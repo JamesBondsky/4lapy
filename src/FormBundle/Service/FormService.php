@@ -88,6 +88,19 @@ class FormService
     }
 
     /**
+     * @param array  $data
+     * @param string $code
+     * @param int    $formId
+     *
+     * @return mixed
+     */
+    public function getFormFieldValueByCode(array $data, string $code, int $formId) {
+        $formattedFields = $this->getRealNamesFields($formId);
+
+        return $data[$formattedFields[$code]];
+    }
+
+    /**
      * @param $fileCode
      * @param $fileSizeMb
      * @param $valid_types
@@ -254,6 +267,12 @@ class FormService
      */
     public function getRealNamesFields(int $formId, array $fields = []): array
     {
+        static $originalNamesStorage;
+
+        if ($originalNamesStorage[$formId]) {
+            return $originalNamesStorage[$formId];
+        }
+
         $params = [
             'formId' => $formId
         ];
@@ -295,6 +314,8 @@ class FormService
                 }
             }
         }
+
+        $originalNamesStorage[$formId] = $originalNames;
 
         return $originalNames;
     }

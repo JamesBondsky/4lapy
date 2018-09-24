@@ -9,6 +9,7 @@ use FourPaws\App\Application;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Callback\CallbackService;
 use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\EcommerceBundle\Service\DataLayerService;
 use FourPaws\FormBundle\Exception\FileSaveException;
 use FourPaws\FormBundle\Exception\FileSizeException;
 use FourPaws\FormBundle\Exception\FileTypeException;
@@ -27,7 +28,7 @@ use Symfony\Component\Routing\Annotation\Route;
  * Class FormController
  *
  * @todo    add middleware (by form type)
- * @Rest\Route('/add')
+ * @Rest\Route("/add")
  *
  * @package FourPaws\FormBundle\AjaxController
  */
@@ -53,6 +54,10 @@ class FormController extends Controller implements LoggerAwareInterface
      * @var ReCaptchaInterface
      */
     private $recaptchaService;
+    /**
+     * @var DataLayerService
+     */
+    private $dataLayerService;
 
     /**
      * FormController constructor.
@@ -60,13 +65,15 @@ class FormController extends Controller implements LoggerAwareInterface
      * @param FormService        $formService
      * @param AjaxMess           $ajaxMessService
      * @param ReCaptchaInterface $recaptchaService
+     * @param DataLayerService   $dataLayerService
      */
-    public function __construct(FormService $formService, AjaxMess $ajaxMessService, ReCaptchaInterface $recaptchaService)
+    public function __construct(FormService $formService, AjaxMess $ajaxMessService, ReCaptchaInterface $recaptchaService, DataLayerService $dataLayerService)
     {
         $this->formService = $formService;
         $this->ajaxMessService = $ajaxMessService;
         $this->recaptchaService = $recaptchaService;
         $this->callbackService = Application::getInstance()->getContainer()->get('callback.service');
+        $this->dataLayerService = $dataLayerService;
     }
 
     /**
@@ -87,8 +94,7 @@ class FormController extends Controller implements LoggerAwareInterface
     public function addFeedbackAction(Request $request): JsonResponse
     {
         $formId = (int)$request->get('WEB_FORM_ID');
-
-        $_SESSION['FEEDBACK_SUCCESS'] = 'Y';
+        $data = $this->formService->getFormFieldsByRequest($request);
 
         $response = $this->getFormResponse(
             $formId,
@@ -109,8 +115,106 @@ class FormController extends Controller implements LoggerAwareInterface
         );
 
         if (null === $response) {
-            $response = JsonSuccessResponse::create('Ваша завка принята', 200, [], ['reload' => true]);
+            $response = JsonSuccessResponse::create(
+                'Ваша завка принята',
+                200,
+                [],
+                [
+                    'reload'  => true,
+                    'command' => $this->dataLayerService->renderFeedback($this->formService->getFormFieldValueByCode($data, 'theme', $formId)),
+                ]
+            );
             $_SESSION['FEEDBACK_SUCCESS'] = 'Y';
+        }
+
+        return $response;
+    }
+
+    /**
+     * @todo ParamConverter
+     * @todo Decomposition
+     * @todo Validators
+     * @todo Symfony Forms
+     * @todo MiddleWare
+     *
+     * @Route("/faq/", methods={"POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     *
+     * @throws RuntimeException
+     */
+    public function addFaqAction(Request $request): JsonResponse
+    {
+        $formId = (int)$request->get('WEB_FORM_ID');
+
+        $response = $this->getFormResponse(
+            $formId,
+            $this->formService->getFormFieldsByRequest($request),
+            [
+                'name',
+                'email',
+                'phone',
+                'message',
+            ]
+        );
+
+        if (null === $response) {
+            $response = JsonSuccessResponse::create('Спасибо! В ближайшее время специалист свяжется с Вами и ответит на вопрос');
+        }
+
+        return $response;
+    }
+
+    /**
+     * @todo ParamConverter
+     * @todo Decomposition
+     * @todo Validators
+     * @todo Symfony Forms
+     * @todo MiddleWare
+     *
+     * @Route("/callback/", methods={"POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     *
+     * @throws RuntimeException
+     */
+    public function addCallbackAction(Request $request): JsonResponse
+    {
+        $formId = (int)$request->get('WEB_FORM_ID');
+        $data = $this->formService->getFormFieldsByRequest($request);
+
+        $phone = PhoneHelper::formatPhone($this->formService->getFormFieldValueByCode($data, 'phone', $formId), PhoneHelper::FORMAT_URL);
+
+        $response = $this->getFormResponse(
+            $formId,
+            $data,
+            [
+                'name',
+                'phone',
+                'time_call',
+            ]
+        );
+
+        if (null === $response) {
+            $response = JsonSuccessResponse::create(
+                'Ваша завка принята',
+                200,
+                [],
+                [
+                    'command' => $this->dataLayerService->renderCallback(),
+                ]
+            );
+
+            if ($phone) {
+                $this->callbackService->send(
+                    $phone,
+                    (new DateTime())->format('Y-m-d H:i:s')
+                );
+            }
         }
 
         return $response;
@@ -175,88 +279,5 @@ class FormController extends Controller implements LoggerAwareInterface
         }
 
         return $this->ajaxMessService->getAddError();
-    }
-
-    /**
-     * @todo ParamConverter
-     * @todo Decomposition
-     * @todo Validators
-     * @todo Symfony Forms
-     * @todo MiddleWare
-     *
-     * @Route("/faq/", methods={"POST"})
-     *
-     * @param Request $request
-     *
-     * @return JsonResponse
-     *
-     * @throws RuntimeException
-     */
-    public function addFaqAction(Request $request): JsonResponse
-    {
-        $formId = (int)$request->get('WEB_FORM_ID');
-        $response = $this->getFormResponse(
-            $formId,
-            $this->formService->getFormFieldsByRequest($request),
-            [
-                'name',
-                'email',
-                'phone',
-                'message',
-            ]
-        );
-
-        if (null === $response) {
-            $response = JsonSuccessResponse::create('Спасибо! В ближайшее время специалист свяжется с Вами и ответит на вопрос');
-        }
-
-        return $response;
-    }
-
-    /**
-     * @todo ParamConverter
-     * @todo Decomposition
-     * @todo Validators
-     * @todo Symfony Forms
-     * @todo MiddleWare
-     *
-     * @Route("/callback/", methods={"POST"})
-     *
-     * @param Request $request
-     *
-     * @return JsonResponse
-     *
-     * @throws RuntimeException
-     */
-    public function addCallbackAction(Request $request): JsonResponse
-    {
-        $formId = (int)$request->get('WEB_FORM_ID');
-        $data = $this->formService->getFormFieldsByRequest($request);
-        $formattedFields = $this->formService->getRealNamesFields($formId);
-        $phone = PhoneHelper::formatPhone($data[$formattedFields['phone']], PhoneHelper::FORMAT_URL);
-
-        $response = $this->getFormResponse(
-            $formId,
-            $data,
-            [
-                'name',
-                'phone',
-                'time_call',
-            ],
-            []
-        );
-
-        if (null === $response) {
-            $response = JsonSuccessResponse::create('Ваша завка принята');
-
-            if ($phone) {
-                $this->callbackService->send(
-                    $phone,
-                    (new DateTime())->format('Y-m-d H:i:s')
-                );
-            }
-        }
-
-        return $response;
     }
 }
