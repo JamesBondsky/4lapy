@@ -12,4 +12,6 @@ class OrderPayment
     public const PAYMENT_CASH         = 'cash';
     public const PAYMENT_ONLINE       = 'card-online';
     public const PAYMENT_INNER        = 'inner';
+
+    public const GENERIC_DELIVERY_CODE = '2000001';
 }

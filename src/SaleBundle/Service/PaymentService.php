@@ -618,7 +618,7 @@ class PaymentService implements LoggerAwareInterface
                     ->setValue(1)
                     ->setMeasure(Loc::getMessage('RBS_PAYMENT_MEASURE_DEFAULT') ?: '')
                 )
-                ->setXmlId('2000001')
+                ->setXmlId(OrderPayment::GENERIC_DELIVERY_CODE)
                 ->setTotal($deliveryPrice)
                 ->setCode($order->getId() . '_DELIVERY')
                 ->setPrice($deliveryPrice)

@@ -23,6 +23,7 @@ use Bitrix\Sale\Payment;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\SaleBundle\Dto\Fiscalization\Fiscalization;
 use FourPaws\SaleBundle\Dto\Fiscalization\Item as FiscalItem;
+use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Exception\PaymentException as SalePaymentException;
 use FourPaws\SaleBundle\Service\OrderService as SaleOrderService;
 use FourPaws\SaleBundle\Service\PaymentService as SalePaymentService;
@@ -239,6 +240,9 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         /** @var array[] $paymentTaskItems */
         $paymentTaskItems = [];
         $paymentTask->getItems()->map(function (Item $item) use (&$paymentTaskItems) {
+            if ($this->isDeliveryItem($item)) {
+                $item->setOfferXmlId(OrderPayment::GENERIC_DELIVERY_CODE);
+            }
             $xmlId = $item->getOfferXmlId();
             if (!isset($paymentTaskItems[$xmlId])) {
                 $paymentTaskItems[$xmlId] = [];
@@ -317,5 +321,23 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         );
 
         return $fiscalization;
+    }
+
+    /**
+     * @param Item $item
+     *
+     * @return bool
+     */
+    private function isDeliveryItem(Item $item): bool {
+        $deliveryArticles = [
+            SapOrder::DELIVERY_ZONE_1_ARTICLE,
+            SapOrder::DELIVERY_ZONE_2_ARTICLE,
+            SapOrder::DELIVERY_ZONE_3_ARTICLE,
+            SapOrder::DELIVERY_ZONE_4_ARTICLE,
+            SapOrder::DELIVERY_ZONE_5_ARTICLE,
+            SapOrder::DELIVERY_ZONE_6_ARTICLE,
+        ];
+
+        return \in_array((string)$item->getOfferXmlId(), $deliveryArticles, true);
     }
 }
