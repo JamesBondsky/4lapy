@@ -1,22 +1,31 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
+namespace FourPaws\FormBundle\Service;
 
-namespace FourPaws\Form;
-
-use FourPaws\Form\Exception\FileSaveException;
-use FourPaws\Form\Exception\FileSizeException;
-use FourPaws\Form\Exception\FileTypeException;
+use FourPaws\FormBundle\Exception\FileSaveException;
+use FourPaws\FormBundle\Exception\FileSizeException;
+use FourPaws\FormBundle\Exception\FileTypeException;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class FormService
  *
- * @package FourPaws\Form
+ * @todo    переписать нахер
+ *
+ * @package FourPaws\Form\Service
  */
 class FormService
 {
+    /**
+     * @param Request $request
+     *
+     * @return array
+     */
+    public function getFormFieldsByRequest(Request $request): array
+    {
+        return $request->request->all();
+    }
+
     /**
      * @param array $fields
      * @param array $requireFields
@@ -42,7 +51,7 @@ class FormService
      */
     public function validEmail(string $email): bool
     {
-        return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+        return \filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
     }
 
     /**
@@ -79,6 +88,19 @@ class FormService
     }
 
     /**
+     * @param array  $data
+     * @param string $code
+     * @param int    $formId
+     *
+     * @return mixed
+     */
+    public function getFormFieldValueByCode(array $data, string $code, int $formId) {
+        $formattedFields = $this->getRealNamesFields($formId);
+
+        return $data[$formattedFields[$code]];
+    }
+
+    /**
      * @param $fileCode
      * @param $fileSizeMb
      * @param $valid_types
@@ -106,6 +128,7 @@ class FormService
                         'Разрешено загружать файлы только с расширениями ' . implode(' ,', $valid_types)
                     );
                 }
+
                 return $file;
             }
 
@@ -158,7 +181,7 @@ class FormService
     }
 
     /**
-     * @param int $formId
+     * @param int   $formId
      * @param array $statuses
      */
     public function addStatuses(int $formId, array $statuses): void
@@ -173,7 +196,7 @@ class FormService
     }
 
     /**
-     * @param int $formId
+     * @param int   $formId
      * @param array $questions
      */
     public function addQuestions(int $formId, array $questions): void
@@ -197,7 +220,7 @@ class FormService
 
     /**
      * @param array $answers
-     * @param int $questionId
+     * @param int   $questionId
      */
     public function addAnswers(int $questionId, array $answers): void
     {
@@ -211,7 +234,7 @@ class FormService
     }
 
     /**
-     * @param int $formId
+     * @param int    $formId
      * @param string $createEmail
      */
     public function addMailTemplate(int $formId, string $createEmail = 'N'): void
@@ -237,13 +260,19 @@ class FormService
     }
 
     /**
-     * @param int $formId
+     * @param int   $formId
      * @param array $fields
      *
      * @return array
      */
     public function getRealNamesFields(int $formId, array $fields = []): array
     {
+        static $originalNamesStorage;
+
+        if ($originalNamesStorage[$formId]) {
+            return $originalNamesStorage[$formId];
+        }
+
         $params = [
             'formId' => $formId
         ];
@@ -285,6 +314,8 @@ class FormService
                 }
             }
         }
+
+        $originalNamesStorage[$formId] = $originalNames;
 
         return $originalNames;
     }

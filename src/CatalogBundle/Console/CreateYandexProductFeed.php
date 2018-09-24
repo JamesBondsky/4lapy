@@ -27,6 +27,8 @@ use Symfony\Component\Filesystem\Exception\IOException;
 /**
  * Class CreateYandexProductFeed
  *
+ * @todo
+ *
  * @package FourPaws\CatalogBundle\Console
  */
 class CreateYandexProductFeed extends Command implements LoggerAwareInterface
@@ -153,7 +155,11 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
     {
         switch ($type) {
             case static::FEED_TYPE_YANDEX_MARKET:
-                $this->yandexMarketService->deleteAllPrices();
+                /**
+                 * @todo return the definition
+                 *
+                 * $this->yandexMarketService->deleteAllPrices();
+                 */
                 break;
         }
     }

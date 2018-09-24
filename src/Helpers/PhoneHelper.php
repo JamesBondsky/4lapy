@@ -13,15 +13,10 @@ use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 class PhoneHelper
 {
     public const FORMAT_FULL = '+7 (%s%s%s) %s%s%s-%s%s-%s%s';
-
     public const FORMAT_DEFAULT = '+7 %s%s%s %s%s%s-%s%s-%s%s';
-
     public const FORMAT_URL = '8%s%s%s%s%s%s%s%s%s%s';
-
     public const FORMAT_INTERNATIONAL = '+7%s%s%s%s%s%s%s%s%s%s';
-
     public const FORMAT_MANZANA = '7%s%s%s%s%s%s%s%s%s%s';
-
     public const FORMAT_SHORT = '%s%s%s%s%s%s%s%s%s%s';
 
     /**
@@ -74,7 +69,7 @@ class PhoneHelper
      */
     public static function getManzanaPhone(string $rawPhone): string
     {
-        return vsprintf(static::FORMAT_MANZANA, str_split(static::normalizePhone($rawPhone)));
+        return \vsprintf(static::FORMAT_MANZANA, \str_split(static::normalizePhone($rawPhone)));
     }
 
     /**
@@ -86,12 +81,21 @@ class PhoneHelper
     public static function formatPhone(string $phone, string $format = self::FORMAT_DEFAULT): string
     {
         try {
-            $normalized = self::normalizePhone($phone);
-
-            return vsprintf($format, str_split($normalized));
+            return self::formatPhoneRaw($phone, $format);
         } catch (WrongPhoneNumberException $e) {
             return $phone;
         }
+    }
+
+    /**
+     * @param string $phone
+     * @param string $format
+     *
+     * @return string
+     */
+    public static function formatPhoneRaw(string $phone, string $format = self::FORMAT_DEFAULT): string
+    {
+        return \vsprintf($format, \str_split(self::normalizePhone($phone)));
     }
 
     /**

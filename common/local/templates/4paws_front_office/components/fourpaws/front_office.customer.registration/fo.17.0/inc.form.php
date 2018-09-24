@@ -23,6 +23,8 @@ $attr = '';
 $attr .= ' data-ajax-url="' . $componentPath . '/ajax.php"';
 $attr .= ' data-result-container="#refreshingBlockContainer"';
 
+$requiredMark = '<span style="color: red;">*</span>';
+$notRequiredMark = '';
 $showAuthButton = false;
 ?>
     <form class="form-page mb-l registration-form" action=""<?= $attr ?> method="post" id="<?= $curFormId ?>">
@@ -68,6 +70,7 @@ $showAuthButton = false;
                 <div class="form-page__field-wrap">
                     <label for="<?= $fieldId ?>" class="form-page__label">
                         Мобильный телефон (10 знаков без 7 или 8 в формате 9ХХХХХХХХХ)
+                        <?= ($fieldMeta['REQUIRED'] ? $requiredMark : $notRequiredMark) ?>
                     </label>
                     <input id="<?= $fieldId ?>"
                            name="<?= $fieldName ?>"
@@ -119,7 +122,10 @@ $showAuthButton = false;
                 }
                 ?>
                 <div class="form-page__field-wrap">
-                    <label for="<?= $fieldId ?>" class="form-page__label">Фамилия</label>
+                    <label for="<?= $fieldId ?>" class="form-page__label">
+                        Фамилия
+                        <?= ($fieldMeta['REQUIRED'] ? $requiredMark : $notRequiredMark) ?>
+                    </label>
                     <input id="<?= $fieldId ?>"
                            name="<?= $fieldName ?>"
                            value="<?= $value ?>"<?= $attr ?>
@@ -158,7 +164,10 @@ $showAuthButton = false;
                 }
                 ?>
                 <div class="form-page__field-wrap">
-                    <label for="<?= $fieldId ?>" class="form-page__label">Имя</label>
+                    <label for="<?= $fieldId ?>" class="form-page__label">
+                        Имя
+                        <?= ($fieldMeta['REQUIRED'] ? $requiredMark : $notRequiredMark) ?>
+                    </label>
                     <input id="<?= $fieldId ?>"
                            name="<?= $fieldName ?>"
                            value="<?= $value ?>"<?= $attr ?>
@@ -197,7 +206,10 @@ $showAuthButton = false;
                 }
                 ?>
                 <div class="form-page__field-wrap">
-                    <label for="<?= $fieldId ?>" class="form-page__label">Отчество</label>
+                    <label for="<?= $fieldId ?>" class="form-page__label">
+                        Отчество
+                        <?= ($fieldMeta['REQUIRED'] ? $requiredMark : $notRequiredMark) ?>
+                    </label>
                     <input id="<?= $fieldId ?>"
                            name="<?= $fieldName ?>"
                            value="<?= $value ?>"<?= $attr ?>
@@ -235,11 +247,14 @@ $showAuthButton = false;
                 $female = $component::EXTERNAL_GENDER_CODE_F;
                 ?>
                 <div class="form-page__field-wrap">
-                    <label for="<?= $fieldId ?>" class="form-page__label">Пол</label>
+                    <label for="<?= $fieldId ?>" class="form-page__label">
+                        Пол
+                        <?= ($fieldMeta['REQUIRED'] ? $requiredMark : $notRequiredMark) ?>
+                    </label>
                     <select id="<?= $fieldId ?>" name="<?= $fieldName ?>">
                         <option<?=$optAttr?> value="">Укажите пол</option>
-                        <option<?= ($value == $male ? ' selected="selected"' : $optAttr) ?> value="<?= $male ?>">Мужской</option>
-                        <option<?= ($value == $female ? ' selected="selected"' : $optAttr) ?> value="<?= $female ?>">Женский</option>
+                        <option<?= ($value === $male ? ' selected="selected"' : $optAttr) ?> value="<?= $male ?>">Мужской</option>
+                        <option<?= ($value === $female ? ' selected="selected"' : $optAttr) ?> value="<?= $female ?>">Женский</option>
                     </select>
                     <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
                 </div>
@@ -275,7 +290,10 @@ $showAuthButton = false;
 
                 ?>
                 <div class="form-page__field-wrap">
-                    <label for="<?= $fieldId ?>" class="form-page__label">Дата рождения дд.мм.гггг</label>
+                    <label for="<?= $fieldId ?>" class="form-page__label">
+                        Дата рождения дд.мм.гггг
+                        <?= ($fieldMeta['REQUIRED'] ? $requiredMark : $notRequiredMark) ?>
+                    </label>
                     <input id="<?= $fieldId ?>"
                            name="<?= $fieldName ?>"
                            value="<?= $value ?>"<?= $attr ?>
@@ -313,15 +331,16 @@ $showAuthButton = false;
                 }
                 ?>
                 <div class="form-page__field-wrap">
-                <label for="<?= $fieldId ?>" class="form-page__label">
-                    Ваш email (поле необязательно для заполнения)
-                </label>
-                <input id="<?= $fieldId ?>"
-                       name="<?= $fieldName ?>"
-                       value="<?= $value ?>"<?= $attr ?>
-                       class="form-page__field mb-l _email"
-                       type="text">
-                <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
+                    <label for="<?= $fieldId ?>" class="form-page__label">
+                        Ваш email
+                        <?= ($fieldMeta['REQUIRED'] ? $requiredMark : $notRequiredMark) ?>
+                    </label>
+                    <input id="<?= $fieldId ?>"
+                           name="<?= $fieldName ?>"
+                           value="<?= $value ?>"<?= $attr ?>
+                           class="form-page__field mb-l _email"
+                           type="text">
+                    <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
                 </div><?php
 
                 // сообщаем компоненту, что пользователя можно регистрировать в случае успешных проверок
@@ -344,7 +363,9 @@ $showAuthButton = false;
                 <?php
                 if ($showAuthButton) {
                     ?>
-                    <a href="javascript:void(0)" data-user-id="<?= $arResult['REGISTERED_USER_ID'] ?>" class="btn inline-block avatarAuth">
+                    <a href="javascript:void(0)"
+                       data-user-id="<?= $arResult['REGISTERED_USER_ID'] ?>"
+                       class="btn inline-block avatarAuth">
                         Авторизоваться
                     </a>
                     <a href="<?= $arParams['CURRENT_PAGE'] ?>" class="btn inline-block">Отказаться</a>
@@ -356,6 +377,7 @@ $showAuthButton = false;
                     <?php
                 }
                 ?>
+                <p><?= $requiredMark ?>&nbsp;&mdash;&nbsp;обязательное поле</p>
             </div>
         </div>
     </form>
