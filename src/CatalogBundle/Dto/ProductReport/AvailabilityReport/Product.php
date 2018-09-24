@@ -74,6 +74,38 @@ class Product
     protected $price;
 
     /**
+     * @var string
+     *
+     * @Serializer\SerializedName("Название для Яндекс.Маркет")
+     * @Serializer\Type("string")
+     */
+    protected $yandexName;
+
+    /**
+     * @var string
+     *
+     * @Serializer\SerializedName("Категория 1-го уровня")
+     * @Serializer\Type("string")
+     */
+    protected $firstLevelCategory;
+
+    /**
+     * @var string
+     *
+     * @Serializer\SerializedName("Категория 2-го уровня")
+     * @Serializer\Type("string")
+     */
+    protected $secondLevelCategory;
+
+    /**
+     * @var string
+     *
+     * @Serializer\SerializedName("Категория 3-го уровня")
+     * @Serializer\Type("string")
+     */
+    protected $thirdLevelCategory;
+
+    /**
      * @return string
      */
     public function getXmlId(): string
@@ -221,6 +253,82 @@ class Product
     public function setPrice(float $price): Product
     {
         $this->price = $price;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getYandexName(): string
+    {
+        return $this->yandexName;
+    }
+
+    /**
+     * @param string $yandexName
+     * @return Product
+     */
+    public function setYandexName(string $yandexName): Product
+    {
+        $this->yandexName = $yandexName;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFirstLevelCategory(): string
+    {
+        return $this->firstLevelCategory;
+    }
+
+    /**
+     * @param string $firstLevelCategory
+     * @return Product
+     */
+    public function setFirstLevelCategory(string $firstLevelCategory): Product
+    {
+        $this->firstLevelCategory = $firstLevelCategory;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSecondLevelCategory(): string
+    {
+        return $this->secondLevelCategory;
+    }
+
+    /**
+     * @param string $secondLevelCategory
+     * @return Product
+     */
+    public function setSecondLevelCategory(string $secondLevelCategory): Product
+    {
+        $this->secondLevelCategory = $secondLevelCategory;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getThirdLevelCategory(): string
+    {
+        return $this->thirdLevelCategory;
+    }
+
+    /**
+     * @param string $thirdLevelCategory
+     * @return Product
+     */
+    public function setThirdLevelCategory(string $thirdLevelCategory): Product
+    {
+        $this->thirdLevelCategory = $thirdLevelCategory;
 
         return $this;
     }

@@ -12,6 +12,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\CatalogBundle\Dto\ProductReport\AvailabilityReport\Product;
@@ -203,15 +204,32 @@ class AvailabilityReportService
         $result = [];
         /** @var Offer $offer */
         foreach ($offers as $offer) {
+            $product = $offer->getProduct();
+
+            $categoryNames = [];
+            if ($section = $product->getSection()) {
+
+                $path = $section->getFullPathCollection();
+                /** @var Category $pathItem */
+                foreach ($path as $pathItem) {
+                    $categoryNames[] = $pathItem->getName();
+                }
+                $categoryNames = \array_reverse($categoryNames);
+            }
+
             $result[] = (new Product())
                 ->setXmlId($offer->getXmlId())
                 ->setName($offer->getName())
                 ->setImage(!empty($offer->getImagesIds()))
-                ->setDescription((bool)$offer->getProduct()->getDetailText()->getText())
+                ->setDescription((bool)$product->getDetailText()->getText())
                 ->setActive($offer->isActive())
                 ->setDateCreate($offer->getDateCreate() ?? new \DateTimeImmutable())
                 ->setStocks($offer->getAllStocks()->filterByStore($store)->getTotalAmount())
-                ->setPrice($offer->getPrice());
+                ->setPrice($offer->getPrice())
+                ->setYandexName($product->getYmlName() ?: '-')
+                ->setFirstLevelCategory($categoryNames[0] ?: '-')
+                ->setSecondLevelCategory($categoryNames[1] ?: '-')
+                ->setThirdLevelCategory($categoryNames[2] ?: '-');
         }
 
         return $result;
