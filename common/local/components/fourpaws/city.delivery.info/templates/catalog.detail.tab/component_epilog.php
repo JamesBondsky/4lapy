@@ -18,8 +18,13 @@ $delivery = $arResult['DELIVERY']['RESULT'];
 if (!$delivery instanceof DeliveryResultInterface) {
     return;
 }
+
+$currentDate = (new \DateTime())->setTime(0, 0, 0, 0);
 /** @noinspection PhpUnhandledExceptionInspection */
-$intervalDays = $this->getIntervalDays($delivery, new \DateTime());
+$intervalDays = $this->getIntervalDays(
+    $delivery,
+    $currentDate
+);
 $intervalHtml = '';
 /** @var IntervalRuleResult $intervalResult */
 foreach ($intervalDays as $intervalResult) {
@@ -39,7 +44,10 @@ foreach ($intervalDays as $intervalResult) {
             <?php } elseif ($intervalResult->getDays() === 1) { ?>
                 на следующий день
             <?php } else { ?>
-                в течение <?= $intervalResult->getDays() ?> <?= (new Declension('дня', 'дней', 'дней'))->get($intervalResult->getDays()) ?>
+                <?= \FourPaws\Helpers\DateHelper::formatDate(
+                    'll',
+                    (clone $currentDate)->modify(\sprintf('+% days', $intervalResult->getDays()))->getTimestamp()
+                ); ?>
             <?php } ?>
         </td>
     </tr>
@@ -47,5 +55,5 @@ foreach ($intervalDays as $intervalResult) {
 }
 ?>
 <script>
-window.FourPawsCityDeliveryInfoComponentHtml = <?= json_encode($intervalHtml) ?>;
+    window.FourPawsCityDeliveryInfoComponentHtml = <?= json_encode($intervalHtml) ?>;
 </script>
