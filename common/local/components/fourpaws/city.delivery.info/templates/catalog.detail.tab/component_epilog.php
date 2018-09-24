@@ -33,7 +33,11 @@ foreach ($intervalDays as $intervalResult) {
     <tr class="b-tab-shipping__tr b-tab-shipping__tr--first-line">
         <td class="b-tab-shipping__td b-tab-shipping__td--first">
             <?php if ($intervalResult->getTimeTo() === 0) { ?>
-                после <?= $intervalResult->getTimeFrom() ?>:00
+                <?php if ($intervalResult->getTimeFrom() === 0) { ?>
+                    в любое время
+                <?php } else { ?>
+                    после <?= $intervalResult->getTimeFrom() ?>:00
+                <?php } ?>
             <?php } else { ?>
                 до <?= $intervalResult->getTimeTo() ?>:00
             <?php } ?>
@@ -46,7 +50,7 @@ foreach ($intervalDays as $intervalResult) {
             <?php } else { ?>
                 <?= \FourPaws\Helpers\DateHelper::formatDate(
                     'll',
-                    (clone $currentDate)->modify(\sprintf('+% days', $intervalResult->getDays()))->getTimestamp()
+                    (clone $currentDate)->modify(\sprintf('+%s days', $intervalResult->getDays()))->getTimestamp()
                 ); ?>
             <?php } ?>
         </td>

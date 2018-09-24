@@ -175,11 +175,11 @@ class IntervalService implements LoggerAwareInterface
                 }
             }
 
-            $nextDeliveries = $this->deliveryService->getNextDeliveries($delivery, $maxDays);
+            $nextDeliveryDates = $this->deliveryService->getNextDeliveryDates($delivery, $maxDays);
             foreach ($intervalData as $intervalRuleResult) {
                 $days = $intervalRuleResult->getDays();
-                foreach ($nextDeliveries as $nextDelivery) {
-                    $diff = DateHelper::diffDays($nextDelivery->getDeliveryDate(), $currentDate);
+                foreach ($nextDeliveryDates as $nextDeliveryDate) {
+                    $diff = DateHelper::diffDays($nextDeliveryDate, $currentDate);
                     if ($diff < $days) {
                         continue;
                     }
