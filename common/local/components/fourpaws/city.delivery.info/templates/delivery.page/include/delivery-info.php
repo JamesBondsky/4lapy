@@ -36,30 +36,32 @@ $isInnerDelivery = $delivery['CODE'] === DeliveryService::INNER_DELIVERY_CODE;
             $results = [];
             /** @var IntervalRuleResult $intervalResult */
             foreach ($intervalDays as $intervalResult) {
+                $result = '';
                 if ($intervalResult->getDays() === 0) {
-                    $results[] = \sprintf(
-                        'в день оформления заказа (при оформлении до %s:00)',
-                        $intervalResult->getTimeTo()
-                    );
+                    $result .= 'в день оформления заказа';
                 } elseif ($intervalResult->getDays() === 1) {
-                    $results[] = \sprintf(
-                        'на следующий день (при оформлении %s %s:00)',
-                        $intervalResult->getTimeTo() === 0 ? 'после' : 'до',
-                        $intervalResult->getTimeTo() === 0 ? $intervalResult->getTimeFrom() : $intervalResult->getTimeTo()
-                    );
+                    $result .= 'на следующий день';
                 } else {
-                    $results[] = \sprintf(
-                        'в течение %s %s (при оформлении %s %s:00)',
+                    $result .= \sprintf(
+                        'в течение %s %s',
                         $intervalResult->getDays(),
                         WordHelper::declension($intervalResult->getDays(), [
                             'день',
                             'дней',
                             'дней',
-                        ]),
+                        ])
+                    );
+                }
+
+                if (!($intervalResult->getTimeTo() === 0 && $intervalResult->getTimeFrom() === 0)) {
+                    $result .= \sprintf(
+                        ' (при оформлении %s %s:00)',
                         $intervalResult->getTimeTo() === 0 ? 'после' : 'до',
                         $intervalResult->getTimeTo() === 0 ? $intervalResult->getTimeFrom() : $intervalResult->getTimeTo()
                     );
                 }
+
+                $results[] = $result;
             } ?>
             <span><?= WordHelper::ucfirst(\implode(', ', $results)) ?></span>
         <?php } else { ?>
