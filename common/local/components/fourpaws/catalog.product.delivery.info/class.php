@@ -187,13 +187,4 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
             'TOTAL'     => $countTotal,
         ];
     }
-
-    /**
-     * @param string $code
-     * @return bool
-     */
-    protected function isDefaultLocation(string $code): bool
-    {
-        return false;
-    }
 }

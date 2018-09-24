@@ -259,4 +259,18 @@ class DateHelper
 
         return FormatDate($dateFormat, $timestamp);
     }
+
+    /**
+     * @param \DateTime $date1
+     * @param \DateTime $date2
+     *
+     * @return int
+     */
+    public static function diffDays(\DateTime $date1, \DateTime $date2): int
+    {
+        $clone1 = (clone $date1)->setTime(0,0,0,0);
+        $clone2 = (clone $date2)->setTime(0,0,0,0);
+
+        return $clone1->diff($clone2)->days;
+    }
 }

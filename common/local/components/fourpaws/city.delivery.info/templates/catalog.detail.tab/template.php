@@ -74,43 +74,16 @@ $delivery = $arResult['DELIVERY'];
                 </tbody>
             </table>
         </div>
-        <?php
-        /** @var ArrayCollection $intervalDays */
-        $intervalDays = $delivery['INTERVAL_DAYS'];
-        if (!$intervalDays->isEmpty()) { ?>
-            <div class="b-tab-shipping__inline-table b-tab-shipping__inline-table--right">
-                <table class="b-tab-shipping__table">
-                    <caption class="b-tab-shipping__caption">Время доставки</caption>
-                    <tbody class="b-tab-shipping__tbody">
-                    <tr class="b-tab-shipping__tr">
-                        <th class="b-tab-shipping__th b-tab-shipping__th--first">Время заказа</th>
-                        <th class="b-tab-shipping__th b-tab-shipping__th--second">Доставка</th>
-                    </tr>
-                    <?php
-                    /** @var IntervalRuleResult $intervalResult */
-                    foreach ($intervalDays as $intervalResult) { ?>
-                        <tr class="b-tab-shipping__tr b-tab-shipping__tr--first-line">
-                            <td class="b-tab-shipping__td b-tab-shipping__td--first">
-                                <?php if ($intervalResult->getTimeTo() === 0) { ?>
-                                    после <?= $intervalResult->getTimeFrom() ?>:00
-                                <?php } else { ?>
-                                    до <?= $intervalResult->getTimeTo() ?>:00
-                                <?php } ?>
-                            </td>
-                            <td class="b-tab-shipping__td b-tab-shipping__td--second">
-                                <?php if ($intervalResult->getDays() === 0) { ?>
-                                    в тот же день
-                                <?php } elseif ($intervalResult->getDays() === 1) { ?>
-                                    на следующий день
-                                <?php } else { ?>
-                                    через <?= $intervalResult->getDays() ?> <?= (new Declension('день', 'дня', 'дней'))->get($intervalResult->getDays()) ?>
-                                <?php } ?>
-                            </td>
-                        </tr>
-                    <?php } ?>
-                    </tbody>
-                </table>
-            </div>
-        <?php } ?>
+        <div class="b-tab-shipping__inline-table b-tab-shipping__inline-table--right js-interval-list" style="display: none">
+            <table class="b-tab-shipping__table">
+                <caption class="b-tab-shipping__caption">Время доставки</caption>
+                <tbody class="b-tab-shipping__tbody">
+                <tr class="b-tab-shipping__tr js-interval-list">
+                    <th class="b-tab-shipping__th b-tab-shipping__th--first">Время заказа</th>
+                    <th class="b-tab-shipping__th b-tab-shipping__th--second">Доставка</th>
+                </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
