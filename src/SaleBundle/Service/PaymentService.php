@@ -44,6 +44,7 @@ use FourPaws\SaleBundle\Dto\SberbankOrderInfo\OrderBundle\Item as SberbankOrderI
 use FourPaws\SaleBundle\Dto\SberbankOrderInfo\OrderInfo;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Exception\FiscalValidation\FiscalAmountExceededException;
+use FourPaws\SaleBundle\Exception\FiscalValidation\FiscalAmountException;
 use FourPaws\SaleBundle\Exception\FiscalValidation\InvalidItemCodeException;
 use FourPaws\SaleBundle\Exception\FiscalValidation\NoMatchingFiscalItemException;
 use FourPaws\SaleBundle\Exception\FiscalValidation\PositionQuantityExceededException;
@@ -158,18 +159,23 @@ class PaymentService implements LoggerAwareInterface
     /**
      * @param Fiscalization $fiscalization
      * @param OrderInfo     $orderInfo
+     * @param int|null      $sumPaid
      *
+     * @throws FiscalAmountExceededException
+     * @throws FiscalAmountException
      * @throws InvalidItemCodeException
      * @throws NoMatchingFiscalItemException
      * @throws PositionQuantityExceededException
-     * @throws FiscalAmountExceededException
      */
     public function validateFiscalization(
         Fiscalization $fiscalization,
-        OrderInfo $orderInfo
+        OrderInfo $orderInfo,
+        int $sumPaid = null
     ): void
     {
         $fiscalItems = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
+        $fiscalAmount = $this->getFiscalTotal($fiscalization);
+
         $sberbankOrderItems = $orderInfo->getOrderBundle()->getCartItems()->getItems();
         /** @var Item $fiscalItem */
         foreach ($fiscalItems as $fiscalItem) {
@@ -216,7 +222,6 @@ class PaymentService implements LoggerAwareInterface
         }
 
         $approvedAmount = $orderInfo->getPaymentAmountInfo()->getApprovedAmount();
-        $fiscalAmount = $this->getFiscalTotal($fiscalization);
         if ($fiscalAmount > $approvedAmount) {
             throw new FiscalAmountExceededException(
                 \sprintf(
@@ -225,6 +230,18 @@ class PaymentService implements LoggerAwareInterface
                     $approvedAmount
                 )
             );
+        }
+
+        if (null !== $sumPaid && $fiscalAmount < $sumPaid) {
+            if (($sumPaid - $fiscalAmount) > ($sumPaid * 0.02)) {
+                throw new FiscalAmountException(
+                    \sprintf(
+                        'Fiscal amount (%s) is lesser than paid amount (%s)',
+                        $fiscalAmount,
+                        $sumPaid
+                    )
+                );
+            }
         }
     }
 

@@ -2,7 +2,7 @@
 
 namespace FourPaws\SaleBundle\Exception\FiscalValidation;
 
-class FiscalAmountTooSmallException extends FiscalValidationException
+class FiscalAmountException extends FiscalValidationException
 {
 
 }
