@@ -101,9 +101,6 @@ services:
     class: JMS\Serializer\Naming\SerializedNameAnnotationStrategy
     arguments: ['@jms_identical_property_naming_strategy']
 
-  form.service:
-      class: FourPaws\Form\FormService
-
   front_office.manzana_integration.service:
     class: FourPaws\FrontOffice\ManzanaIntegrationService
     arguments: ['@jms_serializer', '@manzana.service']
