@@ -2,9 +2,12 @@
 
 namespace FourPaws\FormBundle\Service;
 
+use Bitrix\Main\Entity\Query;
+use Exception;
 use FourPaws\FormBundle\Exception\FileSaveException;
 use FourPaws\FormBundle\Exception\FileSizeException;
 use FourPaws\FormBundle\Exception\FileTypeException;
+use FourPaws\Helpers\Table\FormTable;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -94,7 +97,8 @@ class FormService
      *
      * @return mixed
      */
-    public function getFormFieldValueByCode(array $data, string $code, int $formId) {
+    public function getFormFieldValueByCode(array $data, string $code, int $formId)
+    {
         $formattedFields = $this->getRealNamesFields($formId);
 
         return $data[$formattedFields[$code]];
@@ -367,5 +371,29 @@ class FormService
         }
 
         return $items;
+    }
+
+    /**
+     * @param int $formId
+     *
+     * @return bool
+     */
+    public function isUseCaptcha(int $formId): bool
+    {
+        /**
+         * @var array $result
+         */
+        try {
+            $result = (new Query(FormTable::getEntity()))
+                ->setSelect(['USE_CAPTCHA'])
+                ->setFilter(['=ID' => $formId])
+                ->setCacheTtl(86401)
+                ->exec()
+                ->fetch();
+        } catch (Exception $e) {
+            return false;
+        }
+
+        return $result && $result['USE_CAPTCHA'] === 'Y';
     }
 }
