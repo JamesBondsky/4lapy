@@ -69,7 +69,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
 
 <div class="b-rating b-rating--card" >
     <?php for ($i = $worstRaitingValue; $i <= $bestRaitingValue; $i++) {
-        $activeClass = $arResult['RATING'] > $i ? ' b-rating__star-block--active' : '';
+        $activeClass = $arResult['RATING'] >= $i ? ' b-rating__star-block--active' : '';
         ?>
         <div class="b-rating__star-block <?= $activeClass ?>" >
             <span class="b-icon"><?= $iconStar12x12 ?></span>
