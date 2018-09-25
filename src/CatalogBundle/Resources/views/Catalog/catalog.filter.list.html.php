@@ -60,7 +60,7 @@ foreach ($filters as $filter) {
                 <div class="size_filter js-size-filter color_filter js-color-filter js-accordion-filter js-filter-checkbox quoter">
                     <?php
                     /**
-                     * @var int $id
+                     * @var int     $id
                      * @var Variant $variant
                      */
                     foreach ($filter->getAvailableVariants() as $id => $variant) {
@@ -70,6 +70,13 @@ foreach ($filters as $filter) {
                                 : \sprintf('background-color: #%s;', \ltrim($variant->getColor(), ' #'));
                             ?>
                             <label class="color_filter__item<?= $variant->isChecked() ? '--checked' : '' ?> js-color-filter-item"
+                                <?= $variant->getOnclick()
+                                    ? \sprintf(
+                                        'onclick="%s"',
+                                        $variant->getOnclick()
+                                    )
+                                    : ''
+                                ?>
                                    style="<?= $style ?>">
                                 <input <?= $variant->isChecked() ? 'checked' : '' ?>
                                         class="js-checkbox-change js-filter-control js-filter-select"
@@ -78,10 +85,15 @@ foreach ($filters as $filter) {
                                         name="<?= $filter->getFilterCode() ?>"
                                         value="<?= $variant->getValue() ?>">
                             </label>
-                            <?php
-                        } else {
-                            ?>
-                            <label class="size_filter__item<?= $variant->isChecked() ? '--active' : '' ?> js-size-filter-item">
+                        <?php } else { ?>
+                            <label class="size_filter__item<?= $variant->isChecked() ? '--active' : '' ?> js-size-filter-item"
+                                <?= $variant->getOnclick()
+                                    ? \sprintf(
+                                        'onclick="%s"',
+                                        $variant->getOnclick()
+                                    )
+                                    : ''
+                                ?>>
                                 <input <?= $variant->isChecked() ? 'checked' : '' ?>
                                         class="js-checkbox-change js-filter-control js-filter-select"
                                         id="<?= $filter->getFilterCode() ?>-<?= $id ?>"
@@ -97,7 +109,14 @@ foreach ($filters as $filter) {
                 <ul class="b-filter-link-list b-filter-link-list--filter js-accordion-filter js-filter-checkbox">
                     <?php foreach ($filter->getAvailableVariants() as $id => $variant) { ?>
                         <li class="b-filter-link-list__item">
-                            <label class="b-filter-link-list__label">
+                            <label class="b-filter-link-list__label"
+                                <?= $variant->getOnclick()
+                                    ? \sprintf(
+                                        'onclick="%s"',
+                                        $variant->getOnclick()
+                                    )
+                                    : ''
+                                ?>>
                                 <input class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
                                        type="checkbox"
                                        name="<?= $filter->getFilterCode() ?>"
@@ -113,7 +132,7 @@ foreach ($filters as $filter) {
                         </li>
                     <?php } ?>
                 </ul>
-            <? } ?>
+            <?php } ?>
             <a class="b-link b-link--filter-more js-open-filter-all"
                href="javascript:void(0);" title="Показать все">
                 Показать все

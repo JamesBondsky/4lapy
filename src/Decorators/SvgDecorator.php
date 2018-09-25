@@ -16,7 +16,7 @@ class SvgDecorator
 {
     private $path;
     private $image;
-    private $width = 0;
+    private $width  = 0;
     private $height = 0;
     private $domain;
 
@@ -24,8 +24,8 @@ class SvgDecorator
      * SvgDecorator constructor.
      *
      * @param string $image
-     * @param int $width
-     * @param int $height
+     * @param int    $width
+     * @param int    $height
      */
     public function __construct(string $image, int $width = 0, int $height = 0)
     {
@@ -69,7 +69,7 @@ html;
     {
         try {
             $this->path = Application::markup()
-                ->getSvgFile();
+                                     ->getSvgFile();
         } catch (Exception | InvalidArgumentException $e) {
             $this->path = '';
         }
@@ -160,8 +160,7 @@ html;
             $this->domain = $baseDomain;
         } else {
             try {
-                $baseDomain = Application::getInstance()
-                    ->getSiteDomain();
+                $baseDomain = Application::getInstance()->getSiteDomain();
             } catch (ApplicationCreateException $e) {
                 $baseDomain = '';
             }

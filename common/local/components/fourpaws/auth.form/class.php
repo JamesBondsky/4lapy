@@ -10,7 +10,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
-use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
@@ -23,6 +22,8 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\EcommerceBundle\Enum\DataLayer;
+use FourPaws\EcommerceBundle\Service\DataLayerService;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
@@ -52,8 +53,8 @@ use Symfony\Component\HttpFoundation\Request;
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsAuthFormComponent extends \CBitrixComponent
 {
-    public const MODE_PROFILE = 0;
-    public const MODE_FORM = 1;
+    public const MODE_PROFILE   = 0;
+    public const MODE_FORM      = 1;
     public const PHONE_HOT_LINE = '8 (800) 770-00-22';
 
     /**
@@ -70,6 +71,10 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @var RetailRocketService
      */
     private $retailRocketService;
+    /**
+     * @var DataLayerService
+     */
+    private $dataLayerService;
 
     /**
      * FourPawsAuthFormComponent constructor.
@@ -87,8 +92,10 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
             $this->retailRocketService = $container->get(RetailRocketService::class);
             $this->userAuthorizationService = $container->get(UserAuthorizationInterface::class);
+            $this->dataLayerService = $container->get(DataLayerService::class);
             $this->ajaxMess = $container->get('ajax.mess');
-        } catch (Exception $e) {}
+        } catch (Exception $e) {
+        }
     }
 
     /** {@inheritdoc} */
@@ -99,7 +106,8 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             if ($this->getMode() === static::MODE_FORM) {
                 $this->arResult['ON_SUBMIT'] = \str_replace('"', '\'',
                     \sprintf(
-                        '%s%s%s',
+                        '%s%s%s%s',
+                        $this->dataLayerService->renderAuth(DataLayer::AUTH_TYPE_LOGIN),
                         'if (/^(([^<>()\[\]\\.,;:\s@]+(\.[^<>()\[\]\\.,;:\s@]+)*)|(.+))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(String($(this).find("input[name=login]").val()).toLowerCase())){',
                         $this->retailRocketService->renderSendEmail('$(this).find("input[name=login]").val()'),
                         '};'
@@ -149,6 +157,16 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     public function getCurrentUserProvider(): CurrentUserProviderInterface
     {
         return $this->currentUserProvider;
+    }
+
+    /**
+     * @param string $type
+     *
+     * @return string
+     */
+    public function renderDataLayerByType(string $type): string
+    {
+        return $this->dataLayerService->renderAuth($type);
     }
 
     /**
@@ -838,33 +856,37 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      */
     protected function setSocial(): void
     {
-        if (Loader::includeModule('socialservices')) {
-            $authManager = new \CSocServAuthManager();
-            $startParams['AUTH_SERVICES'] = false;
-            $startParams['CURRENT_SERVICE'] = false;
-            $startParams['FORM_TYPE'] = 'login';
-            $services = $authManager->GetActiveAuthServices($startParams);
+        $authManager = new \CSocServAuthManager();
+        $startParams['AUTH_SERVICES'] = false;
+        $startParams['CURRENT_SERVICE'] = false;
+        $startParams['FORM_TYPE'] = 'login';
+        $services = $authManager->GetActiveAuthServices($startParams);
 
-            if (!empty($services)) {
-                $this->arResult['AUTH_SERVICES'] = $services;
-                $authServiceId =
-                    Application::getInstance()->getContext()->getRequest()->get('auth_service_id');
-                if ($authServiceId !== ''
-                    && isset($authServiceId, $this->arResult['AUTH_SERVICES'][$authServiceId])) {
-                    $this->arResult['CURRENT_SERVICE'] = $authServiceId;
-                    $authServiceError =
-                        Application::getInstance()->getContext()->getRequest()->get('auth_service_error');
-                    if (!empty($authServiceError)) {
-                        $this->arResult['ERROR_MESSAGE'] = $authManager->GetError(
-                            $this->arResult['CURRENT_SERVICE'],
-                            $authServiceError
-                        );
-                    } elseif (!$authManager->Authorize($authServiceId)) {
-                        global $APPLICATION;
-                        $ex = $APPLICATION->GetException();
-                        if ($ex) {
-                            $this->arResult['ERROR_MESSAGE'] = $ex->GetString();
-                        }
+        if ($services) {
+            foreach ($services as &$service) {
+                $service['ONCLICK'] = $this->renderDataLayerByType(DataLayer::SOCIAL_SERVICE_MAP[$service['ID']]
+                                                                   ?? '') . $service['ONCLICK'];
+            }
+            unset($service);
+
+            $this->arResult['AUTH_SERVICES'] = $services;
+            $authServiceId =
+                Application::getInstance()->getContext()->getRequest()->get('auth_service_id');
+            if ($authServiceId !== ''
+                && isset($authServiceId, $this->arResult['AUTH_SERVICES'][$authServiceId])) {
+                $this->arResult['CURRENT_SERVICE'] = $authServiceId;
+                $authServiceError =
+                    Application::getInstance()->getContext()->getRequest()->get('auth_service_error');
+                if ($authServiceError) {
+                    $this->arResult['ERROR_MESSAGE'] = $authManager->GetError(
+                        $this->arResult['CURRENT_SERVICE'],
+                        $authServiceError
+                    );
+                } elseif (!$authManager->Authorize($authServiceId)) {
+                    global $APPLICATION;
+                    $ex = $APPLICATION->GetException();
+                    if ($ex) {
+                        $this->arResult['ERROR_MESSAGE'] = $ex->GetString();
                     }
                 }
             }

@@ -70,7 +70,7 @@ class ColourFilter extends ReferenceFilterNested
             ->withValue($referenceItem->getXmlId())
             ->withImage($referenceItem->getFile());
 
-        if ($referenceItem instanceof  ColorReferenceItem) {
+        if ($referenceItem instanceof ColorReferenceItem) {
             $result->withColor($referenceItem->getColorCode());
         }
 

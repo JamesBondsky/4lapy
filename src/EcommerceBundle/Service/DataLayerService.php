@@ -7,14 +7,14 @@ use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 
 /**
- * Class RetailRocketService
+ * Class DataLayerService
  *
  * @todo    add render configuration
  * @todo    add parter id into configuration
  *
  * @package FourPaws\EcommerceBundle\Service
  */
-final class DataLayerService implements ScriptRenderedInterface, LoggerAwareInterface
+class DataLayerService implements ScriptRenderedInterface, LoggerAwareInterface
 {
     use InlineScriptRendererTrait;
 
@@ -59,7 +59,8 @@ final class DataLayerService implements ScriptRenderedInterface, LoggerAwareInte
      *
      * @throws RuntimeException
      */
-    public function renderCallback(): string
+    public function
+    renderCallback(): string
     {
         return $this->renderScript(
             (new DataLayer())
