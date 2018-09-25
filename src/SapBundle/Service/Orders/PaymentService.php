@@ -24,15 +24,24 @@ use FourPaws\Helpers\DateHelper;
 use FourPaws\SaleBundle\Dto\Fiscalization\Fiscalization;
 use FourPaws\SaleBundle\Dto\Fiscalization\Item as FiscalItem;
 use FourPaws\SaleBundle\Enum\OrderPayment;
+use FourPaws\SaleBundle\Exception\FiscalValidation\FiscalAmountExceededException;
+use FourPaws\SaleBundle\Exception\FiscalValidation\FiscalAmountException;
+use FourPaws\SaleBundle\Exception\FiscalValidation\InvalidItemCodeException;
+use FourPaws\SaleBundle\Exception\FiscalValidation\NoMatchingFiscalItemException;
+use FourPaws\SaleBundle\Exception\FiscalValidation\PositionQuantityExceededException;
+use FourPaws\SaleBundle\Exception\FiscalValidation\PositionWrongAmountException;
 use FourPaws\SaleBundle\Exception\PaymentException as SalePaymentException;
+use FourPaws\SaleBundle\Exception\SberbankOrderNotFoundException;
 use FourPaws\SaleBundle\Service\OrderService as SaleOrderService;
 use FourPaws\SaleBundle\Service\PaymentService as SalePaymentService;
 use FourPaws\SapBundle\Dto\In\ConfirmPayment\Item;
 use FourPaws\SapBundle\Dto\In\ConfirmPayment\Order;
 use FourPaws\SapBundle\Dto\Out\Payment\Debit as OutDebit;
 use FourPaws\SapBundle\Enum\SapOrder;
-use FourPaws\SapBundle\Exception\NotFoundOrderException;
-use FourPaws\SapBundle\Exception\PaymentException;
+use FourPaws\SapBundle\Exception\Payment\NotFoundInvoiceException;
+use FourPaws\SapBundle\Exception\Payment\NotFoundOrderException;
+use FourPaws\SapBundle\Exception\Payment\InvalidOrderNumberException;
+use FourPaws\SapBundle\Exception\Payment\OrderZeroPriceException;
 use FourPaws\SapBundle\Service\SapOutFile;
 use FourPaws\SapBundle\Service\SapOutInterface;
 use FourPaws\UserBundle\Service\UserService;
@@ -104,18 +113,35 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
      * @throws ArgumentException
      * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
+     * @throws IOException
+     * @throws InvalidOrderNumberException
+     * @throws InvalidPathException
+     * @throws NotFoundInvoiceException
+     * @throws NotFoundOrderException
      * @throws NotImplementedException
      * @throws ObjectException
      * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws OrderZeroPriceException
      * @throws SalePaymentException
+     * @throws SberbankOrderNotFoundException
      * @throws SystemException
      * @throws \Exception
+     * @throws FiscalAmountExceededException
+     * @throws FiscalAmountException
+     * @throws InvalidItemCodeException
+     * @throws NoMatchingFiscalItemException
+     * @throws PositionQuantityExceededException
+     * @throws PositionWrongAmountException
      */
     public function paymentTaskPerform(Order $paymentTask)
     {
         /**
          * Check order existence
          */
+        if (!$paymentTask->getBitrixOrderId()) {
+            throw new InvalidOrderNumberException('Order number is empty');
+        }
         $order = SaleOrder::loadByAccountNumber($paymentTask->getBitrixOrderId());
         if (!$order) {
             throw new NotFoundOrderException(
@@ -124,11 +150,11 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         }
 
         if (!$paymentTask->getSumPayed() && !$paymentTask->getSumTotal()) {
-            throw new PaymentException('Сумма на списание и сумма заказа равны нулю');
+            throw new OrderZeroPriceException('Сумма на списание и сумма заказа равны нулю');
         }
 
         if (!$orderInvoiceId = $this->salePaymentService->getOrderInvoiceId($order)) {
-            throw new PaymentException('У заказа не указан номер инвойса');
+            throw new NotFoundInvoiceException('У заказа не указан номер инвойса');
         }
 
         $orderInfo = $this->salePaymentService->getSberbankOrderStatusByOrderId($orderInvoiceId);
