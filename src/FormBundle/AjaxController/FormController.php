@@ -115,10 +115,8 @@ class FormController extends Controller implements LoggerAwareInterface
         );
 
         if (null === $response) {
-            $response = JsonSuccessResponse::create(
+            $response = JsonSuccessResponse::createWithData(
                 'Ваша завка принята',
-                200,
-                [],
                 [
                     'reload'  => true,
                     'command' => $this->dataLayerService->renderFeedback($this->formService->getFormFieldValueByCode($data, 'theme', $formId)),
@@ -200,10 +198,8 @@ class FormController extends Controller implements LoggerAwareInterface
         );
 
         if (null === $response) {
-            $response = JsonSuccessResponse::create(
+            $response = JsonSuccessResponse::createWithData(
                 'Ваша завка принята',
-                200,
-                [],
                 [
                     'command' => $this->dataLayerService->renderCallback(),
                 ]
@@ -232,7 +228,7 @@ class FormController extends Controller implements LoggerAwareInterface
      */
     protected function getFormResponse(int $formId, array $formData, array $requiredFields, array $availableFileTypes = []): ?JsonResponse
     {
-        if (!$this->recaptchaService->checkCaptcha()) {
+        if ($this->formService->isUseCaptcha($formId) && !$this->recaptchaService->checkCaptcha()) {
             return $this->ajaxMessService->getFailCaptchaCheckError();
         }
 
@@ -242,7 +238,7 @@ class FormController extends Controller implements LoggerAwareInterface
             return $this->ajaxMessService->getEmptyDataError();
         }
 
-        if (!$this->formService->validEmail($formData[$formattedFields['email']])) {
+        if (\in_array('email', $requiredFields, true) && !$this->formService->validEmail($formData[$formattedFields['email']])) {
             return $this->ajaxMessService->getWrongEmailError();
         }
 
