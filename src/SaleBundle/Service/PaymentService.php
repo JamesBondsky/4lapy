@@ -210,18 +210,6 @@ class PaymentService implements LoggerAwareInterface
                 );
             }
 
-            if ($fiscalItem->getQuantity()->getValue() > $matchingItem->getQuantity()->getValue()) {
-                throw new PositionQuantityExceededException(
-                    \sprintf(
-                        'Item %s quantity (%s) for position %s exceeds existing item quantity (%s)',
-                        $fiscalItem->getCode(),
-                        $fiscalItem->getQuantity()->getValue(),
-                        $fiscalItem->getPositionId(),
-                        $matchingItem->getQuantity()->getValue()
-                    )
-                );
-            }
-
             if ($fiscalItem->getTotal() !== $fiscalItem->getQuantity()->getValue() * $fiscalItem->getPrice()) {
                 throw new PositionWrongAmountException(
                     \sprintf(
