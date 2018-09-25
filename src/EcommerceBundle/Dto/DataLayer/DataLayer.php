@@ -15,7 +15,6 @@ class DataLayer
      * Событие
      *
      * @Serializer\Type("string")
-     * @Serializer\SkipWhenEmpty()
      *
      * @var string
      */
@@ -32,6 +31,7 @@ class DataLayer
      * Action события
      *
      * @Serializer\Type("string")
+     * @Serializer\SkipWhenEmpty()
      *
      * @var string
      */
