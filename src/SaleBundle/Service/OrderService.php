@@ -972,7 +972,7 @@ class OrderService implements LoggerAwareInterface
                     } catch (\Exception $e) {
                         $this->log()->error(sprintf('failed to save address: %s', $e->getMessage()), [
                             'city'     => $personalAddress->getCity(),
-                            'location' => $personalAddress->getCityLocation(),
+                            'location' => $personalAddress->getLocation(),
                             'userId'   => $personalAddress->getUserId(),
                             'street'   => $personalAddress->getStreet(),
                             'house'    => $personalAddress->getHouse(),
