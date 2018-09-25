@@ -788,8 +788,8 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
-     * @param CalculationResultInterface $delivery
-     * @param int                        $count
+     * @param DeliveryResultInterface $delivery
+     * @param int                     $count
      *
      * @return \DateTime[]
      * @throws ApplicationCreateException
@@ -797,7 +797,7 @@ class DeliveryService implements LoggerAwareInterface
      * @throws NotFoundException
      * @throws StoreNotFoundException
      */
-    public function getNextDeliveryDates(CalculationResultInterface $delivery, int $count = 1): array
+    public function getNextDeliveryDates(DeliveryResultInterface $delivery, int $count = 1): array
     {
         $result = [];
         $nextDeliveries = $this->getNextDeliveries($delivery, $count);

@@ -11,6 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Bitrix\FourPawsComponent;
@@ -138,7 +139,7 @@ class FourPawsCityDeliveryInfoComponent extends FourPawsComponent
                     'PRICE'         => $deliveryResult->getPrice(),
                     'FREE_FROM'     => $deliveryResult->getFreeFrom(),
                     'INTERVALS'     => $deliveryResult->getIntervals(),
-                    'INTERVAL_DAYS' => $this->intervalService->getIntervalDays($deliveryResult),
+                    'INTERVAL_DAYS' => $this->getIntervalDays($deliveryResult),
                     'PERIOD_FROM'   => $deliveryResult->getPeriodFrom(),
                     'PERIOD_TYPE'   => $deliveryResult->getPeriodType() ?? BaseResult::PERIOD_TYPE_DAY,
                     'DELIVERY_DATE' => $deliveryResult->getDeliveryDate(),
@@ -160,16 +161,20 @@ class FourPawsCityDeliveryInfoComponent extends FourPawsComponent
             }
 
             $this->arResult = [
-                'LOCATION' => $location,
-                'CITY'     => [
+                'LOCATION'   => $location,
+                'ZONE'       => $this->deliveryService->getDeliveryZoneByLocation($location['CODE']),
+                'CITY'       => [
                     'NAME'  => $currentCity ? $currentCity->getName() : $defaultCity->getName(),
                     'PHONE' => PhoneHelper::formatPhone(
                         $currentCity ? $currentCity->getPhone() : $defaultCity->getPhone()
                     ),
                 ],
-                'DELIVERY' => $delivery,
-                'PICKUP' => $pickup,
-                'DELIVERIES' => \array_filter([$delivery, $pickup])
+                'DELIVERY'   => $delivery,
+                'PICKUP'     => $pickup,
+                'DELIVERIES' => \array_filter([
+                    $delivery,
+                    $pickup,
+                ]),
             ];
         } else {
             $this->abortResultCache();
@@ -220,5 +225,20 @@ class FourPawsCityDeliveryInfoComponent extends FourPawsComponent
         );
 
         return reset($filtered) ?: null;
+    }
+
+    /**
+     * @param DeliveryResultInterface $delivery
+     *
+     * @param DateTime|null           $currentDate
+     * @return ArrayCollection
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws DeliveryNotFoundException
+     * @throws NotFoundException
+     */
+    public function getIntervalDays(DeliveryResultInterface $delivery, \DateTime $currentDate = null): ArrayCollection
+    {
+        return $this->intervalService->getIntervalDays($delivery, $currentDate);
     }
 }

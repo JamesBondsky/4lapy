@@ -14,6 +14,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Entity\IntervalRule\TimeRuleInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\Helpers\DateHelper;
 use Psr\Log\LoggerAwareInterface;
 
 /**
@@ -122,11 +123,17 @@ class IntervalService implements LoggerAwareInterface
 
     /**
      * @param DeliveryResultInterface $delivery
+     * @param \DateTime|null          $currentDate
      *
      * @return ArrayCollection
+     * @throws NotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
-    public function getIntervalDays(DeliveryResultInterface $delivery): ArrayCollection
+    public function getIntervalDays(DeliveryResultInterface $delivery, \DateTime $currentDate = null): ArrayCollection
     {
+        $delivery = clone $delivery;
         /** @var IntervalCollection $intervals */
         $intervals = $delivery->getIntervals();
         /** @var IntervalRuleResult[] $intervalData */
@@ -158,6 +165,30 @@ class IntervalService implements LoggerAwareInterface
         }
 
         ksort($intervalData);
+
+        if (null !== $currentDate) {
+            $maxDays = 0;
+            $delivery->setCurrentDate($currentDate);
+            foreach ($intervalData as $intervalRuleResult) {
+                if ($intervalRuleResult->getDays() > $maxDays) {
+                    $maxDays = $intervalRuleResult->getDays();
+                }
+            }
+
+            $nextDeliveryDates = $this->deliveryService->getNextDeliveryDates($delivery, $maxDays);
+            foreach ($intervalData as $intervalRuleResult) {
+                $days = $intervalRuleResult->getDays();
+                foreach ($nextDeliveryDates as $nextDeliveryDate) {
+                    $diff = DateHelper::diffDays($nextDeliveryDate, $currentDate);
+                    if ($diff < $days) {
+                        continue;
+                    }
+                    $days = $diff;
+                    break;
+                }
+                $intervalRuleResult->setDays($days);
+            }
+        }
 
         $previous = null;
         foreach ($intervalData as $i => $intervalRuleResult) {
