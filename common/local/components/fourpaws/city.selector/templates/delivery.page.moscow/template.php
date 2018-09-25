@@ -20,8 +20,6 @@
  */
 ?>
 
-<p>Доставка и оплата зависит от вашего местоположения, выберите город или населенный пункт, где вы хотите
-    получить заказ</p>
 <div class="b-delivery__town-form">
     <form class="js-delivery-form" action="<?= $arResult['DELIVERY_INFO_URL'] ?>">
         <div class="b-delivery__town-form--input">

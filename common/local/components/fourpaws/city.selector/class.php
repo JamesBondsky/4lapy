@@ -25,6 +25,8 @@ class FourPawsCitySelectorComponent extends \CBitrixComponent
             $params['CACHE_TIME'] = 36000000;
         }
 
+        $params['LOCATION_CODE'] = $params['LOCATION_CODE'] ?? null;
+
         return $params;
     }
 
@@ -84,7 +86,9 @@ class FourPawsCitySelectorComponent extends \CBitrixComponent
 
         $this->arResult['DEFAULT_CITY'] = $locationService->getDefaultLocation();
 
-        $this->arResult['SELECTED_CITY'] = $userService->getSelectedCity();
+        $this->arResult['SELECTED_CITY'] = $this->arParams['LOCATION_CODE']
+            ? $locationService->findLocationByCode($this->arParams['LOCATION_CODE'])
+            : $userService->getSelectedCity();
 
         return $this;
     }

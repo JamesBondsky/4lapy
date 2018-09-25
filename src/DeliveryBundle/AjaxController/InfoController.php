@@ -41,6 +41,19 @@ class InfoController extends Controller
         ob_start();
         $APPLICATION->IncludeComponent(
             'fourpaws:city.delivery.info',
+            'delivery.page.region_info',
+            [
+                'CACHE_TIME' => 3600,
+                'LOCATION_CODE' => $code,
+            ],
+            false,
+            ['HIDE_ICONS' => 'Y']
+        );
+        $regionHtml = ob_get_clean();
+
+        ob_start();
+        $APPLICATION->IncludeComponent(
+            'fourpaws:city.delivery.info',
             'delivery.page',
             ['LOCATION_CODE' => $code, 'CACHE_TIME' => 3600],
             false,
@@ -66,6 +79,7 @@ class InfoController extends Controller
             '',
             [
                 'html' => [
+                    'region'  => $regionHtml,
                     'date'    => $deliveryHtml,
                     'payment' => $paymentHtml,
                 ],
