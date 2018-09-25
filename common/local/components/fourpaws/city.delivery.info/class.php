@@ -161,16 +161,20 @@ class FourPawsCityDeliveryInfoComponent extends FourPawsComponent
             }
 
             $this->arResult = [
-                'LOCATION' => $location,
-                'CITY'     => [
+                'LOCATION'   => $location,
+                'ZONE'       => $this->deliveryService->getDeliveryZoneByLocation($location['CODE']),
+                'CITY'       => [
                     'NAME'  => $currentCity ? $currentCity->getName() : $defaultCity->getName(),
                     'PHONE' => PhoneHelper::formatPhone(
                         $currentCity ? $currentCity->getPhone() : $defaultCity->getPhone()
                     ),
                 ],
-                'DELIVERY' => $delivery,
-                'PICKUP' => $pickup,
-                'DELIVERIES' => \array_filter([$delivery, $pickup])
+                'DELIVERY'   => $delivery,
+                'PICKUP'     => $pickup,
+                'DELIVERIES' => \array_filter([
+                    $delivery,
+                    $pickup,
+                ]),
             ];
         } else {
             $this->abortResultCache();
