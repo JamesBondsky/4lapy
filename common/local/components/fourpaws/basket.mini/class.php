@@ -10,6 +10,9 @@ declare(strict_types=1);
 
 namespace FourPaws\Components;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketBase;
@@ -21,7 +24,9 @@ use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\SaleBundle\Exception\BasketUserInitializeException;
 use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\SaleBundle\Service\BasketUserService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -36,6 +41,9 @@ class BasketMiniComponent extends FourPawsComponent
 {
     /** @var BasketService */
     public $basketService;
+
+    /** @var BasketUserService */
+    protected $basketUserService;
 
     /** @var array */
     public $offers;
@@ -59,12 +67,22 @@ class BasketMiniComponent extends FourPawsComponent
 
         $container = Application::getInstance()->getContainer();
         $this->basketService = $container->get(BasketService::class);
+        $this->basketUserService = $container->get(BasketUserService::class);
     }
 
+    /**
+     * @param $params
+     * @return array
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws BasketUserInitializeException
+     */
     public function onPrepareComponentParams($params): array
     {
         $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 0;
         $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'N';
+        $params['FUSER_ID'] = $params['FUSER_ID'] ?? $this->basketUserService->getCurrentUserId();
 
         return parent::onPrepareComponentParams($params);
     }
@@ -75,11 +93,7 @@ class BasketMiniComponent extends FourPawsComponent
     public function prepareResult(): void
     {
         /** @var Basket $basket */
-        $basket = $this->arParams['BASKET'];
-        if (null === $basket || !\is_object($basket) || !($basket instanceof Basket)) {
-            $basket = $this->basketService->getBasket();
-        }
-        $this->log()->info('no cache', ['items' => $basket->getQuantityList(), 'fuser' => $basket->getFUserId()]); //debug
+        $basket = $this->basketService->getBasket(false, $this->arParams['FUSER_ID']);
         TaggedCacheHelper::addManagedCacheTag('basket:' . $basket->getFUserId());
         $this->arResult['BASKET'] = $basket;
     }
