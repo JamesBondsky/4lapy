@@ -1,20 +1,22 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
-
 namespace FourPaws\CatalogBundle\Service;
 
 use Elastica\QueryBuilder;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Category;
+use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Filter\InternalFilter;
-use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\Catalog\Model\Variant;
+use FourPaws\EcommerceBundle\Service\DataLayerService;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 
+/**
+ * Class FilterService
+ *
+ * @package FourPaws\CatalogBundle\Service
+ */
 class FilterService implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
@@ -23,20 +25,30 @@ class FilterService implements LoggerAwareInterface
      * @var FilterHelper
      */
     private $filterHelper;
+    /**
+     * @var DataLayerService
+     */
+    private $dataLayerService;
 
     /**
      * FilterService constructor.
-     * @param FilterHelper    $filterHelper
+     *
+     * @param FilterHelper $filterHelper
      */
-    public function __construct(
-        FilterHelper $filterHelper
-    )
+    public function __construct(FilterHelper $filterHelper, DataLayerService $dataLayerService)
     {
         $this->filterHelper = $filterHelper;
+        $this->dataLayerService = $dataLayerService;
     }
 
-    public function getCategoryFilters(Category $category)
+    /**
+     * @param Category $category
+     *
+     * @return FilterCollection
+     */
+    public function getCategoryFilters(Category $category): FilterCollection
     {
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $filterCollection = new FilterCollection();
 
         /**
@@ -45,6 +57,7 @@ class FilterService implements LoggerAwareInterface
         if ($category->getId()) {
             $filterCollection->add($category);
         }
+
         /**
          * Фильтры активности
          */
@@ -58,6 +71,17 @@ class FilterService implements LoggerAwareInterface
         $categoryFilters = $this->filterHelper->getCategoryFilters($category->getId(), $category->getIblockId());
         foreach ($categoryFilters as $categoryFilter) {
             $filterCollection->add($categoryFilter);
+        }
+
+        /**
+         * @var FilterBase $filter
+         * @var Variant $variant
+         */
+        foreach ($filterCollection as $filter) {
+            foreach ($filter->getAvailableVariants() as $variant) {
+                $name = $filter instanceof Category ? 'Категория' : $filter->getName();
+                $variant->setOnclick($this->dataLayerService->renderCatalogFilter($name, $variant->getName()));
+            }
         }
 
         return $filterCollection;
@@ -86,7 +110,7 @@ class FilterService implements LoggerAwareInterface
             /**
              * @todo Фильтр по региональной цене
              */
-//            $internalFilterCollection->add($this->getRegionInternalFilter());
+            //            $internalFilterCollection->add($this->getRegionInternalFilter());
         } catch (\InvalidArgumentException $exception) {
             /**
              * @todo log exception
@@ -143,8 +167,8 @@ class FilterService implements LoggerAwareInterface
                 InternalFilter::create(
                     'OffersActive',
                     $queryBuilder->query()->nested()
-                        ->setPath('offers')
-                        ->setQuery($queryBuilder->query()->term(['offers.active' => true]))
+                                 ->setPath('offers')
+                                 ->setQuery($queryBuilder->query()->term(['offers.active' => true]))
                 )
             );
 
@@ -182,15 +206,20 @@ class FilterService implements LoggerAwareInterface
         return $activeFilterCollection;
     }
 
+    /**
+     * @todo
+     *
+     * @return InternalFilter
+     */
     protected function getRegionInternalFilter(): InternalFilter
     {
         //$currentRegionCode = $this->locationService->getCurrentRegionCode();
-//        $currentRegionCode = LocationService::DEFAULT_REGION_CODE;
-//
-//        return InternalFilter::create(
-//            'CurrentRegion',
-//            (new Nested())->setPath('offers.prices')
-//                ->setQuery(new Term(['offers.prices.REGION_ID' => $currentRegionCode]))
-//        );
+        //        $currentRegionCode = LocationService::DEFAULT_REGION_CODE;
+        //
+        //        return InternalFilter::create(
+        //            'CurrentRegion',
+        //            (new Nested())->setPath('offers.prices')
+        //                ->setQuery(new Term(['offers.prices.REGION_ID' => $currentRegionCode]))
+        //        );
     }
 }

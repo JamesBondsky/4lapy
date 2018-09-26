@@ -1,9 +1,5 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
-
 namespace FourPaws\PersonalBundle\Service;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
@@ -20,6 +16,8 @@ use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\LocationBundle\Entity\Address as LocationAddress;
+use FourPaws\LocationBundle\Exception\CityNotFoundException;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Repository\OldAddressRepository;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -43,19 +41,32 @@ class AddressService
      */
     private $addressRepository;
 
-    /** @var CurrentUserProviderInterface $currentUser */
+    /**
+     * @var CurrentUserProviderInterface $currentUser
+     */
     private $currentUser;
+
+    /**
+     * @var LocationService
+     */
+    private $locationService;
 
     /**
      * AddressService constructor.
      *
      * @param OldAddressRepository         $addressRepository
      * @param CurrentUserProviderInterface $currentUserProvider
+     * @param LocationService              $locationService
      */
-    public function __construct(OldAddressRepository $addressRepository, CurrentUserProviderInterface $currentUserProvider)
+    public function __construct(
+        OldAddressRepository $addressRepository,
+        CurrentUserProviderInterface $currentUserProvider,
+        LocationService $locationService
+    )
     {
         $this->addressRepository = $addressRepository;
         $this->currentUser = $currentUserProvider;
+        $this->locationService = $locationService;
     }
 
     /**
@@ -66,13 +77,13 @@ class AddressService
     public function createFromLocation(LocationAddress $locationAddress): Address
     {
         return (new Address())->setCity($locationAddress->getCity())
-            ->setCityLocation($locationAddress->getLocation())
-            ->setStreet($locationAddress->getStreet())
-            ->setHouse($locationAddress->getHouse())
-            ->setHousing($locationAddress->getHousing())
-            ->setEntrance($locationAddress->getEntrance())
-            ->setFloor($locationAddress->getFloor())
-            ->setFlat($locationAddress->getFlat());
+                              ->setLocation($locationAddress->getLocation())
+                              ->setStreet($locationAddress->getStreet())
+                              ->setHouse($locationAddress->getHouse())
+                              ->setHousing($locationAddress->getHousing())
+                              ->setEntrance($locationAddress->getEntrance())
+                              ->setFloor($locationAddress->getFloor())
+                              ->setFlat($locationAddress->getFlat());
     }
 
     /**
@@ -101,44 +112,46 @@ class AddressService
     }
 
     /**
-     * @param $data
-     *
      * @deprecated
      *
+     * @param array $data
+     *
+     * @return bool
      * @throws ApplicationCreateException
-     * @throws NotAuthorizedException
-     * @throws EmptyEntityClass
-     * @throws \RuntimeException
-     * @throws InvalidIdentifierException
+     * @throws BitrixRuntimeException
+     * @throws CityNotFoundException
      * @throws ConstraintDefinitionException
+     * @throws EmptyEntityClass
+     * @throws InvalidIdentifierException
+     * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
      * @throws ServiceNotFoundException
      * @throws ValidationException
-     * @throws BitrixRuntimeException
      * @throws \Exception
-     * @return bool
+     * @throws \RuntimeException
      */
     public function addFromArray(array $data): bool
     {
         /** @var Address $entity */
         $entity = $this->addressRepository->dataToEntity($data, Address::class);
+
         return $this->add($entity);
     }
 
     /**
      * @param Address $address
-     *
-     * @throws ValidationException
-     * @throws BitrixRuntimeException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws \RuntimeException
-     * @throws NotAuthorizedException
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
-     * @throws ApplicationCreateException
-     * @throws \Exception
      * @return bool
+     * @throws ApplicationCreateException
+     * @throws BitrixRuntimeException
+     * @throws CityNotFoundException
+     * @throws ConstraintDefinitionException
+     * @throws InvalidIdentifierException
+     * @throws NotAuthorizedException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws ValidationException
+     * @throws \Exception
+     * @throws \RuntimeException
      */
     public function add(Address $address): bool
     {
@@ -154,7 +167,9 @@ class AddressService
             $this->disableMainItem();
         }
 
-        $address->setCityLocationByEntity();
+        $address->setLocation(
+            $this->getCityLocationCode($address->getCity())
+        );
         $res = $this->addressRepository->setEntity($address)->create();
         if ($res) {
             if ($address->isMain()
@@ -238,7 +253,7 @@ class AddressService
             throw new SecurityException('не хватает прав доступа для совершения данной операции');
         }
 
-        if($entity->getUserId() === 0){
+        if ($entity->getUserId() === 0) {
             $entity->setUserId($updateEntity->getUserId());
         }
 
@@ -246,7 +261,9 @@ class AddressService
             $this->disableMainItem();
         }
 
-        $entity->setCityLocationByEntity();
+        $entity->setLocation(
+            $this->getCityLocationCode($entity->getCity())
+        );
         $res = $this->addressRepository->setEntity($entity)->update();
         if ($res) {
             if ($entity->isMain()
@@ -255,7 +272,7 @@ class AddressService
                 $this->updateManzanaAddress($entity);
             }
             TaggedCacheHelper::clearManagedCache([
-                'personal:address:' .$updateEntity->getUserId(),
+                'personal:address:' . $updateEntity->getUserId(),
             ]);
         }
 
@@ -293,9 +310,10 @@ class AddressService
                 $this->updateManzanaAddress(new Address());
             }
             TaggedCacheHelper::clearManagedCache([
-                'personal:address:' .$deleteEntity->getUserId(),
+                'personal:address:' . $deleteEntity->getUserId(),
             ]);
         }
+
         return $res;
     }
 
@@ -319,7 +337,7 @@ class AddressService
         try {
             $contactId = $manzanaService->getContactIdByUser();
             $client = new Client();
-            if(!empty($contactId)) {
+            if (!empty($contactId)) {
                 $client->contactId = $contactId;
             }
         } catch (ManzanaServiceException $e) {
@@ -331,5 +349,19 @@ class AddressService
             $this->setClientAddress($client, $address);
             $manzanaService->updateContactAsync($client);
         }
+    }
+
+    /**
+     * @param string $city
+     *
+     * @return string
+     * @throws \RuntimeException
+     * @throws CityNotFoundException
+     */
+    protected function getCityLocationCode(string $city): string
+    {
+        $city = $this->locationService->findLocationCity($city, null, 1, true);
+
+        return $city['CODE'];
     }
 }

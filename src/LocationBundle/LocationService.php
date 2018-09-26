@@ -579,8 +579,25 @@ class LocationService
         return $this->locationsById[$id] ?? [];
     }
 
+    /**
+     * @param string      $query
+     * @param string|null $parentName
+     * @param bool        $exact
+     *
+     * @return array
+     * @throws CityNotFoundException
+     * @throws \RuntimeException
+     */
+    public function findLocationCity(string $query, string $parentName = null, bool $exact = false): array
+    {
+        $result = $this->findLocationCityMultiple($query, $parentName, 1, $exact);
+        $city = reset($result);
+        if (!$city) {
+            throw new CityNotFoundException('City not found');
+        }
 
-    /** @noinspection MoreThanThreeArgumentsInspection */
+        return $city;
+    }
 
     /**
      * Поиск местоположений с типом "город" и "деревня" по названию
@@ -593,7 +610,7 @@ class LocationService
      *
      * @return array
      */
-    public function findLocationCity(
+    public function findLocationCityMultiple(
         string $query,
         $parentName = null,
         int $limit = null,
@@ -760,6 +777,7 @@ class LocationService
      * Получение кода текущего местоположения
      *
      * @return string
+     * @throws \RuntimeException
      */
     public function getCurrentLocation(): string
     {
@@ -776,7 +794,7 @@ class LocationService
             }
         } catch (\Exception $e) {
             $this->log()->error(
-                sprintf('Failed to get product list: %s: %s', \get_class($e), $e->getMessage())
+                sprintf('Failed to selected city: %s: %s', \get_class($e), $e->getMessage())
             );
             $result = static::LOCATION_CODE_MOSCOW;
         }
@@ -850,10 +868,13 @@ class LocationService
     /**
      * Получение эл-та из HL-блока Cities по коду местоположения
      *
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
      * @return null|City
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws SystemException
+     * @throws \LogicException
      */
     public function getDefaultCity(): ?City
     {
@@ -887,13 +908,11 @@ class LocationService
      * Получение эл-та из HL-блока,
      * привязанного к выбранному городу пользователя
      *
-     * @throws NotAuthorizedException
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
      * @return null|City
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws \RuntimeException
      */
     public function getCurrentCity(): ?City
     {

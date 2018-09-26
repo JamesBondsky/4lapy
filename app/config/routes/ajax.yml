@@ -11,7 +11,7 @@ sale:
     prefix: '/sale'
 
 catalog:
-    resource: "@FourPawsCatalogBundle/AjaxController"
+    resource: '@FourPawsCatalogBundle/AjaxController'
     type: annotation
     prefix: '/catalog'
 
@@ -31,7 +31,7 @@ personal:
     prefix: '/personal'
 
 location:
-    resource: "@FourPawsLocationBundle/AjaxController"
+    resource: '@FourPawsLocationBundle/AjaxController'
     type: annotation
     prefix: '/location'
 
@@ -40,6 +40,10 @@ food.selection:
     type: annotation
     prefix: '/food_selection'
 
+form:
+    resource: '@FourPawsFormBundle/AjaxController'
+    type: annotation
+    prefix: '/form'
 
 autosort.property.hint:
   path: /autosort/property-hint/{propertyId}
@@ -61,24 +65,4 @@ comments.catalog.add:
 comments.next:
   path: /comments/next/
   defaults: { _controller: '\FourPaws\AppBundle\AjaxController\CommentsController::nextAction' }
-  methods: [GET]
-
-form.feedback:
-  path: /form/feedback/add/
-  defaults: { _controller: '\FourPaws\Form\AjaxController\FeedBackController::addAction' }
-  methods: [POST]
-
-form.callback:
-  path: /form/callback/add/
-  defaults: { _controller: '\FourPaws\Form\AjaxController\CallBackController::addAction' }
-  methods: [POST]
-
-form.faq:
-  path: /form/faq/add/
-  defaults: { _controller: '\FourPaws\Form\AjaxController\FaqController::addAction' }
-  methods: [POST]
-
-forgot_basket.close_page:
-  path: /sale/forgot_basket_close_page/
-  defaults: { _controller: '\FourPaws\AppBundle\AjaxController\CloseSiteController::closeAction' }
   methods: [GET]

@@ -23,15 +23,25 @@ use Bitrix\Sale\Payment;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\SaleBundle\Dto\Fiscalization\Fiscalization;
 use FourPaws\SaleBundle\Dto\Fiscalization\Item as FiscalItem;
+use FourPaws\SaleBundle\Enum\OrderPayment;
+use FourPaws\SaleBundle\Exception\FiscalValidation\FiscalAmountExceededException;
+use FourPaws\SaleBundle\Exception\FiscalValidation\FiscalAmountException;
+use FourPaws\SaleBundle\Exception\FiscalValidation\InvalidItemCodeException;
+use FourPaws\SaleBundle\Exception\FiscalValidation\NoMatchingFiscalItemException;
+use FourPaws\SaleBundle\Exception\FiscalValidation\PositionQuantityExceededException;
+use FourPaws\SaleBundle\Exception\FiscalValidation\PositionWrongAmountException;
 use FourPaws\SaleBundle\Exception\PaymentException as SalePaymentException;
+use FourPaws\SaleBundle\Exception\SberbankOrderNotFoundException;
 use FourPaws\SaleBundle\Service\OrderService as SaleOrderService;
 use FourPaws\SaleBundle\Service\PaymentService as SalePaymentService;
 use FourPaws\SapBundle\Dto\In\ConfirmPayment\Item;
 use FourPaws\SapBundle\Dto\In\ConfirmPayment\Order;
 use FourPaws\SapBundle\Dto\Out\Payment\Debit as OutDebit;
 use FourPaws\SapBundle\Enum\SapOrder;
-use FourPaws\SapBundle\Exception\NotFoundOrderException;
-use FourPaws\SapBundle\Exception\PaymentException;
+use FourPaws\SapBundle\Exception\Payment\NotFoundInvoiceException;
+use FourPaws\SapBundle\Exception\Payment\NotFoundOrderException;
+use FourPaws\SapBundle\Exception\Payment\InvalidOrderNumberException;
+use FourPaws\SapBundle\Exception\Payment\OrderZeroPriceException;
 use FourPaws\SapBundle\Service\SapOutFile;
 use FourPaws\SapBundle\Service\SapOutInterface;
 use FourPaws\UserBundle\Service\UserService;
@@ -103,18 +113,35 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
      * @throws ArgumentException
      * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
+     * @throws IOException
+     * @throws InvalidOrderNumberException
+     * @throws InvalidPathException
+     * @throws NotFoundInvoiceException
+     * @throws NotFoundOrderException
      * @throws NotImplementedException
      * @throws ObjectException
      * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws OrderZeroPriceException
      * @throws SalePaymentException
+     * @throws SberbankOrderNotFoundException
      * @throws SystemException
      * @throws \Exception
+     * @throws FiscalAmountExceededException
+     * @throws FiscalAmountException
+     * @throws InvalidItemCodeException
+     * @throws NoMatchingFiscalItemException
+     * @throws PositionQuantityExceededException
+     * @throws PositionWrongAmountException
      */
     public function paymentTaskPerform(Order $paymentTask)
     {
         /**
          * Check order existence
          */
+        if (!$paymentTask->getBitrixOrderId()) {
+            throw new InvalidOrderNumberException('Order number is empty');
+        }
         $order = SaleOrder::loadByAccountNumber($paymentTask->getBitrixOrderId());
         if (!$order) {
             throw new NotFoundOrderException(
@@ -123,16 +150,20 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         }
 
         if (!$paymentTask->getSumPayed() && !$paymentTask->getSumTotal()) {
-            throw new PaymentException('Сумма на списание и сумма заказа равны нулю');
+            throw new OrderZeroPriceException('Сумма на списание и сумма заказа равны нулю');
         }
 
         if (!$orderInvoiceId = $this->salePaymentService->getOrderInvoiceId($order)) {
-            throw new PaymentException('У заказа не указан номер инвойса');
+            throw new NotFoundInvoiceException('У заказа не указан номер инвойса');
         }
 
         $orderInfo = $this->salePaymentService->getSberbankOrderStatusByOrderId($orderInvoiceId);
         if ($fiscalization = $this->getFiscalization($order, $paymentTask)) {
-            $this->salePaymentService->validateFiscalization($fiscalization, $orderInfo);
+            $this->salePaymentService->validateFiscalization(
+                $fiscalization,
+                $orderInfo,
+                $paymentTask->getSumPayed() * 100
+            );
         }
 
         $amount = $paymentTask->getSumPayed();
@@ -239,6 +270,9 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         /** @var array[] $paymentTaskItems */
         $paymentTaskItems = [];
         $paymentTask->getItems()->map(function (Item $item) use (&$paymentTaskItems) {
+            if ($this->isDeliveryItem($item)) {
+                $item->setOfferXmlId(OrderPayment::GENERIC_DELIVERY_CODE);
+            }
             $xmlId = $item->getOfferXmlId();
             if (!isset($paymentTaskItems[$xmlId])) {
                 $paymentTaskItems[$xmlId] = [];
@@ -253,7 +287,8 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
                 */
                 $newQuantity = (int)$pti->getQuantity() + (int)$item->getQuantity();
                 if (abs($pti->getPrice() - $item->getPrice()) <= $newQuantity) {
-                    $newPrice = ($pti->getSumPrice() + $item->getSumPrice()) / $newQuantity;
+                    $newPrice = floor(($pti->getSumPrice() + $item->getSumPrice()) / $newQuantity * 100) / 100;
+
                     $pti->setQuantity($newQuantity);
                     $pti->setPrice($newPrice);
                     $pti->setSumPrice($pti->getPrice() * (int)$pti->getQuantity());
@@ -317,5 +352,23 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         );
 
         return $fiscalization;
+    }
+
+    /**
+     * @param Item $item
+     *
+     * @return bool
+     */
+    private function isDeliveryItem(Item $item): bool {
+        $deliveryArticles = [
+            SapOrder::DELIVERY_ZONE_1_ARTICLE,
+            SapOrder::DELIVERY_ZONE_2_ARTICLE,
+            SapOrder::DELIVERY_ZONE_3_ARTICLE,
+            SapOrder::DELIVERY_ZONE_4_ARTICLE,
+            SapOrder::DELIVERY_ZONE_5_ARTICLE,
+            SapOrder::DELIVERY_ZONE_6_ARTICLE,
+        ];
+
+        return \in_array((string)$item->getOfferXmlId(), $deliveryArticles, true);
     }
 }

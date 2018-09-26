@@ -36,12 +36,10 @@ $currentOffer = $arParams['OFFER'];
 </li>
 <?php
 if ($currentOffer->isAvailable()) {
-    if ($arResult['CURRENT']['PICKUP']) {
-        $pickup = $arResult['CURRENT']['PICKUP'];
+    if ($pickup = $arResult['PICKUP']) {
         include __DIR__ . '/include/pickup-info.php';
     }
-    if ($arResult['CURRENT']['DELIVERY']) {
-        $delivery = $arResult['CURRENT']['DELIVERY'];
+    if ($delivery = $arResult['DELIVERY']) {
         include __DIR__ . '/include/delivery-info.php';
     }
 }

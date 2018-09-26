@@ -10,12 +10,14 @@ use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\GroupTable;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Result as MainResult;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\UserGroupTable;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketItemCollection;
@@ -24,6 +26,7 @@ use Bitrix\Sale\Compatible\DiscountCompatibility;
 use Bitrix\Sale\Internals\BasketPropertyTable;
 use Bitrix\Sale\Internals\BasketTable;
 use Bitrix\Sale\Order;
+use CUser;
 use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Collection\ShareCollection;
@@ -31,6 +34,7 @@ use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Enum\UserGroup;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\SaleBundle\Discount\Gift;
@@ -664,33 +668,72 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
+     * Вернет true если пользователь имеет группу, которой нужно всегда начислять бонусы
+     *
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws SystemException
+     *
+     * @return bool
+     */
+    public function isUserGroupWithPermanentBonusRewarding(): bool
+    {
+        /** @global CUser $USER*/
+        global $USER;
+
+        static $groupId = null;
+
+        if (null === $groupId) {
+            $result = GroupTable::getList([
+                'filter' => ['=STRING_ID' => UserGroup::OPT_CODE],
+                'select' => ['ID']
+            ])->fetch();
+            $groupId = $result['ID'];
+        }
+
+        $groups = array_flip($USER->GetUserGroupArray());
+
+        return isset($groups[$groupId]);
+    }
+
+    /**
      *
      * @param BasketItem $basketItem
      * @param Order|null $order
      *
-     * @throws InvalidArgumentException
+     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      *
      * @return int
      */
     public function getBonusAwardingQuantity(BasketItem $basketItem, ?Order $order = null): int
     {
-        /** @var Offer $offer */
-        $offer = $this->getOfferCollection()->getById($basketItem->getProductId());
-
-        if (!$offer) {
-            $offer = (new OfferQuery())
-                ->withFilter(['=ID' => $basketItem->getProductId()])
-                ->exec()
-                ->getById($basketItem->getProductId());
-            if (!$offer) {
-                throw new InvalidArgumentException('Предложение не найдено');
-            }
-            $this->getOfferCollection()->add($offer);
-        }
         $resultQuantity = 0;
-        if ($offer->isBonusExclude()) {
-            $basketDiscounts = true;
+        /** LP23-81 */
+        if($this->isUserGroupWithPermanentBonusRewarding()) {
+            $resultQuantity = (int)$basketItem->getQuantity();
+            $basketDiscounts = false;
         } else {
+            /** @var Offer $offer */
+            $offer = $this->getOfferCollection()->getById($basketItem->getProductId());
+
+            if (!$offer) {
+                $offer = (new OfferQuery())
+                    ->withFilter(['=ID' => $basketItem->getProductId()])
+                    ->exec()
+                    ->getById($basketItem->getProductId());
+                if (!$offer) {
+                    throw new InvalidArgumentException('Предложение не найдено');
+                }
+                $this->getOfferCollection()->add($offer);
+            }
+        }
+
+        if ($resultQuantity === 0 && isset($offer) && $offer->isBonusExclude()) {
+            $basketDiscounts = true;
+        } elseif($resultQuantity === 0) {
             /**
              * @var BasketItemCollection $basketItemCollection
              * @var Order $order
@@ -884,6 +927,9 @@ class BasketService implements LoggerAwareInterface
     {
         $xmlId = $this->getBasketItemXmlId($basketItem);
 
+        /**
+         * @todo выпилить 1 октября 2018 года
+         */
         return !\in_array($xmlId, ['3005425', '3005437', '3005424', '3005436'], true) && // @todo костыль для акции "добролап"
             ($xmlId[0] === '3');
     }

@@ -3,14 +3,21 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/header.php");
 $APPLICATION->SetTitle("Доставка и оплата");
 ?>
 <div class="b-container b-container--delivery">
-    <?php $APPLICATION->IncludeComponent(
-        'fourpaws:city.selector',
-        'delivery.page',
-        [],
-        false,
-        ['HIDE_ICONS' => 'Y']
-    );
-    ?>
+    <div class="b_delivery">
+        <h1 class="b-title b-title--h1">Доставка и оплата</h1>
+        <div class="b-delivery__town">
+            <?php $APPLICATION->IncludeComponent(
+                'fourpaws:city.delivery.info',
+                'delivery.page.region_info',
+                [
+                    'CACHE_TIME' => 3600,
+                ],
+                false,
+                ['HIDE_ICONS' => 'Y']
+            );
+            ?>
+        </div>
+    </div>
 </div>
 <div class="b-container b-container--delivery b-container--delivery__date">
     <?php $APPLICATION->IncludeComponent(

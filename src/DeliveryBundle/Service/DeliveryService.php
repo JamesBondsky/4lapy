@@ -473,6 +473,7 @@ class DeliveryService implements LoggerAwareInterface
      * @param bool $skipLocations
      *
      * @return string
+     * @throws \RuntimeException
      */
     public function getDeliveryZoneByDelivery($deliveryLocation, $deliveryId, $skipLocations = true): string
     {
@@ -788,8 +789,8 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
-     * @param CalculationResultInterface $delivery
-     * @param int                        $count
+     * @param DeliveryResultInterface $delivery
+     * @param int                     $count
      *
      * @return \DateTime[]
      * @throws ApplicationCreateException
@@ -797,7 +798,7 @@ class DeliveryService implements LoggerAwareInterface
      * @throws NotFoundException
      * @throws StoreNotFoundException
      */
-    public function getNextDeliveryDates(CalculationResultInterface $delivery, int $count = 1): array
+    public function getNextDeliveryDates(DeliveryResultInterface $delivery, int $count = 1): array
     {
         $result = [];
         $nextDeliveries = $this->getNextDeliveries($delivery, $count);
@@ -1038,28 +1039,31 @@ class DeliveryService implements LoggerAwareInterface
      * @param bool   $skipLocations
      *
      * @return string
+     * @throws \RuntimeException
      */
     protected function getDeliveryZoneCode(string $locationCode, array $zones = [], $skipLocations = true): string
     {
-        $deliveryLocationPath = [$locationCode];
         if (($location = $this->locationService->findLocationByCode($locationCode)) && $location['PATH']) {
-            $deliveryLocationPath = array_merge(
-                $deliveryLocationPath,
-                array_column($location['PATH'], 'CODE')
-            );
+            foreach (\array_reverse($location['PATH']) as $pathItem) {
+                $deliveryLocationPath[] = $pathItem['CODE'];
+            }
+            $deliveryLocationPath[] = $location['CODE'];
+        } else {
+            $deliveryLocationPath[] = $locationCode;
         }
 
-        $result = null;
+        $result = [];
         foreach ($zones as $code => $zone) {
             if ($skipLocations && $zone['TYPE'] === static::LOCATION_RESTRICTION_TYPE_LOCATION) {
                 continue;
             }
-            if (!empty(array_intersect($deliveryLocationPath, $zone['LOCATIONS']))) {
-                $result = $code;
-                break;
+
+            $found = array_intersect($deliveryLocationPath, $zone['LOCATIONS']);
+            foreach ($found as $item) {
+                $result[\array_search($item, $deliveryLocationPath, true)] = $zone['CODE'];
             }
         }
 
-        return $result ?? static::ZONE_4;
+        return empty($result) ? static::ZONE_4 : $result[\max(\array_keys($result))];
     }
 }

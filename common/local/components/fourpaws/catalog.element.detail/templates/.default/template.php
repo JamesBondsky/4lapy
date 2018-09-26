@@ -349,7 +349,11 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                 foreach ($currentOffer->getShare() as $share) {
                     $activeFrom = $share->getDateActiveFrom();
                     $activeTo = $share->getDateActiveTo(); ?>
-                    <p class="b-counter-basket__text b-counter-basket__text--red"><?= $share->getName() ?></p>
+                    <a href="<?= $share->getDetailPageUrl() ?>" title="<?= $share->getName() ?>">
+                        <p class="b-counter-basket__text b-counter-basket__text--red">
+                            <?= $share->getName() ?>
+                        </p>
+                    </a>
                     <?php if (!empty($share->getPreviewText()->getText())) { ?>
                         <p class="b-counter-basket__text"><?= $share->getPreviewText()->getText() ?></p>
                     <?php } ?>

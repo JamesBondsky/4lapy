@@ -37,8 +37,8 @@ if ($template->hasMainWrapper()) {
         <?php include __DIR__ . '/blocks/preloader.php'; ?>
         </div>
     <?php } ?>
-    <div class="article_popup__bg js-article-popup-bg"></div>
     <div class="article_popup__wrapper--hidden js-article-popup">
+        <div class="article_popup__bg js-article-popup-bg"></div>
         <div class="article_popup">
             <div class="article_popup_nav">
                 <div class="article_popup_nav__cross js-article-close">
@@ -121,7 +121,7 @@ if ($template->hasMainWrapper()) {
 <script>
     <?php /** хз насколько кросбраузерно */?>
     window.onbeforeunload = function () {
-        $.get('/ajax/sale/forgot_basket_close_page/');
+        $.get('/ajax/sale/forgot-basket/close-page/');
     }
 </script>
 </body>

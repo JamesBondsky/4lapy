@@ -7,9 +7,14 @@
 namespace FourPaws\DeliveryBundle\Service;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\DeliveryBundle\Collection\IntervalCollection;
+use FourPaws\DeliveryBundle\Dto\IntervalRuleResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
+use FourPaws\DeliveryBundle\Entity\IntervalRule\TimeRuleInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\Helpers\DateHelper;
 use Psr\Log\LoggerAwareInterface;
 
 /**
@@ -114,5 +119,88 @@ class IntervalService implements LoggerAwareInterface
         }
 
         return static::DELIVERY_INTERVALS[$code];
+    }
+
+    /**
+     * @param DeliveryResultInterface $delivery
+     * @param \DateTime|null          $currentDate
+     *
+     * @return ArrayCollection
+     * @throws NotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
+    public function getIntervalDays(DeliveryResultInterface $delivery, \DateTime $currentDate = null): ArrayCollection
+    {
+        $delivery = clone $delivery;
+        /** @var IntervalCollection $intervals */
+        $intervals = $delivery->getIntervals();
+        /** @var IntervalRuleResult[] $intervalData */
+        $intervalData = [];
+
+        /** @var Interval $interval */
+        foreach ($intervals as $interval) {
+            foreach ($interval->getRules() as $rule) {
+                if (!$rule instanceof TimeRuleInterface) {
+                    continue;
+                }
+
+                $to = $rule->getTo();
+                if ($to === 0) {
+                    $to = 24;
+                }
+
+                if (null === $intervalData[$to]) {
+                    $intervalData[$to] = (new IntervalRuleResult())
+                        ->setTimeFrom($rule->getFrom())
+                        ->setTimeTo($rule->getTo())
+                        ->setDays($rule->getValue());
+                }
+
+                if ($intervalData[$to]->getDays() > $rule->getValue()) {
+                    $intervalData[$to]->setDays($rule->getValue());
+                }
+            }
+        }
+
+        ksort($intervalData);
+
+        if (null !== $currentDate) {
+            $maxDays = 0;
+            $delivery->setCurrentDate($currentDate);
+            foreach ($intervalData as $intervalRuleResult) {
+                if ($intervalRuleResult->getDays() > $maxDays) {
+                    $maxDays = $intervalRuleResult->getDays();
+                }
+            }
+
+            $nextDeliveryDates = $this->deliveryService->getNextDeliveryDates($delivery, $maxDays);
+            foreach ($intervalData as $intervalRuleResult) {
+                $days = $intervalRuleResult->getDays();
+                foreach ($nextDeliveryDates as $nextDeliveryDate) {
+                    $diff = DateHelper::diffDays($nextDeliveryDate, $currentDate);
+                    if ($diff < $days) {
+                        continue;
+                    }
+                    $days = $diff;
+                    break;
+                }
+                $intervalRuleResult->setDays($days);
+            }
+        }
+
+        $previous = null;
+        foreach ($intervalData as $i => $intervalRuleResult) {
+            if (null !== $previous) {
+                if ($intervalData[$previous]->getDays() === $intervalRuleResult->getDays()) {
+                    $intervalRuleResult->setTimeFrom($intervalData[$previous]->getTimeFrom());
+                    unset($intervalData[$previous]);
+                }
+            }
+            $previous = $i;
+        }
+
+        return new ArrayCollection($intervalData);
     }
 }

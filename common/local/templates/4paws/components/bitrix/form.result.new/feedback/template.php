@@ -15,7 +15,7 @@ use FourPaws\ReCaptchaBundle\Service\ReCaptchaService;
 ?>
 <h2 class="b-title b-title--feedback-form"><?= $arResult['FORM_DESCRIPTION'] ?></h2>
 <form class="b-feedback-page__form js-form-validation js-feedback-form"
-      name="<?= $arResult['arForm']['SID'] ?>" data-url="/ajax/form/feedback/add/"
+      name="<?= $arResult['arForm']['SID'] ?>" data-url="/ajax/form/add/feedback/"
       method="post"
       enctype="multipart/form-data">
     <?= bitrix_sessid_post() ?>
