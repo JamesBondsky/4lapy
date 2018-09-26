@@ -695,7 +695,7 @@ class UserRepository
     }
 
     /**
-     * @param $FUserId
+     * @param int $FUserId
      *
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
@@ -703,7 +703,7 @@ class UserRepository
      *
      * @return User
      */
-    public function findByFUser($FUserId): User
+    public function findByFUser(int $FUserId): ? User
     {
         $result = UserTable::getList([
             'select' => ['*', 'UF_*'],
@@ -717,6 +717,6 @@ class UserRepository
             ],
         ]);
 
-        return \current($this->collectionFactory($result));
+        return \current($this->collectionFactory($result)) ?: null;
     }
 }
