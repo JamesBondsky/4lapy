@@ -15,6 +15,7 @@ use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -82,6 +83,8 @@ class AddressController extends Controller
                     ['reload' => true]
                 );
             }
+        } catch (CityNotFoundException $e) {
+            return $this->ajaxMess->getAddError(' населенный пункт не найден');
         } catch (BitrixRuntimeException $e) {
             return $this->ajaxMess->getAddError($e->getMessage());
         } catch (EmptyEntityClass $e) {

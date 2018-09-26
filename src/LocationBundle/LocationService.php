@@ -579,8 +579,25 @@ class LocationService
         return $this->locationsById[$id] ?? [];
     }
 
+    /**
+     * @param string      $query
+     * @param string|null $parentName
+     * @param bool        $exact
+     *
+     * @return array
+     * @throws CityNotFoundException
+     * @throws \RuntimeException
+     */
+    public function findLocationCity(string $query, string $parentName = null, bool $exact = false): array
+    {
+        $result = $this->findLocationCityMultiple($query, $parentName, 1, $exact);
+        $city = reset($result);
+        if (!$city) {
+            throw new CityNotFoundException('City not found');
+        }
 
-    /** @noinspection MoreThanThreeArgumentsInspection */
+        return $city;
+    }
 
     /**
      * Поиск местоположений с типом "город" и "деревня" по названию
@@ -593,7 +610,7 @@ class LocationService
      *
      * @return array
      */
-    public function findLocationCity(
+    public function findLocationCityMultiple(
         string $query,
         $parentName = null,
         int $limit = null,
