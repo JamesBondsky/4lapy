@@ -39,6 +39,7 @@ $resultsByZone = $arResult['RESULTS_BY_ZONE'];
 if (isset($resultsByZone[$deliveryZone])) {
     $currentResult = $resultsByZone[$deliveryZone];
     unset($resultsByZone[$deliveryZone]);
+    $deliveryResult = $currentResult;
     ?>
     <div class="b-delivery__info">
         <div class="b-delivery__info-item">
@@ -64,7 +65,7 @@ if (isset($resultsByZone[$deliveryZone])) {
         <div class="b-delivery__town-map"><img src="/static/build/images/inhtml/delivery-map.png"></div>
         <div class="b-delivery__town-data">
             <div class="b-delivery__region">
-                <div class="b-delivery__region-section b-delivery__region-section--border b-delivery__region-section--type2">
+                <div class="b-delivery__region-section b-delivery__region-section--border b-delivery__region-section--type<?= $realZoneToZone[$deliveryResult->getDeliveryZone()] ?>">
                     <div class="b-delivery__region-title"><img class="b-delivery__region-title-icon"
                                                                src="/static/build/images/inhtml/delivery-mark.gif">
                         Ваш город
@@ -79,7 +80,6 @@ if (isset($resultsByZone[$deliveryZone])) {
                         false,
                         ['HIDE_ICONS' => 'Y']
                     );
-                    $deliveryResult = $currentResult;
                     ?>
                     <div class="b-delivery__region-item b-delivery__region-item--type<?= $realZoneToZone[$deliveryResult->getDeliveryZone()] ?>">
                         <strong
