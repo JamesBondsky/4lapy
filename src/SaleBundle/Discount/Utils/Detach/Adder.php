@@ -127,6 +127,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                                         'DISCOUNT_PRICE',
                                         $basketItem->getBasePrice() - $initialPrice
                                     );
+                                    $newBasketItem->setFieldNoDemand('FUSER_ID', $basketItem->getFUserId());
 
                                 } elseif ((int)$basketItem->getQuantity() === (int)$params['params']['apply_count']) {
                                     //Просто проставляем поля
