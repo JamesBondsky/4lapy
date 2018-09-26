@@ -1,9 +1,5 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
-
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -13,21 +9,27 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
+use Symfony\Bundle\FrameworkBundle\Routing\Router;
+use Symfony\Component\Routing\RouteCollection;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsCitySelectorComponent extends \CBitrixComponent
 {
-
-    /** {@inheritdoc} */
+    /** @noinspection PhpMissingParentCallCommonInspection
+     *
+     * {@inheritdoc}
+     */
     public function onPrepareComponentParams($params): array
     {
         if (!isset($params['CACHE_TIME'])) {
             $params['CACHE_TIME'] = 36000000;
         }
 
+        $params['LOCATION_CODE'] = $params['LOCATION_CODE'] ?? null;
+
         return $params;
     }
-    
+
     /** @noinspection PhpMissingParentCallCommonInspection
      *
      * {@inheritdoc}
@@ -38,15 +40,14 @@ class FourPawsCitySelectorComponent extends \CBitrixComponent
             $this->prepareResult();
 
             $this->includeComponentTemplate();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             try {
                 $logger = LoggerFactory::create('component');
                 $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
-            } catch (\RuntimeException $e) {
-            }
+            } catch (RuntimeException $e) {}
         }
     }
-    
+
     /**
      * @return $this
      *
@@ -56,9 +57,9 @@ class FourPawsCitySelectorComponent extends \CBitrixComponent
      */
     protected function prepareResult()
     {
-        /** @var \Symfony\Bundle\FrameworkBundle\Routing\Router */
+        /** @var Router */
         $router = Application::getInstance()->getContainer()->get('router');
-        /** @var Symfony\Component\Routing\RouteCollection $routes */
+        /** @var RouteCollection $routes */
         $routes = $router->getRouteCollection();
 
         /** @var \FourPaws\LocationBundle\LocationService $locationService */
@@ -85,7 +86,9 @@ class FourPawsCitySelectorComponent extends \CBitrixComponent
 
         $this->arResult['DEFAULT_CITY'] = $locationService->getDefaultLocation();
 
-        $this->arResult['SELECTED_CITY'] = $userService->getSelectedCity();
+        $this->arResult['SELECTED_CITY'] = $this->arParams['LOCATION_CODE']
+            ? $locationService->findLocationByCode($this->arParams['LOCATION_CODE'])
+            : $userService->getSelectedCity();
 
         return $this;
     }

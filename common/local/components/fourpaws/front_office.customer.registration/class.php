@@ -37,7 +37,7 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
      * @param array $params
      * @return array
      */
-    public function onPrepareComponentParams($params)
+    public function onPrepareComponentParams($params): array
     {
         $params = parent::onPrepareComponentParams($params);
 
@@ -66,17 +66,9 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
     }
 
     /**
-     * @throws Exception
-     */
-    public function executeComponent()
-    {
-        parent::executeComponent();
-    }
-
-    /**
      * @return string
      */
-    protected function prepareAction()
+    protected function prepareAction(): string
     {
         $action = 'initialLoad';
 
@@ -89,7 +81,7 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
         return $action;
     }
 
-    protected function initialLoadAction()
+    protected function initialLoadAction(): void
     {
         $this->loadData();
     }
@@ -97,7 +89,7 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
     /**
      * @throws ApplicationCreateException
      */
-    protected function postFormAction()
+    protected function postFormAction(): void
     {
         $this->initPostFields();
 
@@ -123,7 +115,7 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
         $this->loadData();
     }
 
-    protected function loadData()
+    protected function loadData(): void
     {
         $this->arResult['IS_AUTHORIZED'] = $GLOBALS['USER']->isAuthorized() ? 'Y' : 'N';
         $this->arResult['CAN_ACCESS'] = $this->canEnvUserAccess() ? 'Y' : 'N';
@@ -134,7 +126,7 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
     /**
      * @throws ApplicationCreateException
      */
-    protected function processPhoneNumber()
+    protected function processPhoneNumber(): void
     {
         $fieldName = 'phone';
         $value = $this->trimValue($this->getFormFieldValue($fieldName));
@@ -144,9 +136,9 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
             $phone = $this->cleanPhoneNumberValue($value);
             if ($phone !== '') {
                 // Наличие юзера с таким номером в БД сайта
-                $user = $this->searchUserByPhoneNumber($phone);
-                if ($user) {
-                    $this->setRegisteredUserId($user->getId());
+                $users = $this->searchAllUsersByPhoneNumber($phone);
+                if ($users) {
+                    $this->setAlreadyRegisteredUsers($users);
                     $this->setFieldError(
                         $fieldName,
                         'Данный телефонный номер есть в базе данных сайта',
@@ -160,17 +152,26 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
                         $searchResultData = $searchResult->getData();
                         if ($searchResultData['clients']) {
                             foreach ($searchResultData['clients'] as $clientData) {
-                                $this->arResult['CONTACT_DATA']['USER'][] = [
+                                $fullName = trim($clientData['LAST_NAME'].' '.$clientData['FIRST_NAME']);
+                                $fullName = trim($fullName.' '.$clientData['SECOND_NAME']);
+                                /** @var \DateTimeImmutable $date */
+                                $date = $clientData['BIRTHDAY'];
+                                $this->arResult['CONTACT_DATA']['USER'][$clientData['CONTACT_ID']] = [
                                     'CONTACT_ID' => $clientData['CONTACT_ID'],
                                     'LAST_NAME' => $clientData['LAST_NAME'],
                                     'FIRST_NAME' => $clientData['FIRST_NAME'],
                                     'SECOND_NAME' => $clientData['SECOND_NAME'],
-                                    'BIRTHDAY' => $clientData['BIRTHDAY'],
+                                    'BIRTHDAY' => $date,
                                     'PHONE' => $clientData['PHONE'],
                                     'EMAIL' => $clientData['EMAIL'],
                                     'GENDER_CODE' => $clientData['GENDER_CODE'],
+                                    'CARD_NUMBER' => $clientData['CARD_NUMBER'],
                                     '_PHONE_NORMALIZED_' => $this->cleanPhoneNumberValue($clientData['PHONE']),
-                                    '_BX_GENDER_CODE_' => $this->getBitrixGenderByExternalGender($clientData['GENDER_CODE']),
+                                    '_BX_GENDER_CODE_' => $this->getBitrixGenderByExternalGender(
+                                        $clientData['GENDER_CODE']
+                                    ),
+                                    '_FULL_NAME_' => $fullName,
+                                    '_BIRTHDAY_FORMATTED_' => $date ? $date->format('d.m.Y') : '',
                                 ];
                             }
                         }
@@ -182,18 +183,18 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
         }
     }
 
-    protected function processPersonalData()
+    protected function processPersonalData(): void
     {
         $tmpList = [
-            'lastName',
-            'firstName',
-            'secondName',
+            'lastName' => false,
+            'firstName' => true,
+            'secondName' => false,
         ];
-        foreach ($tmpList as $fieldName) {
+        foreach ($tmpList as $fieldName => $isRequired) {
             $value = $this->trimValue($this->getFormFieldValue($fieldName));
-            if ($value === '') {
+            if ($isRequired && $value === '') {
                 $this->setFieldError($fieldName, 'Значение не задано', 'empty');
-            } else {
+            } elseif ($value !== '') {
                 if (strlen($value) < 3 || preg_match('/[^а-яА-ЯёЁ\-\s]/u', $value)) {
                     $this->setFieldError($fieldName, 'Значение задано некорректно', 'not_valid');
                 }
@@ -201,11 +202,12 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
         }
 
         $fieldName = 'birthDay';
+        $isRequired = false;
         $value = $this->trimValue($this->getFormFieldValue($fieldName));
-        if ($value === '') {
+        if ($isRequired && $value === '') {
             $this->setFieldError($fieldName, 'Значение не задано', 'empty');
-        } else {
-            if(!preg_match('/^\d{2}\.\d{2}\.\d{4}$/', $value)) {
+        } elseif ($value !== '') {
+            if (!preg_match('/^\d{2}\.\d{2}\.\d{4}$/', $value)) {
                 $this->setFieldError($fieldName, 'Значение задано некорректно', 'not_valid');
             } else {
                 if (!$GLOBALS['DB']->IsDate($value, 'DD.MM.YYYY')) {
@@ -215,11 +217,12 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
         }
 
         $fieldName = 'genderCode';
+        $isRequired = false;
         $value = $this->trimValue($this->getFormFieldValue($fieldName));
-        if ($value === '') {
+        if ($isRequired && $value === '') {
             $this->setFieldError($fieldName, 'Значение не задано', 'empty');
-        } else {
-            if($value != static::EXTERNAL_GENDER_CODE_M && $value != static::EXTERNAL_GENDER_CODE_F) {
+        } elseif ($value !== '') {
+            if ($value !== static::EXTERNAL_GENDER_CODE_M && $value !== static::EXTERNAL_GENDER_CODE_F) {
                 $this->setFieldError($fieldName, 'Значение задано некорректно', 'not_valid');
             }
         }
@@ -228,7 +231,7 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
     /**
      * @throws ApplicationCreateException
      */
-    protected function processEmail()
+    protected function processEmail(): void
     {
         $fieldName = 'email';
         $value = $this->trimValue($this->getFormFieldValue($fieldName));
@@ -250,7 +253,7 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
     /**
      * @return bool
      */
-    protected function canSendUserRegistrationSms()
+    protected function canSendUserRegistrationSms(): bool
     {
         return $this->arParams['SEND_USER_REGISTRATION_SMS'] === 'Y';
     }
@@ -258,9 +261,17 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
     /**
      * @param int $userId
      */
-    protected function setRegisteredUserId(int $userId)
+    protected function setRegisteredUserId(int $userId): void
     {
         $this->arResult['REGISTERED_USER_ID'] = $userId > 0 ? $userId : 0;
+    }
+
+    /**
+     * @param User[] $users
+     */
+    protected function setAlreadyRegisteredUsers(array $users): void
+    {
+        $this->arResult['ALREADY_REGISTERED_USERS'] = $users;
     }
 
     /**
@@ -270,7 +281,7 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      */
-    protected function doCustomerRegistration()
+    protected function doCustomerRegistration(): Result
     {
         $result = new Result();
 
@@ -361,7 +372,7 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
     /**
      * @return Result
      */
-    protected function createUserByFormFields()
+    protected function createUserByFormFields(): Result
     {
         $user = $this->userByFormFields();
 
@@ -375,7 +386,7 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
     /**
      * @return User
      */
-    protected function userByFormFields()
+    protected function userByFormFields(): User
     {
         $user = new User();
         $user->setName(
@@ -435,7 +446,7 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
      * @throws \FourPaws\External\Exception\ManzanaServiceException
      * @throws \FourPaws\FrontOffice\Exception\InvalidArgumentException
      */
-    protected function doManzanaUpdateContact(User $user)
+    protected function doManzanaUpdateContact(User $user): Result
     {
         try {
             $currentContact = $this->getManzanaIntegrationService()->getContactByPhone(
@@ -465,7 +476,7 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
     /**
      * @return string
      */
-    protected function getShopOfActivation()
+    protected function getShopOfActivation(): string
     {
         return $this->arParams['SHOP_OF_ACTIVATION'];
     }
@@ -477,7 +488,7 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      */
-    protected function getShopRegistration()
+    protected function getShopRegistration(): string
     {
         $currentUser = $this->searchUserById($this->arParams['USER_ID']);
 
@@ -489,7 +500,7 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
      *
      * @return bool
      */
-    private function shouldSetActualContact()
+    private function shouldSetActualContact(): bool
     {
         // Если карта регистрируется через
         // ЛК магазина (касса) или ЛК магазина (планшет),
@@ -504,7 +515,7 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
      * @param Client $contact
      * @throws ApplicationCreateException
      */
-    protected function bindUserDiscountCard(int $userId, Client $contact)
+    protected function bindUserDiscountCard(int $userId, Client $contact): void
     {
         if ($contact->contactId) {
             $actualCard = $this->getManzanaIntegrationService()->getActualCardByContactId(

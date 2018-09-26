@@ -228,7 +228,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ->setDateInsert(DateHelper::convertToDateTime($order->getDateInsert()
                 ->toUserTime()))
             ->setClientId($order->getUserId())
-            ->setClientFio($this->getPropertyValueByCode($order, 'NAME'))
+            ->setClientFio(\str_replace('#', '', $this->getPropertyValueByCode($order, 'NAME')))
             ->setClientPhone(PhoneHelper::formatPhone(
                 $this->getPropertyValueByCode($order, 'PHONE'),
                 PhoneHelper::FORMAT_URL
@@ -581,6 +581,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             case DeliveryService::INNER_DELIVERY_CODE:
                 switch ($deliveryZone) {
                     case DeliveryService::ZONE_1:
+                    case DeliveryService::ZONE_5:
+                    case DeliveryService::ZONE_6:
                         return SapOrder::DELIVERY_TYPE_COURIER_RC;
                     case DeliveryService::ZONE_2:
                         return SapOrder::DELIVERY_TYPE_COURIER_SHOP;
@@ -1080,9 +1082,13 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
             switch ($deliveryZone) {
                 case DeliveryService::ZONE_1:
-                case DeliveryService::ZONE_5:
-                case DeliveryService::ZONE_6:
                     $xmlId = SapOrder::DELIVERY_ZONE_1_ARTICLE;
+                    break;
+                case DeliveryService::ZONE_5:
+                    $xmlId = SapOrder::DELIVERY_ZONE_5_ARTICLE;
+                    break;
+                case DeliveryService::ZONE_6:
+                    $xmlId = SapOrder::DELIVERY_ZONE_6_ARTICLE;
                     break;
                 case DeliveryService::ZONE_2:
                     $xmlId = SapOrder::DELIVERY_ZONE_2_ARTICLE;

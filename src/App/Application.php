@@ -1,9 +1,5 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
-
 namespace FourPaws\App;
 
 use Bitrix\Main\Entity\DataManager;
@@ -48,7 +44,7 @@ class Application extends AppKernel
     {
         if (null === self::$markupBuild) {
             $cache = new FilesystemAdapter('4lapy', 86400, self::getInstance()
-                ->getCacheDir());
+                                                               ->getCacheDir());
 
             $markupBuildItem = $cache->getItem('markup_build');
 
@@ -65,8 +61,8 @@ class Application extends AppKernel
                 if (!Env::isProd() && is_file(self::getDocumentRoot() . MarkupBuild::STATIC_DEV_JS)) {
                     //подключить результаты сборки к реальному сайту
                     $markupBuild->withJsFile(MarkupBuild::STATIC_DEV_JS)
-                        ->withCssFile(MarkupBuild::STATIC_DEV_CSS)
-                        ->withSvgFile(MarkupBuild::STATIC_DEV_SVG);
+                                ->withCssFile(MarkupBuild::STATIC_DEV_CSS)
+                                ->withSvgFile(MarkupBuild::STATIC_DEV_SVG);
                 } else {
                     $jsonFileLoader =
                         new JsonFileLoader($markupBuild, new FileLocator(self::getDocumentRoot() . '/static'));
@@ -102,7 +98,6 @@ class Application extends AppKernel
     }
 
     /**
-     * @throws ApplicationCreateException
      * @return Application
      *
      */
@@ -165,8 +160,8 @@ class Application extends AppKernel
     public static function getHlBlockDataManager(string $hlblockServiceName): DataManager
     {
         $dataManager = self::getInstance()
-            ->getContainer()
-            ->get($hlblockServiceName);
+                           ->getContainer()
+                           ->get($hlblockServiceName);
 
         /** Если это метод для HL-сущностей, то правильней проверять все же \Bitrix\Highloadblock\DataManager */
         if (!($dataManager instanceof DataManager)) {
@@ -187,15 +182,14 @@ class Application extends AppKernel
      */
     public function getSiteDomain(): string
     {
-        $context = \Bitrix\Main\Application::getInstance()
-            ->getContext();
+        $context = \Bitrix\Main\Application::getInstance()->getContext();
 
         return \sprintf(
             'http%s://%s',
             $context->getRequest()
-                ->isHttps() ? 's' : '',
+                    ->isHttps() ? 's' : '',
             $context->getServer()
-                ->getHttpHost()
+                    ->getHttpHost()
         );
     }
 
@@ -207,15 +201,14 @@ class Application extends AppKernel
     public function getSiteCurrentDomain(): string
     {
         $context = \Bitrix\Main\Application::getInstance()
-            ->getContext();
+                                           ->getContext();
 
         return \sprintf(
             'http%s://%s',
             $context->getRequest()
-                ->isHttps() ? 's' : '',
-            $context->getRequest()
-                ->get(CatalogLandingService::LANDING_REQUEST_KEY) ?: $context->getServer()
-                ->getHttpHost()
+                    ->isHttps() ? 's' : '',
+            $context->getRequest()->get(CatalogLandingService::LANDING_REQUEST_KEY)
+                ?: $context->getServer()->getHttpHost()
         );
     }
 }

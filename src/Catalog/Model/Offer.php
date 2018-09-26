@@ -43,7 +43,6 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\StoreBundle\Collection\StockCollection;
-use FourPaws\StoreBundle\Entity\Stock;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -66,7 +65,14 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 class Offer extends IblockElement
 {
     public const SIMPLE_SHARE_SALE_CODE = 'VKA0';
+
     public const SIMPLE_SHARE_DISCOUNT_CODE = 'ZRBT';
+
+    public const PACKAGE_LABEL_TYPE_SIZE = 'SIZE';
+
+    public const PACKAGE_LABEL_TYPE_VOLUME = 'VOLUME';
+
+    public const PACKAGE_LABEL_TYPE_WEIGHT = 'WEIGHT';
 
     /**
      * @var bool
@@ -404,6 +410,14 @@ class Offer extends IblockElement
     protected $share;
 
     /**
+     * @var string
+     * @Type("array<string>")
+     * @Groups({"elastic"})
+     * @Accessor(getter="getAvailableStores")
+     */
+    protected $availableStores = [];
+
+    /**
      * Offer constructor.
      *
      * @param array $fields
@@ -693,6 +707,7 @@ class Offer extends IblockElement
     public function setBonusExclude(bool $exclude): Offer
     {
         $this->PROPERTY_BONUS_EXCLUDE = $exclude;
+
         return $this;
     }
 
@@ -1195,7 +1210,6 @@ class Offer extends IblockElement
         return $result;
     }
 
-
     /**
      * @param int $percent
      * @param int $quantity
@@ -1468,21 +1482,26 @@ class Offer extends IblockElement
     public function getShare(): ShareCollection
     {
         if ($this->share === null) {
-            $this->share = (new ShareQuery())->withOrder(['SORT' => 'ASC', 'ACTIVE_FROM' => 'DESC'])->withFilter([
-                'ACTIVE' => 'Y',
-                'ACTIVE_DATE' => 'Y',
-                'PROPERTY_PRODUCTS' => $this->getXmlId(),
-            ])->withSelect([
-                'ID',
-                'NAME',
-                'IBLOCK_ID',
-                'PREVIEW_TEXT',
-                'DATE_ACTIVE_FROM',
-                'DATE_ACTIVE_TO',
-                'PROPERTY_LABEL',
-                'PROPERTY_LABEL_IMAGE',
-            ])->exec();
+            $this->share = (new ShareQuery())->withOrder(['SORT' => 'ASC', 'ACTIVE_FROM' => 'DESC'])->withFilter(
+                [
+                    'ACTIVE'            => 'Y',
+                    'ACTIVE_DATE'       => 'Y',
+                    'PROPERTY_PRODUCTS' => $this->getXmlId(),
+                ]
+            )->withSelect(
+                [
+                    'ID',
+                    'NAME',
+                    'IBLOCK_ID',
+                    'PREVIEW_TEXT',
+                    'DATE_ACTIVE_FROM',
+                    'DATE_ACTIVE_TO',
+                    'PROPERTY_LABEL',
+                    'PROPERTY_LABEL_IMAGE',
+                ]
+            )->exec();
         }
+
         return $this->share;
     }
 
@@ -1497,10 +1516,63 @@ class Offer extends IblockElement
     {
         return
             $this->isActive()
-            &&
-            ($this->getQuantity() > 0)
-            &&
-            ($this->getProduct()->isDeliveryAvailable() || $this->getProduct()->isPickupAvailable());
+            && ($this->getQuantity() > 0)
+            && ($this->getProduct()->isDeliveryAvailable() || $this->getProduct()->isPickupAvailable());
+    }
+
+    /**
+     * Возвращает подпись упаковки торгового предложения: размер фасовки, объём, цвет и т.п. в зависимости от типа
+     * торгового предложения.
+     *
+     * @param $short
+     *
+     * @param $fullLimit
+     *
+     * @return string
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
+     *
+     * @see \FourPaws\Helpers\WordHelper::showWeight
+     */
+    public function getPackageLabel(bool $short = false, int $fullLimit =0): string
+    {
+        if ($this->getClothingSize()) {
+            return $this->getClothingSize()->getName();
+        }
+
+        if ($this->getVolumeReference()) {
+            return $this->getVolumeReference()->getName();
+        }
+        $weight = $this->getCatalogProduct()->getWeight();
+        if ($weight > 0) {
+            return WordHelper::showWeight($weight, $short, $fullLimit);
+        }
+
+        return 'арт. ' . $this->getXmlId();
+    }
+
+    /**
+     * Возвращает тип подписи упаковки
+     *
+     * @return string Одна из констант \FourPaws\Catalog\Model\Offer::PACKAGE_LABEL_TYPE_*
+     *
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
+     */
+    public function getPackageLabelType(): string
+    {
+        if ($this->getClothingSize()) {
+            return self::PACKAGE_LABEL_TYPE_SIZE;
+        }
+
+        if ($this->getVolumeReference()) {
+
+            return self::PACKAGE_LABEL_TYPE_VOLUME;
+        }
+
+        return self::PACKAGE_LABEL_TYPE_WEIGHT;
     }
 
     /**
@@ -1530,9 +1602,30 @@ class Offer extends IblockElement
         }
 
         $this->withPrice($price)
-            ->withOldPrice($oldPrice)
-            ->withDiscount(round(100 * $oldPrice / $price));
+             ->withOldPrice($oldPrice)
+             ->withDiscount(round(100 * $oldPrice / $price));
         $this->isCounted = true;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName(): string
+    {
+        /** LP23-365 Удаляем дубли названия бренда в названии оффера */
+        $brandName = $this->getProduct()->getBrandName();
+        $name = $this->NAME;
+        while ($brandName && \stripos($name, $brandName) !== \strripos($name, $brandName)) {
+            $name = \substr_replace(
+                $name,
+                '',
+                \strripos($name, $brandName),
+                \strlen($brandName)
+            );
+            $name = str_replace('  ', ' ', trim($name));
+        }
+
+        return $name;
     }
 
     /**
@@ -1571,9 +1664,9 @@ class Offer extends IblockElement
         $basket = Basket::create(SITE_ID);
         $basket->setFUserId((int)Fuser::getId());
         $fields = [
-            'PRODUCT_ID' => $this->getId(),
-            'QUANTITY' => 1,
-            'MODULE' => 'catalog',
+            'PRODUCT_ID'             => $this->getId(),
+            'QUANTITY'               => 1,
+            'MODULE'                 => 'catalog',
             'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
         ];
 
@@ -1584,8 +1677,7 @@ class Offer extends IblockElement
         foreach ($basket->getBasketItems() as $basketItem) {
             if (
                 (int)$basketItem->getProductId() === $this->getId()
-                &&
-                $discountPercent = round(100 * ($basketItem->getDiscountPrice() / $basketItem->getBasePrice()))
+                && $discountPercent = round(100 * ($basketItem->getDiscountPrice() / $basketItem->getBasePrice()))
             ) {
                 $this
                     ->withDiscount($discountPercent)
@@ -1647,12 +1739,12 @@ class Offer extends IblockElement
         $result = null;
         $setItemsEntity = HLBlockFactory::createTableObject('BundleItems');
         $resBundleItems = $setItemsEntity::query()
-            ->where('UF_ACTIVE', true)
-            ->where('UF_PRODUCT', $offerId)
-            ->setSelect(['ID'])
-            ->setOrder(['RAND'])
-            ->registerRuntimeField(new ExpressionField('RAND', 'RAND()'))
-            ->exec();
+                                         ->where('UF_ACTIVE', true)
+                                         ->where('UF_PRODUCT', $offerId)
+                                         ->setSelect(['ID'])
+                                         ->setOrder(['RAND'])
+                                         ->registerRuntimeField(new ExpressionField('RAND', 'RAND()'))
+                                         ->exec();
         while ($break === false) {
             /**
              * @var array $bundleItem
@@ -1665,13 +1757,12 @@ class Offer extends IblockElement
             }
             $setEntity = HLBlockFactory::createTableObject('Bundle');
             $resBundle = $setEntity::query()
-                ->where('UF_ACTIVE', true)
-                ->where('UF_PRODUCTS', $bundleItem['ID'])
-                ->setSelect(['UF_NAME', 'UF_PRODUCTS', 'UF_COUNT_ITEMS'])
-                ->setOrder(['RAND'])
-                ->registerRuntimeField(new ExpressionField('RAND', 'RAND()'))
-                ->exec();
-
+                                   ->where('UF_ACTIVE', true)
+                                   ->where('UF_PRODUCTS', $bundleItem['ID'])
+                                   ->setSelect(['UF_NAME', 'UF_PRODUCTS', 'UF_COUNT_ITEMS'])
+                                   ->setOrder(['RAND'])
+                                   ->registerRuntimeField(new ExpressionField('RAND', 'RAND()'))
+                                   ->exec();
 
             if ($resBundle->getSelectedRowsCount() === 0) {
                 continue;
@@ -1697,18 +1788,18 @@ class Offer extends IblockElement
                 }
 
                 $res = $setItemsEntity::query()
-                    ->where('UF_ACTIVE', true)
-                    ->whereIn('ID', $setItem['UF_PRODUCTS'])
-                    ->setLimit($countItems)
-                    ->setSelect(['UF_PRODUCT', 'UF_QUANTITY'])
-                    ->exec();
+                                      ->where('UF_ACTIVE', true)
+                                      ->whereIn('ID', $setItem['UF_PRODUCTS'])
+                                      ->setLimit($countItems)
+                                      ->setSelect(['UF_PRODUCT', 'UF_QUANTITY'])
+                                      ->exec();
                 if ($res->getSelectedRowsCount() === 0) {
                     continue;
                 }
                 $result = [
-                    'NAME' => $setItem['UF_NAME'],
+                    'NAME'        => $setItem['UF_NAME'],
                     'COUNT_ITEMS' => $countItems,
-                    'PRODUCTS' => [],
+                    'PRODUCTS'    => [],
                 ];
 
                 /** @noinspection PhpAssignmentInConditionInspection */
@@ -1717,9 +1808,9 @@ class Offer extends IblockElement
                      * @var array $item
                      */
                     $itemFields = [
-                        'PRODUCT' => null,
+                        'PRODUCT'    => null,
                         'PRODUCT_ID' => $item['UF_PRODUCT'],
-                        'QUANTITY' => $item['UF_QUANTITY'],
+                        'QUANTITY'   => $item['UF_QUANTITY'],
                     ];
                     if ($offerId === (int)$item['UF_PRODUCT']) {
                         $itemFields['PRODUCT'] = $this;
@@ -1742,7 +1833,11 @@ class Offer extends IblockElement
 
         if ($result !== null) {
             $serializer = Application::getInstance()->getContainer()->get(SerializerInterface::class);
-            $result = $serializer->fromArray($result, Bundle::class, DeserializationContext::create()->setGroups(['read']));
+            $result = $serializer->fromArray(
+                $result,
+                Bundle::class,
+                DeserializationContext::create()->setGroups(['read'])
+            );
             if (!empty($productIds)) {
                 $offerCollection = (new OfferQuery())->withFilter(['=ID' => $productIds])->exec();
                 /** @var Offer $offer */
@@ -1775,6 +1870,17 @@ class Offer extends IblockElement
     public function getDiscountPrice(): float
     {
         return round($this->getOldPrice() - $this->getPrice());
+    }
+
+    /**
+     * @return string[]
+     * @throws ApplicationCreateException
+     * @throws ServiceNotFoundException
+     * @throws StoreNotFoundException
+     */
+    public function getAvailableStores(): array
+    {
+        return $this->getAllStocks()->getStores(1)->getXmlIds();
     }
 
     /**

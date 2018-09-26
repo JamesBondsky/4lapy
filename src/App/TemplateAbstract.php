@@ -2,6 +2,7 @@
 
 namespace FourPaws\App;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Context;
 use Bitrix\Main\Context\Culture;
 use Bitrix\Main\HttpRequest;
@@ -26,11 +27,8 @@ use Bitrix\Main\Web\Uri;
 abstract class TemplateAbstract
 {
     protected static $instance;
-    
     private          $context;
-    
     private          $path;
-    
     private          $dir;
     
     /**
@@ -38,9 +36,13 @@ abstract class TemplateAbstract
      *
      * @return TemplateAbstract
      */
-    public static function getInstance(Context $context) : self
+    public static function getInstance(Context $context = null) : self
     {
         if (!static::$instance) {
+            if (null === $context) {
+                $context = Application::getInstance()->getContext();
+            }
+
             static::$instance = new static($context);
         }
         

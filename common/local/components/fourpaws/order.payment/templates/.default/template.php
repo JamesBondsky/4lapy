@@ -23,7 +23,7 @@ $declension = new Declension('товар', 'товара', 'товаров');
             <h1 class="b-title b-title--h1 b-title--order">Переход на страницу оплаты заказа
             </h1>
             <div class="b-order b-order--top-line">
-                <div class="b-order__text-block">Сейчас вы будете перенаправлены на страницу оплата заказа...
+                <div class="b-order__text-block">Сейчас вы будете перенаправлены на страницу оплаты заказа...
                 </div>
             </div>
         <?php } else { ?>
@@ -42,13 +42,20 @@ $declension = new Declension('товар', 'товара', 'товаров');
     $order = $arResult['ORDER'];
     $orderWeight = $order->getBasket()->getWeight();
     $orderQuantity = array_sum($order->getBasket()->getQuantityList());
-
+    $orderPrice = $order->getPrice();
+    if ($order->getPaymentCollection()->getInnerPayment()) {
+        $orderPrice -= $order->getPaymentCollection()->getInnerPayment()->getSum();
+    }
 
     /** @var Order $relatedOrder */
     $relatedOrder = $arResult['RELATED_ORDER'];
     if ($relatedOrder) {
         $relatedOrderWeight = $relatedOrder->getBasket()->getWeight();
         $relatedOrderQuantity = array_sum($relatedOrder->getBasket()->getQuantityList());
+        $relatedOrderPrice = $relatedOrder->getPrice();
+        if ($relatedOrder->getPaymentCollection()->getInnerPayment()) {
+            $relatedOrderPrice -= $relatedOrder->getPaymentCollection()->getInnerPayment()->getSum();
+        }
     }
     ?>
     <div class="b-container">
@@ -70,7 +77,7 @@ $declension = new Declension('товар', 'товара', 'товаров');
                                 (<?= WordHelper::showWeight($orderWeight) ?>)
                             <?php } ?>
                             на
-                            сумму <?= CurrencyHelper::formatPrice($order->getPrice() - $order->getPaymentCollection()->getInnerPayment()->getSum()) ?></p>
+                            сумму <?= CurrencyHelper::formatPrice($orderPrice) ?></p>
                     </div>
                     <?php if ($order->isPaid()) { ?>
                         <button class="b-button b-button--order-step-3 b-button--next" disabled="disabled">
@@ -100,7 +107,7 @@ $declension = new Declension('товар', 'товара', 'товаров');
                                     (<?= WordHelper::showWeight($relatedOrderWeight) ?>)
                                 <?php } ?>
                                 на
-                                сумму <?= CurrencyHelper::formatPrice($relatedOrder->getPrice() - $relatedOrder->getPaymentCollection()->getInnerPayment()->getSum()) ?>
+                                сумму <?= CurrencyHelper::formatPrice($relatedOrderPrice) ?>
                             </p>
                         </div>
                         <?php if ($relatedOrder->isPaid()) { ?>

@@ -9,7 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  */
 
 ?>
-<div class="b-account-tab-top">
+<div class="b-account-tab-top" data-url="/ajax/catalog/product-info/">
     <div class="b-account-tab-top__title">Наиболее часто заказываемые вами товары</div>
     <div class="b-common-wrapper b-common-wrapper--stock b-common-wrapper--account-top">
         <?php if (\is_array($arResult['PRODUCTS']) && !empty($arResult['PRODUCTS'])) {

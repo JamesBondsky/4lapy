@@ -2,14 +2,14 @@
 
 /**
  * @var string $data
- * @var bool $addScriptTag
+ * @var bool   $addScriptTag
  */
 
 if ($addScriptTag) { ?>
     <script>
         window.dataLayer = window.dataLayer || [];
-<?php } ?>
+        <?php } ?>
         dataLayer.push(<?= $data ?>);
-<?php if ($addScriptTag) { ?>
+        <?php if ($addScriptTag) { ?>
     </script>
 <?php }

@@ -23,10 +23,10 @@ $tmpCategory = $category;
 do {
     $parent = $tmpCategory->getParent();
     $tmpCategory = $parent;
-    if ($parent->getId()) {
+    if ($parent && $parent->getId()) {
         $parents[] = $parent;
     }
-} while ($parent->getId());
+} while ($parent && $parent->getId());
 
 $parents = array_reverse($parents);
 

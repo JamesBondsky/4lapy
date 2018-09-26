@@ -646,7 +646,8 @@ class User implements UserInterface
      */
     public function setName(string $name): User
     {
-        $this->name = $name;
+
+        $this->name = str_replace('#', '', $name);
 
         return $this;
     }

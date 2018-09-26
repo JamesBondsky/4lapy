@@ -185,6 +185,7 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         }
         $deliveryZone = $this->deliveryService->getDeliveryZoneForShipment($shipment, true);
         $data['INTERVALS'] = $this->getIntervals($shipment);
+        $data['WEEK_DAYS'] = $this->getWeekDays($shipment);
         if (!$offers = static::getOffers($basket)) {
             $result->setData($data);
 
@@ -204,7 +205,6 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         $stockResult = static::getStocks($basket, $offers, $availableStores);
 
         $data['STOCK_RESULT'] = $stockResult;
-        $data['WEEK_DAYS'] = $this->getWeekDays($shipment);
 
         $result->setData($data);
         if ($stockResult->getOrderable()->isEmpty()) {

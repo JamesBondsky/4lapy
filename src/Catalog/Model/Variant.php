@@ -1,12 +1,13 @@
 <?php
 
 namespace FourPaws\Catalog\Model;
+
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 
 /**
  * Class Variant
- * 
+ *
  * @package FourPaws\Catalog\Model
  */
 class Variant
@@ -15,36 +16,38 @@ class Variant
      * @var string Название варианта фильтра
      */
     private $name = '';
-
     /**
      * @var string Значение варианта фильтра. Оно же является уникальным кодом варианта.
      */
     private $value = '';
-
     /**
      * @var int Количество продуктов, которые соответствуют этому варианту.
      */
     private $count = 0;
-
     /**
      * @var bool Вариант выбран.
      */
     private $checked = false;
-
     /**
      * @var bool Вариант доступен - его выбор даст непустой результат фильтрации.
      */
     private $available = true;
-
     /**
      * @var int ID файла картинки
      */
     private $image = 0;
-
     /**
      * @var string код цвета данного варианта
      */
     private $color = '';
+    /**
+     * @var int - id значения с которым смержили. Nb: Не стал добавлять новое поле с id т.к. есть в ключах колекции
+     */
+    private $baseValueId = 0;
+    /**
+     * @var string - аттрибут onclick
+     */
+    private $onclick = '';
 
     /**
      * @return string
@@ -156,6 +159,7 @@ class Variant
 
     /**
      * @param int $image
+     *
      * @return $this
      */
     public function withImage(int $image)
@@ -186,6 +190,26 @@ class Variant
     }
 
     /**
+     * @return int
+     */
+    public function getBaseValueId(): int
+    {
+        return $this->baseValueId;
+    }
+
+    /**
+     * @param int $baseValueId
+     *
+     * @return Variant
+     */
+    public function withBaseValueId(int $baseValueId): Variant
+    {
+        $this->baseValueId = $baseValueId;
+
+        return $this;
+    }
+
+    /**
      * @param int $width
      * @param int $height
      *
@@ -195,13 +219,33 @@ class Variant
     {
         try {
             $result = ResizeImageDecorator::createFromPrimary($this->getImage())
-                ->setResizeHeight($width)
-                ->setResizeWidth($height)
-                ->getSrc();
+                                          ->setResizeHeight($width)
+                                          ->setResizeWidth($height)
+                                          ->getSrc();
         } catch (FileNotFoundException $e) {
             $result = '';
         }
 
         return $result;
+    }
+
+    /**
+     * @return string
+     */
+    public function getOnclick(): string
+    {
+        return $this->onclick;
+    }
+
+    /**
+     * @param string $onclick
+     *
+     * @return Variant
+     */
+    public function setOnclick(string $onclick): Variant
+    {
+        $this->onclick = $onclick;
+
+        return $this;
     }
 }

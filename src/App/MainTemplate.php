@@ -1,9 +1,5 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
-
 namespace FourPaws\App;
 
 /**
@@ -173,7 +169,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function isListSharesFilter(): bool
     {
-        return $this->isPartitionDir('/shares/by_pet');
+        return $this->isPartitionDir('/shares') && strpos($this->getPath(), '.html') === false;
     }
 
     /**
@@ -213,8 +209,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function hasHeaderPersonalContainer(): bool
     {
-        return ($this->isPersonalDirectory() || $this->isPersonal()) && !$this->isRegister()
-            && !$this->isForgotPassword();
+        return ($this->isPersonalDirectory() || $this->isPersonal()) && !$this->isRegister() && !$this->isForgotPassword();
     }
 
     /**

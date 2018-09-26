@@ -12,8 +12,6 @@ use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\StoreBundle\Service\StoreService;
 
-CBitrixComponent::includeComponentClass('fourpaws:city.delivery.info');
-
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsCatalogShopAvailableComponent extends CBitrixComponent
 {

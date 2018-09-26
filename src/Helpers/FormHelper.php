@@ -3,6 +3,7 @@
 namespace FourPaws\Helpers;
 
 use FourPaws\Helpers\Table\FormTable;
+use RuntimeException;
 
 /**
  * Class FormHelper
@@ -15,10 +16,36 @@ class FormHelper
      * @param string $code
      *
      * @return int
+     *
+     * @throws RuntimeException
      */
-    public static function getIdByCode(string $code) : int
+    public static function getIdByCode(string $code): int
     {
-        return !empty($code) ? (int)FormTable::query()->setSelect(['ID'])->setFilter(['SID' => $code])->exec()->fetch(
-        )['ID'] : 0;
+        $id = 0;
+
+        if ($code) {
+            /**
+             * @var array $form
+             */
+            $form = FormTable::query()
+                             ->setSelect(['ID'])
+                             ->setFilter(['SID' => $code])
+                             ->setCacheTtl(360000)
+                             ->exec()
+                             ->fetch();
+
+            if ($form) {
+                $id = $form['ID'];
+            }
+        }
+
+        if ($id === 0) {
+            throw new RuntimeException(\sprintf(
+                'Form with code %s is not found',
+                $code
+            ));
+        }
+
+        return $id;
     }
 }

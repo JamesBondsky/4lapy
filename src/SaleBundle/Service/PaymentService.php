@@ -43,11 +43,14 @@ use FourPaws\SaleBundle\Dto\SberbankOrderInfo\Attribute;
 use FourPaws\SaleBundle\Dto\SberbankOrderInfo\OrderBundle\Item as SberbankOrderItem;
 use FourPaws\SaleBundle\Dto\SberbankOrderInfo\OrderInfo;
 use FourPaws\SaleBundle\Enum\OrderPayment;
+use FourPaws\SaleBundle\Exception\FiscalValidation\FiscalAmountExceededException;
+use FourPaws\SaleBundle\Exception\FiscalValidation\FiscalAmountException;
 use FourPaws\SaleBundle\Exception\FiscalValidation\InvalidItemCodeException;
 use FourPaws\SaleBundle\Exception\FiscalValidation\NoMatchingFiscalItemException;
-use FourPaws\SaleBundle\Exception\FiscalValidation\PositionAmountExceededException;
 use FourPaws\SaleBundle\Exception\FiscalValidation\PositionQuantityExceededException;
+use FourPaws\SaleBundle\Exception\FiscalValidation\PositionWrongAmountException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\SaleBundle\Exception\OrderUpdateException;
 use FourPaws\SaleBundle\Exception\PaymentException;
 use FourPaws\SaleBundle\Exception\PaymentReverseException;
 use FourPaws\SaleBundle\Exception\SberbankOrderNotFoundException;
@@ -60,6 +63,8 @@ use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\StoreBundle\Entity\Store;
 use JMS\Serializer\ArrayTransformerInterface;
 use Psr\Log\LoggerAwareInterface;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class PaymentService
@@ -155,20 +160,24 @@ class PaymentService implements LoggerAwareInterface
     /**
      * @param Fiscalization $fiscalization
      * @param OrderInfo     $orderInfo
-     * @param bool          $priceFix
+     * @param int|null      $sumPaid
      *
+     * @throws FiscalAmountExceededException
+     * @throws FiscalAmountException
      * @throws InvalidItemCodeException
      * @throws NoMatchingFiscalItemException
-     * @throws PositionAmountExceededException
      * @throws PositionQuantityExceededException
+     * @throws PositionWrongAmountException
      */
     public function validateFiscalization(
         Fiscalization $fiscalization,
         OrderInfo $orderInfo,
-        bool $priceFix = false
+        int $sumPaid = null
     ): void
     {
         $fiscalItems = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
+        $fiscalAmount = $this->getFiscalTotal($fiscalization);
+
         $sberbankOrderItems = $orderInfo->getOrderBundle()->getCartItems()->getItems();
         /** @var Item $fiscalItem */
         foreach ($fiscalItems as $fiscalItem) {
@@ -201,36 +210,39 @@ class PaymentService implements LoggerAwareInterface
                 );
             }
 
-            if ($fiscalItem->getQuantity()->getValue() > $matchingItem->getQuantity()->getValue()) {
-                throw new PositionQuantityExceededException(
+            if ($fiscalItem->getTotal() !== $fiscalItem->getQuantity()->getValue() * $fiscalItem->getPrice()) {
+                throw new PositionWrongAmountException(
                     \sprintf(
-                        'Item %s quantity (%s) for position %s exceeds existing item quantity (%s)',
+                        'Item %s total (%s) for position %s is not equal to (price * amount) (%s)',
                         $fiscalItem->getCode(),
-                        $fiscalItem->getQuantity()->getValue(),
+                        $fiscalItem->getTotal(),
                         $fiscalItem->getPositionId(),
-                        $matchingItem->getQuantity()->getValue()
+                        $fiscalItem->getQuantity()->getValue() * $fiscalItem->getPrice()
                     )
                 );
             }
+        }
 
-            if ($fiscalItem->getTotal() > $matchingItem->getItemAmount()) {
-                if ($priceFix) {
-                    $price = round($matchingItem->getItemAmount() / $matchingItem->getQuantity()->getValue());
+        $approvedAmount = $orderInfo->getPaymentAmountInfo()->getApprovedAmount();
+        if ($fiscalAmount > $approvedAmount) {
+            throw new FiscalAmountExceededException(
+                \sprintf(
+                    'Fiscal amount (%s) exceeds approved amount (%s)',
+                    $fiscalAmount,
+                    $approvedAmount
+                )
+            );
+        }
 
-                    $fiscalItem
-                        ->setTotal($matchingItem->getItemAmount())
-                        ->setPrice($price);
-                } else {
-                    throw new PositionAmountExceededException(
-                        \sprintf(
-                            'Item %s amount (%s) for position %s exceeds existing item amount (%s)',
-                            $fiscalItem->getCode(),
-                            $fiscalItem->getTotal(),
-                            $fiscalItem->getPositionId(),
-                            $matchingItem->getItemAmount()
-                        )
-                    );
-                }
+        if (null !== $sumPaid && $fiscalAmount < $sumPaid) {
+            if (($sumPaid - $fiscalAmount) > ($sumPaid * 0.01)) {
+                throw new FiscalAmountException(
+                    \sprintf(
+                        'Fiscal amount (%s) is lesser than paid amount (%s)',
+                        $fiscalAmount,
+                        $sumPaid
+                    )
+                );
             }
         }
     }
@@ -376,8 +388,10 @@ class PaymentService implements LoggerAwareInterface
      * @param float $amount
      *
      * @throws ArgumentException
+     * @throws NotFoundException
      * @throws ObjectNotFoundException
      * @throws PaymentException
+     * @throws PaymentReverseException
      */
     protected function reverseOnlinePayment(Order $order, float $amount = 0): void
     {
@@ -523,9 +537,13 @@ class PaymentService implements LoggerAwareInterface
         $items = new ArrayCollection();
 
         $measureList = [];
+        $defaultMeasure = 'Штука';
         $dbMeasure = \CCatalogMeasure::getList();
         while ($arMeasure = $dbMeasure->GetNext()) {
             $measureList[$arMeasure['ID']] = $arMeasure['MEASURE_TITLE'];
+            if ($arMeasure['IS_DEFAULT'] === BitrixUtils::BX_BOOL_TRUE) {
+                $defaultMeasure = $arMeasure['MEASURE_TITLE'];
+            }
         }
 
         $vatList = [];
@@ -618,12 +636,12 @@ class PaymentService implements LoggerAwareInterface
             $deliveryPrice = floor($order->getDeliveryPrice() * 100);
             $delivery = (new Item())
                 ->setPositionId(++$position)
-                ->setName(Loc::getMessage('RBS_PAYMENT_DELIVERY_TITLE') ?: '')
+                ->setName(Loc::getMessage('RBS_PAYMENT_DELIVERY_TITLE') ?: 'Доставка')
                 ->setQuantity((new ItemQuantity())
                     ->setValue(1)
-                    ->setMeasure(Loc::getMessage('RBS_PAYMENT_MEASURE_DEFAULT') ?: '')
+                    ->setMeasure(Loc::getMessage('RBS_PAYMENT_MEASURE_DEFAULT') ?: $defaultMeasure)
                 )
-                ->setXmlId('2000001')
+                ->setXmlId(OrderPayment::GENERIC_DELIVERY_CODE)
                 ->setTotal($deliveryPrice)
                 ->setCode($order->getId() . '_DELIVERY')
                 ->setPrice($deliveryPrice)
@@ -779,12 +797,16 @@ class PaymentService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
+     * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentNullException
+     * @throws NotFoundException
      * @throws NotImplementedException
      * @throws ObjectPropertyException
      * @throws SystemException
-     * @throws ApplicationCreateException
+     * @throws \RuntimeException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
      */
     public function processOnlinePaymentError(Order $order): void
     {
@@ -818,7 +840,10 @@ class PaymentService implements LoggerAwareInterface
                 $newPayment->save();
                 $commWay = $orderService->getOrderPropertyByCode($order, 'COM_WAY');
                 $commWay->setValue(OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS);
-                $order->save();
+                $result = $order->save();
+                if (!$result->isSuccess()) {
+                    throw new OrderUpdateException(\implode(', ', $result->getErrorMessages()));
+                }
                 $sapConsumer->consume($order);
             } catch (\Exception $e) {
                 $this->log()->error(sprintf('failed to process payment error: %s', $e->getMessage()), [

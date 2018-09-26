@@ -30,6 +30,7 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
         </header>
         <form class="b-registration__form js-form-validation js-auth-2way"
               data-url="/ajax/user/auth/login/"
+              onsubmit="<?= $arResult['ON_SUBMIT'] ?>"
               method="post">
             <input type="hidden" name="action" value="login" class="js-no-valid">
             <?php if (!CatalogLandingService::isLandingPage()) { ?>
