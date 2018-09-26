@@ -84,7 +84,7 @@ class OrderAddressValidator extends ConstraintValidator
             try {
                 $address = $addressService->getById($entity->getAddressId());
                 if (($address->getUserId() != $entity->getUserId()) ||
-                    ($address->getCityLocation() != $entity->getCityCode())
+                    ($address->getLocation() != $entity->getCityCode())
                 ) {
                     $found = false;
                 }
