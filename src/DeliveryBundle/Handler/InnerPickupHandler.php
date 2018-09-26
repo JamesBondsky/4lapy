@@ -21,7 +21,6 @@ use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
-use FourPaws\StoreBundle\Service\StoreService;
 
 class InnerPickupHandler extends DeliveryHandlerBase
 {
@@ -92,7 +91,7 @@ class InnerPickupHandler extends DeliveryHandlerBase
             return $result;
         }
 
-        $shops = $this->storeService->getStoresByLocation($deliveryLocation, StoreService::TYPE_SHOP);
+        $shops = $this->storeService->getShopsByLocation($deliveryLocation);
         if ($shops->isEmpty()) {
             $result->addError(new Error('Нет доступных магазинов'));
             return $result;
