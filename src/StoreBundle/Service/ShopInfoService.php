@@ -14,6 +14,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Adapter\DaDataLocationAdapter;
 use FourPaws\Adapter\Model\Output\BitrixLocation;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Validator\Constraints\LocationCode;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\Catalog\Model\Offer;
@@ -189,12 +190,17 @@ class ShopInfoService
             $metroList,
         ] = $this->storeService->getFullStoreInfo($stores);
 
-        $avgLatitude = 0;
-        $avgLongitude = 0;
+        $avgLatitudeAll = 0;
+        $avgLongitudeAll = 0;
+
+        $avgLatitudeCurrentLocation = 0;
+        $avgLongitudeCurrentLocation = 0;
+        $shopCountCurrentLocation = 0;
         $shops = new ArrayCollection();
         $services = new ArrayCollection();
 
         $subregionCode = $this->locationService->findLocationSubRegion($locationCode)['CODE'] ?? '';
+        $regionCode = $this->locationService->findLocationRegion($locationCode)['CODE'] ?? '';
 
         /** @var Store $store */
         foreach ($stores as $store) {
@@ -241,13 +247,21 @@ class ShopInfoService
                 continue;
             }
 
-            $avgLatitude += $store->getLatitude();
-            $avgLongitude += $store->getLongitude();
+            if (($regionCode === LocationService::LOCATION_CODE_MOSCOW_REGION) &&
+                ($store->getLocation() === $locationCode)
+            ) {
+                $avgLatitudeCurrentLocation += $store->getLatitude();
+                $avgLongitudeCurrentLocation += $store->getLongitude();
+                $shopCountCurrentLocation++;
+            }
+
+            $avgLatitudeAll += $store->getLatitude();
+            $avgLongitudeAll += $store->getLongitude();
 
             $shops->add($shop);
         }
 
-        if ($shopCount = $shops->count()) {
+        if ($shopCountAll = $shops->count()) {
             /** @var array $service */
             foreach ($servicesList as $service) {
                 $services->add(
@@ -263,11 +277,26 @@ class ShopInfoService
             }
         }
 
+        /**
+         * Для Московской области центрируем карту на магазинах текущего местоположения,
+         * если там есть магазины (только в карточке товара)
+         */
+        if ($offer && $shopCountCurrentLocation) {
+            $avgLatitude = $avgLatitudeCurrentLocation / $shopCountCurrentLocation;
+            $avgLongitude = $avgLongitudeCurrentLocation / $shopCountCurrentLocation;
+        } elseif ($shopCountAll) {
+            $avgLatitude = $avgLatitudeAll / $shopCountAll;
+            $avgLongitude = $avgLongitudeAll / $shopCountAll;
+        } else {
+            $avgLatitude = $avgLatitudeAll;
+            $avgLongitude = $avgLongitudeAll;
+        }
+
         $shopList = (new ShopList())
             ->setItems($shops)
-            ->setAvgLatitude($shopCount ? $avgLatitude / $shopCount : $avgLatitude)
-            ->setAvgLongitude($shopCount ? $avgLongitude / $shopCount : $avgLongitude)
-            ->setHideTab((bool)$shopCount)
+            ->setAvgLatitude($avgLatitude)
+            ->setAvgLongitude($avgLongitude)
+            ->setHideTab((bool)$shopCountAll)
             ->setServices($services);
 
         return $shopList;

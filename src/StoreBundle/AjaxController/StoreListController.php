@@ -166,7 +166,7 @@ class StoreListController extends Controller implements LoggerAwareInterface
      * @throws \RuntimeException
      * @throws ApplicationCreateException
      */
-    public function getByItemAction(Request $request): JsonResponse
+    public function getByProductAction(Request $request): JsonResponse
     {
         $offerId = $request->get('offer', 0);
 
