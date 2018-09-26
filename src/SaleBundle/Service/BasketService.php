@@ -10,14 +10,12 @@ use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
-use Bitrix\Main\GroupTable;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Result as MainResult;
 use Bitrix\Main\SystemException;
-use Bitrix\Main\UserGroupTable;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketItemCollection;
@@ -26,7 +24,6 @@ use Bitrix\Sale\Compatible\DiscountCompatibility;
 use Bitrix\Sale\Internals\BasketPropertyTable;
 use Bitrix\Sale\Internals\BasketTable;
 use Bitrix\Sale\Order;
-use CUser;
 use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Collection\ShareCollection;
@@ -45,6 +42,7 @@ use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SapBundle\Repository\ShareRepository;
+use FourPaws\UserBundle\Entity\Group;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -142,7 +140,7 @@ class BasketService implements LoggerAwareInterface
             $fields = $rewriteFields + $fields;
         }
 
-        $basket = $basket instanceof Basket ? $basket : $this->getBasket();
+        $basket = $basket ?? $this->getBasket();
 
         $oldBasketCodes = [];
         /** @var BasketItem $basketItem */
@@ -453,7 +451,7 @@ class BasketService implements LoggerAwareInterface
         static $storage;
         if (null === $storage || $renew) {
             $storage = [
-                'gift'   => [],
+                'gift' => [],
                 'detach' => [],
             ];
         }
@@ -537,6 +535,12 @@ class BasketService implements LoggerAwareInterface
 
     /**
      * @param int|User $userId
+     *
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      *
      * @return float
      */
@@ -670,30 +674,42 @@ class BasketService implements LoggerAwareInterface
     /**
      * Вернет true если пользователь имеет группу, которой нужно всегда начислять бонусы
      *
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws SystemException
+     * @param User $user
      *
      * @return bool
      */
-    public function isUserGroupWithPermanentBonusRewarding(): bool
+    public function isUserGroupWithPermanentBonusRewarding(User $user): bool
     {
-        /** @global CUser $USER*/
-        global $USER;
+        return $user->getGroups()->exists(
+            function (/** @noinspection PhpUnusedParameterInspection */ $k, Group $group) {
+                return $group->getCode() === UserGroup::OPT_CODE;
+            }
+        );
+    }
 
-        static $groupId = null;
-
-        if (null === $groupId) {
-            $result = GroupTable::getList([
-                'filter' => ['=STRING_ID' => UserGroup::OPT_CODE],
-                'select' => ['ID']
-            ])->fetch();
-            $groupId = $result['ID'];
+    /**
+     * @param BasketItem $basketItem
+     *
+     * @throws InvalidArgumentException
+     *
+     * @return Order
+     */
+    public function extractOrderFromBasketItem(BasketItem $basketItem): Order
+    {
+        /**
+         * @var $basketItemCollection BasketItemCollection
+         * @var $order Order
+         */
+        if (
+            !($basketItemCollection = $basketItem->getCollection())
+            ||
+            !($basket = $basketItemCollection->getBasket())
+            ||
+            !($order = $basket->getOrder())
+        ) {
+            throw new InvalidArgumentException('У элемента корзины не установлен заказ');
         }
-
-        $groups = array_flip($USER->GetUserGroupArray());
-
-        return isset($groups[$groupId]);
+        return $order;
     }
 
     /**
@@ -701,7 +717,9 @@ class BasketService implements LoggerAwareInterface
      * @param BasketItem $basketItem
      * @param Order|null $order
      *
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws InvalidArgumentException
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
@@ -710,9 +728,20 @@ class BasketService implements LoggerAwareInterface
      */
     public function getBonusAwardingQuantity(BasketItem $basketItem, ?Order $order = null): int
     {
+        if ($this->currentUserProvider->getCurrentFUserId() === (int) $basketItem->getFUserId()) {
+            try {
+                $user = $this->currentUserProvider->getCurrentUser();
+            } catch (NotAuthorizedException $e) {
+                // для неавторизованного не имеет смысла проверять
+                $user = false;
+            }
+        } else {
+            $user = $this->currentUserProvider->getUserRepository()->findByFUser($basketItem->getFUserId());
+        }
+
         $resultQuantity = 0;
         /** LP23-81 */
-        if($this->isUserGroupWithPermanentBonusRewarding()) {
+        if ($user && $this->isUserGroupWithPermanentBonusRewarding($user)) {
             $resultQuantity = (int)$basketItem->getQuantity();
             $basketDiscounts = false;
         } else {
@@ -733,24 +762,9 @@ class BasketService implements LoggerAwareInterface
 
         if ($resultQuantity === 0 && isset($offer) && $offer->isBonusExclude()) {
             $basketDiscounts = true;
-        } elseif($resultQuantity === 0) {
-            /**
-             * @var BasketItemCollection $basketItemCollection
-             * @var Order $order
-             * @var Basket $basket
-             */
-            if (
-                !$order
-                &&
-                (
-                    !($basketItemCollection = $basketItem->getCollection())
-                    ||
-                    !($basket = $basketItemCollection->getBasket())
-                    ||
-                    !($order = $basket->getOrder())
-                )
-            ) {
-                throw new InvalidArgumentException('У элемента корзины не установлен заказ');
+        } elseif ($resultQuantity === 0) {
+            if (!$order) {
+                $order = $this->extractOrderFromBasketItem($basketItem);
             }
 
             if (
@@ -919,9 +933,8 @@ class BasketService implements LoggerAwareInterface
 
     /**
      * @param BasketItem $basketItem
+     *
      * @return bool
-     * @throws ArgumentException
-     * @throws ArgumentNullException
      */
     public function isGiftProduct(BasketItem $basketItem): bool
     {
@@ -1094,7 +1107,7 @@ class BasketService implements LoggerAwareInterface
      *
      * @return array|null
      */
-    public function getBasketPropByCode(int $basketItemId, string $propCode) : ?array
+    public function getBasketPropByCode(int $basketItemId, string $propCode): ?array
     {
         try {
             $res = BasketPropertyTable::query()
@@ -1102,7 +1115,7 @@ class BasketService implements LoggerAwareInterface
                 ->where('BASKET_ID', $basketItemId)
                 ->setSelect(['*'])
                 ->exec();
-            if($res->getSelectedRowsCount() === 0){
+            if ($res->getSelectedRowsCount() === 0) {
                 return null;
             }
             return $res->fetch();
@@ -1119,7 +1132,7 @@ class BasketService implements LoggerAwareInterface
      *
      * @return bool
      */
-    public function isBasketPropEmpty(int $basketItemId, string $propCode) : bool
+    public function isBasketPropEmpty(int $basketItemId, string $propCode): bool
     {
         $value = $this->getBasketPropByCode($basketItemId, $propCode);
         return $value === null || empty($value);
@@ -1127,6 +1140,7 @@ class BasketService implements LoggerAwareInterface
 
     /**
      * @param Basket|null $basket
+     *
      * @return array
      */
     public function getBasketProducts(?Basket $basket = null): array
@@ -1178,7 +1192,7 @@ class BasketService implements LoggerAwareInterface
 
             /** @var Share $share */
             foreach ($shareCollection as $share) {
-                if(\in_array($discountId, $share->getPropertyBasketRules())) {
+                if (\in_array($discountId, $share->getPropertyBasketRules())) {
                     $result = $share->isBonus();
                     break;
                 }
