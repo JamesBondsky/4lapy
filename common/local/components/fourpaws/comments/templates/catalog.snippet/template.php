@@ -16,7 +16,7 @@ use FourPaws\Helpers\WordHelper;
 if ($arResult['COUNT_COMMENTS'] > 0) { ?>
     <div class="b-rating b-rating--card">
         <?php for ($i = 1; $i <= 5; $i++) { ?>
-            <div class="b-rating__star-block<?= $arResult['RATING'] > $i ? ' b-rating__star-block--active' : '' ?>">
+            <div class="b-rating__star-block<?= $arResult['RATING'] >= $i ? ' b-rating__star-block--active' : '' ?>">
                 <span class="b-icon"><?= new SvgDecorator('icon-star', 12, 12) ?></span>
             </div>
         <?php } ?>

@@ -69,7 +69,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
 
 <div class="b-rating b-rating--card" >
     <?php for ($i = $worstRaitingValue; $i <= $bestRaitingValue; $i++) {
-        $activeClass = $arResult['RATING'] > $i ? ' b-rating__star-block--active' : '';
+        $activeClass = $arResult['RATING'] >= $i ? ' b-rating__star-block--active' : '';
         ?>
         <div class="b-rating__star-block <?= $activeClass ?>" >
             <span class="b-icon"><?= $iconStar12x12 ?></span>
@@ -121,7 +121,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                         <div class="b-rating b-rating--big">
                             <?php for ($i = 1; $i <= 5; $i++) { ?>
                                 <div class="b-rating__star-block<?= $arResult['RATING']
-                                > $i ? ' b-rating__star-block--active' : '' ?>">
+                                >= $i ? ' b-rating__star-block--active' : '' ?>">
                                     <span class="b-icon"><?= new SvgDecorator('icon-star', 12, 12) ?></span>
                                 </div>
                             <?php } ?>

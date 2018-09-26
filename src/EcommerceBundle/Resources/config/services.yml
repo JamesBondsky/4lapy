@@ -22,3 +22,8 @@ services:
     FourPaws\EcommerceBundle\Service\RetailRocketService:
         class: FourPaws\EcommerceBundle\Service\RetailRocketService
         public: true
+
+    # Необходимо вынести, тк используется в Битрикс
+    FourPaws\EcommerceBundle\Service\DataLayerService:
+        class: FourPaws\EcommerceBundle\Service\DataLayerService
+        public: true

@@ -940,6 +940,9 @@ class BasketService implements LoggerAwareInterface
     {
         $xmlId = $this->getBasketItemXmlId($basketItem);
 
+        /**
+         * @todo выпилить 1 октября 2018 года
+         */
         return !\in_array($xmlId, ['3005425', '3005437', '3005424', '3005436'], true) && // @todo костыль для акции "добролап"
             ($xmlId[0] === '3');
     }

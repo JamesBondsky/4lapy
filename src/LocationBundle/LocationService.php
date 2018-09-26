@@ -255,7 +255,7 @@ class LocationService
                 $stores = $storeService->getStoresByLocation(
                     $element['PROPERTY_LOCATION_VALUE'],
                     StoreService::TYPE_SHOP
-                );
+                )->getStores();
                 /** @var Store $store */
                 foreach ($stores as $store) {
                     $storeCodes[] = $store->getXmlId();
@@ -281,7 +281,7 @@ class LocationService
                 $stores = $storeService->getStoresByLocation(
                     $element['PROPERTY_LOCATION_VALUE'],
                     StoreService::TYPE_SHOP
-                );
+                )->getStores();
                 /** @var Store $store */
                 foreach ($stores as $store) {
                     $storeCodes[] = $store->getXmlId();
@@ -433,7 +433,9 @@ class LocationService
                             '_TYPE_ID'   => 'TYPE.ID',
                             '_TYPE_CODE' => 'TYPE.CODE',
                             '_TYPE_NAME' => 'TYPE.NAME.NAME',
-                        ])->exec();
+                        ])
+                        ->setOrder(['_TYPE_ID' => 'ASC'])
+                        ->exec();
                     while ($parentItem = $parentRes->fetch()) {
                         $parentItem['NAME'] = $parentItem['DISPLAY'];
                         unset($parentItem['DISPLAY']);
@@ -579,8 +581,25 @@ class LocationService
         return $this->locationsById[$id] ?? [];
     }
 
+    /**
+     * @param string      $query
+     * @param string|null $parentName
+     * @param bool        $exact
+     *
+     * @return array
+     * @throws CityNotFoundException
+     * @throws \RuntimeException
+     */
+    public function findLocationCity(string $query, string $parentName = null, bool $exact = false): array
+    {
+        $result = $this->findLocationCityMultiple($query, $parentName, 1, $exact);
+        $city = reset($result);
+        if (!$city) {
+            throw new CityNotFoundException('City not found');
+        }
 
-    /** @noinspection MoreThanThreeArgumentsInspection */
+        return $city;
+    }
 
     /**
      * Поиск местоположений с типом "город" и "деревня" по названию
@@ -593,7 +612,7 @@ class LocationService
      *
      * @return array
      */
-    public function findLocationCity(
+    public function findLocationCityMultiple(
         string $query,
         $parentName = null,
         int $limit = null,

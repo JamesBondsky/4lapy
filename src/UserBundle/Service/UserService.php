@@ -346,7 +346,7 @@ class UserService implements
             $city = $this->locationService->findLocationCityByCode($code);
         } else {
             /** @noinspection PassingByReferenceCorrectnessInspection */
-            $city = reset($this->locationService->findLocationCity($name, $parentName, 1, true, false));
+            $city = reset($this->locationService->findLocationCityMultiple($name, $parentName, 1, true, false));
         }
 
         if ($city && $this->isAuthorized()) {

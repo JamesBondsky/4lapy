@@ -6,6 +6,6 @@
 
 namespace FourPaws\SapBundle\Exception;
 
-interface SapBundleException
+interface SapBundleException extends \Throwable
 {
 }
