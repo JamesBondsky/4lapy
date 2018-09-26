@@ -67,7 +67,7 @@ class StoreListController extends Controller implements LoggerAwareInterface
     {
         try {
             $result = JsonSuccessResponse::createWithData(
-                'Подгрузка успешна',
+                '',
                 $this->shopInfoService->shopListToArray(
                     $this->shopInfoService->getShopListByRequest($request)
                 )
@@ -92,7 +92,7 @@ class StoreListController extends Controller implements LoggerAwareInterface
     {
         try {
             $result = JsonSuccessResponse::createWithData(
-                'Подгрузка успешна',
+                '',
                 $this->shopInfoService->shopListToArray(
                     $this->shopInfoService->getShopListByRequest($request)
                 )
@@ -117,7 +117,7 @@ class StoreListController extends Controller implements LoggerAwareInterface
     {
         try {
             $result = JsonSuccessResponse::createWithData(
-                'Подгрузка успешна',
+                '',
                 $this->shopInfoService->shopListToArray(
                     $this->shopInfoService->getShopListByRequest($request)
                 )
@@ -147,7 +147,7 @@ class StoreListController extends Controller implements LoggerAwareInterface
 
             $shopList = $this->shopInfoService->getShopListByRequest($request);
             $result = JsonSuccessResponse::createWithData(
-                'Подгрузка успешна',
+                '',
                 $this->shopInfoService->shopListToArray($shopList)
             );
         } catch (Exception $e) {
@@ -159,7 +159,7 @@ class StoreListController extends Controller implements LoggerAwareInterface
     }
 
     /**
-     * @Route("/getByItem/", methods={"GET"})
+     * @Route("/by-product/", methods={"GET"})
      * @param Request $request
      *
      * @return JsonResponse
@@ -187,7 +187,7 @@ class StoreListController extends Controller implements LoggerAwareInterface
                 );
 
                 $result = JsonSuccessResponse::createWithData(
-                    'Подгрузка успешна', $result
+                    '', $result
                 );
             } catch (Exception $e) {
                 $this->log()->error($e->getMessage());

@@ -72,7 +72,7 @@ $offer = $arParams['OFFER'];
                 <ul class="b-delivery-list js-delivery-list"></ul>
             </div>
             <div class="b-tab-delivery-map b-tab-delivery-map--card js-content-map">
-                <div class="b-tab-delivery-map__map js-product-map" id="map" data-url="/ajax/store/list/getByItem/?offer=<?=$offer->getId()?>"></div>
+                <div class="b-tab-delivery-map__map js-product-map" id="map" data-url="/ajax/store/list/by-product/?offer=<?=$offer->getId()?>"></div>
                 <a class="b-link b-link--close-baloon js-product-list"
                    href="javascript:void(0);"
                    title="">
