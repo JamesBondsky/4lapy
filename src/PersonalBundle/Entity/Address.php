@@ -1,15 +1,8 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
-
 namespace FourPaws\PersonalBundle\Entity;
 
-use FourPaws\App\Application;
 use FourPaws\AppBundle\Entity\BaseEntity;
-use FourPaws\LocationBundle\Exception\CityNotFoundException;
-use FourPaws\LocationBundle\LocationService;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -51,7 +44,7 @@ class Address extends BaseEntity
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $cityLocation = '';
+    protected $location = '';
 
     /**
      * @var string
@@ -399,33 +392,21 @@ class Address extends BaseEntity
     /**
      * @return string
      */
-    public function getCityLocation(): string
+    public function getLocation(): string
     {
-        return $this->cityLocation ?? 0;
+        return $this->location ?? 0;
     }
 
     /**
-     * @param string $cityLocation
+     * @param string $location
      *
      * @return Address
      */
-    public function setCityLocation(string $cityLocation): Address
+    public function setLocation(string $location): Address
     {
-        $this->cityLocation = $cityLocation;
+        $this->location = $location;
 
         return $this;
-    }
-
-    public function setCityLocationByEntity()
-    {
-        /** @var LocationService $locationService */
-        $locationService = Application::getInstance()->getContainer()->get('location.service');
-        try {
-            $cities = $locationService->findLocationCity($this->getCity(), null, 1, true);
-            $city = reset($cities);
-            $this->setCityLocation($city['CODE']);
-        } catch (CityNotFoundException $e) {
-        }
     }
 
     /**

@@ -110,7 +110,7 @@ class DaDataLocationAdapter extends BaseAdapter
             $fullRegion = $this->getFullRegion($entity);
             /** гребаный фикс - циклим поиск по нескольким местоположениям */
             foreach ($fullCities as $fullCity) {
-                $cities = $this->locationService->findLocationCity(trim($fullCity), trim($fullRegion), 1, true,
+                $cities = $this->locationService->findLocationCityMultiple(trim($fullCity), trim($fullRegion), 1, true,
                     true);
                 if (!empty($cities)) {
                     break;

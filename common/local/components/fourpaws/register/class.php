@@ -12,7 +12,6 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Db\SqlQueryException;
-use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\Uri;
@@ -21,6 +20,8 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\EcommerceBundle\Enum\DataLayer;
+use FourPaws\EcommerceBundle\Service\DataLayerService;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
@@ -82,6 +83,10 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      * @var RetailRocketService|object
      */
     private $retailRocketService;
+    /**
+     * @var DataLayerService
+     */
+    private $dataLayerService;
 
     /**
      * FourPawsAuthFormComponent constructor.
@@ -110,6 +115,17 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         $this->ajaxMess = $container->get('ajax.mess');
         $this->serializer = $container->get(SerializerInterface::class);
         $this->retailRocketService = $container->get(RetailRocketService::class);
+        $this->dataLayerService = $container->get(DataLayerService::class);
+    }
+
+    /**
+     * @param string $type
+     *
+     * @return string
+     */
+    public function renderDataLayerByType(string $type): string
+    {
+        return $this->dataLayerService->renderRegister($type);
     }
 
     /**
@@ -594,7 +610,13 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         }
 
         /** @noinspection PhpUnusedLocalVariableInspection */
-        $formSubmit = \str_replace('"', '\'', $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val()'));
+        $formSubmit = \str_replace('"', '\'',
+            \sprintf(
+                '%s%s',
+                $this->renderDataLayerByType(DataLayer::REGISTER_TYPE_LOGIN),
+                $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val()')
+            )
+        );
 
         $phone = PhoneHelper::formatPhone($phone, PhoneHelper::FORMAT_FULL);
         ob_start(); ?>
@@ -623,33 +645,37 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      */
     protected function setSocial(): void
     {
-        if (Loader::includeModule('socialservices')) {
-            $authManager = new \CSocServAuthManager();
-            $startParams['AUTH_SERVICES'] = false;
-            $startParams['CURRENT_SERVICE'] = false;
-            $startParams['FORM_TYPE'] = 'login';
-            $services = $authManager->GetActiveAuthServices($startParams);
+        $authManager = new \CSocServAuthManager();
+        $startParams['AUTH_SERVICES'] = false;
+        $startParams['CURRENT_SERVICE'] = false;
+        $startParams['FORM_TYPE'] = 'login';
+        $services = $authManager->GetActiveAuthServices($startParams);
 
-            if (!empty($services)) {
-                $this->arResult['AUTH_SERVICES'] = $services;
-                $authServiceId =
-                    Application::getInstance()->getContext()->getRequest()->get('auth_service_id');
-                if ($authServiceId !== ''
-                    && isset($authServiceId, $this->arResult['AUTH_SERVICES'][$authServiceId])) {
-                    $this->arResult['CURRENT_SERVICE'] = $authServiceId;
-                    $authServiceError =
-                        Application::getInstance()->getContext()->getRequest()->get('auth_service_error');
-                    if (!empty($authServiceError)) {
-                        $this->arResult['ERROR_MESSAGE'] = $authManager->GetError(
-                            $this->arResult['CURRENT_SERVICE'],
-                            $authServiceError
-                        );
-                    } elseif (!$authManager->Authorize($authServiceId)) {
-                        global $APPLICATION;
-                        $ex = $APPLICATION->GetException();
-                        if ($ex) {
-                            $this->arResult['ERROR_MESSAGE'] = $ex->GetString();
-                        }
+        if ($services) {
+            $this->arResult['AUTH_SERVICES'] = $services;
+            foreach ($services as &$service) {
+                $service['ONCLICK'] = $this->renderDataLayerByType(DataLayer::SOCIAL_SERVICE_MAP[$service['ID']]
+                                                                   ?? '') . $service['ONCLICK'];
+            }
+            unset($service);
+
+            $authServiceId = Application::getInstance()->getContext()->getRequest()->get('auth_service_id');
+            if (
+                $authServiceId !== ''
+                && isset($authServiceId, $this->arResult['AUTH_SERVICES'][$authServiceId])
+            ) {
+                $this->arResult['CURRENT_SERVICE'] = $authServiceId;
+                $authServiceError = Application::getInstance()->getContext()->getRequest()->get('auth_service_error');
+                if ($authServiceError) {
+                    $this->arResult['ERROR_MESSAGE'] = $authManager->GetError(
+                        $this->arResult['CURRENT_SERVICE'],
+                        $authServiceError
+                    );
+                } elseif (!$authManager->Authorize($authServiceId)) {
+                    global $APPLICATION;
+                    $ex = $APPLICATION->GetException();
+                    if ($ex) {
+                        $this->arResult['ERROR_MESSAGE'] = $ex->GetString();
                     }
                 }
             }
