@@ -152,6 +152,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     </label>
                 </div>
             </div>
+            <input type="hidden" name="dadata" id="city-dadata" class="js-no-valid">
             <button class="b-button b-button--subscribe-delivery">Добавить</button>
         </form>
     </div>
