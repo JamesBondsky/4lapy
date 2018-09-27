@@ -145,6 +145,7 @@ class FourPawsCityDeliveryInfoComponent extends FourPawsComponent
                     'DELIVERY_DATE' => $deliveryResult->getDeliveryDate(),
                     'CODE'          => $deliveryResult->getDeliveryCode(),
                     'ZONE'          => $deliveryResult->getDeliveryZone(),
+                    'WEEK_DAYS'     => $deliveryResult->getWeekDays(),
                     'RESULT'        => $deliveryResult,
                 ];
             }
