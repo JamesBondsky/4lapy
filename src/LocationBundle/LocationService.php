@@ -26,6 +26,7 @@ use CBitrixLocationSelectorSearchComponent;
 use CIBlockElement;
 use Exception;
 use FourPaws\Adapter\DaDataLocationAdapter;
+use FourPaws\Adapter\Model\Output\BitrixLocation;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Enum\IblockCode;
@@ -1047,6 +1048,25 @@ class LocationService
     {
         return \json_encode((new DaDataLocationAdapter())->convertLocationArrayToDadataArray($location),
             JSON_OBJECT_AS_ARRAY);
+    }
+
+    /**
+     * @param array $data
+     *
+     * @return BitrixLocation
+     * @throws ApplicationCreateException
+     * @throws \RuntimeException
+     * @throws CityNotFoundException
+     */
+    public function getCityFromDadata(array $data): BitrixLocation
+    {
+        $result = (new DaDataLocationAdapter())->convertFromArray($data);
+
+        if (!$result->getCode()) {
+            throw new CityNotFoundException('City not found');
+        }
+
+        return $result;
     }
 
     /**
