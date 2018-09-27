@@ -18,6 +18,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\StockResult;
@@ -25,6 +26,7 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -33,6 +35,7 @@ use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\PaymentService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Enum\StoreLocationType;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -78,6 +81,11 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
     protected $pickup;
 
     /**
+     * @var LocationService
+     */
+    protected $locationService;
+
+    /**
      * FourPawsOrderShopListComponent constructor.
      *
      * @param null $component
@@ -97,6 +105,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         $this->orderSplitService = $serviceContainer->get(OrderSplitService::class);
         $this->deliveryService = $serviceContainer->get('delivery.service');
         $this->paymentService = $serviceContainer->get(PaymentService::class);
+        $this->locationService = $serviceContainer->get('location.service');
     }
 
     /**
@@ -155,17 +164,24 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         }
 
         $stores = $pickup->getBestShops();
+
         if (!$stores->isEmpty()) {
             $avgGpsN = 0;
             $avgGpsS = 0;
-
+            $locationCode = $this->locationService->getCurrentLocation();
+            $subregionCode = $this->locationService->findLocationSubRegion($locationCode)['CODE'] ?? '';
             $metroList = $this->getMetroInfo($stores);
 
             /** @var Store $store */
             $shopCount = 0;
             foreach ($stores as $store) {
                 try {
-                    $result['items'][] = $this->getShopData($pickup, $store, $metroList, false);
+                    $item = $this->getShopData($pickup, $store, $metroList, false);
+                    $item['location_type'] = (($store->getLocation() === $locationCode) || ($store->getSubRegion() && $store->getSubRegion() === $subregionCode))
+                        ? StoreLocationType::SUBREGIONAL
+                        : StoreLocationType::REGIONAL;
+                    $result['items'][] = $item;
+                    $result['offers'] = $this->getOfferInfo($pickup->getFullStockResult());
                     $shopCount++;
                     $avgGpsN += $store->getLongitude();
                     $avgGpsS += $store->getLatitude();
@@ -208,12 +224,19 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         $pickup = $pickup instanceof PickupResultInterface ? $pickup : $this->getPickupResult();
         if ($pickup) {
             $stores = $pickup->getBestShops();
+            $locationCode = $this->locationService->getCurrentLocation();
+            $subregionCode = $this->locationService->findLocationSubRegion($locationCode)['CODE'] ?? '';
             $metroList = $this->getMetroInfo($stores);
             /** @var Store $store */
             foreach ($stores as $store) {
                 try {
                     if ($store->getXmlId() === $xmlId) {
-                        $result['items'][] = $this->getShopData($pickup, $store, $metroList, true);
+                        $item = $this->getShopData($pickup, $store, $metroList, true);
+                        $item['location_type'] = (($store->getLocation() === $locationCode) || ($store->getSubRegion() && $store->getSubRegion() === $subregionCode))
+                            ? StoreLocationType::SUBREGIONAL
+                            : StoreLocationType::REGIONAL;
+                        $result['items'][] = $item;
+                        $result['offers'] = $this->getOfferInfo($pickup->getFullStockResult());
                     }
                 } catch (DeliveryNotAvailableException $e) {
                 }
@@ -224,6 +247,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
+     * @todo перевести на DTO
      * @param PickupResultInterface $pickup
      * @param Store                 $store
      * @param array                 $metroList
@@ -279,7 +303,6 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             $orderType = 'delay';
         }
 
-        $partsFull = $this->getItemData($fullResult->getStockResult());
         $partsDelayed = $this->getItemData($delayed);
 
         /**
@@ -329,7 +352,6 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             'order'             => $orderType,
             'parts_available'   => $partsAvailable,
             'parts_delayed'     => $partsDelayed,
-            'full'              => $partsFull,
             'price'             => WordHelper::numberFormat($price),
             'full_price'        => WordHelper::numberFormat($fullResult->getStockResult()->getPrice()),
             /* @todo поменять местами gps_s и gps_n */
@@ -431,10 +453,27 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         /** @var StockResult $item */
         foreach ($stockResultCollection as $item) {
             $result[] = [
-                'name'     => $item->getOffer()->getName(),
+                'id'       => $item->getOffer()->getId(),
                 'quantity' => $item->getAmount(),
                 'price'    => $item->getPrice(),
-                'weight'   => $item->getOffer()->getCatalogProduct()->getWeight(),
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param StockResultCollection $stockResultCollection
+     * @return array
+     */
+    protected function getOfferInfo(StockResultCollection $stockResultCollection): array
+    {
+        $result = [];
+        /** @var Offer $offer */
+        foreach ($stockResultCollection->getOffers(false) as $offer) {
+            $result[$offer->getId()] = [
+                'name' => $offer->getName(),
+                'weight' => $offer->getCatalogProduct()->getWeight()
             ];
         }
 

@@ -7,6 +7,7 @@ use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserGroupTable;
 use Bitrix\Main\UserTable;
+use Bitrix\Sale\Internals\FuserTable;
 use CUser;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -691,5 +692,31 @@ class UserRepository
         if ($result->count()) {
             throw new InvalidIdentifierException(sprintf('Wrong identifier %s passed', $id));
         }
+    }
+
+    /**
+     * @param int $FUserId
+     *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     *
+     * @return User
+     */
+    public function findByFUser(int $FUserId): ? User
+    {
+        $result = UserTable::getList([
+            'select' => ['*', 'UF_*'],
+            'filter' => ['FUSER.ID' => $FUserId],
+            'runtime' => [
+                new ReferenceField(
+                    'FUSER',
+                    FuserTable::class,
+                    ['=this.ID' => 'ref.USER_ID']
+                )
+            ],
+        ]);
+
+        return \current($this->collectionFactory($result)) ?: null;
     }
 }

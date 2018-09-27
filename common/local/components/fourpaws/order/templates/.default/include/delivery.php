@@ -148,7 +148,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                 </label>
             </div>
             <div class="b-input b-input--registration-form">
-                <input class="b-input__input-field b-input__input-field--registration-form js-housing js-no-valid"
+                <input class="b-input__input-field b-input__input-field--registration-form js-regular-field js-only-number js-housing js-no-valid"
                        id="order-address-part"
                        name="building"
                        type="text"
@@ -163,7 +163,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                 </label>
             </div>
             <div class="b-input b-input--registration-form">
-                <input class="b-input__input-field b-input__input-field--registration-form js-entrance js-no-valid"
+                <input class="b-input__input-field b-input__input-field--registration-form js-regular-field js-only-number js-entrance js-no-valid"
                        id="order-address-entrance"
                        name="porch"
                        value="<?= $storage->getPorch() ?>"/>
@@ -177,7 +177,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                 </label>
             </div>
             <div class="b-input b-input--registration-form">
-                <input class="b-input__input-field b-input__input-field--registration-form js-floor js-no-valid"
+                <input class="b-input__input-field b-input__input-field--registration-form js-regular-field js-only-number js-floor js-no-valid"
                        id="order-address-floor"
                        name="floor"
                        type="text"
@@ -193,7 +193,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                 </label>
             </div>
             <div class="b-input b-input--registration-form">
-                <input class="b-input__input-field b-input__input-field--registration-form js-office js-no-valid"
+                <input class="b-input__input-field b-input__input-field--registration-form js-regular-field js-only-number js-office js-no-valid"
                        id="order-address-apart"
                        name="apartment"
                        type="text"

@@ -31,6 +31,7 @@ use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Enum\UserGroup;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\SaleBundle\Discount\Gift;
@@ -41,6 +42,7 @@ use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SapBundle\Repository\ShareRepository;
+use FourPaws\UserBundle\Entity\Group;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -138,7 +140,7 @@ class BasketService implements LoggerAwareInterface
             $fields = $rewriteFields + $fields;
         }
 
-        $basket = $basket instanceof Basket ? $basket : $this->getBasket();
+        $basket = $basket ?? $this->getBasket();
 
         $oldBasketCodes = [];
         /** @var BasketItem $basketItem */
@@ -449,7 +451,7 @@ class BasketService implements LoggerAwareInterface
         static $storage;
         if (null === $storage || $renew) {
             $storage = [
-                'gift'   => [],
+                'gift' => [],
                 'detach' => [],
             ];
         }
@@ -533,6 +535,12 @@ class BasketService implements LoggerAwareInterface
 
     /**
      * @param int|User $userId
+     *
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      *
      * @return float
      */
@@ -664,50 +672,99 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
+     * Вернет true если пользователь имеет группу, которой нужно всегда начислять бонусы
+     *
+     * @param User $user
+     *
+     * @return bool
+     */
+    public function isUserGroupWithPermanentBonusRewarding(User $user): bool
+    {
+        return $user->getGroups()->exists(
+            function (/** @noinspection PhpUnusedParameterInspection */ $k, Group $group) {
+                return $group->getCode() === UserGroup::OPT_CODE;
+            }
+        );
+    }
+
+    /**
+     * @param BasketItem $basketItem
+     *
+     * @throws InvalidArgumentException
+     *
+     * @return Order
+     */
+    public function extractOrderFromBasketItem(BasketItem $basketItem): Order
+    {
+        /**
+         * @var $basketItemCollection BasketItemCollection
+         * @var $order Order
+         */
+        if (
+            !($basketItemCollection = $basketItem->getCollection())
+            ||
+            !($basket = $basketItemCollection->getBasket())
+            ||
+            !($order = $basket->getOrder())
+        ) {
+            throw new InvalidArgumentException('У элемента корзины не установлен заказ');
+        }
+        return $order;
+    }
+
+    /**
      *
      * @param BasketItem $basketItem
      * @param Order|null $order
      *
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
      * @throws InvalidArgumentException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      *
      * @return int
      */
     public function getBonusAwardingQuantity(BasketItem $basketItem, ?Order $order = null): int
     {
-        /** @var Offer $offer */
-        $offer = $this->getOfferCollection()->getById($basketItem->getProductId());
-
-        if (!$offer) {
-            $offer = (new OfferQuery())
-                ->withFilter(['=ID' => $basketItem->getProductId()])
-                ->exec()
-                ->getById($basketItem->getProductId());
-            if (!$offer) {
-                throw new InvalidArgumentException('Предложение не найдено');
+        if ($this->currentUserProvider->getCurrentFUserId() === (int) $basketItem->getFUserId()) {
+            try {
+                $user = $this->currentUserProvider->getCurrentUser();
+            } catch (NotAuthorizedException $e) {
+                // для неавторизованного не имеет смысла проверять
+                $user = false;
             }
-            $this->getOfferCollection()->add($offer);
-        }
-        $resultQuantity = 0;
-        if ($offer->isBonusExclude()) {
-            $basketDiscounts = true;
         } else {
-            /**
-             * @var BasketItemCollection $basketItemCollection
-             * @var Order $order
-             * @var Basket $basket
-             */
-            if (
-                !$order
-                &&
-                (
-                    !($basketItemCollection = $basketItem->getCollection())
-                    ||
-                    !($basket = $basketItemCollection->getBasket())
-                    ||
-                    !($order = $basket->getOrder())
-                )
-            ) {
-                throw new InvalidArgumentException('У элемента корзины не установлен заказ');
+            $user = $this->currentUserProvider->getUserRepository()->findByFUser($basketItem->getFUserId());
+        }
+
+        $resultQuantity = 0;
+        /** LP23-81 */
+        if ($user && $this->isUserGroupWithPermanentBonusRewarding($user)) {
+            $resultQuantity = (int)$basketItem->getQuantity();
+            $basketDiscounts = false;
+        } else {
+            /** @var Offer $offer */
+            $offer = $this->getOfferCollection()->getById($basketItem->getProductId());
+
+            if (!$offer) {
+                $offer = (new OfferQuery())
+                    ->withFilter(['=ID' => $basketItem->getProductId()])
+                    ->exec()
+                    ->getById($basketItem->getProductId());
+                if (!$offer) {
+                    throw new InvalidArgumentException('Предложение не найдено');
+                }
+                $this->getOfferCollection()->add($offer);
+            }
+        }
+
+        if ($resultQuantity === 0 && isset($offer) && $offer->isBonusExclude()) {
+            $basketDiscounts = true;
+        } elseif ($resultQuantity === 0) {
+            if (!$order) {
+                $order = $this->extractOrderFromBasketItem($basketItem);
             }
 
             if (
@@ -876,14 +933,16 @@ class BasketService implements LoggerAwareInterface
 
     /**
      * @param BasketItem $basketItem
+     *
      * @return bool
-     * @throws ArgumentException
-     * @throws ArgumentNullException
      */
     public function isGiftProduct(BasketItem $basketItem): bool
     {
         $xmlId = $this->getBasketItemXmlId($basketItem);
 
+        /**
+         * @todo выпилить 1 октября 2018 года
+         */
         return !\in_array($xmlId, ['3005425', '3005437', '3005424', '3005436'], true) && // @todo костыль для акции "добролап"
             ($xmlId[0] === '3');
     }
@@ -1048,7 +1107,7 @@ class BasketService implements LoggerAwareInterface
      *
      * @return array|null
      */
-    public function getBasketPropByCode(int $basketItemId, string $propCode) : ?array
+    public function getBasketPropByCode(int $basketItemId, string $propCode): ?array
     {
         try {
             $res = BasketPropertyTable::query()
@@ -1056,7 +1115,7 @@ class BasketService implements LoggerAwareInterface
                 ->where('BASKET_ID', $basketItemId)
                 ->setSelect(['*'])
                 ->exec();
-            if($res->getSelectedRowsCount() === 0){
+            if ($res->getSelectedRowsCount() === 0) {
                 return null;
             }
             return $res->fetch();
@@ -1073,7 +1132,7 @@ class BasketService implements LoggerAwareInterface
      *
      * @return bool
      */
-    public function isBasketPropEmpty(int $basketItemId, string $propCode) : bool
+    public function isBasketPropEmpty(int $basketItemId, string $propCode): bool
     {
         $value = $this->getBasketPropByCode($basketItemId, $propCode);
         return $value === null || empty($value);
@@ -1081,6 +1140,7 @@ class BasketService implements LoggerAwareInterface
 
     /**
      * @param Basket|null $basket
+     *
      * @return array
      */
     public function getBasketProducts(?Basket $basket = null): array
@@ -1132,7 +1192,7 @@ class BasketService implements LoggerAwareInterface
 
             /** @var Share $share */
             foreach ($shareCollection as $share) {
-                if(\in_array($discountId, $share->getPropertyBasketRules())) {
+                if (\in_array($discountId, $share->getPropertyBasketRules())) {
                     $result = $share->isBonus();
                     break;
                 }

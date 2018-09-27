@@ -441,7 +441,7 @@ class ScheduleResultService implements LoggerAwareInterface
                     /**
                      * Дата отгрузки со склада
                      */
-                    $shipmentDate = $schedule->getReceiver()->getShipmentDate($date);
+                    $shipmentDate = $this->storeService->getStoreShipmentDate($schedule->getReceiver(), $date);
 
                     $shipmentDate->modify(sprintf('+%s days', $modifier));
 

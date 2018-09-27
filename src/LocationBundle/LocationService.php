@@ -256,7 +256,7 @@ class LocationService
                 $stores = $storeService->getStoresByLocation(
                     $element['PROPERTY_LOCATION_VALUE'],
                     StoreService::TYPE_SHOP
-                );
+                )->getStores();
                 /** @var Store $store */
                 foreach ($stores as $store) {
                     $storeCodes[] = $store->getXmlId();
@@ -282,7 +282,7 @@ class LocationService
                 $stores = $storeService->getStoresByLocation(
                     $element['PROPERTY_LOCATION_VALUE'],
                     StoreService::TYPE_SHOP
-                );
+                )->getStores();
                 /** @var Store $store */
                 foreach ($stores as $store) {
                     $storeCodes[] = $store->getXmlId();
@@ -434,7 +434,9 @@ class LocationService
                             '_TYPE_ID'   => 'TYPE.ID',
                             '_TYPE_CODE' => 'TYPE.CODE',
                             '_TYPE_NAME' => 'TYPE.NAME.NAME',
-                        ])->exec();
+                        ])
+                        ->setOrder(['_TYPE_ID' => 'ASC'])
+                        ->exec();
                     while ($parentItem = $parentRes->fetch()) {
                         $parentItem['NAME'] = $parentItem['DISPLAY'];
                         unset($parentItem['DISPLAY']);

@@ -1044,7 +1044,7 @@ class DeliveryService implements LoggerAwareInterface
     protected function getDeliveryZoneCode(string $locationCode, array $zones = [], $skipLocations = true): string
     {
         if (($location = $this->locationService->findLocationByCode($locationCode)) && $location['PATH']) {
-            foreach (\array_reverse($location['PATH']) as $pathItem) {
+            foreach ($location['PATH'] as $pathItem) {
                 $deliveryLocationPath[] = $pathItem['CODE'];
             }
             $deliveryLocationPath[] = $location['CODE'];
