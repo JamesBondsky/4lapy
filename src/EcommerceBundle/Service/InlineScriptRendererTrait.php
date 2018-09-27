@@ -59,9 +59,10 @@ trait InlineScriptRendererTrait
 
         try {
             $render = \trim($this->renderer->render('EcommerceBundle:Scripts:inline.script.php', \compact('data', 'addScriptTag')));
-        } catch (RuntimeException $e) {
+        } catch (\Throwable $e) {
             $this->log()->error(\sprintf(
-                'Renderer error: %s',
+                'Render script error: %s: %s',
+                \get_class($e),
                 $e->getMessage()
             ));
         }
@@ -75,14 +76,23 @@ trait InlineScriptRendererTrait
      * @param bool   $addScriptTag
      *
      * @return string
-     *
-     * @throws RuntimeException
      */
     public function renderPreset($data, string $presetName, bool $addScriptTag): string
     {
         /** @noinspection PhpParamsInspection */
         $data = $this->serializer->serialize($data, 'json');
 
-        return \trim($this->renderer->render('EcommerceBundle:Scripts:preset.inline.script.php', \compact('data', 'presetName', 'addScriptTag')));
+        $render = '';
+        try {
+            $render = \trim($this->renderer->render('EcommerceBundle:Scripts:preset.inline.script.php', \compact('data', 'presetName', 'addScriptTag')));
+        } catch (\Throwable $e) {
+            $this->log()->error(\sprintf(
+                'Render preset error: %s: %s',
+                \get_class($e),
+                $e->getMessage()
+            ));
+        }
+
+        return $render;
     }
 }
