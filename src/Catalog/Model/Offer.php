@@ -1650,7 +1650,7 @@ class Offer extends IblockElement
             $pattern = '/' . preg_quote($brandName, '\\') . '/i';
             $parts = preg_split($pattern, $name);
             $parts[0] .= ' ' . $brandName;
-            $name = \implode(' ', \array_map('trim', $parts));
+            $name = \implode(' ', \array_filter(\array_map('trim', $parts)));
         }
 
         return $name;
