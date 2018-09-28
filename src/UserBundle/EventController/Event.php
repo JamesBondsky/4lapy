@@ -114,8 +114,8 @@ class Event extends BaseServiceHandler
         static::initHandlerCompatible('OnBeforeUserLogin', [self::class, 'logoutBeforeAuth'], 'main');
         static::initHandlerCompatible('OnBeforeUserLoginByHash', [self::class, 'logoutBeforeAuth'], 'main');
 
-        /** установка неавторизованному пользователю соотвествующей группы */
-        static::initHandlerCompatible('OnBeforeProlog', [self::class, 'addNotAuthorizedGroup'], 'main');
+        /** установка неавторизованному пользователю соотвествующей группы и удаление лишних групп у группы VIP */
+        static::initHandlerCompatible('OnBeforeProlog', [self::class, 'applyDynamicGroups'], 'main');
 
         /** поиск юзера по email при регистрации из соцсетей */
         static::initHandlerCompatible('OnFindSocialservicesUser', [self::class, 'findSocialServicesUser'],
@@ -264,12 +264,9 @@ class Event extends BaseServiceHandler
             $_SESSION['NOT_MANZANA_UPDATE'] = false;
         }
         if (!$_SESSION['NOT_MANZANA_UPDATE']) {
-            try {
-                $container = App::getInstance()->getContainer();
-            } catch (ApplicationCreateException $e) {
-                /** если вызывается эта ошибка вероятно умерло все */
-                return false;
-            }
+
+            $container = App::getInstance()->getContainer();
+
             unset($_SESSION['NOT_MANZANA_UPDATE']);
 
             $userService = $container->get(CurrentUserProviderInterface::class);
@@ -310,38 +307,35 @@ class Event extends BaseServiceHandler
 
         $notReplacedGroups = [static::GROUP_ADMIN, static::GROUP_TECHNICAL_USERS, static::GROUP_FRONT_OFFICE_USERS];
         if (!empty($fields['PERSONAL_PHONE']) || !empty($fields['EMAIL'])) {
-            try {
-                $container = App::getInstance()->getContainer();
-                $userService = $container->get(UserSearchInterface::class);
-                $user = $userService->getUserRepository()->find((int)$fields['ID']);
 
-                if ($user instanceof User && $user->getActive()) {
-                    foreach ($notReplacedGroups as $groupId) {
-                        foreach ($user->getGroups() as $group) {
-                            if ($group->getId() === $groupId) {
-                                return;
-                            }
-                        }
-                    }
-                    $oldEmail = $user->getEmail();
-                    $oldPhone = $user->getPersonalPhone();
-                    $oldLogin = $user->getLogin();
-                    if (!empty($fields['PERSONAL_PHONE'])) {
-                        if ($oldPhone !== $fields['PERSONAL_PHONE'] || $fields['PERSONAL_PHONE'] !== $oldLogin) {
-                            $fields['LOGIN'] = $fields['PERSONAL_PHONE'];
-                        }
-                    } else {
-                        if (!empty($oldPhone)) {
-                            $fields['LOGIN'] = $oldPhone;
-                        } elseif (!empty($fields['EMAIL'])) {
-                            $fields['LOGIN'] = $fields['EMAIL'];
-                        } elseif (!empty($oldEmail)) {
-                            $fields['LOGIN'] = $oldEmail;
+            $container = App::getInstance()->getContainer();
+            $userService = $container->get(UserSearchInterface::class);
+            $user = $userService->getUserRepository()->find((int)$fields['ID']);
+
+            if ($user instanceof User && $user->getActive()) {
+                foreach ($notReplacedGroups as $groupId) {
+                    foreach ($user->getGroups() as $group) {
+                        if ($group->getId() === $groupId) {
+                            return;
                         }
                     }
                 }
-            } catch (ApplicationCreateException $e) {
-                /** если вызывается эта ошибка вероятно умерло все */
+                $oldEmail = $user->getEmail();
+                $oldPhone = $user->getPersonalPhone();
+                $oldLogin = $user->getLogin();
+                if (!empty($fields['PERSONAL_PHONE'])) {
+                    if ($oldPhone !== $fields['PERSONAL_PHONE'] || $fields['PERSONAL_PHONE'] !== $oldLogin) {
+                        $fields['LOGIN'] = $fields['PERSONAL_PHONE'];
+                    }
+                } else {
+                    if (!empty($oldPhone)) {
+                        $fields['LOGIN'] = $oldPhone;
+                    } elseif (!empty($fields['EMAIL'])) {
+                        $fields['LOGIN'] = $fields['EMAIL'];
+                    } elseif (!empty($oldEmail)) {
+                        $fields['LOGIN'] = $oldEmail;
+                    }
+                }
             }
         }
     }
@@ -515,7 +509,7 @@ class Event extends BaseServiceHandler
     /**
      * @throws \Exception
      */
-    public function addNotAuthorizedGroup()
+    public function applyDynamicGroups()
     {
         /** @todo запретить устанавливать эту группу пользователям */
         global $USER;
