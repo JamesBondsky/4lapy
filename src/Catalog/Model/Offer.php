@@ -1573,14 +1573,14 @@ class Offer extends IblockElement
      */
     public function getFlavourWithWeight(): string
     {
-        $flavours = $this->getProduct()->getFlavour();
-        $flavourName    = [];
-        foreach ($flavours as $flavour) {
-            $flavourName[] = $flavour->getName();
-        }
-        $flavour = implode('/', $flavourName);
-        $dimension = $this->getPackageDimension();
-        return \sprintf('%s, %s', $flavour, $dimension);
+        $flavourName = [];
+
+        $this->getProduct()->getFlavour()->map(function (HlbReferenceItem $item) use (&$flavourName) {
+            $flavourName[] = $item->getName();
+        });
+
+        return \sprintf('%s, %s', \implode('/', $flavourName), $this->getPackageDimension());
+
     }
 
     /**
