@@ -550,7 +550,7 @@ class OrderStorageService
                     $stores = $this->deliveryService->getDpdTerminalsByLocation($storage->getCityCode());
                     $selectedStore = $this->deliveryService->getDpdTerminalByCode($storage->getDeliveryPlaceCode());
                 } else {
-                    $stores = $this->storeService->getStoresByLocation($storage->getCityCode());
+                    $stores = $this->storeService->getStoresByLocation($storage->getCityCode())->getStores();
                     $selectedStore = $this->storeService->getStoreByXmlId($storage->getDeliveryPlaceCode());
                 }
 

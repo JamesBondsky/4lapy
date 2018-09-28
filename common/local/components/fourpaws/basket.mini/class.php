@@ -10,18 +10,21 @@ declare(strict_types=1);
 
 namespace FourPaws\Components;
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
-use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
 use CBitrixComponent;
 use FourPaws\App\Application;
 use FourPaws\AppBundle\Bitrix\FourPawsComponent;
-use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
-use FourPaws\Catalog\Model\Offer;
-use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\SaleBundle\Exception\BasketUserInitializeException;
+use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\SaleBundle\Service\BasketUserService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -34,16 +37,15 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class BasketMiniComponent extends FourPawsComponent
 {
-    /** @var BasketService */
-    public $basketService;
+    /**
+     * @var BasketService
+     */
+    protected $basketService;
 
-    /** @var array */
-    public $offers;
-
-    /** @var array $images */
-    private $images;
-    /** @var Basket */
-    private $basketItemsWithoutGifts;
+    /**
+     * @var BasketUserService
+     */
+    protected $basketUserService;
 
     /**
      * BasketMiniComponent constructor.
@@ -59,105 +61,59 @@ class BasketMiniComponent extends FourPawsComponent
 
         $container = Application::getInstance()->getContainer();
         $this->basketService = $container->get(BasketService::class);
+        $this->basketUserService = $container->get(BasketUserService::class);
     }
 
+    /**
+     * @param $params
+     * @return array
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws BasketUserInitializeException
+     */
     public function onPrepareComponentParams($params): array
     {
         $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 0;
         $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'N';
+        $params['FUSER_ID'] = $params['FUSER_ID'] ?? $this->basketUserService->getCurrentUserId();
 
         return parent::onPrepareComponentParams($params);
     }
 
     /**
-     * Prepare component result
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws \Exception
+     * @throws InvalidArgumentException
+     * @throws \RuntimeException
      */
     public function prepareResult(): void
     {
         /** @var Basket $basket */
-        $basket = $this->arParams['BASKET'];
-        if (null === $basket || !\is_object($basket) || !($basket instanceof Basket)) {
-            $basket = $this->basketService->getBasket();
+        $basket = $this->basketService->getBasket(false, $this->arParams['FUSER_ID']);
+
+        $basketItems = [];
+        /** @var BasketItem $basketItem */
+        foreach ($basket as $basketItem) {
+            $basketItems[] = [
+                'ID'              => $basketItem->getId(),
+                'NAME'            => $basketItem->getField('NAME'),
+                'WEIGHT'          => $basketItem->getWeight(),
+                'PRODUCT_ID'      => $basketItem->getProductId(),
+                'PRICE'           => $basketItem->getPrice(),
+                'BASKE_PRICE'     => $basketItem->getBasePrice(),
+                'QUANTITY'        => $basketItem->getQuantity(),
+                'IS_GIFT'         => $basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT']['VALUE']
+                    ? BitrixUtils::BX_BOOL_TRUE
+                    : BitrixUtils::BX_BOOL_FALSE,
+                'DETAIL_PAGE_URL' => $basketItem->getField('DETAIL_PAGE_URL'),
+            ];
         }
-        $this->log()->info('no cache', ['items' => $basket->getQuantityList(), 'fuser' => $basket->getFUserId()]); //debug
+
         TaggedCacheHelper::addManagedCacheTag('basket:' . $basket->getFUserId());
-        $this->arResult['BASKET'] = $basket;
-    }
-
-    /**
-     * @param int $offerId
-     *
-     * @return Offer|null
-     */
-    public function getOffer(int $offerId): ?Offer
-    {
-        if ($offerId <= 0) {
-            return null;
-        }
-        if (!isset($this->offers[$offerId])) {
-            $this->offers[$offerId] = OfferQuery::getById($offerId,
-                [
-                    'ID',
-                    'IBLOCK_ID',
-                    'PROPERTY_IMG',
-                    'PROPERTY_CML2_LIK',
-                ]);
-        }
-
-        return $this->offers[$offerId];
-    }
-
-    /**
-     * @param int $offerId
-     *
-     * @return ResizeImageDecorator|null
-     */
-    public function getImage(int $offerId): ?ResizeImageDecorator
-    {
-        if ($offerId <= 0) {
-            return null;
-        }
-        if (!isset($this->images[$offerId])) {
-            $offer = $this->getOffer($offerId);
-            $image = null;
-            if ($offer !== null) {
-                $images = $offer->getResizeImages(110, 110);
-                $this->images[$offerId] = $images->first();
-            }
-        }
-
-        return $this->images[$offerId];
-    }
-
-    /**
-     *
-     *
-     * @param Basket $basket
-     *
-     * @return int
-     */
-    public function getBasketCountWithoutGifts(Basket $basket): int
-    {
-        return $this->getBasketItemsWithoutGifts($basket)->count();
-    }
-
-    /**
-     * @param Basket $basket
-     *
-     * @return BasketBase
-     */
-    public function getBasketItemsWithoutGifts(Basket $basket): BasketBase
-    {
-        if ($this->basketItemsWithoutGifts === null) {
-            $this->basketItemsWithoutGifts = Basket::create($basket->getSiteId());
-            /** @var BasketItem $basketItem */
-            foreach ($basket->getBasketItems() as $basketItem) {
-                if ($this->basketService->isBasketPropEmpty($basketItem->getId(), 'IS_GIFT')) {
-                    $this->basketItemsWithoutGifts->addItem($basketItem);
-                }
-            }
-        }
-
-        return $this->basketItemsWithoutGifts;
+        $this->arResult = [
+            'BASKET' => $basketItems,
+        ];
     }
 }

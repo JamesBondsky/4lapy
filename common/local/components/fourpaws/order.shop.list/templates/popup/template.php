@@ -104,14 +104,11 @@ use FourPaws\DeliveryBundle\Collection\StockResultCollection;
                             <?php include 'include/shop.php' ?>
                         </ul>
                         <h4 class="b-tab-delivery__addition-header js-header-part-list">
-                            Заказ в наличии частично
+                            Заказ будет доступен позже в магазинах
                         </h4>
                         <ul class="b-delivery-list b-delivery-list--order js-delivery-part-list">
                             <?php include 'include/shop_partial.php' ?>
                         </ul>
-                        <h4 class="b-tab-delivery__addition-header js-header-delay-list">
-                            Требуется ждать поставки со склада
-                        </h4>
                         <ul class="b-delivery-list b-delivery-list--order js-delivery-delay-list">
                             <?php include 'include/shop_delayed.php' ?>
                         </ul>

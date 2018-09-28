@@ -27,6 +27,10 @@ services:
         public: true
         arguments: ['@FourPaws\SaleBundle\Service\BasketService']
 
+    FourPaws\SaleBundle\Service\BasketUserService:
+        class: FourPaws\SaleBundle\Service\BasketUserService
+        public: true
+
     FourPaws\SaleBundle\Service\NotificationService:
         class: FourPaws\SaleBundle\Service\NotificationService
         public: true

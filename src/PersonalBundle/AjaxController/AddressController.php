@@ -9,6 +9,7 @@ namespace FourPaws\PersonalBundle\AjaxController;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Security\SecurityException;
+use FourPaws\Adapter\Model\Output\BitrixLocation;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -16,6 +17,7 @@ use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -42,17 +44,29 @@ class AddressController extends Controller
      */
     private $addressService;
 
-    /** @var AjaxMess */
+    /**
+     * @var AjaxMess
+     */
     private $ajaxMess;
-    /** @var UserAuthorizationInterface */
+
+    /**
+     * @var UserAuthorizationInterface
+     */
     private $userAuthorization;
+
+    /**
+     * @var LocationService
+     */
+    private $locationService;
 
     public function __construct(
         AddressService $addressService,
+        LocationService $locationService,
         UserAuthorizationInterface $userAuthorization,
         AjaxMess $ajaxMess
     ) {
         $this->addressService = $addressService;
+        $this->locationService = $locationService;
         $this->userAuthorization = $userAuthorization;
         $this->ajaxMess = $ajaxMess;
     }
@@ -69,13 +83,15 @@ class AddressController extends Controller
         if (!$this->userAuthorization->isAuthorized()) {
             return $this->ajaxMess->getNeedAuthError();
         }
-        $data = $request->request->all();
-        if (empty($data)) {
-            return $this->ajaxMess->getEmptyDataError();
+
+        $fields = $request->request->all();
+        if ($location = $this->getDadataLocation($request)) {
+            $fields['UF_CITY'] = $location->getName();
+            $fields['UF_CITY_LOCATION'] = $location->getCode();
         }
 
         try {
-            if ($this->addressService->addFromArray($data)) {
+            if ($this->addressService->addFromArray($fields)) {
                 return JsonSuccessResponse::create(
                     'Адрес доставки добавлен',
                     200,
@@ -114,15 +130,15 @@ class AddressController extends Controller
         if (!$this->userAuthorization->isAuthorized()) {
             return $this->ajaxMess->getNeedAuthError();
         }
-        $data = $request->request->all();
-        if (empty($data)) {
-            return $this->ajaxMess->getEmptyDataError();
+
+        $fields = $request->request->all();
+        if ($location = $this->getDadataLocation($request)) {
+            $fields['UF_CITY'] = $location->getName();
+            $fields['UF_CITY_LOCATION'] = $location->getCode();
         }
-        if ((int)$data['ID'] < 1) {
-            return $this->ajaxMess->getNotIdError(' для обновления');
-        }
+
         try {
-            if ($this->addressService->update($data)) {
+            if ($this->addressService->update($fields)) {
                 return JsonSuccessResponse::create(
                     'Адрес доставки обновлен',
                     200,
@@ -189,5 +205,26 @@ class AddressController extends Controller
         }
 
         return $this->ajaxMess->getSystemError();
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @return BitrixLocation
+     * @throws ApplicationCreateException
+     * @throws \RuntimeException
+     */
+    protected function getDadataLocation(Request $request): ?BitrixLocation
+    {
+        $result = null;
+        try {
+            $dadata = json_decode($request->get('dadata', ''), true);
+            if ($dadata && \is_array($dadata)) {
+                $result = $this->locationService->getCityFromDadata($dadata);
+            }
+        } catch (CityNotFoundException $e) {
+        }
+
+        return $result;
     }
 }

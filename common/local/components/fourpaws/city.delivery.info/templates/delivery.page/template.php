@@ -28,7 +28,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         if ($delivery = $arResult['DELIVERY']) {
             include __DIR__ . '/include/delivery-info.php';
         }
-        if ($pickup = $arResult['CURRENT']['PICKUP']) {
+        if ($pickup = $arResult['PICKUP']) {
             include __DIR__ . '/include/pickup-info.php';
         }
         ?>

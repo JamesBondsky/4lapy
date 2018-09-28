@@ -388,7 +388,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             return true;
         }
 
-        return $offer->isByRequest();
+        return false;
     }
 
     /**

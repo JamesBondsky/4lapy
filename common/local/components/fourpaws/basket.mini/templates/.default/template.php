@@ -3,45 +3,39 @@
 }
 
 /**
- * @global BasketMiniComponent $component
- *
  * @var array $arResult
  * @var array $arParams
- * @var Basket $basket
  */
 
-use Bitrix\Sale\Basket;
-use Bitrix\Sale\BasketItem;
-use FourPaws\Components\BasketMiniComponent;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
 
-$basket = $arResult['BASKET'];
-/** @var Basket $orderableItems */
-$orderableItems = $component->getBasketItemsWithoutGifts($basket->getOrderableItems());
+$itemCount = count($arResult['BASKET']);
 
-$countWithoutGifts =  $component->getBasketCountWithoutGifts($orderableItems);
-$hasItems = $countWithoutGifts > 0;
 if (true !== $arParams['IS_AJAX']) {
     echo '<div class="b-header-info__item b-header-info__item--cart">';
 } ?>
-    <a class="b-header-info__link<?php if ($hasItems) { ?> js-open-popover<?php } ?>"
+    <a class="b-header-info__link<?= $itemCount ? ' js-open-popover ' : '' ?>"
        href="<?= $arParams['PATH_TO_BASKET'] ?>" title="Корзина">
         <span class="b-icon">
             <?= new SvgDecorator('icon-cart', 16, 16) ?>
         </span>
         <span class="b-header-info__inner">Корзина</span>
         <span class="b-header-info__number js-count-products">
-            <?= $countWithoutGifts; ?>
+            <?= $itemCount ?>
         </span>
     </a>
-<?php if ($hasItems) {?>
+<?php if ($itemCount) { ?>
     <div class="b-popover b-popover--cart js-popover">
         <div class="b-cart-popover">
             <span class="b-cart-popover__amount">
-                <?= $countWithoutGifts ?>
+                <?= $itemCount ?>
                 <?= WordHelper::declension(
-                    $countWithoutGifts, ['Товар', 'Товара', 'Товаров']
+                    $itemCount, [
+                        'Товар',
+                        'Товара',
+                        'Товаров',
+                    ]
                 ) ?>
             </span>
             <span class="b-cart-popover__link" style="width: 58%">
@@ -57,39 +51,36 @@ if (true !== $arParams['IS_AJAX']) {
                 Оформить заказ
             </a>
             <?php
-            if ($hasItems) {
-                /** @var BasketItem $basketItem */
-                foreach ($orderableItems->getBasketItems() as $basketItem) {
-                    $offer = $component->getOffer((int)$basketItem->getProductId());
-                    $image = $component->getImage((int)$basketItem->getProductId()); ?>
+            if ($itemCount) {
+                foreach ($arResult['BASKET'] as $item) { ?>
                     <div class="b-cart-item">
                         <div class="b-cart-item__image-wrapper">
-                            <?php if (null !== $image) { ?>
+                            <?php if ($item['IMAGE']) { ?>
                                 <img class="b-cart-item__image"
-                                     src="<?= $image ?>"
-                                     alt="<?= $basketItem->getField('NAME') ?>"
-                                     title="<?= $basketItem->getField('NAME') ?>"/>
+                                     src="<?= $item['IMAGE'] ?>"
+                                     alt="<?= $item['NAME'] ?>"
+                                     title="<?= $item['NAME'] ?>"/>
                             <?php } ?>
                         </div>
                         <div class="b-cart-item__info">
                             <div class="b-clipped-text b-clipped-text--cart-popover">
                                 <a class="b-cart-item__name"
-                                   href="<?= $basketItem->getField('DETAIL_PAGE_URL') ?>"
-                                   title="<?= $basketItem->getField('NAME') ?>">
-                                    <?php if ($offer) { ?>
-                                        <span class="span-strong"><?= $offer->getProduct()->getBrandName() ?> </span>
+                                   href="<?= $item['DETAIL_PAGE_URL'] ?>"
+                                   title="<?= $item['NAME'] ?>">
+                                    <?php if ($item['BRAND']) { ?>
+                                        <span class="span-strong"><?= $item['BRAND'] ?> </span>
                                     <?php } ?>
-                                    <?= $basketItem->getField('NAME') ?>
+                                    <?= $item['NAME'] ?>
                                 </a>
                             </div>
-                            <?php if ($basketItem->getQuantity() > 0 && $basketItem->getWeight() > 0) { ?>
+                            <?php if ($item['WEIGHT'] > 0) { ?>
                                 <span class="b-cart-item__weight">
                                     <?= WordHelper::showWeight(
-                                        $basketItem->getWeight() * $basketItem->getQuantity(), true
+                                        $item['WEIGHT'] * $item['QUANTITY'], true
                                     ) ?>
                                 </span>
                             <?php } ?>
-                            <span class="b-cart-item__amount">(<?= $basketItem->getQuantity() ?> шт.)</span>
+                            <span class="b-cart-item__amount">(<?= $item['QUANTITY'] ?> шт.)</span>
                         </div>
                     </div>
                 <?php }
