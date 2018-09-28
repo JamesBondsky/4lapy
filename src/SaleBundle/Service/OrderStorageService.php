@@ -492,6 +492,31 @@ class OrderStorageService
     /**
      * @param OrderStorage $storage
      *
+     * @return PickupResultInterface|null
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws DeliveryNotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     * @throws UserMessageException
+     */
+    public function getPickupDelivery(OrderStorage $storage): ?PickupResultInterface
+    {
+        $result = null;
+        foreach ($this->getDeliveries($storage) as $delivery) {
+            if ($delivery instanceof PickupResultInterface) {
+                $result = $delivery;
+                break;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param OrderStorage $storage
+     *
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws DeliveryNotFoundException

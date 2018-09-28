@@ -37,6 +37,7 @@ use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
+use FourPaws\SaleBundle\Service\ShopInfoService;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Psr\Log\LoggerAwareInterface;
@@ -70,6 +71,11 @@ class OrderController extends Controller implements LoggerAwareInterface
     private $userAuthProvider;
 
     /**
+     * @var ShopInfoService
+     */
+    private $shopInfoService;
+
+    /**
      * @var DeliveryService
      */
     private $deliveryService;
@@ -86,19 +92,23 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @param DeliveryService            $deliveryService
      * @param OrderStorageService        $orderStorageService
      * @param UserAuthorizationInterface $userAuthProvider
-     * @param ReCaptchaService         $recaptcha
+     * @param ShopInfoService            $shopInfoService
+     * @param ReCaptchaService           $recaptcha
      */
     public function __construct(
         OrderService $orderService,
         DeliveryService $deliveryService,
         OrderStorageService $orderStorageService,
         UserAuthorizationInterface $userAuthProvider,
+        ShopInfoService $shopInfoService,
         ReCaptchaService $recaptcha
-    ) {
+    )
+    {
         $this->orderService = $orderService;
         $this->deliveryService = $deliveryService;
         $this->orderStorageService = $orderStorageService;
         $this->userAuthProvider = $userAuthProvider;
+        $this->shopInfoService = $shopInfoService;
         $this->recaptcha = $recaptcha;
     }
 
@@ -112,13 +122,16 @@ class OrderController extends Controller implements LoggerAwareInterface
      */
     public function storeSearchAction(): JsonResponse
     {
-        \CBitrixComponent::includeComponentClass('fourpaws:order.shop.list');
-        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-        $shopListClass = new \FourPawsOrderShopListComponent();
+        $storage = $this->orderStorageService->getStorage();
 
         return JsonSuccessResponse::createWithData(
             'Подгрузка успешна',
-            $shopListClass->getShopsInfo()
+            $this->shopInfoService->toArray(
+                $this->shopInfoService->getShopInfo(
+                    $storage,
+                    $this->orderStorageService->getPickupDelivery($storage)
+                )
+            )
         );
     }
 
@@ -141,13 +154,18 @@ class OrderController extends Controller implements LoggerAwareInterface
      */
     public function storeInfoAction(Request $request): JsonResponse
     {
-        \CBitrixComponent::includeComponentClass('fourpaws:order.shop.list');
-        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-        $shopListClass = new \FourPawsOrderShopListComponent();
+        $storage = $this->orderStorageService->getStorage();
+        $selectedStore = $request->get('shop', '');
 
         return JsonSuccessResponse::createWithData(
             'Подгрузка успешна',
-            $shopListClass->getShopInfo($request->get('shop') ?? '')
+            $this->shopInfoService->toArray(
+                $this->shopInfoService->getOneShopInfo(
+                    $selectedStore,
+                    $storage,
+                    $this->orderStorageService->getPickupDelivery($storage)
+                )
+            )
         );
     }
 
@@ -285,7 +303,10 @@ class OrderController extends Controller implements LoggerAwareInterface
     public function validateDeliveryAction(Request $request): JsonResponse
     {
         $currentStep = OrderStorageEnum::DELIVERY_STEP;
-        [$validationErrors, $realStep] = $this->fillStorage(
+        [
+            $validationErrors,
+            $realStep,
+        ] = $this->fillStorage(
             $this->orderStorageService->getStorage(),
             $request,
             $currentStep
@@ -332,7 +353,10 @@ class OrderController extends Controller implements LoggerAwareInterface
     {
         $currentStep = OrderStorageEnum::PAYMENT_STEP;
         $storage = $this->orderStorageService->getStorage();
-        [$validationErrors, $realStep] = $this->fillStorage(
+        [
+            $validationErrors,
+            $realStep,
+        ] = $this->fillStorage(
             $storage,
             $request,
             $currentStep
@@ -350,8 +374,9 @@ class OrderController extends Controller implements LoggerAwareInterface
             $order = $this->orderService->createOrder($storage);
         } catch (OrderCreateException|OrderSplitException $e) {
             $this->log()->error(sprintf('failed to create order: %s', $e->getMessage()), [
-                'storage' => $this->orderStorageService->storageToArray($storage)
+                'storage' => $this->orderStorageService->storageToArray($storage),
             ]);
+
             return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Ошибка при создании заказа']]);
         }
 
@@ -423,6 +448,9 @@ class OrderController extends Controller implements LoggerAwareInterface
             $step = $e->getRealStep();
         }
 
-        return [$errors, $step];
+        return [
+            $errors,
+            $step,
+        ];
     }
 }
