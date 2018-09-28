@@ -1580,7 +1580,6 @@ class Offer extends IblockElement
         });
 
         return \sprintf('%s, %s', \implode('/', $flavourName), $this->getPackageDimension());
-
     }
 
     /**
