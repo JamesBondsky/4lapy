@@ -199,14 +199,20 @@ class ShopInfoService
         $result = new ShopList();
 
         if ($pickupResult->isSuccess()) {
-            $avgLatitude = 0;
-            $avgLongitude = 0;
             $locationCode = $this->locationService->getCurrentLocation();
             $subregionCode = $this->locationService->findLocationSubRegion($locationCode)['CODE'] ?? '';
+            $regionCode = $this->locationService->findLocationRegion($locationCode)['CODE'] ?? '';
             $metroList = $this->getMetroInfo($storeCollection);
             $paymentInfo = $this->getPaymentInfo($orderStorage, $pickupResult);
 
             $shops = new ArrayCollection();
+
+            $avgLatitudeAll = 0;
+            $avgLongitudeAll = 0;
+
+            $avgLatitudeCurrentLocation = 0;
+            $avgLongitudeCurrentLocation = 0;
+            $shopCountCurrentLocation = 0;
 
             /** @var Store $store */
             foreach ($storeCollection as $store) {
@@ -217,19 +223,41 @@ class ShopInfoService
                         : StoreLocationType::REGIONAL;
 
                     $item->setLocationType($locationType);
-                    $avgLongitude += $store->getLongitude();
-                    $avgLatitude += $store->getLatitude();
+                    $avgLongitudeAll += $store->getLongitude();
+                    $avgLatitudeAll += $store->getLatitude();
+
+                    if (($regionCode === LocationService::LOCATION_CODE_MOSCOW_REGION) &&
+                        ($store->getLocation() === $locationCode)
+                    ) {
+                        $avgLatitudeCurrentLocation += $store->getLatitude();
+                        $avgLongitudeCurrentLocation += $store->getLongitude();
+                        $shopCountCurrentLocation++;
+                    }
+
                     $shops->add($item);
                 } catch (DeliveryNotAvailableException $e) {
                 }
             }
+            $shopCountAll = $shops->count();
 
-            if ($shops->count()) {
-                $result->setAvgLongitude($avgLongitude / $shops->count())
-                       ->setAvgLatitude($avgLatitude / $shops->count());
+            /**
+             * Для Московской области центрируем карту на магазинах текущего местоположения,
+             * если там есть магазины (только в карточке товара)
+             */
+            if ($shopCountCurrentLocation) {
+                $avgLatitude = $avgLatitudeCurrentLocation / $shopCountCurrentLocation;
+                $avgLongitude = $avgLongitudeCurrentLocation / $shopCountCurrentLocation;
+            } elseif ($shopCountAll) {
+                $avgLatitude = $avgLatitudeAll / $shopCountAll;
+                $avgLongitude = $avgLongitudeAll / $shopCountAll;
+            } else {
+                $avgLatitude = $avgLatitudeAll;
+                $avgLongitude = $avgLongitudeAll;
             }
 
-            $result->setOffers($this->getOfferInfo($pickupResult->getFullStockResult()))
+            $result->setAvgLongitude($avgLongitude)
+                   ->setAvgLatitude($avgLatitude)
+                   ->setOffers($this->getOfferInfo($pickupResult->getFullStockResult()))
                    ->setShops($shops);
 
         }
