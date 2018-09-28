@@ -9,10 +9,12 @@ namespace FourPaws\UserBundle\EventController;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\main\Application as BitrixApplication;
 use Bitrix\Main\EventManager;
+use Bitrix\Main\GroupTable;
 use FourPaws\App\Application as App;
 use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\MainTemplate;
+use FourPaws\Enum\UserGroup;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
@@ -31,6 +33,7 @@ use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use FourPaws\UserBundle\Service\UserSearchInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use WebArch\BitrixCache\BitrixCache;
 
 /**
  * Class Event
@@ -111,9 +114,13 @@ class Event extends BaseServiceHandler
         static::initHandlerCompatible('OnBeforeUserLogin', [self::class, 'logoutBeforeAuth'], 'main');
         static::initHandlerCompatible('OnBeforeUserLoginByHash', [self::class, 'logoutBeforeAuth'], 'main');
 
+        /** установка неавторизованному пользователю соотвествующей группы */
+        static::initHandlerCompatible('OnBeforeProlog', [self::class, 'addNotAuthorizedGroup'], 'main');
+
         /** поиск юзера по email при регистрации из соцсетей */
         static::initHandlerCompatible('OnFindSocialservicesUser', [self::class, 'findSocialServicesUser'],
             'socialservices');
+
     }
 
     /**
@@ -155,7 +162,6 @@ class Event extends BaseServiceHandler
      * @param array $fields
      *
      * @throws ServiceNotFoundException
-     * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      */
     public static function replaceLogin(array $fields): void
@@ -418,7 +424,6 @@ class Event extends BaseServiceHandler
      *
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
      */
     public static function findSocialServicesUser(array $fields): int
     {
@@ -459,7 +464,6 @@ class Event extends BaseServiceHandler
      * @throws ConstraintDefinitionException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws ApplicationCreateException
      *
      * @return bool
      */
@@ -491,7 +495,6 @@ class Event extends BaseServiceHandler
      * @throws ConstraintDefinitionException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws ApplicationCreateException
      * @throws NotFoundException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ArgumentTypeException
@@ -506,6 +509,36 @@ class Event extends BaseServiceHandler
             if (!$userPasswordService->isChangePasswordPossible($fields['RESULT'])) {
                 $userPasswordService->resetPassword($fields['RESULT']);
             }
+        }
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function addNotAuthorizedGroup()
+    {
+        /** @todo запретить устанавливать эту группу пользователям */
+        global $USER;
+        /** @noinspection PhpUnhandledExceptionInspection */
+        $result = (new BitrixCache())
+            ->withTime(31536000)// 1 год
+            ->withTag('notAuthorizedAndVIPGroupId')
+            ->resultOf(
+                function () {
+                    $result = GroupTable::getList([
+                        'filter' => ['=STRING_ID' => [UserGroup::NOT_AUTH_CODE, UserGroup::OPT_CODE]],
+                        'select' => ['ID', 'CODE' => 'STRING_ID'],
+                    ]);
+                    $groups = $result->fetchAll();
+                    return array_flip(array_combine(array_column($groups, 'ID'), array_column($groups, 'CODE')));
+                }
+            );
+
+        /** @noinspection TypeUnsafeArraySearchInspection */
+        if ($USER->IsAuthorized() && \in_array($result[UserGroup::OPT_CODE], $USER->GetUserGroupArray())) {
+            $USER->SetUserGroupArray(array_intersect([1, $result[UserGroup::OPT_CODE]], $USER->GetUserGroupArray()));
+        } else {
+            $USER->SetUserGroupArray([$result[UserGroup::NOT_AUTH_CODE]]);
         }
     }
 }
