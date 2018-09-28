@@ -1568,6 +1568,22 @@ class Offer extends IblockElement
     }
 
     /**
+     * @return string
+     * @throws ApplicationCreateException
+     */
+    public function getFlavourWithWeight(): string
+    {
+        $flavours = $this->getProduct()->getFlavour();
+        $flavourName    = [];
+        foreach ($flavours as $flavour) {
+            $flavourName[] = $flavour->getName();
+        }
+        $flavour = implode('/', $flavourName);
+        $dimension = $this->getPackageDimension();
+        return \sprintf('%s, %s', $flavour, $dimension);
+    }
+
+    /**
      * Возвращает тип подписи упаковки
      *
      * @return string Одна из констант \FourPaws\Catalog\Model\Offer::PACKAGE_LABEL_TYPE_*

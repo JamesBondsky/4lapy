@@ -267,16 +267,8 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                                         <?php /** @var Offer $unionOffer */
                                         foreach ($unionOffers as $unionOffer) {
                                             ?>
-                                            <?php $flavours = $unionOffer->getProduct()->getFlavour();
-                                            $flavourName    = [];
-                                            foreach ($flavours as $flavour) {
-                                                $flavourName[] = $flavour->getName();
-                                            }
-                                            $flavour = implode('/', $flavourName);
-                                            $dimension = $unionOffer->getPackageDimension();
-                                            $labelForSelect = $flavour . ', ' . $dimension; ?>
                                             <option value="<?= $unionOffer->getDetailPageUrl() ?>" <?= $unionOffer->getId() === $currentOffer->getId() ? ' selected' : '' ?>>
-                                                <?= $labelForSelect ?>
+                                                <?= $unionOffer->getFlavourWithWeight()?>
                                             </option>
                                             <?php
                                         } ?>
