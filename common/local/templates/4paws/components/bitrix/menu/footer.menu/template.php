@@ -18,7 +18,7 @@ $drawMenuLevel1 = function ($menu = [], $title = '') use ($oMenu) {
 
     $outString = '<nav class="b-footer-nav">';
     foreach ($menu as $index => $item) {
-        $mobileMenuClass = $item['PARAMS']['MOBILE'] === 'Y' ? 'mobile-only' : '';
+        $mobileMenuClass = $item['PARAMS']['MOBILE'] === 'Y' ? 'b-footer-nav__list-mobile-only' : '';
         $navListClass = trim('b-footer-nav__list' . ' ' . $mobileMenuClass);
         $outString .= '<div class="'.$navListClass.'">';
         $outString .= '<div class="b-footer-nav__header">';
