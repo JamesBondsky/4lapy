@@ -14,7 +14,6 @@ use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Adapter\DaDataLocationAdapter;
 use FourPaws\Adapter\Model\Output\BitrixLocation;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\AppBundle\Validator\Constraints\LocationCode;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\Catalog\Model\Offer;
@@ -94,16 +93,16 @@ class ShopInfoService
      * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
-     * @throws PickupUnavailableException
      * @throws UserMessageException
      * @throws SystemException
      */
     public function getShopsByOffer(Offer $offer): StoreCollection
     {
-        if ($pickupResult = $this->getPickupResult($offer)) {
+        try {
+            $pickupResult = $this->getPickupResult($offer);
             $result = $pickupResult->getBestShops();
-        } else {
-            throw new NoStoresAvailableException(sprintf('No available stores for offer #%s', $offer->getId()));
+        } catch (PickupUnavailableException $e) {
+            $result = new StoreCollection();
         }
 
         if ($result->isEmpty()) {
