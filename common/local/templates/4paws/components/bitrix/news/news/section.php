@@ -1,6 +1,9 @@
-<?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
+
 /**
  * @var \CBitrixComponentTemplate $this
  *
@@ -9,9 +12,10 @@
  *
  * @global CMain                  $APPLICATION
  */
-$this->setFrameMode(true);
-?>
-<?php $APPLICATION->IncludeComponent(
+
+use FourPaws\Decorators\FullHrefDecorator;
+
+$APPLICATION->IncludeComponent(
     'bitrix:news.list',
     '',
     [
@@ -60,7 +64,7 @@ $this->setFrameMode(true);
         'HIDE_LINK_WHEN_NO_DETAIL'        => $arParams['HIDE_LINK_WHEN_NO_DETAIL'],
         'CHECK_DATES'                     => $arParams['CHECK_DATES'],
         'STRICT_SECTION_CHECK'            => $arParams['STRICT_SECTION_CHECK'],
-        
+
         'PARENT_SECTION'      => $arResult['VARIABLES']['SECTION_ID'],
         'PARENT_SECTION_CODE' => $arResult['VARIABLES']['SECTION_CODE'],
         'DETAIL_URL'          => $arResult['FOLDER'] . $arResult['URL_TEMPLATES']['detail'],
@@ -69,4 +73,6 @@ $this->setFrameMode(true);
     ],
     $component,
     ['HIDE_ICONS' => 'Y']
-); ?>
+);
+
+$APPLICATION->SetPageProperty('canonical', (new FullHrefDecorator($APPLICATION->GetCurPage()))->__toString());

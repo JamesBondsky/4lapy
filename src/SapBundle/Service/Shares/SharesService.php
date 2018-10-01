@@ -13,6 +13,7 @@ use Bitrix\Main\DB\Connection;
 use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Entity\DeleteResult;
 use Bitrix\Main\Error;
+use Bitrix\Main\GroupTable;
 use Cocur\Slugify\SlugifyInterface;
 use DateTimeImmutable;
 use Exception;
@@ -185,11 +186,10 @@ class SharesService implements LoggerAwareInterface
     }
 
     /**
-     *
-     *
      * @param BonusBuyShare $share
      * @param BonusBuy $promo
      *
+     * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \FourPaws\SapBundle\Exception\RuntimeException
      * @throws \FourPaws\SapBundle\Exception\InvalidArgumentException
      * @throws ArgumentException
@@ -682,8 +682,29 @@ class SharesService implements LoggerAwareInterface
             ->setXmlId($xmlId)
             ->setActiveFrom($activeFrom)
             ->setActiveTo($activeTo)
-            ->setUserGroups([UserGroup::ALL_USERS])
+            ->setUserGroups($this->getGroupsForBasketRules())
             ->setActions($actions);
+    }
+
+    /**
+     *
+     * @throws ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     *
+     * @return array
+     */
+    public function getGroupsForBasketRules(): array
+    {
+        static $groups;
+        if (null === $groups) {
+            $result = GroupTable::getList([
+                'filter' => ['!=STRING_ID' => [UserGroup::OPT_CODE, UserGroup::ALL_USERS_CODE]],
+                'select' => ['ID'],
+            ]);
+            $groups = array_column($result->fetchAll(), 'ID');
+        }
+        return $groups;
     }
 
     /**

@@ -1,4 +1,6 @@
-<?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
@@ -11,10 +13,9 @@
  * @global CMain                  $APPLICATION
  */
 
-$this->setFrameMode(true);
-?>
+use FourPaws\Decorators\FullHrefDecorator;
 
-<?php $APPLICATION->IncludeComponent(
+$APPLICATION->IncludeComponent(
     'bitrix:news.list',
     '',
     [
@@ -67,4 +68,6 @@ $this->setFrameMode(true);
     ],
     $component,
     ['HIDE_ICONS' => 'Y']
-); ?>
+);
+
+$APPLICATION->SetPageProperty('canonical', (new FullHrefDecorator($APPLICATION->GetCurPage()))->__toString());
