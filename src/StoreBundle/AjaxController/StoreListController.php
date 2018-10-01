@@ -216,6 +216,7 @@ class StoreListController extends Controller implements LoggerAwareInterface
                     $this->shopInfoService->getShopList(
                         $shops,
                         $this->shopInfoService->getLocationByRequest($request),
+                        [],
                         $offer
                     )
                 );

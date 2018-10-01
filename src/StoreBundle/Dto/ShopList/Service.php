@@ -73,6 +73,15 @@ class Service
     protected $fullDescription;
 
     /**
+     * @Serializer\SerializedName("selected")
+     * @Serializer\Type("bool")
+     * @Serializer\SkipWhenEmpty()
+     *
+     * @var bool
+     */
+    protected $selected;
+
+    /**
      * @return int
      */
     public function getId(): int
@@ -208,6 +217,26 @@ class Service
     public function setFullDescription(string $fullDescription): Service
     {
         $this->fullDescription = $fullDescription;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSelected(): bool
+    {
+        return $this->selected;
+    }
+
+    /**
+     * @param bool $selected
+     *
+     * @return Service
+     */
+    public function setSelected(bool $selected): Service
+    {
+        $this->selected = $selected;
 
         return $this;
     }

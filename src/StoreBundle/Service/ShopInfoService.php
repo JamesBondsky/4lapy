@@ -38,6 +38,8 @@ use FourPaws\StoreBundle\Exception\NoStoresAvailableException;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Exception\PickupUnavailableException;
 use JMS\Serializer\ArrayTransformerInterface;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
 class ShopInfoService
@@ -128,13 +130,14 @@ class ShopInfoService
             ,
             $metroList,
         ] = $this->storeService->getFullStoreInfo($storeSearchResult->getStores());
+        $selectedServices = (array)$request->get('stores-sort', []);
 
         $stores = $this->sortByRequest(
             $this->filterByRequest($storeSearchResult->getStores(), $request, $metroList),
             $request
         );
 
-        $shopList = $this->getShopList($stores, $this->getLocationByRequest($request));
+        $shopList = $this->getShopList($stores, $this->getLocationByRequest($request), $selectedServices);
 
         $haveMetro = false;
         $activeStoreId = $request->get('active_store_id', 0);
@@ -168,6 +171,7 @@ class ShopInfoService
     /**
      * @param StoreCollection $stores
      * @param string          $locationCode
+     * @param string[]        $selectedServices
      * @param Offer|null      $offer
      *
      * @return ShopList
@@ -181,8 +185,10 @@ class ShopInfoService
      * @throws UserMessageException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Exception
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
      */
-    public function getShopList(StoreCollection $stores, string $locationCode, Offer $offer = null): ShopList
+    public function getShopList(StoreCollection $stores, string $locationCode, array $selectedServices = [], Offer $offer = null): ShopList
     {
         [
             $servicesList,
@@ -272,6 +278,7 @@ class ShopInfoService
                         ->setLink((string)$service['UF_LINK'])
                         ->setDescription((string)$service['UF_DESCRIPTION'])
                         ->setFullDescription((string)$service['UF_FULL_DESCRIPTION'])
+                        ->setSelected(\in_array((string)$service['ID'], $selectedServices, true))
                 );
             }
         }
