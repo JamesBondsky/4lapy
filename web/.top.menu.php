@@ -27,5 +27,12 @@ $aMenuLinks = Array(
 		Array(),
 		Array('CHILDS_BY_MENU' => 'company'),
         ''
-	)
+	),
+    Array(
+        'Доставка и оплата',
+        '/payment-and-delivery/',
+        Array(),
+        Array('MOBILE' => 'Y'),
+        ''
+    )
 );
