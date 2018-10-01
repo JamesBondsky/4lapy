@@ -30,6 +30,7 @@ use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\Helpers\TaggedCacheHelper;
@@ -81,8 +82,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
     public function __construct(?CBitrixComponent $component = null)
     {
         try {
-            $container = App::getInstance()
-                            ->getContainer();
+            $container = App::getInstance()->getContainer();
             $this->ecommerceService = $container->get(GoogleEcommerceService::class);
             $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
             $this->basketService = $container->get(BasketService::class);
@@ -236,7 +236,10 @@ class CatalogElementDetailComponent extends \CBitrixComponent
 
         $APPLICATION->SetTitle($properties['ELEMENT_META_TITLE']);
         $APPLICATION->SetPageProperty('description', $properties['ELEMENT_META_DESCRIPTION']);
-        $APPLICATION->SetPageProperty('canonical', $offer->getProduct()->getDetailPageUrl());
+        $APPLICATION->SetPageProperty(
+            'canonical',
+            (new FullHrefDecorator($offer->getProduct()->getDetailPageUrl()))->__toString()
+        );
 
         return $this;
     }
