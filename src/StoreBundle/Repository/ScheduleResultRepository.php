@@ -1,85 +1,34 @@
 <?php
-/*
- * @copyright Copyright (c) ADV/web-engineering co.
- */
 
 namespace FourPaws\StoreBundle\Repository;
 
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Entity\DataManager;
-use Bitrix\Main\ObjectPropertyException;
-use Bitrix\Main\SystemException;
-use FourPaws\App\Application;
-use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Exception\RuntimeException;
+use FourPaws\BitrixOrmBundle\Orm\D7Repository;
 use FourPaws\StoreBundle\Collection\ScheduleResultCollection;
 use FourPaws\StoreBundle\Entity\ScheduleResult;
-use FourPaws\StoreBundle\Entity\Store;
-use FourPaws\StoreBundle\Exception\ConstraintDefinitionException;
-use FourPaws\StoreBundle\Exception\InvalidIdentifierException;
 use FourPaws\StoreBundle\Exception\NotFoundException;
-use JMS\Serializer\ArrayTransformerInterface;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
+use WebArch\BitrixCache\BitrixCache;
 
-class ScheduleResultRepository extends BaseRepository
+class ScheduleResultRepository extends D7Repository
 {
     /**
-     * @var DataManager
+     * @var ScheduleResultCollection[]
      */
-    protected $dataManager;
+    protected $bySender = [];
 
     /**
-     * ScheduleResultRepository constructor.
-     *
-     * @param ArrayTransformerInterface $arrayTransformer
-     * @param ValidatorInterface $validator
-     *
-     * @throws ApplicationCreateException
+     * @var ScheduleResultCollection[]
      */
-    public function __construct(ArrayTransformerInterface $arrayTransformer, ValidatorInterface $validator)
-    {
-        $this->dataManager = Application::getInstance()->getContainer()->get('bx.hlblock.deliveryscheduleresult');
-
-        parent::__construct($arrayTransformer, $validator);
-    }
-
-
-    protected function getDefaultFilter(): array
-    {
-        return [];
-    }
-
-    protected function getDefaultOrder(): array
-    {
-        return [];
-    }
-
-    protected function getCollectionClass(): string
-    {
-        return ScheduleResultCollection::class;
-    }
-
-    protected function getEntityClass(): string
-    {
-        return ScheduleResult::class;
-    }
-
-    protected function getDataClass(): string
-    {
-        return \get_class($this->dataManager);
-    }
+    protected $byReceiver = [];
 
     /**
      * @param int $id
      *
-     * @throws NotFoundException
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
-     * @throws ConstraintDefinitionException
-     * @throws InvalidIdentifierException
      * @return ScheduleResult
+     * @throws NotFoundException
+     * @throws RuntimeException
      */
-    public function find(int $id): ScheduleResult
+    public function find($id): ScheduleResult
     {
         $result =parent::find($id);
         if (!$result instanceof ScheduleResult) {
@@ -90,48 +39,52 @@ class ScheduleResultRepository extends BaseRepository
     }
 
     /**
-     * @param Store $sender
+     * @param string $senderXmlId
      *
      * @return ScheduleResultCollection
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
+     * @throws \Exception
      */
-    public function findBySender(Store $sender): ScheduleResultCollection
+    public function findBySender(string $senderXmlId): ScheduleResultCollection
     {
-        /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return $this->findBy(['UF_SENDER' => $sender->getXmlId()]);
+        if (null === $this->bySender[$senderXmlId]) {
+            $getResults = function () use ($senderXmlId) {
+                $scheduleResults = $this->findBy(['UF_SENDER' => $senderXmlId])->toArray();
+
+                return ['result' => new ScheduleResultCollection($scheduleResults)];
+            };
+
+            $result = (new BitrixCache())->withTag('catalog:store:schedule:results')
+                                         ->withId(__METHOD__ . $senderXmlId)
+                                         ->resultOf($getResults)['result'];
+
+            $this->bySender[$senderXmlId] = $result;
+        }
+
+        return $this->bySender[$senderXmlId];
     }
 
     /**
-     * @param Store $receiver
+     * @param string $receiverXmlId
      *
      * @return ScheduleResultCollection
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
+     * @throws \Exception
      */
-    public function findByReceiver(Store $receiver): ScheduleResultCollection
+    public function findByReceiver(string $receiverXmlId): ScheduleResultCollection
     {
-        /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return $this->findBy(['UF_RECEIVER' => $receiver->getXmlId()]);
-    }
+        if (null === $this->byReceiver[$receiverXmlId]) {
+            $getResults = function () use ($receiverXmlId) {
+                $scheduleResults = $this->findBy(['UF_RECEIVER' => $receiverXmlId])->toArray();
 
-    /**
-     * @param Store $sender
-     * @param Store $receiver
-     *
-     * @return ScheduleResultCollection
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
-     */
-    public function findBySenderAndReceiver(Store $sender, Store $receiver): ScheduleResultCollection
-    {
-        /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return $this->findBy([
-            'UF_SENDER' => $sender->getXmlId(),
-            'UF_RECEIVER' => $receiver->getXmlId()
-        ]);
+                return ['result' => new ScheduleResultCollection($scheduleResults)];
+            };
+
+            $result = (new BitrixCache())->withTag('catalog:store:schedule:results')
+                                         ->withId(__METHOD__ . $receiverXmlId)
+                                         ->resultOf($getResults)['result'];
+
+            $this->byReceiver[$receiverXmlId] = $result;
+        }
+
+        return $this->byReceiver[$receiverXmlId];
     }
 }
