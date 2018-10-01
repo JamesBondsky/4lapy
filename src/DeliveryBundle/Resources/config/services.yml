@@ -31,6 +31,10 @@ services:
         class: FourPaws\DeliveryBundle\Service\DeliveryService
         public: true
 
+    FourPaws\DeliveryBundle\Service\DeliveryScheduleResultService:
+        class: FourPaws\DeliveryBundle\Service\DeliveryScheduleResultService
+        public: true
+
     FourPaws\DeliveryBundle\Service\IntervalService:
         class: FourPaws\DeliveryBundle\Service\IntervalService
         public: true
