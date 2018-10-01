@@ -7,5 +7,9 @@ four_paws_bitrix_orm:
             class: FourPaws\SaleBundle\Entity\ForgotBasket
             data_manager: 'bx.hlblock.forgotbasket'
             repository: FourPaws\SaleBundle\Repository\ForgotBasketRepository
+        delivery_schedule_result:
+            class: FourPaws\StoreBundle\Entity\ScheduleResult
+            data_manager: 'bx.hlblock.deliveryscheduleresult'
+            repository: FourPaws\StoreBundle\Repository\ScheduleResultRepository
 
 #            repository: FourPaws\BitrixOrmBundle\Orm\D7Repository

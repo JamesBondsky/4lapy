@@ -48,6 +48,7 @@ use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderSplitService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
+use FourPaws\SaleBundle\Service\ShopInfoService;
 use FourPaws\SaleBundle\Service\UserAccountService;
 use FourPaws\SaleBundle\Validation\OrderDeliveryValidator;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
@@ -126,6 +127,10 @@ class FourPawsOrderComponent extends \CBitrixComponent
      */
     protected $manzanaService;
     /**
+     * @var ShopInfoService
+     */
+    protected $shopListService;
+    /**
      * @var GoogleEcommerceService
      */
     private $ecommerceService;
@@ -154,6 +159,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $this->orderService = $container->get(OrderService::class);
         $this->orderSplitService = $container->get(OrderSplitService::class);
         $this->orderStorageService = $container->get(OrderStorageService::class);
+        $this->shopListService = $container->get(ShopInfoService::class);
         $this->deliveryService = $container->get('delivery.service');
         $this->storeService = $container->get('store.service');
         $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
@@ -437,7 +443,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $storage->setSplit(true);
             $storage->setDeliveryId($pickup->getDeliveryId());
             $storage->setDeliveryPlaceCode($pickup->getSelectedShop()->getXmlId());
-            [$available, $delayed] = $this->orderSplitService->splitStockResult($pickup);
+            $splitStockResult = $this->orderSplitService->splitStockResult($pickup);
+            $available = $splitStockResult->getAvailable();
+            $delayed = $splitStockResult->getDelayed();
 
             $canGetPartial = $this->orderSplitService->canGetPartial($pickup);
 
@@ -541,6 +549,14 @@ class FourPawsOrderComponent extends \CBitrixComponent
         }
 
         return $itemData;
+    }
+
+    /**
+     * @return ShopInfoService
+     */
+    public function getShopListService(): ShopInfoService
+    {
+        return $this->shopListService;
     }
 
     /**
