@@ -133,9 +133,19 @@ class BasketComponent extends CBitrixComponent
 
         $this->arResult['BASKET'] = $basket;
 
+        $this->arResult['USER'] = $user = $userId = null;
+        $this->arResult['USER_ACCOUNT'] = null; // Это зачем???
+        try {
+            $user = $this->currentUserService->getCurrentUser();
+            $this->arResult['USER'] = $user;
+            $userId = $user->getId();
+        } /** @noinspection BadExceptionsProcessingInspection */
+        catch (NotAuthorizedException $e) {
+        }
+
         // привязывать к заказу нужно для расчета скидок
         if (null === $order = $basket->getOrder()) {
-            $order = Order::create(SITE_ID);
+            $order = Order::create(SITE_ID, $userId);
             $order->setBasket($basket);
             // но иногда он так просто не запускается
             if (!Manager::isExtendCalculated()) {
@@ -148,15 +158,8 @@ class BasketComponent extends CBitrixComponent
         // необходимо подгрузить подарки
         $this->loadPromoDescriptions();
         $this->setCoupon();
-        $this->arResult['USER'] = null;
-        $this->arResult['USER_ACCOUNT'] = null;
-        try {
-            $user = $this->currentUserService->getCurrentUser();
-            $this->arResult['USER'] = $user;
+        if ($user) {
             $this->arResult['MAX_BONUS_SUM'] = $this->basketService->getMaxBonusesForPayment();
-        } /** @noinspection BadExceptionsProcessingInspection */
-        catch (NotAuthorizedException $e) {
-            /** в случае ошибки не показываем бюджет в большой корзине */
         }
         $this->arResult['POSSIBLE_GIFT_GROUPS'] = Gift::getPossibleGiftGroups($order);
         $this->arResult['POSSIBLE_GIFTS'] = Gift::getPossibleGifts($order);

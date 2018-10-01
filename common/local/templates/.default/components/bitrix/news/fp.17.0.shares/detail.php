@@ -2,16 +2,14 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
-/**
- * Страница карточки акции в разделе Акции
- *
- * @updated: 12.01.2018
- */
 
-/** @global $APPLICATION */
-/** @var array $arParams */
-/** @var array $arResult */
-/** @var CBitrixComponent $component */
+/**
+ * @global               $APPLICATION
+ *
+ * @var array            $arParams
+ * @var array            $arResult
+ * @var CBitrixComponent $component
+ */
 
 $APPLICATION->SetPageProperty('PUBLICATION_DETAIL_CONTAINER_1', 'b-container b-container--news-detail');
 $APPLICATION->SetPageProperty('PUBLICATION_DETAIL_CONTAINER_2', 'b-detail-page');
@@ -32,7 +30,7 @@ $elementId = $APPLICATION->IncludeComponent(
         'META_KEYWORDS'             => $arParams['META_KEYWORDS'],
         'META_DESCRIPTION'          => $arParams['META_DESCRIPTION'],
         'BROWSER_TITLE'             => $arParams['BROWSER_TITLE'],
-        'SET_CANONICAL_URL'         => $arParams['DETAIL_SET_CANONICAL_URL'],
+        'SET_CANONICAL_URL'         => 'Y',
         'DISPLAY_PANEL'             => $arParams['DISPLAY_PANEL'],
         'SET_LAST_MODIFIED'         => $arParams['SET_LAST_MODIFIED'],
         'SET_TITLE'                 => $arParams['SET_TITLE'],
@@ -83,7 +81,7 @@ if (isset($arParams['SHOW_PRODUCTS_SALE']) && $arParams['SHOW_PRODUCTS_SALE'] ==
             'COUNT_ON_PAGE' => 20,
             'PROPERTY_CODE' => 'PRODUCTS',
             'FILTER_FIELD'  => 'XML_ID',
-            'IS_SHARE' => true
+            'IS_SHARE'      => true
         ],
         $component,
         [
