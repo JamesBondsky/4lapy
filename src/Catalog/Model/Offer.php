@@ -1541,6 +1541,22 @@ class Offer extends IblockElement
             return $this->getClothingSize()->getName();
         }
 
+        if ($value = $this->getPackageDimension($short, $fullLimit)) {
+            return $value;
+        }
+
+        return 'арт. ' . $this->getXmlId();
+    }
+
+    /**
+     * @param bool $short
+     * @param int  $fullLimit
+     *
+     * @return null|string
+     * @throws ApplicationCreateException
+     */
+    public function getPackageDimension(bool $short = false, int $fullLimit = 0): ?string
+    {
         if ($this->getVolumeReference()) {
             return $this->getVolumeReference()->getName();
         }
@@ -1548,8 +1564,22 @@ class Offer extends IblockElement
         if ($weight > 0) {
             return WordHelper::showWeight($weight, $short, $fullLimit);
         }
+        return null;
+    }
 
-        return 'арт. ' . $this->getXmlId();
+    /**
+     * @return string
+     * @throws ApplicationCreateException
+     */
+    public function getFlavourWithWeight(): string
+    {
+        $flavourName = [];
+
+        $this->getProduct()->getFlavour()->map(function (HlbReferenceItem $item) use (&$flavourName) {
+            $flavourName[] = $item->getName();
+        });
+
+        return \sprintf('%s, %s', \implode('/', $flavourName), $this->getPackageDimension());
     }
 
     /**

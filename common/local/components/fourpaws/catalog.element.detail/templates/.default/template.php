@@ -265,11 +265,13 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                                 <div class="b-select b-select--product">
                                     <select class="b-select__block b-select__block--product js-select-link">
                                         <?php /** @var Offer $unionOffer */
-                                        foreach ($unionOffers as $unionOffer) { ?>
+                                        foreach ($unionOffers as $unionOffer) {
+                                            ?>
                                             <option value="<?= $unionOffer->getDetailPageUrl() ?>" <?= $unionOffer->getId() === $currentOffer->getId() ? ' selected' : '' ?>>
-                                                <?= $unionOffer->getName() ?>
+                                                <?= $unionOffer->getFlavourWithWeight()?>
                                             </option>
-                                        <?php } ?>
+                                            <?php
+                                        } ?>
                                     </select>
                                 </div>
                             </div>
