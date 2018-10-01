@@ -24,6 +24,7 @@ class UserGroup
      * Все пользователи (в том числе неавторизованные)
      */
     public const ALL_USERS = 2;
+    public const ALL_USERS_CODE = 'ALL_USERS';
     /*
      * Зарегистрированные пользователи
      */
@@ -31,10 +32,10 @@ class UserGroup
     /*
      * Пользователи панели управления
      */
-    public const CONTROL_PANEL_USERS = 7;
 
+    public const CONTROL_PANEL_USERS = 7;
     /** id лучше не юзать */
     public const OPT_ID = 32;
     public const OPT_CODE = 'VIP';
-
+    public const NOT_AUTH_CODE = 'NOT_AUTH';
 }
