@@ -81,7 +81,6 @@ class ScheduleResultService implements LoggerAwareInterface
      * @param ScheduleResultCollection $results
      *
      * @return int[]
-     * @throws ArgumentException
      * @throws NotFoundException
      * @throws \RuntimeException
      */
@@ -89,7 +88,7 @@ class ScheduleResultService implements LoggerAwareInterface
     {
         $deleted = 0;
         $created = 0;
-        $senders = $results->getSenders();
+        $senders = $this->getSenders($results);
         /** @var Store $sender */
         foreach ($senders as $sender) {
             /** @var ScheduleResult $item */
@@ -233,6 +232,85 @@ class ScheduleResultService implements LoggerAwareInterface
         }
 
         return $result ?? new ScheduleResultCollection();
+    }
+
+    /**
+     * @param ScheduleResult $scheduleResult
+     *
+     * @return Store
+     * @throws NotFoundException
+     */
+    public function getReceiver(ScheduleResult $scheduleResult): Store
+    {
+        return $this->storeService->getStoreByXmlId($scheduleResult->getReceiverCode());
+    }
+
+    /**
+     * @param ScheduleResult $scheduleResult
+     *
+     * @return Store
+     * @throws NotFoundException
+     */
+    public function getSender(ScheduleResult $scheduleResult): Store
+    {
+        return $this->storeService->getStoreByXmlId($scheduleResult->getSenderCode());
+    }
+
+    /**
+     * @param ScheduleResult $scheduleResult
+     *
+     * @return Store
+     * @throws NotFoundException
+     */
+    public function getLastSender(ScheduleResult $scheduleResult): Store
+    {
+        $keys = array_reverse($scheduleResult->getRouteCodes());
+
+        return $this->storeService->getStoreByXmlId($keys[1]);
+    }
+
+    /**
+     * @param ScheduleResultCollection $collection
+     *
+     * @return StoreCollection
+     * @throws NotFoundException
+     */
+    public function getReceivers(ScheduleResultCollection $collection): StoreCollection
+    {
+        $result = new StoreCollection();
+        /** @var ScheduleResult $item */
+        foreach ($collection->getIterator() as $item) {
+            $xmlId = $item->getReceiverCode();
+            if (isset($result[$xmlId])) {
+                continue;
+            }
+
+            $result[$xmlId] = $this->storeService->getStoreByXmlId($xmlId);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param ScheduleResultCollection $collection
+     *
+     * @return StoreCollection
+     * @throws NotFoundException
+     */
+    public function getSenders(ScheduleResultCollection $collection): StoreCollection
+    {
+        $result = new StoreCollection();
+        /** @var ScheduleResult $item */
+        foreach ($collection->getIterator() as $item) {
+            $xmlId = $item->getSenderCode();
+            if (isset($result[$xmlId])) {
+                continue;
+            }
+
+            $result[$xmlId] = $this->storeService->getStoreByXmlId($xmlId);
+        }
+
+        return $result;
     }
 
     /**
@@ -448,9 +526,9 @@ class ScheduleResultService implements LoggerAwareInterface
                     $route[$receiver->getXmlId()] = $receiver;
 
                     $res = (new ScheduleResult())
-                        ->setSender($route->first())
-                        ->setReceiver($schedule->getReceiver())
-                        ->setRoute($route);
+                        ->setSenderCode($route->first()->getXmlId())
+                        ->setReceiverCode($schedule->getReceiverCode())
+                        ->setRouteCodes($route->getKeys());
 
                     /**
                      * @var int       $hour
