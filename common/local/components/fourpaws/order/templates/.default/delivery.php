@@ -258,8 +258,9 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
     </div>
 </div>
 <?php
-\CBitrixComponent::includeComponentClass('fourpaws:order.shop.list');
-$currentShopInfo = (new \FourPawsOrderShopListComponent())->getShopInfo($pickup ? $pickup->getSelectedShop()->getXmlId() : '', $pickup);
+$currentShopInfo = $component->getShopListService()->toArray(
+    $component->getShopListService()->getOneShopInfo($pickup ? $pickup->getSelectedShop()->getXmlId() : '', $storage, $pickup)
+);
 ?>
 <script>
     window.fullBasket = <?= CUtil::PhpToJSObject(array_values($component->getBasketItemData($basket))) ?>;

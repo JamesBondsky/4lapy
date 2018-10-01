@@ -1,10 +1,6 @@
 <?php
-/*
- * @copyright Copyright (c) ADV/web-engineering co.
- */
 
-namespace FourPaws\SaleBundle\Entity;
-
+namespace FourPaws\SaleBundle\Dto\OrderSplit\Basket;
 
 class BasketSplitItem
 {
