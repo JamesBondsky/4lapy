@@ -28,11 +28,6 @@ class ScheduleResultService implements LoggerAwareInterface
     public const MAX_TRANSITION_COUNT = 1;
 
     /**
-     * Кол-во дней, добавляемых к дате доставки при отправке товара со склада поставщика
-     */
-    public const SUPPLIER_DATE_MODIFIER = 2;
-
-    /**
      * Кол-во дней, добавляемых к дате доставки перед поиском графиков поставок
      */
     public const SCHEDULE_DATE_MODIFIER = 1;
@@ -475,8 +470,6 @@ class ScheduleResultService implements LoggerAwareInterface
                     $startDate = $startDates[$hour];
                     $startDate->setTime(9, 0, 0, 0);
                 }
-
-                $modifier += static::SUPPLIER_DATE_MODIFIER;
             }
 
             $modifier += static::SCHEDULE_DATE_MODIFIER;
