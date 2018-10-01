@@ -108,11 +108,10 @@ class StoreListController extends Controller implements LoggerAwareInterface
         $data['command'] = $this->dataLayerService->renderShopFilter(
             $shopList->getLocationName(),
             \implode(', ', $shopList->getServices()->filter(function (Service $service) {
-                /**
-                 * @todo Solovov add a selected filter values
-                 */
-                return false;
-            })) ?? ''
+                return $service->isSelected();
+            })->map(function (Service $service) {
+                return $service->getName();
+            })->toArray()) ?? ''
         );
 
         try {
