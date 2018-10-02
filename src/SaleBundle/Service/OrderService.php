@@ -1032,7 +1032,6 @@ class OrderService implements LoggerAwareInterface
 
                 /** @var PickupResultInterface $selectedDelivery */
                 $shop = $selectedDelivery->getSelectedShop();
-                $addressString = $this->getOrderPropertyByCode($order, 'CITY')->getValue() . ', ' . $shop->getAddress();
                 try {
                     if ($shop->getXmlId() === 'R034') {
                         /** @todo костыль. У этого магазина адрес не распознается дадатой */
@@ -1044,6 +1043,7 @@ class OrderService implements LoggerAwareInterface
                             ->setStreetPrefix('пос')
                             ->setStreet('Красный бор');
                     } else {
+                        $addressString = $this->storeService->getStoreAddress($shop) . ', ' . $shop->getAddress();
                         $address = $this->locationService->splitAddress($addressString, $shop->getLocation());
                     }
                     $this->setOrderAddress($order, $address);
