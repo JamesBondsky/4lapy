@@ -1,12 +1,13 @@
 <?php
 
-
 /**
+ * @var DataLayerService $dataLayerService
  * @var SortsCollection $sorts
  * @var PhpEngine $view
  * @var CMain $APPLICATION
  */
 
+use FourPaws\EcommerceBundle\Service\DataLayerService;
 use Symfony\Component\Templating\PhpEngine;
 use FourPaws\CatalogBundle\Collection\SortsCollection;
 use FourPaws\Catalog\Model\Sorting;

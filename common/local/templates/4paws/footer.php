@@ -89,7 +89,8 @@ if ($template->hasMainWrapper()) {
                                 'DELAY'                => 'N',
                                 'ALLOW_MULTI_SELECT'   => 'N',
                             ],
-                            false
+                            false,
+                            ['HIDE_ICONS' => 'Y']
                         ); ?>
                         <?php $APPLICATION->IncludeComponent(
                             'fourpaws:expertsender.form',

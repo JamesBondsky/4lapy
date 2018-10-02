@@ -5,6 +5,7 @@ use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\CatalogBundle\Dto\CatalogBrandRequest;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\EcommerceBundle\Service\DataLayerService;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\Search\Model\ProductSearchResult;
@@ -12,16 +13,16 @@ use FourPaws\Search\SearchService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Templating\PhpEngine;
 
-
 /**
- * @var Request $request
- * @var CatalogBrandRequest $catalogRequest
- * @var SearchService $searchService
+ * @var Request                $request
+ * @var CatalogBrandRequest    $catalogRequest
+ * @var SearchService          $searchService
+ * @var DataLayerService       $dataLayerService
  * @var GoogleEcommerceService $ecommerceService
- * @var ProductSearchResult $productSearchResult
- * @var PhpEngine $view
- * @var CMain $APPLICATION
- * @var Category $category
+ * @var ProductSearchResult    $productSearchResult
+ * @var PhpEngine              $view
+ * @var CMain                  $APPLICATION
+ * @var Category               $category
  */
 
 global $APPLICATION;
@@ -64,11 +65,11 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.category.list.html.php',
                 [
-                    'category' => $category,
-                    'searchService' => $searchService,
+                    'category'       => $category,
+                    'searchService'  => $searchService,
                     'catalogRequest' => $catalogRequest,
-                    'brand' => $brand,
-                    'isBrand' => true,
+                    'brand'          => $brand,
+                    'isBrand'        => true,
                 ]
             ) ?>
             <?php $filterToShow = $filterCollection->getFiltersToShow();
@@ -110,7 +111,11 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
         </form>
     </div>
     <div class="b-filter__bottom"><a class="b-filter__button" href="javascript:void(0);" title="">
-            Показать <?= $count . ' ' . WordHelper::declension($count, ['товар', 'товара', 'товаров']) ?>
+            Показать <?= $count . ' ' . WordHelper::declension($count, [
+                'товар',
+                'товара',
+                'товаров'
+            ]) ?>
         </a>
     </div>
 </aside>
@@ -127,12 +132,14 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                             <?= new SvgDecorator('icon-open-filter', 19, 14) ?>
                         </span>
                     </a>
-                    <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?= $count . (new Declension(' товар',
+                    <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?= $count
+                                                                                              . (new Declension(' товар',
                             ' товара', ' товаров'))->get($count) ?></span>
                     <?= $view->render(
                         'FourPawsCatalogBundle:Catalog:catalog.filter.sorts.html.php',
                         [
-                            'sorts' => $catalogRequest->getSorts(),
+                            'sorts'            => $catalogRequest->getSorts(),
+                            'dataLayerService' => $dataLayerService,
                         ]
                     ) ?>
                     <?php
@@ -198,7 +205,8 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                 'fourpaws:catalog.element.snippet',
                 '',
                 [
-                    'PRODUCT' => $product, 'GOOGLE_ECOMMERCE_TYPE' => 'Каталог по бренду'
+                    'PRODUCT'               => $product,
+                    'GOOGLE_ECOMMERCE_TYPE' => 'Каталог по бренду'
                 ],
                 null,
                 [
@@ -214,11 +222,11 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
         'bitrix:system.pagenavigation',
         'pagination',
         [
-            'NAV_TITLE' => '',
-            'NAV_RESULT' => $productSearchResult->getProductCollection()->getCdbResult(),
-            'SHOW_ALWAYS' => false,
+            'NAV_TITLE'      => '',
+            'NAV_RESULT'     => $productSearchResult->getProductCollection()->getCdbResult(),
+            'SHOW_ALWAYS'    => false,
             'PAGE_PARAMETER' => 'page',
-            'AJAX_MODE' => 'Y',
+            'AJAX_MODE'      => 'Y',
         ],
         null,
         [

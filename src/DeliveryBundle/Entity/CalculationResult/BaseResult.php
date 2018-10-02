@@ -338,6 +338,11 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                 if (!$stockResult->getDelayed()->isEmpty()) {
                     $date = $this->getStoreShipmentDate($this->selectedStore, $stockResult);
                 }
+
+                if (!$stockResult->getDelayed()->getPrice() && !$stockResult->getAvailable()->getPrice()) {
+                    $this->addError(new Error('Нет доступных для доставки товаров с ненулевой ценой'));
+                    return;
+                }
             }
         }
 

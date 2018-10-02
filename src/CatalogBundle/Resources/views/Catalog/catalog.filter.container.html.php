@@ -7,6 +7,7 @@ use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
 use FourPaws\CatalogBundle\Service\CatalogLandingService;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\EcommerceBundle\Service\DataLayerService;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\Search\Model\ProductSearchResult;
@@ -20,6 +21,7 @@ global $APPLICATION;
  * @var Request                $request
  * @var ChildCategoryRequest   $catalogRequest
  * @var CatalogLandingService  $landingService
+ * @var DataLayerService       $dataLayerService
  * @var ProductSearchResult    $productSearchResult
  * @var GoogleEcommerceService $ecommerceService
  * @var PhpEngine              $view
@@ -201,7 +203,8 @@ if (!$catalogRequest->isLanding()) { ?>
                     <?= $view->render(
                         'FourPawsCatalogBundle:Catalog:catalog.filter.sorts.html.php',
                         [
-                            'sorts' => $catalogRequest->getSorts(),
+                            'sorts'            => $catalogRequest->getSorts(),
+                            'dataLayerService' => $dataLayerService,
                         ]
                     ) ?>
                     <?php

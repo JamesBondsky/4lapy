@@ -10,6 +10,7 @@ use FourPaws\CatalogBundle\Dto\RootCategoryRequest;
 use FourPaws\CatalogBundle\Dto\SearchRequest;
 use FourPaws\CatalogBundle\Exception\RuntimeException as CatalogRuntimeException;
 use FourPaws\CatalogBundle\Service\CatalogLandingService;
+use FourPaws\EcommerceBundle\Service\DataLayerService;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\Search\Model\ProductSearchResult;
@@ -51,6 +52,10 @@ class CatalogController extends Controller
      * @var RetailRocketService
      */
     private $retailRocketService;
+    /**
+     * @var DataLayerService
+     */
+    private $dataLayerService;
 
     /**
      * CatalogController constructor.
@@ -60,14 +65,16 @@ class CatalogController extends Controller
      * @param GoogleEcommerceService $ecommerceService
      * @param CatalogLandingService  $landingService
      * @param RetailRocketService    $retailRocketService
+     * @param DataLayerService       $dataLayerService
      */
-    public function __construct(SearchService $searchService, ValidatorInterface $validator, GoogleEcommerceService $ecommerceService, CatalogLandingService $landingService, RetailRocketService $retailRocketService)
+    public function __construct(SearchService $searchService, ValidatorInterface $validator, GoogleEcommerceService $ecommerceService, CatalogLandingService $landingService, RetailRocketService $retailRocketService, DataLayerService $dataLayerService)
     {
         $this->searchService = $searchService;
         $this->validator = $validator;
         $this->ecommerceService = $ecommerceService;
         $this->retailRocketService = $retailRocketService;
         $this->landingService = $landingService;
+        $this->dataLayerService = $dataLayerService;
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection
@@ -122,6 +129,7 @@ class CatalogController extends Controller
             'catalogRequest'         => $searchRequest,
             'categories'             => $categories,
             'ecommerceService'       => $this->ecommerceService,
+            'dataLayerService'       => $this->dataLayerService,
             'retailRocketViewScript' => $retailRocketViewScript
         ]);
     }
@@ -236,6 +244,7 @@ class CatalogController extends Controller
             'ecommerceService'       => $this->ecommerceService,
             'request'                => $request,
             'landingService'         => $this->landingService,
+            'dataLayerService'       => $this->dataLayerService,
             'retailRocketViewScript' => $retailRocketViewScript,
             'productWithMinPrice'    => $productWithMinPrice
         ]);

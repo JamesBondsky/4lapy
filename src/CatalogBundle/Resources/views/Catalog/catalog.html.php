@@ -3,6 +3,7 @@
 use FourPaws\Catalog\Model\Product;
 use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
 use FourPaws\CatalogBundle\Service\CatalogLandingService;
+use FourPaws\EcommerceBundle\Service\DataLayerService;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Search\Model\ProductSearchResult;
 use Symfony\Component\Templating\PhpEngine;
@@ -11,6 +12,7 @@ use Symfony\Component\Templating\PhpEngine;
  * @var ChildCategoryRequest   $catalogRequest
  * @var ProductSearchResult    $productSearchResult
  * @var PhpEngine              $view
+ * @var DataLayerService       $dataLayerService
  * @var GoogleEcommerceService $ecommerceService
  * @var CatalogLandingService  $landingService
  * @var string                 $retailRocketViewScript
@@ -42,7 +44,7 @@ if ($catalogRequest->isLanding()) {
 
 echo $view->render(
     'FourPawsCatalogBundle:Catalog:catalog.filter.container.html.php',
-    \compact('catalogRequest', 'productSearchResult', 'ecommerceService', 'request', 'landingService', 'retailRocketViewScript', 'productWithMinPrice')
+    \compact('catalogRequest', 'productSearchResult', 'ecommerceService', 'request', 'landingService', 'dataLayerService', 'retailRocketViewScript', 'productWithMinPrice')
 );
 
 if ($catalogRequest->isLanding()) {
