@@ -68,7 +68,7 @@ $offer = $arParams['OFFER'];
                     <ul class="b-delivery-list js-delivery-list" data-available="full">
                     </ul>
                 </div>
-                <h4 class="b-title b-title--advice b-title--seporator">Товар будет доступен позже в магазинах
+                <h4 class="b-title b-title--advice b-title--seporator" data-availability-header>Товар будет доступен позже в магазинах
                 </h4>
                 <ul class="b-delivery-list js-delivery-list" data-available="delay">
                 </ul>

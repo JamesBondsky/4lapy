@@ -5,6 +5,7 @@ use Bitrix\Main\Application;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\CatalogBundle\Dto\CatalogBrandRequest;
+use FourPaws\EcommerceBundle\Service\DataLayerService;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -17,6 +18,7 @@ use Symfony\Component\Templating\PhpEngine;
  * @var CatalogBrandRequest    $catalogRequest
  * @var ProductSearchResult    $productSearchResult
  * @var GoogleEcommerceService $ecommerceService
+ * @var DataLayerService       $dataLayerService
  * @var SearchService          $searchService
  * @var SearchService          $searchService
  * @var PhpEngine              $view
@@ -193,6 +195,7 @@ if (!$isAjax) { ?>
                 'catalogRequest'      => $catalogRequest,
                 'searchService'       => $searchService,
                 'ecommerceService'    => $ecommerceService,
+                'dataLayerService'    => $dataLayerService,
                 'productSearchResult' => $productSearchResult,
                 'brand'               => $catalogRequest->getBrand()->getCode(),
             ]

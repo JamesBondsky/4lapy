@@ -2,12 +2,16 @@
 
 namespace FourPaws\CatalogBundle\Controller;
 
+use Bitrix\Main\ArgumentException;
+use Elastica\Exception\InvalidException;
 use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\CatalogBundle\Dto\CatalogBrandRequest;
 use FourPaws\CatalogBundle\Exception\RuntimeException as CatalogRuntimeException;
+use FourPaws\EcommerceBundle\Service\DataLayerService;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Search\SearchService;
+use InvalidArgumentException;
 use RuntimeException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -38,13 +42,17 @@ class BrandController extends Controller
     /**
      * @Route("/{brand}/")
      *
-     * @param Request $request
-     * @param CatalogBrandRequest $catalogBrandRequest
-     * @param SearchService $searchService
+     * @param Request                $request
+     * @param CatalogBrandRequest    $catalogBrandRequest
+     * @param SearchService          $searchService
      * @param GoogleEcommerceService $ecommerceService
+     * @param DataLayerService       $dataLayerService
      *
      * @return Response
      *
+     * @throws InvalidArgumentException
+     * @throws InvalidException
+     * @throws ArgumentException
      * @throws UnexpectedValueException
      * @throws ServiceCircularReferenceException
      * @throws CatalogRuntimeException
@@ -56,7 +64,8 @@ class BrandController extends Controller
         Request $request,
         CatalogBrandRequest $catalogBrandRequest,
         SearchService $searchService,
-        GoogleEcommerceService $ecommerceService
+        GoogleEcommerceService $ecommerceService,
+        DataLayerService $dataLayerService
     ): Response
     {
         $result = $searchService->searchProducts(
@@ -67,11 +76,12 @@ class BrandController extends Controller
         );
 
         return $this->render('FourPawsCatalogBundle:Catalog:brand.detail.html.php', [
-            'request' => $request,
-            'catalogRequest' => $catalogBrandRequest,
+            'request'             => $request,
+            'catalogRequest'      => $catalogBrandRequest,
             'productSearchResult' => $result,
-            'searchService' => $searchService,
-            'ecommerceService' => $ecommerceService,
+            'searchService'       => $searchService,
+            'ecommerceService'    => $ecommerceService,
+            'dataLayerService'    => $dataLayerService,
         ]);
     }
 }
