@@ -21,20 +21,24 @@ if (!defined('B_PROLOG_INCLUDED')||B_PROLOG_INCLUDED!==true) {
 if ($arResult['RESULT_TYPE'] === 'INITIAL' && $arParams['DEFERRED_LOAD'] === 'Y') {
     $signer = new \Bitrix\Main\Security\Sign\Signer();
     $signedTemplate = $signer->sign($templateName, 'catalog.products.recommendations');
-    $signedParams = $signer->sign(base64_encode(serialize($arResult['ORIGINAL_PARAMETERS'])), 'catalog.products.recommendations');
-
-    ?><script type="text/javascript">
+    $signedParams = $signer->sign(
+        base64_encode(serialize($arResult['ORIGINAL_PARAMETERS'])),
+        'catalog.products.recommendations'
+    );
+    ?>
+    <script type="text/javascript">
         new FourPawsCatalogProductsRecommendationsComponent({
-            siteId:                                                                '<?=\CUtil::JSEscape(SITE_ID)?>',
-            componentPath:                                                         '<?=\CUtil::JSEscape($componentPath)?>',
+            siteId: '<?=\CUtil::JSEscape(SITE_ID)?>',
+            componentPath: '<?=\CUtil::JSEscape($componentPath)?>',
             bigData: <?=\CUtil::PhpToJSObject($arResult['BIG_DATA_SETTINGS'])?>,
-            template:                                                              '<?=\CUtil::JSEscape($signedTemplate)?>',
-            ajaxId:                                                                '<?=\CUtil::JSEscape($arParams['AJAX_ID'])?>',
-            parameters:                                                            '<?=\CUtil::JSEscape($signedParams)?>',
-                                                                containerSelector: '#similar_products_cont',
-                                                                sliderSelector:    '.js-popular-product'
+            template: '<?=\CUtil::JSEscape($signedTemplate)?>',
+            ajaxId: '<?=\CUtil::JSEscape($arParams['AJAX_ID'])?>',
+            parameters: '<?=\CUtil::JSEscape($signedParams)?>',
+            containerSelector: '#similar_products_cont',
+            sliderSelector: '.js-popular-product'
         });
-    </script><?php
+    </script>
+    <?php
 
     echo '<div id="similar_products_cont"></div>';
 
