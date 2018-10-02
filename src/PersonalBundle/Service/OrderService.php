@@ -528,10 +528,11 @@ class OrderService
 
         /** @var OrderItem $item */
         foreach ($order->getItems() as $item) {
-            $productId = $item->getId();
+            $productId = $item->getProductId();
             $basketItem = $orderBasket->createItem('catalog', $productId);
             $basketItem->setFields([
                 'PRICE'                  => $item->getPrice(),
+                'BASE_PRICE'             => $item->getBasePrice(),
                 'CUSTOM_PRICE'           => BitrixUtils::BX_BOOL_TRUE,
                 'QUANTITY'               => $item->getQuantity(),
                 'CURRENCY'               => CurrencyManager::getBaseCurrency(),
@@ -565,10 +566,10 @@ class OrderService
                     $propertyValue->setValue('DC01');
                     break;
                 case 'CITY_CODE':
-                    $propertyValue->setValue($selectedCity['NAME']);
+                    $propertyValue->setValue($selectedCity['CODE']);
                     break;
                 case 'CITY':
-                    $propertyValue->setValue($selectedCity['CODE']);
+                    $propertyValue->setValue($selectedCity['NAME']);
                     break;
             }
         }
@@ -677,14 +678,15 @@ class OrderService
             $item
                 ->setArticle($chequeItem->number)
                 ->setBonus($chequeItem->bonus)
-                ->setPrice($chequeItem->price)
+                ->setPrice($chequeItem->price - ($chequeItem->price * $chequeItem->discount / 100))
+                ->setBasePrice($chequeItem->price)
                 ->setQuantity($chequeItem->quantity)
-                ->setSum($chequeItem->sum)
+                ->setSum($chequeItem->sumDiscounted)
                 ->setName($chequeItem->name)
                 ->setHaveStock(false)
                 ->setWeight($offer->getCatalogProduct()->getWeight())
                 ->setDetailPageUrl($offer->getLink())
-                ->setId($offer->getId());
+                ->setProductId($offer->getId());
             $result[] = $item;
         }
 
