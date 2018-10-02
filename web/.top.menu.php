@@ -9,7 +9,7 @@ $aMenuLinks = Array(
 	),
     Array(
         'Покупателям',
-        '',
+        '/payment-and-delivery/',
         Array(),
         Array('CHILDS_BY_MENU' => 'customer'),
         ''
