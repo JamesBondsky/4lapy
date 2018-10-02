@@ -218,7 +218,7 @@ class ShopInfoService
                     /** @var StockResult $stockResultByStore */
                     $stockResultByStore = $pickupResult->getStockResult()->first();
                     $amount = $stockResultByStore->getOffer()
-                        ->getStocks()
+                        ->getAllStocks()
                         ->filterByStore($store)
                         ->getTotalAmount();
 
