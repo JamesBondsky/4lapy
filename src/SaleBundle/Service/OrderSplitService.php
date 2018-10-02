@@ -134,12 +134,8 @@ class OrderSplitService implements LoggerAwareInterface
         $storage1 = clone $storage;
 
         $splitStockResult = $this->splitStockResult($delivery);
-        [
-            $availableItems,
-            $delayedItems,
-        ] = $this->splitBasket($basket, $splitStockResult);
-
-        $basket1 = $this->generateBasket($availableItems, $canGetPartial);
+        $splitBasket = $this->splitBasket($basket, $splitStockResult);
+        $basket1 = $this->generateBasket($splitBasket->getAvailable(), $canGetPartial);
 
         $storage1->setBonus($this->getMaxBonusPayment($basket1, $storage));
 
@@ -172,7 +168,7 @@ class OrderSplitService implements LoggerAwareInterface
                                                 ->setDelivery($delivery1);
 
         $storage2 = clone $storage;
-        $basket2 = $this->generateBasket($delayedItems, false);
+        $basket2 = $this->generateBasket($splitBasket->getDelayed(), false);
         $storage2->setDeliveryInterval($storage->getSecondDeliveryInterval());
         $storage2->setDeliveryDate($storage->getSecondDeliveryDate());
         $storage2->setComment($storage->getSecondComment());
@@ -310,6 +306,8 @@ class OrderSplitService implements LoggerAwareInterface
                 $partialDate = (clone $delivery)->setStockResult($available)->getDeliveryDate();
                 $result = $fullDate->getTimestamp() !== $partialDate->getTimestamp();
             }
+
+            $result &= $available->getPrice() && $delayed->getPrice();
         }
 
         return $result;
