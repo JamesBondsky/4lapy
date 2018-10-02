@@ -112,7 +112,7 @@ $uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arP
                     </div>
                     <div class="b-form-review__group">
                         <label class="b-form-review__label" for="id-review-pass">Пароль</label>
-                        <input class="b-form-review__input"
+                        <input class="b-form-review__input js-no-valid"
                                id="id-review-pass"
                                type="password"
                                name="PASSWORD"
