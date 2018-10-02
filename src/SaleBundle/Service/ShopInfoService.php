@@ -206,13 +206,7 @@ class ShopInfoService
             $paymentInfo = $this->getPaymentInfo($orderStorage, $pickupResult);
 
             $shops = new ArrayCollection();
-
-            $avgLatitudeAll = 0;
-            $avgLongitudeAll = 0;
-
-            $avgLatitudeCurrentLocation = 0;
-            $avgLongitudeCurrentLocation = 0;
-            $shopCountCurrentLocation = 0;
+            $availableStores = new StoreCollection();
 
             /** @var Store $store */
             foreach ($storeCollection as $store) {
@@ -223,40 +217,16 @@ class ShopInfoService
                         : StoreLocationType::REGIONAL;
 
                     $item->setLocationType($locationType);
-                    $avgLongitudeAll += $store->getLongitude();
-                    $avgLatitudeAll += $store->getLatitude();
-
-                    if (($regionCode === LocationService::LOCATION_CODE_MOSCOW_REGION) &&
-                        ($store->getLocation() === $locationCode)
-                    ) {
-                        $avgLatitudeCurrentLocation += $store->getLatitude();
-                        $avgLongitudeCurrentLocation += $store->getLongitude();
-                        $shopCountCurrentLocation++;
-                    }
 
                     $shops->add($item);
+                    $availableStores->add($store);
                 } catch (DeliveryNotAvailableException $e) {
                 }
             }
-            $shopCountAll = $shops->count();
+            $mapCenter = $this->storeService->getMapCenter($availableStores, $locationCode, $subregionCode, $regionCode);
 
-            /**
-             * Для Московской области центрируем карту на магазинах текущего местоположения,
-             * если там есть магазины (только в карточке товара)
-             */
-            if ($shopCountCurrentLocation) {
-                $avgLatitude = $avgLatitudeCurrentLocation / $shopCountCurrentLocation;
-                $avgLongitude = $avgLongitudeCurrentLocation / $shopCountCurrentLocation;
-            } elseif ($shopCountAll) {
-                $avgLatitude = $avgLatitudeAll / $shopCountAll;
-                $avgLongitude = $avgLongitudeAll / $shopCountAll;
-            } else {
-                $avgLatitude = $avgLatitudeAll;
-                $avgLongitude = $avgLongitudeAll;
-            }
-
-            $result->setAvgLongitude($avgLongitude)
-                   ->setAvgLatitude($avgLatitude)
+            $result->setAvgLongitude($mapCenter->getLongitude())
+                   ->setAvgLatitude($mapCenter->getLatitude())
                    ->setOffers($this->getOfferInfo($pickupResult->getFullStockResult()))
                    ->setShops($shops);
 

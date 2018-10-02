@@ -90,7 +90,14 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                     <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
                         <?php foreach ($filter->getAvailableVariants() as $id => $variant) { ?>
                             <li class="b-filter-link-list__item">
-                                <label class="b-filter-link-list__label">
+                                <label class="b-filter-link-list__label"
+                                    <?= $variant->getOnclick()
+                                        ? \sprintf(
+                                            'onclick="%s"',
+                                            $variant->getOnclick()
+                                        )
+                                        : ''
+                                    ?>>
                                     <input class="b-filter-link-list__checkbox js-discount-input js-filter-control"
                                            type="checkbox"
                                            name="<?= $filter->getFilterCode() ?>"
@@ -152,7 +159,14 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                                 <?php foreach ($filter->getAvailableVariants() as $id => $variant) {
                                     ?>
                                     <li class="b-filter-link-list__item">
-                                        <label class="b-filter-link-list__label">
+                                        <label class="b-filter-link-list__label"
+                                            <?= $variant->getOnclick()
+                                                ? \sprintf(
+                                                    'onclick="%s"',
+                                                    $variant->getOnclick()
+                                                )
+                                                : ''
+                                            ?>>
                                             <input class="b-filter-link-list__checkbox js-discount-input js-filter-control"
                                                    type="checkbox"
                                                    name="<?= $filter->getFilterCode() ?>"

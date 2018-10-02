@@ -120,4 +120,4 @@ $APPLICATION->IncludeComponent(
     ]
 );
 
-$APPLICATION->SetPageProperty('canonical', (new FullHrefDecorator($APPLICATION->GetCurPage()))->__toString());
+$APPLICATION->SetPageProperty('canonical', (new FullHrefDecorator('/shares/'))->__toString());

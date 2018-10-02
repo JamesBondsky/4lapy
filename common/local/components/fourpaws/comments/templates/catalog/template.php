@@ -203,7 +203,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                 </div>
                 <div class="b-form-review__sub-heading">Отзыв</div>
                 <div class="b-form-review__group">
-                    <textarea class="b-form-review__textarea js-small-input-eight"
+                    <textarea class="b-form-review__textarea js-small-input-eight js-no-valid"
                               name="UF_TEXT"
                               placeholder="Оставьте ваш отзыв:"
                               maxlength="1000"></textarea>
