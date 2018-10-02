@@ -195,17 +195,12 @@ class ShopInfoService
             $metroList,
         ] = $this->storeService->getFullStoreInfo($stores);
 
-        $avgLatitudeAll = 0;
-        $avgLongitudeAll = 0;
-
-        $avgLatitudeCurrentLocation = 0;
-        $avgLongitudeCurrentLocation = 0;
-        $shopCountCurrentLocation = 0;
         $shops = new ArrayCollection();
         $services = new ArrayCollection();
 
         $subregionCode = $this->locationService->findLocationSubRegion($locationCode)['CODE'] ?? '';
         $regionCode = $this->locationService->findLocationRegion($locationCode)['CODE'] ?? '';
+        $availableStores = new StoreCollection();
 
         /** @var Store $store */
         foreach ($stores as $store) {
@@ -252,17 +247,7 @@ class ShopInfoService
                 continue;
             }
 
-            if (($regionCode === LocationService::LOCATION_CODE_MOSCOW_REGION) &&
-                ($store->getLocation() === $locationCode)
-            ) {
-                $avgLatitudeCurrentLocation += $store->getLatitude();
-                $avgLongitudeCurrentLocation += $store->getLongitude();
-                $shopCountCurrentLocation++;
-            }
-
-            $avgLatitudeAll += $store->getLatitude();
-            $avgLongitudeAll += $store->getLongitude();
-
+            $availableStores->add($store);
             $shops->add($shop);
         }
 
@@ -283,26 +268,22 @@ class ShopInfoService
             }
         }
 
-        /**
-         * Для Московской области центрируем карту на магазинах текущего местоположения,
-         * если там есть магазины (только в карточке товара)
-         */
-        if ($offer && $shopCountCurrentLocation) {
-            $avgLatitude = $avgLatitudeCurrentLocation / $shopCountCurrentLocation;
-            $avgLongitude = $avgLongitudeCurrentLocation / $shopCountCurrentLocation;
-        } elseif ($shopCountAll) {
-            $avgLatitude = $avgLatitudeAll / $shopCountAll;
-            $avgLongitude = $avgLongitudeAll / $shopCountAll;
+        if ($offer) {
+            $mapCenter = $this->storeService->getMapCenter(
+                $availableStores,
+                $locationCode,
+                $subregionCode,
+                $regionCode
+            );
         } else {
-            $avgLatitude = $avgLatitudeAll;
-            $avgLongitude = $avgLongitudeAll;
+            $mapCenter = $this->storeService->getMapCenter($availableStores);
         }
 
         $shopList = (new ShopList())
             ->setItems($shops)
-            ->setAvgLatitude($avgLatitude)
-            ->setAvgLongitude($avgLongitude)
-            ->setHideTab((bool)$shopCountAll)
+            ->setAvgLatitude($mapCenter->getLatitude())
+            ->setAvgLongitude($mapCenter->getLongitude())
+            ->setHideTab((bool)$availableStores->count())
             ->setServices($services);
 
         return $shopList;

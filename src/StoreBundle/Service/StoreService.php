@@ -13,6 +13,7 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\LocationBundle\Dto\Coordinates;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
@@ -714,6 +715,89 @@ class StoreService implements LoggerAwareInterface
             $services,
             $metro,
         ];
+    }
+
+
+    /**
+     * @todo объединить параметры-координаты в один объект
+     *
+     * @param StoreCollection $stores
+     * @param string          $locationCode
+     * @param string          $subregionCode
+     * @param string          $regionCode
+     *
+     * @return Coordinates
+     */
+    public function getMapCenter(
+        StoreCollection $stores,
+        string $locationCode = null,
+        string $subregionCode = null,
+        string $regionCode = null
+    ): Coordinates
+    {
+        $allCount = 0;
+        $allLatitudeSum = 0;
+        $allLongitudeSum = 0;
+
+        $localCount = 0;
+        $localLatitudeSum = 0;
+        $localLongitudeSum = 0;
+
+        $subregionalCount = 0;
+        $subregionalLatitudeSum = 0;
+        $subregionalLongitudeSum = 0;
+
+        $regionalCount = 0;
+        $regionalLatitudeSum = 0;
+        $regionalLongitudeSum = 0;
+
+        /** @var Store $store */
+        foreach ($stores as $store) {
+            if (!$store->getLongitude() || !$store->getLatitude()) {
+                continue;
+            }
+
+            if ($locationCode && $store->getLocation() === $locationCode) {
+                $localCount++;
+                $localLatitudeSum += $store->getLatitude();
+                $localLongitudeSum += $store->getLongitude();
+            }
+
+            if ($subregionCode && $store->getSubRegion() === $subregionCode) {
+                $subregionalCount++;
+                $subregionalLatitudeSum += $store->getLatitude();
+                $subregionalLongitudeSum += $store->getLongitude();
+            }
+
+            if ($regionCode && \in_array($regionCode, $store->getRegion(), true)) {
+                $regionalCount++;
+                $regionalLatitudeSum += $store->getLatitude();
+                $regionalLongitudeSum += $store->getLongitude();
+            }
+
+            $allCount++;
+            $allLatitudeSum += $store->getLatitude();
+            $allLongitudeSum += $store->getLongitude();
+        }
+
+        if ($localCount) {
+            $avgLatitude = $localLatitudeSum / $localCount;
+            $avgLongitude = $localLongitudeSum / $localCount;
+        } elseif ($subregionalCount) {
+            $avgLatitude = $subregionalLatitudeSum / $subregionalCount;
+            $avgLongitude = $subregionalLongitudeSum / $subregionalCount;
+        } elseif ($regionalCount) {
+            $avgLatitude = $regionalLatitudeSum / $regionalCount;
+            $avgLongitude = $regionalLongitudeSum / $regionalCount;
+        } elseif ($allCount) {
+            $avgLatitude = $allLatitudeSum / $allCount;
+            $avgLongitude = $allLongitudeSum / $allCount;
+        } else {
+            $avgLatitude = $avgLongitude = 0;
+        }
+
+        return (new Coordinates())->setLatitude($avgLatitude)
+                                  ->setLongitude($avgLongitude);
     }
 
     /**
