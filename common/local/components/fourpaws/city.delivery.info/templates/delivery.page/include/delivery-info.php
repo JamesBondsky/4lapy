@@ -51,11 +51,11 @@ $isInnerDelivery = $delivery['CODE'] === DeliveryService::INNER_DELIVERY_CODE;
                     $result .= 'на следующий день';
                 } else {
                     $result .= \sprintf(
-                        'в течение %s %s',
+                        'через %s %s',
                         $intervalResult->getDays(),
                         WordHelper::declension($intervalResult->getDays(), [
                             'день',
-                            'дней',
+                            'дня',
                             'дней',
                         ])
                     );
