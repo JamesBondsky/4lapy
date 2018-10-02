@@ -6,6 +6,7 @@ use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
 use FourPaws\CatalogBundle\ParamConverter\Catalog\AbstractCatalogRequestConverter;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\EcommerceBundle\Service\DataLayerService;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\Search\Model\ProductSearchResult;
@@ -16,6 +17,7 @@ use Symfony\Component\Templating\PhpEngine;
  * @var Request                               $request
  * @var CatalogCategorySearchRequestInterface $catalogRequest
  * @var ProductSearchResult                   $productSearchResult
+ * @var DataLayerService                      $dataLayerService
  * @var GoogleEcommerceService                $ecommerceService
  * @var string                                $retailRocketViewScript
  * @var PhpEngine                             $view
@@ -130,7 +132,8 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
                     <?= $view->render(
                         'FourPawsCatalogBundle:Catalog:catalog.filter.sorts.html.php',
                         [
-                            'sorts' => $catalogRequest->getSorts(),
+                            'sorts'            => $catalogRequest->getSorts(),
+                            'dataLayerService' => $dataLayerService,
                         ]
                     );
 
