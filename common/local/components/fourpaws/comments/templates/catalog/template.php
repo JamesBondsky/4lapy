@@ -174,7 +174,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                 </div>
                 <div class="b-form-review__group">
                     <label class="b-form-review__label" for="id-review-pass">Пароль</label>
-                    <input class="b-form-review__input" id="id-review-pass" type="password" name="PASSWORD" value="" autocomplete="off" />
+                    <input class="b-form-review__input js-no-valid" id="id-review-pass" type="password" name="PASSWORD" value="" autocomplete="off" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
                 </div>

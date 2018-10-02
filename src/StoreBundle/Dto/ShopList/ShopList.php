@@ -114,7 +114,7 @@ class ShopList
     }
 
     /**
-     * @return ArrayCollection
+     * @return ArrayCollection|Service[]
      */
     public function getServices(): ArrayCollection
     {
