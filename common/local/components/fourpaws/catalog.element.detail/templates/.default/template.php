@@ -480,7 +480,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
                             </div>
                         </li>
                         <li class="b-characteristics-tab__item"
-                            <?= (!$val = $currentOffer->getCatalogProduct()->getWidth()) ? 'style="display:none"' : '' ?>>
+                            <?= (!$val = $currentOffer->getCatalogProduct()->getHeight()) ? 'style="display:none"' : '' ?>>
                             <div class="b-characteristics-tab__characteristics-text"><span>Высота</span>
                                 <div class="b-characteristics-tab__dots"></div>
                             </div>
