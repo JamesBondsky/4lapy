@@ -54,6 +54,11 @@ class OrderItem extends BaseEntity
      */
     protected $price = 0;
 
+    /**
+     * @var float
+     */
+    protected $basePrice = 0;
+
     /** @var float
      * @Serializer\Type("float")
      * @Serializer\SerializedName("SUMMARY_PRICE")
@@ -223,6 +228,26 @@ class OrderItem extends BaseEntity
     public function setPrice(float $price): OrderItem
     {
         $this->price = $price;
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getBasePrice(): float
+    {
+        return $this->basePrice;
+    }
+
+    /**
+     * @param float $basePrice
+     *
+     * @return OrderItem
+     */
+    public function setBasePrice(float $basePrice): OrderItem
+    {
+        $this->basePrice = $basePrice;
+
         return $this;
     }
 
