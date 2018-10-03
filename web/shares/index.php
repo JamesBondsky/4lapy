@@ -101,6 +101,7 @@ $APPLICATION->IncludeComponent(
         'SHARE_TEMPLATE' => '',
         'DISPLAY_PREVIEW_TEXT' => 'N',
         'SHOW_PRODUCTS_SALE' => 'Y',
+        'RESIZE_TYPE' => 'BX_RESIZE_IMAGE_PROPORTIONAL',
     ],
     null,
     [
