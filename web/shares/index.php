@@ -52,6 +52,7 @@ $APPLICATION->IncludeComponent(
         'INCLUDE_IBLOCK_INTO_CHAIN' => 'N',
         'LIST_ACTIVE_DATE_FORMAT' => 'j F Y',
         'LIST_FIELD_CODE' => [
+            'ACTIVE_TO',
         ],
         'LIST_PROPERTY_CODE' => [
         ],
@@ -101,6 +102,7 @@ $APPLICATION->IncludeComponent(
         'SHARE_TEMPLATE' => '',
         'DISPLAY_PREVIEW_TEXT' => 'N',
         'SHOW_PRODUCTS_SALE' => 'Y',
+        'RESIZE_TYPE' => 'BX_RESIZE_IMAGE_PROPORTIONAL',
     ],
     null,
     [

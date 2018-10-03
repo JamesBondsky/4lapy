@@ -48,8 +48,16 @@ if (empty($arResult['ITEMS'])) {
                     echo htmlspecialcharsback($arItem['PREVIEW_TEXT']);
                 }
             ?></div><?php
-            if (!empty($arItem['DISPLAY_ACTIVE_FROM'])) {
-                ?><div class="b-info-blocks__item-date"><?=ToLower($arItem['DISPLAY_ACTIVE_FROM'])?></div><?php
+            if (!empty($arItem['DISPLAY_ACTIVE_FROM']) || !empty($arItem['DISPLAY_ACTIVE_TO'])) {
+                $dateStr = '';
+                if (!empty($arItem['DISPLAY_ACTIVE_FROM'])){
+                    $dateStr = 'c ' . $arItem['DISPLAY_ACTIVE_FROM'];
+                }
+                if (!empty($arItem['DISPLAY_ACTIVE_TO'])){
+                    $dateStr .= ' по ' . $arItem['DISPLAY_ACTIVE_TO'];
+                }
+                ?>
+                <div class="b-info-blocks__item-date"><?=trim(ToLower($dateStr))?></div><?php
             }
         ?></a><?php
     }
