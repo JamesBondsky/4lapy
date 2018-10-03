@@ -136,9 +136,9 @@ $uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arP
                                            name="UF_MARK"
                                            value="<?= $i ?>"/>
                                     <label class="b-rating__star" for="radio<?= $i ?>">
-                                    <span class="b-icon">
-                                        <?= new SvgDecorator('icon-star-stroke', 13, 12) ?>
-                                    </span>
+                                        <span class="b-icon">
+                                            <?= new SvgDecorator('icon-star-stroke', 13, 12) ?>
+                                        </span>
                                     </label>
                                 <?php } ?>
                             </div>
@@ -146,7 +146,7 @@ $uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arP
                     </div>
                     <div class="b-form-review__sub-heading">Отзыв</div>
                     <div class="b-form-review__group">
-                    <textarea class="b-form-review__textarea js-small-input-eight"
+                    <textarea class="b-form-review__textarea js-small-input-eight js-no-valid"
                               name="UF_TEXT"
                               placeholder="Оставьте ваш отзыв:"
                               maxlength="1000"></textarea>

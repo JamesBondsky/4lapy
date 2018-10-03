@@ -234,7 +234,7 @@ class Variant
      */
     public function getOnclick(): string
     {
-        return $this->onclick;
+        return \str_replace('"', '\'', $this->onclick);
     }
 
     /**

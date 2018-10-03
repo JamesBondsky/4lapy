@@ -60,7 +60,8 @@ class ReferralController extends Controller
         ReferralService $referralService,
         UserAuthorizationInterface $userAuthorization,
         AjaxMess $ajaxMess
-    ) {
+    )
+    {
         $this->referralService = $referralService;
         $this->userAuthorization = $userAuthorization;
         $this->ajaxMess = $ajaxMess;
@@ -98,6 +99,7 @@ class ReferralController extends Controller
         } catch (ManzanaServiceException $e) {
             $logger = LoggerFactory::create('manzana');
             $logger->error('Ошибка манзаны - ' . $e->getMessage());
+
             return $this->ajaxMess->getSystemError();
         }
         $data['UF_MODERATED'] = 'Y';
@@ -160,6 +162,7 @@ class ReferralController extends Controller
                 'phone'       => $currentCard->phone,
                 'email'       => $currentCard->email,
             ];
+
             return JsonSuccessResponse::createWithData(
                 'Информация о карте получена',
                 ['card' => $cardInfo]
@@ -170,6 +173,7 @@ class ReferralController extends Controller
             $logger = LoggerFactory::create('manzana');
             $logger->error('Ошибка манзаны - ' . $e->getMessage());
         }
+
         return $this->ajaxMess->getSystemError();
     }
 
@@ -183,7 +187,7 @@ class ReferralController extends Controller
     {
         $userId = (int)$request->get('user_id');
         $itemIds = explode(',', $request->get('item_ids'));
-        if(!\is_array($itemIds)){
+        if (!\is_array($itemIds)) {
             $itemIds = [];
         }
 
@@ -192,6 +196,7 @@ class ReferralController extends Controller
         } catch (ApplicationCreateException $e) {
             $logger = LoggerFactory::create('referrals_ajax');
             $logger->error(sprintf('ошибка загрузки контейнера: %s', $e->getMessage()));
+
             return $this->ajaxMess->getSystemError();
         }
         $referralService = $container->get('referral.service');
@@ -200,14 +205,19 @@ class ReferralController extends Controller
             /** @var ArrayCollection $items
              * @var bool $redirect
              */
-            [$items, $redirect, $bonus] = $referralService->getAllUserReferralsWithManzana($userId);
+            [
+                $items,
+                $redirect,
+                $bonus,
+            ] = $referralService->getAllUserReferralsWithManzana($userId);
             if ($bonus > 0) {
                 /** отбрасываем дробную часть - нужно ли? */
                 $bonus = floor($bonus);
             }
             if ($redirect) {
                 /** нефиг дальше обрабатывать делаем перезагрузку */
-                TaggedCacheHelper::clearManagedCache(['personal:referral:'.$userId]);
+                TaggedCacheHelper::clearManagedCache(['personal:referral:' . $userId]);
+
                 return JsonSuccessResponse::createWithData('успех', ['reload' => true]);
             }
         } catch (NotAuthorizedException $e) {
@@ -218,6 +228,7 @@ class ReferralController extends Controller
             return $this->ajaxMess->getUsernameNotFoundException();
         }
 
+        $data = [];
         if (!$items->isEmpty()) {
             /** @var Referral $item */
             $resultItems = [];
@@ -225,16 +236,16 @@ class ReferralController extends Controller
                 if ($item instanceof Referral) {
                     $cardId = $item->getCard();
                     $itemId = $item->getId();
-                    if(empty($itemIds) || \in_array((string)$itemId, $itemIds, true)){
+                    if (empty($itemIds) || \in_array((string)$itemId, $itemIds, true)) {
                         $resultItems[$itemId] = [
-                            'id'     => $item->getId(),
+                            'id'        => $item->getId(),
                             'bonus'     => $item->getBonus(),
                             'card'      => $cardId,
                             'fio'       => $item->getFullName(),
                             'email'     => $item->getEmail(),
                             'phone'     => PhoneHelper::formatPhone($item->getPhone(), PhoneHelper::FORMAT_FULL),
                             'moderated' => $item->isModerate(),
-//                            'dateEndActive' => $item->getDateEndActive(),
+                            //                            'dateEndActive' => $item->getDateEndActive(),
                         ];
                     }
                 }
@@ -249,19 +260,18 @@ class ReferralController extends Controller
                 return $this->ajaxMess->getSystemError();
             }
 
-            return JsonSuccessResponse::createWithData('успех',
-                [
-                    'items'  => $resultItems,
-                    'counts' => [
-                        'all'      => $count,
-                        'active'   => $countActive,
-                        'moderate' => $countModerate,
-                    ],
-                    'bonus'  => $bonus,
-                    'reload' => false,
-                ]);
+            $data = [
+                'items'  => $resultItems,
+                'counts' => [
+                    'all'      => $count,
+                    'active'   => $countActive,
+                    'moderate' => $countModerate,
+                ],
+                'bonus'  => $bonus,
+                'reload' => false,
+            ];
         }
 
-        return $this->ajaxMess->getSystemError();
+        return JsonSuccessResponse::createWithData('', $data);
     }
 }

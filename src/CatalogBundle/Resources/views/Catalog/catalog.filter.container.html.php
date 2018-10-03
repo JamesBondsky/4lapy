@@ -118,14 +118,16 @@ if (!$catalogRequest->isLanding()) { ?>
                    title="Сбросить фильтры">Сбросить фильтры</a>
             </div>
             <?= $view->render(
-                'FourPawsCatalogBundle:Catalog:catalog.filter.category.list.html.php', \compact('category', 'catalogRequest')) ?>
-            <?php $filterToShow = $filterCollection->getFiltersToShow();
-            $filterActions = $filterCollection->getActionsFilter();
+                'FourPawsCatalogBundle:Catalog:catalog.filter.category.list.html.php',
+                \compact('category', 'catalogRequest'))
             ?>
+            <?php $filterToShow = $filterCollection->getFiltersToShow();
+            $filterActions = $filterCollection->getActionsFilter(); ?>
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.list.html.php',
                 [
-                    'filters' => $filterToShow,
+                    'filters'          => $filterToShow,
+                    'dataLayerService' => $dataLayerService
                 ]
             ) ?>
             <div class="b-filter__block b-filter__block--discount js-discount-mobile-here">
@@ -138,7 +140,14 @@ if (!$catalogRequest->isLanding()) { ?>
                         <?php foreach ($filter->getAvailableVariants() as $id => $variant) {
                             ?>
                             <li class="b-filter-link-list__item">
-                                <label class="b-filter-link-list__label">
+                                <label class="b-filter-link-list__label"
+                                    <?= $variant->getOnclick()
+                                        ? \sprintf(
+                                            'onclick="%s"',
+                                            $variant->getOnclick()
+                                        )
+                                        : ''
+                                    ?>>
                                     <input class="b-filter-link-list__checkbox js-discount-input js-filter-control"
                                            type="checkbox"
                                            name="<?= $filter->getFilterCode() ?>"
@@ -217,7 +226,14 @@ if (!$catalogRequest->isLanding()) { ?>
                                 <?php foreach ($filter->getAvailableVariants() as $id => $variant) {
                                     ?>
                                     <li class="b-filter-link-list__item">
-                                        <label class="b-filter-link-list__label">
+                                        <label class="b-filter-link-list__label"
+                                            <?= $variant->getOnclick()
+                                                ? \sprintf(
+                                                    'onclick="%s"',
+                                                    $variant->getOnclick()
+                                                )
+                                                : ''
+                                            ?>>
                                             <input class="b-filter-link-list__checkbox js-discount-input js-filter-control"
                                                    type="checkbox"
                                                    name="<?= $filter->getFilterCode() ?>"

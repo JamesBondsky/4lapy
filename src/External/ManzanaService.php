@@ -426,12 +426,10 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function getUserReferralList(User $user = null): array
     {
-        $contact_id = $this->getContactIdByUser($user);
-        $referrals = [];
-        if ($contact_id > 0) {
+        if ($contactId = $this->getContactIdByUser($user)) {
             $bag = new ParameterBag(
                 [
-                    'contact_id' => $contact_id,
+                    'contact_id' => $contactId,
                 ]
             );
 

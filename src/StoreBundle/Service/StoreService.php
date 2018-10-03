@@ -14,6 +14,7 @@ use Bitrix\Main\SystemException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\LocationBundle\Dto\Coordinates;
+use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
@@ -715,6 +716,28 @@ class StoreService implements LoggerAwareInterface
         ];
     }
 
+    /**
+     * @param Store $store
+     *
+     * @return Address
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \RuntimeException
+     */
+    public function getStoreAddress(Store $store): Address
+    {
+        $location = $this->locationService->findLocationByCode($store->getLocation());
+        $subregion = $this->locationService->findLocationSubRegion($store->getLocation());
+        $region = $this->locationService->findLocationRegion($store->getLocation());
+
+        $address = (new Address())
+            ->setRegion($region['NAME'] ?? '')
+            ->setArea($subregion['NAME'] ?? '')
+            ->setCity($location['NAME'] ?? '');
+
+        return $address;
+    }
 
     /**
      * @todo объединить параметры-координаты в один объект

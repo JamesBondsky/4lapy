@@ -270,7 +270,7 @@ class DeliveryServiceInnerConfig20180829121543 extends SprintMigrationBase
      */
     public function up()
     {
-        return false;
+        return true;
         $deliveryServices = ServicesTable::getList(
             [
                 'filter' => [
