@@ -74,5 +74,9 @@ foreach ($arResult['ITEMS'] as &$item) {
     if (!$arItem['PRINT_PUBLICATION_TYPES'] && !empty($arParams['DEFAULT_PUBLICATION_TYPE_VALUE'])) {
         $arItem['PRINT_PUBLICATION_TYPES'][] = $arParams['DEFAULT_PUBLICATION_TYPE_VALUE'];
     }
+
+    if(isset($item['ACTIVE_TO'])){
+        $item['DISPLAY_ACTIVE_TO'] = CIBlockFormatProperties::DateFormat($arParams["ACTIVE_DATE_FORMAT"], MakeTimeStamp($arItem["ACTIVE_TO"], CSite::GetDateFormat()));
+    }
 }
 unset($item);

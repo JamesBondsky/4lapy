@@ -140,7 +140,9 @@ if (!$isAjax) { ?>
                     'SORT_ORDER1'                     => 'DESC,NULLS',
                     'SORT_BY2'                        => 'SORT',
                     'SORT_ORDER2'                     => 'ASC',
-                    'FIELD_CODE'                      => [],
+                    'FIELD_CODE'                      => [
+                            'ACTIVE_TO',
+                    ],
                     'PROPERTY_CODE'                   => [],
                     'DETAIL_URL'                      => '/shares/#CODE#/',
                     'SECTION_URL'                     => '',
