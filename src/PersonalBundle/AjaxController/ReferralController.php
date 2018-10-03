@@ -237,6 +237,12 @@ class ReferralController extends Controller
                     $cardId = $item->getCard();
                     $itemId = $item->getId();
                     if (empty($itemIds) || \in_array((string)$itemId, $itemIds, true)) {
+                        $moderateStatus = 'active';
+                        if ($item->isModerate()) {
+                            $moderateStatus = 'moderate';
+                        } elseif ($item->isCancelModerate()) {
+                            $moderateStatus = 'cancel';
+                        }
                         $resultItems[$itemId] = [
                             'id'        => $item->getId(),
                             'bonus'     => $item->getBonus(),
@@ -244,7 +250,7 @@ class ReferralController extends Controller
                             'fio'       => $item->getFullName(),
                             'email'     => $item->getEmail(),
                             'phone'     => PhoneHelper::formatPhone($item->getPhone(), PhoneHelper::FORMAT_FULL),
-                            'moderated' => $item->isModerate(),
+                            'moderated' => $moderateStatus,
                             //                            'dateEndActive' => $item->getDateEndActive(),
                         ];
                     }
