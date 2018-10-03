@@ -13,6 +13,7 @@ use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\BitrixOrm\Model\IblockSect;
 use FourPaws\Catalog\Model\Product;
+use FourPaws\EcommerceBundle\Service\DataLayerService;
 use FourPaws\FoodSelectionBundle\Service\FoodSelectionService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -30,11 +31,32 @@ class FoodSelectionController extends Controller
      * @var FoodSelectionService
      */
     private $foodSelectionService;
+    /**
+     * @var DataLayerService
+     */
+    private $dataLayerService;
 
+    /**
+     * FoodSelectionController constructor.
+     *
+     * @param FoodSelectionService $foodSelectionService
+     * @param DataLayerService     $dataLayerService
+     */
     public function __construct(
-        FoodSelectionService $foodSelectionService
-    ) {
+        FoodSelectionService $foodSelectionService,
+        DataLayerService $dataLayerService
+    )
+    {
         $this->foodSelectionService = $foodSelectionService;
+        $this->dataLayerService = $dataLayerService;
+    }
+
+    /**
+     * @return DataLayerService
+     */
+    public function getDataLayerService(): DataLayerService
+    {
+        return $this->dataLayerService;
     }
 
     /**
@@ -95,7 +117,7 @@ class FoodSelectionController extends Controller
         ob_start();
         /** @noinspection PhpIncludeInspection */
         include_once App::getDocumentRoot()
-            . '/local/components/fourpaws/catalog.food.selection/templates/.default/include/fields.php';
+                     . '/local/components/fourpaws/catalog.food.selection/templates/.default/include/fields.php';
 
         return JsonSuccessResponse::createWithData(
             'Успешный аякс',
@@ -163,7 +185,7 @@ class FoodSelectionController extends Controller
         ob_start();
         /** @noinspection PhpIncludeInspection */
         include_once App::getDocumentRoot()
-            . '/local/components/fourpaws/catalog.food.selection/templates/.default/include/fields.php';
+                     . '/local/components/fourpaws/catalog.food.selection/templates/.default/include/fields.php';
         $form_html = ob_get_clean();
 
         try {
@@ -210,7 +232,7 @@ class FoodSelectionController extends Controller
         ob_start();
         /** @noinspection PhpIncludeInspection */
         include_once App::getDocumentRoot()
-            . '/local/components/fourpaws/catalog.food.selection/templates/.default/include/items.php';
+                     . '/local/components/fourpaws/catalog.food.selection/templates/.default/include/items.php';
         $items_html = ob_get_clean();
 
         return JsonSuccessResponse::createWithData(
@@ -308,7 +330,7 @@ class FoodSelectionController extends Controller
         ob_start();
         /** @noinspection PhpIncludeInspection */
         include_once App::getDocumentRoot()
-            . '/local/components/fourpaws/catalog.food.selection/templates/.default/include/items.php';
+                     . '/local/components/fourpaws/catalog.food.selection/templates/.default/include/items.php';
         $items_html = ob_get_clean();
 
         return JsonSuccessResponse::createWithData(
