@@ -30,6 +30,14 @@ $isInnerDelivery = $delivery['CODE'] === DeliveryService::INNER_DELIVERY_CODE;
     <div class="b-delivery__delivery-type-row__day">
         <p>Получение</p>
         <?php
+        /** @var int[] $weekDays */
+        $weekDays = $delivery['WEEK_DAYS'];
+        if ($weekDays && count($weekDays) < 7) {
+            ?>
+            Дни доставки: <?= implode(', ', $weekDays) ?>.
+            <?php
+        }
+
         if ($isInnerDelivery) {
             /** @var ArrayCollection $intervalDays */
             $intervalDays = $delivery['INTERVAL_DAYS'];
@@ -43,11 +51,11 @@ $isInnerDelivery = $delivery['CODE'] === DeliveryService::INNER_DELIVERY_CODE;
                     $result .= 'на следующий день';
                 } else {
                     $result .= \sprintf(
-                        'в течение %s %s',
+                        'через %s %s',
                         $intervalResult->getDays(),
                         WordHelper::declension($intervalResult->getDays(), [
                             'день',
-                            'дней',
+                            'дня',
                             'дней',
                         ])
                     );

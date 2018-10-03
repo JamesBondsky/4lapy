@@ -10,30 +10,22 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\BitrixOrmBundle\Exception\NotFoundRepository;
+use FourPaws\BitrixOrmBundle\Orm\BitrixOrm;
 use FourPaws\StoreBundle\Collection\ScheduleResultCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\DeliverySchedule;
 use FourPaws\StoreBundle\Entity\ScheduleResult;
 use FourPaws\StoreBundle\Entity\Store;
-use FourPaws\StoreBundle\Exception\BitrixRuntimeException;
-use FourPaws\StoreBundle\Exception\ConstraintDefinitionException;
-use FourPaws\StoreBundle\Exception\InvalidIdentifierException;
 use FourPaws\StoreBundle\Exception\NotFoundException;
-use FourPaws\StoreBundle\Exception\ValidationException;
 use FourPaws\StoreBundle\Repository\ScheduleResultRepository;
 use Psr\Log\LoggerAwareInterface;
-use WebArch\BitrixCache\BitrixCache;
 
 class ScheduleResultService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
     public const MAX_TRANSITION_COUNT = 1;
-
-    /**
-     * Кол-во дней, добавляемых к дате доставки при отправке товара со склада поставщика
-     */
-    public const SUPPLIER_DATE_MODIFIER = 2;
 
     /**
      * Кол-во дней, добавляемых к дате доставки перед поиском графиков поставок
@@ -63,38 +55,35 @@ class ScheduleResultService implements LoggerAwareInterface
     /**
      * ScheduleResultService constructor.
      *
-     * @param DeliveryScheduleService  $deliveryScheduleService
-     * @param StoreService             $storeService
-     * @param ScheduleResultRepository $repository
+     * @param DeliveryScheduleService $deliveryScheduleService
+     * @param StoreService            $storeService
+     * @param BitrixOrm               $bitrixOrm
+     *
+     * @throws NotFoundRepository
      */
     public function __construct(
         DeliveryScheduleService $deliveryScheduleService,
         StoreService $storeService,
-        ScheduleResultRepository $repository
+        BitrixOrm $bitrixOrm
     )
     {
         $this->deliveryScheduleService = $deliveryScheduleService;
         $this->storeService = $storeService;
-        $this->repository = $repository;
+        $this->repository = $bitrixOrm->getD7Repository(ScheduleResult::class);
     }
 
     /**
      * @param ScheduleResultCollection $results
      *
-     * @throws ArgumentException
-     * @throws ConstraintDefinitionException
-     * @throws InvalidIdentifierException
-     * @throws NotFoundException
-     * @throws SystemException
-     * @throws BitrixRuntimeException
-     * @throws ValidationException
      * @return int[]
+     * @throws NotFoundException
+     * @throws \RuntimeException
      */
     public function updateResults(ScheduleResultCollection $results): array
     {
         $deleted = 0;
         $created = 0;
-        $senders = $results->getSenders();
+        $senders = $this->getSenders($results);
         /** @var Store $sender */
         foreach ($senders as $sender) {
             /** @var ScheduleResult $item */
@@ -110,16 +99,17 @@ class ScheduleResultService implements LoggerAwareInterface
             }
         }
 
-        return [$created, $deleted];
+        return [
+            $created,
+            $deleted,
+        ];
     }
 
     /**
      * @param Store $sender
      *
-     * @throws BitrixRuntimeException
-     * @throws ConstraintDefinitionException
-     * @throws InvalidIdentifierException
      * @return int
+     * @throws \RuntimeException
      */
     public function deleteResultsForSender(Store $sender): int
     {
@@ -136,11 +126,6 @@ class ScheduleResultService implements LoggerAwareInterface
      * @param ScheduleResult $result
      *
      * @return bool
-     * @throws \Exception
-     * @throws BitrixRuntimeException
-     * @throws ConstraintDefinitionException
-     * @throws InvalidIdentifierException
-     * @throws ValidationException
      */
     public function updateResult(ScheduleResult $result): bool
     {
@@ -151,8 +136,6 @@ class ScheduleResultService implements LoggerAwareInterface
      * @param ScheduleResult $result
      *
      * @return bool
-     * @throws BitrixRuntimeException
-     * @throws ValidationException
      */
     public function createResult(ScheduleResult $result): bool
     {
@@ -163,9 +146,6 @@ class ScheduleResultService implements LoggerAwareInterface
      * @param ScheduleResult $result
      *
      * @return bool
-     * @throws BitrixRuntimeException
-     * @throws ConstraintDefinitionException
-     * @throws InvalidIdentifierException
      */
     public function deleteResult(ScheduleResult $result): bool
     {
@@ -175,12 +155,6 @@ class ScheduleResultService implements LoggerAwareInterface
     /**
      * @param int $id
      *
-     * @throws ArgumentException
-     * @throws ConstraintDefinitionException
-     * @throws InvalidIdentifierException
-     * @throws ObjectPropertyException
-     * @throws SystemException
-     * @throws NotFoundException
      * @return ScheduleResult
      */
     public function findResultById(int $id): ScheduleResult
@@ -192,18 +166,13 @@ class ScheduleResultService implements LoggerAwareInterface
      * @param Store $sender
      *
      * @return ScheduleResultCollection
+     * @throws \RuntimeException
      */
     public function findResultsBySender(Store $sender): ScheduleResultCollection
     {
-        $getResults = function () use ($sender) {
-            return ['result' => $this->repository->findBySender($sender)];
-        };
-
         $result = null;
         try {
-            $result = (new BitrixCache())->withId(__METHOD__ . $sender->getXmlId())
-                          ->withTag('catalog:store:schedule:results')
-                          ->resultOf($getResults)['result'];
+            $result = $this->repository->findBySender($sender->getXmlId());
         } catch (\Exception $e) {
             $this->log()->error(
                 sprintf('failed to get schedule results: %s: %s', \get_class($e), $e->getMessage()),
@@ -218,18 +187,13 @@ class ScheduleResultService implements LoggerAwareInterface
      * @param Store $receiver
      *
      * @return ScheduleResultCollection
+     * @throws \RuntimeException
      */
     public function findResultsByReceiver(Store $receiver): ScheduleResultCollection
     {
-        $getResults = function () use ($receiver) {
-            return ['result' => $this->repository->findByReceiver($receiver)];
-        };
-
         $result = null;
         try {
-            $result = (new BitrixCache())->withId(__METHOD__ . $receiver->getXmlId())
-                          ->withTag('catalog:store:schedule:results')
-                          ->resultOf($getResults)['result'];
+            $result = $this->repository->findByReceiver($receiver->getXmlId());
         } catch (\Exception $e) {
             $this->log()->error(
                 sprintf('failed to get schedule results: %s: %s', \get_class($e), $e->getMessage()),
@@ -245,22 +209,20 @@ class ScheduleResultService implements LoggerAwareInterface
      * @param Store $receiver
      *
      * @return ScheduleResultCollection
+     * @throws \RuntimeException
      */
     public function findResultsBySenderAndReceiver(Store $sender, Store $receiver): ScheduleResultCollection
     {
-        $getResults = function () use ($sender, $receiver) {
-            return ['result' => $this->repository->findBySenderAndReceiver($sender, $receiver)];
-        };
-
         $result = null;
         try {
-            $result = (new BitrixCache())->withId(__METHOD__ . $sender->getXmlId() . '_' . $receiver->getXmlId())
-                          ->withTag('catalog:store:schedule:results')
-                          ->resultOf($getResults)['result'];
+            $result = $this->repository->findBySender($sender->getXmlId())->filterByReceiver($receiver);
         } catch (\Exception $e) {
             $this->log()->error(
                 sprintf('failed to get schedule results: %s: %s', \get_class($e), $e->getMessage()),
-                ['receiver' => $receiver->getXmlId()]
+                [
+                    'sender'   => $sender->getXmlId(),
+                    'receiver' => $receiver->getXmlId(),
+                ]
             );
         }
 
@@ -268,13 +230,95 @@ class ScheduleResultService implements LoggerAwareInterface
     }
 
     /**
+     * @param ScheduleResult $scheduleResult
+     *
+     * @return Store
+     * @throws NotFoundException
+     */
+    public function getReceiver(ScheduleResult $scheduleResult): Store
+    {
+        return $this->storeService->getStoreByXmlId($scheduleResult->getReceiverCode());
+    }
+
+    /**
+     * @param ScheduleResult $scheduleResult
+     *
+     * @return Store
+     * @throws NotFoundException
+     */
+    public function getSender(ScheduleResult $scheduleResult): Store
+    {
+        return $this->storeService->getStoreByXmlId($scheduleResult->getSenderCode());
+    }
+
+    /**
+     * @param ScheduleResult $scheduleResult
+     *
+     * @return Store
+     * @throws NotFoundException
+     */
+    public function getLastSender(ScheduleResult $scheduleResult): Store
+    {
+        $keys = array_reverse($scheduleResult->getRouteCodes());
+
+        return $this->storeService->getStoreByXmlId($keys[1]);
+    }
+
+    /**
+     * @param ScheduleResultCollection $collection
+     *
+     * @return StoreCollection
+     * @throws NotFoundException
+     */
+    public function getReceivers(ScheduleResultCollection $collection): StoreCollection
+    {
+        $result = new StoreCollection();
+        /** @var ScheduleResult $item */
+        foreach ($collection->getIterator() as $item) {
+            $xmlId = $item->getReceiverCode();
+            if (isset($result[$xmlId])) {
+                continue;
+            }
+
+            $result[$xmlId] = $this->storeService->getStoreByXmlId($xmlId);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param ScheduleResultCollection $collection
+     *
+     * @return StoreCollection
+     * @throws NotFoundException
+     */
+    public function getSenders(ScheduleResultCollection $collection): StoreCollection
+    {
+        $result = new StoreCollection();
+        /** @var ScheduleResult $item */
+        foreach ($collection->getIterator() as $item) {
+            $xmlId = $item->getSenderCode();
+            if (isset($result[$xmlId])) {
+                continue;
+            }
+
+            $result[$xmlId] = $this->storeService->getStoreByXmlId($xmlId);
+        }
+
+        return $result;
+    }
+
+    /**
      * @param \DateTime $date
      * @param int|null  $transitionCount
      *
+     * @return ScheduleResultCollection
+     * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws NotFoundException
-     * @throws ApplicationCreateException
-     * @return ScheduleResultCollection
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Exception
      */
     public function calculateForAll(
         \DateTime $date,
@@ -306,6 +350,10 @@ class ScheduleResultService implements LoggerAwareInterface
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws NotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Exception
+     * @throws \RuntimeException
      */
     public function calculateForSender(
         Store $sender,
@@ -347,6 +395,7 @@ class ScheduleResultService implements LoggerAwareInterface
      * @throws NotFoundException
      * @throws ApplicationCreateException
      * @return ScheduleResultCollection
+     * @throws \RuntimeException
      */
     public function calculateForSenderAndReceiver(
         Store $sender,
@@ -379,6 +428,7 @@ class ScheduleResultService implements LoggerAwareInterface
      * @throws NotFoundException
      * @throws ApplicationCreateException
      * @return ScheduleResultCollection
+     * @throws \RuntimeException
      */
     protected function doCalculateScheduleDate(
         Store $sender,
@@ -420,8 +470,6 @@ class ScheduleResultService implements LoggerAwareInterface
                     $startDate = $startDates[$hour];
                     $startDate->setTime(9, 0, 0, 0);
                 }
-
-                $modifier += static::SUPPLIER_DATE_MODIFIER;
             }
 
             $modifier += static::SCHEDULE_DATE_MODIFIER;
@@ -441,7 +489,7 @@ class ScheduleResultService implements LoggerAwareInterface
                     /**
                      * Дата отгрузки со склада
                      */
-                    $shipmentDate = $schedule->getReceiver()->getShipmentDate($date);
+                    $shipmentDate = $this->storeService->getStoreShipmentDate($schedule->getReceiver(), $date);
 
                     $shipmentDate->modify(sprintf('+%s days', $modifier));
 
@@ -471,12 +519,12 @@ class ScheduleResultService implements LoggerAwareInterface
                     $route[$receiver->getXmlId()] = $receiver;
 
                     $res = (new ScheduleResult())
-                        ->setSender($route->first())
-                        ->setReceiver($schedule->getReceiver())
-                        ->setRoute($route);
+                        ->setSenderCode($route->first()->getXmlId())
+                        ->setReceiverCode($schedule->getReceiverCode())
+                        ->setRouteCodes($route->getKeys());
 
                     /**
-                     * @var int $hour
+                     * @var int       $hour
                      * @var \DateTime $date
                      */
                     foreach ($nextDeliveries as $hour => $date) {

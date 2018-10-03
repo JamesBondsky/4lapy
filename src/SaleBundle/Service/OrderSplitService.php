@@ -1,7 +1,4 @@
 <?php
-/*
- * @copyright Copyright (c) ADV/web-engineering co.
- */
 
 namespace FourPaws\SaleBundle\Service;
 
@@ -11,14 +8,17 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketPropertyItem;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\UserMessageException;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
@@ -29,18 +29,23 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\SaleBundle\Collection\BasketSplitItemCollection;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
-use FourPaws\SaleBundle\Entity\BasketSplitItem;
+use FourPaws\SaleBundle\Dto\OrderSplit\Basket\BasketSplitItem;
+use FourPaws\SaleBundle\Dto\OrderSplit\Basket\BasketSplitResult;
+use FourPaws\SaleBundle\Dto\OrderSplit\SplitStockResult;
 use FourPaws\SaleBundle\Entity\OrderSplitResult;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
+use FourPaws\SaleBundle\Exception\InvalidArgumentException;
+use FourPaws\SaleBundle\Exception\NotFoundException as NotFoundSaleException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use Psr\Log\LoggerAwareInterface;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 class OrderSplitService implements LoggerAwareInterface
 {
@@ -82,22 +87,31 @@ class OrderSplitService implements LoggerAwareInterface
     /**
      * @param OrderStorage $storage
      *
+     * @return OrderSplitResult[]
      * @throws ApplicationCreateException
-     * @throws OrderSplitException
      * @throws ArgumentException
      * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
+     * @throws BitrixProxyException
+     * @throws DeliveryNotAvailableException
      * @throws LoaderException
+     * @throws NotFoundException
+     * @throws NotImplementedException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws ObjectPropertyException
-     * @throws UserMessageException
-     * @throws NotFoundException
-     * @throws BitrixProxyException
-     * @throws DeliveryNotAvailableException
      * @throws OrderCreateException
+     * @throws OrderSplitException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
      * @throws StoreNotFoundException
-     * @return OrderSplitResult[]
+     * @throws SystemException
+     * @throws UserMessageException
+     * @throws \Exception
+     * @throws InvalidArgumentException
+     * @throws NotFoundSaleException
+     * @throws \LogicException
+     * @throws \RuntimeException
      */
     public function splitOrder(OrderStorage $storage): array
     {
@@ -119,10 +133,9 @@ class OrderSplitService implements LoggerAwareInterface
 
         $storage1 = clone $storage;
 
-        [$available, $delayed] = $this->splitStockResult($delivery);
-        [$availableItems, $delayedItems] = $this->splitBasket($basket, $available, $delayed);
-
-        $basket1 = $this->generateBasket($availableItems, $canGetPartial);
+        $splitStockResult = $this->splitStockResult($delivery);
+        $splitBasket = $this->splitBasket($basket, $splitStockResult);
+        $basket1 = $this->generateBasket($splitBasket->getAvailable(), $canGetPartial);
 
         $storage1->setBonus($this->getMaxBonusPayment($basket1, $storage));
 
@@ -151,17 +164,17 @@ class OrderSplitService implements LoggerAwareInterface
 
         $order1 = $this->getOrderService()->initOrder($storage1, $basket1, $delivery1);
         $splitResult1 = (new OrderSplitResult())->setOrderStorage($storage1)
-            ->setOrder($order1)
-            ->setDelivery($delivery1);
+                                                ->setOrder($order1)
+                                                ->setDelivery($delivery1);
 
         $storage2 = clone $storage;
-        $basket2 = $this->generateBasket($delayedItems, false);
+        $basket2 = $this->generateBasket($splitBasket->getDelayed(), false);
         $storage2->setDeliveryInterval($storage->getSecondDeliveryInterval());
         $storage2->setDeliveryDate($storage->getSecondDeliveryDate());
         $storage2->setComment($storage->getSecondComment());
         $storage2->setBonus($storage->getBonus() - $storage1->getBonus());
 
-        $delivery2 = (clone $delivery)->setStockResult($delayed);
+        $delivery2 = (clone $delivery)->setStockResult($splitStockResult->getDelayed());
         if (!$delivery2->isSuccess()) {
             throw new OrderSplitException('Delivery for order2 is unavailable');
         }
@@ -172,31 +185,33 @@ class OrderSplitService implements LoggerAwareInterface
 
         $order2 = $this->getOrderService()->initOrder($storage2, $basket2, $delivery2);
         $splitResult2 = (new OrderSplitResult())->setOrderStorage($storage2)
-            ->setOrder($order2)
-            ->setDelivery($delivery2);
+                                                ->setOrder($order2)
+                                                ->setDelivery($delivery2);
 
 
         if ($isDiscountEnabled) {
             Manager::enableExtendsDiscount();
         }
 
-        return [$splitResult1, $splitResult2];
+        return [
+            $splitResult1,
+            $splitResult2,
+        ];
     }
 
 
     /**
-     * @param Basket                $basket
-     * @param StockResultCollection $available
-     * @param StockResultCollection $delayed
+     * @param Basket           $basket
+     * @param SplitStockResult $splitStockResult
      *
-     * @return BasketSplitItemCollection[]
+     * @return BasketSplitResult
+     * @throws ArgumentException
+     * @throws ArgumentNullException
      */
-    public function splitBasket(Basket $basket, StockResultCollection $available, StockResultCollection $delayed): array
+    public function splitBasket(Basket $basket, SplitStockResult $splitStockResult): BasketSplitResult
     {
-        /** @var BasketSplitItemCollection $availableItems */
-        $availableItems = new BasketSplitItemCollection();
-        /** @var BasketSplitItemCollection $availableItems */
-        $delayedItems = new BasketSplitItemCollection();
+        $availableItems = new ArrayCollection();
+        $delayedItems = new ArrayCollection();
         /** @var BasketItem $basketItem */
         foreach ($basket as $basketItem) {
             if ($basketItem->isDelay()) {
@@ -205,7 +220,8 @@ class OrderSplitService implements LoggerAwareInterface
 
             $properties = $basketItem->getPropertyCollection()->getPropertyValues();
             $hasBonus = $properties['HAS_BONUS']['VALUE'];
-            if ($availableResult = $available->filterByOfferId($basketItem->getProductId())->first()) {
+            if ($availableResult = $splitStockResult->getAvailable()->filterByOfferId($basketItem->getProductId())
+                                                    ->first()) {
                 /** @var StockResult $availableResult */
                 if (($priceForAmount = $availableResult->getPriceForAmountByBasketCode($basketItem->getBasketCode())) &&
                     $priceForAmount->getAmount()
@@ -230,7 +246,8 @@ class OrderSplitService implements LoggerAwareInterface
                     );
                 }
             }
-            if ($delayedResult = $delayed->filterByOfferId($basketItem->getProductId())->first()) {
+            if ($delayedResult = $splitStockResult->getDelayed()->filterByOfferId($basketItem->getProductId())
+                                                  ->first()) {
                 /** @var StockResult $delayedResult */
                 /** @var StockResult $availableResult */
                 if (($priceForAmount = $delayedResult->getPriceForAmountByBasketCode($basketItem->getBasketCode())) &&
@@ -251,7 +268,8 @@ class OrderSplitService implements LoggerAwareInterface
             }
         }
 
-        return [$availableItems, $delayedItems];
+        return (new BasketSplitResult())->setAvailable($availableItems)
+                                        ->setDelayed($delayedItems);
     }
 
     /**
@@ -288,6 +306,8 @@ class OrderSplitService implements LoggerAwareInterface
                 $partialDate = (clone $delivery)->setStockResult($available)->getDeliveryDate();
                 $result = $fullDate->getTimestamp() !== $partialDate->getTimestamp();
             }
+
+            $result &= $available->getPrice() && $delayed->getPrice();
         }
 
         return $result;
@@ -326,9 +346,9 @@ class OrderSplitService implements LoggerAwareInterface
      * @throws ArgumentException
      * @throws NotFoundException
      * @throws StoreNotFoundException
-     * @return StockResultCollection[]
+     * @return SplitStockResult
      */
-    public function splitStockResult(CalculationResultInterface $delivery): array
+    public function splitStockResult(CalculationResultInterface $delivery): SplitStockResult
     {
         $stockResultCollection = $delivery->getStockResult();
         if ($this->canSplitOrder($delivery)) {
@@ -356,19 +376,28 @@ class OrderSplitService implements LoggerAwareInterface
             $available = new StockResultCollection();
         }
 
-        return [$available, $delayed];
+        return (new SplitStockResult())->setAvailable($available)
+                                       ->setDelayed($delayed);
     }
 
     /**
      * @param StockResultCollection $stockResultCollection
+     *
      * @return StockResultCollection
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \RuntimeException
      */
     public function recalculateStockResult(StockResultCollection $stockResultCollection): StockResultCollection
     {
         $result = new StockResultCollection();
-        $items = new BasketSplitItemCollection();
+        $items = new ArrayCollection();
         /** @var StockResult $stockResult */
         foreach ($stockResultCollection as $stockResult) {
             $items->add(
@@ -404,14 +433,21 @@ class OrderSplitService implements LoggerAwareInterface
     }
 
     /**
-     * @param BasketSplitItemCollection $items
-     * @param bool                      $recalculateDiscounts
+     * @param ArrayCollection $items
+     * @param bool            $recalculateDiscounts
      *
+     * @return Basket
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
-     * @return Basket
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \RuntimeException
      */
-    protected function generateBasket(BasketSplitItemCollection $items, $recalculateDiscounts = false): Basket
+    protected function generateBasket(ArrayCollection $items, $recalculateDiscounts = false): Basket
     {
         /** @var Basket $basket */
         $basket = Basket::create(SITE_ID);
@@ -468,10 +504,16 @@ class OrderSplitService implements LoggerAwareInterface
     /**
      * @param Basket $basket
      *
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
-    protected function recalculateDiscounts(Basket $basket)
+    protected function recalculateDiscounts(Basket $basket): void
     {
         if (!$isDiscountEnabled = Manager::isExtendDiscountEnabled()) {
             Manager::enableExtendsDiscount();
@@ -491,6 +533,7 @@ class OrderSplitService implements LoggerAwareInterface
      * @param OrderStorage $storage
      *
      * @return int
+     * @throws ArgumentNullException
      */
     protected function getMaxBonusPayment(Basket $basket, OrderStorage $storage): int
     {
@@ -500,8 +543,10 @@ class OrderSplitService implements LoggerAwareInterface
     }
 
     /**
-     * @throws ApplicationCreateException
      * @return OrderService
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws \LogicException
      */
     protected function getOrderService(): OrderService
     {

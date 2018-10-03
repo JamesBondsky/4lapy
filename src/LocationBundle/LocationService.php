@@ -26,6 +26,7 @@ use CBitrixLocationSelectorSearchComponent;
 use CIBlockElement;
 use Exception;
 use FourPaws\Adapter\DaDataLocationAdapter;
+use FourPaws\Adapter\Model\Output\BitrixLocation;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Enum\IblockCode;
@@ -255,7 +256,7 @@ class LocationService
                 $stores = $storeService->getStoresByLocation(
                     $element['PROPERTY_LOCATION_VALUE'],
                     StoreService::TYPE_SHOP
-                );
+                )->getStores();
                 /** @var Store $store */
                 foreach ($stores as $store) {
                     $storeCodes[] = $store->getXmlId();
@@ -281,7 +282,7 @@ class LocationService
                 $stores = $storeService->getStoresByLocation(
                     $element['PROPERTY_LOCATION_VALUE'],
                     StoreService::TYPE_SHOP
-                );
+                )->getStores();
                 /** @var Store $store */
                 foreach ($stores as $store) {
                     $storeCodes[] = $store->getXmlId();
@@ -433,7 +434,9 @@ class LocationService
                             '_TYPE_ID'   => 'TYPE.ID',
                             '_TYPE_CODE' => 'TYPE.CODE',
                             '_TYPE_NAME' => 'TYPE.NAME.NAME',
-                        ])->exec();
+                        ])
+                        ->setOrder(['_TYPE_ID' => 'ASC'])
+                        ->exec();
                     while ($parentItem = $parentRes->fetch()) {
                         $parentItem['NAME'] = $parentItem['DISPLAY'];
                         unset($parentItem['DISPLAY']);
@@ -960,10 +963,11 @@ class LocationService
             }
 
             $result = new Address();
+            $city = $dadataLocation->getCity() ?: $dadataLocation->getSettlementWithType();
             $result->setLocation($locationCode)
                 ->setRegion($dadataLocation->getRegionWithType())
                 ->setArea($dadataLocation->getAreaWithType())
-                ->setCity($dadataLocation->getCity() ?: $dadataLocation->getRegion())
+                ->setCity($city ?: $dadataLocation->getRegion())
                 ->setValid($this->daDataService->isValidAddress($dadataLocation))
                 ->setStreetPrefix($dadataLocation->getStreetType())
                 ->setStreet($dadataLocation->getStreet())
@@ -1047,6 +1051,25 @@ class LocationService
     {
         return \json_encode((new DaDataLocationAdapter())->convertLocationArrayToDadataArray($location),
             JSON_OBJECT_AS_ARRAY);
+    }
+
+    /**
+     * @param array $data
+     *
+     * @return BitrixLocation
+     * @throws ApplicationCreateException
+     * @throws \RuntimeException
+     * @throws CityNotFoundException
+     */
+    public function getCityFromDadata(array $data): BitrixLocation
+    {
+        $result = (new DaDataLocationAdapter())->convertFromArray($data);
+
+        if (!$result->getCode()) {
+            throw new CityNotFoundException('City not found');
+        }
+
+        return $result;
     }
 
     /**

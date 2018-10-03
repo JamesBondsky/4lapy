@@ -19,6 +19,7 @@ use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Collection\DeliveryScheduleResultCollection;
+use FourPaws\DeliveryBundle\Service\DeliveryScheduleResultService;
 use FourPaws\StoreBundle\Collection\ScheduleResultCollection;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -337,6 +338,11 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                 if (!$stockResult->getDelayed()->isEmpty()) {
                     $date = $this->getStoreShipmentDate($this->selectedStore, $stockResult);
                 }
+
+                if (!$stockResult->getDelayed()->getPrice() && !$stockResult->getAvailable()->getPrice()) {
+                    $this->addError(new Error('Нет доступных для доставки товаров с ненулевой ценой'));
+                    return;
+                }
             }
         }
 
@@ -415,7 +421,9 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                 $delayed->setType(StockResult::TYPE_UNAVAILABLE);
             }
         } else {
-            $this->shipmentResults = $resultCollection->getFastest($this->getCurrentDate());
+            /** @var DeliveryScheduleResultService $scheduleResultService */
+            $scheduleResultService = Application::getInstance()->getContainer()->get(DeliveryScheduleResultService::class);
+            $this->shipmentResults = $scheduleResultService->getFastest($resultCollection, $this->getCurrentDate());
 
             $date->modify(sprintf('+%s days', $this->shipmentResults->getDays($this->getCurrentDate())));
             foreach ($offers as $offer) {

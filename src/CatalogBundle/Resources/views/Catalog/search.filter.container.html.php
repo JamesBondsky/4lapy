@@ -3,9 +3,11 @@
 use Bitrix\Main\Grid\Declension;
 use Bitrix\Main\Web\Uri;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
+use FourPaws\Catalog\Model\Variant;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
 use FourPaws\CatalogBundle\ParamConverter\Catalog\AbstractCatalogRequestConverter;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\EcommerceBundle\Service\DataLayerService;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\Search\Model\ProductSearchResult;
@@ -16,6 +18,7 @@ use Symfony\Component\Templating\PhpEngine;
  * @var Request                               $request
  * @var CatalogCategorySearchRequestInterface $catalogRequest
  * @var ProductSearchResult                   $productSearchResult
+ * @var DataLayerService                      $dataLayerService
  * @var GoogleEcommerceService                $ecommerceService
  * @var string                                $retailRocketViewScript
  * @var PhpEngine                             $view
@@ -60,23 +63,32 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
             </div>
             <?php $filterToShow = $filterCollection->getFiltersToShow();
             $filterActions = $filterCollection->getActionsFilter(); ?>
-
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.list.html.php',
                 [
-                    'filters' => $filterToShow,
+                    'filters'          => $filterToShow,
+                    'dataLayerService' => $dataLayerService,
                 ]
             ) ?>
             <div class="b-filter__block b-filter__block--discount js-discount-mobile-here">
                 <?php
                 /**
                  * @var FilterBase $filter
+                 * @var Variant    $variant
                  */
-                foreach ($filterActions as $filter) { ?>
+                foreach ($filterActions as $filter) {
+                    $variants = $filter->getAvailableVariants(); ?>
                     <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
-                        <?php foreach ($filter->getAvailableVariants() as $id => $variant) { ?>
+                        <?php foreach ($variants as $id => $variant) { ?>
                             <li class="b-filter-link-list__item">
-                                <label class="b-filter-link-list__label">
+                                <label class="b-filter-link-list__label"
+                                    <?= $variant->getOnclick()
+                                        ? \sprintf(
+                                            'onclick="%s"',
+                                            $variant->getOnclick()
+                                        )
+                                        : ''
+                                    ?>>
                                     <input class="b-filter-link-list__checkbox js-discount-input js-filter-control"
                                            type="checkbox"
                                            name="<?= $filter->getFilterCode() ?>"
@@ -130,7 +142,8 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
                     <?= $view->render(
                         'FourPawsCatalogBundle:Catalog:catalog.filter.sorts.html.php',
                         [
-                            'sorts' => $catalogRequest->getSorts(),
+                            'sorts'            => $catalogRequest->getSorts(),
+                            'dataLayerService' => $dataLayerService,
                         ]
                     );
 

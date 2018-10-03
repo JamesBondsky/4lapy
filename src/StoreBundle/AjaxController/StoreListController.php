@@ -12,10 +12,13 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\EcommerceBundle\Enum\DataLayer;
+use FourPaws\EcommerceBundle\Service\DataLayerService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Dto\ShopList\Service;
 use FourPaws\StoreBundle\Exception\NoStoresAvailableException;
-use FourPaws\StoreBundle\Exception\NotFoundException;
-use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\StoreBundle\Service\ShopInfoService;
 use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
@@ -23,6 +26,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
+ * @todo    ParamConverter
  * Class StoreListController
  *
  * @package FourPaws\UserBundle\Controller
@@ -32,21 +36,31 @@ class StoreListController extends Controller implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
-    /**@var StoreService */
-    protected $storeService;
-    /** @var AjaxMess */
-    private $ajaxMess;
+    /**
+     * @var ShopInfoService
+     */
+    protected $shopInfoService;
+    /**
+     * @var AjaxMess
+     */
+    protected $ajaxMess;
+    /**
+     * @var DataLayerService
+     */
+    private $dataLayerService;
 
     /**
      * StoreListController constructor.
      *
-     * @param StoreService $storeService
-     * @param AjaxMess     $ajaxMess
+     * @param ShopInfoService  $shopInfoService
+     * @param AjaxMess         $ajaxMess
+     * @param DataLayerService $dataLayerService
      */
-    public function __construct(StoreService $storeService, AjaxMess $ajaxMess)
+    public function __construct(ShopInfoService $shopInfoService, AjaxMess $ajaxMess, DataLayerService $dataLayerService)
     {
-        $this->storeService = $storeService;
+        $this->shopInfoService = $shopInfoService;
         $this->ajaxMess = $ajaxMess;
+        $this->dataLayerService = $dataLayerService;
     }
 
     /**
@@ -55,25 +69,27 @@ class StoreListController extends Controller implements LoggerAwareInterface
      *
      * @return JsonResponse
      * @throws RuntimeException
+     * @throws ApplicationCreateException
      */
     public function orderAction(Request $request): JsonResponse
     {
+        $data = $this->shopInfoService->shopListToArray($this->shopInfoService->getShopListByRequest($request));
+        $data['command'] = $this->dataLayerService->renderSort(
+            DataLayer::SORT_TYPE_SHOPS,
+            $request->get('sort') === 'metro' ? DataLayer::SORT_VALUE_SHOPS_METRO : DataLayer::SORT_VALUE_SHOPS_ADDRESS
+        );
+
         try {
-            return JsonSuccessResponse::createWithData(
-                'Подгрузка успешна',
-                $this->storeService->getStoresInfo(
-                    [
-                        'filter' => $this->storeService->getFilterByRequest($request),
-                        'order'  => $this->storeService->getOrderByRequest($request),
-                        'storesAlways' => true, // отвечает за логику показа магазинов если нет в городе
-                    ]
-                )
+            $result = JsonSuccessResponse::createWithData(
+                '',
+                $data
             );
         } catch (Exception $e) {
             $this->log()->error($e->getMessage());
+            $result = $this->ajaxMess->getSystemError();
         }
 
-        return $this->ajaxMess->getSystemError();
+        return $result;
     }
 
     /**
@@ -82,25 +98,33 @@ class StoreListController extends Controller implements LoggerAwareInterface
      *
      * @return JsonResponse
      * @throws \RuntimeException
+     * @throws ApplicationCreateException
      */
     public function checkboxFilterAction(Request $request): JsonResponse
     {
+        $shopList = $this->shopInfoService->getShopListByRequest($request);
+
+        $data = $this->shopInfoService->shopListToArray($shopList);
+        $data['command'] = $this->dataLayerService->renderShopFilter(
+            $shopList->getLocationName(),
+            \implode(', ', $shopList->getServices()->filter(function (Service $service) {
+                return $service->isSelected();
+            })->map(function (Service $service) {
+                return $service->getName();
+            })->toArray()) ?? ''
+        );
+
         try {
-            return JsonSuccessResponse::createWithData(
-                'Подгрузка успешна',
-                $this->storeService->getStoresInfo(
-                    [
-                        'filter' => $this->storeService->getFilterByRequest($request),
-                        'order'  => $this->storeService->getOrderByRequest($request),
-                        'storesAlways' => true, // отвечает за логику показа магазинов если нет в городе
-                    ]
-                )
+            $result = JsonSuccessResponse::createWithData(
+                '',
+                $data
             );
         } catch (Exception $e) {
             $this->log()->error($e->getMessage());
+            $result = $this->ajaxMess->getSystemError();
         }
 
-        return $this->ajaxMess->getSystemError();
+        return $result;
     }
 
     /**
@@ -109,24 +133,23 @@ class StoreListController extends Controller implements LoggerAwareInterface
      *
      * @return JsonResponse
      * @throws \RuntimeException
+     * @throws ApplicationCreateException
      */
     public function searchAction(Request $request): JsonResponse
     {
         try {
-            return JsonSuccessResponse::createWithData(
-                'Подгрузка успешна',
-                $this->storeService->getStoresInfo(
-                    [
-                        'filter' => $this->storeService->getFilterByRequest($request),
-                        'order'  => $this->storeService->getOrderByRequest($request),
-                    ]
+            $result = JsonSuccessResponse::createWithData(
+                '',
+                $this->shopInfoService->shopListToArray(
+                    $this->shopInfoService->getShopListByRequest($request)
                 )
             );
         } catch (Exception $e) {
             $this->log()->error($e->getMessage());
+            $result = $this->ajaxMess->getSystemError();
         }
 
-        return $this->ajaxMess->getSystemError();
+        return $result;
     }
 
     /**
@@ -135,79 +158,79 @@ class StoreListController extends Controller implements LoggerAwareInterface
      *
      * @return JsonResponse
      * @throws \RuntimeException
+     * @throws ApplicationCreateException
      */
     public function chooseCityAction(Request $request): JsonResponse
     {
         try {
             if ((string)$request->get('findNearest') === 'Y') {
                 $request->query->set('code', $request->get('codeNearest'));
-                /** @todo если передать координаты пользователя - то можно подсветить ближайший магазин, либо удаляем комменты */
-                return JsonSuccessResponse::createWithData(
-                    'Подгрузка успешна',
-                    $this->storeService->getStoresInfo(
-                        [
-                            'filter'       => $this->storeService->getFilterByRequest($request),
-                            'storesAlways' => true, // отвечает за логику показа магазинов если нет в городе
-//                        'order'         => ['DISTANCE_'.$lat.'_'.$lon => 'asc'],
-//                        'activeStoreId' => 'first',
-                        ]
-                    )
-                );
             }
 
-            return JsonSuccessResponse::createWithData(
-                'Подгрузка успешна',
-                $this->storeService->getStoresInfo(
-                    [
-                        'filter'               => $this->storeService->getFilterByRequest($request),
-                        'order'                => $this->storeService->getOrderByRequest($request),
-                        'activeStoreId'        => $request->get('active_store_id', 0),
-                        'returnActiveServices' => true,
-                        'returnSort'           => true,
-                        'sortVal'              => $request->get('sort'),
-                        'storesAlways'         => true, // отвечает за логику показа магазинов если нет в городе
-                    ]
-                )
+            $shopList = $this->shopInfoService->getShopListByRequest($request);
+            $data = $this->shopInfoService->shopListToArray($shopList);
+            $data['command'] = $this->dataLayerService->renderShopFilter(
+                $shopList->getLocationName(),
+                \implode(', ', $shopList->getServices()->filter(function (Service $service) {
+                    return $service->isSelected();
+                })->map(function (Service $service) {
+                    return $service->getName();
+                })->toArray()) ?? ''
+            );
+
+            $result = JsonSuccessResponse::createWithData(
+                '',
+                $data
             );
         } catch (Exception $e) {
             $this->log()->error($e->getMessage());
+            $result = $this->ajaxMess->getSystemError();
         }
 
-        return $this->ajaxMess->getSystemError();
+        return $result;
     }
 
     /**
-     * @Route("/getByItem/", methods={"GET"})
+     * @Route("/by-product/", methods={"GET"})
      * @param Request $request
      *
      * @return JsonResponse
      * @throws \RuntimeException
      * @throws ApplicationCreateException
      */
-    public function getByItemAction(Request $request): JsonResponse
+    public function getByProductAction(Request $request): JsonResponse
     {
         $offerId = $request->get('offer', 0);
 
-        if ((int)$offerId > 0) {
+        if ($offer = OfferQuery::getById((int)$offerId)) {
             try {
                 try {
-                    $storeCollection = $this->storeService->getActiveStoresByProduct($offerId);
+                    $shops = $this->shopInfoService->getShopsByOffer($offer);
                 } catch (NoStoresAvailableException $e) {
-                    $storeCollection = new StoreCollection();
+                    $shops = new StoreCollection();
                 }
 
-                $result = $this->storeService->getFormatedStoreByCollection(['storeCollection' => $storeCollection]);
-                $result['hideTab'] = $storeCollection->isEmpty();
-                return JsonSuccessResponse::createWithData(
-                    'Подгрузка успешна', $result
+                $result = $this->shopInfoService->shopListToArray(
+                    $this->shopInfoService->getShopList(
+                        $shops,
+                        $this->shopInfoService->getLocationByRequest($request),
+                        [],
+                        $offer
+                    )
+                );
+
+                $result = JsonSuccessResponse::createWithData(
+                    '', $result
                 );
             } catch (Exception $e) {
                 $this->log()->error($e->getMessage());
 
-                return $this->ajaxMess->getSystemError();
+                $result = $this->ajaxMess->getSystemError();
             }
+        } else {
+            $result = $this->ajaxMess->getNotIdError(' торгового предложения');
         }
 
-        return $this->ajaxMess->getNotIdError(' торгового предложения');
+        return $result;
     }
 }

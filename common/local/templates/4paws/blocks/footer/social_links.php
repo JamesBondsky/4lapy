@@ -31,5 +31,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             </a>
             <?= tplinvis('social_link_vk') ?>
         </li>
+        <li class="b-social__item">
+            <a class="b-social__link" href="<?= tplvar('social_link_in') ?>" title="Instagram" target="_blank">
+                <span class="b-icon b-icon--in">
+                    <?= new SvgDecorator('icon-in', 22, 18) ?>
+                </span>
+            </a>
+            <?= tplinvis('social_link_in') ?>
+        </li>
     </ul>
 </div>

@@ -49,30 +49,34 @@ $offer = $arParams['OFFER'];
             </li>
         </ul>
         <div class="b-availability__content js-availability-content">
-            <div class="b-tab-delivery js-content-list js-map-list-scroll">
-                <div class="b-tab-delivery__header">
-                    <ul class="b-tab-delivery__header-list">
-                        <li class="b-tab-delivery__header-item b-tab-delivery__header-item--addr">
-                            Адрес
-                        </li>
-                        <li class="b-tab-delivery__header-item b-tab-delivery__header-item--phone">
-                            Телефон
-                        </li>
-                        <li class="b-tab-delivery__header-item b-tab-delivery__header-item--time">
-                            Время работы
-                        </li>
-                        <li class="b-tab-delivery__header-item b-tab-delivery__header-item--amount">
-                            Товар
-                        </li>
-                        <li class="b-tab-delivery__header-item b-tab-delivery__header-item--self-picked">
-                            Самовывоз
-                        </li>
+            <div class="b-delivery-list--section js-content-list js-map-list-scroll">
+                <div class="b-tab-delivery">
+                    <div class="b-tab-delivery__header">
+                        <ul class="b-tab-delivery__header-list">
+                            <li class="b-tab-delivery__header-item b-tab-delivery__header-item--addr">Адрес
+                            </li>
+                            <li class="b-tab-delivery__header-item b-tab-delivery__header-item--phone">Телефон
+                            </li>
+                            <li class="b-tab-delivery__header-item b-tab-delivery__header-item--time">Время работы
+                            </li>
+                            <li class="b-tab-delivery__header-item b-tab-delivery__header-item--amount">Товара
+                            </li>
+                            <li class="b-tab-delivery__header-item b-tab-delivery__header-item--self-picked">Самовывоз
+                            </li>
+                        </ul>
+                    </div>
+                    <ul class="b-delivery-list js-delivery-list" data-available="full">
                     </ul>
                 </div>
-                <ul class="b-delivery-list js-delivery-list"></ul>
+                <h4 class="b-title b-title--advice b-title--seporator" data-availability-header>Товар будет доступен позже в магазинах
+                </h4>
+                <ul class="b-delivery-list js-delivery-list" data-available="delay">
+                </ul>
             </div>
             <div class="b-tab-delivery-map b-tab-delivery-map--card js-content-map">
-                <div class="b-tab-delivery-map__map js-product-map" id="map" data-url="/ajax/store/list/getByItem/?offer=<?=$offer->getId()?>"></div>
+                <div class="b-tab-delivery-map__map js-product-map" id="map"
+                     data-url="/ajax/store/list/by-product/?offer=<?= $offer->getId() ?>">
+                </div>
                 <a class="b-link b-link--close-baloon js-product-list"
                    href="javascript:void(0);"
                    title="">

@@ -1541,6 +1541,22 @@ class Offer extends IblockElement
             return $this->getClothingSize()->getName();
         }
 
+        if ($value = $this->getPackageDimension($short, $fullLimit)) {
+            return $value;
+        }
+
+        return 'арт. ' . $this->getXmlId();
+    }
+
+    /**
+     * @param bool $short
+     * @param int  $fullLimit
+     *
+     * @return null|string
+     * @throws ApplicationCreateException
+     */
+    public function getPackageDimension(bool $short = false, int $fullLimit = 0): ?string
+    {
         if ($this->getVolumeReference()) {
             return $this->getVolumeReference()->getName();
         }
@@ -1548,8 +1564,22 @@ class Offer extends IblockElement
         if ($weight > 0) {
             return WordHelper::showWeight($weight, $short, $fullLimit);
         }
+        return null;
+    }
 
-        return 'арт. ' . $this->getXmlId();
+    /**
+     * @return string
+     * @throws ApplicationCreateException
+     */
+    public function getFlavourWithWeight(): string
+    {
+        $flavourName = [];
+
+        $this->getProduct()->getFlavour()->map(function (HlbReferenceItem $item) use (&$flavourName) {
+            $flavourName[] = $item->getName();
+        });
+
+        return \sprintf('%s, %s', \implode('/', $flavourName), $this->getPackageDimension());
     }
 
     /**
@@ -1615,14 +1645,12 @@ class Offer extends IblockElement
         /** LP23-365 Удаляем дубли названия бренда в названии оффера */
         $brandName = $this->getProduct()->getBrandName();
         $name = $this->NAME;
-        while ($brandName && \stripos($name, $brandName) !== \strripos($name, $brandName)) {
-            $name = \substr_replace(
-                $name,
-                '',
-                \strripos($name, $brandName),
-                \strlen($brandName)
-            );
-            $name = str_replace('  ', ' ', trim($name));
+
+        if (mb_stripos($name, $brandName) !== mb_strripos($name, $brandName)) {
+            $pattern = '/' . preg_quote($brandName, '\\') . '/i';
+            $parts = preg_split($pattern, $name);
+            $parts[0] .= ' ' . $brandName;
+            $name = \implode(' ', \array_filter(\array_map('trim', $parts)));
         }
 
         return $name;

@@ -199,10 +199,6 @@ class UserService implements
     public function getCurrentUser(): User
     {
         $userId = $this->getCurrentUserId();
-        if ($userId <= 0) {
-            throw new NotAuthorizedException('не авторизованы');
-        }
-
         try {
             if ($this->userCollection->containsKey($userId)) {
                 $user = $this->userCollection->get($userId);

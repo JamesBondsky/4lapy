@@ -121,7 +121,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                         <div class="b-rating b-rating--big">
                             <?php for ($i = 1; $i <= 5; $i++) { ?>
                                 <div class="b-rating__star-block<?= $arResult['RATING']
-                                > $i ? ' b-rating__star-block--active' : '' ?>">
+                                >= $i ? ' b-rating__star-block--active' : '' ?>">
                                     <span class="b-icon"><?= new SvgDecorator('icon-star', 12, 12) ?></span>
                                 </div>
                             <?php } ?>
@@ -174,7 +174,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                 </div>
                 <div class="b-form-review__group">
                     <label class="b-form-review__label" for="id-review-pass">Пароль</label>
-                    <input class="b-form-review__input" id="id-review-pass" type="password" name="PASSWORD" value="" autocomplete="off" />
+                    <input class="b-form-review__input js-no-valid" id="id-review-pass" type="password" name="PASSWORD" value="" autocomplete="off" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
                 </div>
@@ -203,7 +203,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                 </div>
                 <div class="b-form-review__sub-heading">Отзыв</div>
                 <div class="b-form-review__group">
-                    <textarea class="b-form-review__textarea js-small-input-eight"
+                    <textarea class="b-form-review__textarea js-small-input-eight js-no-valid"
                               name="UF_TEXT"
                               placeholder="Оставьте ваш отзыв:"
                               maxlength="1000"></textarea>

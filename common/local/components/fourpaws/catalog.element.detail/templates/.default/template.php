@@ -265,11 +265,13 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                                 <div class="b-select b-select--product">
                                     <select class="b-select__block b-select__block--product js-select-link">
                                         <?php /** @var Offer $unionOffer */
-                                        foreach ($unionOffers as $unionOffer) { ?>
+                                        foreach ($unionOffers as $unionOffer) {
+                                            ?>
                                             <option value="<?= $unionOffer->getDetailPageUrl() ?>" <?= $unionOffer->getId() === $currentOffer->getId() ? ' selected' : '' ?>>
-                                                <?= $unionOffer->getName() ?>
+                                                <?= $unionOffer->getFlavourWithWeight()?>
                                             </option>
-                                        <?php } ?>
+                                            <?php
+                                        } ?>
                                     </select>
                                 </div>
                             </div>
@@ -478,7 +480,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
                             </div>
                         </li>
                         <li class="b-characteristics-tab__item"
-                            <?= (!$val = $currentOffer->getCatalogProduct()->getWidth()) ? 'style="display:none"' : '' ?>>
+                            <?= (!$val = $currentOffer->getCatalogProduct()->getHeight()) ? 'style="display:none"' : '' ?>>
                             <div class="b-characteristics-tab__characteristics-text"><span>Высота</span>
                                 <div class="b-characteristics-tab__dots"></div>
                             </div>
