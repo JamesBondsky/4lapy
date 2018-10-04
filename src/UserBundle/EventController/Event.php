@@ -509,7 +509,11 @@ class Event extends BaseServiceHandler
     {
         /** @todo запретить устанавливать эту группу пользователям */
         global $USER;
-        if ($USER->IsAdmin() && \in_array(self::GROUP_TECHNICAL_USERS, $USER->GetUserGroupArray())) {
+        if ($USER->IsAdmin()
+            || \in_array(self::GROUP_TECHNICAL_USERS, $USER->GetUserGroupArray())
+            || \in_array(28, $USER->GetUserGroupArray())
+            || \in_array(29, $USER->GetUserGroupArray())
+        ) {
             return;
         }
 
