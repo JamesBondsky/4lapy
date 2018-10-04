@@ -736,7 +736,9 @@ class BasketService implements LoggerAwareInterface
                 $user = false;
             }
         } else {
-            $user = $this->currentUserProvider->getUserRepository()->findByFUser($basketItem->getFUserId() ?? $this->currentUserProvider->getCurrentFUserId());
+            $user = $this->currentUserProvider->getUserRepository()->findByFUser(
+                (int)$basketItem->getFUserId() ?: $this->currentUserProvider->getCurrentFUserId()
+            );
         }
 
         $resultQuantity = 0;
