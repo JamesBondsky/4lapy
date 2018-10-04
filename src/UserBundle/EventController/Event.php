@@ -1,9 +1,5 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
-
 namespace FourPaws\UserBundle\EventController;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
@@ -513,7 +509,7 @@ class Event extends BaseServiceHandler
     {
         /** @todo запретить устанавливать эту группу пользователям */
         global $USER;
-        if ($USER->IsAdmin()) {
+        if ($USER->IsAdmin() && \in_array(self::GROUP_TECHNICAL_USERS, $USER->GetUserGroupArray())) {
             return;
         }
 
