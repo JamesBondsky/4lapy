@@ -258,9 +258,9 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
     </div>
 </div>
 <?php
-$currentShopInfo = $component->getShopListService()->toArray(
-    $component->getShopListService()->getOneShopInfo($pickup ? $pickup->getSelectedShop()->getXmlId() : '', $storage, $pickup)
-);
+$currentShopInfo = $pickup ? $component->getShopListService()->toArray(
+    $component->getShopListService()->getOneShopInfo($pickup->getSelectedShop()->getXmlId(), $storage, $pickup)
+) : [];
 ?>
 <script>
     window.fullBasket = <?= CUtil::PhpToJSObject(array_values($component->getBasketItemData($basket))) ?>;
