@@ -23,6 +23,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use Bitrix\Highloadblock\DataManager;
 
 /**
  * Class FormController
@@ -123,6 +124,76 @@ class FormController extends Controller implements LoggerAwareInterface
                 ]
             );
             $_SESSION['FEEDBACK_SUCCESS'] = 'Y';
+        }
+
+        return $response;
+    }
+
+    /**
+     * @todo ParamConverter
+     * @todo Decomposition
+     * @todo Validators
+     * @todo Symfony Forms
+     * @todo MiddleWare
+     *
+     * @Route("/order_interview/{order_id}/", methods={"POST"})
+     *
+     * @param Request $request
+     *
+     * @param string  $order_id
+     *
+     * @return JsonResponse
+     *
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public function addOrderInterviewAction(Request $request, string $order_id): JsonResponse
+    {
+
+        $formId = (int)$request->get('WEB_FORM_ID');
+        $data = $this->formService->getFormFieldsByRequest($request);
+
+        $response = $this->getFormResponse(
+            $formId,
+            $data,
+            [
+                'form_hidden_62',
+                'form_hidden_63',
+                'site_convenience_rate',
+                'callcenter_rate',
+                'delivery_rate',
+                'assortment_rate',
+                'impression_rate',
+            ]
+        );
+
+
+        if (null === $response) {
+            $response = JsonSuccessResponse::createWithData(
+                'Ваш отзыв принят',
+                [
+                    'reload'  => true,
+                    //'command' => $this->dataLayerService->renderFeedback($this->formService->getFormFieldValueByCode($data, 'theme', $formId)),
+                ]
+            );
+            $_SESSION['FEEDBACK_SUCCESS'] = 'Y';
+        }
+
+        if($response instanceof JsonSuccessResponse)
+        {
+            /**
+             * @var DataManager $hBlockInterviews
+             */
+            $hBlockInterviews = Application::getInstance()->getContainer()->get('bx.hlblock.orderfeedback');
+            $orderInterviewStatus = $hBlockInterviews->query()
+                                                     ->setFilter(['=UF_ORDER_ID' => $order_id])
+                                                     ->setSelect(['ID', 'UF_INTERVIEWED'])
+                                                     ->exec()
+                                                     ->fetch();
+            if($orderInterviewStatus && $orderInterviewStatus['UF_INTERVIEWED'] !== '1'){
+                $hBlockInterviews::update($orderInterviewStatus['ID'], ['UF_INTERVIEWED' => '1']);
+            }else{
+                $hBlockInterviews::add(['UF_INTERVIEWED' => '1', 'UF_ORDER_ID' => $order_id]);
+            }
         }
 
         return $response;

@@ -65,6 +65,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 /** @noinspection EfferentObjectCouplingInspection */
 
 /** @noinspection AutoloadingIssuesInspection */
+
 class FourPawsOrderComponent extends \CBitrixComponent
 {
     protected const DEFAULT_TEMPLATES_404 = [
@@ -72,6 +73,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         OrderStorageEnum::DELIVERY_STEP => 'delivery/',
         OrderStorageEnum::PAYMENT_STEP => 'payment/',
         OrderStorageEnum::COMPLETE_STEP => 'complete/#ORDER_ID#/',
+        OrderStorageEnum::INTERVIEW_STEP => 'interview/#ORDER_ID#/',
     ];
 
     /**
@@ -156,22 +158,22 @@ class FourPawsOrderComponent extends \CBitrixComponent
     {
         $container = Application::getInstance()->getContainer();
         /** @noinspection PhpUndefinedMethodInspection */
-        $this->orderService = $container->get(OrderService::class);
-        $this->orderSplitService = $container->get(OrderSplitService::class);
+        $this->orderService        = $container->get(OrderService::class);
+        $this->orderSplitService   = $container->get(OrderSplitService::class);
         $this->orderStorageService = $container->get(OrderStorageService::class);
-        $this->shopListService = $container->get(ShopInfoService::class);
-        $this->deliveryService = $container->get('delivery.service');
-        $this->storeService = $container->get('store.service');
+        $this->shopListService     = $container->get(ShopInfoService::class);
+        $this->deliveryService     = $container->get('delivery.service');
+        $this->storeService        = $container->get('store.service');
         $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
-        $this->userCityProvider = $container->get(UserCitySelectInterface::class);
-        $this->basketService = $container->get(BasketService::class);
-        $this->userAccountService = $container->get(UserAccountService::class);
-        $this->locationService = $container->get('location.service');
-        $this->manzanaService = $container->get('manzana.service');
-        $this->ecommerceService = $container->get(GoogleEcommerceService::class);
-        $this->salePreset = $container->get(SalePreset::class);
+        $this->userCityProvider    = $container->get(UserCitySelectInterface::class);
+        $this->basketService       = $container->get(BasketService::class);
+        $this->userAccountService  = $container->get(UserAccountService::class);
+        $this->locationService     = $container->get('location.service');
+        $this->manzanaService      = $container->get('manzana.service');
+        $this->ecommerceService    = $container->get(GoogleEcommerceService::class);
+        $this->salePreset          = $container->get(SalePreset::class);
         $this->retailRocketService = $container->get(RetailRocketService::class);
-        $this->logger = LoggerFactory::create('component_order');
+        $this->logger              = LoggerFactory::create('component_order');
 
         parent::__construct($component);
     }
@@ -182,7 +184,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         global $APPLICATION;
 
         try {
-            $variables = [];
+            $variables     = [];
             $componentPage = CComponentEngine::parseComponentPath(
                 $this->arParams['SEF_FOLDER'],
                 self::DEFAULT_TEMPLATES_404,
@@ -240,7 +242,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
      */
     protected function prepareResult(): void
     {
-        if ($this->currentStep === OrderStorageEnum::COMPLETE_STEP) {
+        if ($this->currentStep === OrderStorageEnum::COMPLETE_STEP ||
+            $this->currentStep === OrderStorageEnum::INTERVIEW_STEP
+        ) {
             return;
         }
 
@@ -267,7 +271,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         }
 
         /** @var Basket $basket */
-        $basket = $this->basketService->getBasket()->getOrderableItems();
+        $basket                                  = $this->basketService->getBasket()->getOrderableItems();
         $this->arResult['ECOMMERCE_VIEW_SCRIPT'] = $this->getEcommerceViewScript($basket);
         /** @noinspection PhpUndefinedVariableInspection */
         if ($this->currentStep === OrderStorageEnum::AUTH_STEP) {
@@ -286,7 +290,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $router = Application::getInstance()->getContainer()->get('router');
         /** @var Symfony\Component\Routing\RouteCollection $routeCollection */
         $routeCollection = $router->getRouteCollection();
-        $routes = [
+        $routes          = [
             'AUTH_VALIDATION' => 'fourpaws_sale_ajax_order_validateauth',
             'DELIVERY_VALIDATION' => 'fourpaws_sale_ajax_order_validatedelivery',
             'PAYMENT_VALIDATION' => 'fourpaws_sale_ajax_order_validatepayment',
@@ -316,7 +320,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         } catch (NotAuthorizedException $e) {
         }
 
-        $deliveries = $this->orderStorageService->getDeliveries($storage);
+        $deliveries       = $this->orderStorageService->getDeliveries($storage);
         $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
         if ($this->currentStep === OrderStorageEnum::DELIVERY_STEP) {
             $this->getPickupData($deliveries, $storage);
@@ -325,11 +329,11 @@ class FourPawsOrderComponent extends \CBitrixComponent
             if ($storage->getUserId()) {
                 /** @var AddressService $addressService */
                 $addressService = Application::getInstance()->getContainer()->get('address.service');
-                $addresses = $addressService->getAddressesByUser($storage->getUserId(), $selectedCity['CODE']);
+                $addresses      = $addressService->getAddressesByUser($storage->getUserId(), $selectedCity['CODE']);
             }
 
             $delivery = null;
-            $pickup = null;
+            $pickup   = null;
             foreach ($deliveries as $calculationResult) {
                 if ($this->deliveryService->isPickup($calculationResult)) {
                     $pickup = $calculationResult;
@@ -346,9 +350,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 // проверяется на этапе валидации $storage
             }
 
-            $this->arResult['PICKUP'] = $pickup;
-            $this->arResult['DELIVERY'] = $delivery;
-            $this->arResult['ADDRESSES'] = $addresses;
+            $this->arResult['PICKUP']            = $pickup;
+            $this->arResult['DELIVERY']          = $delivery;
+            $this->arResult['ADDRESSES']         = $addresses;
             $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
         } elseif ($this->currentStep === OrderStorageEnum::PAYMENT_STEP) {
             $this->getPickupData($deliveries, $storage);
@@ -377,7 +381,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
                     $this->logger->info('Нет телефона у пользователя - ' . $user->getId());
                 } catch (ManzanaServiceException $e) {
                     $this->logger->error(sprintf('failed to get user discount card: %s', $e->getMessage()), [
-                        'user' => $user->getId()
+                        'user' => $user->getId(),
                     ]);
                 }
             }
@@ -400,20 +404,20 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $payments = $this->orderStorageService->getAvailablePayments($storage, true, true, $basket->getPrice());
         }
 
-        $this->arResult['BASKET'] = $basket;
-        $this->arResult['USER'] = $user;
-        $this->arResult['PAYMENTS'] = $payments;
-        $this->arResult['SELECTED_CITY'] = $selectedCity;
+        $this->arResult['BASKET']             = $basket;
+        $this->arResult['USER']               = $user;
+        $this->arResult['PAYMENTS']           = $payments;
+        $this->arResult['SELECTED_CITY']      = $selectedCity;
         $this->arResult['DADATA_CONSTRAINTS'] = $this->locationService->getDadataJsonFromLocationArray($selectedCity);
 
-        $this->arResult['METRO'] = $this->storeService->getMetroInfo();
+        $this->arResult['METRO']   = $this->storeService->getMetroInfo();
         $this->arResult['STORAGE'] = $storage;
-        $this->arResult['STEP'] = $this->currentStep;
+        $this->arResult['STEP']    = $this->currentStep;
     }
 
     /**
      * @param CalculationResultInterface[] $deliveries
-     * @param OrderStorage $storage
+     * @param OrderStorage                 $storage
      */
     protected function getPickupData(array $deliveries, OrderStorage $storage): void
     {
@@ -426,9 +430,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
         if (null !== $pickup) {
             /** @var PickupResultInterface $pickup */
-            $storage = clone $storage;
+            $storage          = clone $storage;
             $selectedShopCode = $storage->getDeliveryPlaceCode();
-            $shops = $pickup->getStockResult()->getStores();
+            $shops            = $pickup->getStockResult()->getStores();
             if ($selectedShopCode && isset($shops[$selectedShopCode])) {
                 $pickup->setSelectedShop($shops[$selectedShopCode]);
             }
@@ -444,8 +448,8 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $storage->setDeliveryId($pickup->getDeliveryId());
             $storage->setDeliveryPlaceCode($pickup->getSelectedShop()->getXmlId());
             $splitStockResult = $this->orderSplitService->splitStockResult($pickup);
-            $available = $splitStockResult->getAvailable();
-            $delayed = $splitStockResult->getDelayed();
+            $available        = $splitStockResult->getAvailable();
+            $delayed          = $splitStockResult->getDelayed();
 
             $canGetPartial = $this->orderSplitService->canGetPartial($pickup);
 
@@ -457,17 +461,18 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 ? null
                 : (clone $pickup)->setStockResult($available);
 
-            $this->arResult['PARTIAL_PICKUP_AVAILABLE'] = $canGetPartial;
-            $this->arResult['SPLIT_PICKUP_AVAILABLE'] = $this->orderSplitService->canSplitOrder($pickup);
-            $this->arResult['PICKUP_STOCKS_AVAILABLE'] = $available;
-            $this->arResult['PICKUP_STOCKS_DELAYED'] = $delayed;
-            $this->arResult['PICKUP_AVAILABLE_PAYMENTS'] = $this->orderStorageService->getAvailablePayments($storage, false, true, $pickup->getStockResult()->getPrice());
+            $this->arResult['PARTIAL_PICKUP_AVAILABLE']  = $canGetPartial;
+            $this->arResult['SPLIT_PICKUP_AVAILABLE']    = $this->orderSplitService->canSplitOrder($pickup);
+            $this->arResult['PICKUP_STOCKS_AVAILABLE']   = $available;
+            $this->arResult['PICKUP_STOCKS_DELAYED']     = $delayed;
+            $this->arResult['PICKUP_AVAILABLE_PAYMENTS'] = $this->orderStorageService->getAvailablePayments($storage, false, true, $pickup->getStockResult()
+                                                                                                                                          ->getPrice());
         }
     }
 
     /**
      * @param CalculationResultInterface $delivery
-     * @param OrderStorage $storage
+     * @param OrderStorage               $storage
      *
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -506,20 +511,21 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
     /**
      * @param StockResultCollection $stockResultCollection
+     *
      * @return array
      */
     public function getOrderItemData(StockResultCollection $stockResultCollection): array
     {
-        $itemData = [];
+        $itemData    = [];
         $totalWeight = 0;
         /** @var StockResult $item */
         foreach ($stockResultCollection->getIterator() as $item) {
-            $weight = $item->getOffer()->getCatalogProduct()->getWeight() * $item->getAmount();
-            $offerId = $item->getOffer()->getId();
-            $itemData[$offerId]['name'] = $item->getOffer()->getName();
+            $weight                         = $item->getOffer()->getCatalogProduct()->getWeight() * $item->getAmount();
+            $offerId                        = $item->getOffer()->getId();
+            $itemData[$offerId]['name']     = $item->getOffer()->getName();
             $itemData[$offerId]['quantity'] += $item->getAmount();
-            $itemData[$offerId]['price'] += $item->getPrice();
-            $itemData[$offerId]['weight'] += $weight;
+            $itemData[$offerId]['price']    += $item->getPrice();
+            $itemData[$offerId]['weight']   += $weight;
 
             $totalWeight += $weight;
         }
@@ -539,10 +545,10 @@ class FourPawsOrderComponent extends \CBitrixComponent
             /** @var Offer $offer */
             foreach ($this->basketService->getOfferCollection() as $offer) {
                 if ($offer->getId() === $offerId) {
-                    $itemData[$offerId]['name'] = $item->getField('NAME');
+                    $itemData[$offerId]['name']     = $item->getField('NAME');
                     $itemData[$offerId]['quantity'] += $item->getQuantity();
-                    $itemData[$offerId]['price'] += $item->getPrice();
-                    $itemData[$offerId]['weight'] += $offer->getCatalogProduct()->getWeight() * $item->getQuantity();
+                    $itemData[$offerId]['price']    += $item->getPrice();
+                    $itemData[$offerId]['weight']   += $offer->getCatalogProduct()->getWeight() * $item->getQuantity();
                     break;
                 }
             }
@@ -568,17 +574,17 @@ class FourPawsOrderComponent extends \CBitrixComponent
      */
     private function getEcommerceViewScript(Basket $basket): string
     {
-        $script = '';
-        $option = '';
-        $step = 1;
+        $script   = '';
+        $option   = '';
+        $step     = 1;
         $isPreset = true;
 
         switch ($this->currentStep) {
             case OrderStorageEnum::COMPLETE_STEP:
                 return $script;
             case OrderStorageEnum::AUTH_STEP:
-                $step = 2;
-                $option = 'Контактные данные';
+                $step     = 2;
+                $option   = 'Контактные данные';
                 $isPreset = false;
                 break;
             case OrderStorageEnum::DELIVERY_STEP:
