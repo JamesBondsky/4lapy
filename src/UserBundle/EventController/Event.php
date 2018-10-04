@@ -513,6 +513,10 @@ class Event extends BaseServiceHandler
     {
         /** @todo запретить устанавливать эту группу пользователям */
         global $USER;
+        if ($USER->IsAdmin()) {
+            return;
+        }
+
         /** @noinspection PhpUnhandledExceptionInspection */
         $result = (new BitrixCache())
             ->withTime(31536000)// 1 год
@@ -530,7 +534,7 @@ class Event extends BaseServiceHandler
 
         /** @noinspection TypeUnsafeArraySearchInspection */
         if ($USER->IsAuthorized() && \in_array($result[UserGroup::OPT_CODE], $USER->GetUserGroupArray())) {
-            $USER->SetUserGroupArray(array_intersect([1, $result[UserGroup::OPT_CODE]], $USER->GetUserGroupArray()));
+            $USER->SetUserGroupArray(array_intersect([$result[UserGroup::OPT_CODE]], $USER->GetUserGroupArray()));
         } else {
             $USER->SetUserGroupArray([$result[UserGroup::NOT_AUTH_CODE]]);
         }
