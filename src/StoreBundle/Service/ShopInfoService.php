@@ -344,7 +344,7 @@ class ShopInfoService
         }
 
         if ($locationCode) {
-            $storeSearchResult = $this->storeService->getStoresByLocation($locationCode);
+            $storeSearchResult = $this->storeService->getStoresByLocation($locationCode, StoreService::TYPE_SHOP);
         }
 
         /**
