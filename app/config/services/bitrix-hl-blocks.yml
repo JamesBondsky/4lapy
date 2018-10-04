@@ -229,3 +229,7 @@ services:
     parent: bx.hlblock.base
     tags:
       - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapOfferProperty::KIND_OF_PACKING}
+
+  bx.hlblock.filterset:
+    arguments: ['FilterSet']
+    parent: bx.hlblock.base
