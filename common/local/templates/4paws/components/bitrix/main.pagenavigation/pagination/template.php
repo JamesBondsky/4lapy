@@ -31,19 +31,19 @@ if ($arParams['AJAX_MODE'] === 'Y') {
             <?php if ((int)$arResult['CURRENT_PAGE'] > 1) { ?>
                 <a class="b-pagination__link<?= $class ?>"
                    title="<?= $arResult['CURRENT_PAGE'] - 1 ?>"
-                   href="<?= $arResult['CURRENT_PAGE'] > 2 ? htmlspecialcharsbx(
+                   href="<?= $arResult['CURRENT_PAGE'] > 2 ?
                        $component->replaceUrlTemplate(
                            $arResult['CURRENT_PAGE'] - 1
-                       )
-                   ) : $arResult['URL'] ?>">Назад</a>
+                       ) : $arResult['URL'] ?>">Назад</a>
             <?php } else { ?>
                 <span class="b-pagination__link">Назад</span>
             <?php } ?>
         </li>
         <?php $page = 1;
         while ($page <= $arResult['PAGE_COUNT']):
-            $url = $page >= 2 ? htmlspecialcharsbx($component->replaceUrlTemplate($page)) : $arResult['URL'];
-            $uri = (new Uri($url))->deleteParams([CatalogLandingService::LANDING_REQUEST_KEY]); ?>
+            $url = $page >= 2 ? $component->replaceUrlTemplate($page) : $arResult['URL'];
+            $uri = (new Uri($url))->deleteParams([CatalogLandingService::LANDING_REQUEST_KEY]);
+            ?>
             <li class="b-pagination__item <?= $page === (int)$arResult['CURRENT_PAGE'] ? '' : $arResult['HIDDEN'][$page] ?? '' ?>">
                 <a class="b-pagination__link<?= $class ?> <?= $page === (int)$arResult['CURRENT_PAGE'] ? 'active' : '' ?>"
                    href="<?= $page === (int)$arResult['CURRENT_PAGE'] ? '' : $uri->getUri() ?>"
@@ -66,7 +66,7 @@ if ($arParams['AJAX_MODE'] === 'Y') {
             <?php if ((int)$arResult['CURRENT_PAGE'] < (int)$arResult['END_PAGE']) { ?>
                 <a class="b-pagination__link<?= $class ?>"
                    title="<?= $arResult['CURRENT_PAGE'] + 1 ?>"
-                   href="<?= htmlspecialcharsbx($component->replaceUrlTemplate($arResult['CURRENT_PAGE'] + 1)) ?>">
+                   href="<?= $component->replaceUrlTemplate($arResult['CURRENT_PAGE'] + 1) ?>">
                     Вперед
                 </a>
             <?php } else { ?>

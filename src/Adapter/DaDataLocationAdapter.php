@@ -164,7 +164,8 @@ class DaDataLocationAdapter extends BaseAdapter
         $result = \array_filter($this->expandLocation($location), function ($item) {
             return $this::TYPE_MAP[$item['TYPE']['CODE']];
         });
-        return \array_reduce($result, function ($array, $item) {
+
+        $result = \array_reduce($result, function ($array, $item) {
             $code = $item['TYPE']['CODE'];
             if (self::EXCLUDE_REGION_TYPE[$item['TYPE']['CODE']]) {
                 $item['NAME'] = \implode(' ', \array_filter(\array_map(function ($str) use ($code) {
@@ -183,6 +184,12 @@ class DaDataLocationAdapter extends BaseAdapter
                 $this::TYPE_MAP[$item['TYPE']['CODE']] => $item['NAME'],
             ]);
         }, []);
+
+        if ($kladrCode = $this->locationService->getLocationKladrCode($location['CODE'])) {
+            $result['kladr_id'] = $kladrCode;
+        }
+
+        return $result;
     }
 
     /**
