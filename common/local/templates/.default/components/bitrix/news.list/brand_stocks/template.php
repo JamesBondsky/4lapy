@@ -46,9 +46,18 @@ if (empty($arResult['ITEMS'])) {
                         <?php if (isset($arParams['DISPLAY_PREVIEW_TEXT']) && $arParams['DISPLAY_PREVIEW_TEXT'] === 'Y') { ?>
                             <p class="b-news-item__description"><?= htmlspecialcharsback($arItem['PREVIEW_TEXT']); ?></p>
                         <?php } ?>
-                        <?php if (!empty($arItem['DISPLAY_ACTIVE_FROM'])) { ?>
-                            <span class="b-news-item__date"><?= ToLower($arItem['DISPLAY_ACTIVE_FROM']) ?></span>
-                        <?php } ?>
+
+                        <?php if (!empty($arItem['DISPLAY_ACTIVE_FROM']) || !empty($arItem['DISPLAY_ACTIVE_TO'])) {
+                            $dateStr = '';
+                            if (!empty($arItem['DISPLAY_ACTIVE_FROM'])){
+                                $dateStr = 'c ' . $arItem['DISPLAY_ACTIVE_FROM'];
+                            }
+                            if (!empty($arItem['DISPLAY_ACTIVE_TO'])){
+                                $dateStr .= ' по ' . $arItem['DISPLAY_ACTIVE_TO'];
+                            }
+                            ?>
+                            <div class="b-info-blocks__item-date"><?=trim(ToLower($dateStr))?></div><?php
+                        } ?>
                     </a>
                 </article>
             <?php } ?>

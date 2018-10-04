@@ -351,13 +351,7 @@ class StoreService implements LoggerAwareInterface
      */
     public function getShopsByLocation(string $locationCode): StoreCollection
     {
-        if ($locationCode === LocationService::LOCATION_CODE_MOSCOW) {
-            $storeSearchResult = $this->getLocalStores($locationCode, static::TYPE_SHOP);
-        } else {
-            $storeSearchResult = $this->getRegionalStores($locationCode, static::TYPE_SHOP);
-        }
-
-        return $storeSearchResult->getStores();
+        return $this->getRegionalStores($locationCode, static::TYPE_SHOP)->getStores();
     }
 
     /**
@@ -464,6 +458,10 @@ class StoreService implements LoggerAwareInterface
         $region = $this->locationService->findLocationRegion($locationCode);
         if ($regionCode = $region['CODE']) {
             $getStores = function () use ($type, $regionCode) {
+                if (\in_array($regionCode, [LocationService::LOCATION_CODE_MOSCOW_REGION, LocationService::LOCATION_CODE_MOSCOW], true)) {
+                    $regionCode = [LocationService::LOCATION_CODE_MOSCOW_REGION, LocationService::LOCATION_CODE_MOSCOW];
+                }
+
                 return ['result' => $this->getStores($type, ['UF_REGION' => $regionCode])];
             };
 
