@@ -234,7 +234,7 @@ class StoreService implements LoggerAwareInterface
         bool $strict = false
     ): StoreSearchResult
     {
-        $storeSearchResult = $this->getLocalStores($locationCode);
+        $storeSearchResult = $this->getLocalStores($locationCode, $type);
 
         /**
          * Ищем склады района и региона
