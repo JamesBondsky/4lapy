@@ -6,17 +6,19 @@ use JMS\Serializer\Annotation\Type;
 
 class CatalogSyncMsg
 {
-    const ACTION_ADD = 'add';
+    public const ACTION_ADD = 'add';
 
-    const ACTION_UPDATE = 'update';
+    public const ACTION_UPDATE = 'update';
 
-    const ACTION_DELETE = 'delete';
+    public const ACTION_UPDATE_STOCKS = 'update-stocks';
 
-    const ENTITY_TYPE_BRAND = 'brand';
+    public const ACTION_DELETE = 'delete';
 
-    const ENTITY_TYPE_PRODUCT = 'product';
+    public const ENTITY_TYPE_BRAND = 'brand';
 
-    const ENTITY_TYPE_OFFER = 'offer';
+    public const ENTITY_TYPE_PRODUCT = 'product';
+
+    public const ENTITY_TYPE_OFFER = 'offer';
 
     /**
      * @var int
@@ -147,7 +149,7 @@ class CatalogSyncMsg
      */
     public function isForUpdateAction(): bool
     {
-        return self::ACTION_UPDATE === $this->getAction();
+        return \in_array($this->getAction(), [self::ACTION_UPDATE, self::ACTION_UPDATE_STOCKS], true);
     }
 
     /**

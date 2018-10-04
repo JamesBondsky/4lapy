@@ -10,6 +10,7 @@ use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\BrandQuery;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\CatalogBundle\EventController\Event;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\Search\Model\CatalogSyncMsg;
 use FourPaws\Search\SearchService;
@@ -89,7 +90,10 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
             $catalogSyncMessage->isForOfferEntity()
             && ($catalogSyncMessage->isForAddAction() || $catalogSyncMessage->isForUpdateAction())
         ) {
-            $this->updateOffer($catalogSyncMessage->getEntityId());
+            $this->updateOffer(
+                $catalogSyncMessage->getEntityId(),
+                $catalogSyncMessage->getAction() === CatalogSyncMsg::ACTION_UPDATE_STOCKS
+            );
         } elseif ($catalogSyncMessage->isForOfferEntity() && $catalogSyncMessage->isForDeleteAction()) {
             $this->deleteOffer($catalogSyncMessage->getEntityId());
         } elseif (
@@ -194,11 +198,12 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
     }
 
     /**
-     * @param int $offerId
+     * @param int  $offerId
+     * @param bool $isStocksUpdate
      *
      * @throws RuntimeException
      */
-    private function updateOffer(int $offerId)
+    private function updateOffer(int $offerId, $isStocksUpdate = false)
     {
         $offer = (new OfferQuery)
             ->withFilter(['ID' => $offerId])
@@ -233,10 +238,12 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
             $indexProductResult = $this->searchService->getIndexHelper()->indexProduct($product);
 
             if ($indexProductResult) {
-                TaggedCacheHelper::clearManagedCache([
-                    'iblock:item:' . $offerId,
-                    'iblock:item:' . $product->getId(),
-                ]);
+                if ($isStocksUpdate) {
+                    TaggedCacheHelper::clearManagedCache(['catalog:stocks:' . $offerId]);
+                } else {
+                    Event::clearProductCache($offerId);
+                    Event::clearProductCache($product->getId());
+                }
             } else {
                 $this->log()->error(
                     sprintf(
