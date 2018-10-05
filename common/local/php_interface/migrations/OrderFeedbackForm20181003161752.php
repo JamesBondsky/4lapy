@@ -167,6 +167,11 @@ class OrderFeedbackForm20181003161752 extends \Adv\Bitrixtools\Migration\SprintM
         ];
 
         $formService->addForm($form);
+
+        $helper = new HelperManager();
+        $eventName = 'FORM_FILLING_order_feedback';
+        $eventHelper = $helper->Event();
+        $eventHelper->updateEventMessageByFilter(['EVENT_NAME' => $eventName], ['EMAIL_TO' => 'welcome@4lapy.ru']);
     }
 
     public function down()
