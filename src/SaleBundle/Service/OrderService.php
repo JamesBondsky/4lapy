@@ -1774,4 +1774,9 @@ class OrderService implements LoggerAwareInterface
         }
         $basket->save();
     }
+
+    public function getOrderFeedbackLink(Order $order): string
+    {
+        return sprintf('/sale/order/interview/%d/?HASH=%s', $order->getId(), $order->getHash());
+    }
 }
