@@ -35,7 +35,7 @@ class ScheduleResultService implements LoggerAwareInterface
     /**
      * Кол-во дней на обработку товара на РЦ
      */
-    public const DC_PROCESSING_DATE_MODIFIER = 2;
+    public const DC_PROCESSING_DATE_MODIFIER = 1;
 
     /**
      * @var DeliveryScheduleService
