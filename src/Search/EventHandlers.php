@@ -61,6 +61,10 @@ class EventHandlers extends BaseServiceHandler
         foreach (['OnProductUpdate', 'OnProductAdd'] as $eventType) {
             static::initHandlerCompatible($eventType, [self::class, 'updateOfferInElasticOnCatalogProductChange'], $module);
         } */
+
+        foreach (['StoreProductOnUpdate', 'StoreProductOnAdd'] as $eventType) {
+            static::initHandler($eventType, [self::class, 'updateOfferInElasticOnStocksChange'], $module);
+        }
     }
 
     /**
@@ -111,6 +115,25 @@ class EventHandlers extends BaseServiceHandler
     }
 
     /**
+     * @param Event $event
+     */
+    public static function updateOfferInElasticOnStocksChange(Event $event): void
+    {
+        $fields = $event->getParameter('fields');
+        if (!$fields['PRODUCT_ID']) {
+            return;
+        }
+
+        $message = new CatalogSyncMsg(
+            CatalogSyncMsg::ACTION_UPDATE_STOCKS,
+            CatalogSyncMsg::ENTITY_TYPE_OFFER,
+            $fields['PRODUCT_ID']
+        );
+
+        self::publishCatSyncMsg($message);
+    }
+
+    /**
      * Обновление торгового предложения, когда у него меняются поля сущности "товар" из "торгового каталога".
      *
      * @param $productId
@@ -146,10 +169,12 @@ class EventHandlers extends BaseServiceHandler
 
         $entityType = self::recognizeEntityType($arFields);
         if ('' !== $entityType) {
-            self::publishCatSyncMsg($action, $entityType, (int)$arFields['ID']);
+            $message = new CatalogSyncMsg($action, $entityType, (int)$arFields['ID']);
+            self::publishCatSyncMsg($message);
         } else {
             foreach (self::getDependantEntities($arFields) as $id => $entityType) {
-                self::publishCatSyncMsg($action, $entityType, $id);
+                $message = new CatalogSyncMsg($action, $entityType, $id);
+                self::publishCatSyncMsg($message);
             }
         }
     }
@@ -229,16 +254,12 @@ class EventHandlers extends BaseServiceHandler
     }
 
     /**
-     * @param string $action
-     * @param string $entityType
-     * @param int    $entityId
+     * @param CatalogSyncMsg $message
      */
-    private static function publishCatSyncMsg(string $action, string $entityType, int $entityId): void
+    private static function publishCatSyncMsg(CatalogSyncMsg $message): void
     {
-        $newCatSyncMsg = new CatalogSyncMsg($action, $entityType, $entityId);
-
         /** @noinspection PhpNonStrictObjectEqualityInspection */
-        if (null !== self::$lastSyncMessage && $newCatSyncMsg->equals(self::$lastSyncMessage)) {
+        if (null !== self::$lastSyncMessage && $message->equals(self::$lastSyncMessage)) {
             /**
              * Предотвращение дублирования, если только что
              * было отправлено точно такое же (по содержимому!)
@@ -247,7 +268,7 @@ class EventHandlers extends BaseServiceHandler
             return;
         }
 
-        static::$searchService->getIndexHelper()->publishSyncMessage($newCatSyncMsg);
-        self::$lastSyncMessage = $newCatSyncMsg;
+        static::$searchService->getIndexHelper()->publishSyncMessage($message);
+        self::$lastSyncMessage = $message;
     }
 }
