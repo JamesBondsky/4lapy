@@ -32,6 +32,20 @@ class PriceForAmountCollection extends ArrayCollection
         return $result;
     }
 
+    public function getAmountWithoutGifts(): int
+    {
+        $result = 0;
+        /** @var PriceForAmount $item */
+        foreach ($this->getIterator() as $item) {
+            if ($item->isGift()) {
+                continue;
+            }
+            $result += $item->getAmount();
+        }
+
+        return $result;
+    }
+
     public function __clone()
     {
         foreach ($this->getIterator() as $i => $item) {

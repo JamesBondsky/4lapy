@@ -243,6 +243,7 @@ class OrderSplitService implements LoggerAwareInterface
                         ->setBasePrice($basketItem->getBasePrice())
                         ->setDiscount($basketItem->getDiscountPrice())
                         ->setProperties($properties)
+                        ->setGift($priceForAmount->isGift())
                     );
                 }
             }
@@ -263,6 +264,7 @@ class OrderSplitService implements LoggerAwareInterface
                         ->setBasePrice($basketItem->getBasePrice())
                         ->setDiscount($basketItem->getDiscountPrice())
                         ->setProperties($properties)
+                        ->setGift($priceForAmount->isGift())
                     );
                 }
             }
@@ -400,10 +402,14 @@ class OrderSplitService implements LoggerAwareInterface
         $items = new ArrayCollection();
         /** @var StockResult $stockResult */
         foreach ($stockResultCollection as $stockResult) {
+            if (!$amount = $stockResult->getAmountWithoutGifts()) {
+                continue;
+            }
+
             $items->add(
                 (new BasketSplitItem())
                     ->setProductId($stockResult->getOffer()->getId())
-                    ->setAmount($stockResult->getAmount())
+                    ->setAmount($amount)
             );
         }
 
@@ -456,6 +462,10 @@ class OrderSplitService implements LoggerAwareInterface
             /** @var BasketSplitItem $item */
             foreach ($items as $item) {
                 if ($recalculateDiscounts) {
+                    if ($item->isGift()) {
+                        continue;
+                    }
+
                     $rewriteFields = [];
                 } else {
                     $rewriteFields = [
@@ -474,6 +484,7 @@ class OrderSplitService implements LoggerAwareInterface
                     false,
                     $basket
                 );
+
                 if ($recalculateDiscounts) {
                     /** @var BasketPropertyItem $propertyValue */
                     foreach ($basketItem->getPropertyCollection() as $propertyValue) {

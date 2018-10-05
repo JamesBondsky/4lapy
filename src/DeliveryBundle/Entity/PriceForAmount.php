@@ -23,6 +23,11 @@ class PriceForAmount
     protected $basketCode = '';
 
     /**
+     * @var bool
+     */
+    protected $gift = false;
+
+    /**
      * @return float
      */
     public function getPrice(): float
@@ -73,6 +78,26 @@ class PriceForAmount
     public function setBasketCode(string $basketCode): PriceForAmount
     {
         $this->basketCode = $basketCode;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isGift(): bool
+    {
+        return $this->gift;
+    }
+
+    /**
+     * @param bool $gift
+     *
+     * @return PriceForAmount
+     */
+    public function setGift(bool $gift): PriceForAmount
+    {
+        $this->gift = $gift;
+
         return $this;
     }
 }
