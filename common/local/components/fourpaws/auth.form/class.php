@@ -240,7 +240,12 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
                         // привязывать к заказу нужно для расчета скидок
                         if (null === $order = $userBasket->getOrder()) {
-                            $order = Order::create(SITE_ID);
+                            $userId = null;
+                            try {
+                                $userId = $this->currentUserProvider->getCurrentUserId();
+                            } catch (NotAuthorizedException $e) {
+                            }
+                            $order = Order::create(SITE_ID, $userId);
                             try {
                                 $order->setBasket($userBasket);
                             } catch (NotSupportedException|ObjectNotFoundException $e) {

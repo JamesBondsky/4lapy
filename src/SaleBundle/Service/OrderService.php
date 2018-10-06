@@ -297,7 +297,7 @@ class OrderService implements LoggerAwareInterface
         ?Basket $basket = null,
         ?CalculationResultInterface $selectedDelivery = null
     ): Order {
-        $order = Order::create(SITE_ID);
+        $order = Order::create(SITE_ID, $storage->getUserId() ?: null);
 
         $checkAvailability = false;
         if (null === $basket) {
