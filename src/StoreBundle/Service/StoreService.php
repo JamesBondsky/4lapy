@@ -11,7 +11,6 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
-use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\LocationBundle\Dto\Coordinates;
 use FourPaws\LocationBundle\Entity\Address;
@@ -77,6 +76,12 @@ class StoreService implements LoggerAwareInterface
 
     /** @var array */
     protected $storesById = [];
+
+    /** @var StoreCollection[] */
+    protected $currentStores = [];
+
+    /** @var StoreCollection */
+    protected $supplierStores;
 
     public function __construct(
         LocationService $locationService,
@@ -209,12 +214,15 @@ class StoreService implements LoggerAwareInterface
      */
     public function getStoresByCurrentLocation($type = self::TYPE_ALL): StoreCollection
     {
-        $location = $this->locationService->getCurrentLocation();
-        if ($this->deliveryService->getCurrentDeliveryZone() === DeliveryService::ZONE_4) {
-            $type = self::TYPE_STORE;
+        if (null === $this->currentStores[$type]) {
+            $location = $this->locationService->getCurrentLocation();
+            if ($this->deliveryService->getCurrentDeliveryZone() === DeliveryService::ZONE_4) {
+                $type = self::TYPE_STORE;
+            }
+            $this->currentStores[$type] = $this->getStoresByLocation($location, $type)->getStores();
         }
 
-        return $this->getStoresByLocation($location, $type)->getStores();
+        return $this->currentStores[$type];
     }
 
     /**
@@ -498,27 +506,31 @@ class StoreService implements LoggerAwareInterface
      */
     public function getSupplierStores(): StoreCollection
     {
-        $getStores = function () {
-            $storeCollection = $this->storeRepository->findBy(
-                $this->getTypeFilter(self::TYPE_SUPPLIER)
-            );
+        if (null === $this->supplierStores) {
+            $getStores = function () {
+                $storeCollection = $this->storeRepository->findBy(
+                    $this->getTypeFilter(self::TYPE_SUPPLIER)
+                );
 
-            return ['result' => $storeCollection];
-        };
+                return ['result' => $storeCollection];
+            };
 
-        try {
-            $result = (new BitrixCache())
-                          ->withId(__METHOD__)
-                          ->withTag('catalog:store')
-                          ->resultOf($getStores)['result'];
-        } catch (\Exception $e) {
-            $this->logger->error(
-                sprintf('failed to get supplier stores: %s', $e->getMessage())
-            );
-            $result = new StoreCollection();
+            try {
+                $result = (new BitrixCache())
+                              ->withId(__METHOD__)
+                              ->withTag('catalog:store')
+                              ->resultOf($getStores)['result'];
+            } catch (\Exception $e) {
+                $this->logger->error(
+                    sprintf('failed to get supplier stores: %s', $e->getMessage())
+                );
+                $result = new StoreCollection();
+            }
+
+            $this->supplierStores = $result;
         }
 
-        return $result;
+        return $this->supplierStores;
     }
 
     /**

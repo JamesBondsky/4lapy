@@ -30,6 +30,11 @@ class BasketSplitItem
     protected $discount = 0;
 
     /**
+     * @var bool
+     */
+    protected $gift = false;
+
+    /**
      * @var array
      */
     protected $properties = [];
@@ -121,6 +126,26 @@ class BasketSplitItem
     public function setDiscount(float $discount): BasketSplitItem
     {
         $this->discount = $discount;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isGift(): bool
+    {
+        return $this->gift;
+    }
+
+    /**
+     * @param bool $gift
+     *
+     * @return BasketSplitItem
+     */
+    public function setGift(bool $gift): BasketSplitItem
+    {
+        $this->gift = $gift;
+
         return $this;
     }
 

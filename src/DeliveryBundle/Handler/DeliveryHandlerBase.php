@@ -25,6 +25,7 @@ use FourPaws\DeliveryBundle\Entity\PriceForAmount;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
@@ -180,6 +181,8 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      */
     public static function getBasketPrices(Basket $basket): array
     {
+        /** @var BasketService $basketService */
+        $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
         /** @var PriceForAmountCollection[] $result */
         $result = [];
         /** @var BasketItem $item */
@@ -191,6 +194,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                 ->setPrice($item->getPrice())
                 ->setAmount($item->getQuantity())
                 ->setBasketCode($item->getBasketCode())
+                ->setGift($basketService->isGiftProduct($item))
             );
         }
 

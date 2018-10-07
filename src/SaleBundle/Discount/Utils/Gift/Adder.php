@@ -123,7 +123,13 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
             ]
         ];
 
-        $basketItem = $this->basketService->addOfferToBasket($offerId, $quantity, $fields);
+        $basketItem = $this->basketService->addOfferToBasket(
+            $offerId,
+            $quantity,
+            $fields,
+            true,
+            $this->order->getBasket()
+        );
         // внутри файнал экшена мы крашим файнал экшен, который вызывается на добавлении элемента,
         // поэтому некоторые поля не устанавливаются
         // http://lurkmore.so/images/5/50/Yo_sobaka.jpg

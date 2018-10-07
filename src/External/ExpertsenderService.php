@@ -683,6 +683,11 @@ class ExpertsenderService implements LoggerAwareInterface
                 'delivery_address',
                 $orderService->getOrderDeliveryAddress($order)
             ),
+            /** @todo uncomment after an implements in ES
+            new Snippet(
+                'order_feedback_link',
+                (new FullHrefDecorator($orderService->getOrderFeedbackLink($order)))->__toString()
+            ), */
         ];
 
         $transactionId = self::COMPLETE_ORDER_LIST_ID;
