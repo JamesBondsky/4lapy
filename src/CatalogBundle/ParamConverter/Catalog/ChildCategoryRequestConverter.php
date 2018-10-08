@@ -3,7 +3,10 @@
 namespace FourPaws\CatalogBundle\ParamConverter\Catalog;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Bitrix\Main\Entity\DataManager;
+use FourPaws\App\Application;
 use FourPaws\Catalog\Exception\CategoryNotFoundException;
+use FourPaws\Catalog\Model\FilterSet;
 use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
 use FourPaws\CatalogBundle\Service\CatalogLandingService;
 use FourPaws\CatalogBundle\Service\CategoriesService;
@@ -11,6 +14,7 @@ use FourPaws\CatalogBundle\Service\FilterService;
 use FourPaws\CatalogBundle\Service\SortService;
 use JMS\Serializer\ArrayTransformerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -22,11 +26,12 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  */
 class ChildCategoryRequestConverter extends AbstractCatalogRequestConverter
 {
+    use ContainerAwareTrait;
+
     /**
      * @var CategoriesService
      */
     private $categoriesService;
-
     /**
      * @var FilterService
      */
@@ -35,6 +40,14 @@ class ChildCategoryRequestConverter extends AbstractCatalogRequestConverter
      * @var CatalogLandingService
      */
     private $landingService;
+    /**
+     * @var FilterSet
+     */
+    private $filterSet;
+    /**
+     * @var DataManager
+     */
+    private $filterSetDataManager;
 
     /**
      * AbstractCatalogRequestConverter constructor.
@@ -51,6 +64,8 @@ class ChildCategoryRequestConverter extends AbstractCatalogRequestConverter
         CatalogLandingService $landingService
     )
     {
+        $this->setContainer(Application::getInstance()->getContainer());
+        $this->filterSetDataManager = $this->container->get('bx.hlblock.filterset');
         $this->landingService = $landingService;
 
         parent::__construct($arrayTransformer, $validator, $sortService);
@@ -126,6 +141,18 @@ class ChildCategoryRequestConverter extends AbstractCatalogRequestConverter
             $object->setLandingDomain($this->landingService->getLandingDomain($request));
             $object->setLandingDocRoot($this->landingService->getLandingDocRoot($request));
             $object->setLandingCollection($this->categoriesService->getLandingCollectionByDomain($this->landingService->getLandingName($request), $request));
+        }
+
+        if ($request->get('filterset')) {
+            /**
+             * @var FilterSet $filterSet
+             */
+            $filterSet = $this->arrayTransformer->fromArray(
+                $this->filterSetDataManager::getByPrimary($request->get('filterset'))->fetch(),
+                FilterSet::class
+            );
+
+            $object->setFilterSet($filterSet);
         }
 
         try {

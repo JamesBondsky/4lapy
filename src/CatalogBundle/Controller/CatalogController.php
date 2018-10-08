@@ -2,6 +2,7 @@
 
 namespace FourPaws\CatalogBundle\Controller;
 
+use Bitrix\Main\Entity\DataManager;
 use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Query\CategoryQuery;
@@ -153,6 +154,30 @@ class CatalogController extends Controller
         $categoryRequest->setCurrentPath($rootCategoryRequest->getLanding()->getSectionPageUrl());
 
         return $this->forward('FourPawsCatalogBundle:Catalog:childCategory', \compact('request', 'categoryRequest'));
+    }
+
+    /**
+     * @todo место для вашего Middleware, глубокоуважаемые
+     *
+     * @param RootCategoryRequest $rootCategoryRequest
+     * @param Request             $request
+     *
+     * @return Response
+     * @Route("/{path}/")
+     *
+     */
+    public function filterSetAction(RootCategoryRequest $rootCategoryRequest, Request $request): Response
+    {
+        if ($rootCategoryRequest->getFilterSetId()) {
+            $fSetRequest = Request::create(
+                $request->getUriForPath($rootCategoryRequest->getFilterSetTarget())
+            );
+            $fSetRequest->request->set('filterset', $rootCategoryRequest->getFilterSetId());
+
+            return $this->get('http_kernel')->handle($fSetRequest);
+        }
+
+        return $this->forward('FourPawsCatalogBundle:Catalog:rootCategory', \compact('rootCategoryRequest', 'request'));
     }
 
     /**

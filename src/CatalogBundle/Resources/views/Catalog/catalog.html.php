@@ -28,6 +28,7 @@ global $APPLICATION;
  * $catalogRequest->isLanding() - новый лендинг, типа fashion
  */
 $category = $catalogRequest->getCategory();
+$filterSet = $catalogRequest->getFilterSet();
 
 if ($category->isLanding() || $catalogRequest->isLanding()) {
     echo $view->render('FourPawsCatalogBundle:Catalog:landing.slider.html.php', \compact('category'));
@@ -44,7 +45,7 @@ if ($catalogRequest->isLanding()) {
 
 echo $view->render(
     'FourPawsCatalogBundle:Catalog:catalog.filter.container.html.php',
-    \compact('catalogRequest', 'productSearchResult', 'ecommerceService', 'request', 'landingService', 'dataLayerService', 'retailRocketViewScript', 'productWithMinPrice')
+    \compact('catalogRequest', 'productSearchResult', 'ecommerceService', 'request', 'landingService', 'dataLayerService', 'retailRocketViewScript', 'productWithMinPrice', 'filterSet')
 );
 
 if ($catalogRequest->isLanding()) {
@@ -92,6 +93,13 @@ if ($catalogRequest->isLanding()) {
     ); ?>
     </div>
 <?php }
+
+
+if ($filterSet) {
+    $APPLICATION->SetTitle($filterSet->getTitle());
+    $APPLICATION->SetPageProperty('title', $filterSet->getH1());
+    $APPLICATION->SetPageProperty('description', $filterSet->getDescription());
+}
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php';
 die();

@@ -2,44 +2,71 @@
 
 namespace FourPaws\Catalog\Model;
 
+use JMS\Serializer\Annotation as Serializer;
 
+/**
+ * Class FilterSet
+ *
+ * @package FourPaws\Catalog\Model
+ */
 class FilterSet
 {
-    /** @var string $name */
-    private $name;
-
-    /** @var string $url */
-    private $url;
-
-    /** @var string $targetUrl */
-    private $targetUrl;
-
-    /** @var string $h1 */
-    private $h1;
-
-    /** @var string $title */
-    private $title;
-
-    /** @var string $description */
-    private $description;
-
-    /** @var string $seoText */
-    private $seoText;
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     */
+    protected $ID;
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_NAME")
+     */
+    protected $UF_NAME;
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     */
+    protected $UF_URL;
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     */
+    protected $UF_TARGET_URL;
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     */
+    protected $UF_H1;
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     */
+    protected $UF_TITLE;
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     */
+    protected $UF_DESCRIPTION;
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     */
+    protected $UF_SEO_TEXT;
 
     /**
      * @return string
      */
     public function getName(): string
     {
-        return $this->name;
+        return $this->UF_NAME ?? '';
     }
 
     /**
-     * @param string $name
+     * @param string $lll
      */
-    public function setName(string $name): void
+    public function setName(string $lll): void
     {
-        $this->name = $name;
+        $this->UF_NAME = $lll;
     }
 
     /**
@@ -47,7 +74,7 @@ class FilterSet
      */
     public function getUrl(): string
     {
-        return $this->url;
+        return $this->UF_URL ?? '';
     }
 
     /**
@@ -55,7 +82,7 @@ class FilterSet
      */
     public function setUrl(string $url): void
     {
-        $this->url = $url;
+        $this->UF_URL = $url;
     }
 
     /**
@@ -63,7 +90,7 @@ class FilterSet
      */
     public function getTargetUrl(): string
     {
-        return $this->targetUrl;
+        return $this->UF_TARGET_URL ?? '';
     }
 
     /**
@@ -71,7 +98,7 @@ class FilterSet
      */
     public function setTargetUrl(string $targetUrl): void
     {
-        $this->targetUrl = $targetUrl;
+        $this->UF_TARGET_URL = $targetUrl;
     }
 
     /**
@@ -79,7 +106,7 @@ class FilterSet
      */
     public function getH1(): string
     {
-        return $this->h1;
+        return $this->UF_H1;
     }
 
     /**
@@ -87,7 +114,7 @@ class FilterSet
      */
     public function setH1(string $h1): void
     {
-        $this->h1 = $h1;
+        $this->UF_H1 = $h1;
     }
 
     /**
@@ -95,7 +122,7 @@ class FilterSet
      */
     public function getTitle(): string
     {
-        return $this->title;
+        return $this->UF_TITLE;
     }
 
     /**
@@ -103,7 +130,7 @@ class FilterSet
      */
     public function setTitle(string $title): void
     {
-        $this->title = $title;
+        $this->UF_TITLE = $title;
     }
 
     /**
@@ -111,7 +138,7 @@ class FilterSet
      */
     public function getDescription(): string
     {
-        return $this->description;
+        return $this->UF_DESCRIPTION;
     }
 
     /**
@@ -119,7 +146,7 @@ class FilterSet
      */
     public function setDescription(string $description): void
     {
-        $this->description = $description;
+        $this->UF_DESCRIPTION = $description;
     }
 
     /**
@@ -127,7 +154,7 @@ class FilterSet
      */
     public function getSeoText(): string
     {
-        return $this->seoText;
+        return $this->UF_SEO_TEXT;
     }
 
     /**
@@ -135,7 +162,27 @@ class FilterSet
      */
     public function setSeoText(string $seoText): void
     {
-        $this->seoText = $seoText;
+        $this->UF_SEO_TEXT = $seoText;
+    }
+
+    /**
+     * @return int
+     */
+    public function getId(): int
+    {
+        return $this->ID;
+    }
+
+    /**
+     * @param int $id
+     *
+     * @return $this
+     */
+    public function setId(int $id)
+    {
+        $this->ID = $id;
+
+        return $this;
     }
 
 }

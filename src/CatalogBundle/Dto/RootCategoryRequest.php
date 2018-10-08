@@ -23,6 +23,14 @@ class RootCategoryRequest extends AbstractCatalogRequest implements CatalogCateg
      * @var Category
      */
     protected $landing;
+    /**
+     * @var int
+     */
+    protected $filterSetId = 0;
+    /**
+     * @var string
+     */
+    protected $filterSetTarget = '';
 
     /**
      * @return Category
@@ -88,6 +96,46 @@ class RootCategoryRequest extends AbstractCatalogRequest implements CatalogCateg
     public function setCategorySlug(string $categorySlug): RootCategoryRequest
     {
         $this->categorySlug = $categorySlug;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getFilterSetId(): int
+    {
+        return $this->filterSetId;
+    }
+
+    /**
+     * @param int $filterSetId
+     *
+     * @return RootCategoryRequest
+     */
+    public function setFilterSetId(int $filterSetId): RootCategoryRequest
+    {
+        $this->filterSetId = $filterSetId;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFilterSetTarget(): string
+    {
+        return $this->filterSetTarget;
+    }
+
+    /**
+     * @param string $filterSetTarget
+     *
+     * @return RootCategoryRequest
+     */
+    public function setFilterSetTarget(string $filterSetTarget): RootCategoryRequest
+    {
+        $this->filterSetTarget = $filterSetTarget;
 
         return $this;
     }
