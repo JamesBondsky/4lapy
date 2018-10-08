@@ -192,26 +192,30 @@ class OrderService
     }
 
     /**
+     * @param int $limit
+     * @param int $offset
+     *
      * @return ArrayCollection|Order[]
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws \RuntimeException
-     * @throws NotFoundException
      * @throws ApplicationCreateException
-     * @throws EmptyEntityClass
-     * @throws SystemException
      * @throws ArgumentException
+     * @throws EmptyEntityClass
      * @throws IblockNotFoundException
      * @throws NotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws SystemException
      * @throws \Exception
+     * @throws \RuntimeException
      */
-    public function getActiveSiteOrders(): ArrayCollection
+    public function getActiveSiteOrders(int $limit = 10, int $offset = 0): ArrayCollection
     {
         return $this->getUserOrders([
             'filter' => [
                 '!STATUS_ID' => array_merge(static::$finalStatuses, static::$cancelStatuses),
                 'CANCELED'   => 'N',
             ],
+            'limit' => $limit,
+            'offset' => $offset,
             'setKey' => 'ID',
         ]);
     }
@@ -250,7 +254,6 @@ class OrderService
                     'CANCELED'  => 'Y',
                 ],
             ],
-            'order' => ['DATE_INSERT' => 'desc'],
             'setKey' => 'ID',
         ]);
     }

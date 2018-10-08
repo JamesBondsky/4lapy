@@ -65,26 +65,4 @@ if (!$closedOrders->isEmpty()) {
             ?>
         </ul>
     </div>
-    <?php
-    if (!empty($arResult['NAV'])) {
-        ?>
-        <div class="b-pagination b-pagination--account">
-            <?php
-            $APPLICATION->IncludeComponent(
-                'bitrix:main.pagenavigation',
-                'pagination',
-                [
-                    'NAV_OBJECT' => $arResult['NAV'],
-                    'SEF_MODE' => 'N',
-                    'AJAX_MODE' => 'N',
-                ],
-                $component,
-                [
-                    'HIDE_ICONS' => 'Y'
-                ]
-            );
-            ?>
-        </div>
-        <?php
-    }
-}
+<?php }

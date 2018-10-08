@@ -11,14 +11,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\SystemException;
-use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Sale;
-use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Bitrix\FourPawsComponent;
 use FourPaws\Helpers\WordHelper;
-use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\BasketService;
@@ -77,7 +74,7 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
      */
     public function onPrepareComponentParams($params): array
     {
-        $params['PAGE_COUNT'] = 10;
+        $params['LIMIT'] = $params['LIMIT'] ?: 10;
         $params['PATH_TO_BASKET'] = '/cart/';
 
         return parent::onPrepareComponentParams($params);
@@ -102,20 +99,8 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
             }
             $this->orderService->loadManzanaOrders($user);
 
-            /** имитация постранички */
-            $nav = new PageNavigation('nav-orders');
-            $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
-            $activeOrders = $this->orderService->getActiveSiteOrders();
-            /** @noinspection PhpUndefinedVariableInspection */
-            $allClosedOrders = $this->orderService->getClosedSiteOrders();
-            /** Сортировка по дате и статусу общих заказов */
-            $allClosedOrdersList = $allClosedOrders->toArray();
-
-            /** имитация постранички */
-            $nav->setRecordCount($allClosedOrders->count());
-            $closedOrders = new ArrayCollection(array_slice($allClosedOrdersList,
-                $nav->getOffset(), $nav->getPageSize(), true));
-            $this->arResult['NAV'] = $nav;
+            $activeOrders = $this->orderService->getActiveSiteOrders($this->arParams['LIMIT'], 0);
+            $closedOrders = $this->orderService->getClosedSiteOrders();
         } catch (NotAuthorizedException $e) {
             define('NEED_AUTH', true);
 

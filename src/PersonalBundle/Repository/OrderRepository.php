@@ -10,13 +10,11 @@ use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Iblock\ElementTable;
-use Bitrix\Iblock\IblockTable;
 use Bitrix\Iblock\PropertyTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\SystemException;
-use Bitrix\Main\Web\Uri;
 use Bitrix\Sale\Internals\BasketPropertyTable;
 use Bitrix\Sale\Internals\BasketTable;
 use Bitrix\Sale\Internals\OrderPropsValueTable;
@@ -103,7 +101,7 @@ class OrderRepository extends BaseRepository
             StatusTable::getEntity(),
             Join::on('this.STATUS_ID', 'ref.ID')
         );
-        $params['order'] = ['STATUS_MAIN.SORT' => 'asc', 'DATE_INSERT' => 'desc'];
+        $params['order'] = ['DATE_INSERT' => 'desc'];
         $params['setKey'] = 'ID';
         return $this->findBy($params);
     }
