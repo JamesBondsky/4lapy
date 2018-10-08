@@ -4,6 +4,7 @@ use Bitrix\Catalog\Model\Product;
 use Bitrix\Main\Grid\Declension;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
+use FourPaws\Catalog\Model\FilterSet;
 use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
 use FourPaws\CatalogBundle\Service\CatalogLandingService;
 use FourPaws\Decorators\SvgDecorator;
@@ -24,6 +25,7 @@ global $APPLICATION;
  * @var DataLayerService       $dataLayerService
  * @var ProductSearchResult    $productSearchResult
  * @var GoogleEcommerceService $ecommerceService
+ * @var FilterSet              $filterSet
  * @var PhpEngine              $view
  * @var string                 $currentPath
  * @var string                 $retailRocketViewScript
@@ -74,14 +76,18 @@ if (!$catalogRequest->isLanding()) { ?>
             ['HIDE_ICONS' => 'Y']
         ); ?>
         <h1 class="b-title b-title--h1 b-title--catalog-filter">
-            <?= \in_array($category->getId(), [
-                148,
-                332
-            ], true) ? $category->getName() : implode(' ', [
-                $category->getName(),
-                $category->getParent()
-                         ->getSuffix()
-            ]) ?>
+            <?php if ($filterSet) { ?>
+                <?= $filterSet->getH1() ?>
+            <?php } else { ?>
+                <?= \in_array($category->getId(), [
+                    148,
+                    332
+                ], true) ? $category->getName() : implode(' ', [
+                    $category->getName(),
+                    $category->getParent()
+                             ->getSuffix()
+                ]) ?>
+            <?php } ?>
         </h1>
     </div>
 <?php } ?>
@@ -93,6 +99,7 @@ if (!$catalogRequest->isLanding()) { ?>
     <div class="b-filter__wrapper b-filter__wrapper--scroll">
         <?php /** @todo from server variable */ ?>
         <form class="b-form js-filter-form"
+              data-location="<?= $filterSet ? 'ja' : 'nein' ?>"
               action="<?= $catalogRequest->isLanding() ? $catalogRequest->getLandingPath() : $APPLICATION->GetCurDir() ?>"
               data-url="/ajax/catalog/product-info/count-by-filter-list/">
             <div class="b-filter__block" style="visibility: hidden; height: 0;width: 0;overflow: hidden;">
@@ -289,7 +296,7 @@ if (!$catalogRequest->isLanding()) { ?>
             'NAV_TITLE'      => '',
             'NAV_RESULT'     => $productSearchResult->getProductCollection()
                                                     ->getCdbResult(),
-            'SHOW_ALWAYS'    => false,
+            'SHOW_ALWAYS'    => true,
             'PAGE_PARAMETER' => 'page',
             'AJAX_MODE'      => 'Y',
             'BASE_URI'       => $catalogRequest->getBaseCategoryPath(),
@@ -299,4 +306,12 @@ if (!$catalogRequest->isLanding()) { ?>
             'HIDE_ICONS' => 'Y',
         ]
     ); ?>
+    <?php if ($filterSet) { ?>
+        <div class="b-line b-line--catalog-filter"></div>
+        <div class="b-description-tab__column">
+            <p>
+                <?= $filterSet->getSeoText() ?>
+            </p>
+        </div>
+    <?php } ?>
 </main>

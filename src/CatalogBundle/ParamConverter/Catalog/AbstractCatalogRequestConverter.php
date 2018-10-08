@@ -25,16 +25,15 @@ abstract class AbstractCatalogRequestConverter implements ParamConverterInterfac
     /**
      * @var ArrayTransformerInterface
      */
-    private $arrayTransformer;
-
+    protected $arrayTransformer;
     /**
      * @var ValidatorInterface
      */
-    private $validator;
+    protected $validator;
     /**
      * @var SortService
      */
-    private $sortService;
+    protected $sortService;
 
     /**
      * AbstractCatalogRequestConverter constructor.

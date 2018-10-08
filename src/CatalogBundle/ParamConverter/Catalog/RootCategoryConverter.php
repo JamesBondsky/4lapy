@@ -4,6 +4,8 @@ namespace FourPaws\CatalogBundle\ParamConverter\Catalog;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Bitrix\Main\Entity\DataManager;
+use FourPaws\App\Application;
 use FourPaws\Catalog\Exception\CategoryNotFoundException;
 use FourPaws\CatalogBundle\Dto\RootCategoryRequest;
 use FourPaws\CatalogBundle\Exception\LandingIsNotFoundException;
@@ -15,6 +17,7 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use JMS\Serializer\ArrayTransformerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -26,11 +29,12 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  */
 class RootCategoryConverter extends AbstractCatalogRequestConverter
 {
+    use ContainerAwareTrait;
+
     /**
      * @var CategoriesService
      */
     private $categoriesService;
-
     /**
      * @var FilterService
      */
@@ -39,6 +43,10 @@ class RootCategoryConverter extends AbstractCatalogRequestConverter
      * @var CatalogLandingService
      */
     private $landingService;
+    /**
+     * @var DataManager
+     */
+    private $filterSetDataManager;
 
     /**
      * AbstractCatalogRequestConverter constructor.
@@ -55,7 +63,9 @@ class RootCategoryConverter extends AbstractCatalogRequestConverter
         CatalogLandingService $landingService
     )
     {
+        $this->setContainer(Application::getInstance()->getContainer());
         $this->landingService = $landingService;
+        $this->filterSetDataManager = $this->container->get('bx.hlblock.filterset');
 
         parent::__construct($arrayTransformer, $validator, $sortService);
     }
@@ -130,9 +140,28 @@ class RootCategoryConverter extends AbstractCatalogRequestConverter
                 $object->setLanding($this->categoriesService->getDefaultLandingByDomain($this->landingService->getLandingName($request)));
 
                 return true;
-            } else {
-                $category = $this->categoriesService->getByPath($value);
             }
+
+            $fSet = $this->filterSetDataManager::query()
+                                               ->setCacheTtl(36000)
+                                               ->setFilter(
+                                                   [
+                                                       '=UF_URL'   => $request->getPathInfo(),
+                                                       'UF_ACTIVE' => true
+                                                   ]
+                                               )
+                                               ->setSelect(['*'])
+                                               ->exec()
+                                               ->fetch();
+
+            if ($fSet && $fSet['UF_TARGET_URL']) {
+                $object->setFilterSetId($fSet['ID']);
+                $object->setFilterSetTarget($fSet['UF_TARGET_URL']);
+
+                return true;
+            }
+
+            $category = $this->categoriesService->getByPath($value);
         } catch (IblockNotFoundException $e) {
             throw new NotFoundHttpException('Инфоблок каталога не найден');
         } catch (CategoryNotFoundException $e) {
@@ -143,8 +172,7 @@ class RootCategoryConverter extends AbstractCatalogRequestConverter
         }
 
         try {
-            $this->filterService->getFilterHelper()
-                ->initCategoryFilters($category, $request);
+            $this->filterService->getFilterHelper()->initCategoryFilters($category, $request);
         } catch (\Exception $e) {
         }
 
