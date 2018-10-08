@@ -45,6 +45,14 @@ class StockResult
     }
 
     /**
+     * @return int
+     */
+    public function getAmountWithoutGifts(): int
+    {
+        return $this->priceForAmount->getAmountWithoutGifts();
+    }
+
+    /**
      * @return Offer
      */
     public function getOffer(): Offer

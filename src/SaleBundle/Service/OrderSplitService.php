@@ -43,6 +43,8 @@ use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -66,22 +68,30 @@ class OrderSplitService implements LoggerAwareInterface
      */
     protected $orderStorageService;
 
+    /**
+     * @var CurrentUserProviderInterface
+     */
+    protected $currentUserProvider;
 
     /**
      * OrderSplitService constructor.
-     * @param BasketService       $basketService
-     * @param DeliveryService     $deliveryService
-     * @param OrderStorageService $orderStorageService
+     *
+     * @param BasketService                $basketService
+     * @param DeliveryService              $deliveryService
+     * @param OrderStorageService          $orderStorageService
+     * @param CurrentUserProviderInterface $currentUserProvider
      */
     public function __construct(
         BasketService $basketService,
         DeliveryService $deliveryService,
-        OrderStorageService $orderStorageService
+        OrderStorageService $orderStorageService,
+        CurrentUserProviderInterface $currentUserProvider
     )
     {
         $this->deliveryService = $deliveryService;
         $this->orderStorageService = $orderStorageService;
         $this->basketService = $basketService;
+        $this->currentUserProvider = $currentUserProvider;
     }
 
     /**
@@ -243,6 +253,7 @@ class OrderSplitService implements LoggerAwareInterface
                         ->setBasePrice($basketItem->getBasePrice())
                         ->setDiscount($basketItem->getDiscountPrice())
                         ->setProperties($properties)
+                        ->setGift($priceForAmount->isGift())
                     );
                 }
             }
@@ -263,6 +274,7 @@ class OrderSplitService implements LoggerAwareInterface
                         ->setBasePrice($basketItem->getBasePrice())
                         ->setDiscount($basketItem->getDiscountPrice())
                         ->setProperties($properties)
+                        ->setGift($priceForAmount->isGift())
                     );
                 }
             }
@@ -400,10 +412,14 @@ class OrderSplitService implements LoggerAwareInterface
         $items = new ArrayCollection();
         /** @var StockResult $stockResult */
         foreach ($stockResultCollection as $stockResult) {
+            if (!$amount = $stockResult->getAmountWithoutGifts()) {
+                continue;
+            }
+
             $items->add(
                 (new BasketSplitItem())
                     ->setProductId($stockResult->getOffer()->getId())
-                    ->setAmount($stockResult->getAmount())
+                    ->setAmount($amount)
             );
         }
 
@@ -456,6 +472,10 @@ class OrderSplitService implements LoggerAwareInterface
             /** @var BasketSplitItem $item */
             foreach ($items as $item) {
                 if ($recalculateDiscounts) {
+                    if ($item->isGift()) {
+                        continue;
+                    }
+
                     $rewriteFields = [];
                 } else {
                     $rewriteFields = [
@@ -474,6 +494,7 @@ class OrderSplitService implements LoggerAwareInterface
                     false,
                     $basket
                 );
+
                 if ($recalculateDiscounts) {
                     /** @var BasketPropertyItem $propertyValue */
                     foreach ($basketItem->getPropertyCollection() as $propertyValue) {
@@ -520,7 +541,12 @@ class OrderSplitService implements LoggerAwareInterface
         }
 
         Manager::setExtendCalculated(false);
-        $order = Order::create(SITE_ID);
+        $userId = null;
+        try {
+            $userId = $this->currentUserProvider->getCurrentUserId();
+        } catch (NotAuthorizedException $e) {
+        }
+        $order = Order::create(SITE_ID, $userId);
         $order->setBasket($basket);
 
         if (!$isDiscountEnabled) {

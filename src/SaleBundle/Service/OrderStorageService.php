@@ -474,7 +474,7 @@ class OrderStorageService
         if (null === $this->deliveries || $reload) {
             $basket = $this->basketService->getBasket();
             if (null === $basket->getOrder()) {
-                $order = Order::create(SITE_ID);
+                $order = Order::create(SITE_ID, $storage->getUserId() ?: null);
                 $order->setBasket($basket);
             }
 
