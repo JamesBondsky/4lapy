@@ -174,6 +174,10 @@ class CatalogController extends Controller
             );
             $fSetRequest->request->set('filterset', $rootCategoryRequest->getFilterSetId());
 
+            if ($request->query->get('partial') === 'Y') {
+                $fSetRequest->query->replace($request->query->all());
+            }
+
             return $this->get('http_kernel')->handle($fSetRequest);
         }
 
