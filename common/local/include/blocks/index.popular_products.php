@@ -9,7 +9,7 @@
 
 /** @global $APPLICATION */
 $APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', '', [
-    'COUNT'        => 12,
+    'COUNT'        => 50,
     'OFFER_FILTER' => [
         '=PROPERTY_IS_POPULAR' => '1',
         '>CATALOG_PRICE_2' => 0
