@@ -173,9 +173,9 @@ class CatalogController extends Controller
                 $request->getUriForPath($rootCategoryRequest->getFilterSetTarget())
             );
             $fSetRequest->request->set('filterset', $rootCategoryRequest->getFilterSetId());
-            
-            if ($request->get('page')) {
-                $fSetRequest->query->set('page', $request->get('page'));
+
+            if ($request->query->get('partial') === 'Y') {
+                $fSetRequest->query->replace($request->query->all());
             }
 
             return $this->get('http_kernel')->handle($fSetRequest);
