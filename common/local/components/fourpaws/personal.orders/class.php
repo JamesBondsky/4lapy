@@ -68,7 +68,6 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
         $this->orderService = $container->get('order.service');
         $this->basketService = $container->get(BasketService::class);
         $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
-        $this->storeService = $container->get('store.service');
     }
 
     /**
@@ -124,9 +123,6 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
             return;
         }
 
-        if (!$activeOrders->isEmpty() || !$closedOrders->isEmpty()) {
-            $this->arResult['METRO'] = new ArrayCollection($this->storeService->getMetroInfo());
-        }
         $this->arResult['CLOSED_ORDERS'] = $closedOrders;
         $this->arResult['ACTIVE_ORDERS'] = $activeOrders;
     }

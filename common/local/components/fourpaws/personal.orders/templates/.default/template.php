@@ -28,7 +28,6 @@ if (!$closedOrders || !$activeOrders) {
 
 if ($closedOrders->isEmpty() && $activeOrders->isEmpty()) {
     include __DIR__ . '/stage.empty.php';
-    return;
 } else {
     include __DIR__ . '/stage.list.php';
 }

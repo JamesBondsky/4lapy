@@ -29,8 +29,7 @@ if (!$activeOrders->isEmpty()) {
                     'fourpaws:personal.order.item',
                     '',
                     [
-                        'ORDER' => $order,
-                        'METRO' => $arResult['METRO']
+                        'ORDER' => $order
                     ],
                     $component,
                     [
@@ -55,8 +54,7 @@ if (!$closedOrders->isEmpty()) {
                     'fourpaws:personal.order.item',
                     '',
                     [
-                        'ORDER' => $order,
-                        'METRO' => $arResult['METRO']
+                        'ORDER' => $order
                     ],
                     $component,
                     [
