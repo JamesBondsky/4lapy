@@ -250,6 +250,7 @@ class OrderService
                     'CANCELED'  => 'Y',
                 ],
             ],
+            'order' => ['DATE_INSERT' => 'desc'],
             'setKey' => 'ID',
         ]);
     }

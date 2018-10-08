@@ -110,7 +110,6 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
             $allClosedOrders = $this->orderService->getClosedSiteOrders();
             /** Сортировка по дате и статусу общих заказов */
             $allClosedOrdersList = $allClosedOrders->toArray();
-            usort($allClosedOrdersList, [static::class, 'sortByStatusAndDate']);
 
             /** имитация постранички */
             $nav->setRecordCount($allClosedOrders->count());
@@ -125,35 +124,6 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
 
         $this->arResult['CLOSED_ORDERS'] = $closedOrders;
         $this->arResult['ACTIVE_ORDERS'] = $activeOrders;
-    }
-
-    /**
-     * @param Order $item1
-     * @param Order $item2
-     *
-     * @return int
-     */
-    public function sortByStatusAndDate(Order $item1, Order $item2): int
-    {
-        if ($item1->getStatusSort() === $item2->getStatusSort()) {
-            $date1 = $item1->getDateInsert()->getTimestamp();
-            $date2 = $item2->getDateInsert()->getTimestamp();
-            if ($date1 < $date2) {
-                return 1;
-            }
-
-            if ($date1 > $date2) {
-                return -1;
-            }
-
-            return 0;
-        }
-
-        if ($item1->getStatusSort() > $item2->getStatusSort()) {
-            return 1;
-        }
-
-        return -1;
     }
 
     /**
