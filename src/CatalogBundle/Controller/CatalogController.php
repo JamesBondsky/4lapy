@@ -173,6 +173,10 @@ class CatalogController extends Controller
                 $request->getUriForPath($rootCategoryRequest->getFilterSetTarget())
             );
             $fSetRequest->request->set('filterset', $rootCategoryRequest->getFilterSetId());
+            
+            if ($request->get('page')) {
+                $fSetRequest->query->set('page', $request->get('page'));
+            }
 
             return $this->get('http_kernel')->handle($fSetRequest);
         }
