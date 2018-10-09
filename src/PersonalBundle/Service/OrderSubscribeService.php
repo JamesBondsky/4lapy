@@ -332,7 +332,7 @@ class OrderSubscribeService
             $params['filter']['=ORDER_SUBSCRIBE.UF_ACTIVE'] = 1;
         }
 
-        return $this->getPersonalOrderService()->getUserOrders($params);
+        return $this->getPersonalOrderService()->getUserOrdersOld($params);
     }
 
     /**
