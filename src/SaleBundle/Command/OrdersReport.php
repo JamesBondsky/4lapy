@@ -4,11 +4,9 @@ namespace FourPaws\SaleBundle\Command;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\DB\Exception;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
-use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Internals\OrderPropsValueTable;
 use Bitrix\Sale\Internals\OrderTable;
@@ -82,7 +80,6 @@ class OrdersReport extends Command implements LoggerAwareInterface
      *
      * @throws RuntimeException
      * @throws IOException
-     * @throws ObjectPropertyException
      * @throws SystemException
      * @throws ArgumentException
      * @throws InvalidArgumentException
@@ -91,13 +88,80 @@ class OrdersReport extends Command implements LoggerAwareInterface
     {
         $date = new \DateTime();
         $date->setTime(23, 59, 59);
-        $dateFrom    = $input->getArgument(static::DATE_FROM);
-        $dateFrom    = \DateTime::createFromFormat('d.m.Y', $dateFrom);
+        $dateFrom = $input->getArgument(static::DATE_FROM);
+        $dateFrom = \DateTime::createFromFormat('d.m.Y', $dateFrom);
         $dateFrom->setTime(0, 0, 0);
         $onlineOrder = $input->getArgument(static::ONLINE_ORDER);
         $onlineOrder = $this->prepareOrderStatus($onlineOrder);
 
         $filter = $this->buildFilter($dateFrom, $date, $onlineOrder);
+
+        $ordersArray = $this->getOrdersForReport($filter);
+
+        $reportFilePath = $this->saveReport($ordersArray, $dateFrom, $date, $onlineOrder);
+
+        $this->log()->info(
+            sprintf(
+                'Task finished! File - %s',
+                $reportFilePath
+            )
+        );
+    }
+
+
+    /**
+     * @param $onlineOrder
+     *
+     * @return bool|null
+     */
+    private function prepareOrderStatus($onlineOrder): ?bool
+    {
+        $valuesMap = ['y' => true, 'n' => false];
+        if ($onlineOrder !== null) {
+            $onlineOrder = strtolower($onlineOrder);
+            if (!isset($valuesMap[$onlineOrder])) {
+                throw new InvalidArgumentException('Please insert correct option!');
+            }
+            $onlineOrder = $valuesMap[$onlineOrder];
+        }
+        return $onlineOrder;
+    }
+
+    /**
+     * @param \DateTime $dateFrom
+     * @param \DateTime $dateTo
+     * @param bool|null $onlineOrder
+     *
+     * @return array
+     */
+    private function buildFilter(\DateTime $dateFrom, \DateTime $dateTo, ?bool $onlineOrder): array
+    {
+        $filter = [
+            '<DATE_INSERT' => $dateTo->format('d.m.Y H:i:s'),
+            '>DATE_INSERT' => $dateFrom->format('d.m.Y H:i:s'),
+        ];
+        if ($onlineOrder === null) {
+            return $filter;
+        }
+
+        if ($onlineOrder) {
+            $filter['!MANZANA_PROP.VALUE'] = false;
+        } else {
+            $filter['MANZANA_PROP.VALUE'] = false;
+        }
+
+        return $filter;
+    }
+
+
+    /**
+     * @param array $filter
+     *
+     * @return array
+     * @throws ArgumentException
+     */
+    private function getOrdersForReport(array $filter): array
+    {
         $ordersArray = [];
         $orders      = OrderTable::query()
                                  ->setSelect([
@@ -142,60 +206,7 @@ class OrdersReport extends Command implements LoggerAwareInterface
         while ($order = $orders->fetch()) {
             $ordersArray[] = $order;
         }
-
-        $reportFilePath = $this->saveReport($ordersArray, $dateFrom, $date, $onlineOrder);
-
-        $this->log()->info(
-            sprintf(
-                'Task finished! File - %s',
-                $reportFilePath
-            )
-        );
-    }
-
-
-    /**
-     * @param $onlineOrder
-     *
-     * @return bool|null
-     */
-    private function prepareOrderStatus($onlineOrder): ?bool
-    {
-        $valuesMap = ['y' => true, 'n' => false];
-        if($onlineOrder !== null){
-            $onlineOrder = strtolower($onlineOrder);
-            if(!isset($valuesMap[$onlineOrder])){
-                throw new InvalidArgumentException('Please insert correct option!');
-            }
-            $onlineOrder = $valuesMap[$onlineOrder];
-        }
-        return $onlineOrder;
-    }
-
-    /**
-     * @param \DateTime $dateFrom
-     * @param \DateTime $dateTo
-     * @param bool|null $onlineOrder
-     *
-     * @return array
-     */
-    private function buildFilter(\DateTime $dateFrom, \DateTime $dateTo, ?bool $onlineOrder): array
-    {
-        $filter = [
-            '<DATE_INSERT' => $dateTo->format('d.m.Y H:i:s'),
-            '>DATE_INSERT' => $dateFrom->format('d.m.Y H:i:s'),
-        ];
-        if ($onlineOrder === null) {
-            return $filter;
-        }
-
-        if ($onlineOrder) {
-            $filter['!MANZANA_PROP.VALUE'] = false;
-        } else {
-            $filter['MANZANA_PROP.VALUE'] = false;
-        }
-
-        return $filter;
+        return $ordersArray;
     }
 
     /**
@@ -208,17 +219,17 @@ class OrdersReport extends Command implements LoggerAwareInterface
      */
     private function saveReport(array $ordersArray, \DateTime $dateFrom, \DateTime $date, ?bool $onlineOrder): string
     {
-        $csv    = $this->serializer->encode($ordersArray, 'csv');
+        $csv            = $this->serializer->encode($ordersArray, 'csv');
         $ordersInReport = '';
-        if($onlineOrder !== null){
+        if ($onlineOrder !== null) {
             $ordersInReport = $onlineOrder ? '_online' : '_offline';
         }
-        $fileName   = sprintf('Report%s-%s%s.csv',
+        $fileName = sprintf('Report%s-%s%s.csv',
             $dateFrom->format('dmY'),
             $date->format('dmY'),
             $ordersInReport
         );
-        $folder = $_SERVER['DOCUMENT_ROOT'] . self::REPORT_FOLDER;
+        $folder   = $_SERVER['DOCUMENT_ROOT'] . self::REPORT_FOLDER;
         $this->write($folder . $fileName, $csv, false);
         return self::REPORT_FOLDER . $fileName;
     }
@@ -238,7 +249,6 @@ class OrdersReport extends Command implements LoggerAwareInterface
         }
 
         if ($append) {
-            // удаление заголовка
             $data = \explode(PHP_EOL, $result);
             array_shift($data);
             $result = \implode(PHP_EOL, $data);
