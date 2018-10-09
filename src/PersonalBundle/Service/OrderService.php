@@ -156,12 +156,14 @@ class OrderService
      * @throws SystemException
      * @throws \Exception
      */
-    public function loadManzanaOrders(User $user, int $limit = self::ORDER_PAGE_LIMIT, int $offset = 0): void
+    public function loadManzanaOrders(User $user, int $page = 1, int $limit = self::ORDER_PAGE_LIMIT): void
     {
         $contactId = $this->manzanaService->getContactByUser($user)->contactId;
         $deliveryId = $this->deliveryService->getDeliveryIdByCode(DeliveryService::INNER_PICKUP_CODE);
+        $offset = ($page - 1) * $limit;
 
-        if ($cheques = \array_slice($this->manzanaService->getCheques($contactId), $offset, $limit)) {
+        $allCheques = $this->manzanaService->getCheques($contactId);
+        if ($cheques = \array_slice($allCheques, $offset, $limit)) {
             $existingManzanaOrders = $this->getSiteManzanaOrders($user->getId());
 
             /** @var Cheque $cheque */
@@ -229,9 +231,13 @@ class OrderService
             throw new InvalidArgumentException('Page must be >= 1');
         }
 
+        if ($limit < 0) {
+            throw new InvalidArgumentException('Limit must be a positive value');
+        }
+
         $offset = ($page - 1) * $limit;
 
-        return new ArrayCollection($this->orderRepository->getUserOrders($user->getId(), $limit, $offset));
+        return $this->orderRepository->getUserOrders($user->getId(), $limit, $offset);
     }
 
     /**

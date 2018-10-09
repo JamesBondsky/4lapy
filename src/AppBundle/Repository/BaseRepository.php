@@ -259,7 +259,7 @@ class BaseRepository
             return new ArrayCollection();
         }
 
-        if (!empty($params['setKey'])) {
+        if (\is_array($params) && !empty($params['setKey'])) {
             $allItems = [];
             $i = -1;
             while ($item = $result->fetch()) {
@@ -269,7 +269,7 @@ class BaseRepository
         } else {
             $allItems = $result->fetchAll();
         }
-        if (!empty($params['entityClass'])) {
+        if (\is_array($params) && !empty($params['entityClass'])) {
             $entityClass = $params['entityClass'];
         }
         if (empty($entityClass) && !empty($this->getEntityClass())) {

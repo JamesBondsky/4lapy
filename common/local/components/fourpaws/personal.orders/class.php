@@ -100,7 +100,7 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
             }
             $this->orderService->loadManzanaOrders($user);
 
-            $orders = $this->orderService->getUserOrders($user, 10);
+            $orders = $this->orderService->getUserOrders($user);
         } catch (NotAuthorizedException $e) {
             define('NEED_AUTH', true);
 

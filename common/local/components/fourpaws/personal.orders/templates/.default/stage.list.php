@@ -14,42 +14,16 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var CBitrixComponentTemplate $this
  * @var string $templateName
  * @var string $componentPath
+ * @var ArrayCollection $orders
  */
-/** @var ArrayCollection $closedOrders */
-/** @var ArrayCollection $activeOrders */
 
-if (!$activeOrders->isEmpty()) {
-    ?>
-    <div class="b-account__accordion">
-        <div class="b-account__title">Текущие</div>
-        <ul class="b-account__accordion-order-list">
-            <?php
-            foreach ($activeOrders as $order) {
-                $APPLICATION->IncludeComponent(
-                    'fourpaws:personal.order.item',
-                    '',
-                    [
-                        'ORDER' => $order
-                    ],
-                    $component,
-                    [
-                        'HIDE_ICONS' => 'Y'
-                    ]
-                );
-            }
-            ?>
-        </ul>
-    </div>
-    <?php
-}
-
-if (!$closedOrders->isEmpty()) {
+if (!$orders->isEmpty()) {
     ?>
     <div class="b-account__accordion b-account__accordion--last">
         <div class="b-account__title">Завершенные</div>
         <ul class="b-account__accordion-order-list">
             <?php
-            foreach ($closedOrders as $order) {
+            foreach ($orders as $order) {
                 $APPLICATION->IncludeComponent(
                     'fourpaws:personal.order.item',
                     '',

@@ -4,13 +4,10 @@ namespace FourPaws\PersonalBundle\AjaxController;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\PersonalBundle\Service\OrderService;
-use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
-use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Psr\Log\LoggerAwareInterface;
@@ -19,8 +16,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
-use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 /**
  * Class OrderSubscribeController
@@ -84,7 +79,7 @@ class OrderController extends Controller implements LoggerAwareInterface
 
         try {
             $user = $this->currentUserProvider->getCurrentUser();
-            $this->orderService->loadManzanaOrders($user);
+            $this->orderService->loadManzanaOrders($user, $page);
             $orders = $this->orderService->getUserOrders($user, $page);
 
             $html = '';
@@ -102,7 +97,7 @@ class OrderController extends Controller implements LoggerAwareInterface
                         'HIDE_ICONS' => 'Y',
                     ]
                 );
-                $html = ob_get_clean();
+                $html .= ob_get_clean();
             }
 
             $result = JsonSuccessResponse::createWithData('', [
@@ -110,9 +105,9 @@ class OrderController extends Controller implements LoggerAwareInterface
                 'count' => $orders->count(),
             ]);
         } catch (NotAuthorizedException $e) {
-            $result = JsonErrorResponse::create($this->ajaxMess->getNeedAuthError());
+            $result = $this->ajaxMess->getNeedAuthError();
         } catch (\Exception $e) {
-            $result = JsonErrorResponse::create($this->ajaxMess->getSystemError());
+            $result = $this->ajaxMess->getSystemError();
         }
 
         return $result;
