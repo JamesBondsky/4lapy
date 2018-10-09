@@ -83,6 +83,11 @@ class StoreService implements LoggerAwareInterface
     /** @var StoreCollection */
     protected $supplierStores;
 
+    /**
+     * @var array
+     */
+    protected $metroInfo;
+
     public function __construct(
         LocationService $locationService,
         StoreRepository $storeRepository,
@@ -543,37 +548,42 @@ class StoreService implements LoggerAwareInterface
      */
     public function getMetroInfo(array $filter = [], array $select = ['*']): array
     {
-        $highloadStation = HLBlockFactory::createTableObject('MetroStations');
-        $branchIds = [];
-        $result = [];
-        $query = $highloadStation::query();
-        if (!empty($filter)) {
-            $query->setFilter($filter);
-        }
-        $res = $query->setSelect($select)->exec();
-        while ($item = $res->fetch()) {
-            $result[$item['ID']] = $item;
-            $branchIds[$item['ID']] = $item['UF_BRANCH'];
-        }
-
-        if (\is_array($branchIds) && !empty($branchIds)) {
-            $highloadBranch = HLBlockFactory::createTableObject('MetroWays');
-            $res = $highloadBranch::query()->setFilter(['ID' => array_unique($branchIds)])->setSelect(['*'])->exec();
-            $reverseBranchIds = [];
-            foreach ($branchIds as $id => $branch) {
-                $reverseBranchIds[$branch][] = $id;
+        if (null === $this->metroInfo) {
+            $highloadStation = HLBlockFactory::createTableObject('MetroStations');
+            $branchIds = [];
+            $result = [];
+            $query = $highloadStation::query();
+            if (!empty($filter)) {
+                $query->setFilter($filter);
             }
+            $res = $query->setSelect($select)->exec();
             while ($item = $res->fetch()) {
-                if (\is_array($reverseBranchIds[$item['ID']]) && !empty($reverseBranchIds[$item['ID']])) {
-                    foreach ($reverseBranchIds[$item['ID']] as $id) {
-                        $item['CLASS'] = $item['UF_CLASS'] ?? '';
-                        $result[$id]['BRANCH'] = $item;
+                $result[$item['ID']] = $item;
+                $branchIds[$item['ID']] = $item['UF_BRANCH'];
+            }
+
+            if (\is_array($branchIds) && !empty($branchIds)) {
+                $highloadBranch = HLBlockFactory::createTableObject('MetroWays');
+                $res = $highloadBranch::query()->setFilter(['ID' => array_unique($branchIds)])->setSelect(['*'])
+                                      ->exec();
+                $reverseBranchIds = [];
+                foreach ($branchIds as $id => $branch) {
+                    $reverseBranchIds[$branch][] = $id;
+                }
+                while ($item = $res->fetch()) {
+                    if (\is_array($reverseBranchIds[$item['ID']]) && !empty($reverseBranchIds[$item['ID']])) {
+                        foreach ($reverseBranchIds[$item['ID']] as $id) {
+                            $item['CLASS'] = $item['UF_CLASS'] ?? '';
+                            $result[$id]['BRANCH'] = $item;
+                        }
                     }
                 }
             }
+
+            $this->metroInfo = $result;
         }
 
-        return $result;
+        return $this->metroInfo;
     }
 
     /**
