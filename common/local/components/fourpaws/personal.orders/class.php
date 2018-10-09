@@ -12,6 +12,7 @@ use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Bitrix\FourPawsComponent;
@@ -74,7 +75,6 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
      */
     public function onPrepareComponentParams($params): array
     {
-        $params['LIMIT'] = $params['LIMIT'] ?: 10;
         $params['PATH_TO_BASKET'] = '/cart/';
 
         return parent::onPrepareComponentParams($params);
@@ -86,6 +86,7 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
      */
     public function prepareResult(): void
     {
+        $orders = null;
         try {
             $user = $this->currentUserProvider->getCurrentUser();
             $instance = Application::getInstance();
@@ -99,16 +100,14 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
             }
             $this->orderService->loadManzanaOrders($user);
 
-            $activeOrders = $this->orderService->getActiveSiteOrders($this->arParams['LIMIT'], 0);
-            $closedOrders = $this->orderService->getClosedSiteOrders();
+            $orders = $this->orderService->getUserOrders($user, 10);
         } catch (NotAuthorizedException $e) {
             define('NEED_AUTH', true);
 
             return;
         }
 
-        $this->arResult['CLOSED_ORDERS'] = $closedOrders;
-        $this->arResult['ACTIVE_ORDERS'] = $activeOrders;
+        $this->arResult['ORDERS'] = $orders ?? new ArrayCollection();
     }
 
     /**

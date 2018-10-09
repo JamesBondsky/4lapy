@@ -16,17 +16,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var string $componentPath
  */
 
-/** @var ArrayCollection $closedOrders */
-$closedOrders = $arResult['CLOSED_ORDERS'] ?? null;
-/** @var ArrayCollection $activeOrders */
-$activeOrders = $arResult['ACTIVE_ORDERS'] ?? null;
+/** @var ArrayCollection $orders */
+$orders = $arResult['ORDERS'];
 
-if (!$closedOrders || !$activeOrders) {
-    // какая-то ошибка произошла в компоненте
-    return;
-}
-
-if ($closedOrders->isEmpty() && $activeOrders->isEmpty()) {
+if ($orders->isEmpty()) {
     include __DIR__ . '/stage.empty.php';
 } else {
     include __DIR__ . '/stage.list.php';

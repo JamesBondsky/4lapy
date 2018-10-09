@@ -47,6 +47,7 @@ use FourPaws\PersonalBundle\Entity\OrderDelivery;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Entity\OrderPayment;
 use FourPaws\PersonalBundle\Entity\OrderProp;
+use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemArticleEmptyException;
 use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemNotActiveException;
 use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemNotExistsException;
@@ -60,9 +61,10 @@ use FourPaws\PersonalBundle\Exception\ManzanaOrder\OrderCreateException;
 use FourPaws\PersonalBundle\Repository\OrderRepository;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\StoreBundle\Entity\Store;
-use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -74,6 +76,8 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class OrderService
 {
+    public const ORDER_PAGE_LIMIT = 10;
+
     public static $finalStatuses = [
         'G',
         'J',
@@ -84,7 +88,7 @@ class OrderService
         'K',
     ];
 
-    protected static $manzanaFinalStatus = 'G';
+    protected const MANZANA_FINAL_STATUS = 'G';
 
     /**
      * @var OrderRepository
@@ -126,136 +130,120 @@ class OrderService
 
     /**
      * @param User $user
+     * @param int  $limit
+     * @param int  $offset
+     *
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws ArgumentTypeException
+     * @throws ConstraintDefinitionException
      * @throws DeliveryNotFoundException
+     * @throws EmptyEntityClass
+     * @throws IblockNotFoundException
      * @throws ManzanaServiceContactSearchMoreOneException
      * @throws ManzanaServiceContactSearchNullException
      * @throws ManzanaServiceException
+     * @throws NotAuthorizedException
+     * @throws NotImplementedException
+     * @throws NotSupportedException
+     * @throws ObjectException
+     * @throws ObjectNotFoundException
      * @throws ObjectPropertyException
+     * @throws ServiceCircularReferenceException
      * @throws ServiceNotFoundException
      * @throws SystemException
      * @throws \Exception
      */
-    public function loadManzanaOrders(User $user)
+    public function loadManzanaOrders(User $user, int $limit = self::ORDER_PAGE_LIMIT, int $offset = 0): void
     {
         $contactId = $this->manzanaService->getContactByUser($user)->contactId;
         $deliveryId = $this->deliveryService->getDeliveryIdByCode(DeliveryService::INNER_PICKUP_CODE);
 
-        $cheques = $this->manzanaService->getCheques($contactId);
+        if ($cheques = \array_slice($this->manzanaService->getCheques($contactId), $offset, $limit)) {
+            $existingManzanaOrders = $this->getSiteManzanaOrders($user->getId());
 
-        $existingManzanaOrders = $this->getSiteManzanaOrders($user->getId());
+            /** @var Cheque $cheque */
+            foreach ($cheques as $cheque) {
+                if ($cheque->operationTypeCode === Cheque::OPERATION_TYPE_RETURN) {
+                    continue;
+                }
 
-        foreach ($cheques as $cheque) {
-            if ($cheque->operationTypeCode === Cheque::OPERATION_TYPE_RETURN) {
-                continue;
-            }
+                if (\in_array($cheque->chequeNumber, $existingManzanaOrders, true)) {
+                    continue;
+                }
 
-            if (\in_array($cheque->chequeNumber, $existingManzanaOrders, true)) {
-                continue;
-            }
+                if (!$cheque->hasItemsBool()) {
+                    continue;
+                }
 
-            if (!$cheque->hasItemsBool()) {
-                continue;
-            }
+                /** @var \DateTimeImmutable $date */
+                $date = $cheque->date;
+                $bitrixDate = DateTime::createFromTimestamp($date->getTimestamp());
+                $order = (new Order())
+                    ->setDateInsert($bitrixDate)
+                    ->setDatePayed($bitrixDate)
+                    ->setDateStatus($bitrixDate)
+                    ->setDateUpdate($bitrixDate)
+                    ->setManzana(true)
+                    ->setUserId($user->getId())
+                    ->setPayed(true)
+                    ->setStatusId(static::MANZANA_FINAL_STATUS)
+                    ->setPrice($cheque->sum)
+                    ->setItemsSum($cheque->sum)
+                    ->setManzanaId($cheque->chequeNumber)
+                    ->setPaySystemId(PaySystemActionTable::query()->setFilter(['CODE' => 'cash'])
+                                                         ->setSelect(['PAY_SYSTEM_ID'])->exec()
+                                                         ->fetch()['PAY_SYSTEM_ID'])
+                    ->setDeliveryId($deliveryId);
 
-            /** @var \DateTimeImmutable $date */
-            $date = $cheque->date;
-            $bitrixDate = DateTime::createFromTimestamp($date->getTimestamp());
-            $order = (new Order())
-                ->setDateInsert($bitrixDate)
-                ->setDatePayed($bitrixDate)
-                ->setDateStatus($bitrixDate)
-                ->setDateUpdate($bitrixDate)
-                ->setManzana(true)
-                ->setUserId($user->getId())
-                ->setPayed(true)
-                ->setStatusId(static::$manzanaFinalStatus)
-                ->setPrice($cheque->sum)
-                ->setItemsSum($cheque->sum)
-                ->setManzanaId($cheque->chequeNumber)
-                ->setPaySystemId(PaySystemActionTable::query()->setFilter(['CODE' => 'cash'])->setSelect(['PAY_SYSTEM_ID'])->exec()->fetch()['PAY_SYSTEM_ID'])
-                ->setDeliveryId($deliveryId);
+                try {
+                    $items = $this->getItemsByCheque($cheque);
+                } /** @noinspection PhpRedundantCatchClauseInspection */ catch (ManzanaChequeItemExceptionInterface $e) {
+                    continue;
+                }
+                $order->setItems(new ArrayCollection($items));
 
-            try {
-                $items = $this->getItemsByCheque($cheque);
-            } /** @noinspection PhpRedundantCatchClauseInspection */ catch (ManzanaChequeItemExceptionInterface $e) {
-                continue;
-            }
-            $order->setItems(new ArrayCollection($items));
-
-            try {
-                $this->addManzanaOrder($order);
-            } /** @noinspection PhpRedundantCatchClauseInspection */ catch (ManzanaOrderExceptionInterface $e) {
+                try {
+                    $this->addManzanaOrder($order);
+                } /** @noinspection PhpRedundantCatchClauseInspection */ catch (ManzanaOrderExceptionInterface $e) {
+                }
             }
         }
     }
 
     /**
-     * @param int $limit
-     * @param int $offset
+     * @param User $user
+     * @param int  $page
+     * @param int  $limit
      *
-     * @return ArrayCollection|Order[]
-     * @throws ApplicationCreateException
+     * @return ArrayCollection
      * @throws ArgumentException
-     * @throws EmptyEntityClass
-     * @throws IblockNotFoundException
-     * @throws NotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws ServiceNotFoundException
+     * @throws InvalidArgumentException
      * @throws SystemException
-     * @throws \Exception
-     * @throws \RuntimeException
      */
-    public function getActiveSiteOrders(int $limit = 10, int $offset = 0): ArrayCollection
+    public function getUserOrders(User $user, int $page = 1, int $limit = self::ORDER_PAGE_LIMIT): ArrayCollection
     {
-        return $this->getUserOrders([
-            'filter' => [
-                '!STATUS_ID' => array_merge(static::$finalStatuses, static::$cancelStatuses),
-                'CANCELED'   => 'N',
-            ],
-            'limit' => $limit,
-            'offset' => $offset,
-            'setKey' => 'ID',
-        ]);
+        if ($page < 1) {
+            throw new InvalidArgumentException('Page must be >= 1');
+        }
+
+        $offset = ($page - 1) * $limit;
+
+        return new ArrayCollection($this->orderRepository->getUserOrders($user->getId(), $limit, $offset));
     }
 
     /**
+     * @deprecated
+     *
      * @param array $params
      *
-     * @return ArrayCollection|Order[]
-     * @throws ServiceNotFoundException
-     * @throws NotFoundException
-     * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
-     * @throws \RuntimeException
-     * @throws ArgumentException
-     * @throws EmptyEntityClass
-     * @throws IblockNotFoundException
-     * @throws SystemException
-     * @throws \Exception
-     */
-    public function getUserOrders(array $params): ArrayCollection
-    {
-        return $this->orderRepository->getUserOrders($params);
-    }
-
-    /**
      * @return ArrayCollection
-     * @throws \Exception
      */
-    public function getClosedSiteOrders(): ArrayCollection
+    public function getUserOrdersOld(array $params): ArrayCollection
     {
-        return $this->getUserOrders([
-            'filter' => [
-                [
-                    'LOGIC'     => 'OR',
-                    'STATUS_ID' => array_merge(static::$finalStatuses, static::$cancelStatuses),
-                    'CANCELED'  => 'Y',
-                ],
-            ],
-            'setKey' => 'ID',
-        ]);
+        return $this->orderRepository->getUserOrdersOld($params);
     }
 
     /**
@@ -519,7 +507,7 @@ class OrderService
         Manager::disableExtendsDiscount();
 
         $bitrixOrder = BitrixOrder::create(SITE_ID, $order->getUserId(), $order->getCurrency());
-        $bitrixOrder->setFieldNoDemand('STATUS_ID', self::$manzanaFinalStatus);
+        $bitrixOrder->setFieldNoDemand('STATUS_ID', $order->getStatusId());
         $bitrixOrder->setFieldNoDemand('PAYED', BitrixUtils::BX_BOOL_TRUE);
         $bitrixOrder->setFieldNoDemand('DATE_PAYED', $order->getDateInsert());
         $bitrixOrder->setFieldNoDemand('DATE_STATUS', $order->getDateInsert());
