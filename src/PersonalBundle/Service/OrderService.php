@@ -78,12 +78,12 @@ class OrderService
 {
     public const ORDER_PAGE_LIMIT = 10;
 
-    public static $finalStatuses = [
+    public const STATUS_FINAL = [
         'G',
         'J',
     ];
 
-    public static $cancelStatuses = [
+    public const STATUS_CANCEL = [
         'A',
         'K',
     ];
@@ -238,6 +238,16 @@ class OrderService
         $offset = ($page - 1) * $limit;
 
         return $this->orderRepository->getUserOrders($user->getId(), $limit, $offset);
+    }
+
+    /**
+     * @param User $user
+     *
+     * @return int
+     */
+    public function getUserOrdersCount(User $user): int
+    {
+        return $this->orderRepository->getUserOrdersCount($user->getId());
     }
 
     /**

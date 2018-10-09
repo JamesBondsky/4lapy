@@ -12,6 +12,7 @@ use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Iblock\ElementTable;
 use Bitrix\Iblock\PropertyTable;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ObjectPropertyException;
@@ -37,6 +38,7 @@ use FourPaws\PersonalBundle\Entity\OrderDelivery;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Entity\OrderPayment;
 use FourPaws\PersonalBundle\Entity\OrderProp;
+use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
 use JMS\Serializer\ArrayTransformerInterface;
@@ -86,19 +88,51 @@ class OrderRepository extends BaseRepository
      */
     public function getUserOrders(int $userId, int $limit = 0, int $offset = 0): ArrayCollection
     {
-        $query = $this->getDataManager()::query();
-        $query->setSelect(['*'])
-              ->setFilter(['USER_ID' => $userId]);
+        $closedOrderStatuses = \implode(',', \array_map(function ($status) {
+            return sprintf('"%s"', $status);
+        }, \array_merge(OrderService::STATUS_CANCEL, OrderService::STATUS_FINAL)));
+
+        $query = $this->getDataManager()::query()
+             ->setSelect([
+                 'IS_ACTIVE',
+                 '*',
+             ])
+             ->setFilter(['USER_ID' => $userId])
+             ->setOrder([
+                 'IS_ACTIVE'   => 'DESC',
+                 'DATE_INSERT' => 'DESC',
+             ])
+             ->registerRuntimeField(new ExpressionField(
+                 'IS_ACTIVE',
+                 'CASE WHEN %s NOT IN (' . $closedOrderStatuses . ') AND %s != "Y" THEN 1 ELSE 0 END',
+                 [
+                     'STATUS_ID',
+                     'CANCELED',
+                 ]
+             ));
 
         if ($limit) {
             $query->setLimit($limit)
                   ->setOffset($offset);
         }
 
-        /** @todo активные заказы в начало */
-        $query->setOrder(['DATE_INSERT' => 'DESC']);
-
         return $this->findBy($query);
+    }
+
+    /**
+     * @param int $userId
+     *
+     * @return int
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function getUserOrdersCount(int $userId): int
+    {
+        $orders = $this->getDataManager()::query()->setFilter(['USER_ID' => $userId])->exec()->fetch();
+
+        dump($orders);
+        die();
     }
 
     /**
