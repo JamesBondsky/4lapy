@@ -43,6 +43,7 @@ class FeedFactory extends Command implements LoggerAwareInterface
 
     public const FEED_TYPE_YANDEX_MARKET   = 'yandex-market';
     public const FEED_TYPE_GOOGLE_MERCHANT = 'google-merchant';
+    public const FEED_TYPE_RETAIL_ROCKET   = 'retail-rocket';
 
     public const EXIT_CODE_CONTINUE = 126;
     public const EXIT_CODE_END      = 127;
@@ -97,15 +98,14 @@ class FeedFactory extends Command implements LoggerAwareInterface
         $step = 0;
         $iterator = 1;
 
-        $this->log()
-            ->info(
-                \sprintf(
-                    'Feed factory was started: profile %d, feed %s, date %s',
-                    $id,
-                    $type,
-                    (new \DateTime())->format('d-m-Y H:i:s')
-                )
-            );
+        $this->log()->info(
+            \sprintf(
+                'Feed factory was started: profile %d, feed %s, date %s',
+                $id,
+                $type,
+                (new \DateTime())->format('d-m-Y H:i:s')
+            )
+        );
 
         if (!$id) {
             throw new ArgumentException('Profile id is not defined');
@@ -128,22 +128,21 @@ class FeedFactory extends Command implements LoggerAwareInterface
                 }
 
                 $step = 1;
-                $this->log()
-                    ->info(\sprintf('Step #%d was finished', $iterator));
+                $this->log()->info(\sprintf('Step #%d was finished', $iterator));
                 $iterator++;
             }
         } catch (Throwable $e) {
             $this->log()
-                ->critical(
-                    \sprintf(
-                        'Feed creation critical error: %s[%s] in %s:%s',
-                        $e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine()
-                    )
-                );
+                 ->critical(
+                     \sprintf(
+                         'Feed creation critical error: %s[%s] in %s:%s',
+                         $e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine()
+                     )
+                 );
         }
 
         $this->log()
-            ->info(\sprintf('Task #%s (%s) finished', $id, $type));
+             ->info(\sprintf('Task #%s (%s) finished', $id, $type));
     }
 
     /**
@@ -166,6 +165,9 @@ class FeedFactory extends Command implements LoggerAwareInterface
                 break;
             case self::FEED_TYPE_GOOGLE_MERCHANT:
                 $command = 'bitrix:feed:create:google';
+                break;
+            case self::FEED_TYPE_RETAIL_ROCKET:
+                $command = 'bitrix:feed:create:retailrocket';
                 break;
             default:
                 throw new ArgumentException(\sprintf(
