@@ -330,15 +330,17 @@ class BasketComponent extends CBitrixComponent
             if ($basketItem->isDelay()) {
                 $notAllowedItems->add($basketItem);
             } else {
-                if ((null === $delivery) ||
-                    !(clone $delivery)->setStockResult(
-                        $this->getDeliveryService()->getStockResultForOffer(
-                            $offer,
-                            $delivery,
-                            (int)$basketItem->getQuantity(),
-                            $basketItem->getPrice()
-                        )
-                    )->isSuccess()
+                if ($basketItem->getPrice() && (
+                        (null === $delivery) ||
+                        !(clone $delivery)->setStockResult(
+                            $this->getDeliveryService()->getStockResultForOffer(
+                                $offer,
+                                $delivery,
+                                (int)$basketItem->getQuantity(),
+                                $basketItem->getPrice()
+                            )
+                        )->isSuccess()
+                    )
                 ) {
                     $this->arResult['ONLY_PICKUP'][] = $offer->getId();
                 }

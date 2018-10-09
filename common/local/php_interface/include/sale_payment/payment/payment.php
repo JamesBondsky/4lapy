@@ -113,4 +113,4 @@ switch ((int)$response['errorCode']) {
         );
 }
 
-echo '<script>window.location="' . $formUrl . '"</script>';
+echo '<script>window.location.assign("' . $formUrl . '")</script>';
