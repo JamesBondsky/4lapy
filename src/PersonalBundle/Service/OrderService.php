@@ -130,8 +130,8 @@ class OrderService
 
     /**
      * @param User $user
+     * @param int  $page
      * @param int  $limit
-     * @param int  $offset
      *
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -156,7 +156,7 @@ class OrderService
      * @throws SystemException
      * @throws \Exception
      */
-    public function loadManzanaOrders(User $user, int $page = 1, int $limit = self::ORDER_PAGE_LIMIT): void
+    public function loadManzanaOrders(User $user, int $page = 1, int $limit = 20): void
     {
         $contactId = $this->manzanaService->getContactByUser($user)->contactId;
         $deliveryId = $this->deliveryService->getDeliveryIdByCode(DeliveryService::INNER_PICKUP_CODE);
@@ -244,6 +244,9 @@ class OrderService
      * @param User $user
      *
      * @return int
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
     public function getUserOrdersCount(User $user): int
     {
@@ -256,6 +259,7 @@ class OrderService
      * @param array $params
      *
      * @return ArrayCollection
+     * @throws ArgumentException
      */
     public function getUserOrdersOld(array $params): ArrayCollection
     {
