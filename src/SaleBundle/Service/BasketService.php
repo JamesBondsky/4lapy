@@ -940,12 +940,12 @@ class BasketService implements LoggerAwareInterface
             }
         }
 
-        if (\strpos($xmlId, '#')) {
+        if (\strpos((string)$xmlId, '#')) {
             /** @noinspection ShortListSyntaxCanBeUsedInspection */
             list(, $xmlId) = \explode('#', $xmlId);
         }
 
-        return $xmlId;
+        return (string)$xmlId;
     }
 
     /**
