@@ -3,32 +3,38 @@
 namespace FourPaws\SaleBundle\Command;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\ExpressionField;
-use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Internals\OrderTable;
-use Bitrix\Sale\Internals\StatusLangTable;
-use Symfony\Component\Serializer\Serializer;
 use Psr\Log\LoggerAwareInterface;
+use RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Exception\LogicException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Serializer\Serializer;
 
+/**
+ * Class OrdersReport
+ *
+ * @package FourPaws\SaleBundle\Command
+ */
 class OrdersReport extends Command implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
     /** @var string DATE_FROM */
     protected const DATE_FROM = 'from';
-
-    protected const REPORT_FOLDER = '/upload/';
+    protected const REPORT_FOLDER = '/upload/reports/';
 
     /** @var Serializer $serializer */
     private $serializer;
-
     /**
      * @var Filesystem
      */
@@ -37,15 +43,17 @@ class OrdersReport extends Command implements LoggerAwareInterface
     /**
      * OrdersReport constructor.
      *
-     * @param null $name
+     * @param Serializer $serializer
+     * @param Filesystem $filesystem
      *
      * @throws LogicException
      */
-    public function __construct(Serializer $serializer, Filesystem $filesystem, $name = null)
+    public function __construct(Serializer $serializer, Filesystem $filesystem)
     {
-        parent::__construct($name);
         $this->serializer = $serializer;
         $this->fileSystem = $filesystem;
+
+        parent::__construct();
     }
 
     /**
@@ -60,7 +68,17 @@ class OrdersReport extends Command implements LoggerAwareInterface
              ]);
     }
 
-
+    /**
+     * @param InputInterface  $input
+     * @param OutputInterface $output
+     *
+     * @throws RuntimeException
+     * @throws IOException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws ArgumentException
+     * @throws InvalidArgumentException
+     */
     protected function execute(InputInterface $input, OutputInterface $output): void
     {
         $date = new \DateTime();
@@ -74,38 +92,40 @@ class OrdersReport extends Command implements LoggerAwareInterface
         ];
 
         $ordersArray = [];
-        $orders      = OrderTable::query()->setSelect([
-            'Номер заказа' => 'ACCOUNT_NUMBER',
-            'Дата' => 'DATE',
-            'Время' => 'TIME',
-            'Сумма' => 'PRICE',
-            'ID покупателя' => 'USER_ID',
-            'E-mail' => 'USER.EMAIL',
-            'Статус' => 'STATUS.NAME',
-        ])
-                                 ->setFilter($filter)
-                                 ->registerRuntimeField(
-                                     'DATE',
-                                     new ExpressionField(
-                                         'DATE',
-                                         'DATE_FORMAT(%s, "%%d.%%m.%%Y")',
-                                         ['DATE_INSERT']
-                                    )
-                                 )
-                                 ->registerRuntimeField(
-                                     'TIME',
-                                     new ExpressionField(
-                                         'TIME',
-                                         'DATE_FORMAT(%s, "%%H:%%i:%%s")',
-                                         ['DATE_INSERT']
-                                    )
-                                 )
-                                 ->exec();
+        $orders = OrderTable::query()
+                            ->setSelect([
+                                'Номер заказа'  => 'ACCOUNT_NUMBER',
+                                'Дата'          => 'DATE',
+                                'Время'         => 'TIME',
+                                'Сумма'         => 'PRICE',
+                                'ID покупателя' => 'USER_ID',
+                                'E-mail'        => 'USER.EMAIL',
+                                'Статус'        => 'STATUS.NAME',
+                            ])
+                            ->setFilter($filter)
+                            ->registerRuntimeField(
+                                'DATE',
+                                new ExpressionField(
+                                    'DATE',
+                                    'DATE_FORMAT(%s, "%%d.%%m.%%Y")',
+                                    ['DATE_INSERT']
+                                )
+                            )
+                            ->registerRuntimeField(
+                                'TIME',
+                                new ExpressionField(
+                                    'TIME',
+                                    'DATE_FORMAT(%s, "%%H:%%i:%%s")',
+                                    ['DATE_INSERT']
+                                )
+                            )
+                            ->exec();
+
         while ($order = $orders->fetch()) {
             $ordersArray[] = $order;
         }
 
-        $csv  = $this->serializer->encode($ordersArray, 'csv');
+        $csv = $this->serializer->encode($ordersArray, 'csv');
         $path = sprintf('Report%s-%s.csv',
             $dateFrom->format('dmY'),
             $date->format('dmY')
@@ -117,6 +137,14 @@ class OrdersReport extends Command implements LoggerAwareInterface
         $this->log()->info('Task finished');
     }
 
+    /**
+     * @param string      $path
+     * @param string      $result
+     * @param bool        $append
+     * @param string|null $encoding
+     *
+     * @throws IOException
+     */
     protected function write(string $path, string $result, bool $append, string $encoding = null): void
     {
         if (null !== $encoding && $encoding !== mb_internal_encoding()) {
