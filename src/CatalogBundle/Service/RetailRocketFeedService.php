@@ -21,11 +21,9 @@ use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\CatalogBundle\Dto\RetailRocket\Offer as RetailRocketOffer;
 use FourPaws\CatalogBundle\Dto\Yandex\Category as YandexCategory;
-use FourPaws\CatalogBundle\Dto\Yandex\Currency;
-use FourPaws\CatalogBundle\Dto\Yandex\DeliveryOption;
 use FourPaws\CatalogBundle\Dto\Yandex\Feed;
-use FourPaws\CatalogBundle\Dto\Yandex\Offer as YandexOffer;
 use FourPaws\CatalogBundle\Dto\Yandex\Shop;
 use FourPaws\CatalogBundle\Exception\ArgumentException;
 use FourPaws\CatalogBundle\Exception\OffersIsOver;
@@ -35,9 +33,7 @@ use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
-use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
-use FourPaws\StoreBundle\Service\StoreService;
 use InvalidArgumentException;
 use JMS\Serializer\SerializerInterface;
 use Psr\Log\LoggerAwareInterface;
@@ -56,29 +52,15 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
 {
     use LazyLoggerAwareTrait;
 
-    private const MINIMAL_AVAILABLE_IN_RC = 2;
-
-    private $deliveryInfo;
-    /**
-     * @var StoreService
-     */
-    private $storeService;
-    /**
-     * @var Store
-     */
-    private $rcStock;
-
     /**
      * RetailRocketFeedService constructor.
      *
      * @param SerializerInterface $serializer
      * @param Filesystem          $filesystem
      */
-    public function __construct(SerializerInterface $serializer, Filesystem $filesystem, StoreService $storeService)
+    public function __construct(SerializerInterface $serializer, Filesystem $filesystem)
     {
         parent::__construct($serializer, $filesystem, Feed::class);
-
-        $this->storeService = $storeService;
     }
 
     /**
@@ -104,11 +86,8 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
             $this->clearFeed($this->getStorageKey());
 
             $feed = new Feed();
-            $this
-                ->processFeed($feed, $configuration)
-                ->processCurrencies($feed, $configuration)
-                ->processDeliveryOptions($feed, $configuration)
-                ->processCategories($feed, $configuration);
+            $this->processFeed($feed, $configuration)
+                 ->processCategories($feed, $configuration);
 
             $this->saveFeed($this->getStorageKey(), $feed);
         } else {
@@ -132,172 +111,6 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
     }
 
     /**
-     * @return string
-     */
-    private function getStorageKey(): string
-    {
-        return \sprintf(
-            '%s/yandex_tmp_feed.xml',
-            \sys_get_temp_dir()
-        );
-    }
-
-    /**
-     * @param Feed          $feed
-     * @param Configuration $configuration
-     *
-     * @return RetailRocketFeedService
-     */
-    protected function processCategories(Feed $feed, Configuration $configuration): RetailRocketFeedService
-    {
-        $categories = new ArrayCollection();
-
-        /**
-         * @var CategoryCollection $parentCategories
-         */
-        $parentCategories = (new CategoryQuery())
-            ->withFilter([
-                'ID'            => $configuration->getSectionIds(),
-                'GLOBAL_ACTIVE' => 'Y'
-            ])
-            ->withOrder(['LEFT_MARGIN' => 'ASC'])
-            ->exec();
-
-        /**
-         * @var Category $parentCategory
-         */
-        foreach ($parentCategories as $parentCategory) {
-            if ($categories->get($parentCategory->getId())) {
-                continue;
-            }
-
-            $this->addCategory($parentCategory, $categories);
-
-            if ($parentCategory->getRightMargin() - $parentCategory->getLeftMargin() < 3) {
-                continue;
-            }
-
-            $childCategories = (new CategoryQuery())
-                ->withFilter([
-                    '>LEFT_MARGIN'  => $parentCategory->getLeftMargin(),
-                    '<RIGHT_MARGIN' => $parentCategory->getRightMargin(),
-                    'GLOBAL_ACTIVE' => 'Y'
-                ])
-                ->withOrder(['LEFT_MARGIN' => 'ASC'])
-                ->exec();
-
-            foreach ($childCategories as $category) {
-                $this->addCategory($category, $categories);
-            }
-        }
-
-        $feed->getShop()
-             ->setCategories($categories);
-
-        return $this;
-    }
-
-    /**
-     * @param Category        $category
-     * @param ArrayCollection $categoryCollection
-     */
-    protected function addCategory(Category $category, ArrayCollection $categoryCollection): void
-    {
-        $categoryCollection->set(
-            $category->getId(),
-            (new YandexCategory())
-                ->setId($category->getId())
-                ->setParentId($category->getIblockSectionId() ?: null)
-                ->setName(
-                    \implode(' - ',
-                        \array_reverse($category->getFullPathCollection()
-                                                ->map(function (Category $category) {
-                                                    return \preg_replace('~\'|"~', '', $category->getName());
-                                                })
-                                                ->toArray()
-                        )
-                    )
-                )
-        );
-    }
-
-    /**
-     * @todo from db + profile
-     *
-     * @param Feed          $feed
-     * @param Configuration $configuration
-     *
-     * @return $this
-     */
-    protected function processDeliveryOptions(Feed $feed, Configuration $configuration): RetailRocketFeedService
-    {
-        /**
-         * По умолчанию в Мск вполне себе доступна бесплатная доставка и товар есть в магазине
-         */
-        $feed->getShop()
-             ->setDeliveryOptions($this->getDeliveryInfo());
-
-        return $this;
-    }
-
-    /**
-     * @return ArrayCollection|DeliveryOption[]
-     */
-    private function getDeliveryInfo(): ArrayCollection
-    {
-        if (!$this->deliveryInfo) {
-            global $APPLICATION;
-
-            $deliveryCollection = new ArrayCollection();
-
-            $deliveryInfo = $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
-                'empty',
-                ['CACHE_TIME' => 3601 * 24],
-                false,
-                ['HIDE_ICONS' => 'Y'])['DELIVERIES'];
-
-            foreach ($deliveryInfo as $delivery) {
-                if ((int)$delivery['PRICE']) {
-                    $deliveryCollection->add(
-                        (new DeliveryOption())
-                            ->setCost((int)$delivery['PRICE'])
-                            ->setDays((string)$delivery['PRICE'] ? (int)$delivery['PERIOD_FROM'] : 0)
-                            ->setDaysBefore(13)
-                            ->setFreeFrom((int)$delivery['FREE_FROM'])
-                    );
-                }
-            }
-
-            $this->deliveryInfo = $deliveryCollection;
-        }
-
-        return $this->deliveryInfo;
-    }
-
-    /**
-     * @param Feed          $feed
-     * @param Configuration $configuration
-     *
-     * @return RetailRocketFeedService
-     */
-    protected function processCurrencies(Feed $feed, Configuration $configuration): RetailRocketFeedService
-    {
-        $currencies = new ArrayCollection();
-        $xmlData = $configuration->getXmlData();
-
-        /** @noinspection ForeachSourceInspection */
-        foreach ($xmlData['CURRENCY'] as $currency => $setting) {
-            $currencies->add((new Currency())->setId($currency)
-                                             ->setRate((int)$setting['rate'] ?: 1));
-        }
-
-        $feed->getShop()
-             ->setCurrencies($currencies);
-
-        return $this;
-    }
-
-    /**
      * @param Feed          $feed
      * @param Configuration $configuration
      *
@@ -307,25 +120,18 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
     {
         $feed
             ->setDate(new DateTime())
-            ->setShop((new Shop())->setName($configuration->getCompanyName())
-                                  ->setCompany($configuration->getCompanyName())
-                                  ->setUrl(\sprintf(
-                                      'http%s://%s/',
-                                      $configuration->isHttps() ? 's' : '',
-                                      $configuration->getServerName()
-                                  )));
+            ->setShop(
+                (new Shop())
+                    ->setName($configuration->getCompanyName())
+                    ->setCompany($configuration->getCompanyName())
+                    ->setUrl(\sprintf(
+                        'http%s://%s/',
+                        $configuration->isHttps() ? 's' : '',
+                        $configuration->getServerName()
+                    ))
+            );
 
         return $this;
-    }
-
-    /**
-     * @param string $key
-     *
-     * @return Feed
-     */
-    public function loadFeed(string $key): Feed
-    {
-        return parent::loadFeed($key);
     }
 
     /**
@@ -352,18 +158,16 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
 
         $offerCollection = $this->getOffers($this->buildOfferFilter($feed, $configuration), $offset, $limit);
 
-        $this
-            ->log()
-            ->info(
-                \sprintf(
-                    'Offers page %d, limit %d, offset %d, pages %d, full count %d',
-                    $offerCollection->getCdbResult()->NavPageNomer,
-                    $limit,
-                    $offset,
-                    $offerCollection->getCdbResult()->NavPageCount,
-                    $offerCollection->getCdbResult()->NavRecordCount
-                )
-            );
+        $this->log()->info(
+            \sprintf(
+                'Offers page %d, limit %d, offset %d, pages %d, full count %d',
+                $offerCollection->getCdbResult()->NavPageNomer,
+                $limit,
+                $offset,
+                $offerCollection->getCdbResult()->NavPageCount,
+                $offerCollection->getCdbResult()->NavRecordCount
+            )
+        );
 
         foreach ($offerCollection as $k => $offer) {
             ++$offset;
@@ -419,6 +223,62 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
     }
 
     /**
+     * @param Offer           $offer
+     * @param ArrayCollection $collection
+     * @param string          $host
+     *
+     * @throws InvalidArgumentException
+     * @throws NotFoundException
+     * @throws DeliveryNotFoundException
+     * @throws ObjectNotFoundException
+     * @throws NotSupportedException
+     * @throws LoaderException
+     * @throws BitrixArgumentException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws RuntimeException
+     * @throws ApplicationCreateException
+     */
+    public function addOffer(Offer $offer, ArrayCollection $collection, string $host): void
+    {
+        $currentImage = (new FullHrefDecorator($offer->getImages()
+                                                     ->first()
+                                                     ->getSrc()))->setHost($host)->__toString();
+        $detailPath = (new FullHrefDecorator($offer->getDetailPageUrl()))->setHost($host)->__toString();
+
+        /** @noinspection CallableParameterUseCaseInTypeContextInspection */
+        /** @noinspection PassingByReferenceCorrectnessInspection */
+        $yandexOffer =
+            (new RetailRocketOffer())
+                ->setId($offer->getXmlId())
+                ->setName(\sprintf(
+                    '%s %s',
+                    $offer->getProduct()
+                          ->getBrandName(),
+                    $offer->getName()
+                ))
+                ->setCategoryId($offer->getProduct()
+                                      ->getIblockSectionId())
+                ->setDescription(\substr(\strip_tags($offer->getProduct()
+                                                           ->getDetailText()
+                                                           ->getText()), 0, 2990))
+                ->setAvailable($offer->isAvailable())
+                ->setPrice($offer->getPrice())
+                ->setPicture($currentImage)
+                ->setUrl($detailPath)
+                ->setVendor($offer->getProduct()->getBrandName());
+
+        $country = $offer
+            ->getProduct()
+            ->getCountry();
+        if ($country) {
+            $yandexOffer->setCountryOfOrigin($country->getName());
+        }
+
+        $collection->add($yandexOffer);
+    }
+
+    /**
      * @param Feed          $feed
      * @param Configuration $configuration
      *
@@ -441,23 +301,25 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
         $idList = [];
 
         try {
-            $idList = \array_reduce(ElementTable::query()
-                //->setCacheTtl(3600)
-                                                ->setSelect(['ID'])
-                                                ->setFilter([
-                                                    'IBLOCK_ID'         => IblockUtils::getIblockId(
-                                                        IblockType::CATALOG,
-                                                        IblockCode::PRODUCTS
-                                                    ),
-                                                    'IBLOCK_SECTION_ID' => $sectionIds,
-                                                    'ACTIVE'            => 'Y'
-                                                ])
-                                                ->exec()
-                                                ->fetchAll() ?: [], function ($carry, $on) {
-                $carry[] = $on['ID'];
+            $idList = \array_reduce(
+                ElementTable::query()
+                            ->setSelect(['ID'])
+                            ->setFilter([
+                                'IBLOCK_ID'         => IblockUtils::getIblockId(
+                                    IblockType::CATALOG,
+                                    IblockCode::PRODUCTS
+                                ),
+                                'IBLOCK_SECTION_ID' => $sectionIds,
+                                'ACTIVE'            => 'Y'
+                            ])
+                            ->exec()
+                            ->fetchAll()
+                    ?: [],
+                function ($carry, $on) {
+                    $carry[] = $on['ID'];
 
-                return $carry;
-            }, []);
+                    return $carry;
+                }, []);
         } catch (Exception $e) {
         }
 
@@ -471,170 +333,101 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
     }
 
     /**
-     * @param Offer           $offer
-     * @param ArrayCollection $collection
-     * @param string          $host
+     * @param Feed          $feed
+     * @param Configuration $configuration
      *
-     * @throws InvalidArgumentException
-     * @throws NotFoundException
-     * @throws DeliveryNotFoundException
-     * @throws ObjectNotFoundException
-     * @throws NotSupportedException
-     * @throws LoaderException
-     * @throws BitrixArgumentException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws RuntimeException
-     * @throws ApplicationCreateException
+     * @return RetailRocketFeedService
      */
-    public function addOffer(Offer $offer, ArrayCollection $collection, string $host): void
+    protected function processCategories(Feed $feed, Configuration $configuration): RetailRocketFeedService
     {
-        if ($this->isOfferExcluded($offer)) {
-            return;
-        }
+        $categories = new ArrayCollection();
 
-        $currentImage = (new FullHrefDecorator($offer->getImages()
-                                                     ->first()
-                                                     ->getSrc()))->setHost($host)
-                                                                 ->__toString();
-        $detailPath = (new FullHrefDecorator(\sprintf(
-            '%s%sutm_source=market.yandex.ru&utm_term=4386079&utm_medium=cpc&utm_campaign=main',
-            $offer->getDetailPageUrl(),
-            (\strpos($offer->getDetailPageUrl(), '?') > 0 ? '&' : '?')
-        )))->setHost($host)
-           ->__toString();
+        /**
+         * @var CategoryCollection $parentCategories
+         */
+        $parentCategories = (new CategoryQuery())
+            ->withFilter([
+                'ID'            => $configuration->getSectionIds(),
+                'GLOBAL_ACTIVE' => 'Y'
+            ])
+            ->withOrder(['LEFT_MARGIN' => 'ASC'])
+            ->exec();
 
-        $deliveryInfo = $this->getOfferDeliveryInfo($offer);
-
-        /** @noinspection CallableParameterUseCaseInTypeContextInspection */
-        /** @noinspection PassingByReferenceCorrectnessInspection */
-        $yandexOffer =
-            (new YandexOffer())
-                ->setId($offer->getXmlId())
-                ->setName(\sprintf(
-                    '%s %s',
-                    $offer->getProduct()
-                          ->getBrandName(),
-                    $offer->getName()
-                ))
-                ->setCategoryId($offer->getProduct()
-                                      ->getIblockSectionId())
-                ->setDelivery(!$offer->getProduct()
-                                     ->isDeliveryForbidden())
-                ->setPickup(true)
-                ->setStore($offer->getDeliverableQuantity() > 0)
-                ->setDescription(\substr(\strip_tags($offer->getProduct()
-                                                           ->getDetailText()
-                                                           ->getText()), 0, 2990))
-                ->setManufacturerWarranty(true)
-                ->setAvailable($offer->isAvailable())
-                ->setCurrencyId('RUB')
-                ->setPrice($offer->getPrice())
-                ->setPicture($currentImage)
-                ->setUrl($detailPath)
-                ->setCpa(0)
-                ->setVendor($offer->getProduct()
-                                  ->getBrandName())
-                ->setDeliveryOptions($deliveryInfo)
-                ->setVendorCode(\array_shift($offer->getBarcodes()) ?: '');
-
-        $country = $offer
-            ->getProduct()
-            ->getCountry();
-        if ($country) {
-            $yandexOffer->setCountryOfOrigin($country->getName());
-        }
-
-        $collection->add($yandexOffer);
-    }
-
-    /**
-     * Проверяем по стоп-словам, ТПЗ.
-     *
-     * @param Offer $offer
-     *
-     * @return bool
-     *
-     * @throws RuntimeException
-     */
-    protected function isOfferExcluded(Offer $offer): bool
-    {
-        $badWordsTemplate = '~новинка|подарка|хит|скидка|бесплатно|спеццена|специальная цена|новинка|заказ|аналог|акция|распродажа|новый|подарок|new|sale~iu';
-
-        if (!$offer->getXmlId()) {
-            return true;
-        }
-
-        if (
-            preg_match($badWordsTemplate, $offer->getName()) > 0
-            || preg_match(
-                   $badWordsTemplate,
-                   $offer->getProduct()
-                         ->getDetailText()
-                         ->getText()
-               ) > 0
-        ) {
-            $this->log()
-                 ->info(
-                     \sprintf(
-                         'Offer %s was been excluded by stop word',
-                         $offer->getXmlId()
-                     )
-                 );
-
-            return true;
-        }
-
-        if ((int)$offer->getPrice() === 0) {
-            return true;
-        }
-
-        if ($offer->getAllStocks()->filterByStore($this->getRcStock())->getTotalAmount()
-            < self::MINIMAL_AVAILABLE_IN_RC) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * @return Store
-     */
-    private function getRcStock(): Store
-    {
-        if (null === $this->rcStock) {
-            $this->rcStock = $this->storeService->getStoreByXmlId('DC01');
-        }
-
-        return $this->rcStock;
-    }
-
-    /**
-     * @param Offer $offer
-     *
-     * @return ArrayCollection
-     */
-    private function getOfferDeliveryInfo(Offer $offer): ArrayCollection
-    {
-        if ($offer->getProduct()
-                  ->isDeliveryForbidden()) {
-            return new ArrayCollection();
-        }
-
-
-        $deliveryInfo = clone $this->getDeliveryInfo();
-
-        foreach ($deliveryInfo as $option) {
-            if ($offer->getDeliverableQuantity() < 1) {
-                $option->setDays('1');
-                $option->setDaysBefore(13);
+        /**
+         * @var Category $parentCategory
+         */
+        foreach ($parentCategories as $parentCategory) {
+            if ($categories->get($parentCategory->getId())) {
+                continue;
             }
 
-            if ($offer->getPrice() > $option->getFreeFrom()) {
-                $option->setCost(0);
+            $this->addCategory($parentCategory, $categories);
+
+            if ($parentCategory->getRightMargin() - $parentCategory->getLeftMargin() < 3) {
+                continue;
+            }
+
+            $childCategories = (new CategoryQuery())
+                ->withFilter([
+                    '>LEFT_MARGIN'  => $parentCategory->getLeftMargin(),
+                    '<RIGHT_MARGIN' => $parentCategory->getRightMargin(),
+                    'GLOBAL_ACTIVE' => 'Y'
+                ])
+                ->withOrder(['LEFT_MARGIN' => 'ASC'])
+                ->exec();
+
+            foreach ($childCategories as $category) {
+                $this->addCategory($category, $categories);
             }
         }
 
-        return clone $deliveryInfo;
+        $feed->getShop()->setCategories($categories);
+
+        return $this;
+    }
+
+    /**
+     * @param Category        $category
+     * @param ArrayCollection $categoryCollection
+     */
+    protected function addCategory(Category $category, ArrayCollection $categoryCollection): void
+    {
+        $categoryCollection->set(
+            $category->getId(),
+            (new YandexCategory())
+                ->setId($category->getId())
+                ->setParentId($category->getIblockSectionId() ?: null)
+                ->setName(
+                    \implode(' - ',
+                        \array_reverse($category->getFullPathCollection()
+                                                ->map(function (Category $category) {
+                                                    return \preg_replace('~\'|"~', '', $category->getName());
+                                                })
+                                                ->toArray()
+                        )
+                    )
+                )
+        );
+    }
+
+    /**
+     * @param string $key
+     *
+     * @return Feed
+     */
+    public function loadFeed(string $key): Feed
+    {
+        return parent::loadFeed($key);
+    }
+
+    /**
+     * @return string
+     */
+    private function getStorageKey(): string
+    {
+        return \sprintf(
+            '%s/retail_rocket_tmp_feed.xml',
+            \sys_get_temp_dir()
+        );
     }
 }
