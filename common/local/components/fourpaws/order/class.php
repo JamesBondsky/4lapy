@@ -265,6 +265,11 @@ class FourPawsOrderComponent extends \CBitrixComponent
         try {
             $order = $this->orderService->initOrder($storage);
         } catch (OrderCreateException $e) {
+            if ($this->currentStep === OrderStorageEnum::PAYMENT_STEP && $_SESSION['ORDER_PAYMENT_URL']) {
+                $url = $_SESSION['ORDER_PAYMENT_URL'];
+                unset($_SESSION['ORDER_PAYMENT_URL']);
+                LocalRedirect($url);
+            }
             LocalRedirect('/cart');
 
             return;
@@ -307,6 +312,11 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
         $realStep = $this->orderStorageService->validateStorage($storage, $this->currentStep);
         if ($realStep !== $this->currentStep) {
+            if ($this->currentStep === OrderStorageEnum::PAYMENT_STEP && $_SESSION['ORDER_PAYMENT_URL']) {
+                $url = $_SESSION['ORDER_PAYMENT_URL'];
+                unset($_SESSION['ORDER_PAYMENT_URL']);
+                LocalRedirect($url);
+            }
             LocalRedirect($this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[$realStep]);
         }
 

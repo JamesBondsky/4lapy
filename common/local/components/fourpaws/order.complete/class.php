@@ -132,6 +132,7 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
             $APPLICATION->SetTitle('Заказ оформлен');
         }
 
+        unset($_SESSION['ORDER_PAYMENT_URL']);
         $this->arResult['IS_AUTH'] = $this->authUserService->isAuthorized();
 
         $user = null;

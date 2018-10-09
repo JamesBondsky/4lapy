@@ -1183,8 +1183,9 @@ class OrderService implements LoggerAwareInterface
             }
             $this->resetBasket($toDelete);
         } else {
-            $order = $this->initOrder($storage);
-            $this->saveOrder($order, $storage);
+            $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
+            $order = $this->initOrder($storage, null, $selectedDelivery);
+            $this->saveOrder($order, $storage, $selectedDelivery);
         }
 
         $this->orderStorageService->clearStorage($storage);

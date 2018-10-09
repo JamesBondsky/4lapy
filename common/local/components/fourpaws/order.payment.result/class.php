@@ -76,6 +76,7 @@ class FourPawsOrderPaymentResultComponent extends FourPawsComponent
         } catch (NotFoundException $e) {
             Tools::process404('', true, true, true);
         }
+        unset($_SESSION['ORDER_PAYMENT_URL']);
 
         /**
          * Попытка повторной оплаты заказа
