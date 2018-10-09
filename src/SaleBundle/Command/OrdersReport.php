@@ -4,9 +4,13 @@ namespace FourPaws\SaleBundle\Command;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\Exception;
 use Bitrix\Main\Entity\ExpressionField;
+use Bitrix\Main\Entity\Query;
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\Internals\OrderPropsValueTable;
 use Bitrix\Sale\Internals\OrderTable;
 use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
@@ -30,7 +34,8 @@ class OrdersReport extends Command implements LoggerAwareInterface
     use LazyLoggerAwareTrait;
 
     /** @var string DATE_FROM */
-    protected const DATE_FROM = 'from';
+    protected const DATE_FROM     = 'from';
+    protected const ONLINE_ORDER  = 'online_order';
     protected const REPORT_FOLDER = '/upload/reports/';
 
     /** @var Serializer $serializer */
@@ -62,9 +67,12 @@ class OrdersReport extends Command implements LoggerAwareInterface
     protected function configure(): void
     {
         $this->setName('fourpaws:sale:orders:report')
-             ->setDescription('Creates an orders report since given date')
+             ->setDescription(
+                 'Creates an orders report since given date'
+             )
              ->setDefinition([
-                 new InputArgument(static::DATE_FROM, InputArgument::OPTIONAL, 'Date from you want to get orders report', date('01.07.2018')),
+                 new InputArgument(static::DATE_FROM, InputArgument::OPTIONAL, 'Date from you want to get orders report (d.m.Y)', '01.07.2018'),
+                 new InputArgument(static::ONLINE_ORDER, InputArgument::OPTIONAL, 'Which orders (online/offline) you want get (y/n) both when ignored'),
              ]);
     }
 
@@ -83,58 +91,136 @@ class OrdersReport extends Command implements LoggerAwareInterface
     {
         $date = new \DateTime();
         $date->setTime(23, 59, 59);
-        $dateFrom = $input->getArgument(static::DATE_FROM);
-        $dateFrom = \DateTime::createFromFormat('d.m.Y', $dateFrom);
+        $dateFrom    = $input->getArgument(static::DATE_FROM);
+        $dateFrom    = \DateTime::createFromFormat('d.m.Y', $dateFrom);
+        $dateFrom->setTime(0, 0, 0);
+        $onlineOrder = $input->getArgument(static::ONLINE_ORDER);
+        $onlineOrder = $this->prepareOrderStatus($onlineOrder);
 
-        $filter = [
-            '<DATE_INSERT' => $date->format('d.m.Y H:i:s'),
-            '>DATE_INSERT' => $dateFrom->format('d.m.Y H:i:s'),
-        ];
-
+        $filter = $this->buildFilter($dateFrom, $date, $onlineOrder);
         $ordersArray = [];
-        $orders = OrderTable::query()
-                            ->setSelect([
-                                'Номер заказа'  => 'ACCOUNT_NUMBER',
-                                'Дата'          => 'DATE',
-                                'Время'         => 'TIME',
-                                'Сумма'         => 'PRICE',
-                                'ID покупателя' => 'USER_ID',
-                                'E-mail'        => 'USER.EMAIL',
-                                'Статус'        => 'STATUS.NAME',
-                            ])
-                            ->setFilter($filter)
-                            ->registerRuntimeField(
-                                'DATE',
-                                new ExpressionField(
-                                    'DATE',
-                                    'DATE_FORMAT(%s, "%%d.%%m.%%Y")',
-                                    ['DATE_INSERT']
-                                )
-                            )
-                            ->registerRuntimeField(
-                                'TIME',
-                                new ExpressionField(
-                                    'TIME',
-                                    'DATE_FORMAT(%s, "%%H:%%i:%%s")',
-                                    ['DATE_INSERT']
-                                )
-                            )
-                            ->exec();
+        $orders      = OrderTable::query()
+                                 ->setSelect([
+                                     'Номер заказа'       => 'ACCOUNT_NUMBER',
+                                     'Дата'               => 'DATE',
+                                     'Время'              => 'TIME',
+                                     'Сумма'              => 'PRICE',
+                                     'ID покупателя'      => 'USER_ID',
+                                     'E-mail'             => 'USER.EMAIL',
+                                     'Статус'             => 'STATUS.NAME',
+                                     'ID чека из Манзаны' => 'MANZANA_PROP.VALUE',
+                                 ])
+                                 ->setFilter($filter)
+                                 ->registerRuntimeField(
+                                     'DATE',
+                                     new ExpressionField(
+                                         'DATE',
+                                         'DATE_FORMAT(%s, "%%d.%%m.%%Y")',
+                                         ['DATE_INSERT']
+                                     )
+                                 )
+                                 ->registerRuntimeField(
+                                     'TIME',
+                                     new ExpressionField(
+                                         'TIME',
+                                         'DATE_FORMAT(%s, "%%H:%%i:%%s")',
+                                         ['DATE_INSERT']
+                                     )
+                                 )
+                                 ->registerRuntimeField(
+                                     'MANZANA_PROP',
+                                     new ReferenceField(
+                                         'MANZANA_PROP',
+                                         OrderPropsValueTable::class,
+                                         Query\Join::on('this.ID', 'ref.ORDER_ID')
+                                                   ->where('ref.CODE', '=', 'MANZANA_NUMBER'),
+                                         ['join_type' => 'LEFT']
+                                     )
+                                 )
+                                 ->exec();
 
         while ($order = $orders->fetch()) {
             $ordersArray[] = $order;
         }
 
-        $csv = $this->serializer->encode($ordersArray, 'csv');
-        $path = sprintf('Report%s-%s.csv',
+        $reportFilePath = $this->saveReport($ordersArray, $dateFrom, $date, $onlineOrder);
+
+        $this->log()->info(
+            sprintf(
+                'Task finished! File - %s',
+                $reportFilePath
+            )
+        );
+    }
+
+
+    /**
+     * @param $onlineOrder
+     *
+     * @return bool|null
+     */
+    private function prepareOrderStatus($onlineOrder): ?bool
+    {
+        $valuesMap = ['y' => true, 'n' => false];
+        if($onlineOrder !== null){
+            $onlineOrder = strtolower($onlineOrder);
+            if(!isset($valuesMap[$onlineOrder])){
+                throw new InvalidArgumentException('Please insert correct option!');
+            }
+            $onlineOrder = $valuesMap[$onlineOrder];
+        }
+        return $onlineOrder;
+    }
+
+    /**
+     * @param \DateTime $dateFrom
+     * @param \DateTime $dateTo
+     * @param bool|null $onlineOrder
+     *
+     * @return array
+     */
+    private function buildFilter(\DateTime $dateFrom, \DateTime $dateTo, ?bool $onlineOrder): array
+    {
+        $filter = [
+            '<DATE_INSERT' => $dateTo->format('d.m.Y H:i:s'),
+            '>DATE_INSERT' => $dateFrom->format('d.m.Y H:i:s'),
+        ];
+        if ($onlineOrder === null) {
+            return $filter;
+        }
+
+        if ($onlineOrder) {
+            $filter['!MANZANA_PROP.VALUE'] = false;
+        } else {
+            $filter['MANZANA_PROP.VALUE'] = false;
+        }
+
+        return $filter;
+    }
+
+    /**
+     * @param array     $ordersArray
+     * @param \DateTime $dateFrom
+     * @param \DateTime $date
+     * @param bool|null $onlineOrder
+     *
+     * @return string
+     */
+    private function saveReport(array $ordersArray, \DateTime $dateFrom, \DateTime $date, ?bool $onlineOrder): string
+    {
+        $csv    = $this->serializer->encode($ordersArray, 'csv');
+        $ordersInReport = '';
+        if($onlineOrder !== null){
+            $ordersInReport = $onlineOrder ? '_online' : '_offline';
+        }
+        $fileName   = sprintf('Report%s-%s%s.csv',
             $dateFrom->format('dmY'),
-            $date->format('dmY')
+            $date->format('dmY'),
+            $ordersInReport
         );
         $folder = $_SERVER['DOCUMENT_ROOT'] . self::REPORT_FOLDER;
-        $this->write($folder . $path, $csv, false);
-
-
-        $this->log()->info('Task finished');
+        $this->write($folder . $fileName, $csv, false);
+        return self::REPORT_FOLDER . $fileName;
     }
 
     /**
