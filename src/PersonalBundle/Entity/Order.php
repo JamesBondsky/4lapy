@@ -1002,7 +1002,7 @@ class Order extends BaseEntity
      */
     public function isClosed(): bool
     {
-        return \in_array($this->getStatusId(), OrderService::$finalStatuses, true);
+        return \in_array($this->getStatusId(), OrderService::STATUS_FINAL, true);
     }
 
     /**
