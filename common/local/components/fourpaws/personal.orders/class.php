@@ -87,6 +87,7 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
     public function prepareResult(): void
     {
         $orders = null;
+        $orderCount = 0;
         try {
             $user = $this->currentUserProvider->getCurrentUser();
             $instance = Application::getInstance();
@@ -101,12 +102,14 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
             $this->orderService->loadManzanaOrders($user);
 
             $orders = $this->orderService->getUserOrders($user);
+            $orderCount = $this->orderService->getUserOrdersCount($user);
         } catch (NotAuthorizedException $e) {
             define('NEED_AUTH', true);
 
             return;
         }
 
+        $this->arResult['TOTAL_ORDER_COUNT'] = $orderCount;
         $this->arResult['ORDERS'] = $orders ?? new ArrayCollection();
     }
 

@@ -93,23 +93,23 @@ class OrderRepository extends BaseRepository
         }, \array_merge(OrderService::STATUS_CANCEL, OrderService::STATUS_FINAL)));
 
         $query = $this->getDataManager()::query()
-             ->setSelect([
-                 'IS_ACTIVE',
-                 '*',
-             ])
-             ->setFilter(['USER_ID' => $userId])
-             ->setOrder([
-                 'IS_ACTIVE'   => 'DESC',
-                 'DATE_INSERT' => 'DESC',
-             ])
-             ->registerRuntimeField(new ExpressionField(
-                 'IS_ACTIVE',
-                 'CASE WHEN %s NOT IN (' . $closedOrderStatuses . ') AND %s != "Y" THEN 1 ELSE 0 END',
-                 [
-                     'STATUS_ID',
-                     'CANCELED',
-                 ]
-             ));
+                      ->setSelect([
+                          'IS_ACTIVE',
+                          '*',
+                      ])
+                      ->setFilter(['USER_ID' => $userId])
+                      ->setOrder([
+                          'IS_ACTIVE'   => 'DESC',
+                          'DATE_INSERT' => 'DESC',
+                      ])
+                      ->registerRuntimeField(new ExpressionField(
+                          'IS_ACTIVE',
+                          'CASE WHEN %s NOT IN (' . $closedOrderStatuses . ') AND %s != "Y" THEN 1 ELSE 0 END',
+                          [
+                              'STATUS_ID',
+                              'CANCELED',
+                          ]
+                      ));
 
         if ($limit) {
             $query->setLimit($limit)
@@ -129,10 +129,7 @@ class OrderRepository extends BaseRepository
      */
     public function getUserOrdersCount(int $userId): int
     {
-        $orders = $this->getDataManager()::query()->setFilter(['USER_ID' => $userId])->exec()->fetch();
-
-        dump($orders);
-        die();
+        return $this->getDataManager()::getCount(['USER_ID' => $userId]);
     }
 
     /**

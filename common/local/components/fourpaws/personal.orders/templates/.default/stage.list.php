@@ -7,14 +7,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 /**
- * @global CMain $APPLICATION
- * @var array $arParams
- * @var array $arResult
- * @var CBitrixComponent $component
+ * @global CMain                 $APPLICATION
+ * @var array                    $arParams
+ * @var array                    $arResult
+ * @var CBitrixComponent         $component
  * @var CBitrixComponentTemplate $this
- * @var string $templateName
- * @var string $componentPath
- * @var ArrayCollection $orders
+ * @var string                   $templateName
+ * @var string                   $componentPath
+ * @var ArrayCollection          $orders
  */
 
 if (!$orders->isEmpty()) {
@@ -28,11 +28,11 @@ if (!$orders->isEmpty()) {
                     'fourpaws:personal.order.item',
                     '',
                     [
-                        'ORDER' => $order
+                        'ORDER' => $order,
                     ],
                     $component,
                     [
-                        'HIDE_ICONS' => 'Y'
+                        'HIDE_ICONS' => 'Y',
                     ]
                 );
             }
@@ -40,3 +40,12 @@ if (!$orders->isEmpty()) {
         </ul>
     </div>
 <?php }
+if ($orders->count() < $arResult['TOTAL_ORDER_COUNT']) { ?>
+    <div class="b-pagination b-pagination--account">
+        <ul class="b-pagination__list">
+            <li class="b-pagination__item b-pagination__item--next">
+                <button class="b-pagination__link js-orders-more" href="javascript:void(0);" data-url="/ajax/personal/order/list/" data-page="2">Показать еще</button>
+            </li>
+        </ul>
+    </div>
+<?php } ?>
