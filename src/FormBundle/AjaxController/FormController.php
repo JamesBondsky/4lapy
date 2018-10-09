@@ -121,7 +121,9 @@ class FormController extends Controller implements LoggerAwareInterface
                 [
                     'reload'  => true,
                     'command' => $this->dataLayerService->renderFeedback($this->formService->getFormFieldValueByCode($data, 'theme', $formId)),
-                ]
+                ],
+                200,
+                ['reload'  => true]
             );
             $_SESSION['FEEDBACK_SUCCESS'] = 'Y';
         }
@@ -172,8 +174,9 @@ class FormController extends Controller implements LoggerAwareInterface
                 'Ваш отзыв принят',
                 [
                     'reload'  => true,
-                    //'command' => $this->dataLayerService->renderFeedback($this->formService->getFormFieldValueByCode($data, 'theme', $formId)),
-                ]
+                ],
+                200,
+                ['redirect' => '/feedback/']
             );
             $_SESSION['FEEDBACK_SUCCESS'] = 'Y';
         }
