@@ -108,7 +108,10 @@ if ($isBrand && !empty($brand)) {
             $cache->endDataCache(['childs' => $childs]);
         }
         foreach($childs as $key => $child){
-            $childs->set($key, new Category($child));
+            if(is_array($child)){
+                //  Какой-то кеш мог уцелеть и тут будет error, если это не массив
+                $childs->set($key, new Category($child));
+            }
         }
     }
 } else {
