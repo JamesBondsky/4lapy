@@ -28,7 +28,7 @@ class Offer
      * @Serializer\XmlAttribute()
      * @Serializer\Type("int")
      * @Serializer\SerializedName("group_id")
-     * @Required()
+     * @Serializer\SkipWhenEmpty()
      *
      * @var int
      */
@@ -61,6 +61,7 @@ class Offer
 
     /**
      * @Serializer\XmlList(inline=true, entry="int")
+     * @Serializer\Type("int")
      *
      * @var array
      */
@@ -109,8 +110,9 @@ class Offer
     /**
      * Торговые предложения
      *
-     * @Serializer\XmlList(inline=false, entry="param")
+     * @Serializer\XmlList(inline=true, entry="param")
      * @Serializer\Type("ArrayCollection<FourPaws\CatalogBundle\Dto\RetailRocket\Parameter>")
+     * @Serializer\SkipWhenEmpty()
      *
      * @var ArrayCollection
      */

@@ -37,13 +37,17 @@ class YmlParameterHelper
      *
      * @param string   $parameterClass
      * @param int|null $maxCount
+     *
+     * @throws \LogicException
      */
     public function __construct(string $parameterClass, int $maxCount = null)
     {
+        /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         if (!is_a($parameterClass, YmlOfferParameterInterface::class, true)) {
-            // @todo
+            throw new \LogicException(\sprintf('Expected %s, got %s', YmlOfferParameterInterface::class, $parameterClass));
         }
 
+        $this->parameterClass = $parameterClass;
         $this->maxCount = $maxCount;
     }
 
@@ -171,19 +175,19 @@ class YmlParameterHelper
     protected function addCatalogParameters(CatalogProduct $catalogProduct, ArrayCollection $parameters): void
     {
         if ($weight = $catalogProduct->getWeight()) {
-            $this->addParameter($parameters, 'Вес', $weight);
+            $this->addParameter($parameters, 'Вес, г', $weight);
         }
 
         if ($length = $catalogProduct->getLength()) {
-            $this->addParameter($parameters, 'Длина', $length);
+            $this->addParameter($parameters, 'Длина, мм', $length);
         }
 
         if ($width = $catalogProduct->getWidth()) {
-            $this->addParameter($parameters, 'Ширина', $width);
+            $this->addParameter($parameters, 'Ширина, мм', $width);
         }
 
         if ($height = $catalogProduct->getHeight()) {
-            $this->addParameter($parameters, 'Высота', $height);
+            $this->addParameter($parameters, 'Высота, мм', $height);
         }
     }
 
@@ -236,7 +240,7 @@ class YmlParameterHelper
         }
 
         /** @var YmlOfferParameterInterface $parameter */
-        $parameter = new $this->parameterClass();
+        $parameter = new $this->parameterClass;
         $parameter->setName($name)
                   ->setValue($value);
 

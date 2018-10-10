@@ -24,9 +24,9 @@ use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\CatalogBundle\Dto\RetailRocket\Offer as RetailRocketOffer;
 use FourPaws\CatalogBundle\Dto\RetailRocket\Parameter;
-use FourPaws\CatalogBundle\Dto\Yandex\Category as YandexCategory;
-use FourPaws\CatalogBundle\Dto\Yandex\Feed;
-use FourPaws\CatalogBundle\Dto\Yandex\Shop;
+use FourPaws\CatalogBundle\Dto\RetailRocket\Category as RrCategory;
+use FourPaws\CatalogBundle\Dto\RetailRocket\Feed;
+use FourPaws\CatalogBundle\Dto\RetailRocket\Shop;
 use FourPaws\CatalogBundle\Exception\ArgumentException;
 use FourPaws\CatalogBundle\Exception\OffersIsOver;
 use FourPaws\CatalogBundle\Helper\YmlParameterHelper;
@@ -125,16 +125,7 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
     {
         $feed
             ->setDate(new DateTime())
-            ->setShop(
-                (new Shop())
-                    ->setName($configuration->getCompanyName())
-                    ->setCompany($configuration->getCompanyName())
-                    ->setUrl(\sprintf(
-                        'http%s://%s/',
-                        $configuration->isHttps() ? 's' : '',
-                        $configuration->getServerName()
-                    ))
-            );
+            ->setShop(new Shop());
 
         return $this;
     }
@@ -244,6 +235,7 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
      * @throws RuntimeException
      * @throws ApplicationCreateException
      * @throws SystemException
+     * @throws \LogicException
      */
     public function addOffer(Offer $offer, ArrayCollection $collection, string $host): void
     {
@@ -301,7 +293,7 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
             $feed->getShop()
                  ->getCategories()
                  ->toArray(),
-            function ($carry, YandexCategory $item) {
+            function ($carry, RrCategory $item) {
                 return \array_merge($carry, [$item->getId()]);
             },
             []
@@ -403,7 +395,7 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
     {
         $categoryCollection->set(
             $category->getId(),
-            (new YandexCategory())
+            (new RrCategory())
                 ->setId($category->getId())
                 ->setParentId($category->getIblockSectionId() ?: null)
                 ->setName(
