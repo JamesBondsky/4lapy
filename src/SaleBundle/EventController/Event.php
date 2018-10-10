@@ -81,6 +81,11 @@ class Event extends BaseServiceHandler
     {
         parent::initHandlers($eventManager);
 
+        static::initHandlerCompatible('OnBuildGlobalMenu', [
+            self::class,
+            'addRetailRocketOrderReportToAdminMenu',
+        ], 'main');
+
         $module = 'sale';
         ###   Обработчики скидок       ###
 
@@ -694,6 +699,26 @@ class Event extends BaseServiceHandler
         $entity = $event->getParameter('ENTITY');
         if ($entity instanceof BasketItem) {
             TaggedCacheHelper::clearManagedCache(['basket:' . $entity->getFUserId()]);
+        }
+    }
+
+    /**
+     * @param $adminMenu
+     * @param $moduleMenu
+     */
+    public static function addRetailRocketOrderReportToAdminMenu(&$adminMenu, &$moduleMenu)
+    {
+        foreach ($moduleMenu as $i => $menuItem) {
+            if ($menuItem['parent_menu'] === 'global_menu_store' &&
+                $menuItem['items_id'] === 'menu_sale_stat'
+            ) {
+                $moduleMenu[$i]['items'][] = [
+                    'text' => 'Отчет по заказам для RetailRocket',
+                    'title' => 'Отчет по заказам для RetailRocket',
+                    'url' => '/bitrix/admin/fourpaws_retail_rocket_orders_report.php?lang=' . LANG,
+                    'more_url' => ''
+                ];
+            }
         }
     }
 }
