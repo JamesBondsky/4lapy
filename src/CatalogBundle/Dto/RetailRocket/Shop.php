@@ -8,14 +8,14 @@ use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
- * Class RetailRocket
+ * Class Shop
  *
  * @package FourPaws\CatalogBundle\Dto\Yandex
  */
 class Shop
 {
     /**
-     * Оффскт
+     * Оффсет
      *
      * @Serializer\SkipWhenEmpty()
      * @Serializer\Type("int")
