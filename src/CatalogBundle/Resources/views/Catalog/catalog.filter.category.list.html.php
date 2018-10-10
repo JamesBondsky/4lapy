@@ -16,7 +16,6 @@ use Bitrix\Iblock\SectionElementTable;
 use Bitrix\Main\Application;
 use Bitrix\Main\Entity\ExpressionField;
 use Doctrine\Common\Collections\ArrayCollection;
-use FourPaws\BitrixOrm\Collection\CollectionBase;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
@@ -58,7 +57,6 @@ if ($isBrand && !empty($brand)) {
                        'itemsMd5' => md5(serialize($productIds))
             ]))) {
             $result = $cache->getVars();
-            /** @var CollectionBase $childs */
             $childs = $result['childs'];
         } elseif ($cache->startDataCache()) {
             $tagCache = (new TaggedCacheHelper())->addTag('catalog:brand:' . $brand);
@@ -93,12 +91,11 @@ if ($isBrand && !empty($brand)) {
                             ->exec()
                             ->first();
                         if ($parent instanceof Category && !\in_array($parent->getId(), $rootSections, true)) {
-                            $childs->add($parent->toArray());
+                            $childs->add($parent);
                             $rootSections[] = $parent->getId();
                         }
                         $childs->remove($key);
                     } else {
-                        $childs->set($key, $section->toArray());
                         $rootSections[] = $section->getId();
                     }
                 }
@@ -106,12 +103,6 @@ if ($isBrand && !empty($brand)) {
 
             $tagCache->end();
             $cache->endDataCache(['childs' => $childs]);
-        }
-        foreach($childs as $key => $child){
-            if(is_array($child)){
-                //  Какой-то кеш мог уцелеть и тут будет error, если это не массив
-                $childs->set($key, new Category($child));
-            }
         }
     }
 } else {
