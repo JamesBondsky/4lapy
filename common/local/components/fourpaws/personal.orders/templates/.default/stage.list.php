@@ -20,7 +20,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 if (!$orders->isEmpty()) {
     ?>
     <div class="b-account__accordion b-account__accordion--last">
-        <div class="b-account__title">Завершенные</div>
+        <div class="b-account__title">Мои заказы</div>
         <ul class="b-account__accordion-order-list">
             <?php
             foreach ($orders as $order) {
