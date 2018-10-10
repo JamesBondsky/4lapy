@@ -26,7 +26,7 @@ class Feed
 
     /**
      * @Required()
-     * @Serializer\Type("FourPaws\CatalogBundle\Dto\Yandex\Shop")
+     * @Serializer\Type("FourPaws\CatalogBundle\Dto\RetailRocket\Shop")
      *
      * @var Shop
      */
