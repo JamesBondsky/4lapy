@@ -9,7 +9,7 @@ namespace FourPaws\CatalogBundle\Console;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Exception;
 use FourPaws\CatalogBundle\Exception\ArgumentException;
-use FourPaws\CatalogBundle\Service\YandexFeedService;
+use FourPaws\CatalogBundle\Service\RetailRocketFeedService;
 use FourPaws\CatalogBundle\Translate\BitrixExportConfigTranslator;
 use FourPaws\External\Exception\YandexMarketApiException;
 use Psr\Log\LoggerAwareInterface;
@@ -24,21 +24,21 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Exception\IOException;
 
 /**
- * Class CreateYandexProductFeed
+ * Class CreateRetailRocketProductFeed
  *
  * @todo
  *
  * @package FourPaws\CatalogBundle\Console
  */
-class CreateYandexProductFeed extends Command implements LoggerAwareInterface
+class CreateRetailRocketProductFeed extends Command implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
-    public const ARG_PROFILE_ID          = 'id';
-    public const OPT_FEED_TYPE           = 'type';
-    public const OPT_FEED_STEP           = 'step';
+    public const ARG_PROFILE_ID = 'id';
+    public const OPT_FEED_TYPE  = 'type';
+    public const OPT_FEED_STEP  = 'step';
     /**
-     * @var YandexFeedService
+     * @var RetailRocketFeedService
      */
     private $feedService;
     /**
@@ -49,12 +49,12 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
     /**
      * CreateProductFeed constructor.
      *
-     * @param YandexFeedService            $feedService
+     * @param RetailRocketFeedService      $feedService
      * @param BitrixExportConfigTranslator $translator
      *
      * @throws LogicException
      */
-    public function __construct(YandexFeedService $feedService, BitrixExportConfigTranslator $translator)
+    public function __construct(RetailRocketFeedService $feedService, BitrixExportConfigTranslator $translator)
     {
         $this->feedService = $feedService;
         $this->translator = $translator;
@@ -68,14 +68,9 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
     public function configure(): void
     {
         $this
-            ->setName('bitrix:feed:create:yandex')
-            ->setDescription('Run bitrix export task - yandex feed')
+            ->setName('bitrix:feed:create:retailrocket')
+            ->setDescription('Run bitrix export task - retail rocket')
             ->addArgument(static::ARG_PROFILE_ID, InputArgument::REQUIRED, 'Bitrix feed id')
-            ->addOption(
-                static::OPT_FEED_TYPE,
-                't',
-                InputOption::VALUE_REQUIRED,
-                'type of feed - deprecated')
             ->addOption(
                 static::OPT_FEED_STEP,
                 's',

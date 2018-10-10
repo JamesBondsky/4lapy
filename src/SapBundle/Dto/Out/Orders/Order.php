@@ -1,9 +1,5 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
-
 namespace FourPaws\SapBundle\Dto\Out\Orders;
 
 use Doctrine\Common\Collections\Collection;
