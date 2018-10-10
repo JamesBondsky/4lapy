@@ -11,14 +11,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\SystemException;
-use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Sale;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Bitrix\FourPawsComponent;
 use FourPaws\Helpers\WordHelper;
-use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\BasketService;
@@ -68,7 +66,6 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
         $this->orderService = $container->get('order.service');
         $this->basketService = $container->get(BasketService::class);
         $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
-        $this->storeService = $container->get('store.service');
     }
 
     /**
@@ -78,7 +75,6 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
      */
     public function onPrepareComponentParams($params): array
     {
-        $params['PAGE_COUNT'] = 10;
         $params['PATH_TO_BASKET'] = '/cart/';
 
         return parent::onPrepareComponentParams($params);
@@ -90,6 +86,8 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
      */
     public function prepareResult(): void
     {
+        $orders = null;
+        $orderCount = 0;
         try {
             $user = $this->currentUserProvider->getCurrentUser();
             $instance = Application::getInstance();
@@ -103,61 +101,16 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
             }
             $this->orderService->loadManzanaOrders($user);
 
-            /** имитация постранички */
-            $nav = new PageNavigation('nav-orders');
-            $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
-            $activeOrders = $this->orderService->getActiveSiteOrders();
-            /** @noinspection PhpUndefinedVariableInspection */
-            $allClosedOrders = $this->orderService->getClosedSiteOrders();
-            /** Сортировка по дате и статусу общих заказов */
-            $allClosedOrdersList = $allClosedOrders->toArray();
-            usort($allClosedOrdersList, [static::class, 'sortByStatusAndDate']);
-
-            /** имитация постранички */
-            $nav->setRecordCount($allClosedOrders->count());
-            $closedOrders = new ArrayCollection(array_slice($allClosedOrdersList,
-                $nav->getOffset(), $nav->getPageSize(), true));
-            $this->arResult['NAV'] = $nav;
+            $orders = $this->orderService->getUserOrders($user);
+            $orderCount = $this->orderService->getUserOrdersCount($user);
         } catch (NotAuthorizedException $e) {
             define('NEED_AUTH', true);
 
             return;
         }
 
-        if (!$activeOrders->isEmpty() || !$closedOrders->isEmpty()) {
-            $this->arResult['METRO'] = new ArrayCollection($this->storeService->getMetroInfo());
-        }
-        $this->arResult['CLOSED_ORDERS'] = $closedOrders;
-        $this->arResult['ACTIVE_ORDERS'] = $activeOrders;
-    }
-
-    /**
-     * @param Order $item1
-     * @param Order $item2
-     *
-     * @return int
-     */
-    public function sortByStatusAndDate(Order $item1, Order $item2): int
-    {
-        if ($item1->getStatusSort() === $item2->getStatusSort()) {
-            $date1 = $item1->getDateInsert()->getTimestamp();
-            $date2 = $item2->getDateInsert()->getTimestamp();
-            if ($date1 < $date2) {
-                return 1;
-            }
-
-            if ($date1 > $date2) {
-                return -1;
-            }
-
-            return 0;
-        }
-
-        if ($item1->getStatusSort() > $item2->getStatusSort()) {
-            return 1;
-        }
-
-        return -1;
+        $this->arResult['TOTAL_ORDER_COUNT'] = $orderCount;
+        $this->arResult['ORDERS'] = $orders ?? new ArrayCollection();
     }
 
     /**

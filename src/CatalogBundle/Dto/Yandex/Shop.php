@@ -48,7 +48,7 @@ class Shop
     protected $url;
 
     /**
-     * Урл сайта
+     * Оффсет
      *
      * @Serializer\SkipWhenEmpty()
      * @Serializer\Type("int")
