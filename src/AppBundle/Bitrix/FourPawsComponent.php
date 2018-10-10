@@ -50,7 +50,7 @@ abstract class FourPawsComponent extends \CBitrixComponent implements LoggerAwar
      */
     public function executeComponent(): ?array
     {
-        if ($this->startResultCache()) {
+        if ($this->startResultCache(false, false, $this->getResultCachePath())) {
 
             try {
                 parent::executeComponent();
@@ -93,5 +93,10 @@ abstract class FourPawsComponent extends \CBitrixComponent implements LoggerAwar
      */
     protected function setTemplatePage(string $page) {
         $this->templatePage = $page;
+    }
+
+    protected function getResultCachePath()
+    {
+        return false;
     }
 }

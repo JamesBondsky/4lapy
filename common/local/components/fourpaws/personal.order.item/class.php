@@ -2,9 +2,11 @@
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Application as BitrixApplication;
+use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\SystemException;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
+use FourPaws\AppBundle\Bitrix\FourPawsComponent;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
@@ -16,7 +18,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  *
  * Class FourPawsPersonalCabinetOrderItemComponent
  */
-class FourPawsPersonalCabinetOrderItemComponent extends CBitrixComponent
+class FourPawsPersonalCabinetOrderItemComponent extends FourPawsComponent
 {
     use LazyLoggerAwareTrait;
 
@@ -71,31 +73,18 @@ class FourPawsPersonalCabinetOrderItemComponent extends CBitrixComponent
     }
 
     /**
-     * @return array
-     * @throws SystemException
      * @throws Exception
+     * @throws SystemException
      */
-    public function executeComponent()
+    public function prepareResult(): void
     {
         /** @var Order $personalOrder */
         $personalOrder = $this->arParams['ORDER'];
 
-        $cachePath = BitrixApplication::getInstance()->getManagedCache()->getCompCachePath(
-            $this->getRelativePath()
-        );
-        // к пути кеша добавляем идентификатор заказа
-        $cachePath = $cachePath . '/' . $personalOrder->getId();
+        (new TaggedCacheHelper($this->getResultCachePath()))->addTag('order:item:' . $personalOrder->getId());
 
-        if ($this->startResultCache(false, false, $cachePath)) {
-            (new TaggedCacheHelper($cachePath))->addTag('order:item:' . $personalOrder->getId());
-
-            $this->arResult['ORDER'] = $personalOrder;
-            $this->arResult['METRO'] = new ArrayCollection($this->storeService->getMetroInfo());
-
-            $this->includeComponentTemplate();
-        }
-
-        return $this->arResult;
+        $this->arResult['ORDER'] = $personalOrder;
+        $this->arResult['METRO'] = new ArrayCollection($this->storeService->getMetroInfo());
     }
 
     /**
@@ -112,5 +101,16 @@ class FourPawsPersonalCabinetOrderItemComponent extends CBitrixComponent
         }
 
         return $this->orderSubscribeService;
+    }
+
+    protected function getResultCachePath()
+    {
+        /** @var Order $personalOrder */
+        $personalOrder = $this->arParams['ORDER'];
+        $cachePath = BitrixApplication::getInstance()->getManagedCache()->getCompCachePath(
+            $this->getRelativePath()
+        );
+
+        return $cachePath . '/' . $personalOrder->getId();
     }
 }
