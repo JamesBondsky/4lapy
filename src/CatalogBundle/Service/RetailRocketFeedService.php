@@ -10,6 +10,7 @@ use Bitrix\Main\ArgumentException as BitrixArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\SystemException;
 use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
@@ -22,11 +23,13 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\CatalogBundle\Dto\RetailRocket\Offer as RetailRocketOffer;
-use FourPaws\CatalogBundle\Dto\Yandex\Category as YandexCategory;
-use FourPaws\CatalogBundle\Dto\Yandex\Feed;
-use FourPaws\CatalogBundle\Dto\Yandex\Shop;
+use FourPaws\CatalogBundle\Dto\RetailRocket\Parameter;
+use FourPaws\CatalogBundle\Dto\RetailRocket\Category as RrCategory;
+use FourPaws\CatalogBundle\Dto\RetailRocket\Feed;
+use FourPaws\CatalogBundle\Dto\RetailRocket\Shop;
 use FourPaws\CatalogBundle\Exception\ArgumentException;
 use FourPaws\CatalogBundle\Exception\OffersIsOver;
+use FourPaws\CatalogBundle\Helper\YmlParameterHelper;
 use FourPaws\CatalogBundle\Translate\Configuration;
 use FourPaws\CatalogBundle\Translate\ConfigurationInterface;
 use FourPaws\Decorators\FullHrefDecorator;
@@ -51,6 +54,8 @@ use Symfony\Component\Filesystem\Filesystem;
 class RetailRocketFeedService extends FeedService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
+
+    protected const MAX_OFFER_PARAMETERS = 40;
 
     /**
      * RetailRocketFeedService constructor.
@@ -120,16 +125,7 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
     {
         $feed
             ->setDate(new DateTime())
-            ->setShop(
-                (new Shop())
-                    ->setName($configuration->getCompanyName())
-                    ->setCompany($configuration->getCompanyName())
-                    ->setUrl(\sprintf(
-                        'http%s://%s/',
-                        $configuration->isHttps() ? 's' : '',
-                        $configuration->getServerName()
-                    ))
-            );
+            ->setShop(new Shop());
 
         return $this;
     }
@@ -238,6 +234,8 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
      * @throws ServiceCircularReferenceException
      * @throws RuntimeException
      * @throws ApplicationCreateException
+     * @throws SystemException
+     * @throws \LogicException
      */
     public function addOffer(Offer $offer, ArrayCollection $collection, string $host): void
     {
@@ -248,7 +246,7 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
 
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         /** @noinspection PassingByReferenceCorrectnessInspection */
-        $yandexOffer =
+        $rrOffer =
             (new RetailRocketOffer())
                 ->setId($offer->getXmlId())
                 ->setName(\sprintf(
@@ -258,7 +256,7 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
                     $offer->getName()
                 ))
                 ->setCategoryId($offer->getProduct()
-                                      ->getIblockSectionId())
+                                      ->getSectionsIdList())
                 ->setDescription(\substr(\strip_tags($offer->getProduct()
                                                            ->getDetailText()
                                                            ->getText()), 0, 2990))
@@ -268,14 +266,17 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
                 ->setUrl($detailPath)
                 ->setVendor($offer->getProduct()->getBrandName());
 
-        $country = $offer
-            ->getProduct()
-            ->getCountry();
-        if ($country) {
-            $yandexOffer->setCountryOfOrigin($country->getName());
+        if ($combination = $offer->getFlavourCombination() ?: $offer->getColourCombination()) {
+            $rrOffer->setGroupId($combination);
         }
 
-        $collection->add($yandexOffer);
+        $helper = new YmlParameterHelper(
+            Parameter::class,
+            static::MAX_OFFER_PARAMETERS
+        );
+        $rrOffer->setParameters($helper->getOfferParameters($offer));
+
+        $collection->add($rrOffer);
     }
 
     /**
@@ -292,7 +293,7 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
             $feed->getShop()
                  ->getCategories()
                  ->toArray(),
-            function ($carry, YandexCategory $item) {
+            function ($carry, RrCategory $item) {
                 return \array_merge($carry, [$item->getId()]);
             },
             []
@@ -310,7 +311,7 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
                                     IblockCode::PRODUCTS
                                 ),
                                 'IBLOCK_SECTION_ID' => $sectionIds,
-                                'ACTIVE'            => 'Y'
+                                'ACTIVE'            => 'Y',
                             ])
                             ->exec()
                             ->fetchAll()
@@ -328,7 +329,7 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
         return [
             '=PROPERTY_CML2_LINK' => $idList,
             '<XML_ID'             => 2000000,
-            'ACTIVE'              => 'Y'
+            'ACTIVE'              => 'Y',
         ];
     }
 
@@ -348,7 +349,7 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
         $parentCategories = (new CategoryQuery())
             ->withFilter([
                 'ID'            => $configuration->getSectionIds(),
-                'GLOBAL_ACTIVE' => 'Y'
+                'GLOBAL_ACTIVE' => 'Y',
             ])
             ->withOrder(['LEFT_MARGIN' => 'ASC'])
             ->exec();
@@ -371,7 +372,7 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
                 ->withFilter([
                     '>LEFT_MARGIN'  => $parentCategory->getLeftMargin(),
                     '<RIGHT_MARGIN' => $parentCategory->getRightMargin(),
-                    'GLOBAL_ACTIVE' => 'Y'
+                    'GLOBAL_ACTIVE' => 'Y',
                 ])
                 ->withOrder(['LEFT_MARGIN' => 'ASC'])
                 ->exec();
@@ -394,7 +395,7 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
     {
         $categoryCollection->set(
             $category->getId(),
-            (new YandexCategory())
+            (new RrCategory())
                 ->setId($category->getId())
                 ->setParentId($category->getIblockSectionId() ?: null)
                 ->setName(
