@@ -31,7 +31,7 @@ class Feed
     protected $channel;
 
     /**
-     * @return Shop
+     * @return Channel
      */
     public function getChannel(): Channel
     {
@@ -39,7 +39,7 @@ class Feed
     }
 
     /**
-     * @param Shop $channel
+     * @param Channel $channel
      *
      * @return Feed
      */

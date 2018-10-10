@@ -25,15 +25,6 @@ class Item
 
     /**
      * @Serializer\XmlElement(cdata=false, namespace="http://base.google.com/ns/1.0")
-     * @Serializer\Type("int")
-     * @Required()
-     *
-     * @var int
-     */
-    protected $groupId;
-
-    /**
-     * @Serializer\XmlElement(cdata=false, namespace="http://base.google.com/ns/1.0")
      * @Serializer\Type("string")
      * @Required()
      *
@@ -74,6 +65,16 @@ class Item
      * @var string
      */
     protected $price;
+
+    /**
+     * @Serializer\XmlElement(cdata=false, namespace="http://base.google.com/ns/1.0")
+     * @Serializer\Type("string")
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\SerializedName("sale_price")
+     *
+     * @var string
+     */
+    protected $salePrice;
 
     /**
      * @Serializer\XmlElement(cdata=false, namespace="http://base.google.com/ns/1.0")
@@ -151,7 +152,7 @@ class Item
      */
     public function getGroupId(): int
     {
-        return $this->id;
+        return $this->categoryId;
     }
 
     /**
@@ -161,7 +162,7 @@ class Item
      */
     public function setGroupId(int $groupId): Item
     {
-        $this->groupId = $groupId;
+        $this->categoryId = $groupId;
 
         return $this;
     }
@@ -202,6 +203,26 @@ class Item
     public function setPrice(string $price): Item
     {
         $this->price = $price;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSalePrice(): string
+    {
+        return $this->salePrice;
+    }
+
+    /**
+     * @param string $salePrice
+     *
+     * @return Item
+     */
+    public function setSalePrice(string $salePrice): Item
+    {
+        $this->salePrice = $salePrice;
 
         return $this;
     }

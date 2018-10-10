@@ -35,7 +35,6 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
     use LazyLoggerAwareTrait;
 
     public const ARG_PROFILE_ID          = 'id';
-    public const OPT_FEED_TYPE           = 'type';
     public const OPT_FEED_STEP           = 'step';
     /**
      * @var YandexFeedService
@@ -71,11 +70,6 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
             ->setName('bitrix:feed:create:yandex')
             ->setDescription('Run bitrix export task - yandex feed')
             ->addArgument(static::ARG_PROFILE_ID, InputArgument::REQUIRED, 'Bitrix feed id')
-            ->addOption(
-                static::OPT_FEED_TYPE,
-                't',
-                InputOption::VALUE_REQUIRED,
-                'type of feed - deprecated')
             ->addOption(
                 static::OPT_FEED_STEP,
                 's',
