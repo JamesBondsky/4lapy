@@ -1642,14 +1642,13 @@ class Offer extends IblockElement
      */
     public function getName(): string
     {
-        /** LP23-365 Удаляем дубли названия бренда в названии оффера */
+        /** LP23-365 Удаляем названия бренда в названии оффера */
         $brandName = $this->getProduct()->getBrandName();
         $name = $this->NAME;
 
-        if (mb_stripos($name, $brandName) !== mb_strripos($name, $brandName)) {
+        if (mb_strpos($name, $brandName) !== false) {
             $pattern = '/' . preg_quote($brandName, '\\') . '/i';
             $parts = preg_split($pattern, $name);
-            $parts[0] .= ' ' . $brandName;
             $name = \implode(' ', \array_filter(\array_map('trim', $parts)));
         }
 

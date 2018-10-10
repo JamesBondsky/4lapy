@@ -29,7 +29,7 @@ class Shop
      *
      * @Required()
      * @Serializer\XmlList(inline=false, entry="category")
-     * @Serializer\Type("ArrayCollection<FourPaws\CatalogBundle\Dto\Yandex\Category>")
+     * @Serializer\Type("ArrayCollection<FourPaws\CatalogBundle\Dto\RetailRocket\Category>")
      *
      * @var Category[]|Collection
      */
@@ -39,7 +39,7 @@ class Shop
      * Торговые предложения
      *
      * @Serializer\XmlList(inline=false, entry="offer")
-     * @Serializer\Type("ArrayCollection<FourPaws\CatalogBundle\Dto\Yandex\Offer>")
+     * @Serializer\Type("ArrayCollection<FourPaws\CatalogBundle\Dto\RetailRocket\Offer>")
      *
      * @var Offer[]|Collection
      */

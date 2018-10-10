@@ -14,12 +14,15 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\Collection\CategoryCollection;
 use FourPaws\Catalog\Collection\OfferCollection;
+use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\CatalogBundle\Dto\GoogleMerchant\Channel;
 use FourPaws\CatalogBundle\Dto\GoogleMerchant\Feed;
-use FourPaws\CatalogBundle\Dto\RetailRocket\Offer as RetailRocketOffer;
+use FourPaws\CatalogBundle\Dto\GoogleMerchant\Item;
 use FourPaws\CatalogBundle\Exception\ArgumentException;
 use FourPaws\CatalogBundle\Exception\OffersIsOver;
 use FourPaws\CatalogBundle\Translate\Configuration;
@@ -28,7 +31,9 @@ use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
+use FourPaws\StoreBundle\Service\StoreService;
 use InvalidArgumentException;
 use JMS\Serializer\SerializerInterface;
 use Psr\Log\LoggerAwareInterface;
@@ -46,6 +51,11 @@ use Symfony\Component\Filesystem\Filesystem;
 class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
+    private $rcStock;
+    /**
+     * @var StoreService
+     */
+    private $storeService;
 
     /**
      * GoogleMerchantFeedService constructor.
@@ -53,9 +63,11 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
      * @param SerializerInterface $serializer
      * @param Filesystem          $filesystem
      */
-    public function __construct(SerializerInterface $serializer, Filesystem $filesystem)
+    public function __construct(SerializerInterface $serializer, Filesystem $filesystem, StoreService $storeService)
     {
         parent::__construct($serializer, $filesystem, Feed::class);
+
+        $this->storeService = $storeService;
     }
 
     /**
@@ -109,7 +121,7 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
     private function getStorageKey(): string
     {
         return \sprintf(
-            '%s/retail_rocket_tmp_feed.xml',
+            '%s/google_merchant_tmp_feed.xml',
             \sys_get_temp_dir()
         );
     }
@@ -222,6 +234,70 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
     }
 
     /**
+     * @param Configuration $configuration
+     *
+     * @return array
+     */
+    protected function getCategoryIds(Configuration $configuration): array
+    {
+        $ids = [];
+        /**
+         * @var CategoryCollection $parentCategories
+         */
+        $parentCategories = (new CategoryQuery())
+            ->withFilter([
+                'ID'            => $configuration->getSectionIds(),
+                'GLOBAL_ACTIVE' => 'Y'
+            ])
+            ->withSelect([
+                'ID',
+                'IBLOCK_SECTION_ID',
+                'DEPTH_LEVEL',
+                'LEFT_MARGIN',
+                'RIGHT_MARGIN',
+            ])
+            ->withOrder(['LEFT_MARGIN' => 'ASC'])
+            ->exec();
+
+        /**
+         * @var Category $parentCategory
+         */
+        foreach ($parentCategories as $parentCategory) {
+            if ($ids[$parentCategory->getId()]) {
+                continue;
+            }
+
+            $ids[$parentCategory->getId()] = $parentCategory->getId();
+
+            if ($parentCategory->getRightMargin() - $parentCategory->getLeftMargin() < 3) {
+                continue;
+            }
+
+            $childCategories = (new CategoryQuery())
+                ->withFilter([
+                    '>LEFT_MARGIN'  => $parentCategory->getLeftMargin(),
+                    '<RIGHT_MARGIN' => $parentCategory->getRightMargin(),
+                    'GLOBAL_ACTIVE' => 'Y'
+                ])
+                ->withSelect([
+                    'ID',
+                    'IBLOCK_SECTION_ID',
+                    'DEPTH_LEVEL',
+                    'LEFT_MARGIN',
+                    'RIGHT_MARGIN',
+                ])
+                ->withOrder(['LEFT_MARGIN' => 'ASC'])
+                ->exec();
+
+            foreach ($childCategories as $category) {
+                $ids[$category->getId()] = $category->getId();
+            }
+        }
+
+        return $ids;
+    }
+
+    /**
      * @param Feed          $feed
      * @param Configuration $configuration
      *
@@ -231,15 +307,7 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
      */
     public function buildOfferFilter(Feed $feed, Configuration $configuration): array
     {
-        $sectionIds = \array_reduce(
-            $feed->getChannel()
-                 ->getCategories()
-                 ->toArray(),
-            function ($carry, YandexCategory $item) {
-                return \array_merge($carry, [$item->getId()]);
-            },
-            []
-        );
+        $sectionIds = \array_values($this->getCategoryIds($configuration));
 
         $idList = [];
 
@@ -294,6 +362,14 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
      */
     public function addOffer(Offer $offer, ArrayCollection $collection, string $host): void
     {
+        if (
+            !$offer->getXmlId()
+            || (int)$offer->getPrice() === 0
+            || $offer->getAllStocks()->filterByStore($this->getRcStock())->getTotalAmount() < 1
+        ) {
+            return;
+        }
+
         $currentImage = (new FullHrefDecorator($offer->getImages()
                                                      ->first()
                                                      ->getSrc()))->setHost($host)->__toString();
@@ -301,33 +377,53 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
 
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         /** @noinspection PassingByReferenceCorrectnessInspection */
-        $yandexOffer =
-            (new RetailRocketOffer())
-                ->setId($offer->getXmlId())
-                ->setName(\sprintf(
-                    '%s %s',
-                    $offer->getProduct()
-                          ->getBrandName(),
-                    $offer->getName()
-                ))
-                ->setCategoryId($offer->getProduct()
-                                      ->getIblockSectionId())
-                ->setDescription(\substr(\strip_tags($offer->getProduct()
-                                                           ->getDetailText()
-                                                           ->getText()), 0, 2990))
-                ->setAvailable($offer->isAvailable())
-                ->setPrice($offer->getPrice())
-                ->setPicture($currentImage)
-                ->setUrl($detailPath)
-                ->setVendor($offer->getProduct()->getBrandName());
+        $item = (new Item())
+            ->setId($offer->getXmlId())
+            ->setName(\sprintf(
+                '%s %s',
+                $offer->getProduct()
+                      ->getBrandName(),
+                $offer->getName()
+            ))
+            ->setLink($detailPath)
+            ->setGroupId($offer->getProduct()->getGoogleCategory())
+            ->setDescription(\substr(\strip_tags($offer->getProduct()
+                                                       ->getDetailText()
+                                                       ->getText()), 0, 4990))
+            ->setPicture($currentImage)
+            ->setVendor($offer->getProduct()->getBrandName())
+            ->setGtin($offer->getBarcodes()[0] ?? '');
 
-        $country = $offer
-            ->getProduct()
-            ->getCountry();
-        if ($country) {
-            $yandexOffer->setCountryOfOrigin($country->getName());
+        if ($offer->getOldPrice() !== $offer->getPrice()) {
+            $item->setPrice(
+                \sprintf(
+                    '%d RUR',
+                    $offer->getCatalogOldPrice()
+                ))
+                 ->setSalePrice(\sprintf(
+                     '%d RUR',
+                     $offer->getCatalogPrice()
+                 ));
+        } else {
+            $item->setPrice(
+                \sprintf(
+                    '%d RUR',
+                    $offer->getCatalogPrice()
+                ));
         }
 
-        $collection->add($yandexOffer);
+        $collection->add($item);
+    }
+
+    /**
+     * @return Store
+     */
+    private function getRcStock(): Store
+    {
+        if (null === $this->rcStock) {
+            $this->rcStock = $this->storeService->getStoreByXmlId('DC01');
+        }
+
+        return $this->rcStock;
     }
 }

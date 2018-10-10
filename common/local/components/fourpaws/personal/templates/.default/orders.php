@@ -15,9 +15,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 $APPLICATION->IncludeComponent(
     'fourpaws:personal.orders',
     '',
-    [
-        'CACHE_TYPE' => 'A',
-    ],
+    [],
     $component,
     ['HIDE_ICONS' => 'Y']
 );

@@ -47,6 +47,7 @@ use FourPaws\PersonalBundle\Entity\OrderDelivery;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Entity\OrderPayment;
 use FourPaws\PersonalBundle\Entity\OrderProp;
+use FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException;
 use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemArticleEmptyException;
 use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemNotActiveException;
@@ -60,6 +61,7 @@ use FourPaws\PersonalBundle\Exception\ManzanaOrder\OrderAlreadyExistsException;
 use FourPaws\PersonalBundle\Exception\ManzanaOrder\OrderCreateException;
 use FourPaws\PersonalBundle\Repository\OrderRepository;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
+use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
@@ -320,19 +322,30 @@ class OrderService
      * @param Order $order
      *
      * @return Store|null
-     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
-     * @throws \Exception
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws EmptyEntityClass
+     * @throws NotImplementedException
+     * @throws ObjectPropertyException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws SystemException
+     * @throws BitrixOrderNotFoundException
+     * @throws NotFoundException
      */
     public function getStore(Order $order): ?Store
     {
         /** @var OrderProp $prop */
         $props = $order->getProps();
         if (!$props->isEmpty()) {
-            /** получение и проверка доставки */
-            $deliveryCode = $order->getOrderService()->getOrderDeliveryCode($order->getBitrixOrder());
+            $deliveryCode  = '';
+
+            try {
+                /** получение и проверка доставки */
+                $deliveryCode = $order->getOrderService()->getOrderDeliveryCode($order->getBitrixOrder());
+            } catch (NotFoundException $e) {
+            }
             /** если самовывоз */
             if (\in_array($deliveryCode, DeliveryService::PICKUP_CODES, true)) {
                 $dpdTerminal = $props->get('DPD_TERMINAL_CODE');

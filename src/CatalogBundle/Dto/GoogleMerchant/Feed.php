@@ -16,6 +16,7 @@ use JMS\Serializer\Annotation as Serializer;
 class Feed
 {
     /**
+     * @Serializer\XmlAttribute()
      * @Serializer\Type("string")
      *
      * @var string
@@ -24,14 +25,14 @@ class Feed
 
     /**
      * @Required()
-     * @Serializer\Type("FourPaws\CatalogBundle\Dto\Yandex\Channel")
+     * @Serializer\Type("FourPaws\CatalogBundle\Dto\GoogleMerchant\Channel")
      *
      * @var Channel
      */
     protected $channel;
 
     /**
-     * @return Shop
+     * @return Channel
      */
     public function getChannel(): Channel
     {
@@ -39,7 +40,7 @@ class Feed
     }
 
     /**
-     * @param Shop $channel
+     * @param Channel $channel
      *
      * @return Feed
      */

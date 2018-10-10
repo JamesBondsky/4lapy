@@ -3,6 +3,7 @@
 namespace FourPaws\CatalogBundle\Dto\RetailRocket;
 
 use Doctrine\Common\Annotations\Annotation\Required;
+use Doctrine\Common\Collections\ArrayCollection;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -26,7 +27,8 @@ class Offer
     /**
      * @Serializer\XmlAttribute()
      * @Serializer\Type("int")
-     * @Required()
+     * @Serializer\SerializedName("group_id")
+     * @Serializer\SkipWhenEmpty()
      *
      * @var int
      */
@@ -59,6 +61,7 @@ class Offer
 
     /**
      * @Serializer\XmlList(inline=true, entry="int")
+     * @Serializer\Type("int")
      *
      * @var array
      */
@@ -103,6 +106,17 @@ class Offer
      * @var string
      */
     protected $model;
+
+    /**
+     * Торговые предложения
+     *
+     * @Serializer\XmlList(inline=true, entry="param")
+     * @Serializer\Type("ArrayCollection<FourPaws\CatalogBundle\Dto\RetailRocket\Parameter>")
+     * @Serializer\SkipWhenEmpty()
+     *
+     * @var ArrayCollection
+     */
+    protected $parameters;
 
     /**
      * @return int
@@ -205,6 +219,26 @@ class Offer
     }
 
     /**
+     * @return array
+     */
+    public function getCategoryId(): array
+    {
+        return $this->categoryId;
+    }
+
+    /**
+     * @param array $categoryId
+     *
+     * @return Offer
+     */
+    public function setCategoryId(array $categoryId): Offer
+    {
+        $this->categoryId = $categoryId;
+
+        return $this;
+    }
+
+    /**
      * @return string
      */
     public function getPicture(): string
@@ -300,6 +334,26 @@ class Offer
     public function setModel(string $model): Offer
     {
         $this->model = $model;
+
+        return $this;
+    }
+
+    /**
+     * @return ArrayCollection
+     */
+    public function getParameters(): ArrayCollection
+    {
+        return $this->parameters;
+    }
+
+    /**
+     * @param ArrayCollection $parameters
+     *
+     * @return Offer
+     */
+    public function setParameters(ArrayCollection $parameters): Offer
+    {
+        $this->parameters = $parameters;
 
         return $this;
     }

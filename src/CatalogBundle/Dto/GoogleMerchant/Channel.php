@@ -49,7 +49,7 @@ class Channel
      * Торговые предложения
      *
      * @Serializer\XmlList(inline=false, entry="offer")
-     * @Serializer\Type("ArrayCollection<FourPaws\CatalogBundle\Dto\Yandex\Item>")
+     * @Serializer\Type("ArrayCollection<FourPaws\CatalogBundle\Dto\GoogleMerchant\Item>")
      *
      * @var Item[]|Collection
      */
