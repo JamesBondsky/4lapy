@@ -72,11 +72,6 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
             ->setDescription('Run bitrix export task - yandex feed')
             ->addArgument(static::ARG_PROFILE_ID, InputArgument::REQUIRED, 'Bitrix feed id')
             ->addOption(
-                static::OPT_FEED_TYPE,
-                't',
-                InputOption::VALUE_REQUIRED,
-                'type of feed - deprecated')
-            ->addOption(
                 static::OPT_FEED_STEP,
                 's',
                 InputOption::VALUE_REQUIRED,

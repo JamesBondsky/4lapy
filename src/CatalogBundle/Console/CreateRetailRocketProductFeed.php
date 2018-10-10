@@ -35,7 +35,6 @@ class CreateRetailRocketProductFeed extends Command implements LoggerAwareInterf
     use LazyLoggerAwareTrait;
 
     public const ARG_PROFILE_ID = 'id';
-    public const OPT_FEED_TYPE  = 'type';
     public const OPT_FEED_STEP  = 'step';
     /**
      * @var RetailRocketFeedService

@@ -177,13 +177,11 @@ class FeedFactory extends Command implements LoggerAwareInterface
         }
 
         return \sprintf(
-            '%s %s/bin/symfony_console %s %s --%s %s --%s %d',
+            '%s %s/bin/symfony_console %s %s --%s %d',
             $php,
             Application::getInstance()->getRootDir(),
             $command,
             $id,
-            self::OPT_FEED_TYPE,
-            $type,
             self::OPT_FEED_STEP,
             $step
         );
