@@ -77,6 +77,7 @@ class Item
     protected $salePrice;
 
     /**
+     * @Serializer\Type("string")
      * @Serializer\XmlElement(cdata=false, namespace="http://base.google.com/ns/1.0")
      * @Serializer\SerializedName("google_product_category")
      *
@@ -148,19 +149,19 @@ class Item
     }
 
     /**
-     * @return int
+     * @return string
      */
-    public function getGroupId(): int
+    public function getGroupId(): string
     {
         return $this->categoryId;
     }
 
     /**
-     * @param int $groupId
+     * @param string $groupId
      *
      * @return Item
      */
-    public function setGroupId(int $groupId): Item
+    public function setGroupId(string $groupId): Item
     {
         $this->categoryId = $groupId;
 

@@ -267,7 +267,7 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
                 continue;
             }
 
-            $ids[$parentCategory->getId()] = $parentCategory;
+            $ids[$parentCategory->getId()] = $parentCategory->getId();
 
             if ($parentCategory->getRightMargin() - $parentCategory->getLeftMargin() < 3) {
                 continue;
@@ -290,7 +290,7 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
                 ->exec();
 
             foreach ($childCategories as $category) {
-                $ids[$category->getId()] = $category;
+                $ids[$category->getId()] = $category->getId();
             }
         }
 
@@ -307,9 +307,7 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
      */
     public function buildOfferFilter(Feed $feed, Configuration $configuration): array
     {
-        $sectionIds = \array_column($this->getCategoryIds($configuration), 'ID');
-        dump($sectionIds);
-        die;
+        $sectionIds = \array_values($this->getCategoryIds($configuration));
 
         $idList = [];
 
@@ -396,7 +394,7 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
             ->setVendor($offer->getProduct()->getBrandName())
             ->setGtin($offer->getBarcodes()[0] ?? '');
 
-        if ($offer->getOldPrice()) {
+        if ($offer->getOldPrice() !== $offer->getPrice()) {
             $item->setPrice(
                 \sprintf(
                     '%d RUR',
