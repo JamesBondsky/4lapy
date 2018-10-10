@@ -77,7 +77,7 @@
 ## Фабрика фидов
 
 ```
-- ./bin/symfony_console b:f:f %id% --type %type% # id - ид профиля выгрузки, type - тип фида (yandex-market)
+- ./bin/symfony_console b:f:f %id% --type %type% # id - ид профиля выгрузки, type - тип фида (yandex-market; google-merchant; retail-rocket)
 ```
 
 ## Сервисы вагранта
