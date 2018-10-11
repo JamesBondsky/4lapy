@@ -60,8 +60,8 @@ class Offer
     protected $price;
 
     /**
-     * @Serializer\XmlList(inline=true, entry="int")
-     * @Serializer\Type("int")
+     * @Serializer\XmlList(inline=true, entry="categoryId")
+     * @Serializer\Type("array<int>")
      *
      * @var array
      */
