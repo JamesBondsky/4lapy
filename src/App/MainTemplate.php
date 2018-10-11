@@ -24,7 +24,14 @@ class MainTemplate extends TemplateAbstract
      */
     public function getWrapperClass(): string
     {
-        return $this->isOrderPage() ? ' b-page-wrapper--order ' : '';
+        $result = '';
+        if ($this->isOrderPage()) {
+            $result = ' b-page-wrapper--order ';
+        } elseif ($this->isPaymentPage()) {
+            $result = ' b-page-wrapper--payment ';
+        }
+
+        return $result;
     }
 
     /**
