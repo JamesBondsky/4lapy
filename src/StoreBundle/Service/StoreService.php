@@ -11,7 +11,6 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
-use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\LocationBundle\Dto\Coordinates;
 use FourPaws\LocationBundle\Entity\Address;
@@ -77,6 +76,17 @@ class StoreService implements LoggerAwareInterface
 
     /** @var array */
     protected $storesById = [];
+
+    /** @var StoreCollection[] */
+    protected $currentStores = [];
+
+    /** @var StoreCollection */
+    protected $supplierStores;
+
+    /**
+     * @var array
+     */
+    protected $metroInfo;
 
     public function __construct(
         LocationService $locationService,
@@ -209,12 +219,15 @@ class StoreService implements LoggerAwareInterface
      */
     public function getStoresByCurrentLocation($type = self::TYPE_ALL): StoreCollection
     {
-        $location = $this->locationService->getCurrentLocation();
-        if ($this->deliveryService->getCurrentDeliveryZone() === DeliveryService::ZONE_4) {
-            $type = self::TYPE_STORE;
+        if (null === $this->currentStores[$type]) {
+            $location = $this->locationService->getCurrentLocation();
+            if ($this->deliveryService->getCurrentDeliveryZone() === DeliveryService::ZONE_4) {
+                $type = self::TYPE_STORE;
+            }
+            $this->currentStores[$type] = $this->getStoresByLocation($location, $type)->getStores();
         }
 
-        return $this->getStoresByLocation($location, $type)->getStores();
+        return $this->currentStores[$type];
     }
 
     /**
@@ -234,7 +247,7 @@ class StoreService implements LoggerAwareInterface
         bool $strict = false
     ): StoreSearchResult
     {
-        $storeSearchResult = $this->getLocalStores($locationCode);
+        $storeSearchResult = $this->getLocalStores($locationCode, $type);
 
         /**
          * Ищем склады района и региона
@@ -498,27 +511,31 @@ class StoreService implements LoggerAwareInterface
      */
     public function getSupplierStores(): StoreCollection
     {
-        $getStores = function () {
-            $storeCollection = $this->storeRepository->findBy(
-                $this->getTypeFilter(self::TYPE_SUPPLIER)
-            );
+        if (null === $this->supplierStores) {
+            $getStores = function () {
+                $storeCollection = $this->storeRepository->findBy(
+                    $this->getTypeFilter(self::TYPE_SUPPLIER)
+                );
 
-            return ['result' => $storeCollection];
-        };
+                return ['result' => $storeCollection];
+            };
 
-        try {
-            $result = (new BitrixCache())
-                          ->withId(__METHOD__)
-                          ->withTag('catalog:store')
-                          ->resultOf($getStores)['result'];
-        } catch (\Exception $e) {
-            $this->logger->error(
-                sprintf('failed to get supplier stores: %s', $e->getMessage())
-            );
-            $result = new StoreCollection();
+            try {
+                $result = (new BitrixCache())
+                              ->withId(__METHOD__)
+                              ->withTag('catalog:store')
+                              ->resultOf($getStores)['result'];
+            } catch (\Exception $e) {
+                $this->logger->error(
+                    sprintf('failed to get supplier stores: %s', $e->getMessage())
+                );
+                $result = new StoreCollection();
+            }
+
+            $this->supplierStores = $result;
         }
 
-        return $result;
+        return $this->supplierStores;
     }
 
     /**
@@ -531,37 +548,42 @@ class StoreService implements LoggerAwareInterface
      */
     public function getMetroInfo(array $filter = [], array $select = ['*']): array
     {
-        $highloadStation = HLBlockFactory::createTableObject('MetroStations');
-        $branchIds = [];
-        $result = [];
-        $query = $highloadStation::query();
-        if (!empty($filter)) {
-            $query->setFilter($filter);
-        }
-        $res = $query->setSelect($select)->exec();
-        while ($item = $res->fetch()) {
-            $result[$item['ID']] = $item;
-            $branchIds[$item['ID']] = $item['UF_BRANCH'];
-        }
-
-        if (\is_array($branchIds) && !empty($branchIds)) {
-            $highloadBranch = HLBlockFactory::createTableObject('MetroWays');
-            $res = $highloadBranch::query()->setFilter(['ID' => array_unique($branchIds)])->setSelect(['*'])->exec();
-            $reverseBranchIds = [];
-            foreach ($branchIds as $id => $branch) {
-                $reverseBranchIds[$branch][] = $id;
+        if (null === $this->metroInfo) {
+            $highloadStation = HLBlockFactory::createTableObject('MetroStations');
+            $branchIds = [];
+            $result = [];
+            $query = $highloadStation::query();
+            if (!empty($filter)) {
+                $query->setFilter($filter);
             }
+            $res = $query->setSelect($select)->exec();
             while ($item = $res->fetch()) {
-                if (\is_array($reverseBranchIds[$item['ID']]) && !empty($reverseBranchIds[$item['ID']])) {
-                    foreach ($reverseBranchIds[$item['ID']] as $id) {
-                        $item['CLASS'] = $item['UF_CLASS'] ?? '';
-                        $result[$id]['BRANCH'] = $item;
+                $result[$item['ID']] = $item;
+                $branchIds[$item['ID']] = $item['UF_BRANCH'];
+            }
+
+            if (\is_array($branchIds) && !empty($branchIds)) {
+                $highloadBranch = HLBlockFactory::createTableObject('MetroWays');
+                $res = $highloadBranch::query()->setFilter(['ID' => array_unique($branchIds)])->setSelect(['*'])
+                                      ->exec();
+                $reverseBranchIds = [];
+                foreach ($branchIds as $id => $branch) {
+                    $reverseBranchIds[$branch][] = $id;
+                }
+                while ($item = $res->fetch()) {
+                    if (\is_array($reverseBranchIds[$item['ID']]) && !empty($reverseBranchIds[$item['ID']])) {
+                        foreach ($reverseBranchIds[$item['ID']] as $id) {
+                            $item['CLASS'] = $item['UF_CLASS'] ?? '';
+                            $result[$id]['BRANCH'] = $item;
+                        }
                     }
                 }
             }
+
+            $this->metroInfo = $result;
         }
 
-        return $result;
+        return $this->metroInfo;
     }
 
     /**

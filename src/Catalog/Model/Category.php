@@ -801,6 +801,9 @@ class Category extends IblockSection implements FilterInterface
             'SECTION_PAGE_URL',
             'IBLOCK_SECTION_ID',
             'ELEMENT_CNT',
+            'NAME',
+            'CODE',
+            'XML_ID'
         ];
     }
 }

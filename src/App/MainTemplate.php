@@ -24,7 +24,14 @@ class MainTemplate extends TemplateAbstract
      */
     public function getWrapperClass(): string
     {
-        return $this->isOrderPage() ? ' b-page-wrapper--order ' : '';
+        $result = '';
+        if ($this->isOrderPage()) {
+            $result = ' b-page-wrapper--order ';
+        } elseif ($this->isPaymentPage()) {
+            $result = ' b-page-wrapper--payment ';
+        }
+
+        return $result;
     }
 
     /**
@@ -89,7 +96,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function hasShortHeaderFooter(): bool
     {
-        return $this->isOrderPage() || $this->isPaymentPage();
+        return ($this->isOrderPage() && !$this->isOrderInterviewPage()) || $this->isPaymentPage();
     }
 
     /**
@@ -322,6 +329,14 @@ class MainTemplate extends TemplateAbstract
     public function isOrderPage(): bool
     {
         return $this->isDir('/sale/order') || $this->isPartitionDir('/sale/order');
+    }
+
+    /**
+     * @return bool
+     */
+    public function isOrderInterviewPage(): bool
+    {
+        return $this->isPartitionDir('/sale/order/interview');
     }
 
     /**

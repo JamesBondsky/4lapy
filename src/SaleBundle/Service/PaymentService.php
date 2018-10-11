@@ -562,6 +562,10 @@ class PaymentService implements LoggerAwareInterface
         $position = 0;
         /** @var BasketItem $basketItem */
         foreach ($order->getBasket() as $basketItem) {
+            if ($basketItem->isDelay()) {
+                continue;
+            }
+
             if ($skipGifts && $this->basketService->isGiftProduct($basketItem)) {
                 continue;
             }

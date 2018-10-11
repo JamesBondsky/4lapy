@@ -4,6 +4,7 @@ namespace FourPaws\CatalogBundle\Dto;
 
 use FourPaws\Catalog\Collection\CategoryCollection;
 use FourPaws\Catalog\Model\Category;
+use FourPaws\Catalog\Model\FilterSet;
 
 /**
  * Class ChildCategoryRequest
@@ -36,6 +37,10 @@ class ChildCategoryRequest extends AbstractCatalogRequest implements CatalogCate
      * @var string
      */
     protected $landingDomain;
+    /**
+     * @var FilterSet
+     */
+    protected $filterSet;
 
     /**
      * @return string
@@ -153,6 +158,26 @@ class ChildCategoryRequest extends AbstractCatalogRequest implements CatalogCate
     public function setCurrentPath(string $currentPath): CatalogCategorySearchRequestInterface
     {
         $this->currentPath = $currentPath;
+
+        return $this;
+    }
+
+    /**
+     * @return FilterSet|null
+     */
+    public function getFilterSet(): ?FilterSet
+    {
+        return $this->filterSet;
+    }
+
+    /**
+     * @param FilterSet $filterSet
+     *
+     * @return ChildCategoryRequest
+     */
+    public function setFilterSet(FilterSet $filterSet): ChildCategoryRequest
+    {
+        $this->filterSet = $filterSet;
 
         return $this;
     }

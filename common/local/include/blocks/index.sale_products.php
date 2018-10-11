@@ -15,7 +15,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 /** @global $APPLICATION */
 $APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', '', [
-    'COUNT'        => 12,
+    'COUNT'        => 50,
     'OFFER_FILTER' => [
         '=PROPERTY_IS_SALE' => '1',
         '>CATALOG_PRICE_2' => 0,

@@ -7,6 +7,7 @@
 namespace FourPaws\AppBundle\Repository;
 
 use Bitrix\Main\Entity\DataManager;
+use Bitrix\Main\Entity\Query;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\UI\PageNavigation;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -197,7 +198,7 @@ class BaseRepository
      *      'countTotal'=>bool
      * ]
      *
-     * @param array|DataManager $params
+     * @param array|Query $params
      * @return ArrayCollection
      * @throws ObjectPropertyException
      * @throws \Bitrix\Main\ArgumentException
@@ -205,7 +206,7 @@ class BaseRepository
      */
     public function findBy($params): ArrayCollection
     {
-        if ($params instanceof DataManager) {
+        if ($params instanceof Query) {
             $query = $params;
         } else {
             if (!isset($params['select'])) {
@@ -258,7 +259,7 @@ class BaseRepository
             return new ArrayCollection();
         }
 
-        if (!empty($params['setKey'])) {
+        if (\is_array($params) && !empty($params['setKey'])) {
             $allItems = [];
             $i = -1;
             while ($item = $result->fetch()) {
@@ -268,7 +269,7 @@ class BaseRepository
         } else {
             $allItems = $result->fetchAll();
         }
-        if (!empty($params['entityClass'])) {
+        if (\is_array($params) && !empty($params['entityClass'])) {
             $entityClass = $params['entityClass'];
         }
         if (empty($entityClass) && !empty($this->getEntityClass())) {

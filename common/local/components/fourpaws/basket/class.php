@@ -330,44 +330,38 @@ class BasketComponent extends CBitrixComponent
             if ($basketItem->isDelay()) {
                 $notAllowedItems->add($basketItem);
             } else {
-                if ((null === $delivery) ||
-                    !(clone $delivery)->setStockResult(
-                        $this->getDeliveryService()->getStockResultForOffer(
-                            $offer,
-                            $delivery,
-                            (int)$basketItem->getQuantity(),
-                            $basketItem->getPrice()
-                        )
-                    )->isSuccess()
+                if ($basketItem->getPrice() && (
+                        (null === $delivery) ||
+                        !(clone $delivery)->setStockResult(
+                            $this->getDeliveryService()->getStockResultForOffer(
+                                $offer,
+                                $delivery,
+                                (int)$basketItem->getQuantity(),
+                                $basketItem->getPrice()
+                            )
+                        )->isSuccess()
+                    )
                 ) {
                     $this->arResult['ONLY_PICKUP'][] = $offer->getId();
                 }
             }
 
             if ($offer->isByRequest()) {
-                $dates = [];
-                foreach ($deliveries as $calculationResult) {
-                    $res = (clone $calculationResult)->setStockResult(
+                if (null !== $delivery) {
+                    $res = (clone $delivery)->setStockResult(
                         $this->getDeliveryService()->getStockResultForOffer(
                             $offer,
-                            $calculationResult,
+                            $delivery,
                             (int)$basketItem->getQuantity(),
                             $basketItem->getPrice()
                         )
                     );
-                    if (!$res->isSuccess()) {
-                        continue;
+                    if ($res->isSuccess()) {
+                        $this->arResult['OFFER_MIN_DELIVERY'][$basketItem->getProductId()] = DateHelper::formatDate(
+                            'XX',
+                            $res->getDeliveryDate()->getTimestamp()
+                        );
                     }
-                    $dates[] = $res->getDeliveryDate();
-                }
-
-                if (!empty($dates)) {
-                    /** @var \DateTime $date */
-                    $date = min($dates);
-                    $this->arResult['OFFER_MIN_DELIVERY'][$basketItem->getProductId()] = DateHelper::formatDate(
-                        'XX',
-                        $date->getTimestamp()
-                    );
                 }
 
                 if (!$notAllowedItems->contains($basketItem)) {

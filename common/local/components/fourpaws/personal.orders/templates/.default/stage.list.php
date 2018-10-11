@@ -7,86 +7,45 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 /**
- * @global CMain $APPLICATION
- * @var array $arParams
- * @var array $arResult
- * @var CBitrixComponent $component
+ * @global CMain                 $APPLICATION
+ * @var array                    $arParams
+ * @var array                    $arResult
+ * @var CBitrixComponent         $component
  * @var CBitrixComponentTemplate $this
- * @var string $templateName
- * @var string $componentPath
+ * @var string                   $templateName
+ * @var string                   $componentPath
+ * @var ArrayCollection          $orders
  */
-/** @var ArrayCollection $closedOrders */
-/** @var ArrayCollection $activeOrders */
 
-if (!$activeOrders->isEmpty()) {
-    ?>
-    <div class="b-account__accordion">
-        <div class="b-account__title">Текущие</div>
-        <ul class="b-account__accordion-order-list">
-            <?php
-            foreach ($activeOrders as $order) {
-                $APPLICATION->IncludeComponent(
-                    'fourpaws:personal.order.item',
-                    '',
-                    [
-                        'ORDER' => $order,
-                        'METRO' => $arResult['METRO']
-                    ],
-                    $component,
-                    [
-                        'HIDE_ICONS' => 'Y'
-                    ]
-                );
-            }
-            ?>
-        </ul>
-    </div>
-    <?php
-}
-
-if (!$closedOrders->isEmpty()) {
+if (!$orders->isEmpty()) {
     ?>
     <div class="b-account__accordion b-account__accordion--last">
-        <div class="b-account__title">Завершенные</div>
+        <div class="b-account__title">Мои заказы</div>
         <ul class="b-account__accordion-order-list">
             <?php
-            foreach ($closedOrders as $order) {
+            foreach ($orders as $order) {
                 $APPLICATION->IncludeComponent(
                     'fourpaws:personal.order.item',
                     '',
                     [
                         'ORDER' => $order,
-                        'METRO' => $arResult['METRO']
                     ],
                     $component,
                     [
-                        'HIDE_ICONS' => 'Y'
+                        'HIDE_ICONS' => 'Y',
                     ]
                 );
             }
             ?>
         </ul>
     </div>
-    <?php
-    if (!empty($arResult['NAV'])) {
-        ?>
-        <div class="b-pagination b-pagination--account">
-            <?php
-            $APPLICATION->IncludeComponent(
-                'bitrix:main.pagenavigation',
-                'pagination',
-                [
-                    'NAV_OBJECT' => $arResult['NAV'],
-                    'SEF_MODE' => 'N',
-                    'AJAX_MODE' => 'N',
-                ],
-                $component,
-                [
-                    'HIDE_ICONS' => 'Y'
-                ]
-            );
-            ?>
-        </div>
-        <?php
-    }
-}
+<?php }
+if ($orders->count() < $arResult['TOTAL_ORDER_COUNT']) { ?>
+    <div class="b-pagination b-pagination--account">
+        <ul class="b-pagination__list">
+            <li class="b-pagination__item b-pagination__item--next">
+                <button class="b-pagination__link js-orders-more" href="javascript:void(0);" data-url="/ajax/personal/order/list/" data-page="2">Показать еще</button>
+            </li>
+        </ul>
+    </div>
+<?php } ?>

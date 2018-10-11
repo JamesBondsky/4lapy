@@ -7,7 +7,7 @@ namespace FourPaws\CatalogBundle\Exception;
  *
  * @package FourPaws\CatalogBundle\Exception
  */
-interface CatalogExceptionInterface
+interface CatalogExceptionInterface extends \Throwable
 {
 
 }

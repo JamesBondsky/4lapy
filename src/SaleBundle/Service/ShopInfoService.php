@@ -162,7 +162,7 @@ class ShopInfoService
             try {
                 $stores = new StoreCollection([$this->storeService->getStoreByXmlId($storeXmlId)]);
 
-                $result = $this->generateShopList($stores, $orderStorage, $pickupResult);
+                $result = $this->generateShopList($stores, $orderStorage, $pickupResult, true);
             } catch (StoreNotFoundException $e) {
             }
         }
@@ -174,6 +174,7 @@ class ShopInfoService
      * @param StoreCollection       $storeCollection
      * @param OrderStorage          $orderStorage
      * @param PickupResultInterface $pickupResult
+     * @param bool                  $recalculateBasket
      *
      * @return ShopList
      * @throws ApplicationCreateException
@@ -193,7 +194,8 @@ class ShopInfoService
     public function generateShopList(
         StoreCollection $storeCollection,
         OrderStorage $orderStorage,
-        PickupResultInterface $pickupResult
+        PickupResultInterface $pickupResult,
+        bool $recalculateBasket = false
     ): ShopList
     {
         $result = new ShopList();
@@ -211,7 +213,7 @@ class ShopInfoService
             /** @var Store $store */
             foreach ($storeCollection as $store) {
                 try {
-                    $item = $this->getShopData($pickupResult, $store, $metroList, $paymentInfo, false);
+                    $item = $this->getShopData($pickupResult, $store, $metroList, $paymentInfo, $recalculateBasket);
                     $locationType = (($store->getLocation() === $locationCode) || ($store->getSubRegion() && $store->getSubRegion() === $subregionCode))
                         ? StoreLocationType::SUBREGIONAL
                         : StoreLocationType::REGIONAL;

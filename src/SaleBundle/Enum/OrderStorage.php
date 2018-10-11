@@ -14,6 +14,7 @@ class OrderStorage
     public const PAYMENT_STEP = 'payment';
     public const PAYMENT_STEP_CARD = 'payment-card';
     public const COMPLETE_STEP = 'complete';
+    public const INTERVIEW_STEP = 'interview';
 
     /**
      * Порядок оформления заказа
@@ -23,5 +24,6 @@ class OrderStorage
         self::DELIVERY_STEP,
         self::PAYMENT_STEP,
         self::COMPLETE_STEP,
+        self::INTERVIEW_STEP,
     ];
 }

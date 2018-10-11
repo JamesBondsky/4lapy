@@ -6,6 +6,7 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\SystemException;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -28,9 +29,10 @@ use FourPaws\Search\SearchService;
 use Psr\Log\LoggerAwareInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
-use WebArch\BitrixCache\BitrixCache;
 
 /**
  * Class ProductInfoController
@@ -189,7 +191,6 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
         $currentOffer = null;
 
         $cartItems = $this->basketService->getBasketProducts();
-        $location = $this->locationService->getCurrentLocation();
 
         if (!$this->validator->validate($productListRequest)->count()) {
             /** @var ProductSearchResult $result */
@@ -253,13 +254,14 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
                 }
 
                 foreach ($product->getOffers() as $offer) {
-                    $responseItem = $this->getProductInfo($product, $offer, $location);
+                    $responseItem = $this->getProductInfo($product, $offer);
                     $responseItem['inCart'] = $cartItems[$offer->getId()] ?? 0;
                     $responseItem['active'] = $activeOffer->getId() === $offer->getId();
                     $response['products'][$product->getId()][$offer->getId()] = $responseItem;
                 }
             }
         }
+
         return JsonSuccessResponse::createWithData('', $response);
     }
 
@@ -486,47 +488,29 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
     /**
      * @param Product $product
      * @param Offer   $offer
-     * @param string  $location
+     *
      * @return array
+     * @throws ArgumentException
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
      */
-    private function getProductInfo(Product $product, Offer $offer, string $location)
+    private function getProductInfo(Product $product, Offer $offer)
     {
-        $result = [];
-        $getResult = function () use ($product, $offer) {
-            $available = $offer->isAvailable();
-            $price = $offer->getCatalogPrice();
-            $oldPrice = $offer->getOldPrice() ? $offer->getCatalogOldPrice() : $price;
+        $available = $offer->isAvailable();
+        $price = $offer->getCatalogPrice();
+        $oldPrice = $offer->getOldPrice() ? $offer->getCatalogOldPrice() : $price;
+        $isByRequest = $offer->isByRequest();
+        $pickupOnly = $available && $product->isPickupAvailable() && !$product->isDeliveryAvailable();
 
-            $responseItem = [
-                'available' => $available,
-                'byRequest' => $offer->isByRequest(),
-                'price'     => $price,
-                'oldPrice'  => $oldPrice,
-                'pickup'    => $available && $product->isPickupAvailable() && !$product->isDeliveryAvailable(),
-            ];
+        $responseItem = [
+            'available' => $available,
+            'byRequest' => $isByRequest,
+            'price'     => $price,
+            'oldPrice'  => $oldPrice,
+            'pickup'    => $pickupOnly,
+        ];
 
-            return $responseItem;
-        };
-
-        try {
-            $result = (new BitrixCache())
-                ->withId(__METHOD__ . '_' . $product->getId() . '_' . $offer->getId() . '_' . $location)
-                ->withTag('iblock:item:' . $product->getId())
-                ->withTag('iblock:item:' . $offer->getId())
-                ->withTag('catalog:offer:' . $offer->getId())
-                ->withTime(24 * 60 * 60)//кешируем на сутки
-                ->resultOf($getResult);
-        } catch (\Exception $e) {
-            $this->log()->error(
-                sprintf('Failed to get product info: %s: %s', \get_class($e), $e->getMessage()),
-                [
-                    'offer'    => $offer->getId(),
-                    'product'  => $product->getId(),
-                    'location' => $location,
-                ]
-            );
-        }
-
-        return $result;
+        return $responseItem;
     }
 }

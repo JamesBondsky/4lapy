@@ -965,7 +965,7 @@ class LocationService
             $result = new Address();
             $city = $dadataLocation->getCity() ?: $dadataLocation->getSettlementWithType();
             $result->setLocation($locationCode)
-                ->setRegion($dadataLocation->getRegionWithType())
+                ->setRegion($locationCode === static::LOCATION_CODE_MOSCOW ? '' : $dadataLocation->getRegionWithType())
                 ->setArea($dadataLocation->getAreaWithType())
                 ->setCity($city ?: $dadataLocation->getRegion())
                 ->setValid($this->daDataService->isValidAddress($dadataLocation))

@@ -298,7 +298,12 @@ class BasketService implements LoggerAwareInterface
 
         $basket = $basket ?? $this->getBasket();
         if (null === $order = $basket->getOrder()) {
-            $order = Order::create(SITE_ID);
+            $userId = null;
+            try {
+                $userId = $this->currentUserProvider->getCurrentUserId();
+            } catch (NotAuthorizedException $e) {
+            }
+            $order = Order::create(SITE_ID, $userId);
             $order->setBasket($basket);
         }
 
@@ -459,7 +464,12 @@ class BasketService implements LoggerAwareInterface
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         $order = $order instanceof Order ? $order : $this->getBasket()->getOrder();
         if (null === $order) {
-            $order = Order::create(SITE_ID);
+            $userId = null;
+            try {
+                $userId = $this->currentUserProvider->getCurrentUserId();
+            } catch (NotAuthorizedException $e) {
+            }
+            $order = Order::create(SITE_ID, $userId);
             $order->setBasket($this->getBasket());
         }
 
@@ -507,7 +517,12 @@ class BasketService implements LoggerAwareInterface
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         $order = $order instanceof Order ? $order : $this->getBasket()->getOrder();
         if (null === $order) {
-            $order = Order::create(SITE_ID);
+            $userId = null;
+            try {
+                $userId = $this->currentUserProvider->getCurrentUserId();
+            } catch (NotAuthorizedException $e) {
+            }
+            $order = Order::create(SITE_ID, $userId);
             $order->setBasket($this->getBasket());
         }
 
@@ -736,7 +751,9 @@ class BasketService implements LoggerAwareInterface
                 $user = false;
             }
         } else {
-            $user = $this->currentUserProvider->getUserRepository()->findByFUser($basketItem->getFUserId());
+            $user = $this->currentUserProvider->getUserRepository()->findByFUser(
+                (int)$basketItem->getFUserId() ?: $this->currentUserProvider->getCurrentFUserId()
+            );
         }
 
         $resultQuantity = 0;
@@ -923,12 +940,12 @@ class BasketService implements LoggerAwareInterface
             }
         }
 
-        if (\strpos($xmlId, '#')) {
+        if (\strpos((string)$xmlId, '#')) {
             /** @noinspection ShortListSyntaxCanBeUsedInspection */
             list(, $xmlId) = \explode('#', $xmlId);
         }
 
-        return $xmlId;
+        return (string)$xmlId;
     }
 
     /**

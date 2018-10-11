@@ -28,7 +28,8 @@ foreach ($arResult['ITEMS'] as &$item) {
     $item['PRINT_PICTURE'] = $mImgField && is_array($mImgField) ? $mImgField : [];
     if ($mImgField && !empty($arParams['RESIZE_WIDTH']) && !empty($arParams['RESIZE_HEIGHT'])) {
         try {
-            $bCrop = isset($arParams['RESIZE_TYPE']) && $arParams['RESIZE_TYPE'] === 'BX_RESIZE_IMAGE_EXACT';
+            //$bCrop = isset($arParams['RESIZE_TYPE']) && $arParams['RESIZE_TYPE'] === 'BX_RESIZE_IMAGE_EXACT';
+            $bCrop = false;
             if ($bCrop) {
                 if (is_array($mImgField)) {
                     $obImg = new CropImageDecorator($mImgField);

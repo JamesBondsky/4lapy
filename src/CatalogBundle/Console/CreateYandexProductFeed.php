@@ -12,7 +12,6 @@ use FourPaws\CatalogBundle\Exception\ArgumentException;
 use FourPaws\CatalogBundle\Service\YandexFeedService;
 use FourPaws\CatalogBundle\Translate\BitrixExportConfigTranslator;
 use FourPaws\External\Exception\YandexMarketApiException;
-use FourPaws\External\YandexMarketService;
 use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 use Symfony\Component\Console\Command\Command;
@@ -36,8 +35,6 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
     use LazyLoggerAwareTrait;
 
     public const ARG_PROFILE_ID          = 'id';
-    public const OPT_FEED_TYPE           = 'type';
-    public const FEED_TYPE_YANDEX_MARKET = 'yandex-market';
     public const OPT_FEED_STEP           = 'step';
     /**
      * @var YandexFeedService
@@ -47,26 +44,19 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
      * @var BitrixExportConfigTranslator
      */
     private $translator;
-    /**
-     * @var YandexMarketService
-     */
-    private $yandexMarketService;
 
     /**
      * CreateProductFeed constructor.
      *
-     *
      * @param YandexFeedService            $feedService
      * @param BitrixExportConfigTranslator $translator
-     * @param YandexMarketService          $yandexMarketService
      *
      * @throws LogicException
      */
-    public function __construct(YandexFeedService $feedService, BitrixExportConfigTranslator $translator, YandexMarketService $yandexMarketService)
+    public function __construct(YandexFeedService $feedService, BitrixExportConfigTranslator $translator)
     {
         $this->feedService = $feedService;
         $this->translator = $translator;
-        $this->yandexMarketService = $yandexMarketService;
 
         parent::__construct();
     }
@@ -78,13 +68,8 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
     {
         $this
             ->setName('bitrix:feed:create:yandex')
-            ->setDescription('Run bitrix export task')
+            ->setDescription('Run bitrix export task - yandex feed')
             ->addArgument(static::ARG_PROFILE_ID, InputArgument::REQUIRED, 'Bitrix feed id')
-            ->addOption(
-                static::OPT_FEED_TYPE,
-                't',
-                InputOption::VALUE_REQUIRED,
-                'type of feed')
             ->addOption(
                 static::OPT_FEED_STEP,
                 's',
@@ -111,7 +96,6 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $id = $input->getArgument(static::ARG_PROFILE_ID);
-        $type = $input->getOption(static::OPT_FEED_TYPE);
         $step = $input->getOption(static::OPT_FEED_STEP);
 
         if (!$id) {
@@ -122,46 +106,22 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
 
         try {
             if ($this->feedService->process($configuration, $step)) {
-                $this->log()
-                    ->info('Step cleared');
+                $this->log()->info('Step cleared');
 
                 return FeedFactory::EXIT_CODE_CONTINUE;
             }
         } catch (\Throwable $e) {
-            $this->log()
-                ->error(
-                    \sprintf(
-                        'Export error: code %s, message %s in %s:%d',
-                        $e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine()
-                    )
-                );
+            $this->log()->error(
+                \sprintf(
+                    'Export error: code %s, message %s in %s:%d',
+                    $e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine()
+                )
+            );
         }
 
-        $this->log()
-            ->info('Feed was create');
-        $this->runAfterExport($type);
+        $this->log()->info('Feed was create');
 
         return FeedFactory::EXIT_CODE_END;
-    }
-
-    /**
-     * @todo move to service
-     *
-     * @param string $type
-     *
-     * @throws YandexMarketApiException
-     */
-    protected function runAfterExport(string $type)
-    {
-        switch ($type) {
-            case static::FEED_TYPE_YANDEX_MARKET:
-                /**
-                 * @todo return the definition
-                 *
-                 * $this->yandexMarketService->deleteAllPrices();
-                 */
-                break;
-        }
     }
 }
 

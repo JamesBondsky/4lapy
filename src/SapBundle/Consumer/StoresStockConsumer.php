@@ -458,7 +458,10 @@ class StoresStockConsumer implements ConsumerInterface, LoggerAwareInterface
                     }
                 } else {
                     // Обновление существующей записи
-                    $actionResult = StoreProductTable::update($item['ID'], ['AMOUNT' => $stockValue]);
+                    $actionResult = StoreProductTable::update($item['ID'], [
+                        'AMOUNT' => $stockValue,
+                        'PRODUCT_ID' => $item['PRODUCT_ID'] // передаем productId в event
+                    ]);
                     if ($getExtResult) {
                         $tmpResult = new Result();
                         if (!$actionResult->isSuccess()) {

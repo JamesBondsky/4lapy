@@ -21,7 +21,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  */
 
 use FourPaws\Decorators\SvgDecorator;
-use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\Helpers\WordHelper;
 
 if (empty($arResult)) {
@@ -46,10 +45,13 @@ if (empty($arResult)) {
         </span>
     </a>
     <div class="b-popover b-popover--blue-arrow js-popover">
-        <p class="b-popover__text">Доставка от <?= WordHelper::numberFormat($arResult['DELIVERY']['PRICE'], 0) ?> ₽</p>
         <?php if ($arResult['DELIVERY']['FREE_FROM']) { ?>
-            <p class="b-popover__text b-popover__text--last">Бесплатно при заказе
+            <p class="b-popover__text">Бесплатно при заказе
                 от <?= WordHelper::numberFormat($arResult['DELIVERY']['FREE_FROM'], 0) ?> ₽</p>
         <?php } ?>
+        <p class="b-popover__text<?php if ($arResult['DELIVERY']['FREE_FROM']) { ?> b-popover__text--last<?php } ?>">
+            <?= $arResult['DELIVERY']['FREE_FROM'] ? 'Или доставка' : 'Доставка'?>
+            от <?= WordHelper::numberFormat($arResult['DELIVERY']['PRICE'], 0) ?> ₽
+        </p>
     </div>
 </div>

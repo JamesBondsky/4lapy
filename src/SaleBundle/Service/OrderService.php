@@ -297,7 +297,7 @@ class OrderService implements LoggerAwareInterface
         ?Basket $basket = null,
         ?CalculationResultInterface $selectedDelivery = null
     ): Order {
-        $order = Order::create(SITE_ID);
+        $order = Order::create(SITE_ID, $storage->getUserId() ?: null);
 
         $checkAvailability = false;
         if (null === $basket) {
@@ -1183,8 +1183,9 @@ class OrderService implements LoggerAwareInterface
             }
             $this->resetBasket($toDelete);
         } else {
-            $order = $this->initOrder($storage);
-            $this->saveOrder($order, $storage);
+            $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
+            $order = $this->initOrder($storage, null, $selectedDelivery);
+            $this->saveOrder($order, $storage, $selectedDelivery);
         }
 
         $this->orderStorageService->clearStorage($storage);
@@ -1773,5 +1774,10 @@ class OrderService implements LoggerAwareInterface
             );
         }
         $basket->save();
+    }
+
+    public function getOrderFeedbackLink(Order $order): string
+    {
+        return sprintf('/sale/order/interview/%d/?HASH=%s', $order->getId(), $order->getHash());
     }
 }

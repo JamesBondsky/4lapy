@@ -506,6 +506,12 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     protected $PROPERTY_PRODUCED_BY_HOLDER = false;
 
     /**
+     * @var string
+     * @Type("string")
+     */
+    protected $PROPERTY_GOOGLE_CATEGORY= false;
+
+    /**
      * @var array
      * @Type("array")
      * @Groups({"elastic"})
@@ -1750,8 +1756,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     /**
      * Возвращает id группы товаров.
      *
-     * \remark Скорее всего, ненужное на текущем сайте свойство товара.
-     *
      * @return string
      */
     public function getGroupId(): string
@@ -1762,13 +1766,33 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     /**
      * Возвращает название группы товаров.
      *
-     * \remark Скорее всего, ненужное на текущем сайте свойство товара.
-     *
      * @return string
      */
     public function getGroupName(): string
     {
         return $this->PROPERTY_GROUP_NAME;
+    }
+
+    /**
+     * Возвращает id группы товаров.
+     *
+     * @return string
+     */
+    public function getGoogleCategory(): string
+    {
+        return $this->PROPERTY_GOOGLE_CATEGORY;
+    }
+
+    /**
+     * @param string $googleCategory
+     *
+     * @return Product
+     */
+    public function withGoogleCategory(string $googleCategory): self
+    {
+        $this->PROPERTY_GOOGLE_CATEGORY = $googleCategory;
+
+        return $this;
     }
 
     /**

@@ -474,7 +474,7 @@ class OrderStorageService
         if (null === $this->deliveries || $reload) {
             $basket = $this->basketService->getBasket();
             if (null === $basket->getOrder()) {
-                $order = Order::create(SITE_ID);
+                $order = Order::create(SITE_ID, $storage->getUserId() ?: null);
                 $order->setBasket($basket);
             }
 
@@ -568,14 +568,11 @@ class OrderStorageService
         $result = null;
         if ($storage->getDeliveryPlaceCode()) {
             try {
-                /* @todo сделать так, чтобы при смене зоны доставки с той, где самовывоз DPD
-                 *       на ту, где самовывоз из магазина, не писалась в лог ошибка "Склад не найден"
-                 */
                 if ($this->deliveryService->isDpdPickup($delivery)) {
                     $stores = $this->deliveryService->getDpdTerminalsByLocation($storage->getCityCode());
                     $selectedStore = $this->deliveryService->getDpdTerminalByCode($storage->getDeliveryPlaceCode());
                 } else {
-                    $stores = $this->storeService->getStoresByLocation($storage->getCityCode())->getStores();
+                    $stores = $this->storeService->getShopsByLocation($storage->getCityCode());
                     $selectedStore = $this->storeService->getStoreByXmlId($storage->getDeliveryPlaceCode());
                 }
 

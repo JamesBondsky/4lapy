@@ -173,7 +173,12 @@ class FourPawsFastOrderComponent extends CBitrixComponent
                 $this->offerCollection = $this->basketService->getOfferCollection(true);
                 // привязывать к заказу нужно для расчета скидок
                 if (null === $order = $basket->getOrder()) {
-                    $order = Order::create(SITE_ID);
+                    $userId = null;
+                    try {
+                        $userId = $this->currentUserProvider->getCurrentUserId();
+                    } catch (NotAuthorizedException $e) {
+                    }
+                    $order = Order::create(SITE_ID, $userId);
                     $order->setBasket($basket);
                 }
                 $this->arResult['BASKET'] = $basket;

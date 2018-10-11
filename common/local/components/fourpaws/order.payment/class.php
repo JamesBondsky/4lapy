@@ -136,9 +136,9 @@ class FourPawsOrderPaymentComponent extends FourPawsComponent
 
             if ($service) {
                 $context = BitrixApp::getInstance()->getContext();
-
                 $isOk = false;
                 try {
+                    $_SESSION['ORDER_PAYMENT_URL'] = $this->getPaymentUrl();
                     $result = $service->initiatePay(
                         $paymentItem,
                         $context->getRequest()
@@ -151,11 +151,13 @@ class FourPawsOrderPaymentComponent extends FourPawsComponent
                     }
                     $isOk = true;
                 } /** @noinspection PhpRedundantCatchClauseInspection */ catch (PaymentException $e) {
+                    unset($_SESSION['ORDER_PAYMENT_URL']);
                     $this->log()->notice(sprintf('payment initiate error: %s', $e->getMessage()), [
                         'order' => $order->getId(),
                         'code' => $e->getCode()
                     ]);
                 } catch (\Exception $e) {
+                    unset($_SESSION['ORDER_PAYMENT_URL']);
                     $this->log()->error(sprintf('payment error: %s: %s', \get_class($e) , $e->getMessage()), [
                         'order' => $order->getId(),
                         'code' => $e->getCode()
