@@ -222,7 +222,7 @@ class FourPawsFrontOfficeCustomerRegistrationComponent extends CustomerRegistrat
         if ($isRequired && $value === '') {
             $this->setFieldError($fieldName, 'Значение не задано', 'empty');
         } elseif ($value !== '') {
-            if ($value !== static::EXTERNAL_GENDER_CODE_M && $value !== static::EXTERNAL_GENDER_CODE_F) {
+            if ($value !== trim(static::EXTERNAL_GENDER_CODE_M) && $value !== trim(static::EXTERNAL_GENDER_CODE_F)) {
                 $this->setFieldError($fieldName, 'Значение задано некорректно', 'not_valid');
             }
         }
