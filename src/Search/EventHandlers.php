@@ -63,7 +63,7 @@ class EventHandlers extends BaseServiceHandler
         } */
 
         foreach (['StoreProductOnUpdate', 'StoreProductOnAdd'] as $eventType) {
-            static::initHandler($eventType, [self::class, 'updateOfferInElasticOnStocksChange'], $module);
+//            static::initHandler($eventType, [self::class, 'updateOfferInElasticOnStocksChange'], $module);
         }
     }
 

@@ -596,10 +596,7 @@ class PaymentService implements LoggerAwareInterface
             return $total + $item->getTotal();
         }, 0);
 
-        $innerPayment = $order->getPaymentCollection()->getInnerPayment();
-        if ($innerPayment &&
-            $innerPayment->isPaid()
-        ) {
+        if ($innerPayment = $order->getPaymentCollection()->getInnerPayment()) {
             $correction = 0;
             $bonusSum = $innerPayment->getSum() * 100;
             $diff = $total - $bonusSum;

@@ -226,13 +226,6 @@ class FastOrderController extends Controller
 
         $name = $request->get('name', '');
 
-        $currentStore = null;
-        $stores = $this->storeService->getStoresByCurrentLocation();
-        if (!$stores->isEmpty()) {
-            /** @var Store $currentStore */
-            $currentStore = $stores->first();
-        }
-
         $selectedCity = $this->citySelectProvider->getSelectedCity();
         $orderStorage
             ->setSplit(false)
@@ -253,7 +246,6 @@ class FastOrderController extends Controller
                                          ->setCacheTtl(360000)
                                          ->exec()
                                          ->fetch()['ID'])
-            ->setDeliveryPlaceCode($currentStore->getCode())
             ->setCity($selectedCity['NAME'])
             ->setCityCode($selectedCity['CODE']);
 
