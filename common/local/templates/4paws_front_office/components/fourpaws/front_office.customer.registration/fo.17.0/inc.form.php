@@ -235,16 +235,19 @@ $showAuthButton = false;
                             $errMess = $error->getMessage();
                             break;
                         case 'empty':
-                        case 'not_valid':
                             $errMess = 'Укажите пол';
+                            break;
+                        case 'not_valid':
+                            $errMess = 'Значение задано некорректно';
                             break;
                         default:
                             $errMess = '[' . $error->getCode() . '] ' . $error->getMessage();
                             break;
                     }
                 }
-                $male = $component::EXTERNAL_GENDER_CODE_M;
-                $female = $component::EXTERNAL_GENDER_CODE_F;
+                $value = trim($value);
+                $male = trim($component::EXTERNAL_GENDER_CODE_M);
+                $female = trim($component::EXTERNAL_GENDER_CODE_F);
                 ?>
                 <div class="form-page__field-wrap">
                     <label for="<?= $fieldId ?>" class="form-page__label">
@@ -344,7 +347,7 @@ $showAuthButton = false;
                 </div><?php
 
                 // сообщаем компоненту, что пользователя можно регистрировать в случае успешных проверок
-                ?><input type="hidden" name="doCustomerRegistration" value="Y"><?
+                ?><input type="hidden" name="doCustomerRegistration" value="Y"><?php
             }
 
             // вывод ошибок регистрации карты

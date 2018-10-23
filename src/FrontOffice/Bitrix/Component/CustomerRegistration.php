@@ -6,7 +6,6 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\FrontOffice\Traits\ManzanaIntegrationServiceTrait;
-use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\UserBundle\Entity\User;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializationContext;
@@ -17,22 +16,22 @@ abstract class CustomerRegistration extends SubmitForm
 {
     use ManzanaIntegrationServiceTrait;
 
-    const EXTERNAL_GENDER_CODE_M = 1;
-    const EXTERNAL_GENDER_CODE_F = 2;
-    const BITRIX_GENDER_CODE_M = 'M';
-    const BITRIX_GENDER_CODE_F = 'F';
+    public const EXTERNAL_GENDER_CODE_M = 1;
+    public const EXTERNAL_GENDER_CODE_F = 2;
+    public const BITRIX_GENDER_CODE_M = 'M';
+    public const BITRIX_GENDER_CODE_F = 'F';
 
     /**
      * @param string $externalGenderCode
      * @return string
      */
-    public function getBitrixGenderByExternalGender(string $externalGenderCode)
+    public function getBitrixGenderByExternalGender(string $externalGenderCode): string
     {
         $result = '';
-        $externalGenderCode = (int)$externalGenderCode;
-        if ($externalGenderCode === static::EXTERNAL_GENDER_CODE_M) {
+        $externalGenderCodeInt = (int)$externalGenderCode;
+        if ($externalGenderCodeInt === static::EXTERNAL_GENDER_CODE_M) {
             $result = static::BITRIX_GENDER_CODE_M;
-        } elseif ($externalGenderCode === static::EXTERNAL_GENDER_CODE_F) {
+        } elseif ($externalGenderCodeInt === static::EXTERNAL_GENDER_CODE_F) {
             $result = static::BITRIX_GENDER_CODE_F;
         }
 
