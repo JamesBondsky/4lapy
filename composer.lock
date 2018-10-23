@@ -1,17 +1,17 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e52abdee2e613af7fcc972a200d43601",
+    "content-hash": "d567d52ec7ade4d006125665790598c1",
     "packages": [
         {
             "name": "adv/bitrix-tools",
             "version": "v1.0.20",
             "source": {
                 "type": "git",
-                "url": "ssh://git@bitbucket.adv.ru:7999/adv/bitrix-tools.git",
+                "url": "git@bitbucket.org:articul/bitrix-tools.git",
                 "reference": "cece1e35b56e1bd3a70c850291fd32e81ff3d6de"
             },
             "require": {
@@ -52,7 +52,7 @@
             "version": "v1.0.5",
             "source": {
                 "type": "git",
-                "url": "ssh://git@scm.adv.ru:7999/adv/yandex-market-api.git",
+                "url": "git@bitbucket.org:articul/yandex-market-api.git",
                 "reference": "3b6247501e1f3e52dcf575a53946147a17110a1f"
             },
             "require": {
@@ -2992,17 +2992,6 @@
         {
             "name": "roave/security-advisories",
             "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/Roave/SecurityAdvisories.git",
-                "reference": "c83f6aa0ed08f680c012656d411d1b7c94003012"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/Roave/SecurityAdvisories/zipball/c83f6aa0ed08f680c012656d411d1b7c94003012",
-                "reference": "c83f6aa0ed08f680c012656d411d1b7c94003012",
-                "shasum": ""
-            },
             "conflict": {
                 "3f/pygmentize": "<1.2",
                 "adodb/adodb-php": "<5.20.6",

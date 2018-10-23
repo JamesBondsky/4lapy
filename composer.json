@@ -129,11 +129,11 @@
   "repositories": [
     {
       "type": "vcs",
-      "url": "ssh://git@bitbucket.adv.ru:7999/adv/bitrix-tools.git"
+      "url": "git@bitbucket.org:articul/bitrix-tools.git"
     },
     {
       "type": "vcs",
-      "url": "ssh://git@scm.adv.ru:7999/adv/yandex-market-api.git"
+      "url": "git@bitbucket.org:articul/yandex-market-api.git"
     }
   ],
   "scripts": {
