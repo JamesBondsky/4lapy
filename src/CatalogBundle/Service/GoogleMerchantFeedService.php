@@ -373,7 +373,7 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
         $currentImage = (new FullHrefDecorator($offer->getImages()
                                                      ->first()
                                                      ->getSrc()))->setHost($host)->__toString();
-        $detailPath = (new FullHrefDecorator($offer->getDetailPageUrl()))->setHost($host)->__toString();
+        $detailPath = (new FullHrefDecorator($this->getLink($offer)))->setHost($host)->__toString();
 
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         /** @noinspection PassingByReferenceCorrectnessInspection */
@@ -397,22 +397,32 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
         if ($offer->getOldPrice() !== $offer->getPrice()) {
             $item->setPrice(
                 \sprintf(
-                    '%d RUR',
+                    '%d RUB',
                     $offer->getCatalogOldPrice()
                 ))
                  ->setSalePrice(\sprintf(
-                     '%d RUR',
+                     '%d RUB',
                      $offer->getCatalogPrice()
                  ));
         } else {
             $item->setPrice(
                 \sprintf(
-                    '%d RUR',
+                    '%d RUB',
                     $offer->getCatalogPrice()
                 ));
         }
 
         $collection->add($item);
+    }
+
+
+    /**
+     * @param Offer $offer
+     * @return string
+     */
+    private function getLink(Offer $offer)
+    {
+        return $offer->getDetailPageUrl() . '&utm_source=rt-merchants&utm_campaign=main&utm_medium=cpc&utm_term=' . $offer->getXmlId();
     }
 
     /**
