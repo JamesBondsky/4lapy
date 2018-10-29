@@ -154,6 +154,8 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
  */
 $APPLICATION->ShowViewContent('header_dropdown_menu'); ?>
 <div class="b-page-wrapper <?= $template->getWrapperClass() ?> js-this-scroll">
+    <?php require_once __DIR__ . '/blocks/header/social_bar.php' ?>
+
     <?php if ($template->hasMainWrapper()) { ?>
     <main class="b-wrapper<?= $template->getIndexMainClass() ?>" role="main">
         <?php if ($template->hasHeaderPublicationListContainer()) { ?>

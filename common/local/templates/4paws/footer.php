@@ -107,9 +107,6 @@ if ($template->hasMainWrapper()) {
                 <div class="b-footer__column">
                     <?php require_once __DIR__ . '/blocks/footer/copyright.php' ?>
                 </div>
-                <div class="b-footer__column b-footer__column--small">
-                    <?php require_once __DIR__ . '/blocks/footer/creator.php' ?>
-                </div>
             </div>
         </div>
     </div>
