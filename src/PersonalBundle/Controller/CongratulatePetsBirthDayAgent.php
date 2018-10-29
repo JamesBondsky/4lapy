@@ -43,7 +43,6 @@
             }
             catch (\Exception $exception)
             {
-                dump($exception);
                 $instance = static::getInstance();
                 $instance->log()->critical(
                     sprintf(
