@@ -161,6 +161,7 @@ class BonusService
                     $cardBonus->setCardId($card->cardId);
                     $cardBonus->setCardNumber($card->cardNumber);
                     $cardBonus->setSum((float)$card->sum);
+                    $cardBonus->setSumDiscounted((float)$card->sumDiscounted);
                     $cardBonus->setDebit((float)$card->debit);
                     $cardBonus->setCredit((float)$card->credit);
                     $cardBonus->setActiveBalance((float)$card->activeBalance);
@@ -179,6 +180,7 @@ class BonusService
                             $cardBonus->setCardId($card->cardId);
                             $cardBonus->setCardNumber($card->cardNumber);
                             $cardBonus->setSum((float)$card->sum);
+                            $cardBonus->setSumDiscounted((float)$card->sumDiscounted);
                             $cardBonus->setDebit((float)$card->debit);
                             $cardBonus->setCredit((float)$card->credit);
                             $cardBonus->setActiveBalance((float)$card->activeBalance);
@@ -198,6 +200,7 @@ class BonusService
                 $bonus->setCredit((float)$contact->plCredit);
                 $bonus->setDebit((float)$contact->plDebet);
                 $bonus->setSum((float)$contact->plSumm);
+                $bonus->setSumDiscounted((float)$contact->plSummDiscounted);
                 $bonus->setDiscount((float)$contact->plDiscount);
 
                 $bonus->setCard($cardBonus);
