@@ -42,7 +42,7 @@ class PriceFilter extends RangeFilterBase
     /**
      * @inheritdoc
      */
-    public function collapse(string $aggName, array $aggResult)
+    public function collapse(string $aggName, array $aggResult): void
     {
         foreach ([$this->getMinFilterCode(), $this->getMaxFilterCode()] as $subAggName) {
             if (
