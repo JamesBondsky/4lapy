@@ -17,8 +17,10 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
 <html lang="ru">
 <head>
     <? /** onesignal.com manifest.json, must appear before any other link <link rel="manifest" ...> */?>
-    <? if (getenv('ONESIGNAL_API_KEY')) {?>
-        <link rel="manifest" href="/manifest.json">
+    <? if ($USER->IsAdmin()) { /** [todo] remove after production tests */?>
+        <? if (getenv('ONESIGNAL_API_KEY')) {?>
+            <link rel="manifest" href="/manifest.json">
+        <?}?>
     <?}?>
 
     <base href="<?= PawsApplication::getInstance()
@@ -47,19 +49,21 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
     $asset->addJs('https://www.google.com/recaptcha/api.js?hl=ru');
 
     /** onesignal.com */
-    if (getenv('ONESIGNAL_API_KEY')) {
-        $asset->addString('<script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>');
-        $asset->addString('
-            <script>
-              var OneSignal = window.OneSignal || [];
-              OneSignal.push(function() {
-                OneSignal.init({
-                  appId: \''.getenv('ONESIGNAL_API_KEY').'\',
-                  autoRegister: true
-                });
-              });
-            </script>
-        ');
+    if ($USER->IsAdmin()) { /** [todo] remove after production tests */
+        if (getenv('ONESIGNAL_API_KEY')) {
+            $asset->addString('<script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>');
+            $asset->addString('
+                <script>
+                  var OneSignal = window.OneSignal || [];
+                  OneSignal.push(function() {
+                    OneSignal.init({
+                      appId: \''.getenv('ONESIGNAL_API_KEY').'\',
+                      autoRegister: true
+                    });
+                  });
+                </script>
+            ');
+        }
     }
 
     ?>
