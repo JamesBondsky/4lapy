@@ -247,7 +247,7 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
     /**
      * @inheritdoc
      */
-    public function collapse(string $aggName, array $aggResult)
+    public function collapse(string $aggName, array $aggResult): void
     {
         if (!array_key_exists('value', $aggResult)) {
             throw new InvalidArgumentException(
