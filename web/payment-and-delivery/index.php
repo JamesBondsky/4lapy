@@ -1,6 +1,9 @@
 <?php
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/header.php");
-$APPLICATION->SetTitle("Доставка и оплата");
+$APPLICATION->SetPageProperty('title', 'Доставка товаров для животных из зоомагазина Четыре Лапы – подробные условия доставки и оплаты зоотоваров в Вашем регионе');
+$APPLICATION->SetPageProperty('description', '');
+$APPLICATION->SetPageProperty('keywords', '');
+$APPLICATION->SetTitle("Доставка товаров для животных из зоомагазина Четыре Лапы – подробные условия доставки и оплаты зоотоваров в Вашем регионе");
 ?>
 <div class="b-container b-container--delivery">
     <div class="b_delivery">
