@@ -17,6 +17,11 @@ class HitMetaInfo
     private $matchedQueries = [];
 
     /**
+     * @var array
+     */
+    private $highlight = [];
+
+    /**
      * @param Result $result
      *
      * @return HitMetaInfo
@@ -28,6 +33,9 @@ class HitMetaInfo
         $hit = $result->getHit();
         if (isset($hit['matched_queries']) && \is_array($hit['matched_queries'])) {
             $self->withMatchedQueries($hit['matched_queries']);
+        }
+        if(isset($hit['highlight'])) {
+            $self->withHighlight($hit['highlight']);
         }
 
         $score = $result->getScore();
@@ -77,4 +85,21 @@ class HitMetaInfo
 
         return $this;
     }
+
+    /**
+     * @param array $highlight
+     */
+    public function withHighlight(array $highlight)
+    {
+        $this->highlight = $highlight;
+    }
+
+    /**
+     * @return array
+     */
+    public function getHighlight(): array
+    {
+        return $this->highlight;
+    }
+
 }
