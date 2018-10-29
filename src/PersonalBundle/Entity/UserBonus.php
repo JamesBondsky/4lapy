@@ -51,6 +51,13 @@ class UserBonus
      * @var float
      */
     private $sum = 0;
+
+    /**
+     * сумма покупок со учетом скидок
+     *
+     * @var float
+     */
+    private $sumDiscounted = 0;
     
     /**
      * скидка по карте - не верная - из манзаны
@@ -266,7 +273,7 @@ class UserBonus
         $sumToNext    = 0;
         $realDiscount = $this->getRealDiscount();
         if ($realDiscount > 0) {
-            $sum           = $this->getSum();
+            $sum           = $this->getSumDiscounted();
             $finalSum      = $this->getEndSum();
             if ($sum < $finalSum) {
                 $reverse          = array_reverse(static::$discountTable, true);
@@ -326,7 +333,7 @@ class UserBonus
     public function getGeneratedRealDiscount() : int
     {
         $discount = 0;
-        $sum      = $this->getSum();
+        $sum      = $this->getSumDiscounted();
         if ($sum > 0) {
             $reverse = array_reverse(static::$discountTable, true);
             foreach ($reverse as $discountPercent => $minSum) {
@@ -362,7 +369,25 @@ class UserBonus
         $this->sum = $sum;
         return $this;
     }
-    
+
+    /**
+     * @return float
+     */
+    public function getSumDiscounted() : float
+    {
+        return $this->sumDiscounted;
+    }
+
+    /**
+     * @param float $sumDiscounted
+     * @return $this
+     */
+    public function setSumDiscounted($sumDiscounted): self
+    {
+        $this->sumDiscounted = $sumDiscounted;
+        return $this;
+    }
+
     /**
      * @return float
      */
@@ -391,7 +416,7 @@ class UserBonus
      */
     public function getGeneratedNextDiscount() : float
     {
-        $sum = $this->getSum();
+        $sum = $this->getSumDiscounted();
         
         $discountTable = static::$discountTable;
         end($discountTable);
@@ -443,7 +468,7 @@ class UserBonus
                     /** формула
                      * прогресс = активные интервалы * процент одного интервала + ((((сумма покупок - сумма нижней границы) / (сумма верхней границы - сумма нижней границы))*100)* процент одного интервала / 100)*/
                     $progress = floor(
-                        $activeIntervals * $percentOneInterval + ((($this->getSum() - $minPrice) / ($nextPrice - $minPrice) * 100) * $percentOneInterval / 100)
+                        $activeIntervals * $percentOneInterval + ((($this->getSumDiscounted() - $minPrice) / ($nextPrice - $minPrice) * 100) * $percentOneInterval / 100)
                     );
                 } else {
                     $progress = 100;
