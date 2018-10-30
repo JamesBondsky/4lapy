@@ -49,6 +49,13 @@ class CardBonus
      * @var float
      */
     private $sum = 0;
+
+    /**
+     * Сумма покупок с учетом скидок
+     *
+     * @var float
+     */
+    private $sumDiscounted = 0;
     
     /**
      *Потраченные бонусы
@@ -243,7 +250,7 @@ class CardBonus
         $sumToNext    = 0;
         $realDiscount = $this->getRealDiscount();
         if ($realDiscount > 0) {
-            $sum           = $this->getSum();
+            $sum           = $this->getSumDiscounted();
             $discountTable = UserBonus::$discountTable;
             $finalSum      = end($discountTable);
             if ($sum < $finalSum) {
@@ -290,7 +297,7 @@ class CardBonus
     public function getGeneratedRealDiscount() : float
     {
         $discount = 0;
-        $sum      = $this->getSum();
+        $sum      = $this->getSumDiscounted();
         if ($sum > 0) {
             $reverse = array_reverse(UserBonus::$discountTable, true);
             foreach ($reverse as $discountPercent => $minSum) {
@@ -319,7 +326,25 @@ class CardBonus
     {
         $this->sum = $sum;
     }
-    
+
+    /**
+     * @return float
+     */
+    public function getSumDiscounted(): float
+    {
+        return $this->sumDiscounted;
+    }
+
+    /**
+     * @param float $sumDiscounted
+     * @return $this
+     */
+    public function setSumDiscounted(float $sumDiscounted)
+    {
+        $this->sumDiscounted = $sumDiscounted;
+        return $this;
+    }
+
     /**
      * @return bool
      */

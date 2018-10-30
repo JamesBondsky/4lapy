@@ -22,13 +22,17 @@ use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Exception\ExpertsenderBasketEmptyException;
 use FourPaws\External\Exception\ExpertsenderEmptyEmailException;
+use FourPaws\External\Exception\ExpertsenderNotAllowedException;
 use FourPaws\External\Exception\ExpertSenderOfferNotFoundException;
 use FourPaws\External\Exception\ExpertsenderServiceApiException;
 use FourPaws\External\Exception\ExpertsenderServiceBlackListException;
 use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\ExpertSender\Dto\ForgotBasket;
+use FourPaws\External\ExpertSender\Dto\PetBirthDay;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
+use FourPaws\PersonalBundle\Entity\Pet;
+use FourPaws\PersonalBundle\Models\PetCongratulationsNotify;
 use FourPaws\SaleBundle\Dto\Fiscalization\Item;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -101,6 +105,13 @@ class ExpertsenderService implements LoggerAwareInterface
     public const COMPLETE_ORDER_LIST_ID = 7778;
     public const FORGOT_PASSWORD_LIST_ID = 7779;
     public const CHANGE_PASSWORD_LIST_ID = 7780;
+
+    /**
+     * BirthDay mail ids
+     */
+    public const CATS_BIRTH_DAY = 8420;
+    public const DOGS_BIRTH_DAY = 8421;
+    public const OTHER_BIRTH_DAY = 8422;
 
     public const BLACK_LIST_ERROR_CODE = 400;
     public const BLACK_LIST_ERROR_MESSAGE = 'Subscriber is blacklisted.';
@@ -1015,6 +1026,57 @@ class ExpertsenderService implements LoggerAwareInterface
         return $transactionId;
     }
 
+    /**
+     * @param PetCongratulationsNotify $pet
+     * @return int
+     * @throws ExpertSenderException
+     * @throws ExpertsenderEmptyEmailException
+     * @throws ExpertsenderNotAllowedException
+     * @throws ExpertsenderServiceApiException
+     * @throws ExpertsenderServiceException
+     */
+    public function sendBirthDayCongratulationsEmail(PetCongratulationsNotify $pet)
+    {
+        $email = $pet->getOwnerEmail();
+        if (empty($email)) {
+            throw new ExpertsenderEmptyEmailException('order email is empty');
+        }
+
+        if($pet->isDog()) {
+            $transactionId = self::DOGS_BIRTH_DAY;
+        }
+        elseif($pet->isCat()) {
+            $transactionId = self::CATS_BIRTH_DAY;
+        }
+        else {
+            $transactionId = self::OTHER_BIRTH_DAY;
+        }
+
+        $snippets[] = new Snippet('user_name', htmlspecialcharsbx($pet->getOwnerName()));
+        $snippets[] = new Snippet('user_email', htmlspecialcharsbx($email));
+        $snippets[] = new Snippet('pet_name', htmlspecialcharsbx($pet->getPetName()));
+        $snippets[] = new Snippet('pet_id', htmlspecialcharsbx($pet->getPetId()));
+
+        $this->log()->info(
+            __FUNCTION__,
+            [
+                'email' => $email,
+                'transactionId' => $transactionId,
+                'petId' => $pet->getPetId(),
+                'snippets' => implode(
+                    '; ',
+                    array_map(
+                        function($snp) {
+                            return $snp instanceof Snippet ? $snp->getName().': '.$snp->getValue() : '-';
+                        },
+                        $snippets
+                    )
+                ),
+            ]
+        );
+        $this->sendSystemTransactional($transactionId, 'v.salshin@articul.ru', $snippets);
+        return $transactionId;
+    }
 
     /**
      * @param int    $transactionId

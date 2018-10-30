@@ -56,8 +56,8 @@ class CatalogCategoryRoot extends CatalogCategory
 
     public function setTitle()
     {
-        if ($this->arParams['SET_TITLE'] === 'Y') {
-            global $APPLICATION;
+        global $APPLICATION;
+        if ($this->arParams['SET_TITLE'] === 'Y' && $APPLICATION->GetCurPage() != '/catalog/') {
             /**
              * @var Category $catalog
              */

@@ -1,6 +1,10 @@
 <?php
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
-$APPLICATION->SetTitle('Магазины');
+
+$APPLICATION->SetPageProperty('title', 'Адреса магазинов Четыре Лапы в Вашем регионе');
+$APPLICATION->SetPageProperty('description', '');
+$APPLICATION->SetTitle("Адреса магазинов Четыре Лапы в Вашем регионе");
+
 ?>
 <?php $APPLICATION->IncludeComponent(
     'fourpaws:shop',

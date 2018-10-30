@@ -16,6 +16,13 @@ $template = MainTemplate::getInstance(Application::getInstance()
 $markup = PawsApplication::markup(); ?><!DOCTYPE html>
 <html lang="ru">
 <head>
+    <? /** onesignal.com manifest.json, must appear before any other link <link rel="manifest" ...> */?>
+    <? if ($USER->IsAdmin()) { /** [todo] remove after production tests */?>
+        <? if (getenv('ONESIGNAL_API_KEY')) {?>
+            <link rel="manifest" href="/manifest.json">
+        <?}?>
+    <?}?>
+
     <base href="<?= PawsApplication::getInstance()
         ->getSiteDomain() ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimal-ui, user-scalable=no">
@@ -39,7 +46,27 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
     $asset->addCss($markup->getCssFile());
     //$asset->addJs('https://api-maps.yandex.ru/2.1.68/?lang=ru_RU');
     $asset->addJs('/api-maps.yandex.ru.js');
-    $asset->addJs('https://www.google.com/recaptcha/api.js?hl=ru'); ?>
+    $asset->addJs('https://www.google.com/recaptcha/api.js?hl=ru');
+
+    /** onesignal.com */
+    if ($USER->IsAdmin()) { /** [todo] remove after production tests */
+        if (getenv('ONESIGNAL_API_KEY')) {
+            $asset->addString('<script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>');
+            $asset->addString('
+                <script>
+                  var OneSignal = window.OneSignal || [];
+                  OneSignal.push(function() {
+                    OneSignal.init({
+                      appId: \''.getenv('ONESIGNAL_API_KEY').'\',
+                      autoRegister: true
+                    });
+                  });
+                </script>
+            ');
+        }
+    }
+
+    ?>
 
     <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_header.php'; ?>
 </head>
@@ -155,6 +182,8 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
  */
 $APPLICATION->ShowViewContent('header_dropdown_menu'); ?>
 <div class="b-page-wrapper <?= $template->getWrapperClass() ?> js-this-scroll">
+    <?php require_once __DIR__ . '/blocks/header/social_bar.php' ?>
+
     <?php if ($template->hasMainWrapper()) { ?>
     <main class="b-wrapper<?= $template->getIndexMainClass() ?>" role="main">
         <?php if ($template->hasHeaderPublicationListContainer()) { ?>
