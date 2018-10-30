@@ -6,10 +6,11 @@ use FourPaws\Enum\IblockType;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
-$APPLICATION->SetPageProperty('title', 'Зоомагазин Четыре лапы – сеть магазинов зоотоваров');
-$APPLICATION->SetPageProperty('description', 'Самая крупная сеть магазинов зоотоваров Четыре Лапы: широкий ассортимент товаров, популярные бренды, качественная продукция и выгодные цены. Покупайте товары для домашних питомцев от известных производителей с доставкой.');
+$APPLICATION->SetPageProperty('title', 'Интернет-зоомагазин Четыре Лапы – продажа и доставка зоотоваров по Москве, Московской области и всей России');
+$APPLICATION->SetPageProperty('description', '');
+$APPLICATION->SetPageProperty('keywords', '');
 $APPLICATION->SetPageProperty('NOT_SHOW_NAV_CHAIN', 'Y');
-$APPLICATION->SetTitle('Главная страница');
+$APPLICATION->SetTitle('Интернет-зоомагазин Четыре Лапы – продажа и доставка зоотоваров по Москве, Московской области и всей России');
 
 $APPLICATION->IncludeComponent('bitrix:news.list',
     'index.slider',
