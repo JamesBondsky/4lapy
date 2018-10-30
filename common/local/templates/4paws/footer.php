@@ -54,7 +54,7 @@ if ($template->hasMainWrapper()) {
     <?php include __DIR__ . '/blocks/preloader.php'; ?>
     </main>
 <?php } ?>
-<footer class="b-footer <?= $template->getFooterClass() ?>">
+<footer class="b-footer js-main-footer <?= $template->getFooterClass() ?>">
     <?php if (!$template->hasShortHeaderFooter()) { ?>
         <div class="b-footer__communication">
             <div class="b-container">

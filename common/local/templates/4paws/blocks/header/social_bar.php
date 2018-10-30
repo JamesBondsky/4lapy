@@ -1,6 +1,6 @@
 <?php use FourPaws\Decorators\SvgDecorator; ?>
 
-<div class="b-social-bar">
+<div class="b-social-bar js-social-bar">
     <ul class="b-social-bar__list">
         <li class="b-social-bar__item">
             <a class="b-social-bar__link" href="<?= tplvar('social_link_vk') ?>" title="ВКонтакте" target="_blank">
