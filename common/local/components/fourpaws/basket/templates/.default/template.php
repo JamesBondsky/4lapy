@@ -131,7 +131,7 @@ if ($arParams['IS_AJAX']) {
                                                 }
                                                 ?>
 
-                                                        <span class="b-clipped-text b-clipped-text--shopping-cart">
+                                                        <span class="b-clipped-text b-clipped-text--shopping-cart b-clipped-text--gift-order">
                                                             <span><?= $name ?></span>
                                                         </span>
                                                             <?php /* <span class="b-common-item__variant b-common-item__variant--shopping-cart"><span class="b-common-item__name-value">Цвет:</span><span>прозрачные</span></span>*/ ?>
