@@ -8,6 +8,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 <div class="b-social">
     <ul class="b-social__list">
         <li class="b-social__item">
+            <a class="b-social__link" href="<?= tplvar('social_link_vk') ?>" title="ВКонтакте" target="_blank">
+                <span class="b-icon b-icon--vk">
+                    <?= new SvgDecorator('icon-vk', 22, 18) ?>
+                </span>
+            </a>
+            <?= tplinvis('social_link_vk') ?>
+        </li>
+        <li class="b-social__item">
             <a class="b-social__link" href="<?= tplvar('social_link_fb') ?>" title="Facebook" target="_blank">
                 <span class="b-icon b-icon--fb">
                     <?= new SvgDecorator('icon-fb', 9, 18) ?>
@@ -24,20 +32,20 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             <?= tplinvis('social_link_ok') ?>
         </li>
         <li class="b-social__item">
-            <a class="b-social__link" href="<?= tplvar('social_link_vk') ?>" title="ВКонтакте" target="_blank">
-                <span class="b-icon b-icon--vk">
-                    <?= new SvgDecorator('icon-vk', 22, 18) ?>
-                </span>
-            </a>
-            <?= tplinvis('social_link_vk') ?>
-        </li>
-        <li class="b-social__item">
-            <a class="b-social__link" href="<?= tplvar('social_link_in') ?>" title="Instagram" target="_blank">
-                <span class="b-icon b-icon--in">
-                    <?= new SvgDecorator('icon-in', 22, 18) ?>
+            <a class="b-social__link" href="<?= tplvar('social_link_youtube') ?>" title="Youtube" target="_blank">
+                <span class="b-icon b-icon--youtube">
+                    <?= new SvgDecorator('icon-youtube', 23, 23) ?>
                 </span>
             </a>
             <?= tplinvis('social_link_in') ?>
+        </li>
+        <li class="b-social__item">
+            <a class="b-social__link" href="<?= tplvar('social_link_inst') ?>" title="Instagram" target="_blank">
+                <span class="b-icon b-icon--inst">
+                    <?= new SvgDecorator('icon-inst', 23, 23) ?>
+                </span>
+            </a>
+            <?= tplinvis('social_link_inst') ?>
         </li>
     </ul>
 </div>

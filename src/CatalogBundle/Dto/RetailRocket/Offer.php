@@ -60,10 +60,10 @@ class Offer
     protected $price;
 
     /**
-     * @Serializer\XmlList(inline=true, entry="categoryId")
-     * @Serializer\Type("array<int>")
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Type("int")
      *
-     * @var array
+     * @var int
      */
     protected $categoryId;
 
@@ -219,19 +219,19 @@ class Offer
     }
 
     /**
-     * @return array
+     * @return int
      */
-    public function getCategoryId(): array
+    public function getCategoryId(): int
     {
         return $this->categoryId;
     }
 
     /**
-     * @param array $categoryId
+     * @param int $categoryId
      *
      * @return Offer
      */
-    public function setCategoryId(array $categoryId): Offer
+    public function setCategoryId(int $categoryId): Offer
     {
         $this->categoryId = $categoryId;
 

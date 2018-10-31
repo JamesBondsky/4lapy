@@ -1,7 +1,9 @@
 <?php
 require $_SERVER['DOCUMENT_ROOT']. '/bitrix/header.php';
 
-$APPLICATION->SetTitle('Бренды');
+$APPLICATION->SetPageProperty('title', 'Все бренды производителей товаров для животных представлены в интернет-магазине Четыре Лапы');
+$APPLICATION->SetPageProperty('description', '*Убрать первые "Бренды"');
+$APPLICATION->SetTitle("Все бренды производителей товаров для животных представлены в интернет-магазине Четыре Лапы");
 
 $APPLICATION->IncludeComponent(
     'fourpaws:brands',

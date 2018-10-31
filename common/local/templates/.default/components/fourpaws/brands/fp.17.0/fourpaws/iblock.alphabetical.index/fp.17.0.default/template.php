@@ -21,7 +21,7 @@ $this->setFrameMode(true);
                 $sTmpAddClass .= ' active';
             }
             if ($arItem['EXISTS'] === 'Y') {
-                ?><a class="b-link-list__link js-scroll-x<?=$sTmpAddClass?>" href="<?='#'.$arItem['ANCHOR']?>" title=""><?php
+                ?><a class="b-link-list__link js-scroll-x<?=$sTmpAddClass?>"   href="javascript:void(0);" onclick="document.location.hash='<?=$arItem['ANCHOR']?>';" title="<?=$arItem['ANCHOR']?>"><?php
                     echo $arItem['CAPTION'];
                 ?></a><?php
             } else {

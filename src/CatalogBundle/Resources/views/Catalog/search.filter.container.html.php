@@ -200,12 +200,25 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
             true
         );
 
+        //$productSearchResult->getResultSet()->getResults()
+        /**
+         * @var \FourPaws\Catalog\Model\Product $product
+         */
         foreach ($productCollection as $product) {
+            $highlight = $product->getHitMetaInfo()->getHighlight();
+            $offer = null;
+            if(!empty($highlight) && isset($highlight['offers.XML_ID'])) {
+                $xmlId = $productSearchResult->getQuery();
+                $offer = $product->getOffers()->filter(function (\FourPaws\Catalog\Model\Offer $offer) use($xmlId) {
+                    return $offer->getXmlId() == $xmlId;
+                })->first();
+            }
             $APPLICATION->IncludeComponent(
                 'fourpaws:catalog.element.snippet',
                 '',
                 [
                     'PRODUCT'               => $product,
+                    'CURRENT_OFFER'         => $offer,
                     'GOOGLE_ECOMMERCE_TYPE' => 'Поиск'
                 ]
             );

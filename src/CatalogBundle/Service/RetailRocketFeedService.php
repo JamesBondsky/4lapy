@@ -256,7 +256,7 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
                     $offer->getName()
                 ))
                 ->setCategoryId($offer->getProduct()
-                                      ->getSectionsIdList())
+                    ->getIblockSectionId())
                 ->setDescription(\substr(\strip_tags($offer->getProduct()
                                                            ->getDetailText()
                                                            ->getText()), 0, 2990))

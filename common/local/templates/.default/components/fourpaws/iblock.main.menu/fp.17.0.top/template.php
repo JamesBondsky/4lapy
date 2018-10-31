@@ -241,72 +241,12 @@ foreach ($arResult['MENU_TREE'] as $arFirstLevelItem) {
                 //
                 // Бренды (алфавитный указатель, сгруппированный список, популярные бренды)
                 //
-                $APPLICATION->IncludeComponent(
-                    'bitrix:news.list',
-                    'fp.17.0.brands',
-                    [
-                        'BRANDS_POPULAR_LIMIT' => $arParams['BRANDS_MENU_POPULAR_LIMIT'] ?? 8,
-
-                        'IBLOCK_TYPE'  => IblockType::CATALOG,
-                        'IBLOCK_ID'    => IblockCode::BRANDS,
-                        'SORT_BY1'     => 'SORT',
-                        'SORT_ORDER1'  => 'ASC',
-                        'SORT_BY2'     => 'NAME',
-                        'SORT_ORDER2'  => 'ASC',
-                        'FIELD_CODE'   => [
-                            'NAME',
-                            'DETAIL_PICTURE',
-                            'PROPERTY_POPULAR',
-                        ],
-                        'FILTER_NAME'  => '',
-                        'CACHE_FILTER' => 'Y',
-                        'CACHE_GROUPS' => 'N',
-                        'NEWS_COUNT'   => '9999',
-                        'CACHE_TIME'   => $arParams['TEMPLATE_NO_CACHE'] === 'Y' ? $arParams['CACHE_TIME'] : 'N',
-                        'CACHE_TYPE'   => $arParams['CACHE_TYPE'],
-                        'CHECK_DATES'  => 'Y',
-                        'DETAIL_URL'   => '',
-
-                        'RESIZE_WIDTH'  => $arParams['RESIZE_WIDTH'],
-                        'RESIZE_HEIGHT' => $arParams['RESIZE_HEIGHT'],
-                        'RESIZE_TYPE'   => $arParams['RESIZE_TYPE'],
-
-                        'ACTIVE_DATE_FORMAT'              => 'd.m.Y',
-                        'ADD_SECTIONS_CHAIN'              => 'N',
-                        'AJAX_MODE'                       => 'N',
-                        'AJAX_OPTION_ADDITIONAL'          => '',
-                        'AJAX_OPTION_HISTORY'             => 'N',
-                        'AJAX_OPTION_JUMP'                => 'N',
-                        'AJAX_OPTION_STYLE'               => 'N',
-                        'HIDE_LINK_WHEN_NO_DETAIL'        => 'N',
-                        'INCLUDE_IBLOCK_INTO_CHAIN'       => 'N',
-                        'INCLUDE_SUBSECTIONS'             => 'N',
-                        'PAGER_BASE_LINK_ENABLE'          => 'N',
-                        'PAGER_DESC_NUMBERING'            => 'N',
-                        'PAGER_DESC_NUMBERING_CACHE_TIME' => '36000',
-                        'PAGER_SHOW_ALL'                  => 'N',
-                        'PAGER_SHOW_ALWAYS'               => 'N',
-                        'PAGER_TEMPLATE'                  => '',
-                        'PAGER_TITLE'                     => '',
-                        'PARENT_SECTION'                  => '',
-                        'PARENT_SECTION_CODE'             => '',
-                        'PREVIEW_TRUNCATE_LEN'            => '',
-                        'PROPERTY_CODE'                   => [
-                        ],
-                        'SET_BROWSER_TITLE'               => 'N',
-                        'SET_LAST_MODIFIED'               => 'N',
-                        'SET_META_DESCRIPTION'            => 'N',
-                        'SET_META_KEYWORDS'               => 'N',
-                        'SET_STATUS_404'                  => 'N',
-                        'SET_TITLE'                       => 'N',
-                        'SHOW_404'                        => 'N',
-                    ],
-                    $component,
-                    [
-                        'HIDE_ICONS'       => 'Y',
-                        'ACTIVE_COMPONENT' => 'Y',
-                    ]
-                );
+                $APPLICATION->IncludeComponent('refactoring:brands.list', 'top.menu', [
+                    'BRANDS_POPULAR_LIMIT' => $arParams['BRANDS_MENU_POPULAR_LIMIT'] ?? 8,
+                ], $component, [
+                    'HIDE_ICONS'       => 'Y',
+                    'ACTIVE_COMPONENT' => 'Y',
+                ]);
                 ?>
             </div>
         </div>
