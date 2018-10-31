@@ -13,6 +13,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /** @var User $user */
 $user = $arResult['USER'];
 
+$sViewportHideCookie = $_COOKIE['viewport_hide'] ?? null;
+
 /** @var Basket $basket */
 $basket = $arResult['BASKET'];
 $orderableItems = $basket->getOrderableItems();
@@ -317,7 +319,7 @@ if ($arParams['IS_AJAX']) {
                             </span><span class="b-ruble">₽</span>
                         </div>
                     </div>
-                    <a class="b-button b-button--start-order"
+                    <a class="b-button b-button--start-order <?= $sViewportHideCookie === null ? 'b-button--bottom-indent' : '' ?>"
                        href="<?= (int)$arResult['TOTAL_PRICE'] === 0 ? 'javascript:void(0)' : '/sale/order/' ?>"
                        title="Начать оформление" <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
                         Начать оформление

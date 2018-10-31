@@ -54,6 +54,7 @@ if ($template->hasMainWrapper()) {
     <?php include __DIR__ . '/blocks/preloader.php'; ?>
     </main>
 <?php } ?>
+<?php require_once __DIR__ . '/blocks/footer/change_viewport.php'; ?>
 <footer class="b-footer js-main-footer <?= $template->getFooterClass() ?>">
     <?php if (!$template->hasShortHeaderFooter()) { ?>
         <div class="b-footer__communication">
@@ -106,6 +107,11 @@ if ($template->hasMainWrapper()) {
             <div class="b-footer__line">
                 <div class="b-footer__column">
                     <?php require_once __DIR__ . '/blocks/footer/copyright.php' ?>
+                </div>
+                <div class="b-footer__column b-footer__column--small b-footer-btn-change-viewport">
+                    <div class="b-footer-btn-change-viewport__link" data-change-viewport-mode='true' data-type="mobile">
+                        Перейти в мобильную версию
+                    </div>
                 </div>
             </div>
         </div>
