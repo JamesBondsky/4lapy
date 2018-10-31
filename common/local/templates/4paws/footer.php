@@ -13,6 +13,11 @@ use FourPaws\App\Application as PawsApplication;
 use FourPaws\App\MainTemplate;
 use FourPaws\Decorators\SvgDecorator;
 
+/**
+ * @var $sViewportCookie - Значение куки отвечающе за переключение вьпорта с мобильного на десктоп.
+ */
+$sViewportCookie = $_COOKIE['viewport'] ?? null;
+
 $markup = PawsApplication::markup();
 /** @var MainTemplate $template */
 if (!isset($template) || !($template instanceof MainTemplate)) {
@@ -108,9 +113,17 @@ if ($template->hasMainWrapper()) {
                 <div class="b-footer__column">
                     <?php require_once __DIR__ . '/blocks/footer/copyright.php' ?>
                 </div>
-                <div class="b-footer__column b-footer__column--small b-footer-btn-change-viewport">
-                    <div class="b-footer-btn-change-viewport__link" data-change-viewport-mode='true' data-type="mobile">
+                <div class="b-footer__column 
+                            b-footer__column--small 
+                            b-footer__column--change-viewport 
+                            <?= ($sViewportCookie === 'mobile')||($sViewportCookie === 'desktop') ? 'active' : '' ?>"
+                            data-footer-links-change-viewport="true">
+
+                    <div class="link-toggle-view <?= $sViewportCookie === 'desktop' ? 'active' : '' ?>" data-change-viewport-mode='desktop' data-type="mobile">
                         Перейти в мобильную версию
+                    </div>
+                    <div class="link-toggle-view <?= $sViewportCookie === 'mobile' ? 'active' : '' ?>" data-change-viewport-mode='mobile' data-type="desktop">
+                        Перейти в полноэкранный режим
                     </div>
                 </div>
             </div>

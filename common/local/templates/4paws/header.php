@@ -83,7 +83,7 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
 
     <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_header.php'; ?>
 </head>
-<body class="<?php if($sViewportCookie == 'desktop') { echo 'change-viewport-desktop'; } ?><?php if($sViewportCookie == 'mobile') { echo 'change-viewport-mobile'; } ?>">
+<body>
 <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_body.php'; ?>
 <?php $APPLICATION->ShowPanel(); ?>
 <header class="b-header <?= $template->getHeaderClass() ?> js-header">
