@@ -13,6 +13,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /** @var User $user */
 $user = $arResult['USER'];
 
+/**
+ * @var $sViewportCookie - Значение куки отвечающе за переключение вьпорта с мобильного на десктоп.
+ */
+$sViewportCookie = $_COOKIE['viewport'] ?? null;
+
 /** @var Basket $basket */
 $basket = $arResult['BASKET'];
 $orderableItems = $basket->getOrderableItems();
@@ -129,7 +134,7 @@ if ($arParams['IS_AJAX']) {
                                                 }
                                                 ?>
 
-                                                        <span class="b-clipped-text b-clipped-text--shopping-cart">
+                                                        <span class="b-clipped-text b-clipped-text--shopping-cart b-clipped-text--gift-order">
                                                             <span><?= $name ?></span>
                                                         </span>
                                                             <?php /* <span class="b-common-item__variant b-common-item__variant--shopping-cart"><span class="b-common-item__name-value">Цвет:</span><span>прозрачные</span></span>*/ ?>
@@ -317,7 +322,7 @@ if ($arParams['IS_AJAX']) {
                             </span><span class="b-ruble">₽</span>
                         </div>
                     </div>
-                    <a class="b-button b-button--start-order"
+                    <a class="b-button b-button--start-order <?= $sViewportCookie === null ? 'b-button--bottom-indent' : '' ?>"
                        href="<?= (int)$arResult['TOTAL_PRICE'] === 0 ? 'javascript:void(0)' : '/sale/order/' ?>"
                        title="Начать оформление" <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
                         Начать оформление
