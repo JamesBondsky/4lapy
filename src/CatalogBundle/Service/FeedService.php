@@ -106,6 +106,7 @@ abstract class FeedService
      */
     public function publicFeed($feed, string $file): void
     {
-        $this->filesystem->dumpFile($file, $this->serializer->serialize($feed, 'xml'));
+        //TODO hotfix, because JMS serializer change & to &amp;
+        $this->filesystem->dumpFile($file, str_replace('&amp;','&',$this->serializer->serialize($feed, 'xml')));
     }
 }

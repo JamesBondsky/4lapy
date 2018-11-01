@@ -17,6 +17,7 @@ use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\PersonalBundle\Entity\Pet;
+use FourPaws\PersonalBundle\Models\PetCongratulationsNotify;
 use FourPaws\PersonalBundle\Repository\PetRepository;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -286,5 +287,27 @@ class PetService
     public function getById(int $id): Pet
     {
         return $this->petRepository->findById($id);
+    }
+
+    /**
+     * @return array
+     * @throws ObjectPropertyException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getBirthdayPets()
+    {
+        $pets = $this->petRepository->findPetsForBirthDayNotify();
+        $result = [];
+        foreach ($pets as $pet) {
+            $result[] = (new PetCongratulationsNotify())->setPetId($pet['PET_ID'])
+                ->setPetName($pet['PET_NAME'])
+                ->setPetType($pet['PET_TYPE'])
+                ->setOwnerEmail($pet['USER_EMAIL'])
+                ->setBirthDay($pet['PET_BIRTHDAY'])
+                ->setOwnerName($pet['USER_NAME']);
+        }
+        return $result;
     }
 }

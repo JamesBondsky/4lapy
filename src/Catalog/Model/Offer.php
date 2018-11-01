@@ -1239,7 +1239,7 @@ class Offer extends IblockElement
     public function getLink(): string
     {
         if (!$this->link) {
-            $productUrl = $this->getProduct()->getDetailPageUrl();
+            $productUrl = str_replace('#', '%23', $this->getProduct()->getDetailPageUrl());
 
             $this->link = $productUrl ? \sprintf(
                 '%s?offer=%s',

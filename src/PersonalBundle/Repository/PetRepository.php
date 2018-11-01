@@ -3,6 +3,7 @@
 namespace FourPaws\PersonalBundle\Repository;
 
 use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\UserTable;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\AppBundle\Repository\BaseHlRepository;
 use FourPaws\PersonalBundle\Entity\Pet;
@@ -106,5 +107,47 @@ class PetRepository extends BaseHlRepository
                 'filter' => ['UF_USER_ID' => $userId],
             ]
         );
+    }
+
+    /**
+     * @return array
+     * @throws ObjectPropertyException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function findPetsForBirthDayNotify()
+    {
+        $today = new \Bitrix\Main\Type\Date();
+        $oPets = $this->getDataManager()->getList([
+            'select' => ['UF_USER_ID', 'ID', 'UF_NAME', 'UF_BIRTHDAY', 'UF_TYPE', 'USER_EMAIL' => 'REF_USER.EMAIL', 'USER_NAME' => 'REF_USER.NAME', 'USER_SECOND_NAME' => 'REF_USER.SECOND_NAME', 'USER_LAST_NAME' => 'REF_USER.LAST_NAME', 'PET_TYPE' => 'REF_PET_TYPE.UF_CODE'],
+            'filter' => [
+                'LOGIC' => 'AND',
+                ['UF_BIRTHDAY' => $today]
+            ],
+            'runtime' => [
+                new \Bitrix\Main\Entity\ReferenceField('REF_USER',
+                    UserTable::class, [
+                        '=this.UF_USER_ID' => 'ref.ID'
+                    ]),
+                new \Bitrix\Main\Entity\ReferenceField('REF_PET_TYPE',
+                    'ForWho', [
+                        '=this.UF_TYPE' => 'ref.ID'
+                    ])
+            ]
+        ]);
+
+        $arResult = [];
+        foreach ($oPets as $arPet) {
+            $arResult[] = [
+                'PET_ID' => $arPet['ID'],
+                'PET_NAME' => $arPet['UF_NAME'],
+                'PET_TYPE' => $arPet['PET_TYPE'],
+                'PET_BIRTHDAY' => $arPet['UF_BIRTHDAY'],
+                'USER_EMAIL' => $arPet['USER_EMAIL'],
+                'USER_NAME' => implode(" ", array_filter([$arPet['USER_LAST_NAME'], $arPet['USER_NAME'], $arPet['USER_SECOND_NAME']])),
+            ];
+        }
+        return $arResult;
     }
 }
