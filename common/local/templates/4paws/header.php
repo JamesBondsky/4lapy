@@ -53,7 +53,7 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
         window.dataLayer = window.dataLayer || [];
     </script>
     <?php $APPLICATION->ShowHead(); ?>
-    <title><?php $APPLICATION->ShowTitle(false) ?></title>
+    <title><?php $APPLICATION->ShowTitle() ?></title>
     <?php
     $asset = Asset::getInstance();
     $asset->addCss($markup->getCssFile());
