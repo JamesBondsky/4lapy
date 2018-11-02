@@ -7,9 +7,9 @@ use FourPaws\Decorators\SvgDecorator;
 
 ?>
 
-<section class="b-popup-change-viewport js-popup-section" data-popup="change-view">
+<section class="b-popup-change-viewport" data-popup="change-view">
     <div class="b-popup-change-viewport__container">
-        <a class="js-close-popup b-popup-change-viewport__close" href="javascript:void(0)" title="закрыть" data-change-viewport-mode='true' data-type="desktop"></a>
+        <div class="b-popup-change-viewport__close" title="закрыть" data-close-popup-change-viewport='true' data-change-viewport-mode='true' data-type="desktop"></div>
         <div class="b-popup-change-viewport__content">
             <span class="b-icon b-icon--icon-desktop">
                 <?= new SvgDecorator('icon-desktop', 60, 60) ?>
