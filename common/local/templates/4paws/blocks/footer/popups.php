@@ -47,5 +47,6 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
 
     include __DIR__ . '/gifts_popup.php';
     include __DIR__ . '/modal_popup.php';
+    include __DIR__ . '/change_view_popup.php';
     ?>
 </div>

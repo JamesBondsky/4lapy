@@ -13,7 +13,14 @@ use Bitrix\Main\Application;use Bitrix\Main\Page\Asset;use FourPaws\App\Applicat
 /** @var MainTemplate $template */
 $template = MainTemplate::getInstance(Application::getInstance()
     ->getContext());
-$markup = PawsApplication::markup(); ?><!DOCTYPE html>
+$markup = PawsApplication::markup(); 
+
+/**
+ * @var $sViewportCookie - Значение куки отвечающе за переключение вьпорта с мобильного на десктоп.
+ */
+$sViewportCookie = $_COOKIE['viewport'] ?? null;
+?>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <? /** onesignal.com manifest.json, must appear before any other link <link rel="manifest" ...> */?>
@@ -25,7 +32,13 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
 
     <base href="<?= PawsApplication::getInstance()
         ->getSiteDomain() ?>">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimal-ui, user-scalable=no">
+    <?
+        if ($sViewportCookie == 'desktop') {
+            echo "<meta name=\"viewport\" content=\"width=1300px\">";
+        } else {
+            echo "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=1, minimal-ui, user-scalable=no\">";
+        }
+    ?>
     <meta name="skype_toolbar" content="skype_toolbar_parser_compatible">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="google" content="notranslate">
@@ -40,7 +53,7 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
         window.dataLayer = window.dataLayer || [];
     </script>
     <?php $APPLICATION->ShowHead(); ?>
-    <title><?php $APPLICATION->ShowTitle(false) ?></title>
+    <title><?php $APPLICATION->ShowTitle() ?></title>
     <?php
     $asset = Asset::getInstance();
     $asset->addCss($markup->getCssFile());
