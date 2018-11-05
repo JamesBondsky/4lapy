@@ -1,6 +1,11 @@
 <?if (!defined('B_PROLOG_INCLUDED')||B_PROLOG_INCLUDED!==true) {
     die();
 }
+
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
+
 /**
  * Карточка бренда (в разделе брендов)
  *
@@ -49,3 +54,43 @@ $this->__component->SetResultCacheKeys(
         'PRINT_PICTURE',
     )
 );
+
+if (!empty($arResult['PROPERTIES']['BLOCKS_SHOW_SWITCHER']['~VALUE'])) {
+    $arResult['SHOW_BLOCKS'] = json_decode($arResult['PROPERTIES']['BLOCKS_SHOW_SWITCHER']['~VALUE'], true);
+} else {
+    $arResult['SHOW_BLOCKS'] = [
+        'SLIDER_IMAGES' => false,
+        'VIDEO' => false,
+        'SECTIONS' => false
+    ];
+}
+
+if ($arResult['SHOW_BLOCKS']['SLIDER_IMAGES']) {
+    //TODO WTF CFile::GetList don`t return SRC?
+    foreach ($arResult['PROPERTIES']['SLIDER_IMAGES']['VALUE'] as $fileID) {
+        $arResult['SLIDER_IMAGE'][] = CFile::GetPath($fileID);
+    }
+}
+
+if ($arResult['SHOW_BLOCKS']['VIDEO']) {
+    $arResult['VIDEO'][] = [
+        'picture' => CFile::GetPath($arResult['PROPERTIES']['VIDEO']['VALUE']),
+        'description' => $arResult['PROPERTIES']['VIDEO_DESCRIPTION']['VALUE']
+    ];
+}
+
+if ($arResult['SHOW_BLOCKS']['SECTIONS']) {
+    $arFilter = ['IBLOCK_TYPE' => IblockType::CATALOG, 'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS), 'ID' => $arResult['PROPERTIES']['SECTIONS']['VALUE']];
+    $dbSections = CIBlockSection::GetList(null, $arFilter);
+    while ($section = $dbSections->GetNext()) {
+        $arResult['SECTIONS'][$section['ID']] = [
+            'title' => $section['NAME'],
+            'link' => $section['SECTION_PAGE_URL']
+        ];
+        if ($section['PICTURE']) {
+            $arResult['SECTIONS'][$section['ID']]['picture'] = CFile::GetPath($section['PICTURE']);
+        } elseif ($section['DETAIL_PICTURE']) {
+            $arResult['SECTIONS'][$section['ID']]['picture'] = CFile::GetPath($section['DETAIL_PICTURE']);
+        }
+    }
+}
