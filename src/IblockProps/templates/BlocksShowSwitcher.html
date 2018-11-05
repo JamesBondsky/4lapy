@@ -1,0 +1,118 @@
+<style>
+    .blocks-show-switcher-items {
+        padding: 0;
+        margin: 0;
+    }
+
+    .blocks-show-switcher-item {
+        list-style: none;
+        margin: 3px 0;
+    }
+
+    .block__list {
+        max-width: 360px;
+        margin-left: 5px;
+        border: 2px dashed #d3d2d2;
+        border-radius: 4px;
+    }
+
+    .block__list:hover {
+        border: 2px dashed #929ba1;
+    }
+
+    .block__list li {
+        cursor: move;
+    }
+
+    .block__list li label {
+        cursor: pointer;
+    }
+
+    .block__list_words li {
+        padding: 7px;
+    }
+
+    .block__list_words .sortable-ghost {
+        opacity: 0.4;
+        background-color: #F4E2C9;
+    }
+
+    .block__list_words li:first-letter {
+        text-transform: uppercase;
+    }
+
+    .block__list_tags li {
+        color: #fff;
+        float: left;
+        margin: 8px 20px 10px 0;
+        padding: 5px 10px;
+        min-width: 10px;
+        background-color: #5F9EDF;
+        text-align: center;
+    }
+
+    .block__list_tags li:first-child:first-letter {
+        text-transform: uppercase;
+    }
+</style>
+<input type="hidden" name="#CONTROL_NAME#" id="sending_field">
+<div id="blocks-show-switcher-wrapper" class="block__list">
+    <ul class="blocks-show-switcher-items block__list_words" id="blocks-show-switcher-items">
+        #SORTABLE_BLOCKS#
+    </ul>
+</div>
+
+<script>
+    $(document).ready(function () {
+        let switcherItemsWrapper = $('#blocks-show-switcher-items'),
+            sortableEl = switcherItemsWrapper[0],
+            switchers = $('.input-switcher'),
+            sendingField = $('#sending_field');
+
+        function init() {
+            //sortable init
+            Sortable.create(sortableEl, {
+                animation: 150,
+                onUpdate: function (evt) {
+                    setSendingField();
+                }
+            });
+            $.each(switcherItemsWrapper.find('.blocks-show-switcher-item'), function (key, value) {
+                input = $(value).find('.input-switcher');
+                if (!input.prop("checked")) {
+                    $('#tr_PROPERTY_' + input.data('block')).hide();
+                    if (input.data('block-second')) {
+                        $('#tr_PROPERTY_' + input.data('block-second')).hide();
+                    }
+                }
+            });
+        }
+
+        function setSendingField() {
+            let result = {};
+            $.each(switcherItemsWrapper.find('.blocks-show-switcher-item'), function (key, value) {
+                input = $(value).find('.input-switcher');
+                result[input.attr('id')] = input.prop("checked");
+            });
+            sendingField.val(JSON.stringify(result));
+        }
+
+        //toggle event
+        switchers.change(function () {
+            if ($(this).prop("checked")) {
+                $('#tr_PROPERTY_' + $(this).data('block')).show();
+                if ($(this).data('block-second')) {
+                    $('#tr_PROPERTY_' + $(this).data('block-second')).show();
+                }
+            } else {
+                $('#tr_PROPERTY_' + $(this).data('block')).hide();
+                if ($(this).data('block-second')) {
+                    $('#tr_PROPERTY_' + $(this).data('block-second')).hide();
+                }
+            }
+            setSendingField();
+        });
+
+        init();
+    });
+</script>
