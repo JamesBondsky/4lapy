@@ -55,7 +55,7 @@ if (!$isAjax) { ?>
                 'PROPERTY_CODE'             => [],
                 'CACHE_GROUPS'              => 'N',
                 'CACHE_TIME'                => '43200',
-                'CACHE_TYPE'                => 'A',
+                'CACHE_TYPE'                => 'N',
                 'DETAIL_URL'                => '',
                 'RESIZE_WIDTH'              => '90',
                 'RESIZE_HEIGHT'             => '90',

@@ -65,32 +65,52 @@ if (!empty($arResult['PROPERTIES']['BLOCKS_SHOW_SWITCHER']['~VALUE'])) {
     ];
 }
 
+$uploadDir = COption::GetOptionString("main", "upload_dir", "upload");
+
 if ($arResult['SHOW_BLOCKS']['SLIDER_IMAGES']) {
-    //TODO WTF CFile::GetList don`t return SRC?
-    foreach ($arResult['PROPERTIES']['SLIDER_IMAGES']['VALUE'] as $fileID) {
-        $arResult['SLIDER_IMAGE'][] = CFile::GetPath($fileID);
+    $files = $arResult['PROPERTIES']['SLIDER_IMAGES']['VALUE'];
+    $dbFiles = CFile::GetList([], ['@ID' => implode(',', $files)]);
+    while ($file = $dbFiles->Fetch()) {
+        $arResult['SLIDER_IMAGE'][] = '/' . $uploadDir . '/' . $file['SUBDIR'] . '/' . $file['FILE_NAME'];
     }
 }
 
 if ($arResult['SHOW_BLOCKS']['VIDEO']) {
-    $arResult['VIDEO'][] = [
+    $arResult['VIDEO'] = [
+        'title' => $arResult['PROPERTIES']['VIDEO']['DESCRIPTION'],
         'picture' => CFile::GetPath($arResult['PROPERTIES']['VIDEO']['VALUE']),
         'description' => $arResult['PROPERTIES']['VIDEO_DESCRIPTION']['VALUE']
     ];
 }
 
 if ($arResult['SHOW_BLOCKS']['SECTIONS']) {
-    $arFilter = ['IBLOCK_TYPE' => IblockType::CATALOG, 'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS), 'ID' => $arResult['PROPERTIES']['SECTIONS']['VALUE']];
+    $files = [];
+    $arFilter = [
+        'IBLOCK_TYPE' => IblockType::CATALOG,
+        'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
+        'ID' => $arResult['PROPERTIES']['SECTIONS']['VALUE']
+    ];
     $dbSections = CIBlockSection::GetList(null, $arFilter);
     while ($section = $dbSections->GetNext()) {
         $arResult['SECTIONS'][$section['ID']] = [
             'title' => $section['NAME'],
-            'link' => $section['SECTION_PAGE_URL']
+            'link' => $section['SECTION_PAGE_URL'],
+            'picture' => ''
         ];
         if ($section['PICTURE']) {
-            $arResult['SECTIONS'][$section['ID']]['picture'] = CFile::GetPath($section['PICTURE']);
+            $files[$section['ID']] = $section['PICTURE'];
         } elseif ($section['DETAIL_PICTURE']) {
-            $arResult['SECTIONS'][$section['ID']]['picture'] = CFile::GetPath($section['DETAIL_PICTURE']);
+            $files[$section['ID']] = $section['DETAIL_PICTURE'];
         }
     }
+
+    $sectionFiles = [];
+    $dbFiles = CFile::GetList([], ['@ID' => implode(',', $files)]);
+    while ($file = $dbFiles->Fetch()) {
+        $sectionFiles[$file['ID']] = '/' . $uploadDir . '/' . $file['SUBDIR'] . '/' . $file['FILE_NAME'];
+    }
+    foreach ($arResult['SECTIONS'] as $sectionID => &$section) {
+        $section['picture'] = $sectionFiles[$files[$sectionID]];
+    }
+
 }

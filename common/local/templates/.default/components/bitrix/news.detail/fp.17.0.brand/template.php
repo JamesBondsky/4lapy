@@ -54,3 +54,22 @@ if ($arResult['DETAIL_TEXT'] || $arResult['PRINT_PICTURE']) { ?>
         } ?>
     </div>
 <?php } ?>
+
+<? foreach ($arResult['SHOW_BLOCKS'] as $key => $value) {
+    if($value){
+        switch($key){
+            case 'SLIDER_IMAGES':
+                ?>Слайдер<?
+                ?><pre><?print_r($arResult['SLIDER_IMAGE']);?></pre><?
+                break;
+            case 'VIDEO':
+                ?>Видео<?
+                ?><pre><?print_r($arResult['VIDEO']);?></pre><?
+                break;
+            case 'SECTIONS':
+                ?>Разделы товаров<?
+                ?><pre><?print_r($arResult['SECTIONS']);?></pre><?
+                break;
+        }
+    }
+ } ?>

@@ -114,7 +114,9 @@ class BlocksShowSwitcher extends IblockPropertyTypeBase
             </li>';
         }
 
-        $template = str_replace(['#SORTABLE_BLOCKS#', '#CONTROL_NAME#', '#CONTROL_NAME_VALUE#'], [$sortableBlosk, $control['VALUE'], $value['VALUE']], $template);
+
+        $template = str_replace(['#SORTABLE_BLOCKS#', '#CONTROL_NAME#', '#CONTROL_NAME_VALUE#'],
+            [$sortableBlosk, $control['VALUE'], $value['VALUE']], $template);
 
         return $template;
     }
