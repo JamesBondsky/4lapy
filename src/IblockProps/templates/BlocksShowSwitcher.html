@@ -77,12 +77,15 @@
                     setSendingField();
                 }
             });
-            $.each(switcherItemsWrapper.find('.blocks-show-switcher-item'), function (key, value) {
+            $.each(switcherItemsWrapper.find('.blocks-show-switcher-item'), function (i, value) {
                 input = $(value).find('.input-switcher');
                 if (!input.prop("checked")) {
-                    $('#tr_PROPERTY_' + input.data('block')).hide();
-                    if (input.data('block-second')) {
-                        $('#tr_PROPERTY_' + input.data('block-second')).hide();
+                    if (input.data('block').toString().indexOf(',') == -1) {
+                        $('#tr_PROPERTY_' + input.data('block')).hide();
+                    } else {
+                        $.each(input.data('block').split(','), function (j, id) {
+                            $('#tr_PROPERTY_' + id).hide();
+                        });
                     }
                 }
             });
@@ -100,14 +103,26 @@
         //toggle event
         switchers.change(function () {
             if ($(this).prop("checked")) {
-                $('#tr_PROPERTY_' + $(this).data('block')).show();
-                if ($(this).data('block-second')) {
-                    $('#tr_PROPERTY_' + $(this).data('block-second')).show();
+                console.log($(this).data('block').toString().indexOf(','));
+                if ($(this).data('block').toString().indexOf(',') == -1) {
+                    console.log($('#tr_PROPERTY_' + $(this).data('block')));
+                    $('#tr_PROPERTY_' + $(this).data('block')).show();
+                } else {
+                    $.each($(this).data('block').split(','), function (i, id) {
+                        console.log($('#tr_PROPERTY_' + id));
+                        $('#tr_PROPERTY_' + id).show();
+                    });
                 }
             } else {
-                $('#tr_PROPERTY_' + $(this).data('block')).hide();
-                if ($(this).data('block-second')) {
-                    $('#tr_PROPERTY_' + $(this).data('block-second')).hide();
+                console.log($(this).data('block').toString().indexOf(','));
+                if ($(this).data('block').toString().indexOf(',') == -1) {
+                    console.log($('#tr_PROPERTY_' + $(this).data('block')));
+                    $('#tr_PROPERTY_' + $(this).data('block')).hide();
+                } else {
+                    $.each($(this).data('block').split(','), function (i, id) {
+                        console.log($('#tr_PROPERTY_' + id));
+                        $('#tr_PROPERTY_' + id).hide();
+                    });
                 }
             }
             setSendingField();

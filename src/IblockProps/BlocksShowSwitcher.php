@@ -8,10 +8,17 @@ use Bitrix\Main\Page\Asset;
 class BlocksShowSwitcher extends IblockPropertyTypeBase
 {
     const PROPS_CODE_TO_SWITCH = [
-        'SLIDER_IMAGES' => 'Показывать слайдер',
-        'VIDEO' => 'Показывать видео',
+        'BANNER_IMAGES_DESKTOP' => 'Показывать баннер',
+        'BANNER_IMAGES_NOTEBOOK' => null,
+        'BANNER_IMAGES_MOBILE' => null,
+        'BANNER_LINK' => null,
+        'VIDEO_MP4' => 'Показывать видео',
+        'VIDEO_WEBM' => null,
+        'VIDEO_OGG' => null,
+        'VIDEO_TITLE' => null,
         'VIDEO_DESCRIPTION' => null,
-        'SECTIONS' => 'Показывать разделы товаров'
+        'VIDEO_PREVIEW_PICTURE' => null,
+        'PRODUCT_CATEGORIES' => 'Показывать товарные категории'
     ];
 
     /**
@@ -89,26 +96,47 @@ class BlocksShowSwitcher extends IblockPropertyTypeBase
             $initValues = json_decode($value['VALUE'], true);
         } else {
             $initValues = [
-                'SLIDER_IMAGES' => true,
-                'VIDEO' => true,
-                'SECTIONS' => true
+                'BANNER_IMAGES_DESKTOP' => true,
+                'VIDEO_MP4' => true,
+                'PRODUCT_CATEGORIES' => true
             ];
         }
 
         $sortableBlosk = '';
+
+        $arInputValues = [];
         foreach ($initValues as $code => $checked) {
             if (self::PROPS_CODE_TO_SWITCH[$code] == null) {
                 continue;
             }
+            switch ($code) {
+                case 'BANNER_IMAGES_DESKTOP':
+                    $arInputValues['BANNER_IMAGES_DESKTOP'] = $propsToSwitch[$code] .
+                        ',' . $propsToSwitch['BANNER_IMAGES_NOTEBOOK'] .
+                        ',' . $propsToSwitch['BANNER_IMAGES_MOBILE'] .
+                        ',' . $propsToSwitch['BANNER_LINK'];
+                    break;
+                case 'VIDEO_MP4':
+                    $arInputValues['VIDEO_MP4'] = $propsToSwitch[$code] .
+                        ',' . $propsToSwitch['VIDEO_WEBM'] .
+                        ',' . $propsToSwitch['VIDEO_OGG'] .
+                        ',' . $propsToSwitch['VIDEO_TITLE'] .
+                        ',' . $propsToSwitch['VIDEO_DESCRIPTION'];
+                    break;
+                case 'PRODUCT_CATEGORIES':
+                    $arInputValues['PRODUCT_CATEGORIES'] = $propsToSwitch[$code];
+            }
+        }
+
+        foreach ($arInputValues as $code => $ids) {
             $sortableBlosk .= '
             <li class="blocks-show-switcher-item">
                 <input 
-                class="input-switcher" 
-                id="' . $code . '" 
-                type="checkbox" 
-                value="' . $code . '" 
-                data-block="' . $propsToSwitch[$code] . '" ' .
-                (($code == 'VIDEO') ? 'data-block-second="' . $propsToSwitch['VIDEO_DESCRIPTION'] . '"' : '') .
+                class="input-switcher"
+                id="' . $code . '"
+                type="checkbox"
+                value="' . $code . '"
+                data-block="' . $ids . '" ' .
                 (($initValues[$code]) ? 'checked="checked"' : '') . '/>
                 <label for="' . $code . '">' . self::PROPS_CODE_TO_SWITCH[$code] . '</label>
             </li>';
@@ -116,7 +144,7 @@ class BlocksShowSwitcher extends IblockPropertyTypeBase
 
 
         $template = str_replace(['#SORTABLE_BLOCKS#', '#CONTROL_NAME#', '#CONTROL_NAME_VALUE#'],
-            [$sortableBlosk, $control['VALUE'], $value['VALUE']], $template);
+            [$sortableBlosk, $control['VALUE'], json_encode($initValues)], $template);
 
         return $template;
     }
