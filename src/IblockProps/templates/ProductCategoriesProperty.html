@@ -1,0 +1,133 @@
+<style>
+    .product-categories-property-items {
+        padding: 0;
+        margin: 0;
+    }
+
+    .product-categories-property-item {
+        list-style: none;
+        display: block;
+        float: left;
+        width: 100px;
+        height: 100px;
+    }
+
+    .block__list li {
+        cursor: move;
+    }
+
+    .block__list li label {
+        cursor: pointer;
+    }
+
+    .block__list_words li {
+        padding: 7px;
+    }
+
+    .block__list_words .sortable-ghost {
+        opacity: 0.4;
+        background-color: #F4E2C9;
+    }
+
+    .block__list_words li:first-letter {
+        text-transform: uppercase;
+    }
+
+    .block__list_tags li {
+        color: #fff;
+        float: left;
+        margin: 8px 20px 10px 0;
+        padding: 5px 10px;
+        min-width: 10px;
+        background-color: #5F9EDF;
+        text-align: center;
+    }
+
+    .block__list_tags li:first-child:first-letter {
+        text-transform: uppercase;
+    }
+
+    .product-categories-property-item:nth-child(5),
+    .product-categories-property-item:nth-child(8) {
+        clear: left;
+    }
+</style>
+<input type="hidden" name="#CONTROL_NAME#" id="sending_field_ProductCategoriesProperty" value='#CONTROL_NAME_VALUE#'>
+<div id="product-categories-property-wrapper">
+    <ul class="product-categories-property-items block__list_words" id="product-categories-property-items">
+        <li class="product-categories-property-item">
+            1
+        </li>
+        <li class="product-categories-property-item">
+            2
+        </li>
+        <li class="product-categories-property-item">
+            3
+        </li>
+        <li class="product-categories-property-item">
+            4
+        </li>
+        <li class="product-categories-property-item">
+            5
+        </li>
+        <li class="product-categories-property-item">
+            6
+        </li>
+        <li class="product-categories-property-item">
+            7
+        </li>
+        <li class="product-categories-property-item">
+            8
+        </li>
+        <li class="product-categories-property-item">
+            9
+        </li>
+        <li class="product-categories-property-item">
+            10
+        </li>
+        <li class="product-categories-property-item">
+            11
+        </li>
+    </ul>
+</div>
+
+<script>
+    $(document).ready(function () {
+        let parentWrapper = $('#product-categories-property-wrapper'),
+            switcherItemsWrapper = $('#product-categories-property-items'),
+            sortableEl = switcherItemsWrapper[0];
+
+        function init() {
+            //sortable init
+            Sortable.create(sortableEl, {
+                animation: 150,
+                onUpdate: function (evt) {
+                    setSendingField();
+                }
+            });
+            $.each(switcherItemsWrapper.find('.product-categories-property-item'), function (key, value) {
+                input = $(value).find('.input-switcher');
+                if (!input.prop("checked")) {
+                    if (input.data('block').toString().indexOf(',') == -1) {
+                        $('#tr_PROPERTY_' + input.data('block')).hide();
+                    } else {
+                        $.each(input.data('block').split(','), function (id) {
+                            $('#tr_PROPERTY_' + id).hide();
+                        });
+                    }
+                }
+            });
+        }
+
+        function setSendingField() {
+            // let result = {};
+            // $.each(switcherItemsWrapper.find('.product-categories-property-item'), function (key, value) {
+            //     input = $(value).find('.input-switcher');
+            //     result[input.attr('id')] = input.prop("checked");
+            // });
+            // sendingField.val(JSON.stringify(result));
+        }
+
+        init();
+    });
+</script>
