@@ -59,17 +59,70 @@ if ($arResult['DETAIL_TEXT'] || $arResult['PRINT_PICTURE']) { ?>
     if($value){
         switch($key){
             case 'SLIDER_IMAGES':
-                ?>Слайдер<?
-                ?><pre><?print_r($arResult['SLIDER_IMAGE']);?></pre><?
-                break;
-            case 'VIDEO':
-                ?>Видео<?
-                ?><pre><?print_r($arResult['VIDEO']);?></pre><?
-                break;
-            case 'SECTIONS':
-                ?>Разделы товаров<?
-                ?><pre><?print_r($arResult['SECTIONS']);?></pre><?
-                break;
+                ?>
+                <div class="b-brand-banner">
+                    <a href="#" class="b-brand-banner__link">
+                        <img class="b-brand-banner__background b-brand-banner__background--desktop" src="/upload/static-brands/desktop-banner-brand-static.png" alt="">
+                        <img class="b-brand-banner__background b-brand-banner__background--tablet" src="/upload/static-brands/tablet-banner-brand-static.png" alt="">
+                        <img class="b-brand-banner__background b-brand-banner__background--mobile" src="/upload/static-brands/mobile-banner-brand-static.png" alt="">
+                    </a>
+                </div>
+                <?/*<pre><?print_r($arResult['SLIDER_IMAGE']);?></pre>*/?>
+
+                <? break;
+            case 'VIDEO': ?>
+                <div class="b-brand-video">
+                    <div class="b-brand-video__info">
+                        <div class="b-brand-video__title">
+                            Название видео
+                        </div>
+                        <div class="b-brand-video__descr">
+                            Рацион Хиллс был разработан ветеринарным врачом, и&nbsp;<nobr>ре-путация</nobr> этого бренда кормов для ветеринарных врачей неоспорима. Ветеринарные специалисты доверяют нам, поскольку знают, что все наши корма разрабатываются только профессионалами.
+
+                            <?/*= $arResult['VIDEO']['description']['TEXT'] */?>
+                        </div>
+                    </div>
+                    <div class="b-brand-video__right-col">
+                        <div class="b-brand-video__logo-wrap">
+                            <img class="b-brand-video__logo" src="<?= $arResult['PRINT_PICTURE']['SRC'] ?>" alt="<?= $arResult['NAME'] ?>">
+                        </div>                            
+                        <div class="b-brand-video__video">
+                            <video data-brand-video="true" width="100%" height="100%" poster="/upload/static-brands/preview.jpg" controls="controls" preload="none" muted>
+                                <!-- MP4 for Safari, IE9, iPhone, iPad, Android, and Windows Phone 7 -->
+                                <source type="video/mp4" src="/upload/static-brands/grandin_lamb_video.mp4" />
+                                <!-- WebM/VP8 for Firefox4, Opera, and Chrome -->
+                                <source type="video/webm" src="/upload/static-brands/grandin_lamb_video.webm" />
+                                <!-- Ogg/Vorbis for older Firefox and Opera versions -->
+                                <source type="video/ogg" src="/upload/static-brands/grandin_lamb_video.ogv" />
+                            </video>
+                            <?/*<div class="b-brand-video__video-youtube">
+                                <iframe src="https://www.youtube.com/embed/FNg4Sol7AaA" frameborder="0" allowfullscreen></iframe>
+                            </div>*/?>
+                        </div>
+                    </div>
+                </div>
+
+                <?/*<pre><?print_r($arResult['VIDEO']);?></pre>*/?>
+
+                <? break;
+            case 'SECTIONS':?>
+                <div class="b-brand-products js-brand-products-slider">
+                    <?php  
+                        foreach ($arResult['SECTIONS'] as $item) { ?>
+                            <div class="b-brand-products__item">
+                                <div class="b-brand-products__img">
+                                    <img src="<?= $item[picture] ?>">
+                                </div>
+                                <div class="b-brand-products__title">
+                                    <?= $item['title'] ?>
+                                </div>
+                            </div>
+                        
+                        <? }
+                    ?>
+                </div>
+                <pre><?print_r($arResult['SECTIONS']);?></pre>
+                <? break;
         }
     }
  } ?>
