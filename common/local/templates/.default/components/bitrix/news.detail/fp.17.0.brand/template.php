@@ -110,18 +110,20 @@ if ($arResult['DETAIL_TEXT'] || $arResult['PRINT_PICTURE']) { ?>
                     <?php  
                         foreach ($arResult['SECTIONS'] as $item) { ?>
                             <div class="b-brand-products__item">
-                                <div class="b-brand-products__img">
-                                    <img src="<?= $item[picture] ?>">
-                                </div>
-                                <div class="b-brand-products__title">
-                                    <?= $item['title'] ?>
-                                </div>
+                                <a href="<?= $item['link'] ?>" class="b-brand-products__link">
+                                    <div class="b-brand-products__img">
+                                        <img src="<?= $item[picture] ?>">
+                                    </div>
+                                    <div class="b-brand-products__title b-clipped-text">
+                                        <?= $item['title'] ?>
+                                    </div>
+                                </a>
                             </div>
                         
                         <? }
                     ?>
                 </div>
-                <pre><?print_r($arResult['SECTIONS']);?></pre>
+                <?/*<pre><?print_r($arResult['SECTIONS']);?></pre>*/?>
                 <? break;
         }
     }
