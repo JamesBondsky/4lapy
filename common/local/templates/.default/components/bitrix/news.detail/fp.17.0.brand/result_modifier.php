@@ -132,5 +132,6 @@ if ($arResult['SHOW_BLOCKS']['PRODUCT_CATEGORIES']) {
     $dbFiles = CFile::GetList([], ['@ID' => implode(',', array_keys($files))]);
     while ($file = $dbFiles->Fetch()) {
         $arResult['PRODUCT_CATEGORIES'][$files[$file['ID']]]['image'] = '/' . $uploadDir . '/' . $file['SUBDIR'] . '/' . $file['FILE_NAME'];
+        $arResult['PRODUCT_CATEGORIES'][$files[$file['ID']]]['alt'] = $file['DESCRIPTION'];
     }
 }

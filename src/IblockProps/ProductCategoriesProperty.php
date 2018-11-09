@@ -45,10 +45,12 @@ class ProductCategoriesProperty
         }
 
         $files = $_REQUEST['product_categories_images'];
+        $descriptions = $_REQUEST['product_categories_images_descr'];
         foreach ($files as $setID => $file) {
             if (!empty($file['tmp_name']) && !(empty($file['name']))) {
                 $fileArray = \CFile::MakeFileArray('/upload/tmp' . $file['tmp_name']);
                 $fileArray['name'] = $file['name'];
+                $fileArray['description'] = $descriptions[$setID];
                 foreach ($result as $key => $res) {
                     if ($res['move_id'] == $setID) {
                         $result[$key]['image_id'] = strval(\CFile::SaveFile($fileArray, 'iblock'));
@@ -57,7 +59,21 @@ class ProductCategoriesProperty
                 }
             } elseif ((int)$file == 0) {
                 $fileArray = \CFile::MakeFileArray($file);
+                $fileArray['description'] = $descriptions[$setID];
                 $result[$key]['image_id'] = strval(\CFile::SaveFile($fileArray, 'iblock'));
+            }
+        }
+
+        if (!empty($descriptions)) {
+            foreach ($descriptions as $setID => $descr) {
+                if(!empty($descr)){
+                    foreach ($result as $key => $res) {
+                        if ($res['move_id'] == $setID) {
+                            \CFile::UpdateDesc($result[$key]['image_id'], $descr);
+                            break;
+                        }
+                    }
+                }
             }
         }
 

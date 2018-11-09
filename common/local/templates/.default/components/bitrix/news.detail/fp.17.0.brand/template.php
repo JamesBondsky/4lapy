@@ -109,7 +109,7 @@ if ($arResult['DETAIL_TEXT'] || $arResult['PRINT_PICTURE']) { ?>
                                 <div class="b-brand-products__item">
                                     <div data-brand-product-item="<?= $arItem['filters'] ?>" class="b-brand-products__link js-brand-product-item">
                                         <div class="b-brand-products__img">
-                                            <img src="<?= $arItem['image'] ?>"> <?// echo $arItem['image'] ?>
+                                            <img src="<?= $arItem['image'] ?>" alt="<?= $arItem['alt'] ?>">
                                         </div>
                                         <div class="b-brand-products__title">
                                             <div class="b-brand-products__title-product b-clipped-text">
