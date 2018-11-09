@@ -8,10 +8,11 @@
         list-style: none;
         display: block;
         float: left;
-        width: 142px;
+        width: 250px;
+        height: 529px;
         border: 2px dashed #d3d2d2;
         border-radius: 4px;
-        margin: 1%;
+        margin: 10px;
         cursor: move;
     }
 
@@ -60,11 +61,15 @@
     }
 
     .product-categories-property-item:nth-child(5) {
-        margin-left: 98px;
+        margin-left: 151px;
     }
 
     .input-wrapper {
         margin-bottom: 10px;
+    }
+
+    .input-wrapper:last-child {
+        margin-bottom: 0;
     }
 
     .input-wrapper input {
@@ -73,174 +78,265 @@
         -moz-box-sizing: border-box;
         box-sizing: border-box;
     }
+
+    .modal {
+        background-color: #f5f9f9;
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1000; /* Sit on top */
+        padding-top: 50px; /* Location of the box */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+    }
+
+    .modal-content {
+        margin: auto;
+        display: block;
+        width: 1108px;
+        height: 822px;
+    }
+
+    @keyframes zoom {
+        from {
+            transform: scale(0)
+        }
+        to {
+            transform: scale(1)
+        }
+    }
+
+    .close {
+        position: absolute;
+        top: 15px;
+        right: 35px;
+        color: #000;
+        font-size: 40px;
+        font-weight: bold;
+        transition: 0.3s;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: #bbb;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .product-categories-property-wrapper {
+        margin: 0 auto;
+        width: 1136px;
+        height: 1750px;
+    }
+
 </style>
 <input type="hidden" name="#CONTROL_NAME#" id="sending_field_ProductCategoriesProperty" value='#CONTROL_NAME_VALUE#'>
-<div id="product-categories-property-wrapper">
-    <ul class="product-categories-property-items block__list_words" id="product-categories-property-items">
-        <li class="product-categories-property-item">
-            <div class="input-wrapper">
-                <label for="title">Заголовок</label>
-                <input type="text" name="title" id="title" value="">
-            </div>
-            <div class="input-wrapper">
-                <label for="title">Подзаголовок</label>
-                <input type="text" name="subtitle" id="subtitle" value="">
-            </div>
-            <div class="input-wrapper">
-                <label for="title">Фильтры</label>
-                <input type="text" name="filters" id="filters" value="">
-            </div>
-        </li>
-        <li class="product-categories-property-item">
-            <div class="input-wrapper">
-                <label for="title">Заголовок</label>
-                <input type="text" name="title" id="title" value="">
-            </div>
-            <div class="input-wrapper">
-                <label for="title">Подзаголовок</label>
-                <input type="text" name="subtitle" id="subtitle" value="">
-            </div>
-            <div class="input-wrapper">
-                <label for="title">Фильтры</label>
-                <input type="text" name="filters" id="filters" value="">
-            </div>
-        </li>
-        <li class="product-categories-property-item">
-            <div class="input-wrapper">
-                <label for="title">Заголовок</label>
-                <input type="text" name="title" id="title" value="">
-            </div>
-            <div class="input-wrapper">
-                <label for="title">Подзаголовок</label>
-                <input type="text" name="subtitle" id="subtitle" value="">
-            </div>
-            <div class="input-wrapper">
-                <label for="title">Фильтры</label>
-                <input type="text" name="filters" id="filters" value="">
-            </div>
-        </li>
-        <li class="product-categories-property-item">
-            <div class="input-wrapper">
-                <label for="title">Заголовок</label>
-                <input type="text" name="title" id="title" value="">
-            </div>
-            <div class="input-wrapper">
-                <label for="title">Подзаголовок</label>
-                <input type="text" name="subtitle" id="subtitle" value="">
-            </div>
-            <div class="input-wrapper">
-                <label for="title">Фильтры</label>
-                <input type="text" name="filters" id="filters" value="">
-            </div>
-        </li>
-        <li class="product-categories-property-item">
-            <div class="input-wrapper">
-                <label for="title">Заголовок</label>
-                <input type="text" name="title" id="title" value="">
-            </div>
-            <div class="input-wrapper">
-                <label for="title">Подзаголовок</label>
-                <input type="text" name="subtitle" id="subtitle" value="">
-            </div>
-            <div class="input-wrapper">
-                <label for="title">Фильтры</label>
-                <input type="text" name="filters" id="filters" value="">
-            </div>
-        </li>
-        <li class="product-categories-property-item">
-            <div class="input-wrapper">
-                <label for="title">Заголовок</label>
-                <input type="text" name="title" id="title" value="">
-            </div>
-            <div class="input-wrapper">
-                <label for="title">Подзаголовок</label>
-                <input type="text" name="subtitle" id="subtitle" value="">
-            </div>
-            <div class="input-wrapper">
-                <label for="title">Фильтры</label>
-                <input type="text" name="filters" id="filters" value="">
-            </div>
-        </li>
-        <li class="product-categories-property-item">
-            <div class="input-wrapper">
-                <label for="title">Заголовок</label>
-                <input type="text" name="title" id="title" value="">
-            </div>
-            <div class="input-wrapper">
-                <label for="title">Подзаголовок</label>
-                <input type="text" name="subtitle" id="subtitle" value="">
-            </div>
-            <div class="input-wrapper">
-                <label for="title">Фильтры</label>
-                <input type="text" name="filters" id="filters" value="">
-            </div>
-        </li>
-        <li class="product-categories-property-item">
-            <div class="input-wrapper">
-                <label for="title">Заголовок</label>
-                <input type="text" name="title" id="title" value="">
-            </div>
-            <div class="input-wrapper">
-                <label for="title">Подзаголовок</label>
-                <input type="text" name="subtitle" id="subtitle" value="">
-            </div>
-            <div class="input-wrapper">
-                <label for="title">Фильтры</label>
-                <input type="text" name="filters" id="filters" value="">
-            </div>
-        </li>
-        <li class="product-categories-property-item">
-            <div class="input-wrapper">
-                <label for="title">Заголовок</label>
-                <input type="text" name="title" id="title" value="">
-            </div>
-            <div class="input-wrapper">
-                <label for="title">Подзаголовок</label>
-                <input type="text" name="subtitle" id="subtitle" value="">
-            </div>
-            <div class="input-wrapper">
-                <label for="title">Фильтры</label>
-                <input type="text" name="filters" id="filters" value="">
-            </div>
-        </li>
-        <li class="product-categories-property-item">
-            <div class="input-wrapper">
-                <label for="title">Заголовок</label>
-                <input type="text" name="title" id="title" value="">
-            </div>
-            <div class="input-wrapper">
-                <label for="title">Подзаголовок</label>
-                <input type="text" name="subtitle" id="subtitle" value="">
-            </div>
-            <div class="input-wrapper">
-                <label for="title">Фильтры</label>
-                <input type="text" name="filters" id="filters" value="">
-            </div>
-        </li>
-        <li class="product-categories-property-item">
-            <div class="input-wrapper">
-                <label for="title">Заголовок</label>
-                <input type="text" name="title" id="title" value="">
-            </div>
-            <div class="input-wrapper">
-                <label for="title">Подзаголовок</label>
-                <input type="text" name="subtitle" id="subtitle" value="">
-            </div>
-            <div class="input-wrapper">
-                <label for="title">Фильтры</label>
-                <input type="text" name="filters" id="filters" value="">
-            </div>
-        </li>
-    </ul>
+<a href="javascript:void(0);" id="open-modal">Настроить</a>
+<div id="modal" class="modal">
+    <span class="close" id="close">&times;</span>
+    <div id="product-categories-property-wrapper" class="product-categories-property-wrapper">
+        <ul class="product-categories-property-items block__list_words" id="product-categories-property-items">
+            <li class="product-categories-property-item">
+                <div class="input-wrapper">
+                    <label for="title">Заголовок</label>
+                    <input type="text" name="title" id="title" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Подзаголовок</label>
+                    <input type="text" name="subtitle" id="subtitle" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Фильтры</label>
+                    <input type="text" name="filters" id="filters" value="">
+                </div>
+                <div class="input-wrapper">
+                    #FILE_0#
+                </div>
+            </li>
+            <li class="product-categories-property-item">
+                <div class="input-wrapper">
+                    <label for="title">Заголовок</label>
+                    <input type="text" name="title" id="title" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Подзаголовок</label>
+                    <input type="text" name="subtitle" id="subtitle" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Фильтры</label>
+                    <input type="text" name="filters" id="filters" value="">
+                </div>
+                <div class="input-wrapper">
+                    #FILE_1#
+                </div>
+            </li>
+            <li class="product-categories-property-item">
+                <div class="input-wrapper">
+                    <label for="title">Заголовок</label>
+                    <input type="text" name="title" id="title" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Подзаголовок</label>
+                    <input type="text" name="subtitle" id="subtitle" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Фильтры</label>
+                    <input type="text" name="filters" id="filters" value="">
+                </div>
+                <div class="input-wrapper">
+                    #FILE_2#
+                </div>
+            </li>
+            <li class="product-categories-property-item">
+                <div class="input-wrapper">
+                    <label for="title">Заголовок</label>
+                    <input type="text" name="title" id="title" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Подзаголовок</label>
+                    <input type="text" name="subtitle" id="subtitle" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Фильтры</label>
+                    <input type="text" name="filters" id="filters" value="">
+                </div>
+                <div class="input-wrapper">
+                    #FILE_3#
+                </div>
+            </li>
+            <li class="product-categories-property-item">
+                <div class="input-wrapper">
+                    <label for="title">Заголовок</label>
+                    <input type="text" name="title" id="title" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Подзаголовок</label>
+                    <input type="text" name="subtitle" id="subtitle" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Фильтры</label>
+                    <input type="text" name="filters" id="filters" value="">
+                </div>
+                <div class="input-wrapper">
+                    #FILE_4#
+                </div>
+            </li>
+            <li class="product-categories-property-item">
+                <div class="input-wrapper">
+                    <label for="title">Заголовок</label>
+                    <input type="text" name="title" id="title" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Подзаголовок</label>
+                    <input type="text" name="subtitle" id="subtitle" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Фильтры</label>
+                    <input type="text" name="filters" id="filters" value="">
+                </div>
+                <div class="input-wrapper">
+                    #FILE_5#
+                </div>
+            </li>
+            <li class="product-categories-property-item">
+                <div class="input-wrapper">
+                    <label for="title">Заголовок</label>
+                    <input type="text" name="title" id="title" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Подзаголовок</label>
+                    <input type="text" name="subtitle" id="subtitle" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Фильтры</label>
+                    <input type="text" name="filters" id="filters" value="">
+                </div>
+                <div class="input-wrapper">
+                    #FILE_6#
+                </div>
+            </li>
+            <li class="product-categories-property-item">
+                <div class="input-wrapper">
+                    <label for="title">Заголовок</label>
+                    <input type="text" name="title" id="title" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Подзаголовок</label>
+                    <input type="text" name="subtitle" id="subtitle" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Фильтры</label>
+                    <input type="text" name="filters" id="filters" value="">
+                </div>
+                <div class="input-wrapper">
+                    #FILE_7#
+                </div>
+            </li>
+            <li class="product-categories-property-item">
+                <div class="input-wrapper">
+                    <label for="title">Заголовок</label>
+                    <input type="text" name="title" id="title" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Подзаголовок</label>
+                    <input type="text" name="subtitle" id="subtitle" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Фильтры</label>
+                    <input type="text" name="filters" id="filters" value="">
+                </div>
+                <div class="input-wrapper">
+                    #FILE_8#
+                </div>
+            </li>
+            <li class="product-categories-property-item">
+                <div class="input-wrapper">
+                    <label for="title">Заголовок</label>
+                    <input type="text" name="title" id="title" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Подзаголовок</label>
+                    <input type="text" name="subtitle" id="subtitle" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Фильтры</label>
+                    <input type="text" name="filters" id="filters" value="">
+                </div>
+                <div class="input-wrapper">
+                    #FILE_9#
+                </div>
+            </li>
+            <li class="product-categories-property-item">
+                <div class="input-wrapper">
+                    <label for="title">Заголовок</label>
+                    <input type="text" name="title" id="title" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Подзаголовок</label>
+                    <input type="text" name="subtitle" id="subtitle" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Фильтры</label>
+                    <input type="text" name="filters" id="filters" value="">
+                </div>
+                <div class="input-wrapper">
+                    #FILE_10#
+                </div>
+            </li>
+        </ul>
+    </div>
 </div>
-
 <script>
     $(document).ready(function () {
         let parentWrapper = $('#product-categories-property-wrapper'),
             switcherItemsWrapper = $('#product-categories-property-items'),
             inputItems = switcherItemsWrapper.find('input'),
             sortableEl = switcherItemsWrapper[0],
-            sendingField = $('#sending_field_ProductCategoriesProperty');
+            sendingField = $('#sending_field_ProductCategoriesProperty'),
+            modal = $('#modal'),
+            modalCloseBtn = modal.find('#close');
         function init() {
             //sortable init
             Sortable.create(sortableEl, {
@@ -260,6 +356,17 @@
         inputItems.change(function () {
             setSendingField();
         });
+        $('#open-modal').click(function (e) {
+            modal.show();
+        });
+        $(document).keyup(function (e) {
+            if (e.key === "Escape") {
+                modal.hide();
+            }
+        });
+        modalCloseBtn.click(function () {
+            modal.hide();
+        });
         function setSendingField() {
             let result = {},
                 i = 0;
@@ -268,6 +375,7 @@
                 itemArr['title'] = $(liItem).find('input[name=title]').val();
                 itemArr['subtitle'] = $(liItem).find('input[name=subtitle]').val();
                 itemArr['filters'] = $(liItem).find('input[name=filters]').val();
+                itemArr['image_id'] = $(liItem).find('.adm-fileinput-wrapper .adm-fileinput-item-preview input').val();
                 result[i] = itemArr;
                 i++;
             });

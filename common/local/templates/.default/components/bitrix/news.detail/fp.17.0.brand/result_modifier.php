@@ -120,5 +120,17 @@ if ($arResult['SHOW_BLOCKS']['VIDEO_MP4']) {
 }
 
 if ($arResult['SHOW_BLOCKS']['PRODUCT_CATEGORIES']) {
-    $arResult['PRODUCT_CATEGORIES'] = json_decode(htmlspecialcharsBack($arResult['DISPLAY_PROPERTIES']['PRODUCT_CATEGORIES']['VALUE']), true);
+    $arResult['PRODUCT_CATEGORIES'] = json_decode(htmlspecialcharsBack($arResult['DISPLAY_PROPERTIES']['PRODUCT_CATEGORIES']['VALUE']),
+        true);
+    $files = [];
+    foreach ($arResult['PRODUCT_CATEGORIES'] as $key => &$productCategory) {
+        if (isset($productCategory['image_id'])) {
+            $files[$productCategory['image_id']] = $key;
+            unset($arResult['PRODUCT_CATEGORIES'][$key]['image_id']);
+        }
+    }
+    $dbFiles = CFile::GetList([], ['@ID' => implode(',', array_keys($files))]);
+    while ($file = $dbFiles->Fetch()) {
+        $arResult['PRODUCT_CATEGORIES'][$files[$file['ID']]]['image'] = '/' . $uploadDir . '/' . $file['SUBDIR'] . '/' . $file['FILE_NAME'];
+    }
 }
