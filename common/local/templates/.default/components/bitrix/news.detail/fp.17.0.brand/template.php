@@ -78,16 +78,16 @@ if ($arResult['DETAIL_TEXT'] || $arResult['PRINT_PICTURE']) { ?>
                 <? break;
             case 'VIDEO_MP4': ?>
                 <div class="b-brand-video">
-                    <?if (!empty($arResult['VIDEO']['TITLE']) || !empty($arResult['VIDEO']['DESCRIPTION'])) {?>
-                        <div class="b-brand-video__info">
-                            <?if (!empty($arResult['VIDEO']['TITLE'])) { ?>
-                                <div class="b-brand-video__title"><?=$arResult['VIDEO']['TITLE']?></div>
-                            <? } ?>
-                            <?if (!empty($arResult['VIDEO']['DESCRIPTION'])) { ?>
-                                <div class="b-brand-video__descr"><?=$arResult['VIDEO']['DESCRIPTION']?></div>
-                            <? } ?>
-                        </div>
-                    <? } ?>
+                        <?if (!empty($arResult['VIDEO']['TITLE']) || !empty($arResult['VIDEO']['DESCRIPTION'])) {?>
+                            <div class="b-brand-video__info">
+                                <?if (!empty($arResult['VIDEO']['TITLE'])) { ?>
+                                    <div class="b-brand-video__title"><?=$arResult['VIDEO']['TITLE']?></div>
+                                <? } ?>
+                                <?if (!empty($arResult['VIDEO']['DESCRIPTION'])) { ?>
+                                    <div class="b-brand-video__descr"><?=$arResult['VIDEO']['DESCRIPTION']?></div>
+                                <? } ?>
+                            </div>
+                        <? } ?>
                     <div class="b-brand-video__video-wrap">
                         <div class="b-brand-video__video">
                             <video data-brand-video="true" width="100%" height="100%" <?if (!empty($arResult['VIDEO']['PREVIEW_PICTURE'])) {?>poster="<?=$arResult['VIDEO']['PREVIEW_PICTURE']?>"<? } ?> controls="controls" preload="none" muted>
@@ -101,25 +101,29 @@ if ($arResult['DETAIL_TEXT'] || $arResult['PRINT_PICTURE']) { ?>
                 <? break;
             case 'PRODUCT_CATEGORIES':
                 ?>
-                <div class="b-brand-products js-brand-products-slider">
-                    <?php
-                    foreach ($arResult['PRODUCT_CATEGORIES'] as $arItem) { ?>
-                        <div class="b-brand-products__item">
-                            <a href="<?= $arItem['filters'] ?>" class="b-brand-products__link">
-                                <div class="b-brand-products__img">
-                                    <img src="/upload/static-brands/brand-item2.png"> <?// echo $arItem['image'] ?>
-                                </div>
-                                <div class="b-brand-products__title b-clipped-text">
-                                    <?= $arItem['title'] ?>
-                                </div>
-                                <div class="b-brand-products__subtitle b-clipped-text">
-                                    <?= $arItem['subtitle'] ?>
-                                </div>
-                            </a>
-                        </div>
+                <div class="b-brand-products">
+                    <div class="b-brand-products__list js-brand-products-slider">
+                        <?php
+                        foreach ($arResult['PRODUCT_CATEGORIES'] as $arItem) { ?>
+                            <div class="b-brand-products__item">
+                                <a href="<?= $arItem['filters'] ?>" class="b-brand-products__link">
+                                    <div class="b-brand-products__img">
+                                        <img src="/upload/static-brands/brand-item2.png"> <?// echo $arItem['image'] ?>
+                                    </div>
+                                    <div class="b-brand-products__title">
+                                        <div class="b-brand-products__title-product b-clipped-text">
+                                            <?= $arItem['title'] ?>
+                                        </div>
+                                        <div class="b-brand-products__title-type">
+                                            <?= $arItem['subtitle'] ?>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
 
-                    <? }
-                    ?>
+                        <? }
+                        ?>
+                    </div>
                 </div>
                 <? break;
         }
