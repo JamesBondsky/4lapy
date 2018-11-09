@@ -88,7 +88,7 @@ if ($arResult['DETAIL_TEXT'] || $arResult['PRINT_PICTURE']) { ?>
                             <? } ?>
                         </div>
                     <? } ?>
-                    <div class="b-brand-video__right-col">
+                    <div class="b-brand-video__video-wrap">
                         <div class="b-brand-video__video">
                             <video data-brand-video="true" width="100%" height="100%" <?if (!empty($arResult['VIDEO']['PREVIEW_PICTURE'])) {?>poster="<?=$arResult['VIDEO']['PREVIEW_PICTURE']?>"<? } ?> controls="controls" preload="none" muted>
                                 <source type="video/mp4" src="<?=$arResult['VIDEO']['VIDEOS']['VIDEO_MP4']?>"/>
@@ -107,7 +107,7 @@ if ($arResult['DETAIL_TEXT'] || $arResult['PRINT_PICTURE']) { ?>
                         <div class="b-brand-products__item">
                             <a href="<?= $arItem['filters'] ?>" class="b-brand-products__link">
                                 <div class="b-brand-products__img">
-                                    <img src="/upload/iblock/000/000ede0083800d79e881c0a98af036d9.jpg"> <?// echo $arItem['image'] ?>
+                                    <img src="/upload/static-brands/brand-item2.png"> <?// echo $arItem['image'] ?>
                                 </div>
                                 <div class="b-brand-products__title b-clipped-text">
                                     <?= $arItem['title'] ?>
