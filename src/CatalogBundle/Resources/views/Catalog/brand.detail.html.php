@@ -53,6 +53,8 @@ if (!$isAjax) { ?>
                     'DETAIL_PICTURE',
                 ],
                 'PROPERTY_CODE' => [
+                    'BLOCKS_SHOW_SWITCHER',
+                    'PRODUCT_CATEGORIES',
                     'BANNER_IMAGES_DESKTOP',
                     'BANNER_IMAGES_NOTEBOOK',
                     'BANNER_IMAGES_MOBILE',

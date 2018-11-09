@@ -103,14 +103,17 @@ if ($arResult['DETAIL_TEXT'] || $arResult['PRINT_PICTURE']) { ?>
                 ?>
                 <div class="b-brand-products js-brand-products-slider">
                     <?php
-                    foreach ($arResult['SECTIONS'] as $item) { ?>
+                    foreach ($arResult['PRODUCT_CATEGORIES'] as $arItem) { ?>
                         <div class="b-brand-products__item">
-                            <a href="<?= $item['link'] ?>" class="b-brand-products__link">
+                            <a href="<?= $arItem['filters'] ?>" class="b-brand-products__link">
                                 <div class="b-brand-products__img">
-                                    <img src="<?= $item[picture] ?>">
+                                    <img src="/upload/iblock/000/000ede0083800d79e881c0a98af036d9.jpg"> <?// echo $arItem['image'] ?>
                                 </div>
                                 <div class="b-brand-products__title b-clipped-text">
-                                    <?= $item['title'] ?>
+                                    <?= $arItem['title'] ?>
+                                </div>
+                                <div class="b-brand-products__subtitle b-clipped-text">
+                                    <?= $arItem['subtitle'] ?>
                                 </div>
                             </a>
                         </div>

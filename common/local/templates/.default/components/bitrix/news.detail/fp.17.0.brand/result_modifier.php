@@ -55,8 +55,8 @@ $this->__component->SetResultCacheKeys(
     )
 );
 
-if (!empty($arResult['PROPERTIES']['BLOCKS_SHOW_SWITCHER']['~VALUE'])) {
-    $arResult['SHOW_BLOCKS'] = json_decode($arResult['PROPERTIES']['BLOCKS_SHOW_SWITCHER']['~VALUE'], true);
+if (!empty($arResult['DISPLAY_PROPERTIES']['BLOCKS_SHOW_SWITCHER']['VALUE'])) {
+    $arResult['SHOW_BLOCKS'] = json_decode(htmlspecialcharsBack($arResult['DISPLAY_PROPERTIES']['BLOCKS_SHOW_SWITCHER']['VALUE']), true);
 } else {
     $arResult['SHOW_BLOCKS'] = [
         'BANNER_IMAGES_DESKTOP' => false,
@@ -118,35 +118,7 @@ if ($arResult['SHOW_BLOCKS']['VIDEO_MP4']) {
         $arResult['VIDEO']['PREVIEW_PICTURE'] = CFile::GetPath($arResult['DISPLAY_PROPERTIES']['VIDEO_PREVIEW_PICTURE']['VALUE']);
     }
 }
-/*
-if ($arResult['SHOW_BLOCKS']['SECTIONS']) {
-    $files = [];
-    $arFilter = [
-        'IBLOCK_TYPE' => IblockType::CATALOG,
-        'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
-        'ID' => $arResult['PROPERTIES']['SECTIONS']['VALUE']
-    ];
-    $dbSections = CIBlockSection::GetList(null, $arFilter);
-    while ($section = $dbSections->GetNext()) {
-        $arResult['SECTIONS'][$section['ID']] = [
-            'title' => $section['NAME'],
-            'link' => $section['SECTION_PAGE_URL'],
-            'picture' => ''
-        ];
-        if ($section['PICTURE']) {
-            $files[$section['ID']] = $section['PICTURE'];
-        } elseif ($section['DETAIL_PICTURE']) {
-            $files[$section['ID']] = $section['DETAIL_PICTURE'];
-        }
-    }
 
-    $sectionFiles = [];
-    $dbFiles = CFile::GetList([], ['@ID' => implode(',', $files)]);
-    while ($file = $dbFiles->Fetch()) {
-        $sectionFiles[$file['ID']] = '/' . $uploadDir . '/' . $file['SUBDIR'] . '/' . $file['FILE_NAME'];
-    }
-    foreach ($arResult['SECTIONS'] as $sectionID => &$section) {
-        $section['picture'] = $sectionFiles[$files[$sectionID]];
-    }
-
+if ($arResult['SHOW_BLOCKS']['PRODUCT_CATEGORIES']) {
+    $arResult['PRODUCT_CATEGORIES'] = json_decode(htmlspecialcharsBack($arResult['DISPLAY_PROPERTIES']['PRODUCT_CATEGORIES']['VALUE']), true);
 }
