@@ -13,12 +13,32 @@ use Bitrix\Main\Application;use Bitrix\Main\Page\Asset;use FourPaws\App\Applicat
 /** @var MainTemplate $template */
 $template = MainTemplate::getInstance(Application::getInstance()
     ->getContext());
-$markup = PawsApplication::markup(); ?><!DOCTYPE html>
+$markup = PawsApplication::markup(); 
+
+/**
+ * @var $sViewportCookie - Значение куки отвечающе за переключение вьпорта с мобильного на десктоп.
+ */
+$sViewportCookie = $_COOKIE['viewport'] ?? null;
+?>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
+    <? /** onesignal.com manifest.json, must appear before any other link <link rel="manifest" ...> */?>
+    <? if ($USER->IsAdmin()) { /** [todo] remove after production tests */?>
+        <? if (getenv('ONESIGNAL_API_KEY')) {?>
+            <link rel="manifest" href="/manifest.json">
+        <?}?>
+    <?}?>
+
     <base href="<?= PawsApplication::getInstance()
         ->getSiteDomain() ?>">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimal-ui, user-scalable=no">
+    <?
+        if ($sViewportCookie == 'desktop') {
+            echo "<meta name=\"viewport\" content=\"width=1300px\">";
+        } else {
+            echo "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=1, minimal-ui, user-scalable=no\">";
+        }
+    ?>
     <meta name="skype_toolbar" content="skype_toolbar_parser_compatible">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="google" content="notranslate">
@@ -33,13 +53,33 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
         window.dataLayer = window.dataLayer || [];
     </script>
     <?php $APPLICATION->ShowHead(); ?>
-    <title><?php $APPLICATION->ShowTitle(false) ?></title>
+    <title><?php $APPLICATION->ShowTitle() ?></title>
     <?php
     $asset = Asset::getInstance();
     $asset->addCss($markup->getCssFile());
     //$asset->addJs('https://api-maps.yandex.ru/2.1.68/?lang=ru_RU');
     $asset->addJs('/api-maps.yandex.ru.js');
-    $asset->addJs('https://www.google.com/recaptcha/api.js?hl=ru'); ?>
+    $asset->addJs('https://www.google.com/recaptcha/api.js?hl=ru');
+
+    /** onesignal.com */
+    if ($USER->IsAdmin()) { /** [todo] remove after production tests */
+        if (getenv('ONESIGNAL_API_KEY')) {
+            $asset->addString('<script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>');
+            $asset->addString('
+                <script>
+                  var OneSignal = window.OneSignal || [];
+                  OneSignal.push(function() {
+                    OneSignal.init({
+                      appId: \''.getenv('ONESIGNAL_API_KEY').'\',
+                      autoRegister: true
+                    });
+                  });
+                </script>
+            ');
+        }
+    }
+
+    ?>
 
     <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_header.php'; ?>
 </head>
@@ -155,6 +195,8 @@ $markup = PawsApplication::markup(); ?><!DOCTYPE html>
  */
 $APPLICATION->ShowViewContent('header_dropdown_menu'); ?>
 <div class="b-page-wrapper <?= $template->getWrapperClass() ?> js-this-scroll">
+    <?php require_once __DIR__ . '/blocks/header/social_bar.php' ?>
+
     <?php if ($template->hasMainWrapper()) { ?>
     <main class="b-wrapper<?= $template->getIndexMainClass() ?>" role="main">
         <?php if ($template->hasHeaderPublicationListContainer()) { ?>

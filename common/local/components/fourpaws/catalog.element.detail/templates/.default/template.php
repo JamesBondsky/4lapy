@@ -258,14 +258,22 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                 </li>
                 <?php if (!empty($currentOffer->getFlavourCombination())) {
                     $unionOffers = $component->getOffersByUnion('flavour', $currentOffer->getFlavourCombination());
-                    if (!$unionOffers->isEmpty()) { ?>
+                    if (!$unionOffers->isEmpty()) {
+
+                        $unionOffersSort = [];
+                        foreach ($unionOffers as $unionOffer) {
+                            $unionOffersSort[$unionOffer->getFlavourWithWeight()] = $unionOffer;
+                        }
+                        ksort($unionOffersSort);
+
+                        ?>
                         <li class="b-product-information__item">
                             <div class="b-product-information__title-info">Вкус</div>
                             <div class="b-product-information__value b-product-information__value--select">
                                 <div class="b-select b-select--product">
                                     <select class="b-select__block b-select__block--product js-select-link">
                                         <?php /** @var Offer $unionOffer */
-                                        foreach ($unionOffers as $unionOffer) {
+                                        foreach ($unionOffersSort as $unionOffer) {
                                             ?>
                                             <option value="<?= $unionOffer->getDetailPageUrl() ?>" <?= $unionOffer->getId() === $currentOffer->getId() ? ' selected' : '' ?>>
                                                 <?= $unionOffer->getFlavourWithWeight()?>
@@ -286,6 +294,13 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                     if ($continue) {
                         $unionOffers = $component->getOffersByUnion('color', $currentOffer->getColourCombination());
                         if (!$unionOffers->isEmpty()) {
+
+                            $unionOffersSort = [];
+                            foreach ($unionOffers as $unionOffer) {
+                                $unionOffersSort[$unionOffer->getName()] = $unionOffer;
+                            }
+                            ksort($unionOffersSort);
+
                             ?>
                             <li class="b-product-information__item">
                                 <div class="b-product-information__title-info">Цвет
@@ -294,7 +309,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                                     <div class="b-select b-select--product">
                                         <select class="b-select__block b-select__block--product js-select-link">
                                             <?php /** @var Offer $unionOffer */
-                                            foreach ($unionOffers as $unionOffer) {
+                                            foreach ($unionOffersSort as $unionOffer) {
                                                 ?>
                                                 <option value="<?= $unionOffer->getDetailPageUrl() ?>" <?= $unionOffer->getId() === $currentOffer->getId() ? ' selected' : '' ?>>
                                                     <?= $unionOffer->getName() ?>

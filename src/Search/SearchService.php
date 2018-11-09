@@ -111,12 +111,12 @@ class SearchService implements LoggerAwareInterface
                ->setFrom($navigation->getFrom())
                ->setSize($navigation->getSize())
                ->setSort($sorting->getRule())
-               ->setParam('query', $this->getFullQueryRule($filters, $searchString));
+               ->setParam('query', $this->getFullQueryRule($filters, $searchString))
+               ->setHighlight(['fields' => ['offers.XML_ID' => (object)[]]]);
 
         $this->getAggsHelper()->setAggs($search->getQuery(), $filters);
 
         $resultSet = $search->search();
-
         // если задана строка поиска и не найдено совпадений, то пробуем в другой раскладке
         if ($searchString && !$resultSet->getTotalHits()) {
             $from = preg_match('/[ЁёА-я]/u', $searchString) ? 'ru' : 'en';

@@ -5,6 +5,10 @@ use FourPaws\CatalogBundle\Dto\RootCategoryRequest;
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include.php';
 
+$APPLICATION->SetPageProperty('title', 'Каталог товаров для животных зоомагазина Четыре Лапы');
+$APPLICATION->SetPageProperty('description', 'Каталог товаров');
+$APPLICATION->SetTitle("Каталог товаров для животных зоомагазина Четыре Лапы");
+
 /**
  * @todo
  *

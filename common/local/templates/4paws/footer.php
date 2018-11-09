@@ -13,6 +13,11 @@ use FourPaws\App\Application as PawsApplication;
 use FourPaws\App\MainTemplate;
 use FourPaws\Decorators\SvgDecorator;
 
+/**
+ * @var $sViewportCookie - Значение куки отвечающе за переключение вьпорта с мобильного на десктоп.
+ */
+$sViewportCookie = $_COOKIE['viewport'] ?? null;
+
 $markup = PawsApplication::markup();
 /** @var MainTemplate $template */
 if (!isset($template) || !($template instanceof MainTemplate)) {
@@ -54,7 +59,8 @@ if ($template->hasMainWrapper()) {
     <?php include __DIR__ . '/blocks/preloader.php'; ?>
     </main>
 <?php } ?>
-<footer class="b-footer <?= $template->getFooterClass() ?>">
+<?php require_once __DIR__ . '/blocks/footer/change_viewport.php'; ?>
+<footer class="b-footer js-main-footer <?= $template->getFooterClass() ?>">
     <?php if (!$template->hasShortHeaderFooter()) { ?>
         <div class="b-footer__communication">
             <div class="b-container">
@@ -107,8 +113,18 @@ if ($template->hasMainWrapper()) {
                 <div class="b-footer__column">
                     <?php require_once __DIR__ . '/blocks/footer/copyright.php' ?>
                 </div>
-                <div class="b-footer__column b-footer__column--small">
-                    <?php require_once __DIR__ . '/blocks/footer/creator.php' ?>
+                <div class="b-footer__column 
+                            b-footer__column--small 
+                            b-footer__column--change-viewport 
+                            <?= ($sViewportCookie === 'mobile')||($sViewportCookie === 'desktop') ? 'active' : '' ?>"
+                            data-footer-links-change-viewport="true">
+
+                    <div class="link-toggle-view <?= $sViewportCookie === 'desktop' ? 'active' : '' ?>" data-change-viewport-mode='desktop' data-type="mobile">
+                        Перейти в мобильную версию
+                    </div>
+                    <div class="link-toggle-view <?= $sViewportCookie === 'mobile' ? 'active' : '' ?>" data-change-viewport-mode='mobile' data-type="desktop">
+                        Перейти в полноэкранный режим
+                    </div>
                 </div>
             </div>
         </div>
