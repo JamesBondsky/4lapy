@@ -82,12 +82,9 @@ if ($arResult['DETAIL_TEXT'] || $arResult['PRINT_PICTURE']) { ?>
                             <?/*= $arResult['VIDEO']['description']['TEXT'] */?>
                         </div>
                     </div>
-                    <div class="b-brand-video__right-col">
-                        <div class="b-brand-video__logo-wrap">
-                            <img class="b-brand-video__logo" src="<?= $arResult['PRINT_PICTURE']['SRC'] ?>" alt="<?= $arResult['NAME'] ?>">
-                        </div>                            
+                    <div class="b-brand-video__video-wrap">
                         <div class="b-brand-video__video">
-                            <video data-brand-video="true" width="100%" height="100%" poster="/upload/static-brands/preview.jpg" controls="controls" preload="none" muted>
+                            <video data-brand-video="true" width="100%" height="100%" poster="/upload/static-brands/preview.jpg?v=1" controls="controls" preload="none" muted>
                                 <!-- MP4 for Safari, IE9, iPhone, iPad, Android, and Windows Phone 7 -->
                                 <source type="video/mp4" src="/upload/static-brands/grandin_lamb_video.mp4" />
                                 <!-- WebM/VP8 for Firefox4, Opera, and Chrome -->
@@ -106,23 +103,145 @@ if ($arResult['DETAIL_TEXT'] || $arResult['PRINT_PICTURE']) { ?>
 
                 <? break;
             case 'SECTIONS':?>
-                <div class="b-brand-products js-brand-products-slider">
-                    <?php  
-                        foreach ($arResult['SECTIONS'] as $item) { ?>
-                            <div class="b-brand-products__item">
-                                <a href="<?= $item['link'] ?>" class="b-brand-products__link">
-                                    <div class="b-brand-products__img">
-                                        <img src="<?= $item[picture] ?>">
-                                    </div>
-                                    <div class="b-brand-products__title b-clipped-text">
-                                        <?= $item['title'] ?>
-                                    </div>
-                                </a>
-                            </div>
-                        
-                        <? }
-                    ?>
-                </div>
+            	<div class="b-brand-products">
+	                <div class="b-brand-products__list js-brand-products-slider">
+	                    <?/*php  
+	                        foreach ($arResult['SECTIONS'] as $item) { ?>
+	                            <div class="b-brand-products__item">
+	                                <a href="<?= $item['link'] ?>" class="b-brand-products__link">
+	                                    <div class="b-brand-products__img">
+	                                        <img src="<?= $item[picture] ?>">
+	                                    </div>
+	                                    <div class="b-brand-products__title">
+	                                        <?= $item['title'] ?>
+	                                    </div>
+	                                </a>
+	                            </div>
+	                        
+	                        <? } */?>
+	                    <div class="b-brand-products__item">
+	                        <a href="#" class="b-brand-products__link">
+	                            <div class="b-brand-products__img">
+	                                <img src="/upload/static-brands/brand-item2.png">
+	                            </div>
+	                            <div class="b-brand-products__title">
+	                                <div class="b-brand-products__title-product b-clipped-text">Корм</div>
+	                                <div class="b-brand-products__title-type">Для щенков</div>
+	                            </div>
+	                        </a>
+	                    </div>
+	                    <div class="b-brand-products__item">
+	                        <a href="#" class="b-brand-products__link">
+	                            <div class="b-brand-products__img">
+	                                <img src="/upload/static-brands/brand-item3.png">
+	                            </div>
+	                            <div class="b-brand-products__title">
+	                                <div class="b-brand-products__title-product b-clipped-text">Корм для собак</div>
+	                                <div class="b-brand-products__title-type">Средних пород</div>
+	                            </div>
+	                        </a>
+	                    </div>
+	                    <div class="b-brand-products__item">
+	                        <a href="#" class="b-brand-products__link">
+	                            <div class="b-brand-products__img">
+	                                <img src="/upload/static-brands/brand-item1.png">
+	                            </div>
+	                            <div class="b-brand-products__title">
+	                                <div class="b-brand-products__title-product b-clipped-text">Корм для собак</div>
+	                                <div class="b-brand-products__title-type">Мелких пород</div>
+	                            </div>
+	                        </a>
+	                    </div>
+	                    <div class="b-brand-products__item">
+	                        <a href="#" class="b-brand-products__link">
+	                            <div class="b-brand-products__img">
+	                                <img src="/upload/static-brands/brand-item4.png">
+	                            </div>
+	                            <div class="b-brand-products__title">
+	                                <div class="b-brand-products__title-product b-clipped-text">Корм для собак</div>
+	                                <div class="b-brand-products__title-type">Крупных пород</div>
+	                            </div>
+	                        </a>
+	                    </div>
+	                    <div class="b-brand-products__item">
+	                        <a href="#" class="b-brand-products__link">
+	                            <div class="b-brand-products__img">
+	                                <img src="/upload/static-brands/brand-item5.png">
+	                            </div>
+	                            <div class="b-brand-products__title">
+	                                <div class="b-brand-products__title-product b-clipped-text">Корм для кошек</div>
+	                                <div class="b-brand-products__title-type">Средних пород</div>
+	                            </div>
+	                        </a>
+	                    </div>
+	                    <div class="b-brand-products__item">
+	                        <a href="#" class="b-brand-products__link">
+	                            <div class="b-brand-products__img">
+	                                <img src="/upload/static-brands/brand-item6.png">
+	                            </div>
+	                            <div class="b-brand-products__title">
+	                                <div class="b-brand-products__title-product b-clipped-text">Корм для кошек</div>
+	                                <div class="b-brand-products__title-type">Особый</div>
+	                            </div>
+	                        </a>
+	                    </div>
+	                    <div class="b-brand-products__item">
+	                        <a href="#" class="b-brand-products__link">
+	                            <div class="b-brand-products__img">
+	                                <img src="/upload/static-brands/brand-item7.png">
+	                            </div>
+	                            <div class="b-brand-products__title">
+	                                <div class="b-brand-products__title-product b-clipped-text">Корм для кошек</div>
+	                                <div class="b-brand-products__title-type">Мелких пород</div>
+	                            </div>
+	                        </a>
+	                    </div>
+	                    <div class="b-brand-products__item">
+	                        <a href="#" class="b-brand-products__link">
+	                            <div class="b-brand-products__img">
+	                                <img src="/upload/static-brands/brand-item7.png">
+	                            </div>
+	                            <div class="b-brand-products__title">
+	                                <div class="b-brand-products__title-product b-clipped-text">Корм для кошек</div>
+	                                <div class="b-brand-products__title-type">Мелких пород</div>
+	                            </div>
+	                        </a>
+	                    </div>
+	                    <div class="b-brand-products__item">
+	                        <a href="#" class="b-brand-products__link">
+	                            <div class="b-brand-products__img">
+	                                <img src="/upload/static-brands/brand-item8.png">
+	                            </div>
+	                            <div class="b-brand-products__title">
+	                                <div class="b-brand-products__title-product b-clipped-text">Корм для собак</div>
+	                                <div class="b-brand-products__title-type">Средних пород</div>
+	                            </div>
+	                        </a>
+	                    </div>
+	                    <div class="b-brand-products__item">
+	                        <a href="#" class="b-brand-products__link">
+	                            <div class="b-brand-products__img">
+	                                <img src="/upload/static-brands/brand-item3.png">
+	                            </div>
+	                            <div class="b-brand-products__title">
+	                                <div class="b-brand-products__title-product b-clipped-text">Корм для собак</div>
+	                                <div class="b-brand-products__title-type">Мелких пород</div>
+	                            </div>
+	                        </a>
+	                    </div>
+	                    <div class="b-brand-products__item">
+	                        <a href="#" class="b-brand-products__link">
+	                            <div class="b-brand-products__img">
+	                                <img src="/upload/static-brands/brand-item1.png">
+	                            </div>
+	                            <div class="b-brand-products__title">
+	                                <div class="b-brand-products__title-product b-clipped-text">Корм для собак</div>
+	                                <div class="b-brand-products__title-type">Крупных пород</div>
+	                            </div>
+	                        </a>
+	                    </div>
+	                </div>
+	            </div>
                 <?/*<pre><?print_r($arResult['SECTIONS']);?></pre>*/?>
                 <? break;
         }
