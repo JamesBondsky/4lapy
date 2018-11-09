@@ -32,19 +32,37 @@ class ProductCategoriesProperty
     public static function ConvertToDB($arProperty, $value)
     {
         $result = json_decode($value['VALUE'], true);
-        $files = $_REQUEST['product_categories_images'];
         $delFiles = $_REQUEST['product_categories_images_del'];
-        foreach ($files as $key => $file) {
-            if(!empty($file['tmp_name']) && !(empty($file['name']))){
-                $fileArray = \CFile::MakeFileArray('/upload/tmp' . $file['tmp_name']);
-                $fileArray['name'] = $file['name'];
-                $result[$key]['image_id'] = \CFile::SaveFile($fileArray, 'iblock');
+        foreach ($delFiles as $delID => $val) {
+            foreach ($result as $key => $res) {
+                if ($res['move_id'] == $delID) {
+                    $fileID = $result[$key]['image_id'];
+                    \CFile::Delete($fileID);
+                    unset($result[$key]['image_id']);
+                    break;
+                }
             }
         }
-        foreach($delFiles as $delID => $val){
-            $fileID = $result[$delID]['image_id'];
-            \CFile::Delete($fileID);
-            unset($result[$delID]['image_id']);
+
+        $files = $_REQUEST['product_categories_images'];
+        foreach ($files as $setID => $file) {
+            if (!empty($file['tmp_name']) && !(empty($file['name']))) {
+                $fileArray = \CFile::MakeFileArray('/upload/tmp' . $file['tmp_name']);
+                $fileArray['name'] = $file['name'];
+                foreach ($result as $key => $res) {
+                    if ($res['move_id'] == $setID) {
+                        $result[$key]['image_id'] = strval(\CFile::SaveFile($fileArray, 'iblock'));
+                        break;
+                    }
+                }
+            } elseif ((int)$file == 0) {
+                $fileArray = \CFile::MakeFileArray($file);
+                $result[$key]['image_id'] = strval(\CFile::SaveFile($fileArray, 'iblock'));
+            }
+        }
+
+        foreach ($result as $key => &$res) {
+            $res['move_id'] = $key;
         }
         return json_encode($result);
     }

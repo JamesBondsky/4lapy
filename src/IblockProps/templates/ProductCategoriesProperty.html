@@ -138,7 +138,7 @@
     <span class="close" id="close">&times;</span>
     <div id="product-categories-property-wrapper" class="product-categories-property-wrapper">
         <ul class="product-categories-property-items block__list_words" id="product-categories-property-items">
-            <li class="product-categories-property-item">
+            <li class="product-categories-property-item" data-start-index="0">
                 <div class="input-wrapper">
                     <label for="title">Заголовок</label>
                     <input type="text" name="title" id="title" value="">
@@ -155,7 +155,7 @@
                     #FILE_0#
                 </div>
             </li>
-            <li class="product-categories-property-item">
+            <li class="product-categories-property-item" data-start-index="1">
                 <div class="input-wrapper">
                     <label for="title">Заголовок</label>
                     <input type="text" name="title" id="title" value="">
@@ -172,7 +172,7 @@
                     #FILE_1#
                 </div>
             </li>
-            <li class="product-categories-property-item">
+            <li class="product-categories-property-item" data-start-index="2">
                 <div class="input-wrapper">
                     <label for="title">Заголовок</label>
                     <input type="text" name="title" id="title" value="">
@@ -189,7 +189,7 @@
                     #FILE_2#
                 </div>
             </li>
-            <li class="product-categories-property-item">
+            <li class="product-categories-property-item" data-start-index="3">
                 <div class="input-wrapper">
                     <label for="title">Заголовок</label>
                     <input type="text" name="title" id="title" value="">
@@ -206,7 +206,7 @@
                     #FILE_3#
                 </div>
             </li>
-            <li class="product-categories-property-item">
+            <li class="product-categories-property-item" data-start-index="4">
                 <div class="input-wrapper">
                     <label for="title">Заголовок</label>
                     <input type="text" name="title" id="title" value="">
@@ -223,7 +223,7 @@
                     #FILE_4#
                 </div>
             </li>
-            <li class="product-categories-property-item">
+            <li class="product-categories-property-item" data-start-index="5">
                 <div class="input-wrapper">
                     <label for="title">Заголовок</label>
                     <input type="text" name="title" id="title" value="">
@@ -240,7 +240,7 @@
                     #FILE_5#
                 </div>
             </li>
-            <li class="product-categories-property-item">
+            <li class="product-categories-property-item" data-start-index="6">
                 <div class="input-wrapper">
                     <label for="title">Заголовок</label>
                     <input type="text" name="title" id="title" value="">
@@ -257,7 +257,7 @@
                     #FILE_6#
                 </div>
             </li>
-            <li class="product-categories-property-item">
+            <li class="product-categories-property-item" data-start-index="7">
                 <div class="input-wrapper">
                     <label for="title">Заголовок</label>
                     <input type="text" name="title" id="title" value="">
@@ -274,7 +274,7 @@
                     #FILE_7#
                 </div>
             </li>
-            <li class="product-categories-property-item">
+            <li class="product-categories-property-item" data-start-index="8">
                 <div class="input-wrapper">
                     <label for="title">Заголовок</label>
                     <input type="text" name="title" id="title" value="">
@@ -291,7 +291,7 @@
                     #FILE_8#
                 </div>
             </li>
-            <li class="product-categories-property-item">
+            <li class="product-categories-property-item" data-start-index="9">
                 <div class="input-wrapper">
                     <label for="title">Заголовок</label>
                     <input type="text" name="title" id="title" value="">
@@ -308,7 +308,7 @@
                     #FILE_9#
                 </div>
             </li>
-            <li class="product-categories-property-item">
+            <li class="product-categories-property-item" data-start-index="10">
                 <div class="input-wrapper">
                     <label for="title">Заголовок</label>
                     <input type="text" name="title" id="title" value="">
@@ -372,6 +372,7 @@
                 i = 0;
             $.each(switcherItemsWrapper.find('li'), function (key, liItem) {
                 let itemArr = {};
+                itemArr['move_id'] = $(liItem).data('start-index');
                 itemArr['title'] = $(liItem).find('input[name=title]').val();
                 itemArr['subtitle'] = $(liItem).find('input[name=subtitle]').val();
                 itemArr['filters'] = $(liItem).find('input[name=filters]').val();
@@ -379,6 +380,7 @@
                 result[i] = itemArr;
                 i++;
             });
+            console.log(result);
             sendingField.val(JSON.stringify(result));
         }
         init();
