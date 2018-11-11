@@ -118,7 +118,7 @@ class Brand extends IblockElement
     protected $PROPERTY_POPULAR = 0;
 
     /**
-     * @var array
+     * @var array|null
      * @Type("array")
      */
     protected $PROPERTY_CATALOG_INNER_BANNER = 0;
@@ -144,11 +144,11 @@ class Brand extends IblockElement
     }
 
     /**
-     * @return array
+     * @return array|null
      */
-    public function getCatalogInnerBanner():array
+    public function getCatalogInnerBanner(): ?array
     {
-        return $this->PROPERTY_CATALOG_INNER_BANNER;
+        return ($this->PROPERTY_CATALOG_INNER_BANNER) ? $this->PROPERTY_CATALOG_INNER_BANNER : null;
     }
 
     /**

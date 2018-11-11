@@ -215,7 +215,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
         );
 
         $i = 1;
-        $catalogInnerBanner = $catalogRequest->getBrand()->getCatalogInnerBanner()['TEXT'];
+        $catalogInnerBanner = $catalogRequest->getBrand()->getCatalogInnerBanner();
         foreach ($productCollection as $product) {
             $APPLICATION->IncludeComponent(
                 'fourpaws:catalog.element.snippet',
@@ -229,25 +229,26 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                     'HIDE_ICONS' => 'Y',
                 ]
             );
-            if($i == 4){
-                ?>
-                <div class="b-fleas-protection-banner b-mobile b-fleas-brand">
-                    <?= htmlspecialcharsback($catalogInnerBanner) ?>
-                </div>
-                <?
-            }
-            elseif ($i == 6) {
-                ?>
-                <div class="b-fleas-protection-banner b-tablet b-fleas-brand">
-                    <?= htmlspecialcharsback($catalogInnerBanner) ?>
-                </div>
-                <?
-            } elseif ($i == 8) {
-                ?>
-                <div class="b-fleas-protection-banner b-desktop b-fleas-brand">
-                    <?= htmlspecialcharsback($catalogInnerBanner) ?>
-                </div>
-                <?
+            if ($catalogInnerBanner != null && $catalogInnerBanner['TEXT'] != '') {
+                if ($i == 4) {
+                    ?>
+                    <div class="b-fleas-protection-banner b-mobile b-fleas-brand">
+                        <?= htmlspecialcharsback($catalogInnerBanner['TEXT']) ?>
+                    </div>
+                    <?
+                } elseif ($i == 6) {
+                    ?>
+                    <div class="b-fleas-protection-banner b-tablet b-fleas-brand">
+                        <?= htmlspecialcharsback($catalogInnerBanner['TEXT']) ?>
+                    </div>
+                    <?
+                } elseif ($i == 8) {
+                    ?>
+                    <div class="b-fleas-protection-banner b-desktop b-fleas-brand">
+                        <?= htmlspecialcharsback($catalogInnerBanner['TEXT']) ?>
+                    </div>
+                    <?
+                }
             }
             $i++;
         }
