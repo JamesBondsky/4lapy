@@ -27,41 +27,30 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
     echo $arResult['ECOMMERCE_VIEW_SCRIPT'];
 } ?>
 <div class="b-main-slider js-main-slider">
-    <?php foreach ($arResult['ITEMS'] as $item) { ?>
+    <?php foreach ($arResult['ITEMS'] as $key => $item) { ?>
         <div class="b-main-item b-main-item--background js-image-wrapper"
             <?= !empty($item['BACKGROUND']) ? ' style=\'background: url("'
                 . $item['BACKGROUND']
                 . '")\'' : '' ?>>
-            <a class="b-main-item__link-main"
-                <?php if ($item['ECOMMERCE_CLICK_SCRIPT']) {
-                    echo \sprintf('onclick="%s;"', \str_replace('"', '\'', $item['ECOMMERCE_CLICK_SCRIPT']));
-                } ?>
-               href="<?= $item['PROPERTIES']['LINK']['VALUE'] ?>"
-               title="<?= $item['NAME'] ?>"><?php
-                if (!empty($item['DESKTOP_PICTURE'])) {
-                    ?>
-                    <img class="b-main-item__slider-background b-main-item__slider-background--desktop js-image-wrapper"
-                         src="<?= $item['DESKTOP_PICTURE'] ?>"
-                         alt="<?= $item['NAME'] ?>"
-                         role="presentation"><?php
-                }
 
-                if (!empty($item['TABLET_PICTURE'])) {
-                    ?>
-                    <img class="b-main-item__slider-background b-main-item__slider-background--tablet js-image-wrapper"
-                         src="<?= $item['TABLET_PICTURE'] ?>"
-                         alt="<?= $item['NAME'] ?>"
-                         role="presentation"><?php
-                }
+            <?php if (!empty($item['DESKTOP_PICTURE'])) {?>
+                <a class="b-main-item__link-main"
+                    <?php if ($item['ECOMMERCE_CLICK_SCRIPT']) {
+                        echo \sprintf('onclick="%s;"', \str_replace('"', '\'', $item['ECOMMERCE_CLICK_SCRIPT']));
+                    } ?>
+                   href="<?= $item['PROPERTIES']['LINK']['VALUE'] ?>"
+                   title="<?= $item['NAME'] ?>">
 
-                if (!empty($item['MOBILE_PICTURE'])) {
-                    ?>
-                    <img class="b-main-item__slider-background b-main-item__slider-background--mobile js-image-wrapper"
-                         src="<?= $item['MOBILE_PICTURE'] ?>"
-                         alt="<?= $item['NAME'] ?>"
-                         role="presentation"><?php
-                }
-                ?></a>
+                    <img class="b-main-item__slider-background b-main-item__slider-background js-image-wrapper"
+                        <? if ($key == 0) { ?>src="<?= $item['DESKTOP_PICTURE']?>"<? } ?>
+                             data-lazy-main-slider="true"
+                             data-desktop-img-main-slider="<?= $item['DESKTOP_PICTURE'] ?>"
+                             data-tablet-img-main-slider="<?= $item['TABLET_PICTURE'] ?>"
+                             data-mobile-img-main-slider="<?= $item['MOBILE_PICTURE'] ?>"
+                             alt="<?= $item['NAME'] ?>"
+                             role="presentation">
+                </a>
+            <?php } ?>
         </div>
     <?php } ?>
 </div>
