@@ -46,3 +46,7 @@ Desktop.ini
 !/web/include/.gitkeep
 /web/include/static/*
 !/web/include/static/.gitkeep
+
+/common/local/lib/*
+/common/static
+/common/local/php_interface/dbconn.php
