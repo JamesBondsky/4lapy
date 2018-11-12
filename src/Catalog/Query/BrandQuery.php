@@ -30,6 +30,7 @@ class BrandQuery extends IblockElementQuery
             'LIST_PAGE_URL',
             'CANONICAL_PAGE_URL',
             'PROPERTY_POPULAR',
+            'PROPERTY_CATALOG_INNER_BANNER',
         ];
     }
 
