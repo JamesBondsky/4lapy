@@ -103,24 +103,18 @@
         //toggle event
         switchers.change(function () {
             if ($(this).prop("checked")) {
-                console.log($(this).data('block').toString().indexOf(','));
                 if ($(this).data('block').toString().indexOf(',') == -1) {
-                    console.log($('#tr_PROPERTY_' + $(this).data('block')));
                     $('#tr_PROPERTY_' + $(this).data('block')).show();
                 } else {
                     $.each($(this).data('block').split(','), function (i, id) {
-                        console.log($('#tr_PROPERTY_' + id));
                         $('#tr_PROPERTY_' + id).show();
                     });
                 }
             } else {
-                console.log($(this).data('block').toString().indexOf(','));
                 if ($(this).data('block').toString().indexOf(',') == -1) {
-                    console.log($('#tr_PROPERTY_' + $(this).data('block')));
                     $('#tr_PROPERTY_' + $(this).data('block')).hide();
                 } else {
                     $.each($(this).data('block').split(','), function (i, id) {
-                        console.log($('#tr_PROPERTY_' + id));
                         $('#tr_PROPERTY_' + id).hide();
                     });
                 }
