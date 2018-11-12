@@ -254,6 +254,7 @@ class IndexHelper implements LoggerAwareInterface
                                 'CANONICAL_PAGE_URL' => ['type' => 'text', 'index' => false],
                                 'NAME'               => ['type' => 'text'],
                                 'PROPERTY_POPULAR'   => ['type' => 'boolean'],
+                                'PROPERTY_CATALOG_INNER_BANNER'   => ['type' => 'text'],
                             ],
                         ],
                         'offers'                           => [

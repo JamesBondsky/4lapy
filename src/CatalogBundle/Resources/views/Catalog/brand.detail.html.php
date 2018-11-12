@@ -69,7 +69,7 @@ if (!$isAjax) { ?>
                 ],
                 'CACHE_GROUPS'              => 'N',
                 'CACHE_TIME'                => '43200',
-                'CACHE_TYPE'                => 'N',
+                'CACHE_TYPE'                => 'A',
                 'DETAIL_URL'                => '',
                 'RESIZE_WIDTH'              => '90',
                 'RESIZE_HEIGHT'             => '90',
