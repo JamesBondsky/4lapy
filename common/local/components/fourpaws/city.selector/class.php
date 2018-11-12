@@ -79,7 +79,7 @@ class FourPawsCitySelectorComponent extends \CBitrixComponent
             $this->arResult['CITY_AUTOCOMPLETE_URL'] = $cityAutocompleteRoute->getPath();
         }
 
-        $availableCities = $locationService->getAvailableCities();
+        $availableCities = $locationService->getAvailableCitiesEx();
 
         $this->arResult['POPULAR_CITIES'] = $availableCities['popular'] ?? [];
         $this->arResult['MOSCOW_CITIES'] = $availableCities['moscow_region'] ?? [];
