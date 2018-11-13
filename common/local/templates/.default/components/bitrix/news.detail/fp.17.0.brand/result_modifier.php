@@ -9,8 +9,8 @@
 
 
 $mImgField = false;
-if ($arResult['PREVIEW_PICTURE'] || $arResult['DETAIL_PICTURE']) {
-    $mImgField = $arResult['PREVIEW_PICTURE'] ? $arResult['PREVIEW_PICTURE'] : $arResult['DETAIL_PICTURE'];
+if ($arResult['DETAIL_PICTURE']) {
+    $mImgField = $arResult['DETAIL_PICTURE'];
 }
 $arResult['PRINT_PICTURE'] = $mImgField && is_array($mImgField) ? $mImgField : array();
 if ($mImgField) {
