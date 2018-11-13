@@ -78,16 +78,14 @@ if ($arResult['DETAIL_TEXT'] || $arResult['PRINT_PICTURE']) { ?>
                 <? break;
             case 'VIDEO_MP4': ?>
                 <div class="b-brand-video">
-                        <?if (!empty($arResult['VIDEO']['TITLE']) || !empty($arResult['VIDEO']['DESCRIPTION'])) {?>
-                            <div class="b-brand-video__info">
-                                <?if (!empty($arResult['VIDEO']['TITLE'])) { ?>
-                                    <div class="b-brand-video__title"><?=$arResult['VIDEO']['TITLE']?></div>
-                                <? } ?>
-                                <?if (!empty($arResult['VIDEO']['DESCRIPTION'])) { ?>
-                                    <div class="b-brand-video__descr"><?=$arResult['VIDEO']['DESCRIPTION']?></div>
-                                <? } ?>
-                            </div>
+                    <div class="b-brand-video__info">
+                        <?if (!empty($arResult['VIDEO']['TITLE'])) { ?>
+                            <div class="b-brand-video__title"><?=$arResult['VIDEO']['TITLE']?></div>
                         <? } ?>
+                        <?if (!empty($arResult['VIDEO']['DESCRIPTION'])) { ?>
+                            <div class="b-brand-video__descr"><?=$arResult['VIDEO']['DESCRIPTION']?></div>
+                        <? } ?>
+                    </div>
                     <div class="b-brand-video__video-wrap">
                         <div class="b-brand-video__video">
                             <video data-brand-video="true" width="100%" height="100%" <?if (!empty($arResult['VIDEO']['PREVIEW_PICTURE'])) {?>poster="<?=$arResult['VIDEO']['PREVIEW_PICTURE']?>"<? } ?> controls="controls" preload="none" muted>
