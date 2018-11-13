@@ -119,11 +119,8 @@ if ($arResult['DETAIL_TEXT'] || $arResult['PRINT_PICTURE']) { ?>
                                         </div>
                                     </div>
                                 </div>
-                            <? } else {?>
-                                <div class="b-brand-products__item"></div>
-                            <?}?>
-                        <? }
-                        ?>
+                            <? } ?>
+                        <? } ?>
                     </div>
                 </div>
                 <? break;
