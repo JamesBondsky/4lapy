@@ -29,7 +29,7 @@
                    value="<?= $arResult['SELECTED_CITY']['NAME'] ?>"
                    data-url="<?= $arResult['CITY_AUTOCOMPLETE_URL'] ?>">
         </div>
-        <button class="b-button b-button--form-inline b-button--delivery"></button>
+        <button class="b-button b-button--form-inline b-button--delivery" disabled="disabled"></button>
     </form>
     <div class="b-delivery__town-form--dropdown">
         <ul></ul>

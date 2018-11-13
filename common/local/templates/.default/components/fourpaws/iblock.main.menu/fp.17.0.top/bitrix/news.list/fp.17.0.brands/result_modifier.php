@@ -22,8 +22,8 @@ $arResult['GROUPING']['#'] = array(
 
 foreach ($arResult['ITEMS'] as $mKey => &$arItem) {
     $mImgField = false;
-    if ($arItem['PREVIEW_PICTURE'] || $arItem['DETAIL_PICTURE']) {
-        $mImgField = $arItem['PREVIEW_PICTURE'] ? $arItem['PREVIEW_PICTURE'] : $arItem['DETAIL_PICTURE'];
+    if ($arItem['PREVIEW_PICTURE']) {
+        $mImgField = $arItem['PREVIEW_PICTURE'];
     }
     $arItem['PRINT_PICTURE'] = $mImgField && is_array($mImgField) ? $mImgField : array();
     if ($mImgField) {

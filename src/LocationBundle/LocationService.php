@@ -305,6 +305,67 @@ class LocationService
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
+     * Тоже самое что и getAvailableCities,
+     * но без выбора складов по каждому городу
+     *
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws IblockNotFoundException
+     * @throws Exception
+     * @return array
+     */
+    public function getAvailableCitiesEx(): array
+    {
+        $getAvailableCities = function () {
+            $iblockId = IblockUtils::getIblockId(IblockType::REFERENCE_BOOKS, IblockCode::CITIES);
+
+            $result = [];
+            $filter = [
+                'IBLOCK_ID' => $iblockId,
+                'SECTION_CODE' => CitiesSectionCode::POPULAR,
+                'ACTIVE' => BitrixUtils::BX_BOOL_TRUE
+            ];
+            $select = ['ID', 'NAME', 'PROPERTY_LOCATION'];
+
+            // При выборе популярных городов учитываем сортировку
+            $sort = ['SORT' => 'ASC', 'ID' => 'ASC'];
+            $elements = CIBlockElement::GetList($sort, $filter, false, false, $select);
+            while ($element = $elements->Fetch()) {
+                if (empty($element['PROPERTY_LOCATION_VALUE'])) {
+                    continue;
+                }
+
+                $result[CitiesSectionCode::POPULAR][] = [
+                    'NAME'  => $element['NAME'],
+                    'CODE'  => $element['PROPERTY_LOCATION_VALUE']
+                ];
+            }
+
+            // При выборе городов Московской обл. сортируем по алфавиту
+            $sort = ['NAME' => 'ASC', 'ID' => 'ASC'];
+            $filter['SECTION_CODE'] = CitiesSectionCode::MOSCOW_REGION;
+            $elements = CIBlockElement::GetList($sort, $filter, false, false, $select);
+            while ($element = $elements->Fetch()) {
+                if (empty($element['PROPERTY_LOCATION_VALUE'])) {
+                    continue;
+                }
+
+                $result[CitiesSectionCode::MOSCOW_REGION][] = [
+                    'NAME'  => $element['NAME'],
+                    'CODE'  => $element['PROPERTY_LOCATION_VALUE']
+                ];
+            }
+
+            return $result;
+        };
+
+        return (new BitrixCache())
+            ->withId(__METHOD__)
+            ->withIblockTag(IblockUtils::getIblockId(IblockType::REFERENCE_BOOKS, IblockCode::CITIES))
+            ->resultOf($getAvailableCities);
+    }/** @noinspection MoreThanThreeArgumentsInspection */
+
+    /**
      * Поиск местоположения по названию
      *
      * @param string $query

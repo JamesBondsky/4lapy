@@ -53,7 +53,7 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
         window.dataLayer = window.dataLayer || [];
     </script>
     <?php $APPLICATION->ShowHead(); ?>
-    <title><?php $APPLICATION->ShowTitle(false) ?></title>
+    <title><?php $APPLICATION->ShowTitle() ?></title>
     <?php
     $asset = Asset::getInstance();
     $asset->addCss($markup->getCssFile());
@@ -177,7 +177,7 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
                 ?>
                 <?php $APPLICATION->IncludeComponent('fourpaws:city.selector',
                     '',
-                    [],
+                    ['GET_STORES' => false],
                     false,
                     ['HIDE_ICONS' => 'Y']) ?>
                 <?php $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
