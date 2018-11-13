@@ -3,6 +3,7 @@
 }
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 
@@ -55,8 +56,21 @@ $this->__component->SetResultCacheKeys(
     )
 );
 
+function getCropImage(array $arImage, int $width, int $height): CropImageDecorator
+{
+    $cropImage = new CropImageDecorator($arImage);
+
+    $cropImage->setCropWidth($width)->setCropHeight($height);
+    return $cropImage;
+}
+
 if (!empty($arResult['DISPLAY_PROPERTIES']['BLOCKS_SHOW_SWITCHER']['VALUE'])) {
-    $arResult['SHOW_BLOCKS'] = json_decode(htmlspecialcharsBack($arResult['DISPLAY_PROPERTIES']['BLOCKS_SHOW_SWITCHER']['VALUE']), true);
+    $arResult['SHOW_BLOCKS'] = json_decode(
+        htmlspecialcharsBack(
+            $arResult['DISPLAY_PROPERTIES']['BLOCKS_SHOW_SWITCHER']['VALUE']
+        ),
+        true
+    );
 } else {
     $arResult['SHOW_BLOCKS'] = [
         'BANNER_IMAGES_DESKTOP' => false,
@@ -81,11 +95,28 @@ if ($arResult['SHOW_BLOCKS']['BANNER_IMAGES_DESKTOP']) {
 
         $dbFiles = CFile::GetList([], ['@ID' => implode(',', array_keys($files))]);
         while ($file = $dbFiles->Fetch()) {
-            if (!file_exists($_SERVER['DOCUMENT_ROOT'] . '/' . $uploadDir . '/' . $file['SUBDIR'] . '/' . $file['FILE_NAME'])) {
+            $path = '/' . $uploadDir . '/' . $file['SUBDIR'] . '/' . $file['FILE_NAME'];
+            if (!file_exists($_SERVER['DOCUMENT_ROOT'] . $path)) {
                 $arResult['SHOW_BLOCKS']['BANNER_IMAGES_DESKTOP'] = false;
                 break;
             } else {
-                $arResult['BANNER']['IMAGES'][$files[$file['ID']]] = '/' . $uploadDir . '/' . $file['SUBDIR'] . '/' . $file['FILE_NAME'];
+                $arImage['src'] = $path;
+                switch ($files[$file['ID']]) {
+                    case 'BANNER_IMAGES_DESKTOP':
+                        $width = 1280;
+                        $height = 300;
+                        break;
+                    case 'BANNER_IMAGES_NOTEBOOK':
+                        $width = 940;
+                        $height = 250;
+                        break;
+                    case 'BANNER_IMAGES_MOBILE':
+                        $width = 767;
+                        $height = 160;
+                        break;
+                }
+                $arResult['BANNER']['IMAGES'][$files[$file['ID']]] = getCropImage($arImage, $width, $height);
+
             }
         }
         $arResult['BANNER']['LINK'] = $arResult['DISPLAY_PROPERTIES']['BANNER_LINK']['VALUE'];
@@ -106,16 +137,20 @@ if ($arResult['SHOW_BLOCKS']['VIDEO_MP4']) {
 
         $dbFiles = CFile::GetList([], ['@ID' => implode(',', array_keys($files))]);
         while ($file = $dbFiles->Fetch()) {
-            if (!file_exists($_SERVER['DOCUMENT_ROOT'] . '/' . $uploadDir . '/' . $file['SUBDIR'] . '/' . $file['FILE_NAME'])) {
+            $path = '/' . $uploadDir . '/' . $file['SUBDIR'] . '/' . $file['FILE_NAME'];
+            if (!file_exists($_SERVER['DOCUMENT_ROOT'] . $path)) {
                 $arResult['SHOW_BLOCKS']['VIDEO_MP4'] = false;
                 break;
             } else {
-                $arResult['VIDEO']['VIDEOS'][$files[$file['ID']]] = '/' . $uploadDir . '/' . $file['SUBDIR'] . '/' . $file['FILE_NAME'];
+                $arResult['VIDEO']['VIDEOS'][$files[$file['ID']]] = $path;
             }
         }
         $arResult['VIDEO']['TITLE'] = $arResult['DISPLAY_PROPERTIES']['VIDEO_TITLE']['VALUE'];
         $arResult['VIDEO']['DESCRIPTION'] = htmlspecialcharsBack($arResult['DISPLAY_PROPERTIES']['VIDEO_DESCRIPTION']['VALUE']['TEXT']);
-        $arResult['VIDEO']['PREVIEW_PICTURE'] = CFile::GetPath($arResult['DISPLAY_PROPERTIES']['VIDEO_PREVIEW_PICTURE']['VALUE']);
+
+        $arImage['src'] = CFile::GetPath($arResult['DISPLAY_PROPERTIES']['VIDEO_PREVIEW_PICTURE']['VALUE']);
+        $arResult['VIDEO']['PREVIEW_PICTURE'] = getCropImage($arImage, 1011, 568);
+
     }
 }
 
@@ -131,7 +166,8 @@ if ($arResult['SHOW_BLOCKS']['PRODUCT_CATEGORIES']) {
     }
     $dbFiles = CFile::GetList([], ['@ID' => implode(',', array_keys($files))]);
     while ($file = $dbFiles->Fetch()) {
-        $arResult['PRODUCT_CATEGORIES'][$files[$file['ID']]]['image'] = '/' . $uploadDir . '/' . $file['SUBDIR'] . '/' . $file['FILE_NAME'];
+        $arImage['src'] = '/' . $uploadDir . '/' . $file['SUBDIR'] . '/' . $file['FILE_NAME'];
+        $arResult['PRODUCT_CATEGORIES'][$files[$file['ID']]]['image'] = getCropImage($arImage, 273, 230);
         $arResult['PRODUCT_CATEGORIES'][$files[$file['ID']]]['alt'] = $file['DESCRIPTION'];
     }
 }
