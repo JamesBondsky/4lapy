@@ -31,6 +31,7 @@ class BrandQuery extends IblockElementQuery
             'CANONICAL_PAGE_URL',
             'PROPERTY_POPULAR',
             'PROPERTY_CATALOG_INNER_BANNER',
+            'PROPERTY_CATALOG_UNDER_BANNER'
         ];
     }
 

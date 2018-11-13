@@ -271,4 +271,11 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             'HIDE_ICONS' => 'Y',
         ]
     ); ?>
+    <?php
+    $catalogUnderBanner = $catalogRequest->getBrand()->getCatalogUnderBanner();
+    if ($catalogUnderBanner != null && $catalogUnderBanner['TEXT'] != '') { ?>
+        <div class="b-brand-text">
+            <?= htmlspecialcharsback($catalogUnderBanner['TEXT'])?>
+        </div>
+    <? } ?>
 </main>

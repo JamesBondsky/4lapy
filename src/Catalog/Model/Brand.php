@@ -124,6 +124,12 @@ class Brand extends IblockElement
     protected $PROPERTY_CATALOG_INNER_BANNER = 0;
 
     /**
+     * @var array|null
+     * @Type("array")
+     */
+    protected $PROPERTY_CATALOG_UNDER_BANNER = 0;
+
+    /**
      * @return bool
      */
     public function isPopular(): bool
@@ -159,6 +165,26 @@ class Brand extends IblockElement
     public function withCatalogInnerBanner($banner)
     {
         $this->PROPERTY_CATALOG_INNER_BANNER = $banner;
+
+        return $this;
+    }
+
+    /**
+     * @return array|null
+     */
+    public function getCatalogUnderBanner(): ?array
+    {
+        return ($this->PROPERTY_CATALOG_UNDER_BANNER) ? $this->PROPERTY_CATALOG_UNDER_BANNER : null;
+    }
+
+    /**
+     * @param $banner
+     *
+     * @return $this
+     */
+    public function withCatalogUnderBanner($banner)
+    {
+        $this->PROPERTY_CATALOG_UNDER_BANNER = $banner;
 
         return $this;
     }
