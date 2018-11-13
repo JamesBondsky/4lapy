@@ -122,7 +122,7 @@ class BrandsAddNewFields20181105113539 extends \Adv\Bitrixtools\Migration\Sprint
             'NAME' => 'Видео ogg',
             'SORT' => '80',
             'CODE' => 'VIDEO_OGG',
-            'FILE_TYPE' => 'ogv',
+            'FILE_TYPE' => 'ogv,ogg,oga,ogx,ogm',
             'IS_REQUIRED' => 'N',
             'USER_TYPE' => '',
             'HINT' => 'Ogg для старых версий Firefox и Opera',
