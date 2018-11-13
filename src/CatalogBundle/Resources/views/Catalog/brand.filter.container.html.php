@@ -58,9 +58,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             </div>
             <div class="b-filter__block b-filter__block--reset js-reset-link-block"
                 <?= $filterCollection->hasCheckedFilterBrand() ? 'style="display:block"' : '' ?>>
-                <a class="b-link b-link--reset js-reset-filter"
-                   href="<?= $APPLICATION->GetCurDir() ?>"
-                   title="Сбросить фильтры">Сбросить фильтры</a>
+                <div class="b-link b-link--reset b-link--brand-reset js-reset-brand-filter">Сбросить фильтры</div>
             </div>
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.category.list.html.php',
