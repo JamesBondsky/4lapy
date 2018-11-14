@@ -52,7 +52,21 @@ if (!$isAjax) { ?>
                     'DETAIL_TEXT',
                     'DETAIL_PICTURE',
                 ],
-                'PROPERTY_CODE'             => [],
+                'PROPERTY_CODE' => [
+                    'BLOCKS_SHOW_SWITCHER',
+                    'PRODUCT_CATEGORIES',
+                    'BANNER_IMAGES_DESKTOP',
+                    'BANNER_IMAGES_NOTEBOOK',
+                    'BANNER_IMAGES_MOBILE',
+                    'BANNER_LINK',
+                    'VIDEO_MP4',
+                    'VIDEO_WEBM',
+                    'VIDEO_OGG',
+                    'VIDEO_TITLE',
+                    'VIDEO_DESCRIPTION',
+                    'PRODUCT_CATEGORIES',
+                    'VIDEO_PREVIEW_PICTURE'
+                ],
                 'CACHE_GROUPS'              => 'N',
                 'CACHE_TIME'                => '43200',
                 'CACHE_TYPE'                => 'A',
@@ -189,7 +203,7 @@ if (!$isAjax) { ?>
     <?php
 } ?>
     <div class="b-catalog">
-    <div class="b-container b-container--catalog-filter">
+    <div class="b-container b-container--catalog-filter js-brand-container-catalog">
         <?php /** товары бренда */ ?>
         <?= $view->render(
             'FourPawsCatalogBundle:Catalog:brand.filter.container.html.php',

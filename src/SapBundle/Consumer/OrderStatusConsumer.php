@@ -60,7 +60,7 @@ class OrderStatusConsumer implements ConsumerInterface, LoggerAwareInterface
             return false;
         }
 
-        $this->log()->log(LogLevel::INFO, 'Импортируется статус заказа', ['orderId' => $order->getId()]);
+        $this->log()->log(LogLevel::INFO, 'Импортируется статус заказа', ['orderId' => $order->getId(), 'status' => $order->getStatus()]);
         
         try {
             $success = true;
