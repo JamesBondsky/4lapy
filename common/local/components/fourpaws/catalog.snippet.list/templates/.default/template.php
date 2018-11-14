@@ -40,19 +40,23 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
             ?>
         </div>
         <div class="b-common-section__content b-common-section__content--sale js-popular-product">
-            <?php foreach ($component->getProductCollection() as $product) {
+            <?php 
+            $i = 0;
+            foreach ($component->getProductCollection() as $key => $product) {
                 $APPLICATION->IncludeComponent(
                     'fourpaws:catalog.element.snippet',
                     'vertical',
                     [
                         'PRODUCT' => $product,
-                        'OFFER_FILTER' => $arParams['OFFER_FILTER'] ?? []
+                        'OFFER_FILTER' => $arParams['OFFER_FILTER'] ?? [],
+                        'COUNTER' => $i,
                     ],
                     $component,
                     [
                         'HIDE_ICONS' => 'Y',
                     ]
                 );
+                $i++;
             }
             ?>
         </div>
