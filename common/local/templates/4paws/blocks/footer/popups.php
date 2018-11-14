@@ -18,7 +18,7 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
      */
     $APPLICATION->ShowViewContent('footer_popup_cont');
 
-    $APPLICATION->IncludeComponent('fourpaws:city.selector', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
+    ?><section class="b-popup-pick-city js-popup-section" data-popup="pick-city"></section><?
     $APPLICATION->IncludeComponent('fourpaws:auth.form', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
     $APPLICATION->IncludeComponent('fourpaws:information.popup', '', [], false, ['HIDE_ICONS' => 'Y']);
     if ($template->hasPersonalReferral()) {

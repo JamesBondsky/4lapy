@@ -203,7 +203,7 @@ if (!$isAjax) { ?>
     <?php
 } ?>
     <div class="b-catalog">
-    <div class="b-container b-container--catalog-filter">
+    <div class="b-container b-container--catalog-filter js-brand-container-catalog">
         <?php /** товары бренда */ ?>
         <?= $view->render(
             'FourPawsCatalogBundle:Catalog:brand.filter.container.html.php',
