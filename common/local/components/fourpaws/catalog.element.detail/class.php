@@ -126,16 +126,20 @@ class CatalogElementDetailComponent extends \CBitrixComponent
      */
     public function executeComponent()
     {
-        if (!$this->arParams['CODE']) {
+        $code = $this->arParams['CODE'];
+        $offerId = (int)$this->arParams['OFFER_ID'];
+        $showFastOrder = $this->arParams['SHOW_FAST_ORDER'];
+
+        if (!$code) {
             Tools::process404([], true, true, true);
         }
 
-        if ($this->startResultCache()) {
-            parent::executeComponent();
+        parent::executeComponent();
 
+        $getProductData = function () use ($code, $offerId, $showFastOrder) {
             /** @var Product $product */
             try {
-                $product = $this->getProduct($this->arParams['CODE']);
+                $product = $this->getProduct($code);
             } catch (CatalogProductNotFoundException $e) {
                 $product = false;
             }
@@ -147,7 +151,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                 return false;
             }
 
-            $currentOffer = $this->getCurrentOffer($product, (int)$this->arParams['OFFER_ID']);
+            $currentOffer = $this->getCurrentOffer($product, $offerId);
 
             TaggedCacheHelper::addManagedCacheTags([
                 'iblock:item:' . $product->getId(),
@@ -155,11 +159,11 @@ class CatalogElementDetailComponent extends \CBitrixComponent
 
             $sectionId = (int)current($product->getSectionsIdList());
 
-            $this->arResult = [
+            $result = [
                 'PRODUCT'               => $product,
                 'CURRENT_OFFER'         => $currentOffer,
                 'SECTION_CHAIN'         => $this->getSectionChain($sectionId),
-                'SHOW_FAST_ORDER'       => $this->arParams['SHOW_FAST_ORDER'],
+                'SHOW_FAST_ORDER'       => $showFastOrder,
                 'ECOMMERCE_VIEW_SCRIPT' => \sprintf(
                     "<script>%s\n%s</script>",
                     $this->ecommerceService->renderScript(
@@ -173,15 +177,16 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                 )
             ];
 
-            $this->setResultCacheKeys([
-                'PRODUCT',
-                'CURRENT_OFFER',
-                'SHOW_FAST_ORDER'
-            ]);
+            return $result;
+        };
 
-            $this->includeComponentTemplate();
-        }
+        $this->arResult = (new BitrixCache())
+            ->withId('product_code' . $this->arParams['CODE'])
+            ->withTag('catalog:product:' . $this->arParams['CODE'])
+            ->resultOf($getProductData);
 
+
+        $this->includeComponentTemplate();
         $this->setSeo($this->arResult['CURRENT_OFFER']);
 
         // bigdata
