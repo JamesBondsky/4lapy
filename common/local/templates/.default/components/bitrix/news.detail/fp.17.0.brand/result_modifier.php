@@ -56,12 +56,12 @@ $this->__component->SetResultCacheKeys(
     )
 );
 
-function getCropImage(array $arImage, int $width, int $height): CropImageDecorator
+function getResizeImage(array $arImage, int $width, int $height): string
 {
-    $cropImage = new CropImageDecorator($arImage);
-
-    $cropImage->setCropWidth($width)->setCropHeight($height);
-    return $cropImage;
+    $obImg = new \FourPaws\BitrixOrm\Model\ResizeImageDecorator($arImage);
+    $obImg->setResizeWidth($width);
+    $obImg->setResizeHeight($height);
+    return $obImg->getSrc();
 }
 
 if (!empty($arResult['DISPLAY_PROPERTIES']['BLOCKS_SHOW_SWITCHER']['VALUE'])) {
@@ -115,7 +115,7 @@ if ($arResult['SHOW_BLOCKS']['BANNER_IMAGES_DESKTOP']) {
                         $height = 160;
                         break;
                 }
-                $arResult['BANNER']['IMAGES'][$files[$file['ID']]] = getCropImage($arImage, $width, $height);
+                $arResult['BANNER']['IMAGES'][$files[$file['ID']]] = getResizeImage($arImage, $width, $height);
 
             }
         }
@@ -149,7 +149,7 @@ if ($arResult['SHOW_BLOCKS']['VIDEO_MP4']) {
         $arResult['VIDEO']['DESCRIPTION'] = htmlspecialcharsBack($arResult['DISPLAY_PROPERTIES']['VIDEO_DESCRIPTION']['VALUE']['TEXT']);
 
         $arImage['src'] = CFile::GetPath($arResult['DISPLAY_PROPERTIES']['VIDEO_PREVIEW_PICTURE']['VALUE']);
-        $arResult['VIDEO']['PREVIEW_PICTURE'] = getCropImage($arImage, 1011, 568);
+        $arResult['VIDEO']['PREVIEW_PICTURE'] = getResizeImage($arImage, 1011, 568);
 
     }
 }
@@ -167,7 +167,7 @@ if ($arResult['SHOW_BLOCKS']['PRODUCT_CATEGORIES']) {
     $dbFiles = CFile::GetList([], ['@ID' => implode(',', array_keys($files))]);
     while ($file = $dbFiles->Fetch()) {
         $arImage['src'] = '/' . $uploadDir . '/' . $file['SUBDIR'] . '/' . $file['FILE_NAME'];
-        $arResult['PRODUCT_CATEGORIES'][$files[$file['ID']]]['image'] = getCropImage($arImage, 273, 230);
+        $arResult['PRODUCT_CATEGORIES'][$files[$file['ID']]]['image'] = getResizeImage($arImage, 273, 230);
         $arResult['PRODUCT_CATEGORIES'][$files[$file['ID']]]['alt'] = $file['DESCRIPTION'];
     }
 }
