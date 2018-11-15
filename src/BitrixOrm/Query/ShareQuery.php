@@ -27,6 +27,22 @@ class ShareQuery extends IblockElementQuery
         return $array;
     }
 
+    public function getProperties(): array
+    {
+        return [
+            'SHARE_TYPE',
+            'TYPE',
+            'ONLY_MP',
+            'SHORT_URL',
+            'OLD_URL',
+            'PRODUCTS',
+            'LABEL',
+            'BASKET_RULES',
+            'JSON_GROUP_SET',
+            'PREMISE_BONUS',
+        ];
+    }
+
     /** @noinspection PhpMissingParentCallCommonInspection
      *
      * @inheritdoc
@@ -47,16 +63,6 @@ class ShareQuery extends IblockElementQuery
             'CANONICAL_PAGE_URL',
             'PREVIEW_TEXT',
             'DETAIL_TEXT',
-            'PROPERTY_SHARE_TYPE',
-            'PROPERTY_TYPE',
-            'PROPERTY_ONLY_MP',
-            'PROPERTY_SHORT_URL',
-            'PROPERTY_OLD_URL',
-            'PROPERTY_PRODUCTS',
-            'PROPERTY_LABEL',
-            'PROPERTY_BASKET_RULES',
-            'PROPERTY_JSON_GROUP_SET',
-            'PROPERTY_PREMISE_BONUS',
         ];
     }
 
@@ -81,6 +87,6 @@ class ShareQuery extends IblockElementQuery
      */
     public function exec(): CollectionBase
     {
-        return new ShareCollection($this->doExec());
+        return new ShareCollection($this->doExec(), $this->getProperties());
     }
 }
