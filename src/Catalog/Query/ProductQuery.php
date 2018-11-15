@@ -78,8 +78,9 @@ class ProductQuery extends IblockElementQuery
             'CANONICAL_PAGE_URL',
             'PREVIEW_TEXT',
             'DETAIL_TEXT',
-            'PROPERTY_BRAND',
             'PROPERTY_BRAND.NAME',
+            /*
+            'PROPERTY_BRAND',
             'PROPERTY_FOR_WHO',
             'PROPERTY_PET_SIZE',
             'PROPERTY_PET_AGE',
@@ -119,6 +120,7 @@ class ProductQuery extends IblockElementQuery
             'PROPERTY_COMPOSITION',
             'PROPERTY_NORMS_OF_USE',
             'PROPERTY_PACKING_COMBINATION',
+            */
         ];
     }
 

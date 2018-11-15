@@ -74,6 +74,8 @@ class OfferQuery extends IblockElementQuery
             'SECTION_PAGE_URL',
             'LIST_PAGE_URL',
             'CANONICAL_PAGE_URL',
+            'CATALOG_GROUP_2',
+            /*
             'PROPERTY_CML2_LINK',
             'PROPERTY_IS_NEW',
             'PROPERTY_IS_HIT',
@@ -92,11 +94,11 @@ class OfferQuery extends IblockElementQuery
             'PROPERTY_COLOUR_COMBINATION',
             'PROPERTY_FLAVOUR_COMBINATION',
             'PROPERTY_OLD_URL',
-            'CATALOG_GROUP_2',
             'PROPERTY_COND_VALUE',
             'PROPERTY_PRICE_ACTION',
             'PROPERTY_COND_FOR_ACTION',
             'PROPERTY_BONUS_EXCLUDE',
+            */
         ];
     }
 
