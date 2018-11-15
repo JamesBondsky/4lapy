@@ -25,7 +25,7 @@ class IblockElementQuery extends IblockQueryBase
     }
 
     /**
-     * @return \CDBResult|\CIBlockResult
+     * @return \CDBResult
      */
     public function doExec(): \CDBResult
     {

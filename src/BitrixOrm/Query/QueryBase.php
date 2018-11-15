@@ -4,7 +4,6 @@ namespace FourPaws\BitrixOrm\Query;
 
 use Bitrix\Main\DB\Result;
 use CDBResult;
-use CIBlockResult;
 use FourPaws\BitrixOrm\Collection\CollectionBase;
 
 abstract class QueryBase
@@ -177,7 +176,7 @@ abstract class QueryBase
     /**
      * Непосредственное выполнение запроса через API Битрикса
      *
-     * @return mixed|CDBResult|Result|CIblockResult
+     * @return mixed|CDBResult|Result
      */
     abstract public function doExec();
 
