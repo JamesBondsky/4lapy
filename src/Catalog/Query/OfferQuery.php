@@ -55,6 +55,34 @@ class OfferQuery extends IblockElementQuery
         }
     }
 
+    public function getProperties():array
+    {
+        return [
+            'CML2_LINK',
+            'IS_NEW',
+            'IS_HIT',
+            'IS_SALE',
+            'IS_POPULAR',
+            'COLOUR',
+            'VOLUME_REFERENCE',
+            'VOLUME',
+            'CLOTHING_SIZE',
+            'IMG',
+            'BARCODE',
+            'KIND_OF_PACKING',
+            'SEASON_YEAR',
+            'MULTIPLICITY',
+            'REWARD_TYPE',
+            'COLOUR_COMBINATION',
+            'FLAVOUR_COMBINATION',
+            'OLD_URL',
+            'COND_VALUE',
+            'PRICE_ACTION',
+            'COND_FOR_ACTION',
+            'BONUS_EXCLUDE',
+        ];
+    }
+
     /**
      * @inheritdoc
      */
@@ -75,30 +103,6 @@ class OfferQuery extends IblockElementQuery
             'LIST_PAGE_URL',
             'CANONICAL_PAGE_URL',
             'CATALOG_GROUP_2',
-            /*
-            'PROPERTY_CML2_LINK',
-            'PROPERTY_IS_NEW',
-            'PROPERTY_IS_HIT',
-            'PROPERTY_IS_SALE',
-            'PROPERTY_IS_POPULAR',
-            'PROPERTY_COLOUR',
-            'PROPERTY_VOLUME_REFERENCE',
-            'PROPERTY_VOLUME',
-            'PROPERTY_CLOTHING_SIZE',
-            'PROPERTY_IMG',
-            'PROPERTY_BARCODE',
-            'PROPERTY_KIND_OF_PACKING',
-            'PROPERTY_SEASON_YEAR',
-            'PROPERTY_MULTIPLICITY',
-            'PROPERTY_REWARD_TYPE',
-            'PROPERTY_COLOUR_COMBINATION',
-            'PROPERTY_FLAVOUR_COMBINATION',
-            'PROPERTY_OLD_URL',
-            'PROPERTY_COND_VALUE',
-            'PROPERTY_PRICE_ACTION',
-            'PROPERTY_COND_FOR_ACTION',
-            'PROPERTY_BONUS_EXCLUDE',
-            */
         ];
     }
 

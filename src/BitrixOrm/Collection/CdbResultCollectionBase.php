@@ -13,19 +13,13 @@ abstract class CdbResultCollectionBase extends CollectionBase
     protected $cdbResult;
 
     /**
-     * @var array
-     */
-    protected $properties;
-
-    /**
      * @var int Сколько всего элементов выбрано, если мы получили только одну страницу.
      */
     protected $totalCount = 0;
 
-    public function __construct(\CDBResult $result, $properties = [])
+    public function __construct(\CDBResult $result)
     {
         $this->cdbResult = $result;
-        $this->properties = $properties;
         $this->collection = new ArrayCollection();
     }
 
@@ -44,14 +38,6 @@ abstract class CdbResultCollectionBase extends CollectionBase
     public function getCdbResult(): \CDBResult
     {
         return $this->cdbResult;
-    }
-
-    /**
-     * @return array
-     */
-    public function getProperties(): array
-    {
-        return $this->properties;
     }
 
     protected function doInitialize()
