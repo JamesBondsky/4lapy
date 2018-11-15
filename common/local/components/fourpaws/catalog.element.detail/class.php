@@ -22,6 +22,7 @@ use Exception;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Templates\MediaEnum;
+use FourPaws\BitrixOrm\Collection\ImageCollection;
 use FourPaws\BitrixOrm\Model\Exceptions\CatalogProductNotFoundException;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Category;
@@ -126,20 +127,16 @@ class CatalogElementDetailComponent extends \CBitrixComponent
      */
     public function executeComponent()
     {
-        $code = $this->arParams['CODE'];
-        $offerId = (int)$this->arParams['OFFER_ID'];
-        $showFastOrder = $this->arParams['SHOW_FAST_ORDER'];
-
-        if (!$code) {
+        if (!$this->arParams['CODE']) {
             Tools::process404([], true, true, true);
         }
 
         parent::executeComponent();
 
-        $getProductData = function () use ($code, $offerId, $showFastOrder) {
+        if ($this->startResultCache()) {
             /** @var Product $product */
             try {
-                $product = $this->getProduct($code);
+                $product = $this->getProduct($this->arParams['CODE']);
             } catch (CatalogProductNotFoundException $e) {
                 $product = false;
             }
@@ -151,7 +148,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                 return false;
             }
 
-            $currentOffer = $this->getCurrentOffer($product, $offerId);
+            $currentOffer = $this->getCurrentOffer($product, (int)$this->arParams['OFFER_ID']);
 
             TaggedCacheHelper::addManagedCacheTags([
                 'iblock:item:' . $product->getId(),
@@ -159,11 +156,11 @@ class CatalogElementDetailComponent extends \CBitrixComponent
 
             $sectionId = (int)current($product->getSectionsIdList());
 
-            $result = [
+            $this->arResult = [
                 'PRODUCT'               => $product,
                 'CURRENT_OFFER'         => $currentOffer,
                 'SECTION_CHAIN'         => $this->getSectionChain($sectionId),
-                'SHOW_FAST_ORDER'       => $showFastOrder,
+                'SHOW_FAST_ORDER'       => $this->arParams['SHOW_FAST_ORDER'],
                 'ECOMMERCE_VIEW_SCRIPT' => \sprintf(
                     "<script>%s\n%s</script>",
                     $this->ecommerceService->renderScript(
@@ -174,19 +171,32 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                 'BASKET_LINK_EVENT'     => \sprintf(
                     'onmousedown="%s"',
                     $this->retailRocketService->renderAddToBasket($currentOffer->getXmlId())
-                )
+                ),
+                'OFFERS' => $product->getOffersSorted(),
+                'BRAND' => $product->getBrand()
             ];
 
-            return $result;
-        };
+            foreach ($this->arResult['OFFERS'] as &$offer) {
+                $imagesIDs = $offer->getImagesIds();
+                if (!$imagesIDs) {
+                    $imageCollection = ImageCollection::createFromIds($imagesIDs);
+                    $offer->withImages($imageCollection);
+                    $offer->getResizeImages(480, 480);
+                }
+            }
 
-        $this->arResult = (new BitrixCache())
-            ->withId('product_code' . $this->arParams['CODE'])
-            ->withTag('catalog:product:' . $this->arParams['CODE'])
-            ->resultOf($getProductData);
+            $this->setResultCacheKeys([
+                'PRODUCT',
+                'CURRENT_OFFER',
+                'SHOW_FAST_ORDER',
+                'OFFERS',
+                'BRAND'
+            ]);
+
+            $this->includeComponentTemplate();
+        }
 
 
-        $this->includeComponentTemplate();
         $this->setSeo($this->arResult['CURRENT_OFFER']);
 
         // bigdata

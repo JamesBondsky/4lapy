@@ -37,6 +37,7 @@ class ShareQuery extends IblockElementQuery
             'OLD_URL',
             'PRODUCTS',
             'LABEL',
+            'LABEL_IMAGE',
             'BASKET_RULES',
             'JSON_GROUP_SET',
             'PREMISE_BONUS',
@@ -87,6 +88,6 @@ class ShareQuery extends IblockElementQuery
      */
     public function exec(): CollectionBase
     {
-        return new ShareCollection($this->doExec(), $this->getProperties());
+        return new ShareCollection($this->doExec());
     }
 }
