@@ -34,10 +34,9 @@ define('BX_COMP_MANAGED_CACHE', true);
 define('BX_CACHE_TYPE', 'memcache');
 define('BX_MEMCACHE_HOST', getenv('BX_MEMCACHE_HOST'));
 define('BX_MEMCACHE_PORT', getenv('BX_MEMCACHE_PORT'));
-define('BX_CACHE_SID', realpath($_SERVER['DOCUMENT_ROOT']) . '#01');
-
 define('BX_SECURITY_SESSION_MEMCACHE_HOST', getenv('BX_MEMCACHE_HOST'));
 define('BX_SECURITY_SESSION_MEMCACHE_PORT', getenv('BX_MEMCACHE_PORT'));
+define('BX_CACHE_SID', realpath($_SERVER['DOCUMENT_ROOT']) . '#01');
 
 define('BX_UTF', true);
 define('BX_FILE_PERMISSIONS', 0664);
