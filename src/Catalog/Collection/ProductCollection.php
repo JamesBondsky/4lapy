@@ -21,8 +21,13 @@ class ProductCollection extends IblockElementCollection
             $result['PROPERTIES'] = $fields->GetProperties();
             foreach ($result['PROPERTIES'] as $key => &$arProp) {
                 if (in_array($key, $props)) {
-                    $result['PROPERTY_' . $key . '_VALUE'] = $arProp['VALUE'];
-                    $result['~PROPERTY_' . $key . '_VALUE'] = $arProp['VALUE'];
+                    if ($arProp['PROPERTY_TYPE'] == 'F' && $arProp['VALUE'] == '') {
+                        $val = null;
+                    } else {
+                        $val = $arProp['VALUE'];
+                    }
+                    $result['PROPERTY_' . $key . '_VALUE'] = $val;
+                    $result['~PROPERTY_' . $key . '_VALUE'] = $val;
                     if (isset($arProp['PROPERTY_VALUE_ID'])) {
                         $result['PROPERTY_' . $key . '_VALUE_ID'] = $arProp['PROPERTY_VALUE_ID'];
                         $result['~PROPERTY_' . $key . '_VALUE_ID'] = $arProp['PROPERTY_VALUE_ID'];
