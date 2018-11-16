@@ -33,7 +33,7 @@ class UpdateSeoCatalogSections20181116203000 extends \Adv\Bitrixtools\Migration\
                 $sectionID,
                 [
                     'IPROPERTY_TEMPLATES' => [
-                        'SECTION_META_TITLE' => $name
+                        'SECTION_PAGE_TITLE' => $name
                     ]
                 ]
             );
