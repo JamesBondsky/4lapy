@@ -58,7 +58,8 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
     $asset = Asset::getInstance();
     $asset->addCss($markup->getCssFile());
     //$asset->addJs('https://api-maps.yandex.ru/2.1.68/?lang=ru_RU');
-    $asset->addJs('/api-maps.yandex.ru.js');
+    $asset->addJs('//api-maps.yandex.ru/2.1.68/?lang=ru_RU');
+    //$asset->addJs('/api-maps.yandex.ru.js');
     $asset->addJs('https://www.google.com/recaptcha/api.js?hl=ru');
 
     /** onesignal.com */
