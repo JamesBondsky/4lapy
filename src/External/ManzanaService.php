@@ -742,8 +742,8 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     public function updateContactAsync(Client $contact)
     {
         /** @noinspection MissingService */
-        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_update_producer');
-        $producer->publish($this->serializer->serialize($contact, 'json'));
+//        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_update_producer');
+//        $producer->publish($this->serializer->serialize($contact, 'json'));
     }
 
     /**

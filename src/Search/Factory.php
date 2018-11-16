@@ -6,6 +6,7 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Elastica\Client;
 use Elastica\Document;
 use Elastica\Result;
+use FourPaws\Catalog\Model\Brand;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Search\Enum\DocumentType;
 use FourPaws\Search\Model\HitMetaInfo;
@@ -89,6 +90,24 @@ class Factory
             DocumentType::PRODUCT
         );
     }
+    
+    /**
+     * @param Brand $brand
+     *
+     * @return Document
+     */
+    public function makeBrandDocument(Brand $brand)
+    {
+        return new Document(
+            $brand->getId(),
+            $this->serializer->serialize(
+                $brand,
+                'json',
+                SerializationContext::create()->setGroups(['elastic'])
+            ),
+            DocumentType::BRAND
+        );
+    }
 
     /**
      * @param Result $result
@@ -113,6 +132,30 @@ class Factory
 
         return $product;
     }
+    
+    /**
+     * @param Result $result
+     *
+     * @return Brand
+     * @throws RuntimeException
+     */
+    public function makeBrandObject(Result $result): Brand
+    {
+        if (DocumentType::BRAND !== $result->getType()) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Ожидается тип документа `%s` , а получен `%s`',
+                    DocumentType::BRAND,
+                    $result->getType()
+                )
+            );
+        }
+        
+        $brand = $this->makeBrandObjectFromArray($result->getSource());
+        $brand->withHitMetaInfo(HitMetaInfo::create($result));
+        
+        return $brand;
+    }
 
     /**
      * @param array $source
@@ -135,5 +178,28 @@ class Factory
         }
 
         return $product;
+    }
+    
+    /**
+     * @param array $source
+     *
+     * @return Brand
+     * @throws RuntimeException
+     */
+    public function makeBrandObjectFromArray(array $source) {
+        $json = json_encode($source);
+        
+        $brand = $this->serializer->deserialize(
+            $json,
+            Brand::class,
+            'json',
+            DeserializationContext::create()->setGroups(['elastic'])
+        );
+        
+        if (!($brand instanceof Brand)) {
+            throw new RuntimeException('Ошибка десериализации бренда');
+        }
+        
+        return $brand;
     }
 }
