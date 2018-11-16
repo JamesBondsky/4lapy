@@ -47,7 +47,13 @@ use FourPaws\Decorators\SvgDecorator;
             <?= new SvgDecorator('icon-search-header', 20, 20) ?>
         </span>
     </a>
-    <div class="b-form-inline__autocomplete-wrapper b-form-inline__autocomplete-wrapper--search"
-         id="id-header-search-auto">
+    <div class="b-form-inline__autocomplete-wrapper b-form-inline__autocomplete-wrapper--search">
+        <div class="autocomplete-results" id="id-header-search-auto">
+          <div class="autocomplete-results__list"
+            id="id-header-search-results"></div>
+          <div class="autocomplete-results__products"
+            id="id-header-search-products"></div>
+        </div>
+
     </div>
 </div>
