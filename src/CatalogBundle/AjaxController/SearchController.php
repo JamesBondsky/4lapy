@@ -6,8 +6,10 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Brand;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\CatalogBundle\Dto\SearchRequest;
 use FourPaws\Search\Model\CombinedSearchResult;
@@ -65,6 +67,7 @@ class SearchController extends Controller
             $res = [
                 'brands' => [],
                 'products' => [],
+                'suggest' => [],
             ];
             /** @var Product|Brand $product */
             foreach ($result->getCollection() as $item) {
@@ -72,7 +75,15 @@ class SearchController extends Controller
                     $res['brands'][] = ['DETAIL_PAGE_URL' => $item->getDetailPageUrl(), 'NAME' => $item->getName()];
                 }
                 elseif ($item instanceof Product) {
-                    $res['products'][] = ['DETAIL_PAGE_URL' => $item->getDetailPageUrl(), 'NAME' => $item->getName()];
+                    /**
+                     * @var Offer $offer
+                     */
+                    $offer = $item->getOffers()->first();
+                    /**
+                     * @var Image $image
+                     */
+                    $image = $offer->getImages()->first();
+                    $res['products'][] = ['DETAIL_PAGE_URL' => $item->getDetailPageUrl(), 'NAME' => $item->getName(), 'PREVIEW' => sprintf("/upload/%s/%s", $image->getSubDir(), $image->getFileName()), 'PRICE' => $offer->getPrice(), 'CURRENCY' => $offer->getCurrency(), 'BRAND' => $item->getBrand()->getName()];
                 }
                 
             }

@@ -9,6 +9,7 @@ use Elastica\Query;
 use Elastica\Query\AbstractQuery;
 use Elastica\Query\BoolQuery;
 use Elastica\QueryBuilder;
+use Elastica\Search;
 use Elastica\Suggest;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\FilterCollection;
@@ -16,6 +17,7 @@ use FourPaws\Catalog\Model\Filter\FilterInterface;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Model\Sorting;
 use FourPaws\CatalogBundle\Service\SortService;
+use FourPaws\Search\Enum\DocumentType;
 use FourPaws\Search\Helper\AggsHelper;
 use FourPaws\Search\Helper\IndexHelper;
 use FourPaws\Search\Model\CombinedSearchResult;
@@ -175,14 +177,31 @@ class SearchService implements LoggerAwareInterface
             ->setSort($sorting->getRule())
             ->setParam('query', $this->getBrandFullQueryRule($searchString));
         
+        
+        $suggest = new Suggest();
+    
+        $completion = new Suggest\Completion('product_suggest', 'suggest');
+        $completion->setText($searchString);
+        $completion->setParam('fuzzy', ['fuzziness' => 2]);
+        $completion->setParam('size', $navigation->getSize());
+        $suggest->addSuggestion($completion);
+        
+        $suggestQuery = $this->indexHelper->createSuggestSearch();
+        $suggestQuery->getQuery()->setMinScore(0.9);
+        
+        $suggestSearch = $this->getIndexHelper()->createSuggestSearch();
+        $suggestSearch->getQuery()
+            ->setParam('query', $suggestQuery);
+        $suggestSearch->addType(DocumentType::PRODUCT);
+        
         $this->getAggsHelper()->setAggs($productSearch->getQuery(), $filters);
     
-        $multiSearch->setSearches([$brandSearch, $productSearch]);
+        $multiSearch->setSearches([$brandSearch, $productSearch, $suggestSearch]);
         
         
         $resultSet = $multiSearch->search();
     
-        return new CombinedSearchResult($resultSet, $navigation, $searchString);
+        return new CombinedSearchResult($resultSet, $navigation);
     }
 
     /**

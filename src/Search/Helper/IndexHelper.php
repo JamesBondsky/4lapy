@@ -356,11 +356,6 @@ class IndexHelper implements LoggerAwareInterface
                 'brand' => [
                     '_all'       => ['enabled' => false],
                     'properties' => [
-                        'suggest'                          => [
-                            'type'            => 'completion',
-                            'analyzer'        => 'autocomplete',
-                            'search_analyzer' => 'standard',
-                        ],
                         'active'             => ['type' => 'boolean'],
                         'dateActiveFrom'     => ['type' => 'date', 'format' => 'date_optional_time'],
                         'dateActiveTo'       => ['type' => 'date', 'format' => 'date_optional_time'],
@@ -374,7 +369,7 @@ class IndexHelper implements LoggerAwareInterface
                         'DETAIL_TEXT_TYPE'   => ['type' => 'keyword', 'index' => false],
                         'DETAIL_PAGE_URL'    => ['type' => 'text', 'index' => false],
                         'CANONICAL_PAGE_URL' => ['type' => 'text', 'index' => false],
-                        'NAME'               => ['type' => 'string', 'index' => 'not_analyzed'],
+                        'NAME'               => ['type' => 'string'],
                         'PROPERTY_POPULAR'   => ['type' => 'boolean'],
                         'PROPERTY_CATALOG_INNER_BANNER'   => ['type' => 'text'],
                     ]
@@ -728,6 +723,13 @@ class IndexHelper implements LoggerAwareInterface
     public function createAllTypesSearch(): \Elastica\Multi\Search
     {
         return (new \Elastica\Multi\Search($this->client));
+//            ->addSearch($this->createProductSearch())
+//            ->addSearch($this->createBrandSearch());
+    }
+    
+    public function createSuggestSearch(): Search
+    {
+        return (new Search($this->client));
 //            ->addSearch($this->createProductSearch())
 //            ->addSearch($this->createBrandSearch());
     }
