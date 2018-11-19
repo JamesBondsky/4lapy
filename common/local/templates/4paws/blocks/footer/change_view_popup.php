@@ -15,8 +15,8 @@ use FourPaws\Decorators\SvgDecorator;
                 <?= new SvgDecorator('icon-desktop', 60, 60) ?>
             </span>
             <div class="b-popup-change-viewport__descr">
-                Вы&nbsp;перешли к&nbsp;обычной версии сайта.<br />
-                К&nbsp;возврату просмотра мобильной версии и&nbsp;обратно нажмите ссылку в&nbsp;правом нижнем углу.
+                Вы&nbsp;перешли на&nbsp;полную версию сайта.<br />
+                Для возврата на&nbsp;мобильную версию перейдите по&nbsp;ссылке в&nbsp;правом нижнем углу сайта.
             </div>
         </div>
     </div>
