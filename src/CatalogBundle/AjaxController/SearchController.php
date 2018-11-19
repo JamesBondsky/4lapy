@@ -6,9 +6,13 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\Catalog\Collection\FilterCollection;
+use FourPaws\Catalog\Model\Brand;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\CatalogBundle\Dto\SearchRequest;
+use FourPaws\Search\Model\CombinedSearchResult;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\SearchService;
 use InvalidArgumentException;
@@ -52,17 +56,36 @@ class SearchController extends Controller
         $validator = $this->container->get('validator');
 
         if (!$validator->validate($searchRequest)->count()) {
-            /** @var ProductSearchResult $result */
-            $result = $searchService->searchProducts(
+            /** @var CombinedSearchResult $result */
+            $result = $searchService->searchAll(
                 $searchRequest->getCategory()->getFilters(),
                 $searchRequest->getSorts()->getSelected(),
                 $searchRequest->getNavigation(),
                 $searchRequest->getSearchString()
             );
-
-            /** @var Product $product */
-            foreach ($result->getProductCollection() as $product) {
-                $res[] = ['DETAIL_PAGE_URL' => $product->getDetailPageUrl(), 'NAME' => $product->getName()];
+    
+            $res = [
+                'brands' => [],
+                'products' => [],
+                'suggest' => [],
+            ];
+            /** @var Product|Brand $product */
+            foreach ($result->getCollection() as $item) {
+                if($item instanceof Brand) {
+                    $res['brands'][] = ['DETAIL_PAGE_URL' => $item->getDetailPageUrl(), 'NAME' => $item->getName()];
+                }
+                elseif ($item instanceof Product) {
+                    /**
+                     * @var Offer $offer
+                     */
+                    $offer = $item->getOffers()->first();
+                    /**
+                     * @var Image $image
+                     */
+                    $image = $offer->getImages()->first();
+                    $res['products'][] = ['DETAIL_PAGE_URL' => $item->getDetailPageUrl(), 'NAME' => $item->getName(), 'PREVIEW' => sprintf("/upload/%s/%s", $image->getSubDir(), $image->getFileName()), 'PRICE' => $offer->getPrice(), 'CURRENCY' => $offer->getCurrency(), 'BRAND' => $item->getBrand()->getName()];
+                }
+                
             }
         }
 

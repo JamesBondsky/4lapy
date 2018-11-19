@@ -16,7 +16,10 @@ use Elastica\Query;
 use Elastica\Search;
 use Exception;
 use FourPaws\App\Env;
+use FourPaws\BitrixOrm\Collection\CollectionBase;
+use FourPaws\Catalog\Model\Brand;
 use FourPaws\Catalog\Model\Product;
+use FourPaws\Catalog\Query\BrandQuery;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Search\Enum\DocumentType;
 use FourPaws\Search\Exception\Index\IndexExceptionInterface;
@@ -350,6 +353,27 @@ class IndexHelper implements LoggerAwareInterface
                         'deliveryAvailability'             => ['type' => 'keyword'],
                     ],
                 ],
+                'brand' => [
+                    '_all'       => ['enabled' => false],
+                    'properties' => [
+                        'active'             => ['type' => 'boolean'],
+                        'dateActiveFrom'     => ['type' => 'date', 'format' => 'date_optional_time'],
+                        'dateActiveTo'       => ['type' => 'date', 'format' => 'date_optional_time'],
+                        'ID'                 => ['type' => 'integer'],
+                        'CODE'               => ['type' => 'keyword'],
+                        'XML_ID'             => ['type' => 'keyword'],
+                        'SORT'               => ['type' => 'integer'],
+                        'PREVIEW_TEXT'       => ['type' => 'text'],
+                        'PREVIEW_TEXT_TYPE'  => ['type' => 'keyword', 'index' => false],
+                        'DETAIL_TEXT'        => ['type' => 'text'],
+                        'DETAIL_TEXT_TYPE'   => ['type' => 'keyword', 'index' => false],
+                        'DETAIL_PAGE_URL'    => ['type' => 'text', 'index' => false],
+                        'CANONICAL_PAGE_URL' => ['type' => 'text', 'index' => false],
+                        'NAME'               => ['type' => 'string'],
+                        'PROPERTY_POPULAR'   => ['type' => 'boolean'],
+                        'PROPERTY_CATALOG_INNER_BANNER'   => ['type' => 'text'],
+                    ]
+                ]
             ],
         ];
     }
@@ -412,6 +436,60 @@ class IndexHelper implements LoggerAwareInterface
 
         return true;
     }
+    
+    public function indexBrand(Brand $brand)
+    {
+        return $this->indexBrands([$brand]);
+    }
+    
+    /**
+     * @param Brand[] $brands
+     * @return bool
+     */
+    public function indexBrands(array $brands)
+    {
+        $brands = array_filter($brands, function ($data) {
+            try {
+                $result = $this->canIndexBrand($data);
+            } catch (IndexExceptionInterface $e) {
+                $this->log()->debug(
+                    \sprintf(
+                        'Skipping brand #%s: %s',
+                        $data instanceof Brand ? $data->getId() : 'N',
+                        $e->getMessage()
+                    )
+                );
+                $result = false;
+            }
+        
+            return $result;
+        });
+    
+        if (!$brands) {
+            return true;
+        }
+        
+        $documents = array_map(function (Brand $brand) {
+            return $this->factory->makeBrandDocument($brand);
+        }, $brands);
+        
+        $responseSet = $this->getCatalogIndex()->addDocuments($documents);
+    
+        if (!$responseSet->isOk()) {
+            $this->log()->error(
+                $responseSet->getError(),
+                [
+                    'brands' => array_map(function (Brand $brand) {
+                        return $brand->getId();
+                    }, $brands),
+                ]
+            );
+        
+            return false;
+        }
+    
+        return true;
+    }
 
     /**
      * **Синхронно** индексирует товары в Elasticsearch
@@ -422,6 +500,14 @@ class IndexHelper implements LoggerAwareInterface
      */
     public function indexAll(bool $flushBaseFilter = false, int $batchSize = 500)
     {
+        $brandQuery = (new BrandQuery())
+            ->withOrder(['ID' => 'DESC']);
+        if ($flushBaseFilter) {
+            $brandQuery->withFilter([]);
+        }
+        $allBrands = $brandQuery->exec();
+        $this->__indexAll(Brand::class, $allBrands, $batchSize);
+        
         $query = (new ProductQuery())
             ->withOrder(['ID' => 'DESC']);
 
@@ -430,44 +516,105 @@ class IndexHelper implements LoggerAwareInterface
         }
 
         $allProducts = $query->exec();
-
+        $this->__indexAll(Product::class, $allProducts, $batchSize);
+//        $indexOk = 0;
+//        $indexError = 0;
+//        $indexTotal = $allProducts->count();
+//
+//        $this->log()->info(
+//            sprintf(
+//                'Всего товаров: %d. Идёт индексация товаров... Ждите.',
+//                $indexTotal
+//            )
+//        );
+//
+//        $allProductsChunked = array_chunk($allProducts->toArray(), $batchSize);
+//        unset($allProducts);
+//        unset($query);
+//
+//        $this->log()->debug(sprintf('memory: %s, memory_pick_usage: %s', memory_get_usage(true), memory_get_peak_usage(true)));
+//        foreach ($allProductsChunked as $i => $allProductsChunk) {
+//            if ($this->indexProducts($allProductsChunk)) {
+//                $indexOk += \count($allProductsChunk);
+//            } else {
+//                $indexError +=\count($allProductsChunk);
+//            }
+//            unset($allProductsChunked[$i]);
+//
+//            $this->log()->info(sprintf('Индексировано товаров %d...', $indexOk));
+//            $this->log()->debug(sprintf('memory: %s, memory_pick_usage: %s', memory_get_usage(true), memory_get_peak_usage(true)));
+//        }
+//
+//        $this->log()->info(
+//            sprintf(
+//                "Товаров: %d;\tиндексировано: %d;\tошибок: %d;",
+//                $indexTotal,
+//                $indexOk,
+//                $indexError
+//            )
+//        );
+    }
+    
+    /**
+     * @param string $type
+     * @param CollectionBase $result
+     * @param int $batchSize
+     */
+    private function __indexAll(string $type, CollectionBase $result, int $batchSize = 500)
+    {
         $indexOk = 0;
         $indexError = 0;
-        $indexTotal = $allProducts->count();
-
+        $indexTotal = $result->count();
+        $entityName = $method = '';
+        
+        switch ($type) {
+            case Product::class:
+                $entityName = 'товаров';
+                $method = 'indexProducts';
+                break;
+            case Brand::class:
+                $entityName = 'брендов';
+                $method = 'indexBrands';
+                break;
+        }
+        
+        
         $this->log()->info(
             sprintf(
-                'Всего товаров: %d. Идёт индексация товаров... Ждите.',
+                'Всего %s: %d. Идёт индексация товаров... Ждите.',
+                $entityName,
                 $indexTotal
             )
         );
-
-        $allProductsChunked = array_chunk($allProducts->toArray(), $batchSize);
-        unset($allProducts);
-        unset($query);
-
+    
+        $allItemsChunked = array_chunk($result->toArray(), $batchSize);
+        unset($result);
+    
         $this->log()->debug(sprintf('memory: %s, memory_pick_usage: %s', memory_get_usage(true), memory_get_peak_usage(true)));
-        foreach ($allProductsChunked as $i => $allProductsChunk) {
-            if ($this->indexProducts($allProductsChunk)) {
-                $indexOk += \count($allProductsChunk);
+        foreach ($allItemsChunked as $i => $allItemChunk) {
+            if (call_user_func([$this, $method], $allItemChunk)) {
+                $indexOk += \count($allItemChunk);
             } else {
-                $indexError +=\count($allProductsChunk);
+                $indexError += \count($allItemChunk);
             }
-            unset($allProductsChunked[$i]);
-
-            $this->log()->info(sprintf('Индексировано товаров %d...', $indexOk));
+            
+            unset($allItemsChunked[$i]);
+        
+            $this->log()->info(sprintf('Индексировано %s %d...', $entityName, $indexOk));
             $this->log()->debug(sprintf('memory: %s, memory_pick_usage: %s', memory_get_usage(true), memory_get_peak_usage(true)));
         }
-
+    
         $this->log()->info(
             sprintf(
-                "Товаров: %d;\tиндексировано: %d;\tошибок: %d;",
+                "%s: %d;\tиндексировано: %d;\tошибок: %d;",
+                $entityName,
                 $indexTotal,
                 $indexOk,
                 $indexError
             )
         );
     }
+    
 
     /**
      * @param int $productId
@@ -556,6 +703,35 @@ class IndexHelper implements LoggerAwareInterface
             ->setQuery(new Query())
             ->addIndex($this->getCatalogIndex())
             ->addType(DocumentType::PRODUCT);
+    }
+    
+    public function createBrandSearch(): Search
+    {
+        /*
+         * Обязательно надо создавать явно новый объект Query,
+         * иначе даже при создании новых объектов Search они
+         * будут разделять общий объект Query и выставление
+         * size = 0 для дозапросов аггрегаций будет ломать
+         * постраничную навигацию каталога.
+         */
+        return (new Search($this->client))
+            ->setQuery(new Query())
+            ->addIndex($this->getCatalogIndex())
+            ->addType(DocumentType::BRAND);
+    }
+    
+    public function createAllTypesSearch(): \Elastica\Multi\Search
+    {
+        return (new \Elastica\Multi\Search($this->client));
+//            ->addSearch($this->createProductSearch())
+//            ->addSearch($this->createBrandSearch());
+    }
+    
+    public function createSuggestSearch(): Search
+    {
+        return (new Search($this->client));
+//            ->addSearch($this->createProductSearch())
+//            ->addSearch($this->createBrandSearch());
     }
 
     /**
@@ -688,6 +864,26 @@ class IndexHelper implements LoggerAwareInterface
             throw new NotActiveException('Product is not active');
         }
 
+        return true;
+    }
+    
+    /**
+     * @param $brand
+     *
+     * @return bool
+     * @throws NotActiveException
+     * @throws WrongEntityPassedException
+     */
+    private function canIndexBrand($brand): bool
+    {
+        if (!$brand instanceof Brand) {
+            throw new WrongEntityPassedException('Invalid entity type');
+        }
+        
+        if (!$brand->isActive()) {
+            throw new NotActiveException('Brand is not active');
+        }
+        
         return true;
     }
 }

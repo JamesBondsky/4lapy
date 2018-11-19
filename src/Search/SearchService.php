@@ -9,6 +9,7 @@ use Elastica\Query;
 use Elastica\Query\AbstractQuery;
 use Elastica\Query\BoolQuery;
 use Elastica\QueryBuilder;
+use Elastica\Search;
 use Elastica\Suggest;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\FilterCollection;
@@ -16,8 +17,10 @@ use FourPaws\Catalog\Model\Filter\FilterInterface;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Model\Sorting;
 use FourPaws\CatalogBundle\Service\SortService;
+use FourPaws\Search\Enum\DocumentType;
 use FourPaws\Search\Helper\AggsHelper;
 use FourPaws\Search\Helper\IndexHelper;
+use FourPaws\Search\Model\CombinedSearchResult;
 use FourPaws\Search\Model\Navigation;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\Model\ProductSuggestResult;
@@ -117,6 +120,7 @@ class SearchService implements LoggerAwareInterface
         $this->getAggsHelper()->setAggs($search->getQuery(), $filters);
 
         $resultSet = $search->search();
+        
         // если задана строка поиска и не найдено совпадений, то пробуем в другой раскладке
         if ($searchString && !$resultSet->getTotalHits()) {
             $from = preg_match('/[ЁёА-я]/u', $searchString) ? 'ru' : 'en';
@@ -140,6 +144,64 @@ class SearchService implements LoggerAwareInterface
         }
 
         return new ProductSearchResult($resultSet, $navigation, $searchString);
+    }
+    
+    public function searchAll(
+        FilterCollection $filters,
+        Sorting $sorting,
+        Navigation $navigation,
+        string $searchString = ''
+    )
+    {
+        
+        $multiSearch = $this->getIndexHelper()->createAllTypesSearch();
+        
+        $productSearch = $this->getIndexHelper()->createProductSearch();
+        $brandSearch = $this->getIndexHelper()->createBrandSearch();
+        
+        if ($searchString !== '') {
+            $productSearch->getQuery()->setMinScore(0.9);
+            $brandSearch->getQuery()->setMinScore(0.9);
+        }
+    
+        $productSearch->getQuery()
+            ->setFrom($navigation->getFrom())
+            ->setSize($navigation->getSize())
+            ->setSort($sorting->getRule())
+            ->setParam('query', $this->getFullQueryRule($filters, $searchString))
+            ->setHighlight(['fields' => ['offers.XML_ID' => (object)[]]]);
+    
+        $brandSearch->getQuery()
+            ->setFrom($navigation->getFrom())
+            ->setSize($navigation->getSize())
+            ->setSort($sorting->getRule())
+            ->setParam('query', $this->getBrandFullQueryRule($searchString));
+        
+        
+        $suggest = new Suggest();
+    
+        $completion = new Suggest\Completion('product_suggest', 'suggest');
+        $completion->setText($searchString);
+        $completion->setParam('fuzzy', ['fuzziness' => 2]);
+        $completion->setParam('size', $navigation->getSize());
+        $suggest->addSuggestion($completion);
+        
+        $suggestQuery = $this->indexHelper->createSuggestSearch();
+        $suggestQuery->getQuery()->setMinScore(0.9);
+        
+        $suggestSearch = $this->getIndexHelper()->createSuggestSearch();
+        $suggestSearch->getQuery()
+            ->setParam('query', $suggestQuery);
+        $suggestSearch->addType(DocumentType::PRODUCT);
+        
+        $this->getAggsHelper()->setAggs($productSearch->getQuery(), $filters);
+    
+        $multiSearch->setSearches([$brandSearch, $productSearch, $suggestSearch]);
+        
+        
+        $resultSet = $multiSearch->search();
+    
+        return new CombinedSearchResult($resultSet, $navigation);
     }
 
     /**
@@ -191,6 +253,62 @@ class SearchService implements LoggerAwareInterface
         return $filterSet;
     }
 
+    public function getBrandQueryRule(string $searchString): BoolQuery
+    {
+        $queryBuilder = new QueryBuilder();
+        $boolQuery = $queryBuilder->query()->bool();
+        if ($searchString === '') {
+            return $boolQuery;
+        }
+    
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['NAME'])
+                ->setType('phrase')
+                ->setAnalyzer('default')
+                ->setParam('boost', 80.0)
+                ->setParam('_name', 'name-phrase')
+        );
+    
+        //Точное по слову в названии
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['NAME'])
+                ->setType('best_fields')
+                ->setFuzziness(0)
+                ->setAnalyzer('default')
+                ->setParam('boost', 70.0)
+                ->setParam('_name', 'name-exact-word')
+    
+        );
+    
+        //Нечёткое совпадение с учётом опечаток в названии
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['NAME'])
+                ->setType('best_fields')
+                ->setFuzziness('AUTO')
+                ->setAnalyzer('full-text-search')
+                ->setParam('boost', 60.0)
+                ->setParam('_name', 'name-fuzzy-word')
+    
+        );
+    
+        //Совпадение по звучанию в названии
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['NAME.phonetic'])
+                ->setAnalyzer('sounds-similar')
+                ->setParam('boost', 50.0)
+                ->setParam('_name', 'name-sounds-similar')
+        );
+        return $boolQuery;
+    }
+    
     /**
      * @param string $searchString
      *
@@ -390,6 +508,24 @@ class SearchService implements LoggerAwareInterface
             $searchQuery->setBoostMode('sum');
         }
 
+        return $searchQuery;
+    }
+    
+    /**
+     * @param string $searchString
+     * @return AbstractQuery
+     */
+    public function getBrandFullQueryRule(string $searchString = ''): AbstractQuery
+    {
+        $searchQuery = new Query\FunctionScore();
+    
+        $boolQuery = $this->getBrandQueryRule($searchString);
+        $searchQuery->setQuery($boolQuery);
+        
+        if ('' === $searchString) {
+            $searchQuery->setBoostMode('sum');
+        }
+    
         return $searchQuery;
     }
 
