@@ -12,6 +12,4 @@ namespace FourPaws\Search\Enum;
 class DocumentType
 {
     const PRODUCT = 'product';
-    
-    const BRAND = 'brand';
 }
