@@ -47,7 +47,13 @@ $category = $APPLICATION->IncludeComponent(
                     ['HIDE_ICONS' => 'Y']
                 );
                 ?>
-                <h1 class="b-title b-title--h1"><?= $category->getCanonicalName() ?></h1>
+                <h1 class="b-title b-title--h1">
+                    <?if ($APPLICATION->GetTitle() == null || $APPLICATION->GetTitle() == '') { ?>
+                        <?= $category->getCanonicalName() ?>
+                    <? } else { ?>
+                        <?= $APPLICATION->GetTitle(); ?>
+                    <? } ?>
+                </h1>
             </div>
             <?php
 

@@ -78,7 +78,7 @@ if (!$catalogRequest->isLanding()) { ?>
         <h1 class="b-title b-title--h1 b-title--catalog-filter">
             <?php if ($filterSet) { ?>
                 <?= $filterSet->getH1() ?>
-            <?php } else { ?>
+            <?php } elseif($APPLICATION->GetTitle() == null || $APPLICATION->GetTitle() == '') { ?>
                 <?= \in_array($category->getId(), [
                     148,
                     332
@@ -87,7 +87,9 @@ if (!$catalogRequest->isLanding()) { ?>
                     $category->getParent()
                              ->getSuffix()
                 ]) ?>
-            <?php } ?>
+            <?php } else { ?>
+                <?= $APPLICATION->GetTitle(); ?>
+            <? } ?>
         </h1>
     </div>
 <?php } ?>
