@@ -35,8 +35,8 @@ $locationService = Application::getInstance()->getContainer()->get('location.ser
  */
 
 $product = $arResult['PRODUCT'];
-$offers = $product->getOffersSorted();
-$brand = $product->getBrand();
+$offers = $arResult['OFFERS'];
+$brand = $arResult['BRAND'];
 $currentOffer = $arResult['CURRENT_OFFER'];
 
 if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {

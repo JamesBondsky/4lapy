@@ -2,7 +2,7 @@
 
 namespace FourPaws\EcommerceBundle\Service;
 
-use CDBResult;
+use CIBlockResult;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Collection\ProductCollection;
@@ -182,7 +182,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
      */
     public function buildDetailFromOffer(Offer $offer, string $list = ''): GoogleEcommerce
     {
-        $offerCollection = new OfferCollection(new CDBResult());
+        $offerCollection = new OfferCollection(new CIBlockResult());
         $offerCollection->add($offer);
 
         return (new GoogleEcommerce())
@@ -209,7 +209,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
      */
     public function buildClickFromOffer(Offer $offer, string $list = ''): GoogleEcommerce
     {
-        $offerCollection = new OfferCollection(new CDBResult());
+        $offerCollection = new OfferCollection(new CIBlockResult());
         $offerCollection->add($offer);
 
         return (new GoogleEcommerce())
@@ -237,7 +237,7 @@ class GoogleEcommerceService implements ScriptRenderedInterface
     public function buildImpressionsFromOfferArray(array $offerList, string $list = ''): GoogleEcommerce
     {
         $storage = KeyValueStaticStorage::getInstance();
-        $collection = new OfferCollection(new CDBResult());
+        $collection = new OfferCollection(new CIBlockResult());
 
         foreach ($offerList as $rawOffer) {
             $key = \sprintf(

@@ -1,0 +1,394 @@
+<style>
+    .product-categories-property-items {
+        padding: 0;
+        margin: 0;
+    }
+
+    .product-categories-property-item {
+        list-style: none;
+        display: block;
+        float: left;
+        width: 250px;
+        height: 403px;
+        border: 2px dashed #d3d2d2;
+        border-radius: 4px;
+        margin: 10px;
+        cursor: move;
+    }
+
+    .product-categories-property-item:hover {
+        border: 2px dashed #929ba1;
+    }
+
+    .block__list li {
+        cursor: move;
+    }
+
+    .block__list li label {
+        cursor: pointer;
+    }
+
+    .block__list_words li {
+        padding: 5px;
+    }
+
+    .block__list_words .sortable-ghost {
+        opacity: 0.4;
+        background-color: #F4E2C9;
+    }
+
+    .block__list_words li:first-letter {
+        text-transform: uppercase;
+    }
+
+    .block__list_tags li {
+        color: #fff;
+        float: left;
+        margin: 8px 20px 10px 0;
+        padding: 5px 10px;
+        min-width: 10px;
+        background-color: #5F9EDF;
+        text-align: center;
+    }
+
+    .block__list_tags li:first-child:first-letter {
+        text-transform: uppercase;
+    }
+
+    .product-categories-property-item:nth-child(5),
+    .product-categories-property-item:nth-child(8) {
+        clear: left;
+    }
+
+    .product-categories-property-item:nth-child(5) {
+        margin-left: 151px;
+    }
+
+    .input-wrapper {
+        margin-bottom: 10px;
+    }
+
+    .input-wrapper:last-child {
+        margin-bottom: 0;
+    }
+
+    .input-wrapper input {
+        width: 100%;
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+    }
+
+    .modal {
+        background-color: #f5f9f9;
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1000; /* Sit on top */
+        padding-top: 50px; /* Location of the box */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+    }
+
+    .modal-content {
+        margin: auto;
+        display: block;
+        width: 1108px;
+        height: 822px;
+    }
+
+    @keyframes zoom {
+        from {
+            transform: scale(0)
+        }
+        to {
+            transform: scale(1)
+        }
+    }
+
+    .close {
+        position: absolute;
+        top: 15px;
+        right: 35px;
+        color: #000;
+        font-size: 40px;
+        font-weight: bold;
+        transition: 0.3s;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: #bbb;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .product-categories-property-wrapper {
+        margin: 0 auto;
+        width: 1136px;
+        height: 1400px;
+    }
+    #modal .adm-fileinput-wrapper-single .adm-fileinput-area{
+        width: 189px;
+        margin-top: -99px;
+    }
+    #modal div.adm-fileinput-item{
+        margin: 0 !important;
+    }
+
+</style>
+<input type="hidden" name="#CONTROL_NAME#" id="sending_field_ProductCategoriesProperty" value='#CONTROL_NAME_VALUE#'>
+<a href="javascript:void(0);" id="open-modal">Настроить</a>
+<div id="modal" class="modal">
+    <span class="close" id="close">&times;</span>
+    <div id="product-categories-property-wrapper" class="product-categories-property-wrapper">
+        <ul class="product-categories-property-items block__list_words" id="product-categories-property-items">
+            <li class="product-categories-property-item" data-start-index="0">
+                <div class="input-wrapper">
+                    <label for="title">Заголовок</label>
+                    <input type="text" name="title" id="title" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Подзаголовок</label>
+                    <input type="text" name="subtitle" id="subtitle" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Фильтры</label>
+                    <input type="text" name="filters" id="filters" value="">
+                </div>
+                <div class="input-wrapper">
+                    #FILE_0#
+                </div>
+            </li>
+            <li class="product-categories-property-item" data-start-index="1">
+                <div class="input-wrapper">
+                    <label for="title">Заголовок</label>
+                    <input type="text" name="title" id="title" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Подзаголовок</label>
+                    <input type="text" name="subtitle" id="subtitle" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Фильтры</label>
+                    <input type="text" name="filters" id="filters" value="">
+                </div>
+                <div class="input-wrapper">
+                    #FILE_1#
+                </div>
+            </li>
+            <li class="product-categories-property-item" data-start-index="2">
+                <div class="input-wrapper">
+                    <label for="title">Заголовок</label>
+                    <input type="text" name="title" id="title" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Подзаголовок</label>
+                    <input type="text" name="subtitle" id="subtitle" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Фильтры</label>
+                    <input type="text" name="filters" id="filters" value="">
+                </div>
+                <div class="input-wrapper">
+                    #FILE_2#
+                </div>
+            </li>
+            <li class="product-categories-property-item" data-start-index="3">
+                <div class="input-wrapper">
+                    <label for="title">Заголовок</label>
+                    <input type="text" name="title" id="title" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Подзаголовок</label>
+                    <input type="text" name="subtitle" id="subtitle" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Фильтры</label>
+                    <input type="text" name="filters" id="filters" value="">
+                </div>
+                <div class="input-wrapper">
+                    #FILE_3#
+                </div>
+            </li>
+            <li class="product-categories-property-item" data-start-index="4">
+                <div class="input-wrapper">
+                    <label for="title">Заголовок</label>
+                    <input type="text" name="title" id="title" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Подзаголовок</label>
+                    <input type="text" name="subtitle" id="subtitle" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Фильтры</label>
+                    <input type="text" name="filters" id="filters" value="">
+                </div>
+                <div class="input-wrapper">
+                    #FILE_4#
+                </div>
+            </li>
+            <li class="product-categories-property-item" data-start-index="5">
+                <div class="input-wrapper">
+                    <label for="title">Заголовок</label>
+                    <input type="text" name="title" id="title" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Подзаголовок</label>
+                    <input type="text" name="subtitle" id="subtitle" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Фильтры</label>
+                    <input type="text" name="filters" id="filters" value="">
+                </div>
+                <div class="input-wrapper">
+                    #FILE_5#
+                </div>
+            </li>
+            <li class="product-categories-property-item" data-start-index="6">
+                <div class="input-wrapper">
+                    <label for="title">Заголовок</label>
+                    <input type="text" name="title" id="title" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Подзаголовок</label>
+                    <input type="text" name="subtitle" id="subtitle" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Фильтры</label>
+                    <input type="text" name="filters" id="filters" value="">
+                </div>
+                <div class="input-wrapper">
+                    #FILE_6#
+                </div>
+            </li>
+            <li class="product-categories-property-item" data-start-index="7">
+                <div class="input-wrapper">
+                    <label for="title">Заголовок</label>
+                    <input type="text" name="title" id="title" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Подзаголовок</label>
+                    <input type="text" name="subtitle" id="subtitle" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Фильтры</label>
+                    <input type="text" name="filters" id="filters" value="">
+                </div>
+                <div class="input-wrapper">
+                    #FILE_7#
+                </div>
+            </li>
+            <li class="product-categories-property-item" data-start-index="8">
+                <div class="input-wrapper">
+                    <label for="title">Заголовок</label>
+                    <input type="text" name="title" id="title" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Подзаголовок</label>
+                    <input type="text" name="subtitle" id="subtitle" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Фильтры</label>
+                    <input type="text" name="filters" id="filters" value="">
+                </div>
+                <div class="input-wrapper">
+                    #FILE_8#
+                </div>
+            </li>
+            <li class="product-categories-property-item" data-start-index="9">
+                <div class="input-wrapper">
+                    <label for="title">Заголовок</label>
+                    <input type="text" name="title" id="title" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Подзаголовок</label>
+                    <input type="text" name="subtitle" id="subtitle" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Фильтры</label>
+                    <input type="text" name="filters" id="filters" value="">
+                </div>
+                <div class="input-wrapper">
+                    #FILE_9#
+                </div>
+            </li>
+            <li class="product-categories-property-item" data-start-index="10">
+                <div class="input-wrapper">
+                    <label for="title">Заголовок</label>
+                    <input type="text" name="title" id="title" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Подзаголовок</label>
+                    <input type="text" name="subtitle" id="subtitle" value="">
+                </div>
+                <div class="input-wrapper">
+                    <label for="title">Фильтры</label>
+                    <input type="text" name="filters" id="filters" value="">
+                </div>
+                <div class="input-wrapper">
+                    #FILE_10#
+                </div>
+            </li>
+        </ul>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        let parentWrapper = $('#product-categories-property-wrapper'),
+            switcherItemsWrapper = $('#product-categories-property-items'),
+            inputItems = switcherItemsWrapper.find('input'),
+            sortableEl = switcherItemsWrapper[0],
+            sendingField = $('#sending_field_ProductCategoriesProperty'),
+            modal = $('#modal'),
+            modalCloseBtn = modal.find('#close');
+        function init() {
+            //sortable init
+            Sortable.create(sortableEl, {
+                animation: 150,
+                onUpdate: function (evt) {
+                    setSendingField();
+                }
+            });
+            let initData = JSON.parse(sendingField.val());
+            $.each(initData, function (key, arValues) {
+                let curLi = $(switcherItemsWrapper.find('li')[key]);
+                $.each(arValues, function (filterName, value) {
+                    curLi.find('input[name=' + filterName + ']').val(value);
+                });
+            });
+        }
+        inputItems.change(function () {
+            setSendingField();
+        });
+        $('#open-modal').click(function (e) {
+            modal.show();
+        });
+        $(document).keyup(function (e) {
+            if (e.key === "Escape") {
+                modal.hide();
+            }
+        });
+        modalCloseBtn.click(function () {
+            modal.hide();
+        });
+        function setSendingField() {
+            let result = {},
+                i = 0;
+            $.each(switcherItemsWrapper.find('li'), function (key, liItem) {
+                let itemArr = {};
+                itemArr['move_id'] = $(liItem).data('start-index');
+                itemArr['title'] = $(liItem).find('input[name=title]').val();
+                itemArr['subtitle'] = $(liItem).find('input[name=subtitle]').val();
+                itemArr['filters'] = $(liItem).find('input[name=filters]').val();
+                itemArr['image_id'] = $(liItem).find('.adm-fileinput-wrapper .adm-fileinput-item-preview input').val();
+                result[i] = itemArr;
+                i++;
+            });
+            sendingField.val(JSON.stringify(result));
+        }
+        init();
+    });
+</script>

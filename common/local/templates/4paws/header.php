@@ -177,7 +177,7 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
                 ?>
                 <?php $APPLICATION->IncludeComponent('fourpaws:city.selector',
                     '',
-                    [],
+                    ['GET_STORES' => false],
                     false,
                     ['HIDE_ICONS' => 'Y']) ?>
                 <?php $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',

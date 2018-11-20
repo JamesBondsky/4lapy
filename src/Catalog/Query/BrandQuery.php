@@ -29,7 +29,15 @@ class BrandQuery extends IblockElementQuery
             'SECTION_PAGE_URL',
             'LIST_PAGE_URL',
             'CANONICAL_PAGE_URL',
-            'PROPERTY_POPULAR',
+        ];
+    }
+
+    public function getProperties(): array
+    {
+        return [
+            'POPULAR',
+            'CATALOG_INNER_BANNER',
+            'CATALOG_UNDER_BANNER'
         ];
     }
 
@@ -46,7 +54,7 @@ class BrandQuery extends IblockElementQuery
      */
     public function exec(): CollectionBase
     {
-        return new BrandCollection($this->doExec());
+        return new BrandCollection($this->doExec(), $this->getProperties());
     }
 
 }

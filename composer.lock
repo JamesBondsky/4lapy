@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d567d52ec7ade4d006125665790598c1",
+    "content-hash": "82e8136e4e5fc6c6c18a7573a7fbd56c",
     "packages": [
         {
             "name": "adv/bitrix-tools",
@@ -119,6 +119,46 @@
                 "migration"
             ],
             "time": "2018-03-05T11:38:00+00:00"
+        },
+        {
+            "name": "articul/articul.newrelic",
+            "version": "v1.0",
+            "source": {
+                "type": "git",
+                "url": "git@bitbucket.org:articul/articul.newrelic.git",
+                "reference": "f14d2d3b9626302a99737f54df8beccba8e45265"
+            },
+            "require": {
+                "composer/installers": "~1.0",
+                "php": ">=5.4.0"
+            },
+            "type": "bitrix-d7-module",
+            "extra": {
+                "installer-name": "newrelic"
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Andrey Brazhnikov",
+                    "homepage": "http://articulmedia.ru/",
+                    "email": "a.brazhnikov@articul.ru"
+                }
+            ],
+            "description": "Module for Bitrix which gives names to transactions going through urlrewrite.php for New Relic",
+            "homepage": "http://articulmedia.ru/",
+            "keywords": [
+                "bitrix",
+                "components",
+                "module"
+            ],
+            "support": {
+                "email": "a.brazhnikov@articul.ru",
+                "skype": "andrey.brajnikov",
+                "source": "https://bitbucket.org/articul/articul.newrelic"
+            },
+            "time": "2018-11-15T16:00:47+00:00"
         },
         {
             "name": "ci/restclientbundle",
@@ -237,16 +277,16 @@
         },
         {
             "name": "composer/installers",
-            "version": "v1.5.0",
+            "version": "v1.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/composer/installers.git",
-                "reference": "049797d727261bf27f2690430d935067710049c2"
+                "reference": "cfcca6b1b60bc4974324efb5783c13dca6932b5b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/composer/installers/zipball/049797d727261bf27f2690430d935067710049c2",
-                "reference": "049797d727261bf27f2690430d935067710049c2",
+                "url": "https://api.github.com/repos/composer/installers/zipball/cfcca6b1b60bc4974324efb5783c13dca6932b5b",
+                "reference": "cfcca6b1b60bc4974324efb5783c13dca6932b5b",
                 "shasum": ""
             },
             "require": {
@@ -353,7 +393,7 @@
                 "zend",
                 "zikula"
             ],
-            "time": "2017-12-29T09:13:20+00:00"
+            "time": "2018-08-27T06:10:37+00:00"
         },
         {
             "name": "doctrine/annotations",
