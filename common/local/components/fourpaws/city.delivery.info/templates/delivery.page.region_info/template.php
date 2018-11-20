@@ -37,6 +37,21 @@ $deliveryZone = $arResult['ZONE'];
 $resultsByZone = $arResult['RESULTS_BY_ZONE'];
 ?>
 
+<div class="b-delivery__banner">
+    <div class="b-delivery__banner-item">
+        <div class="b-delivery__banner-icon"><img src="/static/build/images/inhtml/delivery_auto.jpg"></div>
+        <div class="b-delivery__banner-text">
+            <div class="b-delivery__banner-title">Уважаемые покупатели!</div>
+        </div>
+        <div class="b-delivery__banner-text">
+            <div>
+                <p>В&nbsp;период проведения акции &laquo;Черная пятница&raquo; изменяются условия доставки по&nbsp;Москве&nbsp;и&nbsp;области.</p>
+                <p>Для получения более подробной информации введите Ваш населенный пункт в&nbsp;поисковую&nbsp;строку.</p>
+            </div>
+        </div>
+    </div>
+</div>
+<?/*
 <div class="b-delivery__info">
     <div class="b-delivery__info-item">
         <div class="b-delivery__info-icon"><img src="/static/build/images/inhtml/delivery-icon-01.png"></div>
@@ -69,6 +84,7 @@ $resultsByZone = $arResult['RESULTS_BY_ZONE'];
         <div class="b-delivery__info-text"><strong>Самовывоз</strong><span>210+ магазинов</span></div>
     </div>
 </div>
+*/?>
 
 <?php if (isset($resultsByZone[$deliveryZone])) {
     $currentResult = $resultsByZone[$deliveryZone];
@@ -77,7 +93,10 @@ $resultsByZone = $arResult['RESULTS_BY_ZONE'];
     ?>
 
     <div class="b-delivery__town-content">
-        <div class="b-delivery__town-map"><img src="/static/build/images/inhtml/delivery-map.png"></div>
+        <div class="b-delivery__town-map">
+            <?/*<img src="/static/build/images/inhtml/delivery-map.png">*/?>
+            <img src="/static/build/images/inhtml/delivery-map_blackfriday.png">
+        </div>
         <div class="b-delivery__town-data">
             <div class="b-delivery__region">
                 <div class="b-delivery__region-section b-delivery__region-section--border b-delivery__region-section--type<?= $realZoneToZone[$deliveryResult->getDeliveryZone()] ?>">
