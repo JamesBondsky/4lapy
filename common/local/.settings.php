@@ -19,6 +19,7 @@ return [
             'value' => true,
             'readonly' => true,
         ],
+    /*
     'cache' => [
         'value' => [
             'type' => 'memcache',
@@ -28,6 +29,17 @@ return [
             ],
             'sid' => realpath($_SERVER['DOCUMENT_ROOT']) . '#01',
         ],
+    ],
+    */
+    'cache' => [
+        'value' => [
+            'sid' => realpath($_SERVER['DOCUMENT_ROOT']) . '#01',
+            'type' => [
+                'required_remote_file' => realpath($_SERVER["DOCUMENT_ROOT"]) . '/local/php_interface/cache_memcache_hl.php',
+                'class_name' => 'CPHPCacheMemcacheHL',
+            ],
+        ],
+        'readonly' => false,
     ],
     'cache_flags' =>
         [
