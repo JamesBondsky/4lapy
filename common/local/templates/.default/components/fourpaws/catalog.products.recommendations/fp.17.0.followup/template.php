@@ -99,12 +99,6 @@ if ($arResult['RESULT_TYPE'] === 'RESULT') {
         if ($arParams['WRAP_CONTAINER_BLOCK'] === 'Y') {
             echo '</div>';
         }
-
-        ?>
-        <script>
-            window._global.initPopularProductSlider('.js-popular-product');
-        </script>
-        <?
     }
 
     if ($arParams['DEFERRED_LOAD'] === 'Y') {

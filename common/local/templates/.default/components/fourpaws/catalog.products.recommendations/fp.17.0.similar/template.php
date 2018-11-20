@@ -87,11 +87,6 @@ if ($arResult['RESULT_TYPE'] === 'RESULT') {
                 ?></div>
             </section>
         </div>
-
-        <script>
-            window._global.initPopularProductSlider('.js-popular-product');
-        </script>
-
         <?php
     }
 
