@@ -89,7 +89,13 @@ if ($arResult['RESULT_TYPE'] === 'RESULT') {
                     }
                 ?></div>
             </section>
-        </div><?php
+        </div>
+
+        <script>
+            window._global.initPopularProductSlider('.js-popular-product');
+        </script>
+
+        <?php
     }
 
     if ($arParams['DEFERRED_LOAD'] === 'Y') {
