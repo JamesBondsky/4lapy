@@ -129,7 +129,13 @@ class CatalogCategory extends CBitrixComponent
             }, (new SectionValues($category->getIblockId(), $category->getId()))->getValues());
         });
 
-        $APPLICATION->SetTitle($properties['SECTION_META_TITLE']);
+        if($properties['SECTION_PAGE_TITLE'] == null || $properties['SECTION_PAGE_TITLE'] == ''){
+            $APPLICATION->SetTitle($properties['SECTION_META_TITLE']);
+        } else {
+            $APPLICATION->SetTitle($properties['SECTION_PAGE_TITLE']);
+        }
+        $APPLICATION->SetPageProperty('title', $properties['SECTION_META_TITLE']);
+        $APPLICATION->SetPageProperty('keywords', $properties['SECTION_META_KEYWORDS']);
         $APPLICATION->SetPageProperty('description', $properties['SECTION_META_DESCRIPTION']);
         $APPLICATION->SetPageProperty('canonical', $category->getSectionPageUrl());
 

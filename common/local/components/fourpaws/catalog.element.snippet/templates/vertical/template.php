@@ -70,7 +70,7 @@ if (!$currentOffer->getImagesIds()) {
 
 /** @noinspection PhpUnhandledExceptionInspection */
 $value = $currentOffer->getPackageLabel(true, 999);
-
+$imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
 ?>
     <div class="b-common-item js-product-item" id="<?= $arParams['ITEM_ATTR_ID'] ?>"
          data-productid="<?= $product->getId() ?>">
@@ -80,9 +80,19 @@ $value = $currentOffer->getPackageLabel(true, 999);
                 <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getLink() ?>"
                    onclick="<?= $getOnClick($currentOffer) ?>">
                     <img class="b-common-item__image js-weight-img"
-                         src="<?= $offerWithImages->getResizeImages(240, 240)->first() ?>"
+                         <? if($arParams['COUNTER'] == null) {?>
+                            src="<?= $imageSrc; ?>"
+                         <? } else { ?>
+                            <? if($arParams['COUNTER'] < 5) { ?>
+                        	src="<?= $imageSrc; ?>"
+                            <? } else { ?>
+                        	data-popular-product-slider="<?= $imageSrc; ?>"
+                            <? } ?>
+                         <? } ?>
                          alt="<?= $currentOffer->getName() ?>"
-                         title="">
+                         title=""
+                         <??>
+                    >
                 </a>
             <?php } ?>
         </span>

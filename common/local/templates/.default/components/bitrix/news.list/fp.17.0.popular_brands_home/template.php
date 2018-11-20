@@ -28,7 +28,7 @@ if (!$arResult['ITEMS']) {
             ?><div class="b-popular-brand-item">
                 <a class="b-popular-brand-item__link" title="<?=$arItem['NAME']?>" href="<?=$arItem['DETAIL_PAGE_URL']?>"><?php
                     if ($arItem['PRINT_PICTURE']) {
-                        ?><img class="b-popular-brand-item__image js-image-wrapper" src="<?=$arItem['PRINT_PICTURE']['SRC']?>" alt="<?=$arItem['NAME']?>" title="<?=$arItem['NAME']?>"><?php
+                        ?><img class="b-popular-brand-item__image js-image-wrapper js-lazy" data-src="<?=$arItem['PRINT_PICTURE']['SRC']?>" alt="<?=$arItem['NAME']?>" title="<?=$arItem['NAME']?>"><?php
                     }
                 ?></a>
             </div><?php
