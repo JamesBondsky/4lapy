@@ -91,6 +91,7 @@
     "adv/bitrix-tools": "^1.0",
     "adv/yandex-market-api": "^1.0",
     "andreyryabin/sprint.migration": "^2.3",
+    "articul/articul.newrelic": "^1.0",
     "ci/restclientbundle": "~2.0.2",
     "cocur/slugify": "^3.0",
     "doctrine/collections": "^1.4",
@@ -134,6 +135,10 @@
     {
       "type": "vcs",
       "url": "git@bitbucket.org:articul/yandex-market-api.git"
+    },
+    {
+      "type": "vcs",
+      "url": "git@bitbucket.org:articul/articul.newrelic.git"
     }
   ],
   "scripts": {

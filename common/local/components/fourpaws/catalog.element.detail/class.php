@@ -22,6 +22,7 @@ use Exception;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Templates\MediaEnum;
+use FourPaws\BitrixOrm\Collection\ImageCollection;
 use FourPaws\BitrixOrm\Model\Exceptions\CatalogProductNotFoundException;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Category;
@@ -130,9 +131,9 @@ class CatalogElementDetailComponent extends \CBitrixComponent
             Tools::process404([], true, true, true);
         }
 
-        if ($this->startResultCache()) {
-            parent::executeComponent();
+        parent::executeComponent();
 
+        if ($this->startResultCache()) {
             /** @var Product $product */
             try {
                 $product = $this->getProduct($this->arParams['CODE']);
@@ -170,17 +171,31 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                 'BASKET_LINK_EVENT'     => \sprintf(
                     'onmousedown="%s"',
                     $this->retailRocketService->renderAddToBasket($currentOffer->getXmlId())
-                )
+                ),
+                'OFFERS' => $product->getOffersSorted(),
+                'BRAND' => $product->getBrand()
             ];
+
+            foreach ($this->arResult['OFFERS'] as &$offer) {
+                $imagesIDs = $offer->getImagesIds();
+                if (!$imagesIDs) {
+                    $imageCollection = ImageCollection::createFromIds($imagesIDs);
+                    $offer->withImages($imageCollection);
+                    $offer->getResizeImages(480, 480);
+                }
+            }
 
             $this->setResultCacheKeys([
                 'PRODUCT',
                 'CURRENT_OFFER',
-                'SHOW_FAST_ORDER'
+                'SHOW_FAST_ORDER',
+                'OFFERS',
+                'BRAND'
             ]);
 
             $this->includeComponentTemplate();
         }
+
 
         $this->setSeo($this->arResult['CURRENT_OFFER']);
 

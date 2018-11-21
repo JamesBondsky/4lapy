@@ -58,9 +58,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             </div>
             <div class="b-filter__block b-filter__block--reset js-reset-link-block"
                 <?= $filterCollection->hasCheckedFilterBrand() ? 'style="display:block"' : '' ?>>
-                <a class="b-link b-link--reset js-reset-filter"
-                   href="<?= $APPLICATION->GetCurDir() ?>"
-                   title="Сбросить фильтры">Сбросить фильтры</a>
+                <div class="b-link b-link--reset b-link--brand-reset js-reset-brand-filter">Сбросить фильтры</div>
             </div>
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.category.list.html.php',
@@ -214,12 +212,14 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             true
         );
 
+        $i = 1;
+        $catalogInnerBanner = $catalogRequest->getBrand()->getCatalogInnerBanner();
         foreach ($productCollection as $product) {
             $APPLICATION->IncludeComponent(
                 'fourpaws:catalog.element.snippet',
                 '',
                 [
-                    'PRODUCT'               => $product,
+                    'PRODUCT' => $product,
                     'GOOGLE_ECOMMERCE_TYPE' => 'Каталог по бренду'
                 ],
                 null,
@@ -227,6 +227,28 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
                     'HIDE_ICONS' => 'Y',
                 ]
             );
+            if ($catalogInnerBanner != null && $catalogInnerBanner['TEXT'] != '') {
+                if ($i == 4) {
+                    ?>
+                    <div class="b-fleas-protection-banner b-mobile b-fleas-brand">
+                        <?= htmlspecialcharsback($catalogInnerBanner['TEXT']) ?>
+                    </div>
+                    <?
+                } elseif ($i == 6) {
+                    ?>
+                    <div class="b-fleas-protection-banner b-tablet b-fleas-brand">
+                        <?= htmlspecialcharsback($catalogInnerBanner['TEXT']) ?>
+                    </div>
+                    <?
+                } elseif ($i == 8) {
+                    ?>
+                    <div class="b-fleas-protection-banner b-desktop b-fleas-brand">
+                        <?= htmlspecialcharsback($catalogInnerBanner['TEXT']) ?>
+                    </div>
+                    <?
+                }
+            }
+            $i++;
         }
         ?>
     </div>
@@ -247,4 +269,11 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             'HIDE_ICONS' => 'Y',
         ]
     ); ?>
+    <?php
+    $catalogUnderBanner = $catalogRequest->getBrand()->getCatalogUnderBanner();
+    if ($catalogUnderBanner != null && $catalogUnderBanner['TEXT'] != '') { ?>
+        <div class="b-brand-text">
+            <?= htmlspecialcharsback($catalogUnderBanner['TEXT'])?>
+        </div>
+    <? } ?>
 </main>

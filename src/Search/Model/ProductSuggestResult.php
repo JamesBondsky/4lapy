@@ -2,7 +2,7 @@
 
 namespace FourPaws\Search\Model;
 
-use CDBResult;
+use CIBlockResult;
 use Elastica\ResultSet;
 use FourPaws\App\Application;
 use FourPaws\Catalog\Collection\ProductCollection;
@@ -56,7 +56,7 @@ class ProductSuggestResult implements ProductResultInterface
                 }
             }
 
-            $cdbres = new CDBResult(null);
+            $cdbres = new CIBlockResult(null);
             $cdbres->InitFromArray($productList);
 
             $this->productCollection = new ProductCollection($cdbres);
