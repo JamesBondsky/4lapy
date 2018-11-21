@@ -105,16 +105,18 @@ class SearchController extends Controller
                                 ];
                             }
                         } elseif ($key == 'suggests') {
-                            if (empty($res[$key][$offer->getIblockSectionId()])) {
-                                $res[$key][$offer->getIblockSectionId()] = [
-//                                    'NAME' => $item->getSection()->getName(),
-                                    'DETAIL_PAGE_URL' => $item->getDetailPageUrl(),
-                                    'ELEMENTS' => [
-                                        $offer->getName()
-                                    ]
-                                ];
-                            } else {
-                                $res[$key][$offer->getIblockSectionId()]['ELEMENTS'][] = $offer->getName();
+                            if($offer != false){
+                                if (empty($res[$key][$offer->getProduct()->getIblockSectionId()])) {
+                                    $res[$key][$offer->getProduct()->getIblockSectionId()] = [
+                                        'NAME' => $offer->getProduct()->getSection()->getName(),
+                                        'DETAIL_PAGE_URL' => $offer->getProduct()->getSection()->getSectionPageUrl(),
+                                        'ELEMENTS' => [
+                                            $offer->getName()
+                                        ]
+                                    ];
+                                } else {
+                                    $res[$key][$offer->getProduct()->getIblockSectionId()]['ELEMENTS'][] = $offer->getName();
+                                }
                             }
                         }
                     }
