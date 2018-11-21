@@ -52,3 +52,5 @@ Desktop.ini
 /common/local/lib/*
 /common/static
 /common/local/php_interface/dbconn.php
+
+/local
