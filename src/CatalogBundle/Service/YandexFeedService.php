@@ -84,6 +84,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     /**
      * @param ConfigurationInterface $configuration
      * @param int                    $step
+     * @param string                 $stockID
      *
      * If need to continue, return true. Else - false.
      *
@@ -94,7 +95,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      * @throws ArgumentException
      * @throws IOException
      */
-    public function process(ConfigurationInterface $configuration, int $step): bool
+    public function process(ConfigurationInterface $configuration, int $step, string $stockID = null): bool
     {
         /**
          * @var Configuration $configuration
@@ -115,7 +116,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             $feed = $this->loadFeed($this->getStorageKey());
 
             try {
-                $this->processOffers($feed, $configuration);
+                $this->processOffers($feed, $configuration, $stockID);
             } catch (OffersIsOver $isOver) {
                 $feed = $this->loadFeed($this->getStorageKey());
                 $feed->getShop()
@@ -178,6 +179,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     /**
      * @param Feed          $feed
      * @param Configuration $configuration
+     * @param string        $stockID
      *
      * @return YandexFeedService
      *
@@ -187,7 +189,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      * @throws OffersIsOver
      * @throws ArgumentException
      */
-    protected function processOffers(Feed $feed, Configuration $configuration): YandexFeedService
+    protected function processOffers(Feed $feed, Configuration $configuration, string $stockID = null): YandexFeedService
     {
         $limit = 500;
         $offers = $feed->getShop()
@@ -197,7 +199,13 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             ->getOffset();
         $offset = $offset ?? 0;
 
-        $offerCollection = $this->getOffers($this->buildOfferFilter($feed, $configuration), $offset, $limit);
+        $filter = $this->buildOfferFilter($feed, $configuration);
+
+        if (!empty($stockID)) {
+            $filter['>CATALOG_STORE_AMOUNT_' . $stockID] = '0';
+        }
+
+        $offerCollection = $this->getOffers($filter, $offset, $limit);
 
         $this
             ->log()

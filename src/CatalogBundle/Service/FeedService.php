@@ -49,12 +49,13 @@ abstract class FeedService
     /**
      * @param ConfigurationInterface $configuration
      * @param int                    $step
+     * @param string                 $stockID
      *
      * If need to continue, return true. Else - false.
      *
      * @return boolean
      */
-    abstract public function process(ConfigurationInterface $configuration, int $step): bool;
+    abstract public function process(ConfigurationInterface $configuration, int $step, string $stockID = null): bool;
 
     /**
      * @todo set with client
