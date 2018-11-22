@@ -224,7 +224,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             ++$offset;
 
             try {
-                $this->addOffer($offer, $offers, $configuration->getServerName());
+                $this->addOffer($offer, $offers, $configuration->getServerName(), $stockID);
             } catch (Exception $e) {
                 /** Просто подавляем исключение */
             }
@@ -290,9 +290,10 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      * @throws RuntimeException
      * @throws ApplicationCreateException
      */
-    public function addOffer(Offer $offer, ArrayCollection $collection, string $host): void
+    public function addOffer(Offer $offer, ArrayCollection $collection, string $host, string $stockID = null): void
     {
-        if ($this->isOfferExcluded($offer)) {
+        //isOfferExcluded - проверка наличия в складе DC01 и на акционные товары/новинки и прочее
+        if (empty($stockID) && $this->isOfferExcluded($offer)) {
             return;
         }
 
