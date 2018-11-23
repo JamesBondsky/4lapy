@@ -109,4 +109,15 @@ abstract class FeedService
     {
         $this->filesystem->dumpFile($file, $this->serializer->serialize($feed, 'xml'));
     }
+
+    /**
+     * @param        $data
+     * @param string $file
+     *
+     * @throws IOException
+     */
+    public function publicFeedJson(array $data, string $file): void
+    {
+        $this->filesystem->dumpFile($file, json_encode($data, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
+    }
 }

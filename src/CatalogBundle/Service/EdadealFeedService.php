@@ -4,16 +4,16 @@ namespace FourPaws\CatalogBundle\Service;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use FourPaws\CatalogBundle\Exception\ArgumentException;
 use FourPaws\CatalogBundle\Translate\Configuration;
 use FourPaws\CatalogBundle\Translate\ConfigurationInterface;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\StoreBundle\Service\StoreService;
 use Psr\Log\LoggerAwareInterface;
-use RuntimeException;
-use Symfony\Component\Filesystem\Exception\IOException;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\Filesystem\Filesystem;
+use FourPaws\App\Application;
+use FourPaws\App\Application as App;
 
 /**
  * Class EdadealFeedService
@@ -22,6 +22,19 @@ use Symfony\Component\Filesystem\Filesystem;
  */
 class EdadealFeedService extends FeedService implements LoggerAwareInterface
 {
+    /** @var array $arResult */
+    private $arResult;
+    /** @var int $time */
+    private $time;
+    /** @var array $offers */
+    private $offers;
+    /** @var array $arMeasures */
+    private $arMeasures;
+    /** @var StoreService $storeService */
+    private $storeService;
+    /** @var \FourPaws\StoreBundle\Entity\StoreSearchResult */
+    private $stores;
+
     use LazyLoggerAwareTrait;
 
     /**
@@ -48,78 +61,257 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
      */
     public function process(ConfigurationInterface $configuration, int $step, string $stockID = null): bool
     {
-        $arResult = [
-            'catalog' => [],
+        /**
+         * @var Configuration $configuration
+         */
+
+        $this->arResult = [
+            'catalogs' => [],
             'offers' => [],
             'version' => 2
         ];
 
-        /*
-         *
-         * {
-                  "conditions": "Предложения действительны для Москвы, Переславль-Залесского и Костромской области",
-                  "date_end": "2017-01-10T23:59:59+03:00",
-                  "date_start": "2017-01-01T00:00:00+03:00",
-                  "id": "1234",
-                  "image": "https://retailer.ru/catalogs/1234.jpg",
-                  "is_main": true,
-                  "offers": [
-                    "11111",
-                    "22222",
-                    "33333"
-                  ],
-                  "target_regions": [
-                    "Москва",
-                    "Ярославская область, Переславль-Залесский",
-                    "Костромская область, Островский район, село Адищево"
-                  ]
-                },
-         *
-         */
+        $this->time = ConvertTimeStamp(time(), 'FULL');
 
+        $this->getStores($configuration);
+        $this->getCurrentShares($configuration);
+        $this->getCurrentOffers($configuration);
+        $this->prepareResult();
 
-        $time = ConvertTimeStamp(time(), 'FULL');
+        return $this->createResultFile($configuration, $this->arResult);
+    }
+
+    /**
+     * @param Configuration $configuration
+     */
+    private function getStores(Configuration $configuration)
+    {
+        $container = App::getInstance()->getContainer();
+        $this->storeService = $container->get('store.service');
+        $tmpStores = $this->storeService->getAllStores(StoreService::TYPE_SHOP);
+        foreach ($tmpStores->getStores() as $store) {
+            $address = $store->getAddress();
+            $arAddress = explode(', ', $address);
+            $city = $arAddress[count($arAddress) - 1];
+            $this->stores[] = $city . ', ' . str_replace(', ' . $city, '', $store->getAddress());
+        }
+    }
+
+    /**
+     * @param Configuration $configuration
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     */
+    private function getCurrentShares(Configuration $configuration): void
+    {
+        $files = [];
+        $this->offers = [];
 
         $arOrder = [
             'ID' => 'ASC'
         ];
+
         $arFilter = [
             'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES),
             'ACTIVE' => 'Y',
-            '>=DATE_ACTIVE_FROM' => $time,
-            '<=DATE_ACTIVE_TO' => $time
+            '<=DATE_ACTIVE_FROM' => $this->time,
+            '>=DATE_ACTIVE_TO' => $this->time,
         ];
 
         $arSelect = [
             'ID',
             'IBLOCK_ID',
+            'NAME',
             'DATE_ACTIVE_FROM',
             'DATE_ACTIVE_TO',
-            'PREVIEW_PICTURE'
+            'PREVIEW_PICTURE',
+            'DETAIL_TEXT'
         ];
 
         $dbShare = \CIBlockElement::GetList($arOrder, $arFilter, false, false, $arSelect);
         while ($cibeShare = $dbShare->GetNextElement()) {
             $share = $cibeShare->GetFields();
             $share['PROPERTIES'] = $cibeShare->GetProperties();
-            $arResult['catalog'][$share['ID']] = [
-                'conditions' => 'Условия действия акции',   //-
-                'date_end' => $share['DATE_ACTIVE_TO'],     // формат
-                'date_start' => $share['DATE_ACTIVE_FROM'], // формат
-                'id' => $share['ID'],
-                'image' => '', //
-                'is_main' => true,
-                'offers' => [
 
-                ],
-                'target_regions' => '' //нет
-            ];
+            if ($share['PROPERTIES']['SHARE_TYPE']['VALUE'] == '' ||
+                $share['PROPERTIES']['SHARE_TYPE']['VALUE'] == 'aktsiya-v-im-roznitse' ||
+                $share['PROPERTIES']['SHARE_TYPE']['VALUE'] == 'aktsiya-v-roznitse'
+            ) {
+                $this->arResult['catalogs'][$share['ID']] = [
+                    'id' => $share['ID'],
+                    'conditions' => \HTMLToTxt($share['DETAIL_TEXT']),
+                    'date_start' => \DateTime::createFromFormat('d.m.Y H:i:s',
+                        $share['DATE_ACTIVE_FROM'])->format(\DateTime::RFC3339),
+                    'date_end' => \DateTime::createFromFormat('d.m.Y H:i:s',
+                        $share['DATE_ACTIVE_TO'])->format(\DateTime::RFC3339),
+                    'is_main' => true,
+                    'image' => $share['PREVIEW_PICTURE'],
+                    'offers' => array_unique($share['PROPERTIES']['PRODUCTS']['VALUE']),
+                    'target_shops' => $this->stores,
+                    'label' => $share['PROPERTIES']['LABEL']['VALUE']
+                ];
 
-            $arImages[$share['ID']] = $share['PREVIEW_PICTURE'];
+                if (!empty($share['PREVIEW_PICTURE'])) {
+                    $files[$share['PREVIEW_PICTURE']] = $share['ID'];
+                }
+
+                $this->offers = array_merge($this->offers, $share['PROPERTIES']['PRODUCTS']['VALUE']);
+            }
         }
 
-        dump($arResult);
+        //файлы акций
+        $this->setFilesPaths($configuration, $files, 'catalogs');
+    }
 
+    /**
+     * @param Configuration $configuration
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     */
+    private function getCurrentOffers(Configuration $configuration)
+    {
+        //инфа об офферах
+        $arOrder = [
+            'ID' => 'ASC'
+        ];
+
+        $arFilter = [
+            'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
+            'XML_ID' => $this->offers,
+            'ACTIVE' => 'Y'
+        ];
+
+        $arSelect = [
+            'ID',
+            'IBLOCK_ID',
+            'NAME',
+            'CATALOG_GROUP_2',
+            'XML_ID'
+        ];
+
+        //единицы измерения
+        $this->getCurrentMeasures();
+
+        $files = [];
+        $products = [];
+        $dbItems = \CIBlockElement::GetList($arOrder, $arFilter, false, false, $arSelect);
+        while ($cibeOffer = $dbItems->GetNextElement()) {
+            $offer = $cibeOffer->GetFields();
+            $offer['PROPERTIES'] = $cibeOffer->GetProperties();
+
+            $this->arResult['offers'][$offer['XML_ID']] = [
+                'id' => $offer['XML_ID'],
+                'image' => $offer['PROPERTIES']['IMG']['VALUE'][0],
+                'price_new' => floatval($offer['CATALOG_PRICE_2']),
+                'quantity' => intval($offer['CATALOG_QUANTITY']),
+                'quantity_unit' => $this->arMeasures[$offer['CATALOG_MEASURE']]
+            ];
+
+            //штрих-код
+            if (!empty($offer['PROPERTIES']['BARCODE']['VALUE'][0])) {
+                $this->arResult['offers'][$offer['XML_ID']]['barcode'] = $offer['PROPERTIES']['BARCODE']['VALUE'][0];
+            }
+
+            //img
+            if (!empty($offer['PROPERTIES']['IMG']['VALUE'][0])) {
+                $files[$offer['PROPERTIES']['IMG']['VALUE'][0]] = $offer['XML_ID'];
+            }
+
+            $products[$offer['PROPERTIES']['CML2_LINK']['VALUE']] = $offer['XML_ID'];
+        }
+
+        $this->getCurrentProducts($products);
+
+        //файлы офферов
+        $this->setFilesPaths($configuration, $files, 'offers');
+    }
+
+    /**
+     * @param array $products
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     */
+    private function getCurrentProducts(array $products)
+    {
+        $arSelect = [
+            'ID',
+            'IBLOCK_ID',
+            'PROPERTY_BRAND.NAME',
+            'DETAIL_TEXT'
+        ];
+
+        $arFilter = [
+            'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
+            'ID' => array_keys($products)
+        ];
+
+        $dbProduct = \CIBlockElement::GetList([], $arFilter, false, false, $arSelect);
+        while ($arProduct = $dbProduct->Fetch()) {
+            $this->arResult['offers'][$products[$arProduct['ID']]]['brand'] = $arProduct['PROPERTY_BRAND_NAME'];
+            $this->arResult['offers'][$products[$arProduct['ID']]]['description'] = \HTMLToTxt($arProduct['DETAIL_TEXT']);
+        }
+    }
+
+    private function getCurrentMeasures()
+    {
+        $this->arMeasures = [];
+        $dbMeasure = \CCatalogMeasure::getList();
+        while ($arMeasure = $dbMeasure->GetNext()) {
+            $this->arMeasures[$arMeasure['ID']] = $arMeasure['SYMBOL'];
+        }
+    }
+
+
+    /**
+     * @param Configuration $configuration
+     * @param array $files
+     * @param string $key
+     * @return bool
+     */
+    private function setFilesPaths(Configuration $configuration, array $files, string $key): bool
+    {
+        $uploadDir = \COption::GetOptionString('main', 'upload_dir', 'upload');
+        $dbFiles = \CFile::GetList([], ['@ID' => implode(',', array_keys($files))]);
+        while ($file = $dbFiles->Fetch()) {
+            $path = '/' . $uploadDir . '/' . $file['SUBDIR'] . '/' . $file['FILE_NAME'];
+            if (!file_exists($_SERVER['DOCUMENT_ROOT'] . $path)) {
+                unset($this->arResult[$key][$files[$file['ID']]]['image']);
+            }
+
+            $path = \sprintf(
+                'http%s://%s%s',
+                $configuration->isHttps() ? 's' : '',
+                $configuration->getServerName(),
+                $path
+            );
+
+            if (isset($this->arResult[$key][$files[$file['ID']]]['image'])) {
+                $this->arResult[$key][$files[$file['ID']]]['image'] = $path;
+            }
+        }
+        return true;
+    }
+
+    private function prepareResult()
+    {
+        foreach ($this->arResult['catalogs'] as &$catalog) {
+            if ($catalog['label'] != '' && strpos($catalog['label'], '+') !== false) {
+                foreach ($catalog['offers'] as $offerID) {
+                    $this->arResult['offers'][$offerID]['discount_label'] = $catalog['label'];
+                }
+            }
+            unset($catalog['label']);
+            $catalog['offers'] =  array_values($catalog['offers']);
+        }
+        $this->arResult['catalogs'] = array_values($this->arResult['catalogs']);
+        $this->arResult['offers'] = array_values($this->arResult['offers']);
+    }
+
+    /**
+     * @param Configuration $configuration
+     * @param array $arResult
+     * @return bool
+     */
+    private function createResultFile(Configuration $configuration, array $arResult): bool
+    {
+        $this->publicFeedJson($arResult, Application::getAbsolutePath($configuration->getExportFile()));
         return true;
     }
 
