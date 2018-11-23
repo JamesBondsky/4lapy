@@ -75,7 +75,10 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
 
         $this->getStores($configuration);
         $this->getCurrentShares($configuration);
-        $this->getCurrentOffers($configuration);
+        if (count($this->offers) > 0) {
+            $this->getCurrentOffers($configuration);
+        }
+
         $this->prepareResult();
 
         return $this->createResultFile($configuration, $this->arResult);
@@ -210,6 +213,7 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
 
             $this->arResult['offers'][$offer['XML_ID']] = [
                 'id' => $offer['XML_ID'],
+                'sku' => $offer['ID'],
                 'image' => $offer['PROPERTIES']['IMG']['VALUE'][0],
                 'price_new' => floatval($offer['CATALOG_PRICE_2']),
                 'quantity' => intval($offer['CATALOG_QUANTITY']),
