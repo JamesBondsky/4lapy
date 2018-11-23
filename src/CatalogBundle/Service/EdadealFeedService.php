@@ -132,12 +132,21 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
             $share = $cibeShare->GetFields();
             $share['PROPERTIES'] = $cibeShare->GetProperties();
 
-            if (($share['PROPERTIES']['SHARE_TYPE']['VALUE'] == '' ||
-                $share['PROPERTIES']['SHARE_TYPE']['VALUE'] == 'aktsiya-v-im-roznitse' ||
-                $share['PROPERTIES']['SHARE_TYPE']['VALUE'] == 'aktsiya-v-roznitse')
-                && $share['DATE_ACTIVE_FROM'] != ''
-                && $share['DATE_ACTIVE_TO'] != ''
+            if (
+                $share['DATE_ACTIVE_FROM'] != '' &&
+                $share['DATE_ACTIVE_TO'] != '' &&
+                (
+                    $share['PROPERTIES']['SHARE_TYPE']['VALUE'] == '' ||
+                    $share['PROPERTIES']['SHARE_TYPE']['VALUE'] == 'aktsiya-v-im-roznitse' ||
+                    $share['PROPERTIES']['SHARE_TYPE']['VALUE'] == 'aktsiya-v-roznitse'
+                )
             ) {
+                if (strpos($share['DATE_ACTIVE_FROM'], ' ') === false) {
+                    $share['DATE_ACTIVE_FROM'] .= '00:00:00';
+                }
+                if (strpos($share['DATE_ACTIVE_TO'], ' ') === false) {
+                    $share['DATE_ACTIVE_TO'] .= '23:59:59';
+                }
                 $this->arResult['catalogs'][$share['ID']] = [
                     'id' => $share['ID'],
                     'conditions' => \HTMLToTxt($share['DETAIL_TEXT']),
@@ -300,7 +309,7 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
                 }
             }
             unset($catalog['label']);
-            $catalog['offers'] =  array_values($catalog['offers']);
+            $catalog['offers'] = array_values($catalog['offers']);
         }
         $this->arResult['catalogs'] = array_values($this->arResult['catalogs']);
         $this->arResult['offers'] = array_values($this->arResult['offers']);
