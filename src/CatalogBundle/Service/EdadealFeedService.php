@@ -132,9 +132,11 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
             $share = $cibeShare->GetFields();
             $share['PROPERTIES'] = $cibeShare->GetProperties();
 
-            if ($share['PROPERTIES']['SHARE_TYPE']['VALUE'] == '' ||
+            if (($share['PROPERTIES']['SHARE_TYPE']['VALUE'] == '' ||
                 $share['PROPERTIES']['SHARE_TYPE']['VALUE'] == 'aktsiya-v-im-roznitse' ||
-                $share['PROPERTIES']['SHARE_TYPE']['VALUE'] == 'aktsiya-v-roznitse'
+                $share['PROPERTIES']['SHARE_TYPE']['VALUE'] == 'aktsiya-v-roznitse')
+                && $share['DATE_ACTIVE_FROM'] != ''
+                && $share['DATE_ACTIVE_TO'] != ''
             ) {
                 $this->arResult['catalogs'][$share['ID']] = [
                     'id' => $share['ID'],
