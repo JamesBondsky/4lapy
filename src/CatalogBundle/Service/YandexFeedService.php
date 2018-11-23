@@ -202,7 +202,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         $filter = $this->buildOfferFilter($feed, $configuration);
 
         if (!empty($stockID)) {
-            $filter['>CATALOG_STORE_AMOUNT_' . $stockID] = '0';
+            $filter['>CATALOG_STORE_AMOUNT_' . $stockID] = '2';
         }
 
         $offerCollection = $this->getOffers($filter, $offset, $limit);
@@ -274,21 +274,18 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     }
 
     /**
-     * @param Offer           $offer
+     * @param Offer $offer
      * @param ArrayCollection $collection
-     * @param string          $host
+     * @param string $host
      *
-     * @throws InvalidArgumentException
-     * @throws NotFoundException
-     * @throws DeliveryNotFoundException
-     * @throws ObjectNotFoundException
-     * @throws NotSupportedException
-     * @throws LoaderException
-     * @throws BitrixArgumentException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws RuntimeException
+     * @param string|null $stockID
      * @throws ApplicationCreateException
+     * @throws BitrixArgumentException
+     * @throws DeliveryNotFoundException
+     * @throws LoaderException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      */
     public function addOffer(Offer $offer, ArrayCollection $collection, string $host, string $stockID = null): void
     {
