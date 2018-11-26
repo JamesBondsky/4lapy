@@ -12,6 +12,7 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
+use FourPaws\Decorators\SvgDecorator;
 use FourPaws\App\Templates\ViewsEnum;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\Catalog\Model\Product;
@@ -146,6 +147,181 @@ if (null === $offer) {
                 );
             } ?>
         </div>
+
+        <div class="b-product-card__complect">
+            <div class="b-product-card-complect">
+                <div class="b-product-card-complect__title">Аквариум под ключ</div>
+                <div class="b-product-card-complect__row">
+                    <div class="b-product-card-complect__slider" data-product-complect-container="true">
+                        <div class="b-product-card-complect__list js-product-complect">
+                            <div class="b-product-card-complect__list-item slide">
+
+                                <div class="b-common-item" data-productid="42921" tabindex="0">
+                                    <div class="b-common-item__image-wrap">
+                                        <a class="b-common-item__image-link js-item-link" href="#" tabindex="0">
+                                            <img class="b-common-item__image" src="/resize/240x240/upload/iblock/a7a/a7af6bcf89150ab357fdbb5a7d6e83a1.jpg" alt="Аквариум прямоугольный с крышкой 35 л" title="">
+                                        </a>
+                                    </div>
+                                    <div class="b-common-item__info-center-block">
+                                        <a class="b-common-item__description-wrap" href="#" tabindex="0">
+                                            <span class="b-clipped-text b-clipped-text--complect">
+                                                <span>
+                                                    <span class="span-strong">Авгуръ</span> Аквариум прямоугольный с крышкой 35 л
+                                                </span>
+                                            </span>
+                                        </a>
+                                        <div class="b-common-item__info">
+                                            <div class="b-common-item__property">
+                                                <span class="b-common-item__property-value">10 кг</span>
+                                            </div>
+                                            <div class="b-common-item__price">
+                                                <span class="b-common-item__price-value">3 719</span>
+                                                <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
+                                            </div>
+                                        </div>
+                                        <div class="b-common-item__replace">
+                                            <a href="javascript:void(0)" class="b-common-item__replace-link js-product-complect-replace js-this-product-complect">
+                                                <span class="b-common-item__replace-text">Поменять</span>
+                                                <span class="b-icon b-icon--replace-complect b-icon--left-3"><?= new SvgDecorator('icon-arrow-down', 10, 12) ?></span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="b-product-card-complect__list-item slide">
+
+                                <div class="b-common-item" data-productid="42921" tabindex="0">
+                                    <div class="b-common-item__image-wrap">
+                                        <a class="b-common-item__image-link js-item-link" href="#" tabindex="0">
+                                            <img class="b-common-item__image" src="/resize/240x240/upload/iblock/5fb/5fb5f6becfbf9a2c07a6f5c9f1a024f5.jpg" alt="Подставка пода аквариум Биодизайн Риф 150 цвета венге без дверок" title="">
+                                        </a>
+                                    </div>
+                                    <div class="b-common-item__info-center-block">
+                                        <a class="b-common-item__description-wrap" href="#" tabindex="0">
+                                            <span class="b-clipped-text b-clipped-text--complect">
+                                                <span>
+                                                    <span class="span-strong">Biodesign</span> Подставка пода аквариум Биодизайн Риф 150 цвета венге без дверок
+                                                </span>
+                                            </span>
+                                        </a>
+                                        <div class="b-common-item__info">
+                                            <div class="b-common-item__property">
+                                                <span class="b-common-item__property-value">42x30x73 см</span>
+                                            </div>
+                                            <div class="b-common-item__price">
+                                                <span class="b-common-item__price-value">3 408</span>
+                                                <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
+                                            </div>
+                                        </div>
+                                        <div class="b-common-item__replace">
+                                            <a href="javascript:void(0)" class="b-common-item__replace-link js-product-complect-replace js-this-product-complect">
+                                                <span class="b-common-item__replace-text">Поменять</span>
+                                                <span class="b-icon b-icon--replace-complect b-icon--left-3"><?= new SvgDecorator('icon-arrow-down', 10, 12) ?></span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="b-product-card-complect__list-item slide">
+
+                                <div class="b-common-item" data-productid="42921" tabindex="0">
+                                    <div class="b-common-item__image-wrap">
+                                        <a class="b-common-item__image-link js-item-link" href="#" tabindex="0">
+                                            <img class="b-common-item__image" src="/resize/240x240/upload/iblock/5a1/5a1841d8dc62e9102c6c41b0a8101b62.jpg" alt="Фильтр внутренний (250л/ч)" title="">
+                                        </a>
+                                    </div>
+                                    <div class="b-common-item__info-center-block">
+                                        <a class="b-common-item__description-wrap" href="#" tabindex="0">
+                                            <span class="b-clipped-text b-clipped-text--complect">
+                                                <span>
+                                                    <span class="span-strong">Jebo</span> Фильтр внутренний (250л/ч)
+                                                </span>
+                                            </span>
+                                        </a>
+                                        <div class="b-common-item__info">
+                                            <div class="b-common-item__property">
+                                                <span class="b-common-item__property-value">250 л/ч</span>
+                                            </div>
+                                            <div class="b-common-item__price">
+                                                <span class="b-common-item__price-value">519</span>
+                                                <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
+                                            </div>
+                                        </div>
+                                        <div class="b-common-item__replace">
+                                            <a href="javascript:void(0)" class="b-common-item__replace-link js-product-complect-replace js-this-product-complect">
+                                                <span class="b-common-item__replace-text">Поменять</span>
+                                                <span class="b-icon b-icon--replace-complect b-icon--left-3"><?= new SvgDecorator('icon-arrow-down', 10, 12) ?></span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="b-product-card-complect__list-item slide">
+
+                                <div class="b-common-item" data-productid="42921" tabindex="0">
+                                    <div class="b-common-item__image-wrap">
+                                        <a class="b-common-item__image-link js-item-link" href="#" tabindex="0">
+                                            <img class="b-common-item__image" src="/resize/240x240/upload/iblock/4f0/4f09b0205a49de782ee73afecddae18d.jpg" alt="Помпа для аквариума Рекорд 1000 Рио 125/180 Экофлоу 600л/ч" title="">
+                                        </a>
+                                    </div>
+                                    <div class="b-common-item__info-center-block">
+                                        <a class="b-common-item__description-wrap" href="#" tabindex="0">
+                                            <span class="b-clipped-text b-clipped-text--complect">
+                                                <span>
+                                                    <span class="span-strong">Juwel</span> Помпа для аквариума Рекорд 1000 Рио 125/180 Экофлоу 600л/ч
+                                                </span>
+                                            </span>
+                                        </a>
+                                        <div class="b-common-item__info">
+                                            <div class="b-common-item__property">
+                                                <span class="b-common-item__property-value">250 л/ч</span>
+                                            </div>
+                                            <div class="b-common-item__price">
+                                                <span class="b-common-item__price-value">3065</span>
+                                                <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
+                                            </div>
+                                        </div>
+                                        <div class="b-common-item__replace">
+                                            <a href="javascript:void(0)" class="b-common-item__replace-link js-product-complect-replace js-this-product-complect">
+                                                <span class="b-common-item__replace-text">Поменять</span>
+                                                <span class="b-icon b-icon--replace-complect b-icon--left-3"><?= new SvgDecorator('icon-arrow-down', 10, 12) ?></span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="b-product-card-complect__result">
+                        <div class="b-product-card-complect__summ">
+                            <span class="b-product-card-complect__price js-price-product-complect">2445</span><span class="b-ruble b-ruble--product-information">&nbsp;₽</span>
+                        </div>
+                        <div class="b-product-card-complect__basket">
+                            <a href="javascript:void(0)" class="b-product-card-complect__basket-link js-basket-add js-this-product-complect" data-offercomplectId="43641">
+                                <span class="b-icon b-icon--advice"><?= new SvgDecorator('icon-cart', 20, 20) ?></span>
+                                <span class="b-product-card-complect__basket-text">В корзину</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="b-product-card-complect">
+                <div class="b-product-card-complect__title">Другие помпы</div>
+                <div class="b-product-card-complect__row">
+                    row
+                </div>
+            </div>
+        </div>
+
+        <!-- <div class="b-product-card__othercomplect">
+            
+        </div> -->
+
         <div class="b-product-card__tab">
             <div class="b-tab">
                 <div class="b-tab-title">
