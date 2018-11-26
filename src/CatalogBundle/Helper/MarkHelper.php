@@ -165,12 +165,11 @@ final class MarkHelper
             foreach ($offer->getShare() as $shareItem) {
                 if ($shareItem->getId() === $shareId) {
                     $share = $shareItem;
+                    if ($share->hasLabelImage()) {
+                        return self::DEFAULT_TRANSPARENT_TEMPLATE;
+                    }
                 }
             }
-        }
-
-        if ($share->hasLabelImage()) {
-            return self::DEFAULT_TRANSPARENT_TEMPLATE;
         }
 
         return self::DEFAULT_TEMPLATE;
