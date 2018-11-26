@@ -177,18 +177,17 @@ class SearchService implements LoggerAwareInterface
             ->setSort($sorting->getRule())
             ->setParam('query', $this->getBrandFullQueryRule($searchString));
 
-        $suggestSearch = $this->getIndexHelper()->createSuggestSearch();
-        $suggestSearch->getQuery()->setMinScore(0.9)->setParam('fuzzy', ['fuzziness' => 2]);
-        $suggestSearch->setOption('size', $navigation->getSize());
-        $suggestSearch->setQuery($searchString);
-        $suggestSearch->addType(DocumentType::PRODUCT);
+//        $suggestSearch = $this->getIndexHelper()->createSuggestSearch();
+//        $suggestSearch->getQuery()->setMinScore(0.9)->setParam('fuzzy', ['fuzziness' => 2]);
+//        $suggestSearch->setOption('size', $navigation->getSize());
+//        $suggestSearch->setQuery($searchString);
+//        $suggestSearch->addType(DocumentType::PRODUCT);
 
         $this->getAggsHelper()->setAggs($productSearch->getQuery(), $filters);
 
         $multiSearch->setSearches([
             'brands' => $brandSearch,
-            'products' => $productSearch,
-            'suggests' => $suggestSearch
+            'products' => $productSearch
         ]);
 
 

@@ -69,8 +69,16 @@ class SearchController extends Controller
                 'products' => [],
                 'suggests' => [],
             ];
+
+            $converted = $result->getCollection()->toArray();
+            $converted['suggests'] = $searchService->productsAutocomplete(
+                $searchRequest->getNavigation(),
+                $searchRequest->getSearchString())
+                ->getProductCollection()
+                ->toArray();
+
             /** @var Product|Brand $product */
-            foreach ($result->getCollection()->toArray() as $key => $arItems) {
+            foreach ($converted as $key => $arItems) {
                 foreach ($arItems as $item) {
                     if ($item instanceof Brand) {
                         $res['brands'][] = ['DETAIL_PAGE_URL' => $item->getDetailPageUrl(), 'NAME' => $item->getName()];
