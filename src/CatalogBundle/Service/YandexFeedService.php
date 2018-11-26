@@ -515,16 +515,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             (new YandexCategory())
                 ->setId($category->getId())
                 ->setParentId($category->getIblockSectionId() ?: null)
-                ->setName(
-                    \implode(' - ',
-                        \array_reverse($category->getFullPathCollection()
-                            ->map(function (Category $category) {
-                                return \preg_replace('~\'|"~', '', $category->getName());
-                            })
-                            ->toArray()
-                        )
-                    )
-                )
+                ->setName($category->getName())
         );
     }
 
