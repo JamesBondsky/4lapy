@@ -15,7 +15,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
 
-$cacheTime = 36000000;
+$cacheTime = 7 * 24 * 60 * 60;
 
 if ($this->startResultCache($cacheTime)) {
 
