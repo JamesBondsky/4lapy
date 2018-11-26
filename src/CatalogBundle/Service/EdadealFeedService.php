@@ -210,7 +210,14 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
         while ($cibeOffer = $dbItems->GetNextElement()) {
             $offer = $cibeOffer->GetFields();
             $offer['PROPERTIES'] = $cibeOffer->GetProperties();
-
+            if (intval($offer['CATALOG_QUANTITY']) == 0) {
+                foreach ($this->arResult['catalogs'] as &$catalog) {
+                    if (isset($catalog['offers'][$offer['XML_ID']])) {
+                        unset($catalog['offers'][$offer['XML_ID']]);
+                    }
+                }
+                continue;
+            }
             $this->arResult['offers'][$offer['XML_ID']] = [
                 'id' => $offer['XML_ID'],
                 'sku' => $offer['ID'],
