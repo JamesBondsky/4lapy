@@ -45,6 +45,7 @@ class FeedFactory extends Command implements LoggerAwareInterface
     public const FEED_TYPE_YANDEX_MARKET   = 'yandex-market';
     public const FEED_TYPE_GOOGLE_MERCHANT = 'google-merchant';
     public const FEED_TYPE_RETAIL_ROCKET   = 'retail-rocket';
+    public const FEED_TYPE_EDADEAL         = 'edadeal';
 
     public const EXIT_CODE_CONTINUE = 126;
     public const EXIT_CODE_END      = 127;
@@ -177,6 +178,9 @@ class FeedFactory extends Command implements LoggerAwareInterface
                 break;
             case self::FEED_TYPE_RETAIL_ROCKET:
                 $command = 'bitrix:feed:create:retailrocket';
+                break;
+            case self::FEED_TYPE_EDADEAL:
+                $command = 'bitrix:feed:create:edadeal';
                 break;
             default:
                 throw new ArgumentException(\sprintf(
