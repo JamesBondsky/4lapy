@@ -88,17 +88,14 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
 <?php $APPLICATION->ShowPanel(); ?>
 
 <header class="b-header <?= $template->getHeaderClass() ?> js-header">
-    <div class="b-mobile-app hidden js-banner-mobile-app">
-        <div class="b-mobile-app__banner hidden js-banner-mobile-app-android">
-            <a href="#" class="b-mobile-app__link" style="background-image: url('/static/build/images/inhtml/app_googleplay.png')" target="_blank"></a>
-        </div>
-        <div class="b-mobile-app__banner hidden js-banner-mobile-app-ios">
-            <a href="#" class="b-mobile-app__link" style="background-image: url('/static/build/images/inhtml/app_appstore.png')" target="_blank"></a>
-        </div>
-        <div class="b-mobile-app__close-wrap">
-            <button type="button" class="b-mobile-app__close js-banner-mobile-app-close"></button>
-        </div>
-    </div>
+    <?php
+    $APPLICATION->IncludeComponent('articul:header.mobile.bunner',
+        '',
+        [],
+        false,
+        []
+    );
+    ?>
     <div class="b-container">
         <?php if ($template->hasShortHeaderFooter()) { ?>
             <div class="b-header__info b-header__info--short-header">
