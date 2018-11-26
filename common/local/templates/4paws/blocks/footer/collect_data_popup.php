@@ -19,11 +19,14 @@ if($USER->IsAuthorized()) {
         if($modal_counts !== '3 3 3') { // модалки не по 3 штуки
             $modal_counts = explode(' ', $modal_counts);
             if($USER->GetParam('data_collect') == false){ // модалку в сессии еще не показали
-                if(CUser::GetByID( $USER->GetID() )->Fetch()['UF_SESSION_CNTS'] % 3 == 0){ // Каждая 3-я сессия
+                $user_data = CUser::GetByID( $USER->GetID() )->Fetch();
+                if($user_data['UF_SESSION_CNTS'] % 3 == 0){ // Каждая 3-я сессия
                     // все равны, значит 3-ю показывали уже. => покажем 1-ю
-                    if($modal_counts[0] == $modal_counts[1] && $modal_counts[1] == $modal_counts[2]) $modal_number = 1;
+                    if($modal_counts[0] == $modal_counts[1] && $modal_counts[1] == $modal_counts[2] && !$user_data['PERSONAL_PHONE'] &&
+                        !$user_data['NAME']) $modal_number = 1;
                     // 1-я > 2-й, а 2-я == 3-й, значит 1-ю показали уже, покажем 2-ю.
-                    if($modal_counts[0] > $modal_counts[1] && $modal_counts[1] == $modal_counts[2]) $modal_number = 2;
+                    if($modal_counts[0] > $modal_counts[1] && $modal_counts[1] == $modal_counts[2] && !$user_data['PERSONAL_PHONE'] &&
+                        !$user_data['NAME'] && !$user_data['SURNAME'] && !$user_data['EMAIL']) $modal_number = 2;
                     // 1-я == 2-й, 2-я > 3-й, значит нужно показать 3-ю.
                     if($modal_counts[0] == $modal_counts[1] && $modal_counts[1] > $modal_counts[2]) $modal_number = 3;
                 }
@@ -32,16 +35,17 @@ if($USER->IsAuthorized()) {
     }
 } ?>
 <? //if($modal_number == 1) { ?>
-
+    <? $APPLICATION->IncludeComponent('fourpaws:personal.profile', 'popupCollectorName', [], null, ['HIDE_ICONS' => 'Y']); ?>
+    <a class="js-add-query js-open-popup js-open-popup--account-tab" style="display: none;" id="data_collect" data-popup-id="collector-name" data-url="/ajax/personal/pets/add/"></a>
 <? //}?>
 <? //if($modal_number == 2) { ?>
 
 <? //}?>
 <? //if($modal_number == 3) { ?>
-    <? $APPLICATION->IncludeComponent('fourpaws:personal.pets', 'popup', ['COLLECTOR' => 'Y'], null, ['HIDE_ICONS' => 'Y']); ?>
-    <a class="js-add-query js-open-popup js-open-popup--account-tab" style="display: none;" id="data_collect" title="Добавить питомца" data-popup-id="edit-popup-pet" data-url="/ajax/personal/pets/add/"></a>
+    <? //$APPLICATION->IncludeComponent('fourpaws:personal.pets', 'popup', ['COLLECTOR' => 'Y'], null, ['HIDE_ICONS' => 'Y']); ?>
+    <!--<a class="js-add-query js-open-popup js-open-popup--account-tab" style="display: none;" id="data_collect" data-popup-id="edit-popup-pet" data-url="/ajax/personal/pets/add/"></a>-->
 <? //}?>
-<? if($modal_number) {?>
+<? if(1) {?>
     <script>
         // заглушка для вызова формы - вынесено во одно место, чтобы было удобнее исправлять и не менять шаблоны.
         $(document).ready(function () {
