@@ -203,11 +203,13 @@ if (null === $offer) {
                         <div class="b-tab-content__container js-tab-content" data-tab-content="composition">
                             <div class="b-description-tab b-description-tab--full">
                                 <div class="b-description-tab__column b-description-tab__column--full">
-                                    <? if ($product->getLayoutComposition()->getText() != '' && $product->getLayoutComposition()->getText() != null) { ?>
-                                        <?= $product->getLayoutComposition()->getText() ?>
-                                    <? } else { ?>
-                                        <p><?= $product->getComposition()->getText() ?></p>
-                                    <? } ?>
+                                    <div class="rc-product-detail">
+                                        <? if ($product->getLayoutComposition()->getText() != '' && $product->getLayoutComposition()->getText() != null) { ?>
+                                            <?= $product->getLayoutComposition()->getText() ?>
+                                        <? } else { ?>
+                                            <p><?= $product->getComposition()->getText() ?></p>
+                                        <? } ?>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -216,12 +218,14 @@ if (null === $offer) {
                     if ($product->getNormsOfUse()->getText() || $product->getLayoutRecommendations()->getText()) { ?>
                         <div class="b-tab-content__container js-tab-content b-tab-content__container_recommendations" data-tab-content="recommendations">
                             <div class="b-description-tab b-description-tab--full">
-                                <div class="b-description-tab__column b-description-tab__column--full">
-                                    <? if ($product->getLayoutRecommendations()->getText() != '' && $product->getLayoutRecommendations()->getText() != null) { ?>
-                                        <?= $product->getLayoutRecommendations()->getText() ?>
-                                    <? } else { ?>
-                                        <p><?= $product->getNormsOfUse()->getText() ?></p>
-                                    <? } ?>
+                                <div class="rc-product-detail">
+                                    <div class="b-description-tab__column b-description-tab__column--full">
+                                        <? if ($product->getLayoutRecommendations()->getText() != '' && $product->getLayoutRecommendations()->getText() != null) { ?>
+                                            <?= $product->getLayoutRecommendations()->getText() ?>
+                                        <? } else { ?>
+                                            <p><?= $product->getNormsOfUse()->getText() ?></p>
+                                        <? } ?>
+                                    </div>
                                 </div>
                             </div>
                         </div>
