@@ -71,11 +71,12 @@ class SearchController extends Controller
             ];
 
             $converted = $result->getCollection()->toArray();
-            $converted['suggests'] = $searchService->productsAutocomplete(
-                $searchRequest->getNavigation(),
-                $searchRequest->getSearchString())
-                ->getProductCollection()
-                ->toArray();
+//            $converted['suggests'] = $searchService->productsAutocomplete(
+//                $searchRequest->getNavigation(),
+//                $searchRequest->getSearchString())
+//                ->getProductCollection()
+//                ->toArray();
+            // отрубил такой вывод пока
 
             /** @var Product|Brand $product */
             foreach ($converted as $key => $arItems) {
