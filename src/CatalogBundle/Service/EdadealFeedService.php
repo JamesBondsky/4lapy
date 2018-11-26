@@ -218,15 +218,27 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
                 }
                 continue;
             }
-            $this->arResult['offers'][$offer['XML_ID']] = [
-                'id' => $offer['XML_ID'],
-                'sku' => $offer['ID'],
-                'image' => $offer['PROPERTIES']['IMG']['VALUE'][0],
-                'price_old' => floatval($offer['CATALOG_PRICE_2']),
-                'price_new' => floatval($offer['PROPERTIES']['PRICE_ACTION']['VALUE']),
-                'quantity' => intval($offer['CATALOG_QUANTITY']),
-                'quantity_unit' => $this->arMeasures[$offer['CATALOG_MEASURE']]
-            ];
+
+            if ($offer['PROPERTIES']['PRICE_ACTION']['VALUE'] == '' || $offer['PROPERTIES']['PRICE_ACTION']['VALUE'] == 0) {
+                $this->arResult['offers'][$offer['XML_ID']] = [
+                    'id' => $offer['XML_ID'],
+                    'sku' => $offer['ID'],
+                    'image' => $offer['PROPERTIES']['IMG']['VALUE'][0],
+                    'price_new' => floatval($offer['CATALOG_PRICE_2']),
+                    'quantity' => intval($offer['CATALOG_QUANTITY']),
+                    'quantity_unit' => $this->arMeasures[$offer['CATALOG_MEASURE']]
+                ];
+            } else {
+                $this->arResult['offers'][$offer['XML_ID']] = [
+                    'id' => $offer['XML_ID'],
+                    'sku' => $offer['ID'],
+                    'image' => $offer['PROPERTIES']['IMG']['VALUE'][0],
+                    'price_old' => floatval($offer['CATALOG_PRICE_2']),
+                    'price_new' => floatval($offer['PROPERTIES']['PRICE_ACTION']['VALUE']),
+                    'quantity' => intval($offer['CATALOG_QUANTITY']),
+                    'quantity_unit' => $this->arMeasures[$offer['CATALOG_MEASURE']]
+                ];
+            }
 
             //штрих-код
             if (!empty($offer['PROPERTIES']['BARCODE']['VALUE'][0])) {
