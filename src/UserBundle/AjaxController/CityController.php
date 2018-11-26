@@ -11,9 +11,11 @@ use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\External\DaDataService;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\UserBundle\Service\UserService;
+use Monolog\Handler\StreamHandler;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
+use Monolog\Logger;
 
 /**
  * Class CityController
@@ -189,6 +191,38 @@ class CityController extends Controller
             $response = JsonErrorResponse::createWithData($e->getMessage());
         }
 
+        return $response;
+    }
+
+    /**
+     * @Route("/use_yandex_geolocation/", methods={"POST", "GET"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Exception
+     */
+    public function useGeolocationAction(Request $request): JsonResponse
+    {
+        $logger = new Logger('geolocation use');
+        if (!is_dir($_SERVER['DOCUMENT_ROOT'] . '/local/logs/')) {
+            mkdir($_SERVER['DOCUMENT_ROOT'] . '/local/logs/', 0775);
+        }
+        $logger->pushHandler(new StreamHandler($_SERVER['DOCUMENT_ROOT'] . '/local/logs/useYandexGeolocation-' . date('m.d.Y') . '.log',
+            Logger::NOTICE));
+
+        $this->setLogger($logger);
+
+        $this->log()->notice('Использование геолокации пользователем',
+            ['user_ip' => $_SERVER['REMOTE_ADDR']]);
+
+        $response = JsonSuccessResponse::createWithData(
+            'Запись в лог об использовании геолокации прошла успешно',
+            [],
+            200,
+            ['reload' => true]
+        );
         return $response;
     }
 
