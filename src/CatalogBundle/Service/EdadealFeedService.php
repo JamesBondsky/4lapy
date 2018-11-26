@@ -96,6 +96,9 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
             $address = $store->getAddress();
             $arAddress = explode(', ', $address);
             $city = $arAddress[count($arAddress) - 1];
+            if ($city == '-' || $store->getAddress() == '-') {
+                continue;
+            }
             $this->stores[] = $city . ', ' . str_replace(', ' . $city, '', $store->getAddress());
         }
     }
