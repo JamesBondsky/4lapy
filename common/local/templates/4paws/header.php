@@ -86,7 +86,23 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
 <body>
 <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_body.php'; ?>
 <?php $APPLICATION->ShowPanel(); ?>
+
 <header class="b-header <?= $template->getHeaderClass() ?> js-header">
+    <div class="b-mobile-app hidden js-banner-mobile-app">
+        <div class="b-mobile-app__banner hidden js-banner-mobile-app-android">
+            <a href="#" class="b-mobile-app__link">
+                <img src="/static/build/images/inhtml/app_googleplay.png" class="b-mobile-app__link-banner">
+            </a>
+        </div>
+        <div class="b-mobile-app__banner hidden js-banner-mobile-app-ios">
+            <a href="#" class="b-mobile-app__link">
+                <img src="/static/build/images/inhtml/app_appstore.png" class="b-mobile-app__link-banner">
+            </a>
+        </div>
+        <div class="b-mobile-app__close-wrap">
+            <button type="button" class="b-mobile-app__close js-banner-mobile-app-close"></button>
+        </div>
+    </div>
     <div class="b-container">
         <?php if ($template->hasShortHeaderFooter()) { ?>
             <div class="b-header__info b-header__info--short-header">
