@@ -40,10 +40,12 @@ class FeedFactory extends Command implements LoggerAwareInterface
     public const ARG_PROFILE_ID = 'id';
     public const OPT_FEED_TYPE  = 'type';
     public const OPT_FEED_STEP  = 'step';
+    public const OPT_FEED_STOCK_ID  = 'stock';
 
     public const FEED_TYPE_YANDEX_MARKET   = 'yandex-market';
     public const FEED_TYPE_GOOGLE_MERCHANT = 'google-merchant';
     public const FEED_TYPE_RETAIL_ROCKET   = 'retail-rocket';
+    public const FEED_TYPE_EDADEAL         = 'edadeal';
 
     public const EXIT_CODE_CONTINUE = 126;
     public const EXIT_CODE_END      = 127;
@@ -74,6 +76,12 @@ class FeedFactory extends Command implements LoggerAwareInterface
                 't',
                 InputOption::VALUE_REQUIRED,
                 'type of feed'
+            )
+            ->addOption(
+                static::OPT_FEED_STOCK_ID,
+                'stock',
+                InputOption::VALUE_REQUIRED,
+                'stock id'
             );
     }
 
@@ -95,15 +103,17 @@ class FeedFactory extends Command implements LoggerAwareInterface
     {
         $id = $input->getArgument(static::ARG_PROFILE_ID);
         $type = $input->getOption(static::OPT_FEED_TYPE);
+        $stockID = $input->getOption(static::OPT_FEED_STOCK_ID);
         $step = 0;
         $iterator = 1;
 
         $this->log()->info(
             \sprintf(
-                'Feed factory was started: profile %d, feed %s, date %s',
+                'Feed factory was started: profile %d, feed %s, date %s, %s',
                 $id,
                 $type,
-                (new \DateTime())->format('d-m-Y H:i:s')
+                (new \DateTime())->format('d-m-Y H:i:s'),
+                !empty($stockID) ? 'with stock id ' . $stockID : ''
             )
         );
 
@@ -113,7 +123,7 @@ class FeedFactory extends Command implements LoggerAwareInterface
 
         try {
             while (true) {
-                $process = new Process($this->getFeedProcessName($id, $type, $step));
+                $process = new Process($this->getFeedProcessName($id, $type, $step, $stockID));
                 $process->setTimeout(600);
                 $process->run();
 
@@ -149,13 +159,13 @@ class FeedFactory extends Command implements LoggerAwareInterface
      * @param int    $id
      * @param string $type
      * @param int    $step
+     * @param string $stockID
      *
      * @return string
      *
-     * @throws ApplicationCreateException
      * @throws ArgumentException
      */
-    public function getFeedProcessName(int $id, string $type, $step = 0): string
+    public function getFeedProcessName(int $id, string $type, $step = 0, $stockID = null): string
     {
         $php = (new PhpExecutableFinder())->find();
 
@@ -169,6 +179,9 @@ class FeedFactory extends Command implements LoggerAwareInterface
             case self::FEED_TYPE_RETAIL_ROCKET:
                 $command = 'bitrix:feed:create:retailrocket';
                 break;
+            case self::FEED_TYPE_EDADEAL:
+                $command = 'bitrix:feed:create:edadeal';
+                break;
             default:
                 throw new ArgumentException(\sprintf(
                     'Feed type %s is not available/',
@@ -177,13 +190,14 @@ class FeedFactory extends Command implements LoggerAwareInterface
         }
 
         return \sprintf(
-            '%s %s/bin/symfony_console %s %s --%s %d',
+            '%s %s/bin/symfony_console %s %s --%s %d %s',
             $php,
             Application::getInstance()->getRootDir(),
             $command,
             $id,
             self::OPT_FEED_STEP,
-            $step
+            $step,
+            !empty($stockID) ? '--' . self::OPT_FEED_STOCK_ID . ' ' . $stockID : ''
         );
     }
 }

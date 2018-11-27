@@ -1418,7 +1418,7 @@ class Offer extends IblockElement
     }
 
     /**
-     * Участвует ли товар в ации "Цена по акции"
+     * Участвует ли товар в акции "Цена по акции"
      */
     public function isSimpleSaleAction(): bool
     {
