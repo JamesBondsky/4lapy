@@ -29,6 +29,20 @@ class FourPawsDeliveryIntervalEditComponent extends \CBitrixComponent
         foreach ($params['ZONES'] as $code => $zone) {
             $found = false;
             foreach ($params['VALUE'] as $i => $value) {
+                if (!isset($params['VALUE'][$i]['INTERVALS'])) {
+                    $params['VALUE'][$i]['INTERVALS'][0] = [
+                        'FROM' => '0',
+                        'TO' => '23',
+                        'RULES' => [
+                            'ADD_DAYS' => [
+                                0 => '1',
+                                1 => '1',
+                                2 => '2'
+                            ]
+                        ]
+                    ];
+                }
+
                 if (!isset($params['VALUE'][$i]['RULES'][\FourPaws\DeliveryBundle\Entity\IntervalRule\BaseRule::TYPE_ADD_DAYS])) {
                     $params['VALUE'][$i]['RULES'][BaseRule::TYPE_ADD_DAYS] = [];
                 }
