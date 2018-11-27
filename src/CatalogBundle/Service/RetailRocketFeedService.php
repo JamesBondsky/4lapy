@@ -71,6 +71,7 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
     /**
      * @param ConfigurationInterface $configuration
      * @param int                    $step
+     * @param string                 $stockID
      *
      * If need to continue, return true. Else - false.
      *
@@ -81,7 +82,7 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
      * @throws ArgumentException
      * @throws IOException
      */
-    public function process(ConfigurationInterface $configuration, int $step): bool
+    public function process(ConfigurationInterface $configuration, int $step, string $stockID = null): bool
     {
         /**
          * @var Configuration $configuration

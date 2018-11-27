@@ -444,6 +444,14 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
                                 <?= $product->getPurpose() ? $product->getPurpose()->getName() : '' ?>
                             </div>
                         </li>
+                        <li class="b-characteristics-tab__item" <?= (!$product->getBrandName()) ? 'style="display:none"' : '' ?>>
+                            <div class="b-characteristics-tab__characteristics-text"><span>Бренд</span>
+                                <div class="b-characteristics-tab__dots"></div>
+                            </div>
+                            <div class="b-characteristics-tab__characteristics-value">
+                                <?= $product->getBrandName() ?>
+                            </div>
+                        </li>
                         <li class="b-characteristics-tab__item" <?= (!$product->getCountry()) ? 'style="display:none"' : '' ?>>
                             <div class="b-characteristics-tab__characteristics-text">
                                 <span>Страна производства</span>

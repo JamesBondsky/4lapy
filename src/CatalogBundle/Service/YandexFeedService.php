@@ -84,6 +84,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     /**
      * @param ConfigurationInterface $configuration
      * @param int                    $step
+     * @param string                 $stockID
      *
      * If need to continue, return true. Else - false.
      *
@@ -94,7 +95,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      * @throws ArgumentException
      * @throws IOException
      */
-    public function process(ConfigurationInterface $configuration, int $step): bool
+    public function process(ConfigurationInterface $configuration, int $step, string $stockID = null): bool
     {
         /**
          * @var Configuration $configuration
@@ -115,7 +116,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             $feed = $this->loadFeed($this->getStorageKey());
 
             try {
-                $this->processOffers($feed, $configuration);
+                $this->processOffers($feed, $configuration, $stockID);
             } catch (OffersIsOver $isOver) {
                 $feed = $this->loadFeed($this->getStorageKey());
                 $feed->getShop()
@@ -178,6 +179,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     /**
      * @param Feed          $feed
      * @param Configuration $configuration
+     * @param string        $stockID
      *
      * @return YandexFeedService
      *
@@ -187,7 +189,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      * @throws OffersIsOver
      * @throws ArgumentException
      */
-    protected function processOffers(Feed $feed, Configuration $configuration): YandexFeedService
+    protected function processOffers(Feed $feed, Configuration $configuration, string $stockID = null): YandexFeedService
     {
         $limit = 500;
         $offers = $feed->getShop()
@@ -197,7 +199,13 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             ->getOffset();
         $offset = $offset ?? 0;
 
-        $offerCollection = $this->getOffers($this->buildOfferFilter($feed, $configuration), $offset, $limit);
+        $filter = $this->buildOfferFilter($feed, $configuration);
+
+        if (!empty($stockID)) {
+            $filter['>CATALOG_STORE_AMOUNT_' . $stockID] = '2';
+        }
+
+        $offerCollection = $this->getOffers($filter, $offset, $limit);
 
         $this
             ->log()
@@ -216,7 +224,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             ++$offset;
 
             try {
-                $this->addOffer($offer, $offers, $configuration->getServerName());
+                $this->addOffer($offer, $offers, $configuration->getServerName(), $stockID);
             } catch (Exception $e) {
                 /** Просто подавляем исключение */
             }
@@ -266,25 +274,23 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     }
 
     /**
-     * @param Offer           $offer
+     * @param Offer $offer
      * @param ArrayCollection $collection
-     * @param string          $host
+     * @param string $host
      *
-     * @throws InvalidArgumentException
-     * @throws NotFoundException
-     * @throws DeliveryNotFoundException
-     * @throws ObjectNotFoundException
-     * @throws NotSupportedException
-     * @throws LoaderException
-     * @throws BitrixArgumentException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws RuntimeException
+     * @param string|null $stockID
      * @throws ApplicationCreateException
+     * @throws BitrixArgumentException
+     * @throws DeliveryNotFoundException
+     * @throws LoaderException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      */
-    public function addOffer(Offer $offer, ArrayCollection $collection, string $host): void
+    public function addOffer(Offer $offer, ArrayCollection $collection, string $host, string $stockID = null): void
     {
-        if ($this->isOfferExcluded($offer)) {
+        //isOfferExcluded - проверка наличия в складе DC01 и на акционные товары/новинки и прочее
+        if (empty($stockID) && $this->isOfferExcluded($offer)) {
             return;
         }
 
@@ -509,16 +515,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             (new YandexCategory())
                 ->setId($category->getId())
                 ->setParentId($category->getIblockSectionId() ?: null)
-                ->setName(
-                    \implode(' - ',
-                        \array_reverse($category->getFullPathCollection()
-                            ->map(function (Category $category) {
-                                return \preg_replace('~\'|"~', '', $category->getName());
-                            })
-                            ->toArray()
-                        )
-                    )
-                )
+                ->setName($category->getName())
         );
     }
 
