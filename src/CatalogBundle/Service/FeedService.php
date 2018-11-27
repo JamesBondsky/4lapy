@@ -49,12 +49,13 @@ abstract class FeedService
     /**
      * @param ConfigurationInterface $configuration
      * @param int                    $step
+     * @param string                 $stockID
      *
      * If need to continue, return true. Else - false.
      *
      * @return boolean
      */
-    abstract public function process(ConfigurationInterface $configuration, int $step): bool;
+    abstract public function process(ConfigurationInterface $configuration, int $step, string $stockID = null): bool;
 
     /**
      * @todo set with client
@@ -107,5 +108,16 @@ abstract class FeedService
     public function publicFeed($feed, string $file): void
     {
         $this->filesystem->dumpFile($file, $this->serializer->serialize($feed, 'xml'));
+    }
+
+    /**
+     * @param        $data
+     * @param string $file
+     *
+     * @throws IOException
+     */
+    public function publicFeedJson(array $data, string $file): void
+    {
+        $this->filesystem->dumpFile($file, json_encode($data, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
     }
 }

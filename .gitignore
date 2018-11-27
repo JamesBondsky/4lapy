@@ -50,6 +50,7 @@ Desktop.ini
 !/web/include/static/.gitkeep
 
 /common/local/lib/*
+/common/local/logs/*
 /common/static
 /common/local/php_interface/dbconn.php
 
