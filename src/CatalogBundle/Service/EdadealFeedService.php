@@ -231,7 +231,7 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
                     'quantity' => intval($offer['CATALOG_QUANTITY']),
                     'quantity_unit' => $this->arMeasures[$offer['CATALOG_MEASURE']]
                 ];
-            } elseif(floatval($offer['CATALOG_PRICE_2']) == floatval($offer['PROPERTIES']['PRICE_ACTION']['VALUE'])) {
+            } elseif (floatval($offer['CATALOG_PRICE_2']) == floatval($offer['PROPERTIES']['PRICE_ACTION']['VALUE'])) {
                 $this->arResult['offers'][$offer['XML_ID']] = [
                     'id' => $offer['XML_ID'],
                     'sku' => $offer['ID'],
@@ -347,6 +347,21 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
             unset($catalog['label']);
             $catalog['offers'] = array_values($catalog['offers']);
         }
+
+        foreach ($this->arResult['offers'] as $key => $offer) {
+            $hasInCatalog = false;
+            foreach ($this->arResult['catalogs'] as $catalog) {
+                foreach ($catalog['offers'] as $offerID) {
+                    if ($offer['id'] == $offerID) {
+                        $hasInCatalog = true;
+                    }
+                }
+            }
+            if (!$hasInCatalog) {
+                unset($this->arResult['offers'][$key]);
+            }
+        }
+
         $this->arResult['catalogs'] = array_values($this->arResult['catalogs']);
         $this->arResult['offers'] = array_values($this->arResult['offers']);
     }
