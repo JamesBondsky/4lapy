@@ -86,7 +86,16 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
 <body>
 <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_body.php'; ?>
 <?php $APPLICATION->ShowPanel(); ?>
+
 <header class="b-header <?= $template->getHeaderClass() ?> js-header">
+    <?php
+    $APPLICATION->IncludeComponent('articul:header.mobile.bunner',
+        '',
+        [],
+        false,
+        []
+    );
+    ?>
     <div class="b-container">
         <?php if ($template->hasShortHeaderFooter()) { ?>
             <div class="b-header__info b-header__info--short-header">
