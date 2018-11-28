@@ -19,7 +19,7 @@ return [
             'value' => true,
             'readonly' => true,
         ],
-    /*
+
     'cache' => [
         'value' => [
             'type' => 'memcache',
@@ -30,8 +30,8 @@ return [
             'sid' => realpath($_SERVER['DOCUMENT_ROOT']) . '#01',
         ],
     ],
-    */
-    'cache' => [
+
+/*    'cache' => [
         'value' => [
             'sid' => realpath($_SERVER['DOCUMENT_ROOT']) . '#01',
             'type' => [
@@ -40,7 +40,7 @@ return [
             ],
         ],
         'readonly' => false,
-    ],
+    ],*/
     'cache_flags' =>
         [
             'value' =>

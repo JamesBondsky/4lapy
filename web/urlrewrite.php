@@ -24,7 +24,7 @@ $arUrlRewrite=array (
     'PATH' => '/personal/index.php',
     'SORT' => 100,
   ),
-  0 => 
+  7 => 
   array (
     'CONDITION' => '#^/shares/#',
     'RULE' => '',
