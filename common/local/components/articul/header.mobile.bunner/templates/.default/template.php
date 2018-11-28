@@ -1,4 +1,9 @@
-<? if ($arResult['SHOW_BANNER']) { ?>
+<?/**
+ * @var $sCancelMobileBannerCookie - Значение куки отвечающе за отмену показа мобильного баннера
+ */
+$sCancelMobileBannerCookie = $_COOKIE['cancel_mobile_app'] ?? null;
+
+if ($arResult['SHOW_BANNER'] && (int)$sCancelMobileBannerCookie !== 1) { ?>
     <div class="b-mobile-app hidden js-banner-mobile-app">
         <div class="b-mobile-app__banner hidden js-banner-mobile-app-android">
             <a href="<?= $arResult['BANNER']['ANDROID_LINK'] ?>" class="b-mobile-app__link"
