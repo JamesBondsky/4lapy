@@ -566,7 +566,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $deliveryZone = $this->getDeliveryZone($order);
 
         if (
-            $deliveryZone === DeliveryService::ZONE_2
+            in_array($deliveryZone, DeliveryService::getZonesTwo())
             && $this->getPropertyValueByCode($order, 'REGION_COURIER_FROM_DC') === 'Y'
         ) {
             return SapOrder::DELIVERY_TYPE_ROUTE;
@@ -585,6 +585,20 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     case DeliveryService::ZONE_6:
                         return SapOrder::DELIVERY_TYPE_COURIER_RC;
                     case DeliveryService::ZONE_2:
+                    case DeliveryService::ZONE_NIZHNY_NOVGOROD:
+                    case DeliveryService::ZONE_NIZHNY_NOVGOROD_REGION:
+                    case DeliveryService::ZONE_VLADIMIR:
+                    case DeliveryService::ZONE_VLADIMIR_REGION:
+                    case DeliveryService::ZONE_VORONEZH:
+                    case DeliveryService::ZONE_VORONEZH_REGION:
+                    case DeliveryService::ZONE_YAROSLAVL:
+                    case DeliveryService::ZONE_YAROSLAVL_REGION:
+                    case DeliveryService::ZONE_TULA:
+                    case DeliveryService::ZONE_TULA_REGION:
+                    case DeliveryService::ZONE_KALUGA:
+                    case DeliveryService::ZONE_KALUGA_REGION:
+                    case DeliveryService::ZONE_IVANOVO:
+                    case DeliveryService::ZONE_IVANOVO_REGION:
                         return SapOrder::DELIVERY_TYPE_COURIER_SHOP;
                 }
 
@@ -607,6 +621,20 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     case DeliveryService::ZONE_6:
                         return SapOrder::DELIVERY_TYPE_COURIER_RC;
                     case DeliveryService::ZONE_2:
+                    case DeliveryService::ZONE_NIZHNY_NOVGOROD:
+                    case DeliveryService::ZONE_NIZHNY_NOVGOROD_REGION:
+                    case DeliveryService::ZONE_VLADIMIR:
+                    case DeliveryService::ZONE_VLADIMIR_REGION:
+                    case DeliveryService::ZONE_VORONEZH:
+                    case DeliveryService::ZONE_VORONEZH_REGION:
+                    case DeliveryService::ZONE_YAROSLAVL:
+                    case DeliveryService::ZONE_YAROSLAVL_REGION:
+                    case DeliveryService::ZONE_TULA:
+                    case DeliveryService::ZONE_TULA_REGION:
+                    case DeliveryService::ZONE_KALUGA:
+                    case DeliveryService::ZONE_KALUGA_REGION:
+                    case DeliveryService::ZONE_IVANOVO:
+                    case DeliveryService::ZONE_IVANOVO_REGION:
                         return SapOrder::DELIVERY_TYPE_COURIER_SHOP;
                     case DeliveryService::ZONE_3:
                         return SapOrder::DELIVERY_TYPE_PICKUP;
@@ -1091,6 +1119,20 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     $xmlId = SapOrder::DELIVERY_ZONE_6_ARTICLE;
                     break;
                 case DeliveryService::ZONE_2:
+                case DeliveryService::ZONE_NIZHNY_NOVGOROD:
+                case DeliveryService::ZONE_NIZHNY_NOVGOROD_REGION:
+                case DeliveryService::ZONE_VLADIMIR:
+                case DeliveryService::ZONE_VLADIMIR_REGION:
+                case DeliveryService::ZONE_VORONEZH:
+                case DeliveryService::ZONE_VORONEZH_REGION:
+                case DeliveryService::ZONE_YAROSLAVL:
+                case DeliveryService::ZONE_YAROSLAVL_REGION:
+                case DeliveryService::ZONE_TULA:
+                case DeliveryService::ZONE_TULA_REGION:
+                case DeliveryService::ZONE_KALUGA:
+                case DeliveryService::ZONE_KALUGA_REGION:
+                case DeliveryService::ZONE_IVANOVO:
+                case DeliveryService::ZONE_IVANOVO_REGION:
                     $xmlId = SapOrder::DELIVERY_ZONE_2_ARTICLE;
                     break;
                 case DeliveryService::ZONE_3:
