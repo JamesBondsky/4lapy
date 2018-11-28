@@ -120,11 +120,15 @@ class SearchController extends Controller
                                         'NAME' => $offer->getProduct()->getSection()->getName(),
                                         'DETAIL_PAGE_URL' => $offer->getProduct()->getSection()->getSectionPageUrl(),
                                         'ELEMENTS' => [
-                                            $offer->getProduct()->getBrandName().' '.$offer->getName()
+                                            'NAME' => $offer->getProduct()->getBrandName().' '.$offer->getName(),
+                                            'LINK' => $offer->getProduct()->getDetailPageUrl()
                                         ]
                                     ];
                                 } else {
-                                    $res[$key][$offer->getProduct()->getIblockSectionId()]['ELEMENTS'][] = $offer->getProduct()->getBrandName().' '.$offer->getName();
+                                    $res[$key][$offer->getProduct()->getIblockSectionId()]['ELEMENTS'][] = [
+                                        'NAME' => $offer->getProduct()->getBrandName().' '.$offer->getName(),
+                                        'LINK' => $offer->getProduct()->getDetailPageUrl()
+                                    ];
                                 }
                             }
                         }
