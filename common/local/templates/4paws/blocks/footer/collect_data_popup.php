@@ -45,20 +45,36 @@ if($USER->IsAuthorized()) {
     <? //$APPLICATION->IncludeComponent('fourpaws:personal.pets', 'popup', ['COLLECTOR' => 'Y'], null, ['HIDE_ICONS' => 'Y']); ?>
     <!--<a class="js-add-query js-open-popup js-open-popup--account-tab" style="display: none;" id="data_collect" data-popup-id="edit-popup-pet" data-url="/ajax/personal/pets/add/"></a>-->
 <? //}?>
-<? if(1) {?>
+<? if(1){ //$modal_timer?>
     <script>
         // заглушка для вызова формы - вынесено во одно место, чтобы было удобнее исправлять и не менять шаблоны.
         $(document).ready(function () {
-            setTimeout(function () {
+            function getCookie(name) {
+                var matches = document.cookie.match(new RegExp(
+                    "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+                ));
+                return matches ? decodeURIComponent(matches[1]) : 0;
+            }
+            function serveModal(timer){
+                clearInterval(timer);
                 $('#data_collect').trigger('click');
 
-                var data = [<?=$modal_counts[0]?>, <?=$modal_counts[1]?>, <?=$modal_counts[2]?>];
+                let data = [<?=$modal_counts[0]?>, <?=$modal_counts[1]?>, <?=$modal_counts[2]?>];
                 data[<?=$modal_number-1?>]++;
-                console.log(data.join(' '));
 
+                //data.join(' ');
                 // TODO: написать запрос и перезаписать данные модалки.
                 // $USER->SetParam('data_collect', true); - в контроллер, перепишем куки, чтоб больше не лезло.
-            }, 1000);
+            }
+            let timer = setInterval(function () {
+
+                let time = parseInt(getCookie('modal_timer'));
+                time++;
+                document.cookie = "modal_timer="+time;
+                console.log(getCookie('modal_timer'));
+
+                if(parseInt(getCookie('modal_timer'), 10) === 9) serveModal(timer);
+            }, 5000);
         });
     </script>
 <? }?>

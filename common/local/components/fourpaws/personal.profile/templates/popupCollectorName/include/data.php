@@ -5,7 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /** @var string $phone
  * @var string $oldPhone*/ ?>
 <form class="b-registration__form js-form-validation js-phone-change-one"
-      data-url="/ajax/personal/profile/collectName/"
+      data-url="/ajax/personal/profile/changePhone/"
       method="post">
     <input type="hidden" class="js-data-id js-no-valid" name="ID" value="<?= $arResult['CUR_USER']['ID'] ?>">
     <div class="b-input-line b-input-line--popup-authorization b-input-line--referal js-first-name">
@@ -16,7 +16,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <div class="b-input b-input--registration-form">
             <input class="b-input__input-field b-input__input-field--registration-form js-small-input"
                    type="text"
-                   id="data-first-name"
+                   id="data-first-name-fake"
                    name="NAME"
                    value="<?= $arResult['CUR_USER']['NAME'] ?>"
                    data-text="1"
