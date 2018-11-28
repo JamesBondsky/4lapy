@@ -560,6 +560,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     protected $sectionIdList;
 
     /**
+     * @var string Название раздела
+     * @Type("string")
+     * @Accessor(getter="getSectionName")
+     * @Groups({"elastic"})
+     */
+    protected $sectionName;
+
+    /**
      * @var string[]
      * @Type("array<string>")
      * @Accessor(getter="getSuggest")
@@ -2281,6 +2289,24 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         }
 
         return $this->sectionIdList;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSectionName(): string
+    {
+        return $this->getSection()->getName();
+    }
+
+    /**
+     * @param string $sectionName
+     * @return string
+     */
+    public function withSectionName(string $sectionName): string
+    {
+        $this->sectionName = $sectionName;
+        return $this;
     }
 
     /**
