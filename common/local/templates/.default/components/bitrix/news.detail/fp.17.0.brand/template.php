@@ -102,10 +102,15 @@ if ($arResult['DETAIL_TEXT'] || $arResult['PRINT_PICTURE']) { ?>
                 <div class="b-brand-products">
                     <div class="b-brand-products__list js-brand-products-slider">
                         <?php
+                        $prevRow = $arResult['PRODUCT_CATEGORIES'][0]['row'];
                         foreach ($arResult['PRODUCT_CATEGORIES'] as $arItem) { ?>
+                            <? if ($prevRow != $arItem['row']){ ?>
+                                </div><div class="b-brand-products__list js-brand-products-slider">
+                            <? } ?>
                             <? if (!empty($arItem['filters']) && !empty($arItem['image']) && !empty($arItem['title']) && !empty($arItem['subtitle'])) { ?>
                                 <div class="b-brand-products__item">
-                                    <div data-brand-product-item="<?= $arItem['filters'] ?>" class="b-brand-products__link js-brand-product-item">
+                                    <div data-brand-product-item="<?= $arItem['filters'] ?>"
+                                         class="b-brand-products__link js-brand-product-item">
                                         <div class="b-brand-products__img">
                                             <img src="<?= $arItem['image'] ?>" alt="<?= $arItem['alt'] ?>">
                                         </div>
@@ -120,6 +125,7 @@ if ($arResult['DETAIL_TEXT'] || $arResult['PRINT_PICTURE']) { ?>
                                     </div>
                                 </div>
                             <? } ?>
+                            <? $prevRow = $arItem['row']; ?>
                         <? } ?>
                     </div>
                 </div>
