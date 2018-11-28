@@ -519,7 +519,7 @@ class SearchService implements LoggerAwareInterface
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['NAME'])
+                ->setFields(['NAME', 'sectionName'])
                 ->setType('phrase')
                 ->setAnalyzer('default')
                 ->setParam('boost', 100.0)
@@ -530,7 +530,7 @@ class SearchService implements LoggerAwareInterface
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['NAME'])
+                ->setFields(['NAME', 'sectionName'])
                 ->setType('best_fields')
                 ->setFuzziness(0)
                 ->setAnalyzer('default')
@@ -543,7 +543,7 @@ class SearchService implements LoggerAwareInterface
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['catalog.NAME'])
+                ->setFields(['catalog.NAME', 'sectionName'])
                 ->setType('best_fields')
                 ->setFuzziness(0)
                 ->setAnalyzer('default')
@@ -556,7 +556,7 @@ class SearchService implements LoggerAwareInterface
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['NAME'])
+                ->setFields(['NAME', 'sectionName'])
                 ->setType('best_fields')
                 ->setFuzziness('AUTO')
                 ->setAnalyzer('full-text-search')

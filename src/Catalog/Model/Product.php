@@ -24,6 +24,7 @@ use FourPaws\Catalog\Collection\CategoryCollection;
 use FourPaws\Catalog\Query\BrandQuery;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Catalog\Table\CatalogPriceTable;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Search\Model\HitMetaInfoAwareInterface;
 use FourPaws\Search\Model\HitMetaInfoAwareTrait;
@@ -99,6 +100,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @Groups({"elastic"})
      */
     protected $NAME = '';
+
+    /**
+     * @var string Название раздела
+     * @Type("string")
+     * @Accessor(getter="getSectionName")
+     * @Groups({"elastic"})
+     */
+    protected $sectionName = '';
 
     /**
      * @var int
@@ -560,14 +569,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     protected $sectionIdList;
 
     /**
-     * @var string Название раздела
-     * @Type("string")
-     * @Accessor(getter="getSectionName")
-     * @Groups({"elastic"})
-     */
-    protected $sectionName;
-
-    /**
      * @var string[]
      * @Type("array<string>")
      * @Accessor(getter="getSuggest")
@@ -732,6 +733,17 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             $this->PROPERTY_BRAND_NAME = $this->getBrand()->getName();
         }
         return $this->PROPERTY_BRAND_NAME;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSectionName(): string
+    {
+        if ($sect = $this->getSection()) {
+            $this->sectionName = $sect->getName();
+        }
+        return $this->sectionName;
     }
 
     /**
@@ -2289,24 +2301,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         }
 
         return $this->sectionIdList;
-    }
-
-    /**
-     * @return string
-     */
-    public function getSectionName(): string
-    {
-        return $this->getSection()->getName();
-    }
-
-    /**
-     * @param string $sectionName
-     * @return string
-     */
-    public function withSectionName(string $sectionName): string
-    {
-        $this->sectionName = $sectionName;
-        return $this;
     }
 
     /**
