@@ -533,7 +533,7 @@ class SearchService implements LoggerAwareInterface
                 ->setFields(['NAME'])
                 ->setType('phrase')
                 ->setAnalyzer('default')
-                ->setParam('boost', 100.0)
+                ->setParam('boost', 150.0)
                 ->setParam('_name', 'name-phrase')
         );
 
