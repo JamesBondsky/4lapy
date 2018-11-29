@@ -139,6 +139,6 @@ class SearchController extends Controller
             }
         }
 
-        return JsonSuccessResponse::createWithData('', $res);
+        return JsonSuccessResponse::createWithData('', $res)->setEncodingOptions(JSON_UNESCAPED_UNICODE);
     }
 }

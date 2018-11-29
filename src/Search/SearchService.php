@@ -519,7 +519,18 @@ class SearchService implements LoggerAwareInterface
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['NAME', 'sectionName'])
+                ->setFields(['sectionName'])
+                ->setType('phrase')
+                ->setAnalyzer('default')
+                ->setParam('boost', 75.0)
+                ->setParam('_name', 'name-phrase')
+        );
+
+        //Точное по фразе в названии
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['NAME'])
                 ->setType('phrase')
                 ->setAnalyzer('default')
                 ->setParam('boost', 100.0)
@@ -530,11 +541,11 @@ class SearchService implements LoggerAwareInterface
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['NAME', 'sectionName'])
+                ->setFields(['sectionName'])
                 ->setType('best_fields')
                 ->setFuzziness(0)
                 ->setAnalyzer('default')
-                ->setParam('boost', 60.0)
+                ->setParam('boost', 10.0)
                 ->setParam('_name', 'name-exact-word')
 
         );
@@ -543,14 +554,27 @@ class SearchService implements LoggerAwareInterface
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['catalog.NAME', 'sectionName'])
+                ->setFields(['NAME'])
                 ->setType('best_fields')
                 ->setFuzziness(0)
                 ->setAnalyzer('default')
-                ->setParam('boost', 100.0)
+                ->setParam('boost', 80.0)
                 ->setParam('_name', 'name-exact-word')
 
         );
+
+        //Точное по слову в названии
+//        $boolQuery->addShould(
+//            $queryBuilder->query()->multi_match()
+//                ->setQuery($searchString)
+//                ->setFields(['catalog.NAME', 'sectionName'])
+//                ->setType('best_fields')
+//                ->setFuzziness(0)
+//                ->setAnalyzer('default')
+//                ->setParam('boost', 100.0)
+//                ->setParam('_name', 'name-exact-word')
+//
+//        );
 
         //Нечёткое совпадение с учётом опечаток в названии
         $boolQuery->addShould(
@@ -560,7 +584,7 @@ class SearchService implements LoggerAwareInterface
                 ->setType('best_fields')
                 ->setFuzziness('AUTO')
                 ->setAnalyzer('full-text-search')
-                ->setParam('boost', 40.0)
+                ->setParam('boost', 10.0)
                 ->setParam('_name', 'name-fuzzy-word')
 
         );
@@ -570,7 +594,7 @@ class SearchService implements LoggerAwareInterface
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
                 ->setFields(['product.NAME.phonetic'])
-                ->setParam('boost', 30.0)
+                ->setParam('boost', 5.0)
                 ->setParam('_name', 'name-sounds-similar')
         );
 
@@ -793,9 +817,9 @@ class SearchService implements LoggerAwareInterface
                     ->match()
                     ->setField('PROPERTY_STM', true)
             )
-            // популярные товары +50
+            // популярные товары +25
             ->addWeightFunction(
-                100,
+                25,
                 $queryBuilder
                     ->query()
                     ->nested()
