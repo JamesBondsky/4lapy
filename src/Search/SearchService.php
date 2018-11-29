@@ -377,7 +377,7 @@ class SearchService implements LoggerAwareInterface
                 ->setType('best_fields')
                 ->setFuzziness('AUTO')
                 ->setAnalyzer('full-text-search')
-                ->setParam('boost', 100.0)
+                ->setParam('boost', 150.0)
                 ->setParam('_name', 'brand-fuzzy')
         );
 
