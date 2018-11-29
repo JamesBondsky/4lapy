@@ -10,13 +10,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             <dt class="b-app__name">Наши приложения</dt>
             <dd class="b-app__block">
                 <?php if (tplvar('application_ios')) { ?>
-                    <a class="b-app__link b-app__link--app" href="<?= tplvar('application_ios') ?>" title="">
+                    <a class="b-app__link b-app__link--app" href="<?= tplvar('application_ios') ?>" target="_blank" title="">
                         <img src="/static/build/images/inhtml/app-store.png" title="" alt="" role="presentation" />
                     </a>
                 <?php } ?>
                 <?= tplinvis('application_ios') ?>
                 <?php if (tplvar('application_android')) { ?>
-                    <a class="b-app__link b-app__link--app" href="<?= tplvar('application_android') ?>" title="Скоро">
+                    <a class="b-app__link b-app__link--app" href="<?= tplvar('application_android') ?>" target="_blank" title="Скоро">
                         <img src="/static/build/images/inhtml/android.png" title="" alt="" role="presentation" />
                     </a>
                 <?php } ?>
