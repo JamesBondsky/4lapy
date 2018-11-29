@@ -410,17 +410,16 @@ class SearchService implements LoggerAwareInterface
         );
 
         //Нечёткое совпадение с учётом опечаток в названии
-//        $boolQuery->addShould(
-//            $queryBuilder->query()->multi_match()
-//                ->setQuery($searchString)
-//                ->setFields(['NAME'])
-//                ->setType('best_fields')
-//                ->setFuzziness('AUTO')
-//                ->setAnalyzer('full-text-search')
-//                ->setParam('boost', 60.0)
-//                ->setParam('_name', 'name-fuzzy-word')
-//
-//        );
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['NAME'])
+                ->setType('phrase_prefix')
+                ->setAnalyzer('full-text-search')
+                ->setParam('boost', 10.0)
+                ->setParam('_name', 'name-fuzzy-word')
+
+        );
 
         //Совпадение по звучанию в названии
         $boolQuery->addShould(
@@ -581,10 +580,9 @@ class SearchService implements LoggerAwareInterface
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
                 ->setFields(['NAME', 'sectionName'])
-                ->setType('best_fields')
-                ->setFuzziness('AUTO')
+                ->setType('phrase_prefix')
                 ->setAnalyzer('full-text-search')
-                ->setParam('boost', 10.0)
+                ->setParam('boost', 70.0)
                 ->setParam('_name', 'name-fuzzy-word')
 
         );
@@ -716,9 +714,9 @@ class SearchService implements LoggerAwareInterface
                             ->match('hasStocks', true)
                     )
             )
-            // собственная торговая марка +50
+            // собственная торговая марка +25
             ->addWeightFunction(
-                50,
+                25,
                 $queryBuilder
                     ->query()
                     ->match()
@@ -738,17 +736,17 @@ class SearchService implements LoggerAwareInterface
                             ->setField('offers.PROPERTY_IS_POPULAR', true)
                     )
             )
-            // товар, имеющий акции +100
+            // товар, имеющий акции +25
             ->addWeightFunction(
-                100,
+                25,
                 $queryBuilder
                     ->query()
                     ->match()
                     ->setField('hasActions', true)
             )
-            // новинки +50
+            // новинки +25
             ->addWeightFunction(
-                50,
+                25,
                 $queryBuilder
                     ->query()
                     ->nested()
@@ -760,9 +758,9 @@ class SearchService implements LoggerAwareInterface
                             ->setField('offers.PROPERTY_IS_NEW', true)
                     )
             )
-            // товары с шильдиками +20
+            // товары с шильдиками +10
             ->addWeightFunction(
-                20,
+                10,
                 $queryBuilder
                     ->query()
                     ->nested()
