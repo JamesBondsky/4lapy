@@ -410,17 +410,17 @@ class SearchService implements LoggerAwareInterface
         );
 
         //Нечёткое совпадение с учётом опечаток в названии
-        $boolQuery->addShould(
-            $queryBuilder->query()->multi_match()
-                ->setQuery($searchString)
-                ->setFields(['NAME'])
-                ->setType('best_fields')
-                ->setFuzziness('AUTO')
-                ->setAnalyzer('full-text-search')
-                ->setParam('boost', 60.0)
-                ->setParam('_name', 'name-fuzzy-word')
-
-        );
+//        $boolQuery->addShould(
+//            $queryBuilder->query()->multi_match()
+//                ->setQuery($searchString)
+//                ->setFields(['NAME'])
+//                ->setType('best_fields')
+//                ->setFuzziness('AUTO')
+//                ->setAnalyzer('full-text-search')
+//                ->setParam('boost', 60.0)
+//                ->setParam('_name', 'name-fuzzy-word')
+//
+//        );
 
         //Совпадение по звучанию в названии
         $boolQuery->addShould(
