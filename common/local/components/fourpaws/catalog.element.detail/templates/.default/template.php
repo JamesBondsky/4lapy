@@ -415,7 +415,13 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
     <div class="b-tab-content__container active js-tab-content" data-tab-content="description">
         <div class="b-description-tab">
             <div class="b-description-tab__column" itemprop="description" >
-                <p><?= $product->getDetailText()->getText() ?></p>
+                <div class="rc-product-detail">
+                    <? if ($product->getLayoutDescription()->getText() != '' && $product->getLayoutDescription()->getText() != null) { ?>
+                        <?= $product->getLayoutDescription()->getText() ?>
+                    <? } else { ?>
+                        <p><?= $product->getDetailText()->getText() ?></p>
+                    <? } ?>
+                </div>
             </div>
             <div class="b-description-tab__column b-description-tab__column--characteristics">
                 <h2>Подробные характеристики</h2>

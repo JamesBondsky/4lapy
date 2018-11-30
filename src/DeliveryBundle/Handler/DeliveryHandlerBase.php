@@ -319,6 +319,20 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                         $result = $storeService->getStoresByLocation($locationCode, StoreService::TYPE_STORE)->getStores();
                         break;
                     case DeliveryService::ZONE_2:
+                    case DeliveryService::ZONE_NIZHNY_NOVGOROD:
+                    case DeliveryService::ZONE_NIZHNY_NOVGOROD_REGION:
+                    case DeliveryService::ZONE_VLADIMIR:
+                    case DeliveryService::ZONE_VLADIMIR_REGION:
+                    case DeliveryService::ZONE_VORONEZH:
+                    case DeliveryService::ZONE_VORONEZH_REGION:
+                    case DeliveryService::ZONE_YAROSLAVL:
+                    case DeliveryService::ZONE_YAROSLAVL_REGION:
+                    case DeliveryService::ZONE_TULA:
+                    case DeliveryService::ZONE_TULA_REGION:
+                    case DeliveryService::ZONE_KALUGA:
+                    case DeliveryService::ZONE_KALUGA_REGION:
+                    case DeliveryService::ZONE_IVANOVO:
+                    case DeliveryService::ZONE_IVANOVO_REGION:
                         /**
                          * условие доставки в эту зону - наличие в базовом магазине
                          */

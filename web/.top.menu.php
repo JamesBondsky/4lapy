@@ -16,14 +16,14 @@ $aMenuLinks = Array(
     ),
 	Array(
         'Сервисы',
-        '',
+        '/catalog/food-selection/',
 		Array(),
 		Array('CHILDS_BY_MENU' => 'services'),
         ''
 	),
 	Array(
         'Компания',
-        '',
+        '/about/',
 		Array(),
 		Array('CHILDS_BY_MENU' => 'company'),
         ''
