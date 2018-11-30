@@ -234,11 +234,6 @@ if (!$isAjax) { ?>
             'HIDE_ICONS' => 'Y',
         ]
     ); ?>
-    <div class="b-preloader b-preloader--catalog">
-        <div class="b-preloader__spinner">
-            <img class="b-preloader__image" src="/static/build/images/inhtml/spinner.svg" alt="spinner" title=""/>
-        </div>
-    </div>
     </div>
     <?php require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php';
 } else { ?>

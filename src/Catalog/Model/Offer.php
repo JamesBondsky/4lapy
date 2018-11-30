@@ -1418,7 +1418,7 @@ class Offer extends IblockElement
     }
 
     /**
-     * Участвует ли товар в ации "Цена по акции"
+     * Участвует ли товар в акции "Цена по акции"
      */
     public function isSimpleSaleAction(): bool
     {
@@ -1496,8 +1496,6 @@ class Offer extends IblockElement
                     'PREVIEW_TEXT',
                     'DATE_ACTIVE_FROM',
                     'DATE_ACTIVE_TO',
-                    'PROPERTY_LABEL',
-                    'PROPERTY_LABEL_IMAGE',
                 ]
             )->exec();
         }

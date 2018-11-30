@@ -1112,7 +1112,7 @@ class BasketService implements LoggerAwareInterface
         if (!empty($this->basketProductIds)) {
             $offerCollection = (new OfferQuery())->withFilter(['=ID' => $this->basketProductIds])->exec();
         } else {
-            $offerCollection = new OfferCollection(new \CDBResult());
+            $offerCollection = new OfferCollection(new \CIblockResult());
         }
 
         return $this->offerCollection = $offerCollection;

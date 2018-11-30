@@ -1,3 +1,5 @@
+/bitrix
+/bitrix/
 /common/bitrix
 /common/upload
 /.vagrant/
@@ -48,5 +50,8 @@ Desktop.ini
 !/web/include/static/.gitkeep
 
 /common/local/lib/*
+/common/local/logs/*
 /common/static
 /common/local/php_interface/dbconn.php
+
+/local

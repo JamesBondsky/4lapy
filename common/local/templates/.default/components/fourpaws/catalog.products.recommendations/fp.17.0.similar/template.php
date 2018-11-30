@@ -60,6 +60,7 @@ if ($arResult['RESULT_TYPE'] === 'RESULT') {
                     <h2 class="b-title b-title--popular b-title--product"><?=Loc::getMessage('SIMILAR_PRODUCTS.TITLE')?></h2><?php
                 ?></div>
                 <div class="b-common-section__content b-common-section__content--popular b-common-section__content--product js-popular-product"><?php
+                    $i = 0;
                     foreach ($arResult['PRODUCTS'] as $product) {
                         /** @var \FourPaws\Catalog\Model\Product $product */
                         $productId = $product->getId();
@@ -74,16 +75,19 @@ if ($arResult['RESULT_TYPE'] === 'RESULT') {
                                     'cookieDomain' => $arResult['BIG_DATA_SETTINGS']['js']['cookieDomain'] ?? '',
                                     'serverTime' => $arResult['BIG_DATA_SETTINGS']['js']['serverTime'] ?? '',
                                 ],
+                                'COUNTER' => $i,
                             ],
                             $component,
                             [
                                 'HIDE_ICONS' => 'Y'
                             ]
                         );
+                        $i++;
                     }
                 ?></div>
             </section>
-        </div><?php
+        </div>
+        <?php
     }
 
     if ($arParams['DEFERRED_LOAD'] === 'Y') {

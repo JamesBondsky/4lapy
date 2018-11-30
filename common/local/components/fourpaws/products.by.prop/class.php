@@ -91,7 +91,7 @@ class ProductsByProp extends CBitrixComponent
             $this->arParams['CURRENT_PAGE'] = 1;
         }
 
-        $this->arResult['OFFERS'] = new ProductCollection(new \CDBResult());
+        $this->arResult['OFFERS'] = new ProductCollection(new \CIblockResult());
         if ($this->startResultCache()) {
             TaggedCacheHelper::addManagedCacheTags([
                 'iblock:item:' . $this->arParams['ITEM_ID'],
