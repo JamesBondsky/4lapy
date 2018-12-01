@@ -1,4 +1,4 @@
-User-agent: *
+User-Agent: *
 Disallow: /*sort=
 Disallow: /*?uid=
 Disallow: /*?pages
@@ -20,8 +20,9 @@ Disallow: /?PAGEN&
 Disallow: /feedback/
 Disallow: /*personal
 Disallow: /*order
+Sitemap: https://4lapy.ru/sitemap_index.xml
 
-User-agent: Yandexbot
+User-Agent: Yandexbot
 Disallow: /*pages_cols
 Disallow: /auth/
 Disallow: /*sklad=1
@@ -43,10 +44,10 @@ Disallow: /*backurl
 Disallow: /*admin
 Clean-param: pages&offer&uid&sort&section_id /catalog/
 
-User-agent: Googlebot
+User-Agent: Googlebot
 Allow: *.css
 Allow: *.js
 Disallow: /*?
 
-User-agent: YandexSearchShop
+User-Agent: YandexSearchShop
 Allow: /bitrix/catalog_export/*

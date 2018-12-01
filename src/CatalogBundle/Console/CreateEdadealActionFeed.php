@@ -9,38 +9,40 @@ namespace FourPaws\CatalogBundle\Console;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Exception;
 use FourPaws\CatalogBundle\Exception\ArgumentException;
-use FourPaws\CatalogBundle\Service\YandexFeedService;
+use FourPaws\CatalogBundle\Service\EdadealFeedService;
 use FourPaws\CatalogBundle\Translate\BitrixExportConfigTranslator;
-use FourPaws\External\Exception\YandexMarketApiException;
 use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
-use Symfony\Component\Console\Exception\LogicException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Exception\IOException;
+use Symfony\Component\Console\Exception\LogicException;
 
 /**
- * Class CreateYandexProductFeed
+ * Class CreateEdadealActionFeed
  *
  * @todo
  *
  * @package FourPaws\CatalogBundle\Console
  */
-class CreateYandexProductFeed extends Command implements LoggerAwareInterface
+class CreateEdadealActionFeed extends Command implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
     public const ARG_PROFILE_ID          = 'id';
-    public const OPT_FEED_STEP           = 'step';
     public const OPT_FEED_STOCK_ID       = 'stock';
+
+    public const OPT_FEED_STEP           = 'step';
+
     /**
-     * @var YandexFeedService
+     * @var EdadealFeedService
      */
     private $feedService;
+
     /**
      * @var BitrixExportConfigTranslator
      */
@@ -49,12 +51,12 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
     /**
      * CreateProductFeed constructor.
      *
-     * @param YandexFeedService            $feedService
+     * @param EdadealFeedService           $feedService
      * @param BitrixExportConfigTranslator $translator
      *
      * @throws LogicException
      */
-    public function __construct(YandexFeedService $feedService, BitrixExportConfigTranslator $translator)
+    public function __construct(EdadealFeedService $feedService, BitrixExportConfigTranslator $translator)
     {
         $this->feedService = $feedService;
         $this->translator = $translator;
@@ -68,8 +70,8 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
     public function configure(): void
     {
         $this
-            ->setName('bitrix:feed:create:yandex')
-            ->setDescription('Run bitrix export task - yandex feed')
+            ->setName('bitrix:feed:create:edadeal')
+            ->setDescription('Run bitrix export task - edadeal feed')
             ->addArgument(static::ARG_PROFILE_ID, InputArgument::REQUIRED, 'Bitrix feed id')
             ->addOption(
                 static::OPT_FEED_STEP,
@@ -77,12 +79,6 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
                 InputOption::VALUE_REQUIRED,
                 'Step',
                 0
-            )
-            ->addOption(
-                static::OPT_FEED_STOCK_ID,
-                'stock',
-                InputOption::VALUE_REQUIRED,
-                'stock id'
             );
     }
 
@@ -95,7 +91,6 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
      *
      * @throws ArgumentException
      * @throws IOException
-     * @throws YandexMarketApiException
      * @throws Exception
      * @throws RuntimeException
      * @throws InvalidArgumentException
@@ -103,8 +98,6 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $id = $input->getArgument(static::ARG_PROFILE_ID);
-        $step = $input->getOption(static::OPT_FEED_STEP);
-        $stockID = $input->getOption(static::OPT_FEED_STOCK_ID);
 
         if (!$id) {
             throw new RuntimeException('Profile id not defined');
@@ -113,13 +106,10 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
         $configuration = $this->translator->translate($this->translator->getProfileData($id));
 
         try {
-            if (!empty($stockID)) {
-                $configuration->setExportFile('/bitrix/catalog_export/yandex_export_feed_' . $stockID . '.xml');
-            }
-            if ($this->feedService->process($configuration, $step, $stockID)) {
+            if ($this->feedService->process($configuration,0,null)) {
                 $this->log()->info('Step cleared');
 
-                return FeedFactory::EXIT_CODE_CONTINUE;
+                return FeedFactory::EXIT_CODE_END;
             }
         } catch (\Throwable $e) {
             $this->log()->error(
