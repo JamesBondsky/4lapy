@@ -16,6 +16,8 @@ class IblockCode
 
     public const CITIES    = 'cities';
 
+    public const AREA_CITY = 'area-city';
+
     public const MAIN_MENU = 'main_menu';
 
     public const NEWS      = 'news';
@@ -31,4 +33,7 @@ class IblockCode
     public const RELATED_LINKS    = 'related_links';
 
     public const FAQ  = 'faq';
+
+    public const SOCIALS  = 'socials';
+
 }

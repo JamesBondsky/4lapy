@@ -1,0 +1,13 @@
+DirectoryIndex index.php
+
+RewriteEngine On
+
+RewriteCond %{REQUEST_FILENAME}	!-f
+RewriteCond %{REQUEST_FILENAME}	!-d
+RewriteCond %{REQUEST_FILENAME}	!(gif|jpg|png|js|ico|mp3|css|flv|txt|404.html)$
+RewriteRule ^test/(.+)(/*)$ /test/index.php?method=$1&%{QUERY_STRING} [L]
+
+RewriteCond %{REQUEST_FILENAME}	!-f
+RewriteCond %{REQUEST_FILENAME}	!-d
+RewriteCond %{REQUEST_FILENAME}	!(gif|jpg|png|js|ico|mp3|css|flv|txt|404.html)$
+RewriteRule ^api/(.+)(/*)$ /local/mobile_app/htdocs/index.php?method=$1&%{QUERY_STRING} [L]

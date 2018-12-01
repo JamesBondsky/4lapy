@@ -1,0 +1,467 @@
+<?
+class city extends \stdClass
+{
+	public static function getListDefaultSite()
+	{
+		\Bitrix\Main\Loader::includeModule('sale');
+
+		$arResult = array();
+		$arCities = array();
+
+		// $oCities = \Bitrix\Sale\Location\DefaultSiteTable::getList(array(
+		// 	'order' => array('LOCATION.PARENTS.LEFT_MARGIN' => 'DESC'),
+		// 	'filter' => array(
+		// 		'=SITE_ID' => SITE_ID,
+		// 		'=LOCATION.PARENTS.NAME.LANGUAGE_ID' => 'ru',
+		// 	),
+		// 	'select' => array(
+		// 		'ID' => 'LOCATION.ID',
+		// 		'PARENT_ID' => 'LOCATION.PARENTS.ID',
+		// 		'PARENT_NAME' => 'LOCATION.PARENTS.NAME.NAME',
+		// 		'SORT',
+		// 	)
+		// ));
+
+		$ttt = array(
+			array('ID'=>67221, 'PARENT_ID'=>67221, 'PARENT_NAME'=>'Зеленоград', 'SORT'=>132),
+			array('ID'=>540, 'PARENT_ID'=>540, 'PARENT_NAME'=>'Железнодорожный', 'SORT'=>134),
+			array('ID'=>561, 'PARENT_ID'=>561, 'PARENT_NAME'=>'Жуковский', 'SORT'=>133),
+			array('ID'=>586, 'PARENT_ID'=>586, 'PARENT_NAME'=>'Дубна', 'SORT'=>136),
+			array('ID'=>603, 'PARENT_ID'=>603, 'PARENT_NAME'=>'Королев', 'SORT'=>128),
+			array('ID'=>665, 'PARENT_ID'=>665, 'PARENT_NAME'=>'Климовск', 'SORT'=>131),
+			array('ID'=>672, 'PARENT_ID'=>672, 'PARENT_NAME'=>'Реутов', 'SORT'=>112),
+			array('ID'=>675, 'PARENT_ID'=>675, 'PARENT_NAME'=>'Лобня', 'SORT'=>125),
+			array('ID'=>684, 'PARENT_ID'=>684, 'PARENT_NAME'=>'Лыткарино', 'SORT'=>123),
+			array('ID'=>726, 'PARENT_ID'=>726, 'PARENT_NAME'=>'Фрязино', 'SORT'=>107),
+			array('ID'=>728, 'PARENT_ID'=>728, 'PARENT_NAME'=>'Электросталь', 'SORT'=>102),
+			array('ID'=>789, 'PARENT_ID'=>789, 'PARENT_NAME'=>'Орехово-Зуево', 'SORT'=>118),
+			array('ID'=>791, 'PARENT_ID'=>791, 'PARENT_NAME'=>'Юбилейный', 'SORT'=>101),
+			array('ID'=>792, 'PARENT_ID'=>792, 'PARENT_NAME'=>'Дзержинский', 'SORT'=>139),
+			array('ID'=>793, 'PARENT_ID'=>793, 'PARENT_NAME'=>'Коломна', 'SORT'=>129),
+			array('ID'=>845, 'PARENT_ID'=>845, 'PARENT_NAME'=>'Подольск', 'SORT'=>115),
+			array('ID'=>847, 'PARENT_ID'=>847, 'PARENT_NAME'=>'Долгопрудный', 'SORT'=>137),
+			array('ID'=>869, 'PARENT_ID'=>869, 'PARENT_NAME'=>'Химки', 'SORT'=>106),
+			array('ID'=>955, 'PARENT_ID'=>955, 'PARENT_NAME'=>'Серпухов', 'SORT'=>110),
+			array('ID'=>994, 'PARENT_ID'=>994, 'PARENT_NAME'=>'Балашиха', 'SORT'=>143),
+			array('ID'=>1944, 'PARENT_ID'=>1944, 'PARENT_NAME'=>'Воскресенск', 'SORT'=>140),
+			array('ID'=>1944, 'PARENT_ID'=>1682, 'PARENT_NAME'=>'Воскресенский район', 'SORT'=>140),
+			array('ID'=>2331, 'PARENT_ID'=>2331, 'PARENT_NAME'=>'Дмитров', 'SORT'=>138),
+			array('ID'=>2331, 'PARENT_ID'=>1984, 'PARENT_NAME'=>'Дмитровский район', 'SORT'=>138),
+			array('ID'=>2898, 'PARENT_ID'=>2898, 'PARENT_NAME'=>'Егорьевск', 'SORT'=>135),
+			array('ID'=>2898, 'PARENT_ID'=>2444, 'PARENT_NAME'=>'Егорьевский район', 'SORT'=>135),
+			array('ID'=>3820, 'PARENT_ID'=>3820, 'PARENT_NAME'=>'Клин', 'SORT'=>130),
+			array('ID'=>3820, 'PARENT_ID'=>3683, 'PARENT_NAME'=>'Клинский район', 'SORT'=>130),
+			array('ID'=>4341, 'PARENT_ID'=>4341, 'PARENT_NAME'=>'Красногорск', 'SORT'=>126),
+			array('ID'=>4362, 'PARENT_ID'=>4362, 'PARENT_NAME'=>'Отрадное посёлок', 'SORT'=>117),
+			array('ID'=>4341, 'PARENT_ID'=>4279, 'PARENT_NAME'=>'Красногорский район', 'SORT'=>126),
+			array('ID'=>4362, 'PARENT_ID'=>4279, 'PARENT_NAME'=>'Красногорский район', 'SORT'=>117),
+			array('ID'=>4487, 'PARENT_ID'=>4487, 'PARENT_NAME'=>'Видное', 'SORT'=>141),
+			array('ID'=>4487, 'PARENT_ID'=>4408, 'PARENT_NAME'=>'Ленинский район', 'SORT'=>141),
+			array('ID'=>4797, 'PARENT_ID'=>4797, 'PARENT_NAME'=>'Луховицы', 'SORT'=>124),
+			array('ID'=>4797, 'PARENT_ID'=>4630, 'PARENT_NAME'=>'Луховицкий район', 'SORT'=>124),
+			array('ID'=>4829, 'PARENT_ID'=>4829, 'PARENT_NAME'=>'Красково посёлок', 'SORT'=>127),
+			array('ID'=>4845, 'PARENT_ID'=>4845, 'PARENT_NAME'=>'Люберцы', 'SORT'=>122),
+			array('ID'=>4939, 'PARENT_ID'=>4939, 'PARENT_NAME'=>'Томилино посёлок', 'SORT'=>108),
+			array('ID'=>4845, 'PARENT_ID'=>4828, 'PARENT_NAME'=>'Люберецкий район', 'SORT'=>122),
+			array('ID'=>4939, 'PARENT_ID'=>4828, 'PARENT_NAME'=>'Люберецкий район', 'SORT'=>108),
+			array('ID'=>4829, 'PARENT_ID'=>4828, 'PARENT_NAME'=>'Люберецкий район', 'SORT'=>127),
+			array('ID'=>5809, 'PARENT_ID'=>5809, 'PARENT_NAME'=>'Мытищи', 'SORT'=>121),
+			array('ID'=>5809, 'PARENT_ID'=>5677, 'PARENT_NAME'=>'Мытищинский район', 'SORT'=>121),
+			array('ID'=>6571, 'PARENT_ID'=>6571, 'PARENT_NAME'=>'Ногинск', 'SORT'=>120),
+			array('ID'=>6571, 'PARENT_ID'=>6338, 'PARENT_NAME'=>'Ногинский район', 'SORT'=>120),
+			array('ID'=>7129, 'PARENT_ID'=>7129, 'PARENT_NAME'=>'Одинцово', 'SORT'=>119),
+			array('ID'=>7129, 'PARENT_ID'=>6934, 'PARENT_NAME'=>'Одинцовский район', 'SORT'=>119),
+			array('ID'=>7941, 'PARENT_ID'=>7941, 'PARENT_NAME'=>'Павловский Посад', 'SORT'=>116),
+			array('ID'=>7941, 'PARENT_ID'=>7921, 'PARENT_NAME'=>'Павлово-Посадский район', 'SORT'=>116),
+			array('ID'=>8738, 'PARENT_ID'=>8738, 'PARENT_NAME'=>'Пушкино', 'SORT'=>114),
+			array('ID'=>8738, 'PARENT_ID'=>8357, 'PARENT_NAME'=>'Пушкинский район', 'SORT'=>114),
+			array('ID'=>9082, 'PARENT_ID'=>9082, 'PARENT_NAME'=>'Быково рабочий посёлок', 'SORT'=>142),
+			array('ID'=>9498, 'PARENT_ID'=>9498, 'PARENT_NAME'=>'Раменское', 'SORT'=>113),
+			array('ID'=>9498, 'PARENT_ID'=>8788, 'PARENT_NAME'=>'Раменский район', 'SORT'=>113),
+			array('ID'=>9082, 'PARENT_ID'=>8788, 'PARENT_NAME'=>'Раменский район', 'SORT'=>142),
+			array('ID'=>10559, 'PARENT_ID'=>10559, 'PARENT_NAME'=>'Сергиев Посад', 'SORT'=>111),
+			array('ID'=>10559, 'PARENT_ID'=>10195, 'PARENT_NAME'=>'Сергиево-Посадский район', 'SORT'=>111),
+			array('ID'=>12289, 'PARENT_ID'=>12289, 'PARENT_NAME'=>'Солнечногорск', 'SORT'=>109),
+			array('ID'=>12289, 'PARENT_ID'=>11807, 'PARENT_NAME'=>'Солнечногорский район', 'SORT'=>109),
+			array('ID'=>13807, 'PARENT_ID'=>13807, 'PARENT_NAME'=>'Чехов', 'SORT'=>105),
+			array('ID'=>13807, 'PARENT_ID'=>13380, 'PARENT_NAME'=>'Чеховский район', 'SORT'=>105),
+			array('ID'=>14354, 'PARENT_ID'=>14354, 'PARENT_NAME'=>'Щелково', 'SORT'=>104),
+			array('ID'=>14354, 'PARENT_ID'=>14214, 'PARENT_NAME'=>'Щелковский район', 'SORT'=>104),
+			array('ID'=>869, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>106),
+			array('ID'=>728, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>102),
+			array('ID'=>586, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>136),
+			array('ID'=>8738, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>114),
+			array('ID'=>4829, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>127),
+			array('ID'=>2331, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>138),
+			array('ID'=>793, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>129),
+			array('ID'=>675, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>125),
+			array('ID'=>12289, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>109),
+			array('ID'=>6571, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>120),
+			array('ID'=>4362, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>117),
+			array('ID'=>955, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>110),
+			array('ID'=>789, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>118),
+			array('ID'=>603, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>128),
+			array('ID'=>9082, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>142),
+			array('ID'=>4845, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>122),
+			array('ID'=>2898, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>135),
+			array('ID'=>845, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>115),
+			array('ID'=>684, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>123),
+			array('ID'=>13807, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>105),
+			array('ID'=>540, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>134),
+			array('ID'=>7129, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>119),
+			array('ID'=>4487, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>141),
+			array('ID'=>994, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>143),
+			array('ID'=>791, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>101),
+			array('ID'=>67221, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>132),
+			array('ID'=>665, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>131),
+			array('ID'=>9498, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>113),
+			array('ID'=>4939, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>108),
+			array('ID'=>3820, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>130),
+			array('ID'=>847, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>137),
+			array('ID'=>726, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>107),
+			array('ID'=>14354, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>104),
+			array('ID'=>561, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>133),
+			array('ID'=>7941, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>116),
+			array('ID'=>4797, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>124),
+			array('ID'=>1944, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>140),
+			array('ID'=>792, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>139),
+			array('ID'=>672, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>112),
+			array('ID'=>10559, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>111),
+			array('ID'=>5809, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>121),
+			array('ID'=>4341, 'PARENT_ID'=>1, 'PARENT_NAME'=>'Московская область', 'SORT'=>126),
+			array('ID'=>14620, 'PARENT_ID'=>14620, 'PARENT_NAME'=>'Иваново', 'SORT'=>900),
+			array('ID'=>14620, 'PARENT_ID'=>2, 'PARENT_NAME'=>'Ивановская область', 'SORT'=>900),
+			array('ID'=>18661, 'PARENT_ID'=>18661, 'PARENT_NAME'=>'Калуга', 'SORT'=>870),
+			array('ID'=>18922, 'PARENT_ID'=>18922, 'PARENT_NAME'=>'Обнинск', 'SORT'=>760),
+			array('ID'=>18661, 'PARENT_ID'=>3, 'PARENT_NAME'=>'Калужская область', 'SORT'=>870),
+			array('ID'=>18922, 'PARENT_ID'=>3, 'PARENT_NAME'=>'Калужская область', 'SORT'=>760),
+			array('ID'=>22959, 'PARENT_ID'=>22959, 'PARENT_NAME'=>'Кострома', 'SORT'=>840),
+			array('ID'=>22959, 'PARENT_ID'=>22743, 'PARENT_NAME'=>'Костромской район', 'SORT'=>840),
+			array('ID'=>22959, 'PARENT_ID'=>4, 'PARENT_NAME'=>'Костромская область', 'SORT'=>840),
+			array('ID'=>26924, 'PARENT_ID'=>26924, 'PARENT_NAME'=>'Липецк', 'SORT'=>780),
+			array('ID'=>26924, 'PARENT_ID'=>5, 'PARENT_NAME'=>'Липецкая область', 'SORT'=>780),
+			array('ID'=>28624, 'PARENT_ID'=>28624, 'PARENT_NAME'=>'Орёл', 'SORT'=>740),
+			array('ID'=>28624, 'PARENT_ID'=>6, 'PARENT_NAME'=>'Орловская область', 'SORT'=>740),
+			array('ID'=>32102, 'PARENT_ID'=>32102, 'PARENT_NAME'=>'Рязань', 'SORT'=>720),
+			array('ID'=>32102, 'PARENT_ID'=>7, 'PARENT_NAME'=>'Рязанская область', 'SORT'=>720),
+			array('ID'=>35106, 'PARENT_ID'=>35106, 'PARENT_NAME'=>'Тверь', 'SORT'=>680),
+			array('ID'=>35106, 'PARENT_ID'=>8, 'PARENT_NAME'=>'Тверская область', 'SORT'=>680),
+			array('ID'=>45546, 'PARENT_ID'=>45546, 'PARENT_NAME'=>'Ярославль', 'SORT'=>640),
+			array('ID'=>45546, 'PARENT_ID'=>9, 'PARENT_NAME'=>'Ярославская область', 'SORT'=>640),
+			array('ID'=>52883, 'PARENT_ID'=>52883, 'PARENT_NAME'=>'Воронеж', 'SORT'=>950),
+			array('ID'=>52883, 'PARENT_ID'=>10, 'PARENT_NAME'=>'Воронежская область', 'SORT'=>950),
+			array('ID'=>55277, 'PARENT_ID'=>55277, 'PARENT_NAME'=>'Владимир', 'SORT'=>1000),
+			array('ID'=>55277, 'PARENT_ID'=>11, 'PARENT_NAME'=>'Владимирская область', 'SORT'=>1000),
+			array('ID'=>67310, 'PARENT_ID'=>67310, 'PARENT_NAME'=>'Щербинка', 'SORT'=>103),
+			array('ID'=>12, 'PARENT_ID'=>12, 'PARENT_NAME'=>'Москва', 'SORT'=>770),
+			array('ID'=>67310, 'PARENT_ID'=>12, 'PARENT_NAME'=>'Москва', 'SORT'=>103),
+			array('ID'=>58976, 'PARENT_ID'=>58976, 'PARENT_NAME'=>'Волгоград', 'SORT'=>980),
+			array('ID'=>58976, 'PARENT_ID'=>13, 'PARENT_NAME'=>'Волгоградская область', 'SORT'=>980),
+			array('ID'=>61358, 'PARENT_ID'=>61358, 'PARENT_NAME'=>'Нижний Новгород', 'SORT'=>770),
+			array('ID'=>61358, 'PARENT_ID'=>14, 'PARENT_NAME'=>'Нижегородская область', 'SORT'=>770),
+			array('ID'=>67687, 'PARENT_ID'=>67687, 'PARENT_NAME'=>'Тула', 'SORT'=>660),
+			array('ID'=>70828, 'PARENT_ID'=>70828, 'PARENT_NAME'=>'Новомосковск', 'SORT'=>770),
+			array('ID'=>70828, 'PARENT_ID'=>70639, 'PARENT_NAME'=>'Новомосковский район', 'SORT'=>770),
+			array('ID'=>70828, 'PARENT_ID'=>67686, 'PARENT_NAME'=>'Тульская область', 'SORT'=>770),
+			array('ID'=>67687, 'PARENT_ID'=>67686, 'PARENT_NAME'=>'Тульская область', 'SORT'=>660),
+			array('ID'=>82596, 'PARENT_ID'=>82596, 'PARENT_NAME'=>'Казань', 'SORT'=>860),
+			array('ID'=>82596, 'PARENT_ID'=>80986, 'PARENT_NAME'=>'Республика Татарстан', 'SORT'=>860),
+			array('ID'=>97957, 'PARENT_ID'=>97957, 'PARENT_NAME'=>'Самара', 'SORT'=>710),
+			array('ID'=>97957, 'PARENT_ID'=>80991, 'PARENT_NAME'=>'Самарская область', 'SORT'=>710),
+			array('ID'=>100915, 'PARENT_ID'=>100915, 'PARENT_NAME'=>'Пермь', 'SORT'=>730),
+			array('ID'=>100915, 'PARENT_ID'=>80992, 'PARENT_NAME'=>'Пермский край', 'SORT'=>730),
+			array('ID'=>126305, 'PARENT_ID'=>126305, 'PARENT_NAME'=>'Санкт-Петербург', 'SORT'=>700),
+			array('ID'=>166367, 'PARENT_ID'=>166367, 'PARENT_NAME'=>'Красноярск', 'SORT'=>800),
+			array('ID'=>166367, 'PARENT_ID'=>163504, 'PARENT_NAME'=>'Красноярский край', 'SORT'=>800),
+			array('ID'=>172796, 'PARENT_ID'=>172796, 'PARENT_NAME'=>'Новосибирск', 'SORT'=>765),
+			array('ID'=>172796, 'PARENT_ID'=>163507, 'PARENT_NAME'=>'Новосибирская область', 'SORT'=>765),
+			array('ID'=>175483, 'PARENT_ID'=>175483, 'PARENT_NAME'=>'Омск', 'SORT'=>750),
+			array('ID'=>175483, 'PARENT_ID'=>163508, 'PARENT_NAME'=>'Омская область', 'SORT'=>750),
+			array('ID'=>186914, 'PARENT_ID'=>186914, 'PARENT_NAME'=>'Екатеринбург', 'SORT'=>920),
+			array('ID'=>186914, 'PARENT_ID'=>184973, 'PARENT_NAME'=>'Свердловская область', 'SORT'=>920),
+			array('ID'=>192871, 'PARENT_ID'=>192871, 'PARENT_NAME'=>'Челябинск', 'SORT'=>645),
+			array('ID'=>192871, 'PARENT_ID'=>184977, 'PARENT_NAME'=>'Челябинская область', 'SORT'=>645),
+			array('ID'=>194792, 'PARENT_ID'=>194792, 'PARENT_NAME'=>'Краснодар', 'SORT'=>820),
+			array('ID'=>194792, 'PARENT_ID'=>194786, 'PARENT_NAME'=>'Краснодарский край', 'SORT'=>820),
+			array('ID'=>198252, 'PARENT_ID'=>198252, 'PARENT_NAME'=>'Ростов-на-Дону', 'SORT'=>740),
+			array('ID'=>198252, 'PARENT_ID'=>194787, 'PARENT_NAME'=>'Ростовская область', 'SORT'=>740)
+		);
+
+		// while ($arCity = $oCities->Fetch()) {
+		foreach ($ttt as $arCity) {
+			if ($arCity['ID'] == $arCity['PARENT_ID']) {
+				if (!isset($arCities[$arCity['ID']])) {
+					$arCities[$arCity['ID']] = array(
+						'ID' => $arCity['ID'],
+						'NAME' => $arCity['PARENT_NAME'],
+						'SORT' => $arCity['SORT'],
+						'PATH' => array()
+					);
+				}
+			} else {
+				if (!in_array($arCity['PARENT_NAME'], $arCities[$arCity['ID']]['PATH'])) {
+					$arCities[$arCity['ID']]['PATH'][] = $arCity['PARENT_NAME'];
+				}
+			}
+		}
+
+		usort($arCities, function ($a, $b) {
+			if ($a['SORT'] > $b['SORT']) {
+				return -1;
+			} elseif ($a['SORT'] < $b['SORT']) {
+				return 1;
+			} elseif ($a['NAME'] > $b['NAME']) {
+				return 1;
+			} elseif ($a['NAME'] < $b['NAME']) {
+				return -1;
+			} else {
+				return 0;
+			}
+		});
+
+		foreach ($arCities as $arCity) {
+			$arResult[] = array(
+				'id' => $arCity['ID'],
+				'title' => $arCity['NAME'],
+				'has_metro' => ($arCity['NAME'] == 'Москва'),
+				'path' => $arCity['PATH']
+			);
+		}
+
+		return $arResult;
+	}
+
+	public static function getList($arParams = array())
+	{
+		\Bitrix\Main\Loader::includeModule('sale');
+
+		$arResult = array();
+		$arCities = array();
+		$arFilter = array();
+
+		if (isset($arParams['filter'])) {
+			$arFilter = $arParams['filter'];
+		}
+
+		$arCities = array();
+		$arCitiesR = array();
+		$arParents_0 = array();
+		$arFilter_ = array();
+		$i = 0;
+
+		foreach ($arFilter['=ID'] as $l_id) 
+		{
+			$arFilter_['=ID'][$l_id] = $l_id;
+		}
+		$arFilter = $arFilter_;
+
+		while (count($arFilter['=ID'])) 
+		{
+			$oCities = \Bitrix\Sale\Location\LocationTable::getList(array(
+				'filter' => $arFilter,
+				'select' => array(
+					'ID',
+					'PARENT_ID',
+					'SORT',
+					'TYPE_ID',
+				)
+			));
+
+			while ($arCity = $oCities->Fetch()) {
+				$arCities[$arCity['ID']] = $arCity;
+
+				if($arCity['PARENT_ID'])
+				{
+					$arFilter['=ID'][$arCity['PARENT_ID']] = $arCity['PARENT_ID'];
+				}
+				
+				unset($arFilter['=ID'][$arCity['ID']]);
+			}
+
+			//на всякий пожарный)
+			$i++;
+			if($i>10) break;
+		}
+
+		$oCitiesR = \Bitrix\Sale\Location\LocationTable::getList(array(
+			// 'order' => array('PARENTS.LEFT_MARGIN' => 'DESC'),
+			'filter' => array(
+				'=ID' => array_keys($arCities),
+				'=NAME.LANGUAGE_ID' => 'ru'
+				),
+			'select' => array(
+				'ID',
+				'NAME_RU' => 'NAME.NAME',
+			)
+		));
+
+		while ($arCityR = $oCitiesR->Fetch()) {
+			$arCities[$arCityR['ID']]['NAME'] = $arCityR['NAME_RU'];
+		}
+
+		foreach ($arParams['filter']['=ID'] as $city_id) 
+		{
+			$arCitiesR[$city_id] = array(
+					'ID' => $city_id,
+					'NAME' => $arCities[$city_id]['NAME'],
+					'SORT' => $arCities[$city_id]['SORT'],
+					'TYPE_ID' => $arCities[$city_id]['TYPE_ID'],
+					'PATH' => array()
+				);
+			$parentID = $arCities[$city_id]['PARENT_ID'];
+			while($parentID)
+			{
+				$arCitiesR[$city_id]['PATH'][] = $arCities[$parentID]['NAME'];
+				$parentID = $arCities[$parentID]['PARENT_ID'];
+			}
+
+		}
+
+		usort($arCitiesR, function ($a, $b) {
+			if ($a['TYPE_ID'] == '3' && $b['TYPE_ID'] != '3') {
+				return -1;
+			} elseif ($a['TYPE_ID'] != '3' && $b['TYPE_ID'] == '3') {
+				return 1;
+			} elseif ($a['TYPE_ID'] == '3' && $b['TYPE_ID'] == '3') {
+				if ($a['SORT'] > $b['SORT']) {
+					return 1;
+				} elseif ($a['SORT'] < $b['SORT']) {
+					return -1;
+				} elseif ($a['NAME'] > $b['NAME']) {
+					return 1;
+				} elseif ($a['NAME'] < $b['NAME']) {
+					return -1;
+				} else {
+					return 0;
+				}
+			} elseif ($a['SORT'] > $b['SORT']) {
+				return 1;
+			} elseif ($a['SORT'] < $b['SORT']) {
+				return -1;
+			} elseif ($a['NAME'] > $b['NAME']) {
+				return 1;
+			} elseif ($a['NAME'] < $b['NAME']) {
+				return -1;
+			} else {
+				return 0;
+			}
+		});
+
+		foreach ($arCitiesR as $arCity) {
+			//тут вырезаем из поисковой выдачи области и улицы
+			if($arCity['TYPE_ID'] > 2 and $arCity['TYPE_ID'] < 7){
+				$arResult[] = array(
+					'id' => $arCity['ID'],
+					'title' => $arCity['NAME'],
+					'has_metro' => ($arCity['NAME'] == 'Москва'),
+					'path' => $arCity['PATH']
+				);
+			}
+
+		}
+
+		return $arResult;
+	}
+
+	/*
+	* метод для нахождения id города ИБ по id местоположения
+	*/
+	public static function convGeo2toGeo1($id)
+	{
+		\Bitrix\Main\Loader::includeModule('sale');
+		\Bitrix\Main\Loader::includeModule('iblock');
+
+		$result = null;
+
+		if ($id = intval($id)) {
+			// $arLocation = \Bitrix\Sale\Location\LocationTable::getList(array(
+				// 'filter' => array('=ID' => $id, 'NAME.LANGUAGE_ID' => 'ru'),
+				// 'select' => array('CITY_NAME' => 'NAME.NAME'),
+			// ))->fetch();
+
+			$arLocation = \Bitrix\Sale\Location\LocationTable::getList(array(
+				'order' => array('PARENTS.LEFT_MARGIN' => 'ASC'),
+				'filter' => array(
+					'=ID' => $id,
+					'=NAME.LANGUAGE_ID' => 'ru',
+					'=PARENTS.NAME.LANGUAGE_ID' => 'ru',
+					'=PARENTS.TYPE.CODE' => array('CITY', 'REGION'),
+				),
+				'select' => array('PARENTS_NAME' => 'PARENTS.NAME.NAME', 'CITY_NAME' => 'NAME.NAME'),
+				'limit' => 1
+			))->fetch();
+
+			if ($arLocation) {
+				$arElement = \Bitrix\Iblock\ElementTable::getList(array(
+					'filter' => array(
+						'=IBLOCK_ID' => \CIBlockTools::GetIBlockId('area-city'),
+						'=NAME' => $arLocation['CITY_NAME'],
+						'=IBLOCK_SECTION.NAME' => $arLocation['PARENTS_NAME'],
+					),
+					'select' => array('ID'),
+				))->fetch();
+
+				$result = $arElement['ID'];
+			}
+		}
+
+		return $result;
+	}
+
+	/*
+	* метод для нахождения id местоположения по id города ИБ
+	*/
+	public static function convGeo1toGeo2($id)
+	{
+		\Bitrix\Main\Loader::includeModule('sale');
+
+		$result = null;
+
+		if ($id && $id = intval($id)) {
+			$arCityRegion = \GeoCatalog::GetCityRegionById($id);
+			$arResult = \MyCAjax::GetLocationByName($arCityRegion['IBLOCK_SECTION_NAME'], $arCityRegion['NAME']);
+
+			if ($arResult['result']) {
+				$arCity = reset($arResult['data']);
+				$result = $arCity['ID'];
+			}
+		}
+
+		return $result;
+	}
+
+	public static function getById($id)
+	{
+		$arResult = null;
+
+		if ($id && $id = intval($id)) {
+			$oLocations = \Bitrix\Sale\Location\LocationTable::getList(array(
+				'order' => array('PARENTS.LEFT_MARGIN' => 'DESC'),
+				'filter' => array(
+					'=PARENTS.NAME.LANGUAGE_ID' => 'ru',
+					'=ID' => $id,
+				),
+				'select' => array(
+					'ID',
+					'PARENTS_ID' => 'PARENTS.ID',
+					'PARENTS_NAME' => 'PARENTS.NAME.NAME',
+				)
+			));
+
+			while ($arLocation = $oLocations->Fetch()) {
+				if ($arLocation['ID'] == $arLocation['PARENTS_ID']) {
+					$arResult = array(
+						'id' => $arLocation['ID'],
+						'title' => $arLocation['PARENTS_NAME'],
+						'has_metro' => ($arLocation['PARENTS_NAME'] == 'Москва'),
+						'path' => array()
+					);
+				} else {
+					$arResult['path'][] = $arLocation['PARENTS_NAME'];
+				}
+			}
+		}
+
+		return $arResult;
+	}
+}
