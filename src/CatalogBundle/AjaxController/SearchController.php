@@ -56,13 +56,23 @@ class SearchController extends Controller
         $validator = $this->container->get('validator');
 
         if (!$validator->validate($searchRequest)->count()) {
+
             /** @var CombinedSearchResult $result */
-            $result = $searchService->searchAll(
+            $result = $searchService->hardSearch(
                 $searchRequest->getCategory()->getFilters(),
                 $searchRequest->getSorts()->getSelected(),
                 $searchRequest->getNavigation(),
                 $searchRequest->getSearchString()
             );
+
+
+//            /** @var CombinedSearchResult $result */
+//            $result = $searchService->searchAll(
+//                $searchRequest->getCategory()->getFilters(),
+//                $searchRequest->getSorts()->getSelected(),
+//                $searchRequest->getNavigation(),
+//                $searchRequest->getSearchString()
+//            );
 
             $res = [
                 'brands' => [],
@@ -82,58 +92,65 @@ class SearchController extends Controller
             foreach ($converted as $key => $arItems) {
                 foreach ($arItems as $item) {
                     if ($item instanceof Brand) {
-                        $res['brands'][] = ['DETAIL_PAGE_URL' => $item->getDetailPageUrl(), 'NAME' => $item->getName()];
-                    } elseif ($item instanceof Product) {
-                        /**
-                         * @var Offer $offer
-                         */
-                        $offer = $item->getOffers()->first();
+                        $res['brands'][] = [
+                            'DETAIL_PAGE_URL' => $item->getDetailPageUrl(),
+                            'NAME' => $item->getName(),
+//                            'HIGHTLIGHT' => $item->getHitMetaInfo()->getHighlight(),
+//                            'MATCHED_QUERIES' => $item->getHitMetaInfo()->getMatchedQueries(),
+                            'SCORE' => $item->getHitMetaInfo()->getScore(),
 
-                        if ($key == 'products') {
-                            /**
-                             * @var Image $image
-                             */
-                            $images = $offer->getImages();
-                            if ($images != false && $images != null) {
-                                $image = $offer->getImages()->first();
-                                $res[$key][] = [
-                                    'DETAIL_PAGE_URL' => $item->getDetailPageUrl(),
-                                    'NAME' => $item->getName(),
-                                    'PREVIEW' => sprintf("/upload/%s/%s", $image->getSubDir(), $image->getFileName()),
-                                    'PRICE' => $offer->getPrice(),
-                                    'CURRENCY' => $offer->getCurrency(),
-                                    'BRAND' => $item->getBrand()->getName()
-                                ];
-                            } else {
-                                $res[$key][] = [
-                                    'DETAIL_PAGE_URL' => $item->getDetailPageUrl(),
-                                    'NAME' => $item->getName(),
-                                    'PRICE' => $offer->getPrice(),
-                                    'CURRENCY' => $offer->getCurrency(),
-                                    'BRAND' => $item->getBrand()->getName()
-                                ];
-                            }
-                        } elseif ($key == 'suggests') {
-                            if ($offer != false) {
-                                if (empty($res[$key][$offer->getProduct()->getIblockSectionId()])) {
-                                    $res[$key][$offer->getProduct()->getIblockSectionId()] = [
-                                        'NAME' => $offer->getProduct()->getSection()->getName(),
-                                        'DETAIL_PAGE_URL' => $offer->getProduct()->getSection()->getSectionPageUrl(),
-                                        'ELEMENTS' => [
-                                            [
-                                                'NAME' => $offer->getProduct()->getBrandName() . ' ' . $offer->getName(),
-                                                'LINK' => $offer->getProduct()->getDetailPageUrl()
-                                            ]
-                                        ]
-                                    ];
-                                } else {
-                                    $res[$key][$offer->getProduct()->getIblockSectionId()]['ELEMENTS'][] = [
-                                        'NAME' => $offer->getProduct()->getBrandName() . ' ' . $offer->getName(),
-                                        'LINK' => $offer->getProduct()->getDetailPageUrl()
-                                    ];
-                                }
-                            }
-                        }
+                        ];
+                    } elseif ($item instanceof Product) {
+//                        /**
+//                         * @var Offer $offer
+//                         */
+//                        $offer = $item->getOffers()->first();
+//
+//                        if ($key == 'products') {
+//                            /**
+//                             * @var Image $image
+//                             */
+//                            $images = $offer->getImages();
+//                            if ($images != false && $images != null) {
+//                                $image = $offer->getImages()->first();
+//                                $res[$key][] = [
+//                                    'DETAIL_PAGE_URL' => $item->getDetailPageUrl(),
+//                                    'NAME' => $item->getName(),
+//                                    'PREVIEW' => sprintf("/upload/%s/%s", $image->getSubDir(), $image->getFileName()),
+//                                    'PRICE' => $offer->getPrice(),
+//                                    'CURRENCY' => $offer->getCurrency(),
+//                                    'BRAND' => $item->getBrand()->getName()
+//                                ];
+//                            } else {
+//                                $res[$key][] = [
+//                                    'DETAIL_PAGE_URL' => $item->getDetailPageUrl(),
+//                                    'NAME' => $item->getName(),
+//                                    'PRICE' => $offer->getPrice(),
+//                                    'CURRENCY' => $offer->getCurrency(),
+//                                    'BRAND' => $item->getBrand()->getName()
+//                                ];
+//                            }
+//                        } elseif ($key == 'suggests') {
+//                            if ($offer != false) {
+//                                if (empty($res[$key][$offer->getProduct()->getIblockSectionId()])) {
+//                                    $res[$key][$offer->getProduct()->getIblockSectionId()] = [
+//                                        'NAME' => $offer->getProduct()->getSection()->getName(),
+//                                        'DETAIL_PAGE_URL' => $offer->getProduct()->getSection()->getSectionPageUrl(),
+//                                        'ELEMENTS' => [
+//                                            [
+//                                                'NAME' => $offer->getProduct()->getBrandName() . ' ' . $offer->getName(),
+//                                                'LINK' => $offer->getProduct()->getDetailPageUrl()
+//                                            ]
+//                                        ]
+//                                    ];
+//                                } else {
+//                                    $res[$key][$offer->getProduct()->getIblockSectionId()]['ELEMENTS'][] = [
+//                                        'NAME' => $offer->getProduct()->getBrandName() . ' ' . $offer->getName(),
+//                                        'LINK' => $offer->getProduct()->getDetailPageUrl()
+//                                    ];
+//                                }
+//                            }
+//                        }
                     }
                 }
             }

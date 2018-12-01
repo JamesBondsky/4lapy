@@ -201,6 +201,64 @@ class SearchService implements LoggerAwareInterface
         return new CombinedSearchResult($resultSet, $navigation);
     }
 
+    public function hardSearch(
+        FilterCollection $filters,
+        Sorting $sorting,
+        Navigation $navigation,
+        string $searchString = ''
+    )
+    {
+
+        $multiSearch = $this->getIndexHelper()->createAllTypesSearch();
+
+        $productSearch = $this->getIndexHelper()->createProductSearch();
+        $brandSearch = $this->getIndexHelper()->createBrandSearch();
+        $suggestSearch = $this->getIndexHelper()->createSuggestSearch();
+
+        if ($searchString !== '') {
+            $productSearch->getQuery()->setMinScore(0.9);
+            $brandSearch->getQuery()->setMinScore(20);
+            $suggestSearch->getQuery()->setMinScore(0.9);
+        }
+
+
+        $productSearch->getQuery()
+            ->setFrom($navigation->getFrom())
+            ->setSize($navigation->getSize())
+            ->setSort($sorting->getRule())
+            ->setParam('query', $this->getFullQueryRule($filters, $searchString))
+            ->setHighlight(['fields' => ['offers.XML_ID' => (object)[]]]);
+
+        $brandSearch->getQuery()
+            ->setFrom($navigation->getFrom())
+            ->setSize($navigation->getSize())
+            ->setSort($sorting->getRule())
+            ->setParam('query', $this->getBrandFullQueryRuleHard($searchString));
+
+        $suggestSearch->getQuery()
+            ->setFrom($navigation->getFrom())
+            ->setSize(10)
+            ->setSort($sorting->getRule())
+            ->setParam('query', $this->getSuggestionsMax($searchString));
+
+
+        $suggestSearch->addType(DocumentType::PRODUCT);
+
+        $this->getAggsHelper()->setAggs($productSearch->getQuery(), $filters);
+
+        $multiSearch->setSearches([
+            'brands' => $brandSearch,
+            'products' => $productSearch,
+            'suggests' => $suggestSearch
+        ]);
+
+        $resultSet = $multiSearch->search();
+
+        return new CombinedSearchResult($resultSet, $navigation);
+    }
+
+
+
     /**
      * Автокомплит для товаров
      *
@@ -248,6 +306,66 @@ class SearchService implements LoggerAwareInterface
         }
 
         return $filterSet;
+    }
+
+    public function getBrandQueryRuleHard(string $searchString): BoolQuery
+    {
+        $queryBuilder = new QueryBuilder();
+        $boolQuery = $queryBuilder->query()->bool();
+        if ($searchString === '') {
+            return $boolQuery;
+        }
+
+        //0 ошибок
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['NAME', 'PROPERTY_TRANSLITS'])
+                ->setType('best_fields')
+                ->setFuzziness(0)
+                ->setAnalyzer('full-text-brand-hard-search')
+                ->setParam('boost', 80.0)
+                ->setParam('_name', 'name-fuzzy-word')
+                ->setOperator('and')
+        );
+
+        //1 ошибка
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['NAME', 'PROPERTY_TRANSLITS'])
+                ->setType('best_fields')
+                ->setFuzziness(1)
+                ->setAnalyzer('full-text-brand-hard-search')
+                ->setParam('boost', 40.0)
+                ->setParam('_name', 'name-fuzzy-word')
+                ->setOperator('and')
+        );
+
+        //две ошибки
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['NAME', 'PROPERTY_TRANSLITS'])
+                ->setType('best_fields')
+                ->setFuzziness(2)
+                ->setAnalyzer('full-text-brand-hard-search')
+                ->setParam('boost', 20.0)
+                ->setParam('_name', 'name-fuzzy-word')
+                ->setOperator('and')
+        );
+
+        //транслит (голосовое соответствие)
+//        $boolQuery->addShould(
+//            $queryBuilder->query()->multi_match()
+//                ->setQuery($searchString)
+//                ->setFields(['NAME'])
+//                ->setAnalyzer('analyzer_3000')
+//                ->setParam('boost', 50.0)
+//                ->setParam('_name', 'name-sounds-similar')
+//        );
+
+        return $boolQuery;
     }
 
     public function getBrandQueryRule(string $searchString): BoolQuery
@@ -643,6 +761,24 @@ class SearchService implements LoggerAwareInterface
         $searchQuery->setQuery($boolQuery);
 
         $this->addWeightSuggestions($searchQuery);
+        if ('' === $searchString) {
+            $searchQuery->setBoostMode('sum');
+        }
+
+        return $searchQuery;
+    }
+
+    /**
+     * @param string $searchString
+     * @return AbstractQuery
+     */
+    public function getBrandFullQueryRuleHard(string $searchString = ''): AbstractQuery
+    {
+        $searchQuery = new Query\FunctionScore();
+
+        $boolQuery = $this->getBrandQueryRuleHard($searchString);
+        $searchQuery->setQuery($boolQuery);
+
         if ('' === $searchString) {
             $searchQuery->setBoostMode('sum');
         }

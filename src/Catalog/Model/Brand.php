@@ -134,6 +134,14 @@ class Brand extends IblockElement implements HitMetaInfoAwareInterface
     protected $PROPERTY_CATALOG_UNDER_BANNER = 0;
 
     /**
+     * @var string Транслиты названия бренда
+     * @Type("string")
+     * @Accessor(getter="getTranslits")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_TRANSLITS = '';
+
+    /**
      * @return bool
      */
     public function isPopular(): bool
@@ -189,6 +197,25 @@ class Brand extends IblockElement implements HitMetaInfoAwareInterface
     public function withCatalogUnderBanner($banner)
     {
         $this->PROPERTY_CATALOG_UNDER_BANNER = $banner;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTranslits(): string
+    {
+        return $this->PROPERTY_TRANSLITS;
+    }
+
+    /**
+     * @param $translits
+     * @return $this
+     */
+    public function withTranslits($translits)
+    {
+        $this->PROPERTY_TRANSLITS = $translits;
 
         return $this;
     }
