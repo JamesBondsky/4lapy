@@ -14,23 +14,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     <input type="hidden" name="oldPhone" value="<?= $oldPhone ?>">
     <input type="hidden" name="phone" value="<?= $phone ?>">
     <div class="b-registration__step js-two">
-        <div class="b-input-line b-input-line--popup-authorization b-input-line--referal js-first-name">
-            <div class="b-input-line__label-wrapper">
-                <label class="b-input-line__label" for="data-first-name">Имя</label>
-                <span class="b-input-line__require">(обязательно)</span>
-            </div>
-            <div class="b-input b-input--registration-form">
-                <input class="b-input__input-field b-input__input-field--registration-form js-small-input"
-                       type="text"
-                       id="data-first-name"
-                       name="NAME"
-                       value="<?= $arResult['CUR_USER']['NAME'] ?>"
-                       data-text="1"
-                       placeholder="" />
-                <div class="b-error"><span class="js-message"></span>
-                </div>
-            </div>
-        </div>
         <div class="b-registration__text b-registration__text--phone" id="js-resend"
              data-url="/ajax/personal/profile/changePhone/"
              data-phone="<?= $phone ?>"

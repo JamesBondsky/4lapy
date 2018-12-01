@@ -211,6 +211,48 @@ class ProfileController extends Controller
     }
 
     /**
+     * @Route("/disableModalPersist/", methods={"POST"})
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
+    public function disableModalPersist(Request $request): JsonResponse
+    {
+        global $USER;
+        $USER->SetParam('data_collect', 'Y');
+
+        $total_modals = $request->request->get('modals');
+
+        $user_class = new \CUser;
+        $user_id = (int) $GLOBALS['USER']->GetID();
+        $user_class->Update($user_id, ['UF_MODALS_CNTS' => $total_modals]);
+
+        return JsonSuccessResponse::createWithData('All fine!');
+    }
+
+    /**
+     * @Route("/collectUserData/", methods={"POST"})
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
+    public function collectUserData(Request $request): JsonResponse
+    {
+        // Отправляем запрос на изменение данных, если пришел успешный ответ
+        // Тогда отправим запрос на смену телефона и вывод модалки
+        // шторм ругается на отсутствие JSON'a , возможно потребуется поставить.
+        $update_response = $this->changeDataAction($request);
+        $update_result = $update_response->getContent();
+        $message = json_decode($update_result);
+
+        if($message->message == 'Данные обновлены') // Прошли валидацию и записали данные пользователя
+        {
+            return $this->changePhoneAction($request);
+        }
+        return $update_response;
+    }
+
+    /**
      * @Route("/changeData/", methods={"POST"})
      * @param Request $request
      *
