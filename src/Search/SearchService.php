@@ -217,7 +217,7 @@ class SearchService implements LoggerAwareInterface
 
         if ($searchString !== '') {
             $productSearch->getQuery()->setMinScore(0.9);
-            $brandSearch->getQuery()->setMinScore(20);
+            $brandSearch->getQuery()->setMinScore(100);
             $suggestSearch->getQuery()->setMinScore(0.9);
         }
 
@@ -324,7 +324,7 @@ class SearchService implements LoggerAwareInterface
                 ->setType('best_fields')
                 ->setFuzziness(0)
                 ->setAnalyzer('full-text-brand-hard-search')
-                ->setParam('boost', 80.0)
+                ->setParam('boost', 100.0)
                 ->setParam('_name', 'name-fuzzy-word')
                 ->setOperator('and')
         );
@@ -337,7 +337,7 @@ class SearchService implements LoggerAwareInterface
                 ->setType('best_fields')
                 ->setFuzziness(1)
                 ->setAnalyzer('full-text-brand-hard-search')
-                ->setParam('boost', 40.0)
+                ->setParam('boost', 45.0)
                 ->setParam('_name', 'name-fuzzy-word')
                 ->setOperator('and')
         );
@@ -350,20 +350,23 @@ class SearchService implements LoggerAwareInterface
                 ->setType('best_fields')
                 ->setFuzziness(2)
                 ->setAnalyzer('full-text-brand-hard-search')
-                ->setParam('boost', 20.0)
+                ->setParam('boost', 27.5)
                 ->setParam('_name', 'name-fuzzy-word')
                 ->setOperator('and')
         );
 
         //транслит (голосовое соответствие)
-//        $boolQuery->addShould(
-//            $queryBuilder->query()->multi_match()
-//                ->setQuery($searchString)
-//                ->setFields(['NAME'])
-//                ->setAnalyzer('analyzer_3000')
-//                ->setParam('boost', 50.0)
-//                ->setParam('_name', 'name-sounds-similar')
-//        );
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['NAME.phonetic'])
+                ->setType('best_fields')
+                ->setFuzziness(2)
+                ->setAnalyzer('analyzer_3000')
+                ->setParam('boost', 20.0)
+                ->setParam('_name', 'name-sounds-similar')
+                ->setOperator('and')
+        );
 
         return $boolQuery;
     }

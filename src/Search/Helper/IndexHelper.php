@@ -188,6 +188,7 @@ class IndexHelper implements LoggerAwareInterface
                                 'filter'    => [
                                     'lowercase',
                                     'russian_stop',
+                                    'russian_stemmer',
                                 ],
                             ],
                             'sounds-similar'   => [
@@ -199,12 +200,15 @@ class IndexHelper implements LoggerAwareInterface
                                     'sounds-similar',
                                 ],
                             ],
-                            "analyzer_3000" => [
-                                "tokenizer" => "standard",
-                                "filter" => [
-                                    "standard",
-                                    "my_phonetic_english",
-                                    "my_phonetic_cyrillic"
+                            'analyzer_3000' => [
+                                'tokenizer' => 'standard',
+                                'filter' => [
+                                    'standard',
+                                    'lowercase',
+//                                    'russian_stop',
+//                                    'russian_stemmer',
+                                    'phonetic_english',
+                                    'phonetic_cyrillic',
                                 ]
                             ]
                         ],
@@ -234,19 +238,19 @@ class IndexHelper implements LoggerAwareInterface
                                 'type'          => 'synonym',
                                 'synonyms_path' => 'resources/synonym.txt',
                             ],
-                            "my_phonetic_cyrillic" => [
-                                "type" => "phonetic",
-                                "encoder" => "beider_morse",
-                                "rule_type" => "approx",
-                                "name_type" => "generic",
-                                "languageset" => ["cyrillic"]
+                            'phonetic_cyrillic' => [
+                                'type' => 'phonetic',
+                                'encoder' => 'beider_morse',
+                                'rule_type' => 'exact',
+                                'name_type' => 'generic',
+                                'languageset' => ['cyrillic']
                             ],
-                            "my_phonetic_english" => [
-                                "type" => "phonetic",
-                                "encoder" => "beider_morse",
-                                "rule_type" => "approx",
-                                "name_type" => "generic",
-                                "languageset" => ["english"]
+                            'phonetic_english' => [
+                                'type' => 'phonetic',
+                                'encoder' => 'beider_morse',
+                                'rule_type' => 'exact',
+                                'name_type' => 'generic',
+                                'languageset' => ['english']
                             ]
                         ],
                         'char_filter' => [
@@ -400,7 +404,15 @@ class IndexHelper implements LoggerAwareInterface
                         'DETAIL_TEXT_TYPE'                => ['type' => 'keyword', 'index' => false],
                         'DETAIL_PAGE_URL'                 => ['type' => 'text', 'index' => false],
                         'CANONICAL_PAGE_URL'              => ['type' => 'text', 'index' => false],
-                        'NAME'                            => ['type' => 'text'],
+                        'NAME'                            => [
+                            'type' => 'text',
+                            'fields' => [
+                                'phonetic' => [
+                                    'type' => 'text',
+                                    'analyzer' => 'analyzer_3000'
+                                ]
+                            ]
+                        ],
                         'PROPERTY_POPULAR'                => ['type' => 'boolean'],
                         'PROPERTY_CATALOG_INNER_BANNER'   => ['type' => 'text'],
                         'PROPERTY_TRANSLITS'              => ['type' => 'text'],
