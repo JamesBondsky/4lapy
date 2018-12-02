@@ -1,108 +1,110 @@
 <?
 
+use \FourPaws\Catalog\Query\BannerQuery;
+use \FourPaws\Catalog\Model\Banner;
+
 class baner_list extends \APIServer
 {
 
 	public function get($arInput)
 	{
-		\Bitrix\Main\Loader::includeModule('advertising');
+        $result = [];
+        $bannerType = false;
+        if (isset($arInput['tag']) && strlen($arInput['tag']) > 0) {
+            $bannerType = $arInput['tag'];
+        } else {
+            $this->addError('required_params_missed');
+        }
 
-		if (isset($arInput['tag']) && strlen($arInput['tag']) > 0) {
-			$bannerType = $arInput['tag'];
-		} else {
-			$this->addError('required_params_missed');
-		}
+        if (!$this->hasErrors()) {
+            $cityId = ($arInput['city_id'] and strlen($arInput['city_id']) > 0)?$arInput['city_id']:null;
+            $result['banners'] = $this->getBanners($bannerType, $cityId);
+        }
 
-		if (!$this->hasErrors()) {
-			// тянем баннеры определенного типа с сортировкой по весу
-
-			$oCache = \Bitrix\Main\Data\Cache::createInstance();
-			$cacheTime = 60 * 60 * 1 * 1;
-			$cacheId = md5("baner_list1|{$bannerType}");
-			$cacheDir = '/baner_list';
-
-			if ($oCache->initCache($cacheTime, $cacheId, $cacheDir)) {
-				$arResult = $oCache->getVars();
-			} elseif ($oCache->startDataCache()) {
-				$oBanners = \CAdvBanner::GetList(
-					$by = 's_weight',
-					$order = 'asc',
-					array(
-						'ACTIVE' => 'Y',
-						'STATUS_SID' => 'PUBLISHED',
-						'TYPE_SID' => $bannerType,
-						'TYPE_SID_EXACT_MATCH' => 'Y',
-						'LAMP' => 'green'
-					),
-					$bIsFiltered,
-					'N'
-				);
-
-				while ($arBanner = $oBanners->Fetch()) {
-					unset($targetUrl);
-
-					if ($arBanner['GROUP_SID'] == 'goods') {
-						$methodName = 'goods_item';
-						$arQueryData = array(
-							'token' => $this->User['token'],
-							'id' => $arBanner['URL']
-						);
-					} elseif ($arBanner['GROUP_SID'] == 'goods_list') {
-						$methodName = 'goods_item_list';
-						$arQueryData = array(
-							'token' => $this->User['token'],
-							'id' => explode(";", $arBanner['URL'])
-						);
-					} elseif ($arBanner['GROUP_SID'] == 'catalog') {
-						$methodName = 'categories';
-						$arQueryData = array(
-							'token' => $this->User['token'],
-							'id' => $arBanner['URL']
-						);
-					} elseif ($arBanner['GROUP_SID'] == 'news') {
-						$methodName = 'info';
-						$arQueryData = array(
-							'token' => $this->User['token'],
-							'type' => 'news',
-							'info_id' => $arBanner['URL'],
-							'city_id' => ($arInput['city_id'] and strlen($arInput['city_id']) > 0)?$arInput['city_id']:null
-						);
-					} elseif ($arBanner['GROUP_SID'] == 'action') {
-						$methodName = 'info';
-						$arQueryData = array(
-							'token' => $this->User['token'],
-							'type' => 'action',
-							'info_id' => $arBanner['URL'],
-							'city_id' => ($arInput['city_id'] and strlen($arInput['city_id']) > 0)?$arInput['city_id']:null
-						);
-					} else {
-						$methodName = false;
-						$targetUrl = $arBanner['URL'];
-					}
-
-					if ($methodName) {
-						$targetUrlTemp = 'https://'.SITE_SERVER_NAME_API.'/mobile-api-v2/#METHOD_NAME#/?';
-
-						$targetUrl = str_replace("#METHOD_NAME#", $methodName, $targetUrlTemp);
-						$targetUrl .= http_build_query($arQueryData);
-					}
-
-
-					$arResult['banners'][] = array(
-						'id' => $arBanner['ID'],
-						'picture' => ($arBanner['IMAGE_ID']) ? 'https://'.SITE_SERVER_NAME_API.CFile::GetPath($arBanner['IMAGE_ID']) : '',
-						'delay' => API_SHOW_BANNER_TIME,
-						'title' => ($arBanner['NAME'])?:'',
-						'type' => ($arBanner['GROUP_SID'])?:'',
-						'target' => ($targetUrl)?:'',
-						'target_alt' => ($arBanner['URL'])?:'',
-					);
-				}
-
-				$oCache->endDataCache($arResult);
-			}
-		}
-
-		return $arResult;
+	    return $result;
 	}
+
+	protected function getMethodNameByType($type) {
+        $methodName = false;
+        switch ($type) {
+            case 'goods':
+                $methodName = 'goods_item';
+                break;
+            case 'goods_list':
+                $methodName = 'goods_item_list';
+                break;
+            case 'catalog':
+                $methodName = 'categories';
+                break;
+            case 'news':
+                $methodName = 'news';
+                break;
+            case 'action':
+                $methodName = 'action';
+                break;
+        }
+        return $methodName;
+    }
+
+    protected function getQueryDataByType($type, $banner, $cityId) {
+        $queryData = [];
+
+        switch ($type) {
+            case 'goods':
+            case 'goods_list':
+            case 'catalog':
+                $queryData = [
+                    'token' => $this->User['token'],
+                    'id' => $banner['PROPERTY_VALUES']['LINK']
+                ];
+                break;
+            case 'news':
+            case 'action':
+                $queryData = [
+                    'token' => $this->User['token'],
+                    'type' => $banner['CODE'],
+                    'info_id' => $banner['PROPERTY_VALUES']['LINK'],
+                    'city_id' => $cityId
+                ];
+                break;
+        }
+
+        return $queryData;
+    }
+
+    protected function getTargetUrl($type, $banner, $cityId) {
+        $methodName = $this->getMethodNameByType($type);
+        $queryData = $this->getQueryDataByType($type, $banner, $cityId);
+        $targetUrl = $banner['PROPERTY_VALUES']['LINK'];
+
+        if ($methodName) {
+            $targetUrl = 'https://'.SITE_SERVER_NAME_API.'/mobile-api-v2/' . $methodName . '/?' . http_build_query($queryData);
+        }
+        return $targetUrl;
+    }
+
+    public function getBanners($bannerType, $cityId = null) {
+	    $result = [];
+        $res = (new BannerQuery())
+            ->withFilterParameter('ACTIVE', 'Y')
+            ->withType($bannerType)
+            ->exec();
+
+        /** @var Banner $banner */
+        foreach ($res->getValues() as $banner) {
+            $type = $banner->getBannerType();
+            $banner = $banner->toArray();
+            $targetUrl = $this->getTargetUrl($type, $banner, $cityId);
+            $result[] = [
+                'id' => $banner['ID'],
+                'picture' => ($banner['DETAIL_PICTURE']) ? 'https://'.SITE_SERVER_NAME_API.CFile::GetPath($banner['DETAIL_PICTURE']) : '',
+                'delay' => 3, // API_SHOW_BANNER_TIME,
+                'title' => ($banner['NAME'])?:'',
+                'type' => $type,
+                'target' => ($targetUrl)?:'',
+                'target_alt' => ($banner['PROPERTY_VALUES']['LINK'])?:'',
+            ];
+        }
+        return $result;
+    }
 }
