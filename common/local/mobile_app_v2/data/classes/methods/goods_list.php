@@ -1,11 +1,8 @@
 <?php
 
-use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
-use FourPaws\Enum\IblockType;
-use FourPaws\Enum\IblockCode;
 use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\CatalogBundle\Helper\MarkHelper;
+use FourPaws\Catalog\Model\Offer;
 
 class goods_list extends APIServer
 {
@@ -53,12 +50,7 @@ class goods_list extends APIServer
         $res = (new OfferQuery())
             ->withFilterParameter('ID', $offerIds)
             ->exec();
-        
-        foreach ($res->getValues() as $offer) {
-            var_dump($offer->getProduct());
-        }
-        die();
-        
+
         //КОСТЫЛЬ: убираем из выдачи товары от поставщиков
         /*
         $arProviders = GeoCatalog::GetProvidersStores();
@@ -78,38 +70,11 @@ class goods_list extends APIServer
         // echo "<pre>";print_r($arFilter);echo "</pre>"."\r\n";
         //!КОСТЫЛЬ: убираем из выдачи товары от поставщиков
 
-        $oProductsList = CIBlockElement::GetList(
-            array(
-                'SORT' => 'ASC',
-                // 'NAME' => 'ASC'
-            ),
-            $arFilter,
-            false,
-            false,
-            array(
-                'ID',
-                'NAME',
-                'IBLOCK_SECTION_ID',
-                'PROPERTY_DESCRIPTION_CARD',
-                'PROPERTY_MULTIPLICITY',
-                'PROPERTY_MULT_ONLY',
-                'PROPERTY_IMG',
-                'DETAIL_PAGE_URL',
-                'PROPERTY_ACTIONS_SHILDS_NEW',
-                'PROPERTY_HIT',
-                'PROPERTY_NEW',
-                'PROPERTY_DISCOUNT',
-                'PROPERTY_BRAND_NAME',
-                'PROPERTY_CML2_LINK',
-                'XML_ID',
-            )
-        );
-
-        $products = [];
-        $arProductsLinks = array();
-
-        while ($offer = $oProductsList->GetNext()) {
-            //формируем информацию по шильдикам
+        /** @var Offer $offer */
+        foreach ($res->getValues() as $offer) {
+            $oProduct = $offer->getProduct();
+            $productCategory = $oProduct->getCategory()->toArray();
+            $offer = $offer->toArray();
             $tags = [];
 
             if ($offer['PROPERTY_IS_HIT_VALUE'] != false)
@@ -126,82 +91,41 @@ class goods_list extends APIServer
                 $tags[] = [
                     'img' => MarkHelper::MARK_SALE_IMAGE_SRC,
                 ];
-
-            if($offer["PROPERTY_IMG_VALUE"][0]) {
-                $file = CFile::GetFileArray($offer["PROPERTY_IMG_VALUE"][0]);
-                // once GD will be installed uncomment the next string and delete the previous one
-                // $file = CFile::ResizeImageGet($offer["PROPERTY_IMG_VALUE"][0], array('width'=>'200', 'height'=>'250'), BX_RESIZE_IMAGE_PROPORTIONAL, true);
-            }
-
-            $arResult[$offer['ID']] = array(
+            $result[$offer['ID']] = [
                 'id' => $offer['ID'],
                 'xml_id' => $offer['XML_ID'],
-                'picture' => ($offer["PROPERTY_IMG_VALUE"][0]) ? 'https://'.SITE_SERVER_NAME_API.CFile::GetPath($offer['PROPERTY_IMG_VALUE'][0]) : '',
-                'picture_preview' => ($offer["PROPERTY_IMG_VALUE"][0]) ? 'https://'.SITE_SERVER_NAME_API.$file['src'] : '',
+                'picture' => ($offer['PROPERTY_VALUES']['IMG'][0]) ? 'https://'.SITE_SERVER_NAME_API.CFile::GetPath($offer['PROPERTY_VALUES']['IMG'][0]) : '',
+                // 'picture_preview' => ($arOffer['PROPERTY_VALUES']['IMG'][0]) ? 'https://'.SITE_SERVER_NAME_API.$file['src'] : '',
                 'title' => $offer['NAME'],
                 'info' => '',
                 // 'info' => ($offer['PROPERTY_DESCRIPTION_CARD_VALUE']['TEXT']) ? $offer['PROPERTY_DESCRIPTION_CARD_VALUE']['TEXT'] : '',
-                'in_pack' => ($offer['PROPERTY_MULTIPLICITY_VALUE']) ? $offer['PROPERTY_MULTIPLICITY_VALUE'] : '',
-                'pack_only' => ($offer['PROPERTY_MULT_ONLY_VALUE'] === 'Y') ? true : false,
+                'in_pack' => ($offer['PROPERTY_VALUES']['MULTIPLICITY']) ? $offer['MULTIPLICITY'] : '',
+                // 'pack_only' => ($offer['PROPERTY_VALUES']['MULT_ONLY'] === 'Y') ? true : false,
                 'discount_text' => '', //нет на сайте
                 'webpage' => 'https://'.SITE_SERVER_NAME_API.$offer['DETAIL_PAGE_URL'],
-                'tag' => ($tags) ?: array(),
-                'brand_name' => $offer["PROPERTY_BRAND_NAME_VALUE"],
-                'category' => array(
-                    'id' => $offer['IBLOCK_SECTION_ID'],
-                    'title' => ''
-                ),
-            );
-
-            $products[] = 
-
-            $arPrice = \CCatalogProduct::GetOptimalPrice($arProduct['ID'], 1, array(), 'N', array(), SITE_ID);
-
-            $arResult[$arProduct['ID']]['price'] = array(
-                'actual' => $arPrice['RESULT_PRICE']['DISCOUNT_PRICE'],
-                'old' => ($arPrice['RESULT_PRICE']['DISCOUNT_PRICE'] <  $arPrice['RESULT_PRICE']['BASE_PRICE'] ? $arPrice['RESULT_PRICE']['BASE_PRICE'] : '')
-            );
-        }
-        // получаем категории товаров
-        if (count($arResult) > 0)
-        {
-            $oCategoryList = CIBlockSection::GetList(
-                array(
-                    'SORT' => 'ASC'
-                ),
-                array(
-                    'IBLOCK_ID' => ROOT_CATALOG_ID,
-                    'ID' => $arCategoryList,
-                    'ACTIVE' => 'Y'
-                ),
-                false,
-                array(
-                    'ID',
-                    'NAME'
-                )
-            );
-        }
-        $arCategoryList = array();
-        while ($arCategory = $oCategoryList->GetNext())
-        {
-            $arCategoryList[$arCategory['ID']] = $arCategory['NAME'];
+                'tag' => ($tags) ?: [],
+                'brand_name' => $oProduct->getBrandName(),
+                'category' => [
+                    'id' => $productCategory['UF_XML_ID'],
+                    'title' => $productCategory['UF_NAME'],
+                ],
+                'price' => [
+                    'actual' => $offer['price'],
+                    'old' => $offer['oldPrice'] > 0 ? $offer['oldPrice'] : '',
+                ]
+            ];
         }
 
-        foreach ($arResult as $productId => $arProduct)
-        {
-            $arResult[$productId]['category']['title'] = $arCategoryList[$arProduct['category']['id']];
-        }
-
-        return $arResult;
+        return $result;
     }
 
     public function GetProductBonus($arPrice, $arProdInfo)
     {
         if (!self::$arCardInfo)
         {
-            if ($this->User['UF_DISC'] and $this->User['UF_DISC'] != '')
+            if ($this->User['UF_DISCOUNT_CARD'] and $this->User['UF_DISCOUNT_CARD'] != '')
             {
-                self::$arCardInfo = MyCCard::UpdateDataCard_ml($this->User['UF_DISC'], $bReturnData = true);
+                self::$arCardInfo = \FourPaws\MobileApiOldBundle\Card::UpdateDataCard_ml($this->User['UF_DISCOUNT_CARD'], $bReturnData = true);
                 // echo "<pre>+"; print_r(self::$arCardInfo); echo "</pre>";
             }
         }
@@ -229,6 +153,8 @@ class goods_list extends APIServer
             }
 
             //если товар участвует в акции - удваиваем количество бонусов
+            /*
+            $iProdId = $arProdInfo['id'];
             if (!empty($arProdDetailInfo[$iProdId]['PROPERTY_ACTIONS_SHILDS_VALUE']))
             {
                 //на боевом id этой акции 56
@@ -243,6 +169,7 @@ class goods_list extends APIServer
                     $arProductBonus['bonus_all'] = 0;
                 }
             }
+            */
 
             CModule::IncludeModule("iblock");
             $cacheTime = '86400';
@@ -330,33 +257,6 @@ class goods_list extends APIServer
                     }
                 }
             }
-
-            //очередной костыль, добавляем бонусов к артикулам.
-            $arXmlId = array(
-                1010051,
-                1000743,
-                1019975,
-                1008059,
-                1010051,
-                1016771,
-                1000745,
-                1000746,
-                1019976,
-                1010056,
-                1000747,
-                1019977,
-                1010055,
-                1016772
-            );
-            $timeStart = mktime(0, 0, 0, 8, 1, 2018);
-            $timeFinash = mktime(0, 0, 0, 9, 1, 2018);
-            $timeNow = time();
-
-            if(($timeNow > $timeStart) and ($timeNow < $timeFinash) and in_array($arProdInfo['xml_id'], $arXmlId)){
-                $arProductBonus['bonus_user'] += 25;
-                $arProductBonus['bonus_all'] += 25;
-            }
-            //!очередной костыль, добавляем бонусов к артикулам.
 
             //округляем хз как
             //23.08.2017 модифицируем количество бонусов
