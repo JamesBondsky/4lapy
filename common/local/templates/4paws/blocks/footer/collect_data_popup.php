@@ -7,6 +7,8 @@
 global $USER;
 $modal_number = NULL;
 
+use FourPaws\App\Application as App;
+
 if($USER->IsAuthorized()) {
     // срезаем пути - любой шаг заказа + баскет.
     if(!$template->isOrderPage() && !$template->isOrderInterviewPage() &&  !$template->isOrderDeliveryPage() && !$template->isPaymentPage() && !$template->isBasket())
@@ -26,8 +28,9 @@ if($USER->IsAuthorized()) {
                     if($modal_counts[0] > $modal_counts[1] && $modal_counts[1] == $modal_counts[2] && !$user_data['PERSONAL_PHONE'] &&
                         !$user_data['NAME'] && !$user_data['LAST_NAME'] && !$user_data['EMAIL']) $modal_number = 2;
 
-                    $pets = new FourPawsPersonalCabinetPetsComponent();
-                    if($modal_counts[0] == $modal_counts[1] && $modal_counts[1] > $modal_counts[2] && count($pets->hasOwnPets())) $modal_number = 3;
+                    $container = App::getInstance()->getContainer();
+                    $pets = $container->get('pet.service');
+                    if($modal_counts[0] == $modal_counts[1] && $modal_counts[1] > $modal_counts[2] && count($pets->getCurUserPets())) $modal_number = 3;
                 }
             }
         }
@@ -50,6 +53,7 @@ if($USER->IsAuthorized()) {
     <script>
         // заглушка для вызова формы - вынесено во одно место, чтобы было удобнее исправлять и не менять шаблоны.
         $(document).ready(function () {
+            document.cookie = "modal_timer=0; path=/;";
             function getCookie(name) {
                 var matches = document.cookie.match(new RegExp(
                     "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
