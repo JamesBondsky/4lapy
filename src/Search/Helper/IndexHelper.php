@@ -191,13 +191,13 @@ class IndexHelper implements LoggerAwareInterface
                                     'russian_stemmer',
                                 ],
                             ],
-                            'sounds-similar'   => [
+                            'word-suggest-hard-search' => [
+                                'type'      => 'custom',
                                 'tokenizer' => 'standard',
                                 'filter'    => [
                                     'lowercase',
-//                                    'synonym',
-                                    'transform-to-latin',
-                                    'sounds-similar',
+                                    'russian_stop',
+                                    'russian_stemmer',
                                 ],
                             ],
                             'analyzer_3000' => [
@@ -225,10 +225,6 @@ class IndexHelper implements LoggerAwareInterface
                             'russian_stemmer'     => [
                                 'type'     => 'stemmer',
                                 'language' => 'russian',
-                            ],
-                            'sounds-similar'      => [
-                                'type'    => 'phonetic',
-                                'encoder' => 'double_metaphone',
                             ],
                             'transform-to-latin'  => [
                                 'type' => 'icu_transform',
@@ -289,9 +285,18 @@ class IndexHelper implements LoggerAwareInterface
                                 'DETAIL_TEXT_TYPE'                => ['type' => 'keyword', 'index' => false],
                                 'DETAIL_PAGE_URL'                 => ['type' => 'text', 'index' => false],
                                 'CANONICAL_PAGE_URL'              => ['type' => 'text', 'index' => false],
-                                'NAME'                            => ['type' => 'text'],
+                                'NAME'                            => [
+                                    'type' => 'text',
+                                    'fields' => [
+                                        'phonetic' => [
+                                            'type' => 'text',
+                                            'analyzer' => 'analyzer_3000'
+                                        ]
+                                    ]
+                                ],
                                 'PROPERTY_POPULAR'                => ['type' => 'boolean'],
                                 'PROPERTY_CATALOG_INNER_BANNER'   => ['type' => 'text'],
+                                'PROPERTY_TRANSLITS'              => ['type' => 'text'],
                             ],
                         ],
                         'offers' => [
@@ -304,7 +309,15 @@ class IndexHelper implements LoggerAwareInterface
                                 'CODE'                      => ['type' => 'keyword'],
                                 'XML_ID'                    => ['type' => 'keyword'],
                                 'SORT'                      => ['type' => 'integer'],
-                                'NAME'                      => ['type' => 'text'],
+                                'NAME'                      => [
+                                    'type' => 'text',
+                                    'fields' => [
+                                        'phonetic' => [
+                                            'type' => 'text',
+                                            'analyzer' => 'analyzer_3000'
+                                        ]
+                                    ]
+                                ],
                                 'PROPERTY_VOLUME'           => ['type' => 'float'],
                                 'PROPERTY_VOLUME_REFERENCE' => ['type' => 'keyword'],
                                 'PROPERTY_COLOUR'           => ['type' => 'keyword'],
@@ -331,7 +344,15 @@ class IndexHelper implements LoggerAwareInterface
                         ],
                         'active'                           => ['type' => 'boolean'],
                         'sectionIdList'                    => ['type' => 'integer'],
-                        'sectionName'                      => ['type' => 'text'],
+                        'sectionName'                      => [
+                            'type' => 'text',
+                            'fields' => [
+                                'phonetic' => [
+                                    'type' => 'text',
+                                    'analyzer' => 'analyzer_3000'
+                                ]
+                            ]
+                        ],
                         'ID'                               => ['type' => 'integer'],
                         'CODE'                             => ['type' => 'keyword'],
                         'XML_ID'                           => ['type' => 'keyword'],
@@ -344,7 +365,15 @@ class IndexHelper implements LoggerAwareInterface
                         'CANONICAL_PAGE_URL'               => ['type' => 'text', 'index' => false],
                         'dateActiveFrom'                   => ['type' => 'date', 'format' => 'date_optional_time'],
                         'dateActiveTo'                     => ['type' => 'date', 'format' => 'date_optional_time'],
-                        'NAME'                             => ['type' => 'text'],
+                        'NAME'                             => [
+                            'type' => 'text',
+                            'fields' => [
+                                'phonetic' => [
+                                    'type' => 'text',
+                                    'analyzer' => 'analyzer_3000'
+                                ]
+                            ]
+                        ],
                         'PROPERTY_BRAND'                   => ['type' => 'integer'],
                         'PROPERTY_FOR_WHO'                 => ['type' => 'keyword'],
                         'PROPERTY_PET_SIZE'                => ['type' => 'keyword'],

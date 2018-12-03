@@ -58,21 +58,12 @@ class SearchController extends Controller
         if (!$validator->validate($searchRequest)->count()) {
 
             /** @var CombinedSearchResult $result */
-            $result = $searchService->hardSearch(
+            $result = $searchService->searchAll(
                 $searchRequest->getCategory()->getFilters(),
                 $searchRequest->getSorts()->getSelected(),
                 $searchRequest->getNavigation(),
                 $searchRequest->getSearchString()
             );
-
-
-//            /** @var CombinedSearchResult $result */
-//            $result = $searchService->searchAll(
-//                $searchRequest->getCategory()->getFilters(),
-//                $searchRequest->getSorts()->getSelected(),
-//                $searchRequest->getNavigation(),
-//                $searchRequest->getSearchString()
-//            );
 
             $res = [
                 'brands' => [],
@@ -81,12 +72,6 @@ class SearchController extends Controller
             ];
 
             $converted = $result->getCollection()->toArray();
-//            $converted['suggests'] = $searchService->productsAutocomplete(
-//                $searchRequest->getNavigation(),
-//                $searchRequest->getSearchString())
-//                ->getProductCollection()
-//                ->toArray();
-            // отрубил такой вывод пока
 
             /** @var Product|Brand $product */
             foreach ($converted as $key => $arItems) {
@@ -95,66 +80,65 @@ class SearchController extends Controller
                         $res['brands'][] = [
                             'DETAIL_PAGE_URL' => $item->getDetailPageUrl(),
                             'NAME' => $item->getName(),
-//                            'HIGHTLIGHT' => $item->getHitMetaInfo()->getHighlight(),
-//                            'MATCHED_QUERIES' => $item->getHitMetaInfo()->getMatchedQueries(),
                             'SCORE' => $item->getHitMetaInfo()->getScore(),
-
                         ];
                     } elseif ($item instanceof Product) {
-//                        /**
-//                         * @var Offer $offer
-//                         */
-//                        $offer = $item->getOffers()->first();
-//
-//                        if ($key == 'products') {
-//                            /**
-//                             * @var Image $image
-//                             */
-//                            $images = $offer->getImages();
-//                            if ($images != false && $images != null) {
-//                                $image = $offer->getImages()->first();
-//                                $res[$key][] = [
-//                                    'DETAIL_PAGE_URL' => $item->getDetailPageUrl(),
-//                                    'NAME' => $item->getName(),
-//                                    'PREVIEW' => sprintf("/upload/%s/%s", $image->getSubDir(), $image->getFileName()),
-//                                    'PRICE' => $offer->getPrice(),
-//                                    'CURRENCY' => $offer->getCurrency(),
-//                                    'BRAND' => $item->getBrand()->getName()
-//                                ];
-//                            } else {
-//                                $res[$key][] = [
-//                                    'DETAIL_PAGE_URL' => $item->getDetailPageUrl(),
-//                                    'NAME' => $item->getName(),
-//                                    'PRICE' => $offer->getPrice(),
-//                                    'CURRENCY' => $offer->getCurrency(),
-//                                    'BRAND' => $item->getBrand()->getName()
-//                                ];
-//                            }
-//                        } elseif ($key == 'suggests') {
-//                            if ($offer != false) {
-//                                if (empty($res[$key][$offer->getProduct()->getIblockSectionId()])) {
-//                                    $res[$key][$offer->getProduct()->getIblockSectionId()] = [
-//                                        'NAME' => $offer->getProduct()->getSection()->getName(),
-//                                        'DETAIL_PAGE_URL' => $offer->getProduct()->getSection()->getSectionPageUrl(),
-//                                        'ELEMENTS' => [
-//                                            [
-//                                                'NAME' => $offer->getProduct()->getBrandName() . ' ' . $offer->getName(),
-//                                                'LINK' => $offer->getProduct()->getDetailPageUrl()
-//                                            ]
-//                                        ]
-//                                    ];
-//                                } else {
-//                                    $res[$key][$offer->getProduct()->getIblockSectionId()]['ELEMENTS'][] = [
-//                                        'NAME' => $offer->getProduct()->getBrandName() . ' ' . $offer->getName(),
-//                                        'LINK' => $offer->getProduct()->getDetailPageUrl()
-//                                    ];
-//                                }
-//                            }
-//                        }
+                        /**
+                         * @var Offer $offer
+                         */
+                        $offer = $item->getOffers()->first();
+
+                        if ($key == 'products') {
+                            /**
+                             * @var Image $image
+                             */
+                            $images = $offer->getImages();
+                            if ($images != false && $images != null) {
+                                $image = $offer->getImages()->first();
+                                $res[$key][] = [
+                                    'DETAIL_PAGE_URL' => $item->getDetailPageUrl(),
+                                    'NAME' => $item->getName(),
+                                    'PREVIEW' => sprintf("/upload/%s/%s", $image->getSubDir(), $image->getFileName()),
+                                    'PRICE' => $offer->getPrice(),
+                                    'CURRENCY' => $offer->getCurrency(),
+                                    'BRAND' => $item->getBrand()->getName(),
+                                    'SCORE' => $item->getHitMetaInfo()->getScore()
+                                ];
+                            } else {
+                                $res[$key][] = [
+                                    'DETAIL_PAGE_URL' => $item->getDetailPageUrl(),
+                                    'NAME' => $item->getName(),
+                                    'PRICE' => $offer->getPrice(),
+                                    'CURRENCY' => $offer->getCurrency(),
+                                    'BRAND' => $item->getBrand()->getName(),
+                                    'SCORE' => $item->getHitMetaInfo()->getScore()
+                                ];
+                            }
+                        } elseif ($key == 'suggests') {
+                            if ($offer != false) {
+                                if (empty($res[$key][$offer->getProduct()->getIblockSectionId()])) {
+                                    $res[$key][$offer->getProduct()->getIblockSectionId()] = [
+                                        'NAME' => $offer->getProduct()->getSection()->getName(),
+                                        'DETAIL_PAGE_URL' => $offer->getProduct()->getSection()->getSectionPageUrl(),
+                                        'SCORE' => $item->getHitMetaInfo()->getScore()
+                                    ];
+                                } else {
+                                    $curScore = $item->getHitMetaInfo()->getScore();
+                                    $res[$key][$offer->getProduct()->getIblockSectionId()]['SCORE'] += $curScore;
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
+
+        usort($res['suggests'], function ($a, $b) {
+            if ($a['SCORE'] == $b['SCORE']) {
+                return 0;
+            }
+            return ($a['SCORE'] < $b['SCORE']) ? 1 : -1;
+        });
 
         return JsonSuccessResponse::createWithData('', $res)->setEncodingOptions(JSON_UNESCAPED_UNICODE);
     }
