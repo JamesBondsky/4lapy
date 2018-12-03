@@ -43,8 +43,9 @@ if($USER->IsAuthorized()) {
                     if($modal_counts[0] == $modal_counts[1] && $modal_counts[1] > $modal_counts[2]) {
                         if(!count($pets->getCurUserPets())) $modal_number = 3;
                         else {
-                            $modal_counts[2]++;
-                            $modal_number = 1;
+                            $user_class = new \CUser;
+                            $user_class->Update($USER->GetID(), ['UF_MODALS_CNTS' => '3 3 3']);
+                            $modal_number = NULL;
                         }
                     }
                 }
