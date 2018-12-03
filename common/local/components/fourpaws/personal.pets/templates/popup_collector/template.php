@@ -128,7 +128,10 @@
                 </div>
             </div>
             <button class="b-button b-button--subscribe-delivery">Добавить</button>
-            <div>Вы сможете сделать это позже в соответствующем разделе личного <a href="/personal/pets/">кабинета</a></div>В
+            <p style="font-size: 14px;">
+                Вы сможете сделать это позже в соответствующем разделе личного
+                <a href="/personal/pets/" style="color: #ff6927;">кабинета</a>
+            </p>
         </form>
     </div>
 </section>

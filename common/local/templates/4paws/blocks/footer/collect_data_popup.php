@@ -17,7 +17,7 @@ if($USER->IsAuthorized()) {
         if($modal_counts != '3 3 3') // модалки не по 3 штуки
         {
             $modal_counts = explode(' ', $modal_counts);
-            if($USER->GetParam('data_collect') != 'Y') // модалку в сессии еще не показали
+            if($USER->GetParam('data_collect') !== 'Y') // модалку в сессии еще не показали
             {
                 $user_data = CUser::GetByID( $USER->GetID() )->Fetch();
                 if($user_data['UF_SESSION_CNTS'] % 3 == 0) // Каждая 3-я сессия
@@ -30,7 +30,7 @@ if($USER->IsAuthorized()) {
 
                     $container = App::getInstance()->getContainer();
                     $pets = $container->get('pet.service');
-                    if($modal_counts[0] == $modal_counts[1] && $modal_counts[1] > $modal_counts[2] && count($pets->getCurUserPets())) $modal_number = 3;
+                    if($modal_counts[0] == $modal_counts[1] && $modal_counts[1] > $modal_counts[2] && !count($pets->getCurUserPets())) $modal_number = 3;
                 }
             }
         }
@@ -48,8 +48,8 @@ if($USER->IsAuthorized()) {
 <? if($modal_number == 3) { ?>
     <? $APPLICATION->IncludeComponent('fourpaws:personal.pets', 'popup_collector', [], null, ['HIDE_ICONS' => 'Y']); ?>
 <? } ?>
-<? $APPLICATION->IncludeComponent('fourpaws:personal.pets', 'popup_collector', [], null, ['HIDE_ICONS' => 'Y']); ?>
-<? if(1){ //$modal_number?>
+
+<? if($modal_number) { ?>
     <script>
         // заглушка для вызова формы - вынесено во одно место, чтобы было удобнее исправлять и не менять шаблоны.
         $(document).ready(function () {
@@ -71,7 +71,7 @@ if($USER->IsAuthorized()) {
                 $.ajax({
                     method: "POST",
                     url: "/ajax/personal/profile/disableModalPersist/",
-                    data: { modals: modals_counter.join(' ') }
+                    data: { modals: modals_counter }
                 });
             }
             let timer = setInterval(function () {

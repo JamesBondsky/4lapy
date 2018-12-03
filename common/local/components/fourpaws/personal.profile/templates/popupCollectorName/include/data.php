@@ -87,5 +87,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     <button
             class="b-button b-button--subscribe-delivery js-sms-step">Подтвердить
     </button>
+    <p style="font-size: 14px;">
+        Вы сможете сделать это позже в соответствующем разделе личного
+        <a href="/personal/" style="color: #ff6927;">кабинета</a>
+    </p>
 </form>
 
