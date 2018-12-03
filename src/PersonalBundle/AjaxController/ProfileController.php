@@ -226,7 +226,7 @@ class ProfileController extends Controller
         $user_class = new \CUser;
         $user_id = (int) $GLOBALS['USER']->GetID();
         $write = (int)$total_modals[0]." ".(int)$total_modals[1]." ".(int)$total_modals[2];
-        $user_class->Update($user_id, ['UF_MODALS_CNTS' => $total_modals]);
+        $user_class->Update($user_id, ['UF_MODALS_CNTS' => $write]);
 
         return JsonSuccessResponse::createWithData('All fine!');
     }
