@@ -155,8 +155,4 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
             $this->arResult['PET_TYPES'][] = $item;
         }
     }
-
-    public function hasOwnPets(){
-        return $this->petService->getCurUserPets();
-    }
 }

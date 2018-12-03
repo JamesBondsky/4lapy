@@ -53,7 +53,7 @@ if($USER->IsAuthorized()) {
     <script>
         // заглушка для вызова формы - вынесено во одно место, чтобы было удобнее исправлять и не менять шаблоны.
         $(document).ready(function () {
-            document.cookie = "modal_timer=0; path=/;";
+            if(parseInt(getCookie('modal_timer'), 10) >= 9) document.cookie = "modal_timer=0; path=/;";
             function getCookie(name) {
                 var matches = document.cookie.match(new RegExp(
                     "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
