@@ -8,7 +8,7 @@ use FourPaws\BitrixOrm\Model\BitrixArrayItemBase;
 abstract class CdbResultCollectionBase extends CollectionBase
 {
     /**
-     * @var \CDBResult
+     * @var \CDBResult|\CIBlockResult
      */
     protected $cdbResult;
 
@@ -33,7 +33,7 @@ abstract class CdbResultCollectionBase extends CollectionBase
     }
 
     /**
-     * @return \CDBResult
+     * @return \CDBResult|\CIBlockResult
      */
     public function getCdbResult(): \CDBResult
     {

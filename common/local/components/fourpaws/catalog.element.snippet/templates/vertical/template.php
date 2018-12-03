@@ -70,7 +70,7 @@ if (!$currentOffer->getImagesIds()) {
 
 /** @noinspection PhpUnhandledExceptionInspection */
 $value = $currentOffer->getPackageLabel(true, 999);
-
+$imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
 ?>
     <div class="b-common-item js-product-item" id="<?= $arParams['ITEM_ATTR_ID'] ?>"
          data-productid="<?= $product->getId() ?>">
@@ -79,10 +79,24 @@ $value = $currentOffer->getPackageLabel(true, 999);
             <?php if ($offerWithImages->getImagesIds()) { ?>
                 <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getLink() ?>"
                    onclick="<?= $getOnClick($currentOffer) ?>">
-                    <img class="b-common-item__image js-weight-img"
-                         src="<?= $offerWithImages->getResizeImages(240, 240)->first() ?>"
+                    <img
+                         <? if($arParams['COUNTER'] == null) {?>
+                            src="<?= $imageSrc; ?>"
+                            class="b-common-item__image js-weight-img"
+                         <? } else { ?>
+                            <? if($arParams['COUNTER'] < 5) { ?>
+                        	src="<?= $imageSrc; ?>"
+                            class="b-common-item__image js-weight-img"
+                            <? } else { ?>
+                            src="/static/build/images/inhtml/no_image_list.jpg"
+                            data-popular-product-slider="<?= $imageSrc; ?>"
+                            class="b-common-item__image js-weight-img not_loaded_src"
+                            <? } ?>
+                         <? } ?>
                          alt="<?= $currentOffer->getName() ?>"
-                         title="">
+                         title=""
+                         <??>
+                    >
                 </a>
             <?php } ?>
         </span>
@@ -222,7 +236,7 @@ $value = $currentOffer->getPackageLabel(true, 999);
                 echo '<div class="b-common-item__additional-information">' . $addInfo . '</div>';
             } ?>
         </div>
-    </div><?php
+    <?php
 
 //
 // BigData
@@ -256,4 +270,6 @@ if (isset($arParams['BIG_DATA']['RCM_ID']) && !empty($arParams['BIG_DATA']['RCM_
     <script type="text/javascript">
         new FourPawsCatalogElementSnippet(<?=\CUtil::PhpToJSObject($jsParams)?>);
     </script>
-<?php }
+<?php }?>
+
+</div>

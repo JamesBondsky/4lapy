@@ -60,8 +60,8 @@ use FourPaws\Decorators\SvgDecorator; ?>
                             <?php } ?>
                             <?php if (!empty($item['PREVIEW_PICTURE']['SRC'])) { ?>
                                 <span class="b-news-item__image-wrapper js-image-cover">
-                                    <img class="b-news-item__image"
-                                         src="<?= $item['PREVIEW_PICTURE']['SRC'] ?>"
+                                    <img class="b-news-item__image js-lazy"
+                                         data-src="<?= $item['PREVIEW_PICTURE']['SRC'] ?>"
                                          alt="<?= $item['PREVIEW_PICTURE']['ALT'] ?>"
                                          title="<?= $item['PREVIEW_PICTURE']['TITLE'] ?>" />
                                     <?php if (!empty($item['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE'])) { ?>

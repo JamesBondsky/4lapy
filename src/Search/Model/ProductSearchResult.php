@@ -2,7 +2,7 @@
 
 namespace FourPaws\Search\Model;
 
-use CDBResult;
+use CIBlockResult;
 use Elastica\Result;
 use Elastica\ResultSet;
 use FourPaws\App\Application;
@@ -75,7 +75,7 @@ class ProductSearchResult implements ProductResultInterface
                 $productList[] = $this->factory->makeProductObject($item);
             }
 
-            $cdbres = new CDBResult(null);
+            $cdbres = new CIBlockResult(null);
 
             $cdbres->InitFromArray($productList);
 
