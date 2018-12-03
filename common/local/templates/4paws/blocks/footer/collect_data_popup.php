@@ -14,23 +14,39 @@ if($USER->IsAuthorized()) {
     if(!$template->isOrderPage() && !$template->isOrderInterviewPage() &&  !$template->isOrderDeliveryPage() && !$template->isPaymentPage() && !$template->isBasket())
     {
         $modal_counts = CUser::GetByID( $USER->GetID() )->Fetch()['UF_MODALS_CNTS'];
-        if($modal_counts != '3 3 3') // модалки не по 3 штуки
+        $modal_counts = explode(' ', $modal_counts);
+        if($modal_counts[0] < 3 && $modal_counts[1] < 3 && $modal_counts[2] < 3) // модалки не по 3 штуки
         {
-            $modal_counts = explode(' ', $modal_counts);
             if($USER->GetParam('data_collect') !== 'Y') // модалку в сессии еще не показали
             {
                 $user_data = CUser::GetByID( $USER->GetID() )->Fetch();
-                if($user_data['UF_SESSION_CNTS'] % 3 == 0) // Каждая 3-я сессия
+                if($user_data['UF_SESSION_CNTS'] % 3 == 1) // Каждая 3-я сессия
                 {
-                    if($modal_counts[0] == $modal_counts[1] && $modal_counts[1] == $modal_counts[2] && !$user_data['NAME'] &&
-                        !$user_data['PERSONAL_PHONE']) $modal_number = 1;
+                    if($modal_counts[0] == $modal_counts[1] && $modal_counts[1] == $modal_counts[2]) {
+                        if(!$user_data['NAME'] || !$user_data['PERSONAL_PHONE']) $modal_number = 1;
+                        else if($user_data['NAME'] && $user_data['PERSONAL_PHONE']){
+                            $modal_counts[0]++;
+                            $modal_number = 2;
+                        }
+                    }
 
-                    if($modal_counts[0] > $modal_counts[1] && $modal_counts[1] == $modal_counts[2] && !$user_data['PERSONAL_PHONE'] &&
-                        !$user_data['NAME'] && !$user_data['LAST_NAME'] && !$user_data['EMAIL']) $modal_number = 2;
+                    if($modal_counts[0] > $modal_counts[1] && $modal_counts[1] == $modal_counts[2]) {
+                        if(!$user_data['PERSONAL_PHONE'] || !$user_data['NAME'] || !$user_data['LAST_NAME'] || !$user_data['EMAIL']) $modal_number = 2;
+                        else if($user_data['PERSONAL_PHONE'] && $user_data['NAME'] && $user_data['LAST_NAME'] && $user_data['EMAIL']) {
+                            $modal_counts[1]++;
+                            $modal_number = 3;
+                        }
+                    }
 
                     $container = App::getInstance()->getContainer();
                     $pets = $container->get('pet.service');
-                    if($modal_counts[0] == $modal_counts[1] && $modal_counts[1] > $modal_counts[2] && !count($pets->getCurUserPets())) $modal_number = 3;
+                    if($modal_counts[0] == $modal_counts[1] && $modal_counts[1] > $modal_counts[2]) {
+                        if(!count($pets->getCurUserPets())) $modal_number = 3;
+                        else {
+                            $modal_counts[2]++;
+                            $modal_number = 1;
+                        }
+                    }
                 }
             }
         }
