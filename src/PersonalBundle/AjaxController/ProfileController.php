@@ -246,7 +246,10 @@ class ProfileController extends Controller
         $update_result = $update_response->getContent();
         $message = json_decode($update_result);
 
-        if($message->message == 'Данные обновлены') // Прошли валидацию и записали данные пользователя
+        $parts = parse_url($request->getContent());
+        parse_str($parts['path'], $parts);
+
+        if($message->message == 'Данные обновлены' && strlen($parts['PHONE_SET']) < 5) // Прошли валидацию и записали данные пользователя
         {
             return $this->changePhoneAction($request);
         }

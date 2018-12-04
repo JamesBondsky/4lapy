@@ -15,6 +15,12 @@
               method="post"
               data-url="/ajax/personal/pets/add/"
               enctype="multipart/form-data">
+            <p style="font-size: 14px;">
+                <b>
+                    Вы видите эту форму, так как не все данные в Вашем профиле заполнены.
+                    Дополнительная информация позволит нам сообщать о распродажах, новинках и подарках, которые будут интересны именно Вам и Вашему питомцу.
+                </b>
+            </p>
             <input class="js-data-id js-no-valid" name="ID" value="" type="hidden">
             <div class="b-registration__wrapper-avatar">
                 <div class="b-registration__add-photos js-img">
@@ -128,10 +134,6 @@
                 </div>
             </div>
             <button class="b-button b-button--subscribe-delivery">Добавить</button>
-            <p style="font-size: 14px;">
-                Вы сможете сделать это позже в соответствующем разделе личного
-                <a href="/personal/pets/" style="color: #ff6927;">кабинета</a>
-            </p>
         </form>
     </div>
 </section>

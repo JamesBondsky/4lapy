@@ -80,6 +80,10 @@ if($USER->IsAuthorized()) {
                 clearInterval(timer);
                 $('#data_collect').trigger('click');
 
+                $('form.collector-form input').each(function () {
+                   if($(this).val().length > 2) $(this).attr('disabled', "");
+                });
+
                 let modals_counter = [<?=$modal_counts[0]?>, <?=$modal_counts[1]?>, <?=$modal_counts[2]?>];
                 modals_counter[<?=$modal_number-1?>]++;
 

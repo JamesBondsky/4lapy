@@ -4,10 +4,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 /** @var string $phone
  * @var string $oldPhone*/ ?>
-<form class="b-registration__form js-form-validation js-phone-change-one"
+<form class="b-registration__form js-form-validation js-phone-change-one collector-form"
       data-url="/ajax/personal/profile/collectUserData/"
       method="post">
+    <p style="font-size: 14px;">
+        <b>
+            Вы видите эту форму, так как не все данные в Вашем профиле заполнены.
+            Дополнительная информация позволит нам сообщать о распродажах, новинках и подарках, которые будут интересны именно Вам и Вашему питомцу.
+        </b>
+    </p>
     <input type="hidden" class="js-data-id js-no-valid" name="ID" value="<?= $arResult['CUR_USER']['ID'] ?>">
+    <input type="hidden" class="js-data-id js-no-valid" name="PHONE_SET" value="<?= $phone ?>">
     <div class="b-input-line b-input-line--popup-authorization b-input-line--referal js-first-name">
         <div class="b-input-line__label-wrapper">
             <label class="b-input-line__label" for="data-first-name">Имя</label>
@@ -87,9 +94,5 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     <button
             class="b-button b-button--subscribe-delivery js-sms-step">Подтвердить
     </button>
-    <p style="font-size: 14px;">
-        Вы сможете сделать это позже в соответствующем разделе личного
-        <a href="/personal/" style="color: #ff6927;">кабинета</a>
-    </p>
 </form>
 
