@@ -368,6 +368,10 @@ class IndexHelper implements LoggerAwareInterface
                         'NAME'                             => [
                             'type' => 'text',
                             'fields' => [
+                                'full_search' => [
+                                    'type' => 'text',
+                                    'analyzer' => 'default'
+                                ],
                                 'phonetic' => [
                                     'type' => 'text',
                                     'analyzer' => 'analyzer_3000'

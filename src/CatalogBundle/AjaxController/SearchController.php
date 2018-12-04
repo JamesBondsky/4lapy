@@ -140,6 +140,16 @@ class SearchController extends Controller
             return ($a['SCORE'] < $b['SCORE']) ? 1 : -1;
         });
 
+        if (count($res['products']) > 5) {
+            $res['products'] = [];
+        } else {
+            $res['products'] = [$res['products'][0]];
+        }
+
+        if (count($res['brands']) > 3) {
+
+        }
+
         return JsonSuccessResponse::createWithData('', $res)->setEncodingOptions(JSON_UNESCAPED_UNICODE);
     }
 }

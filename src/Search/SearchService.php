@@ -174,12 +174,12 @@ class SearchService implements LoggerAwareInterface
             $suggestSearch->getQuery()->setMinScore(100);
         }
 
-        $cntResults = (count(explode(' ', $searchString)) >= 4) ? 1 : 10;
+        $cntResults = (count(explode(' ', $searchString)) >= 4) ? 10 : 10;
 
         $productSearch->getQuery()
             ->setFrom($navigation->getFrom())
             ->setSize($navigation->getSize())
-            ->setSize($cntResults)
+            ->setSize(100)
             ->setSort($sorting->getRule())
             ->setParam('query', $this->getFullQueryRule($filters, $searchString))
             ->setHighlight(['fields' => ['offers.XML_ID' => (object)[]]]);
@@ -296,7 +296,7 @@ class SearchService implements LoggerAwareInterface
                 ->setFields(['NAME', 'PROPERTY_TRANSLITS'])
                 ->setType('best_fields')
                 ->setFuzziness(1)
-                ->setPrefixLength(1)
+//                ->setPrefixLength(1)
                 ->setAnalyzer('full-text-brand-hard-search')
                 ->setParam('boost', 45.0)
                 ->setParam('_name', 'name-fuzzy-word')
@@ -310,25 +310,24 @@ class SearchService implements LoggerAwareInterface
                 ->setFields(['NAME', 'PROPERTY_TRANSLITS'])
                 ->setType('best_fields')
                 ->setFuzziness(2)
-                ->setPrefixLength(1)
+//                ->setPrefixLength(1)
                 ->setAnalyzer('full-text-brand-hard-search')
-                ->setParam('boost', 27.5)
+                ->setParam('boost', 15.0)
                 ->setParam('_name', 'name-fuzzy-word')
                 ->setOperator('and')
         );
 
-        //транслит (голосовое соответствие)
+        //0 ошибок
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['NAME.phonetic'])
+                ->setFields(['NAME', 'PROPERTY_TRANSLITS'])
                 ->setType('best_fields')
-                ->setFuzziness(2)
-                ->setPrefixLength(1)
-                ->setAnalyzer('analyzer_3000')
-                ->setParam('boost', 20.0)
-                ->setParam('_name', 'name-sounds-similar')
-                ->setOperator('and')
+                ->setFuzziness(0)
+                ->setAnalyzer('full-text-brand-hard-search')
+                ->setParam('boost', 10.0)
+                ->setParam('_name', 'name-fuzzy-word')
+                ->setOperator('or')
         );
 
         return $boolQuery;
@@ -395,7 +394,7 @@ class SearchService implements LoggerAwareInterface
                 ->setType('best_fields')
                 ->setFuzziness(0)
                 ->setAnalyzer('full-text-brand-hard-search')
-                ->setParam('boost', 12.0)
+                ->setParam('boost', 100.0)
                 ->setParam('_name', 'name-fuzzy-word-brand-0')
                 ->setOperator('and')
         );
@@ -409,7 +408,7 @@ class SearchService implements LoggerAwareInterface
                 ->setFuzziness(1)
                 ->setPrefixLength(1)
                 ->setAnalyzer('full-text-brand-hard-search')
-                ->setParam('boost', 6.0)
+                ->setParam('boost', 45.0)
                 ->setParam('_name', 'name-fuzzy-word-brand-1')
                 ->setOperator('and')
         );
@@ -423,25 +422,10 @@ class SearchService implements LoggerAwareInterface
                 ->setFuzziness(2)
                 ->setPrefixLength(1)
                 ->setAnalyzer('full-text-brand-hard-search')
-                ->setParam('boost', 3.0)
+                ->setParam('boost', 15.0)
                 ->setParam('_name', 'name-fuzzy-word-brand-2')
                 ->setOperator('and')
         );
-
-        //бренды транслит (голосовое соответствие)
-        $boolQuery->addShould(
-            $queryBuilder->query()->multi_match()
-                ->setQuery($searchString)
-                ->setFields(['brand.NAME.phonetic'])
-                ->setType('best_fields')
-                ->setFuzziness(2)
-                ->setPrefixLength(1)
-                ->setAnalyzer('analyzer_3000')
-                ->setParam('boost', 1.5)
-                ->setParam('_name', 'name-sounds-similar-brand-phonetic')
-                ->setOperator('and')
-        );
-
 
         //////////////////////////
         /// Разделы и названия ///
@@ -486,28 +470,14 @@ class SearchService implements LoggerAwareInterface
                 ->setOperator('and')
         );
 
-        //транслит (голосовое соответствие)
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['sectionName.phonetic'])
-                ->setType('best_fields')
-                ->setFuzziness(2)
-                ->setPrefixLength(1)
-                ->setAnalyzer('analyzer_3000')
-                ->setParam('boost', 1.5)
-                ->setParam('_name', 'name-sounds-similar-brand-phonetic')
-                ->setOperator('and')
-        );
-
-        $boolQuery->addShould(
-            $queryBuilder->query()->multi_match()
-                ->setQuery($searchString)
-                ->setFields(['NAME'])
+                ->setFields(['NAME.full_search'])
                 ->setType('best_fields')
                 ->setFuzziness(0)
-                ->setAnalyzer('full-text-brand-hard-search')
-                ->setParam('boost', 100)
+                ->setAnalyzer('default')
+                ->setParam('boost', 50)
                 ->setParam('_name', 'name-fuzzy-word-name-0')
                 ->setOperator('and')
         );
@@ -517,12 +487,12 @@ class SearchService implements LoggerAwareInterface
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['NAME'])
+                ->setFields(['NAME.full_search'])
                 ->setType('best_fields')
                 ->setFuzziness(1)
                 ->setPrefixLength(1)
-                ->setAnalyzer('full-text-brand-hard-search')
-                ->setParam('boost', 50)
+                ->setAnalyzer('default')
+                ->setParam('boost', 25)
                 ->setParam('_name', 'name-fuzzy-word-name-1')
                 ->setOperator('and')
         );
@@ -531,30 +501,56 @@ class SearchService implements LoggerAwareInterface
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['NAME'])
+                ->setFields(['NAME.full_search'])
                 ->setType('best_fields')
                 ->setFuzziness(2)
                 ->setPrefixLength(1)
                 ->setAnalyzer('full-text-brand-hard-search')
-                ->setParam('boost', 25)
+                ->setParam('boost', 10)
                 ->setParam('_name', 'name-fuzzy-word-name-2')
                 ->setOperator('and')
         );
 
-        //название транслит (голосовое соответствие)
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['NAME.phonetic'])
+                ->setFields(['PREVIEW_TEXT', 'DETAIL_TEXT'])
                 ->setType('best_fields')
-                ->setFuzziness(2)
-                ->setPrefixLength(1)
-                ->setAnalyzer('analyzer_3000')
-                ->setParam('boost', 12.5)
-                ->setParam('_name', 'name-sounds-similar-brand-phonetic')
+                ->setFuzziness(0)
+                ->setAnalyzer('default')
+                ->setParam('boost', 35)
+                ->setParam('_name', 'name-fuzzy-word-name-0')
                 ->setOperator('and')
         );
 
+
+        //1 ошибка
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['PREVIEW_TEXT', 'DETAIL_TEXT'])
+                ->setType('best_fields')
+                ->setFuzziness(1)
+                ->setPrefixLength(1)
+                ->setAnalyzer('default')
+                ->setParam('boost', 10)
+                ->setParam('_name', 'name-fuzzy-word-name-1')
+                ->setOperator('and')
+        );
+
+        //2 ошибка
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['PREVIEW_TEXT', 'DETAIL_TEXT'])
+                ->setType('best_fields')
+                ->setFuzziness(2)
+                ->setPrefixLength(1)
+                ->setAnalyzer('full-text-brand-hard-search')
+                ->setParam('boost', 5)
+                ->setParam('_name', 'name-fuzzy-word-name-2')
+                ->setOperator('and')
+        );
 
         return $boolQuery;
     }
@@ -615,27 +611,10 @@ class SearchService implements LoggerAwareInterface
                 ->setOperator('and')
         );
 
-        //бренды транслит (голосовое соответствие)
-        $boolQuery->addShould(
-            $queryBuilder->query()->multi_match()
-                ->setQuery($searchString)
-                ->setFields(['brand.NAME.phonetic'])
-                ->setType('best_fields')
-                ->setFuzziness(2)
-                ->setPrefixLength(1)
-                ->setAnalyzer('analyzer_3000')
-                ->setParam('boost', 5.0)
-                ->setParam('_name', 'name-sounds-similar-brand-phonetic')
-                ->setOperator('and')
-        );
-
 
         //////////////////////////
         /// Разделы и названия ///
         //////////////////////////
-        ///
-        /// полнотекстовый
-
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
@@ -673,20 +652,6 @@ class SearchService implements LoggerAwareInterface
                 ->setAnalyzer('full-text-brand-hard-search')
                 ->setParam('boost', 25)
                 ->setParam('_name', 'name-fuzzy-word-section-2')
-                ->setOperator('and')
-        );
-
-        //бренды транслит (голосовое соответствие)
-        $boolQuery->addShould(
-            $queryBuilder->query()->multi_match()
-                ->setQuery($searchString)
-                ->setFields(['sectionName.phonetic'])
-                ->setType('best_fields')
-                ->setFuzziness(2)
-                ->setPrefixLength(1)
-                ->setAnalyzer('analyzer_3000')
-                ->setParam('boost', 10.0)
-                ->setParam('_name', 'name-sounds-similar-brand-phonetic')
                 ->setOperator('and')
         );
 
@@ -731,17 +696,44 @@ class SearchService implements LoggerAwareInterface
                 ->setOperator('and')
         );
 
-        //название транслит (голосовое соответствие)
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['NAME.phonetic'])
+                ->setFields(['PREVIEW_TEXT', 'DETAIL_TEXT'])
+                ->setType('best_fields')
+                ->setFuzziness(0)
+                ->setAnalyzer('default')
+                ->setParam('boost', 35)
+                ->setParam('_name', 'name-fuzzy-word-name-0')
+                ->setOperator('and')
+        );
+
+
+        //1 ошибка
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['PREVIEW_TEXT', 'DETAIL_TEXT'])
+                ->setType('best_fields')
+                ->setFuzziness(1)
+                ->setPrefixLength(1)
+                ->setAnalyzer('default')
+                ->setParam('boost', 10)
+                ->setParam('_name', 'name-fuzzy-word-name-1')
+                ->setOperator('and')
+        );
+
+        //2 ошибка
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['PREVIEW_TEXT', 'DETAIL_TEXT'])
                 ->setType('best_fields')
                 ->setFuzziness(2)
                 ->setPrefixLength(1)
-                ->setAnalyzer('analyzer_3000')
-                ->setParam('boost', 8.0)
-                ->setParam('_name', 'name-sounds-similar-brand-phonetic')
+                ->setAnalyzer('full-text-brand-hard-search')
+                ->setParam('boost', 5)
+                ->setParam('_name', 'name-fuzzy-word-name-2')
                 ->setOperator('and')
         );
 
