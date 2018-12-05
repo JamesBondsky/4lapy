@@ -1,5 +1,9 @@
-<?php use FourPaws\Decorators\SvgDecorator; // $arParams['COLLECTOR'] == 'Y' ?>
-<section class="b-popup-pick-city b-popup-pick-city--add-pet js-popup-section" data-popup="edit-popup-pet">
+<?php use FourPaws\Decorators\SvgDecorator;?>
+<section class="b-popup-pick-city b-popup-pick-city--add-pet js-popup-section" data-popup="collector-pet">
+    <div class="js-tab-account" style="display: none;" data-tab-content="my-pet">
+        <!-- обманка вынесена сюда -->
+        <a class="js-add-query js-open-popup js-open-popup--account-tab js-add-query" id="data_collect" data-popup-id="collector-pet" data-url="/ajax/personal/pets/add/"></a>
+    </div>
     <a class="b-popup-pick-city__close b-popup-pick-city__close--add-pet js-close-popup"
        href="javascript:void(0);"
        title="Закрыть"></a>
@@ -11,6 +15,12 @@
               method="post"
               data-url="/ajax/personal/pets/add/"
               enctype="multipart/form-data">
+            <p style="font-size: 14px;">
+                <b>
+                    Вы видите эту форму, так как не все данные в Вашем профиле заполнены.
+                    Дополнительная информация позволит нам сообщать о распродажах, новинках и подарках, которые будут интересны именно Вам и Вашему питомцу.
+                </b>
+            </p>
             <input class="js-data-id js-no-valid" name="ID" value="" type="hidden">
             <div class="b-registration__wrapper-avatar">
                 <div class="b-registration__add-photos js-img">
@@ -123,7 +133,7 @@
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
-            <button class="b-button b-button--subscribe-delivery">Сохранить</button>
+            <button class="b-button b-button--subscribe-delivery">Добавить</button>
         </form>
     </div>
 </section>
