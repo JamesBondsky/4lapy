@@ -245,14 +245,34 @@ class CityController extends Controller
         $sxGeo->setCityFromSxgeo();
         $cityName = $sxGeo->getCityName();
 
-        $responseCode = $this->getGeolocationCityCode(json_encode(['city_name' => $cityName]));
-        $jsonResponseCode = json_decode($responseCode->getContent(), true);
+        if (!$cityName) {
+            $cityCode = static::DEFAULT_CITY_CODE;
+        } else {
+            $dbVars = \CSaleLocation::GetList(
+                null,
+                [
+                    'CITY_NAME' => $cityName
+                ],
+                false,
+                false,
+                [
+                    'CITY_NAME',
+                    'CODE'
+                ]
+            );
+
+            if ($vars = $dbVars->Fetch()) {
+                $cityCode = $vars['CODE'];
+            } else {
+                $cityCode = static::DEFAULT_CITY_CODE;
+            }
+        }
 
         $response = JsonSuccessResponse::createWithData(
             'Местоположение успешно определено',
             [
                 'city_name' => $cityName,
-                'city_code' => $jsonResponseCode['data']['city_code'] ? $jsonResponseCode['data']['city_code'] : static::DEFAULT_CITY_CODE
+                'city_code' => $cityCode
             ],
             200,
             ['reload' => true]
@@ -264,13 +284,13 @@ class CityController extends Controller
     /**
      * @Route("/get_geolocation_city_code/", methods={"POST"})
      *
-     * @param string $request
+     * @param Request $request
      * @return JsonResponse
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    public function getGeolocationCityCode(string $request): JsonResponse
+    public function getGeolocationCityCode(Request $request): JsonResponse
     {
-        $cityName = json_decode($request, true)['city_name'];
+        $cityName = json_decode($request->getContent(), true)['city_name'];
         if (!$cityName) {
             $cityCode = static::DEFAULT_CITY_CODE;
         } else {
