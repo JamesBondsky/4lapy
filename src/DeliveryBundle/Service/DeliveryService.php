@@ -78,6 +78,42 @@ class DeliveryService implements LoggerAwareInterface
     public const ZONE_5 = 'ZONE_5';
     public const ZONE_6 = 'ZONE_6';
 
+    /**
+     * Нижний Новгород и Нижегородская область
+     */
+    public const ZONE_NIZHNY_NOVGOROD = 'ZONE_NIZHNY_NOVGOROD';
+    public const ZONE_NIZHNY_NOVGOROD_REGION = 'ZONE_NIZHNY_NOVGOROD_REGION';
+    /**
+     * Владимир и Владимирская область
+     */
+    public const ZONE_VLADIMIR = 'ZONE_VLADIMIR';
+    public const ZONE_VLADIMIR_REGION = 'ZONE_VLADIMIR_REGION';
+    /**
+     * Воронеж и Воронежская область
+     */
+    public const ZONE_VORONEZH = 'ZONE_VORONEZH';
+    public const ZONE_VORONEZH_REGION = 'ZONE_VORONEZH_REGION';
+    /**
+     * Ярославль и Ярославская область
+     */
+    public const ZONE_YAROSLAVL = 'ZONE_YAROSLAVL';
+    public const ZONE_YAROSLAVL_REGION = 'ZONE_YAROSLAVL_REGION';
+    /**
+     * Тула и Тульская область
+     */
+    public const ZONE_TULA = 'ZONE_TULA';
+    public const ZONE_TULA_REGION = 'ZONE_TULA_REGION';
+    /**
+     * Калуга и Калужская область
+     */
+    public const ZONE_KALUGA = 'ZONE_KALUGA';
+    public const ZONE_KALUGA_REGION = 'ZONE_KALUGA_REGION';
+    /**
+     * Иваново и Ивановская область
+     */
+    public const ZONE_IVANOVO = 'ZONE_IVANOVO';
+    public const ZONE_IVANOVO_REGION = 'ZONE_IVANOVO_REGION';
+
     public const PICKUP_CODES = [
         DeliveryService::INNER_PICKUP_CODE,
         DeliveryService::DPD_PICKUP_CODE,
@@ -1065,5 +1101,26 @@ class DeliveryService implements LoggerAwareInterface
         }
 
         return empty($result) ? static::ZONE_4 : $result[\max(\array_keys($result))];
+    }
+
+    static function getZonesTwo():array
+    {
+        return [
+            self::ZONE_2,
+            self::ZONE_NIZHNY_NOVGOROD,
+            self::ZONE_NIZHNY_NOVGOROD_REGION,
+            self::ZONE_VLADIMIR,
+            self::ZONE_VLADIMIR_REGION,
+            self::ZONE_VORONEZH,
+            self::ZONE_VORONEZH_REGION,
+            self::ZONE_YAROSLAVL,
+            self::ZONE_YAROSLAVL_REGION,
+            self::ZONE_TULA,
+            self::ZONE_TULA_REGION,
+            self::ZONE_KALUGA,
+            self::ZONE_KALUGA_REGION,
+            self::ZONE_IVANOVO,
+            self::ZONE_IVANOVO_REGION
+        ];
     }
 }

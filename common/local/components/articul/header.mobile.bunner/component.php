@@ -27,7 +27,8 @@ if ($this->startResultCache($cacheTime)) {
         ],
         [
             'IBLOCK_TYPE' => 'publications',
-            'IBLOCK_ID' => $iblockId
+            'IBLOCK_ID' => $iblockId,
+            'ACTIVE' => 'Y'
         ],
         false,
         [
@@ -42,6 +43,9 @@ if ($this->startResultCache($cacheTime)) {
             'DETAIL_PICTURE'
         ]
     );
+
+    $arResult['SHOW_BANNER'] = false;
+
     if ($ciEl = $ciDb->GetNextElement()) {
         $arResult['SHOW_BANNER'] = true;
         $arItem = $ciEl->GetFields();
