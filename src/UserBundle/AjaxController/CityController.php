@@ -16,6 +16,7 @@ use Monolog\Logger;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
+use FourPaws\App\Geo\Geo as SxGeo;
 
 /**
  * Class CityController
@@ -25,6 +26,9 @@ use Symfony\Component\HttpFoundation\Request;
 class CityController extends Controller
 {
     use LazyLoggerAwareTrait;
+
+    const DEFAULT_CITY_NAME = 'Москва';
+    const DEFAULT_CITY_CODE = '0000073738';
 
     /**@var UserService */
     protected $userService;
@@ -195,7 +199,7 @@ class CityController extends Controller
     }
 
     /**
-    * @Route("/use_yandex_geolocation/", methods={"POST", "GET"})
+    * @Route("/use_yandex_geolocation/", methods={"POST"})
     *
     * @param Request $request
     *
@@ -223,6 +227,54 @@ class CityController extends Controller
             200,
             ['reload' => true]
         );
+        return $response;
+    }
+
+    /**
+     * @Route("/get_geolocation/", methods={"POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Exception
+     */
+    public function useGetGeolocationAction(Request $request): JsonResponse
+    {
+        $sxGeo = new SxGeo();
+        $sxGeo->setCityFromSxgeo();
+        $cityName = $sxGeo->getCityName();
+
+        $dbVars = \CSaleLocation::GetList(
+            null,
+            [
+                'CITY_NAME' => $cityName
+            ],
+            false,
+            false,
+            [
+                'CITY_NAME',
+                'CODE'
+            ]
+        );
+        if ($vars = $dbVars->Fetch()) {
+            $cityName = $vars['CITY_NAME'];
+            $cityCode = $vars['CODE'];
+        } else {
+            $cityName = static::DEFAULT_CITY_NAME;
+            $cityCode = static::DEFAULT_CITY_CODE;
+        }
+
+        $response = JsonSuccessResponse::createWithData(
+            'Местоположение успешно определено',
+            [
+                'city_name' => $cityName,
+                'city_code' => $cityCode
+            ],
+            200,
+            ['reload' => true]
+        );
+
         return $response;
     }
 
