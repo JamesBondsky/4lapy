@@ -93,7 +93,7 @@ $resultsByZone = $arResult['RESULTS_BY_ZONE'];
 
     <div class="b-delivery__town-content">
         <div class="b-delivery__town-map">
-            <img src="/static/build/images/inhtml/delivery-map.png">
+            <img src="/static/build/images/inhtml/delivery-map.png?v=1">
             <?/*<img src="/static/build/images/inhtml/delivery-map_blackfriday.png">*/?>
         </div>
         <div class="b-delivery__town-data">
