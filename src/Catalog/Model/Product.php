@@ -700,18 +700,37 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      */
     public function __construct(array $fields = [])
     {
-        $fields['PROPERTY_SPECIFICATIONS_VALUE'] = $fields['~PROPERTY_SPECIFICATIONS_VALUE'] ?? [
-                'TYPE' => '',
+        if ($fields['~PROPERTY_SPECIFICATIONS_VALUE']) {
+            $fields['PROPERTY_SPECIFICATIONS_VALUE']['TEXT'] = htmlspecialchars_decode($fields['~PROPERTY_SPECIFICATIONS_VALUE']['TEXT']);
+            $fields['PROPERTY_SPECIFICATIONS_VALUE']['TYPE'] = '';
+        } else {
+            $fields['PROPERTY_SPECIFICATIONS_VALUE'] = [
+                'TYPE' => 'HTML',
                 'TEXT' => '',
             ];
-        $fields['PROPERTY_COMPOSITION_VALUE'] = $fields['~PROPERTY_COMPOSITION_VALUE'] ?? [
-                'TYPE' => '',
+        }
+
+
+        if ($fields['~PROPERTY_COMPOSITION_VALUE']) {
+            $fields['PROPERTY_COMPOSITION_VALUE']['TEXT'] = htmlspecialchars_decode($fields['~PROPERTY_COMPOSITION_VALUE']['TEXT']);
+            $fields['PROPERTY_COMPOSITION_VALUE']['TYPE'] = '';
+        } else {
+            $fields['PROPERTY_COMPOSITION_VALUE'] = [
+                'TYPE' => 'HTML',
                 'TEXT' => '',
             ];
-        $fields['PROPERTY_NORMS_OF_USE_VALUE'] = $fields['~PROPERTY_NORMS_OF_USE_VALUE'] ?? [
-                'TYPE' => '',
+        }
+
+        if ($fields['~PROPERTY_NORMS_OF_USE_VALUE']) {
+            $fields['PROPERTY_NORMS_OF_USE_VALUE']['TEXT'] = htmlspecialchars_decode($fields['~PROPERTY_NORMS_OF_USE_VALUE']['TEXT']);
+            $fields['PROPERTY_NORMS_OF_USE_VALUE']['TYPE'] = '';
+        } else {
+            $fields['PROPERTY_NORMS_OF_USE_VALUE'] = [
+                'TYPE' => 'HTML',
                 'TEXT' => '',
             ];
+        }
+
         parent::__construct($fields);
     }
 
