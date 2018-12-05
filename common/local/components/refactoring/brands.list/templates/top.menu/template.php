@@ -110,7 +110,11 @@ $sPopBrandsTitle = \Bitrix\Main\Localization\Loc::getMessage('MENU_BRANDS.POP_BR
     //
     if($arResult['POPULAR_ITEMS_ARRAY_KEYS']) {
         ?><div class="b-menu-brands__popular-brand">
-            <div class="b-menu-brands__title"><?=$sPopBrandsText?></div>
+            <div class="b-menu-brands__title">
+                <a href="/brand/" class="b-menu-brands__title-link">
+                    <?=$sPopBrandsText?>
+                </a>
+            </div>
             <div class="b-popular-brand b-popular-brand--brands"><?php
                 $iCnt = 0;
                 foreach ($arResult['POPULAR_ITEMS_ARRAY_KEYS'] as $mKey) {

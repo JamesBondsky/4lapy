@@ -55,3 +55,5 @@ Desktop.ini
 /common/local/php_interface/dbconn.php
 
 /local
+
+common/local/resources/sypexgeo/SxGeoCity.dat
