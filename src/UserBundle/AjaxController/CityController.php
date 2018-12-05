@@ -199,14 +199,14 @@ class CityController extends Controller
     }
 
     /**
-    * @Route("/use_yandex_geolocation/", methods={"POST"})
-    *
-    * @param Request $request
-    *
-    * @return JsonResponse
-    * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-    * @throws \Exception
-    */
+     * @Route("/use_yandex_geolocation/", methods={"POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Exception
+     */
     public function useGeolocationAction(Request $request): JsonResponse
     {
         $logger = new Logger('geolocation use');
@@ -245,6 +245,33 @@ class CityController extends Controller
         $sxGeo->setCityFromSxgeo();
         $cityName = $sxGeo->getCityName();
 
+        $responseCode = $this->getGeolocationCityCode($request, $cityName);
+        $jsonResponseCode = json_decode($responseCode->getContent(), true);
+
+        $response = JsonSuccessResponse::createWithData(
+            'Местоположение успешно определено',
+            [
+                'city_name' => $cityName,
+                'city_code' => $jsonResponseCode['data']['city_code'] ? $jsonResponseCode['data']['city_code'] : static::DEFAULT_CITY_CODE
+            ],
+            200,
+            ['reload' => true]
+        );
+
+        return $response;
+    }
+
+    /**
+     * @Route("/get_geolocation_city_code/", methods={"POST"})
+     *
+     * @param Request $request
+     *
+     * @param string $cityName
+     * @return JsonResponse
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public function getGeolocationCityCode(Request $request, string $cityName): JsonResponse
+    {
         $dbVars = \CSaleLocation::GetList(
             null,
             [
@@ -258,17 +285,14 @@ class CityController extends Controller
             ]
         );
         if ($vars = $dbVars->Fetch()) {
-            $cityName = $vars['CITY_NAME'];
             $cityCode = $vars['CODE'];
         } else {
-            $cityName = static::DEFAULT_CITY_NAME;
             $cityCode = static::DEFAULT_CITY_CODE;
         }
 
         $response = JsonSuccessResponse::createWithData(
             'Местоположение успешно определено',
             [
-                'city_name' => $cityName,
                 'city_code' => $cityCode
             ],
             200,
