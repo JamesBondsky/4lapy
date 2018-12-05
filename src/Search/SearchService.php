@@ -178,7 +178,6 @@ class SearchService implements LoggerAwareInterface
 
         $productSearch->getQuery()
             ->setFrom($navigation->getFrom())
-            ->setSize($navigation->getSize())
             ->setSize(100)
             ->setSort($sorting->getRule())
             ->setParam('query', $this->getFullQueryRule($filters, $searchString))
@@ -186,7 +185,6 @@ class SearchService implements LoggerAwareInterface
 
         $brandSearch->getQuery()
             ->setFrom($navigation->getFrom())
-            ->setSize($navigation->getSize())
             ->setSize($cntResults)
             ->setSort($sorting->getRule())
             ->setParam('query', $this->getBrandFullQueryRule($searchString));
@@ -283,7 +281,7 @@ class SearchService implements LoggerAwareInterface
                 ->setFields(['NAME', 'PROPERTY_TRANSLITS'])
                 ->setType('best_fields')
                 ->setFuzziness(0)
-                ->setAnalyzer('full-text-brand-hard-search')
+                ->setAnalyzer('default')
                 ->setParam('boost', 100.0)
                 ->setParam('_name', 'name-fuzzy-word')
                 ->setOperator('and')
@@ -296,23 +294,8 @@ class SearchService implements LoggerAwareInterface
                 ->setFields(['NAME', 'PROPERTY_TRANSLITS'])
                 ->setType('best_fields')
                 ->setFuzziness(1)
-//                ->setPrefixLength(1)
-                ->setAnalyzer('full-text-brand-hard-search')
+                ->setAnalyzer('default')
                 ->setParam('boost', 45.0)
-                ->setParam('_name', 'name-fuzzy-word')
-                ->setOperator('and')
-        );
-
-        //две ошибки
-        $boolQuery->addShould(
-            $queryBuilder->query()->multi_match()
-                ->setQuery($searchString)
-                ->setFields(['NAME', 'PROPERTY_TRANSLITS'])
-                ->setType('best_fields')
-                ->setFuzziness(2)
-//                ->setPrefixLength(1)
-                ->setAnalyzer('full-text-brand-hard-search')
-                ->setParam('boost', 15.0)
                 ->setParam('_name', 'name-fuzzy-word')
                 ->setOperator('and')
         );
@@ -393,7 +376,7 @@ class SearchService implements LoggerAwareInterface
                 ->setFields(['brand.NAME', 'brand.PROPERTY_TRANSLITS'])
                 ->setType('best_fields')
                 ->setFuzziness(0)
-                ->setAnalyzer('full-text-brand-hard-search')
+                ->setAnalyzer('default')
                 ->setParam('boost', 100.0)
                 ->setParam('_name', 'name-fuzzy-word-brand-0')
                 ->setOperator('and')
@@ -406,24 +389,9 @@ class SearchService implements LoggerAwareInterface
                 ->setFields(['brand.NAME', 'brand.PROPERTY_TRANSLITS'])
                 ->setType('best_fields')
                 ->setFuzziness(1)
-                ->setPrefixLength(1)
-                ->setAnalyzer('full-text-brand-hard-search')
+                ->setAnalyzer('default')
                 ->setParam('boost', 45.0)
                 ->setParam('_name', 'name-fuzzy-word-brand-1')
-                ->setOperator('and')
-        );
-
-        //бренды 2 ошибка
-        $boolQuery->addShould(
-            $queryBuilder->query()->multi_match()
-                ->setQuery($searchString)
-                ->setFields(['brand.NAME', 'brand.PROPERTY_TRANSLITS'])
-                ->setType('best_fields')
-                ->setFuzziness(2)
-                ->setPrefixLength(1)
-                ->setAnalyzer('full-text-brand-hard-search')
-                ->setParam('boost', 15.0)
-                ->setParam('_name', 'name-fuzzy-word-brand-2')
                 ->setOperator('and')
         );
 
@@ -436,7 +404,7 @@ class SearchService implements LoggerAwareInterface
                 ->setFields(['sectionName'])
                 ->setType('best_fields')
                 ->setFuzziness(0)
-                ->setAnalyzer('full-text-brand-hard-search')
+                ->setAnalyzer('default')
                 ->setParam('boost', 12.0)
                 ->setParam('_name', 'name-fuzzy-word-section-0')
                 ->setOperator('and')
@@ -449,34 +417,32 @@ class SearchService implements LoggerAwareInterface
                 ->setFields(['sectionName'])
                 ->setType('best_fields')
                 ->setFuzziness(1)
-                ->setPrefixLength(1)
-                ->setAnalyzer('full-text-brand-hard-search')
+                ->setAnalyzer('default')
                 ->setParam('boost', 6.0)
                 ->setParam('_name', 'name-fuzzy-word-section-1')
                 ->setOperator('and')
         );
 
         //2 ошибка
-        $boolQuery->addShould(
-            $queryBuilder->query()->multi_match()
-                ->setQuery($searchString)
-                ->setFields(['sectionName'])
-                ->setType('best_fields')
-                ->setFuzziness(2)
-                ->setPrefixLength(1)
-                ->setAnalyzer('full-text-brand-hard-search')
-                ->setParam('boost', 3.0)
-                ->setParam('_name', 'name-fuzzy-word-section-2')
-                ->setOperator('and')
-        );
+//        $boolQuery->addShould(
+//            $queryBuilder->query()->multi_match()
+//                ->setQuery($searchString)
+//                ->setFields(['sectionName'])
+//                ->setType('best_fields')
+//                ->setFuzziness(2)
+//                ->setAnalyzer('default')
+//                ->setParam('boost', 3.0)
+//                ->setParam('_name', 'name-fuzzy-word-section-2')
+//                ->setOperator('and')
+//        );
 
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['NAME.full_search'])
+                ->setFields(['NAME.synonym'])
                 ->setType('best_fields')
                 ->setFuzziness(0)
-                ->setAnalyzer('default')
+//                ->setAnalyzer('default')
                 ->setParam('boost', 50)
                 ->setParam('_name', 'name-fuzzy-word-name-0')
                 ->setOperator('and')
@@ -487,37 +453,35 @@ class SearchService implements LoggerAwareInterface
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['NAME.full_search'])
+                ->setFields(['NAME.synonym'])
                 ->setType('best_fields')
                 ->setFuzziness(1)
-                ->setPrefixLength(1)
-                ->setAnalyzer('default')
+//                ->setAnalyzer('default')
                 ->setParam('boost', 25)
                 ->setParam('_name', 'name-fuzzy-word-name-1')
                 ->setOperator('and')
         );
 
         //2 ошибка
-        $boolQuery->addShould(
-            $queryBuilder->query()->multi_match()
-                ->setQuery($searchString)
-                ->setFields(['NAME.full_search'])
-                ->setType('best_fields')
-                ->setFuzziness(2)
-                ->setPrefixLength(1)
-                ->setAnalyzer('full-text-brand-hard-search')
-                ->setParam('boost', 10)
-                ->setParam('_name', 'name-fuzzy-word-name-2')
-                ->setOperator('and')
-        );
+//        $boolQuery->addShould(
+//            $queryBuilder->query()->multi_match()
+//                ->setQuery($searchString)
+//                ->setFields(['NAME.full_search'])
+//                ->setType('best_fields')
+//                ->setFuzziness(2)
+//                ->setAnalyzer('default')
+//                ->setParam('boost', 10)
+//                ->setParam('_name', 'name-fuzzy-word-name-2')
+//                ->setOperator('and')
+//        );
 
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['PREVIEW_TEXT', 'DETAIL_TEXT'])
+                ->setFields(['PREVIEW_TEXT.synonym', 'DETAIL_TEXT.synonym'])
                 ->setType('best_fields')
                 ->setFuzziness(0)
-                ->setAnalyzer('default')
+//                ->setAnalyzer('default')
                 ->setParam('boost', 35)
                 ->setParam('_name', 'name-fuzzy-word-name-0')
                 ->setOperator('and')
@@ -528,29 +492,27 @@ class SearchService implements LoggerAwareInterface
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['PREVIEW_TEXT', 'DETAIL_TEXT'])
+                ->setFields(['PREVIEW_TEXT.synonym', 'DETAIL_TEXT.synonym'])
                 ->setType('best_fields')
                 ->setFuzziness(1)
-                ->setPrefixLength(1)
-                ->setAnalyzer('default')
+//                ->setAnalyzer('default')
                 ->setParam('boost', 10)
                 ->setParam('_name', 'name-fuzzy-word-name-1')
                 ->setOperator('and')
         );
 
         //2 ошибка
-        $boolQuery->addShould(
-            $queryBuilder->query()->multi_match()
-                ->setQuery($searchString)
-                ->setFields(['PREVIEW_TEXT', 'DETAIL_TEXT'])
-                ->setType('best_fields')
-                ->setFuzziness(2)
-                ->setPrefixLength(1)
-                ->setAnalyzer('full-text-brand-hard-search')
-                ->setParam('boost', 5)
-                ->setParam('_name', 'name-fuzzy-word-name-2')
-                ->setOperator('and')
-        );
+//        $boolQuery->addShould(
+//            $queryBuilder->query()->multi_match()
+//                ->setQuery($searchString)
+//                ->setFields(['PREVIEW_TEXT', 'DETAIL_TEXT'])
+//                ->setType('best_fields')
+//                ->setFuzziness(2)
+//                ->setAnalyzer('default')
+//                ->setParam('boost', 5)
+//                ->setParam('_name', 'name-fuzzy-word-name-2')
+//                ->setOperator('and')
+//        );
 
         return $boolQuery;
     }
@@ -577,7 +539,7 @@ class SearchService implements LoggerAwareInterface
                 ->setFields(['brand.NAME', 'brand.PROPERTY_TRANSLITS'])
                 ->setType('best_fields')
                 ->setFuzziness(0)
-                ->setAnalyzer('full-text-brand-hard-search')
+                ->setAnalyzer('default')
                 ->setParam('boost', 25.0)
                 ->setParam('_name', 'name-fuzzy-word-brand-0')
                 ->setOperator('and')
@@ -590,24 +552,9 @@ class SearchService implements LoggerAwareInterface
                 ->setFields(['brand.NAME', 'brand.PROPERTY_TRANSLITS'])
                 ->setType('best_fields')
                 ->setFuzziness(1)
-                ->setPrefixLength(1)
-                ->setAnalyzer('full-text-brand-hard-search')
+                ->setAnalyzer('default')
                 ->setParam('boost', 12.0)
                 ->setParam('_name', 'name-fuzzy-word-brand-1')
-                ->setOperator('and')
-        );
-
-        //бренды 2 ошибка
-        $boolQuery->addShould(
-            $queryBuilder->query()->multi_match()
-                ->setQuery($searchString)
-                ->setFields(['brand.NAME', 'brand.PROPERTY_TRANSLITS'])
-                ->setType('best_fields')
-                ->setFuzziness(2)
-                ->setPrefixLength(1)
-                ->setAnalyzer('full-text-brand-hard-search')
-                ->setParam('boost', 7.0)
-                ->setParam('_name', 'name-fuzzy-word-brand-2')
                 ->setOperator('and')
         );
 
@@ -615,54 +562,52 @@ class SearchService implements LoggerAwareInterface
         //////////////////////////
         /// Разделы и названия ///
         //////////////////////////
-        $boolQuery->addShould(
-            $queryBuilder->query()->multi_match()
-                ->setQuery($searchString)
-                ->setFields(['sectionName'])
-                ->setType('best_fields')
-                ->setFuzziness(0)
-                ->setAnalyzer('full-text-brand-hard-search')
-                ->setParam('boost', 100.0)
-                ->setParam('_name', 'name-fuzzy-word-section-0')
-                ->setOperator('and')
-        );
-
-        //1 ошибка
-        $boolQuery->addShould(
-            $queryBuilder->query()->multi_match()
-                ->setQuery($searchString)
-                ->setFields(['sectionName'])
-                ->setType('best_fields')
-                ->setFuzziness(1)
-                ->setPrefixLength(1)
-                ->setAnalyzer('full-text-brand-hard-search')
-                ->setParam('boost', 50)
-                ->setParam('_name', 'name-fuzzy-word-section-1')
-                ->setOperator('and')
-        );
+//        $boolQuery->addShould(
+//            $queryBuilder->query()->multi_match()
+//                ->setQuery($searchString)
+//                ->setFields(['sectionName'])
+//                ->setType('best_fields')
+//                ->setFuzziness(0)
+//                ->setAnalyzer('full-text-brand-hard-search')
+//                ->setParam('boost', 100.0)
+//                ->setParam('_name', 'name-fuzzy-word-section-0')
+//                ->setOperator('and')
+//        );
+//
+//        //1 ошибка
+//        $boolQuery->addShould(
+//            $queryBuilder->query()->multi_match()
+//                ->setQuery($searchString)
+//                ->setFields(['sectionName'])
+//                ->setType('best_fields')
+//                ->setFuzziness(1)
+//                ->setAnalyzer('full-text-brand-hard-search')
+//                ->setParam('boost', 50)
+//                ->setParam('_name', 'name-fuzzy-word-section-1')
+//                ->setOperator('and')
+//        );
 
         //2 ошибка
-        $boolQuery->addShould(
-            $queryBuilder->query()->multi_match()
-                ->setQuery($searchString)
-                ->setFields(['sectionName'])
-                ->setType('best_fields')
-                ->setFuzziness(2)
-                ->setPrefixLength(1)
-                ->setAnalyzer('full-text-brand-hard-search')
-                ->setParam('boost', 25)
-                ->setParam('_name', 'name-fuzzy-word-section-2')
-                ->setOperator('and')
-        );
+//        $boolQuery->addShould(
+//            $queryBuilder->query()->multi_match()
+//                ->setQuery($searchString)
+//                ->setFields(['sectionName'])
+//                ->setType('best_fields')
+//                ->setFuzziness(2)
+//                ->setAnalyzer('default')
+//                ->setParam('boost', 25)
+//                ->setParam('_name', 'name-fuzzy-word-section-2')
+//                ->setOperator('and')
+//        );
 
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['NAME'])
+                ->setFields(['NAME.synonym'])
                 ->setType('best_fields')
                 ->setFuzziness(0)
-                ->setAnalyzer('full-text-brand-hard-search')
-                ->setParam('boost', 60.0)
+//                ->setAnalyzer('detail-text-analyzator')
+                ->setParam('boost', 100.0)
                 ->setParam('_name', 'name-fuzzy-word-name-0')
                 ->setOperator('and')
         );
@@ -672,12 +617,11 @@ class SearchService implements LoggerAwareInterface
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['NAME'])
+                ->setFields(['NAME.synonym'])
                 ->setType('best_fields')
                 ->setFuzziness(1)
-                ->setPrefixLength(1)
-                ->setAnalyzer('full-text-brand-hard-search')
-                ->setParam('boost', 30)
+//                ->setAnalyzer('detail-text-analyzator')
+                ->setParam('boost', 50)
                 ->setParam('_name', 'name-fuzzy-word-name-1')
                 ->setOperator('and')
         );
@@ -686,11 +630,10 @@ class SearchService implements LoggerAwareInterface
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['NAME'])
+                ->setFields(['NAME.synonym'])
                 ->setType('best_fields')
                 ->setFuzziness(2)
-                ->setPrefixLength(1)
-                ->setAnalyzer('full-text-brand-hard-search')
+//                ->setAnalyzer('detail-text-analyzator')
                 ->setParam('boost', 15)
                 ->setParam('_name', 'name-fuzzy-word-name-2')
                 ->setOperator('and')
@@ -699,10 +642,10 @@ class SearchService implements LoggerAwareInterface
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['PREVIEW_TEXT', 'DETAIL_TEXT'])
+                ->setFields(['PREVIEW_TEXT.synonym', 'DETAIL_TEXT.synonym'])
                 ->setType('best_fields')
                 ->setFuzziness(0)
-                ->setAnalyzer('default')
+//                ->setAnalyzer('detail-text-analyzator')
                 ->setParam('boost', 35)
                 ->setParam('_name', 'name-fuzzy-word-name-0')
                 ->setOperator('and')
@@ -713,29 +656,27 @@ class SearchService implements LoggerAwareInterface
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['PREVIEW_TEXT', 'DETAIL_TEXT'])
+                ->setFields(['PREVIEW_TEXT.synonym', 'DETAIL_TEXT.synonym'])
                 ->setType('best_fields')
                 ->setFuzziness(1)
-                ->setPrefixLength(1)
-                ->setAnalyzer('default')
+//                ->setAnalyzer('detail-text-analyzator')
                 ->setParam('boost', 10)
                 ->setParam('_name', 'name-fuzzy-word-name-1')
                 ->setOperator('and')
         );
 
-        //2 ошибка
-        $boolQuery->addShould(
-            $queryBuilder->query()->multi_match()
-                ->setQuery($searchString)
-                ->setFields(['PREVIEW_TEXT', 'DETAIL_TEXT'])
-                ->setType('best_fields')
-                ->setFuzziness(2)
-                ->setPrefixLength(1)
-                ->setAnalyzer('full-text-brand-hard-search')
-                ->setParam('boost', 5)
-                ->setParam('_name', 'name-fuzzy-word-name-2')
-                ->setOperator('and')
-        );
+//        //2 ошибка
+//        $boolQuery->addShould(
+//            $queryBuilder->query()->multi_match()
+//                ->setQuery($searchString)
+//                ->setFields(['PREVIEW_TEXT', 'DETAIL_TEXT'])
+//                ->setType('best_fields')
+//                ->setFuzziness(2)
+//                ->setAnalyzer('full-text-brand-hard-search')
+//                ->setParam('boost', 5)
+//                ->setParam('_name', 'name-fuzzy-word-name-2')
+//                ->setOperator('and')
+//        );
 
         return $boolQuery;
     }

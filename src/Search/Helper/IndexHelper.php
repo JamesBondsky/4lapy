@@ -200,17 +200,16 @@ class IndexHelper implements LoggerAwareInterface
                                     'russian_stemmer',
                                 ],
                             ],
-                            'analyzer_3000' => [
+                            'detail-text-analyzator' => [
+                                'type'      => 'custom',
                                 'tokenizer' => 'standard',
-                                'filter' => [
-                                    'standard',
+                                'filter'    => [
                                     'lowercase',
-//                                    'russian_stop',
-//                                    'russian_stemmer',
-                                    'phonetic_english',
-                                    'phonetic_cyrillic',
-                                ]
-                            ]
+                                    'synonym',
+                                    'russian_stop',
+                                    'russian_stemmer',
+                                ],
+                            ],
                         ],
                         'filter'      => [
                             'autocomplete_filter' => [
@@ -279,21 +278,37 @@ class IndexHelper implements LoggerAwareInterface
                                 'CODE'                            => ['type' => 'keyword'],
                                 'XML_ID'                          => ['type' => 'keyword'],
                                 'SORT'                            => ['type' => 'integer'],
-                                'PREVIEW_TEXT'                    => ['type' => 'text'],
+                                'PREVIEW_TEXT'                    => [
+                                    'type' => 'text',
+                                    'fields' => [
+                                        'synonym' => [
+                                            'type' => 'text',
+                                            'analyzer' => 'detail-text-analyzator'
+                                        ],
+                                        'synonym_keyword' => [
+                                            'type' => 'keyword',
+//                                            'analyzer' => 'detail-text-analyzator'
+                                        ],
+                                    ]
+                                ],
                                 'PREVIEW_TEXT_TYPE'               => ['type' => 'keyword', 'index' => false],
-                                'DETAIL_TEXT'                     => ['type' => 'text'],
+                                'DETAIL_TEXT' => [
+                                    'type' => 'text',
+                                    'fields' => [
+                                        'synonym' => [
+                                            'type' => 'text',
+                                            'analyzer' => 'detail-text-analyzator'
+                                        ],
+                                        'synonym_keyword' => [
+                                            'type' => 'keyword',
+//                                            'analyzer' => 'detail-text-analyzator'
+                                        ],
+                                    ]
+                                ],
                                 'DETAIL_TEXT_TYPE'                => ['type' => 'keyword', 'index' => false],
                                 'DETAIL_PAGE_URL'                 => ['type' => 'text', 'index' => false],
                                 'CANONICAL_PAGE_URL'              => ['type' => 'text', 'index' => false],
-                                'NAME'                            => [
-                                    'type' => 'text',
-                                    'fields' => [
-                                        'phonetic' => [
-                                            'type' => 'text',
-                                            'analyzer' => 'analyzer_3000'
-                                        ]
-                                    ]
-                                ],
+                                'NAME'                            => ['type' => 'text'],
                                 'PROPERTY_POPULAR'                => ['type' => 'boolean'],
                                 'PROPERTY_CATALOG_INNER_BANNER'   => ['type' => 'text'],
                                 'PROPERTY_TRANSLITS'              => ['type' => 'text'],
@@ -309,15 +324,7 @@ class IndexHelper implements LoggerAwareInterface
                                 'CODE'                      => ['type' => 'keyword'],
                                 'XML_ID'                    => ['type' => 'keyword'],
                                 'SORT'                      => ['type' => 'integer'],
-                                'NAME'                      => [
-                                    'type' => 'text',
-                                    'fields' => [
-                                        'phonetic' => [
-                                            'type' => 'text',
-                                            'analyzer' => 'analyzer_3000'
-                                        ]
-                                    ]
-                                ],
+                                'NAME'                      => ['type' => 'text'],
                                 'PROPERTY_VOLUME'           => ['type' => 'float'],
                                 'PROPERTY_VOLUME_REFERENCE' => ['type' => 'keyword'],
                                 'PROPERTY_COLOUR'           => ['type' => 'keyword'],
@@ -344,23 +351,39 @@ class IndexHelper implements LoggerAwareInterface
                         ],
                         'active'                           => ['type' => 'boolean'],
                         'sectionIdList'                    => ['type' => 'integer'],
-                        'sectionName'                      => [
-                            'type' => 'text',
-                            'fields' => [
-                                'phonetic' => [
-                                    'type' => 'text',
-                                    'analyzer' => 'analyzer_3000'
-                                ]
-                            ]
-                        ],
+                        'sectionName'                      => ['type' => 'text'],
                         'ID'                               => ['type' => 'integer'],
                         'CODE'                             => ['type' => 'keyword'],
                         'XML_ID'                           => ['type' => 'keyword'],
                         'SORT'                             => ['type' => 'integer'],
-                        'PREVIEW_TEXT'                     => ['type' => 'text'],
-                        'PREVIEW_TEXT_TYPE'                => ['type' => 'keyword', 'index' => false],
-                        'DETAIL_TEXT'                      => ['type' => 'text'],
-                        'DETAIL_TEXT_TYPE'                 => ['type' => 'keyword', 'index' => false],
+                        'PREVIEW_TEXT'                    => [
+                            'type' => 'text',
+                            'fields' => [
+                                'synonym' => [
+                                    'type' => 'text',
+                                    'analyzer' => 'detail-text-analyzator'
+                                ],
+                                'synonym_keyword' => [
+                                    'type' => 'keyword',
+//                                    'analyzer' => 'detail-text-analyzator'
+                                ],
+                            ]
+                        ],
+                        'PREVIEW_TEXT_TYPE'               => ['type' => 'keyword', 'index' => false],
+                        'DETAIL_TEXT' => [
+                            'type' => 'text',
+                            'fields' => [
+                                'synonym' => [
+                                    'type' => 'text',
+                                    'analyzer' => 'detail-text-analyzator'
+                                ],
+                                'synonym_keyword' => [
+                                    'type' => 'keyword',
+//                                    'analyzer' => 'detail-text-analyzator'
+                                ],
+                            ]
+                        ],
+                        'DETAIL_TEXT_TYPE'                => ['type' => 'keyword', 'index' => false],
                         'DETAIL_PAGE_URL'                  => ['type' => 'text', 'index' => false],
                         'CANONICAL_PAGE_URL'               => ['type' => 'text', 'index' => false],
                         'dateActiveFrom'                   => ['type' => 'date', 'format' => 'date_optional_time'],
@@ -368,14 +391,14 @@ class IndexHelper implements LoggerAwareInterface
                         'NAME'                             => [
                             'type' => 'text',
                             'fields' => [
-                                'full_search' => [
+                                'synonym' => [
                                     'type' => 'text',
-                                    'analyzer' => 'default'
+                                    'analyzer' => 'detail-text-analyzator'
                                 ],
-                                'phonetic' => [
-                                    'type' => 'text',
-                                    'analyzer' => 'analyzer_3000'
-                                ]
+                                'synonym_keyword' => [
+                                    'type' => 'keyword',
+//                                    'analyzer' => 'detail-text-analyzator'
+                                ],
                             ]
                         ],
                         'PROPERTY_BRAND'                   => ['type' => 'integer'],
@@ -431,21 +454,37 @@ class IndexHelper implements LoggerAwareInterface
                         'CODE'                            => ['type' => 'keyword'],
                         'XML_ID'                          => ['type' => 'keyword'],
                         'SORT'                            => ['type' => 'integer'],
-                        'PREVIEW_TEXT'                    => ['type' => 'text'],
+                        'PREVIEW_TEXT'                    => [
+                            'type' => 'text',
+                            'fields' => [
+                                'synonym' => [
+                                    'type' => 'text',
+                                    'analyzer' => 'detail-text-analyzator'
+                                ],
+                                'synonym_keyword' => [
+                                    'type' => 'keyword',
+//                                    'analyzer' => 'detail-text-analyzator'
+                                ],
+                            ]
+                        ],
                         'PREVIEW_TEXT_TYPE'               => ['type' => 'keyword', 'index' => false],
-                        'DETAIL_TEXT'                     => ['type' => 'text'],
+                        'DETAIL_TEXT' => [
+                            'type' => 'text',
+                            'fields' => [
+                                'synonym' => [
+                                    'type' => 'text',
+                                    'analyzer' => 'detail-text-analyzator'
+                                ],
+                                'synonym_keyword' => [
+                                    'type' => 'keyword',
+//                                    'analyzer' => 'detail-text-analyzator'
+                                ],
+                            ]
+                        ],
                         'DETAIL_TEXT_TYPE'                => ['type' => 'keyword', 'index' => false],
                         'DETAIL_PAGE_URL'                 => ['type' => 'text', 'index' => false],
                         'CANONICAL_PAGE_URL'              => ['type' => 'text', 'index' => false],
-                        'NAME'                            => [
-                            'type' => 'text',
-                            'fields' => [
-                                'phonetic' => [
-                                    'type' => 'text',
-                                    'analyzer' => 'analyzer_3000'
-                                ]
-                            ]
-                        ],
+                        'NAME'                            => ['type' => 'text'],
                         'PROPERTY_POPULAR'                => ['type' => 'boolean'],
                         'PROPERTY_CATALOG_INNER_BANNER'   => ['type' => 'text'],
                         'PROPERTY_TRANSLITS'              => ['type' => 'text'],

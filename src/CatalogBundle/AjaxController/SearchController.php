@@ -117,14 +117,27 @@ class SearchController extends Controller
                         } elseif ($key == 'suggests') {
                             if ($offer != false) {
                                 if (empty($res[$key][$offer->getProduct()->getIblockSectionId()])) {
+                                    $curScore = $item->getHitMetaInfo()->getScore();
                                     $res[$key][$offer->getProduct()->getIblockSectionId()] = [
                                         'NAME' => $offer->getProduct()->getSection()->getName(),
                                         'DETAIL_PAGE_URL' => $offer->getProduct()->getSection()->getSectionPageUrl(),
-                                        'SCORE' => $item->getHitMetaInfo()->getScore()
+                                        'SCORE' => $item->getHitMetaInfo()->getScore(),
+//                                        'ELEMENTS' => [
+//                                            [
+//                                                'NAME' => $offer->getProduct()->getName(),
+//                                                'URL' => $offer->getProduct()->getDetailPageUrl(),
+//                                                'SCORE' => $curScore
+//                                            ]
+//                                        ]
                                     ];
                                 } else {
                                     $curScore = $item->getHitMetaInfo()->getScore();
                                     $res[$key][$offer->getProduct()->getIblockSectionId()]['SCORE'] += $curScore;
+//                                    $res[$key][$offer->getProduct()->getIblockSectionId()]['ELEMENTS'][] = [
+//                                        'NAME' => $offer->getProduct()->getName(),
+//                                        'URL' => $offer->getProduct()->getDetailPageUrl(),
+//                                        'SCORE' => $curScore
+//                                    ];
                                 }
                             }
                         }
@@ -144,10 +157,6 @@ class SearchController extends Controller
             $res['products'] = [];
         } else {
             $res['products'] = [$res['products'][0]];
-        }
-
-        if (count($res['brands']) > 3) {
-
         }
 
         return JsonSuccessResponse::createWithData('', $res)->setEncodingOptions(JSON_UNESCAPED_UNICODE);
