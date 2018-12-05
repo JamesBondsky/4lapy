@@ -53,10 +53,10 @@ class AuthController extends Controller
      */
     public function loginAction(Request $request): JsonResponse
     {
-        if (!check_bitrix_sessid()) {
+        $action = $request->get('action', '');
+        if ($action == 'login' && !check_bitrix_sessid()) {
             return JsonErrorResponse::createWithData('Ошибка проверки сессии');
         }
-        $action = $request->get('action', '');
         CBitrixComponent::includeComponentClass('fourpaws:auth.form');
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         try {
