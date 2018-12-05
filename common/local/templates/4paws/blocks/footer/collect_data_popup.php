@@ -81,7 +81,7 @@ if($USER->IsAuthorized()) {
                 $('#data_collect').trigger('click');
 
                 $('form.collector-form input').each(function () {
-                   if($(this).val().length > 2) $(this).attr('disabled', "");
+                   if($(this).val().length > 2) $(this).attr('readonly', "");
                 });
 
                 let modals_counter = [<?=$modal_counts[0]?>, <?=$modal_counts[1]?>, <?=$modal_counts[2]?>];
