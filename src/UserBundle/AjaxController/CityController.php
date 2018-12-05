@@ -245,7 +245,7 @@ class CityController extends Controller
         $sxGeo->setCityFromSxgeo();
         $cityName = $sxGeo->getCityName();
 
-        $responseCode = $this->getGeolocationCityCode($request, $cityName);
+        $responseCode = $this->getGeolocationCityCode(json_encode(['city_name' => $cityName]));
         $jsonResponseCode = json_decode($responseCode->getContent(), true);
 
         $response = JsonSuccessResponse::createWithData(
@@ -264,30 +264,33 @@ class CityController extends Controller
     /**
      * @Route("/get_geolocation_city_code/", methods={"POST"})
      *
-     * @param Request $request
-     *
-     * @param string $cityName
+     * @param string $request
      * @return JsonResponse
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    public function getGeolocationCityCode(Request $request, string $cityName): JsonResponse
+    public function getGeolocationCityCode(string $request): JsonResponse
     {
-        $dbVars = \CSaleLocation::GetList(
-            null,
-            [
-                'CITY_NAME' => $cityName
-            ],
-            false,
-            false,
-            [
-                'CITY_NAME',
-                'CODE'
-            ]
-        );
-        if ($vars = $dbVars->Fetch()) {
-            $cityCode = $vars['CODE'];
-        } else {
+        $cityName = json_decode($request, true)['city_name'];
+        if (!$cityName) {
             $cityCode = static::DEFAULT_CITY_CODE;
+        } else {
+            $dbVars = \CSaleLocation::GetList(
+                null,
+                [
+                    'CITY_NAME' => $cityName
+                ],
+                false,
+                false,
+                [
+                    'CITY_NAME',
+                    'CODE'
+                ]
+            );
+            if ($vars = $dbVars->Fetch()) {
+                $cityCode = $vars['CODE'];
+            } else {
+                $cityCode = static::DEFAULT_CITY_CODE;
+            }
         }
 
         $response = JsonSuccessResponse::createWithData(
