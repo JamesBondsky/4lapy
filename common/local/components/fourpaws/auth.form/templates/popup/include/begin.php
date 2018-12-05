@@ -32,6 +32,7 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
               data-url="/ajax/user/auth/login/"
               onsubmit="<?= $arResult['ON_SUBMIT'] ?>"
               method="post">
+            <?= bitrix_sessid_post() ?>
             <input type="hidden" name="action" value="login" class="js-no-valid">
             <?php if (!CatalogLandingService::isLandingPage()) { ?>
                 <input type="hidden" name="backurl" value="<?= $backUrl ?>" class="js-no-valid">
