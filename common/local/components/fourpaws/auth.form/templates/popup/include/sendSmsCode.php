@@ -20,6 +20,7 @@ use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
           id="reg-step3-form"
           data-url="/ajax/user/auth/login/"
           method="post">
+        <?= bitrix_sessid_post() ?>
         <input type="hidden" name="action" value="savePhone">
         <input type="hidden" name="phone" value="<?= $phone ?>">
         <input type="hidden" name="backurl" value="<?= $backUrl ?>" class="js-no-valid">
