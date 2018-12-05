@@ -85,7 +85,9 @@
       "common/local/modules/{$name}/": [
         "type:bitrix-module"
       ]
-    }
+    },
+    "sypexgeo_remote": "https://sypexgeo.net/files/SxGeoCity_utf8.zip",
+    "sypexgeo_local": "./common/local/resources/sypexgeo/SxGeoCity.dat"
   },
   "require": {
     "adv/bitrix-tools": "^1.0",
@@ -97,6 +99,7 @@
     "doctrine/collections": "^1.4",
     "friendsofsymfony/rest-bundle": "^2.2",
     "gietos/dadata": "^1.1",
+    "igi/sypexgeo": "dev-master",
     "incenteev/composer-parameter-handler": "^2.1",
     "jms/serializer": "^1.9",
     "jms/serializer-bundle": "~2.1.0",
@@ -115,9 +118,9 @@
     "theiconic/php-ga-measurement-protocol": "^2.0",
     "twig/twig": "^1.0",
     "webarchitect609/bitrix-cache": "^1.0",
+    "webarchitect609/bitrix-iblock-property-type": "^1.0",
     "webarchitect609/bitrix-neverinclude": "^0.4.2",
-    "webarchitect609/bitrix-user-type": "^0.1.0",
-    "webarchitect609/bitrix-iblock-property-type": "^1.0"
+    "webarchitect609/bitrix-user-type": "^0.1.0"
   },
   "require-dev": {
     "codeception/codeception": "^2.3",
@@ -143,7 +146,8 @@
   ],
   "scripts": {
     "post-install-cmd": [
-      "Incenteev\\ParameterHandler\\ScriptHandler::buildParameters"
+      "Incenteev\\ParameterHandler\\ScriptHandler::buildParameters",
+      "IgI\\SypexGeo\\Composer::installDatabases"
     ],
     "post-update-cmd": [
       "Incenteev\\ParameterHandler\\ScriptHandler::buildParameters"
