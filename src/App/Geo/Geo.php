@@ -147,7 +147,7 @@ class Geo
 
     public function setCityFromSxgeo()
     {
-        $ip = '178.169.87.30' ?: false;
+        $ip = $_SERVER['REMOTE_ADDR'] ?: false;
 
         if ($ip) {
             /** выставляем кодировку для работы с базой sxgeo (опять битрикс своим mbstring.func_overload поднасрал!!!) */
