@@ -16,6 +16,7 @@ use Monolog\Logger;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
+use FourPaws\App\Geo\Geo as SxGeo;
 
 /**
  * Class CityController
@@ -25,6 +26,9 @@ use Symfony\Component\HttpFoundation\Request;
 class CityController extends Controller
 {
     use LazyLoggerAwareTrait;
+
+    const DEFAULT_CITY_NAME = 'Москва';
+    const DEFAULT_CITY_CODE = '0000073738';
 
     /**@var UserService */
     protected $userService;
@@ -195,14 +199,14 @@ class CityController extends Controller
     }
 
     /**
-    * @Route("/use_yandex_geolocation/", methods={"POST", "GET"})
-    *
-    * @param Request $request
-    *
-    * @return JsonResponse
-    * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-    * @throws \Exception
-    */
+     * @Route("/use_yandex_geolocation/", methods={"POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Exception
+     */
     public function useGeolocationAction(Request $request): JsonResponse
     {
         $logger = new Logger('geolocation use');
@@ -223,6 +227,101 @@ class CityController extends Controller
             200,
             ['reload' => true]
         );
+        return $response;
+    }
+
+    /**
+     * @Route("/get_geolocation/", methods={"POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Exception
+     */
+    public function useGetGeolocationAction(Request $request): JsonResponse
+    {
+        $sxGeo = new SxGeo();
+        $sxGeo->setCityFromSxgeo();
+        $cityName = $sxGeo->getCityName();
+
+        if (!$cityName) {
+            $cityCode = static::DEFAULT_CITY_CODE;
+        } else {
+            $dbVars = \CSaleLocation::GetList(
+                null,
+                [
+                    'CITY_NAME' => $cityName
+                ],
+                false,
+                false,
+                [
+                    'CITY_NAME',
+                    'CODE'
+                ]
+            );
+
+            if ($vars = $dbVars->Fetch()) {
+                $cityCode = $vars['CODE'];
+            } else {
+                $cityCode = static::DEFAULT_CITY_CODE;
+            }
+        }
+
+        $response = JsonSuccessResponse::createWithData(
+            'Местоположение успешно определено',
+            [
+                'city_name' => $cityName,
+                'city_code' => $cityCode
+            ],
+            200,
+            ['reload' => true]
+        );
+
+        return $response;
+    }
+
+    /**
+     * @Route("/get_geolocation_city_code/", methods={"POST"})
+     *
+     * @param Request $request
+     * @return JsonResponse
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public function getGeolocationCityCode(Request $request): JsonResponse
+    {
+        $cityName = json_decode($request->getContent(), true)['city_name'];
+        if (!$cityName) {
+            $cityCode = static::DEFAULT_CITY_CODE;
+        } else {
+            $dbVars = \CSaleLocation::GetList(
+                null,
+                [
+                    'CITY_NAME' => $cityName
+                ],
+                false,
+                false,
+                [
+                    'CITY_NAME',
+                    'CODE'
+                ]
+            );
+            if ($vars = $dbVars->Fetch()) {
+                $cityCode = $vars['CODE'];
+            } else {
+                $cityCode = static::DEFAULT_CITY_CODE;
+            }
+        }
+
+        $response = JsonSuccessResponse::createWithData(
+            'Местоположение успешно определено',
+            [
+                'city_code' => $cityCode
+            ],
+            200,
+            ['reload' => true]
+        );
+
         return $response;
     }
 

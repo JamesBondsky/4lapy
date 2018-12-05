@@ -39,7 +39,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
              */
             ?>
         </div>
-        <div class="b-common-section__content b-common-section__content--sale js-popular-product">
+        <div class="b-common-section__content b-common-section__content--sale b-common-section__content--main-sale js-popular-product">
             <?php 
             $i = 0;
             foreach ($component->getProductCollection() as $key => $product) {

@@ -31,3 +31,12 @@ $retailRocket = $container->get(RetailRocketService::class);
         f.parentNode.insertBefore(j, f);
     })(window, document, 'script', 'dataLayer', 'GTM-NXNPF4Z');
 </script>
+<!-- Global site tag (gtag.js) - Google Ads: 832765585 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-832765585"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'AW-832765585');
+</script>
