@@ -9,6 +9,7 @@ use Elastica\Query;
 use Elastica\Query\AbstractQuery;
 use Elastica\Query\BoolQuery;
 use Elastica\QueryBuilder;
+use Elastica\Search;
 use Elastica\Suggest;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\FilterCollection;
@@ -16,8 +17,10 @@ use FourPaws\Catalog\Model\Filter\FilterInterface;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Model\Sorting;
 use FourPaws\CatalogBundle\Service\SortService;
+use FourPaws\Search\Enum\DocumentType;
 use FourPaws\Search\Helper\AggsHelper;
 use FourPaws\Search\Helper\IndexHelper;
+use FourPaws\Search\Model\CombinedSearchResult;
 use FourPaws\Search\Model\Navigation;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\Model\ProductSuggestResult;
@@ -108,15 +111,16 @@ class SearchService implements LoggerAwareInterface
         }
 
         $search->getQuery()
-               ->setFrom($navigation->getFrom())
-               ->setSize($navigation->getSize())
-               ->setSort($sorting->getRule())
-               ->setParam('query', $this->getFullQueryRule($filters, $searchString))
-               ->setHighlight(['fields' => ['offers.XML_ID' => (object)[]]]);
+            ->setFrom($navigation->getFrom())
+            ->setSize($navigation->getSize())
+            ->setSort($sorting->getRule())
+            ->setParam('query', $this->getFullQueryRule($filters, $searchString))
+            ->setHighlight(['fields' => ['offers.XML_ID' => (object)[]]]);
 
         $this->getAggsHelper()->setAggs($search->getQuery(), $filters);
 
         $resultSet = $search->search();
+
         // если задана строка поиска и не найдено совпадений, то пробуем в другой раскладке
         if ($searchString && !$resultSet->getTotalHits()) {
             $from = preg_match('/[ЁёА-я]/u', $searchString) ? 'ru' : 'en';
@@ -142,6 +146,61 @@ class SearchService implements LoggerAwareInterface
         return new ProductSearchResult($resultSet, $navigation, $searchString);
     }
 
+    public function searchAll(
+        FilterCollection $filters,
+        Sorting $sorting,
+        Navigation $navigation,
+        string $searchString = ''
+    )
+    {
+
+        $multiSearch = $this->getIndexHelper()->createAllTypesSearch();
+
+        $productSearch = $this->getIndexHelper()->createProductSearch();
+        $brandSearch = $this->getIndexHelper()->createBrandSearch();
+        $suggestSearch = $this->getIndexHelper()->createSuggestSearch();
+
+        if ($searchString !== '') {
+            $productSearch->getQuery()->setMinScore(0.9);
+            $brandSearch->getQuery()->setMinScore(0.9);
+            $suggestSearch->getQuery()->setMinScore(0.9);
+        }
+
+        $productSearch->getQuery()
+            ->setFrom($navigation->getFrom())
+            ->setSize($navigation->getSize())
+            ->setSort($sorting->getRule())
+            ->setParam('query', $this->getFullQueryRule($filters, $searchString))
+            ->setHighlight(['fields' => ['offers.XML_ID' => (object)[]]]);
+
+        $brandSearch->getQuery()
+            ->setFrom($navigation->getFrom())
+            ->setSize($navigation->getSize())
+            ->setSort($sorting->getRule())
+            ->setParam('query', $this->getBrandFullQueryRule($searchString));
+
+        $suggestSearch->getQuery()
+            ->setFrom($navigation->getFrom())
+            ->setSize(10)
+            ->setSort($sorting->getRule())
+            ->setParam('query', $this->getSuggestionsMax($searchString));
+
+
+        $suggestSearch->addType(DocumentType::PRODUCT);
+
+        $this->getAggsHelper()->setAggs($productSearch->getQuery(), $filters);
+
+        $multiSearch->setSearches([
+            'brands' => $brandSearch,
+            'products' => $productSearch,
+            'suggests' => $suggestSearch
+        ]);
+
+        $resultSet = $multiSearch->search();
+
+        return new CombinedSearchResult($resultSet, $navigation);
+    }
+
     /**
      * Автокомплит для товаров
      *
@@ -158,7 +217,7 @@ class SearchService implements LoggerAwareInterface
 
         $completion = new Suggest\Completion('product_suggest', 'suggest');
         $completion->setText($searchString);
-        $completion->setParam('fuzzy', ['fuzziness' => 2]);
+        $completion->setParam('fuzzy', ['fuzziness' => 'auto']);
         $completion->setParam('size', $navigation->getSize());
         $suggest->addSuggestion($completion);
 
@@ -191,6 +250,62 @@ class SearchService implements LoggerAwareInterface
         return $filterSet;
     }
 
+    public function getBrandQueryRule(string $searchString): BoolQuery
+    {
+        $queryBuilder = new QueryBuilder();
+        $boolQuery = $queryBuilder->query()->bool();
+        if ($searchString === '') {
+            return $boolQuery;
+        }
+
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['NAME'])
+                ->setType('phrase')
+                ->setAnalyzer('default')
+                ->setParam('boost', 80.0)
+                ->setParam('_name', 'name-phrase')
+        );
+
+        //Точное по слову в названии
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['NAME'])
+                ->setType('best_fields')
+                ->setFuzziness(0)
+                ->setAnalyzer('default')
+                ->setParam('boost', 70.0)
+                ->setParam('_name', 'name-exact-word')
+
+        );
+
+        //Нечёткое совпадение с учётом опечаток в названии
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['NAME'])
+                ->setType('best_fields')
+                ->setFuzziness('AUTO')
+                ->setAnalyzer('full-text-search')
+                ->setParam('boost', 60.0)
+                ->setParam('_name', 'name-fuzzy-word')
+
+        );
+
+        //Совпадение по звучанию в названии
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['NAME.phonetic'])
+                ->setAnalyzer('sounds-similar')
+                ->setParam('boost', 50.0)
+                ->setParam('_name', 'name-sounds-similar')
+        );
+        return $boolQuery;
+    }
+
     /**
      * @param string $searchString
      *
@@ -219,35 +334,35 @@ class SearchService implements LoggerAwareInterface
         //Точное по артикулу
         $boolQuery->addShould(
             $queryBuilder->query()->nested()
-                         ->setPath('offers')
-                         ->setQuery(
-                             $queryBuilder->query()->term(
-                                 [
-                                     'offers.XML_ID' => [
-                                         'value' => $searchString,
-                                         'boost' => 100.0,
-                                         '_name' => 'skuId',
-                                     ],
-                                 ]
-                             )
-                         )
+                ->setPath('offers')
+                ->setQuery(
+                    $queryBuilder->query()->term(
+                        [
+                            'offers.XML_ID' => [
+                                'value' => $searchString,
+                                'boost' => 100.0,
+                                '_name' => 'skuId',
+                            ],
+                        ]
+                    )
+                )
         );
 
         //Точное по штрихкоду
         $boolQuery->addShould(
             $queryBuilder->query()->nested()
-                         ->setPath('offers')
-                         ->setQuery(
-                             $queryBuilder->query()->term(
-                                 [
-                                     'offers.PROPERTY_BARCODE' => [
-                                         'value' => $searchString,
-                                         'boost' => 100.0,
-                                         '_name' => 'barcode',
-                                     ],
-                                 ]
-                             )
-                         )
+                ->setPath('offers')
+                ->setQuery(
+                    $queryBuilder->query()->term(
+                        [
+                            'offers.PROPERTY_BARCODE' => [
+                                'value' => $searchString,
+                                'boost' => 100.0,
+                                '_name' => 'barcode',
+                            ],
+                        ]
+                    )
+                )
         );
 
         /*
@@ -257,13 +372,13 @@ class SearchService implements LoggerAwareInterface
         //Нечёткое по бренду
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
-                         ->setQuery($searchString)
-                         ->setFields(['brand.NAME'])
-                         ->setType('best_fields')
-                         ->setFuzziness('AUTO')
-                         ->setAnalyzer('full-text-search')
-                         ->setParam('boost', 90.0)
-                         ->setParam('_name', 'brand-fuzzy')
+                ->setQuery($searchString)
+                ->setFields(['brand.NAME'])
+                ->setType('best_fields')
+                ->setFuzziness('AUTO')
+                ->setAnalyzer('full-text-search')
+                ->setParam('boost', 150.0)
+                ->setParam('_name', 'brand-fuzzy')
         );
 
         /*
@@ -273,47 +388,46 @@ class SearchService implements LoggerAwareInterface
         //Точное по фразе в названии
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
-                         ->setQuery($searchString)
-                         ->setFields(['NAME'])
-                         ->setType('phrase')
-                         ->setAnalyzer('default')
-                         ->setParam('boost', 80.0)
-                         ->setParam('_name', 'name-phrase')
+                ->setQuery($searchString)
+                ->setFields(['NAME'])
+                ->setType('phrase')
+                ->setAnalyzer('default')
+                ->setParam('boost', 20.0)
+                ->setParam('_name', 'name-phrase')
         );
 
         //Точное по слову в названии
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
-                         ->setQuery($searchString)
-                         ->setFields(['NAME'])
-                         ->setType('best_fields')
-                         ->setFuzziness(0)
-                         ->setAnalyzer('default')
-                         ->setParam('boost', 70.0)
-                         ->setParam('_name', 'name-exact-word')
+                ->setQuery($searchString)
+                ->setFields(['NAME'])
+                ->setType('best_fields')
+                ->setFuzziness(0)
+                ->setAnalyzer('default')
+                ->setParam('boost', 15.0)
+                ->setParam('_name', 'name-exact-word')
 
         );
 
         //Нечёткое совпадение с учётом опечаток в названии
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
-                         ->setQuery($searchString)
-                         ->setFields(['NAME'])
-                         ->setType('best_fields')
-                         ->setFuzziness('AUTO')
-                         ->setAnalyzer('full-text-search')
-                         ->setParam('boost', 60.0)
-                         ->setParam('_name', 'name-fuzzy-word')
+                ->setQuery($searchString)
+                ->setFields(['NAME'])
+                ->setType('phrase_prefix')
+                ->setAnalyzer('full-text-search')
+                ->setParam('boost', 10.0)
+                ->setParam('_name', 'name-fuzzy-word')
 
         );
 
         //Совпадение по звучанию в названии
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
-                         ->setQuery($searchString)
-                         ->setFields(['product.NAME.phonetic'])
-                         ->setParam('boost', 50.0)
-                         ->setParam('_name', 'name-sounds-similar')
+                ->setQuery($searchString)
+                ->setFields(['product.NAME.phonetic'])
+                ->setParam('boost', 50.0)
+                ->setParam('_name', 'name-sounds-similar')
         );
 
         /*
@@ -323,24 +437,24 @@ class SearchService implements LoggerAwareInterface
         //Точное по фразе
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
-                         ->setQuery($searchString)
-                         ->setFields($textFields)
-                         ->setType('phrase')
-                         ->setAnalyzer('full-text-search')
-                         ->setParam('boost', 0.5)
-                         ->setParam('_name', 'desc-phrase')
+                ->setQuery($searchString)
+                ->setFields($textFields)
+                ->setType('phrase')
+                ->setAnalyzer('full-text-search')
+                ->setParam('boost', 0.5)
+                ->setParam('_name', 'desc-phrase')
         );
 
         //Точное по тексту
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
-                         ->setQuery($searchString)
-                         ->setFields($textFields)
-                         ->setType('best_fields')
-                         ->setFuzziness(0)
-                         ->setAnalyzer('default')
-                         ->setParam('boost', 0.5)
-                         ->setParam('_name', 'desc-exact-word')
+                ->setQuery($searchString)
+                ->setFields($textFields)
+                ->setType('best_fields')
+                ->setFuzziness(0)
+                ->setAnalyzer('default')
+                ->setParam('boost', 0.5)
+                ->setParam('_name', 'desc-exact-word')
         );
 
         /**
@@ -359,6 +473,128 @@ class SearchService implements LoggerAwareInterface
                 ->setParam('_name', 'desc-fuzzy-word')
         );
         */
+
+        return $boolQuery;
+    }
+
+    /**
+     * @param string $searchString
+     *
+     * @return BoolQuery
+     * @throws InvalidException
+     */
+    public function getSuggestRules(string $searchString): BoolQuery
+    {
+        $queryBuilder = new QueryBuilder();
+        $boolQuery = $queryBuilder->query()->bool();
+
+        if ($searchString === '') {
+            return $boolQuery;
+        }
+
+        $textFields = [
+            'PREVIEW_TEXT',
+            'DETAIL_TEXT',
+            'PROPERTY_SPECIFICATIONS.TEXT',
+        ];
+
+        // нечёткое по бренду
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['brand.NAME'])
+                ->setType('best_fields')
+                ->setFuzziness('AUTO')
+                ->setAnalyzer('full-text-search')
+                ->setParam('boost', 80.0)
+                ->setParam('_name', 'brand-fuzzy')
+        );
+
+        /*
+         * 2 Название товара
+         */
+
+        //Точное по фразе в названии
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['sectionName'])
+                ->setType('phrase')
+                ->setAnalyzer('default')
+                ->setParam('boost', 75.0)
+                ->setParam('_name', 'name-phrase')
+        );
+
+        //Точное по фразе в названии
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['NAME'])
+                ->setType('phrase')
+                ->setAnalyzer('default')
+                ->setParam('boost', 150.0)
+                ->setParam('_name', 'name-phrase')
+        );
+
+        //Точное по слову в названии
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['sectionName'])
+                ->setType('best_fields')
+                ->setFuzziness(0)
+                ->setAnalyzer('default')
+                ->setParam('boost', 10.0)
+                ->setParam('_name', 'name-exact-word')
+
+        );
+
+        //Точное по слову в названии
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['NAME'])
+                ->setType('best_fields')
+                ->setFuzziness(0)
+                ->setAnalyzer('default')
+                ->setParam('boost', 80.0)
+                ->setParam('_name', 'name-exact-word')
+
+        );
+
+        //Точное по слову в названии
+//        $boolQuery->addShould(
+//            $queryBuilder->query()->multi_match()
+//                ->setQuery($searchString)
+//                ->setFields(['catalog.NAME', 'sectionName'])
+//                ->setType('best_fields')
+//                ->setFuzziness(0)
+//                ->setAnalyzer('default')
+//                ->setParam('boost', 100.0)
+//                ->setParam('_name', 'name-exact-word')
+//
+//        );
+
+        //Нечёткое совпадение с учётом опечаток в названии
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['NAME', 'sectionName'])
+                ->setType('phrase_prefix')
+                ->setAnalyzer('full-text-search')
+                ->setParam('boost', 70.0)
+                ->setParam('_name', 'name-fuzzy-word')
+
+        );
+
+        //Совпадение по звучанию в названии
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['product.NAME.phonetic'])
+                ->setParam('boost', 5.0)
+                ->setParam('_name', 'name-sounds-similar')
+        );
 
         return $boolQuery;
     }
@@ -386,6 +622,45 @@ class SearchService implements LoggerAwareInterface
         }
 
         $this->addWeightFunctions($searchQuery);
+        if ('' === $searchString) {
+            $searchQuery->setBoostMode('sum');
+        }
+
+        return $searchQuery;
+    }
+
+    /**
+     * @param string $searchString
+     *
+     * @return AbstractQuery
+     * @throws InvalidException
+     */
+    public function getSuggestionsMax(string $searchString = ''): AbstractQuery
+    {
+        $searchQuery = new Query\FunctionScore();
+
+        $boolQuery = $this->getSuggestRules($searchString);
+        $searchQuery->setQuery($boolQuery);
+
+        $this->addWeightSuggestions($searchQuery);
+        if ('' === $searchString) {
+            $searchQuery->setBoostMode('sum');
+        }
+
+        return $searchQuery;
+    }
+
+    /**
+     * @param string $searchString
+     * @return AbstractQuery
+     */
+    public function getBrandFullQueryRule(string $searchString = ''): AbstractQuery
+    {
+        $searchQuery = new Query\FunctionScore();
+
+        $boolQuery = $this->getBrandQueryRule($searchString);
+        $searchQuery->setQuery($boolQuery);
+
         if ('' === $searchString) {
             $searchQuery->setBoostMode('sum');
         }
@@ -439,9 +714,9 @@ class SearchService implements LoggerAwareInterface
                             ->match('hasStocks', true)
                     )
             )
-            // собственная торговая марка +50
+            // собственная торговая марка +25
             ->addWeightFunction(
-                50,
+                25,
                 $queryBuilder
                     ->query()
                     ->match()
@@ -461,9 +736,102 @@ class SearchService implements LoggerAwareInterface
                             ->setField('offers.PROPERTY_IS_POPULAR', true)
                     )
             )
+            // товар, имеющий акции +25
+            ->addWeightFunction(
+                25,
+                $queryBuilder
+                    ->query()
+                    ->match()
+                    ->setField('hasActions', true)
+            )
+            // новинки +25
+            ->addWeightFunction(
+                25,
+                $queryBuilder
+                    ->query()
+                    ->nested()
+                    ->setPath('offers')
+                    ->setQuery(
+                        $queryBuilder
+                            ->query()
+                            ->match()
+                            ->setField('offers.PROPERTY_IS_NEW', true)
+                    )
+            )
+            // товары с шильдиками +10
+            ->addWeightFunction(
+                10,
+                $queryBuilder
+                    ->query()
+                    ->nested()
+                    ->setPath('offers')
+                    ->setQuery(
+                        $queryBuilder
+                            ->query()
+                            ->multi_match()
+                            ->setFields([
+                                'offers.PROPERTY_IS_POPULAR',
+                                'offers.PROPERTY_IS_HIT',
+                                'offers.PROPERTY_IS_NEW',
+                                'offers.PROPERTY_IS_SALE',
+                            ])
+                            ->setQuery(true)
+                    )
+            )
+            ->setScoreMode('sum');
+    }
+
+    /**
+     * @param Query\FunctionScore $query
+     *
+     * @throws InvalidException
+     */
+    protected function addWeightSuggestions(Query\FunctionScore $query): void
+    {
+        $queryBuilder = new QueryBuilder();
+        $query
+            // товары, имеющие остатки и картинки
+            ->addWeightFunction(
+                10,
+                $queryBuilder
+                    ->query()
+                    ->bool()
+                    ->addMust(
+                        $queryBuilder
+                            ->query()
+                            ->match('hasImages', true)
+                    )
+                    ->addMust(
+                        $queryBuilder
+                            ->query()
+                            ->match('hasStocks', true)
+                    )
+            )
+            // собственная торговая марка +50
+            ->addWeightFunction(
+                10,
+                $queryBuilder
+                    ->query()
+                    ->match()
+                    ->setField('PROPERTY_STM', true)
+            )
+            // популярные товары +25
+            ->addWeightFunction(
+                25,
+                $queryBuilder
+                    ->query()
+                    ->nested()
+                    ->setPath('offers')
+                    ->setQuery(
+                        $queryBuilder
+                            ->query()
+                            ->match()
+                            ->setField('offers.PROPERTY_IS_POPULAR', true)
+                    )
+            )
             // товар, имеющий акции +100
             ->addWeightFunction(
-                100,
+                10,
                 $queryBuilder
                     ->query()
                     ->match()
@@ -471,7 +839,7 @@ class SearchService implements LoggerAwareInterface
             )
             // новинки +50
             ->addWeightFunction(
-                50,
+                10,
                 $queryBuilder
                     ->query()
                     ->nested()
@@ -485,7 +853,7 @@ class SearchService implements LoggerAwareInterface
             )
             // товары с шильдиками +20
             ->addWeightFunction(
-                20,
+                10,
                 $queryBuilder
                     ->query()
                     ->nested()

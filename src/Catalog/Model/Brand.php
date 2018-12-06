@@ -4,12 +4,16 @@ namespace FourPaws\Catalog\Model;
 
 use DateTimeImmutable;
 use FourPaws\BitrixOrm\Model\IblockElement;
+use FourPaws\Search\Model\HitMetaInfoAwareInterface;
+use FourPaws\Search\Model\HitMetaInfoAwareTrait;
 use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
 
-class Brand extends IblockElement
+class Brand extends IblockElement implements HitMetaInfoAwareInterface
 {
+    use HitMetaInfoAwareTrait;
+
     /**
      * @var bool
      * @Type("bool")
