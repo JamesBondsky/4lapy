@@ -299,6 +299,8 @@ class Share extends IblockElement
      */
     public function getPropertyProducts(): array
     {
+        $this->PROPERTY_PRODUCTS = \is_array($this->PROPERTY_PRODUCTS) ? $this->PROPERTY_PRODUCTS : [];
+
         return $this->PROPERTY_PRODUCTS;
     }
 

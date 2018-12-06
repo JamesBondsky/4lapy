@@ -36,6 +36,7 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
 
     public const ARG_PROFILE_ID          = 'id';
     public const OPT_FEED_STEP           = 'step';
+    public const OPT_FEED_STOCK_ID       = 'stock';
     /**
      * @var YandexFeedService
      */
@@ -76,6 +77,12 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
                 InputOption::VALUE_REQUIRED,
                 'Step',
                 0
+            )
+            ->addOption(
+                static::OPT_FEED_STOCK_ID,
+                'stock',
+                InputOption::VALUE_REQUIRED,
+                'stock id'
             );
     }
 
@@ -97,6 +104,7 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
     {
         $id = $input->getArgument(static::ARG_PROFILE_ID);
         $step = $input->getOption(static::OPT_FEED_STEP);
+        $stockID = $input->getOption(static::OPT_FEED_STOCK_ID);
 
         if (!$id) {
             throw new RuntimeException('Profile id not defined');
@@ -105,7 +113,10 @@ class CreateYandexProductFeed extends Command implements LoggerAwareInterface
         $configuration = $this->translator->translate($this->translator->getProfileData($id));
 
         try {
-            if ($this->feedService->process($configuration, $step)) {
+            if (!empty($stockID)) {
+                $configuration->setExportFile('/bitrix/catalog_export/yandex_export_feed_' . $stockID . '.xml');
+            }
+            if ($this->feedService->process($configuration, $step, $stockID)) {
                 $this->log()->info('Step cleared');
 
                 return FeedFactory::EXIT_CODE_CONTINUE;

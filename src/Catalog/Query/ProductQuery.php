@@ -99,6 +99,9 @@ class ProductQuery extends IblockElementQuery
             'COMPOSITION',
             'NORMS_OF_USE',
             'PACKING_COMBINATION',
+            'LAYOUT_DESCRIPTION',
+            'LAYOUT_COMPOSITION',
+            'LAYOUT_RECOMMENDATIONS'
         ];
     }
 

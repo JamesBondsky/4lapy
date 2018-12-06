@@ -539,9 +539,43 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     protected $PROPERTY_NORMS_OF_USE = [];
 
     /**
+     * @var array
+     */
+    protected $PROPERTY_LAYOUT_DESCRIPTION = [];
+
+
+    /**
+     * @var array
+     */
+    protected $PROPERTY_LAYOUT_COMPOSITION = [];
+
+
+    /**
+     * @var array
+     */
+    protected $PROPERTY_LAYOUT_RECOMMENDATIONS = [];
+
+
+    /**
      * @var TextContent
      */
     protected $normsOfUse;
+
+    /**
+     * @var TextContent
+     */
+    protected $layoutDescription;
+
+    /**
+     * @var TextContent
+     */
+    protected $layoutComposition;
+
+
+    /**
+     * @var TextContent
+     */
+    protected $layoutRecommendations;
 
     /**
      * @var Collection
@@ -657,18 +691,37 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      */
     public function __construct(array $fields = [])
     {
-        $fields['PROPERTY_SPECIFICATIONS_VALUE'] = $fields['~PROPERTY_SPECIFICATIONS_VALUE'] ?? [
-                'TYPE' => '',
+        if ($fields['~PROPERTY_SPECIFICATIONS_VALUE']) {
+            $fields['PROPERTY_SPECIFICATIONS_VALUE']['TEXT'] = htmlspecialchars_decode($fields['~PROPERTY_SPECIFICATIONS_VALUE']['TEXT']);
+            $fields['PROPERTY_SPECIFICATIONS_VALUE']['TYPE'] = '';
+        } else {
+            $fields['PROPERTY_SPECIFICATIONS_VALUE'] = [
+                'TYPE' => 'HTML',
                 'TEXT' => '',
             ];
-        $fields['PROPERTY_COMPOSITION_VALUE'] = $fields['~PROPERTY_COMPOSITION_VALUE'] ?? [
-                'TYPE' => '',
+        }
+
+
+        if ($fields['~PROPERTY_COMPOSITION_VALUE']) {
+            $fields['PROPERTY_COMPOSITION_VALUE']['TEXT'] = htmlspecialchars_decode($fields['~PROPERTY_COMPOSITION_VALUE']['TEXT']);
+            $fields['PROPERTY_COMPOSITION_VALUE']['TYPE'] = '';
+        } else {
+            $fields['PROPERTY_COMPOSITION_VALUE'] = [
+                'TYPE' => 'HTML',
                 'TEXT' => '',
             ];
-        $fields['PROPERTY_NORMS_OF_USE_VALUE'] = $fields['~PROPERTY_NORMS_OF_USE_VALUE'] ?? [
-                'TYPE' => '',
+        }
+
+        if ($fields['~PROPERTY_NORMS_OF_USE_VALUE']) {
+            $fields['PROPERTY_NORMS_OF_USE_VALUE']['TEXT'] = htmlspecialchars_decode($fields['~PROPERTY_NORMS_OF_USE_VALUE']['TEXT']);
+            $fields['PROPERTY_NORMS_OF_USE_VALUE']['TYPE'] = '';
+        } else {
+            $fields['PROPERTY_NORMS_OF_USE_VALUE'] = [
+                'TYPE' => 'HTML',
                 'TEXT' => '',
             ];
+        }
+
         parent::__construct($fields);
     }
 
@@ -1854,6 +1907,51 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         }
 
         return $this->normsOfUse;
+    }
+
+    /**
+     * @return TextContent
+     */
+    public function getLayoutDescription(): TextContent
+    {
+        if (!($this->layoutDescription instanceof TextContent)) {
+            if (empty($this->PROPERTY_LAYOUT_DESCRIPTION)) {
+                $this->PROPERTY_LAYOUT_DESCRIPTION = ['TYPE' => 'text', 'TEXT' => ''];
+            }
+            $this->layoutDescription = new TextContent($this->PROPERTY_LAYOUT_DESCRIPTION);
+        }
+
+        return $this->layoutDescription;
+    }
+
+    /**
+     * @return TextContent
+     */
+    public function getLayoutComposition(): TextContent
+    {
+        if (!($this->layoutComposition instanceof TextContent)) {
+            if (empty($this->PROPERTY_LAYOUT_COMPOSITION)) {
+                $this->PROPERTY_LAYOUT_COMPOSITION = ['TYPE' => 'text', 'TEXT' => ''];
+            }
+            $this->layoutComposition = new TextContent($this->PROPERTY_LAYOUT_COMPOSITION);
+        }
+
+        return $this->layoutComposition;
+    }
+
+    /**
+     * @return TextContent
+     */
+    public function getLayoutRecommendations(): TextContent
+    {
+        if (!($this->layoutRecommendations instanceof TextContent)) {
+            if (empty($this->PROPERTY_LAYOUT_RECOMMENDATIONS)) {
+                $this->PROPERTY_LAYOUT_RECOMMENDATIONS = ['TYPE' => 'text', 'TEXT' => ''];
+            }
+            $this->layoutRecommendations = new TextContent($this->PROPERTY_LAYOUT_RECOMMENDATIONS);
+        }
+
+        return $this->layoutRecommendations;
     }
 
     /**

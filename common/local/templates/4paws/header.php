@@ -57,8 +57,8 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
     <?php
     $asset = Asset::getInstance();
     $asset->addCss($markup->getCssFile());
-    //$asset->addJs('https://api-maps.yandex.ru/2.1.68/?lang=ru_RU');
-    $asset->addJs('/api-maps.yandex.ru.js');
+    $asset->addJs('//api-maps.yandex.ru/2.1/?apikey=ad666cd3-80be-4111-af2d-209dddf2c55e&lang=ru_RU');
+    //$asset->addJs('/api-maps.yandex.ru.js');
     $asset->addJs('https://www.google.com/recaptcha/api.js?hl=ru');
 
     /** onesignal.com */
@@ -86,7 +86,16 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
 <body>
 <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_body.php'; ?>
 <?php $APPLICATION->ShowPanel(); ?>
+
 <header class="b-header <?= $template->getHeaderClass() ?> js-header">
+    <?php
+    $APPLICATION->IncludeComponent('articul:header.mobile.bunner',
+        '',
+        [],
+        false,
+        []
+    );
+    ?>
     <div class="b-container">
         <?php if ($template->hasShortHeaderFooter()) { ?>
             <div class="b-header__info b-header__info--short-header">

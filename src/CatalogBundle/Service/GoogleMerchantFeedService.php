@@ -73,6 +73,7 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
     /**
      * @param ConfigurationInterface $configuration
      * @param int                    $step
+     * @param string                 $stockID
      *
      * If need to continue, return true. Else - false.
      *
@@ -83,7 +84,7 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
      * @throws ArgumentException
      * @throws IOException
      */
-    public function process(ConfigurationInterface $configuration, int $step): bool
+    public function process(ConfigurationInterface $configuration, int $step, string $stockID = null): bool
     {
         /**
          * @var Configuration $configuration
@@ -422,7 +423,7 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
      */
     private function getLink(Offer $offer)
     {
-        return $offer->getDetailPageUrl() . '&utm_source=rt-merchants&utm_campaign=main&utm_medium=cpc&utm_term=' . $offer->getXmlId();
+        return $offer->getDetailPageUrl();
     }
 
     /**
