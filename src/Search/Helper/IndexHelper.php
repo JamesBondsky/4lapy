@@ -166,7 +166,7 @@ class IndexHelper implements LoggerAwareInterface
                                 'tokenizer' => 'standard',
                                 'filter'    => [
                                     'lowercase',
-                                    'synonym',
+//                                    'synonym',
                                     'russian_stop',
                                     'russian_stemmer',
                                     'autocomplete_filter',
@@ -177,18 +177,37 @@ class IndexHelper implements LoggerAwareInterface
                                 'tokenizer' => 'standard',
                                 'filter'    => [
                                     'lowercase',
-                                    'synonym',
+//                                    'synonym',
                                     'russian_stop',
                                     'russian_stemmer',
                                 ],
                             ],
-                            'sounds-similar'   => [
+                            'full-text-brand-hard-search' => [
+                                'type'      => 'custom',
+                                'tokenizer' => 'standard',
+                                'filter'    => [
+                                    'lowercase',
+                                    'russian_stop',
+                                    'russian_stemmer',
+                                ],
+                            ],
+                            'word-suggest-hard-search' => [
+                                'type'      => 'custom',
+                                'tokenizer' => 'standard',
+                                'filter'    => [
+                                    'lowercase',
+                                    'russian_stop',
+                                    'russian_stemmer',
+                                ],
+                            ],
+                            'detail-text-analyzator' => [
+                                'type'      => 'custom',
                                 'tokenizer' => 'standard',
                                 'filter'    => [
                                     'lowercase',
                                     'synonym',
-                                    'transform-to-latin',
-                                    'sounds-similar',
+                                    'russian_stop',
+                                    'russian_stemmer',
                                 ],
                             ],
                         ],
@@ -206,10 +225,6 @@ class IndexHelper implements LoggerAwareInterface
                                 'type'     => 'stemmer',
                                 'language' => 'russian',
                             ],
-                            'sounds-similar'      => [
-                                'type'    => 'phonetic',
-                                'encoder' => 'double_metaphone',
-                            ],
                             'transform-to-latin'  => [
                                 'type' => 'icu_transform',
                                 'id'   => 'Any-Latin; NFD; [:Nonspacing Mark:] Remove; NFC',
@@ -218,6 +233,20 @@ class IndexHelper implements LoggerAwareInterface
                                 'type'          => 'synonym',
                                 'synonyms_path' => 'resources/synonym.txt',
                             ],
+                            'phonetic_cyrillic' => [
+                                'type' => 'phonetic',
+                                'encoder' => 'beider_morse',
+                                'rule_type' => 'exact',
+                                'name_type' => 'generic',
+                                'languageset' => ['cyrillic']
+                            ],
+                            'phonetic_english' => [
+                                'type' => 'phonetic',
+                                'encoder' => 'beider_morse',
+                                'rule_type' => 'exact',
+                                'name_type' => 'generic',
+                                'languageset' => ['english']
+                            ]
                         ],
                         'char_filter' => [
                             'ru_en' => [
@@ -235,33 +264,58 @@ class IndexHelper implements LoggerAwareInterface
                 'product' => [
                     '_all'       => ['enabled' => false],
                     'properties' => [
-                        'suggest'                          => [
+                        'suggest'             => [
                             'type'            => 'completion',
                             'analyzer'        => 'autocomplete',
                             'search_analyzer' => 'standard',
                         ],
-                        'brand'                            => [
+                        'brand' => [
                             'properties' => [
-                                'active'             => ['type' => 'boolean'],
-                                'dateActiveFrom'     => ['type' => 'date', 'format' => 'date_optional_time'],
-                                'dateActiveTo'       => ['type' => 'date', 'format' => 'date_optional_time'],
-                                'ID'                 => ['type' => 'integer'],
-                                'CODE'               => ['type' => 'keyword'],
-                                'XML_ID'             => ['type' => 'keyword'],
-                                'SORT'               => ['type' => 'integer'],
-                                'PREVIEW_TEXT'       => ['type' => 'text'],
-                                'PREVIEW_TEXT_TYPE'  => ['type' => 'keyword', 'index' => false],
-                                'DETAIL_TEXT'        => ['type' => 'text'],
-                                'DETAIL_TEXT_TYPE'   => ['type' => 'keyword', 'index' => false],
-                                'DETAIL_PAGE_URL'    => ['type' => 'text', 'index' => false],
-                                'CANONICAL_PAGE_URL' => ['type' => 'text', 'index' => false],
-                                'NAME'               => ['type' => 'text'],
-                                'PROPERTY_POPULAR'   => ['type' => 'boolean'],
+                                'active'                          => ['type' => 'boolean'],
+                                'dateActiveFrom'                  => ['type' => 'date', 'format' => 'date_optional_time'],
+                                'dateActiveTo'                    => ['type' => 'date', 'format' => 'date_optional_time'],
+                                'ID'                              => ['type' => 'integer'],
+                                'CODE'                            => ['type' => 'keyword'],
+                                'XML_ID'                          => ['type' => 'keyword'],
+                                'SORT'                            => ['type' => 'integer'],
+                                'PREVIEW_TEXT'                    => [
+                                    'type' => 'text',
+                                    'fields' => [
+                                        'synonym' => [
+                                            'type' => 'text',
+                                            'analyzer' => 'detail-text-analyzator'
+                                        ],
+                                        'synonym_keyword' => [
+                                            'type' => 'keyword',
+//                                            'analyzer' => 'detail-text-analyzator'
+                                        ],
+                                    ]
+                                ],
+                                'PREVIEW_TEXT_TYPE'               => ['type' => 'keyword', 'index' => false],
+                                'DETAIL_TEXT' => [
+                                    'type' => 'text',
+                                    'fields' => [
+                                        'synonym' => [
+                                            'type' => 'text',
+                                            'analyzer' => 'detail-text-analyzator'
+                                        ],
+                                        'synonym_keyword' => [
+                                            'type' => 'keyword',
+//                                            'analyzer' => 'detail-text-analyzator'
+                                        ],
+                                    ]
+                                ],
+                                'DETAIL_TEXT_TYPE'                => ['type' => 'keyword', 'index' => false],
+                                'DETAIL_PAGE_URL'                 => ['type' => 'text', 'index' => false],
+                                'CANONICAL_PAGE_URL'              => ['type' => 'text', 'index' => false],
+                                'NAME'                            => ['type' => 'text'],
+                                'PROPERTY_POPULAR'                => ['type' => 'boolean'],
                                 'PROPERTY_CATALOG_INNER_BANNER'   => ['type' => 'text'],
+                                'PROPERTY_TRANSLITS'              => ['type' => 'text'],
                             ],
                         ],
-                        'offers'                           => [
-                            'type'       => 'nested',
+                        'offers' => [
+                            'type' => 'nested',
                             'properties' => [
                                 'active'                    => ['type' => 'boolean'],
                                 'dateActiveFrom'            => ['type' => 'date', 'format' => 'date_optional_time'],
@@ -302,15 +356,51 @@ class IndexHelper implements LoggerAwareInterface
                         'CODE'                             => ['type' => 'keyword'],
                         'XML_ID'                           => ['type' => 'keyword'],
                         'SORT'                             => ['type' => 'integer'],
-                        'PREVIEW_TEXT'                     => ['type' => 'text'],
-                        'PREVIEW_TEXT_TYPE'                => ['type' => 'keyword', 'index' => false],
-                        'DETAIL_TEXT'                      => ['type' => 'text'],
-                        'DETAIL_TEXT_TYPE'                 => ['type' => 'keyword', 'index' => false],
+                        'PREVIEW_TEXT'                    => [
+                            'type' => 'text',
+                            'fields' => [
+                                'synonym' => [
+                                    'type' => 'text',
+                                    'analyzer' => 'detail-text-analyzator'
+                                ],
+                                'synonym_keyword' => [
+                                    'type' => 'keyword',
+//                                    'analyzer' => 'detail-text-analyzator'
+                                ],
+                            ]
+                        ],
+                        'PREVIEW_TEXT_TYPE'               => ['type' => 'keyword', 'index' => false],
+                        'DETAIL_TEXT' => [
+                            'type' => 'text',
+                            'fields' => [
+                                'synonym' => [
+                                    'type' => 'text',
+                                    'analyzer' => 'detail-text-analyzator'
+                                ],
+                                'synonym_keyword' => [
+                                    'type' => 'keyword',
+//                                    'analyzer' => 'detail-text-analyzator'
+                                ],
+                            ]
+                        ],
+                        'DETAIL_TEXT_TYPE'                => ['type' => 'keyword', 'index' => false],
                         'DETAIL_PAGE_URL'                  => ['type' => 'text', 'index' => false],
                         'CANONICAL_PAGE_URL'               => ['type' => 'text', 'index' => false],
                         'dateActiveFrom'                   => ['type' => 'date', 'format' => 'date_optional_time'],
                         'dateActiveTo'                     => ['type' => 'date', 'format' => 'date_optional_time'],
-                        'NAME'                             => ['type' => 'text'],
+                        'NAME'                             => [
+                            'type' => 'text',
+                            'fields' => [
+                                'synonym' => [
+                                    'type' => 'text',
+                                    'analyzer' => 'detail-text-analyzator'
+                                ],
+                                'synonym_keyword' => [
+                                    'type' => 'keyword',
+//                                    'analyzer' => 'detail-text-analyzator'
+                                ],
+                            ]
+                        ],
                         'PROPERTY_BRAND'                   => ['type' => 'integer'],
                         'PROPERTY_FOR_WHO'                 => ['type' => 'keyword'],
                         'PROPERTY_PET_SIZE'                => ['type' => 'keyword'],
@@ -357,22 +447,47 @@ class IndexHelper implements LoggerAwareInterface
                 'brand' => [
                     '_all'       => ['enabled' => false],
                     'properties' => [
-                        'active'             => ['type' => 'boolean'],
-                        'dateActiveFrom'     => ['type' => 'date', 'format' => 'date_optional_time'],
-                        'dateActiveTo'       => ['type' => 'date', 'format' => 'date_optional_time'],
-                        'ID'                 => ['type' => 'integer'],
-                        'CODE'               => ['type' => 'keyword'],
-                        'XML_ID'             => ['type' => 'keyword'],
-                        'SORT'               => ['type' => 'integer'],
-                        'PREVIEW_TEXT'       => ['type' => 'text'],
-                        'PREVIEW_TEXT_TYPE'  => ['type' => 'keyword', 'index' => false],
-                        'DETAIL_TEXT'        => ['type' => 'text'],
-                        'DETAIL_TEXT_TYPE'   => ['type' => 'keyword', 'index' => false],
-                        'DETAIL_PAGE_URL'    => ['type' => 'text', 'index' => false],
-                        'CANONICAL_PAGE_URL' => ['type' => 'text', 'index' => false],
-                        'NAME'               => ['type' => 'string'],
-                        'PROPERTY_POPULAR'   => ['type' => 'boolean'],
+                        'active'                          => ['type' => 'boolean'],
+                        'dateActiveFrom'                  => ['type' => 'date', 'format' => 'date_optional_time'],
+                        'dateActiveTo'                    => ['type' => 'date', 'format' => 'date_optional_time'],
+                        'ID'                              => ['type' => 'integer'],
+                        'CODE'                            => ['type' => 'keyword'],
+                        'XML_ID'                          => ['type' => 'keyword'],
+                        'SORT'                            => ['type' => 'integer'],
+                        'PREVIEW_TEXT'                    => [
+                            'type' => 'text',
+                            'fields' => [
+                                'synonym' => [
+                                    'type' => 'text',
+                                    'analyzer' => 'detail-text-analyzator'
+                                ],
+                                'synonym_keyword' => [
+                                    'type' => 'keyword',
+//                                    'analyzer' => 'detail-text-analyzator'
+                                ],
+                            ]
+                        ],
+                        'PREVIEW_TEXT_TYPE'               => ['type' => 'keyword', 'index' => false],
+                        'DETAIL_TEXT' => [
+                            'type' => 'text',
+                            'fields' => [
+                                'synonym' => [
+                                    'type' => 'text',
+                                    'analyzer' => 'detail-text-analyzator'
+                                ],
+                                'synonym_keyword' => [
+                                    'type' => 'keyword',
+//                                    'analyzer' => 'detail-text-analyzator'
+                                ],
+                            ]
+                        ],
+                        'DETAIL_TEXT_TYPE'                => ['type' => 'keyword', 'index' => false],
+                        'DETAIL_PAGE_URL'                 => ['type' => 'text', 'index' => false],
+                        'CANONICAL_PAGE_URL'              => ['type' => 'text', 'index' => false],
+                        'NAME'                            => ['type' => 'text'],
+                        'PROPERTY_POPULAR'                => ['type' => 'boolean'],
                         'PROPERTY_CATALOG_INNER_BANNER'   => ['type' => 'text'],
+                        'PROPERTY_TRANSLITS'              => ['type' => 'text'],
                     ]
                 ]
             ],

@@ -56,6 +56,7 @@ class SearchController extends Controller
         $validator = $this->container->get('validator');
 
         if (!$validator->validate($searchRequest)->count()) {
+
             /** @var CombinedSearchResult $result */
             $result = $searchService->searchAll(
                 $searchRequest->getCategory()->getFilters(),
@@ -71,18 +72,16 @@ class SearchController extends Controller
             ];
 
             $converted = $result->getCollection()->toArray();
-//            $converted['suggests'] = $searchService->productsAutocomplete(
-//                $searchRequest->getNavigation(),
-//                $searchRequest->getSearchString())
-//                ->getProductCollection()
-//                ->toArray();
-            // отрубил такой вывод пока
 
             /** @var Product|Brand $product */
             foreach ($converted as $key => $arItems) {
                 foreach ($arItems as $item) {
                     if ($item instanceof Brand) {
-                        $res['brands'][] = ['DETAIL_PAGE_URL' => $item->getDetailPageUrl(), 'NAME' => $item->getName()];
+                        $res['brands'][] = [
+                            'DETAIL_PAGE_URL' => $item->getDetailPageUrl(),
+                            'NAME' => $item->getName(),
+                            'SCORE' => $item->getHitMetaInfo()->getScore(),
+                        ];
                     } elseif ($item instanceof Product) {
                         /**
                          * @var Offer $offer
@@ -102,7 +101,8 @@ class SearchController extends Controller
                                     'PREVIEW' => sprintf("/upload/%s/%s", $image->getSubDir(), $image->getFileName()),
                                     'PRICE' => $offer->getPrice(),
                                     'CURRENCY' => $offer->getCurrency(),
-                                    'BRAND' => $item->getBrand()->getName()
+                                    'BRAND' => $item->getBrand()->getName(),
+                                    'SCORE' => $item->getHitMetaInfo()->getScore()
                                 ];
                             } else {
                                 $res[$key][] = [
@@ -110,33 +110,54 @@ class SearchController extends Controller
                                     'NAME' => $item->getName(),
                                     'PRICE' => $offer->getPrice(),
                                     'CURRENCY' => $offer->getCurrency(),
-                                    'BRAND' => $item->getBrand()->getName()
+                                    'BRAND' => $item->getBrand()->getName(),
+                                    'SCORE' => $item->getHitMetaInfo()->getScore()
                                 ];
                             }
                         } elseif ($key == 'suggests') {
                             if ($offer != false) {
                                 if (empty($res[$key][$offer->getProduct()->getIblockSectionId()])) {
+//                                    $curScore = $item->getHitMetaInfo()->getScore();
                                     $res[$key][$offer->getProduct()->getIblockSectionId()] = [
                                         'NAME' => $offer->getProduct()->getSection()->getName(),
-                                        'DETAIL_PAGE_URL' => $offer->getProduct()->getSection()->getSectionPageUrl(),
-                                        'ELEMENTS' => [
-                                            [
-                                                'NAME' => $offer->getProduct()->getBrandName() . ' ' . $offer->getName(),
-                                                'LINK' => $offer->getProduct()->getDetailPageUrl()
-                                            ]
-                                        ]
+                                        'DETAIL_PAGE_URL' => $offer->getProduct()->getSection()->getSectionPageUrl() .
+                                            '?query=' . str_replace(' ', '+', $searchRequest->getSearchString()),
+                                        'SCORE' => $item->getHitMetaInfo()->getScore(),
+//                                        'ELEMENTS' => [
+//                                            [
+//                                                'NAME' => $offer->getProduct()->getName(),
+//                                                'URL' => $offer->getProduct()->getDetailPageUrl(),
+//                                                'SCORE' => $curScore
+//                                            ]
+//                                        ]
                                     ];
                                 } else {
-                                    $res[$key][$offer->getProduct()->getIblockSectionId()]['ELEMENTS'][] = [
-                                        'NAME' => $offer->getProduct()->getBrandName() . ' ' . $offer->getName(),
-                                        'LINK' => $offer->getProduct()->getDetailPageUrl()
-                                    ];
+                                    $curScore = $item->getHitMetaInfo()->getScore();
+                                    $res[$key][$offer->getProduct()->getIblockSectionId()]['SCORE'] += $curScore;
+//                                    $res[$key][$offer->getProduct()->getIblockSectionId()]['ELEMENTS'][] = [
+//                                        'NAME' => $offer->getProduct()->getName(),
+//                                        'URL' => $offer->getProduct()->getDetailPageUrl(),
+//                                        'SCORE' => $curScore
+//                                    ];
                                 }
                             }
                         }
                     }
                 }
             }
+        }
+
+        usort($res['suggests'], function ($a, $b) {
+            if ($a['SCORE'] == $b['SCORE']) {
+                return 0;
+            }
+            return ($a['SCORE'] < $b['SCORE']) ? 1 : -1;
+        });
+
+        if (count($res['products']) >= 5) {
+            $res['products'] = [];
+        } else {
+            $res['products'] = [$res['products'][0]];
         }
 
         return JsonSuccessResponse::createWithData('', $res)->setEncodingOptions(JSON_UNESCAPED_UNICODE);
