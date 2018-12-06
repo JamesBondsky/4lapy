@@ -117,10 +117,11 @@ class SearchController extends Controller
                         } elseif ($key == 'suggests') {
                             if ($offer != false) {
                                 if (empty($res[$key][$offer->getProduct()->getIblockSectionId()])) {
-                                    $curScore = $item->getHitMetaInfo()->getScore();
+//                                    $curScore = $item->getHitMetaInfo()->getScore();
                                     $res[$key][$offer->getProduct()->getIblockSectionId()] = [
                                         'NAME' => $offer->getProduct()->getSection()->getName(),
-                                        'DETAIL_PAGE_URL' => $offer->getProduct()->getSection()->getSectionPageUrl(),
+                                        'DETAIL_PAGE_URL' => $offer->getProduct()->getSection()->getSectionPageUrl() .
+                                            '?query=' . str_replace(' ', '+', $searchRequest->getSearchString()),
                                         'SCORE' => $item->getHitMetaInfo()->getScore(),
 //                                        'ELEMENTS' => [
 //                                            [
@@ -153,7 +154,7 @@ class SearchController extends Controller
             return ($a['SCORE'] < $b['SCORE']) ? 1 : -1;
         });
 
-        if (count($res['products']) > 5) {
+        if (count($res['products']) >= 5) {
             $res['products'] = [];
         } else {
             $res['products'] = [$res['products'][0]];
