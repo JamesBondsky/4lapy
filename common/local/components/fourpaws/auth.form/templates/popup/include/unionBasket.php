@@ -18,7 +18,7 @@ $ajaxUrl = '/ajax/user/auth/login/'; ?>
     <form class="b-registration__form js-auth-2way" method="post">
         <?= bitrix_sessid_post() ?>
         <input type="button" name="confirm_yes" value="Да"
-               class="b-button b-button--social b-button--full-width js-ajax-item" data-url="<?= $ajaxUrl ?>"
+               class="b-button b-button--social b-button--full-width b-cart-combination__btn--left js-ajax-item" data-url="<?= $ajaxUrl ?>"
                data-action="unionBasket" data-backurl="<?= $backUrl ?>"
                data-need_add_phone="<?= $needAddPhone ?>"
             <?= !empty($delItemsByUnion) ? 'data-del_items_by_union="' . implode(',', $delItemsByUnion) . '"' : '' ?>
@@ -26,7 +26,7 @@ $ajaxUrl = '/ajax/user/auth/login/'; ?>
             <?= !empty($addQuantityByUnion) ? 'data-add_quantity_by_union="' . json_encode($addQuantityByUnion) . '"' : '' ?>
         >
         <input type="button" name="confirm_no" value="Нет"
-               class="b-button b-button--social b-button--full-width js-ajax-item" data-url="<?= $ajaxUrl ?>"
+               class="b-button b-button--social b-button--full-width b-cart-combination__btn--right js-ajax-item" data-url="<?= $ajaxUrl ?>"
                data-action="notUnionBasket" data-backurl="<?= $backUrl ?>" data-need_add_phone="<?= $needAddPhone ?>"
             <?= !empty($delBasketIds) ? 'data-del_basket_items="' . implode(',', $delBasketIds) . '"' : '' ?>
             <?= !empty($delBasketKeys) ? 'data-del_basket_items_by_keys="' . implode(',', $delBasketKeys) . '"' : '' ?>

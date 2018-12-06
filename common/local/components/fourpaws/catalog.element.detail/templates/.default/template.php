@@ -68,6 +68,17 @@ $clonedOffers->uasort(
     }
 );
 ?>
+    <script id="gtag-prod">
+        gtag('event', 'page_view', {
+            'send_to': 'AW-832765585',
+            'ecomm_pagetype': 'offerdetail',
+            'ecomm_prodid': '<?=(int)$_GET['offer']?>',
+        });
+        $(document).ready(function () {
+            $('#gtag-prod').appendTo('head');
+        });
+    </script>
+
     <div class="b-product-card__slider">
         <div class="b-product-slider">
             <div class="b-product-slider__list b-product-slider__list--main js-product-slider-for">
