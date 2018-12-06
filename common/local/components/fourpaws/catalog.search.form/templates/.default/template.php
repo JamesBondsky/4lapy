@@ -28,7 +28,7 @@ use FourPaws\Decorators\SvgDecorator;
           data-url="<?= $arResult['AUTOCOMPLETE_URL'] ?>"
           action="<?= $arResult['SEARCH_URL'] ?>">
         <div class="b-input">
-            <input class="b-input__input-field"
+            <input class="b-input__input-field b-input__input-field--searchheader"
                    type="text"
                    id="header-search"
                    placeholder="Найти лучшее для вашего питомца…"

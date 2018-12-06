@@ -10,7 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
        title="Закрыть"></a>
     <div class="b-registration b-registration--edit-data">
         <header class="b-registration__header">
-            <div class="b-title b-title--h1 b-title--registration">Изменение данных</div>
+            <div class="b-title b-title--h1 b-title--registration"></div>
         </header>
         <div class="b-registration__form">
             <?php $phone = $arResult['CUR_USER']['PERSONAL_PHONE'];

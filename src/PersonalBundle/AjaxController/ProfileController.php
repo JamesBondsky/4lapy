@@ -11,6 +11,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
@@ -252,6 +253,9 @@ class ProfileController extends Controller
         if($message->message == 'Данные обновлены' && strlen($parts['PHONE_SET']) < 5) // Прошли валидацию и записали данные пользователя
         {
             return $this->changePhoneAction($request);
+        }
+        else if($message->message == 'Данные обновлены') {
+            return JsonErrorResponse::createWithData('Данные обновлены');
         }
         return $update_response;
     }

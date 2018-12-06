@@ -29,23 +29,18 @@ if($USER->IsAuthorized()) {
                         {
                             $container = App::getInstance()->getContainer();
                             $pets = $container->get('pet.service');
-                            if(count($pets->getCurUserPets()))
-                            {
-                                $user_class->Update($USER->GetID(), ['UF_MODALS_CNTS' => '3 3 3']);
-                            }
+                            if(count($pets->getCurUserPets())) $user_class->Update($USER->GetID(), ['UF_MODALS_CNTS' => '3 3 3']);
                             else{
                                 if($modal_counts[2] > 2) $user_class->Update($USER->GetID(), ['UF_MODALS_CNTS' => '3 3 3']);
                                 else $modal_number = 3;
                             }
                         }
                         else {
-                            if($modal_counts[1] > 2) $user_class->Update($USER->GetID(), ['UF_MODALS_CNTS' => '3 3 3']);
-                            else $modal_number = 2;
+                            if($modal_counts[1] < 3) $modal_number = 2;
                         }
                     }
                     else {
-                        if($modal_counts[0] > 2) $user_class->Update($USER->GetID(), ['UF_MODALS_CNTS' => '3 3 3']);
-                        else $modal_number = 1;
+                        if($modal_counts[0] < 3) $modal_number = 1;
                     }
                 }
             }
@@ -81,7 +76,7 @@ if($USER->IsAuthorized()) {
                 $('#data_collect').trigger('click');
 
                 $('form.collector-form input').each(function () {
-                   if($(this).val().length > 2) $(this).attr('disabled', "");
+                   if($(this).val().length > 2) $(this).attr('readonly', "");
                 });
 
                 let modals_counter = [<?=$modal_counts[0]?>, <?=$modal_counts[1]?>, <?=$modal_counts[2]?>];
