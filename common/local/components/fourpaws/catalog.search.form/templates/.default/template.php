@@ -41,6 +41,7 @@ use FourPaws\Decorators\SvgDecorator;
                 <?= new SvgDecorator('icon-search', 16, 16) ?>
             </span>
         </button>
+        <button class="b-button b-button--clear-search js-clear-searchheader"></button>
     </form>
     <a class="b-form-inline__mobile-search js-hide-open-menu" href="javascript:void(0)" title="">
         <span class="b-icon b-icon--header-search-mobile">
