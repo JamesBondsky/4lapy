@@ -62,20 +62,23 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
     $asset->addJs('https://www.google.com/recaptcha/api.js?hl=ru');
 
     /** onesignal.com */
-    if (getenv('ONESIGNAL_API_KEY')) {
-        $asset->addString('<script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>');
-        $asset->addString('
+    if ($USER->IsAdmin()) { /** [todo] remove after production tests */
+        if (getenv('ONESIGNAL_API_KEY')) {
+            $asset->addString('<script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>');
+            $asset->addString('
                 <script>
                   var OneSignal = window.OneSignal || [];
                   OneSignal.push(function() {
                     OneSignal.init({
-                      appId: \'' . getenv('ONESIGNAL_API_KEY') . '\',
+                      appId: \''.getenv('ONESIGNAL_API_KEY').'\',
                       autoRegister: true
                     });
                   });
                 </script>
             ');
+        }
     }
+
     ?>
 
     <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_header.php'; ?>
