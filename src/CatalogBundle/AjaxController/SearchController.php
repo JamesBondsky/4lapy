@@ -211,8 +211,10 @@ class SearchController extends Controller
 
         if (count($res['products']) >= 5) {
             $res['products'] = [];
-        } else {
+        } elseif (isset($res['products'][0])) {
             $res['products'] = [$res['products'][0]];
+        } else {
+            $res['products'] = [];
         }
 
         return JsonSuccessResponse::createWithData('', $res)->setEncodingOptions(JSON_UNESCAPED_UNICODE);
