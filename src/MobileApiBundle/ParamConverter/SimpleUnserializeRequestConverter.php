@@ -139,7 +139,7 @@ class SimpleUnserializeRequestConverter implements ParamConverterInterface
 
         $validationResult = $this->validator->validate($object, null, $groups);
         if (!$notThrowException && $validationResult->count() > 0) {
-            throw new ValidationException('Cant converte request to object');
+            throw new ValidationException($validationResult);
         }
 
         if (!$request->attributes->has(static::API_ERRORS)) {
@@ -169,7 +169,7 @@ class SimpleUnserializeRequestConverter implements ParamConverterInterface
             DeserializationContext::create()->setGroups($groups)
         );
         if (!$object) {
-            throw new SystemException('Cant converte request to object');
+            throw new SystemException('Cant convert request to object');
         }
         return $object;
     }
