@@ -351,7 +351,7 @@ class IndexHelper implements LoggerAwareInterface
                         ],
                         'active'                           => ['type' => 'boolean'],
                         'sectionIdList'                    => ['type' => 'integer'],
-                        'sectionName'                      => ['type' => 'text'],
+                        'sectionName'                      => ['type' => 'keyword'],
                         'ID'                               => ['type' => 'integer'],
                         'CODE'                             => ['type' => 'keyword'],
                         'XML_ID'                           => ['type' => 'keyword'],

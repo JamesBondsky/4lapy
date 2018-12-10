@@ -2,6 +2,7 @@
 
 namespace FourPaws\CatalogBundle\AjaxController;
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Iblock\InheritedProperty\SectionValues;
 use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application;
@@ -14,6 +15,8 @@ use FourPaws\Catalog\Model\Brand;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\CatalogBundle\Dto\SearchRequest;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\Search\Model\CombinedSearchResult;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\SearchService;
@@ -62,11 +65,35 @@ class SearchController extends Controller
         if (!$validator->validate($searchRequest)->count()) {
 
             //костыль для заказчика
-            $searchString = $searchRequest->getSearchString();
-            if (mb_strpos('про план', mb_strtolower($searchString)) !== false) {
-                $searchString = str_replace('про план', 'pro plan', mb_strtolower($searchString));
-            } elseif (mb_strpos('про пак', mb_strtolower($searchString)) !== false) {
-                $searchString = str_replace('про пак', 'pro pac', mb_strtolower($searchString));
+            $searchString = mb_strtolower($searchRequest->getSearchString());
+            if (preg_match('/[А-Яа-яЁё]/u', $searchString)) {
+                $arSelect = [
+                    'ID',
+                    'IBLOCK_ID',
+                    'NAME',
+                    'PROPERTY_TRANSLITS'
+                ];
+
+                $arFilter = [
+                    'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::BRANDS),
+                    'ACTIVE' => 'Y',
+                    '!PROPERTY_TRANSLITS' => false
+                ];
+
+                $dbItems = \CIBlockElement::GetList([], $arFilter, false, false, $arSelect);
+                while ($arItem = $dbItems->Fetch()) {
+                    if (!empty($arItem['PROPERTY_TRANSLITS_VALUE'])) {
+                        $arTranslits = explode(',', $arItem['PROPERTY_TRANSLITS_VALUE']);
+                        foreach ($arTranslits as $translit) {
+                            $translit = mb_strtolower(trim($translit));
+                            if (mb_strpos($searchString, $translit) !== false) {
+                                $searchString = str_replace($translit,
+                                    mb_strtolower($arItem['NAME']), $searchString);
+                            }
+                        }
+                    }
+
+                }
             }
 
             /** @var CombinedSearchResult $result */
