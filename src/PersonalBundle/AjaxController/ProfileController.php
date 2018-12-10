@@ -11,6 +11,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
@@ -208,6 +209,55 @@ class ProfileController extends Controller
         }
 
         return $this->ajaxMess->getSystemError();
+    }
+
+    /**
+     * @Route("/disableModalPersist/", methods={"POST"})
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
+    public function disableModalPersist(Request $request): JsonResponse
+    {
+        global $USER;
+        $USER->SetParam('data_collect', 'Y');
+
+        $total_modals = $request->request->get('modals');
+
+        $user_class = new \CUser;
+        $user_id = (int) $GLOBALS['USER']->GetID();
+        $write = (int)$total_modals[0]." ".(int)$total_modals[1]." ".(int)$total_modals[2];
+        $user_class->Update($user_id, ['UF_MODALS_CNTS' => $write]);
+
+        return JsonSuccessResponse::createWithData('All fine!');
+    }
+
+    /**
+     * @Route("/collectUserData/", methods={"POST"})
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
+    public function collectUserData(Request $request): JsonResponse
+    {
+        // Отправляем запрос на изменение данных, если пришел успешный ответ
+        // Тогда отправим запрос на смену телефона и вывод модалки
+        // шторм ругается на отсутствие JSON'a , возможно потребуется поставить.
+        $update_response = $this->changeDataAction($request);
+        $update_result = $update_response->getContent();
+        $message = json_decode($update_result);
+
+        $parts = parse_url($request->getContent());
+        parse_str($parts['path'], $parts);
+
+        if($message->message == 'Данные обновлены' && strlen($parts['PHONE_SET']) < 5) // Прошли валидацию и записали данные пользователя
+        {
+            return $this->changePhoneAction($request);
+        }
+        else if($message->message == 'Данные обновлены') {
+            return JsonErrorResponse::createWithData('Данные обновлены');
+        }
+        return $update_response;
     }
 
     /**

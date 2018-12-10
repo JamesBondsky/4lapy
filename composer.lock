@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "82e8136e4e5fc6c6c18a7573a7fbd56c",
+    "content-hash": "826b49623a399bdcd3de7af6e3daa8d8",
     "packages": [
         {
             "name": "adv/bitrix-tools",
@@ -1537,6 +1537,49 @@
                 "stream"
             ],
             "time": "2014-10-12T19:18:40+00:00"
+        },
+        {
+            "name": "igi/sypexgeo",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/iginikolaev/sypexgeo.git",
+                "reference": "b2bb7f2f4b9d0a7c2cde0e1934a59e1192591ab6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/iginikolaev/sypexgeo/zipball/b2bb7f2f4b9d0a7c2cde0e1934a59e1192591ab6",
+                "reference": "b2bb7f2f4b9d0a7c2cde0e1934a59e1192591ab6",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Eugene Bazilenko",
+                    "email": "iginikolaev@gmail.com",
+                    "homepage": "https://github.com/iginikolaev"
+                }
+            ],
+            "description": "PHP library Sypex Geo API (http://sypexgeo.net)",
+            "keywords": [
+                "geoip",
+                "sxgeo",
+                "sypex"
+            ],
+            "abandoned": true,
+            "time": "2015-02-22T21:11:15+00:00"
         },
         {
             "name": "incenteev/composer-parameter-handler",
@@ -6742,6 +6785,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
+        "igi/sypexgeo": 20,
         "nelmio/api-doc-bundle": 10,
         "roave/security-advisories": 20,
         "friendsofphp/php-cs-fixer": 0

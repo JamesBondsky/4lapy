@@ -24,6 +24,7 @@ use FourPaws\Catalog\Collection\CategoryCollection;
 use FourPaws\Catalog\Query\BrandQuery;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Catalog\Table\CatalogPriceTable;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Search\Model\HitMetaInfoAwareInterface;
 use FourPaws\Search\Model\HitMetaInfoAwareTrait;
@@ -99,6 +100,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @Groups({"elastic"})
      */
     protected $NAME = '';
+
+    /**
+     * @var string Название раздела
+     * @Type("string")
+     * @Accessor(getter="getSectionName")
+     * @Groups({"elastic"})
+     */
+    protected $sectionName = '';
 
     /**
      * @var int
@@ -691,18 +700,37 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      */
     public function __construct(array $fields = [])
     {
-        $fields['PROPERTY_SPECIFICATIONS_VALUE'] = $fields['~PROPERTY_SPECIFICATIONS_VALUE'] ?? [
-                'TYPE' => '',
+        if ($fields['~PROPERTY_SPECIFICATIONS_VALUE']) {
+            $fields['PROPERTY_SPECIFICATIONS_VALUE']['TEXT'] = htmlspecialchars_decode($fields['~PROPERTY_SPECIFICATIONS_VALUE']['TEXT']);
+            $fields['PROPERTY_SPECIFICATIONS_VALUE']['TYPE'] = '';
+        } else {
+            $fields['PROPERTY_SPECIFICATIONS_VALUE'] = [
+                'TYPE' => 'HTML',
                 'TEXT' => '',
             ];
-        $fields['PROPERTY_COMPOSITION_VALUE'] = $fields['~PROPERTY_COMPOSITION_VALUE'] ?? [
-                'TYPE' => '',
+        }
+
+
+        if ($fields['~PROPERTY_COMPOSITION_VALUE']) {
+            $fields['PROPERTY_COMPOSITION_VALUE']['TEXT'] = htmlspecialchars_decode($fields['~PROPERTY_COMPOSITION_VALUE']['TEXT']);
+            $fields['PROPERTY_COMPOSITION_VALUE']['TYPE'] = '';
+        } else {
+            $fields['PROPERTY_COMPOSITION_VALUE'] = [
+                'TYPE' => 'HTML',
                 'TEXT' => '',
             ];
-        $fields['PROPERTY_NORMS_OF_USE_VALUE'] = $fields['~PROPERTY_NORMS_OF_USE_VALUE'] ?? [
-                'TYPE' => '',
+        }
+
+        if ($fields['~PROPERTY_NORMS_OF_USE_VALUE']) {
+            $fields['PROPERTY_NORMS_OF_USE_VALUE']['TEXT'] = htmlspecialchars_decode($fields['~PROPERTY_NORMS_OF_USE_VALUE']['TEXT']);
+            $fields['PROPERTY_NORMS_OF_USE_VALUE']['TYPE'] = '';
+        } else {
+            $fields['PROPERTY_NORMS_OF_USE_VALUE'] = [
+                'TYPE' => 'HTML',
                 'TEXT' => '',
             ];
+        }
+
         parent::__construct($fields);
     }
 
@@ -758,6 +786,17 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             $this->PROPERTY_BRAND_NAME = $this->getBrand()->getName();
         }
         return $this->PROPERTY_BRAND_NAME;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSectionName(): string
+    {
+        if ($sect = $this->getSection()) {
+            $this->sectionName = $sect->getName();
+        }
+        return $this->sectionName;
     }
 
     /**
