@@ -17,7 +17,7 @@ use FourPaws\MobileApiBundle\Dto\Response\SpecialOffersResponse;
 class ProductController extends FOSRestController
 {
     /**
-     * @Rest\Get(path="/special_offers")
+     * @Rest\Get(path="/special_offers/")
      * @see SpecialOffersRequest
      * @see SpecialOffersResponse
      */
@@ -29,7 +29,7 @@ class ProductController extends FOSRestController
     }
 
     /**
-     * @Rest\Get("/goods_list")
+     * @Rest\Get("/goods_list/")
      * @see GoodsListRequest
      * @see GoodsListResponse
      */
@@ -38,7 +38,7 @@ class ProductController extends FOSRestController
     }
 
     /**
-     * @Rest\Get("/goods_search_barcode")
+     * @Rest\Get("/goods_search_barcode/")
      * @see GoodsSearchBarcodeRequest
      */
     public function getGoodsSearchBarcodeAction()

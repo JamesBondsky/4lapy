@@ -108,26 +108,11 @@ class Banner extends IblockElement
      */
     protected $PROPERTY_LINK = '';
 
-    public function getBannerType() {
-        $link = $this->PROPERTY_LINK;
-        $type = '';
-        if (strpos($link, '/catalog/') !== false && strpos($link, '.html') !== false) {
-            // ссылка на товар
-            $type = 'goods';
-        } else if (preg_match('\/catalog\/$', $link)) {
-            // ссылка на главную каталога
-            $type = 'catalog';
-        } else if (strpos($link, '/catalog/') !== false && strpos($link, '.html') === false) {
-            // ссылка на список товаров
-            $type = 'goods_list';
-        } else if (strpos($link, '/news/') !== false) {
-            // ссылка на новость
-            $type = 'news';
-        } else if (strpos($link, '/articles/') !== false) {
-            // ссылка на акцию
-            $type = 'action';
-        }
-        return $type;
+    /**
+     * @return string
+     */
+    public function getLink() {
+        return $this->PROPERTY_LINK;
     }
 
 }

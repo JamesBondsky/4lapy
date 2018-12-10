@@ -20,7 +20,7 @@ four_paws_mobile_api:
     Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException:
       code: 9
       status_code: 200
-      message: 'Пользователь не авторизован'
+      message: 'Доступ запрещен'
     FourPaws\MobileApiBundle\Exception\DeliveryAddressAddError:
       code: 20
       message: 'Ошибка при добавлении профиля доставки'

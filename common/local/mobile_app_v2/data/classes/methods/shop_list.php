@@ -1,8 +1,6 @@
 <?
 
-use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
-use FourPaws\Enum\IblockType;
-use FourPaws\Enum\IblockCode;
+
 
 class shop_list extends \APIServer
 {
@@ -33,96 +31,82 @@ class shop_list extends \APIServer
 
 	public function get($arInput)
 	{
-		$arResult = array();
-		$arResult['shops'] = array();
+		$result = [
+		    'shops' => [],
+        ];
 
 		if (!$this->hasErrors()) {
-			$arFilter = array();
+			$filter = [];
 
 			if (isset($arInput['city_id']) && intval($arInput['city_id'])) {
-				$cityId = intval($arInput['city_id']);
-				$arFilter['city_id'] = $cityId;
+                $filter['city_id'] = $arInput['city_id'];
 			}
 
 			if(isset($arInput['metro_station']) && !empty($arInput['metro_station'])) {
-				$arFilter['metro'] = $arInput['metro_station'];
+                $filter['metro'] = $arInput['metro_station'];
 			}
 
-			if (isset($arInput['lat']) && isset($arInput['lon']) && $arInput['lat'] && $arInput['lon']) {
-				$lat = $arInput['lat'];
-				$lon = $arInput['lon'];
-			} else {
-				list($lat, $lon) = ($this->getCityCoord(\city::convGeo2toGeo1($cityId) ?: 0) ?: array(0, 0));
-			}
+            if (isset($arInput['lat']) && isset($arInput['lon']) && $arInput['lat'] && $arInput['lon']) {
+                $lat = $arInput['lat'];
+                $lon = $arInput['lon'];
+            } else {
+                // list($lat, $lon) = ($this->getCityCoord(\city::convGeo2toGeo1($cityId) ?: 0) ?: array(0, 0));
+            }
 
-			//
-			$oCache = \Bitrix\Main\Data\Cache::createInstance();
-			$cacheTime = 60 * 60 * 24 * 7;
-			// $cacheId = md5('shop_list|'.join('|', $arFilter));
-			$cacheId = md5('shop_list|'.join('|', $arFilter).join('|', $arFilter['metro']));
-			$cacheDir = '/shop_list';
+            $shops = \shop::getList(['filter' => $filter]);
 
-			if ($oCache->initCache($cacheTime, $cacheId, $cacheDir)) {
-				$arShops = $oCache->getVars();
-			} elseif ($oCache->startDataCache()) {
-				$arShops = \shop::getList(array('filter' => $arFilter));
+            if (!$shops) {
+                $closestCity = \city_nearest::getNearestId($filter['city_id']);
 
-				if (!$arShops) {
-					$cityNearest = \city_nearest::getNearestId($cityId);
-
-					if (!$this->hasErrors()) {
-						$arShops = \shop::getList(array('filter' => array('city_id' => $cityNearest)));
-					}
-				}
-
-				// вешаем тегированный кеш на ИБ магазинов
-				$GLOBALS['CACHE_MANAGER']->StartTagCache($cacheDir);
-				$GLOBALS['CACHE_MANAGER']->RegisterTag('iblock_id_'.\CIBlockTools::GetIBlockId('pet-shops'));
-				$GLOBALS['CACHE_MANAGER']->EndTagCache();
-
-				$oCache->endDataCache($arShops);
-			}
-
-			//
-			if ($lat && $lon) {
-				//сортируем по приближенности
-				foreach ($arShops as &$arShop) {
-					$arShop['dist'] = pow($lat - $arShop['lat'], 2) + pow($lon - $arShop['lon'], 2);
-				}
-
-				unset($arShop);
-				usort($arShops, function ($a, $b) {
-					if ($a['dist'] > $b['dist']) {
-						return 1;
-					} elseif ($a['dist'] < $b['dist']) {
-						return -1;
-					} elseif ($a['title'] > $b['title']) {
-						return 1;
-					} elseif ($a['title'] < $b['title']) {
-						return -1;
-					} else {
-						return 0;
-					}
-				});
-			} else {
-				usort($arShops, function ($a, $b) {
-					if ($a['title'] > $b['title']) {
-						return 1;
-					} elseif ($a['title'] < $b['title']) {
-						return -1;
-					} else {
-						return 0;
-					}
-				});
-			}
-
-			//
-			foreach ($arShops as $arShop) {
-				unset($arShop['dist']);
-				$arResult['shops'][] = $arShop;
-			}
+                if (!$this->hasErrors()) {
+                    $shops = \shop::getList(array('filter' => array('city_id' => $closestCity)));
+                }
+            }
+            $result['shops'] = $this->sortShops($shops, $lat, $lon);
 		}
 
-		return $arResult;
+		return $result;
 	}
+
+	protected function sortShops($shops, $lat = false, $lon = false) {
+
+        if ($lat && $lon) {
+            //сортируем по приближенности
+            foreach ($shops as &$shop) {
+                $shop['dist'] = pow($lat - $shop['lat'], 2) + pow($lon - $shop['lon'], 2);
+            }
+
+            unset($shop);
+            usort($shops, function ($a, $b) {
+                if ($a['dist'] > $b['dist']) {
+                    return 1;
+                } elseif ($a['dist'] < $b['dist']) {
+                    return -1;
+                } elseif ($a['title'] > $b['title']) {
+                    return 1;
+                } elseif ($a['title'] < $b['title']) {
+                    return -1;
+                } else {
+                    return 0;
+                }
+            });
+
+            foreach ($shops as &$shop) {
+                unset($shop['dist']);
+            }
+
+        } else {
+            usort($shops, function ($a, $b) {
+                if ($a['title'] > $b['title']) {
+                    return 1;
+                } elseif ($a['title'] < $b['title']) {
+                    return -1;
+                } else {
+                    return 0;
+                }
+            });
+        }
+
+	    return $shops;
+    }
 }

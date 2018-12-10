@@ -24,65 +24,6 @@ class baner_list extends \APIServer
 	    return $result;
 	}
 
-	protected function getMethodNameByType($type) {
-        $methodName = false;
-        switch ($type) {
-            case 'goods':
-                $methodName = 'goods_item';
-                break;
-            case 'goods_list':
-                $methodName = 'goods_item_list';
-                break;
-            case 'catalog':
-                $methodName = 'categories';
-                break;
-            case 'news':
-                $methodName = 'news';
-                break;
-            case 'action':
-                $methodName = 'action';
-                break;
-        }
-        return $methodName;
-    }
-
-    protected function getQueryDataByType($type, $banner, $cityId) {
-        $queryData = [];
-
-        switch ($type) {
-            case 'goods':
-            case 'goods_list':
-            case 'catalog':
-                $queryData = [
-                    'token' => $this->User['token'],
-                    'id' => $banner['PROPERTY_VALUES']['LINK']
-                ];
-                break;
-            case 'news':
-            case 'action':
-                $queryData = [
-                    'token' => $this->User['token'],
-                    'type' => $banner['CODE'],
-                    'info_id' => $banner['PROPERTY_VALUES']['LINK'],
-                    'city_id' => $cityId
-                ];
-                break;
-        }
-
-        return $queryData;
-    }
-
-    protected function getTargetUrl($type, $banner, $cityId) {
-        $methodName = $this->getMethodNameByType($type);
-        $queryData = $this->getQueryDataByType($type, $banner, $cityId);
-        $targetUrl = $banner['PROPERTY_VALUES']['LINK'];
-
-        if ($methodName) {
-            $targetUrl = 'https://'.SITE_SERVER_NAME_API.'/mobile-api-v2/' . $methodName . '/?' . http_build_query($queryData);
-        }
-        return $targetUrl;
-    }
-
     public function getBanners($bannerType, $cityId = null) {
 	    $result = [];
         $res = (new BannerQuery())

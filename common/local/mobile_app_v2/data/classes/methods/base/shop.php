@@ -1,8 +1,77 @@
 <?
+
+use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\LocationBundle\LocationService;
+use FourPaws\App\Application;
+
 class shop extends \stdClass
 {
 	public static function getList($arParams = array())
 	{
+	    $result = null;
+        $filter = [];
+
+        if (isset($arParams['filter']['code'])) {
+            // $arFilter['PROPERTY_code'] = ($arParams['filter']['code'] ?: '---');
+        }
+
+        if (isset($arParams['filter']['city_id'])) {
+            $filter['UF_LOCATION'] = $arParams['filter']['city_id'];
+        }
+
+        if(isset($arParams['filter']['metro'])
+            && is_array($arParams['filter']['metro'])
+            && !empty($arParams['filter']['metro'])
+        ) {
+            $filter['UF_METRO'] = $arParams['filter']['metro'];
+        }
+
+        $serviceContainer = Application::getInstance()->getContainer();
+        /** @var StoreService $storeService */
+        $storeService = $serviceContainer->get('store.service');
+        /** @var LocationService $locationService */
+        $locationService = $serviceContainer->get('location.service');
+
+        $stores = $storeService->getStores($storeService::TYPE_ALL, $filter)->toArray();
+        $metroData = $storeService->getMetroInfo();
+        $services = $storeService->getServicesInfo();
+
+        /** @var FourPaws\StoreBundle\Entity\Store $store */
+        foreach ($stores as $store) {
+            $metro = $metroData[$store->getMetro()];
+            $address = $store->getAddress();
+            if ($metro) {
+                $address = 'м. ' . $metro['UF_NAME'] . ', ' . $address;
+            }
+            $location = $locationService->findLocationByCode($store->getLocation());
+            $result[] = array(
+                'city_id' => $location['ID'],
+                'id' => $store->getXmlId(),
+                'title' => $store->getTitle(),
+                'picture' => $store->getSrcImage(),
+                'details' => $store->getDescription(),
+                'lat' => $store->getLatitude(),
+                'lon' => $store->getLongitude(),
+                'metro_name' => $metro ? $metro['UF_NAME'] : '',
+                'metro_color' => $metro ? $metro['BRANCH']['UF_COLOUR_CODE'] : '',
+                'worktime' => $store->getScheduleString(),
+                'address' => $address,
+                'phone' => $store->getPhone(),
+                'phone_ext' => '',
+                'url' => '',
+                'service' => array_map(function($serviceId) use ($services) {
+                    $service = $services[$serviceId];
+                    return [
+                        'title' => $service['UF_NAME'],
+                        'image' => \CFile::getPath($service['UF_FILE']),
+                    ];
+                }, $store->getServices())
+            );
+        }
+        return $result;
+
+
+	    /*
 		\Bitrix\Main\Loader::includeModule('iblock');
 
 		$arResult = null;
@@ -107,6 +176,7 @@ class shop extends \stdClass
 		}
 
 		return $arResult;
+	    */
 	}
 
 	public static function getByCode($shopCode)

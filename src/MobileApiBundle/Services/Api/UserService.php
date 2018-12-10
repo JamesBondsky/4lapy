@@ -40,6 +40,7 @@ class UserService
      * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
      * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
      * @throws \Bitrix\Main\Db\SqlQueryException
+     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
      * @return UserLoginResponse
      */

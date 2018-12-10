@@ -48,6 +48,7 @@ class UserController extends FOSRestController
      * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
      * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
      * @throws \Bitrix\Main\DB\SqlQueryException
+     * @throws \Bitrix\Main\SystemException
      * @return ApiResponse
      * @internal param Request $request
      *
