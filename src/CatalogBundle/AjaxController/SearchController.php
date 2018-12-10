@@ -173,7 +173,6 @@ class SearchController extends Controller
 
                                         $res[$key][$offer->getProduct()->getIblockSectionId()] = [
                                             'NAME' => $sectionProps['SECTION_PAGE_TITLE'],
-                                            'NAME' => $offer->getProduct()->getSection()->getName(),
                                             'DETAIL_PAGE_URL' => $offer->getProduct()->getSection()->getSectionPageUrl() .
                                                 '?query=' . str_replace(' ', '+', $searchRequest->getSearchString()),
                                             'SCORE' => $item->getHitMetaInfo()->getScore(),
