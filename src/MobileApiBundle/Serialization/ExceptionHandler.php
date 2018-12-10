@@ -154,11 +154,14 @@ class ExceptionHandler implements SubscribingHandlerInterface
         if ($this->isDebug()) {
             $error['exception'] = [
                 'type'  => get_class($exception),
-                'title' => $exception->getMessage(),
+                'title' => explode("\n", $exception->getMessage()),
                 'file'  => $exception->getFile(),
                 'line'  => $exception->getLine(),
                 'code'  => $exception->getCode(),
-                'trace' => $exception->getTraceAsString(),
+                'trace' => array_map(
+                    function($v) { list($path, $method) = explode(': ', $v); return [$path . ':', $method]; },
+                    explode("\n", $exception->getTraceAsString())
+                ),
             ];
         }
 
