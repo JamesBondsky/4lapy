@@ -130,25 +130,26 @@ class SearchController extends Controller
                             if ($offer != false) {
                                 if (empty($res[$key][$offer->getProduct()->getIblockSectionId()])) {
 //                                    $curScore = $item->getHitMetaInfo()->getScore();
-                                    /*
-                                    $category = $offer->getProduct()->getSection();
-                                    $cache = (new BitrixCache())
-                                        ->withId(__METHOD__ . $category->getId())
-                                        ->withTime(3600);
 
-                                    $sectionProps = $cache->resultOf(function () use ($category) {
-                                        return \array_map(function ($meta) use ($category) {
-                                            return $meta;
-                                        }, (new SectionValues($category->getIblockId(),
-                                            $category->getId()))->getValues());
-                                    });
-*/
-                                    $res[$key][$offer->getProduct()->getIblockSectionId()] = [
-//                                        'NAME' => $sectionProps['SECTION_PAGE_TITLE'],
-                                        'NAME' => $offer->getProduct()->getSection()->getName(),
+                                    $category = $offer->getProduct()->getSection();
+                                    if ($category) {
+                                        $cache = (new BitrixCache())
+                                            ->withId(__METHOD__ . $category->getId())
+                                            ->withTime(3600);
+
+                                        $sectionProps = $cache->resultOf(function () use ($category) {
+                                            return \array_map(function ($meta) use ($category) {
+                                                return $meta;
+                                            }, (new SectionValues($category->getIblockId(),
+                                                $category->getId()))->getValues());
+                                        });
+
+                                        $res[$key][$offer->getProduct()->getIblockSectionId()] = [
+                                            'NAME' => $sectionProps['SECTION_PAGE_TITLE'],
+                                            'NAME' => $offer->getProduct()->getSection()->getName(),
                                             'DETAIL_PAGE_URL' => $offer->getProduct()->getSection()->getSectionPageUrl() .
-                                            '?query=' . str_replace(' ', '+', $searchRequest->getSearchString()),
-                                        'SCORE' => $item->getHitMetaInfo()->getScore(),
+                                                '?query=' . str_replace(' ', '+', $searchRequest->getSearchString()),
+                                            'SCORE' => $item->getHitMetaInfo()->getScore(),
 //                                        'ELEMENTS' => [
 //                                            [
 //                                                'NAME' => $offer->getProduct()->getName(),
@@ -156,7 +157,8 @@ class SearchController extends Controller
 //                                                'SCORE' => $curScore
 //                                            ]
 //                                        ]
-                                    ];
+                                        ];
+                                    }
                                 } else {
                                     $curScore = $item->getHitMetaInfo()->getScore();
                                     $res[$key][$offer->getProduct()->getIblockSectionId()]['SCORE'] += $curScore;
