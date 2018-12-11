@@ -105,9 +105,9 @@ class Info
     public $images;
 
     /**
-     * @var null
+     * @var array
      */
-    protected $participants;
+    protected $participants = [];
     /**
      * Признак открытого/закрытого голосования
      *

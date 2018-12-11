@@ -50,7 +50,7 @@ class InfoService implements LoggerAwareInterface
                     $collection = $this->getNews($id, $select);
                     break;
                 case InfoEnum::LETTERS:
-                    $collection = $this->getActions($id, $select);
+                    $collection = $this->getArticles($id, $select);
                     break;
                 default:
                     throw new \RuntimeException(sprintf('No such method to get %s type', $type));

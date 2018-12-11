@@ -9,7 +9,7 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Request\InfoRequest;
-use FourPaws\MobileApiBundle\Dto\Response;
+use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
 use FourPaws\MobileApiBundle\Services\Api\InfoService;
 
 class InfoController extends FOSRestController
@@ -33,11 +33,11 @@ class InfoController extends FOSRestController
      *
      * @param InfoRequest $infoRequest
      *
-     * @return Response
+     * @return ApiResponse
      */
-    public function getInfoAction(InfoRequest $infoRequest): Response
+    public function getInfoAction(InfoRequest $infoRequest): ApiResponse
     {
-        $response = new Response();
+        $response = new ApiResponse();
         $response->setData($this->infoService->getInfo(
             $infoRequest->getType(),
             $infoRequest->getInfoId(),
