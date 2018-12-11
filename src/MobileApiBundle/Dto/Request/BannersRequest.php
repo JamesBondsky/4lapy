@@ -55,7 +55,7 @@ class BannersRequest implements SimpleUnserializeRequest, GetRequest
      * @param string $cityId
      * @return BannersRequest
      */
-    public function setCityId($cityId): string
+    public function setCityId($cityId): BannersRequest
     {
         $this->cityId = $cityId;
         return $this;
