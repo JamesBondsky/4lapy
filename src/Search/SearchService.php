@@ -410,6 +410,32 @@ class SearchService implements LoggerAwareInterface
                 ->setOperator('and')
         );
 
+        if (mb_strpos(mb_strtolower($searchString), 'корм') !== false) {
+            $boolQuery->addShould(
+                $queryBuilder->query()->multi_match()
+                    ->setQuery('корм')
+                    ->setFields(['sectionName'])
+                    ->setType('best_fields')
+                    ->setFuzziness(0)
+                    ->setAnalyzer('default')
+                    ->setParam('boost', 200.0)
+                    ->setParam('_name', 'name-fuzzy-word-section-0')
+                    ->setOperator('and')
+            );
+
+            $boolQuery->addShould(
+                $queryBuilder->query()->multi_match()
+                    ->setQuery('корм')
+                    ->setFields(['sectionName'])
+                    ->setType('best_fields')
+                    ->setFuzziness(1)
+                    ->setAnalyzer('default')
+                    ->setParam('boost', 100.0)
+                    ->setParam('_name', 'name-fuzzy-word-section-0')
+                    ->setOperator('and')
+            );
+        }
+
         //1 ошибка
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
