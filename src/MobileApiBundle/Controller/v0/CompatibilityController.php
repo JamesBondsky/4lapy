@@ -33,7 +33,7 @@ class CompatibilityController extends FOSRestController
      *
      * @return ApiResponse
      */
-    public function getBannersListAction(CompatibilityRequest $compatibilityRequest): ApiResponse
+    public function checkCompatibilityAction(CompatibilityRequest $compatibilityRequest): ApiResponse
     {
         return (new ApiResponse())
             ->setData(

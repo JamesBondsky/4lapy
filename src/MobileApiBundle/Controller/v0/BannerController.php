@@ -7,7 +7,6 @@
 namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
-use Swagger\Annotations\Parameter;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Request\BannersRequest;
 use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
@@ -22,7 +21,7 @@ class BannerController extends FOSRestController
      */
     private $apiBannerService;
 
-    private $cacheTime = 3600;
+    private $cacheTime = 3601;
     private $cachePath = '/api/banners';
 
     public function __construct(ApiBannerService $apiBannerService)
@@ -31,7 +30,7 @@ class BannerController extends FOSRestController
     }
 
     /**
-     * @Rest\Get(path="/baner_list/")
+     * @Rest\Get("/baner_list/")
      * @Rest\View()
      *
      * @param BannersRequest $bannersRequest
