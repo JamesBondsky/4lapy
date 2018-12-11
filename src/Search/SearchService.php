@@ -171,7 +171,7 @@ class SearchService implements LoggerAwareInterface
         if ($searchString !== '') {
             $productSearch->getQuery()->setMinScore(100);
             $brandSearch->getQuery()->setMinScore(100);
-            $suggestSearch->getQuery()->setMinScore(100);
+            $suggestSearch->getQuery()->setMinScore(1000);
         }
 
         $cntResults = (count(explode(' ', $searchString)) >= 4) ? 10 : 10;
@@ -191,7 +191,7 @@ class SearchService implements LoggerAwareInterface
 
         $suggestSearch->getQuery()
             ->setFrom($navigation->getFrom())
-            ->setSize(50)
+            ->setSize(500)
             ->setSort($sorting->getRule())
             ->setParam('query', $this->getSuggestionsMax($searchString));
 
