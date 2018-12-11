@@ -45,6 +45,8 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
 
     private const FORGOT_PASSWORD_SECONDS = 60;
 
+    private const FORGOT_USER_FIELD_NAME = 'UF_SMS_FGT_PASS_TIME'
+
     /**
      * @var CurrentUserProviderInterface
      */
@@ -259,8 +261,8 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         $catSendSms = false;
         $arUser = CUser::GetByID($userID)->Fetch();
 
-        if ($arUser['UF_SMS_FGT_PASS_TIME'] == null || $arUser['UF_SMS_FGT_PASS_TIME'] != '') {
-            $catSendSms = ($time - $arUser['UF_SMS_FGT_PASS_TIME']) >= static::FORGOT_PASSWORD_SECONDS;
+        if ($arUser[static::FORGOT_USER_FIELD_NAME] == null || $arUser[static::FORGOT_USER_FIELD_NAME] != '') {
+            $catSendSms = ($time - $arUser[static::FORGOT_USER_FIELD_NAME]) >= static::FORGOT_PASSWORD_SECONDS;
         }
         return $catSendSms;
     }
@@ -273,7 +275,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
     private function writeForgotPasswordSmsTime($userID, $time)
     {
         $user = new CUser;
-        $fields = ['UF_SMS_FGT_PASS_TIME' => $time];
+        $fields = [static::FORGOT_USER_FIELD_NAME => $time];
         $user->Update($userID, $fields);
     }
 
