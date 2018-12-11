@@ -36,6 +36,9 @@ use FourPaws\Decorators\SvgDecorator;
                    autocomplete="off"
                    value="<?= $arResult['QUERY'] ?>"/>
         </div>
+        <div class="search-loader js-loader-search-header">
+          <img src="/static/build/images/inhtml/spinner.svg" alt="spinner" title="">
+        </div>
         <button class="b-button b-button--form-inline b-button--search">
             <span class="b-icon">
                 <?= new SvgDecorator('icon-search', 16, 16) ?>
