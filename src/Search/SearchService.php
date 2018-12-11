@@ -469,7 +469,7 @@ class SearchService implements LoggerAwareInterface
                 ->setType('best_fields')
                 ->setFuzziness(0)
 //                ->setAnalyzer('default')
-                ->setParam('boost', 50)
+                ->setParam('boost', 80)
                 ->setParam('_name', 'name-fuzzy-word-name-0')
                 ->setOperator('and')
         );
@@ -483,7 +483,7 @@ class SearchService implements LoggerAwareInterface
                 ->setType('best_fields')
                 ->setFuzziness(1)
 //                ->setAnalyzer('default')
-                ->setParam('boost', 25)
+                ->setParam('boost', 60)
                 ->setParam('_name', 'name-fuzzy-word-name-1')
                 ->setOperator('and')
         );
@@ -496,7 +496,7 @@ class SearchService implements LoggerAwareInterface
                 ->setType('best_fields')
                 ->setFuzziness(2)
 //                ->setAnalyzer('default')
-                ->setParam('boost', 15)
+                ->setParam('boost', 30)
                 ->setParam('_name', 'name-fuzzy-word-name-2')
                 ->setOperator('and')
         );
