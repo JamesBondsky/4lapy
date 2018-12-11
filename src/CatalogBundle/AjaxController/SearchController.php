@@ -212,6 +212,8 @@ class SearchController extends Controller
             $res['products'] = [];
         } elseif (isset($res['products'][0])) {
             $res['products'] = [$res['products'][0]];
+            $res['suggests'] = [];
+            $res['brands'] = [];
         } else {
             $res['products'] = [];
         }
