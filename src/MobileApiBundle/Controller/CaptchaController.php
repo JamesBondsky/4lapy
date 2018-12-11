@@ -50,18 +50,6 @@ class CaptchaController extends FOSRestController
      */
     public function verifyAction(CaptchaVerifyRequest $captchaVerifyRequest)
     {
-        /**
-         * @todo Сериализация
-         */
-
-        /**
-         * @todo Валидация
-         */
-
-        /**
-         * @todo Проверка типа сущности
-         *       Возможно в рамках Constraint
-         */
         $data = $this->apiCaptchaService->verify(
             $captchaVerifyRequest->getEntity(),
             $captchaVerifyRequest->getCaptchaId(),
