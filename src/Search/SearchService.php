@@ -489,17 +489,17 @@ class SearchService implements LoggerAwareInterface
         );
 
         //2 ошибка
-//        $boolQuery->addShould(
-//            $queryBuilder->query()->multi_match()
-//                ->setQuery($searchString)
-//                ->setFields(['NAME.full_search'])
-//                ->setType('best_fields')
-//                ->setFuzziness(2)
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['NAME.synonym'])
+                ->setType('best_fields')
+                ->setFuzziness(2)
 //                ->setAnalyzer('default')
-//                ->setParam('boost', 10)
-//                ->setParam('_name', 'name-fuzzy-word-name-2')
-//                ->setOperator('and')
-//        );
+                ->setParam('boost', 15)
+                ->setParam('_name', 'name-fuzzy-word-name-2')
+                ->setOperator('and')
+        );
 
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
