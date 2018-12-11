@@ -80,6 +80,7 @@ class SearchController extends Controller
                     '!PROPERTY_TRANSLITS' => false
                 ];
 
+                $brandFound = false;
                 $dbItems = \CIBlockElement::GetList([], $arFilter, false, false, $arSelect);
                 while ($arItem = $dbItems->Fetch()) {
                     if (!empty($arItem['PROPERTY_TRANSLITS_VALUE'])) {
@@ -89,10 +90,14 @@ class SearchController extends Controller
                             if (mb_strpos($searchString, $translit) !== false) {
                                 $searchString = str_replace($translit,
                                     mb_strtolower($arItem['NAME']), $searchString);
+                                $brandFound = true;
+                                break;
                             }
                         }
                     }
-
+                    if ($brandFound) {
+                        break;
+                    }
                 }
             }
 
