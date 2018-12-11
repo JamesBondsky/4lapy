@@ -10,25 +10,14 @@ use \FourPaws\Catalog\Query\BannerQuery;
 use \FourPaws\MobileApiBundle\Dto\Object\Banner;
 use FourPaws\Catalog\Model\Banner as BannerModel;
 use FourPaws\MobileApiBundle\Dto\Response\BannerListResponse;
-use FourPaws\UserBundle\Service\UserService as UserBundleService;
 use Doctrine\Common\Collections\ArrayCollection;
 
 class BannerService
 {
     /**
-     * @var UserBundleService
-     */
-    private $userBundleService;
-
-    /**
      * @var string
      */
     private $cityId = '';
-
-    public function __construct(UserBundleService $userBundleService)
-    {
-        $this->userBundleService = $userBundleService;
-    }
 
     /**
      * @param string $sectionCode
@@ -49,7 +38,7 @@ class BannerService
      * @param string $cityId
      * @return BannerService
      */
-    public function setCityId($cityId) {
+    public function setCityId($cityId): BannerService {
         $this->cityId = $cityId;
         return $this;
     }

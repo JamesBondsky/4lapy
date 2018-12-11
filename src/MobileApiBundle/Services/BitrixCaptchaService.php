@@ -18,7 +18,7 @@ class BitrixCaptchaService implements CaptchaServiceInterface
          */
         include_once $_SERVER['DOCUMENT_ROOT']. '/bitrix/modules/main/classes/general/captcha.php';
 
-        $this->captchaProvider = new CCaptcha();
+        $this->captchaProvider = new \CCaptcha();
         $this->captchaProvider->SetCode();
     }
 

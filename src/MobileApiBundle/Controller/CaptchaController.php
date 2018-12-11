@@ -4,40 +4,51 @@ namespace FourPaws\MobileApiBundle\Controller;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\MobileApiBundle\Dto\Request\CaptchaCreateRequest;
+use FourPaws\MobileApiBundle\Dto\Request\CaptchaVerifyRequest;
+use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
+use FourPaws\MobileApiBundle\Services\Api\CaptchaService as ApiCaptchaService;
 
 class CaptchaController extends FOSRestController
 {
     /**
-     * @see \FourPaws\MobileApiBundle\Dto\Request\CaptchaCreateRequest
-     * @Rest\Post(path="/captcha")
+     * @var ApiCaptchaService
      */
-    public function createAction()
+    private $apiCaptchaService;
+
+    public function __construct(ApiCaptchaService $apiCaptchaService)
     {
-        /**
-         * @todo Сериализация
-         */
-        /**
-         * @todo Валидация
-         */
-
-        /**
-         * @todo Если валидируемая сущность телефон
-         *       Отправка из регистрации - Генерим код подтверждения и отправляем смс
-         *       Отправка из редактирования - Генерим код подтверждения и отправляем смс
-         *       Отправка из активайии карты - Генерим код подтверждения и отправляем смс
-         */
-
-        /**
-         * @todo Если валидируемая сущность не телефон
-         *       Отправка из редактирования или из активации карты - возвращаем ошибку captcha__email_is_used
-         *       Отправка из создания - отправляем письмо с кодом качи
-         */
+        $this->apiCaptchaService = $apiCaptchaService;
     }
 
     /**
-     * @see \FourPaws\MobileApiBundle\Dto\Request\CaptchaVerifyRequest
+     * @Rest\Post(path="/captcha/")
+     * @Rest\View()
+     *
+     * @param CaptchaCreateRequest $captchaCreateRequest
+     * @return ApiResponse
+     * @throws \Bitrix\Main\ArgumentTypeException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\UserBundle\Exception\NotFoundException
      */
-    public function verifyAction()
+    public function createAction(CaptchaCreateRequest $captchaCreateRequest)
+    {
+        $data = $this->apiCaptchaService->sendValidation(
+            $captchaCreateRequest->getLogin(),
+            $captchaCreateRequest->getSender()
+        );
+        return (new ApiResponse())->setData($data);
+    }
+
+    /**
+     * @Rest\Post(path="/verify/")
+     * @Rest\View()
+     *
+     * @param CaptchaVerifyRequest $captchaVerifyRequest
+     * @return ApiResponse
+     */
+    public function verifyAction(CaptchaVerifyRequest $captchaVerifyRequest)
     {
         /**
          * @todo Сериализация
@@ -51,5 +62,11 @@ class CaptchaController extends FOSRestController
          * @todo Проверка типа сущности
          *       Возможно в рамках Constraint
          */
+        $data = $this->apiCaptchaService->verify(
+            $captchaVerifyRequest->getEntity(),
+            $captchaVerifyRequest->getCaptchaId(),
+            $captchaVerifyRequest->getCaptchaValue()
+        );
+        return (new ApiResponse())->setData($data);
     }
 }
