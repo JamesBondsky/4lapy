@@ -62,7 +62,8 @@ if ($arResult['DETAIL_TEXT'] || $arResult['PRINT_PICTURE']) { ?>
                 ?>
 
                 <div class="b-brand-banner">
-                    <?if (!empty($arResult['BANNER']['LINK'])) {?>
+                    <?
+                    if (!empty($arResult['BANNER']['LINK'])) { ?>
                     <a href="<?= $arResult['BANNER']['LINK'] ?>" class="b-brand-banner__link">
                         <? } ?>
                         <img class="b-brand-banner__background b-brand-banner__background--desktop"
@@ -71,7 +72,8 @@ if ($arResult['DETAIL_TEXT'] || $arResult['PRINT_PICTURE']) { ?>
                              src="<?= $arResult['BANNER']['IMAGES']['BANNER_IMAGES_NOTEBOOK'] ?>" alt="">
                         <img class="b-brand-banner__background b-brand-banner__background--mobile"
                              src="<?= $arResult['BANNER']['IMAGES']['BANNER_IMAGES_MOBILE'] ?>" alt="">
-                        <?if (!empty($arResult['BANNER']['LINK'])) {?>
+                        <?
+                        if (!empty($arResult['BANNER']['LINK'])) { ?>
                     </a>
                 <? } ?>
                 </div>
@@ -79,19 +81,23 @@ if ($arResult['DETAIL_TEXT'] || $arResult['PRINT_PICTURE']) { ?>
             case 'VIDEO_MP4': ?>
                 <div class="b-brand-video">
                     <div class="b-brand-video__info">
-                        <?if (!empty($arResult['VIDEO']['TITLE'])) { ?>
-                            <div class="b-brand-video__title"><?=$arResult['VIDEO']['TITLE']?></div>
+                        <?
+                        if (!empty($arResult['VIDEO']['TITLE'])) { ?>
+                            <div class="b-brand-video__title"><?= $arResult['VIDEO']['TITLE'] ?></div>
                         <? } ?>
-                        <?if (!empty($arResult['VIDEO']['DESCRIPTION'])) { ?>
-                            <div class="b-brand-video__descr"><?=$arResult['VIDEO']['DESCRIPTION']?></div>
+                        <?
+                        if (!empty($arResult['VIDEO']['DESCRIPTION'])) { ?>
+                            <div class="b-brand-video__descr"><?= $arResult['VIDEO']['DESCRIPTION'] ?></div>
                         <? } ?>
                     </div>
                     <div class="b-brand-video__video-wrap">
                         <div class="b-brand-video__video">
-                            <video data-brand-video="true" width="100%" height="100%" <?if (!empty($arResult['VIDEO']['PREVIEW_PICTURE'])) {?>poster="<?=$arResult['VIDEO']['PREVIEW_PICTURE']?>"<? } ?> controls="controls" preload="none" muted>
-                                <source type="video/mp4" src="<?=$arResult['VIDEO']['VIDEOS']['VIDEO_MP4']?>"/>
-                                <source type="video/webm" src="<?=$arResult['VIDEO']['VIDEOS']['VIDEO_WEBM']?>"/>
-                                <source type="video/ogg" src="<?=$arResult['VIDEO']['VIDEOS']['VIDEO_OGG']?>"/>
+                            <video data-brand-video="true" width="100%" height="100%" <?
+                            if (!empty($arResult['VIDEO']['PREVIEW_PICTURE'])) { ?>poster="<?= $arResult['VIDEO']['PREVIEW_PICTURE'] ?>"<? } ?>
+                                   controls="controls" preload="none" muted>
+                                <source type="video/mp4" src="<?= $arResult['VIDEO']['VIDEOS']['VIDEO_MP4'] ?>"/>
+                                <source type="video/webm" src="<?= $arResult['VIDEO']['VIDEOS']['VIDEO_WEBM'] ?>"/>
+                                <source type="video/ogg" src="<?= $arResult['VIDEO']['VIDEOS']['VIDEO_OGG'] ?>"/>
                             </video>
                         </div>
                     </div>
@@ -107,11 +113,18 @@ if ($arResult['DETAIL_TEXT'] || $arResult['PRINT_PICTURE']) { ?>
                 if ($needShowBlock) {
                     ?>
                     <div class="b-brand-products">
-                        <div class="b-brand-products__list js-brand-products-slider">
-                            <?php
-                            foreach ($arResult['PRODUCT_CATEGORIES'] as $arItem) { ?>
+                        <div class="b-brand-products__list-wrap js-brand-products-slider">
+                            <div class="b-brand-products__list js-list-brand-products">
+                                <?php
+                                $prevRow = $arResult['PRODUCT_CATEGORIES'][0]['row'];
+                                foreach ($arResult['PRODUCT_CATEGORIES'] as $arItem) { ?>
+                                <? if ($prevRow != $arItem['row']){ ?>
+                            </div>
+                            <div class="b-brand-products__list js-list-brand-products">
+                                <? } ?>
                                 <? if (!empty($arItem['filters']) && !empty($arItem['image']) && !empty($arItem['title']) && !empty($arItem['subtitle'])) { ?>
-                                    <div class="b-brand-products__item">
+                                    <div class="b-brand-products__item"
+                                         data-row-brand-product-item="<?= $arItem['row'] ?>">
                                         <div data-brand-product-item="<?= $arItem['filters'] ?>"
                                              class="b-brand-products__link js-brand-product-item">
                                             <div class="b-brand-products__img">
@@ -128,7 +141,9 @@ if ($arResult['DETAIL_TEXT'] || $arResult['PRINT_PICTURE']) { ?>
                                         </div>
                                     </div>
                                 <? } ?>
-                            <? } ?>
+                                <? $prevRow = $arItem['row']; ?>
+                                <? } ?>
+                            </div>
                         </div>
                     </div>
                 <? } ?>
