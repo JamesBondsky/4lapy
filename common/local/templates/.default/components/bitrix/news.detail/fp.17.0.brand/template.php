@@ -98,31 +98,40 @@ if ($arResult['DETAIL_TEXT'] || $arResult['PRINT_PICTURE']) { ?>
                 </div>
                 <? break;
             case 'PRODUCT_CATEGORIES':
-                ?>
-                <div class="b-brand-products">
-                    <div class="b-brand-products__list js-brand-products-slider">
-                        <?php
-                        foreach ($arResult['PRODUCT_CATEGORIES'] as $arItem) { ?>
-                            <? if (!empty($arItem['filters']) && !empty($arItem['image']) && !empty($arItem['title']) && !empty($arItem['subtitle'])) { ?>
-                                <div class="b-brand-products__item">
-                                    <div data-brand-product-item="<?= $arItem['filters'] ?>" class="b-brand-products__link js-brand-product-item">
-                                        <div class="b-brand-products__img">
-                                            <img src="<?= $arItem['image'] ?>" alt="<?= $arItem['alt'] ?>">
-                                        </div>
-                                        <div class="b-brand-products__title">
-                                            <div class="b-brand-products__title-product b-clipped-text">
-                                                <?= $arItem['title'] ?>
+                $needShowBlock = false;
+                foreach ($arResult['PRODUCT_CATEGORIES'] as $arItem) {
+                    if (!empty($arItem['filters']) && !empty($arItem['image']) && !empty($arItem['title']) && !empty($arItem['subtitle'])) {
+                        $needShowBlock = true;
+                    }
+                }
+                if ($needShowBlock) {
+                    ?>
+                    <div class="b-brand-products">
+                        <div class="b-brand-products__list js-brand-products-slider">
+                            <?php
+                            foreach ($arResult['PRODUCT_CATEGORIES'] as $arItem) { ?>
+                                <? if (!empty($arItem['filters']) && !empty($arItem['image']) && !empty($arItem['title']) && !empty($arItem['subtitle'])) { ?>
+                                    <div class="b-brand-products__item">
+                                        <div data-brand-product-item="<?= $arItem['filters'] ?>"
+                                             class="b-brand-products__link js-brand-product-item">
+                                            <div class="b-brand-products__img">
+                                                <img src="<?= $arItem['image'] ?>" alt="<?= $arItem['alt'] ?>">
                                             </div>
-                                            <div class="b-brand-products__title-type">
-                                                <?= $arItem['subtitle'] ?>
+                                            <div class="b-brand-products__title">
+                                                <div class="b-brand-products__title-product b-clipped-text">
+                                                    <?= $arItem['title'] ?>
+                                                </div>
+                                                <div class="b-brand-products__title-type">
+                                                    <?= $arItem['subtitle'] ?>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                <? } ?>
                             <? } ?>
-                        <? } ?>
+                        </div>
                     </div>
-                </div>
+                <? } ?>
                 <? break;
         }
     }
