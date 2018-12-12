@@ -163,7 +163,7 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
      */
     protected function processOffers(Feed $feed, Configuration $configuration): GoogleMerchantFeedService
     {
-        $limit = 500;
+        $limit = 10;
         $offers = $feed->getChannel()->getItems();
 
         $offset = $feed->getChannel()->getOffset() ?? 0;
@@ -198,7 +198,7 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
         $this->saveFeed($this->getStorageKey(), $feed);
 
         $cdbResult = $offerCollection->getCdbResult();
-        if ($this->getPageNumber($offset, $limit) === (int)$cdbResult->NavPageCount) {
+        if ($this->getPageNumber($offset, $limit) === 3) {
             throw new OffersIsOver('All offers was been processed.');
         }
 
