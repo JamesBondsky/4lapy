@@ -17,7 +17,7 @@ use FourPaws\MobileApiBundle\Dto\Response\OrderStatusHistoryResponse;
 class OrderController extends FOSRestController
 {
     /**
-     * @Rest\Get(path="/order_list")
+     * @Rest\Get(path="/order_list/")
      * @see OrderListResponse
      */
     public function getOrderListAction()
@@ -25,7 +25,7 @@ class OrderController extends FOSRestController
     }
 
     /**
-     * @Rest\Get(path="/order_status_history")
+     * @Rest\Get(path="/order_status_history/")
      * @see OrderStatusHistoryRequest
      * @see OrderStatusHistoryResponse
      */
@@ -34,7 +34,7 @@ class OrderController extends FOSRestController
     }
 
     /**
-     * @Rest\Get(path="/order_info")
+     * @Rest\Get(path="/order_info/")
      * @see OrderInfoRequest
      * @see OrderInfoResponse
      */

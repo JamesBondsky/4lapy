@@ -41,7 +41,7 @@ class CityService implements LoggerAwareInterface
      * @return City[]|Collection
      * @todo change metro check by metroways
      */
-    public function search(string $query, ?int $limit = null, bool $exact = false, array $filter = []): Collection
+    public function search(string $query, ?int $limit = 0, bool $exact = false, array $filter = []): Collection
     {
         try {
             /** NAME_UPPER в индексе */

@@ -7,6 +7,7 @@
 namespace FourPaws\MobileApiBundle\Dto\Object\Catalog;
 
 use Doctrine\Common\Collections\Collection;
+use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct\Tag;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
 use JMS\Serializer\Annotation as Serializer;
@@ -27,6 +28,7 @@ class ShortProduct
      *
      * @var string
      * @Serializer\Type("string")
+     * @Serializer\SerializedName("webpage")
      * @todo path?
      */
     protected $webPage = '';
@@ -159,10 +161,12 @@ class ShortProduct
      * @param string $webPage
      *
      * @return ShortProduct
+     * @throws \Bitrix\Main\SystemException
      */
     public function setWebPage(string $webPage): ShortProduct
     {
-        $this->webPage = $webPage;
+        $hrefDecorator = new FullHrefDecorator($webPage);
+        $this->webPage = $hrefDecorator->getFullPublicPath();
         return $this;
     }
 
@@ -197,10 +201,12 @@ class ShortProduct
      * @param string $picture
      *
      * @return ShortProduct
+     * @throws \Bitrix\Main\SystemException
      */
     public function setPicture(string $picture): ShortProduct
     {
-        $this->picture = $picture;
+        $hrefDecorator = new FullHrefDecorator($picture);
+        $this->picture = $hrefDecorator->getFullPublicPath();
         return $this;
     }
 

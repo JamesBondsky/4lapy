@@ -3,7 +3,7 @@
 namespace FourPaws\MobileApiBundle\Dto\Object;
 
 use Bitrix\Main\Application;
-use FourPaws\MobileApiBundle\Util\UrlHelper;
+use FourPaws\Decorators\FullHrefDecorator;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -154,7 +154,8 @@ class Banner
      * @throws \Bitrix\Main\SystemException
      */
     public function setLink($link, $cityId = ''): Banner {
-        $this->link = UrlHelper::getFullUrl($link);
+        $hrefDecorator = new FullHrefDecorator($link);
+        $this->link = $hrefDecorator->getFullPublicPath();
         $this->cityId = $cityId;
         $this->preparedLink = $this->getPreparedLink();
         return $this;
