@@ -25,6 +25,19 @@ class PushController extends FOSRestController
      */
     public function getAction()
     {
+        // ToDo: по токену который есть у юзера в табличке api_user_session выбираем из EventTable все сообщения и возвращаем массив
+        /*
+         * 	$arResult['messages'][] = array(
+                'id' => $arEvent['ID'],
+                'text' => $arEvent['MESSAGE']['TITLE'],
+                'date' => $arEvent['DATE_TIME_EXEC']->format("d.m.Y"),
+                'read' => ($arEvent['VIEWED'] == 'Y') ? true : false,
+                'options' => array(
+                    'type' => $arEvent['MESSAGE']['TYPE'],
+                    'id' => $arEvent['MESSAGE']['ID']
+                    )
+                );
+         */
         return (new Response())
             ->setData(['ok']);
     }
@@ -35,6 +48,7 @@ class PushController extends FOSRestController
      */
     public function markViewedAction()
     {
+        // ToDo: на вход приходит некий id сообщения. По id и по токену который есть у юзера в табличке api_user_session выбираем из таблички EventTable (push_event) сообщение и ставим ему 'VIEWED' => 'Y'
         return (new Response())
             ->setData(['result' => true]);
     }
@@ -45,7 +59,14 @@ class PushController extends FOSRestController
      */
     public function deleteAction()
     {
+        // ToDo: на вход приходит некий id сообщения. По id и по токену который есть у юзера в табличке api_user_session выбираем из таблички EventTable (push_event) сообщение и удаляем его
         return (new Response())
             ->setData(['result' => true]);
+    }
+
+    public function setPushTokenAction()
+    {
+        // ToDo: на вход приходят platform и token. Надо сохранять эти значения в табличке api_user_session выбрав пользователя по токену... Зачем? Пока не понятно...
+
     }
 }

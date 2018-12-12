@@ -464,6 +464,8 @@ class LocationService
                     'LEFT_MARGIN',
                     'RIGHT_MARGIN',
                     'TYPE_ID',
+                    'LATITUDE',
+                    'LONGITUDE'
                 ]);
             } else {
                 $query = $queryParams;

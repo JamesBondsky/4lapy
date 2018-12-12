@@ -192,6 +192,8 @@ class CityService implements LoggerAwareInterface
             ->setPath(array_map(function ($item) {
                 return $item['NAME'];
             }, $data['PATH']))
-            ->setHasMetro($data['CODE'] === LocationService::LOCATION_CODE_MOSCOW);
+            ->setHasMetro($data['CODE'] === LocationService::LOCATION_CODE_MOSCOW)
+            ->setLatitude($data['LATITUDE'])
+            ->setLongitude($data['LONGITUDE']);
     }
 }
