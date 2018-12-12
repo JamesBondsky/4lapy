@@ -29,9 +29,11 @@ if($USER->IsAuthorized()) {
                         {
                             $container = App::getInstance()->getContainer();
                             $pets = $container->get('pet.service');
+
                             if(count($pets->getCurUserPets()) || $modal_counts[2] > 2) {
                                 $user_class->Update($USER->GetID(), ['UF_MODALS_CNTS' => '3 3 3']);
                             }
+
                             else{
                                 $modal_number = 3;
                             }

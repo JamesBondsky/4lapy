@@ -2,6 +2,9 @@
 
 namespace FourPaws\CatalogBundle\AjaxController;
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Bitrix\Iblock\InheritedProperty\SectionValues;
+use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
@@ -12,9 +15,12 @@ use FourPaws\Catalog\Model\Brand;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\CatalogBundle\Dto\SearchRequest;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\Search\Model\CombinedSearchResult;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\SearchService;
+use FourPaws\Search\Table\SearchRequestStatisticTable;
 use InvalidArgumentException;
 use RuntimeException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
@@ -22,6 +28,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use WebArch\BitrixCache\BitrixCache;
 
 /**
  * Class SearchController
@@ -57,12 +64,49 @@ class SearchController extends Controller
 
         if (!$validator->validate($searchRequest)->count()) {
 
+            //костыль для заказчика
+            $searchString = mb_strtolower($searchRequest->getSearchString());
+            if (preg_match('/[А-Яа-яЁё]/u', $searchString)) {
+                $arSelect = [
+                    'ID',
+                    'IBLOCK_ID',
+                    'NAME',
+                    'PROPERTY_TRANSLITS'
+                ];
+
+                $arFilter = [
+                    'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::BRANDS),
+                    'ACTIVE' => 'Y',
+                    '!PROPERTY_TRANSLITS' => false
+                ];
+
+                $brandFound = false;
+                $dbItems = \CIBlockElement::GetList([], $arFilter, false, false, $arSelect);
+                while ($arItem = $dbItems->Fetch()) {
+                    if (!empty($arItem['PROPERTY_TRANSLITS_VALUE'])) {
+                        $arTranslits = explode(',', $arItem['PROPERTY_TRANSLITS_VALUE']);
+                        foreach ($arTranslits as $translit) {
+                            $translit = mb_strtolower(trim($translit));
+                            if (mb_strpos($searchString, $translit) !== false) {
+                                $searchString = str_replace($translit,
+                                    mb_strtolower($arItem['NAME']), $searchString);
+                                $brandFound = true;
+                                break;
+                            }
+                        }
+                    }
+                    if ($brandFound) {
+                        break;
+                    }
+                }
+            }
+
             /** @var CombinedSearchResult $result */
             $result = $searchService->searchAll(
                 $searchRequest->getCategory()->getFilters(),
                 $searchRequest->getSorts()->getSelected(),
                 $searchRequest->getNavigation(),
-                $searchRequest->getSearchString()
+                $searchString
             );
 
             $res = [
@@ -118,11 +162,25 @@ class SearchController extends Controller
                             if ($offer != false) {
                                 if (empty($res[$key][$offer->getProduct()->getIblockSectionId()])) {
 //                                    $curScore = $item->getHitMetaInfo()->getScore();
-                                    $res[$key][$offer->getProduct()->getIblockSectionId()] = [
-                                        'NAME' => $offer->getProduct()->getSection()->getName(),
-                                        'DETAIL_PAGE_URL' => $offer->getProduct()->getSection()->getSectionPageUrl() .
-                                            '?query=' . str_replace(' ', '+', $searchRequest->getSearchString()),
-                                        'SCORE' => $item->getHitMetaInfo()->getScore(),
+
+                                    $category = $offer->getProduct()->getSection();
+                                    if ($category) {
+                                        $cache = (new BitrixCache())
+                                            ->withId(__METHOD__ . $category->getId())
+                                            ->withTime(3600);
+
+                                        $sectionProps = $cache->resultOf(function () use ($category) {
+                                            return \array_map(function ($meta) use ($category) {
+                                                return $meta;
+                                            }, (new SectionValues($category->getIblockId(),
+                                                $category->getId()))->getValues());
+                                        });
+
+                                        $res[$key][$offer->getProduct()->getIblockSectionId()] = [
+                                            'NAME' => $sectionProps['SECTION_PAGE_TITLE'],
+                                            'DETAIL_PAGE_URL' => $offer->getProduct()->getSection()->getSectionPageUrl() .
+                                                '?query=' . str_replace(' ', '+', $searchRequest->getSearchString()),
+                                            'SCORE' => $item->getHitMetaInfo()->getScore(),
 //                                        'ELEMENTS' => [
 //                                            [
 //                                                'NAME' => $offer->getProduct()->getName(),
@@ -130,7 +188,8 @@ class SearchController extends Controller
 //                                                'SCORE' => $curScore
 //                                            ]
 //                                        ]
-                                    ];
+                                        ];
+                                    }
                                 } else {
                                     $curScore = $item->getHitMetaInfo()->getScore();
                                     $res[$key][$offer->getProduct()->getIblockSectionId()]['SCORE'] += $curScore;
@@ -156,10 +215,55 @@ class SearchController extends Controller
 
         if (count($res['products']) >= 5) {
             $res['products'] = [];
-        } else {
+        } elseif (isset($res['products'][0])) {
             $res['products'] = [$res['products'][0]];
+            $res['suggests'] = [];
+            $res['brands'] = [];
+        } else {
+            $res['products'] = [];
         }
 
         return JsonSuccessResponse::createWithData('', $res)->setEncodingOptions(JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * @Route("/write_statistic/")
+     *
+     * @param SearchRequest $searchRequest
+     *
+     * @return JsonResponse
+     *
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     * @throws \Exception
+     */
+    public function writeStatisticAction(SearchRequest $searchRequest): JsonResponse
+    {
+        $statisticDb = SearchRequestStatisticTable::GetList([
+            'filter' => [
+                'search_string' => $searchRequest->getSearchString()
+            ]
+        ]);
+
+        if ($statisticDb->getSelectedRowsCount() == 0) {
+            SearchRequestStatisticTable::Add([
+                'search_string' => $searchRequest->getSearchString(),
+                'quantity' => 1,
+                'last_date_search' => new DateTime()
+            ]);
+        } else {
+            $statisticRow = $statisticDb->fetch();
+            SearchRequestStatisticTable::Update(
+                $statisticRow['id'],
+                [
+                    'quantity' => $statisticRow['quantity'] + 1,
+                    'last_date_search' => new DateTime()
+                ]
+            );
+        }
+        return JsonSuccessResponse::createWithData('', []);
     }
 }

@@ -171,7 +171,7 @@ class SearchService implements LoggerAwareInterface
         if ($searchString !== '') {
             $productSearch->getQuery()->setMinScore(100);
             $brandSearch->getQuery()->setMinScore(100);
-            $suggestSearch->getQuery()->setMinScore(100);
+            $suggestSearch->getQuery()->setMinScore(1000);
         }
 
         $cntResults = (count(explode(' ', $searchString)) >= 4) ? 10 : 10;
@@ -191,7 +191,7 @@ class SearchService implements LoggerAwareInterface
 
         $suggestSearch->getQuery()
             ->setFrom($navigation->getFrom())
-            ->setSize(50)
+            ->setSize(500)
             ->setSort($sorting->getRule())
             ->setParam('query', $this->getSuggestionsMax($searchString));
 
@@ -410,6 +410,32 @@ class SearchService implements LoggerAwareInterface
                 ->setOperator('and')
         );
 
+//        if (mb_strpos(mb_strtolower($searchString), 'корм') !== false) {
+//            $boolQuery->addShould(
+//                $queryBuilder->query()->multi_match()
+//                    ->setQuery('корм')
+//                    ->setFields(['sectionName'])
+//                    ->setType('best_fields')
+//                    ->setFuzziness(0)
+//                    ->setAnalyzer('default')
+//                    ->setParam('boost', 200.0)
+//                    ->setParam('_name', 'name-fuzzy-word-section-0')
+//                    ->setOperator('and')
+//            );
+//
+//            $boolQuery->addShould(
+//                $queryBuilder->query()->multi_match()
+//                    ->setQuery('корм')
+//                    ->setFields(['sectionName'])
+//                    ->setType('best_fields')
+//                    ->setFuzziness(1)
+//                    ->setAnalyzer('default')
+//                    ->setParam('boost', 100.0)
+//                    ->setParam('_name', 'name-fuzzy-word-section-0')
+//                    ->setOperator('and')
+//            );
+//        }
+
         //1 ошибка
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
@@ -443,7 +469,7 @@ class SearchService implements LoggerAwareInterface
                 ->setType('best_fields')
                 ->setFuzziness(0)
 //                ->setAnalyzer('default')
-                ->setParam('boost', 50)
+                ->setParam('boost', 80)
                 ->setParam('_name', 'name-fuzzy-word-name-0')
                 ->setOperator('and')
         );
@@ -457,23 +483,23 @@ class SearchService implements LoggerAwareInterface
                 ->setType('best_fields')
                 ->setFuzziness(1)
 //                ->setAnalyzer('default')
-                ->setParam('boost', 25)
+                ->setParam('boost', 60)
                 ->setParam('_name', 'name-fuzzy-word-name-1')
                 ->setOperator('and')
         );
 
         //2 ошибка
-//        $boolQuery->addShould(
-//            $queryBuilder->query()->multi_match()
-//                ->setQuery($searchString)
-//                ->setFields(['NAME.full_search'])
-//                ->setType('best_fields')
-//                ->setFuzziness(2)
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['NAME.synonym'])
+                ->setType('best_fields')
+                ->setFuzziness(2)
 //                ->setAnalyzer('default')
-//                ->setParam('boost', 10)
-//                ->setParam('_name', 'name-fuzzy-word-name-2')
-//                ->setOperator('and')
-//        );
+                ->setParam('boost', 30)
+                ->setParam('_name', 'name-fuzzy-word-name-2')
+                ->setOperator('and')
+        );
 
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
