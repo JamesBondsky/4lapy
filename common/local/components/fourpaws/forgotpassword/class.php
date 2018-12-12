@@ -14,6 +14,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\Uri;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
@@ -41,6 +42,10 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
     public const BASKET_BACK_URL = '/cart/';
 
     public const PERSONAL_URL = '/personal/';
+
+    private const FORGOT_PASSWORD_SECONDS = 60;
+
+    private const FORGOT_USER_FIELD_NAME = 'UF_SMS_FGT_PASS_TIME'
 
     /**
      * @var CurrentUserProviderInterface
@@ -245,6 +250,35 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         return $this->ajaxMess->getSystemError();
     }
 
+
+    /**
+     * @param $userID
+     * @param $time
+     * @return bool
+     */
+    private function checkCanSendSms($userID, $time): bool
+    {
+        $catSendSms = false;
+        $arUser = CUser::GetByID($userID)->Fetch();
+
+        if ($arUser[static::FORGOT_USER_FIELD_NAME] == null || $arUser[static::FORGOT_USER_FIELD_NAME] != '') {
+            $catSendSms = ($time - $arUser[static::FORGOT_USER_FIELD_NAME]) >= static::FORGOT_PASSWORD_SECONDS;
+        }
+        return $catSendSms;
+    }
+
+
+    /**
+     * @param $userID
+     * @param $time
+     */
+    private function writeForgotPasswordSmsTime($userID, $time)
+    {
+        $user = new CUser;
+        $fields = [static::FORGOT_USER_FIELD_NAME => $time];
+        $user->Update($userID, $fields);
+    }
+
     /**
      * @param $phone
      *
@@ -258,6 +292,27 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             return $this->ajaxMess->getWrongPhoneNumberException();
         }
 
+        $users = $this->currentUserProvider->getUserRepository()->findBy(
+            [
+                '=PERSONAL_PHONE' => $phone,
+            ]
+        );
+
+        if (count($users) > 1) {
+            return $this->ajaxMess->getTooManyUserFoundException('', $phone,'телефоном');
+        }
+
+        if (count($users) === 0) {
+            return $this->ajaxMess->getUsernameNotFoundException($phone);
+        }
+
+        //check last send time
+        $time = time();
+        $userID = $users[0]->getId();
+        if (!$this->checkCanSendSms($userID, $time)) {
+            return JsonErrorResponse::createWithData('Минута еще не прошла!')->setEncodingOptions(JSON_UNESCAPED_UNICODE);
+        }
+
         try {
             /** @var ConfirmCodeService $confirmService */
             $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
@@ -265,6 +320,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             if (!$res) {
                 return $this->ajaxMess->getSmsSendErrorException();
             }
+            $this->writeForgotPasswordSmsTime($userID, $time);
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
         } catch (\RuntimeException|\Exception $e) {
@@ -408,10 +464,18 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             return $this->ajaxMess->getUsernameNotFoundException($phone);
         }
 
+        //check last send time
+        $time = time();
+        $userID = $users[0]->getId();
+        if (!$this->checkCanSendSms($userID, $time)) {
+            return JsonErrorResponse::createWithData('Минута еще не прошла!')->setEncodingOptions(JSON_UNESCAPED_UNICODE);
+        }
+
         try {
             /** @var ConfirmCodeService $confirmService */
             $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
             $confirmService::sendConfirmSms($phone);
+            $this->writeForgotPasswordSmsTime($userID, $time);
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
         } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
