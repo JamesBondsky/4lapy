@@ -72,7 +72,7 @@ $clonedOffers->uasort(
         gtag('event', 'page_view', {
             'send_to': 'AW-832765585',
             'ecomm_pagetype': 'offerdetail',
-            'ecomm_prodid': '<?=(int)$_GET['offer']?>',
+            'ecomm_prodid': '<?=(int)$currentOffer->getXmlId()?>',
         });
         $(document).ready(function () {
             $('#gtag-prod').appendTo('head');
