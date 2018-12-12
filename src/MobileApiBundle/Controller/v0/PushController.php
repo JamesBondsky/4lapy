@@ -14,7 +14,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 /**
  * Class PushController
  * @package FourPaws\MobileApiBundle\Controller
- * @Security("has_role('ROLE_USER')")
+ * @Security("has_role('REGISTERED_USERS')")
  * @todo    after create notification
  */
 class PushController extends FOSRestController
@@ -25,7 +25,8 @@ class PushController extends FOSRestController
      */
     public function getAction()
     {
-        return new Response();
+        return (new Response())
+            ->setData(['ok']);
     }
 
     /**

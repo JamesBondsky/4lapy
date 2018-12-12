@@ -13,15 +13,36 @@ use FourPaws\MobileApiBundle\Dto\Request\OrderStatusHistoryRequest;
 use FourPaws\MobileApiBundle\Dto\Response\OrderInfoResponse;
 use FourPaws\MobileApiBundle\Dto\Response\OrderListResponse;
 use FourPaws\MobileApiBundle\Dto\Response\OrderStatusHistoryResponse;
+use FourPaws\PersonalBundle\Entity\Order;
+use \FourPaws\MobileApiBundle\Dto\Object\Order as ApiObjectOrder;
+use FourPaws\PersonalBundle\Service\OrderService;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 
+/**
+ * Class PushController
+ * @package FourPaws\MobileApiBundle\Controller
+ * @Security("has_role('REGISTERED_USERS')")
+ */
 class OrderController extends FOSRestController
 {
     /**
-     * @Rest\Get(path="/order_list/")
-     * @see OrderListResponse
+     * @Rest\Get(path="/order_list_v2/")
+     * @Rest\View()
      */
-    public function getOrderListAction()
+    public function getOrderListAction(OrderService $orderService)
     {
+        /**
+         * @var User $user
+         */
+        $user = $this->getUser();
+        $orders = $orderService->getUserOrders($user)->getValues();
+        $orders = array_map(function (Order $order) {
+            return (new ApiObjectOrder())
+                // ->setDate($order->getDateInsert())
+                // ->setTime($order->getDateInsert())
+                ->setPaid($order->isPayed());
+}       , $orders);
+        return (new OrderListResponse())->setOrderList($orders);
     }
 
     /**

@@ -11,29 +11,45 @@ use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Request\FilterListRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Dto\Response\FilterListResponse;
-use FourPaws\MobileApiBundle\Services\Api\CatalogService;
+use FourPaws\MobileApiBundle\Services\Api\CatalogService as ApiCatalogService;
 
 class CatalogController extends FOSRestController
 {
+
+    /**
+     * @var ApiCatalogService
+     */
+    private $apiCatalogService;
+
+    public function __construct(ApiCatalogService $apiCatalogService)
+    {
+        $this->apiCatalogService = $apiCatalogService;
+    }
+
     /**
      * @Rest\Get("/filter_list/")
      * @Rest\View(serializerGroups={"Default", "response"})
-     * @see  FilterListRequest
-     * @see  FilterListResponse
      *
-     * @param CatalogService    $catalogService
      * @param FilterListRequest $filterListRequest
      *
      * @throws \FourPaws\MobileApiBundle\Exception\SystemException
      * @throws \FourPaws\MobileApiBundle\Exception\CategoryNotFoundException
-     * @return Response
+     * @return FilterListResponse
      */
-    public function getFilterListAction(CatalogService $catalogService, FilterListRequest $filterListRequest): Response
+    public function getFilterListAction(FilterListRequest $filterListRequest): FilterListResponse
     {
-        return new Response(
-            new FilterListResponse(
-                $catalogService->getFilters($filterListRequest->getId())
-            )
+        return new FilterListResponse(
+            $this->apiCatalogService->getFilters($filterListRequest->getId())
         );
+    }
+
+    /**
+     * @Rest\Get("/pets_category/")
+     * @Rest\View()
+     */
+    public function getPetsCategoryAction()
+    {
+
+        return (new Response())->setData($this->apiCatalogService->getPetsCategories());
     }
 }
