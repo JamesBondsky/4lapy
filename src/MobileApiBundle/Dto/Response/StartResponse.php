@@ -12,7 +12,7 @@ use JMS\Serializer\Annotation as Serializer;
 class StartResponse
 {
     /**
-     * @Serializer\SerializedName("access_id")
+     * @Serializer\SerializedName("token")
      * @Serializer\Type("string")
      * @var string
      */
