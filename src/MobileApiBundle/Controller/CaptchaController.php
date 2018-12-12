@@ -32,7 +32,7 @@ class CaptchaController extends FOSRestController
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\UserBundle\Exception\NotFoundException
      */
-    public function createAction(CaptchaCreateRequest $captchaCreateRequest)
+    public function sendCaptchaValidationAction(CaptchaCreateRequest $captchaCreateRequest)
     {
         $data = $this->apiCaptchaService->sendValidation(
             $captchaCreateRequest->getLogin(),
@@ -48,7 +48,7 @@ class CaptchaController extends FOSRestController
      * @param CaptchaVerifyRequest $captchaVerifyRequest
      * @return ApiResponse
      */
-    public function verifyAction(CaptchaVerifyRequest $captchaVerifyRequest)
+    public function verifyCaptchaAction(CaptchaVerifyRequest $captchaVerifyRequest)
     {
         $data = $this->apiCaptchaService->verify(
             $captchaVerifyRequest->getEntity(),
