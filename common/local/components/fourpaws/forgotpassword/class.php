@@ -45,7 +45,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
 
     private const FORGOT_PASSWORD_SECONDS = 60;
 
-    private const FORGOT_USER_FIELD_NAME = 'UF_SMS_FGT_PASS_TIME'
+    private const FORGOT_USER_FIELD_NAME = 'UF_SMS_FGT_PASS_TIME';
 
     /**
      * @var CurrentUserProviderInterface
