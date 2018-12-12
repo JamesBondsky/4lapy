@@ -337,7 +337,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         )))->setHost($host)
             ->__toString();
 
-        $deliveryInfo = $this->getOfferDeliveryInfo($offer);
+        $deliveryInfo = $this->getOfferDeliveryInfo($offer, $stockID);
 
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         /** @noinspection PassingByReferenceCorrectnessInspection */
@@ -595,20 +595,55 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     }
 
     /**
+     * @param null $stockID
      * @return ArrayCollection|DeliveryOption[]
      */
-    private function getDeliveryInfo(): ArrayCollection
+    private function getDeliveryInfo($stockID = null): ArrayCollection
     {
         if (!$this->deliveryInfo) {
             global $APPLICATION;
 
             $deliveryCollection = new ArrayCollection();
-
-            $deliveryInfo = $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
-                'empty',
-                ['CACHE_TIME' => 3601 * 24],
-                false,
-                ['HIDE_ICONS' => 'Y'])['DELIVERIES'];
+            if($stockID == null){
+                $deliveryInfo = $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
+                    'empty',
+                    ['CACHE_TIME' => 3601 * 24],
+                    false,
+                    ['HIDE_ICONS' => 'Y'])['DELIVERIES'];
+            } else {
+                echo $stockID . "\r\n";
+                switch ($stockID) {
+                    case '47':
+                        $locationCode = '0000263227';
+                        break;
+                    case '151':
+                        $locationCode = '0000293598';
+                        break;
+                    case '168':
+                        $locationCode = '0000250453';
+                        break;
+                    case '36':
+                        $locationCode = '0000121319';
+                        break;
+                    case '163':
+                        $locationCode = '0000312126';
+                        break;
+                    case '207':
+                        $locationCode = '0000600317';
+                        break;
+                    case '65':
+                        $locationCode = '0000148783';
+                        break;
+                    default:
+                        $locationCode = '0000073738';
+                }
+                echo $locationCode;
+                $deliveryInfo = $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
+                    'empty',
+                    ['CACHE_TIME' => 3601 * 24, 'LOCATION_CODE' => $locationCode],
+                    false,
+                    ['HIDE_ICONS' => 'Y'])['DELIVERIES'];
+            }
 
             foreach ($deliveryInfo as $delivery) {
                 if ((int)$delivery['PRICE']) {
@@ -677,9 +712,17 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     /**
      * @param Offer $offer
      *
+     * @param null $stockID
      * @return ArrayCollection
+     * @throws ApplicationCreateException
+     * @throws BitrixArgumentException
+     * @throws DeliveryNotFoundException
+     * @throws LoaderException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      */
-    private function getOfferDeliveryInfo(Offer $offer): ArrayCollection
+    private function getOfferDeliveryInfo(Offer $offer, $stockID = null): ArrayCollection
     {
         if ($offer->getProduct()
             ->isDeliveryForbidden()) {
@@ -687,7 +730,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         }
 
 
-        $deliveryInfo = clone $this->getDeliveryInfo();
+        $deliveryInfo = clone $this->getDeliveryInfo($stockID);
 
         foreach ($deliveryInfo as $option) {
             if ($offer->getDeliverableQuantity() < 1) {
