@@ -266,7 +266,7 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
                 $files[$offer['PROPERTIES']['IMG']['VALUE'][0]] = $offer['XML_ID'];
             }
 
-            $products[$offer['PROPERTIES']['CML2_LINK']['VALUE']] = $offer['XML_ID'];
+            $products[$offer['PROPERTIES']['CML2_LINK']['VALUE']][] = $offer['XML_ID'];
         }
 
         $this->getCurrentProducts($products);
@@ -298,10 +298,14 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
         while ($arProduct = $dbProduct->Fetch()) {
             $descr = \HTMLToTxt($arProduct['DETAIL_TEXT']);
             if ($descr != '' && $descr != null && $arProduct['ACTIVE'] == 'Y') {
-                $this->arResult['offers'][$products[$arProduct['ID']]]['brand'] = $arProduct['PROPERTY_BRAND_NAME'];
-                $this->arResult['offers'][$products[$arProduct['ID']]]['description'] = \HTMLToTxt($arProduct['DETAIL_TEXT']);
+                foreach ($products[$arProduct['ID']] as $offer) {
+                    $this->arResult['offers'][$offer]['brand'] = $arProduct['PROPERTY_BRAND_NAME'];
+                    $this->arResult['offers'][$offer]['description'] = $descr;
+                }
             } else {
-                unset($this->arResult['offers'][$products[$arProduct['ID']]]);
+                foreach ($products[$arProduct['ID']] as $offer) {
+                    unset($this->arResult['offers'][$offer]);
+                }
             }
         }
     }
