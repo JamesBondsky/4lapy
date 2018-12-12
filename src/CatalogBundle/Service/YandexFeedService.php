@@ -24,6 +24,7 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\CatalogBundle\Dto\Yandex\Category as YandexCategory;
 use FourPaws\CatalogBundle\Dto\Yandex\Currency;
 use FourPaws\CatalogBundle\Dto\Yandex\DeliveryOption;
+use FourPaws\CatalogBundle\Dto\Yandex\Param;
 use FourPaws\CatalogBundle\Dto\Yandex\Feed;
 use FourPaws\CatalogBundle\Dto\Yandex\Offer as YandexOffer;
 use FourPaws\CatalogBundle\Dto\Yandex\Shop;
@@ -35,6 +36,7 @@ use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -294,14 +296,44 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             return;
         }
 
+        $url = 'market.yandex.ru';
+
+        if (!empty($stockID)) {
+            switch ($stockID) {
+                case '47':
+                    $url = 'yaroslavl.market.yandex.ru';
+                    break;
+                case '151':
+                    $url = 'voronezh.yandex.ru';
+                    break;
+                case '168':
+                    $url = 'tula.market.yandex.ru';
+                    break;
+                case '36':
+                    $url = 'ivanovo.market.yandex.ru';
+                    break;
+                case '163':
+                    $url = 'vladimir.market.yandex.ru';
+                    break;
+                case '207':
+                    $url = 'nn.market.yandex.ru';
+                    break;
+                case '65':
+                    $url = 'obninsk.market.yandex.ru';
+                    break;
+            }
+        }
+
         $currentImage = (new FullHrefDecorator($offer->getImages()
             ->first()
             ->getSrc()))->setHost($host)
             ->__toString();
         $detailPath = (new FullHrefDecorator(\sprintf(
-            '%s%sutm_source=market.yandex.ru&utm_term=4386079&utm_medium=cpc&utm_campaign=main',
+            '%s%sutm_source=%s&utm_term=%s&utm_medium=cpc&utm_campaign=main',
             $offer->getDetailPageUrl(),
-            (\strpos($offer->getDetailPageUrl(), '?') > 0 ? '&' : '?')
+            (\strpos($offer->getDetailPageUrl(), '?') > 0 ? '&' : '?'),
+            $url,
+            $offer->getXmlId()
         )))->setHost($host)
             ->__toString();
 
@@ -345,6 +377,9 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         if ($country) {
             $yandexOffer->setCountryOfOrigin($country->getName());
         }
+
+        $params = $this->getOfferParam($offer);
+        $yandexOffer->setParam($params);
 
         $collection->add($yandexOffer);
     }
@@ -591,6 +626,52 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         }
 
         return $this->deliveryInfo;
+    }
+
+    /**
+     * @param Offer $offer
+     * @return ArrayCollection
+     */
+    private function getOfferParam(Offer $offer): ArrayCollection
+    {
+        $params = new ArrayCollection();
+
+        $curName = mb_strtolower($offer->getName());
+        $curSectionName = mb_strtolower($offer->getProduct()->getSectionName());
+
+        if (mb_strpos($curName, 'корм') !== false || mb_strpos($curSectionName, 'корм') !== false) {
+            $curWeigth = WordHelper::showWeightNumber($offer->getCatalogProduct()->getWeight(), true);
+            if ($curWeigth != null && $curWeigth != '' && floatval($curWeigth) > 0) {
+                $paramWeigth = (new Param())
+                    ->setName('Вес упаковки')
+                    ->setUnit('кг')
+                    ->setValue($curWeigth);
+
+                $params->set('weigth', $paramWeigth);
+            }
+        } elseif (mb_strpos($curName, 'наполнитель') !== false || mb_strpos($curSectionName, 'наполнитель') !== false) {
+            $curWeigth = WordHelper::showWeightNumber($offer->getCatalogProduct()->getWeight(), true);
+            if ($curWeigth != null && $curWeigth != '' && floatval($curWeigth) > 0) {
+                $paramWeigth = (new Param())
+                    ->setName('Вес')
+                    ->setUnit('кг')
+                    ->setValue($curWeigth);
+
+                $params->set('weigth', $paramWeigth);
+            }
+
+            $curVolume = $offer->getVolume();
+            if ($curVolume != null && $curVolume != '' && floatval($curVolume) > 0) {
+                $paramVolume = (new Param())
+                    ->setName('Объем')
+                    ->setUnit('л')
+                    ->setValue($curVolume);
+
+                $params->set('volume', $paramVolume);
+            }
+        }
+
+        return $params;
     }
 
     /**
