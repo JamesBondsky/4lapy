@@ -141,5 +141,15 @@ if ($template->hasMainWrapper()) {
         $.get('/ajax/sale/forgot-basket/close-page/');
     }
 </script>
+
+<script src="/static/build/js/external/snowfall.js" type="text/javascript"></script>
+<script type="text/javascript">
+    $(function(){
+        if(BX.GetWindowScrollSize().scrollWidth >= 768 && !BX.browser.IsIOS() && !BX.browser.IsAndroid()){
+            $(document).snowfall({image:"/static/build/images/inhtml/snow1.png", collection:'.b-header__info', collectionHeight:10, minSize:10, maxSize:30, flakeCount:50, maxSpeed:2});
+        }
+    });
+</script>
+
 </body>
 </html>
