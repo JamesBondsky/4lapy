@@ -166,7 +166,6 @@ class IndexHelper implements LoggerAwareInterface
                                 'tokenizer' => 'standard',
                                 'filter'    => [
                                     'lowercase',
-//                                    'synonym',
                                     'russian_stop',
                                     'russian_stemmer',
                                     'autocomplete_filter',
@@ -177,7 +176,6 @@ class IndexHelper implements LoggerAwareInterface
                                 'tokenizer' => 'standard',
                                 'filter'    => [
                                     'lowercase',
-//                                    'synonym',
                                     'russian_stop',
                                     'russian_stemmer',
                                 ],
@@ -205,7 +203,6 @@ class IndexHelper implements LoggerAwareInterface
                                 'tokenizer' => 'standard',
                                 'filter'    => [
                                     'lowercase',
-                                    'synonym',
                                     'russian_stop',
                                     'russian_stemmer',
                                 ],
@@ -228,10 +225,6 @@ class IndexHelper implements LoggerAwareInterface
                             'transform-to-latin'  => [
                                 'type' => 'icu_transform',
                                 'id'   => 'Any-Latin; NFD; [:Nonspacing Mark:] Remove; NFC',
-                            ],
-                            'synonym'             => [
-                                'type'          => 'synonym',
-                                'synonyms_path' => 'resources/synonym.txt',
                             ],
                             'phonetic_cyrillic' => [
                                 'type' => 'phonetic',

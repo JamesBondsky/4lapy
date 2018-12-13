@@ -559,7 +559,7 @@ class SearchService implements LoggerAwareInterface
         }
 
         //спец. поле для буста
-        $boolQuery->addShould(
+        $boolQuery->addMust(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
                 ->setFields(['searchBooster'])
@@ -572,7 +572,7 @@ class SearchService implements LoggerAwareInterface
         );
 
         //спец. поле для буста 1 ошибка
-        $boolQuery->addShould(
+        $boolQuery->addMust(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
                 ->setFields(['searchBooster'])
@@ -581,6 +581,19 @@ class SearchService implements LoggerAwareInterface
                 ->setAnalyzer('detail-text-analyzator')
                 ->setParam('boost', 350.0)
                 ->setParam('_name', 'name-fuzzy-word-searchBooster-1')
+                ->setOperator('and')
+        );
+
+        //спец. поле для буста 1 ошибка
+        $boolQuery->addMust(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['searchBooster'])
+                ->setType('best_fields')
+                ->setFuzziness(2)
+                ->setAnalyzer('detail-text-analyzator')
+                ->setParam('boost', 150.0)
+                ->setParam('_name', 'name-fuzzy-word-searchBooster')
                 ->setOperator('and')
         );
 
@@ -652,7 +665,7 @@ class SearchService implements LoggerAwareInterface
 //                ->setOperator('and')
 //        );
 
-        $boolQuery->addShould(
+        $boolQuery->addMust(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
                 ->setFields(['NAME.synonym'])
@@ -666,7 +679,7 @@ class SearchService implements LoggerAwareInterface
 
 
         //1 ошибка
-        $boolQuery->addShould(
+        $boolQuery->addMust(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
                 ->setFields(['NAME.synonym'])
@@ -679,7 +692,7 @@ class SearchService implements LoggerAwareInterface
         );
 
         //2 ошибка
-        $boolQuery->addShould(
+        $boolQuery->addMust(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
                 ->setFields(['NAME.synonym'])
