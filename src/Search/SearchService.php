@@ -584,6 +584,19 @@ class SearchService implements LoggerAwareInterface
                 ->setOperator('and')
         );
 
+        //спец. поле для буста 1 ошибка
+        $boolQuery->addMust(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['searchBooster'])
+                ->setType('best_fields')
+                ->setFuzziness(2)
+                ->setAnalyzer('detail-text-analyzator')
+                ->setParam('boost', 150.0)
+                ->setParam('_name', 'name-fuzzy-word-searchBooster')
+                ->setOperator('and')
+        );
+
         //бренды 0 ошибок
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
