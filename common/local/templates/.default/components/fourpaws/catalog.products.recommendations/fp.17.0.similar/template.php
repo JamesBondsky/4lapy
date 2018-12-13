@@ -59,7 +59,7 @@ if ($arResult['RESULT_TYPE'] === 'RESULT') {
                 <div class="b-common-section__title-box b-common-section__title-box--popular b-common-section__title-box--product">
                     <h2 class="b-title b-title--popular b-title--product"><?=Loc::getMessage('SIMILAR_PRODUCTS.TITLE')?></h2><?php
                 ?></div>
-                <div class="b-common-section__content b-common-section__content--popular b-common-section__content--product js-popular-product"><?php
+                <div class="b-common-section__content b-common-section__content--popular b-common-section__content--product b-common-section__content--recommendations js-popular-product"><?php
                     $i = 0;
                     foreach ($arResult['PRODUCTS'] as $product) {
                         /** @var \FourPaws\Catalog\Model\Product $product */

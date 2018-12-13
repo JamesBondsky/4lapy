@@ -28,7 +28,7 @@ use FourPaws\Decorators\SvgDecorator;
           data-url="<?= $arResult['AUTOCOMPLETE_URL'] ?>"
           action="<?= $arResult['SEARCH_URL'] ?>">
         <div class="b-input">
-            <input class="b-input__input-field"
+            <input class="b-input__input-field b-input__input-field--searchheader"
                    type="text"
                    id="header-search"
                    placeholder="Найти лучшее для вашего питомца…"
@@ -36,11 +36,15 @@ use FourPaws\Decorators\SvgDecorator;
                    autocomplete="off"
                    value="<?= $arResult['QUERY'] ?>"/>
         </div>
+        <div class="search-loader js-loader-search-header">
+          <img src="/static/build/images/inhtml/spinner.svg" alt="spinner" title="">
+        </div>
         <button class="b-button b-button--form-inline b-button--search">
             <span class="b-icon">
                 <?= new SvgDecorator('icon-search', 16, 16) ?>
             </span>
         </button>
+        <button class="b-button b-button--clear-search js-clear-searchheader"></button>
     </form>
     <a class="b-form-inline__mobile-search js-hide-open-menu" href="javascript:void(0)" title="">
         <span class="b-icon b-icon--header-search-mobile">

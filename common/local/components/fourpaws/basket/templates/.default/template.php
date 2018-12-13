@@ -342,8 +342,8 @@ if ($arParams['IS_AJAX']) {
         </aside>
         <script id="gtag-cart">
             let offers = [];
-            $('a.b-common-item__description-wrap.b-common-item__description-wrap--shopping').each(function() {
-                offers.push(parseInt(RegExp('offer' + '=' + '(.+?)(&|$)').exec($(this).attr('href'))[1], 10));
+            $('a.b-common-item__description-wrap.b-common-item__description-wrap--shopping span.b-common-item__variant.b-common-item__variant--shopping-cart.b-common-item__variant--shopping span').each(function() {
+                if(/^\d+$/.test($(this).html())) offers.push($(this).html());
             });
             $(document).ready(function () {
                 gtag('event', 'page_view', {

@@ -185,6 +185,17 @@ class Offer
     protected $barcode;
 
     /**
+     * Параметры оффера
+     *
+     * @Serializer\SerializedName("param")
+     * @Serializer\XmlList(inline=true, entry="param")
+     * @Serializer\Type("ArrayCollection<FourPaws\CatalogBundle\Dto\Yandex\Param>")
+     *
+     * @var Param[]|Collection
+     */
+    protected $param;
+
+    /**
      * @return int
      */
     public function getId(): int
@@ -560,6 +571,26 @@ class Offer
     public function setBarcode(string $barcode): Offer
     {
         $this->barcode = $barcode;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Param[]
+     */
+    public function getParam()
+    {
+        return $this->param;
+    }
+
+    /**
+     * @param Collection|Param[] $param
+     *
+     * @return Offer
+     */
+    public function setParam($param): Offer
+    {
+        $this->param = $param;
 
         return $this;
     }

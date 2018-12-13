@@ -7,6 +7,7 @@
 namespace FourPaws\AppBundle\Command;
 
 use FourPaws\App\Application;
+use FourPaws\Search\SearchService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -18,6 +19,8 @@ class IndexerReindex extends Command
     const OPT_FORCE = 'force';
     const OPT_NO_FILTER = 'no-filter';
     const OPT_BATCH_SIZE = 'batch';
+
+    /** @var SearchService searchService */
     private $searchService;
 
     /**

@@ -24,6 +24,7 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\CatalogBundle\Dto\Yandex\Category as YandexCategory;
 use FourPaws\CatalogBundle\Dto\Yandex\Currency;
 use FourPaws\CatalogBundle\Dto\Yandex\DeliveryOption;
+use FourPaws\CatalogBundle\Dto\Yandex\Param;
 use FourPaws\CatalogBundle\Dto\Yandex\Feed;
 use FourPaws\CatalogBundle\Dto\Yandex\Offer as YandexOffer;
 use FourPaws\CatalogBundle\Dto\Yandex\Shop;
@@ -35,6 +36,7 @@ use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -294,18 +296,48 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             return;
         }
 
+        $url = 'market.yandex.ru';
+
+        if (!empty($stockID)) {
+            switch ($stockID) {
+                case '47':
+                    $url = 'yaroslavl.market.yandex.ru';
+                    break;
+                case '151':
+                    $url = 'voronezh.yandex.ru';
+                    break;
+                case '168':
+                    $url = 'tula.market.yandex.ru';
+                    break;
+                case '36':
+                    $url = 'ivanovo.market.yandex.ru';
+                    break;
+                case '163':
+                    $url = 'vladimir.market.yandex.ru';
+                    break;
+                case '207':
+                    $url = 'nn.market.yandex.ru';
+                    break;
+                case '65':
+                    $url = 'obninsk.market.yandex.ru';
+                    break;
+            }
+        }
+
         $currentImage = (new FullHrefDecorator($offer->getImages()
             ->first()
             ->getSrc()))->setHost($host)
             ->__toString();
         $detailPath = (new FullHrefDecorator(\sprintf(
-            '%s%sutm_source=market.yandex.ru&utm_term=4386079&utm_medium=cpc&utm_campaign=main',
+            '%s%sutm_source=%s&utm_term=%s&utm_medium=cpc&utm_campaign=main',
             $offer->getDetailPageUrl(),
-            (\strpos($offer->getDetailPageUrl(), '?') > 0 ? '&' : '?')
+            (\strpos($offer->getDetailPageUrl(), '?') > 0 ? '&' : '?'),
+            $url,
+            $offer->getXmlId()
         )))->setHost($host)
             ->__toString();
 
-        $deliveryInfo = $this->getOfferDeliveryInfo($offer);
+        $deliveryInfo = $this->getOfferDeliveryInfo($offer, $stockID);
 
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         /** @noinspection PassingByReferenceCorrectnessInspection */
@@ -345,6 +377,9 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         if ($country) {
             $yandexOffer->setCountryOfOrigin($country->getName());
         }
+
+        $params = $this->getOfferParam($offer);
+        $yandexOffer->setParam($params);
 
         $collection->add($yandexOffer);
     }
@@ -560,20 +595,55 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     }
 
     /**
+     * @param null $stockID
      * @return ArrayCollection|DeliveryOption[]
      */
-    private function getDeliveryInfo(): ArrayCollection
+    private function getDeliveryInfo($stockID = null): ArrayCollection
     {
         if (!$this->deliveryInfo) {
             global $APPLICATION;
 
             $deliveryCollection = new ArrayCollection();
-
-            $deliveryInfo = $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
-                'empty',
-                ['CACHE_TIME' => 3601 * 24],
-                false,
-                ['HIDE_ICONS' => 'Y'])['DELIVERIES'];
+            if($stockID == null){
+                $deliveryInfo = $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
+                    'empty',
+                    ['CACHE_TIME' => 3601 * 24],
+                    false,
+                    ['HIDE_ICONS' => 'Y'])['DELIVERIES'];
+            } else {
+                echo $stockID . "\r\n";
+                switch ($stockID) {
+                    case '47':
+                        $locationCode = '0000263227';
+                        break;
+                    case '151':
+                        $locationCode = '0000293598';
+                        break;
+                    case '168':
+                        $locationCode = '0000250453';
+                        break;
+                    case '36':
+                        $locationCode = '0000121319';
+                        break;
+                    case '163':
+                        $locationCode = '0000312126';
+                        break;
+                    case '207':
+                        $locationCode = '0000600317';
+                        break;
+                    case '65':
+                        $locationCode = '0000148783';
+                        break;
+                    default:
+                        $locationCode = '0000073738';
+                }
+                echo $locationCode;
+                $deliveryInfo = $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
+                    'empty',
+                    ['CACHE_TIME' => 3601 * 24, 'LOCATION_CODE' => $locationCode],
+                    false,
+                    ['HIDE_ICONS' => 'Y'])['DELIVERIES'];
+            }
 
             foreach ($deliveryInfo as $delivery) {
                 if ((int)$delivery['PRICE']) {
@@ -595,10 +665,64 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
 
     /**
      * @param Offer $offer
-     *
      * @return ArrayCollection
      */
-    private function getOfferDeliveryInfo(Offer $offer): ArrayCollection
+    private function getOfferParam(Offer $offer): ArrayCollection
+    {
+        $params = new ArrayCollection();
+
+        $curName = mb_strtolower($offer->getName());
+        $curSectionName = mb_strtolower($offer->getProduct()->getSectionName());
+
+        if (mb_strpos($curName, 'корм') !== false || mb_strpos($curSectionName, 'корм') !== false) {
+            $curWeigth = WordHelper::showWeightNumber($offer->getCatalogProduct()->getWeight(), true);
+            if ($curWeigth != null && $curWeigth != '' && floatval($curWeigth) > 0) {
+                $paramWeigth = (new Param())
+                    ->setName('Вес упаковки')
+                    ->setUnit('кг')
+                    ->setValue($curWeigth);
+
+                $params->set('weigth', $paramWeigth);
+            }
+        } elseif (mb_strpos($curName, 'наполнитель') !== false || mb_strpos($curSectionName, 'наполнитель') !== false) {
+            $curWeigth = WordHelper::showWeightNumber($offer->getCatalogProduct()->getWeight(), true);
+            if ($curWeigth != null && $curWeigth != '' && floatval($curWeigth) > 0) {
+                $paramWeigth = (new Param())
+                    ->setName('Вес')
+                    ->setUnit('кг')
+                    ->setValue($curWeigth);
+
+                $params->set('weigth', $paramWeigth);
+            }
+
+            $curVolume = $offer->getVolume();
+            if ($curVolume != null && $curVolume != '' && floatval($curVolume) > 0) {
+                $paramVolume = (new Param())
+                    ->setName('Объем')
+                    ->setUnit('л')
+                    ->setValue($curVolume);
+
+                $params->set('volume', $paramVolume);
+            }
+        }
+
+        return $params;
+    }
+
+    /**
+     * @param Offer $offer
+     *
+     * @param null $stockID
+     * @return ArrayCollection
+     * @throws ApplicationCreateException
+     * @throws BitrixArgumentException
+     * @throws DeliveryNotFoundException
+     * @throws LoaderException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     */
+    private function getOfferDeliveryInfo(Offer $offer, $stockID = null): ArrayCollection
     {
         if ($offer->getProduct()
             ->isDeliveryForbidden()) {
@@ -606,7 +730,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         }
 
 
-        $deliveryInfo = clone $this->getDeliveryInfo();
+        $deliveryInfo = clone $this->getDeliveryInfo($stockID);
 
         foreach ($deliveryInfo as $option) {
             if ($offer->getDeliverableQuantity() < 1) {

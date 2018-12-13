@@ -28,6 +28,35 @@ class WordHelper
      *
      * @return string
      */
+    public static function showWeightNumber(float $weight, $short = false, int $fullLimit = 0): string
+    {
+        if ($short && ($fullLimit === 0 || ($fullLimit > 0 && $weight > $fullLimit))) {
+            return static::numberFormat($weight / 1000, 2, true);
+        }
+
+        $parts = [];
+
+        $kg = floor($weight / 1000);
+        if ($kg) {
+            $parts[] = static::numberFormat($kg, 0);
+        }
+
+        $g = $weight % 1000;
+        if ($g) {
+            $parts[] = $g;
+        }
+
+        return implode(' ', $parts);
+    }
+
+    /**
+     * @param float $weight
+     * @param bool  $short
+     *
+     * @param int   $fullLimit
+     *
+     * @return string
+     */
     public static function showWeight(float $weight, $short = false, int $fullLimit = 0): string
     {
         if ($short && ($fullLimit === 0 || ($fullLimit > 0 && $weight > $fullLimit))) {

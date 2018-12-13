@@ -48,7 +48,7 @@ class Channel
     /**
      * Торговые предложения
      *
-     * @Serializer\XmlList(inline=false, entry="offer")
+     * @Serializer\XmlList(inline=true, entry="item")
      * @Serializer\Type("ArrayCollection<FourPaws\CatalogBundle\Dto\GoogleMerchant\Item>")
      *
      * @var Item[]|Collection

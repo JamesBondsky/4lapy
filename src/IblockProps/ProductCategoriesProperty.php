@@ -66,7 +66,7 @@ class ProductCategoriesProperty
 
         if (!empty($descriptions)) {
             foreach ($descriptions as $setID => $descr) {
-                if(!empty($descr)){
+                if (!empty($descr)) {
                     foreach ($result as $key => $res) {
                         if ($res['move_id'] == $setID) {
                             \CFile::UpdateDesc($result[$key]['image_id'], $descr);
@@ -79,8 +79,15 @@ class ProductCategoriesProperty
 
         foreach ($result as $key => &$res) {
             $res['move_id'] = $key;
+            if ($key < 4) {
+                $res['row'] = 1;
+            } elseif ($key < 7) {
+                $res['row'] = 2;
+            } else {
+                $res['row'] = 3;
+            }
         }
-        return json_encode($result);
+        return json_encode($result, JSON_UNESCAPED_UNICODE);
     }
 
     public function GetPropertyFieldHtml(array $property, array $value, array $control)
@@ -94,6 +101,7 @@ class ProductCategoriesProperty
         } else {
             for ($i = 0; $i < 11; $i++) {
                 $initValues[$i] = [
+                    'row' => '',
                     'title' => '',
                     'subtitle' => '',
                     'filters' => ''
@@ -135,7 +143,7 @@ class ProductCategoriesProperty
             ],
             [
                 $control['VALUE'],
-                json_encode($initValues),
+                json_encode($initValues, JSON_UNESCAPED_UNICODE),
                 $arFiles[0],
                 $arFiles[1],
                 $arFiles[2],

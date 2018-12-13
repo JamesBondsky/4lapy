@@ -708,6 +708,11 @@ class IndexHelper implements LoggerAwareInterface
 
         $this->log()->debug(sprintf('memory: %s, memory_pick_usage: %s', memory_get_usage(true), memory_get_peak_usage(true)));
         foreach ($allItemsChunked as $i => $allItemChunk) {
+
+            /**
+             * @see indexProducts for Product::class
+             * @see indexBrands for Brand::class
+             */
             if (call_user_func([$this, $method], $allItemChunk)) {
                 $indexOk += \count($allItemChunk);
             } else {

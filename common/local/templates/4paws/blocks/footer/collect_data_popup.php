@@ -29,9 +29,11 @@ if($USER->IsAuthorized()) {
                         {
                             $container = App::getInstance()->getContainer();
                             $pets = $container->get('pet.service');
+
                             if(count($pets->getCurUserPets()) || $modal_counts[2] > 2) {
                                 $user_class->Update($USER->GetID(), ['UF_MODALS_CNTS' => '3 3 3']);
                             }
+
                             else{
                                 $modal_number = 3;
                             }
@@ -92,7 +94,7 @@ if($USER->IsAuthorized()) {
             }
             let timer = setInterval(function () {
                 let time = parseInt(getCookie('modal_timer'));
-                time++;
+                if($('.b-popup-wrapper').hasClass('active') !== true) time++;
                 document.cookie = "modal_timer="+time+"; path=/;";
                 if(parseInt(getCookie('modal_timer'), 10) === 9) serveModal(timer);
             }, 5000);
