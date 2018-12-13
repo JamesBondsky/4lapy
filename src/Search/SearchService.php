@@ -559,7 +559,7 @@ class SearchService implements LoggerAwareInterface
         }
 
         //спец. поле для буста
-        $boolQuery->addShould(
+        $boolQuery->addMust(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
                 ->setFields(['searchBooster'])
@@ -572,7 +572,7 @@ class SearchService implements LoggerAwareInterface
         );
 
         //спец. поле для буста 1 ошибка
-        $boolQuery->addShould(
+        $boolQuery->addMust(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
                 ->setFields(['searchBooster'])
@@ -652,7 +652,7 @@ class SearchService implements LoggerAwareInterface
 //                ->setOperator('and')
 //        );
 
-        $boolQuery->addShould(
+        $boolQuery->addMust(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
                 ->setFields(['NAME.synonym'])
@@ -666,7 +666,7 @@ class SearchService implements LoggerAwareInterface
 
 
         //1 ошибка
-        $boolQuery->addShould(
+        $boolQuery->addMust(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
                 ->setFields(['NAME.synonym'])
@@ -679,7 +679,7 @@ class SearchService implements LoggerAwareInterface
         );
 
         //2 ошибка
-        $boolQuery->addShould(
+        $boolQuery->addMust(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
                 ->setFields(['NAME.synonym'])
