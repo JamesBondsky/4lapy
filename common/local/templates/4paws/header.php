@@ -74,7 +74,7 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
                       autoRegister: true,
                       welcomeNotification: {
                         "title": "Спасибо за подписку",
-                        "message": " ",
+                        "message": " "
                       }
                     });
                   });
