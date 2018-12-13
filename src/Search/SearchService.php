@@ -369,6 +369,32 @@ class SearchService implements LoggerAwareInterface
                 )
         );
 
+        //спец. поле для буста
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['searchBooster'])
+                ->setType('best_fields')
+                ->setFuzziness(0)
+                ->setAnalyzer('detail-text-analyzator')
+                ->setParam('boost', 700.0)
+                ->setParam('_name', 'name-fuzzy-word-searchBooster')
+                ->setOperator('and')
+        );
+
+        //спец. поле для буста 1 ошибка
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                ->setQuery($searchString)
+                ->setFields(['searchBooster'])
+                ->setType('best_fields')
+                ->setFuzziness(1)
+                ->setAnalyzer('detail-text-analyzator')
+                ->setParam('boost', 350.0)
+                ->setParam('_name', 'name-fuzzy-word-searchBooster')
+                ->setOperator('and')
+        );
+
         //бренды 0 ошибок
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
@@ -409,32 +435,6 @@ class SearchService implements LoggerAwareInterface
                 ->setParam('_name', 'name-fuzzy-word-section-0')
                 ->setOperator('and')
         );
-
-//        if (mb_strpos(mb_strtolower($searchString), 'корм') !== false) {
-//            $boolQuery->addShould(
-//                $queryBuilder->query()->multi_match()
-//                    ->setQuery('корм')
-//                    ->setFields(['sectionName'])
-//                    ->setType('best_fields')
-//                    ->setFuzziness(0)
-//                    ->setAnalyzer('default')
-//                    ->setParam('boost', 200.0)
-//                    ->setParam('_name', 'name-fuzzy-word-section-0')
-//                    ->setOperator('and')
-//            );
-//
-//            $boolQuery->addShould(
-//                $queryBuilder->query()->multi_match()
-//                    ->setQuery('корм')
-//                    ->setFields(['sectionName'])
-//                    ->setType('best_fields')
-//                    ->setFuzziness(1)
-//                    ->setAnalyzer('default')
-//                    ->setParam('boost', 100.0)
-//                    ->setParam('_name', 'name-fuzzy-word-section-0')
-//                    ->setOperator('and')
-//            );
-//        }
 
         //1 ошибка
         $boolQuery->addShould(
@@ -504,7 +504,7 @@ class SearchService implements LoggerAwareInterface
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['PREVIEW_TEXT.synonym', 'DETAIL_TEXT.synonym'])
+                ->setFields(['PREVIEW_TEXT', 'DETAIL_TEXT'])
                 ->setType('best_fields')
                 ->setFuzziness(0)
 //                ->setAnalyzer('default')
@@ -518,7 +518,7 @@ class SearchService implements LoggerAwareInterface
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['PREVIEW_TEXT.synonym', 'DETAIL_TEXT.synonym'])
+                ->setFields(['PREVIEW_TEXT', 'DETAIL_TEXT'])
                 ->setType('best_fields')
                 ->setFuzziness(1)
 //                ->setAnalyzer('default')
@@ -668,7 +668,7 @@ class SearchService implements LoggerAwareInterface
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['PREVIEW_TEXT.synonym', 'DETAIL_TEXT.synonym'])
+                ->setFields(['PREVIEW_TEXT', 'DETAIL_TEXT'])
                 ->setType('best_fields')
                 ->setFuzziness(0)
 //                ->setAnalyzer('detail-text-analyzator')
@@ -682,7 +682,7 @@ class SearchService implements LoggerAwareInterface
         $boolQuery->addShould(
             $queryBuilder->query()->multi_match()
                 ->setQuery($searchString)
-                ->setFields(['PREVIEW_TEXT.synonym', 'DETAIL_TEXT.synonym'])
+                ->setFields(['PREVIEW_TEXT', 'DETAIL_TEXT'])
                 ->setType('best_fields')
                 ->setFuzziness(1)
 //                ->setAnalyzer('detail-text-analyzator')

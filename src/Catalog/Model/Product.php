@@ -694,6 +694,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     protected $fullPathCollection;
 
     /**
+     * @var string
+     * @Type("string")
+     * @Accessor(getter="getSearchBooster")
+     * @Groups({"elastic"})
+     */
+    protected $searchBooster = '';
+
+    /**
      * BitrixArrayItemBase constructor.
      *
      * @param array $fields
@@ -2417,5 +2425,42 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         }
 
         return \array_unique($result);
+    }
+
+    /**
+     * @return string
+     * @throws ApplicationCreateException
+     */
+    public function getSearchBooster(): string
+    {
+        $this->searchBooster = '';
+
+        if (!empty($this->getBrandName())) {
+            $this->searchBooster = $this->getBrandName() . ' ';
+        }
+
+        if (!empty($this->getName())) {
+            $this->searchBooster .= $this->getName() . ' ';
+        }
+
+        if (!empty($this->getConsistence())) {
+            $this->searchBooster .= $this->getConsistence()->getName() . ' ';
+        }
+
+        $arProp = $this->getFlavour()->toArray();
+        if (!empty($arProp)) {
+            foreach ($arProp as $item) {
+                $this->searchBooster .= $item->getName() . ' ';
+            }
+        }
+
+        $arProp = $this->getForWho()->toArray();
+        if (!empty($arProp)) {
+            foreach ($arProp as $item) {
+                $this->searchBooster .= str_replace('@', ' ', $item->getName()) . ' ';
+            }
+        }
+
+        return trim(str_replace('  ', ' ', $this->searchBooster));
     }
 }
