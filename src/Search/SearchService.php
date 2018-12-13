@@ -567,7 +567,7 @@ class SearchService implements LoggerAwareInterface
                 ->setFuzziness(0)
                 ->setAnalyzer('detail-text-analyzator')
                 ->setParam('boost', 700.0)
-                ->setParam('_name', 'name-fuzzy-word-searchBooster')
+                ->setParam('_name', 'name-fuzzy-word-searchBooster-0')
                 ->setOperator('and')
         );
 
@@ -580,7 +580,7 @@ class SearchService implements LoggerAwareInterface
                 ->setFuzziness(1)
                 ->setAnalyzer('detail-text-analyzator')
                 ->setParam('boost', 350.0)
-                ->setParam('_name', 'name-fuzzy-word-searchBooster')
+                ->setParam('_name', 'name-fuzzy-word-searchBooster-1')
                 ->setOperator('and')
         );
 
