@@ -66,40 +66,40 @@ class SearchController extends Controller
 
             //костыль для заказчика
             $searchString = mb_strtolower($searchRequest->getSearchString());
-            if (preg_match('/[А-Яа-яЁё]/u', $searchString)) {
-                $arSelect = [
-                    'ID',
-                    'IBLOCK_ID',
-                    'NAME',
-                    'PROPERTY_TRANSLITS'
-                ];
 
-                $arFilter = [
-                    'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::BRANDS),
-                    'ACTIVE' => 'Y',
-                    '!PROPERTY_TRANSLITS' => false
-                ];
+            $arSelect = [
+                'ID',
+                'IBLOCK_ID',
+                'NAME',
+                'PROPERTY_TRANSLITS'
+            ];
 
-                $brandFound = false;
-                $dbItems = \CIBlockElement::GetList([], $arFilter, false, false, $arSelect);
-                while ($arItem = $dbItems->Fetch()) {
-                    if (!empty($arItem['PROPERTY_TRANSLITS_VALUE'])) {
-                        $arTranslits = explode(',', $arItem['PROPERTY_TRANSLITS_VALUE']);
-                        foreach ($arTranslits as $translit) {
-                            $translit = mb_strtolower(trim($translit));
-                            if (mb_strpos($searchString, $translit) !== false) {
-                                $searchString = str_replace($translit,
-                                    mb_strtolower($arItem['NAME']), $searchString);
-                                $brandFound = true;
-                                break;
-                            }
+            $arFilter = [
+                'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::BRANDS),
+                'ACTIVE' => 'Y',
+                '!PROPERTY_TRANSLITS' => false
+            ];
+
+            $brandFound = false;
+            $dbItems = \CIBlockElement::GetList([], $arFilter, false, false, $arSelect);
+            while ($arItem = $dbItems->Fetch()) {
+                if (!empty($arItem['PROPERTY_TRANSLITS_VALUE'])) {
+                    $arTranslits = explode(',', $arItem['PROPERTY_TRANSLITS_VALUE']);
+                    foreach ($arTranslits as $translit) {
+                        $translit = mb_strtolower(trim($translit));
+                        if (mb_strpos($searchString, $translit) !== false) {
+                            $searchString = str_replace($translit,
+                                mb_strtolower($arItem['NAME']), $searchString);
+                            $brandFound = true;
+                            break;
                         }
                     }
-                    if ($brandFound) {
-                        break;
-                    }
+                }
+                if ($brandFound) {
+                    break;
                 }
             }
+
 
             /** @var CombinedSearchResult $result */
             $result = $searchService->searchAll(
