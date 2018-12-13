@@ -71,7 +71,11 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
                   OneSignal.push(function() {
                     OneSignal.init({
                       appId: \''.getenv('ONESIGNAL_API_KEY').'\',
-                      autoRegister: true
+                      autoRegister: true,
+                      welcomeNotification: {
+                        "title": "Спасибо за подписку",
+                        "message": " "
+                      }
                     });
                   });
                 </script>
