@@ -68,6 +68,7 @@ class CategoryService
     private function toApiFormat(Category $categoryItem): CatalogCategory
     {
         $category = new CatalogCategory();
+        $category->setId($categoryItem->getId());
         $category->setTitle($categoryItem->getCanonicalName());
 
         if ($categoryItem->getPictureId()) {

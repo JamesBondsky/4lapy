@@ -6,6 +6,7 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct;
 
+use FourPaws\Decorators\FullHrefDecorator;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -66,10 +67,12 @@ class Tag
      * @param string $img
      *
      * @return Tag
+     * @throws \Bitrix\Main\SystemException
      */
     public function setImg(string $img): Tag
     {
-        $this->img = $img;
+        $hrefDecorator = new FullHrefDecorator($img);
+        $this->img = $hrefDecorator->getFullPublicPath();
         return $this;
     }
 }

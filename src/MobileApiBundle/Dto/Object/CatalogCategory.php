@@ -13,6 +13,12 @@ use Symfony\Component\Validator\Constraints as Assert;
 class CatalogCategory
 {
     /**
+     * @Serializer\Type("int")
+     * @var int
+     */
+    protected $id;
+
+    /**
      * @Serializer\Type("string")
      * @Serializer\SerializedName("title")
      * @var string
@@ -41,6 +47,25 @@ class CatalogCategory
      * @var CatalogCategory[]
      */
     protected $child = [];
+
+    /**
+     * @return int
+     */
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    /**
+     * @param int $id
+     *
+     * @return CatalogCategory
+     */
+    public function setId(int $id): CatalogCategory
+    {
+        $this->id = $id;
+        return $this;
+    }
 
     /**
      * @return string

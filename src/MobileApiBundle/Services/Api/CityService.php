@@ -117,27 +117,21 @@ class CityService implements LoggerAwareInterface
     }
 
     /**
-     * @throws \FourPaws\MobileApiBundle\Exception\SystemException
      * @return City[]|Collection
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      */
     public function getDefaultCity()
     {
-        $defaultCities = DefaultSiteTable::query()
-            ->addSelect('LOCATION_CODE')
-            ->setCacheTtl(604800)
-            ->exec()
-            ->fetchAll();
-        $defaultCities = array_map(function ($city) {
-            return $city['LOCATION_CODE'];
-        }, $defaultCities);
-
+        $availableCities = $this->locationService->getAvailableCitiesEx();
         $locations = [];
-        if ($defaultCities) {
-            try {
-                $locations = array($this->locationService->findLocationByCode($defaultCities));
-            } catch (CityNotFoundException $e) {
-            } catch (\Exception $e) {
-                throw new SystemException($e->getMessage(), $e->getCode(), $e);
+        foreach ($availableCities as $cityGroup) {
+            foreach ($cityGroup as $city) {
+                try {
+                    $locations[] = $this->locationService->findLocationByCode($city['CODE']);
+                } catch (CityNotFoundException $e) {
+                } catch (\Exception $e) {
+                    throw new SystemException($e->getMessage(), $e->getCode(), $e);
+                }
             }
         }
         return $this->mapLocations($locations);

@@ -10,6 +10,7 @@ class BannerListResponse
 {
     /**
      * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Banner>")
+     * @Serializer\SerializedName("banners")
      * @var Banner[]
      */
     protected $bannerList = [];

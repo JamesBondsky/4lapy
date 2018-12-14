@@ -12,6 +12,14 @@ use JMS\Serializer\Annotation as Serializer;
 class Order
 {
     /**
+     * ID заказа
+     * @Serializer\SerializedName("id")
+     * @Serializer\Type("int")
+     * @var int
+     */
+    protected $id;
+
+    /**
      * ОбъектПараметрЗаказа
      * @Serializer\SerializedName("cart_param")
      * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\OrderParameter")
@@ -94,6 +102,24 @@ class Order
     public function __construct()
     {
         $this->dateFormat = new \DateTIme();
+    }
+
+    /**
+     * @return int
+     */
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    /**
+     * @param int $id
+     * @return Order
+     */
+    public function setId(int $id): Order
+    {
+        $this->id = $id;
+        return $this;
     }
 
     /**

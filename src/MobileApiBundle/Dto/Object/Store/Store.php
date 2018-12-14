@@ -7,6 +7,12 @@ use JMS\Serializer\Annotation as Serializer;
 class Store
 {
     /**
+     * @Serializer\Type("int")
+     * @var int
+     */
+    protected $id;
+
+    /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("city_id")
@@ -96,6 +102,22 @@ class Store
      * @Serializer\SerializedName("availability_status")
      */
     protected $availabilityStatus;
+
+    /**
+     * @param int $id
+     * @return Store
+     */
+    public function setId($id): Store {
+        $this->id = $id;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getId(): int {
+        return $this->id;
+    }
 
     /**
      * @return string

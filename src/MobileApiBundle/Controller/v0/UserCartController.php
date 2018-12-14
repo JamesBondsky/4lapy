@@ -10,9 +10,16 @@ use Bitrix\Sale\BasketItem;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
+use FourPaws\CatalogBundle\Helper\MarkHelper;
+use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
+use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct;
+use FourPaws\MobileApiBundle\Dto\Object\OrderCalculate;
+use FourPaws\MobileApiBundle\Dto\Object\OrderParameter;
+use FourPaws\MobileApiBundle\Dto\Request\UserCartRequest;
+use FourPaws\MobileApiBundle\Dto\Response\UserCartResponse;
 use FourPaws\SaleBundle\Service\BasketService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
+use FourPaws\MobileApiBundle\Dto\Object\Price;
 
 /**
  * Class UserCartController
@@ -35,70 +42,95 @@ class UserCartController extends FOSRestController
      * @Rest\View()
      * @Security("has_role('REGISTERED_USERS')")
      *
+     * @throws \Bitrix\Main\SystemException
      */
-    public function getUserCartAction()
+    public function getUserCartAction(UserCartRequest $userCartRequest)
     {
-        $result = array(
-            'cart_param' => array(
-                'card' => '',
-                'card_used' => '',
-                'delivery_type' => '',
-                'delivery_place' => '',
-                'delivery_date' => '',
-                'delivery_time_range' => '',
-                'pickup_place' => ''
-            ),
-            'cart_calc' => array(
-                'total_price' => array(
-                    'actual' => $this->basketService->getBasket()->getPrice(),
-                    'old' => ''
-                ),
-                'price_details' => array(
-                    array(
-                        'id' => 'cart_price',
-                        'title' => 'Товаров в корзине на сумму',
-                        'value' => $this->basketService->getBasket()->getPrice()
-                    ),
-                    array(
-                        'id' => 'delivery',
-                        'title' => 'Стоимость доставки',
-                        'value' => ''
-                    )
-                ),
-                'card_details' => array(
-                    array(
-                        'id' => 'bonus_add',
-                        'title' => 'Начислено',
-                        'value' => ''
-                    ),
-                    array(
-                        'id' => 'bonus_sub',
-                        'title' => 'Списано',
-                        'value' => ''
-                    )
-                )
-            )
-        );
-
+        $totalBasePrice = 0;
+        $totalPrice = 0;
+        $products = [];
+        $basket = $this->basketService->getBasket();
+        /** @var BasketItem $basketItem */
+        $orderableBasket = $basket->getOrderableItems();
         /**
          * @var $basketItem BasketItem
          */
-        foreach ($this->basketService->getBasket() as $basketItem) {
+        foreach ($orderableBasket as $basketItem) {
+
             $offer = OfferQuery::getById($basketItem->getProductId());
-            $result['cart_param']['goods'][] = [
-                'goods' => $offer->toArray(),
-                'qty' => $basketItem->getQuantity()
-            ];
+            $productOriginal = $offer->getProduct();
+            $picture = $offer->getImages()->first();
+            $picturePreview = $offer->getResizeImages(200, 250)->first();
+
+            $price = (new Price())
+                ->setActual($offer->getPrice())
+                ->setOld($offer->getOldPrice());
+
+            $tags = [];
+            if ($offer->isHit()) {
+                $tags[] = (new ShortProduct\Tag())->setImg(MarkHelper::MARK_HIT_IMAGE_SRC);
+            }
+            if ($offer->isNew()) {
+                $tags[] = (new ShortProduct\Tag())->setImg(MarkHelper::MARK_NEW_IMAGE_SRC);
+            }
+            if ($offer->isSale()) {
+                $tags[] = (new ShortProduct\Tag())->setImg(MarkHelper::MARK_SALE_IMAGE_SRC);
+            }
+
+            $shortProduct = (new ShortProduct())
+                ->setTitle($productOriginal->getName())
+                ->setWebPage($productOriginal->getCanonicalPageUrl())
+                ->setXmlId($productOriginal->getXmlId())
+                ->setBrandName($productOriginal->getBrandName())
+                ->setPicture($picture)
+                ->setPicturePreview($picturePreview)
+                ->setPrice($price)
+                ->setInPack($offer->getMultiplicity())
+                ->setTag($tags);
+
+
+            $products[] = (new Product())
+                ->setShortProduct($shortProduct)
+                ->setQuantity($basketItem->getQuantity());
+
+            $itemQuantity = (int)$basketItem->getQuantity();
+            //если не подарок
+            if (!isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
+                $totalBasePrice += (float)$offer->getOldPrice() * $itemQuantity;
+                $totalPrice += (float)$offer->getPrice() * $itemQuantity;
+                // Слияние строчек с одинаковыми sku
+                // $offer = $this->getOffer((int)$basketItem->getProductId());
+                // if (!$offer || $offer->isByRequest()) {
+                //    continue;
+                // }
+            }
+
+            //toDo подсчет бонусов для товара
         }
 
+        $orderParameter = (new OrderParameter())
+            ->setProducts($products);
 
-        /*
-       if($promocode) {
-           $arResult['cart_calc']['promocode_result'] = ($promocode and $promocode_result["result"])?$promocode:'';
-       }
-       */
+        $totalPrice = (new Price())
+            ->setOld($totalBasePrice)
+            ->setActual($totalPrice);
 
-        return (new ApiResponse())->setData($result);
+        $orderCalculate = (new OrderCalculate())->setTotalPrice($totalPrice);
+
+        if ($promoCode = $userCartRequest->getPromoCode()) {
+
+            $promoCodeResult = false;
+            // toDo добавление промокода в купоны
+            // $promoCodeResult = MyCAjax::AddCouponAPI($promoCode, $this->getFuserId(), $this->getUserId());
+
+            if ($promoCodeResult) {
+                $orderCalculate->setPromoCodeResult($promoCode);
+            }
+        }
+
+        return (new UserCartResponse())
+            ->setCartCalc($orderCalculate)
+            ->setCartParam($orderParameter);
     }
 
 }

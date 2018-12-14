@@ -8,6 +8,7 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\MobileApiBundle\Dto\Object\OrderStatus;
 use FourPaws\MobileApiBundle\Dto\Request\OrderInfoRequest;
 use FourPaws\MobileApiBundle\Dto\Request\OrderStatusHistoryRequest;
 use FourPaws\MobileApiBundle\Dto\Response\OrderInfoResponse;
@@ -37,9 +38,19 @@ class OrderController extends FOSRestController
         $user = $this->getUser();
         $orders = $orderService->getUserOrders($user)->getValues();
         $orders = array_map(function (Order $order) {
+
+            $dateInsert = (new \DateTime())->setTimestamp($order->getDateInsert()->getTimestamp());
+
+            $status = (new OrderStatus())
+                ->setTitle($order->getStatus())
+                ->setCode($order->getStatusId());
+
             return (new ApiObjectOrder())
-                // ->setDate($order->getDateInsert())
-                // ->setTime($order->getDateInsert())
+                ->setId($order->getId())
+                ->setDateFormat($dateInsert)
+                // ->setReviewEnabled($order->) // toDo reviews выбираются из таблички opros_checks, поля opros_4, opros_5, opros_8
+                ->setStatus($status)
+                ->setCompleted($order->isClosed())
                 ->setPaid($order->isPayed());
 }       , $orders);
         return (new OrderListResponse())->setOrderList($orders);

@@ -113,6 +113,13 @@ class ShortProduct
     protected $tag = [];
 
     /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("brand_name")
+     */
+    protected $brandName = '';
+
+    /**
      * Размер бонуса для авторизованных, неавторизованных пользователей
      *
      * @var int
@@ -222,10 +229,12 @@ class ShortProduct
      * @param string $picturePreview
      *
      * @return ShortProduct
+     * @throws \Bitrix\Main\SystemException
      */
     public function setPicturePreview(string $picturePreview): ShortProduct
     {
-        $this->picturePreview = $picturePreview;
+        $hrefDecorator = new FullHrefDecorator($picturePreview);
+        $this->picturePreview = $hrefDecorator->getFullPublicPath();
         return $this;
     }
 
@@ -340,6 +349,24 @@ class ShortProduct
     public function setTag($tag)
     {
         $this->tag = $tag;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBrandName()
+    {
+        return $this->brandName;
+    }
+
+    /**
+     * @param string $brandName
+     * @return ShortProduct
+     */
+    public function setBrandName(string $brandName): ShortProduct
+    {
+        $this->brandName = $brandName;
         return $this;
     }
 

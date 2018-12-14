@@ -76,7 +76,7 @@ class OrderParameter
     /**
      * Дата времени доставки
      * @Serializer\SerializedName("delivery_range_date")
-     * @Serializer\Type("DateTime<d.m.Y>")
+     * @Serializer\Type("DateTime<'d.m.Y'>")
      * @var \DateTime
      */
     protected $deliveryRangeDate;
@@ -116,7 +116,7 @@ class OrderParameter
 
     /**
      * Дата, когда заказ доступен для самовывоза
-     * @Serializer\Type("DateTime<d.m.Y>")
+     * @Serializer\Type("DateTime<'d.m.Y'>")
      * @Serializer\SerializedName("availability_date")
      * @var \DateTime
      */
