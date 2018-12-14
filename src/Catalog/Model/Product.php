@@ -2443,9 +2443,9 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             $this->searchBooster .= $this->getName() . ' ';
         }
 
-//        if (!empty($this->getSectionName())) {
-//            $this->searchBooster .= $this->getSectionName() . ' ';
-//        }
+        if (!empty($this->getSectionName())) {
+            $this->searchBooster .= $this->getSectionName() . ' ';
+        }
 
         if (!empty($this->getConsistence())) {
             $this->searchBooster .= $this->getConsistence()->getName() . ' ';
