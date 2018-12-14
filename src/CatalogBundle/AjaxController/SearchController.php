@@ -17,6 +17,7 @@ use FourPaws\Catalog\Model\Product;
 use FourPaws\CatalogBundle\Dto\SearchRequest;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\Search\Helper\IndexHelper;
 use FourPaws\Search\Model\CombinedSearchResult;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\SearchService;
@@ -67,39 +68,7 @@ class SearchController extends Controller
             //костыль для заказчика
             $searchString = mb_strtolower($searchRequest->getSearchString());
 
-            $arSelect = [
-                'ID',
-                'IBLOCK_ID',
-                'NAME',
-                'PROPERTY_TRANSLITS'
-            ];
-
-            $arFilter = [
-                'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::BRANDS),
-                'ACTIVE' => 'Y',
-                '!PROPERTY_TRANSLITS' => false
-            ];
-
-            $brandFound = false;
-            $dbItems = \CIBlockElement::GetList([], $arFilter, false, false, $arSelect);
-            while ($arItem = $dbItems->Fetch()) {
-                if (!empty($arItem['PROPERTY_TRANSLITS_VALUE'])) {
-                    $arTranslits = explode(',', $arItem['PROPERTY_TRANSLITS_VALUE']);
-                    foreach ($arTranslits as $translit) {
-                        $translit = mb_strtolower(trim($translit));
-                        if (mb_strpos($searchString, $translit) !== false) {
-                            $searchString = str_replace($translit,
-                                mb_strtolower($arItem['NAME']), $searchString);
-                            $brandFound = true;
-                            break;
-                        }
-                    }
-                }
-                if ($brandFound) {
-                    break;
-                }
-            }
-
+            $searchString = IndexHelper::getAlias($searchString);
 
             /** @var CombinedSearchResult $result */
             $result = $searchService->searchAll(
@@ -178,8 +147,7 @@ class SearchController extends Controller
 
                                         $res[$key][$offer->getProduct()->getIblockSectionId()] = [
                                             'NAME' => $sectionProps['SECTION_PAGE_TITLE'],
-                                            'DETAIL_PAGE_URL' => $offer->getProduct()->getSection()->getSectionPageUrl() .
-                                                '?query=' . str_replace(' ', '+', $searchRequest->getSearchString()),
+                                            'DETAIL_PAGE_URL' => $offer->getProduct()->getSection()->getSectionPageUrl() . '?query=' . str_replace(' ', '+', $searchString),
                                             'SCORE' => $item->getHitMetaInfo()->getScore(),
 //                                        'ELEMENTS' => [
 //                                            [
