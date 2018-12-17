@@ -156,20 +156,20 @@ if (null === $offer) {
                         <div class="b-product-card-complect__list js-product-complect">
                             <div class="b-product-card-complect__list-item slide">
 
-                                <div class="b-common-item js-product-complect-item" data-product-info='{"productid": 32157, "offerid": 32158, "offerprice": 3899}' tabindex="0">
+                                <div class="b-common-item">
                                     <div class="b-common-item__image-wrap">
-                                        <a class="b-common-item__image-link js-item-link" href="/catalog/ryby/akvariumy/banki-bez-kryshki-akvariumy/Akvarium_Avgur_televizor_s_kryshkoy_55_l_1003273.html?offer=32158" tabindex="0">
+                                        <div class="b-common-item__image-link">
                                             <img class="b-common-item__image" src="/resize/240x240/upload/iblock/a7a/a7af6bcf89150ab357fdbb5a7d6e83a1.jpg" alt="Аквариум прямоугольный с крышкой 35 л" title="">
-                                        </a>
+                                        </div>
                                     </div>
                                     <div class="b-common-item__info-center-block">
-                                        <a class="b-common-item__description-wrap" href="/catalog/ryby/akvariumy/banki-bez-kryshki-akvariumy/Akvarium_Avgur_televizor_s_kryshkoy_55_l_1003273.html?offer=32158" tabindex="0">
+                                        <div class="b-common-item__description-wrap">
                                             <span class="b-clipped-text b-clipped-text--three">
                                                 <span>
                                                     <span class="span-strong">Авгуръ</span> Аквариум телевизор с крышкой 55 л
                                                 </span>
                                             </span>
-                                        </a>
+                                        </div>
                                         <div class="b-common-item__info">
                                             <div class="b-common-item__property">
                                                 <span class="b-common-item__property-value">10 кг</span>
@@ -179,83 +179,8 @@ if (null === $offer) {
                                                 <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
                                             </div>
                                         </div>
-                                        <div class="b-common-item__replace">
-                                            <a href="javascript:void(0)" class="b-common-item__replace-link js-product-complect-replace js-this-product-complect">
-                                                <span class="b-common-item__replace-text js-product-complect-replace-text">Поменять</span>
-                                                <span class="b-icon b-icon--replace-complect b-icon--left-3"><?= new SvgDecorator('icon-arrow-down', 10, 12) ?></span>
-                                            </a>
-                                        </div>
                                     </div>
                                 </div>
-
-                                <?/* верстка товара для переноса в слайдер другие товары */?>
-                                <div class="b-product-card-complect__item-replace js-product-complect-replace-item">
-                                    <div class="js-product-item" data-productid="32157">
-                                        <span class="b-common-item__image-wrap">
-                                            <a class="b-common-item__image-link js-item-link" href="/catalog/ryby/akvariumy/banki-bez-kryshki-akvariumy/Akvarium_Avgur_televizor_s_kryshkoy_55_l_1003273.html?offer=32158">
-                                                <img class="b-common-item__image js-weight-img"
-                                                     src="/resize/240x240/upload/iblock/a7a/a7af6bcf89150ab357fdbb5a7d6e83a1.jpg"
-                                                     alt="Аквариум телевизор с крышкой 55 л"
-                                                     title="Аквариум телевизор с крышкой 55 л"/>
-                                            </a>
-                                        </span>
-                                        <div class="b-common-item__info-center-block">
-                                            <a class="b-common-item__description-wrap js-item-link" href="/catalog/ryby/akvariumy/banki-bez-kryshki-akvariumy/Akvarium_Avgur_televizor_s_kryshkoy_55_l_1003273.html?offer=32158" title="">
-                                                <span class="b-clipped-text b-clipped-text--three">
-                                                    <span><span class="span-strong">Авгуръ</span> Аквариум телевизор с крышкой 55 л</span>
-                                                </span>
-                                            </a>
-                                            <div class="b-weight-container b-weight-container--list">
-                                                <a class="b-weight-container__link  js-mobile-select js-select-mobile-package"
-                                                   href="javascript:void(0);"
-                                                   title="">55л</a>
-                                                <div class="b-weight-container__dropdown-list__wrapper">
-                                                    <div class="b-weight-container__dropdown-list"></div>
-                                                </div>
-                                                <ul class="b-weight-container__list">
-                                                    <li class="b-weight-container__item">
-                                                        <a href="javascript:void(0)"
-                                                           class="b-weight-container__link js-price active-link"
-                                                           data-oldprice=""
-                                                           data-discount=""
-                                                           data-price="3899"
-                                                           data-offerid="32158"
-                                                           data-image="/resize/240x240/upload/iblock/a7a/a7af6bcf89150ab357fdbb5a7d6e83a1.jpg"
-                                                           data-link="/catalog/ryby/akvariumy/banki-bez-kryshki-akvariumy/Akvarium_Avgur_televizor_s_kryshkoy_55_l_1003273.html?offer=32158">55л</a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                            <a class="b-common-item__add-to-cart js-complect-replace"
-                                               href="javascript:void(0);"
-                                               title=""
-                                               data-offerid="32158">
-                                                <span class="b-common-item__wrapper-link">
-                                                    <span class="b-cart">
-                                                        <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
-                                                    </span>
-                                                    <span class="b-common-item__price js-price-block">3899</span>
-                                                    <span class="b-common-item__currency">
-                                                        <span class="b-ruble">₽</span>
-                                                    </span>
-                                                </span>
-                                            </a>
-                                            <div class="b-common-item__additional-information">
-                                                <div class="b-common-item__benefin js-sale-block">
-                                                    <span class="b-common-item__prev-price js-sale-origin">
-                                                        <span class="b-ruble b-ruble--prev-price"></span>
-                                                    </span>
-                                                    <span class="b-common-item__discount">
-                                                        <span class="b-common-item__disc"></span>
-                                                        <span class="b-common-item__discount-price js-sale-sale"></span>
-                                                        <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount"></span>
-                                                        </span>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <?/* /верстка товара для переноса в слайдер другие товары */?>
 
                             </div>
                             <div class="b-product-card-complect__list-item slide">
@@ -283,91 +208,13 @@ if (null === $offer) {
                                                 <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
                                             </div>
                                         </div>
-                                        <div class="b-common-item__replace">
-                                            <a href="javascript:void(0)" class="b-common-item__replace-link js-product-complect-replace js-this-product-complect">
-                                                <span class="b-common-item__replace-text js-product-complect-replace-text">Поменять</span>
-                                                <span class="b-icon b-icon--replace-complect b-icon--left-3"><?= new SvgDecorator('icon-arrow-down', 10, 12) ?></span>
-                                            </a>
-                                        </div>
                                     </div>
                                 </div>
-
-                                <?/* верстка товара для переноса в слайдер другие товары */?>
-                                <div class="b-product-card-complect__item-replace js-product-complect-replace-item">
-                                    <div class="js-product-item" data-productid="81383">
-                                        <span class="b-common-item__image-wrap">
-                                            <a class="b-common-item__image-link js-item-link" href="/catalog/ryby/akvariumy/tumby-podstavki-akvariumy/podstavka-poda-akvarium-biodizayn-rif-150-cveta-venge-bez-dverok.html?offer=48584">
-                                                <img class="b-common-item__image js-weight-img"
-                                                 src="/resize/240x240/upload/iblock/5fb/5fb5f6becfbf9a2c07a6f5c9f1a024f5.jpg"
-                                                 alt="Подставка пода аквариум Биодизайн Риф 150 цвета венге без дверок"
-                                                 title="Подставка пода аквариум Биодизайн Риф 150 цвета венге без дверок"/>
-                                            </a>
-                                        </span>
-                                        <div class="b-common-item__info-center-block">
-                                            <a class="b-common-item__description-wrap js-item-link" href="/catalog/ryby/akvariumy/tumby-podstavki-akvariumy/podstavka-poda-akvarium-biodizayn-rif-150-cveta-venge-bez-dverok.html?offer=48584" title="">
-                                                <span class="b-clipped-text b-clipped-text--three">
-                                                    <span>
-                                                        <span class="span-strong">Biodesign</span> Подставка пода аквариум Биодизайн Риф 150 цвета венге без дверок
-                                                    </span>
-                                                </span>
-                                            </a>
-                                            <div class="b-weight-container b-weight-container--list">
-                                                <a class="b-weight-container__link  js-mobile-select js-select-mobile-package"
-                                                   href="javascript:void(0);"
-                                                   title="">145л</a>
-                                                <div class="b-weight-container__dropdown-list__wrapper">
-                                                    <div class="b-weight-container__dropdown-list"></div>
-                                                </div>
-                                                <ul class="b-weight-container__list">
-                                                    <li class="b-weight-container__item">
-                                                        <a href="javascript:void(0)"
-                                                           class="b-weight-container__link js-price active-link"
-                                                           data-oldprice=""
-                                                           data-discount=""
-                                                           data-price="3408"
-                                                           data-offerid="48584"
-                                                           data-image="/resize/240x240/upload/iblock/5fb/5fb5f6becfbf9a2c07a6f5c9f1a024f5.jpg"
-                                                           data-link="/catalog/ryby/akvariumy/tumby-podstavki-akvariumy/podstavka-poda-akvarium-biodizayn-rif-150-cveta-venge-bez-dverok.html?offer=48584">145л</a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-
-                                            <a class="b-common-item__add-to-cart js-complect-replace"
-                                               href="javascript:void(0);"
-                                               title=""
-                                               data-offerid="48584">
-                                                <span class="b-common-item__wrapper-link">
-                                                    <span class="b-cart">
-                                                        <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
-                                                    </span>
-                                                    <span class="b-common-item__price js-price-block">3408</span>
-                                                    <span class="b-common-item__currency">
-                                                        <span class="b-ruble">₽</span>
-                                                    </span>
-                                                </span>
-                                            </a>
-                                            <div class="b-common-item__additional-information">
-                                                <div class="b-common-item__benefin js-sale-block">
-                                                    <span class="b-common-item__prev-price js-sale-origin">
-                                                        <span class="b-ruble b-ruble--prev-price"></span>
-                                                    </span>
-                                                    <span class="b-common-item__discount">
-                                                        <span class="b-common-item__disc"></span>
-                                                        <span class="b-common-item__discount-price js-sale-sale"></span>
-                                                        <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount"></span>
-                                                        </span>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <?/* /верстка товара для переноса в слайдер другие товары */?>
 
                             </div>
                             <div class="b-product-card-complect__list-item slide">
 
-                                <div class="b-common-item js-product-complect-item" data-product-info='{"productid": 33016, "offerid": 33017, "offerprice": 519}' tabindex="0">
+                                <div class="b-common-item js-product-complect-item" data-product-info='{"productid": 33016, "offerid": 33017, "offerprice": 519, "groupid": 1}' data-product-group-title="Другие фильтры" tabindex="0">
                                     <div class="b-common-item__image-wrap">
                                         <a class="b-common-item__image-link js-item-link" href="/catalog/ryby/oborudowanie/vnutrennie-filtry-ryby/Amma_Filtr_vnutrenniy__250lch__1004795.html?offer=33017" tabindex="0">
                                             <img class="b-common-item__image" src="/resize/240x240/upload/iblock/5a1/5a1841d8dc62e9102c6c41b0a8101b62.jpg" alt="Фильтр внутренний (250л/ч)" title="">
@@ -418,6 +265,11 @@ if (null === $offer) {
                                                     </span>
                                                 </span>
                                             </a>
+                                            <div class="b-common-item__info">
+                                                <div class="b-common-item__property">
+                                                    <span class="b-common-item__property-value">250 л/ч</span>
+                                                </div>
+                                            </div>
                                             <div class="b-weight-container b-weight-container--list">
                                                 <a class="b-weight-container__link  js-mobile-select js-select-mobile-package"
                                                    href="javascript:void(0);"
@@ -473,7 +325,7 @@ if (null === $offer) {
                             </div>
                             <div class="b-product-card-complect__list-item slide">
 
-                                <div class="b-common-item js-product-complect-item" data-product-info='{"productid": 33079, "offerid": 33080, "offerprice": 3065}' tabindex="0">
+                                <div class="b-common-item js-product-complect-item" data-product-info='{"productid": 33079, "offerid": 33080, "offerprice": 3065, "groupid": 2}' data-product-group-title="Другие помпы" tabindex="0">
                                     <div class="b-common-item__image-wrap">
                                         <a class="b-common-item__image-link js-item-link" href="/catalog/ryby/oborudowanie/pompy-ryby/Pompa_dlya_akvariuma_YUvel_Rekord_1000_Rio_125180_Ekoflou_600lch_1005324.html?offer=33080" tabindex="0">
                                             <img class="b-common-item__image" src="/resize/240x240/upload/iblock/4f0/4f09b0205a49de782ee73afecddae18d.jpg" alt="Помпа для аквариума Рекорд 1000 Рио 125/180 Экофлоу 600л/ч" title="">
@@ -523,6 +375,11 @@ if (null === $offer) {
                                                         <span class="span-strong">Juwel</span> Помпа для аквариума Рекорд 1000 Рио 125/180 Экофлоу 600л/ч</span>
                                                 </span>
                                             </a>
+                                            <div class="b-common-item__info">
+                                                <div class="b-common-item__property">
+                                                    <span class="b-common-item__property-value">250 л/ч</span>
+                                                </div>
+                                            </div>
                                             <div class="b-weight-container b-weight-container--list">
                                                 <a class="b-weight-container__link  js-mobile-select js-select-mobile-package"
                                                    href="javascript:void(0);"
@@ -576,6 +433,116 @@ if (null === $offer) {
                                 <?/* /верстка товара для переноса в слайдер другие товары */?>
 
                             </div>
+                            <div class="b-product-card-complect__list-item slide">
+
+                                <div class="b-common-item js-product-complect-item" data-product-info='{"productid": 85914, "offerid": 85915, "offerprice": 5889, "groupid": 3}' data-product-group-title="Другие светильники" tabindex="0">
+                                    <div class="b-common-item__image-wrap">
+                                        <a class="b-common-item__image-link js-item-link" href="/catalog/ryby/oborudowanie/lampy-i-svetilniki-ryby/vneshniy-svetilnik-led-fixture-1200black.html?offer=85915" tabindex="0">
+                                            <img class="b-common-item__image" src="/resize/240x240/upload/iblock/2d5/2d578432b4b4d7f4940e82b5895c8394.jpg" alt="Внешний светильник LED fiXture 1200black" title="Внешний светильник LED fiXture 1200black">
+                                        </a>
+                                    </div>
+                                    <div class="b-common-item__info-center-block">
+                                        <a class="b-common-item__description-wrap" href="/catalog/ryby/oborudowanie/lampy-i-svetilniki-ryby/vneshniy-svetilnik-led-fixture-1200black.html?offer=85915" tabindex="0">
+                                            <span class="b-clipped-text b-clipped-text--three">
+                                                <span>
+                                                    <span class="span-strong">Sera</span> Внешний светильник LED fiXture 1200black
+                                                </span>
+                                            </span>
+                                        </a>
+                                        <div class="b-common-item__info">
+                                            <div class="b-common-item__property">
+                                                <span class="b-common-item__property-value">1.91 кг</span>
+                                            </div>
+                                            <div class="b-common-item__price">
+                                                <span class="b-common-item__price-value">5 889</span>
+                                                <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
+                                            </div>
+                                        </div>
+                                        <div class="b-common-item__replace">
+                                            <a href="javascript:void(0)" class="b-common-item__replace-link js-product-complect-replace js-this-product-complect">
+                                                <span class="b-common-item__replace-text js-product-complect-replace-text">Поменять</span>
+                                                <span class="b-icon b-icon--replace-complect b-icon--left-3"><?= new SvgDecorator('icon-arrow-down', 10, 12) ?></span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <?/* верстка товара для переноса в слайдер другие товары */?>
+                                <div class="b-product-card-complect__item-replace js-product-complect-replace-item">
+                                    <div class="js-product-item" data-productid="85914">
+                                        <span class="b-common-item__image-wrap">
+                                            <a class="b-common-item__image-link js-item-link" href="/catalog/ryby/oborudowanie/lampy-i-svetilniki-ryby/vneshniy-svetilnik-led-fixture-1200black.html?offer=85915">
+                                                <img class="b-common-item__image js-weight-img"
+                                                     src="/resize/240x240/upload/iblock/2d5/2d578432b4b4d7f4940e82b5895c8394.jpg"
+                                                     alt="Внешний светильник LED fiXture 1200black"
+                                                     title="Внешний светильник LED fiXture 1200black"/>
+                                            </a>
+                                        </span>
+                                        <div class="b-common-item__info-center-block">
+                                            <a class="b-common-item__description-wrap js-item-link" href="/catalog/ryby/oborudowanie/lampy-i-svetilniki-ryby/vneshniy-svetilnik-led-fixture-1200black.html?offer=85915" title="">
+                                                <span class="b-clipped-text b-clipped-text--three">
+                                                    <span><span class="span-strong">Sera</span> Внешний светильник LED fiXture 1200black</span>
+                                                </span>
+                                            </a>
+                                            <div class="b-common-item__info">
+                                                <div class="b-common-item__property">
+                                                    <span class="b-common-item__property-value">250 л/ч</span>
+                                                </div>
+                                            </div>
+                                            <div class="b-weight-container b-weight-container--list">
+                                                <a class="b-weight-container__link  js-mobile-select js-select-mobile-package"
+                                                   href="javascript:void(0);"
+                                                   title="">1.91 кг</a>
+                                                <div class="b-weight-container__dropdown-list__wrapper">
+                                                    <div class="b-weight-container__dropdown-list"></div>
+                                                </div>
+                                                <ul class="b-weight-container__list">
+                                                    <li class="b-weight-container__item">
+                                                        <a href="javascript:void(0)"
+                                                           class="b-weight-container__link js-price active-link"
+                                                           data-oldprice=""
+                                                           data-discount=""
+                                                           data-price="5889"
+                                                           data-offerid="85915"
+                                                           data-image="/resize/240x240/upload/iblock/2d5/2d578432b4b4d7f4940e82b5895c8394.jpg"
+                                                           data-link="/catalog/ryby/oborudowanie/lampy-i-svetilniki-ryby/vneshniy-svetilnik-led-fixture-1200black.html?offer=85915">1.91 кг</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+
+                                            <a class="b-common-item__add-to-cart js-complect-replace"
+                                               href="javascript:void(0);"
+                                               title=""
+                                               data-offerid="85915">
+                                                <span class="b-common-item__wrapper-link">
+                                                    <span class="b-cart">
+                                                        <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
+                                                    </span>
+                                                    <span class="b-common-item__price js-price-block">5889</span>
+                                                    <span class="b-common-item__currency">
+                                                        <span class="b-ruble">₽</span>
+                                                    </span>
+                                                </span>
+                                            </a>
+                                            <div class="b-common-item__additional-information">
+                                                <div class="b-common-item__benefin js-sale-block">
+                                                    <span class="b-common-item__prev-price js-sale-origin">
+                                                        <span class="b-ruble b-ruble--prev-price"></span>
+                                                    </span>
+                                                    <span class="b-common-item__discount">
+                                                        <span class="b-common-item__disc"></span>
+                                                        <span class="b-common-item__discount-price js-sale-sale"></span>
+                                                        <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount"></span>
+                                                        </span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <?/* /верстка товара для переноса в слайдер другие товары */?>
+
+                            </div>
                         </div>
                     </div>
                     <div class="b-product-card-complect__result">
@@ -594,10 +561,10 @@ if (null === $offer) {
 
             <div class="b-product-card-complect hidden js-product-complect-other">
                 <div class="b-product-card-complect__otherproducts">
-                    <div class="b-product-card-complect__title">Другие помпы</div>
+                    <div class="b-product-card-complect__title" data-product-complect-otherproducts-title="true"></div>
 
                     <div class="b-common-section__content b-common-section__content--sale js-slider-product-complect-other">
-                        <div class="b-common-item">
+                        <div class="b-common-item red" data-product-complect-groupid="2">
                             <div class="js-product-item" data-productid="42375">
                                 <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;"><img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/></span>
                                 <span class="b-common-item__image-wrap">
@@ -618,6 +585,11 @@ if (null === $offer) {
                                             </span>
                                         </span>
                                     </a>
+                                    <div class="b-common-item__info">
+                                        <div class="b-common-item__property">
+                                            <span class="b-common-item__property-value">250 л/ч</span>
+                                        </div>
+                                    </div>
                                     <div class="b-weight-container b-weight-container--list">
                                         <a class="b-weight-container__link  b-weight-container__link--mobile js-mobile-select js-select-mobile-package"
                                            href="javascript:void(0);">15 кг</a>
@@ -663,7 +635,7 @@ if (null === $offer) {
                                 </div>
                             </div>
                         </div>
-                        <div class="b-common-item">
+                        <div class="b-common-item" data-product-complect-groupid="1">
                             <div class="js-product-item" data-productid="42461">
                                 <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">
                                     <img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>
@@ -686,6 +658,11 @@ if (null === $offer) {
                                             </span>
                                         </span>
                                     </a>
+                                    <div class="b-common-item__info">
+                                        <div class="b-common-item__property">
+                                            <span class="b-common-item__property-value">250 л/ч</span>
+                                        </div>
+                                    </div>
                                     <div class="b-weight-container b-weight-container--list">
                                         <a class="b-weight-container__link  b-weight-container__link--mobile js-mobile-select js-select-mobile-package"
                                            href="javascript:void(0);">12 кг</a>
@@ -731,7 +708,7 @@ if (null === $offer) {
                                 </div>
                             </div>
                         </div>
-                        <div class="b-common-item">
+                        <div class="b-common-item blue" data-product-complect-groupid="2">
                             <div class="js-product-item" data-productid="42921">
                                 <span class="b-common-item__image-wrap">
                                     <a class="b-common-item__image-link js-item-link" href="/catalog/koshki/korm-koshki/sukhoy/Pro_Plan_After_Care_suhoy_korm_dlya_kastrirovannyhsterilizovannyh_koshek_indeykakuritsa.html?offer=43476">
@@ -751,6 +728,11 @@ if (null === $offer) {
                                             </span>
                                         </span>
                                     </a>
+                                    <div class="b-common-item__info">
+                                        <div class="b-common-item__property">
+                                            <span class="b-common-item__property-value">250 л/ч</span>
+                                        </div>
+                                    </div>
                                     <div class="b-weight-container b-weight-container--list">
                                         <a class="b-weight-container__link  b-weight-container__link--mobile js-mobile-select js-select-mobile-package"
                                            href="javascript:void(0);">10 кг</a>
@@ -799,7 +781,7 @@ if (null === $offer) {
                                 </div>
                             </div>
                         </div>
-                        <div class="b-common-item">
+                        <div class="b-common-item blue" data-product-complect-groupid="3">
                             <div class="js-product-item" data-productid="43407">
                                 <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;"><img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/></span> <span class="b-common-item__image-wrap">
                                     <a class="b-common-item__image-link js-item-link" href="/catalog/sobaki/korm-sobaki/sukhoy-korm-sobaki/Eukanuba_Adultarge_suhoy_korm_dlya_sobak_krupnyh_porod_yagnenok_i_ris.html?offer=43408">
@@ -819,6 +801,11 @@ if (null === $offer) {
                                             </span>
                                         </span>
                                     </a>
+                                    <div class="b-common-item__info">
+                                        <div class="b-common-item__property">
+                                            <span class="b-common-item__property-value">250 л/ч</span>
+                                        </div>
+                                    </div>
                                     <div class="b-weight-container b-weight-container--list">
                                         <a class="b-weight-container__link  b-weight-container__link--mobile js-mobile-select js-select-mobile-package"
                                            href="javascript:void(0);">12 кг</a>
@@ -859,7 +846,7 @@ if (null === $offer) {
                                 </div>
                             </div>
                         </div>
-                        <div class="b-common-item">
+                        <div class="b-common-item yellow" data-product-complect-groupid="1">
                             <div class="js-product-item" data-productid="43589">
                                 <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;"><img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/></span> <span class="b-common-item__image-wrap">
                                     <a class="b-common-item__image-link js-item-link" href="/catalog/sobaki/korm-sobaki/sukhoy-korm-sobaki/Avva_Premium_suhoy_korm_dlya_shchenkov_krupnyh_porod_kuritsa.html?offer=45807">
@@ -879,6 +866,11 @@ if (null === $offer) {
                                             </span>
                                         </span>
                                     </a>
+                                    <div class="b-common-item__info">
+                                        <div class="b-common-item__property">
+                                            <span class="b-common-item__property-value">250 л/ч</span>
+                                        </div>
+                                    </div>
                                     <div class="b-weight-container b-weight-container--list">
                                         <a class="b-weight-container__link  b-weight-container__link--mobile js-mobile-select js-select-mobile-package"
                                            href="javascript:void(0);">12 кг</a>
@@ -919,7 +911,7 @@ if (null === $offer) {
                                 </div>
                             </div>
                         </div>
-                        <div class="b-common-item">
+                        <div class="b-common-item yellow" data-product-complect-groupid="3">
                             <div class="js-product-item" data-productid="43596">
                                 <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">
                                     <img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>
@@ -943,6 +935,11 @@ if (null === $offer) {
                                             </span>
                                         </span>
                                     </a>
+                                    <div class="b-common-item__info">
+                                        <div class="b-common-item__property">
+                                            <span class="b-common-item__property-value">250 л/ч</span>
+                                        </div>
+                                    </div>
                                     <div class="b-weight-container b-weight-container--list">
                                         <a class="b-weight-container__link  b-weight-container__link--mobile js-mobile-select js-select-mobile-package"
                                            href="javascript:void(0);">12 кг</a>
