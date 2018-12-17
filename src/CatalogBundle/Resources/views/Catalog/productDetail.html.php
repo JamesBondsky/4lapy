@@ -27,6 +27,8 @@ use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\HighloadHelper;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
+use FourPaws\Helpers\WordHelper;
+use FourPaws\Catalog\Model\Offer;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
@@ -147,93 +149,137 @@ if (null === $offer) {
                 );
             } ?>
         </div>
+        <?
+        /**
+         * @var Offer $pedestal
+         */
+        $pedestal = $product->getPedestal($product->getAssociationAquariums());
 
-        <div class="b-product-card__complect">
+        $volumeStr = strtolower($offer->getVolumeReference()->getName());
+        /**
+         * Перевод миллилитров в литры (если нужно)
+         */
+        if (mb_strpos($volumeStr, 'мл') || mb_strpos($volumeStr, 'л')) {
+            $volume = intval(str_replace(',', '.', preg_replace("/[^0-9]/", '', $volumeStr)));
+            if (mb_strpos($volumeStr, 'мл')) {
+                $volume = $volume / 1000;
+            }
+        } else {
+            $hideBlockAqua = true;
+        }
+        /**
+         * @var OfferCollection $internalFilters
+         */
+        $internalFilters = $product->getInternalFilters($offerVolume);
+        if (!empty($internalFilters)) {
+            /** @var Offer $internalFilterFirst */
+            $internalFilterFirst = $internalFilters->first();
+        }
+
+        /**
+         * @var OfferCollection $externalFilters
+         */
+        $externalFilters = $product->getExternalFilters($offerVolume);
+        if (!empty($externalFilters)) {
+            /** @var Offer $externalFilterFirst */
+            $externalFilterFirst = $externalFilters->first();
+        }
+        /**
+         * @var OfferCollection $lamps
+         */
+        $lamps = $product->getLamps();
+        if (!empty($lamps)) {
+            /** @var Offer $lamp */
+            $lamp = $lamps->first();
+        }
+        ?>
+        <? if (!empty($pedestal) && !$internalFilters->isEmpty() && !$externalFilters->isEmpty()&& !$lamps->isEmpty() && !$hideBlockAqua) { ?>
+            <div class="b-product-card__complect">
             <div class="b-product-card-complect">
                 <div class="b-product-card-complect__title">Аквариум под ключ</div>
                 <div class="b-product-card-complect__row">
                     <div class="b-product-card-complect__slider" data-product-complect-container="true">
                         <div class="b-product-card-complect__list js-product-complect">
                             <div class="b-product-card-complect__list-item slide">
-
                                 <div class="b-common-item">
                                     <div class="b-common-item__image-wrap">
                                         <div class="b-common-item__image-link">
-                                            <img class="b-common-item__image" src="/resize/240x240/upload/iblock/a7a/a7af6bcf89150ab357fdbb5a7d6e83a1.jpg" alt="Аквариум прямоугольный с крышкой 35 л" title="">
+                                            <img class="b-common-item__image" src="<?= $offer->getResizeImages(240,240)->first()?>" alt="<?= $offer->getName()?>" title="">
                                         </div>
                                     </div>
                                     <div class="b-common-item__info-center-block">
                                         <div class="b-common-item__description-wrap">
                                             <span class="b-clipped-text b-clipped-text--three">
                                                 <span>
-                                                    <span class="span-strong">Авгуръ</span> Аквариум телевизор с крышкой 55 л
+                                                    <span class="span-strong"><?= $product->getBrandName() ?></span> <?= $offer->getName()?>
                                                 </span>
                                             </span>
                                         </div>
                                         <div class="b-common-item__info">
                                             <div class="b-common-item__property">
-                                                <span class="b-common-item__property-value">10 кг</span>
+                                                <span class="b-common-item__property-value"><?= $offer->getVolumeReference()->getName() ?></span>
                                             </div>
                                             <div class="b-common-item__price">
-                                                <span class="b-common-item__price-value">3 899</span>
+                                                <span class="b-common-item__price-value"><?= $offer->getPrice(); ?></span>
                                                 <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-
                             </div>
-                            <div class="b-product-card-complect__list-item slide">
 
-                                <div class="b-common-item js-product-complect-item" data-product-info='{"productid": 81383, "offerid": 48584, "offerprice": 3408}' tabindex="0">
+                            <div class="b-product-card-complect__list-item slide">
+                                <div class="b-common-item js-product-complect-item" data-product-info='{"productid": <?= $pedestal->getProduct()->getXmlId(); ?>, "offerid": <?= $pedestal->getXmlId(); ?>, "offerprice": <?= $pedestal->getPrice(); ?>}' tabindex="0">
                                     <div class="b-common-item__image-wrap">
-                                        <a class="b-common-item__image-link js-item-link" href="/catalog/ryby/akvariumy/tumby-podstavki-akvariumy/podstavka-poda-akvarium-biodizayn-rif-150-cveta-venge-bez-dverok.html?offer=48584" tabindex="0">
-                                            <img class="b-common-item__image" src="/resize/240x240/upload/iblock/5fb/5fb5f6becfbf9a2c07a6f5c9f1a024f5.jpg" alt="Подставка пода аквариум Биодизайн Риф 150 цвета венге без дверок" title="">
+                                        <a class="b-common-item__image-link js-item-link" href="<?= $pedestal->getDetailPageUrl(); ?>" tabindex="0">
+                                            <img class="b-common-item__image" src="<?= $pedestal->getResizeImages(240,240)->first(); ?>" alt="<?= $pedestal->getName(); ?>" title="">
                                         </a>
                                     </div>
                                     <div class="b-common-item__info-center-block">
-                                        <a class="b-common-item__description-wrap" href="/catalog/ryby/akvariumy/tumby-podstavki-akvariumy/podstavka-poda-akvarium-biodizayn-rif-150-cveta-venge-bez-dverok.html?offer=48584" tabindex="0">
+                                        <a class="b-common-item__description-wrap" href="<?= $pedestal->getDetailPageUrl(); ?>" tabindex="0">
                                             <span class="b-clipped-text b-clipped-text--three">
                                                 <span>
-                                                    <span class="span-strong">Biodesign</span> Подставка пода аквариум Биодизайн Риф 150 цвета венге без дверок
+                                                    <span class="span-strong"><?= $pedestal->getProduct()->getBrandName(); ?></span> <?= $pedestal->getName(); ?>
                                                 </span>
                                             </span>
                                         </a>
                                         <div class="b-common-item__info">
                                             <div class="b-common-item__property">
-                                                <span class="b-common-item__property-value">42x30x73 см</span>
+                                                <span class="b-common-item__property-value"><?= WordHelper::showLengthNumber($pedestal->getCatalogProduct()->getLength()); ?>x<?= WordHelper::showLengthNumber($pedestal->getCatalogProduct()->getWidth()); ?>x<?= WordHelper::showLengthNumber($pedestal->getCatalogProduct()->getHeight()); ?> см</span>
                                             </div>
                                             <div class="b-common-item__price">
-                                                <span class="b-common-item__price-value">3 408</span>
+                                                <span class="b-common-item__price-value"><?= $pedestal->getPrice(); ?></span>
                                                 <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-
                             </div>
+
                             <div class="b-product-card-complect__list-item slide">
 
-                                <div class="b-common-item js-product-complect-item" data-product-info='{"productid": 33016, "offerid": 33017, "offerprice": 519, "groupid": 1}' data-product-group-title="Другие фильтры" tabindex="0">
+                                <div class="b-common-item js-product-complect-item" data-product-info='{"productid": <?= $externalFilterFirst->getProduct()->getXmlId(); ?>, "offerid": <?= $externalFilterFirst->getXmlId(); ?>, "offerprice": <?= $externalFilterFirst->getPrice(); ?>, "groupid": 1}' data-product-group-title="Другие внешние фильтры" tabindex="0">
                                     <div class="b-common-item__image-wrap">
-                                        <a class="b-common-item__image-link js-item-link" href="/catalog/ryby/oborudowanie/vnutrennie-filtry-ryby/Amma_Filtr_vnutrenniy__250lch__1004795.html?offer=33017" tabindex="0">
-                                            <img class="b-common-item__image" src="/resize/240x240/upload/iblock/5a1/5a1841d8dc62e9102c6c41b0a8101b62.jpg" alt="Фильтр внутренний (250л/ч)" title="">
+                                        <a class="b-common-item__image-link js-item-link" href="<?= $externalFilterFirst->getDetailPageUrl(); ?>" tabindex="0">
+                                            <img class="b-common-item__image" src="<?= $externalFilterFirst->getResizeImages(240,240)->first(); ?>" alt="<?= $externalFilterFirst->getName(); ?>" title="">
                                         </a>
                                     </div>
                                     <div class="b-common-item__info-center-block">
-                                        <a class="b-common-item__description-wrap" href="/catalog/ryby/oborudowanie/vnutrennie-filtry-ryby/Amma_Filtr_vnutrenniy__250lch__1004795.html?offer=33017" tabindex="0">
+                                        <a class="b-common-item__description-wrap" href="<?= $externalFilterFirst->getDetailPageUrl(); ?>" tabindex="0">
                                             <span class="b-clipped-text b-clipped-text--three">
                                                 <span>
-                                                    <span class="span-strong">Jebo</span> Фильтр внутренний (250л/ч)
+                                                    <span class="span-strong"><?= $externalFilterFirst->getProduct()->getBrandName(); ?></span> <?= $externalFilterFirst->getName(); ?>
                                                 </span>
                                             </span>
                                         </a>
                                         <div class="b-common-item__info">
-                                            <div class="b-common-item__property">
-                                                <span class="b-common-item__property-value">250 л/ч</span>
-                                            </div>
+                                            <? if ($externalFilterFirst->getProduct()->getPowerMax()) { ?>
+                                                <div class="b-common-item__property">
+                                                    <span class="b-common-item__property-value"><?= $externalFilterFirst->getProduct()->getPowerMax(); ?> л/ч</span>
+                                                </div>
+                                            <? } ?>
                                             <div class="b-common-item__price">
-                                                <span class="b-common-item__price-value">519</span>
+                                                <span class="b-common-item__price-value"><?= $externalFilterFirst->getPrice(); ?></span>
                                                 <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
                                             </div>
                                         </div>
@@ -246,30 +292,30 @@ if (null === $offer) {
                                     </div>
                                 </div>
 
-                                <?/* верстка товара для переноса в слайдер другие товары */?>
                                 <div class="b-product-card-complect__item-replace js-product-complect-replace-item">
                                     <div class="js-product-item" data-productid="33016">
                                         <span class="b-common-item__image-wrap">
-                                            <a class="b-common-item__image-link js-item-link" href="/catalog/ryby/oborudowanie/vnutrennie-filtry-ryby/Amma_Filtr_vnutrenniy__250lch__1004795.html?offer=33017">
-                                                <img class="b-common-item__image js-weight-img"
-                                                     src="/resize/240x240/upload/iblock/5a1/5a1841d8dc62e9102c6c41b0a8101b62.jpg"
-                                                     alt="Фильтр внутренний (250л/ч)"
-                                                     title="Фильтр внутренний (250л/ч)"/>
+                                            <a class="b-common-item__image-link js-item-link" href="<?= $externalFilterFirst->getDetailPageUrl(); ?>">
+                                                <img class="b-common-item__image js-weight-img" src="<?= $externalFilterFirst->getResizeImages(240,240)->first(); ?>" alt="<?= $externalFilterFirst->getName(); ?>" title="">
                                             </a>
                                         </span>
                                         <div class="b-common-item__info-center-block">
-                                            <a class="b-common-item__description-wrap js-item-link" href="/catalog/ryby/oborudowanie/vnutrennie-filtry-ryby/Amma_Filtr_vnutrenniy__250lch__1004795.html?offer=33017" title="">
+                                            <a class="b-common-item__description-wrap js-item-link" href="<?= $externalFilterFirst->getDetailPageUrl(); ?>" title="">
                                                 <span class="b-clipped-text b-clipped-text--three">
                                                     <span>
-                                                        <span class="span-strong">Jebo</span> Фильтр внутренний (250л/ч)
+                                                        <span class="span-strong"><?= $externalFilterFirst->getProduct()->getBrandName(); ?></span> <?= $externalFilterFirst->getName(); ?>
                                                     </span>
                                                 </span>
                                             </a>
                                             <div class="b-common-item__info">
-                                                <div class="b-common-item__property">
-                                                    <span class="b-common-item__property-value">250 л/ч</span>
-                                                </div>
+                                                <? if ($externalFilterFirst->getProduct()->getPowerMax()) { ?>
+                                                    <div class="b-common-item__property">
+                                                        <span class="b-common-item__property-value"><?= $externalFilterFirst->getProduct()->getPowerMax(); ?> л/ч</span>
+                                                    </div>
+                                                <? } ?>
                                             </div>
+                                            <?
+                                            /*
                                             <div class="b-weight-container b-weight-container--list">
                                                 <a class="b-weight-container__link  js-mobile-select js-select-mobile-package"
                                                    href="javascript:void(0);"
@@ -290,15 +336,17 @@ if (null === $offer) {
                                                     </li>
                                                 </ul>
                                             </div>
+                                            */
+                                            ?>
                                             <a class="b-common-item__add-to-cart js-complect-replace"
                                                href="javascript:void(0);"
                                                title=""
-                                               data-offerid="33017">
+                                               data-offerid="<?= $externalFilterFirst->getXmlId(); ?>">
                                                 <span class="b-common-item__wrapper-link">
                                                     <span class="b-cart">
                                                         <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
                                                     </span>
-                                                    <span class="b-common-item__price js-price-block">519</span>
+                                                    <span class="b-common-item__price js-price-block"><?= $externalFilterFirst->getPrice(); ?></span>
                                                     <span class="b-common-item__currency">
                                                         <span class="b-ruble">₽</span>
                                                     </span>
@@ -320,12 +368,10 @@ if (null === $offer) {
                                         </div>
                                     </div>
                                 </div>
-                                <?/* /верстка товара для переноса в слайдер другие товары */?>
-
                             </div>
-                            <div class="b-product-card-complect__list-item slide">
 
-                                <div class="b-common-item js-product-complect-item" data-product-info='{"productid": 33079, "offerid": 33080, "offerprice": 3065, "groupid": 2}' data-product-group-title="Другие помпы" tabindex="0">
+                            <div class="b-product-card-complect__list-item slide">
+                                <div class="b-common-item js-product-complect-item" data-product-info='{"productid": 33079, "offerid": 33080, "offerprice": 3065, "groupid": 2}' data-product-group-title="Другие внутренние фильтры" tabindex="0">
                                     <div class="b-common-item__image-wrap">
                                         <a class="b-common-item__image-link js-item-link" href="/catalog/ryby/oborudowanie/pompy-ryby/Pompa_dlya_akvariuma_YUvel_Rekord_1000_Rio_125180_Ekoflou_600lch_1005324.html?offer=33080" tabindex="0">
                                             <img class="b-common-item__image" src="/resize/240x240/upload/iblock/4f0/4f09b0205a49de782ee73afecddae18d.jpg" alt="Помпа для аквариума Рекорд 1000 Рио 125/180 Экофлоу 600л/ч" title="">
@@ -356,8 +402,7 @@ if (null === $offer) {
                                         </div>
                                     </div>
                                 </div>
-
-                                <?/* верстка товара для переноса в слайдер другие товары */?>
+                                
                                 <div class="b-product-card-complect__item-replace js-product-complect-replace-item">
                                     <div class="js-product-item" data-productid="33079">
                                         <span class="b-common-item__image-wrap">
@@ -430,9 +475,8 @@ if (null === $offer) {
                                         </div>
                                     </div>
                                 </div>
-                                <?/* /верстка товара для переноса в слайдер другие товары */?>
-
                             </div>
+
                             <div class="b-product-card-complect__list-item slide">
 
                                 <div class="b-common-item js-product-complect-item" data-product-info='{"productid": 85914, "offerid": 85915, "offerprice": 5889, "groupid": 3}' data-product-group-title="Другие светильники" tabindex="0">
@@ -466,8 +510,7 @@ if (null === $offer) {
                                         </div>
                                     </div>
                                 </div>
-
-                                <?/* верстка товара для переноса в слайдер другие товары */?>
+                                
                                 <div class="b-product-card-complect__item-replace js-product-complect-replace-item">
                                     <div class="js-product-item" data-productid="85914">
                                         <span class="b-common-item__image-wrap">
@@ -540,8 +583,6 @@ if (null === $offer) {
                                         </div>
                                     </div>
                                 </div>
-                                <?/* /верстка товара для переноса в слайдер другие товары */?>
-
                             </div>
                         </div>
                     </div>
@@ -984,6 +1025,7 @@ if (null === $offer) {
                 </div>
             </div>
         </div>
+        <? } ?>
 
         <div class="b-product-card__tab">
             <div class="b-tab">

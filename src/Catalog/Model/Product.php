@@ -24,6 +24,7 @@ use FourPaws\Catalog\Collection\CategoryCollection;
 use FourPaws\Catalog\Query\BrandQuery;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Catalog\Table\CatalogPriceTable;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Search\Model\HitMetaInfoAwareInterface;
@@ -700,6 +701,27 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @Groups({"elastic"})
      */
     protected $searchBooster = '';
+
+    /**
+     * @var string
+     * @Type("string")
+     * @Accessor(getter="getAssociationAquariums")
+     */
+    protected $PROPERTY_ASSOCIATION_AQUARIUMS;
+
+    /**
+     * @var string
+     * @Type("string")
+     * @Accessor(getter="getPowerMin")
+     */
+    protected $PROPERTY_POWER_MIN;
+
+    /**
+     * @var string
+     * @Type("string")
+     * @Accessor(getter="getPowerMax")
+     */
+    protected $PROPERTY_POWER_MAX;
 
     /**
      * BitrixArrayItemBase constructor.
@@ -2466,5 +2488,168 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         }
 
         return trim(str_replace('  ', ' ', $this->searchBooster));
+    }
+
+    /**
+     * @param $associationAquariums
+     * @return Product
+     */
+    public function withAssociationAquariums($associationAquariums): Product
+    {
+        $this->PROPERTY_ASSOCIATION_AQUARIUMS = $associationAquariums;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAssociationAquariums(): string
+    {
+        return $this->PROPERTY_ASSOCIATION_AQUARIUMS;
+    }
+
+    /**
+     * @param $powerMin
+     * @return Product
+     */
+    public function withPowerMin($powerMin): Product
+    {
+        $this->PROPERTY_POWER_MIN = $powerMin;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPowerMin(): string
+    {
+        return $this->PROPERTY_POWER_MIN;
+    }
+
+    /**
+     * @param $powerMax
+     * @return Product
+     */
+    public function withPowerMax($powerMax): Product
+    {
+        $this->PROPERTY_POWER_MAX = $powerMax;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPowerMax(): string
+    {
+        return $this->PROPERTY_POWER_MAX;
+    }
+
+
+    /**
+     * @param $associationAquariums
+     * @return Offer
+     */
+    public function getPedestal($associationAquariums): Offer
+    {
+        $res = (new ProductQuery())
+            ->withFilterParameter('PROPERTY_ASSOCIATION_AQUARIUMS', $associationAquariums)
+            ->withFilterParameter('SECTION_CODE', 'tumby-podstavki-akvariumy')
+            ->withFilterParameter('ACTIVE', 'Y')
+            ->exec();
+        if ($res->isEmpty()) {
+            return null;
+        } else {
+            return $res->first()->getOffers()->first();
+        }
+    }
+
+    /**
+     * @param $volume
+     * @return ArrayCollection
+     */
+    public function getInternalFilters($volume): ArrayCollection
+    {
+        $result = new ArrayCollection();
+        $res = (new ProductQuery())
+            ->withFilter([
+                [
+                    'LOGIC' => 'OR',
+                    'PROPERTY_POWER_MIN' => false,
+                    '<=PROPERTY_POWER_MIN' => $volume
+                ],
+                '>=PROPERTY_POWER_MAX' => $volume,
+                'SECTION_CODE' => 'vnutrennie-filtry-ryby',
+                'ACTIVE' => 'Y'
+            ])
+            ->exec();
+        if (!$res->isEmpty()) {
+            while ($product = $res->next()) {
+                $offers = $product->getOffers();
+                foreach ($offers as $offer) {
+                    $result->add($offer);
+                }
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * @param $volume
+     * @return ArrayCollection
+     */
+    public function getExternalFilters($volume): ArrayCollection
+    {
+        $result = new ArrayCollection();
+        $res = (new ProductQuery())
+            ->withFilter([
+                [
+                    'LOGIC' => 'OR',
+                    'PROPERTY_POWER_MIN' => false,
+                    '<=PROPERTY_POWER_MIN' => $volume
+                ],
+                '>=PROPERTY_POWER_MAX' => $volume,
+                'SECTION_CODE' => 'vneshnie-filtry-ryby',
+                'ACTIVE' => 'Y'
+            ])
+            ->exec();
+
+        if (!$res->isEmpty()) {
+            while ($product = $res->next()) {
+                $offers = $product->getOffers();
+                foreach ($offers as $offer) {
+                    $result->add($offer);
+                }
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * @param $volume
+     * @return ArrayCollection
+     */
+    public function getLamps(): ArrayCollection
+    {
+        $result = new ArrayCollection();
+        $res = (new ProductQuery())
+            ->withFilter([
+                'SECTION_CODE' => 'lampy-i-svetilniki-ryby',
+                'ACTIVE' => 'Y'
+            ])
+            ->withNav(['nPageSize' => 20])
+            ->exec();
+
+        if (!$res->isEmpty()) {
+            while ($product = $res->next()) {
+                $offers = $product->getOffers();
+                foreach ($offers as $offer) {
+                    $result->add($offer);
+                }
+            }
+        }
+        return $result;
     }
 }
