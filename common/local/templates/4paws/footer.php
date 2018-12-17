@@ -57,6 +57,10 @@ if ($template->hasMainWrapper()) {
     </div>
     <?php /** Основной прелоадер из gui */ ?>
     <?php include __DIR__ . '/blocks/preloader.php'; ?>
+
+    <div class="b-snow b-snow--left" data-snow="true"></div>
+    <div class="b-snow b-snow--right" data-snow="true"></div>
+
     </main>
 <?php } ?>
 <?php require_once __DIR__ . '/blocks/footer/change_viewport.php'; ?>
@@ -142,14 +146,9 @@ if ($template->hasMainWrapper()) {
     }
 </script>
 
-<script src="/static/build/js/external/snowfall.js" type="text/javascript"></script>
-<script type="text/javascript">
-    $(function(){
-        if(BX.GetWindowScrollSize().scrollWidth >= 768 && !BX.browser.IsIOS() && !BX.browser.IsAndroid()){
-            $(document).snowfall({image:"/static/build/images/inhtml/snow1.png", collection:'.b-header__info', collectionHeight:10, minSize:10, maxSize:30, flakeCount:50, maxSpeed:2});
-        }
-    });
-</script>
+<a href="https://fashion.4lapy.ru/odezhda-i-obuv/?section_id=176&Season=00000009&sort=popular" target="_blank" class="b-new-year-accessories js-new-year-accessories">
+    <img src="/static/build/images/inhtml/new-year-dog.png">
+</a>
 
 </body>
 </html>
