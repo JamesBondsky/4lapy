@@ -10,6 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
           id="reg-step2-form"
           data-url="/ajax/user/auth/login/"
           method="post">
+        <?= bitrix_sessid_post() ?>
         <input type="hidden" name="action" value="login">
         <div class="b-input-line b-input-line--phone-two js-phone-mask">
             <div class="b-input-line__label-wrapper">

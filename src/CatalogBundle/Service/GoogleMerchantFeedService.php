@@ -423,7 +423,7 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
      */
     private function getLink(Offer $offer)
     {
-        return $offer->getDetailPageUrl() . '&utm_source=rt-merchants&utm_campaign=main&utm_medium=cpc&utm_term=' . $offer->getXmlId();
+        return $offer->getDetailPageUrl();
     }
 
     /**

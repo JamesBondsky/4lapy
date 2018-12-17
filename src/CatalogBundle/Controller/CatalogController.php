@@ -2,6 +2,7 @@
 
 namespace FourPaws\CatalogBundle\Controller;
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Main\Entity\DataManager;
 use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -14,6 +15,9 @@ use FourPaws\CatalogBundle\Service\CatalogLandingService;
 use FourPaws\EcommerceBundle\Service\DataLayerService;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
+use FourPaws\Search\Helper\IndexHelper;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\SearchService;
 use RuntimeException;
@@ -96,6 +100,11 @@ class CatalogController extends Controller
     {
         $result = null;
 
+        //костыль для заказчика
+        $searchString = mb_strtolower($searchRequest->getSearchString());
+
+        $searchString = IndexHelper::getAlias($searchString);
+
         if (!$this->validator->validate($searchRequest)
                              ->count()) {
             /** @var ProductSearchResult $result */
@@ -103,7 +112,7 @@ class CatalogController extends Controller
                 $searchRequest->getCategory()->getFilters(),
                 $searchRequest->getSorts()->getSelected(),
                 $searchRequest->getNavigation(),
-                $searchRequest->getSearchString()
+                $searchString
             );
         }
 

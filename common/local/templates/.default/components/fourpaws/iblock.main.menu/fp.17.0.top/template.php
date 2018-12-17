@@ -171,7 +171,7 @@ foreach ($arResult['MENU_TREE'] as $arFirstLevelItem) {
                                         <?php }
                                     }
                                     if ($arSecondLevelItem['SECTION_HREF'] && $arSecondLevelItem['SECTION_HREF']['ID'] && $arResult['SECTIONS_POPULAR_BRANDS'][$arSecondLevelItem['SECTION_HREF']['ID']]) {
-                                        $sTmpUrl = 'javascript:void(0);';
+                                        $sTmpUrl = '/brand/';
                                         $sTmpText = 'Популярные бренды';
                                         $sTmpTitle = 'Популярные бренды'; ?>
                                         <div class="b-menu-main__popular-brand">

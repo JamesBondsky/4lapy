@@ -203,6 +203,23 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
             </div>
         </div>
     </div>
+    <div class="b-input-line b-radio-tab__address-map js-courierdelivery-map hidden">
+        <div class="b-radio-tab-map b-radio-tab-map--order">
+            <div class="b-radio-tab-map__label-wrapper">
+                <a href="javascript:void(0);" class="b-radio-tab-map__label js-toogle-courierdelivery-map">
+                    <span class="b-radio-tab-map__label-inner">
+                        Место доставки на карте
+                    </span>
+                    <span class="b-icon b-icon--map">
+                        <?= new SvgDecorator('icon-arrow-down', 10, 12) ?>
+                    </span>
+                </a>
+            </div>
+            <div class="b-radio-tab-map__map-wrapper">
+                <div class="b-radio-tab-map__map" id="map_courier_delivery"></div>
+            </div>
+        </div>
+    </div>
 </div>
 
 

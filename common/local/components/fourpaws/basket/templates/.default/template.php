@@ -340,6 +340,20 @@ if ($arParams['IS_AJAX']) {
                 </div>
             </div>
         </aside>
+        <script id="gtag-cart">
+            let offers = [];
+            $('a.b-common-item__description-wrap.b-common-item__description-wrap--shopping span.b-common-item__variant.b-common-item__variant--shopping-cart.b-common-item__variant--shopping span').each(function() {
+                if(/^\d+$/.test($(this).html())) offers.push($(this).html());
+            });
+            $(document).ready(function () {
+                gtag('event', 'page_view', {
+                    'send_to': 'AW-832765585',
+                    'ecomm_pagetype': 'cart',
+                    'ecomm_prodid': offers,
+                });
+                $('#gtag-cart').appendTo('head');
+            });
+            </script>
         <?php
 
         /**

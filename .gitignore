@@ -53,3 +53,7 @@ Desktop.ini
 /common/local/logs/*
 /common/static
 /common/local/php_interface/dbconn.php
+
+/local
+
+/common/local/resources/sypexgeo/SxGeoCity.dat

@@ -48,14 +48,14 @@ class ProductIdFilter extends FilterBase
     /**
      * @param array $checkedValues
      */
-    public function setCheckedVariants(array $checkedValues)
+    public function setCheckedVariants(array $checkedValues): void
     {
         $allVariants = $this->getAllVariants();
         foreach ($checkedValues as $value) {
             $allVariants->add((new Variant())->withAvailable(true)
-                                             ->withName($value)
-                                             ->withValue($value)
-                                             ->withChecked(true));
+                ->withName($value)
+                ->withValue($value)
+                ->withChecked(true));
         }
     }
 }
