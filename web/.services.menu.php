@@ -35,6 +35,13 @@ $aMenuLinks = Array(
         Array(),
         Array(),
         ""
+    ),
+    Array(
+        "Подбор корма",
+        "/catalog/food-selection/",
+        Array(),
+        Array(),
+        ""
     )
 );
 ?>

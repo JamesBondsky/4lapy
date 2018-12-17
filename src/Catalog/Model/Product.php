@@ -24,6 +24,7 @@ use FourPaws\Catalog\Collection\CategoryCollection;
 use FourPaws\Catalog\Query\BrandQuery;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Catalog\Table\CatalogPriceTable;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Search\Model\HitMetaInfoAwareInterface;
 use FourPaws\Search\Model\HitMetaInfoAwareTrait;
@@ -99,6 +100,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @Groups({"elastic"})
      */
     protected $NAME = '';
+
+    /**
+     * @var string Название раздела
+     * @Type("string")
+     * @Accessor(getter="getSectionName")
+     * @Groups({"elastic"})
+     */
+    protected $sectionName = '';
 
     /**
      * @var int
@@ -539,9 +548,43 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     protected $PROPERTY_NORMS_OF_USE = [];
 
     /**
+     * @var array
+     */
+    protected $PROPERTY_LAYOUT_DESCRIPTION = [];
+
+
+    /**
+     * @var array
+     */
+    protected $PROPERTY_LAYOUT_COMPOSITION = [];
+
+
+    /**
+     * @var array
+     */
+    protected $PROPERTY_LAYOUT_RECOMMENDATIONS = [];
+
+
+    /**
      * @var TextContent
      */
     protected $normsOfUse;
+
+    /**
+     * @var TextContent
+     */
+    protected $layoutDescription;
+
+    /**
+     * @var TextContent
+     */
+    protected $layoutComposition;
+
+
+    /**
+     * @var TextContent
+     */
+    protected $layoutRecommendations;
 
     /**
      * @var Collection
@@ -651,24 +694,51 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     protected $fullPathCollection;
 
     /**
+     * @var string
+     * @Type("string")
+     * @Accessor(getter="getSearchBooster")
+     * @Groups({"elastic"})
+     */
+    protected $searchBooster = '';
+
+    /**
      * BitrixArrayItemBase constructor.
      *
      * @param array $fields
      */
     public function __construct(array $fields = [])
     {
-        $fields['PROPERTY_SPECIFICATIONS_VALUE'] = $fields['~PROPERTY_SPECIFICATIONS_VALUE'] ?? [
-                'TYPE' => '',
+        if ($fields['~PROPERTY_SPECIFICATIONS_VALUE']) {
+            $fields['PROPERTY_SPECIFICATIONS_VALUE']['TEXT'] = htmlspecialchars_decode($fields['~PROPERTY_SPECIFICATIONS_VALUE']['TEXT']);
+            $fields['PROPERTY_SPECIFICATIONS_VALUE']['TYPE'] = '';
+        } else {
+            $fields['PROPERTY_SPECIFICATIONS_VALUE'] = [
+                'TYPE' => 'HTML',
                 'TEXT' => '',
             ];
-        $fields['PROPERTY_COMPOSITION_VALUE'] = $fields['~PROPERTY_COMPOSITION_VALUE'] ?? [
-                'TYPE' => '',
+        }
+
+
+        if ($fields['~PROPERTY_COMPOSITION_VALUE']) {
+            $fields['PROPERTY_COMPOSITION_VALUE']['TEXT'] = htmlspecialchars_decode($fields['~PROPERTY_COMPOSITION_VALUE']['TEXT']);
+            $fields['PROPERTY_COMPOSITION_VALUE']['TYPE'] = '';
+        } else {
+            $fields['PROPERTY_COMPOSITION_VALUE'] = [
+                'TYPE' => 'HTML',
                 'TEXT' => '',
             ];
-        $fields['PROPERTY_NORMS_OF_USE_VALUE'] = $fields['~PROPERTY_NORMS_OF_USE_VALUE'] ?? [
-                'TYPE' => '',
+        }
+
+        if ($fields['~PROPERTY_NORMS_OF_USE_VALUE']) {
+            $fields['PROPERTY_NORMS_OF_USE_VALUE']['TEXT'] = htmlspecialchars_decode($fields['~PROPERTY_NORMS_OF_USE_VALUE']['TEXT']);
+            $fields['PROPERTY_NORMS_OF_USE_VALUE']['TYPE'] = '';
+        } else {
+            $fields['PROPERTY_NORMS_OF_USE_VALUE'] = [
+                'TYPE' => 'HTML',
                 'TEXT' => '',
             ];
+        }
+
         parent::__construct($fields);
     }
 
@@ -724,6 +794,17 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             $this->PROPERTY_BRAND_NAME = $this->getBrand()->getName();
         }
         return $this->PROPERTY_BRAND_NAME;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSectionName(): string
+    {
+        if ($sect = $this->getSection()) {
+            $this->sectionName = $sect->getName();
+        }
+        return $this->sectionName;
     }
 
     /**
@@ -1857,6 +1938,51 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
+     * @return TextContent
+     */
+    public function getLayoutDescription(): TextContent
+    {
+        if (!($this->layoutDescription instanceof TextContent)) {
+            if (empty($this->PROPERTY_LAYOUT_DESCRIPTION)) {
+                $this->PROPERTY_LAYOUT_DESCRIPTION = ['TYPE' => 'text', 'TEXT' => ''];
+            }
+            $this->layoutDescription = new TextContent($this->PROPERTY_LAYOUT_DESCRIPTION);
+        }
+
+        return $this->layoutDescription;
+    }
+
+    /**
+     * @return TextContent
+     */
+    public function getLayoutComposition(): TextContent
+    {
+        if (!($this->layoutComposition instanceof TextContent)) {
+            if (empty($this->PROPERTY_LAYOUT_COMPOSITION)) {
+                $this->PROPERTY_LAYOUT_COMPOSITION = ['TYPE' => 'text', 'TEXT' => ''];
+            }
+            $this->layoutComposition = new TextContent($this->PROPERTY_LAYOUT_COMPOSITION);
+        }
+
+        return $this->layoutComposition;
+    }
+
+    /**
+     * @return TextContent
+     */
+    public function getLayoutRecommendations(): TextContent
+    {
+        if (!($this->layoutRecommendations instanceof TextContent)) {
+            if (empty($this->PROPERTY_LAYOUT_RECOMMENDATIONS)) {
+                $this->PROPERTY_LAYOUT_RECOMMENDATIONS = ['TYPE' => 'text', 'TEXT' => ''];
+            }
+            $this->layoutRecommendations = new TextContent($this->PROPERTY_LAYOUT_RECOMMENDATIONS);
+        }
+
+        return $this->layoutRecommendations;
+    }
+
+    /**
      * Возвращает информацию, на основе которой Elasticsearch будет строить механизм автодополнения
      *
      * @return string[]
@@ -2299,5 +2425,46 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         }
 
         return \array_unique($result);
+    }
+
+    /**
+     * @return string
+     * @throws ApplicationCreateException
+     */
+    public function getSearchBooster(): string
+    {
+        $this->searchBooster = '';
+
+        if (!empty($this->getBrandName())) {
+            $this->searchBooster = $this->getBrandName() . ' ';
+        }
+
+        if (!empty($this->getName())) {
+            $this->searchBooster .= $this->getName() . ' ';
+        }
+
+//        if (!empty($this->getSectionName())) {
+//            $this->searchBooster .= $this->getSectionName() . ' ';
+//        }
+
+        if (!empty($this->getConsistence())) {
+            $this->searchBooster .= $this->getConsistence()->getName() . ' ';
+        }
+
+        $arProp = $this->getFlavour()->toArray();
+        if (!empty($arProp)) {
+            foreach ($arProp as $item) {
+                $this->searchBooster .= $item->getName() . ' ';
+            }
+        }
+
+        $arProp = $this->getForWho()->toArray();
+        if (!empty($arProp)) {
+            foreach ($arProp as $item) {
+                $this->searchBooster .= str_replace('@', ' ', $item->getName()) . ' ';
+            }
+        }
+
+        return trim(str_replace('  ', ' ', $this->searchBooster));
     }
 }

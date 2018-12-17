@@ -14,6 +14,7 @@ use FourPaws\MobileApiBundle\Services\Session\SessionHandlerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
+
 /**
  * Class Event
  *
@@ -46,6 +47,15 @@ class Event extends BaseServiceHandler
     {
         $sessionHandler = Application::getInstance()->getContainer()->get(SessionHandlerInterface::class);
         $sessionHandler->login();
+
+        $user_class = new \CUser;
+        $user_id = (int) $GLOBALS['USER']->GetID();
+        $total_sessions = $user_class::GetByID( $user_id )->Fetch()['UF_SESSION_CNTS'];
+
+        $user_class->Update($user_id, ['UF_SESSION_CNTS' => (int) $total_sessions+1]);
+
+        // TODO: выбрасывает 500, но БД обновляет - нужно думать почему.
+        // TODO: P.S при обновлении в битре полей также выкидывает эррор.
     }
 
     /**

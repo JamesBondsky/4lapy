@@ -37,7 +37,8 @@ class BrandQuery extends IblockElementQuery
         return [
             'POPULAR',
             'CATALOG_INNER_BANNER',
-            'CATALOG_UNDER_BANNER'
+            'CATALOG_UNDER_BANNER',
+            'TRANSLITS'
         ];
     }
 
