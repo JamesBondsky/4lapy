@@ -20,6 +20,8 @@ use FourPaws\MobileApiBundle\Dto\Response\UserCartResponse;
 use FourPaws\SaleBundle\Service\BasketService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
+use FourPaws\SaleBundle\Discount\Manzana;
+use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 
 /**
  * Class UserCartController
@@ -31,10 +33,24 @@ class UserCartController extends FOSRestController
      * @var BasketService
      */
     private $basketService;
+    /**
+     * @var Manzana
+     */
+    private $manzana;
+    /**
+     * @var CouponStorageInterface
+     */
+    private $couponStorage;
 
-    public function __construct(BasketService $basketService)
+    public function __construct(
+        BasketService $basketService,
+        Manzana $manzana,
+        CouponStorageInterface $couponStorage
+    )
     {
         $this->basketService = $basketService;
+        $this->manzana = $manzana;
+        $this->couponStorage = $couponStorage;
     }
 
     /**
@@ -42,7 +58,11 @@ class UserCartController extends FOSRestController
      * @Rest\View()
      * @Security("has_role('REGISTERED_USERS')")
      *
+     * @param UserCartRequest $userCartRequest
+     * @return UserCartResponse
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
      * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\External\Exception\ManzanaPromocodeUnavailableException
      */
     public function getUserCartAction(UserCartRequest $userCartRequest)
     {
@@ -98,11 +118,6 @@ class UserCartController extends FOSRestController
             if (!isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
                 $totalBasePrice += (float)$offer->getOldPrice() * $itemQuantity;
                 $totalPrice += (float)$offer->getPrice() * $itemQuantity;
-                // Слияние строчек с одинаковыми sku
-                // $offer = $this->getOffer((int)$basketItem->getProductId());
-                // if (!$offer || $offer->isByRequest()) {
-                //    continue;
-                // }
             }
 
             //toDo подсчет бонусов для товара
@@ -119,13 +134,12 @@ class UserCartController extends FOSRestController
 
         if ($promoCode = $userCartRequest->getPromoCode()) {
 
-            $promoCodeResult = false;
-            // toDo добавление промокода в купоны
-            // $promoCodeResult = MyCAjax::AddCouponAPI($promoCode, $this->getFuserId(), $this->getUserId());
-
-            if ($promoCodeResult) {
-                $orderCalculate->setPromoCodeResult($promoCode);
-            }
+            // toDo проверить как работают промо-коды
+            $this->manzana->setPromocode($promoCode);
+            $this->manzana->calculate();
+            $this->couponStorage->clear();
+            $this->couponStorage->save($promoCode);
+            $orderCalculate->setPromoCodeResult($promoCode);
         }
 
         return (new UserCartResponse())

@@ -27,7 +27,7 @@ class OrderParameter
      * Массив объектов ОбъектКоличествоТовара
      * (в случае, когда ОбъектПараметрЗаказа отправляется на сервер в качестве параметра, например, при оформлении заказа)
      * @Serializer\Groups("request")
-     * @Serializer\SerializedName("goods")
+     * @Serializer\SerializedName("productsQuantity")
      * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\ProductQuantity>")
      * @var ProductQuantity[]
      */

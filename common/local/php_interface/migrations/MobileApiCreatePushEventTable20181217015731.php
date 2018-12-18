@@ -2,33 +2,30 @@
 
 namespace Sprint\Migration;
 
-use Adv\Bitrixtools\Migration\SprintMigrationBase;
 use Bitrix\Main\Application;
-use FourPaws\MobileApiBundle\Tables\ApiUserSessionTable;
+use FourPaws\MobileApiBundle\Tables\ApiPushEventTable;
 
-class UserSession20171110145721 extends SprintMigrationBase
+class MobileApiCreatePushEventTable20181217015731 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
 {
 
-    protected $description = 'Create User Session Table for mobile api';
+    protected $description = 'Создание служебной таблички api_push_event для пуш уведомлений в мобильном апи';
 
     public function up()
     {
-        $tableName = ApiUserSessionTable::getTableName();
+        $tableName = ApiPushEventTable::getTableName();
         /**
          * Compile from d7 DataManager will return only not null table fields structure
          */
         $tableStructure = <<<SQL
 CREATE TABLE `$tableName`(
   `ID`                   INT          NOT NULL AUTO_INCREMENT,
-  `DATE_INSERT`          DATETIME     NOT NULL,
-  `DATE_UPDATE`          DATETIME     NOT NULL,
-  `USER_AGENT`           VARCHAR(255),
-  `REMOTE_ADDR`          VARCHAR(255),
-  `HTTP_CLIENT_IP`       VARCHAR(255),
-  `HTTP_X_FORWARDED_FOR` VARCHAR(255),
-  `USER_ID`              INT,
-  `FUSER_ID`             INT          NOT NULL,
-  `TOKEN`                VARCHAR(255) NOT NULL,
+  `PLATFORM`             CHAR(1)      NOT NULL,
+  `TOKEN`                VARCHAR(255) NOT NULL DEFAULT 0,
+  `DATE_TIME_EXEC`       DATETIME     NOT NULL,
+  `MESSAGE`              TEXT         NOT NULL,
+  `SUCCESS_EXEC`         CHAR(1)      NOT NULL DEFAULT 'W',
+  `VIEWED`               CHAR(1)      NOT NULL DEFAULT 'N',
+  `MD5`                  VARCHAR(255),
   PRIMARY KEY (`ID`)
 )
 SQL;
@@ -51,7 +48,8 @@ SQL;
 
     public function down()
     {
-        $tableName = ApiUserSessionTable::getTableName();
+        $tableName = ApiPushEventTable::getTableName();
         Application::getConnection()->dropTable($tableName);
     }
+
 }

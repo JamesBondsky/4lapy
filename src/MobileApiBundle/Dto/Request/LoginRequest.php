@@ -18,42 +18,82 @@ use Symfony\Component\Validator\Constraints as Assert;
 class LoginRequest implements SimpleUnserializeRequest, PostRequest
 {
     /**
-     * @Assert\Collection(
-     *     fields = {
-     *         "login" = {
-     *              @Assert\NotBlank,
-     *              @PhoneNumber(defaultRegion="RU",type="mobile"),
-     *              @Assert\Regex("/^\d{10}$/")
-     *         },
-     *         "password" = {
-     *             @Assert\NotBlank(),
-     *         }
-     *     },
-     *     allowMissingFields = false
-     * )
-     *
-     * @var array
-     * @Serializer\Type("array")
-     * @Serializer\SerializedName("user_login_info")
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("login")
+     * @Assert\NotBlank()
+     * @var string
      */
-    protected $userLoginInfo = [
-        'login'    => '',
-        'password' => '',
-    ];
+    protected $login = '';
+
+    /**
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("captcha_id")
+     * @Assert\NotBlank()
+     * @var string
+     */
+    protected $captchaId = '';
+
+    /**
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("captcha_value")
+     * @Assert\NotBlank()
+     * @var string
+     */
+    protected $captchaValue = '';
 
     /**
      * @return string
      */
     public function getLogin(): string
     {
-        return $this->userLoginInfo['login'];
+        return $this->login;
+    }
+
+    /**
+     * @param $login
+     * @return LoginRequest
+     */
+    public function setLogin($login): LoginRequest
+    {
+        $this->login = $login;
+        return $this;
     }
 
     /**
      * @return string
      */
-    public function getPassword(): string
+    public function getCaptchaId(): string
     {
-        return $this->userLoginInfo['password'];
+        return $this->captchaId;
     }
+
+    /**
+     * @param $captchaId
+     * @return LoginRequest
+     */
+    public function setCaptchaId($captchaId): LoginRequest
+    {
+        $this->captchaId = $captchaId;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCaptchaValue(): string
+    {
+        return $this->captchaValue;
+    }
+
+    /**
+     * @param $captchaValue
+     * @return LoginRequest
+     */
+    public function setCaptchaValue($captchaValue): LoginRequest
+    {
+        $this->captchaValue = $captchaValue;
+        return $this;
+    }
+
+
 }

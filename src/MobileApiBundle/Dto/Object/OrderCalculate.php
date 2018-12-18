@@ -30,7 +30,7 @@ class OrderCalculate
 
     /**
      * Расшифровка движений по карте клиента на текущий заказ, список ОбъектДетализации[]
-     * @Serializer\SerializedName("price_details")
+     * @Serializer\SerializedName("card_details")
      * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Detailing>")
      * @var Detailing[]
      */

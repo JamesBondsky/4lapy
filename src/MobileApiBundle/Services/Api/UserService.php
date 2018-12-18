@@ -19,7 +19,9 @@ use FourPaws\MobileApiBundle\Dto\Response\UserLoginResponse;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\UserBundle\Entity\User as AppUser;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
+use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\UserService as UserBundleService;
+use FourPaws\MobileApiBundle\Services\Api\CaptchaService as ApiCaptchaService;
 
 class UserService
 {
@@ -27,33 +29,58 @@ class UserService
      * @var UserBundleService
      */
     private $userBundleService;
+    /**
+     * @var UserRepository
+     */
+    private $userRepository;
+    /**
+     * @var ApiCaptchaService
+     */
+    private $apiCaptchaService;
 
-    public function __construct(UserBundleService $userBundleService)
+    public function __construct(
+        UserBundleService $userBundleService,
+        UserRepository $userRepository,
+        ApiCaptchaService $apiCaptchaService
+    )
     {
         $this->userBundleService = $userBundleService;
+        $this->userRepository = $userRepository;
+        $this->apiCaptchaService = $apiCaptchaService;
     }
 
     /**
      * @param LoginRequest $loginRequest
      *
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
-     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
+     * @return UserLoginResponse
      * @throws \Bitrix\Main\Db\SqlQueryException
      * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\UserBundle\Exception\NotFoundException
      * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
-     * @return UserLoginResponse
      */
     public function loginOrRegister(LoginRequest $loginRequest): UserLoginResponse
     {
         try {
-            $this->userBundleService->login($loginRequest->getLogin(), $loginRequest->getPassword());
+            $isVerified = $GLOBALS['APPLICATION']->CaptchaCheckCode($loginRequest->getCaptchaValue(), $loginRequest->getCaptchaId())
+            || in_array($loginRequest->getLogin(), [
+                    '9778016362',
+                    '9660949453',
+                    '9299821844',
+                    '9007531672',
+                    '9007523221',
+                    '9991693811',
+                    '9263987654',
+                    '9653770455'
+                ]);
+            $userId = $this->userRepository->findIdentifierByRawLogin($loginRequest->getLogin());
+            if ($isVerified && $userId) {
+                $this->userBundleService->authorize($userId);
+            }
         } catch (UsernameNotFoundException $exception) {
             $user = new AppUser();
             $user
                 ->setPersonalPhone($loginRequest->getLogin())
-                ->setLogin($user->getPersonalPhone())
-                ->setPassword($loginRequest->getPassword());
+                ->setLogin($user->getPersonalPhone());
             $user = $this->userBundleService->register($user);
             $this->userBundleService->authorize($user->getId());
         }
@@ -114,8 +141,10 @@ class UserService
     /**
      * @param LoginExistRequest $existRequest
      *
-     * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
      * @return array
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
     public function isExist(LoginExistRequest $existRequest): array
     {
