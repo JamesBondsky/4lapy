@@ -200,7 +200,7 @@ if (null === $offer) {
                                 <div class="b-product-card-complect__list js-product-complect js-advice-list">
 
                                     <div class="b-product-card-complect__list-item slide">
-                                        <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $offer->getId(); ?>" data-product-info='{"productid": <?= $product->getId(); ?>, "offerid": <?= $offer->getId(); ?>, "offerprice": <?= $offer->getPrice(); ?>}' tabindex="0">
+                                        <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $offer->getId(); ?>" data-offerprice="<?= $offer->getPrice(); ?>" data-product-info='{"productid": <?= $product->getId(); ?>, "offerid": <?= $offer->getId(); ?>, "offerprice": <?= $offer->getPrice(); ?>}' tabindex="0">
                                             <div class="b-common-item__image-wrap">
                                                 <div class="b-common-item__image-link">
                                                     <img class="b-common-item__image" src="<?= $offer->getResizeImages(240, 240)->first() ?>" alt="<?= $offer->getName() ?>" title="">
@@ -208,11 +208,11 @@ if (null === $offer) {
                                             </div>
                                             <div class="b-common-item__info-center-block">
                                                 <div class="b-common-item__description-wrap">
-                                            <span class="b-clipped-text b-clipped-text--three">
-                                                <span>
-                                                    <span class="span-strong"><?= $product->getBrandName() ?></span> <?= $offer->getName() ?>
-                                                </span>
-                                            </span>
+                                                    <span class="b-clipped-text b-clipped-text--three">
+                                                        <span>
+                                                            <span class="span-strong"><?= $product->getBrandName() ?></span> <?= $offer->getName() ?>
+                                                        </span>
+                                                    </span>
                                                 </div>
                                                 <div class="b-common-item__info">
                                                     <div class="b-common-item__property">
@@ -228,7 +228,7 @@ if (null === $offer) {
                                     </div>
 
                                     <div class="b-product-card-complect__list-item slide">
-                                        <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $pedestal->getId(); ?>" data-product-info='{"productid": <?= $pedestal->getProduct()->getId(); ?>, "offerid": <?= $pedestal->getId(); ?>, "offerprice": <?= $pedestal->getPrice(); ?>}' tabindex="0">
+                                        <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $pedestal->getId(); ?>" data-offerprice="<?= $pedestal->getPrice(); ?>" data-product-info='{"productid": <?= $pedestal->getProduct()->getId(); ?>, "offerid": <?= $pedestal->getId(); ?>, "offerprice": <?= $pedestal->getPrice(); ?>}' tabindex="0">
                                             <div class="b-common-item__image-wrap">
                                                 <a class="b-common-item__image-link js-item-link" href="<?= $pedestal->getDetailPageUrl(); ?>" tabindex="0">
                                                     <img class="b-common-item__image" src="<?= $pedestal->getResizeImages(240, 240)->first(); ?>" alt="<?= $pedestal->getName(); ?>" title="">
@@ -256,8 +256,7 @@ if (null === $offer) {
                                     </div>
 
                                     <div class="b-product-card-complect__list-item slide">
-
-                                        <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $externalFilterFirst->getId(); ?>" data-product-info='{"productid": <?= $externalFilterFirst->getProduct()->getId(); ?>, "offerid": <?= $externalFilterFirst->getId(); ?>, "offerprice": <?= $externalFilterFirst->getPrice(); ?>, "groupid": 1}' data-product-group-title="Другие внешние фильтры" tabindex="0">
+                                        <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $externalFilterFirst->getId(); ?>" data-offerprice="<?= $externalFilterFirst->getPrice(); ?>" data-product-info='{"productid": <?= $externalFilterFirst->getProduct()->getId(); ?>, "offerid": <?= $externalFilterFirst->getId(); ?>, "offerprice": <?= $externalFilterFirst->getPrice(); ?>, "groupid": 1}' data-product-group-title="Другие внешние фильтры" tabindex="0">
                                             <div class="b-common-item__image-wrap">
                                                 <a class="b-common-item__image-link js-item-link" href="<?= $externalFilterFirst->getDetailPageUrl(); ?>" tabindex="0">
                                                     <img class="b-common-item__image" src="<?= $externalFilterFirst->getResizeImages(240, 240)->first(); ?>" alt="<?= $externalFilterFirst->getName(); ?>" title="">
@@ -295,18 +294,18 @@ if (null === $offer) {
 
                                         <div class="b-product-card-complect__item-replace js-product-complect-replace-item">
                                             <div class="js-product-item" data-productid="<?= $externalFilterFirst->getProduct()->getId(); ?>">
-                                        <span class="b-common-item__image-wrap">
-                                            <a class="b-common-item__image-link js-item-link" href="<?= $externalFilterFirst->getDetailPageUrl(); ?>">
-                                                <img class="b-common-item__image js-weight-img" src="<?= $externalFilterFirst->getResizeImages(240, 240)->first(); ?>" alt="<?= $externalFilterFirst->getName(); ?>" title="">
-                                            </a>
-                                        </span>
+                                                <span class="b-common-item__image-wrap">
+                                                    <a class="b-common-item__image-link js-item-link" href="<?= $externalFilterFirst->getDetailPageUrl(); ?>">
+                                                        <img class="b-common-item__image js-weight-img" src="<?= $externalFilterFirst->getResizeImages(240, 240)->first(); ?>" alt="<?= $externalFilterFirst->getName(); ?>" title="">
+                                                    </a>
+                                                </span>
                                                 <div class="b-common-item__info-center-block">
                                                     <a class="b-common-item__description-wrap js-item-link" href="<?= $externalFilterFirst->getDetailPageUrl(); ?>" title="">
-                                                <span class="b-clipped-text b-clipped-text--three">
-                                                    <span>
-                                                        <span class="span-strong"><?= $externalFilterFirst->getProduct()->getBrandName(); ?></span> <?= $externalFilterFirst->getName(); ?>
-                                                    </span>
-                                                </span>
+                                                        <span class="b-clipped-text b-clipped-text--three">
+                                                            <span>
+                                                                <span class="span-strong"><?= $externalFilterFirst->getProduct()->getBrandName(); ?></span> <?= $externalFilterFirst->getName(); ?>
+                                                            </span>
+                                                        </span>
                                                     </a>
                                                     <div class="b-weight-container b-weight-container--list">
                                                         <ul class="b-weight-container__list">
@@ -318,32 +317,33 @@ if (null === $offer) {
                                                                    data-price="<?= $externalFilterFirst->getCatalogPrice() ?>"
                                                                    data-offerid="<?= $externalFilterFirst->getId() ?>"
                                                                    data-image="<?= $externalFilterFirst->getResizeImages(240, 240)->first(); ?>"
-                                                                   data-link="<?= $externalFilterFirst->getLink() ?>"><?= $externalFilterFirst->getProduct()->getPowerMax(); ?> л/ч</a>
+                                                                   data-link="<?= $externalFilterFirst->getLink() ?>"
+                                                                   data-groupid="1"><?= $externalFilterFirst->getProduct()->getPowerMax(); ?> л/ч</a>
                                                             </li>
                                                         </ul>
                                                     </div>
                                                     <a class="b-common-item__add-to-cart js-complect-replace" href="javascript:void(0);" title="" data-offerid="<?= $externalFilterFirst->getId(); ?>">
-                                                <span class="b-common-item__wrapper-link">
-                                                    <span class="b-cart">
-                                                        <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
-                                                    </span>
-                                                    <span class="b-common-item__price js-price-block"><?= $externalFilterFirst->getPrice(); ?></span>
-                                                    <span class="b-common-item__currency">
-                                                        <span class="b-ruble">₽</span>
-                                                    </span>
-                                                </span>
+                                                        <span class="b-common-item__wrapper-link">
+                                                            <span class="b-cart">
+                                                                <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
+                                                            </span>
+                                                            <span class="b-common-item__price js-price-block"><?= $externalFilterFirst->getPrice(); ?></span>
+                                                            <span class="b-common-item__currency">
+                                                                <span class="b-ruble">₽</span>
+                                                            </span>
+                                                        </span>
                                                     </a>
                                                     <div class="b-common-item__additional-information">
                                                         <div class="b-common-item__benefin js-sale-block">
-                                                    <span class="b-common-item__prev-price js-sale-origin">
-                                                        <span class="b-ruble b-ruble--prev-price"></span>
-                                                    </span>
+                                                            <span class="b-common-item__prev-price js-sale-origin">
+                                                                <span class="b-ruble b-ruble--prev-price"></span>
+                                                            </span>
                                                             <span class="b-common-item__discount">
-                                                        <span class="b-common-item__disc"></span>
-                                                        <span class="b-common-item__discount-price js-sale-sale"></span>
-                                                        <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount"></span>
-                                                        </span>
-                                                    </span>
+                                                                <span class="b-common-item__disc"></span>
+                                                                <span class="b-common-item__discount-price js-sale-sale"></span>
+                                                                <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount"></span>
+                                                                </span>
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -353,7 +353,7 @@ if (null === $offer) {
 
                                     <div class="b-product-card-complect__list-item slide">
 
-                                        <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $internalFilterFirst->getId(); ?>" data-product-info='{"productid": <?= $internalFilterFirst->getProduct()->getId(); ?>, "offerid": <?= $internalFilterFirst->getId(); ?>, "offerprice": <?= $internalFilterFirst->getPrice(); ?>, "groupid": 2}' data-product-group-title="Другие внутренние фильтры" tabindex="0">
+                                        <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $internalFilterFirst->getId(); ?>" data-offerprice="<?= $internalFilterFirst->getPrice(); ?>" data-product-info='{"productid": <?= $internalFilterFirst->getProduct()->getId(); ?>, "offerid": <?= $internalFilterFirst->getId(); ?>, "offerprice": <?= $internalFilterFirst->getPrice(); ?>, "groupid": 2}' data-product-group-title="Другие внутренние фильтры" tabindex="0">
                                             <div class="b-common-item__image-wrap">
                                                 <a class="b-common-item__image-link js-item-link" href="<?= $internalFilterFirst->getDetailPageUrl(); ?>" tabindex="0">
                                                     <img class="b-common-item__image" src="<?= $internalFilterFirst->getResizeImages(240, 240)->first(); ?>" alt="<?= $internalFilterFirst->getName(); ?>" title="">
@@ -391,18 +391,18 @@ if (null === $offer) {
 
                                         <div class="b-product-card-complect__item-replace js-product-complect-replace-item">
                                             <div class="js-product-item" data-productid="<?= $internalFilterFirst->getProduct()->getId(); ?>">
-                                        <span class="b-common-item__image-wrap">
-                                            <a class="b-common-item__image-link js-item-link" href="<?= $internalFilterFirst->getDetailPageUrl(); ?>">
-                                                <img class="b-common-item__image js-weight-img" src="<?= $internalFilterFirst->getResizeImages(240, 240)->first(); ?>" alt="<?= $internalFilterFirst->getName(); ?>" title="">
-                                            </a>
-                                        </span>
+                                                <span class="b-common-item__image-wrap">
+                                                    <a class="b-common-item__image-link js-item-link" href="<?= $internalFilterFirst->getDetailPageUrl(); ?>">
+                                                        <img class="b-common-item__image js-weight-img" src="<?= $internalFilterFirst->getResizeImages(240, 240)->first(); ?>" alt="<?= $internalFilterFirst->getName(); ?>" title="">
+                                                    </a>
+                                                </span>
                                                 <div class="b-common-item__info-center-block">
                                                     <a class="b-common-item__description-wrap js-item-link" href="<?= $internalFilterFirst->getDetailPageUrl(); ?>" title="">
-                                                <span class="b-clipped-text b-clipped-text--three">
-                                                    <span>
-                                                        <span class="span-strong"><?= $internalFilterFirst->getProduct()->getBrandName(); ?></span> <?= $internalFilterFirst->getName(); ?>
-                                                    </span>
-                                                </span>
+                                                        <span class="b-clipped-text b-clipped-text--three">
+                                                            <span>
+                                                                <span class="span-strong"><?= $internalFilterFirst->getProduct()->getBrandName(); ?></span> <?= $internalFilterFirst->getName(); ?>
+                                                            </span>
+                                                        </span>
                                                     </a>
                                                     <div class="b-weight-container b-weight-container--list">
                                                         <ul class="b-weight-container__list">
@@ -414,7 +414,8 @@ if (null === $offer) {
                                                                    data-price="<?= $internalFilterFirst->getCatalogPrice() ?>"
                                                                    data-offerid="<?= $internalFilterFirst->getId() ?>"
                                                                    data-image="<?= $internalFilterFirst->getResizeImages(240, 240)->first(); ?>"
-                                                                   data-link="<?= $internalFilterFirst->getLink() ?>"><?= $internalFilterFirst->getProduct()->getPowerMax(); ?> л/ч</a>
+                                                                   data-link="<?= $internalFilterFirst->getLink() ?>"
+                                                                   data-groupid="2"><?= $internalFilterFirst->getProduct()->getPowerMax(); ?> л/ч</a>
                                                             </li>
                                                         </ul>
                                                     </div>
@@ -451,7 +452,7 @@ if (null === $offer) {
                                     </div>
 
                                     <div class="b-product-card-complect__list-item slide">
-                                        <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $lamp->getId(); ?>" data-product-info='{"productid": <?= $lamp->getProduct()->getId(); ?>, "offerid": <?= $lamp->getId(); ?>, "offerprice": <?= $lamp->getPrice(); ?>, "groupid": 3}' data-product-group-title="Другие лампы и светильники" tabindex="0">
+                                        <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $lamp->getId(); ?>" data-offerprice="<?= $lamp->getPrice(); ?>" data-product-info='{"productid": <?= $lamp->getProduct()->getId(); ?>, "offerid": <?= $lamp->getId(); ?>, "offerprice": <?= $lamp->getPrice(); ?>, "groupid": 3}' data-product-group-title="Другие лампы и светильники" tabindex="0">
                                             <div class="b-common-item__image-wrap">
                                                 <a class="b-common-item__image-link js-item-link" href="<?= $lamp->getDetailPageUrl(); ?>" tabindex="0">
                                                     <img class="b-common-item__image" src="<?= $lamp->getResizeImages(240, 240)->first(); ?>" alt="<?= $lamp->getName(); ?>" title="">
@@ -459,11 +460,11 @@ if (null === $offer) {
                                             </div>
                                             <div class="b-common-item__info-center-block">
                                                 <a class="b-common-item__description-wrap" href="<?= $lamp->getDetailPageUrl(); ?>" tabindex="0">
-                                            <span class="b-clipped-text b-clipped-text--three">
-                                                <span>
-                                                    <span class="span-strong"><?= $lamp->getProduct()->getBrandName(); ?></span> <?= $lamp->getName(); ?>
-                                                </span>
-                                            </span>
+                                                    <span class="b-clipped-text b-clipped-text--three">
+                                                        <span>
+                                                            <span class="span-strong"><?= $lamp->getProduct()->getBrandName(); ?></span> <?= $lamp->getName(); ?>
+                                                        </span>
+                                                    </span>
                                                 </a>
                                                 <div class="b-common-item__info">
                                                     <?
@@ -491,18 +492,18 @@ if (null === $offer) {
                                         </div>
                                         <div class="b-product-card-complect__item-replace js-product-complect-replace-item">
                                             <div class="js-product-item" data-productid="<?= $lamp->getProduct()->getId(); ?>">
-                                        <span class="b-common-item__image-wrap">
-                                            <a class="b-common-item__image-link js-item-link" href="<?= $lamp->getDetailPageUrl(); ?>">
-                                                <img class="b-common-item__image js-weight-img" src="<?= $lamp->getResizeImages(240, 240)->first(); ?>" alt="<?= $lamp->getName(); ?>" title="">
-                                            </a>
-                                        </span>
+                                                <span class="b-common-item__image-wrap">
+                                                    <a class="b-common-item__image-link js-item-link" href="<?= $lamp->getDetailPageUrl(); ?>">
+                                                        <img class="b-common-item__image js-weight-img" src="<?= $lamp->getResizeImages(240, 240)->first(); ?>" alt="<?= $lamp->getName(); ?>" title="">
+                                                    </a>
+                                                </span>
                                                 <div class="b-common-item__info-center-block">
                                                     <a class="b-common-item__description-wrap js-item-link" href="<?= $lamp->getDetailPageUrl(); ?>" title="">
-                                                <span class="b-clipped-text b-clipped-text--three">
-                                                    <span>
-                                                        <span class="span-strong"><?= $lamp->getProduct()->getBrandName(); ?></span> <?= $lamp->getName(); ?>
-                                                    </span>
-                                                </span>
+                                                        <span class="b-clipped-text b-clipped-text--three">
+                                                            <span>
+                                                                <span class="span-strong"><?= $lamp->getProduct()->getBrandName(); ?></span> <?= $lamp->getName(); ?>
+                                                            </span>
+                                                        </span>
                                                     </a>
                                                     <div class="b-weight-container b-weight-container--list">
                                                         <ul class="b-weight-container__list">
@@ -514,7 +515,8 @@ if (null === $offer) {
                                                                    data-price="<?= $lamp->getCatalogPrice() ?>"
                                                                    data-offerid="<?= $lamp->getId() ?>"
                                                                    data-image="<?= $lamp->getResizeImages(240, 240)->first(); ?>"
-                                                                   data-link="<?= $lamp->getLink() ?>"><?= WordHelper::showWeight($lamp->getCatalogProduct()->getWeight(), true) ?></a>
+                                                                   data-link="<?= $lamp->getLink() ?>"
+                                                                   data-groupid="3"><?= WordHelper::showWeight($lamp->getCatalogProduct()->getWeight(), true) ?></a>
                                                             </li>
                                                         </ul>
                                                     </div>
@@ -522,27 +524,27 @@ if (null === $offer) {
                                                        href="javascript:void(0);"
                                                        title=""
                                                        data-offerid="<?= $lamp->getId(); ?>">
-                                                <span class="b-common-item__wrapper-link">
-                                                    <span class="b-cart">
-                                                        <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
-                                                    </span>
-                                                    <span class="b-common-item__price js-price-block"><?= $lamp->getPrice(); ?></span>
-                                                    <span class="b-common-item__currency">
-                                                        <span class="b-ruble">₽</span>
-                                                    </span>
-                                                </span>
+                                                        <span class="b-common-item__wrapper-link">
+                                                            <span class="b-cart">
+                                                                <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
+                                                            </span>
+                                                            <span class="b-common-item__price js-price-block"><?= $lamp->getPrice(); ?></span>
+                                                            <span class="b-common-item__currency">
+                                                                <span class="b-ruble">₽</span>
+                                                            </span>
+                                                        </span>
                                                     </a>
                                                     <div class="b-common-item__additional-information">
                                                         <div class="b-common-item__benefin js-sale-block">
-                                                    <span class="b-common-item__prev-price js-sale-origin">
-                                                        <span class="b-ruble b-ruble--prev-price"></span>
-                                                    </span>
+                                                            <span class="b-common-item__prev-price js-sale-origin">
+                                                                <span class="b-ruble b-ruble--prev-price"></span>
+                                                            </span>
                                                             <span class="b-common-item__discount">
-                                                        <span class="b-common-item__disc"></span>
-                                                        <span class="b-common-item__discount-price js-sale-sale"></span>
-                                                        <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount"></span>
-                                                        </span>
-                                                    </span>
+                                                                <span class="b-common-item__disc"></span>
+                                                                <span class="b-common-item__discount-price js-sale-sale"></span>
+                                                                <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount"></span>
+                                                                </span>
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -554,9 +556,9 @@ if (null === $offer) {
                             </div>
                             <div class="b-product-card-complect__result">
                                 <div class="b-product-card-complect__summ">
-                            <span class="b-product-card-complect__price js-total-price-product-complect">
-                                <?= $totalPrice; ?>
-                            </span>
+                                    <span class="b-product-card-complect__price js-total-price-product-complect">
+                                        <?= $totalPrice; ?>
+                                    </span>
                                     <span class="b-ruble b-ruble--product-information">&nbsp;₽</span>
                                 </div>
                                 <div class="b-product-card-complect__basket">
@@ -581,23 +583,23 @@ if (null === $offer) {
                                     $curOfferImage = $curOffer->getResizeImages(240, 240)->first();
                                     $value = $curOffer->getProduct()->getPowerMax() . ' л/ч';
                                     ?>
-                                    <div class="b-common-item red" data-product-complect-groupid="1">
+                                    <div class="b-common-item" data-product-complect-groupid="1">
                                         <div class="js-product-item" data-productid="<?= $curOffer->getProduct()->getId(); ?>">
-                                    <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">
-                                        <img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>
-                                    </span>
+                                            <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">
+                                                <img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>
+                                            </span>
                                             <span class="b-common-item__image-wrap">
-                                    <a class="b-common-item__image-link js-item-link" href="<?= $curOffer->getDetailPageUrl(); ?>">
-                                        <img src="<?= $curOfferImage; ?>" alt="<?= $curOffer->getName(); ?>" class="b-common-item__image js-weight-img" title="">
-                                    </a>
-                                </span>
+                                                <a class="b-common-item__image-link js-item-link" href="<?= $curOffer->getDetailPageUrl(); ?>">
+                                                    <img src="<?= $curOfferImage; ?>" alt="<?= $curOffer->getName(); ?>" class="b-common-item__image js-weight-img" title="">
+                                                </a>
+                                            </span>
                                             <div class="b-common-item__info-center-block">
                                                 <a class="b-common-item__description-wrap js-item-link" href="<?= $curOffer->getDetailPageUrl(); ?>">
-                                            <span class="b-clipped-text b-clipped-text--three">
-                                                <span>
-                                                    <span class="span-strong"><?= $curOffer->getProduct()->getBrandName(); ?></span> <?= $curOffer->getName(); ?>
-                                                </span>
-                                            </span>
+                                                    <span class="b-clipped-text b-clipped-text--three">
+                                                        <span>
+                                                            <span class="span-strong"><?= $curOffer->getProduct()->getBrandName(); ?></span> <?= $curOffer->getName(); ?>
+                                                        </span>
+                                                    </span>
                                                 </a>
                                                 <div class="b-weight-container b-weight-container--list">
                                                     <ul class="b-weight-container__list">
@@ -609,32 +611,33 @@ if (null === $offer) {
                                                                data-price="<?= $curOffer->getCatalogPrice() ?>"
                                                                data-offerid="<?= $curOffer->getId() ?>"
                                                                data-image="<?= $curOfferImage ?>"
-                                                               data-link="<?= $curOffer->getLink() ?>"><?= $value ?></a>
+                                                               data-link="<?= $curOffer->getLink() ?>"
+                                                               data-groupid="1"><?= $value ?></a>
                                                         </li>
                                                     </ul>
                                                 </div>
                                                 <a class="b-common-item__add-to-cart js-complect-replace" href="javascript:void(0);" data-offerid="<?= $curOffer->getId(); ?>">
-                                            <span class="b-common-item__wrapper-link">
-                                                <span class="b-cart">
-                                                    <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
-                                                </span>
-                                                <span class="b-common-item__price js-price-block"><?= $curOffer->getPrice(); ?></span>
-                                                <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
-                                            </span>
+                                                    <span class="b-common-item__wrapper-link">
+                                                        <span class="b-cart">
+                                                            <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
+                                                        </span>
+                                                        <span class="b-common-item__price js-price-block"><?= $curOffer->getPrice(); ?></span>
+                                                        <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
+                                                    </span>
                                                 </a>
                                                 <? /*
-                                        <div class="b-common-item__additional-information">
-                                            <div class="b-common-item__benefin js-sale-block">
-                                            <span class="b-common-item__prev-price js-sale-origin">5225 <span class="b-ruble b-ruble--prev-price">₽</span>
-                                            </span>
-                                                <span class="b-common-item__discount">
-                                                <span class="b-common-item__disc">Скидка</span>
-                                                <span class="b-common-item__discount-price js-sale-sale">784</span>
-                                                <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount">₽</span></span>
-                                            </span>
-                                            </div>
-                                        </div>
-                                        */ ?>
+                                                <div class="b-common-item__additional-information">
+                                                    <div class="b-common-item__benefin js-sale-block">
+                                                    <span class="b-common-item__prev-price js-sale-origin">5225 <span class="b-ruble b-ruble--prev-price">₽</span>
+                                                    </span>
+                                                        <span class="b-common-item__discount">
+                                                        <span class="b-common-item__disc">Скидка</span>
+                                                        <span class="b-common-item__discount-price js-sale-sale">784</span>
+                                                        <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount">₽</span></span>
+                                                    </span>
+                                                    </div>
+                                                </div>
+                                                */ ?>
                                             </div>
                                         </div>
                                     </div>
@@ -647,23 +650,23 @@ if (null === $offer) {
                                     $curOfferImage = $curOffer->getResizeImages(240, 240)->first();
                                     $value = $curOffer->getProduct()->getPowerMax() . ' л/ч';
                                     ?>
-                                    <div class="b-common-item red" data-product-complect-groupid="2">
+                                    <div class="b-common-item" data-product-complect-groupid="2">
                                         <div class="js-product-item" data-productid="<?= $curOffer->getProduct()->getId(); ?>">
-                                    <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">
-                                        <img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>
-                                    </span>
+                                            <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">
+                                                <img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>
+                                            </span>
                                             <span class="b-common-item__image-wrap">
-                                    <a class="b-common-item__image-link js-item-link" href="<?= $curOffer->getDetailPageUrl(); ?>">
-                                        <img src="<?= $curOfferImage; ?>" alt="<?= $curOffer->getName(); ?>" class="b-common-item__image js-weight-img" title="">
-                                    </a>
-                                </span>
+                                                <a class="b-common-item__image-link js-item-link" href="<?= $curOffer->getDetailPageUrl(); ?>">
+                                                    <img src="<?= $curOfferImage; ?>" alt="<?= $curOffer->getName(); ?>" class="b-common-item__image js-weight-img" title="">
+                                                </a>
+                                            </span>
                                             <div class="b-common-item__info-center-block">
                                                 <a class="b-common-item__description-wrap js-item-link" href="<?= $curOffer->getDetailPageUrl(); ?>">
-                                            <span class="b-clipped-text b-clipped-text--three">
-                                                <span>
-                                                    <span class="span-strong"><?= $curOffer->getProduct()->getBrandName(); ?></span> <?= $curOffer->getName(); ?>
-                                                </span>
-                                            </span>
+                                                    <span class="b-clipped-text b-clipped-text--three">
+                                                        <span>
+                                                            <span class="span-strong"><?= $curOffer->getProduct()->getBrandName(); ?></span> <?= $curOffer->getName(); ?>
+                                                        </span>
+                                                    </span>
                                                 </a>
                                                 <div class="b-weight-container b-weight-container--list">
                                                     <ul class="b-weight-container__list">
@@ -675,32 +678,33 @@ if (null === $offer) {
                                                                data-price="<?= $curOffer->getCatalogPrice() ?>"
                                                                data-offerid="<?= $curOffer->getId() ?>"
                                                                data-image="<?= $curOfferImage ?>"
-                                                               data-link="<?= $curOffer->getLink() ?>"><?= $value ?></a>
+                                                               data-link="<?= $curOffer->getLink() ?>"
+                                                               data-groupid="2"><?= $value ?></a>
                                                         </li>
                                                     </ul>
                                                 </div>
                                                 <a class="b-common-item__add-to-cart js-complect-replace" href="javascript:void(0);" data-offerid="<?= $curOffer->getId(); ?>">
-                                            <span class="b-common-item__wrapper-link">
-                                                <span class="b-cart">
-                                                    <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
-                                                </span>
-                                                <span class="b-common-item__price js-price-block"><?= $curOffer->getPrice(); ?></span>
-                                                <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
-                                            </span>
+                                                    <span class="b-common-item__wrapper-link">
+                                                        <span class="b-cart">
+                                                            <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
+                                                        </span>
+                                                        <span class="b-common-item__price js-price-block"><?= $curOffer->getPrice(); ?></span>
+                                                        <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
+                                                    </span>
                                                 </a>
                                                 <? /*
-                                        <div class="b-common-item__additional-information">
-                                            <div class="b-common-item__benefin js-sale-block">
-                                            <span class="b-common-item__prev-price js-sale-origin">5225 <span class="b-ruble b-ruble--prev-price">₽</span>
-                                            </span>
-                                                <span class="b-common-item__discount">
-                                                <span class="b-common-item__disc">Скидка</span>
-                                                <span class="b-common-item__discount-price js-sale-sale">784</span>
-                                                <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount">₽</span></span>
-                                            </span>
-                                            </div>
-                                        </div>
-                                        */ ?>
+                                                <div class="b-common-item__additional-information">
+                                                    <div class="b-common-item__benefin js-sale-block">
+                                                    <span class="b-common-item__prev-price js-sale-origin">5225 <span class="b-ruble b-ruble--prev-price">₽</span>
+                                                    </span>
+                                                        <span class="b-common-item__discount">
+                                                        <span class="b-common-item__disc">Скидка</span>
+                                                        <span class="b-common-item__discount-price js-sale-sale">784</span>
+                                                        <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount">₽</span></span>
+                                                    </span>
+                                                    </div>
+                                                </div>
+                                                */ ?>
                                             </div>
                                         </div>
                                     </div>
@@ -713,23 +717,23 @@ if (null === $offer) {
                                     $curOfferImage = $curOffer->getResizeImages(240, 240)->first();
                                     $weight = $curOffer->getCatalogProduct()->getWeight();
                                     ?>
-                                    <div class="b-common-item red" data-product-complect-groupid="3">
+                                    <div class="b-common-item" data-product-complect-groupid="3">
                                         <div class="js-product-item" data-productid="<?= $curOffer->getProduct()->getId(); ?>">
-                                    <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">
-                                        <img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>
-                                    </span>
+                                            <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">
+                                                <img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>
+                                            </span>
                                             <span class="b-common-item__image-wrap">
-                                    <a class="b-common-item__image-link js-item-link" href="<?= $curOffer->getDetailPageUrl(); ?>">
-                                        <img src="<?= $curOfferImage; ?>" alt="<?= $curOffer->getName(); ?>" class="b-common-item__image js-weight-img" title="">
-                                    </a>
-                                </span>
+                                                <a class="b-common-item__image-link js-item-link" href="<?= $curOffer->getDetailPageUrl(); ?>">
+                                                    <img src="<?= $curOfferImage; ?>" alt="<?= $curOffer->getName(); ?>" class="b-common-item__image js-weight-img" title="">
+                                                </a>
+                                            </span>
                                             <div class="b-common-item__info-center-block">
                                                 <a class="b-common-item__description-wrap js-item-link" href="<?= $curOffer->getDetailPageUrl(); ?>">
-                                            <span class="b-clipped-text b-clipped-text--three">
-                                                <span>
-                                                    <span class="span-strong"><?= $curOffer->getProduct()->getBrandName(); ?></span> <?= $curOffer->getName(); ?>
-                                                </span>
-                                            </span>
+                                                    <span class="b-clipped-text b-clipped-text--three">
+                                                        <span>
+                                                            <span class="span-strong"><?= $curOffer->getProduct()->getBrandName(); ?></span> <?= $curOffer->getName(); ?>
+                                                        </span>
+                                                    </span>
                                                 </a>
                                                 <div class="b-weight-container b-weight-container--list">
                                                     <ul class="b-weight-container__list">
@@ -741,33 +745,34 @@ if (null === $offer) {
                                                                data-price="<?= $curOffer->getCatalogPrice() ?>"
                                                                data-offerid="<?= $curOffer->getId() ?>"
                                                                data-image="<?= $curOfferImage ?>"
-                                                               data-link="<?= $curOffer->getLink() ?>"><?= ($weight) ? WordHelper::showWeight($weight, true) : ''; ?>
+                                                               data-link="<?= $curOffer->getLink() ?>"
+                                                               data-groupid="3"><?= ($weight) ? WordHelper::showWeight($weight, true) : ''; ?>
                                                             </a>
                                                         </li>
                                                     </ul>
                                                 </div>
                                                 <a class="b-common-item__add-to-cart js-complect-replace" href="javascript:void(0);" data-offerid="<?= $curOffer->getId(); ?>">
-                                            <span class="b-common-item__wrapper-link">
-                                                <span class="b-cart">
-                                                    <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
-                                                </span>
-                                                <span class="b-common-item__price js-price-block"><?= $curOffer->getPrice(); ?></span>
-                                                <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
-                                            </span>
+                                                    <span class="b-common-item__wrapper-link">
+                                                        <span class="b-cart">
+                                                            <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
+                                                        </span>
+                                                        <span class="b-common-item__price js-price-block"><?= $curOffer->getPrice(); ?></span>
+                                                        <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
+                                                    </span>
                                                 </a>
                                                 <? /*
-                                        <div class="b-common-item__additional-information">
-                                            <div class="b-common-item__benefin js-sale-block">
-                                            <span class="b-common-item__prev-price js-sale-origin">5225 <span class="b-ruble b-ruble--prev-price">₽</span>
-                                            </span>
-                                                <span class="b-common-item__discount">
-                                                <span class="b-common-item__disc">Скидка</span>
-                                                <span class="b-common-item__discount-price js-sale-sale">784</span>
-                                                <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount">₽</span></span>
-                                            </span>
-                                            </div>
-                                        </div>
-                                        */ ?>
+                                                <div class="b-common-item__additional-information">
+                                                    <div class="b-common-item__benefin js-sale-block">
+                                                    <span class="b-common-item__prev-price js-sale-origin">5225 <span class="b-ruble b-ruble--prev-price">₽</span>
+                                                    </span>
+                                                        <span class="b-common-item__discount">
+                                                        <span class="b-common-item__disc">Скидка</span>
+                                                        <span class="b-common-item__discount-price js-sale-sale">784</span>
+                                                        <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount">₽</span></span>
+                                                    </span>
+                                                    </div>
+                                                </div>
+                                                */ ?>
                                             </div>
                                         </div>
                                     </div>
