@@ -2588,6 +2588,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                 'SECTION_CODE' => 'vnutrennie-filtry-ryby',
                 'ACTIVE' => 'Y'
             ])
+            ->withOrder(['PROPERTY_POWER_MAX' => 'ASC'])
             ->exec();
         if (!$res->isEmpty()) {
             while ($product = $res->next()) {
@@ -2622,6 +2623,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                 'SECTION_CODE' => 'vneshnie-filtry-ryby',
                 'ACTIVE' => 'Y'
             ])
+            ->withOrder(['PROPERTY_POWER_MAX' => 'ASC'])
             ->exec();
 
         if (!$res->isEmpty()) {
