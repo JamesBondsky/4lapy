@@ -130,7 +130,7 @@ if (!$arResult['HIDE_BLOCK']) {
                             </div>
 
                             <div class="b-product-card-complect__item-replace js-product-complect-replace-item">
-                                <div class="js-product-item" data-productid="<?= $externalFilterFirst->getProduct()->getId(); ?>">
+                                <div class="js-product-item" data-productid="<?= $externalFilterFirst->getProduct()->getId(); ?>" style="width: auto">
                                                 <span class="b-common-item__image-wrap">
                                                     <a class="b-common-item__image-link js-item-link" href="<?= $externalFilterFirst->getDetailPageUrl(); ?>">
                                                         <img class="b-common-item__image js-weight-img" src="<?= $externalFilterFirst->getResizeImages(240, 240)->first(); ?>" alt="<?= $externalFilterFirst->getName(); ?>" title="">
@@ -227,7 +227,7 @@ if (!$arResult['HIDE_BLOCK']) {
                             </div>
 
                             <div class="b-product-card-complect__item-replace js-product-complect-replace-item">
-                                <div class="js-product-item" data-productid="<?= $internalFilterFirst->getProduct()->getId(); ?>">
+                                <div class="js-product-item" data-productid="<?= $internalFilterFirst->getProduct()->getId(); ?>" style="width: auto">
                                                 <span class="b-common-item__image-wrap">
                                                     <a class="b-common-item__image-link js-item-link" href="<?= $internalFilterFirst->getDetailPageUrl(); ?>">
                                                         <img class="b-common-item__image js-weight-img" src="<?= $internalFilterFirst->getResizeImages(240, 240)->first(); ?>" alt="<?= $internalFilterFirst->getName(); ?>" title="">
@@ -328,7 +328,7 @@ if (!$arResult['HIDE_BLOCK']) {
                                 </div>
                             </div>
                             <div class="b-product-card-complect__item-replace js-product-complect-replace-item">
-                                <div class="js-product-item" data-productid="<?= $lamp->getProduct()->getId(); ?>">
+                                <div class="js-product-item" data-productid="<?= $lamp->getProduct()->getId(); ?>" style="width: auto">
                                                 <span class="b-common-item__image-wrap">
                                                     <a class="b-common-item__image-link js-item-link" href="<?= $lamp->getDetailPageUrl(); ?>">
                                                         <img class="b-common-item__image js-weight-img" src="<?= $lamp->getResizeImages(240, 240)->first(); ?>" alt="<?= $lamp->getName(); ?>" title="">
@@ -425,7 +425,7 @@ if (!$arResult['HIDE_BLOCK']) {
                         $shares = $curOffer->getShare();
                         ?>
                         <div class="b-common-item" data-product-complect-groupid="1">
-                            <div class="js-product-item" data-productid="<?= $curOffer->getProduct()->getId(); ?>">
+                            <div class="js-product-item" data-productid="<?= $curOffer->getProduct()->getId(); ?>" style="width: auto">
                                 <? if ($shares->getTotalCount() > 0) { ?>
                                     <?= MarkHelper::getMark($curOffer, '', $shares->first()->getId()); ?>
                                 <? } ?>
@@ -458,7 +458,7 @@ if (!$arResult['HIDE_BLOCK']) {
                                         </ul>
                                     </div>
 
-                                    <a class="b-common-item__add-to-cart js-basket-add track-recommendation" href="javascript:void(0);" data-url="/ajax/sale/basket/add/" data-offerid="<?= $curOffer->getId() ?>">
+                                    <a class="b-common-item__add-to-cart js-complect-replace" href="javascript:void(0);" data-offerid="<?= $curOffer->getId(); ?>">
                                         <span class="b-common-item__wrapper-link">
                                             <span class="b-cart">
                                                 <span class="b-icon b-icon--cart">
@@ -497,7 +497,7 @@ if (!$arResult['HIDE_BLOCK']) {
                         $shares = $curOffer->getShare();
                         ?>
                         <div class="b-common-item" data-product-complect-groupid="2">
-                            <div class="js-product-item" data-productid="<?= $curOffer->getProduct()->getId(); ?>">
+                            <div class="js-product-item" data-productid="<?= $curOffer->getProduct()->getId(); ?>" style="width: auto">
                                 <? if ($shares->getTotalCount() > 0) { ?>
                                     <?= MarkHelper::getMark($curOffer, '', $shares->first()->getId()); ?>
                                 <? } ?>
@@ -529,7 +529,7 @@ if (!$arResult['HIDE_BLOCK']) {
                                             </li>
                                         </ul>
                                     </div>
-                                    <a class="b-common-item__add-to-cart js-basket-add track-recommendation" href="javascript:void(0);" data-url="/ajax/sale/basket/add/" data-offerid="<?= $curOffer->getId() ?>">
+                                    <a class="b-common-item__add-to-cart js-complect-replace" href="javascript:void(0);" data-offerid="<?= $curOffer->getId(); ?>">
                                         <span class="b-common-item__wrapper-link">
                                             <span class="b-cart">
                                                 <span class="b-icon b-icon--cart">
@@ -568,7 +568,7 @@ if (!$arResult['HIDE_BLOCK']) {
                         $shares = $curOffer->getShare();
                         ?>
                         <div class="b-common-item" data-product-complect-groupid="3">
-                            <div class="js-product-item" data-productid="<?= $curOffer->getProduct()->getId(); ?>">
+                            <div class="js-product-item" data-productid="<?= $curOffer->getProduct()->getId(); ?>" style="width: auto">
                                 <? if ($shares->getTotalCount() > 0) { ?>
                                     <?= MarkHelper::getMark($curOffer, '', $shares->first()->getId()); ?>
                                 <? } ?>
@@ -601,7 +601,7 @@ if (!$arResult['HIDE_BLOCK']) {
                                             </li>
                                         </ul>
                                     </div>
-                                    <a class="b-common-item__add-to-cart js-basket-add track-recommendation" href="javascript:void(0);" data-url="/ajax/sale/basket/add/" data-offerid="<?= $curOffer->getId() ?>">
+                                    <a class="b-common-item__add-to-cart js-complect-replace" href="javascript:void(0);" data-offerid="<?= $curOffer->getId(); ?>">
                                         <span class="b-common-item__wrapper-link">
                                             <span class="b-cart">
                                                 <span class="b-icon b-icon--cart">
