@@ -705,9 +705,9 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     /**
      * @var string
      * @Type("string")
-     * @Accessor(getter="getAssociationAquariums")
+     * @Accessor(getter="getAquariumCombination")
      */
-    protected $PROPERTY_ASSOCIATION_AQUARIUMS;
+    protected $PROPERTY_AQUARIUM_COMBINATION;
 
     /**
      * @var string
@@ -2491,12 +2491,12 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @param $associationAquariums
+     * @param $aquariumCombination
      * @return Product
      */
-    public function withAssociationAquariums($associationAquariums): Product
+    public function withAquariumCombination($aquariumCombination): Product
     {
-        $this->PROPERTY_ASSOCIATION_AQUARIUMS = $associationAquariums;
+        $this->PROPERTY_AQUARIUM_COMBINATION = $aquariumCombination;
 
         return $this;
     }
@@ -2504,9 +2504,9 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     /**
      * @return string
      */
-    public function getAssociationAquariums(): string
+    public function getAquariumCombination(): string
     {
-        return $this->PROPERTY_ASSOCIATION_AQUARIUMS;
+        return $this->PROPERTY_AQUARIUM_COMBINATION;
     }
 
     /**
@@ -2549,13 +2549,13 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
 
     /**
-     * @param $associationAquariums
+     * @param $aquariumCombination
      * @return Offer|null
      */
-    public function getPedestal($associationAquariums)
+    public function getPedestal($aquariumCombination)
     {
         $res = (new ProductQuery())
-            ->withFilterParameter('PROPERTY_ASSOCIATION_AQUARIUMS', $associationAquariums)
+            ->withFilterParameter('PROPERTY_AQUARIUM_COMBINATION', $aquariumCombination)
             ->withFilterParameter('SECTION_CODE', 'tumby-podstavki-akvariumy')
             ->withFilterParameter('ACTIVE', 'Y')
             ->exec();

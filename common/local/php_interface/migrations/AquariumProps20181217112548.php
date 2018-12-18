@@ -12,12 +12,12 @@ class AquariumProps20181217112548 extends \Adv\Bitrixtools\Migration\SprintMigra
     protected $description = "Новые свойства для комплектов аквариумов";
 
     private $arProps = [
-        'ASSOCIATION_AQUARIUMS' => [
+        'AQUARIUM_COMBINATION' => [
             'IBLOCK_ID' => 0,
             'NAME' => 'Уникальный идентификатор связи аквариум-тумба',
             'ACTIVE' => 'Y',
             'SORT' => '1300',
-            'CODE' => 'ASSOCIATION_AQUARIUMS',
+            'CODE' => 'AQUARIUM_COMBINATION',
             'PROPERTY_TYPE' => 'S',
             'IS_REQUIRED' => 'N',
             'MULTIPLE' => 'N'

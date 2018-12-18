@@ -158,8 +158,8 @@ if (null === $offer) {
                 } ?>
             </div>
             <?
-            if ($product->getSection()->getCode() == 'banki-bez-kryshki-akvariumy' && $product->getAssociationAquariums() != '') {
-                $pedestal = $product->getPedestal($product->getAssociationAquariums());
+            if ($product->getSection()->getCode() == 'banki-bez-kryshki-akvariumy' && $product->getAquariumCombination() != '') {
+                $pedestal = $product->getPedestal($product->getAquariumCombination());
                 if (!empty($pedestal)) {
                     //перевод милилитров в литры
                     $volumeStr = strtolower($offer->getVolumeReference()->getName());

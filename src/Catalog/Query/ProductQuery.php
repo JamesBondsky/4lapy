@@ -102,7 +102,7 @@ class ProductQuery extends IblockElementQuery
             'LAYOUT_DESCRIPTION',
             'LAYOUT_COMPOSITION',
             'LAYOUT_RECOMMENDATIONS',
-            'ASSOCIATION_AQUARIUMS',
+            'AQUARIUM_COMBINATION',
             'POWER_MIN',
             'POWER_MAX'
         ];
