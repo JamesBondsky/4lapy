@@ -2550,9 +2550,9 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
     /**
      * @param $associationAquariums
-     * @return Offer
+     * @return Offer|null
      */
-    public function getPedestal($associationAquariums): Offer
+    public function getPedestal($associationAquariums)
     {
         $res = (new ProductQuery())
             ->withFilterParameter('PROPERTY_ASSOCIATION_AQUARIUMS', $associationAquariums)
@@ -2562,13 +2562,20 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         if ($res->isEmpty()) {
             return null;
         } else {
-            return $res->first()->getOffers()->first();
+            $offer = $res->first()->getOffers()->first();
+            if ($offer->getPrice() > 0 && $offer->getQuantity() > 0) {
+                return $offer;
+            } else {
+                return null;
+            }
         }
     }
 
     /**
      * @param $volume
      * @return ArrayCollection
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function getInternalFilters($volume): ArrayCollection
     {
@@ -2593,8 +2600,13 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         if (!$res->isEmpty()) {
             while ($product = $res->next()) {
                 $offers = $product->getOffers();
+                /**
+                 * @var Offer $offer
+                 */
                 foreach ($offers as $offer) {
-                    $result->add($offer);
+                    if ($offer->getPrice() > 0 && $offer->getQuantity() > 0) {
+                        $result->add($offer);
+                    }
                 }
             }
         }
@@ -2604,6 +2616,8 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     /**
      * @param $volume
      * @return ArrayCollection
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function getExternalFilters($volume): ArrayCollection
     {
@@ -2629,8 +2643,13 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         if (!$res->isEmpty()) {
             while ($product = $res->next()) {
                 $offers = $product->getOffers();
+                /**
+                 * @var Offer $offer
+                 */
                 foreach ($offers as $offer) {
-                    $result->add($offer);
+                    if ($offer->getPrice() > 0 && $offer->getQuantity() > 0) {
+                        $result->add($offer);
+                    }
                 }
             }
         }
@@ -2639,6 +2658,8 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
     /**
      * @return ArrayCollection
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function getLamps(): ArrayCollection
     {
@@ -2654,8 +2675,13 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         if (!$res->isEmpty()) {
             while ($product = $res->next()) {
                 $offers = $product->getOffers();
+                /**
+                 * @var Offer $offer
+                 */
                 foreach ($offers as $offer) {
-                    $result->add($offer);
+                    if ($offer->getPrice() > 0 && $offer->getQuantity() > 0) {
+                        $result->add($offer);
+                    }
                 }
             }
         }

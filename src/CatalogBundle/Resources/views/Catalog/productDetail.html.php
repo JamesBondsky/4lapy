@@ -160,33 +160,36 @@ if (null === $offer) {
             <?
             if ($product->getSection()->getCode() == 'banki-bez-kryshki-akvariumy') {
                 $pedestal = $product->getPedestal($product->getAssociationAquariums());
-                //перевод милилитров в литры
-                $volumeStr = strtolower($offer->getVolumeReference()->getName());
-                if (mb_strpos($volumeStr, 'мл') || mb_strpos($volumeStr, 'л')) {
-                    $volume = intval(str_replace(',', '.', preg_replace("/[^0-9]/", '', $volumeStr)));
-                    if (mb_strpos($volumeStr, 'мл')) {
-                        $volume = $volume / 1000;
+                if(!empty($pedestal)){
+                    //перевод милилитров в литры
+                    $volumeStr = strtolower($offer->getVolumeReference()->getName());
+                    if (mb_strpos($volumeStr, 'мл') || mb_strpos($volumeStr, 'л')) {
+                        $volume = intval(str_replace(',', '.', preg_replace("/[^0-9]/", '', $volumeStr)));
+                        if (mb_strpos($volumeStr, 'мл')) {
+                            $volume = $volume / 1000;
+                        }
+                    } else {
+                        $hideBlockAqua = true;
                     }
+                    $internalFilters = $product->getInternalFilters($offerVolume);
+                    if (!empty($internalFilters)) {
+                        $internalFilterFirst = $internalFilters->first();
+                    }
+
+                    $externalFilters = $product->getExternalFilters($offerVolume);
+                    if (!empty($externalFilters)) {
+                        /** @var Offer $externalFilterFirst */
+                        $externalFilterFirst = $externalFilters->first();
+                    }
+                    $lamps = $product->getLamps();
+                    if (!empty($lamps)) {
+                        $lamp = $lamps->first();
+                    }
+
+                    $totalPrice = $offer->getPrice() + $pedestal->getPrice() + $internalFilterFirst->getPrice() + $externalFilterFirst->getPrice() + $lamp->getPrice();
                 } else {
                     $hideBlockAqua = true;
                 }
-                $internalFilters = $product->getInternalFilters($offerVolume);
-                if (!empty($internalFilters)) {
-                    $internalFilterFirst = $internalFilters->first();
-                }
-
-                $externalFilters = $product->getExternalFilters($offerVolume);
-                if (!empty($externalFilters)) {
-                    /** @var Offer $externalFilterFirst */
-                    $externalFilterFirst = $externalFilters->first();
-                }
-                $lamps = $product->getLamps();
-                if (!empty($lamps)) {
-                    $lamp = $lamps->first();
-                }
-
-                $totalPrice = $offer->getPrice() + $pedestal->getPrice() + $internalFilterFirst->getPrice() + $externalFilterFirst->getPrice() + $lamp->getPrice();
-
             } else {
                 $hideBlockAqua = true;
             }
