@@ -2580,7 +2580,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                     'PROPERTY_POWER_MIN' => false,
                     '<=PROPERTY_POWER_MIN' => $volume
                 ],
-                '>=PROPERTY_POWER_MAX' => $volume,
+                [
+                    'LOGIC' => 'AND',
+                    '!PROPERTY_POWER_MAX' => false,
+                    '>=PROPERTY_POWER_MAX' => $volume
+                ],
                 'SECTION_CODE' => 'vnutrennie-filtry-ryby',
                 'ACTIVE' => 'Y'
             ])
@@ -2610,7 +2614,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                     'PROPERTY_POWER_MIN' => false,
                     '<=PROPERTY_POWER_MIN' => $volume
                 ],
-                '>=PROPERTY_POWER_MAX' => $volume,
+                [
+                    'LOGIC' => 'AND',
+                    '!PROPERTY_POWER_MAX' => false,
+                    '>=PROPERTY_POWER_MAX' => $volume
+                ],
                 'SECTION_CODE' => 'vneshnie-filtry-ryby',
                 'ACTIVE' => 'Y'
             ])
@@ -2628,7 +2636,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @param $volume
      * @return ArrayCollection
      */
     public function getLamps(): ArrayCollection

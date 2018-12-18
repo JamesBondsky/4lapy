@@ -4,6 +4,13 @@
  * @var CatalogLandingService $landingService
  * @var Request               $request
  * @var CMain                 $APPLICATION
+ * @var Offer                 $filter
+ * @var Offer                 $pedestal
+ * @var OfferCollection       $internalFilters
+ * @var Offer                 $internalFilterFirst
+ * @var OfferCollection       $externalFilters
+ * @var OfferCollection       $lamps
+ * Offer                      $lamp
  */
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
@@ -150,50 +157,43 @@ if (null === $offer) {
             } ?>
         </div>
         <?
-        /**
-         * @var Offer $pedestal
-         */
-        $pedestal = $product->getPedestal($product->getAssociationAquariums());
-
-        $volumeStr = strtolower($offer->getVolumeReference()->getName());
-        /**
-         * Перевод миллилитров в литры (если нужно)
-         */
-        if (mb_strpos($volumeStr, 'мл') || mb_strpos($volumeStr, 'л')) {
-            $volume = intval(str_replace(',', '.', preg_replace("/[^0-9]/", '', $volumeStr)));
-            if (mb_strpos($volumeStr, 'мл')) {
-                $volume = $volume / 1000;
+        if ($product->getSection()->getCode() == 'banki-bez-kryshki-akvariumy') {
+            $pedestal = $product->getPedestal($product->getAssociationAquariums());
+            //перевод милилитров в литры
+            $volumeStr = strtolower($offer->getVolumeReference()->getName());
+            if (mb_strpos($volumeStr, 'мл') || mb_strpos($volumeStr, 'л')) {
+                $volume = intval(str_replace(',', '.', preg_replace("/[^0-9]/", '', $volumeStr)));
+                if (mb_strpos($volumeStr, 'мл')) {
+                    $volume = $volume / 1000;
+                }
+            } else {
+                $hideBlockAqua = true;
             }
+            $internalFilters = $product->getInternalFilters($offerVolume);
+            if (!empty($internalFilters)) {
+                $internalFilterFirst = $internalFilters->first();
+                $internalFilterFirstValue = $internalFilterFirst->getPackageLabel(true, 999);
+            }
+
+            $externalFilters = $product->getExternalFilters($offerVolume);
+            if (!empty($externalFilters)) {
+                /** @var Offer $externalFilterFirst */
+                $externalFilterFirst = $externalFilters->first();
+                $externalFilterFirstValue = $externalFilterFirst->getPackageLabel(true, 999);
+            }
+            $lamps = $product->getLamps();
+            if (!empty($lamps)) {
+                $lamp = $lamps->first();
+                $lampValue = $lamp->getPackageLabel(true, 999);
+            }
+
+            $totalPrice = $offer->getPrice() + $pedestal->getPrice() + $internalFilterFirst->getPrice() + $externalFilterFirst->getPrice() + $lamp->getPrice();
+
         } else {
             $hideBlockAqua = true;
         }
-        /**
-         * @var OfferCollection $internalFilters
-         */
-        $internalFilters = $product->getInternalFilters($offerVolume);
-        if (!empty($internalFilters)) {
-            /** @var Offer $internalFilterFirst */
-            $internalFilterFirst = $internalFilters->first();
-        }
-
-        /**
-         * @var OfferCollection $externalFilters
-         */
-        $externalFilters = $product->getExternalFilters($offerVolume);
-        if (!empty($externalFilters)) {
-            /** @var Offer $externalFilterFirst */
-            $externalFilterFirst = $externalFilters->first();
-        }
-        /**
-         * @var OfferCollection $lamps
-         */
-        $lamps = $product->getLamps();
-        if (!empty($lamps)) {
-            /** @var Offer $lamp */
-            $lamp = $lamps->first();
-        }
         ?>
-        <? if (!empty($pedestal) && !$internalFilters->isEmpty() && !$externalFilters->isEmpty()&& !$lamps->isEmpty() && !$hideBlockAqua) { ?>
+        <? if (!$hideBlockAqua && !empty($pedestal) && !$internalFilters->isEmpty() && !$externalFilters->isEmpty()&& !$lamps->isEmpty()) { ?>
             <div class="b-product-card__complect">
             <div class="b-product-card-complect">
                 <div class="b-product-card-complect__title">Аквариум под ключ</div>
@@ -201,7 +201,7 @@ if (null === $offer) {
                     <div class="b-product-card-complect__slider" data-product-complect-container="true">
                         <div class="b-product-card-complect__list js-product-complect">
                             <div class="b-product-card-complect__list-item slide">
-                                <div class="b-common-item">
+                                <div class="b-common-item js-product-complect-item" data-product-info='{"productid": <?= $product->getId(); ?>, "offerid": <?= $offer->getId(); ?>, "offerprice": <?= $offer->getPrice(); ?>}' tabindex="0">
                                     <div class="b-common-item__image-wrap">
                                         <div class="b-common-item__image-link">
                                             <img class="b-common-item__image" src="<?= $offer->getResizeImages(240,240)->first()?>" alt="<?= $offer->getName()?>" title="">
@@ -229,7 +229,7 @@ if (null === $offer) {
                             </div>
 
                             <div class="b-product-card-complect__list-item slide">
-                                <div class="b-common-item js-product-complect-item" data-product-info='{"productid": <?= $pedestal->getProduct()->getXmlId(); ?>, "offerid": <?= $pedestal->getXmlId(); ?>, "offerprice": <?= $pedestal->getPrice(); ?>}' tabindex="0">
+                                <div class="b-common-item js-product-complect-item" data-product-info='{"productid": <?= $pedestal->getProduct()->getId(); ?>, "offerid": <?= $pedestal->getId(); ?>, "offerprice": <?= $pedestal->getPrice(); ?>}' tabindex="0">
                                     <div class="b-common-item__image-wrap">
                                         <a class="b-common-item__image-link js-item-link" href="<?= $pedestal->getDetailPageUrl(); ?>" tabindex="0">
                                             <img class="b-common-item__image" src="<?= $pedestal->getResizeImages(240,240)->first(); ?>" alt="<?= $pedestal->getName(); ?>" title="">
@@ -258,7 +258,7 @@ if (null === $offer) {
 
                             <div class="b-product-card-complect__list-item slide">
 
-                                <div class="b-common-item js-product-complect-item" data-product-info='{"productid": <?= $externalFilterFirst->getProduct()->getXmlId(); ?>, "offerid": <?= $externalFilterFirst->getXmlId(); ?>, "offerprice": <?= $externalFilterFirst->getPrice(); ?>, "groupid": 1}' data-product-group-title="Другие внешние фильтры" tabindex="0">
+                                <div class="b-common-item js-product-complect-item" data-product-info='{"productid": <?= $externalFilterFirst->getProduct()->getId(); ?>, "offerid": <?= $externalFilterFirst->getId(); ?>, "offerprice": <?= $externalFilterFirst->getPrice(); ?>, "groupid": 1}' data-product-group-title="Другие внешние фильтры" tabindex="0">
                                     <div class="b-common-item__image-wrap">
                                         <a class="b-common-item__image-link js-item-link" href="<?= $externalFilterFirst->getDetailPageUrl(); ?>" tabindex="0">
                                             <img class="b-common-item__image" src="<?= $externalFilterFirst->getResizeImages(240,240)->first(); ?>" alt="<?= $externalFilterFirst->getName(); ?>" title="">
@@ -293,7 +293,7 @@ if (null === $offer) {
                                 </div>
 
                                 <div class="b-product-card-complect__item-replace js-product-complect-replace-item">
-                                    <div class="js-product-item" data-productid="33016">
+                                    <div class="js-product-item" data-productid="<?= $externalFilterFirst->getProduct()->getId(); ?>">
                                         <span class="b-common-item__image-wrap">
                                             <a class="b-common-item__image-link js-item-link" href="<?= $externalFilterFirst->getDetailPageUrl(); ?>">
                                                 <img class="b-common-item__image js-weight-img" src="<?= $externalFilterFirst->getResizeImages(240,240)->first(); ?>" alt="<?= $externalFilterFirst->getName(); ?>" title="">
@@ -314,12 +314,8 @@ if (null === $offer) {
                                                     </div>
                                                 <? } ?>
                                             </div>
-                                            <?
-                                            /*
                                             <div class="b-weight-container b-weight-container--list">
-                                                <a class="b-weight-container__link  js-mobile-select js-select-mobile-package"
-                                                   href="javascript:void(0);"
-                                                   title="">7 г</a>
+                                                <a class="b-weight-container__link  js-mobile-select js-select-mobile-package" href="javascript:void(0);" title=""><?= $externalFilterFirstValue ?></a>
                                                 <div class="b-weight-container__dropdown-list__wrapper">
                                                     <div class="b-weight-container__dropdown-list"></div>
                                                 </div>
@@ -327,21 +323,16 @@ if (null === $offer) {
                                                     <li class="b-weight-container__item">
                                                         <a href="javascript:void(0)"
                                                            class="b-weight-container__link js-price active-link"
-                                                           data-oldprice=""
-                                                           data-discount=""
-                                                           data-price="519"
-                                                           data-offerid="33017"
-                                                           data-image="/resize/240x240/upload/iblock/5a1/5a1841d8dc62e9102c6c41b0a8101b62.jpg"
-                                                           data-link="/catalog/ryby/oborudowanie/vnutrennie-filtry-ryby/Amma_Filtr_vnutrenniy__250lch__1004795.html?offer=33017">7 г</a>
+                                                           data-oldprice="<?= $externalFilterFirst->getCatalogOldPrice() !== $externalFilterFirst->getCatalogPrice() ? $externalFilterFirst->getCatalogOldPrice() : '' ?>"
+                                                           data-discount="<?= ($externalFilterFirst->getDiscountPrice() ?: '') ?>"
+                                                           data-price="<?= $externalFilterFirst->getCatalogPrice() ?>"
+                                                           data-offerid="<?= $externalFilterFirst->getId() ?>"
+                                                           data-image="<?= $externalFilterFirst->getResizeImages(240,240)->first(); ?>"
+                                                           data-link="<?= $externalFilterFirst->getLink() ?>"><?= $externalFilterFirstValue ?></a>
                                                     </li>
                                                 </ul>
                                             </div>
-                                            */
-                                            ?>
-                                            <a class="b-common-item__add-to-cart js-complect-replace"
-                                               href="javascript:void(0);"
-                                               title=""
-                                               data-offerid="<?= $externalFilterFirst->getXmlId(); ?>">
+                                            <a class="b-common-item__add-to-cart js-complect-replace" href="javascript:void(0);" title="" data-offerid="<?= $externalFilterFirst->getId(); ?>">
                                                 <span class="b-common-item__wrapper-link">
                                                     <span class="b-cart">
                                                         <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
@@ -371,26 +362,29 @@ if (null === $offer) {
                             </div>
 
                             <div class="b-product-card-complect__list-item slide">
-                                <div class="b-common-item js-product-complect-item" data-product-info='{"productid": 33079, "offerid": 33080, "offerprice": 3065, "groupid": 2}' data-product-group-title="Другие внутренние фильтры" tabindex="0">
+
+                                <div class="b-common-item js-product-complect-item" data-product-info='{"productid": <?= $internalFilterFirst->getProduct()->getId(); ?>, "offerid": <?= $internalFilterFirst->getId(); ?>, "offerprice": <?= $internalFilterFirst->getPrice(); ?>, "groupid": 2}' data-product-group-title="Другие внутренние фильтры" tabindex="0">
                                     <div class="b-common-item__image-wrap">
-                                        <a class="b-common-item__image-link js-item-link" href="/catalog/ryby/oborudowanie/pompy-ryby/Pompa_dlya_akvariuma_YUvel_Rekord_1000_Rio_125180_Ekoflou_600lch_1005324.html?offer=33080" tabindex="0">
-                                            <img class="b-common-item__image" src="/resize/240x240/upload/iblock/4f0/4f09b0205a49de782ee73afecddae18d.jpg" alt="Помпа для аквариума Рекорд 1000 Рио 125/180 Экофлоу 600л/ч" title="">
+                                        <a class="b-common-item__image-link js-item-link" href="<?= $internalFilterFirst->getDetailPageUrl(); ?>" tabindex="0">
+                                            <img class="b-common-item__image" src="<?= $internalFilterFirst->getResizeImages(240,240)->first(); ?>" alt="<?= $internalFilterFirst->getName(); ?>" title="">
                                         </a>
                                     </div>
                                     <div class="b-common-item__info-center-block">
-                                        <a class="b-common-item__description-wrap" href="/catalog/ryby/oborudowanie/pompy-ryby/Pompa_dlya_akvariuma_YUvel_Rekord_1000_Rio_125180_Ekoflou_600lch_1005324.html?offer=33080" tabindex="0">
+                                        <a class="b-common-item__description-wrap" href="<?= $internalFilterFirst->getDetailPageUrl(); ?>" tabindex="0">
                                             <span class="b-clipped-text b-clipped-text--three">
                                                 <span>
-                                                    <span class="span-strong">Juwel</span> Помпа для аквариума Рекорд 1000 Рио 125/180 Экофлоу 600л/ч
+                                                    <span class="span-strong"><?= $internalFilterFirst->getProduct()->getBrandName(); ?></span> <?= $internalFilterFirst->getName(); ?>
                                                 </span>
                                             </span>
                                         </a>
                                         <div class="b-common-item__info">
-                                            <div class="b-common-item__property">
-                                                <span class="b-common-item__property-value">250 л/ч</span>
-                                            </div>
+                                            <? if ($internalFilterFirst->getProduct()->getPowerMax()) { ?>
+                                                <div class="b-common-item__property">
+                                                    <span class="b-common-item__property-value"><?= $internalFilterFirst->getProduct()->getPowerMax(); ?> л/ч</span>
+                                                </div>
+                                            <? } ?>
                                             <div class="b-common-item__price">
-                                                <span class="b-common-item__price-value">3 065</span>
+                                                <span class="b-common-item__price-value"><?= $internalFilterFirst->getPrice(); ?></span>
                                                 <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
                                             </div>
                                         </div>
@@ -402,33 +396,31 @@ if (null === $offer) {
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="b-product-card-complect__item-replace js-product-complect-replace-item">
-                                    <div class="js-product-item" data-productid="33079">
+                                    <div class="js-product-item" data-productid="<?= $internalFilterFirst->getProduct()->getId(); ?>">
                                         <span class="b-common-item__image-wrap">
-                                            <a class="b-common-item__image-link js-item-link" href="/catalog/ryby/oborudowanie/pompy-ryby/Pompa_dlya_akvariuma_YUvel_Rekord_1000_Rio_125180_Ekoflou_600lch_1005324.html?offer=33080" >
-                                                <img class="b-common-item__image js-weight-img"
-                                                     src="/resize/240x240/upload/iblock/4f0/4f09b0205a49de782ee73afecddae18d.jpg"
-                                                     alt="Помпа для аквариума Рекорд 1000 Рио 125/180 Экофлоу 600л/ч"
-                                                     title="Помпа для аквариума Рекорд 1000 Рио 125/180 Экофлоу 600л/ч"/>
+                                            <a class="b-common-item__image-link js-item-link" href="<?= $internalFilterFirst->getDetailPageUrl(); ?>">
+                                                <img class="b-common-item__image js-weight-img" src="<?= $internalFilterFirst->getResizeImages(240,240)->first(); ?>" alt="<?= $internalFilterFirst->getName(); ?>" title="">
                                             </a>
                                         </span>
                                         <div class="b-common-item__info-center-block">
-                                            <a class="b-common-item__description-wrap js-item-link" href="/catalog/ryby/oborudowanie/pompy-ryby/Pompa_dlya_akvariuma_YUvel_Rekord_1000_Rio_125180_Ekoflou_600lch_1005324.html?offer=33080" title="">
+                                            <a class="b-common-item__description-wrap js-item-link" href="<?= $internalFilterFirst->getDetailPageUrl(); ?>" title="">
                                                 <span class="b-clipped-text b-clipped-text--three">
                                                     <span>
-                                                        <span class="span-strong">Juwel</span> Помпа для аквариума Рекорд 1000 Рио 125/180 Экофлоу 600л/ч</span>
+                                                        <span class="span-strong"><?= $internalFilterFirst->getProduct()->getBrandName(); ?></span> <?= $internalFilterFirst->getName(); ?>
+                                                    </span>
                                                 </span>
                                             </a>
                                             <div class="b-common-item__info">
-                                                <div class="b-common-item__property">
-                                                    <span class="b-common-item__property-value">250 л/ч</span>
-                                                </div>
+                                                <? if ($internalFilterFirst->getProduct()->getPowerMax()) { ?>
+                                                    <div class="b-common-item__property">
+                                                        <span class="b-common-item__property-value"><?= $internalFilterFirst->getProduct()->getPowerMax(); ?> л/ч</span>
+                                                    </div>
+                                                <? } ?>
                                             </div>
                                             <div class="b-weight-container b-weight-container--list">
-                                                <a class="b-weight-container__link  js-mobile-select js-select-mobile-package"
-                                                   href="javascript:void(0);"
-                                                   title="">398 г</a>
+                                                <a class="b-weight-container__link  js-mobile-select js-select-mobile-package" href="javascript:void(0);" title=""><?= $internalFilterFirstValue ?></a>
                                                 <div class="b-weight-container__dropdown-list__wrapper">
                                                     <div class="b-weight-container__dropdown-list"></div>
                                                 </div>
@@ -436,132 +428,24 @@ if (null === $offer) {
                                                     <li class="b-weight-container__item">
                                                         <a href="javascript:void(0)"
                                                            class="b-weight-container__link js-price active-link"
-                                                           data-oldprice=""
-                                                           data-discount=""
-                                                           data-price="3065"
-                                                           data-offerid="33080"
-                                                           data-image="/resize/240x240/upload/iblock/4f0/4f09b0205a49de782ee73afecddae18d.jpg"
-                                                           data-link="/catalog/ryby/oborudowanie/pompy-ryby/Pompa_dlya_akvariuma_YUvel_Rekord_1000_Rio_125180_Ekoflou_600lch_1005324.html?offer=33080">398 г</a>
+                                                           data-oldprice="<?= $internalFilterFirst->getCatalogOldPrice() !== $internalFilterFirst->getCatalogPrice() ? $internalFilterFirst->getCatalogOldPrice() : '' ?>"
+                                                           data-discount="<?= ($internalFilterFirst->getDiscountPrice() ?: '') ?>"
+                                                           data-price="<?= $internalFilterFirst->getCatalogPrice() ?>"
+                                                           data-offerid="<?= $internalFilterFirst->getId() ?>"
+                                                           data-image="<?= $internalFilterFirst->getResizeImages(240,240)->first(); ?>"
+                                                           data-link="<?= $internalFilterFirst->getLink() ?>"><?= $internalFilterFirstValue ?></a>
                                                     </li>
                                                 </ul>
                                             </div>
                                             <a class="b-common-item__add-to-cart js-complect-replace"
                                                href="javascript:void(0);"
                                                title=""
-                                               data-offerid="33080">
+                                               data-offerid="<?= $internalFilterFirst->getId(); ?>">
                                                 <span class="b-common-item__wrapper-link">
                                                     <span class="b-cart">
                                                         <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
                                                     </span>
-                                                    <span class="b-common-item__price js-price-block">3065</span>
-                                                    <span class="b-common-item__currency">
-                                                        <span class="b-ruble">₽</span>
-                                                    </span>
-                                                </span>
-                                            </a>
-                                                <div class="b-common-item__additional-information">
-                                                <div class="b-common-item__benefin js-sale-block">
-                                                    <span class="b-common-item__prev-price js-sale-origin">
-                                                        <span class="b-ruble b-ruble--prev-price"></span>
-                                                    </span>
-                                                    <span class="b-common-item__discount">
-                                                        <span class="b-common-item__disc"></span>
-                                                        <span class="b-common-item__discount-price js-sale-sale"></span>
-                                                        <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount"></span>
-                                                        </span>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="b-product-card-complect__list-item slide">
-
-                                <div class="b-common-item js-product-complect-item" data-product-info='{"productid": 85914, "offerid": 85915, "offerprice": 5889, "groupid": 3}' data-product-group-title="Другие светильники" tabindex="0">
-                                    <div class="b-common-item__image-wrap">
-                                        <a class="b-common-item__image-link js-item-link" href="/catalog/ryby/oborudowanie/lampy-i-svetilniki-ryby/vneshniy-svetilnik-led-fixture-1200black.html?offer=85915" tabindex="0">
-                                            <img class="b-common-item__image" src="/resize/240x240/upload/iblock/2d5/2d578432b4b4d7f4940e82b5895c8394.jpg" alt="Внешний светильник LED fiXture 1200black" title="Внешний светильник LED fiXture 1200black">
-                                        </a>
-                                    </div>
-                                    <div class="b-common-item__info-center-block">
-                                        <a class="b-common-item__description-wrap" href="/catalog/ryby/oborudowanie/lampy-i-svetilniki-ryby/vneshniy-svetilnik-led-fixture-1200black.html?offer=85915" tabindex="0">
-                                            <span class="b-clipped-text b-clipped-text--three">
-                                                <span>
-                                                    <span class="span-strong">Sera</span> Внешний светильник LED fiXture 1200black
-                                                </span>
-                                            </span>
-                                        </a>
-                                        <div class="b-common-item__info">
-                                            <div class="b-common-item__property">
-                                                <span class="b-common-item__property-value">1.91 кг</span>
-                                            </div>
-                                            <div class="b-common-item__price">
-                                                <span class="b-common-item__price-value">5 889</span>
-                                                <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
-                                            </div>
-                                        </div>
-                                        <div class="b-common-item__replace">
-                                            <a href="javascript:void(0)" class="b-common-item__replace-link js-product-complect-replace js-this-product-complect">
-                                                <span class="b-common-item__replace-text js-product-complect-replace-text">Поменять</span>
-                                                <span class="b-icon b-icon--replace-complect b-icon--left-3"><?= new SvgDecorator('icon-arrow-down', 10, 12) ?></span>
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="b-product-card-complect__item-replace js-product-complect-replace-item">
-                                    <div class="js-product-item" data-productid="85914">
-                                        <span class="b-common-item__image-wrap">
-                                            <a class="b-common-item__image-link js-item-link" href="/catalog/ryby/oborudowanie/lampy-i-svetilniki-ryby/vneshniy-svetilnik-led-fixture-1200black.html?offer=85915">
-                                                <img class="b-common-item__image js-weight-img"
-                                                     src="/resize/240x240/upload/iblock/2d5/2d578432b4b4d7f4940e82b5895c8394.jpg"
-                                                     alt="Внешний светильник LED fiXture 1200black"
-                                                     title="Внешний светильник LED fiXture 1200black"/>
-                                            </a>
-                                        </span>
-                                        <div class="b-common-item__info-center-block">
-                                            <a class="b-common-item__description-wrap js-item-link" href="/catalog/ryby/oborudowanie/lampy-i-svetilniki-ryby/vneshniy-svetilnik-led-fixture-1200black.html?offer=85915" title="">
-                                                <span class="b-clipped-text b-clipped-text--three">
-                                                    <span><span class="span-strong">Sera</span> Внешний светильник LED fiXture 1200black</span>
-                                                </span>
-                                            </a>
-                                            <div class="b-common-item__info">
-                                                <div class="b-common-item__property">
-                                                    <span class="b-common-item__property-value">250 л/ч</span>
-                                                </div>
-                                            </div>
-                                            <div class="b-weight-container b-weight-container--list">
-                                                <a class="b-weight-container__link  js-mobile-select js-select-mobile-package"
-                                                   href="javascript:void(0);"
-                                                   title="">1.91 кг</a>
-                                                <div class="b-weight-container__dropdown-list__wrapper">
-                                                    <div class="b-weight-container__dropdown-list"></div>
-                                                </div>
-                                                <ul class="b-weight-container__list">
-                                                    <li class="b-weight-container__item">
-                                                        <a href="javascript:void(0)"
-                                                           class="b-weight-container__link js-price active-link"
-                                                           data-oldprice=""
-                                                           data-discount=""
-                                                           data-price="5889"
-                                                           data-offerid="85915"
-                                                           data-image="/resize/240x240/upload/iblock/2d5/2d578432b4b4d7f4940e82b5895c8394.jpg"
-                                                           data-link="/catalog/ryby/oborudowanie/lampy-i-svetilniki-ryby/vneshniy-svetilnik-led-fixture-1200black.html?offer=85915">1.91 кг</a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-
-                                            <a class="b-common-item__add-to-cart js-complect-replace"
-                                               href="javascript:void(0);"
-                                               title=""
-                                               data-offerid="85915">
-                                                <span class="b-common-item__wrapper-link">
-                                                    <span class="b-cart">
-                                                        <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
-                                                    </span>
-                                                    <span class="b-common-item__price js-price-block">5889</span>
+                                                    <span class="b-common-item__price js-price-block"><?= $internalFilterFirst->getPrice(); ?></span>
                                                     <span class="b-common-item__currency">
                                                         <span class="b-ruble">₽</span>
                                                     </span>
@@ -584,11 +468,121 @@ if (null === $offer) {
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="b-product-card-complect__list-item slide">
+                                <div class="b-common-item js-product-complect-item" data-product-info='{"productid": <?= $lamp->getProduct()->getId(); ?>, "offerid": <?= $lamp->getId(); ?>, "offerprice": <?= $lamp->getPrice(); ?>, "groupid": 3}' data-product-group-title="Другие светильники" tabindex="0">
+                                    <div class="b-common-item__image-wrap">
+                                        <a class="b-common-item__image-link js-item-link" href="<?= $lamp->getDetailPageUrl(); ?>" tabindex="0">
+                                            <img class="b-common-item__image" src="<?= $lamp->getResizeImages(240,240)->first(); ?>" alt="<?= $lamp->getName(); ?>" title="">
+                                        </a>
+                                    </div>
+                                    <div class="b-common-item__info-center-block">
+                                        <a class="b-common-item__description-wrap" href="<?= $lamp->getDetailPageUrl(); ?>" tabindex="0">
+                                            <span class="b-clipped-text b-clipped-text--three">
+                                                <span>
+                                                    <span class="span-strong"><?= $lamp->getProduct()->getBrandName(); ?></span> <?= $lamp->getName(); ?>
+                                                </span>
+                                            </span>
+                                        </a>
+                                        <div class="b-common-item__info">
+                                            <? if ($lamp->getProduct()->getPowerMax()) { ?>
+                                                <div class="b-common-item__property">
+                                                    <span class="b-common-item__property-value"><?= $lamp->getProduct()->getPowerMax(); ?> л/ч</span>
+                                                </div>
+                                            <? } ?>
+                                            <div class="b-common-item__price">
+                                                <span class="b-common-item__price-value"><?= $lamp->getPrice(); ?></span>
+                                                <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
+                                            </div>
+                                        </div>
+                                        <div class="b-common-item__replace">
+                                            <a href="javascript:void(0)" class="b-common-item__replace-link js-product-complect-replace js-this-product-complect">
+                                                <span class="b-common-item__replace-text js-product-complect-replace-text">Поменять</span>
+                                                <span class="b-icon b-icon--replace-complect b-icon--left-3"><?= new SvgDecorator('icon-arrow-down', 10, 12) ?></span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="b-product-card-complect__item-replace js-product-complect-replace-item">
+                                    <div class="js-product-item" data-productid="<?= $lamp->getProduct()->getId(); ?>">
+                                        <span class="b-common-item__image-wrap">
+                                            <a class="b-common-item__image-link js-item-link" href="<?= $lamp->getDetailPageUrl(); ?>">
+                                                <img class="b-common-item__image js-weight-img" src="<?= $lamp->getResizeImages(240,240)->first(); ?>" alt="<?= $lamp->getName(); ?>" title="">
+                                            </a>
+                                        </span>
+                                        <div class="b-common-item__info-center-block">
+                                            <a class="b-common-item__description-wrap js-item-link" href="<?= $lamp->getDetailPageUrl(); ?>" title="">
+                                                <span class="b-clipped-text b-clipped-text--three">
+                                                    <span>
+                                                        <span class="span-strong"><?= $lamp->getProduct()->getBrandName(); ?></span> <?= $lamp->getName(); ?>
+                                                    </span>
+                                                </span>
+                                            </a>
+                                            <div class="b-common-item__info">
+                                                <? if ($lamp->getProduct()->getPowerMax()) { ?>
+                                                    <div class="b-common-item__property">
+                                                        <span class="b-common-item__property-value"><?= $lamp->getProduct()->getPowerMax(); ?> л/ч</span>
+                                                    </div>
+                                                <? } ?>
+                                            </div>
+                                            <div class="b-weight-container b-weight-container--list">
+                                                <a class="b-weight-container__link  js-mobile-select js-select-mobile-package" href="javascript:void(0);" title=""><?= $lampValue ?></a>
+                                                <div class="b-weight-container__dropdown-list__wrapper">
+                                                    <div class="b-weight-container__dropdown-list"></div>
+                                                </div>
+                                                <ul class="b-weight-container__list">
+                                                    <li class="b-weight-container__item">
+                                                        <a href="javascript:void(0)"
+                                                           class="b-weight-container__link js-price active-link"
+                                                           data-oldprice="<?= $lamp->getCatalogOldPrice() !== $lamp->getCatalogPrice() ? $lamp->getCatalogOldPrice() : '' ?>"
+                                                           data-discount="<?= ($lamp->getDiscountPrice() ?: '') ?>"
+                                                           data-price="<?= $lamp->getCatalogPrice() ?>"
+                                                           data-offerid="<?= $lamp->getId() ?>"
+                                                           data-image="<?= $lamp->getResizeImages(240,240)->first(); ?>"
+                                                           data-link="<?= $lamp->getLink() ?>"><?= $lampValue ?></a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <a class="b-common-item__add-to-cart js-complect-replace"
+                                               href="javascript:void(0);"
+                                               title=""
+                                               data-offerid="<?= $lamp->getId(); ?>">
+                                                <span class="b-common-item__wrapper-link">
+                                                    <span class="b-cart">
+                                                        <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
+                                                    </span>
+                                                    <span class="b-common-item__price js-price-block"><?= $lamp->getPrice(); ?></span>
+                                                    <span class="b-common-item__currency">
+                                                        <span class="b-ruble">₽</span>
+                                                    </span>
+                                                </span>
+                                            </a>
+                                            <div class="b-common-item__additional-information">
+                                                <div class="b-common-item__benefin js-sale-block">
+                                                    <span class="b-common-item__prev-price js-sale-origin">
+                                                        <span class="b-ruble b-ruble--prev-price"></span>
+                                                    </span>
+                                                    <span class="b-common-item__discount">
+                                                        <span class="b-common-item__disc"></span>
+                                                        <span class="b-common-item__discount-price js-sale-sale"></span>
+                                                        <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount"></span>
+                                                        </span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                     <div class="b-product-card-complect__result">
                         <div class="b-product-card-complect__summ">
-                            <span class="b-product-card-complect__price js-total-price-product-complect">10 891</span><span class="b-ruble b-ruble--product-information">&nbsp;₽</span>
+                            <span class="b-product-card-complect__price js-total-price-product-complect">
+                                <?= $totalPrice; ?>
+                            </span>
+                            <span class="b-ruble b-ruble--product-information">&nbsp;₽</span>
                         </div>
                         <div class="b-product-card-complect__basket">
                             <a href="javascript:void(0)" class="b-product-card-complect__basket-link js-basket-add-complect js-this-product-complect">
@@ -603,424 +597,225 @@ if (null === $offer) {
             <div class="b-product-card-complect hidden js-product-complect-other">
                 <div class="b-product-card-complect__otherproducts">
                     <div class="b-product-card-complect__title" data-product-complect-otherproducts-title="true"></div>
-
                     <div class="b-common-section__content b-common-section__content--sale js-slider-product-complect-other">
-                        <div class="b-common-item red" data-product-complect-groupid="2">
-                            <div class="js-product-item" data-productid="42375">
-                                <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;"><img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/></span>
-                                <span class="b-common-item__image-wrap">
-                                    <a class="b-common-item__image-link js-item-link" href="/catalog/sobaki/korm-sobaki/sukhoy-korm-sobaki/Royal_Canin_Maxi_Adult_26_suhoy_korm_dlya_sobak_krupnyh_porod.html?offer=42376">
-                                        <img
-                                            src="/resize/240x240/upload/iblock/935/9359bb97482838f9f4ddc55bc1c7974c.jpg"
-                                            class="b-common-item__image js-weight-img"
-                                            alt="Maxi Adult 26 корм для собак от 15 месяцев до 5 лет,15 кг"
-                                            title="">
+                        <? foreach ($externalFilters as $curOffer) { ?>
+                            <?
+                            $curOfferImage = $curOffer->getResizeImages(240, 240)->first();
+                            $value = $curOffer->getPackageLabel(true, 999);
+                            ?>
+                            <div class="b-common-item red" data-product-complect-groupid="1">
+                                <div class="js-product-item" data-productid="<?= $curOffer->getProduct()->getId(); ?>">
+                                    <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">
+                                        <img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>
+                                    </span>
+                                    <span class="b-common-item__image-wrap">
+                                    <a class="b-common-item__image-link js-item-link" href="<?= $curOffer->getDetailPageUrl(); ?>">
+                                        <img src="<?= $curOfferImage; ?>" alt="<?= $curOffer->getName(); ?>" class="b-common-item__image js-weight-img" title="">
                                     </a>
                                 </span>
-                                <div class="b-common-item__info-center-block">
-                                    <a class="b-common-item__description-wrap js-item-link"
-                                       href="/catalog/sobaki/korm-sobaki/sukhoy-korm-sobaki/Royal_Canin_Maxi_Adult_26_suhoy_korm_dlya_sobak_krupnyh_porod.html?offer=42376">
-                                        <span class="b-clipped-text b-clipped-text--three">
-                                            <span>
-                                                <span class="span-strong">Royal Canin</span> Maxi Adult 26 корм для собак от 15 месяцев до 5 лет
+                                    <div class="b-common-item__info-center-block">
+                                        <a class="b-common-item__description-wrap js-item-link" href="<?= $curOffer->getDetailPageUrl(); ?>">
+                                            <span class="b-clipped-text b-clipped-text--three">
+                                                <span>
+                                                    <span class="span-strong"><?= $curOffer->getProduct()->getBrandName(); ?></span> <?= $curOffer->getName(); ?>
+                                                </span>
                                             </span>
-                                        </span>
-                                    </a>
-                                    <div class="b-common-item__info">
-                                        <div class="b-common-item__property">
-                                            <span class="b-common-item__property-value">250 л/ч</span>
+                                        </a>
+                                        <?/*
+                                        <div class="b-common-item__info">
+                                            <div class="b-common-item__property">
+                                                <span class="b-common-item__property-value">250 л/ч</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="b-weight-container b-weight-container--list">
-                                        <a class="b-weight-container__link  b-weight-container__link--mobile js-mobile-select js-select-mobile-package"
-                                           href="javascript:void(0);">15 кг</a>
-                                        <div class="b-weight-container__dropdown-list__wrapper">
-                                            <div class="b-weight-container__dropdown-list"></div>
+                                        */?>
+                                        <div class="b-weight-container b-weight-container--list">
+                                            <a class="b-weight-container__link  js-mobile-select js-select-mobile-package" href="javascript:void(0);" title="">398 г</a>
+                                            <div class="b-weight-container__dropdown-list__wrapper">
+                                                <div class="b-weight-container__dropdown-list"></div>
+                                            </div>
+                                            <ul class="b-weight-container__list">
+                                                <li class="b-weight-container__item">
+                                                    <a href="javascript:void(0)"
+                                                       class="b-weight-container__link js-price active-link"
+                                                       data-oldprice="<?= $curOffer->getCatalogOldPrice() !== $curOffer->getCatalogPrice() ? $curOffer->getCatalogOldPrice() : '' ?>"
+                                                       data-discount="<?= ($curOffer->getDiscountPrice() ?: '') ?>"
+                                                       data-price="<?= $curOffer->getCatalogPrice() ?>"
+                                                       data-offerid="<?= $curOffer->getId() ?>"
+                                                       data-image="<?= $curOfferImage ?>"
+                                                       data-link="<?= $curOffer->getLink() ?>"><?= $value ?></a>
+                                                </li>
+                                            </ul>
                                         </div>
-                                        <ul class="b-weight-container__list">
-                                            <li class="b-weight-container__item">
-                                                <a data-price="1432" data-offerid="42379" data-image="/resize/240x240/upload/iblock/609/6098174ac3dd7e4b001c07c7423d29f9.jpg" data-pickup="Только под заказ" data-name="Maxi Adult 26 корм для собак от 15 месяцев до 5 лет,4 кг" data-link="/catalog/sobaki/korm-sobaki/sukhoy-korm-sobaki/Royal_Canin_Maxi_Adult_26_suhoy_korm_dlya_sobak_krupnyh_porod.html?offer=42379" data-oldprice="1685" data-discount="253" data-available="" href="javascript:void(0)" class="b-weight-container__link js-price">
-                                                    4 кг
-                                                </a>
-                                            </li>
-                                            <li class="b-weight-container__item">
-                                                <a data-price="4441" data-offerid="42376" data-image="/resize/240x240/upload/iblock/935/9359bb97482838f9f4ddc55bc1c7974c.jpg" data-pickup="" data-name="Maxi Adult 26 корм для собак от 15 месяцев до 5 лет,15 кг" data-link="/catalog/sobaki/korm-sobaki/sukhoy-korm-sobaki/Royal_Canin_Maxi_Adult_26_suhoy_korm_dlya_sobak_krupnyh_porod.html?offer=42376" data-oldprice="5225" data-discount="784" data-available="" href="javascript:void(0)" class="b-weight-container__link js-price active-link">
-                                                    15 кг
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                    <a class="b-common-item__add-to-cart js-complect-replace"
-                                       href="javascript:void(0);"
-                                       data-offerid="42376">
-                                        <span class="b-common-item__wrapper-link">
-                                            <span class="b-cart">
-                                                <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
+                                        <a class="b-common-item__add-to-cart js-complect-replace" href="javascript:void(0);" data-offerid="<?= $curOffer->getId(); ?>">
+                                            <span class="b-common-item__wrapper-link">
+                                                <span class="b-cart">
+                                                    <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
+                                                </span>
+                                                <span class="b-common-item__price js-price-block"><?= $curOffer->getPrice(); ?></span>
+                                                <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
                                             </span>
-                                            <span class="b-common-item__price js-price-block">4441</span>
-                                            <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
-                                        </span>
-                                    </a>
-                                    <div class="b-common-item__additional-information">
-                                        <div class="b-common-item__benefin js-sale-block">
-                                            <span class="b-common-item__prev-price js-sale-origin">
-                                                5225 <span class="b-ruble b-ruble--prev-price">₽</span>
+                                        </a>
+                                        <?/*
+                                        <div class="b-common-item__additional-information">
+                                            <div class="b-common-item__benefin js-sale-block">
+                                            <span class="b-common-item__prev-price js-sale-origin">5225 <span class="b-ruble b-ruble--prev-price">₽</span>
                                             </span>
-                                            <span class="b-common-item__discount">
+                                                <span class="b-common-item__discount">
                                                 <span class="b-common-item__disc">Скидка</span>
                                                 <span class="b-common-item__discount-price js-sale-sale">784</span>
                                                 <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount">₽</span></span>
                                             </span>
+                                            </div>
                                         </div>
+                                        */?>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="b-common-item" data-product-complect-groupid="1">
-                            <div class="js-product-item" data-productid="42461">
-                                <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">
-                                    <img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>
-                                </span>
-                                <span class="b-common-item__image-wrap">
-                                    <a class="b-common-item__image-link js-item-link" href="/catalog/sobaki/korm-sobaki/sukhoy-korm-sobaki/Hills_Standard_suhoy_korm_dlya_sobak_yagnenokris.html?offer=45780">
-                                        <img
-                                            src="/resize/240x240/upload/iblock/d9e/d9e5d9ff573d426363c2604e3f192f6b.jpg"
-                                            class="b-common-item__image js-weight-img"
-                                            alt="Science Plan Adult Advanced Fitness корм для взрослых собак, с ягненком и рисом, 12 кг"
-                                            title="">
+                        <? } ?>
+                        <? foreach ($internalFilters as $curOffer) { ?>
+                            <?
+                            $curOfferImage = $curOffer->getResizeImages(240, 240)->first();
+                            $value = $curOffer->getPackageLabel(true, 999);
+                            ?>
+                            <div class="b-common-item red" data-product-complect-groupid="2">
+                                <div class="js-product-item" data-productid="<?= $curOffer->getProduct()->getId(); ?>">
+                                    <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">
+                                        <img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>
+                                    </span>
+                                    <span class="b-common-item__image-wrap">
+                                    <a class="b-common-item__image-link js-item-link" href="<?= $curOffer->getDetailPageUrl(); ?>">
+                                        <img src="<?= $curOfferImage; ?>" alt="<?= $curOffer->getName(); ?>" class="b-common-item__image js-weight-img" title="">
                                     </a>
                                 </span>
-                                <div class="b-common-item__info-center-block">
-                                    <a class="b-common-item__description-wrap js-item-link"
-                                   href="/catalog/sobaki/korm-sobaki/sukhoy-korm-sobaki/Hills_Standard_suhoy_korm_dlya_sobak_yagnenokris.html?offer=45780">
-                                        <span class="b-clipped-text b-clipped-text--three">
-                                            <span>
-                                                <span class="span-strong">Hill's</span> Science Plan Adult Advanced Fitness корм для взрослых собак, с ягненком и рисом
+                                    <div class="b-common-item__info-center-block">
+                                        <a class="b-common-item__description-wrap js-item-link" href="<?= $curOffer->getDetailPageUrl(); ?>">
+                                            <span class="b-clipped-text b-clipped-text--three">
+                                                <span>
+                                                    <span class="span-strong"><?= $curOffer->getProduct()->getBrandName(); ?></span> <?= $curOffer->getName(); ?>
+                                                </span>
                                             </span>
-                                        </span>
-                                    </a>
-                                    <div class="b-common-item__info">
-                                        <div class="b-common-item__property">
-                                            <span class="b-common-item__property-value">250 л/ч</span>
+                                        </a>
+                                        <?/*
+                                        <div class="b-common-item__info">
+                                            <div class="b-common-item__property">
+                                                <span class="b-common-item__property-value">250 л/ч</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="b-weight-container b-weight-container--list">
-                                        <a class="b-weight-container__link  b-weight-container__link--mobile js-mobile-select js-select-mobile-package"
-                                           href="javascript:void(0);">12 кг</a>
-                                        <div class="b-weight-container__dropdown-list__wrapper">
-                                            <div class="b-weight-container__dropdown-list"></div>
+                                        */?>
+                                        <div class="b-weight-container b-weight-container--list">
+                                            <a class="b-weight-container__link  js-mobile-select js-select-mobile-package" href="javascript:void(0);" title="">398 г</a>
+                                            <div class="b-weight-container__dropdown-list__wrapper">
+                                                <div class="b-weight-container__dropdown-list"></div>
+                                            </div>
+                                            <ul class="b-weight-container__list">
+                                                <li class="b-weight-container__item">
+                                                    <a href="javascript:void(0)"
+                                                       class="b-weight-container__link js-price active-link"
+                                                       data-oldprice="<?= $curOffer->getCatalogOldPrice() !== $curOffer->getCatalogPrice() ? $curOffer->getCatalogOldPrice() : '' ?>"
+                                                       data-discount="<?= ($curOffer->getDiscountPrice() ?: '') ?>"
+                                                       data-price="<?= $curOffer->getCatalogPrice() ?>"
+                                                       data-offerid="<?= $curOffer->getId() ?>"
+                                                       data-image="<?= $curOfferImage ?>"
+                                                       data-link="<?= $curOffer->getLink() ?>"><?= $value ?></a>
+                                                </li>
+                                            </ul>
                                         </div>
-                                        <ul class="b-weight-container__list">
-                                            <li class="b-weight-container__item">
-                                                <a data-price="1755" data-offerid="42462" data-image="/resize/240x240/upload/iblock/4d1/4d12d1598153fe79038bf6b0b77c2ad8.jpg" data-pickup="Только под заказ" data-name="Science Plan Adult Advanced Fitness корм для взрослых собак, с ягненком и рисом, 3 кг" data-link="/catalog/sobaki/korm-sobaki/sukhoy-korm-sobaki/Hills_Standard_suhoy_korm_dlya_sobak_yagnenokris.html?offer=42462" data-oldprice="" data-discount="" data-available="" href="javascript:void(0)" class="b-weight-container__link js-price">
-                                                    3 кг
-                                                </a>
-                                            </li>
-                                            <li class="b-weight-container__item">
-                                                <a data-price="4195" data-offerid="42463" data-image="/resize/240x240/upload/iblock/d9e/d9e5d9ff573d426363c2604e3f192f6b.jpg" data-pickup="Только под заказ" data-name="Science Plan Adult Advanced Fitness корм для взрослых собак, с ягненком и рисом, 7,5 кг" data-link="/catalog/sobaki/korm-sobaki/sukhoy-korm-sobaki/Hills_Standard_suhoy_korm_dlya_sobak_yagnenokris.html?offer=42463" data-oldprice="" data-discount="" data-available="" href="javascript:void(0)" class="b-weight-container__link js-price">
-                                                    7 кг 500 г
-                                                </a>
-                                            </li>
-                                            <li class="b-weight-container__item">
-                                                <a data-price="5835" data-offerid="45780" data-image="/resize/240x240/upload/iblock/d9e/d9e5d9ff573d426363c2604e3f192f6b.jpg" data-pickup="Только под заказ" data-name="Science Plan Adult Advanced Fitness корм для взрослых собак, с ягненком и рисом, 12 кг" data-link="/catalog/sobaki/korm-sobaki/sukhoy-korm-sobaki/Hills_Standard_suhoy_korm_dlya_sobak_yagnenokris.html?offer=45780" data-oldprice="" data-discount="" data-available="" href="javascript:void(0)" class="b-weight-container__link js-price active-link">
-                                                    12 кг
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                    <a class="b-common-item__add-to-cart js-complect-replace"
-                                        href="javascript:void(0);"
-                                        data-offerid="45780">
-                                        <span class="b-common-item__wrapper-link">
-                                            <span class="b-cart">
-                                                <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
+                                        <a class="b-common-item__add-to-cart js-complect-replace" href="javascript:void(0);" data-offerid="<?= $curOffer->getId(); ?>">
+                                            <span class="b-common-item__wrapper-link">
+                                                <span class="b-cart">
+                                                    <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
+                                                </span>
+                                                <span class="b-common-item__price js-price-block"><?= $curOffer->getPrice(); ?></span>
+                                                <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
                                             </span>
-                                            <span class="b-common-item__price js-price-block">5835</span>
-                                            <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
-                                        </span>
-                                    </a>
-                                    <div class="b-common-item__additional-information">
-                                        <div class="b-common-item__info-wrap">
-                                            <span class="b-common-item__text">
-                                                Только под заказ
+                                        </a>
+                                        <?/*
+                                        <div class="b-common-item__additional-information">
+                                            <div class="b-common-item__benefin js-sale-block">
+                                            <span class="b-common-item__prev-price js-sale-origin">5225 <span class="b-ruble b-ruble--prev-price">₽</span>
                                             </span>
+                                                <span class="b-common-item__discount">
+                                                <span class="b-common-item__disc">Скидка</span>
+                                                <span class="b-common-item__discount-price js-sale-sale">784</span>
+                                                <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount">₽</span></span>
+                                            </span>
+                                            </div>
                                         </div>
+                                        */?>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="b-common-item blue" data-product-complect-groupid="2">
-                            <div class="js-product-item" data-productid="42921">
-                                <span class="b-common-item__image-wrap">
-                                    <a class="b-common-item__image-link js-item-link" href="/catalog/koshki/korm-koshki/sukhoy/Pro_Plan_After_Care_suhoy_korm_dlya_kastrirovannyhsterilizovannyh_koshek_indeykakuritsa.html?offer=43476">
-                                        <img
-                                            src="/resize/240x240/upload/iblock/0c0/0c0b4fdf5e9b5f4dab75b45ae8150aa4.jpg"
-                                            class="b-common-item__image js-weight-img"
-                                            alt="Sterilised корм для стерилизованных кошек, с индейкой, 10 кг"
-                                            title="">
+                        <? } ?>
+                        <? foreach ($lamps as $curOffer) { ?>
+                            <?
+                            $curOfferImage = $curOffer->getResizeImages(240, 240)->first();
+                            $value = $curOffer->getPackageLabel(true, 999);
+                            ?>
+                            <div class="b-common-item red" data-product-complect-groupid="3">
+                                <div class="js-product-item" data-productid="<?= $curOffer->getProduct()->getId(); ?>">
+                                    <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">
+                                        <img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>
+                                    </span>
+                                    <span class="b-common-item__image-wrap">
+                                    <a class="b-common-item__image-link js-item-link" href="<?= $curOffer->getDetailPageUrl(); ?>">
+                                        <img src="<?= $curOfferImage; ?>" alt="<?= $curOffer->getName(); ?>" class="b-common-item__image js-weight-img" title="">
                                     </a>
                                 </span>
-                                <div class="b-common-item__info-center-block">
-                                    <a class="b-common-item__description-wrap js-item-link"
-                                       href="/catalog/koshki/korm-koshki/sukhoy/Pro_Plan_After_Care_suhoy_korm_dlya_kastrirovannyhsterilizovannyh_koshek_indeykakuritsa.html?offer=43476">
-                                        <span class="b-clipped-text b-clipped-text--three">
-                                            <span>
-                                                <span class="span-strong">Pro Plan</span> Sterilised корм для стерилизованных кошек, с индейкой
+                                    <div class="b-common-item__info-center-block">
+                                        <a class="b-common-item__description-wrap js-item-link" href="<?= $curOffer->getDetailPageUrl(); ?>">
+                                            <span class="b-clipped-text b-clipped-text--three">
+                                                <span>
+                                                    <span class="span-strong"><?= $curOffer->getProduct()->getBrandName(); ?></span> <?= $curOffer->getName(); ?>
+                                                </span>
                                             </span>
-                                        </span>
-                                    </a>
-                                    <div class="b-common-item__info">
-                                        <div class="b-common-item__property">
-                                            <span class="b-common-item__property-value">250 л/ч</span>
+                                        </a>
+                                        <?/*
+                                        <div class="b-common-item__info">
+                                            <div class="b-common-item__property">
+                                                <span class="b-common-item__property-value">250 л/ч</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="b-weight-container b-weight-container--list">
-                                        <a class="b-weight-container__link  b-weight-container__link--mobile js-mobile-select js-select-mobile-package"
-                                           href="javascript:void(0);">10 кг</a>
-                                        <div class="b-weight-container__dropdown-list__wrapper">
-                                            <div class="b-weight-container__dropdown-list"></div>
+                                        */?>
+                                        <div class="b-weight-container b-weight-container--list">
+                                            <ul class="b-weight-container__list">
+                                                <li class="b-weight-container__item">
+                                                    <a href="javascript:void(0)"
+                                                       class="b-weight-container__link js-price active-link"
+                                                       data-oldprice="<?= $curOffer->getCatalogOldPrice() !== $curOffer->getCatalogPrice() ? $curOffer->getCatalogOldPrice() : '' ?>"
+                                                       data-discount="<?= ($curOffer->getDiscountPrice() ?: '') ?>"
+                                                       data-price="<?= $curOffer->getCatalogPrice() ?>"
+                                                       data-offerid="<?= $curOffer->getId() ?>"
+                                                       data-image="<?= $curOfferImage ?>"
+                                                       data-link="<?= $curOffer->getLink() ?>"></a>
+                                                </li>
+                                            </ul>
                                         </div>
-                                        <ul class="b-weight-container__list">
-                                            <li class="b-weight-container__item">
-                                                <a data-price="339" data-offerid="45693" data-image="/resize/240x240/upload/iblock/d81/d8159f52d88270330a87f13e453ca411.jpg" data-pickup="Только под заказ" data-name="Sterilised корм для стерилизованных кошек, с индейкой, 400 г" data-link="/catalog/koshki/korm-koshki/sukhoy/Pro_Plan_After_Care_suhoy_korm_dlya_kastrirovannyhsterilizovannyh_koshek_indeykakuritsa.html?offer=45693" data-oldprice="" data-discount="" data-available="" href="javascript:void(0)" class="b-weight-container__link js-price">
-                                                    400 г
-                                                </a>
-                                            </li>
-                                            <li class="b-weight-container__item">
-                                                <a data-price="1159" data-offerid="42922" data-image="/resize/240x240/upload/iblock/55d/55dcafcfc81deed8663d24f7b4ec3bb5.jpg" data-pickup="Только под заказ" data-name="Sterilised корм для стерилизованных кошек, с индейкой, 1,5 кг" data-link="/catalog/koshki/korm-koshki/sukhoy/Pro_Plan_After_Care_suhoy_korm_dlya_kastrirovannyhsterilizovannyh_koshek_indeykakuritsa.html?offer=42922" data-oldprice="" data-discount="" data-available="" href="javascript:void(0)" class="b-weight-container__link js-price">
-                                                    1 кг 500 г
-                                                </a>
-                                            </li>
-                                            <li class="b-weight-container__item">
-                                                <a data-price="1099" data-offerid="31113" data-image="/resize/240x240/upload/iblock/fd4/fd4647e4af2572cbbc517fbd209db822.jpg" data-pickup="" data-name="Sterilised корм для стерилизованных кошек, с индейкой, 1,9 кг" data-link="/catalog/koshki/korm-koshki/sukhoy/Pro_Plan_After_Care_suhoy_korm_dlya_kastrirovannyhsterilizovannyh_koshek_indeykakuritsa.html?offer=31113"  data-oldprice="" data-discount="" data-available="Нет в наличии" href="javascript:void(0)" class="b-weight-container__link js-price">
-                                                    1 кг 900 г
-                                                </a>
-                                            </li>
-                                            <li class="b-weight-container__item">
-                                                <a data-price="1849" data-offerid="45702" data-image="/resize/240x240/upload/iblock/c8f/c8f3fae515d0bd6f4638fbcc82220f36.jpg" data-pickup="Только под заказ" data-name="Sterilised корм для стерилизованных кошек, с индейкой, 3 кг" data-link="/catalog/koshki/korm-koshki/sukhoy/Pro_Plan_After_Care_suhoy_korm_dlya_kastrirovannyhsterilizovannyh_koshek_indeykakuritsa.html?offer=45702" data-oldprice="2175" data-discount="326" data-available="" href="javascript:void(0)" class="b-weight-container__link js-price">
-                                                    3 кг
-                                                </a>
-                                            </li>
-                                            <li class="b-weight-container__item">
-                                                <a data-price="5875" data-offerid="43476" data-image="/resize/240x240/upload/iblock/0c0/0c0b4fdf5e9b5f4dab75b45ae8150aa4.jpg" data-pickup="" data-name="Sterilised корм для стерилизованных кошек, с индейкой, 10 кг" data-link="/catalog/koshki/korm-koshki/sukhoy/Pro_Plan_After_Care_suhoy_korm_dlya_kastrirovannyhsterilizovannyh_koshek_indeykakuritsa.html?offer=43476" data-oldprice="" data-discount="" data-available="" href="javascript:void(0)" class="b-weight-container__link js-price active-link">
-                                                    10 кг
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                    <a class="b-common-item__add-to-cart js-complect-replace"
-                                       href="javascript:void(0);"
-                                       data-offerid="43476">
-                                        <span class="b-common-item__wrapper-link">
-                                            <span class="b-cart">
-                                                <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
+                                        <a class="b-common-item__add-to-cart js-complect-replace" href="javascript:void(0);" data-offerid="<?= $curOffer->getId(); ?>">
+                                            <span class="b-common-item__wrapper-link">
+                                                <span class="b-cart">
+                                                    <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
+                                                </span>
+                                                <span class="b-common-item__price js-price-block"><?= $curOffer->getPrice(); ?></span>
+                                                <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
                                             </span>
-                                            <span class="b-common-item__price js-price-block">5875</span>
-                                            <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
-                                        </span>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="b-common-item blue" data-product-complect-groupid="3">
-                            <div class="js-product-item" data-productid="43407">
-                                <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;"><img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/></span> <span class="b-common-item__image-wrap">
-                                    <a class="b-common-item__image-link js-item-link" href="/catalog/sobaki/korm-sobaki/sukhoy-korm-sobaki/Eukanuba_Adultarge_suhoy_korm_dlya_sobak_krupnyh_porod_yagnenok_i_ris.html?offer=43408">
-                                        <img
-                                            src="/resize/240x240/upload/iblock/f3a/f3afe36d5656c2a8a261a3657a6b696e.jpg"
-                                            class="b-common-item__image js-weight-img"
-                                            alt="Adult Large Корм сухой для собак крупных пород, ягненок и рис"
-                                            title="">
-                                    </a>
-                                </span>
-                                <div class="b-common-item__info-center-block">
-                                    <a class="b-common-item__description-wrap js-item-link"
-                                   href="/catalog/sobaki/korm-sobaki/sukhoy-korm-sobaki/Eukanuba_Adultarge_suhoy_korm_dlya_sobak_krupnyh_porod_yagnenok_i_ris.html?offer=43408">
-                                        <span class="b-clipped-text b-clipped-text--three">
-                                            <span>
-                                                <span class="span-strong">Eukanuba</span> Adult Large Корм сухой для собак крупных пород, ягненок и рис
+                                        </a>
+                                        <?/*
+                                        <div class="b-common-item__additional-information">
+                                            <div class="b-common-item__benefin js-sale-block">
+                                            <span class="b-common-item__prev-price js-sale-origin">5225 <span class="b-ruble b-ruble--prev-price">₽</span>
                                             </span>
-                                        </span>
-                                    </a>
-                                    <div class="b-common-item__info">
-                                        <div class="b-common-item__property">
-                                            <span class="b-common-item__property-value">250 л/ч</span>
-                                        </div>
-                                    </div>
-                                    <div class="b-weight-container b-weight-container--list">
-                                        <a class="b-weight-container__link  b-weight-container__link--mobile js-mobile-select js-select-mobile-package"
-                                           href="javascript:void(0);">12 кг</a>
-                                        <div class="b-weight-container__dropdown-list__wrapper">
-                                            <div class="b-weight-container__dropdown-list"></div>
-                                        </div>
-                                        <ul class="b-weight-container__list">
-                                            <li class="b-weight-container__item">
-                                                <a data-price="1489" data-offerid="31701" data-image="/resize/240x240/upload/iblock/751/75146db0cd4ec5be678c4417289645bf.jpg" data-pickup="Только под заказ" data-name="Adult Large Корм сухой для собак крупных пород, ягненок и рис" data-link="/catalog/sobaki/korm-sobaki/sukhoy-korm-sobaki/Eukanuba_Adultarge_suhoy_korm_dlya_sobak_krupnyh_porod_yagnenok_i_ris.html?offer=31701" data-oldprice="" data-discount="" data-available="" href="javascript:void(0)" class="b-weight-container__link js-price">
-                                                    2 кг 500 г
-                                                </a>
-                                            </li>
-                                            <li class="b-weight-container__item">
-                                                <a data-price="5865" data-offerid="43408" data-image="/resize/240x240/upload/iblock/f3a/f3afe36d5656c2a8a261a3657a6b696e.jpg" data-pickup="Только под заказ" data-name="Adult Large Корм сухой для собак крупных пород, ягненок и рис" data-link="/catalog/sobaki/korm-sobaki/sukhoy-korm-sobaki/Eukanuba_Adultarge_suhoy_korm_dlya_sobak_krupnyh_porod_yagnenok_i_ris.html?offer=43408" data-oldprice="" data-discount="" data-available="" href="javascript:void(0)" class="b-weight-container__link js-price active-link">
-                                                    12 кг
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                    <a class="b-common-item__add-to-cart js-complect-replace"
-                                       href="javascript:void(0);"
-                                       data-offerid="43408">
-                                        <span class="b-common-item__wrapper-link">
-                                            <span class="b-cart">
-                                                <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
+                                                <span class="b-common-item__discount">
+                                                <span class="b-common-item__disc">Скидка</span>
+                                                <span class="b-common-item__discount-price js-sale-sale">784</span>
+                                                <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount">₽</span></span>
                                             </span>
-                                            <span class="b-common-item__price js-price-block">5865</span>
-                                            <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
-                                        </span>
-                                    </a>
-                                    <div class="b-common-item__additional-information">
-                                        <div class="b-common-item__info-wrap">
-                                            <span class="b-common-item__text">
-                                                Только под заказ
-                                            </span>
+                                            </div>
                                         </div>
+                                        */?>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="b-common-item yellow" data-product-complect-groupid="1">
-                            <div class="js-product-item" data-productid="43589">
-                                <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;"><img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/></span> <span class="b-common-item__image-wrap">
-                                    <a class="b-common-item__image-link js-item-link" href="/catalog/sobaki/korm-sobaki/sukhoy-korm-sobaki/Avva_Premium_suhoy_korm_dlya_shchenkov_krupnyh_porod_kuritsa.html?offer=45807">
-                                        <img
-                                            src="/resize/240x240/upload/iblock/11b/11bf72b0378cf0d00783e344e02f7c74.jpg"
-                                            class="b-common-item__image js-weight-img"
-                                            alt="Premium Корм сухой для щенков крупных пород, курица"
-                                            title="">
-                                    </a>
-                                </span>
-                                <div class="b-common-item__info-center-block">
-                                    <a class="b-common-item__description-wrap js-item-link"
-                                       href="/catalog/sobaki/korm-sobaki/sukhoy-korm-sobaki/Avva_Premium_suhoy_korm_dlya_shchenkov_krupnyh_porod_kuritsa.html?offer=45807">
-                                        <span class="b-clipped-text b-clipped-text--three">
-                                            <span>
-                                                <span class="span-strong">Авва</span> Premium Корм сухой для щенков крупных пород, курица
-                                            </span>
-                                        </span>
-                                    </a>
-                                    <div class="b-common-item__info">
-                                        <div class="b-common-item__property">
-                                            <span class="b-common-item__property-value">250 л/ч</span>
-                                        </div>
-                                    </div>
-                                    <div class="b-weight-container b-weight-container--list">
-                                        <a class="b-weight-container__link  b-weight-container__link--mobile js-mobile-select js-select-mobile-package"
-                                           href="javascript:void(0);">12 кг</a>
-                                        <div class="b-weight-container__dropdown-list__wrapper">
-                                            <div class="b-weight-container__dropdown-list"></div>
-                                        </div>
-                                        <ul class="b-weight-container__list">
-                                            <li class="b-weight-container__item">
-                                                <a data-price="859" data-offerid="43590" data-image="/resize/240x240/upload/iblock/985/98588d42a790fe84bbb53bf595737236.jpg" data-pickup="Только под заказ" data-name="Premium Корм сухой для щенков крупных пород, курица" data-link="/catalog/sobaki/korm-sobaki/sukhoy-korm-sobaki/Avva_Premium_suhoy_korm_dlya_shchenkov_krupnyh_porod_kuritsa.html?offer=43590" data-oldprice="" data-discount="" data-available="" href="javascript:void(0)" class="b-weight-container__link js-price">
-                                                    3 кг
-                                                </a>
-                                            </li>
-                                            <li class="b-weight-container__item">
-                                                <a data-price="2979" data-offerid="45807" data-image="/resize/240x240/upload/iblock/11b/11bf72b0378cf0d00783e344e02f7c74.jpg" data-pickup="Только под заказ" data-name="Premium Корм сухой для щенков крупных пород, курица" data-link="/catalog/sobaki/korm-sobaki/sukhoy-korm-sobaki/Avva_Premium_suhoy_korm_dlya_shchenkov_krupnyh_porod_kuritsa.html?offer=45807" data-oldprice="" data-discount="" data-available="" href="javascript:void(0)" class="b-weight-container__link js-price active-link">
-                                                    12 кг
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                    <a class="b-common-item__add-to-cart js-complect-replace"
-                                       href="javascript:void(0);"
-                                       data-offerid="45807">
-                                        <span class="b-common-item__wrapper-link">
-                                            <span class="b-cart">
-                                                <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
-                                            </span>
-                                            <span class="b-common-item__price js-price-block">2979</span>
-                                            <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
-                                        </span>
-                                    </a>
-                                    <div class="b-common-item__additional-information">
-                                        <div class="b-common-item__info-wrap">
-                                            <span class="b-common-item__text">
-                                                Только под заказ
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="b-common-item yellow" data-product-complect-groupid="3">
-                            <div class="js-product-item" data-productid="43596">
-                                <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">
-                                    <img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>
-                                </span>
-                                <span class="b-common-item__image-wrap">
-                                    <a class="b-common-item__image-link js-item-link" href="/catalog/sobaki/korm-sobaki/sukhoy-korm-sobaki/Avva_Premium_suhoy_korm_dlya_sobak_vseh_porod_yagnenokris.html?offer=45768">
-                                        <img
-                                            src="/static/build/images/inhtml/no_image_list.jpg"
-                                            data-product-complect-slider="/resize/240x240/upload/iblock/153/153aca699f53330b851e70f2c01e5559.jpg"
-                                            class="b-common-item__image js-weight-img not_loaded_src"
-                                            alt="Premium Корм сухой для собак всех пород, ягненок/рис"
-                                            title="">
-                                    </a>
-                                </span>
-                                <div class="b-common-item__info-center-block">
-                                    <a class="b-common-item__description-wrap js-item-link"
-                                       href="/catalog/sobaki/korm-sobaki/sukhoy-korm-sobaki/Avva_Premium_suhoy_korm_dlya_sobak_vseh_porod_yagnenokris.html?offer=45768">
-                                        <span class="b-clipped-text b-clipped-text--three">
-                                            <span>
-                                                <span class="span-strong">Авва</span> Premium Корм сухой для собак всех пород, ягненок/рис
-                                            </span>
-                                        </span>
-                                    </a>
-                                    <div class="b-common-item__info">
-                                        <div class="b-common-item__property">
-                                            <span class="b-common-item__property-value">250 л/ч</span>
-                                        </div>
-                                    </div>
-                                    <div class="b-weight-container b-weight-container--list">
-                                        <a class="b-weight-container__link  b-weight-container__link--mobile js-mobile-select js-select-mobile-package"
-                                           href="javascript:void(0);">12 кг</a>
-                                        <div class="b-weight-container__dropdown-list__wrapper">
-                                            <div class="b-weight-container__dropdown-list"></div>
-                                        </div>
-                                        <ul class="b-weight-container__list">
-                                            <li class="b-weight-container__item">
-                                                <a data-price="859" data-offerid="43597" data-image="/resize/240x240/upload/iblock/27f/27f89c2cd4d7d805077d455875d72aa3.jpg" data-pickup="Только под заказ" data-name="Premium Корм сухой для собак всех пород, ягненок/рис" data-link="/catalog/sobaki/korm-sobaki/sukhoy-korm-sobaki/Avva_Premium_suhoy_korm_dlya_sobak_vseh_porod_yagnenokris.html?offer=43597" data-oldprice="" data-discount="" data-available="" href="javascript:void(0)" class="b-weight-container__link js-price">
-                                                    3 кг
-                                                </a>
-                                            </li>
-                                            <li class="b-weight-container__item">
-                                                <a data-price="2979" data-offerid="45768" data-image="/resize/240x240/upload/iblock/153/153aca699f53330b851e70f2c01e5559.jpg" data-pickup="Только под заказ" data-name="Premium Корм сухой для собак всех пород, ягненок/рис" data-link="/catalog/sobaki/korm-sobaki/sukhoy-korm-sobaki/Avva_Premium_suhoy_korm_dlya_sobak_vseh_porod_yagnenokris.html?offer=45768" data-oldprice="" data-discount="" data-available="" href="javascript:void(0)" class="b-weight-container__link js-price active-link">
-                                                    12 кг
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                    <a class="b-common-item__add-to-cart js-complect-replace"
-                                       href="javascript:void(0);"
-                                       data-offerid="45768">
-                                        <span class="b-common-item__wrapper-link">
-                                            <span class="b-cart">
-                                                <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart-complect', 12, 16) ?></span>
-                                            </span>
-                                            <span class="b-common-item__price js-price-block">2979</span>
-                                            <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
-                                        </span>
-                                    </a>
-                                    <div class="b-common-item__additional-information">
-                                        <div class="b-common-item__info-wrap">
-                                            <span class="b-common-item__text">
-                                                Только под заказ
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <? } ?>
                     </div>
                 </div>
             </div>
