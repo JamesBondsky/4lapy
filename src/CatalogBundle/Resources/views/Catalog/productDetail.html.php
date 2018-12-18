@@ -4,14 +4,6 @@
  * @var CatalogLandingService $landingService
  * @var Request $request
  * @var CMain $APPLICATION
- * @var OfferCollection $internalFilters
- * @var OfferCollection $externalFilters
- * @var OfferCollection $lamps
- * @var Offer $filter
- * @var Offer $pedestal
- * @var Offer $internalFilterFirst
- * @var Offer $curOffer
- * @var Offer $lamp
  */
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
@@ -160,7 +152,7 @@ if (null === $offer) {
             <?
             $APPLICATION->IncludeComponent(
                 'articul:catalog.element.detail.kit',
-                '',
+                '.default',
                 [
                     'CODE' => $productDetailRequest->getProductSlug(),
                     'OFFER_ID' => $offerId
