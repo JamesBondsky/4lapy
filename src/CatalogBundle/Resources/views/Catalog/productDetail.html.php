@@ -158,9 +158,9 @@ if (null === $offer) {
                 } ?>
             </div>
             <?
-            if ($product->getSection()->getCode() == 'banki-bez-kryshki-akvariumy') {
+            if ($product->getSection()->getCode() == 'banki-bez-kryshki-akvariumy' && $product->getAssociationAquariums() != '') {
                 $pedestal = $product->getPedestal($product->getAssociationAquariums());
-                if(!empty($pedestal)){
+                if (!empty($pedestal)) {
                     //перевод милилитров в литры
                     $volumeStr = strtolower($offer->getVolumeReference()->getName());
                     if (mb_strpos($volumeStr, 'мл') || mb_strpos($volumeStr, 'л')) {
@@ -588,9 +588,9 @@ if (null === $offer) {
                                     ?>
                                     <div class="b-common-item" data-product-complect-groupid="1">
                                         <div class="js-product-item" data-productid="<?= $curOffer->getProduct()->getId(); ?>">
-                                            <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">
-                                                <img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>
-                                            </span>
+<!--                                            <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">-->
+<!--                                                <img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>-->
+<!--                                            </span>-->
                                             <span class="b-common-item__image-wrap">
                                                 <a class="b-common-item__image-link js-item-link" href="<?= $curOffer->getDetailPageUrl(); ?>">
                                                     <img src="<?= $curOfferImage; ?>" alt="<?= $curOffer->getName(); ?>" class="b-common-item__image js-weight-img" title="">
@@ -655,9 +655,9 @@ if (null === $offer) {
                                     ?>
                                     <div class="b-common-item" data-product-complect-groupid="2">
                                         <div class="js-product-item" data-productid="<?= $curOffer->getProduct()->getId(); ?>">
-                                            <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">
-                                                <img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>
-                                            </span>
+<!--                                            <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">-->
+<!--                                                <img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>-->
+<!--                                            </span>-->
                                             <span class="b-common-item__image-wrap">
                                                 <a class="b-common-item__image-link js-item-link" href="<?= $curOffer->getDetailPageUrl(); ?>">
                                                     <img src="<?= $curOfferImage; ?>" alt="<?= $curOffer->getName(); ?>" class="b-common-item__image js-weight-img" title="">
@@ -722,9 +722,9 @@ if (null === $offer) {
                                     ?>
                                     <div class="b-common-item" data-product-complect-groupid="3">
                                         <div class="js-product-item" data-productid="<?= $curOffer->getProduct()->getId(); ?>">
-                                            <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">
-                                                <img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>
-                                            </span>
+<!--                                            <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">-->
+<!--                                                <img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>-->
+<!--                                            </span>-->
                                             <span class="b-common-item__image-wrap">
                                                 <a class="b-common-item__image-link js-item-link" href="<?= $curOffer->getDetailPageUrl(); ?>">
                                                     <img src="<?= $curOfferImage; ?>" alt="<?= $curOffer->getName(); ?>" class="b-common-item__image js-weight-img" title="">
