@@ -121,7 +121,8 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
             'ACTIVE' => 'Y',
             '<=DATE_ACTIVE_FROM' => $this->time,
             '>=DATE_ACTIVE_TO' => $this->time,
-            '!PROPERTY_PRODUCTS' => false
+            '!PROPERTY_PRODUCTS' => false,
+            '!PREVIEW_PICTURE' => false
         ];
 
         $arSelect = [
@@ -197,7 +198,8 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
         $arFilter = [
             'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
             'XML_ID' => $this->offers,
-            'ACTIVE' => 'Y'
+            'ACTIVE' => 'Y',
+            '!PROPERTY_IMG' => false
         ];
 
         $arSelect = [
@@ -296,7 +298,7 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
 
         $dbProduct = \CIBlockElement::GetList([], $arFilter, false, false, $arSelect);
         while ($arProduct = $dbProduct->Fetch()) {
-            $descr = \HTMLToTxt($arProduct['DETAIL_TEXT']);
+            $descr = html_entity_decode(\HTMLToTxt(preg_replace('/<table(.*)<\/table>/', '', str_replace("\r\n", "", $arProduct['DETAIL_TEXT']))));
             if ($descr != '' && $descr != null && $arProduct['ACTIVE'] == 'Y') {
                 foreach ($products[$arProduct['ID']] as $offer) {
                     $this->arResult['offers'][$offer]['brand'] = $arProduct['PROPERTY_BRAND_NAME'];
