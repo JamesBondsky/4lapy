@@ -2,6 +2,7 @@
     die();
 }
 
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\BitrixOrm\Model\Exceptions\CatalogProductNotFoundException;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\ProductQuery;
@@ -36,42 +37,39 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
      */
     public function executeComponent()
     {
-        if ($this->startResultCache($this->arParams['CACHE_TIME'], $this->arParams['PRODUCT'] && $this->arParams['OFFER'])) {
-            $hideBlock = false;
+        if ($this->startResultCache($this->arParams['CACHE_TIME'], [$this->arParams['PRODUCT'], $this->arParams['OFFER']])) {
+            $hideKitBlock = false;
             $product = $this->getProduct($this->arParams['CODE']);
             $catalogElementDetailClass = new CatalogElementDetailComponent();
             $offer = $catalogElementDetailClass->getCurrentOffer($product, $this->arParams['OFFER_ID']);
+
+            $selectionOffers = new ArrayCollection();
             $pedestal = null;
-            $externalFilters = null;
-            $internalFilters = null;
-            $lamps = null;
             if (($product->getSection()->getCode() == 'banki-bez-kryshki-akvariumy' || $product->getSection()->getCode() == 'detskie-akvariumy-akvariumy') && $product->getAquariumCombination() != '') {
                 $pedestal = $product->getPedestal($product->getAquariumCombination());
                 if (!empty($pedestal)) {
                     $volumeStr = strtolower($offer->getVolumeReference()->getName());
                     if (mb_strpos($volumeStr, 'л')) {
                         $volume = intval(str_replace(',', '.', preg_replace("/[^0-9]/", '', $volumeStr)));
-                        $internalFilters = $product->getInternalFilters($volume);
-                        $externalFilters = $product->getExternalFilters($volume);
-                        $lamps = $product->getLamps();
+                        $selectionOffers['external'] = $product->getExternalFilters($volume);
+                        $selectionOffers['internal'] = $product->getInternalFilters($volume);
+                        $selectionOffers['lamps'] = $product->getLamps();
                     } else {
-                        $hideBlock = true;
+                        $hideKitBlock = true;
                     }
                 } else {
-                    $hideBlock = true;
+                    $hideKitBlock = true;
                 }
             } else {
-                $hideBlock = true;
+                $hideKitBlock = true;
             }
 
             $this->arResult = [
-                'HIDE_BLOCK' => $hideBlock,
+                'HIDE_KIT_BLOCK' => $hideKitBlock,
                 'PRODUCT' => $product,
                 'OFFER' => $offer,
                 'PEDESTAL' => $pedestal,
-                'EXTERNAL_FILTERS' => $externalFilters,
-                'INTERNAL_FILTERS' => $internalFilters,
-                'LAMPS' => $lamps
+                'SELECTION_OFFERS' => $selectionOffers
             ];
 
 
@@ -81,9 +79,6 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
                 'OFFER',
                 'PEDESTAL',
                 'OFFERS',
-                'EXTERNAL_FILTERS',
-                'INTERNAL_FILTERS',
-                'LAMPS'
             ]);
 
             $this->includeComponentTemplate();
