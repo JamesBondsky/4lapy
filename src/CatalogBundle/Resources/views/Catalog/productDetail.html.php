@@ -604,7 +604,7 @@ if (null === $offer) {
                             $curOfferImage = $curOffer->getResizeImages(240, 240)->first();
                             $value = $curOffer->getPackageLabel(true, 999);
                             ?>
-                            <div class="b-common-item red" data-product-complect-groupid="1">
+                            <div class="b-common-item" data-product-complect-groupid="1">
                                 <div class="js-product-item" data-productid="<?= $curOffer->getProduct()->getId(); ?>">
                                     <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">
                                         <img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>
@@ -678,7 +678,7 @@ if (null === $offer) {
                             $curOfferImage = $curOffer->getResizeImages(240, 240)->first();
                             $value = $curOffer->getPackageLabel(true, 999);
                             ?>
-                            <div class="b-common-item red" data-product-complect-groupid="2">
+                            <div class="b-common-item" data-product-complect-groupid="2">
                                 <div class="js-product-item" data-productid="<?= $curOffer->getProduct()->getId(); ?>">
                                     <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">
                                         <img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>
@@ -752,7 +752,7 @@ if (null === $offer) {
                             $curOfferImage = $curOffer->getResizeImages(240, 240)->first();
                             $value = $curOffer->getPackageLabel(true, 999);
                             ?>
-                            <div class="b-common-item red" data-product-complect-groupid="3">
+                            <div class="b-common-item" data-product-complect-groupid="3">
                                 <div class="js-product-item" data-productid="<?= $curOffer->getProduct()->getId(); ?>">
                                     <span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">
                                         <img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>
