@@ -17,6 +17,7 @@ use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\Search\Helper\IndexHelper;
 use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\SearchService;
 use RuntimeException;
@@ -101,40 +102,8 @@ class CatalogController extends Controller
 
         //костыль для заказчика
         $searchString = mb_strtolower($searchRequest->getSearchString());
-        if (preg_match('/[А-Яа-яЁё]/u', $searchString)) {
-            $arSelect = [
-                'ID',
-                'IBLOCK_ID',
-                'NAME',
-                'PROPERTY_TRANSLITS'
-            ];
 
-            $arFilter = [
-                'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::BRANDS),
-                'ACTIVE' => 'Y',
-                '!PROPERTY_TRANSLITS' => false
-            ];
-
-            $brandFound = false;
-            $dbItems = \CIBlockElement::GetList([], $arFilter, false, false, $arSelect);
-            while ($arItem = $dbItems->Fetch()) {
-                if (!empty($arItem['PROPERTY_TRANSLITS_VALUE'])) {
-                    $arTranslits = explode(',', $arItem['PROPERTY_TRANSLITS_VALUE']);
-                    foreach ($arTranslits as $translit) {
-                        $translit = mb_strtolower(trim($translit));
-                        if (mb_strpos($searchString, $translit) !== false) {
-                            $searchString = str_replace($translit,
-                                mb_strtolower($arItem['NAME']), $searchString);
-                            $brandFound = true;
-                            break;
-                        }
-                    }
-                }
-                if ($brandFound) {
-                    break;
-                }
-            }
-        }
+        $searchString = IndexHelper::getAlias($searchString);
 
         if (!$this->validator->validate($searchRequest)
                              ->count()) {

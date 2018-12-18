@@ -6,6 +6,7 @@
 
 namespace FourPaws\Search\Helper;
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Elastica\Client;
 use Elastica\Document;
@@ -21,6 +22,8 @@ use FourPaws\Catalog\Model\Brand;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\BrandQuery;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\Search\Enum\DocumentType;
 use FourPaws\Search\Exception\Index\IndexExceptionInterface;
 use FourPaws\Search\Exception\Index\NotActiveException;
@@ -166,7 +169,6 @@ class IndexHelper implements LoggerAwareInterface
                                 'tokenizer' => 'standard',
                                 'filter'    => [
                                     'lowercase',
-//                                    'synonym',
                                     'russian_stop',
                                     'russian_stemmer',
                                     'autocomplete_filter',
@@ -177,7 +179,6 @@ class IndexHelper implements LoggerAwareInterface
                                 'tokenizer' => 'standard',
                                 'filter'    => [
                                     'lowercase',
-//                                    'synonym',
                                     'russian_stop',
                                     'russian_stemmer',
                                 ],
@@ -205,7 +206,6 @@ class IndexHelper implements LoggerAwareInterface
                                 'tokenizer' => 'standard',
                                 'filter'    => [
                                     'lowercase',
-                                    'synonym',
                                     'russian_stop',
                                     'russian_stemmer',
                                 ],
@@ -228,10 +228,6 @@ class IndexHelper implements LoggerAwareInterface
                             'transform-to-latin'  => [
                                 'type' => 'icu_transform',
                                 'id'   => 'Any-Latin; NFD; [:Nonspacing Mark:] Remove; NFC',
-                            ],
-                            'synonym'             => [
-                                'type'          => 'synonym',
-                                'synonyms_path' => 'resources/synonym.txt',
                             ],
                             'phonetic_cyrillic' => [
                                 'type' => 'phonetic',
@@ -278,33 +274,9 @@ class IndexHelper implements LoggerAwareInterface
                                 'CODE'                            => ['type' => 'keyword'],
                                 'XML_ID'                          => ['type' => 'keyword'],
                                 'SORT'                            => ['type' => 'integer'],
-                                'PREVIEW_TEXT'                    => [
-                                    'type' => 'text',
-                                    'fields' => [
-                                        'synonym' => [
-                                            'type' => 'text',
-                                            'analyzer' => 'detail-text-analyzator'
-                                        ],
-                                        'synonym_keyword' => [
-                                            'type' => 'keyword',
-//                                            'analyzer' => 'detail-text-analyzator'
-                                        ],
-                                    ]
-                                ],
+                                'PREVIEW_TEXT'                    => ['type' => 'text', 'analyzer' => 'detail-text-analyzator'],
                                 'PREVIEW_TEXT_TYPE'               => ['type' => 'keyword', 'index' => false],
-                                'DETAIL_TEXT' => [
-                                    'type' => 'text',
-                                    'fields' => [
-                                        'synonym' => [
-                                            'type' => 'text',
-                                            'analyzer' => 'detail-text-analyzator'
-                                        ],
-                                        'synonym_keyword' => [
-                                            'type' => 'keyword',
-//                                            'analyzer' => 'detail-text-analyzator'
-                                        ],
-                                    ]
-                                ],
+                                'DETAIL_TEXT'                     => ['type' => 'text', 'analyzer' => 'detail-text-analyzator'],
                                 'DETAIL_TEXT_TYPE'                => ['type' => 'keyword', 'index' => false],
                                 'DETAIL_PAGE_URL'                 => ['type' => 'text', 'index' => false],
                                 'CANONICAL_PAGE_URL'              => ['type' => 'text', 'index' => false],
@@ -356,34 +328,10 @@ class IndexHelper implements LoggerAwareInterface
                         'CODE'                             => ['type' => 'keyword'],
                         'XML_ID'                           => ['type' => 'keyword'],
                         'SORT'                             => ['type' => 'integer'],
-                        'PREVIEW_TEXT'                    => [
-                            'type' => 'text',
-                            'fields' => [
-                                'synonym' => [
-                                    'type' => 'text',
-                                    'analyzer' => 'detail-text-analyzator'
-                                ],
-                                'synonym_keyword' => [
-                                    'type' => 'keyword',
-//                                    'analyzer' => 'detail-text-analyzator'
-                                ],
-                            ]
-                        ],
-                        'PREVIEW_TEXT_TYPE'               => ['type' => 'keyword', 'index' => false],
-                        'DETAIL_TEXT' => [
-                            'type' => 'text',
-                            'fields' => [
-                                'synonym' => [
-                                    'type' => 'text',
-                                    'analyzer' => 'detail-text-analyzator'
-                                ],
-                                'synonym_keyword' => [
-                                    'type' => 'keyword',
-//                                    'analyzer' => 'detail-text-analyzator'
-                                ],
-                            ]
-                        ],
-                        'DETAIL_TEXT_TYPE'                => ['type' => 'keyword', 'index' => false],
+                        'PREVIEW_TEXT'                     => ['type' => 'text', 'analyzer' => 'detail-text-analyzator'],
+                        'PREVIEW_TEXT_TYPE'                => ['type' => 'keyword', 'index' => false],
+                        'DETAIL_TEXT'                      => ['type' => 'text', 'analyzer' => 'detail-text-analyzator'],
+                        'DETAIL_TEXT_TYPE'                 => ['type' => 'keyword', 'index' => false],
                         'DETAIL_PAGE_URL'                  => ['type' => 'text', 'index' => false],
                         'CANONICAL_PAGE_URL'               => ['type' => 'text', 'index' => false],
                         'dateActiveFrom'                   => ['type' => 'date', 'format' => 'date_optional_time'],
@@ -394,11 +342,7 @@ class IndexHelper implements LoggerAwareInterface
                                 'synonym' => [
                                     'type' => 'text',
                                     'analyzer' => 'detail-text-analyzator'
-                                ],
-                                'synonym_keyword' => [
-                                    'type' => 'keyword',
-//                                    'analyzer' => 'detail-text-analyzator'
-                                ],
+                                ]
                             ]
                         ],
                         'PROPERTY_BRAND'                   => ['type' => 'integer'],
@@ -442,6 +386,7 @@ class IndexHelper implements LoggerAwareInterface
                         'hasImages'                        => ['type' => 'boolean'],
                         'hasStocks'                        => ['type' => 'boolean'],
                         'deliveryAvailability'             => ['type' => 'keyword'],
+                        'searchBooster'                    => ['type' => 'text', 'analyzer' => 'detail-text-analyzator']
                     ],
                 ],
                 'brand' => [
@@ -454,33 +399,9 @@ class IndexHelper implements LoggerAwareInterface
                         'CODE'                            => ['type' => 'keyword'],
                         'XML_ID'                          => ['type' => 'keyword'],
                         'SORT'                            => ['type' => 'integer'],
-                        'PREVIEW_TEXT'                    => [
-                            'type' => 'text',
-                            'fields' => [
-                                'synonym' => [
-                                    'type' => 'text',
-                                    'analyzer' => 'detail-text-analyzator'
-                                ],
-                                'synonym_keyword' => [
-                                    'type' => 'keyword',
-//                                    'analyzer' => 'detail-text-analyzator'
-                                ],
-                            ]
-                        ],
+                        'PREVIEW_TEXT'                    => ['type' => 'text', 'analyzer' => 'detail-text-analyzator'],
                         'PREVIEW_TEXT_TYPE'               => ['type' => 'keyword', 'index' => false],
-                        'DETAIL_TEXT' => [
-                            'type' => 'text',
-                            'fields' => [
-                                'synonym' => [
-                                    'type' => 'text',
-                                    'analyzer' => 'detail-text-analyzator'
-                                ],
-                                'synonym_keyword' => [
-                                    'type' => 'keyword',
-//                                    'analyzer' => 'detail-text-analyzator'
-                                ],
-                            ]
-                        ],
+                        'DETAIL_TEXT'                     => [ 'type' => 'text', 'analyzer' => 'detail-text-analyzator'],
                         'DETAIL_TEXT_TYPE'                => ['type' => 'keyword', 'index' => false],
                         'DETAIL_PAGE_URL'                 => ['type' => 'text', 'index' => false],
                         'CANONICAL_PAGE_URL'              => ['type' => 'text', 'index' => false],
@@ -1005,5 +926,54 @@ class IndexHelper implements LoggerAwareInterface
         }
 
         return true;
+    }
+
+    static function getAlias($searchString)
+    {
+        $arSelect = [
+            'ID',
+            'IBLOCK_ID',
+            'NAME',
+            'PROPERTY_TRANSLITS'
+        ];
+
+        $arFilter = [
+            'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::BRANDS),
+            'ACTIVE' => 'Y',
+            '!PROPERTY_TRANSLITS' => false
+        ];
+
+        $brandFound = false;
+        $dbItems = \CIBlockElement::GetList([], $arFilter, false, false, $arSelect);
+        while ($arItem = $dbItems->Fetch()) {
+            if (!empty($arItem['PROPERTY_TRANSLITS_VALUE'])) {
+                $arTranslits = explode(',', $arItem['PROPERTY_TRANSLITS_VALUE']);
+                foreach ($arTranslits as $translit) {
+                    $translit = mb_strtolower(trim($translit));
+                    $pos = mb_strpos($searchString, $translit);
+
+                    if ($pos !== false) {
+                        /** не начало строки без пробела */
+                        if (($pos > 0) && (mb_substr($searchString, $pos-1,1) != ' ')) {
+                            continue;
+                        }
+
+                        /** не конец строки без пробела */
+                        if (($pos + mb_strlen($translit) != mb_strlen($searchString)) && mb_substr($searchString, $pos + mb_strlen($translit), 1) != ' ') {
+                            continue;
+                        }
+
+                        $searchString = str_replace($translit,
+                            mb_strtolower($arItem['NAME']), $searchString);
+                        $brandFound = true;
+                        break;
+                    }
+                }
+            }
+            if ($brandFound) {
+                break;
+            }
+        }
+        return $searchString;
     }
 }
