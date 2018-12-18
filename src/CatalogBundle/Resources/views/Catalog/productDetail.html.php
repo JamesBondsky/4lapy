@@ -203,7 +203,7 @@ if (null === $offer) {
                                 <div class="b-product-card-complect__list js-product-complect js-advice-list">
 
                                     <div class="b-product-card-complect__list-item slide">
-                                        <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $offer->getId(); ?>" data-offerprice="<?= $offer->getPrice(); ?>" data-product-info='{"productid": <?= $product->getId(); ?>, "offerid": <?= $offer->getId(); ?>, "offerprice": <?= $offer->getPrice(); ?>}' tabindex="0">
+                                        <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $offer->getId(); ?>_1" data-offerprice="<?= $offer->getPrice(); ?>" data-product-info='{"productid": <?= $product->getId(); ?>, "offerid": <?= $offer->getId(); ?>, "offerprice": <?= $offer->getPrice(); ?>}' tabindex="0">
                                             <div class="b-common-item__image-wrap">
                                                 <div class="b-common-item__image-link">
                                                     <img class="b-common-item__image" src="<?= $offer->getResizeImages(240, 240)->first() ?>" alt="<?= $offer->getName() ?>" title="">
@@ -231,7 +231,7 @@ if (null === $offer) {
                                     </div>
 
                                     <div class="b-product-card-complect__list-item slide">
-                                        <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $pedestal->getId(); ?>" data-offerprice="<?= $pedestal->getPrice(); ?>" data-product-info='{"productid": <?= $pedestal->getProduct()->getId(); ?>, "offerid": <?= $pedestal->getId(); ?>, "offerprice": <?= $pedestal->getPrice(); ?>}' tabindex="0">
+                                        <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $pedestal->getId(); ?>_1" data-offerprice="<?= $pedestal->getPrice(); ?>" data-product-info='{"productid": <?= $pedestal->getProduct()->getId(); ?>, "offerid": <?= $pedestal->getId(); ?>, "offerprice": <?= $pedestal->getPrice(); ?>}' tabindex="0">
                                             <div class="b-common-item__image-wrap">
                                                 <a class="b-common-item__image-link js-item-link" href="<?= $pedestal->getDetailPageUrl(); ?>" tabindex="0">
                                                     <img class="b-common-item__image" src="<?= $pedestal->getResizeImages(240, 240)->first(); ?>" alt="<?= $pedestal->getName(); ?>" title="">
@@ -259,7 +259,7 @@ if (null === $offer) {
                                     </div>
 
                                     <div class="b-product-card-complect__list-item slide">
-                                        <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $externalFilterFirst->getId(); ?>" data-offerprice="<?= $externalFilterFirst->getPrice(); ?>" data-product-info='{"productid": <?= $externalFilterFirst->getProduct()->getId(); ?>, "offerid": <?= $externalFilterFirst->getId(); ?>, "offerprice": <?= $externalFilterFirst->getPrice(); ?>, "groupid": 1}' data-product-group-title="Другие внешние фильтры" tabindex="0">
+                                        <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $externalFilterFirst->getId(); ?>_1" data-offerprice="<?= $externalFilterFirst->getPrice(); ?>" data-product-info='{"productid": <?= $externalFilterFirst->getProduct()->getId(); ?>, "offerid": <?= $externalFilterFirst->getId(); ?>, "offerprice": <?= $externalFilterFirst->getPrice(); ?>, "groupid": 1}' data-product-group-title="Другие внешние фильтры" tabindex="0">
                                             <div class="b-common-item__image-wrap">
                                                 <a class="b-common-item__image-link js-item-link" href="<?= $externalFilterFirst->getDetailPageUrl(); ?>" tabindex="0">
                                                     <img class="b-common-item__image" src="<?= $externalFilterFirst->getResizeImages(240, 240)->first(); ?>" alt="<?= $externalFilterFirst->getName(); ?>" title="">
@@ -356,7 +356,7 @@ if (null === $offer) {
 
                                     <div class="b-product-card-complect__list-item slide">
 
-                                        <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $internalFilterFirst->getId(); ?>" data-offerprice="<?= $internalFilterFirst->getPrice(); ?>" data-product-info='{"productid": <?= $internalFilterFirst->getProduct()->getId(); ?>, "offerid": <?= $internalFilterFirst->getId(); ?>, "offerprice": <?= $internalFilterFirst->getPrice(); ?>, "groupid": 2}' data-product-group-title="Другие внутренние фильтры" tabindex="0">
+                                        <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $internalFilterFirst->getId(); ?>_1" data-offerprice="<?= $internalFilterFirst->getPrice(); ?>" data-product-info='{"productid": <?= $internalFilterFirst->getProduct()->getId(); ?>, "offerid": <?= $internalFilterFirst->getId(); ?>, "offerprice": <?= $internalFilterFirst->getPrice(); ?>, "groupid": 2}' data-product-group-title="Другие внутренние фильтры" tabindex="0">
                                             <div class="b-common-item__image-wrap">
                                                 <a class="b-common-item__image-link js-item-link" href="<?= $internalFilterFirst->getDetailPageUrl(); ?>" tabindex="0">
                                                     <img class="b-common-item__image" src="<?= $internalFilterFirst->getResizeImages(240, 240)->first(); ?>" alt="<?= $internalFilterFirst->getName(); ?>" title="">
@@ -455,7 +455,7 @@ if (null === $offer) {
                                     </div>
 
                                     <div class="b-product-card-complect__list-item slide">
-                                        <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $lamp->getId(); ?>" data-offerprice="<?= $lamp->getPrice(); ?>" data-product-info='{"productid": <?= $lamp->getProduct()->getId(); ?>, "offerid": <?= $lamp->getId(); ?>, "offerprice": <?= $lamp->getPrice(); ?>, "groupid": 3}' data-product-group-title="Другие лампы и светильники" tabindex="0">
+                                        <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $lamp->getId(); ?>_1" data-offerprice="<?= $lamp->getPrice(); ?>" data-product-info='{"productid": <?= $lamp->getProduct()->getId(); ?>, "offerid": <?= $lamp->getId(); ?>, "offerprice": <?= $lamp->getPrice(); ?>, "groupid": 3}' data-product-group-title="Другие лампы и светильники" tabindex="0">
                                             <div class="b-common-item__image-wrap">
                                                 <a class="b-common-item__image-link js-item-link" href="<?= $lamp->getDetailPageUrl(); ?>" tabindex="0">
                                                     <img class="b-common-item__image" src="<?= $lamp->getResizeImages(240, 240)->first(); ?>" alt="<?= $lamp->getName(); ?>" title="">
