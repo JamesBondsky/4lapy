@@ -147,7 +147,7 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
                                     </div>
                                 </div>
                                 <div class="b-product-card-complect__item-replace js-product-complect-replace-item">
-                                    <div class="js-product-item" data-productid="<?= $currentOffer->getProduct()->getId(); ?>" style="width: auto">
+                                    <div class="js-product-item" data-productid="<?= $currentOffer->getProduct()->getId(); ?>">
                                         <span class="b-common-item__image-wrap">
                                             <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getDetailPageUrl(); ?>">
                                                 <img class="b-common-item__image js-weight-img" src="<?= $currentOffer->getResizeImages(240, 240)->first(); ?>" alt="<?= $currentOffer->getName(); ?>" title="">
@@ -239,7 +239,7 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
                             $shares = $currentOffer->getShare();
                             ?>
                             <div class="b-common-item" data-product-complect-groupid="<?= $groupKey ?>">
-                                <div class="js-product-item" data-productid="<?= $currentOffer->getProduct()->getId(); ?>" style="width: auto">
+                                <div class="js-product-item" data-productid="<?= $currentOffer->getProduct()->getId(); ?>">
                                     <? if ($shares->getTotalCount() > 0) { ?>
                                         <?= MarkHelper::getMark($currentOffer, '', $shares->first()->getId()); ?>
                                     <? } ?>
