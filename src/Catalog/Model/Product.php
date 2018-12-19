@@ -2563,7 +2563,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             return null;
         } else {
             $offer = $res->first()->getOffers()->first();
-            if ($offer->getPrice() > 0 && $offer->getQuantity() > 0) {
+            if ($offer->getPrice() > 0) {
                 return $offer;
             } else {
                 return null;

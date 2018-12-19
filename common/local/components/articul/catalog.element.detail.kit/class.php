@@ -18,7 +18,7 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
     public function onPrepareComponentParams($params): array
     {
         if (!isset($params['CACHE_TIME'])) {
-            $params['CACHE_TIME'] = 36000000;
+            $params['CACHE_TIME'] = 86400;
         }
 
         return parent::onPrepareComponentParams($params);
