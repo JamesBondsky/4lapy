@@ -257,7 +257,9 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                   id="order-comment"
                   name="comment"
                   placeholder="Укажите здесь дополнительную информацию к заказу.
-Например, если для доставки заказа курьеру необходимо въехать на территорию с пропускным режимом. В таком случае курьер свяжется с Вами заранее для заказа пропуска на территорию."><?= $storage->getComment() ?></textarea>
+Например, если для доставки заказа курьеру необходимо въехать на территорию с пропускным режимом. В таком случае курьер свяжется с Вами заранее для заказа пропуска на территорию.">
+            <?= $storage->getComment() ?>
+        </textarea>
             <div class="b-error">
                 <span class="js-message"></span>
             </div>
