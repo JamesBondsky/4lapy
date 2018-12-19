@@ -51,7 +51,7 @@ class CaptchaController extends FOSRestController
     public function verifyCaptchaAction(CaptchaVerifyRequest $captchaVerifyRequest)
     {
         $data = $this->apiCaptchaService->verify(
-            $captchaVerifyRequest->getEntity(),
+            $captchaVerifyRequest->getLogin(),
             $captchaVerifyRequest->getCaptchaId(),
             $captchaVerifyRequest->getCaptchaValue()
         );

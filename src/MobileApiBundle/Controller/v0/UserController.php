@@ -50,7 +50,7 @@ class UserController extends FOSRestController
      * @throws \FourPaws\UserBundle\Exception\NotFoundException
      * @internal param Request $request
      *
-     * @Security("!has_role('REGISTERED_USERS')")
+     * @Security("!has_role('REGISTERED_USERS')", message="Вы уже авторизованы")
      *
      * @Rest\View()
      */
@@ -66,7 +66,7 @@ class UserController extends FOSRestController
      *     response="200"
      * )
      *
-     * @Security("has_role('REGISTERED_USERS')")
+     * @Security("has_role('REGISTERED_USERS')", message="Вы не авторизованы")
      *
      * @Rest\View()
      * @throws \FourPaws\MobileApiBundle\Exception\RuntimeException
@@ -80,7 +80,7 @@ class UserController extends FOSRestController
     /**
      * @Rest\Get(path="/user_info/")
      * @Rest\View()
-     * @Security("has_role('REGISTERED_USERS')")
+     * @Security("has_role('REGISTERED_USERS')", message="Вы не авторизованы")
      * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
      * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
      * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
@@ -115,18 +115,20 @@ class UserController extends FOSRestController
     /**
      * @Rest\Get(path="/login_exist/")
      * @Rest\View()
-     * @Security("!has_role('REGISTERED_USERS')")
+     * @Security("!has_role('REGISTERED_USERS')", message="Вы уже авторизованы")
      * @Parameter(
      *     name="login",
      *     in="query",
      *     type="string",
      *     required=true,
-     *     description="Phone or Email of user"
+     *     description="user phone"
      * )
      * @param LoginExistRequest $existRequest
      *
-     * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
      * @return ApiResponse
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
     public function isExistAction(LoginExistRequest $existRequest): ApiResponse
     {

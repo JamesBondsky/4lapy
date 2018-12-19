@@ -3,7 +3,6 @@
 namespace FourPaws\MobileApiBundle\Dto\Request;
 
 use JMS\Serializer\Annotation as Serializer;
-use Symfony\Component\Validator\Constraints as Assert;
 
 class BannersRequest implements SimpleUnserializeRequest, GetRequest
 {

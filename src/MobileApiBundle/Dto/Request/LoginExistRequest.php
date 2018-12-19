@@ -6,24 +6,9 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Request;
 
-use JMS\Serializer\Annotation as Serializer;
-use Symfony\Component\Validator\Constraints as Assert;
+use FourPaws\MobileApiBundle\Dto\Parts\Login;
 
 class LoginExistRequest implements SimpleUnserializeRequest, GetRequest
 {
-    /**
-     * @Serializer\SerializedName("login")
-     * @Serializer\Type("string")
-     * @Assert\NotBlank()
-     * @var string
-     */
-    protected $login = '';
-
-    /**
-     * @return string
-     */
-    public function getLogin(): string
-    {
-        return $this->login;
-    }
+    use Login;
 }

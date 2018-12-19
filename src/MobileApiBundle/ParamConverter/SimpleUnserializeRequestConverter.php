@@ -19,6 +19,8 @@ use JMS\Serializer\DeserializationContext;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Sensio\Bundle\FrameworkExtraBundle\Request\ParamConverter\ParamConverterInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class SimpleUnserializeRequestConverter implements ParamConverterInterface
@@ -139,7 +141,20 @@ class SimpleUnserializeRequestConverter implements ParamConverterInterface
 
         $validationResult = $this->validator->validate($object, null, $groups);
         if (!$notThrowException && $validationResult->count() > 0) {
-            throw new ValidationException($validationResult);
+            $validationError = $validationResult[0];
+            if ($validationError instanceof ConstraintViolation) {
+                if ($validationError->getConstraint() instanceof NotBlank) {
+                    $message = $validationError->getPropertyPath() . ' не может быть пустым';
+                } else {
+                    $message = $validationError->getMessage();
+                    if ($propertyPath = $validationError->getPropertyPath()) {
+                        $message = 'Некорректное значение параметра ' . $propertyPath . ': ' . $message;
+                    }
+                }
+                throw new ValidationException($message);
+            } else {
+                throw new ValidationException($validationResult);
+            }
         }
 
         if (!$request->attributes->has(static::API_ERRORS)) {

@@ -259,7 +259,7 @@ class UserService implements
         $validationResult = $this->userRepository->getValidator()
                                                  ->validate($user, null, ['create']);
         if ($validationResult->count() > 0) {
-            throw new ValidationException('Wrong entity passed to create');
+            throw new ValidationException($validationResult);
         }
 
         Application::getConnection()

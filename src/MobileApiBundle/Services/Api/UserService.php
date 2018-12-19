@@ -70,17 +70,20 @@ class UserService
                     '9007523221',
                     '9991693811',
                     '9263987654',
-                    '9653770455'
+                    '9653770455',
+                    '9165919854'
                 ]);
-            $userId = $this->userRepository->findIdentifierByRawLogin($loginRequest->getLogin());
-            if ($isVerified && $userId) {
-                $this->userBundleService->authorize($userId);
+            if (!$isVerified) {
+                throw new RuntimeException('Некорректный код');
             }
+            $userId = $this->userRepository->findIdentifierByRawLogin($loginRequest->getLogin());
+            $this->userBundleService->authorize($userId);
         } catch (UsernameNotFoundException $exception) {
             $user = new AppUser();
             $user
                 ->setPersonalPhone($loginRequest->getLogin())
-                ->setLogin($user->getPersonalPhone());
+                ->setLogin($user->getPersonalPhone())
+                ->setPassword(randString(20));
             $user = $this->userBundleService->register($user);
             $this->userBundleService->authorize($user->getId());
         }
