@@ -62,25 +62,23 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
     $asset->addJs('https://www.google.com/recaptcha/api.js?hl=ru');
 
     /** onesignal.com */
-    if ($USER->IsAdmin()) { /** [todo] remove after production tests */
-        if (getenv('ONESIGNAL_API_KEY')) {
-            $asset->addString('<script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>');
-            $asset->addString('
-                <script>
-                  var OneSignal = window.OneSignal || [];
-                  OneSignal.push(function() {
-                    OneSignal.init({
-                      appId: \''.getenv('ONESIGNAL_API_KEY').'\',
-                      autoRegister: true,
-                      welcomeNotification: {
-                        "title": "Спасибо за подписку",
-                        "message": " "
-                      }
-                    });
-                  });
-                </script>
-            ');
-        }
+    if (getenv('ONESIGNAL_API_KEY')) {
+        $asset->addString('<script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>');
+        $asset->addString('
+            <script>
+              var OneSignal = window.OneSignal || [];
+              OneSignal.push(function() {
+                OneSignal.init({
+                  appId: \''.getenv('ONESIGNAL_API_KEY').'\',
+                  autoRegister: true,
+                  welcomeNotification: {
+                    "title": "Зоомагазин \"Четыре лапы\"",
+                    "message": "Спасибо за подписку!"
+                  }
+                });
+              });
+            </script>
+        ');
     }
 
     ?>
