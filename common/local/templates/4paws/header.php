@@ -73,8 +73,8 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
                       appId: \''.getenv('ONESIGNAL_API_KEY').'\',
                       autoRegister: true,
                       welcomeNotification: {
-                        "title": "Спасибо за подписку",
-                        "message": " "
+                        "title": "Зоомагазин \"Четыре лапы\"",
+                        "message": "Спасибо за подписку!"
                       }
                     });
                   });
