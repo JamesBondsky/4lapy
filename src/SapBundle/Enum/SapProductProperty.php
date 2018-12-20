@@ -24,6 +24,11 @@ final class SapProductProperty
     public const PACKING_COMBINATION = 'PACKING_COMBINATION';
 
     /**
+     * Связь аквариум-тумба
+     */
+    public const AQUARIUM_COMBINATION = 'AQUARIUM_COMBINATION';
+
+    /**
      * Содержит назначение товара для типа питомца.
      */
     public const FOR_WHO = 'FOR_WHO';
