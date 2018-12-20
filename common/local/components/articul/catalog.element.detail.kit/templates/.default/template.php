@@ -21,7 +21,7 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
     $arMessages = [
         'external' => 'Другие внешние фильтры',
         'internal' => 'Другие внутренние фильтры',
-        'lamp' => 'Другие лампы и светильники',
+        'lamps' => 'Другие лампы и светильники',
     ];
     $product = $arResult['PRODUCT'];
     $offer = $arResult['OFFER'];
@@ -214,7 +214,7 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
         <div class="b-product-card-complect hidden js-product-complect-other">
             <div class="b-product-card-complect__otherproducts">
                 <div class="b-product-card-complect__title" data-product-complect-otherproducts-title="true"></div>
-                <div class="b-common-section__content b-common-section__content--sale js-slider-product-complect-other">
+                <div class="b-common-section__content b-common-section__content--complect-other js-slider-product-complect-other">
                     <?
                     /** @var Offer $currentOffer */
                     ?>
