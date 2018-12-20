@@ -614,7 +614,6 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 false,
                 ['HIDE_ICONS' => 'Y'])['DELIVERIES'];
         } else {
-            echo $stockID . "\r\n";
             switch ($stockID) {
                 case '47':
                     $locationCode = '0000263227';
@@ -640,7 +639,6 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 default:
                     $locationCode = '0000073738';
             }
-            echo $locationCode;
             $deliveryInfo = $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
                 'empty',
                 ['CACHE_TIME' => 3601 * 24, 'LOCATION_CODE' => $locationCode],
