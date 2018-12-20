@@ -74,7 +74,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      * YandexFeedService constructor.
      *
      * @param SerializerInterface $serializer
-     * @param Filesystem          $filesystem
+     * @param Filesystem $filesystem
      */
     public function __construct(SerializerInterface $serializer, Filesystem $filesystem, StoreService $storeService)
     {
@@ -85,8 +85,8 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
 
     /**
      * @param ConfigurationInterface $configuration
-     * @param int                    $step
-     * @param string                 $stockID
+     * @param int $step
+     * @param string $stockID
      *
      * If need to continue, return true. Else - false.
      *
@@ -110,7 +110,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             $this
                 ->processFeed($feed, $configuration)
                 ->processCurrencies($feed, $configuration)
-                ->processDeliveryOptions($feed, $configuration)
+                ->processDeliveryOptions($feed, $configuration, $stockID)
                 ->processCategories($feed, $configuration);
 
             $this->saveFeed($this->getStorageKey(), $feed);
@@ -135,7 +135,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     }
 
     /**
-     * @param Feed          $feed
+     * @param Feed $feed
      * @param Configuration $configuration
      *
      * @return YandexFeedService
@@ -156,7 +156,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     }
 
     /**
-     * @param Feed          $feed
+     * @param Feed $feed
      * @param Configuration $configuration
      *
      * @return YandexFeedService
@@ -179,9 +179,9 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     }
 
     /**
-     * @param Feed          $feed
+     * @param Feed $feed
      * @param Configuration $configuration
-     * @param string        $stockID
+     * @param string $stockID
      *
      * @return YandexFeedService
      *
@@ -191,8 +191,11 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      * @throws OffersIsOver
      * @throws ArgumentException
      */
-    protected function processOffers(Feed $feed, Configuration $configuration, string $stockID = null): YandexFeedService
-    {
+    protected function processOffers(
+        Feed $feed,
+        Configuration $configuration,
+        string $stockID = null
+    ): YandexFeedService {
         $limit = 500;
         $offers = $feed->getShop()
             ->getOffers();
@@ -248,8 +251,8 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
 
     /**
      * @param array $filter
-     * @param int   $offset
-     * @param int   $limit
+     * @param int $offset
+     * @param int $limit
      *
      * @return OfferCollection
      */
@@ -259,7 +262,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         return (new OfferQuery())->withFilter($filter)
             ->withNav([
                 'nPageSize' => $limit,
-                'iNumPage'  => $this->getPageNumber($offset, $limit),
+                'iNumPage' => $this->getPageNumber($offset, $limit),
             ])
             ->exec();
     }
@@ -404,11 +407,11 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         if (
             preg_match($badWordsTemplate, $offer->getName()) > 0
             || preg_match(
-                   $badWordsTemplate,
-                   $offer->getProduct()
-                       ->getDetailText()
-                       ->getText()
-               ) > 0
+                $badWordsTemplate,
+                $offer->getProduct()
+                    ->getDetailText()
+                    ->getText()
+            ) > 0
         ) {
             $this->log()
                 ->info(
@@ -433,7 +436,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     }
 
     /**
-     * @param Feed          $feed
+     * @param Feed $feed
      * @param Configuration $configuration
      *
      * @return array
@@ -459,12 +462,12 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 //->setCacheTtl(3600)
                 ->setSelect(['ID'])
                 ->setFilter([
-                    'IBLOCK_ID'         => IblockUtils::getIblockId(
+                    'IBLOCK_ID' => IblockUtils::getIblockId(
                         IblockType::CATALOG,
                         IblockCode::PRODUCTS
                     ),
                     'IBLOCK_SECTION_ID' => $sectionIds,
-                    'ACTIVE'            => 'Y'
+                    'ACTIVE' => 'Y'
                 ])
                 ->exec()
                 ->fetchAll() ?: [], function ($carry, $on) {
@@ -479,13 +482,13 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
 
         return [
             '=PROPERTY_CML2_LINK' => $idList,
-            '<XML_ID'             => 2000000,
-            'ACTIVE'              => 'Y'
+            '<XML_ID' => 2000000,
+            'ACTIVE' => 'Y'
         ];
     }
 
     /**
-     * @param Feed          $feed
+     * @param Feed $feed
      * @param Configuration $configuration
      *
      * @return YandexFeedService
@@ -499,7 +502,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
          */
         $parentCategories = (new CategoryQuery())
             ->withFilter([
-                'ID'            => $configuration->getSectionIds(),
+                'ID' => $configuration->getSectionIds(),
                 'GLOBAL_ACTIVE' => 'Y'
             ])
             ->withOrder(['LEFT_MARGIN' => 'ASC'])
@@ -521,7 +524,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
 
             $childCategories = (new CategoryQuery())
                 ->withFilter([
-                    '>LEFT_MARGIN'  => $parentCategory->getLeftMargin(),
+                    '>LEFT_MARGIN' => $parentCategory->getLeftMargin(),
                     '<RIGHT_MARGIN' => $parentCategory->getRightMargin(),
                     'GLOBAL_ACTIVE' => 'Y'
                 ])
@@ -540,7 +543,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     }
 
     /**
-     * @param Category        $category
+     * @param Category $category
      * @param ArrayCollection $categoryCollection
      */
     protected function addCategory(Category $category, ArrayCollection $categoryCollection): void
@@ -557,18 +560,19 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     /**
      * @todo from db + profile
      *
-     * @param Feed          $feed
+     * @param Feed $feed
      * @param Configuration $configuration
      *
+     * @param $stockID
      * @return $this
      */
-    protected function processDeliveryOptions(Feed $feed, Configuration $configuration): YandexFeedService
+    protected function processDeliveryOptions(Feed $feed, Configuration $configuration, $stockID): YandexFeedService
     {
         /**
          * По умолчанию в Мск вполне себе доступна бесплатная доставка и товар есть в магазине
          */
         $feed->getShop()
-            ->setDeliveryOptions($this->getDeliveryInfo());
+            ->setDeliveryOptions($this->getDeliveryInfo($stockID));
 
         return $this;
     }
@@ -600,65 +604,63 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      */
     private function getDeliveryInfo($stockID = null): ArrayCollection
     {
-        if (!$this->deliveryInfo) {
-            global $APPLICATION;
+        global $APPLICATION;
 
-            $deliveryCollection = new ArrayCollection();
-            if($stockID == null){
-                $deliveryInfo = $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
-                    'empty',
-                    ['CACHE_TIME' => 3601 * 24],
-                    false,
-                    ['HIDE_ICONS' => 'Y'])['DELIVERIES'];
-            } else {
-                echo $stockID . "\r\n";
-                switch ($stockID) {
-                    case '47':
-                        $locationCode = '0000263227';
-                        break;
-                    case '151':
-                        $locationCode = '0000293598';
-                        break;
-                    case '168':
-                        $locationCode = '0000250453';
-                        break;
-                    case '36':
-                        $locationCode = '0000121319';
-                        break;
-                    case '163':
-                        $locationCode = '0000312126';
-                        break;
-                    case '207':
-                        $locationCode = '0000600317';
-                        break;
-                    case '65':
-                        $locationCode = '0000148783';
-                        break;
-                    default:
-                        $locationCode = '0000073738';
-                }
-                echo $locationCode;
-                $deliveryInfo = $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
-                    'empty',
-                    ['CACHE_TIME' => 3601 * 24, 'LOCATION_CODE' => $locationCode],
-                    false,
-                    ['HIDE_ICONS' => 'Y'])['DELIVERIES'];
+        $deliveryCollection = new ArrayCollection();
+        if ($stockID == null) {
+            $deliveryInfo = $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
+                'empty',
+                ['CACHE_TIME' => 3601 * 24],
+                false,
+                ['HIDE_ICONS' => 'Y'])['DELIVERIES'];
+        } else {
+            echo $stockID . "\r\n";
+            switch ($stockID) {
+                case '47':
+                    $locationCode = '0000263227';
+                    break;
+                case '151':
+                    $locationCode = '0000293598';
+                    break;
+                case '168':
+                    $locationCode = '0000250453';
+                    break;
+                case '36':
+                    $locationCode = '0000121319';
+                    break;
+                case '163':
+                    $locationCode = '0000312126';
+                    break;
+                case '207':
+                    $locationCode = '0000600317';
+                    break;
+                case '65':
+                    $locationCode = '0000148783';
+                    break;
+                default:
+                    $locationCode = '0000073738';
             }
-
-            foreach ($deliveryInfo as $delivery) {
-                if ((int)$delivery['PRICE']) {
-                    $deliveryCollection->add(
-                        (new DeliveryOption())
-                            ->setCost((int)$delivery['PRICE'])
-                            ->setDays((string)$delivery['PRICE'] ? (int)$delivery['PERIOD_FROM'] : 0)
-                            ->setDaysBefore(13)
-                            ->setFreeFrom((int)$delivery['FREE_FROM'])
-                    );
-                }
-            }
-
-            $this->deliveryInfo = $deliveryCollection;
+            echo $locationCode;
+            $deliveryInfo = $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
+                'empty',
+                ['CACHE_TIME' => 3601 * 24, 'LOCATION_CODE' => $locationCode],
+                false,
+                ['HIDE_ICONS' => 'Y'])['DELIVERIES'];
         }
+
+        foreach ($deliveryInfo as $delivery) {
+            if ((int)$delivery['PRICE']) {
+                $deliveryCollection->add(
+                    (new DeliveryOption())
+                        ->setCost((int)$delivery['PRICE'])
+                        ->setDays((string)$delivery['PRICE'] ? (int)$delivery['PERIOD_FROM'] : 0)
+                        ->setDaysBefore(13)
+                        ->setFreeFrom((int)$delivery['FREE_FROM'])
+                );
+            }
+        }
+
+        $this->deliveryInfo = $deliveryCollection;
 
         return $this->deliveryInfo;
     }
