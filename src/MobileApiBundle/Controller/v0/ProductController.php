@@ -63,9 +63,7 @@ class ProductController extends FOSRestController
                 ->setXmlId($offer['XML_ID'])
                 ->setPicture(($offer['PROPERTY_VALUES']['IMG'][0]) ? \CFile::GetPath($offer['PROPERTY_VALUES']['IMG'][0]) : '')
                 ->setInPack($offer['PROPERTY_VALUES']['MULTIPLICITY'])
-                ->setWebPage($offer['DETAIL_PAGE_URL'])
-                ->setPicturePreview('')
-                ->setInfo('');
+                ->setWebPage($offer['DETAIL_PAGE_URL']);
 
             $productPrice = (new Price())
                 ->setActual($offer['price'])

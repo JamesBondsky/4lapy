@@ -7,11 +7,10 @@
 namespace FourPaws\MobileApiBundle\Dto\Request;
 
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\Filter;
-use FourPaws\MobileApiBundle\Dto\Object\Catalog\Sort;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class GoodsListRequest
+class GoodsListRequest implements SimpleUnserializeRequest, GetRequest
 {
     /**
      * id родительской категории
@@ -42,14 +41,18 @@ class GoodsListRequest
     protected $filters = [];
 
     /**
-     * Список примененных сортировок
+     * Сортировка
      *
-     * @Assert\Valid()
-     * @Serializer\SerializedName("sorts")
-     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Catalog\Sort>")
-     * @var Sort[]
+     * @Assert\Choice({
+     *     "popular",
+     *     "up-price",
+     *     "down-price",
+     * })
+     * @Serializer\SerializedName("sort")
+     * @Serializer\Type("string")
+     * @var string
      */
-    protected $sorts = [];
+    protected $sort = 'popular';
 
     /**
      * Номер страницы, начиная с 1
@@ -128,21 +131,21 @@ class GoodsListRequest
     }
 
     /**
-     * @return Sort[]
+     * @return string
      */
-    public function getSorts(): array
+    public function getSort(): string
     {
-        return $this->sorts;
+        return $this->sort;
     }
 
     /**
-     * @param Sort[] $sorts
+     * @param string $sort
      *
      * @return GoodsListRequest
      */
-    public function setSorts(array $sorts): GoodsListRequest
+    public function setSorts(string $sort): GoodsListRequest
     {
-        $this->sorts = $sorts;
+        $this->sort = $sort;
         return $this;
     }
 

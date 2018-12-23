@@ -26,11 +26,17 @@ class FullHrefDecorator
     /**
      * FullHrefDecorator constructor.
      *
-     * @param string $path
+     * @param string $url
      */
-    public function __construct(string $path)
+    public function __construct(string $url)
     {
-        $this->setPath($path);
+        $parsedUrl = parse_url($url);
+        if ($parsedUrl['host']) {
+            $this->setHost($parsedUrl['host']);
+        }
+        if ($parsedUrl['path']) {
+            $this->setPath($parsedUrl['path']);
+        }
     }
     
     /**

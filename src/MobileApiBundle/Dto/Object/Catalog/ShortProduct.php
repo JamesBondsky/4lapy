@@ -15,6 +15,15 @@ use JMS\Serializer\Annotation as Serializer;
 class ShortProduct
 {
     /**
+     * ID
+     *
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("id")
+     */
+    protected $id;
+
+    /**
      * Название
      *
      * @var string
@@ -70,33 +79,6 @@ class ShortProduct
     protected $inPack = 1;
 
     /**
-     * можно купить только упаковкой (кратным значению inPack)
-     *
-     * @var bool
-     * @Serializer\Type("bool")
-     * @Serializer\SerializedName("pack_only")
-     */
-    protected $packOnly = false;
-
-    /**
-     * Акционный текст
-     *
-     * @var string
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("discount_text")
-     */
-    protected $discountText = '';
-
-    /**
-     * Краткое описание
-     *
-     * @var string
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("info")
-     */
-    protected $info = '';
-
-    /**
      * ОбъектЦена
      *
      * @var Price
@@ -136,6 +118,25 @@ class ShortProduct
      * @Serializer\SerializedName("bonus_all")
      */
     protected $bonusAll = 0;
+
+    /**
+     * @return int
+     */
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    /**
+     * @param int $id
+     *
+     * @return ShortProduct
+     */
+    public function setId(int $id): ShortProduct
+    {
+        $this->id = $id;
+        return $this;
+    }
 
     /**
      * @return string
@@ -212,8 +213,10 @@ class ShortProduct
      */
     public function setPicture(string $picture): ShortProduct
     {
-        $hrefDecorator = new FullHrefDecorator($picture);
-        $this->picture = $hrefDecorator->getFullPublicPath();
+        if (!empty($picture)) {
+            $hrefDecorator = new FullHrefDecorator($picture);
+            $this->picture = $hrefDecorator->getFullPublicPath();
+        }
         return $this;
     }
 
@@ -254,63 +257,6 @@ class ShortProduct
     public function setInPack(int $inPack): ShortProduct
     {
         $this->inPack = $inPack;
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isPackOnly(): bool
-    {
-        return $this->packOnly;
-    }
-
-    /**
-     * @param bool $packOnly
-     *
-     * @return ShortProduct
-     */
-    public function setPackOnly(bool $packOnly): ShortProduct
-    {
-        $this->packOnly = $packOnly;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getDiscountText(): string
-    {
-        return $this->discountText;
-    }
-
-    /**
-     * @param string $discountText
-     *
-     * @return ShortProduct
-     */
-    public function setDiscountText(string $discountText): ShortProduct
-    {
-        $this->discountText = $discountText;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getInfo(): string
-    {
-        return $this->info;
-    }
-
-    /**
-     * @param string $info
-     *
-     * @return ShortProduct
-     */
-    public function setInfo(string $info): ShortProduct
-    {
-        $this->info = $info;
         return $this;
     }
 

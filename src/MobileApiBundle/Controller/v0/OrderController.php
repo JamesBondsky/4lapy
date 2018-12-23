@@ -15,7 +15,6 @@ use FourPaws\MobileApiBundle\Dto\Object\Detailing;
 use FourPaws\MobileApiBundle\Dto\Object\OrderCalculate;
 use FourPaws\MobileApiBundle\Dto\Object\OrderParameter;
 use FourPaws\MobileApiBundle\Dto\Object\OrderStatus;
-use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Dto\Request\OrderInfoRequest;
 use FourPaws\MobileApiBundle\Dto\Request\OrderStatusHistoryRequest;
 use FourPaws\MobileApiBundle\Dto\Response\OrderInfoResponse;
@@ -26,6 +25,7 @@ use \FourPaws\MobileApiBundle\Dto\Object\Order as ApiObjectOrder;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\UserBundle\Repository\UserRepository;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
+use FourPaws\MobileApiBundle\Services\Api\OrderService as OrderServiceForApi;
 
 /**
  * Class PushController
@@ -46,26 +46,20 @@ class OrderController extends FOSRestController
      */
     public function getOrderListAction(
         OrderService $orderService,
-        LocationService $locationService
+        LocationService $locationService,
+        OrderServiceForApi $orderServiceForApi
     )
     {
-        /**
-         * @var User $user
-         */
         $user = $this->getUser();
         $orders = $orderService->getUserOrders($user)->getValues();
-        $orders = array_map(function (Order $order) use ($locationService) {
+        $orders = array_map(function (Order $order) use ($locationService, $orderServiceForApi) {
 
-            $basketPrice = 0;
-            $basketDiscountPrice = 0;
+
             $orderItems = $order->getItems();
-            /**
-             * @var $orderItem \FourPaws\PersonalBundle\Entity\OrderItem
-             */
-            foreach ($orderItems as $orderItem) {
-                $basketPrice += $orderItem->getQuantity() * $orderItem->getBasePrice();
-                $basketDiscountPrice += $orderItem->getQuantity() * $orderItem->getPrice();
-            }
+            $products = $orderServiceForApi->getProducts($orderItems);
+            $price = $orderServiceForApi->calculateProductsPrice($orderItems);
+            $discountPrice = $orderServiceForApi->calculateProductsPrice($orderItems);
+
 
             $dateInsert = (new \DateTime())->setTimestamp($order->getDateInsert()->getTimestamp());
 
@@ -80,15 +74,15 @@ class OrderController extends FOSRestController
                 (new Detailing())
                     ->setId('cart_price_old')
                     ->setTitle('Стоимость товаров без скидки')
-                    ->setValue($order->getItemsSum()),
+                    ->setValue($price),
                 (new Detailing())
                     ->setId('cart_price')
                     ->setTitle('Стоимость товаров со скидкой')
-                    ->setValue($order->getItemsSum()),
+                    ->setValue($discountPrice),
                 (new Detailing())
                     ->setId('discount')
                     ->setTitle('Скидка')
-                    ->setValue(0), // toDo доделать скидку
+                    ->setValue($price - $discountPrice),
                 (new Detailing())
                     ->setId('delivery')
                     ->setTitle('Стоимость доставки')
@@ -130,11 +124,11 @@ class OrderController extends FOSRestController
             }
 
             $orderParameter = (new OrderParameter())
+                ->setProducts($products)
                 ->setDeliveryPlace($deliveryAddress)
                 ->setUserPhone($order->getPropValue('PHONE'))
                 ->setExtraPhone($order->getPropValue('PHONE_ALT'))
                 ->setCard($order->getPropValue('DISCOUNT_CARD'))
-                ->setCardBonusUsed($order->getBonusPay()) // toDo сколько бонусов было списано на заказ
             ;
             $orderCalculate = (new OrderCalculate())
                 ->setTotalPrice($price)

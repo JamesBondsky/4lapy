@@ -94,10 +94,12 @@ class Banner
     /**
      * @param int $fileId
      * @return Banner
+     * @throws \Bitrix\Main\SystemException
      */
     public function setPicture($fileId): Banner {
         $src = \CFile::getPath($fileId);
-        $this->picture = $src;
+        $hrefDecorator = new FullHrefDecorator($src);
+        $this->picture = $hrefDecorator->getFullPublicPath();
         return $this;
     }
 

@@ -9,9 +9,12 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Request\FilterListRequest;
+use FourPaws\MobileApiBundle\Dto\Request\GoodsItemRequest;
+use FourPaws\MobileApiBundle\Dto\Request\GoodsListRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Dto\Response\FilterListResponse;
 use FourPaws\MobileApiBundle\Services\Api\CatalogService as ApiCatalogService;
+use Symfony\Component\HttpFoundation\Request;
 
 class CatalogController extends FOSRestController
 {
@@ -44,12 +47,42 @@ class CatalogController extends FOSRestController
     }
 
     /**
-     * @Rest\Get("/pets_category/")
+     * @Rest\Get("/goods_list/")
      * @Rest\View()
+     * @param Request $request
+     * @param GoodsListRequest $goodsListRequest
+     * @return Response\ProductListResponse
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\Catalog\Exception\CategoryNotFoundException
      */
-    public function getPetsCategoryAction()
+    public function getGoodsListAction(Request $request, GoodsListRequest $goodsListRequest)
     {
+        $categoryId = $goodsListRequest->getCategoryId();
+        $sort = $goodsListRequest->getSort();
+        $page = $goodsListRequest->getPage();
+        $count = $goodsListRequest->getCount();
 
-        return (new Response())->setData($this->apiCatalogService->getPetsCategories());
+        $productsList = $this->apiCatalogService->getProductsList($request, $categoryId, $sort, $count, $page);
+        /** @var \CIBlockResult $cdbResult */
+        $cdbResult = $productsList->get('cdbResult');
+        return (new Response\ProductListResponse())
+            ->setProductList($productsList->get('products'))
+            ->setTotalPages($cdbResult->NavPageCount)
+            ->setTotalItems($cdbResult->NavRecordCount);
+    }
+
+    /**
+     * @Rest\Get("/goods_item/")
+     * @Rest\View()
+     * @param GoodsItemRequest $goodsItemRequest
+     * @return Response
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getGoodsItemAction(GoodsItemRequest $goodsItemRequest)
+    {
+        $offer = $this->apiCatalogService->getOffer($goodsItemRequest->getId());
+        return (new Response())->setData(['goods' => $offer]);
     }
 }

@@ -68,7 +68,7 @@ class LocationController extends FOSRestController
                 $cityService->search($request->getQuery(), 50),
                 3,
                 6
-            )
+            )->getValues()
         );
     }
 
@@ -107,7 +107,7 @@ class LocationController extends FOSRestController
 
         $dbConnection = \Bitrix\Main\HttpApplication::getConnection();
 
-        $locations = $dbConnection->query("
+        $location = $dbConnection->query("
             SELECT 
               LOC.*,
               LOC_NAME.NAME, 
@@ -118,18 +118,16 @@ class LocationController extends FOSRestController
             WHERE
               LOC.LATITUDE IS NOT NULL AND LOC.LONGITUDE IS NOT NULL AND LOC.CITY_ID IS NOT NULL
             ORDER BY DISTANCE
-            LIMIT 30;
-        ")->fetchAll();
+            LIMIT 1;
+        ")->fetch();
 
-        $locations = array_map(function($location) {
-            return (new City())
-                ->setId($location['CODE'])
-                ->setTitle($location['NAME'])
-                ->setLatitude($location['LATITUDE'])
-                ->setLongitude($location['LONGITUDE'])
-                ->setHasMetro( $location['CODE'] === LocationService::LOCATION_CODE_MOSCOW);
-        }, $locations);
+        $city = (new City())
+            ->setId($location['CODE'])
+            ->setTitle($location['NAME'])
+            ->setLatitude($location['LATITUDE'])
+            ->setLongitude($location['LONGITUDE'])
+            ->setHasMetro( $location['CODE'] === LocationService::LOCATION_CODE_MOSCOW);
 
-        return (new Response())->setData($locations);
+        return (new Response())->setData(['city' => $city]);
     }
 }

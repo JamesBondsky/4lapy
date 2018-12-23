@@ -115,4 +115,12 @@ class Banner extends IblockElement
         return $this->PROPERTY_LINK;
     }
 
+    /**
+     * @return string
+     */
+    public function getPictureForMobile()
+    {
+        return $this->PREVIEW_PICTURE;
+    }
+
 }

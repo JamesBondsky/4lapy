@@ -8,6 +8,13 @@ use JMS\Serializer\Annotation as Serializer;
 class Product
 {
     /**
+     * @Serializer\SerializedName("basketItemId")
+     * @Serializer\Type("integer")
+     * @var int
+     */
+    protected $basketItemId = 0;
+
+    /**
      * @Serializer\SerializedName("goods")
      * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct")
      * @var ShortProduct
@@ -20,6 +27,25 @@ class Product
      * @var int
      */
     protected $quantity = 0;
+
+    /**
+     * @return int
+     */
+    public function getBasketItemId(): int
+    {
+        return $this->basketItemId;
+    }
+
+    /**
+     * @param int $basketItemId
+     *
+     * @return Product
+     */
+    public function setBasketItemId(int $basketItemId): Product
+    {
+        $this->basketItemId = $basketItemId;
+        return $this;
+    }
 
     /**
      * @return ShortProduct

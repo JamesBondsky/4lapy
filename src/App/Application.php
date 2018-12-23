@@ -107,7 +107,8 @@ class Application extends AppKernel
          * Можем себе позволить, в общем случае объект иммутабелен.
          */
         if (!self::$instance) {
-            self::$instance = new self(Env::getServerType(), !Env::isProd());
+            // self::$instance = new self(Env::getServerType(), !Env::isProd());
+            self::$instance = new self(Env::getServerType(), false);
         }
 
         if (!self::$instance->booted) {

@@ -8,8 +8,9 @@ namespace FourPaws\MobileApiBundle\Dto\Request;
 
 use FourPaws\MobileApiBundle\Dto\Object\ProductQuantity;
 use Symfony\Component\Validator\Constraints as Assert;
+use JMS\Serializer\Annotation as Serializer;
 
-class PutUserCartRequest
+class PutUserCartRequest implements SimpleUnserializeRequest, PutRequest
 {
     /**
      * @Assert\Valid()

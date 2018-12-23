@@ -9,6 +9,7 @@ namespace FourPaws\MobileApiBundle\ParamConverter;
 use FourPaws\MobileApiBundle\Dto\Request\CreateRequest;
 use FourPaws\MobileApiBundle\Dto\Request\GetRequest;
 use FourPaws\MobileApiBundle\Dto\Request\PostRequest;
+use FourPaws\MobileApiBundle\Dto\Request\PutRequest;
 use FourPaws\MobileApiBundle\Dto\Request\SimpleUnserializeRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UpdateRequest;
 use FourPaws\MobileApiBundle\Exception\SystemException;
@@ -106,7 +107,10 @@ class SimpleUnserializeRequestConverter implements ParamConverterInterface
         if (is_a($configuration->getClass(), GetRequest::class, true)) {
             $params = array_merge($params, $request->query->all());
         }
-        if (is_a($configuration->getClass(), PostRequest::class, true)) {
+        if (
+            is_a($configuration->getClass(), PostRequest::class, true)
+            || is_a($configuration->getClass(), PutRequest::class, true)
+        ) {
             $params = array_merge($params, $request->request->all());
         }
         return $params;

@@ -38,11 +38,11 @@ class InfoController extends FOSRestController
     public function getInfoAction(InfoRequest $infoRequest): ApiResponse
     {
         $response = new ApiResponse();
-        $response->setData($this->infoService->getInfo(
+        $response->setData(['info' => $this->infoService->getInfo(
             $infoRequest->getType(),
             $infoRequest->getInfoId(),
             $infoRequest->getFields()
-        ));
+        )->getValues()]);
 
         return $response;
     }

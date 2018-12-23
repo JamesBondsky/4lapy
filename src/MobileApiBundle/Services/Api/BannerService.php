@@ -60,7 +60,7 @@ class BannerService
         $banner = (new Banner())
             ->setId($bannerModel->getId())
             ->setTitle($bannerModel->getName())
-            ->setPicture($bannerModel->getDetailPageUrl())
+            ->setPicture($bannerModel->getPictureForMobile())
             ->setLink($bannerModel->getLink(), $this->cityId);
 
         return $banner;

@@ -42,14 +42,6 @@ class OrderParameter
     protected $card = '';
 
     /**
-     * Выбранное пользователем количество бонусов для списания с карты в пользу текущего заказа
-     * @Serializer\SerializedName("card_used")
-     * @Serializer\Type("string")
-     * @var string
-     */
-    protected $cardBonusUsed = '';
-
-    /**
      * Тип доставки
      * @Serializer\SerializedName("delivery_type")
      * @Serializer\Type("string")
@@ -64,14 +56,6 @@ class OrderParameter
      * @var DeliveryAddress
      */
     protected $deliveryPlace;
-
-    /**
-     * id времени доставки
-     * @Serializer\SerializedName("delivery_range_id")
-     * @Serializer\Type("string")
-     * @var string
-     */
-    protected $deliveryRangeId = '';
 
     /**
      * Дата времени доставки
@@ -89,14 +73,6 @@ class OrderParameter
      * @var string
      */
     protected $pickupPlace = '';
-
-    /**
-     * Комментарий к заказу
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("comment")
-     * @var string
-     */
-    protected $comment = '';
 
     /**
      * Телефон, который указал пользователь при оформлении
@@ -205,25 +181,6 @@ class OrderParameter
     /**
      * @return string
      */
-    public function getCardBonusUsed(): string
-    {
-        return $this->cardBonusUsed;
-    }
-
-    /**
-     * @param string $cardBonusUsed
-     *
-     * @return OrderParameter
-     */
-    public function setCardBonusUsed(string $cardBonusUsed): OrderParameter
-    {
-        $this->cardBonusUsed = $cardBonusUsed;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
     public function getDeliveryType(): string
     {
         return $this->deliveryType;
@@ -256,25 +213,6 @@ class OrderParameter
     public function setDeliveryPlace(DeliveryAddress $deliveryPlace): OrderParameter
     {
         $this->deliveryPlace = $deliveryPlace;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getDeliveryRangeId(): string
-    {
-        return $this->deliveryRangeId;
-    }
-
-    /**
-     * @param string $deliveryRangeId
-     *
-     * @return OrderParameter
-     */
-    public function setDeliveryRangeId(string $deliveryRangeId): OrderParameter
-    {
-        $this->deliveryRangeId = $deliveryRangeId;
         return $this;
     }
 
@@ -313,25 +251,6 @@ class OrderParameter
     public function setPickupPlace(string $pickupPlace): OrderParameter
     {
         $this->pickupPlace = $pickupPlace;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getComment(): string
-    {
-        return $this->comment;
-    }
-
-    /**
-     * @param string $comment
-     *
-     * @return OrderParameter
-     */
-    public function setComment(string $comment): OrderParameter
-    {
-        $this->comment = $comment;
         return $this;
     }
 
