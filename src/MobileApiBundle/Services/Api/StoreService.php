@@ -12,6 +12,7 @@ use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\MobileApiBundle\Dto\Object\Store\Store as ApiStore;
 use FourPaws\MobileApiBundle\Dto\Object\Store\StoreService as ApiStoreServiceDto;
+use FourPaws\MobileApiBundle\Dto\Request\StoreListAvailableRequest;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListRequest;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService as AppStoreService;
@@ -52,6 +53,36 @@ class StoreService
                 ...$this->getParams($cloneRequest)
             );
         }
+        $storeInfo = $this->appStoreService->getFullStoreInfo($appStoreCollection);
+        return $appStoreCollection->map(function (Store $store) use ($storeInfo) {
+            return $this->toApiFormat($store, ...$storeInfo);
+        });
+    }
+
+    /**
+     * @param StoreListAvailableRequest $storeListAvailableRequest
+     * @return Collection
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
+     */
+    public function getListAvailable(StoreListAvailableRequest $storeListAvailableRequest): Collection
+    {
+        $appStoreCollection = $this->appStoreService->getStores(
+            $this->appStoreService::TYPE_SHOP,
+            [
+                'UF_LOCATION' => $storeListAvailableRequest->getCityId()
+            ]
+        );
+        /*
+        if (0 === $appStoreCollection->count()) {
+            $appStoreCollection = $this->appStoreService->getStores(
+                $this->appStoreService::TYPE_SHOP,
+                ...$this->getParams($cloneRequest)
+            );
+        }
+        */
         $storeInfo = $this->appStoreService->getFullStoreInfo($appStoreCollection);
         return $appStoreCollection->map(function (Store $store) use ($storeInfo) {
             return $this->toApiFormat($store, ...$storeInfo);
