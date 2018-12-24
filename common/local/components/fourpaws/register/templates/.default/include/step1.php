@@ -2,6 +2,7 @@
 
 use Bitrix\Main\Application;
 use FourPaws\CatalogBundle\Service\CatalogLandingService;
+use FourPaws\Helpers\ProtectorHelper;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -40,6 +41,9 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
             </div>
         </div>
         <button class="b-button b-button--social b-button--full-width">Отправить код</button>
+
+        <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_REGISTER_SMS_SEND); ?>
+        <input type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
     </form>
 </div>
 <section class="b-registration__additional-info b-registration__additional-info--step">

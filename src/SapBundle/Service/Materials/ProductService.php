@@ -291,6 +291,12 @@ class ProductService
                     ['']
                 )->first()
             )
+            ->withAquariumCombination(
+                (string)$material->getProperties()->getPropertyValues(
+                    SapProductProperty::AQUARIUM_COMBINATION,
+                    ['']
+                )->first()
+            )
             ->withApplyAutoSort(!$product->getId());
         $this->fillReferenceProperties($product, $material);
         $this->fillCountry($product, $material);

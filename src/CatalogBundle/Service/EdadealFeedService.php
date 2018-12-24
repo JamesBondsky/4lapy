@@ -121,6 +121,8 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
             'ACTIVE' => 'Y',
             '<=DATE_ACTIVE_FROM' => $this->time,
             '>=DATE_ACTIVE_TO' => $this->time,
+            '!PROPERTY_PRODUCTS' => false,
+            '!PREVIEW_PICTURE' => false
         ];
 
         $arSelect = [
@@ -153,6 +155,9 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
                 if (strpos($share['DATE_ACTIVE_TO'], ' ') === false) {
                     $share['DATE_ACTIVE_TO'] .= '23:59:59';
                 }
+
+                $products = array_unique($share['PROPERTIES']['PRODUCTS']['VALUE']);
+
                 $this->arResult['catalogs'][$share['ID']] = [
                     'id' => $share['ID'],
                     'conditions' => \HTMLToTxt($share['DETAIL_TEXT']),
@@ -162,7 +167,7 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
                         $share['DATE_ACTIVE_TO'])->format(\DateTime::RFC3339),
                     'is_main' => true,
                     'image' => $share['PREVIEW_PICTURE'],
-                    'offers' => array_unique($share['PROPERTIES']['PRODUCTS']['VALUE']),
+                    'offers' => $products !== null ? $products : [],
                     'target_shops' => $this->stores,
                     'label' => $share['PROPERTIES']['LABEL']['VALUE']
                 ];
@@ -171,7 +176,7 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
                     $files[$share['PREVIEW_PICTURE']] = $share['ID'];
                 }
 
-                $this->offers = array_merge($this->offers, $share['PROPERTIES']['PRODUCTS']['VALUE']);
+                $this->offers = array_merge($this->offers, $products !== null ? $products : []);
             }
         }
 
@@ -193,7 +198,8 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
         $arFilter = [
             'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
             'XML_ID' => $this->offers,
-            'ACTIVE' => 'Y'
+            'ACTIVE' => 'Y',
+            '!PROPERTY_IMG' => false
         ];
 
         $arSelect = [
@@ -262,7 +268,7 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
                 $files[$offer['PROPERTIES']['IMG']['VALUE'][0]] = $offer['XML_ID'];
             }
 
-            $products[$offer['PROPERTIES']['CML2_LINK']['VALUE']] = $offer['XML_ID'];
+            $products[$offer['PROPERTIES']['CML2_LINK']['VALUE']][] = $offer['XML_ID'];
         }
 
         $this->getCurrentProducts($products);
@@ -281,7 +287,8 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
             'ID',
             'IBLOCK_ID',
             'PROPERTY_BRAND.NAME',
-            'DETAIL_TEXT'
+            'DETAIL_TEXT',
+            'ACTIVE'
         ];
 
         $arFilter = [
@@ -291,8 +298,17 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
 
         $dbProduct = \CIBlockElement::GetList([], $arFilter, false, false, $arSelect);
         while ($arProduct = $dbProduct->Fetch()) {
-            $this->arResult['offers'][$products[$arProduct['ID']]]['brand'] = $arProduct['PROPERTY_BRAND_NAME'];
-            $this->arResult['offers'][$products[$arProduct['ID']]]['description'] = \HTMLToTxt($arProduct['DETAIL_TEXT']);
+            $descr = html_entity_decode(\HTMLToTxt(preg_replace('/<table(.*)<\/table>/', '', str_replace("\r\n", "", $arProduct['DETAIL_TEXT']))));
+            if ($descr != '' && $descr != null && $arProduct['ACTIVE'] == 'Y') {
+                foreach ($products[$arProduct['ID']] as $offer) {
+                    $this->arResult['offers'][$offer]['brand'] = $arProduct['PROPERTY_BRAND_NAME'];
+                    $this->arResult['offers'][$offer]['description'] = $descr;
+                }
+            } else {
+                foreach ($products[$arProduct['ID']] as $offer) {
+                    unset($this->arResult['offers'][$offer]);
+                }
+            }
         }
     }
 
@@ -347,6 +363,7 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
             unset($catalog['label']);
             $catalog['offers'] = array_values($catalog['offers']);
         }
+        unset($catalog);
 
         foreach ($this->arResult['offers'] as $key => $offer) {
             $hasInCatalog = false;
@@ -360,6 +377,21 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
             if (!$hasInCatalog) {
                 unset($this->arResult['offers'][$key]);
             }
+        }
+
+        foreach ($this->arResult['catalogs'] as $catalogID => $catalog) {
+            foreach ($catalog['offers'] as $key => $offerID) {
+                if (!in_array($offerID, array_keys($this->arResult['offers']))) {
+                    unset($this->arResult['catalogs'][$catalogID]['offers'][$key]);
+                }
+            }
+            if (count($this->arResult['catalogs'][$catalogID]['offers']) == 0) {
+                unset($this->arResult['catalogs'][$catalogID]);
+            }
+        }
+
+        foreach ($this->arResult['catalogs'] as $catalogID => &$catalog) {
+            $catalog['offers'] = array_values($catalog['offers']);
         }
 
         $this->arResult['catalogs'] = array_values($this->arResult['catalogs']);

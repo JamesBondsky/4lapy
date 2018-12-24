@@ -1,4 +1,4 @@
-<?php use FourPaws\Decorators\SvgDecorator; ?>
+<?php use FourPaws\Decorators\SvgDecorator; // $arParams['COLLECTOR'] == 'Y' ?>
 <section class="b-popup-pick-city b-popup-pick-city--add-pet js-popup-section" data-popup="edit-popup-pet">
     <a class="b-popup-pick-city__close b-popup-pick-city__close--add-pet js-close-popup"
        href="javascript:void(0);"

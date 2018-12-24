@@ -55,6 +55,7 @@ use JMS\Serializer\SerializerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
+use FourPaws\Helpers\ProtectorHelper;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsRegisterComponent extends \CBitrixComponent
@@ -593,7 +594,17 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 unset($_SESSION['COUNT_REGISTER_CONFIRM_CODE']);
                 /** @noinspection PhpUnusedLocalVariableInspection */
                 $newAction = $request->get('newAction');
-                $res = $this->ajaxGetSendSmsCode($phone);
+
+                /** csrf custom sms send protection */
+                if (ProtectorHelper::checkToken($request->get(ProtectorHelper::getField(ProtectorHelper::TYPE_REGISTER_SMS_SEND)), ProtectorHelper::TYPE_REGISTER_SMS_SEND)) {
+                    $res = $this->ajaxGetSendSmsCode($phone);
+                } else {
+                    $res = [
+                        'mess' => 'Смс успешно отправлено',
+                        'step' => '',
+                    ];
+                }
+
                 if ($res instanceof JsonResponse) {
                     return $res;
                 }

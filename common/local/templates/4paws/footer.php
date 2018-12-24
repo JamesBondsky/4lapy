@@ -57,6 +57,10 @@ if ($template->hasMainWrapper()) {
     </div>
     <?php /** Основной прелоадер из gui */ ?>
     <?php include __DIR__ . '/blocks/preloader.php'; ?>
+
+    <div class="b-snow b-snow--left" data-snow="true"></div>
+    <div class="b-snow b-snow--right" data-snow="true"></div>
+
     </main>
 <?php } ?>
 <?php require_once __DIR__ . '/blocks/footer/change_viewport.php'; ?>
@@ -141,5 +145,10 @@ if ($template->hasMainWrapper()) {
         $.get('/ajax/sale/forgot-basket/close-page/');
     }
 </script>
+
+<a href="https://fashion.4lapy.ru/odezhda-i-obuv/?section_id=176&Season=00000009&sort=popular" target="_blank" class="b-new-year-accessories js-new-year-accessories">
+    <img src="/static/build/images/inhtml/new-year-accessories.png">
+</a>
+
 </body>
 </html>

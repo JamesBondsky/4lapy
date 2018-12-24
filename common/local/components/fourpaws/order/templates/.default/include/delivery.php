@@ -203,6 +203,23 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
             </div>
         </div>
     </div>
+    <div class="b-input-line b-radio-tab__address-map js-courierdelivery-map hidden">
+        <div class="b-radio-tab-map b-radio-tab-map--order">
+            <div class="b-radio-tab-map__label-wrapper">
+                <a href="javascript:void(0);" class="b-radio-tab-map__label js-toogle-courierdelivery-map">
+                    <span class="b-radio-tab-map__label-inner">
+                        Место доставки на карте
+                    </span>
+                    <span class="b-icon b-icon--map">
+                        <?= new SvgDecorator('icon-arrow-down', 10, 12) ?>
+                    </span>
+                </a>
+            </div>
+            <div class="b-radio-tab-map__map-wrapper">
+                <div class="b-radio-tab-map__map" id="map_courier_delivery"></div>
+            </div>
+        </div>
+    </div>
 </div>
 
 
@@ -236,9 +253,11 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
             </label>
         </div>
         <div class="b-input b-input--registration-form">
-        <textarea class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form"
+        <textarea class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form b-input__input-field--focus-placeholder"
                   id="order-comment"
-                  name="comment"><?= $storage->getComment() ?></textarea>
+                  name="comment"
+                  placeholder="Укажите здесь дополнительную информацию к заказу.
+Например, если для доставки заказа курьеру необходимо въехать на территорию с пропускным режимом. В таком случае курьер свяжется с Вами заранее для заказа пропуска на территорию."><?= $storage->getComment() ?></textarea>
             <div class="b-error">
                 <span class="js-message"></span>
             </div>

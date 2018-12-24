@@ -57,26 +57,28 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
     <?php
     $asset = Asset::getInstance();
     $asset->addCss($markup->getCssFile());
-    //$asset->addJs('https://api-maps.yandex.ru/2.1.68/?lang=ru_RU');
-    $asset->addJs('/api-maps.yandex.ru.js');
+    $asset->addJs('//api-maps.yandex.ru/2.1/?apikey=ad666cd3-80be-4111-af2d-209dddf2c55e&lang=ru_RU');
+    //$asset->addJs('/api-maps.yandex.ru.js');
     $asset->addJs('https://www.google.com/recaptcha/api.js?hl=ru');
 
     /** onesignal.com */
-    if ($USER->IsAdmin()) { /** [todo] remove after production tests */
-        if (getenv('ONESIGNAL_API_KEY')) {
-            $asset->addString('<script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>');
-            $asset->addString('
-                <script>
-                  var OneSignal = window.OneSignal || [];
-                  OneSignal.push(function() {
-                    OneSignal.init({
-                      appId: \''.getenv('ONESIGNAL_API_KEY').'\',
-                      autoRegister: true
-                    });
-                  });
-                </script>
-            ');
-        }
+    if (getenv('ONESIGNAL_API_KEY')) {
+        $asset->addString('<script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>');
+        $asset->addString('
+            <script>
+              var OneSignal = window.OneSignal || [];
+              OneSignal.push(function() {
+                OneSignal.init({
+                  appId: \''.getenv('ONESIGNAL_API_KEY').'\',
+                  autoRegister: true,
+                  welcomeNotification: {
+                    "title": "Зоомагазин \"Четыре лапы\"",
+                    "message": "Спасибо за подписку!"
+                  }
+                });
+              });
+            </script>
+        ');
     }
 
     ?>

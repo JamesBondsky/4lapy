@@ -6,6 +6,7 @@
 
 namespace FourPaws\Search\Helper;
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Elastica\Client;
 use Elastica\Document;
@@ -16,8 +17,13 @@ use Elastica\Query;
 use Elastica\Search;
 use Exception;
 use FourPaws\App\Env;
+use FourPaws\BitrixOrm\Collection\CollectionBase;
+use FourPaws\Catalog\Model\Brand;
 use FourPaws\Catalog\Model\Product;
+use FourPaws\Catalog\Query\BrandQuery;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\Search\Enum\DocumentType;
 use FourPaws\Search\Exception\Index\IndexExceptionInterface;
 use FourPaws\Search\Exception\Index\NotActiveException;
@@ -163,7 +169,6 @@ class IndexHelper implements LoggerAwareInterface
                                 'tokenizer' => 'standard',
                                 'filter'    => [
                                     'lowercase',
-                                    'synonym',
                                     'russian_stop',
                                     'russian_stemmer',
                                     'autocomplete_filter',
@@ -174,18 +179,35 @@ class IndexHelper implements LoggerAwareInterface
                                 'tokenizer' => 'standard',
                                 'filter'    => [
                                     'lowercase',
-                                    'synonym',
                                     'russian_stop',
                                     'russian_stemmer',
                                 ],
                             ],
-                            'sounds-similar'   => [
+                            'full-text-brand-hard-search' => [
+                                'type'      => 'custom',
                                 'tokenizer' => 'standard',
                                 'filter'    => [
                                     'lowercase',
-                                    'synonym',
-                                    'transform-to-latin',
-                                    'sounds-similar',
+                                    'russian_stop',
+                                    'russian_stemmer',
+                                ],
+                            ],
+                            'word-suggest-hard-search' => [
+                                'type'      => 'custom',
+                                'tokenizer' => 'standard',
+                                'filter'    => [
+                                    'lowercase',
+                                    'russian_stop',
+                                    'russian_stemmer',
+                                ],
+                            ],
+                            'detail-text-analyzator' => [
+                                'type'      => 'custom',
+                                'tokenizer' => 'standard',
+                                'filter'    => [
+                                    'lowercase',
+                                    'russian_stop',
+                                    'russian_stemmer',
                                 ],
                             ],
                         ],
@@ -203,18 +225,24 @@ class IndexHelper implements LoggerAwareInterface
                                 'type'     => 'stemmer',
                                 'language' => 'russian',
                             ],
-                            'sounds-similar'      => [
-                                'type'    => 'phonetic',
-                                'encoder' => 'double_metaphone',
-                            ],
                             'transform-to-latin'  => [
                                 'type' => 'icu_transform',
                                 'id'   => 'Any-Latin; NFD; [:Nonspacing Mark:] Remove; NFC',
                             ],
-                            'synonym'             => [
-                                'type'          => 'synonym',
-                                'synonyms_path' => 'resources/synonym.txt',
+                            'phonetic_cyrillic' => [
+                                'type' => 'phonetic',
+                                'encoder' => 'beider_morse',
+                                'rule_type' => 'exact',
+                                'name_type' => 'generic',
+                                'languageset' => ['cyrillic']
                             ],
+                            'phonetic_english' => [
+                                'type' => 'phonetic',
+                                'encoder' => 'beider_morse',
+                                'rule_type' => 'exact',
+                                'name_type' => 'generic',
+                                'languageset' => ['english']
+                            ]
                         ],
                         'char_filter' => [
                             'ru_en' => [
@@ -232,33 +260,34 @@ class IndexHelper implements LoggerAwareInterface
                 'product' => [
                     '_all'       => ['enabled' => false],
                     'properties' => [
-                        'suggest'                          => [
+                        'suggest'             => [
                             'type'            => 'completion',
                             'analyzer'        => 'autocomplete',
                             'search_analyzer' => 'standard',
                         ],
-                        'brand'                            => [
+                        'brand' => [
                             'properties' => [
-                                'active'             => ['type' => 'boolean'],
-                                'dateActiveFrom'     => ['type' => 'date', 'format' => 'date_optional_time'],
-                                'dateActiveTo'       => ['type' => 'date', 'format' => 'date_optional_time'],
-                                'ID'                 => ['type' => 'integer'],
-                                'CODE'               => ['type' => 'keyword'],
-                                'XML_ID'             => ['type' => 'keyword'],
-                                'SORT'               => ['type' => 'integer'],
-                                'PREVIEW_TEXT'       => ['type' => 'text'],
-                                'PREVIEW_TEXT_TYPE'  => ['type' => 'keyword', 'index' => false],
-                                'DETAIL_TEXT'        => ['type' => 'text'],
-                                'DETAIL_TEXT_TYPE'   => ['type' => 'keyword', 'index' => false],
-                                'DETAIL_PAGE_URL'    => ['type' => 'text', 'index' => false],
-                                'CANONICAL_PAGE_URL' => ['type' => 'text', 'index' => false],
-                                'NAME'               => ['type' => 'text'],
-                                'PROPERTY_POPULAR'   => ['type' => 'boolean'],
+                                'active'                          => ['type' => 'boolean'],
+                                'dateActiveFrom'                  => ['type' => 'date', 'format' => 'date_optional_time'],
+                                'dateActiveTo'                    => ['type' => 'date', 'format' => 'date_optional_time'],
+                                'ID'                              => ['type' => 'integer'],
+                                'CODE'                            => ['type' => 'keyword'],
+                                'XML_ID'                          => ['type' => 'keyword'],
+                                'SORT'                            => ['type' => 'integer'],
+                                'PREVIEW_TEXT'                    => ['type' => 'text', 'analyzer' => 'detail-text-analyzator'],
+                                'PREVIEW_TEXT_TYPE'               => ['type' => 'keyword', 'index' => false],
+                                'DETAIL_TEXT'                     => ['type' => 'text', 'analyzer' => 'detail-text-analyzator'],
+                                'DETAIL_TEXT_TYPE'                => ['type' => 'keyword', 'index' => false],
+                                'DETAIL_PAGE_URL'                 => ['type' => 'text', 'index' => false],
+                                'CANONICAL_PAGE_URL'              => ['type' => 'text', 'index' => false],
+                                'NAME'                            => ['type' => 'text'],
+                                'PROPERTY_POPULAR'                => ['type' => 'boolean'],
                                 'PROPERTY_CATALOG_INNER_BANNER'   => ['type' => 'text'],
+                                'PROPERTY_TRANSLITS'              => ['type' => 'text'],
                             ],
                         ],
-                        'offers'                           => [
-                            'type'       => 'nested',
+                        'offers' => [
+                            'type' => 'nested',
                             'properties' => [
                                 'active'                    => ['type' => 'boolean'],
                                 'dateActiveFrom'            => ['type' => 'date', 'format' => 'date_optional_time'],
@@ -294,19 +323,28 @@ class IndexHelper implements LoggerAwareInterface
                         ],
                         'active'                           => ['type' => 'boolean'],
                         'sectionIdList'                    => ['type' => 'integer'],
+                        'sectionName'                      => ['type' => 'text'],
                         'ID'                               => ['type' => 'integer'],
                         'CODE'                             => ['type' => 'keyword'],
                         'XML_ID'                           => ['type' => 'keyword'],
                         'SORT'                             => ['type' => 'integer'],
-                        'PREVIEW_TEXT'                     => ['type' => 'text'],
+                        'PREVIEW_TEXT'                     => ['type' => 'text', 'analyzer' => 'detail-text-analyzator'],
                         'PREVIEW_TEXT_TYPE'                => ['type' => 'keyword', 'index' => false],
-                        'DETAIL_TEXT'                      => ['type' => 'text'],
+                        'DETAIL_TEXT'                      => ['type' => 'text', 'analyzer' => 'detail-text-analyzator'],
                         'DETAIL_TEXT_TYPE'                 => ['type' => 'keyword', 'index' => false],
                         'DETAIL_PAGE_URL'                  => ['type' => 'text', 'index' => false],
                         'CANONICAL_PAGE_URL'               => ['type' => 'text', 'index' => false],
                         'dateActiveFrom'                   => ['type' => 'date', 'format' => 'date_optional_time'],
                         'dateActiveTo'                     => ['type' => 'date', 'format' => 'date_optional_time'],
-                        'NAME'                             => ['type' => 'text'],
+                        'NAME'                             => [
+                            'type' => 'text',
+                            'fields' => [
+                                'synonym' => [
+                                    'type' => 'text',
+                                    'analyzer' => 'detail-text-analyzator'
+                                ]
+                            ]
+                        ],
                         'PROPERTY_BRAND'                   => ['type' => 'integer'],
                         'PROPERTY_FOR_WHO'                 => ['type' => 'keyword'],
                         'PROPERTY_PET_SIZE'                => ['type' => 'keyword'],
@@ -348,8 +386,31 @@ class IndexHelper implements LoggerAwareInterface
                         'hasImages'                        => ['type' => 'boolean'],
                         'hasStocks'                        => ['type' => 'boolean'],
                         'deliveryAvailability'             => ['type' => 'keyword'],
+                        'searchBooster'                    => ['type' => 'text', 'analyzer' => 'detail-text-analyzator']
                     ],
                 ],
+                'brand' => [
+                    '_all'       => ['enabled' => false],
+                    'properties' => [
+                        'active'                          => ['type' => 'boolean'],
+                        'dateActiveFrom'                  => ['type' => 'date', 'format' => 'date_optional_time'],
+                        'dateActiveTo'                    => ['type' => 'date', 'format' => 'date_optional_time'],
+                        'ID'                              => ['type' => 'integer'],
+                        'CODE'                            => ['type' => 'keyword'],
+                        'XML_ID'                          => ['type' => 'keyword'],
+                        'SORT'                            => ['type' => 'integer'],
+                        'PREVIEW_TEXT'                    => ['type' => 'text', 'analyzer' => 'detail-text-analyzator'],
+                        'PREVIEW_TEXT_TYPE'               => ['type' => 'keyword', 'index' => false],
+                        'DETAIL_TEXT'                     => [ 'type' => 'text', 'analyzer' => 'detail-text-analyzator'],
+                        'DETAIL_TEXT_TYPE'                => ['type' => 'keyword', 'index' => false],
+                        'DETAIL_PAGE_URL'                 => ['type' => 'text', 'index' => false],
+                        'CANONICAL_PAGE_URL'              => ['type' => 'text', 'index' => false],
+                        'NAME'                            => ['type' => 'text'],
+                        'PROPERTY_POPULAR'                => ['type' => 'boolean'],
+                        'PROPERTY_CATALOG_INNER_BANNER'   => ['type' => 'text'],
+                        'PROPERTY_TRANSLITS'              => ['type' => 'text'],
+                    ]
+                ]
             ],
         ];
     }
@@ -413,6 +474,60 @@ class IndexHelper implements LoggerAwareInterface
         return true;
     }
 
+    public function indexBrand(Brand $brand)
+    {
+        return $this->indexBrands([$brand]);
+    }
+
+    /**
+     * @param Brand[] $brands
+     * @return bool
+     */
+    public function indexBrands(array $brands)
+    {
+        $brands = array_filter($brands, function ($data) {
+            try {
+                $result = $this->canIndexBrand($data);
+            } catch (IndexExceptionInterface $e) {
+                $this->log()->debug(
+                    \sprintf(
+                        'Skipping brand #%s: %s',
+                        $data instanceof Brand ? $data->getId() : 'N',
+                        $e->getMessage()
+                    )
+                );
+                $result = false;
+            }
+
+            return $result;
+        });
+
+        if (!$brands) {
+            return true;
+        }
+
+        $documents = array_map(function (Brand $brand) {
+            return $this->factory->makeBrandDocument($brand);
+        }, $brands);
+
+        $responseSet = $this->getCatalogIndex()->addDocuments($documents);
+
+        if (!$responseSet->isOk()) {
+            $this->log()->error(
+                $responseSet->getError(),
+                [
+                    'brands' => array_map(function (Brand $brand) {
+                        return $brand->getId();
+                    }, $brands),
+                ]
+            );
+
+            return false;
+        }
+
+        return true;
+    }
+
     /**
      * **Синхронно** индексирует товары в Elasticsearch
      *
@@ -422,6 +537,14 @@ class IndexHelper implements LoggerAwareInterface
      */
     public function indexAll(bool $flushBaseFilter = false, int $batchSize = 500)
     {
+        $brandQuery = (new BrandQuery())
+            ->withOrder(['ID' => 'DESC']);
+        if ($flushBaseFilter) {
+            $brandQuery->withFilter([]);
+        }
+        $allBrands = $brandQuery->exec();
+        $this->__indexAll(Brand::class, $allBrands, $batchSize);
+
         $query = (new ProductQuery())
             ->withOrder(['ID' => 'DESC']);
 
@@ -430,38 +553,103 @@ class IndexHelper implements LoggerAwareInterface
         }
 
         $allProducts = $query->exec();
+        $this->__indexAll(Product::class, $allProducts, $batchSize);
+//        $indexOk = 0;
+//        $indexError = 0;
+//        $indexTotal = $allProducts->count();
+//
+//        $this->log()->info(
+//            sprintf(
+//                'Всего товаров: %d. Идёт индексация товаров... Ждите.',
+//                $indexTotal
+//            )
+//        );
+//
+//        $allProductsChunked = array_chunk($allProducts->toArray(), $batchSize);
+//        unset($allProducts);
+//        unset($query);
+//
+//        $this->log()->debug(sprintf('memory: %s, memory_pick_usage: %s', memory_get_usage(true), memory_get_peak_usage(true)));
+//        foreach ($allProductsChunked as $i => $allProductsChunk) {
+//            if ($this->indexProducts($allProductsChunk)) {
+//                $indexOk += \count($allProductsChunk);
+//            } else {
+//                $indexError +=\count($allProductsChunk);
+//            }
+//            unset($allProductsChunked[$i]);
+//
+//            $this->log()->info(sprintf('Индексировано товаров %d...', $indexOk));
+//            $this->log()->debug(sprintf('memory: %s, memory_pick_usage: %s', memory_get_usage(true), memory_get_peak_usage(true)));
+//        }
+//
+//        $this->log()->info(
+//            sprintf(
+//                "Товаров: %d;\tиндексировано: %d;\tошибок: %d;",
+//                $indexTotal,
+//                $indexOk,
+//                $indexError
+//            )
+//        );
+    }
 
+    /**
+     * @param string $type
+     * @param CollectionBase $result
+     * @param int $batchSize
+     */
+    private function __indexAll(string $type, CollectionBase $result, int $batchSize = 500)
+    {
         $indexOk = 0;
         $indexError = 0;
-        $indexTotal = $allProducts->count();
+        $indexTotal = $result->count();
+        $entityName = $method = '';
+
+        switch ($type) {
+            case Product::class:
+                $entityName = 'товаров';
+                $method = 'indexProducts';
+                break;
+            case Brand::class:
+                $entityName = 'брендов';
+                $method = 'indexBrands';
+                break;
+        }
+
 
         $this->log()->info(
             sprintf(
-                'Всего товаров: %d. Идёт индексация товаров... Ждите.',
+                'Всего %s: %d. Идёт индексация товаров... Ждите.',
+                $entityName,
                 $indexTotal
             )
         );
 
-        $allProductsChunked = array_chunk($allProducts->toArray(), $batchSize);
-        unset($allProducts);
-        unset($query);
+        $allItemsChunked = array_chunk($result->toArray(), $batchSize);
+        unset($result);
 
         $this->log()->debug(sprintf('memory: %s, memory_pick_usage: %s', memory_get_usage(true), memory_get_peak_usage(true)));
-        foreach ($allProductsChunked as $i => $allProductsChunk) {
-            if ($this->indexProducts($allProductsChunk)) {
-                $indexOk += \count($allProductsChunk);
-            } else {
-                $indexError +=\count($allProductsChunk);
-            }
-            unset($allProductsChunked[$i]);
+        foreach ($allItemsChunked as $i => $allItemChunk) {
 
-            $this->log()->info(sprintf('Индексировано товаров %d...', $indexOk));
+            /**
+             * @see indexProducts for Product::class
+             * @see indexBrands for Brand::class
+             */
+            if (call_user_func([$this, $method], $allItemChunk)) {
+                $indexOk += \count($allItemChunk);
+            } else {
+                $indexError += \count($allItemChunk);
+            }
+
+            unset($allItemsChunked[$i]);
+
+            $this->log()->info(sprintf('Индексировано %s %d...', $entityName, $indexOk));
             $this->log()->debug(sprintf('memory: %s, memory_pick_usage: %s', memory_get_usage(true), memory_get_peak_usage(true)));
         }
 
         $this->log()->info(
             sprintf(
-                "Товаров: %d;\tиндексировано: %d;\tошибок: %d;",
+                "%s: %d;\tиндексировано: %d;\tошибок: %d;",
+                $entityName,
                 $indexTotal,
                 $indexOk,
                 $indexError
@@ -556,6 +744,35 @@ class IndexHelper implements LoggerAwareInterface
             ->setQuery(new Query())
             ->addIndex($this->getCatalogIndex())
             ->addType(DocumentType::PRODUCT);
+    }
+
+    public function createBrandSearch(): Search
+    {
+        /*
+         * Обязательно надо создавать явно новый объект Query,
+         * иначе даже при создании новых объектов Search они
+         * будут разделять общий объект Query и выставление
+         * size = 0 для дозапросов аггрегаций будет ломать
+         * постраничную навигацию каталога.
+         */
+        return (new Search($this->client))
+            ->setQuery(new Query())
+            ->addIndex($this->getCatalogIndex())
+            ->addType(DocumentType::BRAND);
+    }
+
+    public function createAllTypesSearch(): \Elastica\Multi\Search
+    {
+        return (new \Elastica\Multi\Search($this->client));
+//            ->addSearch($this->createProductSearch())
+//            ->addSearch($this->createBrandSearch());
+    }
+
+    public function createSuggestSearch(): Search
+    {
+        return (new Search($this->client));
+//            ->addSearch($this->createProductSearch())
+//            ->addSearch($this->createBrandSearch());
     }
 
     /**
@@ -689,5 +906,74 @@ class IndexHelper implements LoggerAwareInterface
         }
 
         return true;
+    }
+
+    /**
+     * @param $brand
+     *
+     * @return bool
+     * @throws NotActiveException
+     * @throws WrongEntityPassedException
+     */
+    private function canIndexBrand($brand): bool
+    {
+        if (!$brand instanceof Brand) {
+            throw new WrongEntityPassedException('Invalid entity type');
+        }
+
+        if (!$brand->isActive()) {
+            throw new NotActiveException('Brand is not active');
+        }
+
+        return true;
+    }
+
+    static function getAlias($searchString)
+    {
+        $arSelect = [
+            'ID',
+            'IBLOCK_ID',
+            'NAME',
+            'PROPERTY_TRANSLITS'
+        ];
+
+        $arFilter = [
+            'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::BRANDS),
+            'ACTIVE' => 'Y',
+            '!PROPERTY_TRANSLITS' => false
+        ];
+
+        $brandFound = false;
+        $dbItems = \CIBlockElement::GetList([], $arFilter, false, false, $arSelect);
+        while ($arItem = $dbItems->Fetch()) {
+            if (!empty($arItem['PROPERTY_TRANSLITS_VALUE'])) {
+                $arTranslits = explode(',', $arItem['PROPERTY_TRANSLITS_VALUE']);
+                foreach ($arTranslits as $translit) {
+                    $translit = mb_strtolower(trim($translit));
+                    $pos = mb_strpos($searchString, $translit);
+
+                    if ($pos !== false) {
+                        /** не начало строки без пробела */
+                        if (($pos > 0) && (mb_substr($searchString, $pos-1,1) != ' ')) {
+                            continue;
+                        }
+
+                        /** не конец строки без пробела */
+                        if (($pos + mb_strlen($translit) != mb_strlen($searchString)) && mb_substr($searchString, $pos + mb_strlen($translit), 1) != ' ') {
+                            continue;
+                        }
+
+                        $searchString = str_replace($translit,
+                            mb_strtolower($arItem['NAME']), $searchString);
+                        $brandFound = true;
+                        break;
+                    }
+                }
+            }
+            if ($brandFound) {
+                break;
+            }
+        }
+        return $searchString;
     }
 }

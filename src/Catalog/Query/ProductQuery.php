@@ -101,7 +101,10 @@ class ProductQuery extends IblockElementQuery
             'PACKING_COMBINATION',
             'LAYOUT_DESCRIPTION',
             'LAYOUT_COMPOSITION',
-            'LAYOUT_RECOMMENDATIONS'
+            'LAYOUT_RECOMMENDATIONS',
+            'AQUARIUM_COMBINATION',
+            'POWER_MIN',
+            'POWER_MAX'
         ];
     }
 
