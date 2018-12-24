@@ -47,6 +47,7 @@ class SmsZagruzkaService extends SmsService
         $logContext = [
             'number' => $number,
             'immediate' => $immediate,
+            'message' => $text,
         ];
 
         try {
