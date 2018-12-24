@@ -69,7 +69,7 @@ class SmsZagruzkaService extends SmsService
             try {
 
                 $result = $this->client->send($sms);
-                $this->logger->info(\sprintf('Sms was sent: %s.', $number), array_merge($logContext, ['result' => $result->getBody()]));
+                $this->logger->info(\sprintf('Sms was sent: %s.', $number), array_merge($logContext, ['service' => self::class, 'result' => [$result->getStatusCode(), $result->getBody()->getContents()]]));
 
                 /** [todo] need correct exception */
             } catch (SmsTrafficApiException $e) {
