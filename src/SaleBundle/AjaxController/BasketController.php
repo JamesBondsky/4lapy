@@ -611,29 +611,35 @@ class BasketController extends Controller implements LoggerAwareInterface
     public function selectGiftAction(Request $request)
     {
         $response = null;
-        $offerId = (int)$request->get('offerId', 0);
+        $offers = (int)$request->get('offerId', 0);
         $discountId = (int)$request->get('actionId', 0);
-        try {
-            /** @noinspection PhpUndefinedMethodInspection */
-            $this->basketService->getAdder('gift')->selectGift($offerId, $discountId);
-        } catch (BaseExceptionInterface $e) {
-            $response = JsonErrorResponse::create(
-                $e->getMessage(),
-                200,
-                [],
-                ['reload' => true]
-            );
+
+        if (!is_array($offers)) {
+            $offers = [$offers];
         }
-        if (null === $response) {
-            $response = JsonSuccessResponse::createWithData(
-                '',
-                [
-                    'giftId' => 9001,
-                    'basket' => $this->basketViewService->getBasketHtml(true)
-                ],
-                200,
-                ['reload' => true] // todo разобраться почему это нужно на stage
-            );
+        foreach ($offers as $offerId) {
+            try {
+                /** @noinspection PhpUndefinedMethodInspection */
+                $this->basketService->getAdder('gift')->selectGift($offerId, $discountId);
+            } catch (BaseExceptionInterface $e) {
+                $response = JsonErrorResponse::create(
+                    $e->getMessage(),
+                    200,
+                    [],
+                    ['reload' => true]
+                );
+            }
+            if (null === $response) {
+                $response = JsonSuccessResponse::createWithData(
+                    '',
+                    [
+                        'giftId' => 9001,
+                        'basket' => $this->basketViewService->getBasketHtml(true)
+                    ],
+                    200,
+                    ['reload' => true] // todo разобраться почему это нужно на stage
+                );
+            }
         }
 
         return $response;
