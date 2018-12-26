@@ -15,7 +15,7 @@
                      title=""/>
             </span>
             <div class="b-common-item__info-center-block b-common-item__info-center-block--popup-gift">
-                <a class="b-common-item__description-wrap" href="javascript:void(0);" title="">
+                <a class="b-common-item__description-wrap js-link-item-present-order" href="javascript:void(0);" title="">
                     <span class="b-clipped-text b-clipped-text--popup-gift">
                         <span class="js-name-replace">
                             <strong>Хиллс</strong>
@@ -26,6 +26,12 @@
                         <span class="b-common-item__name-value js-value-weight">100 г </span>
                     </span>
                 </a>
+            </div>
+            <div class="b-plus-minus b-plus-minus--presents js-plus-minus-cont">
+                <a class="b-plus-minus__minus js-minus" href="javascript:void(0);"></a>
+                <input title="" class="b-plus-minus__count js-plus-minus-count" type="text" value="1" data-cont-max="1">
+                <a class="b-plus-minus__plus js-plus" href="javascript:void(0);"></a>
+                <div class="b-plus-minus__disabled"></div>
             </div>
             <div class="b-choose-radio">
                 <input class="b-choose-radio__input js-advice-input" type="checkbox"
