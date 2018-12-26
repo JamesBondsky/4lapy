@@ -88,9 +88,11 @@ class Manager
             $couponStorage = $container->get(CouponStorageInterface::class);
 
             // Автоматически добавляем подарки
-            $basketService
-                ->getAdder('gift', $order)
-                ->processOrder();
+            if ($_SERVER['REQUEST_URI'] != '/sale/order/') {
+                $basketService
+                    ->getAdder('gift', $order)
+                    ->processOrder();
+            }
 
             // Удаляем подарки, акции которых не выполнились
             $basketService
