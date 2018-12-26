@@ -10,6 +10,7 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\Helpers\ProtectorHelper;
 
 /** @global \FourPaws\Components\FourPawsFastOrderComponent $component */
 
@@ -285,6 +286,10 @@ $basketRows = $arResult['BASKET_ROWS'];
         <span class="js-message"></span>
     </div>
     <button class="b-button b-button--one-click">Отправить</button>
+
+    <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_FAST_ORDER_CREATE); ?>
+    <input type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
+
 </form>
 <div class="b-preloader b-preloader--fixed">
     <div class="b-preloader__spinner">
