@@ -611,16 +611,13 @@ class BasketController extends Controller implements LoggerAwareInterface
     public function selectGiftAction(Request $request)
     {
         $response = null;
-        $offers = (int)$request->get('offerId', 0);
+        $offers = $request->get('offerId', 0);
         $discountId = (int)$request->get('actionId', 0);
 
-        if (!is_array($offers)) {
-            $offers = [$offers];
-        }
-        foreach ($offers as $offerId) {
+        foreach ($offers as $offer) {
             try {
                 /** @noinspection PhpUndefinedMethodInspection */
-                $this->basketService->getAdder('gift')->selectGift($offerId, $discountId);
+                $this->basketService->getAdder('gift')->selectGift($offer['id'], $discountId, $offer['quantity']);
             } catch (BaseExceptionInterface $e) {
                 $response = JsonErrorResponse::create(
                     $e->getMessage(),

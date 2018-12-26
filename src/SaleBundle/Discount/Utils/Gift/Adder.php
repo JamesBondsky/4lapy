@@ -208,18 +208,15 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
      * @param int $offerId
      * @param int $discountId
      *
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentException
+     * @param int $quantity
+     * @throws BitrixProxyException
      * @throws LoaderException
      * @throws ObjectNotFoundException
-     * @throws RuntimeException
-     * @throws NotFoundException
-     * @throws InvalidArgumentException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws Exception
-     * @throws BitrixProxyException
      */
-    public function selectGift(int $offerId, int $discountId): void
+    public function selectGift(int $offerId, int $discountId, int $quantity = 1): void
     {
         $possibleGiftGroups = Gift::getPossibleGiftGroups($this->order, $discountId);
         if (!isset($possibleGiftGroups[$discountId])) {
@@ -253,6 +250,6 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                 break;
             }
         }
-        $this->addGift($offerId, 1, $discountId, true);
+        $this->addGift($offerId, $quantity, $discountId, true);
     }
 }
