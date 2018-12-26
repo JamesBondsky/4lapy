@@ -81,6 +81,7 @@ class SmsService implements LoggerAwareInterface
         $logContext = [
             'number' => $number,
             'immediate' => $immediate,
+            'message' => $text,
         ];
         try {
             $sms = new IndividualSms(
