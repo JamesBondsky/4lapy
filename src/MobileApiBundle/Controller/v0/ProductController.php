@@ -16,14 +16,27 @@ use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Dto\Request\GoodsListRequest;
 use FourPaws\MobileApiBundle\Dto\Request\GoodsSearchBarcodeRequest;
 use FourPaws\MobileApiBundle\Dto\Request\SpecialOffersRequest;
-use FourPaws\MobileApiBundle\Dto\Response\GoodsListResponse;
 use FourPaws\MobileApiBundle\Dto\Response\SpecialOffersResponse;
-use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct\Tag;
+use FourPaws\MobileApiBundle\Dto\Request\GoodsItemRequest;
+use FourPaws\MobileApiBundle\Dto\Response;
+use Symfony\Component\HttpFoundation\Request;
+use FourPaws\MobileApiBundle\Services\Api\CatalogService as ApiCatalogService;
+
 
 class ProductController extends FOSRestController
 {
+    /**
+     * @var ApiCatalogService
+     */
+    private $apiCatalogService;
+
+    public function __construct(ApiCatalogService $apiCatalogService)
+    {
+        $this->apiCatalogService = $apiCatalogService;
+    }
+
     /**
      * @Rest\Get(path="/special_offers/")
      * @Rest\View()
@@ -59,6 +72,7 @@ class ProductController extends FOSRestController
 
             $product = new ShortProduct();
             $product
+                ->setId($offer['ID'])
                 ->setTitle($offer['NAME'])
                 ->setXmlId($offer['XML_ID'])
                 ->setPicture(($offer['PROPERTY_VALUES']['IMG'][0]) ? \CFile::GetPath($offer['PROPERTY_VALUES']['IMG'][0]) : '')
@@ -100,11 +114,43 @@ class ProductController extends FOSRestController
 
     /**
      * @Rest\Get("/goods_list/")
-     * @see GoodsListRequest
-     * @see GoodsListResponse
+     * @Rest\View()
+     * @param Request $request
+     * @param GoodsListRequest $goodsListRequest
+     * @return Response\ProductListResponse
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\Catalog\Exception\CategoryNotFoundException
      */
-    public function getGoodsListAction()
+    public function getGoodsListAction(Request $request, GoodsListRequest $goodsListRequest)
     {
+        $categoryId = $goodsListRequest->getCategoryId();
+        $sort = $goodsListRequest->getSort();
+        $page = $goodsListRequest->getPage();
+        $count = $goodsListRequest->getCount();
+
+        $productsList = $this->apiCatalogService->getProductsList($request, $categoryId, $sort, $count, $page);
+        /** @var \CIBlockResult $cdbResult */
+        $cdbResult = $productsList->get('cdbResult');
+        return (new Response\ProductListResponse())
+            ->setProductList($productsList->get('products'))
+            ->setTotalPages($cdbResult->NavPageCount)
+            ->setTotalItems($cdbResult->NavRecordCount);
+    }
+
+    /**
+     * @Rest\Get("/goods_item/")
+     * @Rest\View()
+     * @param GoodsItemRequest $goodsItemRequest
+     * @return Response
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public function getGoodsItemAction(GoodsItemRequest $goodsItemRequest)
+    {
+        $offer = $this->apiCatalogService->getOffer($goodsItemRequest->getId());
+        return (new Response())->setData(['goods' => $offer]);
     }
 
     /**

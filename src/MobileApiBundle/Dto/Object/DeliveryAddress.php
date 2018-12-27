@@ -70,7 +70,7 @@ class DeliveryAddress
      * @Serializer\Type("string")
      * @var string
      */
-    protected $details;
+    protected $details = '';
 
     /**
      * @return int

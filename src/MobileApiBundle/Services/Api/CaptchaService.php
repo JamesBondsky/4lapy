@@ -10,23 +10,24 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\SmsService;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\MobileApiBundle\Services\BitrixCaptchaService;
-use FourPaws\UserBundle\Service\UserService as UserBundleService;
+use FourPaws\UserBundle\Repository\UserRepository;
 
 class CaptchaService
 {
     /**
-     * @var UserBundleService
+     *
+     * @var UserRepository
      */
-    private $userBundleService;
+    private $userRepository;
 
     /**
      * @var BitrixCaptchaService
      */
     private $bitrixCaptchaService;
 
-    public function __construct(UserBundleService $userBundleService)
+    public function __construct(UserRepository $userRepository)
     {
-        $this->userBundleService = $userBundleService;
+        $this->userRepository = $userRepository;
     }
 
     /**
@@ -88,11 +89,14 @@ class CaptchaService
      * @param string $phone
      * @param string $sender
      * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\UserBundle\Exception\NotFoundException
      */
     private function sendValidationInSms($phone, $sender)
     {
-        $user = $this->userBundleService->findOneByPhone($phone);
+        $user = $this->userRepository->findOneByPhone($phone);
         if (
             $sender == 'user_registration'
             || ($sender == 'edit_info' && !$user)
@@ -101,7 +105,9 @@ class CaptchaService
             $this->bitrixCaptchaService = new BitrixCaptchaService();
             $verificationCode = $this->bitrixCaptchaService->getCode();
             (new SmsService())->sendSmsImmediate('Код подтверждения: ' . $verificationCode, $phone);
-            $this->saveUserVerificationCode($user->getId(), $verificationCode);
+            if ($user) {
+                $this->saveUserVerificationCode(current($user)->getId(), $verificationCode);
+            }
         } else {
             throw new RuntimeException('Некорреткные условия для страницы с капчей');
         }
@@ -116,11 +122,11 @@ class CaptchaService
      */
     private function sendValidationInEmail($email, $sender)
     {
-        $user = $this->userBundleService->findOneByEmail($email);
+        $user = $this->userRepository->findOneByEmail($email);
 
         if ($sender == 'edit_info' && $user) {
             throw new RuntimeException('Этот email уже был использован для отправки капчи');
-        } elseif ($sender == 'card_activation' && $user && $user['ID'] != $this->userBundleService->getCurrentUserId()) {
+        } elseif ($sender == 'card_activation' && $user && $user['ID'] != $this->userRepository->getCurrentUserId()) {
             throw new RuntimeException('Этот email уже был использован для отправки капчи');
         }
 

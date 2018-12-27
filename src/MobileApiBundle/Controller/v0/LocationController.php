@@ -130,4 +130,22 @@ class LocationController extends FOSRestController
 
         return (new Response())->setData(['city' => $city]);
     }
+
+    /**
+     * @Rest\Get("/street_list/")
+     * @Rest\View()
+     *
+     * @return Response
+     */
+    public function getStreetListAction()
+    {
+
+        return (new Response())->setData([
+            'page' => 1,
+            'total_items' => 0,
+            'total_pages' => 0,
+            'street_list' => []
+        ]);
+    }
+
 }

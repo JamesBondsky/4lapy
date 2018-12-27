@@ -162,6 +162,7 @@ class StoreService
          * )->getTotalAmount();
          * }
          */
+
         $result->setId($store->getId());
         $result->setAvailabilityStatus('');
         $result->setCityId($store->getLocation());

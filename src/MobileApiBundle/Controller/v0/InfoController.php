@@ -42,7 +42,7 @@ class InfoController extends FOSRestController
             $infoRequest->getType(),
             $infoRequest->getInfoId(),
             $infoRequest->getFields()
-        )->getValues()]);
+        )]);
 
         return $response;
     }
