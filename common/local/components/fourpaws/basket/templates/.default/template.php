@@ -74,7 +74,7 @@ if ($arParams['IS_AJAX']) {
                         $disableClass = '';
 
                         /** @noinspection PhpUndefinedMethodInspection */
-                        if (1 > $component->basketService->getAdder('gift')->getExistGiftsQuantity($group, false)) {
+                        if (0 > $group['count'] - count($arResult['SELECTED_GIFTS'][$group['discountId']])) {
                             $disableClass = ' b-link-gift--disabled';
                         }
                         if ($group['list'] instanceof OfferCollection) {
