@@ -87,13 +87,6 @@ class Manager
             $manzana = $container->get(Manzana::class);
             $couponStorage = $container->get(CouponStorageInterface::class);
 
-            // Автоматически добавляем подарки
-            if ($_SERVER['REQUEST_URI'] != '/sale/order/') {
-                $basketService
-                    ->getAdder('gift', $order)
-                    ->processOrder();
-            }
-
             // Удаляем подарки, акции которых не выполнились
             $basketService
                 ->getCleaner('gift', $order)
