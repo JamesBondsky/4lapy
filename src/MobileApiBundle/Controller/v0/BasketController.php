@@ -70,12 +70,15 @@ class BasketController extends FOSRestController
 
     /**
      * Метод рассчитывает корзину.
-     * @Rest\Post(path="/user_cart_calc")
+     * @Rest\Post(path="/user_cart_calc/")
+     * @Rest\View()
+     *
      * @see UserCartCalcRequest
      * @see UserCartCalcResponse
      */
-    public function userCartCalcAction()
+    public function userCartCalcAction(UserCartCalcRequest $userCartCalcRequest)
     {
+        return (new UserCartCalcResponse());
     }
 
     /**
@@ -173,11 +176,14 @@ class BasketController extends FOSRestController
 
     /**
      * Оформление корзины / оформить заказ
-     * @Rest\Post(path="/user_cart_order")
+     * @Rest\Post(path="/user_cart_order/")
+     * @Rest\View()
+     *
      * @see UserCartOrderRequest
      * @see UserCartOrderResponse
      */
-    public function postUserCartOrder()
+    public function postUserCartOrderAction(UserCartOrderRequest $userCartOrderRequest)
     {
+        return (new UserCartOrderResponse());
     }
 }

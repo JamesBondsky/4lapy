@@ -12,7 +12,7 @@ use FourPaws\MobileApiBundle\Dto\Request\InfoRequest;
 use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
 use FourPaws\MobileApiBundle\Services\Api\InfoService;
 
-class InfoController extends FOSRestController
+class OffersController extends FOSRestController
 {
     /**
      * @var InfoService
@@ -25,26 +25,18 @@ class InfoController extends FOSRestController
     }
 
     /**
-     * Получить статичные разделы
+     * Получить типы акций
      *
-     * @todo Статичные страницы, Вакансии, Конкурсы, Условия доставки
-     * @Rest\Get("/info/")
+     * @Rest\Get("/offer_types/")
      * @Rest\View()
-     *
-     * @param InfoRequest $infoRequest
      *
      * @return ApiResponse
      */
-    public function getInfoAction(InfoRequest $infoRequest): ApiResponse
+    public function getOfferTypesAction(): ApiResponse
     {
         return (new ApiResponse())
             ->setData([
-                'info' => $this->infoService->getInfo(
-                    $infoRequest->getType(),
-                    $infoRequest->getInfoId(),
-                    $infoRequest->getFields(),
-                    $infoRequest->getOfferTypeCode()
-                )
+                'offerTypes' => $this->infoService->getOfferTypes()
             ]);
     }
 }

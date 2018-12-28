@@ -15,7 +15,7 @@ class DeliveryTime
     protected $id;
 
     /**
-     * @Serializer\Type("DateTime<d.m.Y>")
+     * @Serializer\Type("DateTime<'d.m.Y'>")
      * @Serializer\SerializedName("delivery_date")
      * @var \DateTime
      */

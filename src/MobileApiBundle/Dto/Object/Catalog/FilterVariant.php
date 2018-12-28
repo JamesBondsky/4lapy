@@ -24,6 +24,11 @@ class FilterVariant
      */
     protected $name;
 
+    /**
+     * FilterVariant constructor.
+     * @param string $id
+     * @param string $name
+     */
     public function __construct(string $id, string $name)
     {
         $this->id = $id;

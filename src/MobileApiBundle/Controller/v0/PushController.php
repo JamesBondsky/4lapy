@@ -39,7 +39,7 @@ class PushController extends FOSRestController
                 );
          */
         return (new Response())
-            ->setData(['ok']);
+            ->setData(['messages' => []]);
     }
 
     /**

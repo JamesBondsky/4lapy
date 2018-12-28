@@ -15,6 +15,7 @@ use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Dto\Request\GoodsListRequest;
 use FourPaws\MobileApiBundle\Dto\Request\GoodsSearchBarcodeRequest;
+use FourPaws\MobileApiBundle\Dto\Request\GoodsSearchRequest;
 use FourPaws\MobileApiBundle\Dto\Request\SpecialOffersRequest;
 use FourPaws\MobileApiBundle\Dto\Response\SpecialOffersResponse;
 use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
@@ -151,6 +152,34 @@ class ProductController extends FOSRestController
     {
         $offer = $this->apiCatalogService->getOffer($goodsItemRequest->getId());
         return (new Response())->setData(['goods' => $offer]);
+    }
+
+    /**
+     * @Rest\Get("/goods_search/")
+     * @Rest\View()
+     * @param Request $request
+     * @param GoodsSearchRequest $goodsSearchRequest
+     * @return Response\ProductListResponse
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\Catalog\Exception\CategoryNotFoundException
+     */
+    public function getGoodsSearchAction(Request $request, GoodsSearchRequest $goodsSearchRequest)
+    {
+        $categoryId = 0;
+        $sort = 'relevance';
+        $page = $goodsSearchRequest->getPage();
+        $count = $goodsSearchRequest->getCount();
+        $query = $goodsSearchRequest->getQuery();
+
+        $productsList = $this->apiCatalogService->getProductsList($request, $categoryId, $sort, $count, $page, $query);
+        /** @var \CIBlockResult $cdbResult */
+        $cdbResult = $productsList->get('cdbResult');
+        return (new Response\ProductListResponse())
+            ->setProductList($productsList->get('products'))
+            ->setTotalPages($cdbResult->NavPageCount)
+            ->setTotalItems($cdbResult->NavRecordCount);
     }
 
     /**

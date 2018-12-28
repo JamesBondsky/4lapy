@@ -10,12 +10,16 @@ use Bitrix\Main\Web\Uri;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\BitrixOrm\Model\Image;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\MobileApiBundle\Dto\Object\Store\Store as ApiStore;
 use FourPaws\MobileApiBundle\Dto\Object\Store\StoreService as ApiStoreServiceDto;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListAvailableRequest;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListRequest;
+use FourPaws\MobileApiBundle\Dto\Request\StoreProductAvailableRequest;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService as AppStoreService;
+use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 
 class StoreService
 {
@@ -24,9 +28,15 @@ class StoreService
      */
     private $appStoreService;
 
-    public function __construct(AppStoreService $appStoreService)
+    /**
+     * @var ApiProductService
+     */
+    private $apiProductService;
+
+    public function __construct(AppStoreService $appStoreService, ApiProductService $apiProductService)
     {
         $this->appStoreService = $appStoreService;
+        $this->apiProductService = $apiProductService;
     }
 
     /**
@@ -60,6 +70,17 @@ class StoreService
     }
 
     /**
+     * @param $storeCode
+     * @return ApiStore
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
+    public function getOne($storeCode)
+    {
+        $store = $this->appStoreService->getStoreByXmlId($storeCode);
+        return $this->toApiFormat($store);
+    }
+
+    /**
      * @param StoreListAvailableRequest $storeListAvailableRequest
      * @return Collection
      * @throws \Bitrix\Main\ArgumentException
@@ -87,6 +108,38 @@ class StoreService
         return $appStoreCollection->map(function (Store $store) use ($storeInfo) {
             return $this->toApiFormat($store, ...$storeInfo);
         });
+    }
+
+    /**
+     * @param StoreProductAvailableRequest $storeProductAvailableRequest
+     * @return array
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getShopProductAvailable(StoreProductAvailableRequest $storeProductAvailableRequest): array
+    {
+        $storeCode = $storeProductAvailableRequest->getShopId();
+        $result = [
+            'available' => [],
+            'unAvailable' => [],
+        ];
+        foreach ($storeProductAvailableRequest->getGoods() as $productQuantity) {
+            $offerId = $productQuantity->getProductId();
+            $quantity = $productQuantity->getQuantity();
+
+            /** @var Offer $offer */
+            $offer = (new OfferQuery())
+                ->withFilter(['ID' => $offerId])
+                ->exec()
+                ->current();
+
+            $shortProduct = $this->apiProductService->convertToShortProduct($offer->getProduct(), $offer);
+
+            $storeCodes = $offer->getAllStocks()->getStores($quantity)->getXmlIds();
+            $result[in_array($storeCode, $storeCodes) ? 'available' : 'unAvailable'][] = $shortProduct;
+        }
+        return $result;
     }
 
     protected function getParams(StoreListRequest $storeListRequest)
@@ -123,7 +176,7 @@ class StoreService
         return $result;
     }
 
-    protected function toApiFormat(Store $store, array $servicesList, array $metroList): ApiStore
+    protected function toApiFormat(Store $store, array $servicesList = [], array $metroList = []): ApiStore
     {
         $result = new ApiStore();
 

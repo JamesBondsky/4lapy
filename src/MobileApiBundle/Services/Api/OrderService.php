@@ -8,29 +8,20 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\MobileApiBundle\Dto\Object\Price;
-use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
-use FourPaws\CatalogBundle\Helper\MarkHelper;
 use FourPaws\PersonalBundle\Entity\OrderItem;
-use FourPaws\UserBundle\Service\UserService as ApiUserService;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 
 class OrderService
 {
-    /**
-     * @var ApiUserService
-     */
-    private $apiUserService;
 
     /**
      * @var ApiProductService;
      */
     private $apiProductService;
 
-    public function __construct(ApiUserService $apiUserService, ApiProductService $apiProductService)
+    public function __construct(ApiProductService $apiProductService)
     {
-        $this->apiUserService = $apiUserService;
         $this->apiProductService = $apiProductService;
     }
 
@@ -46,9 +37,7 @@ class OrderService
             /**
              * @var $orderItem OrderItem
              */
-            $products[] = $this->getProduct($orderItem->getProductId(), $orderItem->getQuantity());
-
-            //toDo подсчет бонусов для товара
+            $products[] = $this->getProduct($orderItem->getId(), $orderItem->getProductId(), $orderItem->getQuantity());
         }
         return $products;
     }
@@ -64,29 +53,8 @@ class OrderService
     {
         $offer =  OfferQuery::getById($offerId);
 
-        $productRaw = $offer->getProduct();
-        $picture = $offer->getResizeImages(200, 250)->first();
-
-        $shortProduct = (new ShortProduct())
-            ->setId($offer->getId())
-            ->setTitle($productRaw->getName())
-            ->setWebPage($productRaw->getCanonicalPageUrl())
-            ->setXmlId($productRaw->getXmlId())
-            ->setBrandName($productRaw->getBrandName())
-            ->setPicture($picture)
-            ->setInPack($offer->getMultiplicity());
-
-        // цена
-        $price = (new Price())
-            ->setActual($offer->getPrice())
-            ->setOld($offer->getOldPrice());
-        $shortProduct->setPrice($price);
-
-        // лейблы
-        $shortProduct->setTag($this->apiProductService->getTags($offer));
-
-        $shortProduct->setBonusAll($offer->getBonusCount(3, $quantity));
-        $shortProduct->setBonusUser($offer->getBonusCount($this->apiUserService->getDiscount(), $quantity));
+        $product = $offer->getProduct();
+        $shortProduct = $this->apiProductService->convertToShortProduct($product, $offer, $quantity);
 
         return (new Product())
             ->setBasketItemId($basketItemId)

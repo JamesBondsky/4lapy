@@ -10,20 +10,23 @@ use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListAvailableRequest;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListRequest;
-use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
+use FourPaws\MobileApiBundle\Dto\Request\StoreProductAvailableRequest;
 use FourPaws\MobileApiBundle\Dto\Response\StoreListResponse;
-use FourPaws\MobileApiBundle\Services\Api\StoreService;
+use FourPaws\MobileApiBundle\Dto\Response\StoreProductAvailableResponse;
+use FourPaws\MobileApiBundle\Services\Api\StoreService as ApiStoreService;
 
 class StoreController extends FOSRestController
 {
     /**
-     * @var StoreService
+     * @var ApiStoreService
      */
-    private $storeService;
+    private $apiStoreService;
 
-    public function __construct(StoreService $storeService)
+    public function __construct(
+        ApiStoreService $apiStoreService
+    )
     {
-        $this->storeService = $storeService;
+        $this->apiStoreService = $apiStoreService;
     }
 
     /**
@@ -34,9 +37,9 @@ class StoreController extends FOSRestController
      * @throws \Exception
      * @return StoreListResponse
      */
-    public function getStoreListAction(StoreListRequest $storeListRequest)
+    public function getStoreListAction(StoreListRequest $storeListRequest): StoreListResponse
     {
-        return new StoreListResponse($this->storeService->getList($storeListRequest));
+        return new StoreListResponse($this->apiStoreService->getList($storeListRequest));
     }
 
     /**
@@ -47,8 +50,26 @@ class StoreController extends FOSRestController
      * @throws \Exception
      * @return StoreListResponse
      */
-    public function getStoreListAvailableAction(StoreListAvailableRequest $storeListAvailableRequest)
+    public function getStoreListAvailableAction(StoreListAvailableRequest $storeListAvailableRequest): StoreListResponse
     {
-        return new StoreListResponse($this->storeService->getListAvailable($storeListAvailableRequest));
+        return new StoreListResponse($this->apiStoreService->getListAvailable($storeListAvailableRequest));
+    }
+
+    /**
+     * @Rest\Post(path="/shop_goods_available/")
+     * @Rest\View()
+     * @param StoreProductAvailableRequest $storeProductAvailableRequest
+     *
+     * @throws \Exception
+     * @return `
+     */
+    public function getStoreProductAvailableAction(StoreProductAvailableRequest $storeProductAvailableRequest): StoreProductAvailableResponse
+    {
+        $shop = $this->apiStoreService->getOne($storeProductAvailableRequest->getShopId());
+        $products = $this->apiStoreService->getShopProductAvailable($storeProductAvailableRequest);
+        return (new StoreProductAvailableResponse())
+            ->setAvailableGoods($products['available'])
+            ->setNotAvailableGoods($products['unAvailable'])
+            ->setShop($shop);
     }
 }

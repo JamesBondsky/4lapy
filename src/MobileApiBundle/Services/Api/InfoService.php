@@ -15,6 +15,7 @@ use Doctrine\Common\Collections\Collection;
 use FourPaws\BitrixOrm\Collection\ImageCollection;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\Helpers\HighloadHelper;
 use FourPaws\MobileApiBundle\Dto\Object\Info;
 use FourPaws\MobileApiBundle\Enum\InfoEnum;
 use Psr\Log\LoggerAwareInterface;
@@ -39,14 +40,18 @@ class InfoService implements LoggerAwareInterface
         $this->bitrixPhpDateTimeFormat = Date::convertFormatToPhp(\FORMAT_DATETIME) ?: '';
     }
 
-    public function getInfo(string $type, string $id, array $select = [])
+    public function getInfo(string $type, string $id, array $select = [], $offerTypeCode = '')
     {
         try {
             switch ($type) {
                 case InfoEnum::ACTION:
+                    $return = $this->getActions($id, $select, $offerTypeCode)->getValues();
+                    break;
                 case InfoEnum::NEWS:
+                    $return = $this->getNews($id, $select)->getValues();
+                    break;
                 case InfoEnum::LETTERS:
-                    $return = $this->getInfoCollection($type, $id, $select)->getValues();
+                    $return = $this->getArticles($id, $select)->getValues();
                     break;
                 case InfoEnum::REGISTER_TERMS:
                 case InfoEnum::BONUS_CARD_INFO:
@@ -66,30 +71,66 @@ class InfoService implements LoggerAwareInterface
         return $return;
     }
 
-    protected function getInfoCollection(string $type, string $id, array $select = []): Collection
+    public function getOfferTypes()
     {
-        try {
-            switch ($type) {
-                case InfoEnum::ACTION:
-                    $collection = $this->getActions($id, $select);
-                    break;
-                case InfoEnum::NEWS:
-                    $collection = $this->getNews($id, $select);
-                    break;
-                case InfoEnum::LETTERS:
-                    $collection = $this->getArticles($id, $select);
-                    break;
-                default:
-                    throw new \RuntimeException(sprintf('No such method to get %s type', $type));
+        $result = [];
+        $hlBlock = \Bitrix\Highloadblock\HighloadBlockTable::getList(
+            [
+                'filter' => [
+                    '=ID' => HighloadHelper::getIdByName('PublicationType'),
+                ]
+            ]
+        )->fetch();
+        if ($hlBlock ) {
+            $filterTypes = [];
+            $filter = [
+                'ACTIVE'    => 'Y',
+                'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES),
+                '!PROPERTY_TYPE' => false,
+            ];
+            $group = [
+                'PROPERTY_TYPE',
+            ];
+            $res = \CIBlockElement::GetList([], $filter, $group);
+            while ($row = $res->fetch()) {
+                $filterTypes[$row['PROPERTY_TYPE_VALUE']] = $row['PROPERTY_TYPE_VALUE'];
             }
-        } catch (\Exception $exception) {
-            $collection = new ArrayCollection();
-            $this->log()->error($exception->getMessage());
+
+            $result = [];
+            $sHlEntityClass = \Bitrix\Highloadblock\HighloadBlockTable::compileEntity($hlBlock)->getDataClass();
+            $res = $sHlEntityClass::getList(
+                [
+                    'select' => [
+                        'ID',
+                        'UF_NAME',
+                        'UF_XML_ID',
+                        // для релазиции сортировки asc,nulls
+                        new \Bitrix\Main\Entity\ExpressionField(
+                            'UF_SORT_ISNULL',
+                            'ISNULL(%s)',
+                            'UF_SORT'
+                        ),
+                    ],
+                    'order' => [
+                        'UF_SORT_ISNULL' => 'asc',
+                        'UF_SORT' => 'asc',
+                        'UF_NAME' => 'asc',
+                    ]
+                ]
+            );
+            while ($row = $res->fetch()) {
+
+                if ($filterTypes[$row['UF_XML_ID']]) {
+                    $result[] = [
+                        'id' => (int) $row['ID'],
+                        'name' => $row['UF_NAME'],
+                        'code' => $row['UF_XML_ID']
+                    ];
+                }
+            }
+
         }
-        return $collection->map(function (Info $info) use ($type) {
-            $info->setType($type);
-            return $info;
-        });
+        return $result;
     }
 
     protected function getInfoItem(string $type, string $id, array $select = []): Info
@@ -177,7 +218,12 @@ class InfoService implements LoggerAwareInterface
             'DETAIL_TEXT',
         ];
 
-        return $this->find($criteria, $order, $select, $id ? 1 : 50);
+        return $this
+            ->find($criteria, $order, $select, $id ? 1 : 50)
+            ->map(function (Info $info) {
+                $info->setType(InfoEnum::NEWS);
+                return $info;
+            });
     }
 
     /**
@@ -215,23 +261,32 @@ class InfoService implements LoggerAwareInterface
             'DETAIL_TEXT',
         ];
 
-        return $this->find($criteria, $order, $select, $id ? 1 : 50);
+        return $this
+            ->find($criteria, $order, $select, $id ? 1 : 50)
+            ->map(function (Info $info) {
+                $info->setType(InfoEnum::LETTERS);
+                return $info;
+            });
     }
 
     /**
      * @param string $id
      *
-     * @param array  $select
+     * @param array $select
      *
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @param string $offerTypeCode
      * @return ArrayCollection|Collection
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      */
-    protected function getActions(string $id, array $select = []): Collection
+    protected function getActions(string $id, array $select = [], $offerTypeCode = ''): Collection
     {
         $criteria = [
             'ACTIVE'    => 'Y',
             'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES),
         ];
+        if ($offerTypeCode) {
+            $criteria['PROPERTY_TYPE'] = $offerTypeCode;
+        }
 
         if ($id) {
             $criteria['ID'] = $id;
@@ -253,7 +308,12 @@ class InfoService implements LoggerAwareInterface
             'SUB_ITEMS',
         ];
 
-        return $this->find($criteria, $order, $select, $id ? 1 : 50);
+        return $this
+            ->find($criteria, $order, $select, $id ? 1 : 50)
+            ->map(function (Info $info) {
+                $info->setType(InfoEnum::ACTION);
+                return $info;
+            });
     }
 
     protected function find(
@@ -263,7 +323,7 @@ class InfoService implements LoggerAwareInterface
         int $limit = 50
     ) {
         $items = [];
-        $dbResult = CIBlockElement::GetList($orderBy, $criteria, false, ['nTopCount' => $limit], $select);
+        $dbResult = \CIBlockElement::GetList($orderBy, $criteria, false, ['nTopCount' => $limit], $select);
         while ($dbItem = $dbResult->GetNext()) {
             $items[$dbItem['ID']] = $dbItem;
         }

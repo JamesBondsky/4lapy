@@ -21,7 +21,7 @@ class SocialController extends FOSRestController
         $response->setData([
             'vkontakte'     =>
                 [
-                    'web'     => 'http://vk.com/4lapy_ru',
+                    'web'     => 'https://vk.com/4lapy_ru',
                     'ios'     => 'vk://vk.com/4lapy_ru',
                     'android' => '',
                 ],

@@ -10,12 +10,14 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\BitrixOrm\Model\Share;
+use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Collection\OfferCollection;
+use FourPaws\Catalog\Collection\ProductCollection;
 use FourPaws\Catalog\Exception\CategoryNotFoundException;
-use FourPaws\Catalog\Model\Bundle as BundleModel;
 use FourPaws\Catalog\Model\BundleItem;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Filter\RangeFilterInterface;
+use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Variant;
 use FourPaws\Catalog\Query\OfferQuery;
@@ -23,6 +25,7 @@ use FourPaws\CatalogBundle\Service\CategoriesService;
 use FourPaws\CatalogBundle\Service\FilterHelper;
 use FourPaws\CatalogBundle\Service\FilterService;
 use FourPaws\CatalogBundle\Service\SortService;
+use FourPaws\Search\Model\Navigation;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\Filter;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\FilterVariant;
@@ -36,11 +39,8 @@ use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Exception\CategoryNotFoundException as MobileCategoryNotFoundException;
 use FourPaws\MobileApiBundle\Exception\NotFoundProductException;
 use FourPaws\MobileApiBundle\Exception\SystemException;
-use FourPaws\Search\Model\Navigation;
 use FourPaws\Search\SearchService;
 use Psr\Log\LoggerAwareInterface;
-use FourPaws\Catalog\Model\Product as ProductModel;
-use FourPaws\Catalog\Model\Offer as OfferModel;
 use Symfony\Component\HttpFoundation\Request;
 
 class CatalogService implements LoggerAwareInterface
@@ -72,12 +72,18 @@ class CatalogService implements LoggerAwareInterface
      */
     private $searchService;
 
+    /**
+     * @var ProductService
+     */
+    private $productService;
+
     public function __construct(
         CategoriesService $categoriesService,
         FilterService $filterService,
         FilterHelper $filterHelper,
         SortService $sortService,
-        SearchService $searchService
+        SearchService $searchService,
+        ProductService $productService
     )
     {
         $this->categoriesService = $categoriesService;
@@ -85,6 +91,7 @@ class CatalogService implements LoggerAwareInterface
         $this->filterHelper = $filterHelper;
         $this->sortService = $sortService;
         $this->searchService = $searchService;
+        $this->productService = $productService;
     }
 
     /**
@@ -121,7 +128,11 @@ class CatalogService implements LoggerAwareInterface
                 } else {
                     $apiFilter->setValues(
                         (new ArrayCollection($filter->getAllVariants()->toArray()))
-                            ->map(function (Variant $variant) {
+                            ->map(/**
+                             * @param Variant $variant
+                             * @return FilterVariant
+                             */
+                                function (Variant $variant) {
                                 return new FilterVariant($variant->getValue(), $variant->getName());
                             })
                     );
@@ -139,33 +150,38 @@ class CatalogService implements LoggerAwareInterface
      * @param string $sort
      * @param int $count
      * @param int $page
+     * @param string $searchQuery
      * @return ArrayCollection
      * @throws CategoryNotFoundException
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Exception
      */
     public function getProductsList(
         Request $request,
-        int $categoryId,
+        int $categoryId = 0,
         string $sort = 'popular',
         int $count = 10,
-        int $page = 1
+        int $page = 1,
+        string $searchQuery = ''
     ): ArrayCollection
     {
-        $category = $this->categoriesService->getById($categoryId);
-        $this->filterHelper->initCategoryFilters($category, $request);
-        $filters = $category->getFilters();
+        $filters = new FilterCollection();
+        if ($categoryId > 0) {
+            $category = $this->categoriesService->getById($categoryId);
+            $this->filterHelper->initCategoryFilters($category, $request);
+            $filters = $category->getFilters();
+        }
 
-        $sort = $this->sortService->getSorts($sort)->getSelected();
+        $sort = $this->sortService->getSorts($sort, strlen($searchQuery) > 0)->getSelected();
 
         $nav = (new Navigation())
             ->withPage($page)
             ->withPageSize($count);
 
-        $productsSearchResult = $this->searchService->searchProducts($filters, $sort, $nav);
-        $productCollection = $productsSearchResult->getProductCollection();
+        $productSearchResult = $this->searchService->searchProducts($filters, $sort, $nav, $searchQuery);
+        /** @var ProductCollection $productCollection */
+        $productCollection = $productSearchResult->getProductCollection();
 
         return (new ArrayCollection([
             'products' => $productCollection->map(\Closure::fromCallable([$this, 'mapProduct']))->getValues(),
@@ -185,14 +201,15 @@ class CatalogService implements LoggerAwareInterface
         if (!$currentOffer) {
             throw new NotFoundProductException("Предложение с ID $id не найдено");
         }
-        $productModel = $currentOffer->getProduct();
-        $offers = $productModel->getOffersSorted();
+        $product = $currentOffer->getProduct();
+        $offers = $product->getOffersSorted();
 
-        $product = (new FullProduct())
-            ->setDetailsHtml([$productModel->getDetailText()->getText()])
-            ->setNutritionRecommendations($productModel->getNormsOfUse()->getText())
-            ->setNutritionFacts($productModel->getComposition()->getText());
+        $fullProduct = $this->productService->convertToFullProduct($product, $currentOffer);
+        $fullProduct
+            ->setNutritionRecommendations($product->getNormsOfUse()->getText())
+            ->setNutritionFacts($product->getComposition()->getText());
 
+        // фасовки
         if (!empty($offers)) {
             $packingVariants = [];
             /** @var Offer $productOffer */
@@ -203,9 +220,10 @@ class CatalogService implements LoggerAwareInterface
                     ->setWeight($productOffer->getPackageLabel(false, 0))
                     ->setHasSpecialOffer($productOffer->hasAction());
             }
-            $product->setPackingVariants($packingVariants);
+            $fullProduct->setPackingVariants($packingVariants);
         }
 
+        // акция
         /** @var Share $specialOfferModel */
         $specialOfferModel = $currentOffer->getShare()->current();
         if ($specialOfferModel) {
@@ -222,9 +240,10 @@ class CatalogService implements LoggerAwareInterface
             if ($specialOfferModel->hasLabelImage()) {
                 $specialOffer->setImage($specialOfferModel->getPropertyLabelImageFileSrc());
             }
-            $product->setSpecialOffer($specialOffer);
+            $fullProduct->setSpecialOffer($specialOffer);
         }
 
+        // вкус
         if (!empty($currentOffer->getFlavourCombination())) {
             $unionOffers = $this->getOffersByUnion('flavour', $currentOffer->getFlavourCombination());
             if (!$unionOffers->isEmpty()) {
@@ -239,10 +258,11 @@ class CatalogService implements LoggerAwareInterface
                         ->setOfferId($unionOffer->getId())
                         ->setTitle($flavourWithWeight);
                 }
-                $product->setFlavours($flavours);
+                $fullProduct->setFlavours($flavours);
             }
         }
 
+        // с этим товаро покупают
         if ($bundle = $currentOffer->getBundle()) {
             $crossSale = [];
             /** @var BundleItem $bundleItem */
@@ -255,71 +275,38 @@ class CatalogService implements LoggerAwareInterface
                     ->setImage($bundleItemOffer->getImages()->current())
                 ;
             }
-            $product->setBundle($crossSale);
+            $fullProduct->setBundle($crossSale);
         }
 
-        $product
-            ->setId($currentOffer->getId())
-            ->setTitle($productModel->getName())
-            ->setXmlId($productModel->getXmlId())
-            ->setBrandName($productModel->getBrandName())
-            ->setWebPage($productModel->getCanonicalPageUrl());
-
-        $product->setPicture($currentOffer->getImages() ? $currentOffer->getImages()->first() : '');
-        $product->setPicturePreview($currentOffer->getResizeImages(200, 250) ? $currentOffer->getResizeImages(200, 250)->first() : '');
-
-        $price = (new Price())
-            ->setActual($currentOffer->getPrice())
-            ->setOld($currentOffer->getOldPrice());
-        $product->setPrice($price);
-
-
-        return $product;
+        return $fullProduct;
     }
 
     /**
-     * @param ProductModel $productModel
+     * @param Product $product
      * @return FullProduct
      * @throws \Bitrix\Main\SystemException
      */
-    protected function mapProduct(ProductModel $productModel): FullProduct
+    protected function mapProduct(Product $product): FullProduct
     {
-        $product = (new FullProduct())
-            ->setDetailsHtml([$productModel->getDetailText()->getText()])
-            ->setId($productModel->getId())
-            ->setTitle($productModel->getName())
-            ->setXmlId($productModel->getXmlId())
-            ->setBrandName($productModel->getBrandName())
-            ->setWebPage($productModel->getCanonicalPageUrl());
-
-        /** @var OfferModel $currentOffer */
-        if ($currentOffer = $this->getCurrentOffer($productModel)) {
-            $product->setPicture($currentOffer->getImages() ? $currentOffer->getImages()->first() : '');
-            $product->setPicturePreview($currentOffer->getResizeImages(200, 250) ? $currentOffer->getResizeImages(200, 250)->first() : '');
-            $price = (new Price())
-                ->setActual($currentOffer->getOldPrice())
-                ->setOld($currentOffer->getPrice());
-            $product->setPrice($price);
-        }
-
-        return $product;
+        /** @var Offer $currentOffer */
+        $currentOffer = $this->getCurrentOffer($product);
+        return $this->productService->convertToFullProduct($product, $currentOffer);
     }
 
     /**
-     * @param ProductModel $productModel
+     * @param Product $product
      *
      * @param array $offerFilter
      * @return mixed|null
      */
-    protected function getCurrentOffer(ProductModel $productModel, $offerFilter = [])
+    protected function getCurrentOffer(Product $product, $offerFilter = [])
     {
-        $productModel->getOffers(true, $offerFilter);
-        $offers = $productModel->getOffersSorted();
-        /** @var OfferModel $offerModel */
+        $product->getOffers(true, $offerFilter);
+        $offers = $product->getOffersSorted();
         $foundOfferWithImages = false;
         $currentOffer = $offers->last();
         foreach ($offers as $offer) {
-            $offer->setProduct($productModel);
+            $offer->setProduct($product);
 
             if (!$foundOfferWithImages || $offer->getImagesIds()) {
                 $currentOffer = $offer;

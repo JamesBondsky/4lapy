@@ -39,8 +39,8 @@ class FullProduct extends ShortProduct
     protected $pictureList = [];
 
     /**
-     * @var array|string[]
-     * @Serializer\Type("array<string>")
+     * @var string
+     * @Serializer\Type("string")
      * @Serializer\SerializedName("details_html")
      */
     protected $detailsHtml = [];
@@ -126,7 +126,7 @@ class FullProduct extends ShortProduct
     }
 
     /**
-     * @return array|string[]
+     * @return string
      */
     public function getDetailsHtml()
     {
@@ -134,7 +134,7 @@ class FullProduct extends ShortProduct
     }
 
     /**
-     * @param array|string[] $detailsHtml
+     * @param string $detailsHtml
      *
      * @return FullProduct
      */
