@@ -581,7 +581,7 @@ class BasketController extends Controller implements LoggerAwareInterface
             $giftDeclension = new Declension('подарок', 'подарка', 'подарков');
             $data = [
                 'count' => $unselectedCount,
-                'title' => 'Выберите ' . $unselectedCount . ' ' . $giftDeclension->get($unselectedCount),
+                'title' => 'Выберите <span data-count-gifts-popup="true">' . $unselectedCount . '</span> ' . $giftDeclension->get($unselectedCount),
                 'items' => $items
             ];
             $response = JsonSuccessResponse::createWithData(

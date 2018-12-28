@@ -95,7 +95,16 @@ if ($arParams['IS_AJAX']) {
                                    data-url-gift="/ajax/sale/basket/gift/select/"
                                    data-discount-id="<?= $group['discountId']; ?>" title=""
                                    data-popup-id="popup-choose-gift">
-                                    <span class="b-link-gift__text">Выбрать подарок</span>
+                                    <span class="b-link-gift__text">
+                                        <?php if (
+                                            isset($arResult['SELECTED_GIFTS'][$group['discountId']])
+                                            && !empty($arResult['SELECTED_GIFTS'][$group['discountId']])
+                                        ) { ?>
+                                            Выбрать ещё
+                                        <?php }else{ ?>
+                                            Выбрать подарок
+                                        <?php } ?>
+                                    </span>
                                     <span class="b-icon b-icon--gift">
                                         <?= new SvgDecorator('icon-gift', 18, 18) ?>
                                     </span>
