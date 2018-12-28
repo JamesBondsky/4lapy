@@ -280,9 +280,9 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                 throw new NotFoundException('Подарок не может быть предоставлен в рамках данной акции');
             }
 
-            if ($this->getExistGiftsQuantity($group, false) < 1) {
-                throw new NotFoundException('Все подарки уже выбраны, сначала необходимо удалить выбранный подарок');
-            }
+//            if ($this->getExistGiftsQuantity($group, false) < 1) {
+//                throw new NotFoundException('Все подарки уже выбраны, сначала необходимо удалить выбранный подарок');
+//            }
 
             $existGifts = $this->getExistGifts($discountId);
             foreach ($existGifts as $existGift) {

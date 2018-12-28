@@ -74,7 +74,13 @@ if ($arParams['IS_AJAX']) {
                         $disableClass = '';
 
                         /** @noinspection PhpUndefinedMethodInspection */
-                        if (0 > $group['count'] - count($arResult['SELECTED_GIFTS'][$group['discountId']])) {
+                        $selectedCount = 0;
+                        foreach($arResult['SELECTED_GIFTS'][$group['discountId']] as $giftOffer){
+                            $selectedCount += $giftOffer['quantity'];
+                        }
+                        $availableGifts = $group['count'] - $selectedCount;
+
+                        if (0 >= $availableGifts) {
                             $disableClass = ' b-link-gift--disabled';
                         }
                         if ($group['list'] instanceof OfferCollection) {
@@ -93,6 +99,7 @@ if ($arParams['IS_AJAX']) {
                                    href="javascript:void(0);"
                                    data-url="/ajax/sale/basket/gift/get/"
                                    data-url-gift="/ajax/sale/basket/gift/select/"
+                                   data-available-gifts="<?= $availableGifts ?>"
                                    data-discount-id="<?= $group['discountId']; ?>" title=""
                                    data-popup-id="popup-choose-gift">
                                     <span class="b-link-gift__text">

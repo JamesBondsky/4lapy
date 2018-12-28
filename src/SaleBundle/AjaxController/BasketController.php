@@ -529,6 +529,7 @@ class BasketController extends Controller implements LoggerAwareInterface
     public function getGiftListAction(Request $request)
     {
         $discountId = (int)$request->get('discountId', 0);
+        $availableGifts = (int)$request->get('availableGifts', 0);
         $response = null;
         try {
             $giftGroup = $this->basketService->getGiftGroupOfferCollection($discountId);
@@ -576,12 +577,11 @@ class BasketController extends Controller implements LoggerAwareInterface
                 ];
 
             }
-            /** @noinspection PhpUndefinedMethodInspection */
-            $unselectedCount = $this->basketService->getAdder('gift')->getExistGiftsQuantity($giftGroup, false);
+
             $giftDeclension = new Declension('подарок', 'подарка', 'подарков');
             $data = [
-                'count' => $unselectedCount,
-                'title' => 'Выберите <span data-count-gifts-popup="true">' . $unselectedCount . '</span> ' . $giftDeclension->get($unselectedCount),
+                'count' => $availableGifts,
+                'title' => 'Выберите <span data-count-gifts-popup="true">' . $availableGifts . '</span> ' . $giftDeclension->get($availableGifts),
                 'items' => $items
             ];
             $response = JsonSuccessResponse::createWithData(
@@ -656,18 +656,16 @@ class BasketController extends Controller implements LoggerAwareInterface
         $response = null;
         $offers = $request->get('offers', 0);
 
-        foreach ($offers as $offer) {
-            try {
-                /** @noinspection PhpUndefinedMethodInspection */
-                $this->basketService->getAdder('gift')->selectGift((int) $offer['offerId'], (int) $offer['actionId'], (int)$offer['count']);
-            } catch (BaseExceptionInterface $e) {
-                $response = JsonErrorResponse::create(
-                    $e->getMessage(),
-                    200,
-                    [],
-                    ['reload' => true]
-                );
-            }
+        try {
+            /** @noinspection PhpUndefinedMethodInspection */
+            $this->basketService->getAdder('gift')->selectGifts($offers);
+        } catch (BaseExceptionInterface $e) {
+            $response = JsonErrorResponse::create(
+                $e->getMessage(),
+                200,
+                [],
+                ['reload' => true]
+            );
         }
 
         if (null === $response) {
