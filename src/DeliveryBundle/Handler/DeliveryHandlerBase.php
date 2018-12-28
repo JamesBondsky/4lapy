@@ -261,11 +261,11 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                 /**
                  * Часть товара (или все количество) не в наличии
                  */
-//                if ($unavailableStockResult) {
-//                    $stockResultCollection->add(
-//                        $unavailableStockResult->setType(StockResult::TYPE_UNAVAILABLE)
-//                    );
-//                }
+                if ($unavailableStockResult) {
+                    $stockResultCollection->add(
+                        $unavailableStockResult->setType(StockResult::TYPE_UNAVAILABLE)
+                    );
+                }
             }
         }
 
