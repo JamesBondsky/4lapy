@@ -28,6 +28,7 @@ use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\Helpers\ProtectorHelper;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\BaseExceptionInterface;
 use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
@@ -216,6 +217,11 @@ class FastOrderController extends Controller
      */
     public function createAction(Request $request): JsonResponse
     {
+
+        if (!ProtectorHelper::checkToken($request->get(ProtectorHelper::getField(ProtectorHelper::TYPE_FAST_ORDER_CREATE)), ProtectorHelper::TYPE_FAST_ORDER_CREATE)) {
+            return $this->ajaxMess->getOrderCreateError('Оформление быстрого заказа невозможно, пожалуйста обратитесь к администратору или попробуйте полный процесс оформления');
+        }
+
         $orderStorage = new OrderStorage();
 
         try {

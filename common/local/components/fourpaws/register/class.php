@@ -248,10 +248,12 @@ class FourPawsRegisterComponent extends \CBitrixComponent
 
     /**
      * @param string $phone
+     * @param string|bool $tokenName
+     * @param string|bool $token
      *
      * @return JsonResponse
      */
-    public function ajaxResendSms($phone): JsonResponse
+    public function ajaxResendSms($phone, $token = false): JsonResponse
     {
         try {
             $phone = PhoneHelper::normalizePhone($phone);
@@ -262,7 +264,13 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         try {
             /** @var ConfirmCodeService $confirmService */
             $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-            $res = $confirmService::sendConfirmSms($phone);
+
+            if (ProtectorHelper::checkToken($token, ProtectorHelper::TYPE_REGISTER_SMS_RESEND)) {
+                $res = $confirmService::sendConfirmSms($phone);
+            } else {
+                $res = true;
+            }
+
             if (!$res) {
                 return $this->ajaxMess->getSmsSendErrorException();
             }
