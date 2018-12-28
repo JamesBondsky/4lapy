@@ -7,6 +7,8 @@ use Bitrix\Main\Application;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
+use FourPaws\Helpers\ProtectorHelper;
+
 
 $request = Application::getInstance()->getContext()->getRequest();
 $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
@@ -50,11 +52,15 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
+
+            <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_REGISTER_SMS_RESEND); ?>
             <a class="b-link-gray js-resend-sms"
                href="javascript:void(0);"
                data-url="/ajax/user/auth/register/"
                data-phone="<?= $phone ?>"
                data-action="resendSms"
+               data-token-name="<?=$token['field']?>"
+               data-token="<?=$token['token']?>"
                title="Отправить снова">Отправить снова</a>
         </div>
         <?php
