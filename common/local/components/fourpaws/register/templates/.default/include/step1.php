@@ -44,16 +44,10 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
             </div>
         </div>
 
-        <style>
-            .g-captcha-custom-css > div {
-                margin
-            }
-        </style>
-
         <?
             /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
             $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
-            echo $recaptchaService->getCaptcha(' b-input-line g-captcha-custom-css', true);
+            echo $recaptchaService->getCaptcha(' b-input-line', true);
         ?>
 
         <button class="b-button b-button--social b-button--full-width">Отправить код</button>

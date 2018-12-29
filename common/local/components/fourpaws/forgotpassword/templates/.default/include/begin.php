@@ -1,6 +1,9 @@
 <?php
 
 use Bitrix\Main\Application;
+use FourPaws\App\Application as App;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -59,6 +62,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                 </div>
             </div>
         </div>
-        <button class="b-button b-button--social b-button--full-width">Далее</button>
+
+        <?
+        $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
+        echo $recaptchaService->getCaptcha('b-input-line', true);
+        ?>
+
+        <button class="b-button b-button--social b-button--full-width" data-recovery-form="true">Далее</button>
     </form>
 </div>
