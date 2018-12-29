@@ -118,7 +118,7 @@ class AuthController extends Controller
 
         switch ($action) {
             case 'resendSms':
-                return $registerClass->ajaxResendSms($request->get('phone', ''), $request->get(ProtectorHelper::getField(ProtectorHelper::TYPE_REGISTER_SMS_RESEND), false), $request);
+                return $registerClass->ajaxResendSms($request->get('phone', ''), $request->get(ProtectorHelper::getField(ProtectorHelper::TYPE_REGISTER_SMS_RESEND), false), $request->get('g-recaptcha-response'));
                 break;
             case 'register':
                 return $registerClass->ajaxRegister($request->request->all());

@@ -28,8 +28,9 @@ class SmsQuarantineHelper
                 'e.bagro@articul.ru',
                 'm.balezin@articul.ru',
                 'pvlasov@4lapy.ru',
-                'edushenko@4lapy.ru'
-            ]), 'Превышени суточный лимит в 15000 смс на 4lapy.ru', '');
+                'edushenko@4lapy.ru',
+                'mporotikov@4lapy.ru'
+            ]), 'Превышен суточный лимит в 15000 смс на 4lapy.ru', '');
             return false;
         }
 
@@ -37,7 +38,8 @@ class SmsQuarantineHelper
             mail(implode(', ', [
                 's.mamontov@articul.ru',
                 'e.bagro@articul.ru',
-            ]), 'Превышени часовой лимит в 1000 смс на 4lapy.ru', '');
+                'm.balezin@articul.ru',
+            ]), 'Превышен часовой лимит в 1000 смс на 4lapy.ru', '');
             return false;
         }
 

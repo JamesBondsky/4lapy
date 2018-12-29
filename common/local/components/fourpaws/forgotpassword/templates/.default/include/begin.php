@@ -62,14 +62,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                 </div>
             </div>
         </div>
+
         <?
-        try {
-            $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
-            echo $recaptchaService->getCaptcha('', true);
-        } catch (ApplicationCreateException $e) {
-        }
+        $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
+        echo $recaptchaService->getCaptcha('b-input-line', true);
         ?>
-        <br>
-        <button class="b-button b-button--social b-button--full-width">Далее</button>
+
+        <button class="b-button b-button--social b-button--full-width" data-recovery-form="true">Далее</button>
     </form>
 </div>

@@ -14,12 +14,13 @@ interface ReCaptchaInterface
 {
     /**
      * @param string $additionalClass
-     *
      * @param bool   $isAjax
+     * @param string $callback
+     * @param string $id
      *
      * @return string
      */
-    public function getCaptcha(string $additionalClass = '', bool $isAjax = false): string;
+    public function getCaptcha(string $additionalClass = '', bool $isAjax = false, string $callback = '', string $id = ''): string;
 
     /**
      * @return array

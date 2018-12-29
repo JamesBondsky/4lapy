@@ -46,16 +46,19 @@ use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
                data-url="/ajax/user/auth/forgotPassword/"
                data-phone="<?= $phone ?>"
                data-action="resendSms"
+               data-recovery-resend-a="true"
                title="Отправить снова">Отправить снова</a>
         </div>
-        <?
-        try {
+
+        <div style="display: none;" data-recovery-resend-captcha="true">
+            <?
+            /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
             $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
-            echo $recaptchaService->getCaptcha('', true);
-        } catch (ApplicationCreateException $e) {
-        }
-        ?>
+            echo $recaptchaService->getCaptcha('b-input-line', true, 'recoveryResendSms');
+            ?>
+        </div>
+
         <br>
-        <button class="b-button b-button--social b-button--full-width" type="submit">Далее</button>
+        <button class="b-button b-button--social b-button--full-width" data-recovery-form-send="true">Далее</button>
     </form>
 </div>

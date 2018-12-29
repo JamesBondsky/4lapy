@@ -251,13 +251,12 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param string $phone
      * @param string|bool $token
-     *
-     * @param bool $request
+     * @param string $captcha
      * @return JsonResponse
      * @throws ApplicationCreateException
      * @throws SystemException
      */
-    public function ajaxResendSms($phone, $token = false, $request = false): JsonResponse
+    public function ajaxResendSms($phone, $token = false, $captcha = ''): JsonResponse
     {
         try {
             $phone = PhoneHelper::normalizePhone($phone);
@@ -265,20 +264,17 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             return $this->ajaxMess->getWrongPhoneNumberException();
         }
 
-        $recaptcha = $request->get('grecaptcha', '');
-
         /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
         $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
-
-        if (!$recaptchaService->checkCaptcha($recaptcha)) {
-            return $this->ajaxMess->getFailCaptchaCheckError();
-        }
 
         try {
             /** @var ConfirmCodeService $confirmService */
             $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
 
-            if (ProtectorHelper::checkToken($token, ProtectorHelper::TYPE_REGISTER_SMS_RESEND)) {
+            if ((true)
+                && ProtectorHelper::checkToken($token, ProtectorHelper::TYPE_REGISTER_SMS_RESEND)
+                && $recaptchaService->checkCaptcha($captcha)
+            ) {
                 $res = $confirmService::sendConfirmSms($phone);
             } else {
                 $res = true;
