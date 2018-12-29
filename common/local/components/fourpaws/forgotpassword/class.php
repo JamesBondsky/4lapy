@@ -356,6 +356,15 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                 return $this->ajaxMess->getWrongPhoneNumberException();
             }
         }
+
+        /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
+        $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
+
+        if (!$recaptchaService->checkCaptcha($request->get('g-recaptcha-response'))) {
+            return $this->ajaxMess->getFailCaptchaCheckError();
+        }
+
+
         $email = $request->get('email', '');
         $title = 'Восстановление пароля';
         if (empty($step)) {
