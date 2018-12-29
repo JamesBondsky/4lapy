@@ -2,6 +2,11 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
+
+use FourPaws\App\Application as App;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
+
 /** @var string $phone
  * @var string $backUrl
  */ ?>
@@ -43,6 +48,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                data-action="resendSms"
                title="Отправить снова">Отправить снова</a>
         </div>
+        <?
+        try {
+            $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
+            echo $recaptchaService->getCaptcha('', true);
+        } catch (ApplicationCreateException $e) {
+        }
+        ?>
+        <br>
         <button class="b-button b-button--social b-button--full-width" type="submit">Далее</button>
     </form>
 </div>

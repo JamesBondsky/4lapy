@@ -250,17 +250,28 @@ class FourPawsRegisterComponent extends \CBitrixComponent
 
     /**
      * @param string $phone
-     * @param string|bool $tokenName
      * @param string|bool $token
      *
+     * @param bool $request
      * @return JsonResponse
+     * @throws ApplicationCreateException
+     * @throws SystemException
      */
-    public function ajaxResendSms($phone, $token = false): JsonResponse
+    public function ajaxResendSms($phone, $token = false, $request = false): JsonResponse
     {
         try {
             $phone = PhoneHelper::normalizePhone($phone);
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
+        }
+
+        $recaptcha = $request->get('grecaptcha', '');
+
+        /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
+        $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
+
+        if (!$recaptchaService->checkCaptcha($recaptcha)) {
+            return $this->ajaxMess->getFailCaptchaCheckError();
         }
 
         try {

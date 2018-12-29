@@ -52,6 +52,12 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
+            <br>
+            <?
+            /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
+            $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
+            echo $recaptchaService->getCaptcha(' b-input-line g-captcha-custom-css', true);
+            ?>
 
             <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_REGISTER_SMS_RESEND); ?>
             <a class="b-link-gray js-resend-sms"
