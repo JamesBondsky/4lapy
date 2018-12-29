@@ -52,7 +52,7 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
-
+            <br>
             <?
             /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
             $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
