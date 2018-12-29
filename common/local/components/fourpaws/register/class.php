@@ -17,6 +17,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\Uri;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
@@ -30,6 +31,7 @@ use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\LocationBundle\Model\City;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
+use FourPaws\Search\Table\FourPawsSmsProtectorTable;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\AuthException;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -264,6 +266,11 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         try {
             /** @var ConfirmCodeService $confirmService */
             $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+
+            /** Проверка прошла ли минута с последней отправки смс */
+            if (!FourPawsSmsProtectorTable::canSend($phone)) {
+                return JsonErrorResponse::createWithData('Минута еще не прошла!')->setEncodingOptions(JSON_UNESCAPED_UNICODE);
+            }
 
             if (ProtectorHelper::checkToken($token, ProtectorHelper::TYPE_REGISTER_SMS_RESEND)) {
                 $res = $confirmService::sendConfirmSms($phone);
