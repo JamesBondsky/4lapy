@@ -267,11 +267,6 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             /** @var ConfirmCodeService $confirmService */
             $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
 
-            /** Проверка прошла ли минута с последней отправки смс */
-            if (!FourPawsSmsProtectorTable::canSend($phone)) {
-                return JsonErrorResponse::createWithData('Минута еще не прошла!')->setEncodingOptions(JSON_UNESCAPED_UNICODE);
-            }
-
             if (ProtectorHelper::checkToken($token, ProtectorHelper::TYPE_REGISTER_SMS_RESEND)) {
                 $res = $confirmService::sendConfirmSms($phone);
             } else {

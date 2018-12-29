@@ -3,6 +3,9 @@
 namespace FourPaws\External\ZagruzkaCom;
 
 
+use FourPaws\Helpers\SmsQuarantineHelper;
+use GuzzleHttp\Psr7\Response;
+
 class Client
 {
 
@@ -47,6 +50,10 @@ class Client
      * @return \Psr\Http\Message\ResponseInterface
      */
     public function send($sms) {
+
+        if (!SmsQuarantineHelper::canSend($sms->getPhone())) {
+            return (new Response());
+        }
 
         $query = [
             'serviceId' => $this->login,
