@@ -294,10 +294,12 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             return $this->ajaxMess->getWrongPhoneNumberException();
         }
 
+        $recaptcha = $request->get('grecaptcha', '');
+
         /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
         $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
 
-        if (!$recaptchaService->checkCaptcha($request->get('g-recaptcha-response'))) {
+        if (!$recaptchaService->checkCaptcha($recaptcha)) {
             return $this->ajaxMess->getFailCaptchaCheckError();
         }
 
