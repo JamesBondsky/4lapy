@@ -34,6 +34,7 @@ use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
+use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 
 /** @noinspection AutoloadingIssuesInspection */
 
