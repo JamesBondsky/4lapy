@@ -160,7 +160,7 @@ class AuthController extends Controller
 
                 break;
             case 'resendSms':
-                return $forgotPasswordClass->ajaxResendSms($request->get('phone', ''));
+                return $forgotPasswordClass->ajaxResendSms($request->get('phone', ''), $request);
 
                 break;
             case 'get':

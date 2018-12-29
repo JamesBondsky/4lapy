@@ -282,10 +282,11 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
 
     /**
      * @param $phone
+     * @param $request
      *
      * @return JsonResponse
      */
-    public function ajaxResendSms($phone): JsonResponse
+    public function ajaxResendSms($phone, $request = null): JsonResponse
     {
         try {
             $phone = PhoneHelper::normalizePhone($phone);

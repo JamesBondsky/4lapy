@@ -55,6 +55,7 @@ use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
         } catch (ApplicationCreateException $e) {
         }
         ?>
+        <br>
         <button class="b-button b-button--social b-button--full-width" type="submit">Далее</button>
     </form>
 </div>
