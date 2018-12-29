@@ -603,8 +603,14 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 /** @noinspection PhpUnusedLocalVariableInspection */
                 $newAction = $request->get('newAction');
 
+                /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
+                $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
+
                 /** csrf custom sms send protection */
-                if (ProtectorHelper::checkToken($request->get(ProtectorHelper::getField(ProtectorHelper::TYPE_REGISTER_SMS_SEND)), ProtectorHelper::TYPE_REGISTER_SMS_SEND)) {
+                if ((true)
+                    && ProtectorHelper::checkToken($request->get(ProtectorHelper::getField(ProtectorHelper::TYPE_REGISTER_SMS_SEND)), ProtectorHelper::TYPE_REGISTER_SMS_SEND)
+                    && $recaptchaService->checkCaptcha($request->get('g-recaptcha-response'))
+                ) {
                     $res = $this->ajaxGetSendSmsCode($phone);
                 } else {
                     $res = [

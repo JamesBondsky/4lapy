@@ -3,6 +3,9 @@
 use Bitrix\Main\Application;
 use FourPaws\CatalogBundle\Service\CatalogLandingService;
 use FourPaws\Helpers\ProtectorHelper;
+use FourPaws\App\Application as App;
+use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
+
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -40,6 +43,19 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
                 <div class="b-error"><span class="js-message"></span></div>
             </div>
         </div>
+
+        <style>
+            .g-captcha-custom-css > div {
+                margin
+            }
+        </style>
+
+        <?
+            /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
+            $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
+            echo $recaptchaService->getCaptcha(' b-input-line g-captcha-custom-css', true);
+        ?>
+
         <button class="b-button b-button--social b-button--full-width">Отправить код</button>
 
         <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_REGISTER_SMS_SEND); ?>
