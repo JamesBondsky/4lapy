@@ -65,7 +65,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <?
         try {
             $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
-            echo $recaptchaService->getCaptcha('', false);
+            echo $recaptchaService->getCaptcha('', true);
         } catch (ApplicationCreateException $e) {
         }
         ?>
