@@ -134,24 +134,30 @@ class BasketController extends FOSRestController
     }
 
     /**
-     * Метод добавляет кол-во товара к уже имеющемуся кол-ву.
+     * Добавление товаров в корзину (принимает id товара и количество)
      * @Rest\Post(path="/user_cart/")
      * @Rest\View()
-     * @param UserCartRequest $postUserCartRequest
+     * @param PostUserCartRequest $postUserCartRequest
      * @return UserCartResponse
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ObjectNotFoundException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\External\Exception\ManzanaPromocodeUnavailableException
+     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
      */
     public function postUserCartAction(PostUserCartRequest $postUserCartRequest)
     {
-        $userCarRequest = new UserCartRequest();
-        return $this->getUserCartAction($userCarRequest);
+        foreach ($postUserCartRequest->getGoods() as $productQuantity) {
+            $this->basketService->addOfferToBasket($productQuantity->getProductId(), $productQuantity->getQuantity());
+        }
+        return $this->getUserCartAction(new UserCartRequest());
     }
 
     /**
-     * Метод выставляет кол-во товара (без добавления к уже имеющемуся кол-ву).
-     * Количество 0 удаляет товариз корзины.
+     * обновление количества товаров в корзине, 0 - удаление (принимает id товара из корзины (basketItemId) и количество)
      * @Rest\Put(path="/user_cart/")
      * @Rest\View()
      * @param PutUserCartRequest $putUserCartRequest

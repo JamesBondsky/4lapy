@@ -90,6 +90,11 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     protected $shipmentResults;
 
     /**
+     * @var string
+     */
+    protected $currency = '₽';
+
+    /**
      * @return \DateTime
      */
     public function getCurrentDate(): \DateTime
@@ -299,6 +304,17 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     {
         $this->resetResult();
         $this->selectedStore = $selectedStore;
+        return $this;
+    }
+
+    public function getCurrency()
+    {
+        return $this->currency;
+    }
+
+    public function setCurrency($currency): CalculationResultInterface
+    {
+        $this->currency = $currency;
         return $this;
     }
 

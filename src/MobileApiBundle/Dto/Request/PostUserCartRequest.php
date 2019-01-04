@@ -5,7 +5,7 @@ namespace FourPaws\MobileApiBundle\Dto\Request;
 use FourPaws\MobileApiBundle\Dto\Object\ProductQuantity;
 use JMS\Serializer\Annotation as Serializer;
 
-class PostUserCartRequest
+class PostUserCartRequest implements SimpleUnserializeRequest, PostRequest
 {
     /**
      * @Serializer\SerializedName("goods")

@@ -9,6 +9,7 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use FourPaws\App\Application;
 use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Collection\OfferCollection;
@@ -40,6 +41,7 @@ use FourPaws\MobileApiBundle\Exception\CategoryNotFoundException as MobileCatego
 use FourPaws\MobileApiBundle\Exception\NotFoundProductException;
 use FourPaws\MobileApiBundle\Exception\SystemException;
 use FourPaws\Search\SearchService;
+use FourPaws\StoreBundle\Service\StockService;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -156,6 +158,7 @@ class CatalogService implements LoggerAwareInterface
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Exception
      */
     public function getProductsList(
         Request $request,
@@ -192,8 +195,12 @@ class CatalogService implements LoggerAwareInterface
     /**
      * @param int $id
      * @return mixed
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public function getOffer(int $id)
     {
@@ -262,7 +269,7 @@ class CatalogService implements LoggerAwareInterface
             }
         }
 
-        // с этим товаро покупают
+        // с этим товаром покупают
         if ($bundle = $currentOffer->getBundle()) {
             $crossSale = [];
             /** @var BundleItem $bundleItem */
@@ -284,7 +291,12 @@ class CatalogService implements LoggerAwareInterface
     /**
      * @param Product $product
      * @return FullProduct
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     protected function mapProduct(Product $product): FullProduct
     {
@@ -312,6 +324,13 @@ class CatalogService implements LoggerAwareInterface
                 $currentOffer = $offer;
             }
         }
+
+        // костыль потому что в allStocks вместо объекта StockCollection приходит просто массив с кодами магазинов...
+        // взято из метода FourPaws\Catalog\Model\getAllStocks()
+        $stockService = Application::getInstance()->getContainer()->get(StockService::class);
+        $currentOffer->withAllStocks($stockService->getStocksByOffer($currentOffer));
+        // end костыль
+
         return $currentOffer;
     }
 

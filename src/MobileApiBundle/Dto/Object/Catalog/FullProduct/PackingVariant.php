@@ -21,7 +21,7 @@ class PackingVariant
      * Идентификатор предложения товара
      * @var int
      * @Serializer\Type("int")
-     * @Serializer\SerializedName("id")
+     * @Serializer\SerializedName("offerId")
      */
     protected $offerId;
 

@@ -38,6 +38,6 @@ class FeedbackController extends FOSRestController
     public function postReportAction(): FeedbackResponse
     {
         //toDo
-        return (new FeedbackResponse('report_send_ok'));
+        return (new FeedbackResponse('Ваше обращение принято'));
     }
 }

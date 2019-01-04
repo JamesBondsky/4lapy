@@ -31,4 +31,10 @@ interface PickupResultInterface extends CalculationResultInterface
      * @return PickupResultInterface
      */
     public function setSelectedShop(Store $selectedStore): PickupResultInterface;
+
+    /**
+     * Возвращает отформатированный текст о доставке для карточки товара на сайте и в мобильном приложении
+     * @return string
+     */
+    public function getTextForOffer(): string;
 }

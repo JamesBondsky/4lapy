@@ -81,11 +81,14 @@ class FullProduct extends ShortProduct
     protected $nutritionRecommendations = '';
 
     /**
+     * С этим товаром покупают
+     *
      * @var Bundle[]
      * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct\Bundle>")
      * @Serializer\SerializedName("bundle")
      */
     protected $bundle;
+
 
     /**
      * @return CatalogCategory

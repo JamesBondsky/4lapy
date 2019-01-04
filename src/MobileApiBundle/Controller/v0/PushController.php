@@ -64,9 +64,14 @@ class PushController extends FOSRestController
             ->setData(['result' => true]);
     }
 
+    /**
+     * @Rest\Post("/push_message/")
+     * @Rest\View()
+     */
     public function setPushTokenAction()
     {
         // ToDo: на вход приходят platform и token. Надо сохранять эти значения в табличке api_user_session выбрав пользователя по токену... Зачем? Пока не понятно...
-
+        return (new Response())
+            ->setData(['result' => true]);
     }
 }

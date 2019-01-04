@@ -15,6 +15,7 @@ use FourPaws\MobileApiBundle\Dto\Object\Detailing;
 use FourPaws\MobileApiBundle\Dto\Object\OrderCalculate;
 use FourPaws\MobileApiBundle\Dto\Object\OrderParameter;
 use FourPaws\MobileApiBundle\Dto\Object\OrderStatus;
+use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Dto\Request\OrderInfoRequest;
 use FourPaws\MobileApiBundle\Dto\Request\OrderStatusHistoryRequest;
 use FourPaws\MobileApiBundle\Dto\Response\OrderInfoResponse;
@@ -57,8 +58,8 @@ class OrderController extends FOSRestController
 
             $orderItems = $order->getItems();
             $products = $orderServiceForApi->getProducts($orderItems);
-            $price = $orderServiceForApi->calculateProductsPrice($orderItems);
-            $discountPrice = $orderServiceForApi->calculateProductsPrice($orderItems);
+            $price = $orderServiceForApi->calculateProductsPrice($products);
+            $discountPrice = $orderServiceForApi->calculateProductsPrice($products);
 
 
             $dateInsert = (new \DateTime())->setTimestamp($order->getDateInsert()->getTimestamp());
@@ -66,9 +67,6 @@ class OrderController extends FOSRestController
             $status = (new OrderStatus())
                 ->setTitle($order->getStatus())
                 ->setCode($order->getStatusId());
-
-            $price = (new Price())
-                ->setActual($order->getPrice());
 
             $priceDetails = [
                 (new Detailing())
@@ -131,7 +129,10 @@ class OrderController extends FOSRestController
                 ->setCard($order->getPropValue('DISCOUNT_CARD'))
             ;
             $orderCalculate = (new OrderCalculate())
-                ->setTotalPrice($price)
+                ->setTotalPrice(
+                    (new Price())
+                        ->setActual($order->getPrice())
+                )
                 ->setPriceDetails($priceDetails)
                 ->setCardDetails($cardDetails)
             ;

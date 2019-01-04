@@ -1917,4 +1917,27 @@ class Offer extends IblockElement
     {
         return OfferQuery::getById((int)$primary);
     }
+
+    /**
+     * Возвращает текст о наличии для карточки товара на сайте и в приложении
+     * @return string
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     */
+    public function getAvailabilityText(): string
+    {
+        if ($this->isByRequest() && $this->isAvailable()) {
+            $availability = 'Только под заказ';
+        } else if (!$this->isAvailable()) {
+            $availability = 'Нет в наличии';
+        } else {
+            $availability = 'В наличии';
+        }
+        return $availability;
+    }
+
+    public function getPickupInfo()
+    {
+
+    }
 }

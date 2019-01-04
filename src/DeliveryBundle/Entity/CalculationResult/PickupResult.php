@@ -7,6 +7,9 @@ use Bitrix\Main\Error;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
@@ -115,6 +118,79 @@ class PickupResult extends BaseResult implements PickupResultInterface
     }
 
     /**
+     * @return string
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws StoreNotFoundException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     */
+    public function getTextForOffer(): string
+    {
+        if ($this->getDeliveryCode() === DeliveryService::INNER_PICKUP_CODE) {
+            $shopCount = $this->getShopCount();
+            $totalCount = $shopCount['TOTAL'];
+            $availableCount = $shopCount['AVAILABLE'];
+            $hasToday = $shopCount['HAS_TODAY'];
+            $unavailableCount = $shopCount['TOTAL'] - $shopCount['AVAILABLE'];
+            if ($availableCount) {
+                if ($hasToday) {
+                    $text = 'из ' . $availableCount . ' ' . WordHelper::declension(
+                        (int)$availableCount,
+                        [
+                            'магазина',
+                            'магазинов',
+                            'магазинов',
+                        ]
+                    );
+                    $text .= ' ' . DeliveryTimeHelper::showByDate($this->getDeliveryDate(), 0, [
+                        'DATE_FORMAT' => 'XX',
+                        'SHOW_TIME'   => $hasToday,
+                    ]);
+                } else {
+                    $text = DeliveryTimeHelper::showByDate($this->getDeliveryDate(), 0, [
+                        'DATE_FORMAT' => 'XX',
+                        'SHOW_TIME'   => $hasToday,
+                    ]) . ' из ' . $availableCount . ' ' . WordHelper::declension(
+                        (int)$availableCount,
+                        [
+                            'магазина',
+                            'магазинов',
+                            'магазинов',
+                        ]
+                    );
+                }
+                if ($unavailableCount) {
+                    $text .= '<br>';
+                    $text .=  'и из ' . $unavailableCount . ' ' . WordHelper::declension(
+                        (int)$unavailableCount,
+                        [
+                            'магазина',
+                            'магазинов',
+                            'магазинов',
+                        ]
+                    ) . ' позже';
+                }
+            } else {
+                $text = 'из ' .  $totalCount . ' ' . WordHelper::declension(
+                    (int)$totalCount,
+                    [
+                        'магазина',
+                        'магазинов',
+                        'магазинов',
+                    ]
+                ) . ' ' . DeliveryTimeHelper::showByDate($this->getDeliveryDate(), 0, [
+                    'DATE_FORMAT' => 'XX',
+                    'SHOW_TIME'   => false,
+                ]);
+            }
+        } else {
+            $text = DeliveryTimeHelper::showByDate($this->getDeliveryDate(), 0, ['DATE_FORMAT' => 'XX']);
+        }
+        return $text;
+    }
+
+    /**
      * Изменяет дату доставки в соответствии с графиком работы магазина
      *
      * @param \DateTime $date
@@ -132,5 +208,55 @@ class PickupResult extends BaseResult implements PickupResultInterface
         } else {
             $date->modify('+1 hour');
         }
+    }
+
+    /**
+     * @param PickupResultInterface $pickup
+     *
+     * @return int[]
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws StoreNotFoundException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \Bitrix\Main\SystemException
+     */
+    protected function getShopCount(): array
+    {
+        $shops = $this->getBestShops();
+        $pickup = clone $this;
+
+        $countTotal = 0;
+        $hasToday = false;
+        $countFirst = 0;
+        $firstDate = null;
+        $currentDate = new \DateTime();
+        /** @var Store $shop */
+        foreach ($shops as $shop) {
+            $pickup->setSelectedStore($shop);
+            if (!$pickup->isSuccess()) {
+                break;
+            }
+
+            if (abs($pickup->getDeliveryDate()->getTimestamp() - $currentDate->getTimestamp()) < 2 * 3600) {
+                $hasToday = true;
+                $countFirst++;
+            }
+
+            if (!$hasToday) {
+                if (null === $firstDate) {
+                    $firstDate = $pickup->getDeliveryDate();
+                }
+                if ($pickup->getDeliveryDate()->format('z') === $firstDate->format('z')) {
+                    $countFirst++;
+                }
+            }
+            $countTotal++;
+        }
+
+        return [
+            'AVAILABLE' => $countFirst,
+            'HAS_TODAY' => $hasToday,
+            'TOTAL'     => $countTotal,
+        ];
     }
 }

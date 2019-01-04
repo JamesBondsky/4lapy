@@ -136,17 +136,18 @@ class FourPawsCityDeliveryInfoComponent extends FourPawsComponent
 
             if (null !== $deliveryResult) {
                 $delivery = [
-                    'PRICE'         => $deliveryResult->getPrice(),
-                    'FREE_FROM'     => $deliveryResult->getFreeFrom(),
-                    'INTERVALS'     => $deliveryResult->getIntervals(),
-                    'INTERVAL_DAYS' => $this->getIntervalDays($deliveryResult),
-                    'PERIOD_FROM'   => $deliveryResult->getPeriodFrom(),
-                    'PERIOD_TYPE'   => $deliveryResult->getPeriodType() ?? BaseResult::PERIOD_TYPE_DAY,
-                    'DELIVERY_DATE' => $deliveryResult->getDeliveryDate(),
-                    'CODE'          => $deliveryResult->getDeliveryCode(),
-                    'ZONE'          => $deliveryResult->getDeliveryZone(),
-                    'WEEK_DAYS'     => $deliveryResult->getWeekDays(),
-                    'RESULT'        => $deliveryResult,
+                    'PRICE'               => $deliveryResult->getPrice(),
+                    'FREE_FROM'           => $deliveryResult->getFreeFrom(),
+                    'CURRENCY'            => $deliveryResult->getCurrency(),
+                    'INTERVALS'           => $deliveryResult->getIntervals(),
+                    'INTERVAL_DAYS'       => $this->getIntervalDays($deliveryResult),
+                    'PERIOD_FROM'         => $deliveryResult->getPeriodFrom(),
+                    'PERIOD_TYPE'         => $deliveryResult->getPeriodType() ?? BaseResult::PERIOD_TYPE_DAY,
+                    'DELIVERY_DATE'       => $deliveryResult->getDeliveryDate(),
+                    'CODE'                => $deliveryResult->getDeliveryCode(),
+                    'ZONE'                => $deliveryResult->getDeliveryZone(),
+                    'WEEK_DAYS'           => $deliveryResult->getWeekDays(),
+                    'RESULT'              => $deliveryResult,
                 ];
             }
 

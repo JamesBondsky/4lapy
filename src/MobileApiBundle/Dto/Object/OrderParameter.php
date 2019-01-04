@@ -29,6 +29,7 @@ class OrderParameter
      * @Serializer\Groups("request")
      * @Serializer\SerializedName("productsQuantity")
      * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\ProductQuantity>")
+     * @Serializer\SkipWhenEmpty()
      * @var ProductQuantity[]
      */
     protected $productsQuantity = [];

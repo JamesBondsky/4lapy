@@ -54,23 +54,23 @@ class DeliveryAddress
      * @Assert\NotBlank()
      * @Serializer\SerializedName("house")
      * @Serializer\Type("string")
-     * @var string
+     * @var null|string
      */
     protected $house;
 
     /**
      * @Serializer\SerializedName("flat")
      * @Serializer\Type("string")
-     * @var string
+     * @var null|string
      */
     protected $flat;
 
     /**
      * @Serializer\SerializedName("details")
      * @Serializer\Type("string")
-     * @var string
+     * @var null|string
      */
-    protected $details = '';
+    protected $details;
 
     /**
      * @return int
@@ -145,7 +145,7 @@ class DeliveryAddress
     }
 
     /**
-     * @return string
+     * @return null|string
      */
     public function getHouse(): string
     {
@@ -153,7 +153,7 @@ class DeliveryAddress
     }
 
     /**
-     * @param string $house
+     * @param null|string $house
      * @return DeliveryAddress
      */
     public function setHouse(string $house): DeliveryAddress
@@ -163,7 +163,7 @@ class DeliveryAddress
     }
 
     /**
-     * @return string
+     * @return null|string
      */
     public function getFlat(): string
     {
@@ -171,7 +171,7 @@ class DeliveryAddress
     }
 
     /**
-     * @param string $flat
+     * @param null|string $flat
      * @return DeliveryAddress
      */
     public function setFlat(string $flat): DeliveryAddress
@@ -181,7 +181,7 @@ class DeliveryAddress
     }
 
     /**
-     * @return string
+     * @return null|string
      */
     public function getDetails(): string
     {
@@ -189,7 +189,7 @@ class DeliveryAddress
     }
 
     /**
-     * @param string $details
+     * @param null|string $details
      * @return DeliveryAddress
      */
     public function setDetails(string $details): DeliveryAddress
