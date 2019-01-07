@@ -27,7 +27,7 @@ class ApiToken extends AbstractToken
     /**
      * @return null|ApiUserSession
      */
-    public function getApiUserSession(): ApiUserSession
+    public function getApiUserSession()
     {
         return $this->apiUserSession;
     }
