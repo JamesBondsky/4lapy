@@ -235,6 +235,8 @@ class UserService implements
             $id = (int)$this->bitrixUserService->GetID();
             if ($id > 0) {
                 return $id;
+            } else {
+                throw new NotAuthorizedException('User is not authorized');
             }
         }
         throw new NotAuthorizedException('Trying to get user id without authorization');
