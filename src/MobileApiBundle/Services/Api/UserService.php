@@ -173,6 +173,7 @@ class UserService
         $user = $this->userBundleService->getCurrentUser();
         $apiUser = new User();
         $apiUser
+            ->setId($user->getId())
             ->setEmail($user->getEmail())
             ->setFirstName($user->getName())
             ->setLastName($user->getLastName())
