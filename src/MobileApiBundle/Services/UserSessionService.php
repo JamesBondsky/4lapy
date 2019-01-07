@@ -11,6 +11,7 @@ use FourPaws\MobileApiBundle\Exception\ValidationException;
 use FourPaws\MobileApiBundle\Exception\WrongTransformerResultException;
 use FourPaws\MobileApiBundle\Repository\ApiUserSessionRepository;
 use FourPaws\MobileApiBundle\Services\Security\SessionFactory;
+use FourPaws\UserBundle\Service\UserService as UserBundleService;
 
 class UserSessionService
 {
@@ -24,10 +25,20 @@ class UserSessionService
      */
     private $userSessionRepository;
 
-    public function __construct(ApiUserSessionRepository $userSessionRepository, SessionFactory $sessionFactory)
+    /**
+     * @var UserBundleService
+     */
+    private $userBundleService;
+
+    public function __construct(
+        ApiUserSessionRepository $userSessionRepository,
+        SessionFactory $sessionFactory,
+        UserBundleService $userBundleService
+    )
     {
         $this->sessionFactory = $sessionFactory;
         $this->userSessionRepository = $userSessionRepository;
+        $this->userBundleService = $userBundleService;
     }
 
     /**
@@ -40,6 +51,10 @@ class UserSessionService
      */
     public function create(): ApiUserSession
     {
+        if ($this->userBundleService->isAuthorized()) {
+            // added by coldshine 07.01.18: при создании сессии пользователь не должен быть авторизован
+            $this->userBundleService->logout();
+        }
         $session = $this->sessionFactory->create();
         if ($this->userSessionRepository->create($session)) {
             return $session;
