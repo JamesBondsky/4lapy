@@ -285,18 +285,17 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
 //            }
 
             $existGifts = $this->getExistGifts($discountId);
+            $existGiftsIds = [];
             foreach ($existGifts as $existGift) {
-                // Находим первый невыбранный подарок и херим его
-                if ($existGift['selected'] === 'N') {
-                    if ($existGift['quantity'] > 1) {
-                        $this->basketService->updateBasketQuantity($existGift['basketId'], $existGift['quantity'] - 1);
-                    } else {
-                        $this->basketService->deleteOfferFromBasket($existGift['basketId']);
-                    }
-                    break;
-                }
+                $existGiftsIds[$existGift['offerId']] = $existGift;
             }
-            $this->addGift($offerId, $quantity, $discountId, true);
+            if (in_array($offerId, array_keys($existGiftsIds))) {
+                $basketId = (int)$existGiftsIds[$offerId]['basketId'];
+                $basketQuantity = (int)$existGiftsIds[$offerId]['quantity'];
+                $this->basketService->updateBasketQuantity($basketId, $basketQuantity + $quantity);
+            } else {
+                $this->addGift($offerId, $quantity, $discountId, true);
+            }
         }
     }
 }
