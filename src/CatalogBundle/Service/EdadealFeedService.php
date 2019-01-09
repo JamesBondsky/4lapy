@@ -357,7 +357,7 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
         while ($file = $dbFiles->Fetch()) {
             $path = '/' . $uploadDir . '/' . $file['SUBDIR'] . '/' . $file['FILE_NAME'];
             if (!file_exists($_SERVER['DOCUMENT_ROOT'] . $path)) {
-                unset($this->arResult[$key][$files[$file['ID']]]['image']);
+                unset($this->arResult[$key][$files[$file['ID']]]);
             }
 
             $path = \sprintf(
