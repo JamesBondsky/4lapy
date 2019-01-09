@@ -61,6 +61,13 @@ class ApiUserSessionTable extends DataManager
                 'unique'        => true,
                 'default_value' => md5(random_bytes(32)),
             ]),
+            'PLATFORM'                => new StringField('PLATFORM', [
+                'default_value' => '',
+            ]),
+            'PUSH_TOKEN'                => new StringField('PUSH_TOKEN', [
+                'unique'        => true,
+                'default_value' => '',
+            ]),
             new ReferenceField(
                 'FUSER',
                 'Bitrix\Sale\Internals\Fuser',

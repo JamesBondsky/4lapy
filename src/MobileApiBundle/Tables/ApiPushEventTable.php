@@ -12,6 +12,7 @@ use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Entity\StringField;
 use Bitrix\Main\Entity\TextField;
 use Bitrix\Main\Type\DateTime;
+use FourPaws\App\Application;
 
 class ApiPushEventTable extends DataManager
 {
@@ -38,17 +39,37 @@ class ApiPushEventTable extends DataManager
             'PLATFORM' => new StringField('PLATFORM', [
                 'required' => true,
             ]),
-            'TOKEN' => new StringField('TOKEN', [
+            'PUSH_TOKEN' => new StringField('PUSH_TOKEN', [
                 'required' => true,
             ]),
             'DATE_TIME_EXEC' => new DatetimeField('DATE_TIME_EXEC', [
                 'default_value' => new DateTime(),
             ]),
-            'MESSAGE' => new TextField('MESSAGE', [
+            'MESSAGE_ID' => new IntegerField('MESSAGE_ID', [
                 'required' => true,
             ]),
             'SUCCESS_EXEC' => new StringField('SUCCESS_EXEC', []),
             'VIEWED' => new StringField('VIEWED', []),
+            'MD5'=> new StringField('MD5', []),
+            new ReferenceField(
+                'MESSAGE',
+                (Application::getHlBlockDataManager('bx.hlblock.pushmessages'))::getEntity(),
+                ['=ref.ID' => 'this.MESSAGE_ID']
+            ),
         ];
+    }
+
+    /**
+     * @param Event $event
+     * @return EventResult
+     * @throws \Bitrix\Main\ArgumentException
+     */
+    public static function OnBeforeAdd(Event $event)
+    {
+        $result = new EventResult();
+        $result->modifyFields([
+            'MD5' => md5(serialize($event->getEntity()->getField('MESSAGE')))
+        ]);
+        return $result;
     }
 }

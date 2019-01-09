@@ -116,6 +116,9 @@ class HlBlockPushMessagesCreate20181217082825 extends \Adv\Bitrixtools\Migration
             'LIST_FILTER_LABEL' => [
                 'ru' => 'Тип push',
             ],
+            'SETTINGS' => [
+                'DISPLAY' => 'CHECKBOX'
+            ],
             'ENUMS' => [
                 'n1' => [
                     'XML_ID' => 'news',
@@ -165,12 +168,15 @@ class HlBlockPushMessagesCreate20181217082825 extends \Adv\Bitrixtools\Migration
             'USER_TYPE_ID'      => 'enumeration',
             'XML_ID'            => 'UF_GROUPS',
             'SORT'              => 60,
-            'MULTIPLE'          => 'N',
+            'MULTIPLE'          => 'Y',
             'MANDATORY'         => 'N',
             'SHOW_FILTER'       => 'Y',
             'SHOW_IN_LIST'      => 'Y',
             'EDIT_IN_LIST'      => 'Y',
             'IS_SEARCHABLE'     => 'N',
+            'SETTINGS' => [
+                'DISPLAY' => 'CHECKBOX'
+            ],
             'EDIT_FORM_LABEL'   => [
                 'ru' => 'Отправлять всем пользователям, подписанным',
             ],
@@ -182,11 +188,11 @@ class HlBlockPushMessagesCreate20181217082825 extends \Adv\Bitrixtools\Migration
             ],
             'ENUMS' => [
                 'n1' => [
-                    'XML_ID' => 'push_on_news',
+                    'XML_ID' => 'UF_PUSH_NEWS',
                     'VALUE' => 'на новости и акции'
                 ],
                 'n2' => [
-                    'XML_ID' => 'push_on_change_order_status',
+                    'XML_ID' => 'UF_PUSH_ORD_STAT',
                     'VALUE' => 'на изменение статуса заказа',
                 ],
             ]
@@ -244,6 +250,9 @@ class HlBlockPushMessagesCreate20181217082825 extends \Adv\Bitrixtools\Migration
             'SHOW_IN_LIST'      => 'Y',
             'EDIT_IN_LIST'      => 'Y',
             'IS_SEARCHABLE'     => 'N',
+            'SETTINGS' => [
+                'DISPLAY' => 'CHECKBOX'
+            ],
             'EDIT_FORM_LABEL'   => [
                 'ru' => 'Отправлять на устройства',
             ],

@@ -20,9 +20,9 @@ class MobileApiCreatePushEventTable20181217015731 extends \Adv\Bitrixtools\Migra
 CREATE TABLE `$tableName`(
   `ID`                   INT          NOT NULL AUTO_INCREMENT,
   `PLATFORM`             CHAR(1)      NOT NULL,
-  `TOKEN`                VARCHAR(255) NOT NULL DEFAULT 0,
+  `PUSH_TOKEN`           VARCHAR(255) NOT NULL DEFAULT 0,
   `DATE_TIME_EXEC`       DATETIME     NOT NULL,
-  `MESSAGE`              TEXT         NOT NULL,
+  `MESSAGE_ID`           INT          NOT NULL,
   `SUCCESS_EXEC`         CHAR(1)      NOT NULL DEFAULT 'W',
   `VIEWED`               CHAR(1)      NOT NULL DEFAULT 'N',
   `MD5`                  VARCHAR(255),

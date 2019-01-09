@@ -96,6 +96,22 @@ class ApiUserSession
     protected $httpXForwardedFor;
 
     /**
+     * @Serializer\SerializedName("PLATFORM")
+     * @Serializer\Type("string")
+     * @Serializer\Groups(groups={"read","update","create"})
+     * @var string
+     */
+    protected $platform;
+
+    /**
+     * @Serializer\SerializedName("PUSH_TOKEN")
+     * @Serializer\Type("string")
+     * @Serializer\Groups(groups={"read","update","create"})
+     * @var string
+     */
+    protected $pushToken;
+
+    /**
      * @return int
      */
     public function getId(): int
@@ -280,6 +296,42 @@ class ApiUserSession
     public function setToken(string $token): ApiUserSession
     {
         $this->token = $token;
+        return $this;
+    }
+
+    /**
+ * @return string
+ */
+    public function getPlatform(): string
+    {
+        return $this->platform ?: '';
+    }
+
+    /**
+     * @param string $platform
+     * @return ApiUserSession
+     */
+    public function setPlatform(string $platform): ApiUserSession
+    {
+        $this->platform = $platform;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPushToken(): string
+    {
+        return $this->pushToken ?: '';
+    }
+
+    /**
+     * @param string $pushToken
+     * @return ApiUserSession
+     */
+    public function setPushToken(string $pushToken): ApiUserSession
+    {
+        $this->pushToken = $pushToken;
         return $this;
     }
 }

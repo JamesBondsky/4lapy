@@ -46,3 +46,9 @@ services:
 
     FourPaws\MobileApiBundle\Services\Api\MetroService:
         arguments: ['@bx.hlblock.metrostations', '@bx.hlblock.metroways']
+
+
+    # Push messages
+    push_event.service:
+        class: FourPaws\MobileApiBundle\Services\PushEventService
+        public: true
