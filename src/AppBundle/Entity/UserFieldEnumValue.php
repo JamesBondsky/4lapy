@@ -5,7 +5,7 @@ namespace FourPaws\AppBundle\Entity;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Collection\UserFieldEnumCollection;
-use FourPaws\AppBundle\Service\UserFieldEnumService;
+use FourPaws\AppBundle\Traits\UserFieldEnumTrait;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -16,6 +16,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  */
 class UserFieldEnumValue extends BaseEntity
 {
+    use UserFieldEnumTrait;
     /**
      * @var int
      * @Serializer\Type("integer")
@@ -54,8 +55,6 @@ class UserFieldEnumValue extends BaseEntity
      */
     protected $xmlId;
 
-    /** @var UserFieldEnumService */
-    private $userFieldEnumService;
     /** @var UserFieldEnumCollection */
     private $collection;
 
@@ -182,19 +181,5 @@ class UserFieldEnumValue extends BaseEntity
 
         return $this->collection;
 
-    }
-
-    /**
-     * @return UserFieldEnumService
-     * @throws ApplicationCreateException
-     */
-    protected function getUserFieldEnumService() : UserFieldEnumService
-    {
-        if (!$this->userFieldEnumService) {
-            $appCont = Application::getInstance()->getContainer();
-            $this->userFieldEnumService = $appCont->get('userfield_enum.service');
-        }
-
-        return $this->userFieldEnumService;
     }
 }

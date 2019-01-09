@@ -8,7 +8,7 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\AppBundle\Entity\UserFieldEnumValue;
-use FourPaws\AppBundle\Service\UserFieldEnumService;
+use FourPaws\AppBundle\Traits\UserFieldEnumTrait;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\NotFoundException;
@@ -20,6 +20,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class OrderSubscribe extends BaseEntity
 {
+    use UserFieldEnumTrait;
+
     /**
      * @var int
      * @Serializer\Type("integer")
@@ -89,8 +91,6 @@ class OrderSubscribe extends BaseEntity
      */
     protected $lastCheck;
 
-    /** @var UserFieldEnumService $userFieldEnumService */
-    private $userFieldEnumService;
     /** @var null|Order $order */
     private $order;
     /** @var UserFieldEnumValue $deliveryFrequencyEntity */
@@ -390,7 +390,6 @@ class OrderSubscribe extends BaseEntity
 
     /**
      * @return OrderSubscribeService
-     * @throws ApplicationCreateException
      */
     protected function getOrderSubscribeService() : OrderSubscribeService
     {
@@ -399,20 +398,6 @@ class OrderSubscribe extends BaseEntity
         $orderSubscribeService = $appCont->get('order_subscribe.service');
 
         return $orderSubscribeService;
-    }
-
-    /**
-     * @return UserFieldEnumService
-     * @throws ApplicationCreateException
-     */
-    protected function getUserFieldEnumService() : UserFieldEnumService
-    {
-        if (!$this->userFieldEnumService) {
-            $appCont = Application::getInstance()->getContainer();
-            $this->userFieldEnumService = $appCont->get('userfield_enum.service');
-        }
-
-        return $this->userFieldEnumService;
     }
 
     /**

@@ -22,7 +22,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Collection\UserFieldEnumCollection;
-use FourPaws\AppBundle\Service\UserFieldEnumService;
+use FourPaws\AppBundle\Traits\UserFieldEnumTrait;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\TaggedCacheHelper;
@@ -47,6 +47,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceExce
 class OrderSubscribeService
 {
     use LazyLoggerAwareTrait;
+    use UserFieldEnumTrait;
 
     // За сколько дней до предстоящей доставки должно отправляться напоминание
     const UPCOMING_DAYS_DELIVERY_MESS = 3;
@@ -61,8 +62,6 @@ class OrderSubscribeService
     private $saleOrderService;
     /** @var DeliveryService $deliveryService */
     private $deliveryService;
-    /** @var UserFieldEnumService $userFieldEnumService */
-    private $userFieldEnumService;
     /** @var OrderSubscribeHistoryService $orderSubscribeHistoryService */
     private $orderSubscribeHistoryService;
 
@@ -160,21 +159,6 @@ class OrderSubscribeService
         }
 
         return $this->deliveryService;
-    }
-
-    /**
-     * @return UserFieldEnumService
-     * @throws ApplicationCreateException
-     */
-    protected function getUserFieldEnumService(): UserFieldEnumService
-    {
-        if (!$this->userFieldEnumService) {
-            $this->userFieldEnumService = Application::getInstance()->getContainer()->get(
-                'userfield_enum.service'
-            );
-        }
-
-        return $this->userFieldEnumService;
     }
 
     /**
