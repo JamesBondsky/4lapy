@@ -6,20 +6,29 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\BitrixOrm\Model\Share;
+use FourPaws\Catalog\Collection\OfferCollection;
+use FourPaws\Catalog\Model\BundleItem;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Helpers\DateHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct;
 use FourPaws\CatalogBundle\Helper\MarkHelper;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
+use FourPaws\MobileApiBundle\Exception\NotFoundProductException;
 use FourPaws\UserBundle\Service\UserService;
+use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct\BundleItem as BundleItemOffer;
+
 
 class ProductService
 {
@@ -48,6 +57,42 @@ class ProductService
     }
 
     /**
+     * Возвращает продукт для карточки товара
+     * @param int $id
+     * @return FullProduct
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
+    public function getOne(int $id): FullProduct
+    {
+        $offer = (new OfferQuery())->getById($id);
+        if (!$offer) {
+            throw new NotFoundProductException("Предложение с ID $id не найдено");
+        }
+        $product = $offer->getProduct();
+
+        $fullProduct = $this->convertToFullProduct($product, $offer);
+        $fullProduct
+            ->setNutritionRecommendations($product->getNormsOfUse()->getText())
+            ->setNutritionFacts($product->getComposition()->getText())
+            ->setPackingVariants($this->getPackingVariants($product))   // фасовки
+            ->setSpecialOffer($this->getSpecialOffer($offer))           // акция
+            ->setFlavours($this->getFlavours($offer))                   // вкус
+            ->setAvailability($offer->getAvailabilityText())            // товар под заказ
+            ->setDelivery($this->getDeliveryText($offer))               // товар под заказ
+            ->setPickup($this->getPickupText($offer))                   // товар под заказ
+            // ->setCrossSale($this->getCrossSale($offer))              // похожие товары
+            ->setBundle($this->getBundle($offer))                       // с этим товаром покупают
+            ;
+
+        return $fullProduct;
+    }
+
+    /**
      * @param Offer $offer
      * @return array<ShortProduct\Tag()>
      * @throws \Bitrix\Main\SystemException
@@ -73,6 +118,7 @@ class ProductService
      * @param int $quantity
      * @return ShortProduct
      * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public function convertToShortProduct(Product $product, Offer $offer, $quantity = 1): ShortProduct
     {
@@ -83,7 +129,8 @@ class ProductService
             ->setBrandName($product->getBrandName())
             ->setWebPage($offer->getCanonicalPageUrl())
             ->setPicture($offer->getImages() ? $offer->getImages()->first() : '')
-            ->setPicturePreview($offer->getResizeImages(200, 250) ? $offer->getResizeImages(200, 250)->first() : '');
+            ->setPicturePreview($offer->getResizeImages(200, 250) ? $offer->getResizeImages(200, 250)->first() : '')
+            ->setIsByRequest($offer->isByRequest());
 
         // цена
         $price = (new Price())
@@ -116,8 +163,7 @@ class ProductService
     {
         $shortProduct = $this->convertToShortProduct($product, $offer);
         $fullProduct = (new FullProduct())
-            ->setDetailsHtml($product->getDetailText()->getText())
-            ->setAvailability($offer->getAvailabilityText());
+            ->setDetailsHtml($product->getDetailText()->getText());;
 
         // toDo: is there any better way to merge ShortProduct into FullProduct?
         $fullProduct
@@ -131,12 +177,14 @@ class ProductService
             ->setPrice($shortProduct->getPrice())
             ->setTag($shortProduct->getTag())
             ->setBonusAll($shortProduct->getBonusAll())
-            ->setBonusUser($shortProduct->getBonusUser());
+            ->setBonusUser($shortProduct->getBonusUser())
+            ->setIsByRequest($shortProduct->getIsByRequest());
 
         return $fullProduct;
     }
 
     /**
+     * Возможные доставки
      * @param Offer $offer
      * @return array
      * @throws \Bitrix\Main\ArgumentException
@@ -166,6 +214,7 @@ class ProductService
     }
 
     /**
+     * Отформатированный текст о доставке
      * @param Offer $offer
      * @return string
      * @throws \Bitrix\Main\ArgumentException
@@ -183,6 +232,7 @@ class ProductService
     }
 
     /**
+     * Отформатированный текст о самовывозе
      * @param Offer $offer
      * @return string
      * @throws \Bitrix\Main\ArgumentException
@@ -197,6 +247,161 @@ class ProductService
         /** @var $pickupResult PickupResult */
         $pickupResult = $this->filterPickups($this->getDeliveries($offer));
         return $pickupResult->getTextForOffer();
+    }
+
+    /**
+     * Фасовки товара
+     * @param Product $product
+     * @return FullProduct\PackingVariant[]
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public function getPackingVariants(Product $product): array
+    {
+        $offers = $product->getOffersSorted();
+        if (empty($offers)) {
+            return [];
+        }
+
+        $packingVariants = [];
+        /** @var Offer $offer */
+        foreach ($offers as $offer) {
+            $packingVariants[] = (new FullProduct\PackingVariant())
+                ->setPrice($offer->getPrice())
+                ->setOfferId($offer->getId())
+                ->setWeight($offer->getPackageLabel(false, 0))
+                ->setHasSpecialOffer($offer->hasAction());
+        }
+        return $packingVariants;
+    }
+
+    /**
+     * Акция товара
+     * @param Offer $offer
+     * @return FullProduct\SpecialOffer
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getSpecialOffer(Offer $offer): FullProduct\SpecialOffer
+    {
+        /** @var Share $specialOfferModel */
+        $specialOfferModel = $offer->getShare()->current();
+        $specialOffer = (new FullProduct\SpecialOffer());
+        if ($specialOfferModel) {
+            $specialOffer
+                ->setId($specialOfferModel->getId())
+                ->setName($specialOfferModel->getName())
+                ->setDescription($specialOfferModel->getPreviewText());
+
+            if ($specialOfferModel->getDateActiveFrom() && $specialOfferModel->getDateActiveTo()) {
+                $dateFrom = DateHelper::replaceRuMonth($specialOfferModel->getDateActiveFrom()->format('d #n# Y'), DateHelper::GENITIVE);
+                $dateTo = DateHelper::replaceRuMonth($specialOfferModel->getDateActiveTo()->format('d #n# Y'), DateHelper::GENITIVE);
+                $specialOffer->setDate($dateFrom . " - " . $dateTo);
+            }
+            if ($specialOfferModel->hasLabelImage()) {
+                $specialOffer->setImage($specialOfferModel->getPropertyLabelImageFileSrc());
+            }
+        }
+        return $specialOffer;
+    }
+
+    /**
+     * Вкусы товара
+     * @param Offer $offer
+     * @return FullProduct\Flavour[]
+     */
+    public function getFlavours(Offer $offer): array
+    {
+        if (!empty($offer->getFlavourCombination())) {
+            $unionOffers = $this->getOffersByUnion('flavour', $offer->getFlavourCombination());
+            if (!$unionOffers->isEmpty()) {
+                $unionOffersSorted = [];
+                foreach ($unionOffers as $unionOffer) {
+                    $unionOffersSorted[$unionOffer->getFlavourWithWeight()] = $unionOffer;
+                }
+                ksort($unionOffersSorted);
+                $flavours = [];
+                foreach ($unionOffersSorted as $flavourWithWeight => $unionOffer) {
+                    $flavours[] = (new FullProduct\Flavour())
+                        ->setOfferId($unionOffer->getId())
+                        ->setTitle($flavourWithWeight);
+                }
+                return $flavours;
+            }
+        }
+        return [];
+    }
+
+    /**
+     * Похожие товары
+     * @param Offer $offer
+     * @return array
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public function getCrossSale(Offer $offer)
+    {
+        if ($bundle = $offer->getBundle()) {
+            $crossSale = [];
+            foreach ($bundle->getProducts() as $bundleItem) {
+                $bundleItemOffer = $bundleItem->getOffer();
+                $crossSale[] = (new FullProduct\CrossSale())
+                    ->setOfferId($bundleItemOffer->getId())
+                    ->setTitle($bundleItemOffer->getName())
+                    ->setPrice($bundleItemOffer->getPrice())
+                    ->setImage($bundleItemOffer->getImages()->current())
+                ;
+            }
+            return $crossSale;
+        }
+        return [];
+    }
+
+    /**
+     * С этим товаром часто берут
+     * @param Offer $offer
+     * @return FullProduct\Bundle
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public function getBundle(Offer $offer)
+    {
+        $bundleItems = [];
+        $oldTotalPrice = 0;
+        $totalPrice = 0;
+        $bonusAmount = 0;
+        if ($bundle = $offer->getBundle()) {
+            $percent = $this->userService->getCurrentUserBonusPercent();
+            /** @var BundleItem $bundleItem */
+            foreach ($bundle->getProducts() as $bundleItem) {
+                $bundleItemOffer = $bundleItem->getOffer();
+                $bundleItems[] = (new BundleItemOffer())
+                    ->setOfferId($bundleItemOffer->getId())
+                    ->setTitle($bundleItemOffer->getName())
+                    ->setPrice(
+                        (new Price)
+                            ->setActual($bundleItemOffer->getPrice())
+                            ->setOld($bundleItemOffer->getOldPrice())
+                    )
+                    ->setImage($bundleItemOffer->getImages()->current())
+                    ->setQuantity($bundleItemOffer->getQuantity())
+                    ->setWeight($bundleItemOffer->getCatalogProduct()->getWeight());
+
+                $totalPrice += $bundleItemOffer->getCatalogPrice() * $bundleItem->getQuantity();
+                $oldTotalPrice += $bundleItemOffer->getCatalogOldPrice() * $bundleItem->getQuantity();
+                $bonusAmount += $bundleItemOffer->getBonusCount($percent, $bundleItem->getQuantity());
+            }
+        }
+        return (new FullProduct\Bundle())
+            ->setBundleItems($bundleItems)
+            ->setTotalPrice(
+                (new Price)
+                    ->setActual($totalPrice)
+                    ->setOld($oldTotalPrice)
+            )
+            ->setBonusAmount($bonusAmount);
     }
 
     /**
@@ -231,6 +436,34 @@ class ProductService
         );
 
         return reset($filtered) ?: null;
+    }
+
+    /**
+     * @param string $type
+     * @param string $val
+     *
+     * @return OfferCollection
+     */
+    protected function getOffersByUnion(string $type, string $val): OfferCollection
+    {
+        $unionOffers = [];
+        $offerCollection = null;
+        switch ($type) {
+            case 'color':
+                $offerCollection = (new OfferQuery())->withFilter(['PROPERTY_COLOUR_COMBINATION' => $val])
+                    ->exec();
+                break;
+            case 'flavour':
+                $offerCollection = (new OfferQuery())->withFilter(['PROPERTY_FLAVOUR_COMBINATION' => $val])
+                    ->exec();
+                break;
+        }
+        if (null !== $offerCollection) {
+            $unionOffers[$type][$val] = $offerCollection;
+        }
+
+
+        return $unionOffers[$type][$val];
     }
 
 }
