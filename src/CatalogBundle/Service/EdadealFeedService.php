@@ -255,7 +255,7 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
             }
 
             if(strpos(mb_strtolower($offer['NAME']), 'корм') !== false){
-                $this->arResult['offers'][$offer['XML_ID']]['quantity'] = (float)WordHelper::showWeightNumber((float)$offer['CATALOG_WEIGHT']);
+                $this->arResult['offers'][$offer['XML_ID']]['quantity'] = (float)WordHelper::showWeightNumber($offer['CATALOG_WEIGHT'], true);
                 $this->arResult['offers'][$offer['XML_ID']]['quantity_unit'] = 'кг';
             }
 
