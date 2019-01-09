@@ -17,6 +17,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\Uri;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
@@ -30,6 +31,7 @@ use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\LocationBundle\Model\City;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
+use FourPaws\Search\Table\FourPawsSmsProtectorTable;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\AuthException;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -248,12 +250,13 @@ class FourPawsRegisterComponent extends \CBitrixComponent
 
     /**
      * @param string $phone
-     * @param string|bool $tokenName
      * @param string|bool $token
-     *
+     * @param string $captcha
      * @return JsonResponse
+     * @throws ApplicationCreateException
+     * @throws SystemException
      */
-    public function ajaxResendSms($phone, $token = false): JsonResponse
+    public function ajaxResendSms($phone, $token = false, $captcha = ''): JsonResponse
     {
         try {
             $phone = PhoneHelper::normalizePhone($phone);
@@ -261,11 +264,17 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             return $this->ajaxMess->getWrongPhoneNumberException();
         }
 
+        /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
+        $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
+
         try {
             /** @var ConfirmCodeService $confirmService */
             $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
 
-            if (ProtectorHelper::checkToken($token, ProtectorHelper::TYPE_REGISTER_SMS_RESEND)) {
+            if ((true)
+                && ProtectorHelper::checkToken($token, ProtectorHelper::TYPE_REGISTER_SMS_RESEND)
+                && $recaptchaService->checkCaptcha($captcha)
+            ) {
                 $res = $confirmService::sendConfirmSms($phone);
             } else {
                 $res = true;
@@ -603,8 +612,14 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 /** @noinspection PhpUnusedLocalVariableInspection */
                 $newAction = $request->get('newAction');
 
+                /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
+                $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
+
                 /** csrf custom sms send protection */
-                if (ProtectorHelper::checkToken($request->get(ProtectorHelper::getField(ProtectorHelper::TYPE_REGISTER_SMS_SEND)), ProtectorHelper::TYPE_REGISTER_SMS_SEND)) {
+                if ((true)
+                    && ProtectorHelper::checkToken($request->get(ProtectorHelper::getField(ProtectorHelper::TYPE_REGISTER_SMS_SEND)), ProtectorHelper::TYPE_REGISTER_SMS_SEND)
+                    && $recaptchaService->checkCaptcha($request->get('g-recaptcha-response'))
+                ) {
                     $res = $this->ajaxGetSendSmsCode($phone);
                 } else {
                     $res = [
