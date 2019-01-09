@@ -120,6 +120,13 @@ class ShortProduct
     protected $bonusAll = 0;
 
     /**
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("isByRequest")
+     */
+    protected $isByRequest = false;
+
+    /**
      * @return int
      */
     public function getId(): int
@@ -351,6 +358,24 @@ class ShortProduct
     public function setBonusAll(int $bonusAll): ShortProduct
     {
         $this->bonusAll = $bonusAll;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getIsByRequest(): bool
+    {
+        return $this->isByRequest;
+    }
+
+    /**
+     * @param bool $isByRequest
+     * @return ShortProduct
+     */
+    public function setIsByRequest(bool $isByRequest): ShortProduct
+    {
+        $this->isByRequest = $isByRequest;
         return $this;
     }
 }

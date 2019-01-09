@@ -7,6 +7,7 @@
 namespace FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct;
 
 use FourPaws\Decorators\FullHrefDecorator;
+use FourPaws\MobileApiBundle\Dto\Object\Price;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -14,111 +15,83 @@ use JMS\Serializer\Annotation as Serializer;
  *
  * @package FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct
  *
- * ОбъектКаталога.ПолныйТовар.СопутствующийТовар
+ * ОбъектКаталога.ПолныйТовар.CЭтимТоваромПокупают
  */
 class Bundle
 {
     /**
+     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct\BundleItem>")
+     * @Serializer\SerializedName("goods")
+     * @var BundleItem[]
+     */
+    protected $bundleItems = [];
+
+    /**
+     * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\Price")
+     * @Serializer\SerializedName("totalPrice")
+     * @var Price
+     */
+    protected $totalPrice;
+
+    /**
      * @Serializer\Type("int")
-     * @Serializer\SerializedName("offerId")
+     * @Serializer\SerializedName("bonusAmount")
      * @var int
      */
-    protected $offerId;
+    protected $bonusAmount = 0;
+
 
     /**
-     * @var string
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("title")
+     * @return BundleItem[]
      */
-    protected $title;
+    public function getBundleItems(): array
+    {
+        return $this->bundleItems;
+    }
 
     /**
-     * @var string
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("image")
+     * @param BundleItem[] $bundleItems
+     * @return Bundle
      */
-    protected $image;
+    public function setBundleItems(array $bundleItems): Bundle
+    {
+        $this->bundleItems = $bundleItems;
+        return $this;
+    }
 
     /**
-     * @Serializer\Type("float")
-     * @Serializer\SerializedName("price")
-     * @var float
+     * @return Price
      */
-    protected $price;
+    public function getTotalPrice(): Price
+    {
+        return $this->totalPrice;
+    }
+
+    /**
+     * @param Price $totalPrice
+     * @return Bundle
+     */
+    public function setTotalPrice(Price $totalPrice): Bundle
+    {
+        $this->totalPrice = $totalPrice;
+        return $this;
+    }
 
     /**
      * @return int
      */
-    public function getOfferId(): int
+    public function getBonusAmount(): int
     {
-        return $this->offerId;
+        return $this->bonusAmount;
     }
 
     /**
-     * @param int $offerId
+     * @param int $totalPrice
      * @return Bundle
      */
-    public function setOfferId(int $offerId): Bundle
+    public function setBonusAmount(int $bonusAmount): Bundle
     {
-        $this->offerId = $offerId;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getTitle(): string
-    {
-        return $this->title;
-    }
-
-    /**
-     * @param string $title
-     * @return Bundle
-     */
-    public function setTitle(string $title): Bundle
-    {
-        $this->title = $title;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getImage(): string
-    {
-        return $this->image;
-    }
-
-    /**
-     * @param string $image
-     *
-     * @return Bundle
-     * @throws \Bitrix\Main\SystemException
-     */
-    public function setImage(string $image): Bundle
-    {
-        $hrefDecorator = new FullHrefDecorator($image);
-        $this->image = $hrefDecorator->getFullPublicPath();
-        return $this;
-    }
-
-    /**
-     * @return float
-     */
-    public function getPrice(): float
-    {
-        return $this->price;
-    }
-
-    /**
-     * @param float $price
-     *
-     * @return Bundle
-     */
-    public function setPrice(float $price): Bundle
-    {
-        $this->price = $price;
+        $this->bonusAmount = $bonusAmount;
         return $this;
     }
 }

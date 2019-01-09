@@ -52,6 +52,7 @@ class ProductController extends FOSRestController
      * @param SpecialOffersRequest $specialOffersRequest
      * @return ApiResponse
      * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public function getSpecialOffersAction(SpecialOffersRequest $specialOffersRequest): ApiResponse
     {
@@ -125,8 +126,10 @@ class ProductController extends FOSRestController
      */
     public function getGoodsItemAction(GoodsItemRequest $goodsItemRequest)
     {
-        $offer = $this->apiCatalogService->getOffer($goodsItemRequest->getId());
-        return (new Response())->setData(['goods' => $offer]);
+        $offer = $this->apiProductService->getOne($goodsItemRequest->getId());
+        return (new Response())->setData([
+            'goods' => $offer
+        ]);
     }
 
     /**
@@ -171,6 +174,7 @@ class ProductController extends FOSRestController
      * @param GoodsListByRequestRequest $goodsListByRequestRequest
      * @return Response
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @deprecated Информация о ТПЗ возвращается в объекте FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct
      */
     public function getGoodsListByRequestAction(GoodsListByRequestRequest $goodsListByRequestRequest)
     {
@@ -187,7 +191,9 @@ class ProductController extends FOSRestController
                 'isByRequest' => $offer->isByRequest()
             ];
         }
-        return (new Response())->setData(['goods' => $offers]);
+        return (new Response())->setData([
+            'goods' => $offers
+        ]);
     }
 
     /**
@@ -201,6 +207,7 @@ class ProductController extends FOSRestController
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @deprecated Информация о ТПЗ возвращается в объекте FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct
      */
     public function getGoodsItemByRequestAction(GoodsItemRequest $goodsItemRequest): GoodsItemByRequestResponse
     {
