@@ -9,17 +9,21 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 use Bitrix\Sale\Location\LocationTable;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\External\DaDataService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\MobileApiBundle\Dto\Object\City;
+use FourPaws\MobileApiBundle\Dto\Object\StreetsListItem;
 use FourPaws\MobileApiBundle\Dto\Request\CityNearestRequest;
 use FourPaws\MobileApiBundle\Dto\Request\CitySearchRequest;
 use FourPaws\MobileApiBundle\Dto\Request\MetroStationsRequest;
+use FourPaws\MobileApiBundle\Dto\Request\StreetsListRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Dto\Response\MetroStationsResponse;
 use FourPaws\MobileApiBundle\Exception\NoneMetroInCityException;
 use FourPaws\MobileApiBundle\Exception\SystemException;
 use FourPaws\MobileApiBundle\Services\Api\CityService;
 use FourPaws\MobileApiBundle\Services\Api\MetroService;
+use Symfony\Component\HttpFoundation\Request;
 
 class LocationController extends FOSRestController
 {
@@ -135,16 +139,30 @@ class LocationController extends FOSRestController
      * @Rest\Get("/street_list/")
      * @Rest\View()
      *
+     * @param StreetsListRequest $streetsListRequest
+     * @param DaDataService $daDataService
+     * @param LocationService $locationService
      * @return Response
      */
-    public function getStreetListAction()
+    public function getStreetListAction(StreetsListRequest $streetsListRequest, DaDataService $daDataService, LocationService $locationService)
     {
+        $cityCode = $streetsListRequest->getId();
+        $city = $locationService->findLocationByCode($cityCode);
+
+        $streetsList = [];
+        $streets = $daDataService->getStreets($streetsListRequest->getStreet(), $city['NAME']);
+        if (!empty($streets)) {
+            foreach ($streets as $street) {
+                if (!empty($street['data']['street_kladr_id'])) {
+                    $streetsList[] = (new StreetsListItem())
+                        ->setId($street['data']['street_kladr_id'])
+                        ->setStreet($street['data']['street_with_type']);
+                }
+            }
+        }
 
         return (new Response())->setData([
-            'page' => 1,
-            'total_items' => 0,
-            'total_pages' => 0,
-            'street_list' => []
+            'street_list' => $streetsList
         ]);
     }
 
