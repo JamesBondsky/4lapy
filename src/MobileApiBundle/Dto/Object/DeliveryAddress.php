@@ -185,7 +185,7 @@ class DeliveryAddress
      */
     public function getDetails(): string
     {
-        return $this->details;
+        return $this->details ?: '';
     }
 
     /**

@@ -180,6 +180,8 @@ class StoreService
     {
         $result = new ApiStore();
 
+        $title = str_replace($store->getXmlId() . ' ', '', $store->getTitle());
+
         $metroId = $store->getMetro();
         $metroName = $metroId > 0 ? $metroList[$metroId]['UF_NAME'] : '';
         $metroAddressText = $metroId > 0 ? 'м.' . $metroName . ', ' : '';
@@ -217,6 +219,7 @@ class StoreService
          */
 
         $result->setId($store->getId());
+        $result->setTitle($title);
         $result->setAvailabilityStatus('');
         $result->setCityId($store->getLocation());
         $result->setDetails($store->getDescription());
@@ -229,7 +232,6 @@ class StoreService
         $result->setPhoneExt('');
         $result->setPicture($store->getSrcImage());
         $result->setService($services);
-        $result->setTitle($store->getTitle());
         /** @todo нет детального магазина - поставлен url на список */
         $uri = new Uri('http://' . SITE_SERVER_NAME . '/shops/');
         $uri->addParams(['city' => $store->getLocation(), 'id' => $store->getId()]);

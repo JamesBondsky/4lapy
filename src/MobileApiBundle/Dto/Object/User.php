@@ -12,6 +12,13 @@ use Symfony\Component\Validator\Constraints as Assert;
 class User
 {
     /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("id")
+     */
+    protected $id;
+
+    /**
      * @var null|string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("email")
@@ -68,6 +75,25 @@ class User
      * @var null|ClientCard
      */
     protected $card;
+
+    /**
+     * @return int
+     */
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    /**
+     * @param int $id
+     *
+     * @return User
+     */
+    public function setId(int $id): User
+    {
+        $this->id = $id;
+        return $this;
+    }
 
     /**
      * @return ClientCard
