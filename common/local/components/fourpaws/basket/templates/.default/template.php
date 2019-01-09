@@ -123,7 +123,7 @@ if ($arParams['IS_AJAX']) {
                             ) { ?>
                                 <div class="b-gift-order__gift-product js-section-remove-stock">
                                     <?php foreach ($arResult['SELECTED_GIFTS'][$group['discountId']] as $gift) {
-                                        for ($i = 0; $i < $gift['quantity']; ++$i) {
+                                            $quantity = $gift['quantity'];
                                             $offer = $component->getOffer((int)$gift['offerId']);
                                             $image = $component->getImage((int)$gift['offerId']);
                                             /**
@@ -165,10 +165,16 @@ if ($arParams['IS_AJAX']) {
                                             <?php
                                                 }
                                                 ?>
+                                                    <span class="b-common-item__description-wrap">
+                                                        <span class="b-clipped-text b-clipped-text--shopping-cart b-clipped-text--gift-order">
+                                                            <span>Количество: <?= $quantity;?></span>
+                                                        </span>
+                                                    </span>
                                                     <a class="b-common-item__delete js-present-delete-item"
                                                        href="javascript:void(0);" title=""
                                                        data-url="/ajax/sale/basket/gift/refuse/"
-                                                       data-gift-id="<?= $gift['basketId']; ?>">
+                                                       data-gift-id="<?= $gift['basketId']; ?>"
+                                                       data-gift-quantity="<?= $quantity; ?>">
                                                         <?php
                                                         if ($giftCanBeRefused) {
                                                             ?>
@@ -185,8 +191,7 @@ if ($arParams['IS_AJAX']) {
                                                     </a>
                                                 </div>
                                             </div>
-                                        <?php }
-                                    } ?>
+                                    <? } ?>
                                 </div>
                             <?php } ?>
                         </div>

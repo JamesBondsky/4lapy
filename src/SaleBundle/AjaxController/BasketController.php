@@ -701,6 +701,7 @@ class BasketController extends Controller implements LoggerAwareInterface
     {
         $response = null;
         $giftBasketId = (int)$request->get('giftId', 0);
+        $quantity = (int)$request->get('quantity', 1);
 
         /** @noinspection BadExceptionsProcessingInspection */
         try {
@@ -710,10 +711,10 @@ class BasketController extends Controller implements LoggerAwareInterface
                 throw new NotFoundException('Подарок не найден');
             }
             $gift = $gift[$giftBasketId];
-            if ($gift['quantity'] === 1) {
+            if ($gift['quantity'] === $quantity) {
                 $this->basketService->deleteOfferFromBasket($giftBasketId);
             } else {
-                $this->basketService->updateBasketQuantity($giftBasketId, $gift['quantity'] - 1);
+                $this->basketService->updateBasketQuantity($giftBasketId, $gift['quantity'] - $quantity);
             }
         } catch (BaseExceptionInterface $e) {
             $response = JsonErrorResponse::create(
