@@ -20,8 +20,7 @@ use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\ExpertSender\Dto\ForgotBasket;
 use FourPaws\External\ExpertsenderService;
 use FourPaws\External\SmsService;
-use FourPaws\MobileApiBundle\Dto\Object\PushMessage;
-use FourPaws\MobileApiBundle\Services\Api\PushMessagesService;
+use FourPaws\MobileApiBundle\Entity\ApiPushMessage;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyParams;
 use FourPaws\SaleBundle\Dto\Notification\ForgotBasketNotification;
@@ -445,7 +444,7 @@ class NotificationService implements LoggerAwareInterface
 
         $text = $this->renderer->render($tpl, $parameters);
 
-        $pushMessage = (new PushMessage())
+        $pushMessage = (new ApiPushMessage())
             ->setMessage($text);
 
         $data = $this->transformer->toArray(

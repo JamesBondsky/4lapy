@@ -4,7 +4,7 @@
  * @copyright Copyright (c) NotAgency
  */
 
-namespace FourPaws\MobileApiBundle\Dto\Object;
+namespace FourPaws\MobileApiBundle\Entity;
 
 
 use FourPaws\App\Application;
@@ -15,7 +15,7 @@ use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 use FourPaws\UserBundle\Entity\User;
 
-class PushMessage
+class ApiPushMessage
 {
     use UserFieldEnumTrait;
 
@@ -23,7 +23,8 @@ class PushMessage
      * @var int
      * @Serializer\SerializedName("ID")
      * @Serializer\Type("int")
-     * @Assert\NotBlank()
+     * @Assert\Type(type="int",groups={"update","delete"})
+     * @Assert\GreaterThanOrEqual(value="1",groups={"update","delete"})
      */
     protected $id;
 
@@ -31,6 +32,7 @@ class PushMessage
      * @var bool
      * @Serializer\SerializedName("UF_ACTIVE")
      * @Serializer\Type("bool")
+     * @Serializer\Groups(groups={"read","update","create"})
      */
     protected $active;
 
@@ -38,6 +40,7 @@ class PushMessage
      * @var string
      * @Serializer\SerializedName("UF_MESSAGE")
      * @Serializer\Type("string")
+     * @Serializer\Groups(groups={"read","update","create"})
      */
     protected $message;
 
@@ -45,6 +48,7 @@ class PushMessage
      * @var \DateTime
      * @Serializer\SerializedName("UF_START_SEND")
      * @Serializer\Type("DateTime<'d.m.Y H:i:s'>")
+     * @Serializer\Groups(groups={"read","update","create"})
      */
     protected $startSend;
 
@@ -52,6 +56,7 @@ class PushMessage
      * @var int
      * @Serializer\SerializedName("UF_TYPE")
      * @Serializer\Type("int")
+     * @Serializer\Groups(groups={"read","update","create"})
      */
     protected $typeId;
 
@@ -59,6 +64,7 @@ class PushMessage
      * @var int
      * @Serializer\SerializedName("UF_EVENT_ID")
      * @Serializer\Type("int")
+     * @Serializer\Groups(groups={"read","update","create"})
      */
     protected $eventId;
 
@@ -66,6 +72,7 @@ class PushMessage
      * @var int[]
      * @Serializer\SerializedName("UF_GROUPS")
      * @Serializer\Type("array<int>")
+     * @Serializer\Groups(groups={"read","update","create"})
      */
     protected $groupIds;
 
@@ -73,6 +80,7 @@ class PushMessage
      * @var int[]
      * @Serializer\SerializedName("UF_USERS")
      * @Serializer\Type("array<int>")
+     * @Serializer\Groups(groups={"read","update","create"})
      */
     protected $userIds;
 
@@ -80,6 +88,7 @@ class PushMessage
      * @var int
      * @Serializer\SerializedName("UF_FILE")
      * @Serializer\Type("int")
+     * @Serializer\Groups(groups={"read","update","create"})
      */
     protected $fileId;
 
@@ -87,6 +96,7 @@ class PushMessage
      * @var int
      * @Serializer\SerializedName("UF_PLATFORM")
      * @Serializer\Type("int")
+     * @Serializer\Groups(groups={"read","update","create"})
      */
     protected $platformId;
 
@@ -123,9 +133,9 @@ class PushMessage
 
     /**
      * @param bool $active
-     * @return PushMessage
+     * @return ApiPushMessage
      */
-    public function setActive(bool $active): PushMessage
+    public function setActive(bool $active): ApiPushMessage
     {
         $this->active = $active;
         return $this;
@@ -141,9 +151,9 @@ class PushMessage
 
     /**
      * @param string $message
-     * @return PushMessage
+     * @return ApiPushMessage
      */
-    public function setMessage(string $message): PushMessage
+    public function setMessage(string $message): ApiPushMessage
     {
         $this->message = $message;
         return $this;
@@ -159,9 +169,9 @@ class PushMessage
 
     /**
      * @param \DateTime $startSend
-     * @return PushMessage
+     * @return ApiPushMessage
      */
-    public function setStartSend(\DateTime $startSend): PushMessage
+    public function setStartSend(\DateTime $startSend): ApiPushMessage
     {
         $this->startSend = $startSend;
         return $this;
@@ -177,9 +187,9 @@ class PushMessage
 
     /**
      * @param int $typeId
-     * @return PushMessage
+     * @return ApiPushMessage
      */
-    public function setTypeId(int $typeId): PushMessage
+    public function setTypeId(int $typeId): ApiPushMessage
     {
         $this->typeId = $typeId;
         return $this;
@@ -209,9 +219,9 @@ class PushMessage
 
     /**
      * @param int $eventId
-     * @return PushMessage
+     * @return ApiPushMessage
      */
-    public function setEventId(int $eventId): PushMessage
+    public function setEventId(int $eventId): ApiPushMessage
     {
         $this->eventId = $eventId;
         return $this;
@@ -227,9 +237,9 @@ class PushMessage
 
     /**
      * @param int[] $groupIds
-     * @return PushMessage
+     * @return ApiPushMessage
      */
-    public function setGroupIds(array $groupIds): PushMessage
+    public function setGroupIds(array $groupIds): ApiPushMessage
     {
         $this->groupIds = $groupIds;
         return $this;
@@ -263,9 +273,9 @@ class PushMessage
 
     /**
      * @param array $userIds
-     * @return PushMessage
+     * @return ApiPushMessage
      */
-    public function setUserIds(array $userIds): PushMessage
+    public function setUserIds(array $userIds): ApiPushMessage
     {
         $this->userIds = $userIds;
         return $this;
@@ -299,9 +309,9 @@ class PushMessage
 
     /**
      * @param int $fileId
-     * @return PushMessage
+     * @return ApiPushMessage
      */
-    public function setFileId(int $fileId): PushMessage
+    public function setFileId(int $fileId): ApiPushMessage
     {
         $this->fileId = $fileId;
         return $this;
@@ -328,9 +338,9 @@ class PushMessage
 
     /**
      * @param int $platformId
-     * @return PushMessage
+     * @return ApiPushMessage
      */
-    public function setPlatformId(int $platformId): PushMessage
+    public function setPlatformId(int $platformId): ApiPushMessage
     {
         $this->platformId = $platformId;
         return $this;
