@@ -711,7 +711,7 @@ class BasketController extends Controller implements LoggerAwareInterface
                 throw new NotFoundException('Подарок не найден');
             }
             $gift = $gift[$giftBasketId];
-            if ($gift['quantity'] === $quantity) {
+            if ($gift['quantity'] == $quantity) {
                 $this->basketService->deleteOfferFromBasket($giftBasketId);
             } else {
                 $this->basketService->updateBasketQuantity($giftBasketId, $gift['quantity'] - $quantity);
