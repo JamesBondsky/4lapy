@@ -8,6 +8,7 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\MobileApiBundle\Dto\Request\StoreAvailableRequest;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListAvailableRequest;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListRequest;
 use FourPaws\MobileApiBundle\Dto\Request\StoreProductAvailableRequest;
@@ -61,7 +62,7 @@ class StoreController extends FOSRestController
      * @param StoreProductAvailableRequest $storeProductAvailableRequest
      *
      * @throws \Exception
-     * @return `
+     * @return StoreProductAvailableResponse
      */
     public function getStoreProductAvailableAction(StoreProductAvailableRequest $storeProductAvailableRequest): StoreProductAvailableResponse
     {
@@ -71,5 +72,20 @@ class StoreController extends FOSRestController
             ->setAvailableGoods($products['available'])
             ->setNotAvailableGoods($products['unAvailable'])
             ->setShop($shop);
+    }
+
+    /**
+     * Метод используется в карточке товара для отображения магазинов, в которых доступен товар в нужном кол-ве
+     *
+     * @Rest\Get(path="/get_shops_available/")
+     * @Rest\View()
+     * @param StoreAvailableRequest $storeAvailableRequest
+     *
+     * @throws \Exception
+     * @return StoreListResponse
+     */
+    public function getShopsAvailableAction(StoreAvailableRequest $storeAvailableRequest): StoreListResponse
+    {
+        return new StoreListResponse();
     }
 }

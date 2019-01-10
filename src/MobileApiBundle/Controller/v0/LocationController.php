@@ -23,7 +23,7 @@ use FourPaws\MobileApiBundle\Exception\NoneMetroInCityException;
 use FourPaws\MobileApiBundle\Exception\SystemException;
 use FourPaws\MobileApiBundle\Services\Api\CityService;
 use FourPaws\MobileApiBundle\Services\Api\MetroService;
-use Symfony\Component\HttpFoundation\Request;
+use FourPaws\MobileApiBundle\Services\Api\StoreService;
 
 class LocationController extends FOSRestController
 {
@@ -96,10 +96,43 @@ class LocationController extends FOSRestController
      * @Rest\View()
      *
      * @param CityNearestRequest $cityNearestRequest
+     * @param StoreService $storeService
+     * @return Response
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\AppBundle\Exception\NotFoundException
+     */
+    public function cityNearestAction(
+        CityNearestRequest $cityNearestRequest,
+        StoreService $storeService
+    ): Response
+    {
+        $lat = $cityNearestRequest->getLat();
+        $lon = $cityNearestRequest->getLon();
+        $location = $storeService->getClosestStoreLocation($lat, $lon);
+
+        $city = (new City())
+            ->setId($location['CODE'])
+            ->setTitle($location['NAME'])
+            ->setLatitude($location['LATITUDE'])
+            ->setLongitude($location['LONGITUDE'])
+            ->setHasMetro( $location['CODE'] === LocationService::LOCATION_CODE_MOSCOW);
+
+        return (new Response())->setData(['city' => $city]);
+    }
+
+    /**
+     * @Rest\Get("/city_nearest_by_location/")
+     * @Rest\View()
+     *
+     * @param CityNearestRequest $cityNearestRequest
      * @return Response
      * @throws \Bitrix\Main\Db\SqlQueryException
+     *
+     * @deprecated Данный метод не используется в API
      */
-    public function cityNearestAction(CityNearestRequest $cityNearestRequest): Response
+    public function cityNearestByLocationAction(CityNearestRequest $cityNearestRequest): Response
     {
         // toDo рефакторинг
         $earthRadius = 3956;

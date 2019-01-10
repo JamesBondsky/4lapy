@@ -74,34 +74,36 @@ class StoreRepository extends BaseRepository
         $haveMetro = false;
         foreach ($allKeys as $key) {
             if (!$haveDistance && strpos($key, 'DISTANCE') !== false) {
-                /** GPS_N - latitude - $explode[1] - широта
-                 * GPS_S - longitude - $explode[2] - долгота*/
-                $explode = explode('_', $key);
-                $query->registerRuntimeField(
-                    new ExpressionField(
-                        'DISTANCE',
-                        static::RADIUS_EARTH_KM . '*2*ASIN('
-                        . 'SQRT('
-                        . 'POWER('
-                        . 'SIN('
-                        . "(%1\$s - ABS(" . $explode[1] . ')) '
-                        . '* PI()/180 / 2'
-                        . ')'
-                        . ', 2'
-                        . ') '
-                        . "+COS(%1\$s * PI()/180) "
-                        . '*COS(ABS(' . $explode[1] . ') * PI()/180) '
-                        . '*POWER('
-                        . 'SIN('
-                        . "(%2\$s - " . $explode[2] . ') * PI()/180 / 2'
-                        . ')'
-                        . ', 2'
-                        . ')'
-                        . ')'
-                        . ')',
-                        ['GPS_N', 'GPS_S']
-                    )
-                );
+                /**
+                 * Пример DISTANCE поля:
+                 * DISTANCE_55.821220_37.815770
+                 * где
+                 * $explode[0] - фраза "DISTANCE"
+                 * GPS_N - latitude - $explode[1] - широта
+                 * GPS_S - longitude - $explode[2] - долгота
+                 */
+                list($fieldName, $latitude, $longitude) = explode('_', $key);
+                $pi180 = pi() / 180;
+
+                $distanceExpression =
+                    static::RADIUS_EARTH_KM . "*2
+                    *ASIN(
+                        SQRT(
+                            POWER(
+                                SIN(
+                                    (%1\$s - ABS('$latitude'))  * $pi180 / 2
+                                ), 2
+                            )
+                            + COS(%1\$s * $pi180)
+                            * COS(ABS('$latitude') * $pi180)
+                            * POWER(
+                                SIN(
+                                    (%2\$s - '$longitude' ) * $pi180 / 2
+                                ), 2
+                            )
+                        )
+                    )";
+
                 if (isset($orderBy[$key])) {
                     $orderBy['DISTANCE'] = $orderBy[$key];
                     unset($orderBy[$key]);
@@ -110,6 +112,13 @@ class StoreRepository extends BaseRepository
                     $criteria['DISTANCE'] = $criteria[$key];
                     unset($criteria[$key]);
                 }
+
+                $query->registerRuntimeField(
+                    new ExpressionField(
+                        'DISTANCE', $distanceExpression,
+                        ['GPS_N', 'GPS_S']
+                    )
+                );
                 $select[] = 'DISTANCE';
                 $haveDistance = true;
             } elseif (!$haveLocation && strpos($key, 'LOCATION') !== false) {

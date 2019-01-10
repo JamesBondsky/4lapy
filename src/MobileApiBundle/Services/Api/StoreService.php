@@ -8,16 +8,19 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Bitrix\Main\Web\Uri;
 use Doctrine\Common\Collections\Collection;
+use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\MobileApiBundle\Dto\Object\Store\Store as ApiStore;
 use FourPaws\MobileApiBundle\Dto\Object\Store\StoreService as ApiStoreServiceDto;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListAvailableRequest;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListRequest;
 use FourPaws\MobileApiBundle\Dto\Request\StoreProductAvailableRequest;
 use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Repository\StoreRepository;
 use FourPaws\StoreBundle\Service\StoreService as AppStoreService;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 
@@ -33,10 +36,23 @@ class StoreService
      */
     private $apiProductService;
 
-    public function __construct(AppStoreService $appStoreService, ApiProductService $apiProductService)
+    /** @var StoreRepository */
+    private $storeRepository;
+
+    /** @var LocationService */
+    private $locationService;
+
+    public function __construct(
+        AppStoreService $appStoreService,
+        ApiProductService $apiProductService,
+        StoreRepository $storeRepository,
+        LocationService $locationService
+    )
     {
         $this->appStoreService = $appStoreService;
         $this->apiProductService = $apiProductService;
+        $this->storeRepository = $storeRepository;
+        $this->locationService = $locationService;
     }
 
     /**
@@ -140,6 +156,38 @@ class StoreService
             $result[in_array($storeCode, $storeCodes) ? 'available' : 'unAvailable'][] = $shortProduct;
         }
         return $result;
+    }
+
+    /**
+     * @param $lat
+     * @param $lon
+     * @return array
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws NotFoundException
+     */
+    public function getClosestStoreLocation($lat, $lon):array
+    {
+        /**
+         * @var Store $store
+         */
+        $orderBy = [
+            'DISTANCE_' . $lat . '_' . $lon => 'ASC'
+        ];
+        $store = $this->storeRepository->findBy([], $orderBy,1)->first();
+
+        if (!$store) {
+            throw new NotFoundException('не найден ближайший магазин по заданным координатам');
+        }
+
+        $location = $this->locationService->findLocationByCode($store->getLocation());
+
+        if (!$location) {
+            throw new NotFoundException('не найдена локация ближайшего магазина');
+        }
+
+        return $location;
     }
 
     protected function getParams(StoreListRequest $storeListRequest)

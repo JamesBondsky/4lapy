@@ -7,7 +7,7 @@ use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * Class StoreListRequest
+ * Class StoreProductAvailableRequest
  * @package FourPaws\MobileApiBundle\Dto\Request
  */
 class StoreProductAvailableRequest implements SimpleUnserializeRequest, PostRequest
