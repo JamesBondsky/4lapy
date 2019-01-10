@@ -23,6 +23,7 @@ class StoreController extends FOSRestController
      */
     private $apiStoreService;
 
+
     public function __construct(
         ApiStoreService $apiStoreService
     )
@@ -44,7 +45,7 @@ class StoreController extends FOSRestController
     }
 
     /**
-     * @Rest\Get(path="/shops_list_available/")
+     * @Rest\Get(path="/shops_list_availableV2/")
      * @Rest\View()
      * @param StoreListAvailableRequest $storeListAvailableRequest
      *
@@ -53,7 +54,12 @@ class StoreController extends FOSRestController
      */
     public function getStoreListAvailableAction(StoreListAvailableRequest $storeListAvailableRequest): StoreListResponse
     {
-        return new StoreListResponse($this->apiStoreService->getListAvailable($storeListAvailableRequest));
+        return new StoreListResponse(
+            $this->apiStoreService->getListAvailable(
+                $storeListAvailableRequest->getGoods(),
+                $storeListAvailableRequest->getCityId()
+            )
+        );
     }
 
     /**
@@ -86,6 +92,10 @@ class StoreController extends FOSRestController
      */
     public function getShopsAvailableAction(StoreAvailableRequest $storeAvailableRequest): StoreListResponse
     {
-        return new StoreListResponse();
+        return new StoreListResponse(
+            $this->apiStoreService->getListAvailable(
+                $storeAvailableRequest->getGoods()
+            )
+        );
     }
 }

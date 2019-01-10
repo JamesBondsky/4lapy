@@ -14,26 +14,24 @@ use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\MobileApiBundle\Dto\Object\ProductQuantity;
 use FourPaws\MobileApiBundle\Dto\Object\Store\Store as ApiStore;
 use FourPaws\MobileApiBundle\Dto\Object\Store\StoreService as ApiStoreServiceDto;
-use FourPaws\MobileApiBundle\Dto\Request\StoreListAvailableRequest;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListRequest;
 use FourPaws\MobileApiBundle\Dto\Request\StoreProductAvailableRequest;
+use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Repository\StoreRepository;
+use FourPaws\StoreBundle\Service\ShopInfoService;
 use FourPaws\StoreBundle\Service\StoreService as AppStoreService;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 
 class StoreService
 {
-    /**
-     * @var AppStoreService
-     */
+    /** @var AppStoreService */
     private $appStoreService;
 
-    /**
-     * @var ApiProductService
-     */
+    /** @var ApiProductService */
     private $apiProductService;
 
     /** @var StoreRepository */
@@ -42,17 +40,22 @@ class StoreService
     /** @var LocationService */
     private $locationService;
 
+    /** @var ShopInfoService */
+    protected $shopInfoService;
+
     public function __construct(
         AppStoreService $appStoreService,
         ApiProductService $apiProductService,
         StoreRepository $storeRepository,
-        LocationService $locationService
+        LocationService $locationService,
+        ShopInfoService $shopInfoService
     )
     {
         $this->appStoreService = $appStoreService;
         $this->apiProductService = $apiProductService;
         $this->storeRepository = $storeRepository;
         $this->locationService = $locationService;
+        $this->shopInfoService = $shopInfoService;
     }
 
     /**
@@ -97,33 +100,49 @@ class StoreService
     }
 
     /**
-     * @param StoreListAvailableRequest $storeListAvailableRequest
+     * @param ProductQuantity[] $productsQuantity
+     * @param string $locationCode
      * @return Collection
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
      * @throws \Exception
      */
-    public function getListAvailable(StoreListAvailableRequest $storeListAvailableRequest): Collection
+    public function getListAvailable(array $productsQuantity, string $locationCode = ''): Collection
     {
-        $appStoreCollection = $this->appStoreService->getStores(
-            $this->appStoreService::TYPE_SHOP,
-            [
-                'UF_LOCATION' => $storeListAvailableRequest->getCityId()
-            ]
-        );
-        /*
-        if (0 === $appStoreCollection->count()) {
-            $appStoreCollection = $this->appStoreService->getStores(
-                $this->appStoreService::TYPE_SHOP,
-                ...$this->getParams($cloneRequest)
-            );
+        $storeCollection = new StoreCollection();
+        foreach ($productsQuantity as $productQuantity) {
+            $offerId = (int) $productQuantity->getProductId();
+            $quantity = $productQuantity->getQuantity();
+            if (!$offerId || !$quantity) {
+                continue;
+            }
+            if ($offer = OfferQuery::getById($offerId)) {
+                try {
+                    $storeCollection = $this->shopInfoService->getShopsByOffer($offer);
+                    $storeCollection = $storeCollection->filter(function (Store $store) use ($offer, $quantity) {
+                        try {
+                            $stockAmount = $this->shopInfoService->getStockAmount($store, $offer);
+                        }  catch (\Exception $e) {
+                            $stockAmount = 0;
+                        }
+                        return $stockAmount >= $quantity;
+                    });
+
+                    if ($locationCode) {
+                        $storeCollection = $storeCollection->filter(function (Store $store) use ($locationCode) {
+                            return $store->getLocation() === $locationCode;
+                        });
+                    }
+
+                    $storeInfo = $this->appStoreService->getFullStoreInfo($storeCollection);
+
+                    $storeCollection = $storeCollection->map(function (Store $store) use ($storeInfo) {
+                        return $this->toApiFormat($store, ...$storeInfo);
+                    });
+
+                } catch (\Exception $e) {
+                }
+            }
         }
-        */
-        $storeInfo = $this->appStoreService->getFullStoreInfo($appStoreCollection);
-        return $appStoreCollection->map(function (Store $store) use ($storeInfo) {
-            return $this->toApiFormat($store, ...$storeInfo);
-        });
+        return $storeCollection;
     }
 
     /**

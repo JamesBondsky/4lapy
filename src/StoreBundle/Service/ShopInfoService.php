@@ -290,6 +290,32 @@ class ShopInfoService
     }
 
     /**
+     * @param Store $store
+     * @param Offer $offer
+     * @return int
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws DeliveryNotFoundException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws PickupUnavailableException
+     * @throws SystemException
+     * @throws UserMessageException
+     */
+    public function getStockAmount(Store $store, Offer $offer)
+    {
+        $pickupResult = $this->getPickupResultByStore($store, $offer);
+
+        /** @var StockResult $stockResultByStore */
+        $stockResultByStore = $pickupResult->getStockResult()->first();
+        return $stockResultByStore->getOffer()
+            ->getAllStocks()
+            ->filterByStore($store)
+            ->getTotalAmount();
+    }
+
+    /**
      * @param Request $request
      *
      * @return string
