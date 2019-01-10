@@ -48,6 +48,16 @@ class GoodsSearchRequest implements SimpleUnserializeRequest, GetRequest
     }
 
     /**
+     * @param string $query
+     * @return GoodsSearchRequest
+     */
+    public function setQuery(string $query): GoodsSearchRequest
+    {
+        $this->query = $query;
+        return $this;
+    }
+
+    /**
      * @return int
      */
     public function getPage(): int

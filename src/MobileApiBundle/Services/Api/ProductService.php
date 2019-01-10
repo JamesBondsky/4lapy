@@ -7,12 +7,18 @@
 namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\App\Application;
 use FourPaws\BitrixOrm\Model\Share;
+use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Collection\OfferCollection;
+use FourPaws\Catalog\Collection\ProductCollection;
 use FourPaws\Catalog\Model\BundleItem;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\CatalogBundle\Service\CategoriesService;
+use FourPaws\CatalogBundle\Service\FilterHelper;
+use FourPaws\CatalogBundle\Service\SortService;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
@@ -25,9 +31,14 @@ use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct;
 use FourPaws\CatalogBundle\Helper\MarkHelper;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
+use FourPaws\MobileApiBundle\Exception\CategoryNotFoundException;
 use FourPaws\MobileApiBundle\Exception\NotFoundProductException;
+use FourPaws\Search\Model\Navigation;
+use FourPaws\Search\SearchService;
+use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\UserBundle\Service\UserService;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct\BundleItem as BundleItemOffer;
+use Symfony\Component\HttpFoundation\Request;
 
 
 class ProductService
@@ -44,16 +55,132 @@ class ProductService
      * @var DeliveryService
      */
     private $deliveryService;
+    /**
+     * @var CategoriesService
+     */
+    private $categoriesService;
+    /**
+     * @var FilterHelper
+     */
+    private $filterHelper;
+    /**
+     * @var SearchService
+     */
+    private $searchService;
+    /**
+     * @var SortService
+     */
+    private $sortService;
 
     public function __construct(
+        CategoriesService $categoriesService,
         UserService $userService,
         LocationService $locationService,
-        DeliveryService $deliveryService
+        DeliveryService $deliveryService,
+        FilterHelper $filterHelper,
+        SortService $sortService,
+        SearchService $searchService
     )
     {
+        $this->categoriesService = $categoriesService;
         $this->userService = $userService;
         $this->locationService = $locationService;
         $this->deliveryService = $deliveryService;
+        $this->filterHelper = $filterHelper;
+        $this->sortService = $sortService;
+        $this->searchService = $searchService;
+    }
+
+    /**
+     * @param Request $request
+     * @param int $categoryId
+     * @param string $sort
+     * @param int $count
+     * @param int $page
+     * @param string $searchQuery
+     * @return ArrayCollection
+     * @throws CategoryNotFoundException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Exception
+     */
+    public function getList(
+        Request $request,
+        int $categoryId = 0,
+        string $sort = 'popular',
+        int $count = 10,
+        int $page = 1,
+        string $searchQuery = ''
+    ): ArrayCollection
+    {
+        $filters = new FilterCollection();
+        if ($categoryId > 0) {
+            $category = $this->categoriesService->getById($categoryId);
+            $this->filterHelper->initCategoryFilters($category, $request);
+            $filters = $category->getFilters();
+        }
+
+        $sort = $this->sortService->getSorts($sort, strlen($searchQuery) > 0)->getSelected();
+
+        $nav = (new Navigation())
+            ->withPage($page)
+            ->withPageSize($count);
+
+        $productSearchResult = $this->searchService->searchProducts($filters, $sort, $nav, $searchQuery);
+        /** @var ProductCollection $productCollection */
+        $productCollection = $productSearchResult->getProductCollection();
+
+        return (new ArrayCollection([
+            'products' => $productCollection->map(\Closure::fromCallable([$this, 'mapProductForList']))->getValues(),
+            'cdbResult' => $productCollection->getCdbResult()
+        ]));
+    }
+
+    /**
+     * @param Product $product
+     * @return FullProduct
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
+    protected function mapProductForList(Product $product): FullProduct
+    {
+        /** @var Offer $currentOffer */
+        $currentOffer = $this->getCurrentOfferForList($product);
+        return $this->convertToFullProduct($product, $currentOffer);
+    }
+
+    /**
+     * @param Product $product
+     *
+     * @param array $offerFilter
+     * @return mixed|null
+     */
+    protected function getCurrentOfferForList(Product $product, $offerFilter = [])
+    {
+        $product->getOffers(true, $offerFilter);
+        $offers = $product->getOffersSorted();
+        $foundOfferWithImages = false;
+        $currentOffer = $offers->last();
+        foreach ($offers as $offer) {
+            $offer->setProduct($product);
+
+            if (!$foundOfferWithImages || $offer->getImagesIds()) {
+                $currentOffer = $offer;
+            }
+        }
+
+        // костыль потому что в allStocks вместо объекта StockCollection приходит просто массив с кодами магазинов...
+        // взято из метода FourPaws\Catalog\Model\getAllStocks()
+        $stockService = Application::getInstance()->getContainer()->get(StockService::class);
+        $currentOffer->withAllStocks($stockService->getStocksByOffer($currentOffer));
+        // end костыль
+
+        return $currentOffer;
     }
 
     /**

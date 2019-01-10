@@ -21,27 +21,20 @@ use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
 use FourPaws\MobileApiBundle\Dto\Request\GoodsItemRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
 use Symfony\Component\HttpFoundation\Request;
-use FourPaws\MobileApiBundle\Services\Api\CatalogService as ApiCatalogService;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 
 
 class ProductController extends FOSRestController
 {
     /**
-     * @var ApiCatalogService
-     */
-    private $apiCatalogService;
-    /**
      * @var ApiProductService
      */
     private $apiProductService;
 
     public function __construct(
-        ApiCatalogService $apiCatalogService,
         ApiProductService $apiProductService
     )
     {
-        $this->apiCatalogService = $apiCatalogService;
         $this->apiProductService = $apiProductService;
     }
 
@@ -103,7 +96,7 @@ class ProductController extends FOSRestController
         $page = $goodsListRequest->getPage();
         $count = $goodsListRequest->getCount();
 
-        $productsList = $this->apiCatalogService->getProductsList($request, $categoryId, $sort, $count, $page);
+        $productsList = $this->apiProductService->getList($request, $categoryId, $sort, $count, $page);
         /** @var \CIBlockResult $cdbResult */
         $cdbResult = $productsList->get('cdbResult');
         return (new Response\ProductListResponse())
@@ -151,7 +144,7 @@ class ProductController extends FOSRestController
         $count = $goodsSearchRequest->getCount();
         $query = $goodsSearchRequest->getQuery();
 
-        $productsList = $this->apiCatalogService->getProductsList($request, $categoryId, $sort, $count, $page, $query);
+        $productsList = $this->apiProductService->getList($request, $categoryId, $sort, $count, $page, $query);
         /** @var \CIBlockResult $cdbResult */
         $cdbResult = $productsList->get('cdbResult');
         return (new Response\ProductListResponse())
@@ -162,10 +155,25 @@ class ProductController extends FOSRestController
 
     /**
      * @Rest\Get("/goods_search_barcode/")
-     * @see GoodsSearchBarcodeRequest
+     * @Rest\View()
+     *
+     * @param Request $request
+     * @param GoodsSearchBarcodeRequest $goodsSearchBarcodeRequest
+     * @return Response\ProductListResponse
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\Catalog\Exception\CategoryNotFoundException
      */
-    public function getGoodsSearchBarcodeAction()
+    public function getGoodsSearchBarcodeAction(
+        Request $request,
+        GoodsSearchBarcodeRequest $goodsSearchBarcodeRequest
+    )
     {
+        $goodsSearchRequest = (new GoodsSearchRequest())
+            ->setQuery($goodsSearchBarcodeRequest->getBarcode())
+        ;
+        return $this->getGoodsSearchAction($request, $goodsSearchRequest);
     }
 
     /**
