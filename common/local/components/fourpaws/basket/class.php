@@ -396,18 +396,6 @@ class BasketComponent extends CBitrixComponent
                 /** @noinspection PhpUndefinedMethodInspection */
                 $this->arResult['SELECTED_GIFTS'][$group['discountId']] = $this->basketService
                     ->getAdder('gift')->getExistGifts($group['discountId'], true);
-
-                //объединение офферов
-                $selectedGifts = [];
-                foreach ($this->arResult['SELECTED_GIFTS'][$group['discountId']] as $key => $selectedGift) {
-                    if (!isset($selectedGifts[$selectedGift['offerId']])) {
-                        $selectedGifts[$selectedGift['offerId']] = $selectedGift;
-                    } else {
-                        $selectedGifts[$selectedGift['offerId']]['quantity'] += $selectedGift['quantity'];
-                        unset($this->arResult['SELECTED_GIFTS'][$group['discountId']][$key]);
-                    }
-                }
-                $this->arResult['SELECTED_GIFTS'][$group['discountId']] = $selectedGifts;
             }
         }
     }
