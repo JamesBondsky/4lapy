@@ -19,8 +19,8 @@ use FourPaws\Helpers\WordHelper;
 
 if (!$arResult['HIDE_KIT_BLOCK']) {
     $arMessages = [
-        'external' => 'Другие внешние фильтры',
-        'internal' => 'Другие внутренние фильтры',
+        'filters' => 'Другие фильтры',
+        'decor' => 'Другие декорации',
         'lamps' => 'Другие лампы и светильники',
     ];
     $product = $arResult['PRODUCT'];
@@ -29,8 +29,8 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
     $selectionOffers = $arResult['SELECTION_OFFERS'];
     $totalPrice = $offer->getCatalogPrice() +
         $pedestal->getCatalogPrice() +
-        $selectionOffers['external']->first()->getCatalogPrice() +
-        $selectionOffers['internal']->first()->getCatalogPrice() +
+        $selectionOffers['filters']->first()->getCatalogPrice() +
+        $selectionOffers['decor']->first()->getCatalogPrice() +
         $selectionOffers['lamps']->first()->getCatalogPrice();
     ?>
     <div class="b-product-card__complect">
@@ -99,12 +99,12 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
                             <?
                             $currentOffer = $offerGroup->first();
                             switch ($groupKey) {
-                                case 'external':
-                                case 'internal':
+                                case 'filters':
                                     $propVal = $currentOffer->getProduct()->getPowerMax();
                                     $propUnit = ' л/ч';
                                     break;
                                 case 'lamps':
+                                case 'decor':
                                     $propVal = WordHelper::showWeightNumber($currentOffer->getCatalogProduct()->getWeight(), true);
                                     $propUnit = ' кг';
                                     break;
@@ -226,12 +226,12 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
                             }
                             $currentOfferImage = $currentOffer->getResizeImages(240, 240)->first();
                             switch ($groupKey) {
-                                case 'external':
-                                case 'internal':
+                                case 'filters':
                                     $propVal = $currentOffer->getProduct()->getPowerMax();
                                     $propUnit = ' л/ч';
                                     break;
                                 case 'lamps':
+                                case 'decor':
                                     $propVal = WordHelper::showWeightNumber($currentOffer->getCatalogProduct()->getWeight(), true);
                                     $propUnit = ' кг';
                                     break;

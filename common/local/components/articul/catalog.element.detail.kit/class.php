@@ -45,15 +45,28 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
 
             $selectionOffers = new ArrayCollection();
             $pedestal = null;
-            if (($product->getSection()->getCode() == 'banki-bez-kryshki-akvariumy' || $product->getSection()->getCode() == 'detskie-akvariumy-akvariumy' || $product->getSection()->getCode() == 'komplekty-akvariumy') && $product->getAquariumCombination() != '') {
-                $pedestal = $product->getPedestal($product->getAquariumCombination());
+            if (($product->getSection()->getCode() == 'banki-bez-kryshki-akvariumy' || $product->getSection()->getCode() == 'detskie-akvariumy-akvariumy' || $product->getSection()->getCode() == 'komplekty-akvariumy' || $product->getSection()->getCode() == 'tumby-podstavki-akvariumy') && $product->getAquariumCombination() != '') {
+                $isAquarium = $product->getSection()->getCode() != 'tumby-podstavki-akvariumy';
+                if($isAquarium){
+                    $pedestal = $product->getPedestal($product->getAquariumCombination());
+                } else {
+                    $pedestal = $product->getAquarium($product->getAquariumCombination());
+                }
                 if (!empty($pedestal)) {
-                    $volumeStr = strtolower($offer->getVolumeReference()->getName());
+                    if($isAquarium){
+                        $volumeStr = strtolower($offer->getVolumeReference()->getName());
+                    } else {
+                        $volumeStr = strtolower($pedestal->getVolumeReference()->getName());
+                    }
                     if (mb_strpos($volumeStr, 'л')) {
                         $volume = intval(str_replace(',', '.', preg_replace("/[^0-9]/", '', $volumeStr)));
-                        $selectionOffers['external'] = $product->getExternalFilters($volume);
-                        $selectionOffers['internal'] = $product->getInternalFilters($volume);
+                        if ($volume < 250) {
+                            $selectionOffers['filters'] = $product->getInternalFilters($volume);
+                        } else {
+                            $selectionOffers['filters'] = $product->getExternalFilters($volume);
+                        }
                         $selectionOffers['lamps'] = $product->getLamps();
+                        $selectionOffers['decor'] = $product->getDecor();
                     } else {
                         $hideKitBlock = true;
                     }
