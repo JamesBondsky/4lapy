@@ -44,19 +44,19 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
             $offer = $catalogElementDetailClass->getCurrentOffer($product, $this->arParams['OFFER_ID']);
 
             $selectionOffers = new ArrayCollection();
-            $pedestal = null;
+            $additionalItem = null;
             if (($product->getSection()->getCode() == 'banki-bez-kryshki-akvariumy' || $product->getSection()->getCode() == 'detskie-akvariumy-akvariumy' || $product->getSection()->getCode() == 'komplekty-akvariumy' || $product->getSection()->getCode() == 'tumby-podstavki-akvariumy') && $product->getAquariumCombination() != '') {
                 $isAquarium = $product->getSection()->getCode() != 'tumby-podstavki-akvariumy';
                 if($isAquarium){
-                    $pedestal = $product->getPedestal($product->getAquariumCombination());
+                    $additionalItem = $product->getPedestal($product->getAquariumCombination());
                 } else {
-                    $pedestal = $product->getAquarium($product->getAquariumCombination());
+                    $additionalItem = $product->getAquarium($product->getAquariumCombination());
                 }
-                if (!empty($pedestal)) {
+                if (!empty($additionalItem)) {
                     if($isAquarium){
                         $volumeStr = strtolower($offer->getVolumeReference()->getName());
                     } else {
-                        $volumeStr = strtolower($pedestal->getVolumeReference()->getName());
+                        $volumeStr = strtolower($additionalItem->getVolumeReference()->getName());
                     }
                     if (mb_strpos($volumeStr, 'л')) {
                         $volume = intval(str_replace(',', '.', preg_replace("/[^0-9]/", '', $volumeStr)));
@@ -81,7 +81,7 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
                 'HIDE_KIT_BLOCK' => $hideKitBlock,
                 'PRODUCT' => $product,
                 'OFFER' => $offer,
-                'PEDESTAL' => $pedestal,
+                'ADDITIONAL_ITEM' => $additionalItem,
                 'SELECTION_OFFERS' => $selectionOffers
             ];
 
@@ -90,7 +90,7 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
                 'HIDE_BLOCK',
                 'PRODUCT',
                 'OFFER',
-                'PEDESTAL',
+                'ADDITIONAL_ITEM',
                 'OFFERS',
             ]);
 
