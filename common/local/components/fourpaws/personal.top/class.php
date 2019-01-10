@@ -8,21 +8,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-use Adv\Bitrixtools\Exception\IblockNotFoundException;
-use Adv\Bitrixtools\Tools\BitrixUtils;
-use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
-use Bitrix\Catalog\PriceTable;
-use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
-use Bitrix\Main\Entity\ExpressionField;
-use Bitrix\Main\Entity\Query\Join;
-use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\LoaderException;
-use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
-use Bitrix\Sale\Internals\BasketTable;
-use Bitrix\Sale\Internals\OrderTable;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Bitrix\FourPawsComponent;
@@ -30,14 +19,13 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
-use FourPaws\Enum\IblockCode;
-use FourPaws\Enum\IblockType;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use FourPaws\SaleBundle\Service\BasketService;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsPersonalCabinetTopComponent extends FourPawsComponent
@@ -46,6 +34,11 @@ class FourPawsPersonalCabinetTopComponent extends FourPawsComponent
      * @var CurrentUserProviderInterface
      */
     private $curUserProvider;
+
+    /**
+     * @var BasketService
+     */
+    private $basketService;
 
     /**
      * AutoloadingIssuesInspection constructor.
@@ -63,6 +56,7 @@ class FourPawsPersonalCabinetTopComponent extends FourPawsComponent
         parent::__construct($component);
         $container = App::getInstance()->getContainer();
         $this->curUserProvider = $container->get(CurrentUserProviderInterface::class);
+        $this->basketService = $container->get(BasketService::class);
     }
 
     /**
@@ -97,15 +91,12 @@ class FourPawsPersonalCabinetTopComponent extends FourPawsComponent
     public function prepareResult(): void
     {
         /** @noinspection PhpUnhandledExceptionInspection */
-        try {
-            $userId = $this->curUserProvider->getCurrentUserId();
-        } catch (NotAuthorizedException $e) {
+        if (!$this->curUserProvider->getCurrentUserId()) {
             define('NEED_AUTH', true);
-
             return;
         }
 
-        $offerIds = $this->getPopularOffers($userId);
+        $offerIds = $this->basketService->getPopularOfferIds($this->arParams['COUNT_ITEMS']);
         $offers = $this->getAllOffers($offerIds);
 
         /**
@@ -123,71 +114,6 @@ class FourPawsPersonalCabinetTopComponent extends FourPawsComponent
             $this->arResult['PRODUCTS'] = $products;
             $this->arResult['OFFERS'] = $offers;
         }
-    }
-
-    /**
-     * @param int $userId
-     *
-     * @return int[]
-     * @throws ArgumentException
-     * @throws IblockNotFoundException
-     * @throws SystemException
-     * @throws ObjectPropertyException
-     */
-    protected function getPopularOffers(int $userId): array
-    {
-        $offersIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS);
-        /**
-         * Все элементы корзины из заказов, принадлежащих данному пользователю,
-         * у которых цена > 0 и активен оффер, оффер не является подарком
-         */
-        $query = BasketTable::query()
-            ->setSelect([
-                'PRODUCT_ID',
-            ])
-            ->setFilter([
-                '>CATALOG_PRICE.PRICE' => 0,
-                'ORDER.USER_ID'        => $userId,
-                '!ELEMENT.XML_ID' => '3%'
-            ])
-            ->setGroup(['PRODUCT_ID'])
-            ->registerRuntimeField(
-                new ExpressionField('CNT', 'COUNT(*)')
-            )
-            ->registerRuntimeField(
-                new ReferenceField(
-                    'ORDER',
-                    OrderTable::class,
-                    ['=this.ORDER_ID' => 'ref.ID'],
-                    ['join_type' => 'INNER']
-                )
-            )
-            ->registerRuntimeField(
-                new ReferenceField(
-                    'ELEMENT', ElementTable::class,
-                    Join::on('this.PRODUCT_ID', 'ref.ID')
-                        ->where('ref.ACTIVE', BitrixUtils::BX_BOOL_TRUE)
-                        ->where('ref.IBLOCK_ID', $offersIblockId),
-                    ['join_type' => 'INNER']
-                )
-            )
-            ->registerRuntimeField(
-                new ReferenceField(
-                    'CATALOG_PRICE', PriceTable::class,
-                    Join::on('this.PRODUCT_ID', 'ref.PRODUCT_ID')->where('ref.CATALOG_GROUP_ID', 2),
-                    ['join_type' => 'INNER']
-                )
-            )
-            ->setOrder(['CNT' => 'DESC'])
-            ->setLimit($this->arParams['COUNT_ITEMS'])
-            ->exec();
-
-        $result = [];
-        while ($offerId = $query->fetch()) {
-            $result[] = $offerId['PRODUCT_ID'];
-        }
-
-        return $result;
     }
 
     /**

@@ -92,6 +92,7 @@ class ProductService
     }
 
     /**
+     * Список товаров в каталоге
      * @param Request $request
      * @param int $categoryId
      * @param string $sort
@@ -138,6 +139,7 @@ class ProductService
     }
 
     /**
+     * Мэппинг полей товара для списка
      * @param Product $product
      * @return FullProduct
      * @throws \Bitrix\Main\ArgumentException
@@ -155,6 +157,7 @@ class ProductService
     }
 
     /**
+     * Текущее ТП для товара в списке
      * @param Product $product
      *
      * @param array $offerFilter
@@ -217,6 +220,11 @@ class ProductService
             ;
 
         return $fullProduct;
+    }
+
+    public function getMyProducts()
+    {
+
     }
 
     /**

@@ -20,6 +20,8 @@ use FourPaws\MobileApiBundle\Dto\Response\GoodsItemByRequestResponse;
 use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
 use FourPaws\MobileApiBundle\Dto\Request\GoodsItemRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
+use FourPaws\SaleBundle\Service\BasketService;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Component\HttpFoundation\Request;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 
@@ -31,11 +33,18 @@ class ProductController extends FOSRestController
      */
     private $apiProductService;
 
+    /**
+     * @var BasketService
+     */
+    private $basketService;
+
     public function __construct(
-        ApiProductService $apiProductService
+        ApiProductService $apiProductService,
+        BasketService $basketService
     )
     {
         $this->apiProductService = $apiProductService;
+        $this->basketService = $basketService;
     }
 
     /**
@@ -174,6 +183,37 @@ class ProductController extends FOSRestController
             ->setQuery($goodsSearchBarcodeRequest->getBarcode())
         ;
         return $this->getGoodsSearchAction($request, $goodsSearchRequest);
+    }
+
+    /**
+     * @Rest\Get("/goods_personal/")
+     * @Rest\View()
+     * @Security("has_role('REGISTERED_USERS')", message="Вы не авторизованы")
+     * @return Response\ProductListResponse
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
+    public function getGoodsPersonalAction()
+    {
+        $offerIds = $this->basketService->getPopularOfferIds(10);
+        $offers = (new OfferQuery())
+            ->withFilter(['=ID' => $offerIds])
+            ->exec();
+
+        /** @var Offer $offer */
+        $products = [];
+        foreach ($offers as $offer) {
+            $product = $offer->getProduct();
+            $products[] = $this->apiProductService->convertToFullProduct($product, $offer);
+        }
+
+        return (new Response\ProductListResponse())
+            ->setProductList($products);
     }
 
     /**
