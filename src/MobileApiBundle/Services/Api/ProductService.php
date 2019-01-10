@@ -228,6 +228,9 @@ class ProductService
     {
         /** @var $deliveryResult DeliveryResult */
         $deliveryResult = $this->filterDeliveries($this->getDeliveries($offer));
+        if (!$deliveryResult) {
+            return '';
+        }
         return $deliveryResult->getTextForOffer($offer->isByRequest(), true);
     }
 
