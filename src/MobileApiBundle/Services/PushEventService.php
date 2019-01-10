@@ -161,26 +161,11 @@ class PushEventService
 
 
     /**
-     * @throws \ApnsPHP_Message_Exception
+     * @throws \FourPaws\External\Exception\FireBaseCloudMessagingException
      */
     public function execPushEventsForAndroid()
     {
         $pushEvents = $this->apiPushEventRepository->findForAndroid();
-        foreach ($pushEvents as $pushEvent) {
-            $this->applePushNotificationService->sendNotification(
-                $pushEvent->getPushToken(),
-                $pushEvent->getMessageText(),
-                $pushEvent->getMessageId(),
-                $pushEvent->getMessageType()
-            );
-            $pushEvent->setSuccessExec(ApiPushEvent::EXEC_SUCCESS_CODE);
-            $this->apiPushEventRepository->update($pushEvent);
-        }
-    }
-
-    public function execPushEventsForIos()
-    {
-        $pushEvents = $this->apiPushEventRepository->findForIos();
         foreach ($pushEvents as $pushEvent) {
             $response = $this->fireBaseCloudMessagingService->sendNotification(
                 $pushEvent->getPushToken(),
@@ -190,6 +175,24 @@ class PushEventService
             );
             $execCode = $response->getStatusCode() === 200 ? ApiPushEvent::EXEC_SUCCESS_CODE : ApiPushEvent::EXEC_FAIL_CODE;
             $pushEvent->setSuccessExec($execCode);
+            $this->apiPushEventRepository->update($pushEvent);
+        }
+    }
+
+    /**
+     * @throws \ApnsPHP_Message_Exception
+     */
+    public function execPushEventsForIos()
+    {
+        $pushEvents = $this->apiPushEventRepository->findForIos();
+        foreach ($pushEvents as $pushEvent) {
+            $this->applePushNotificationService->sendNotification(
+                $pushEvent->getPushToken(),
+                $pushEvent->getMessageText(),
+                $pushEvent->getMessageId(),
+                $pushEvent->getMessageType()
+            );
+            $pushEvent->setSuccessExec(ApiPushEvent::EXEC_SUCCESS_CODE);
             $this->apiPushEventRepository->update($pushEvent);
         }
     }
