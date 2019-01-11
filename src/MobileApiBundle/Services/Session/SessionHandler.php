@@ -66,7 +66,6 @@ class SessionHandler implements SessionHandlerInterface
         $token = $this->tokenStorage->getToken();
 
         if ($token && $token instanceof ApiToken && $session = $token->getApiUserSession()) {
-            $session->setFUserId($this->userService->getCurrentFUserId());
             $session->setUserId($this->userService->getCurrentUserId());
             $token->setApiUserSession($session);
             $this->sessionRepository->update($session);
@@ -92,7 +91,6 @@ class SessionHandler implements SessionHandlerInterface
         $token = $this->tokenStorage->getToken();
         if ($token && $token instanceof ApiToken && $session = $token->getApiUserSession()) {
             $session->setUserId(0);
-            $session->setFUserId(Fuser::getId());
             $token->setApiUserSession($session);
             $this->sessionRepository->update($session);
             $token->setUser('');

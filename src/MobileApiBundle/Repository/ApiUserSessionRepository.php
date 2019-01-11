@@ -59,7 +59,7 @@ class ApiUserSessionRepository implements ApiUserSessionRepositoryInterface
     public function findByToken(string $token)
     {
         if ($token) {
-            $sessions = $this->findBy([static::FIELD_TOKEN => $token], [], 1);
+            $sessions = $this->findBy(['=' . static::FIELD_TOKEN => $token], [], 1);
             return reset($sessions);
         }
         throw new InvalidIdentifierException('Wrong identifier passed: ' . $token);
@@ -76,8 +76,7 @@ class ApiUserSessionRepository implements ApiUserSessionRepositoryInterface
     public function findBy(array $criteria = [], array $orderBy = [], int $limit = null, int $offset = null): array
     {
         $query = ApiUserSessionTable::query()
-            ->addSelect('*')
-            ->addSelect('USER.ID', 'USER_ID');
+            ->addSelect('*');
         if ($criteria) {
             $query->setFilter($criteria);
         }
@@ -90,7 +89,6 @@ class ApiUserSessionRepository implements ApiUserSessionRepositoryInterface
         if ($offset) {
             $query->setOffset($offset);
         }
-
         $dbResult = $query->exec();
 
         if ($dbResult->getSelectedRowsCount() === 0) {

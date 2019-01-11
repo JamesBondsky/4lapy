@@ -39,7 +39,7 @@ class ApiUserSession
      * @var null|int
      * @Serializer\SerializedName("USER_ID")
      * @Serializer\Type("int")
-     * @Serializer\Groups(groups={"read"})
+     * @Serializer\Groups(groups={"read","update","create"})
      */
     protected $userId;
 
@@ -50,16 +50,6 @@ class ApiUserSession
      * @Serializer\Groups(groups={"read","update","create"})
      */
     protected $userAgent;
-
-    /**
-     * @var int
-     * @Serializer\SerializedName("FUSER_ID")
-     * @Serializer\Type("int")
-     * @Serializer\Groups(groups={"read","update","create"})
-     * @Assert\GreaterThanOrEqual(value="1", groups={"update","create"})
-     * @Assert\Type(type="int", groups={"update","create"})
-     */
-    protected $fUserId;
 
     /**
      * @var string
@@ -260,24 +250,6 @@ class ApiUserSession
     public function setUserAgent(string $userAgent): ApiUserSession
     {
         $this->userAgent = $userAgent;
-        return $this;
-    }
-
-    /**
-     * @return int
-     */
-    public function getFUserId(): int
-    {
-        return $this->fUserId;
-    }
-
-    /**
-     * @param int $fUserId
-     * @return ApiUserSession
-     */
-    public function setFUserId(int $fUserId): ApiUserSession
-    {
-        $this->fUserId = $fUserId;
         return $this;
     }
 

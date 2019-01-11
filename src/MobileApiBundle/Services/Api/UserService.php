@@ -17,6 +17,7 @@ use FourPaws\MobileApiBundle\Dto\Request\PostUserInfoRequest;
 use FourPaws\MobileApiBundle\Dto\Response\PostUserInfoResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserLoginResponse;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
+use FourPaws\MobileApiBundle\Services\Session\SessionHandler;
 use FourPaws\UserBundle\Entity\User as AppUser;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Repository\UserRepository;
@@ -38,15 +39,22 @@ class UserService
      */
     private $apiCaptchaService;
 
+    /**
+     * @var SessionHandler
+     */
+    private $sessionHandler;
+
     public function __construct(
         UserBundleService $userBundleService,
         UserRepository $userRepository,
-        ApiCaptchaService $apiCaptchaService
+        ApiCaptchaService $apiCaptchaService,
+        SessionHandler $sessionHandler
     )
     {
         $this->userBundleService = $userBundleService;
         $this->userRepository = $userRepository;
         $this->apiCaptchaService = $apiCaptchaService;
+        $this->sessionHandler = $sessionHandler;
     }
 
     /**
@@ -87,6 +95,7 @@ class UserService
             $user = $this->userBundleService->register($user);
             $this->userBundleService->authorize($user->getId());
         }
+        $this->sessionHandler->login();
         return new UserLoginResponse($this->getCurrentApiUser());
     }
 
@@ -98,6 +107,7 @@ class UserService
         if (!$this->userBundleService->logout()) {
             throw new RuntimeException('Cant logout user');
         }
+        $this->sessionHandler->logout();
         return [
             'feedback_text' => 'Вы вышли из своей учетной записи',
         ];

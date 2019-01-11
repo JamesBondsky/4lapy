@@ -20,8 +20,8 @@ class ApiSessionForeignKey20180130120856 extends SprintMigrationBase
      */
     public function up(): bool
     {
-        Application::getConnection()
-            ->query('ALTER TABLE api_user_session ADD FOREIGN KEY (FUSER_ID) REFERENCES b_sale_fuser(ID) ON DELETE CASCADE');
+        // Application::getConnection()
+            // ->query('ALTER TABLE api_user_session ADD FOREIGN KEY (FUSER_ID) REFERENCES b_sale_fuser(ID) ON DELETE CASCADE');
         Application::getConnection()
             ->query('ALTER TABLE api_user_session MODIFY DATE_UPDATE DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
         Application::getConnection()

@@ -7,6 +7,7 @@
 namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Bitrix\Main\Web\Uri;
+use Bitrix\Sale\Basket;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
@@ -109,7 +110,9 @@ class StoreService
     {
         $storeCollection = new StoreCollection();
         foreach ($productsQuantity as $productQuantity) {
-            $offerId = (int) $productQuantity->getProductId();
+            $basketItemId = (int) $productQuantity->getProductId();
+            $basketItem = \CSaleBasket::getList([], ['=ID' => $basketItemId], false, false, [])->fetch();
+            $offerId = $basketItem['PRODUCT_ID'];
             $quantity = $productQuantity->getQuantity();
             if (!$offerId || !$quantity) {
                 continue;
@@ -250,9 +253,9 @@ class StoreService
         $title = str_replace($store->getXmlId() . ' ', '', $store->getTitle());
 
         $metroId = $store->getMetro();
-        $metroName = $metroId > 0 ? $metroList[$metroId]['UF_NAME'] : '';
-        $metroAddressText = $metroId > 0 ? 'м.' . $metroName . ', ' : '';
-        $metroColor = $metroId > 0 ? '#' . $metroList[$metroId]['BRANCH']['UF_COLOUR_CODE'] : '';
+        $metroName = $metroId > 0 && $metroList[$metroId] ? $metroList[$metroId]['UF_NAME'] : '';
+        $metroAddressText = $metroId > 0 && $metroList[$metroId] ? 'м.' . $metroName . ', ' : '';
+        $metroColor = $metroId > 0 && $metroList[$metroId] ? '#' . $metroList[$metroId]['BRANCH']['UF_COLOUR_CODE'] : '';
 
         $services = [];
         foreach ($servicesList as $serviceItem) {

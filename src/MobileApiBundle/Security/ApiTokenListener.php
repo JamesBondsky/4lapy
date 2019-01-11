@@ -61,12 +61,8 @@ class ApiTokenListener implements ListenerInterface
         }
 
         $preAuthenticationApiToken = new PreAuthenticationApiToken([], $token);
-        try {
-            $authToken = $this->authenticationManager->authenticate($preAuthenticationApiToken);
-            $this->tokenStorage->setToken($authToken);
-            return;
-        } catch (AuthenticationException $exception) {
-        }
-        throw new InvalidTokenException('Invalid token provided');
+        $authToken = $this->authenticationManager->authenticate($preAuthenticationApiToken);
+        $this->tokenStorage->setToken($authToken);
+        return;
     }
 }

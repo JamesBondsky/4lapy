@@ -8,6 +8,7 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct;
@@ -21,6 +22,7 @@ use FourPaws\MobileApiBundle\Dto\Response\GoodsItemByRequestResponse;
 use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
 use FourPaws\MobileApiBundle\Dto\Request\GoodsItemRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
+use FourPaws\MobileApiBundle\Exception\NotFoundProductException;
 use FourPaws\SaleBundle\Service\BasketService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Component\HttpFoundation\Request;
@@ -177,6 +179,7 @@ class ProductController extends FOSRestController
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws NotFoundProductException
      */
     public function getGoodsSearchBarcodeAction(
         Request $request,
@@ -195,6 +198,9 @@ class ProductController extends FOSRestController
             /** @var FullProduct $product */
             $product = $currentProduct[0];
             $offer = $this->apiProductService->getOne($product->getId());
+        }
+        if (empty($offer)) {
+            throw new NotFoundProductException("Товар со штрихкодом $query не найден");
         }
         return (new Response())->setData([
             'goods' => $offer

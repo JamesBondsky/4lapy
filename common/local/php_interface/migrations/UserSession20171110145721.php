@@ -27,7 +27,6 @@ CREATE TABLE `$tableName`(
   `HTTP_CLIENT_IP`       VARCHAR(255),
   `HTTP_X_FORWARDED_FOR` VARCHAR(255),
   `USER_ID`              INT,
-  `FUSER_ID`             INT          NOT NULL,
   `TOKEN`                VARCHAR(255) NOT NULL,
   PRIMARY KEY (`ID`)
 )
