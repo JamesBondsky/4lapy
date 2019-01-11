@@ -72,13 +72,17 @@ class BasketController extends FOSRestController
      * Метод рассчитывает корзину.
      * @Rest\Post(path="/user_cart_calc/")
      * @Rest\View()
-     *
-     * @see UserCartCalcRequest
-     * @see UserCartCalcResponse
+     * @param UserCartCalcRequest $userCartCalcRequest
+     * @return UserCartCalcResponse
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\External\Exception\ManzanaPromocodeUnavailableException
      */
     public function userCartCalcAction(UserCartCalcRequest $userCartCalcRequest)
     {
-        return (new UserCartCalcResponse());
+        $userCartResponse = $this->getUserCartAction((new UserCartRequest()));
+        return (new UserCartCalcResponse())
+            ->setCartCalc($userCartResponse->getCartCalc());
     }
 
     /**
@@ -189,12 +193,16 @@ class BasketController extends FOSRestController
      * Оформление корзины / оформить заказ
      * @Rest\Post(path="/user_cart_order/")
      * @Rest\View()
-     *
-     * @see UserCartOrderRequest
-     * @see UserCartOrderResponse
+     * @param UserCartOrderRequest $userCartOrderRequest
+     * @return UserCartOrderResponse
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\External\Exception\ManzanaPromocodeUnavailableException
      */
     public function postUserCartOrderAction(UserCartOrderRequest $userCartOrderRequest)
     {
-        return (new UserCartOrderResponse());
+        $userCartResponse = $this->getUserCartAction((new UserCartRequest()));
+        return (new UserCartOrderResponse())
+            ->setCartOrder();
     }
 }

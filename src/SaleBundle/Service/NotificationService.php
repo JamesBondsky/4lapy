@@ -82,24 +82,25 @@ class NotificationService implements LoggerAwareInterface
 
     /**
      * NotificationService constructor.
-     * @param OrderService        $orderService
-     * @param SmsService          $smsService
-     * @param StoreService        $storeService
+     * @param OrderService $orderService
+     * @param SmsService $smsService
+     * @param StoreService $storeService
      * @param ExpertsenderService $emailService
-     *
-     * @throws ApplicationCreateException
+     * @param ArrayTransformerInterface $transformer
      */
     public function __construct(
         OrderService $orderService,
         SmsService $smsService,
         StoreService $storeService,
-        ExpertsenderService $emailService
+        ExpertsenderService $emailService,
+        ArrayTransformerInterface $transformer
     )
     {
         $this->orderService = $orderService;
         $this->smsService = $smsService;
         $this->storeService = $storeService;
         $this->emailService = $emailService;
+        $this->transformer = $transformer;
 
         $container = Application::getInstance()->getContainer();
         /** @noinspection MissingService */
@@ -432,20 +433,40 @@ class NotificationService implements LoggerAwareInterface
     /**
      * @param string $tpl
      * @param array $parameters
-     * @param bool $immediate
      * @throws ApplicationCreateException
      * @throws \Exception
      */
     protected function addPushMessage(string $tpl, array $parameters): void
     {
-        if (empty($parameters) || !$parameters['phone']) {
+        if (empty($parameters) || !$parameters['userId']) {
             return;
         }
 
         $text = $this->renderer->render($tpl, $parameters);
 
+        $hlblock = \Bitrix\HighloadBlock\HighloadBlockTable::getList([
+            'filter' => [
+                'TABLE_NAME' => 'api_push_messages'
+            ]
+        ])->fetch();
+
+        $userField = (new \CUserTypeEntity())->GetList([], [
+            'ENTITY_ID' => 'HLBLOCK_' . $hlblock,
+            'XML_ID' => 'UF_TYPE',
+        ])->fetch();
+
+        $type = (new \CUserFieldEnum())->GetList([], [
+            'USER_FIELD_ID' => $userField['ID'],
+            'XML_ID' => 'change_order_status',
+        ])->fetch();
+
         $pushMessage = (new ApiPushMessage())
-            ->setMessage($text);
+            ->setActive(true)
+            ->setMessage($text)
+            ->setUserIds([$parameters['userId']])
+            ->setEventId($parameters['accountNumber'])
+            ->setStartSend(new \DateTime())
+            ->setTypeId($type['ID']);
 
         $data = $this->transformer->toArray(
             $pushMessage,
@@ -478,6 +499,8 @@ class NotificationService implements LoggerAwareInterface
                 ]
             );
 
+            $result['userId'] = $order->getUserId();
+            $result['orderId'] = $order->getId();
             $result['accountNumber'] = $order->getField('ACCOUNT_NUMBER');
             $result['dcDelivery'] = (bool)$properties['SHIPMENT_PLACE_CODE'];
             $result['phone'] = $properties['PHONE'];
@@ -525,7 +548,6 @@ class NotificationService implements LoggerAwareInterface
         $parameters['login'] = $_SESSION['NEW_USER']['LOGIN'];
         $parameters['password'] = $_SESSION['NEW_USER']['PASSWORD'];
         $this->sendSms('FourPawsSaleBundle:Sms:order.new.user.html.php', $parameters, true);
-        $this->addPushMessage('FourPawsSaleBundle:Sms:order.new.user.html.php', $parameters);
         unset($_SESSION['NEW_USER']);
     }
 
