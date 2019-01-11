@@ -6,12 +6,16 @@
 
 namespace FourPaws\MobileApiBundle\Controller\v0;
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct;
+use FourPaws\MobileApiBundle\Dto\Request\GoodsBySpecialOfferRequest;
 use FourPaws\MobileApiBundle\Dto\Request\GoodsListByRequestRequest;
 use FourPaws\MobileApiBundle\Dto\Request\GoodsListRequest;
 use FourPaws\MobileApiBundle\Dto\Request\GoodsSearchBarcodeRequest;
@@ -237,6 +241,51 @@ class ProductController extends FOSRestController
         return (new Response\ProductListResponse())
             ->setProductList($products);
     }
+
+    /**
+     * @Rest\Get("/goods_by_special_offer/")
+     * @Rest\View()
+     * @param GoodsBySpecialOfferRequest $goodsBySpecialOfferRequest
+     * @return Response\ProductListResponse
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
+    public function getGoodsByOfferAction(GoodsBySpecialOfferRequest $goodsBySpecialOfferRequest)
+    {
+        $products = [];
+
+        $offerIds = [];
+        $iblockId = IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES);
+        $res = \CIBlockElement::GetProperty($iblockId, $goodsBySpecialOfferRequest->getId(), '', '', ['CODE' =>'PRODUCTS']);
+        while ($row = $res->fetch()) {
+            if (!empty($row['VALUE'])) {
+                $offerIds[$row['VALUE']] = $row['VALUE'];
+            }
+        }
+
+        if (!empty($offerIds)) {
+            $offers = (new OfferQuery())
+                ->withFilter([
+                    '=XML_ID' => $offerIds,
+                    'ACTIVE' => 'Y',
+                    '>CATALOG_PRICE_2' => 0,
+                ])->exec();
+            /** @var Offer $offer */
+            foreach ($offers as $offer) {
+                $product = $offer->getProduct();
+                $products[] = $this->apiProductService->convertToFullProduct($product, $offer);
+            }
+        }
+
+        return (new Response\ProductListResponse())
+            ->setProductList($products);
+    }
+
 
     /**
      * @Rest\Get("/goods_list_by_request/")
