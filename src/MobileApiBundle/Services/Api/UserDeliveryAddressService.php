@@ -151,7 +151,7 @@ class UserDeliveryAddressService implements LoggerAwareInterface
                     ->setDetails($address->getDetails());
 
                 if ($address->getLocation()) {
-                    if ($city = $this->cityService->search($address->getLocation())->first()) {
+                    if ($city = $this->cityService->searchByCode($address->getLocation())->first()) {
                         $deliveryAddress->setCity($city);
                     }
                 }

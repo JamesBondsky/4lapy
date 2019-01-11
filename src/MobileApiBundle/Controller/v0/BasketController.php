@@ -170,8 +170,13 @@ class BasketController extends FOSRestController
     public function putUserCartAction(PutUserCartRequest $putUserCartRequest)
     {
         foreach ($putUserCartRequest->getGoods() as $productQuantity) {
+            $quantity = $productQuantity->getQuantity();
             try {
-                $this->basketService->updateBasketQuantity($productQuantity->getProductId(), $productQuantity->getQuantity());
+                if ($quantity > 0) {
+                    $this->basketService->updateBasketQuantity($productQuantity->getProductId(), $productQuantity->getQuantity());
+                } else {
+                    $this->basketService->deleteOfferFromBasket($productQuantity->getProductId());
+                }
             }
             catch (\FourPaws\SaleBundle\Exception\NotFoundException $e) {
                 throw new RuntimeException('Товар не найден');
