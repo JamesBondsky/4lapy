@@ -41,5 +41,5 @@ interface ReCaptchaInterface
      * @throws SystemException
      * @return bool
      */
-    public function checkCaptcha(string $recaptcha = ''): bool;
+    public function checkCaptcha(?string $recaptcha = ''): bool;
 }
