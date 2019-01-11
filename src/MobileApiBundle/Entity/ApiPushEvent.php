@@ -6,11 +6,15 @@
 
 namespace FourPaws\MobileApiBundle\Entity;
 
+use FourPaws\AppBundle\Entity\UserFieldEnumValue;
+use FourPaws\AppBundle\Traits\UserFieldEnumTrait;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class ApiPushEvent
 {
+    use UserFieldEnumTrait;
+
     const EXEC_PENDING_CODE = 'W';
     const EXEC_SUCCESS_CODE = 'S';
     const EXEC_FAIL_CODE = 'F';
@@ -82,12 +86,15 @@ class ApiPushEvent
     protected $successExec = self::EXEC_PENDING_CODE;
 
     /**
-     * @var string
-     * @Serializer\Type("string")
+     * @var bool
+     * @Serializer\Type("bool")
      * @Serializer\SerializedName("VIEWED")
      * @Serializer\Groups(groups={"read","update","create"})
      */
     protected $viewed;
+
+    /** @var UserFieldEnumValue $messageTypeEntity */
+    private $messageTypeEntity;
 
     /**
      * @return int
@@ -134,11 +141,11 @@ class ApiPushEvent
     }
 
     /**
-     * @return string
+     * @return \DateTime
      */
     public function getDateTimeExec(): \DateTime
     {
-        return $this->pushToken;
+        return $this->dateTimeExec;
     }
 
     /**
@@ -183,6 +190,20 @@ class ApiPushEvent
     public function getMessageType(): int
     {
         return $this->messageType;
+    }
+
+    /**
+     * @return UserFieldEnumValue
+     */
+    public function getMessageTypeEntity()
+    {
+        if (!isset($this->messageTypeEntity)) {
+            $this->messageTypeEntity = $this->getUserFieldEnumService()->getEnumValueEntity(
+                $this->getMessageType()
+            );
+        }
+
+        return $this->messageTypeEntity;
     }
 
     /**

@@ -24,7 +24,7 @@ CREATE TABLE `$tableName`(
   `DATE_TIME_EXEC`       DATETIME     NOT NULL,
   `MESSAGE_ID`           INT          NOT NULL,
   `SUCCESS_EXEC`         CHAR(1)      NOT NULL DEFAULT 'W',
-  `VIEWED`               CHAR(1)      NOT NULL DEFAULT 'N',
+  `VIEWED`               TINYINT      NOT NULL DEFAULT 0,
   `MD5`                  VARCHAR(255),
   PRIMARY KEY (`ID`)
 )

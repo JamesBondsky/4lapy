@@ -9,6 +9,7 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Request\PostPushTokenRequest;
+use FourPaws\MobileApiBundle\Dto\Request\PushMessageRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Security\ApiTokenListener;
 use FourPaws\MobileApiBundle\Services\Api\PushMessagesService;
@@ -20,7 +21,6 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
  * Class PushController
  * @package FourPaws\MobileApiBundle\Controller
  * @Security("has_role('REGISTERED_USERS')")
- * @todo    after create notification
  */
 class PushController extends FOSRestController
 {
@@ -35,49 +35,44 @@ class PushController extends FOSRestController
     {
         $this->pushMessagesService = $pushMessagesService;
     }
+
     /**
      * @Rest\Get("/personal_messages/")
      * @Rest\View()
+     * @throws \FourPaws\AppBundle\Exception\NotFoundException
      */
     public function getAction()
     {
-        // ToDo: по токену который есть у юзера в табличке api_user_session выбираем из EventTable все сообщения и возвращаем массив
-        /*
-         * 	$arResult['messages'][] = array(
-                'id' => $arEvent['ID'],
-                'text' => $arEvent['MESSAGE']['TITLE'],
-                'date' => $arEvent['DATE_TIME_EXEC']->format("d.m.Y"),
-                'read' => ($arEvent['VIEWED'] == 'Y') ? true : false,
-                'options' => array(
-                    'type' => $arEvent['MESSAGE']['TYPE'],
-                    'id' => $arEvent['MESSAGE']['ID']
-                    )
-                );
-         */
         return (new Response())
-            ->setData(['messages' => []]);
+            ->setData(['messages' => $this->pushMessagesService->getPushEvents()]);
     }
 
     /**
      * @Rest\Post("/personal_messages/")
      * @Rest\View()
+     * @param PushMessageRequest $pushMessageRequest
+     * @return Response
+     * @throws \FourPaws\AppBundle\Exception\NotFoundException
      */
-    public function markViewedAction()
+    public function markViewedAction(PushMessageRequest $pushMessageRequest)
     {
-        // ToDo: на вход приходит некий id сообщения. По id и по токену который есть у юзера в табличке api_user_session выбираем из таблички EventTable (push_event) сообщение и ставим ему 'VIEWED' => 'Y'
+        $id = $pushMessageRequest->getId();
         return (new Response())
-            ->setData(['result' => true]);
+            ->setData(['result' => $this->pushMessagesService->markPushEventAsViewed($id)]);
     }
 
     /**
-     * @Rest\Delete()
+     * @Rest\Delete("/personal_messages/")
      * @Rest\View()
+     * @param PushMessageRequest $pushMessageRequest
+     * @return Response
+     * @throws \FourPaws\AppBundle\Exception\NotFoundException
      */
-    public function deleteAction()
+    public function deleteAction(PushMessageRequest $pushMessageRequest)
     {
-        // ToDo: на вход приходит некий id сообщения. По id и по токену который есть у юзера в табличке api_user_session выбираем из таблички EventTable (push_event) сообщение и удаляем его
+        $id = $pushMessageRequest->getId();
         return (new Response())
-            ->setData(['result' => true]);
+            ->setData(['result' => $this->pushMessagesService->deletePushEvent($id)]);
     }
 
     /**

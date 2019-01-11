@@ -49,7 +49,7 @@ class ApiPushEventTable extends DataManager
                 'required' => true,
             ]),
             'SUCCESS_EXEC' => new StringField('SUCCESS_EXEC', []),
-            'VIEWED' => new StringField('VIEWED', []),
+            'VIEWED' => new BooleanField('VIEWED', []),
             'MD5'=> new StringField('MD5', []),
             new ReferenceField(
                 'MESSAGE',
