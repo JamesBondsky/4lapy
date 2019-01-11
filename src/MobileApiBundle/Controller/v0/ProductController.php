@@ -10,6 +10,7 @@ use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct;
 use FourPaws\MobileApiBundle\Dto\Request\GoodsListByRequestRequest;
 use FourPaws\MobileApiBundle\Dto\Request\GoodsListRequest;
 use FourPaws\MobileApiBundle\Dto\Request\GoodsSearchBarcodeRequest;
@@ -168,25 +169,40 @@ class ProductController extends FOSRestController
      *
      * @param Request $request
      * @param GoodsSearchBarcodeRequest $goodsSearchBarcodeRequest
-     * @return Response\ProductListResponse
+     * @return Response
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\Catalog\Exception\CategoryNotFoundException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public function getGoodsSearchBarcodeAction(
         Request $request,
         GoodsSearchBarcodeRequest $goodsSearchBarcodeRequest
     )
     {
-        $goodsSearchRequest = (new GoodsSearchRequest())
-            ->setQuery($goodsSearchBarcodeRequest->getBarcode())
-        ;
-        return $this->getGoodsSearchAction($request, $goodsSearchRequest);
+        $categoryId = 0;
+        $sort = 'relevance';
+        $page = 1;
+        $count = 1;
+        $query = $goodsSearchBarcodeRequest->getBarcode();
+
+        $offer = [];
+        $productList = $this->apiProductService->getList($request, $categoryId, $sort, $count, $page, $query);
+        if ($currentProduct = $productList->current()) {
+            /** @var FullProduct $product */
+            $product = $currentProduct[0];
+            $offer = $this->apiProductService->getOne($product->getId());
+        }
+        return (new Response())->setData([
+            'goods' => $offer
+        ]);
     }
 
     /**
-     * @Rest\Get("/goods_personal/")
+     * @Rest\Get("/personal_goods/")
      * @Rest\View()
      * @Security("has_role('REGISTERED_USERS')", message="Вы не авторизованы")
      * @return Response\ProductListResponse

@@ -23,7 +23,6 @@ class StreetsListRequest implements SimpleUnserializeRequest, GetRequest
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("search_term")
-     * @Assert\NotBlank()
      */
     protected $street;
 
