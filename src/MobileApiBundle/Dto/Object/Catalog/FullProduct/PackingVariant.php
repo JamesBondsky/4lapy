@@ -50,6 +50,13 @@ class PackingVariant
     protected $hasSpecialOffer = false;
 
     /**
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("isAvailable")
+     */
+    protected $isAvailable = false;
+
+    /**
      * @return int
      */
     public function getOfferId(): int
@@ -122,6 +129,24 @@ class PackingVariant
     public function setHasSpecialOffer(bool $hasSpecialOffer): PackingVariant
     {
         $this->hasSpecialOffer = $hasSpecialOffer;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getIsAvailable(): bool
+    {
+        return $this->isAvailable;
+    }
+
+    /**
+     * @param bool $isAvailable
+     * @return PackingVariant
+     */
+    public function setIsAvailable(bool $isAvailable): PackingVariant
+    {
+        $this->isAvailable = $isAvailable;
         return $this;
     }
 }

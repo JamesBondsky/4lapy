@@ -265,7 +265,8 @@ class ProductService
             ->setWebPage($offer->getCanonicalPageUrl())
             ->setPicture($offer->getImages() ? $offer->getImages()->first() : '')
             ->setPicturePreview($offer->getResizeImages(200, 250) ? $offer->getResizeImages(200, 250)->first() : '')
-            ->setIsByRequest($offer->isByRequest());
+            ->setIsByRequest($offer->isByRequest())
+            ->setIsAvailable($offer->isAvailable());
 
         // цена
         $price = (new Price())
@@ -392,6 +393,7 @@ class ProductService
      * @param Product $product
      * @return FullProduct\PackingVariant[]
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function getPackingVariants(Product $product): array
     {
@@ -407,7 +409,8 @@ class ProductService
                 ->setPrice($offer->getPrice())
                 ->setOfferId($offer->getId())
                 ->setWeight($offer->getPackageLabel(false, 0))
-                ->setHasSpecialOffer($offer->hasAction());
+                ->setHasSpecialOffer($offer->hasAction())
+                ->setIsAvailable($offer->isAvailable());
         }
         return $packingVariants;
     }

@@ -127,6 +127,13 @@ class ShortProduct
     protected $isByRequest = false;
 
     /**
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("isAvailable")
+     */
+    protected $isAvailable = false;
+
+    /**
      * @return int
      */
     public function getId(): int
@@ -376,6 +383,24 @@ class ShortProduct
     public function setIsByRequest(bool $isByRequest): ShortProduct
     {
         $this->isByRequest = $isByRequest;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getIsAvailable(): bool
+    {
+        return $this->isAvailable;
+    }
+
+    /**
+     * @param bool $isAvailable
+     * @return ShortProduct
+     */
+    public function setIsAvailable(bool $isAvailable): ShortProduct
+    {
+        $this->isAvailable = $isAvailable;
         return $this;
     }
 }
