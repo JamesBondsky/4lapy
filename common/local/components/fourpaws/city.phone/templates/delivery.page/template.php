@@ -37,6 +37,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                 /** @see https://jira.adv.ru/browse/LP12-47
                 <a href="/return-policy/">Правила возврата и обмена</a>
                  */ ?>
+                <p>Более подробную информацию об&nbsp;условиях возврата и&nbsp;обмена вы&nbsp;можете получить на&nbsp;странице <a href="/return/">Возврат и&nbsp;обмен</a></p>
             </div>
         </div>
     </div>
