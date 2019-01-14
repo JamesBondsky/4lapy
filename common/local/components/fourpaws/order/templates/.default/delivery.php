@@ -145,17 +145,14 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                     <span class="b-choice-recovery__main-text">
                                         <span class="b-choice-recovery__main-text">
                                             <span class="b-choice-recovery__first">Экспресс</span>
-                                            <span class="b-choice-recovery__second">Экспресс</span>
                                         </span>
                                     </span>
                                     <span class="b-choice-recovery__addition-text js-cur-pickup">
-                                        <?= /** @noinspection PhpUnhandledExceptionInspection */
-                                        DeliveryTimeHelper::showTime($deliveryDostavista) ?>,
+                                        В течение 3 часов,
                                         <span class="js-delivery--price"><?= $deliveryDostavista->getPrice() ?></span>₽
                                     </span>
                                     <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-cur-pickup-mobile">
-                                        <?= /** @noinspection PhpUnhandledExceptionInspection */
-                                        DeliveryTimeHelper::showTime($deliveryDostavista, ['SHORT' => true]) ?>,
+                                        В течение 3 часов,
                                         <span class="js-delivery--price"><?= $deliveryDostavista->getPrice() ?></span>₽
                                 </label>
                             <?php }

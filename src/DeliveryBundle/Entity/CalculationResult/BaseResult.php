@@ -17,9 +17,11 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\DeliveryBundle\Entity\StockResult;
+use FourPaws\DeliveryBundle\Exception\DostavistaDeliveryException;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Collection\DeliveryScheduleResultCollection;
 use FourPaws\DeliveryBundle\Service\DeliveryScheduleResultService;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\StoreBundle\Collection\ScheduleResultCollection;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -119,6 +121,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      * @throws ArgumentException
      * @throws StoreNotFoundException
      * @throws SystemException
+     * @throws DostavistaDeliveryException
      * @return \DateTime
      */
     public function getDeliveryDate(): \DateTime
@@ -126,6 +129,22 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         if (null === $this->deliveryDate) {
             $this->doCalculateDeliveryDate();
             $this->doCalculatePeriod();
+        }
+
+        //фикс для достависты, прибавляем
+        if ($this->getDeliveryCode() == DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
+            $deliveryDateOfMonth = clone $this->deliveryDate; //клонируем для проверки, что следующие сутки не наступили
+            $deliveryEndTime = clone $this->deliveryDate; //клонируем для проверки, что курьерская доставка еще будет работать с учетом времени доставки
+            $deliveryDateOfMonth->modify(sprintf('+%s minutes', $this->getPeriodTo())); //прибавляем максимальное время доставки
+            $endTime = $this->getData()['DELIVERY_END_TIME']; //когда доставка закрывается
+            $arEndTime = explode(':', $endTime);
+            $deliveryEndTime->setTime($arEndTime[0], $arEndTime[1]); //получаем сегодня, когда доставка закроется
+            $oldDayOfMonth = $this->deliveryDate->format('d'); //получаем номер старого дня в месяце
+            $newDayOfMonth = $deliveryDateOfMonth->format('d'); //получаем номер нового дня в месяце с учетом времени доставки
+            //если условие не выполняется возращаем exception
+            if ($oldDayOfMonth != $newDayOfMonth || $deliveryDateOfMonth > $deliveryEndTime) {
+                throw new DostavistaDeliveryException('Время заказа для достависты вышло!'); //TODO доделать обработку
+            }
         }
 
         return $this->deliveryDate;

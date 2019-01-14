@@ -179,7 +179,7 @@ class DostavistaDeliveryHandler extends DeliveryHandlerBase
             return $result;
         }
 
-        $stockResult = static::getStocks($basket, $offers, $availableStores);
+        $stockResult = static::getStocks($basket, $offers, $availableStores); //TODO DC01 исключить
 
         if ($stockResult->getOrderable()->isEmpty()) {
             $result->addError(new Error('Отсутствуют товары в наличии'));

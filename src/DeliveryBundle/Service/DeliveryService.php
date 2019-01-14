@@ -405,6 +405,7 @@ class DeliveryService implements LoggerAwareInterface
             $calculationResult->setDeliveryCode($service->getCode());
             $calculationResult->setCurrentDate($from ?? new \DateTime());
 
+            //тут рассчет времени доставки
             if ($calculationResult->isSuccess()) {
                 $result[] = $calculationResult;
             } else {
