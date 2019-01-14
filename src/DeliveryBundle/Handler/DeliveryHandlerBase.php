@@ -346,6 +346,13 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                         break;
                 }
                 break;
+            case DeliveryService::DELIVERY_DOSTAVISTA_CODE:
+                switch ($deliveryZone) {
+                    case DeliveryService::ZONE_MOSCOW:
+                        $result = $storeService->getStoresByLocation($locationCode, StoreService::TYPE_STORE)->getStores();
+                        break;
+                }
+                break;
         }
 
         return $result;

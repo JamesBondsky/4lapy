@@ -1,6 +1,13 @@
 <?php
 
-use Bitrix\Sale\Delivery\Services\Table as DeliveryTable;
+use Bitrix\Sale\Delivery\DeliveryLocationTable;
+use Bitrix\Sale\Location\GroupLocationTable;
+use FourPaws\DeliveryBundle\Handler\DostavistaDeliveryHandler;
+use Bitrix\Sale\Delivery\Services\Manager;
+use Bitrix\Sale\Delivery\Services\Table as ServicesTable;
+use Bitrix\Sale\Internals\ServiceRestrictionTable;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
+use Bitrix\Sale\Location\GroupTable;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -15,21 +22,46 @@ class articul_dostavista_delivery extends CModule
     var $PARTNER_NAME;
     var $PARTNER_URI;
 
-    static $data = [
-        'CODE' => 'dostavista',
-        'PARENT_ID' => 12, //TODO Актуальные группы доставки захардкодил
-        'NAME' => 'Доставка "Достависта"',
+    protected $defaultFields = [
+        'CODE' => null,
+        'PARENT_ID' => null,
+        'NAME' => '',
         'ACTIVE' => 'Y',
-        'DESCRIPTION' => 'Обработчик доставки "Достависта"',
-        'SORT' => '150',
-        'LOGOTIP' => '',
-        'CONFIG' => '',
-//        'CLASS_NAME' => 'FourPaws\DeliveryBundle\Handler\DostavistaDeliveryHandler',
+        'DESCRIPTION' => '',
+        'SORT' => 100,
+        'LOGOTIP' => null,
+        'CONFIG' => null,
+        'CLASS_NAME' => null,
         'CURRENCY' => 'RUB',
-        'TRACKING_PARAMS' => '{}',
         'ALLOW_EDIT_SHIPMENT' => 'Y',
-        'VAT_ID' => '0'
     ];
+
+    protected $deliveries = [
+        'dostavista' => [
+            'CLASS_NAME' => DostavistaDeliveryHandler::class,
+            'CONFIG' => [
+                'MAIN' => [
+                    'CURRENCY' => 'RUB',
+                ],
+            ],
+        ]
+    ];
+
+    protected $restrictions = [
+        'dostavista' => [
+            [
+                'CLASS_NAME' => '\Bitrix\Sale\Delivery\Restrictions\ByLocation',
+                'ITEMS' => [
+                    [
+                        'LOCATION_CODE' => '0000073738',
+                        'LOCATION_TYPE' => DeliveryService::LOCATION_RESTRICTION_TYPE_LOCATION,
+                    ]
+                ],
+            ],
+        ]
+    ];
+
+    protected $parentName = 'Актуальные группы доставки';
 
     public function __construct()
     {
@@ -58,19 +90,52 @@ class articul_dostavista_delivery extends CModule
     {
         DeleteDirFiles(__DIR__ . '/admin', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/admin');
         UnRegisterModule($this->MODULE_ID);
-        $this->DoUninstallDelivery();
     }
 
     private function DoInstallDelivery()
     {
-        DeliveryTable::add(static::$data);
-    }
-
-    private function DoUninstallDelivery()
-    {
-        $deliveryId = Bitrix\Sale\Delivery\Services\Manager::getIdByCode(static::$data['CODE']);
-        if ($deliveryId) {
-            DeliveryTable::delete($deliveryId);
+        $groupId = Manager::getGroupId($this->parentName);
+        if (!$groupId) {
+            //'Не найдена группа доставок ' . $this->parentName
+            return false;
         }
+
+        $deliveryServices = ServicesTable::getList(
+            [
+                'filter' => [
+                    'CODE' => array_keys($this->deliveries),
+                ],
+            ]
+        );
+
+        while ($deliveryService = $deliveryServices->fetch()) {
+            //'Доставка ' . $deliveryService['CODE'] . ' уже существует'
+            unset($this->deliveries[$deliveryService['CODE']]);
+        }
+
+        foreach ($this->deliveries as $code => $fields) {
+            $className = '\\' . $fields['CLASS_NAME'];
+            $fields['CLASS_NAME'] = $className;
+            $fields = array_merge(
+                $this->defaultFields,
+                $fields,
+                [
+                    'NAME' => $className::getClassTitle(),
+                    'DESCRIPTION' => $className::getClassDescription(),
+                    'CODE' => $code,
+                    'PARENT_ID' => $groupId,
+                ]
+            );
+            $addResult = ServicesTable::add($fields);
+            if ($addResult->isSuccess()) {
+                //'Доставка ' . $code . ' создана'
+            } else {
+                //'Ошибка при создании доставки ' . $code
+
+                return false;
+            }
+        }
+
+        return true;
     }
 }
