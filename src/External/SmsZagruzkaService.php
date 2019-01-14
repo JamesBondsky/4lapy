@@ -5,11 +5,10 @@ namespace FourPaws\External;
 
 use FourPaws\App\Application;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use FourPaws\External\Exception\SmsSendErrorException;
-use FourPaws\External\SmsTraffic\Exception\SmsTrafficApiException;
 use FourPaws\External\ZagruzkaCom\Sms;
-use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\External\ZagruzkaCom\Client;
+use GuzzleHttp\Psr7\Response;
+
 
 
 class SmsZagruzkaService extends SmsService
@@ -67,20 +66,12 @@ class SmsZagruzkaService extends SmsService
                 $sms->setToHour($queueTime->getTo()->format(self::DATE_FORMAT));
             }
 
-            try {
+            $result = $this->client->send($sms);
+            $this->logger->info(\sprintf('Sms was sent: %s.', $number), array_merge($logContext, ['service' => self::class, 'result' => [$result->getStatusCode(), $result->getBody()->getContents()]]));
 
-                $result = $this->client->send($sms);
-                $this->logger->info(\sprintf('Sms was sent: %s.', $number), array_merge($logContext, ['service' => self::class, 'result' => [$result->getStatusCode(), $result->getBody()->getContents()]]));
-
-                /** [todo] need correct exception */
-            } catch (SmsTrafficApiException $e) {
-                throw new SmsSendErrorException($e->getMessage(), $e->getCode(), $e);
-            }
-
-        } catch (WrongPhoneNumberException $e) {
-            $this->logger->info($e->getMessage(), $logContext);
-        } catch (SmsSendErrorException $e) {
+        } catch (\Exception $e) {
             $this->logger->error(\sprintf('Sms send error: %s.', $e->getMessage()), $logContext);
+            $result = (new Response());
         }
 
         return $result;
