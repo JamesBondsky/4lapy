@@ -145,10 +145,5 @@ if ($template->hasMainWrapper()) {
         $.get('/ajax/sale/forgot-basket/close-page/');
     }
 </script>
-
-<a href="https://fashion.4lapy.ru/odezhda-i-obuv/?section_id=176&Season=00000009&sort=popular" target="_blank" class="b-new-year-accessories js-new-year-accessories">
-    <img src="/static/build/images/inhtml/new-year-accessories.png">
-</a>
-
 </body>
 </html>
