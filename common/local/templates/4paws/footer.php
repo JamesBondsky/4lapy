@@ -57,10 +57,6 @@ if ($template->hasMainWrapper()) {
     </div>
     <?php /** Основной прелоадер из gui */ ?>
     <?php include __DIR__ . '/blocks/preloader.php'; ?>
-
-    <div class="b-snow b-snow--left" data-snow="true"></div>
-    <div class="b-snow b-snow--right" data-snow="true"></div>
-
     </main>
 <?php } ?>
 <?php require_once __DIR__ . '/blocks/footer/change_viewport.php'; ?>
