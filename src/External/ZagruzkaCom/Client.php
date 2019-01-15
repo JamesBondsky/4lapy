@@ -3,8 +3,8 @@
 namespace FourPaws\External\ZagruzkaCom;
 
 
+use FourPaws\External\Exception\SmsQuarantineException;
 use FourPaws\Helpers\SmsQuarantineHelper;
-use GuzzleHttp\Psr7\Response;
 
 class Client
 {
@@ -48,11 +48,12 @@ class Client
     /**
      * @param $sms Sms
      * @return \Psr\Http\Message\ResponseInterface
+     * @throws \Exception
      */
     public function send($sms) {
 
         if (!SmsQuarantineHelper::canSend($sms->getPhone())) {
-            return (new Response());
+            throw new SmsQuarantineException();
         }
 
         $query = [
@@ -73,6 +74,7 @@ class Client
         ]);
 
         return $result;
+
     }
 
 }

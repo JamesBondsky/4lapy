@@ -45,8 +45,8 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
 
             $selectionOffers = new ArrayCollection();
             $pedestal = null;
-            $productSectionCode = $product->getSection();
-            if (($productSectionCode !== null && ($productSectionCode->getCode() == 'banki-bez-kryshki-akvariumy' || $productSectionCode->getCode() == 'detskie-akvariumy-akvariumy' || $productSectionCode->getCode() == 'komplekty-akvariumy')) && $product->getAquariumCombination() != '') {
+            $productSection = $product->getSection();
+            if ($productSection !== null && ($productSection->getCode() == 'banki-bez-kryshki-akvariumy' || $productSection->getCode() == 'detskie-akvariumy-akvariumy' || $productSection->getCode() == 'komplekty-akvariumy') && $product->getAquariumCombination() != '') {
                 $pedestal = $product->getPedestal($product->getAquariumCombination());
                 if (!empty($pedestal)) {
                     $volumeStr = strtolower($offer->getVolumeReference()->getName());
