@@ -14,6 +14,7 @@ use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DostavistaDeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdDeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
@@ -60,11 +61,18 @@ class CalculationResultFactory
                 $result = new DpdDeliveryResult();
                 static::fillDpdData($result, $service->getCode(), $shipment);
                 break;
+            case DeliveryService::DELIVERY_DOSTAVISTA_CODE:
+                $result = new DostavistaDeliveryResult();
+                break;
             default:
                 throw new UnknownDeliveryException(sprintf('Unknown delivery service %s', $service->getCode()));
         }
 
-        static::fillDeliveryData($result, $bitrixResult);
+        if($service->getCode() != DeliveryService::DELIVERY_DOSTAVISTA_CODE){
+            static::fillDeliveryData($result, $bitrixResult);
+        } else {
+            static::fillDeliveryDostavistaData($result, $bitrixResult);
+        }
 
         return $result;
     }
@@ -210,6 +218,53 @@ class CalculationResultFactory
                     if ($result instanceof DeliveryResultInterface) {
                         $result->setWeekDays($value);
                     }
+            }
+        }
+
+        return $result;
+    }
+
+
+    /**
+     * @param CalculationResultInterface $result
+     * @param CalculationResult          $bitrixResult
+     *
+     * @return CalculationResultInterface
+     */
+    protected static function fillDeliveryDostavistaData(
+        CalculationResultInterface $result,
+        CalculationResult $bitrixResult
+    ): CalculationResultInterface
+    {
+        $result->setDeliveryPrice($bitrixResult->getDeliveryPrice());
+        $result->setDescription($bitrixResult->getDescription());
+        $result->setPacksCount($bitrixResult->getPacksCount());
+
+        if ($bitrixResult->isNextStep()) {
+            $result->setAsNextStep();
+        }
+
+        $result->setTmpData($bitrixResult->getTmpData());
+        $result->setData($bitrixResult->getData());
+
+        $result->setPeriodDescription($bitrixResult->getPeriodDescription());
+        $result->setPeriodFrom($bitrixResult->getPeriodFrom());
+        $result->setPeriodType($bitrixResult->getPeriodType());
+        $result->setPeriodTo($bitrixResult->getPeriodTo());
+
+        if ($bitrixResult->getErrors()) {
+            $result->addErrors($bitrixResult->getErrors());
+        }
+
+        if ($bitrixResult->getWarnings()) {
+            $result->addWarnings($bitrixResult->getWarnings());
+        }
+
+        foreach ($bitrixResult->getData() as $key => $value) {
+            switch ($key) {
+                case 'FREE_PRICE_FROM':
+                    $result->setFreeFrom($value);
+                    break;
             }
         }
 

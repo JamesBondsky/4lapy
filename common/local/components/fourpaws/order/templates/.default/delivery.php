@@ -23,6 +23,8 @@ use FourPaws\StoreBundle\Entity\Store;
 
 /** @var CalculationResultInterface $delivery */
 $delivery = $arResult['DELIVERY'];
+/** @var CalculationResultInterface $deliveryDostavista */
+$deliveryDostavista = $arResult['DELIVERY_DOSTAVISTA'];
 /** @var PickupResultInterface $pickup */
 $pickup = $arResult['PICKUP'];
 /** @var CalculationResultInterface $selectedDelivery */
@@ -127,6 +129,33 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                         <span class="js-delivery--price"><?= $delivery->getPrice() ?></span>₽
                                 </label>
                             <?php }
+                            if ($deliveryDostavista) { ?>
+                                <input <?= $deliveryService->isDostavistaDelivery($selectedDelivery) ? 'checked="checked"' : '' ?>
+                                        class="b-choice-recovery__input js-recovery-telephone js-delivery"
+                                        id="order-delivery-dostavista-address"
+                                        type="radio"
+                                        name="deliveryDostavistaId"
+                                        data-text="Экспресс"
+                                        value="<?= $deliveryDostavista->getDeliveryId() ?>"
+                                        data-delivery="<?= $deliveryDostavista->getPrice() ?>"
+                                        data-full="<?= $deliveryDostavista->getStockResult()->getOrderable()->getPrice() ?>"
+                                        data-check="js-list-orders-static"/> <!-- TODO тут проверить -->
+                                <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step"
+                                       for="order-delivery-dostavista-address">
+                                    <span class="b-choice-recovery__main-text">
+                                        <span class="b-choice-recovery__main-text">
+                                            <span class="b-choice-recovery__first">Экспресс</span>
+                                        </span>
+                                    </span>
+                                    <span class="b-choice-recovery__addition-text js-cur-pickup">
+                                        В течение 3 часов,
+                                        <span class="js-delivery--price"><?= $deliveryDostavista->getPrice() ?></span>₽
+                                    </span>
+                                    <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-cur-pickup-mobile">
+                                        В течение 3 часов,
+                                        <span class="js-delivery--price"><?= $deliveryDostavista->getPrice() ?></span>₽
+                                </label>
+                            <?php }
 
                             if ($pickup) {
                                 $available = $arResult['PICKUP_STOCKS_AVAILABLE'];
@@ -182,6 +211,14 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 ?>
                                 <li class="b-radio-tab__tab js-telephone-recovery"
                                     <?= $selectedDelivery->getDeliveryId() !== $delivery->getDeliveryId() ? 'style="display:none"' : '' ?>>
+                                    <?php include 'include/delivery.php' ?>
+                                </li>
+                                <?php
+                            } ?>
+                            <?php if ($deliveryDostavista) {
+                                ?>
+                                <li class="b-radio-tab__tab js-telephone-recovery"
+                                    <?= $selectedDelivery->getDeliveryId() !== $deliveryDostavista->getDeliveryId() ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/delivery.php' ?>
                                 </li>
                                 <?php
