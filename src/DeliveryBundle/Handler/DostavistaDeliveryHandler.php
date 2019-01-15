@@ -148,13 +148,12 @@ class DostavistaDeliveryHandler extends DeliveryHandlerBase
         /** @var Basket $basket */
         $basket = $shipment->getParentOrder()->getBasket()->getOrderableItems();
 
-        $deliveryZone = $this->deliveryService->getDeliveryZoneForShipment($shipment, false);
         $data = [];
         if ($this->config['MAIN']['PRICE']) {
-            $result->setDeliveryPrice($this->config['PRICES'][$deliveryZone]);
+            $result->setDeliveryPrice($this->config['MAIN']['PRICE']);
 
             if (!empty($this->config['MAIN']['FREE_PRICE_FROM'])) {
-                $data['FREE_FROM'] = (int)$this->config['MAIN']['FREE_PRICE_FROM'][$deliveryZone];
+                $data['FREE_FROM'] = (int)$this->config['MAIN']['FREE_PRICE_FROM'];
             }
         } else {
             $result->addError(new Error('Не задана стоимость доставки'));
@@ -170,8 +169,6 @@ class DostavistaDeliveryHandler extends DeliveryHandlerBase
         }
 
         $availableStores = self::getAvailableStores($this->code, $deliveryZone, $deliveryLocation);
-        //проверка, что все есть в наличие в Москве в одном магазине
-
 
         if ($availableStores->isEmpty()) {
             $result->addError(new Error('Не найдено доступных складов'));
@@ -179,7 +176,8 @@ class DostavistaDeliveryHandler extends DeliveryHandlerBase
             return $result;
         }
 
-        $stockResult = static::getStocks($basket, $offers, $availableStores); //TODO DC01 исключить
+        //проверка остатков всех офферов, чтобы они были в хотя бы в одном магазине
+        $stockResult = static::getStocksForAllAvailableOffers($basket, $offers, $availableStores);
 
         if ($stockResult->getOrderable()->isEmpty()) {
             $result->addError(new Error('Отсутствуют товары в наличии'));

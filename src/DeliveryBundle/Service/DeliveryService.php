@@ -405,6 +405,26 @@ class DeliveryService implements LoggerAwareInterface
             $calculationResult->setDeliveryCode($service->getCode());
             $calculationResult->setCurrentDate($from ?? new \DateTime());
 
+            //проверка, что достависта работает еще в течение 3ех часов
+            if ($calculationResult->getDeliveryCode() == DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
+                $deliveryDate = clone $calculationResult->getDeliveryDate();
+                $deliveryDateOfMonth = clone $calculationResult->getDeliveryDate(); //клонируем для проверки, что следующие сутки не наступили
+                $deliveryStartTime = clone $calculationResult->getDeliveryDate(); //клонируем для проверки, что курьерская доставка сейчас работает
+                $deliveryEndTime = clone $calculationResult->getDeliveryDate(); //клонируем для проверки, что курьерская доставка еще будет работать с учетом времени доставки
+                $deliveryDateOfMonth->modify(sprintf('+%s minutes', $calculationResult->getPeriodTo())); //прибавляем максимальное время доставки
+                $startTime = $calculationResult->getData()['DELIVERY_START_TIME']; //когда доставка открывается
+                $arStartTime = explode(':', $startTime);
+                $deliveryStartTime->setTime($arStartTime[0], $arStartTime[1]); //получаем сегодня, когда доставка открывается
+                $endTime = $calculationResult->getData()['DELIVERY_END_TIME']; //когда доставка закрывается
+                $arEndTime = explode(':', $endTime);
+                $deliveryEndTime->setTime($arEndTime[0], $arEndTime[1]); //получаем сегодня, когда доставка закроется
+                $oldDayOfMonth = $calculationResult->getDeliveryDate()->format('d'); //получаем номер старого дня в месяце
+                $newDayOfMonth = $deliveryDateOfMonth->format('d'); //получаем номер нового дня в месяце с учетом времени доставки
+                if ($oldDayOfMonth != $newDayOfMonth || $deliveryDateOfMonth > $deliveryEndTime || $deliveryDate < $deliveryStartTime) {
+                    continue;
+                }
+            }
+
             //тут рассчет времени доставки
             if ($calculationResult->isSuccess()) {
                 $result[] = $calculationResult;
