@@ -47,7 +47,10 @@ Clean-param: pages&offer&uid&sort&section_id /catalog/
 User-Agent: Googlebot
 Allow: *.css
 Allow: *.js
-Disallow: /*?
+Disallow:
+
+User-agent: Googlebot-image
+Disallow:
 
 User-Agent: YandexSearchShop
 Allow: /bitrix/catalog_export/*
