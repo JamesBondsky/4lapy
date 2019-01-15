@@ -129,7 +129,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                         <span class="js-delivery--price"><?= $delivery->getPrice() ?></span>₽
                                 </label>
                             <?php }
-                            if ($deliveryDostavista) { ?>
+                            /*if ($deliveryDostavista) { ?>
                                 <input <?= $deliveryService->isDostavistaDelivery($selectedDelivery) ? 'checked="checked"' : '' ?>
                                         class="b-choice-recovery__input js-recovery-telephone js-delivery"
                                         id="order-delivery-dostavista-address"
@@ -155,7 +155,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                         В течение 3 часов,
                                         <span class="js-delivery--price"><?= $deliveryDostavista->getPrice() ?></span>₽
                                 </label>
-                            <?php }
+                            <?php }*/
 
                             if ($pickup) {
                                 $available = $arResult['PICKUP_STOCKS_AVAILABLE'];
@@ -215,14 +215,14 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 </li>
                                 <?php
                             } ?>
-                            <?php if ($deliveryDostavista) {
+                            <?/*php if ($deliveryDostavista) {
                                 ?>
                                 <li class="b-radio-tab__tab js-telephone-recovery"
                                     <?= $selectedDelivery->getDeliveryId() !== $deliveryDostavista->getDeliveryId() ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/delivery.php' ?>
                                 </li>
                                 <?php
-                            } ?>
+                            } */?>
                             <?php if ($pickup) {
                                 ?>
                                 <li class="b-radio-tab__tab js-email-recovery"

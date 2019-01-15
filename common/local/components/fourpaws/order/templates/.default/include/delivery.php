@@ -222,58 +222,131 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
     </div>
 </div>
 
+<div class="b-delivery-type-time">
 
-<div class="delivery-block__type <?= (!empty($arResult['SPLIT_RESULT']) && $storage->isSplit()) ? 'js-hidden-valid-fields' : 'visible' ?>"
-     data-delivery="<?= $delivery->getPrice() ?>"
-     data-full="<?= $orderPrice ?>" data-type="oneDelivery">
-
-    <div class="b-input-line b-input-line--desired-date" data-url="<?= $arResult['URL']['DELIVERY_INTERVALS'] ?>">
-        <div class="b-input-line__label-wrapper">
-            <span class="b-input-line__label">Желаемая дата доставки</span>
-        </div>
-        <div class="b-select b-select--recall b-select--feedback-page">
-            <?php
-            $selectorDelivery = $delivery;
-            $selectorStorage = $storage;
-            $selectorName = 'deliveryDate';
-            include 'delivery_date_select.php'
-            ?>
-        </div>
+    <div class="b-delivery-type-time__info">
+        Вам доступна Экспресс-доставка: доставим в течении 3 часов за 400 ₽
     </div>
-    <?php if (!$delivery->getIntervals()->isEmpty()) {
-        $selectorDelivery = $delivery;
-        $selectorStorage = $storage;
-        $selectorName = 'deliveryInterval';
-        include 'delivery_interval_select.php';
-    } ?>
-    <div class="b-input-line b-input-line--textarea b-input-line--address-textarea js-no-valid">
-        <div class="b-input-line__label-wrapper">
-            <label class="b-input-line__label" for="order-comment">
-                Комментарий к заказу
-            </label>
-        </div>
-        <div class="b-input b-input--registration-form">
-        <textarea class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form b-input__input-field--focus-placeholder"
-                  id="order-comment"
-                  name="comment"
-                  placeholder="Укажите здесь дополнительную информацию к заказу.
+    <div class="b-choice-recovery b-choice-recovery--order-step b-choice-recovery--delivery-type-time">
+        <input checked="checked" 
+            class="b-choice-recovery__input" 
+            id="order-express-courier-delivery" 
+            type="radio" 
+            name="typeTimeDeliveryId"
+            data-type-time-delivery="express">
+        <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step" for="order-express-courier-delivery">
+            <span class="b-choice-recovery__main-text">
+                <span class="b-choice-recovery__main-text">Экспресс</span>
+            </span>
+            <span class="b-choice-recovery__addition-text">
+                в&nbsp;течении 3&nbsp;часов, 400&nbsp;₽
+            </span>
+            <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
+                В&nbsp;течении 3&nbsp;часов, 400&nbsp;₽
+            </span>
+        </label>
+        <input class="b-choice-recovery__input" 
+            id="order-default-courier-delivery" 
+            type="radio" 
+            name="typeTimeDeliveryId"
+            data-type-time-delivery="default">
+        <label class="b-choice-recovery__label b-choice-recovery__label--right b-choice-recovery__label--order-step" for="order-default-courier-delivery">
+            <span class="b-choice-recovery__main-text">Обычная</span>
+            <span class="b-choice-recovery__addition-text">
+                суббота, 2&nbsp;сентября, 350&nbsp;₽
+            </span>
+            <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
+                сб, 2&nbsp;сен, 350&nbsp;₽
+            </span>
+        </label>
+    </div>
+    <ul class="b-radio-tab">
+        <li class="b-radio-tab__tab" data-content-type-time-delivery="express">
+            <div class="b-input-line">
+                    <div class="b-input-line__label-wrapper">
+                        <span class="b-input-line__label">Время доставки</span>
+                    </div>
+                    <div class="b-input b-input--registration-form">
+                        <textarea class="b-input__input-field b-input__input-field--time-express-delivery"
+                              id="time-express-delivery"
+                              name="express_time_delivery">Сегодня, 21.07.2017 — в течении 3 часов с момента заказа</textarea>
+                        <div class="b-error">
+                            <span class="js-message"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="b-input-line b-input-line--textarea b-input-line--address-textarea js-no-valid">
+                    <div class="b-input-line__label-wrapper">
+                        <label class="b-input-line__label" for="order-comment">
+                            Комментарий к заказу
+                        </label>
+                    </div>
+                    <div class="b-input b-input--registration-form">
+                        <textarea class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form"
+                              id="comment-express-delivery"
+                              name="comment">This post is here to help demonstrate how easy it is to take an existing site</textarea>
+                        <div class="b-error">
+                            <span class="js-message"></span>
+                        </div>
+                    </div>
+                </div>
+        </li>
+        <li class="b-radio-tab__tab" data-content-type-time-delivery="default" style="display:none">
+            <div class="delivery-block__type <?= (!empty($arResult['SPLIT_RESULT']) && $storage->isSplit()) ? 'js-hidden-valid-fields' : 'visible' ?>"
+                 data-delivery="<?= $delivery->getPrice() ?>"
+                 data-full="<?= $orderPrice ?>" data-type="oneDelivery">
+
+                <div class="b-input-line b-input-line--desired-date" data-url="<?= $arResult['URL']['DELIVERY_INTERVALS'] ?>">
+                    <div class="b-input-line__label-wrapper">
+                        <span class="b-input-line__label">Желаемая дата доставки</span>
+                    </div>
+                    <div class="b-select b-select--recall b-select--feedback-page">
+                        <?php
+                        $selectorDelivery = $delivery;
+                        $selectorStorage = $storage;
+                        $selectorName = 'deliveryDate';
+                        include 'delivery_date_select.php'
+                        ?>
+                    </div>
+                </div>
+                <?php if (!$delivery->getIntervals()->isEmpty()) {
+                    $selectorDelivery = $delivery;
+                    $selectorStorage = $storage;
+                    $selectorName = 'deliveryInterval';
+                    include 'delivery_interval_select.php';
+                } ?>
+                <div class="b-input-line b-input-line--textarea b-input-line--address-textarea js-no-valid">
+                    <div class="b-input-line__label-wrapper">
+                        <label class="b-input-line__label" for="order-comment">
+                            Комментарий к заказу
+                        </label>
+                    </div>
+                    <div class="b-input b-input--registration-form">
+                    <textarea class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form b-input__input-field--focus-placeholder"
+                              id="order-comment"
+                              name="comment"
+                              placeholder="Укажите здесь дополнительную информацию к заказу.
 Например, если для доставки заказа курьеру необходимо въехать на территорию с пропускным режимом. В таком случае курьер свяжется с Вами заранее для заказа пропуска на территорию."><?= $storage->getComment() ?></textarea>
-            <div class="b-error">
-                <span class="js-message"></span>
+                        <div class="b-error">
+                            <span class="js-message"></span>
+                        </div>
+                    </div>
+                </div>
+                <?php if (!empty($arResult['SPLIT_RESULT'])) {
+                    /** @var DeliveryResultInterface $delivery1 */
+                    $delivery1 = $arResult['SPLIT_RESULT']['1']['DELIVERY'];
+                    ?>
+                    <div class="change-delivery-type"><span class="js-change-delivery-type" data-type="twoDeliveries">Доставить быстрее</span>
+                        <p>Заказ будет разделён на два, с ближайшей
+                            доставкой <?= /** @noinspection PhpUnhandledExceptionInspection */
+                            DeliveryTimeHelper::showTime($delivery1) ?></p>
+                    </div>
+                <?php } ?>
             </div>
-        </div>
-    </div>
-    <?php if (!empty($arResult['SPLIT_RESULT'])) {
-        /** @var DeliveryResultInterface $delivery1 */
-        $delivery1 = $arResult['SPLIT_RESULT']['1']['DELIVERY'];
-        ?>
-        <div class="change-delivery-type"><span class="js-change-delivery-type" data-type="twoDeliveries">Доставить быстрее</span>
-            <p>Заказ будет разделён на два, с ближайшей
-                доставкой <?= /** @noinspection PhpUnhandledExceptionInspection */
-                DeliveryTimeHelper::showTime($delivery1) ?></p>
-        </div>
-    <?php } ?>
+        </li>
+    </ul>
 </div>
+            
 
 <?php if (!empty($arResult['SPLIT_RESULT'])) {
     $delivery1 = $arResult['SPLIT_RESULT']['1']['DELIVERY'];
