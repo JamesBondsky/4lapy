@@ -31,9 +31,9 @@ $sPopBrandsTitle = \Bitrix\Main\Localization\Loc::getMessage('MENU_BRANDS.POP_BR
                     if (!empty($arResult['GROUPING'][$sChar])) {
                         $sAddClass = !$bWasActive ? ' active' : '';
                         $bWasActive = true;
-                        ?><a class="b-link-list__link b-link-list__link--menu js-scroll-x-menu<?=$sAddClass?>" href="javascript:void(0);" title=""><?=$sChar?></a><?php
+                        ?><a class="b-link-list__link b-link-list__link--menu js-scroll-x-menu<?=$sAddClass?>" href="javascript:void(0);" title=""><!--noindex--><?=$sChar?><!--/noindex--></a><?php
                     } else {
-                        ?><span class="b-link-list__link b-link-list__link--menu js-scroll-x-menu" title=""><?=$sChar?></span><?php
+                        ?><span class="b-link-list__link b-link-list__link--menu js-scroll-x-menu" title=""><!--noindex--><?=$sChar?><!--/noindex--></span><?php
                     }
                 }
             ?></div>
@@ -49,7 +49,7 @@ $sPopBrandsTitle = \Bitrix\Main\Localization\Loc::getMessage('MENU_BRANDS.POP_BR
                 ?><li class="b-menu-brands__group b-menu-brands__group--mobile-show">
                     <ul class="b-menu-brands__name-list b-menu-brands__name-list--no-top">
                         <li class="b-menu-brands__name">
-                            <a class="b-menu-brands__name-link js-active-submenu js-open-step-mobile" href="javascript:void(0)" title="<?=$sPopBrandsTitle?>"><?=$sPopBrandsText?></a>
+                            <a class="b-menu-brands__name-link js-active-submenu js-open-step-mobile" href="javascript:void(0)" title="<?=$sPopBrandsTitle?>"><!--noindex--><?=$sPopBrandsText?><!--/noindex--></a>
                             <div class="b-menu-main__submenu js-submenu js-step-mobile">
                                 <div class="b-back-link">
                                     <a class="b-back-link__link js-back-submenu" href="javascript:void(0);" title="<?=$sPopBrandsTitle?>">
@@ -67,7 +67,7 @@ $sPopBrandsTitle = \Bitrix\Main\Localization\Loc::getMessage('MENU_BRANDS.POP_BR
                                             continue;
                                         }
                                         ?><li class="b-menu-brands__name">
-                                            <a class="b-menu-brands__name-link" href="<?=$arItem['DETAIL_PAGE_URL']?>" title="<?=$arItem['NAME']?>"><?=$arItem['NAME']?></a>
+                                            <a class="b-menu-brands__name-link" href="<?=$arItem['DETAIL_PAGE_URL']?>" title="<?=$arItem['NAME']?>"><!--noindex--><?=$arItem['NAME']?><!--/noindex--></a>
                                         </li><?php
                                         if (++$iCnt >= $arParams['BRANDS_POPULAR_LIMIT']) {
                                             break;
@@ -88,7 +88,7 @@ $sPopBrandsTitle = \Bitrix\Main\Localization\Loc::getMessage('MENU_BRANDS.POP_BR
                     continue;
                 }
                 ?><li class="b-menu-brands__group">
-                    <span class="b-menu-brands__litter js-brands-filter"><?=$arGroup['TITLE']?></span>
+                    <span class="b-menu-brands__litter js-brands-filter"><!--noindex--><?=$arGroup['TITLE']?><!--/noindex--></span>
                     <ul class="b-menu-brands__name-list"><?php
                         foreach ($arGroup['ITEMS_ARRAY_KEYS'] as $mKey) {
                             $arItem = isset($arResult['ITEMS'][$mKey]) ? $arResult['ITEMS'][$mKey] : array();
@@ -96,7 +96,7 @@ $sPopBrandsTitle = \Bitrix\Main\Localization\Loc::getMessage('MENU_BRANDS.POP_BR
                                 continue;
                             }
                             ?><li class="b-menu-brands__name">
-                                <a class="b-menu-brands__name-link" href="<?=$arItem['DETAIL_PAGE_URL']?>" title="<?=$arItem['NAME']?>"><?=$arItem['NAME']?></a>
+                                <a class="b-menu-brands__name-link" href="<?=$arItem['DETAIL_PAGE_URL']?>" title="<?=$arItem['NAME']?>"><!--noindex--><?=$arItem['NAME']?><!--/noindex--></a>
                             </li><?php
                         }
                     ?></ul>
@@ -112,7 +112,7 @@ $sPopBrandsTitle = \Bitrix\Main\Localization\Loc::getMessage('MENU_BRANDS.POP_BR
         ?><div class="b-menu-brands__popular-brand">
             <div class="b-menu-brands__title">
                 <a href="/brand/" class="b-menu-brands__title-link">
-                    <?=$sPopBrandsText?>
+                    <!--noindex--><?=$sPopBrandsText?><!--/noindex-->
                 </a>
             </div>
             <div class="b-popular-brand b-popular-brand--brands"><?php
