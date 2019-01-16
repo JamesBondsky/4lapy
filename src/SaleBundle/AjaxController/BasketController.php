@@ -529,6 +529,7 @@ class BasketController extends Controller implements LoggerAwareInterface
     public function getGiftListAction(Request $request)
     {
         $discountId = (int)$request->get('discountId', 0);
+        $availableGifts = (int)$request->get('availableGifts', 0);
         $response = null;
         try {
             $giftGroup = $this->basketService->getGiftGroupOfferCollection($discountId);
@@ -576,12 +577,11 @@ class BasketController extends Controller implements LoggerAwareInterface
                 ];
 
             }
-            /** @noinspection PhpUndefinedMethodInspection */
-            $unselectedCount = $this->basketService->getAdder('gift')->getExistGiftsQuantity($giftGroup, false);
+
             $giftDeclension = new Declension('подарок', 'подарка', 'подарков');
             $data = [
-                'count' => $unselectedCount,
-                'title' => 'Выберите ' . $unselectedCount . ' ' . $giftDeclension->get($unselectedCount),
+                'count' => $availableGifts,
+                'title' => 'Выберите <span data-count-gifts-popup="true">' . $availableGifts . '</span> ' . $giftDeclension->get($availableGifts),
                 'items' => $items
             ];
             $response = JsonSuccessResponse::createWithData(
@@ -640,6 +640,50 @@ class BasketController extends Controller implements LoggerAwareInterface
     }
 
     /**
+     * @Route("/gifts/select/", methods={"GET", "POST"})
+     *
+     * @param Request $request
+     *
+     * @throws RuntimeException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws Exception
+     *
+     * @return JsonErrorResponse|JsonResponse
+     */
+    public function selectGiftsAction(Request $request)
+    {
+        $response = null;
+        $offers = $request->get('offers', 0);
+
+        try {
+            /** @noinspection PhpUndefinedMethodInspection */
+            $this->basketService->getAdder('gift')->selectGifts($offers);
+        } catch (BaseExceptionInterface $e) {
+            $response = JsonErrorResponse::create(
+                $e->getMessage(),
+                200,
+                [],
+                ['reload' => true]
+            );
+        }
+
+        if (null === $response) {
+            $response = JsonSuccessResponse::createWithData(
+                '',
+                [
+                    'giftId' => 9001,
+                    'basket' => $this->basketViewService->getBasketHtml(true)
+                ],
+                200,
+                ['reload' => true] // todo разобраться почему это нужно на stage
+            );
+        }
+
+        return $response;
+    }
+
+    /**
      * @Route("/gift/refuse/", methods={"GET", "POST"})
      *
      * @param Request $request
@@ -657,6 +701,7 @@ class BasketController extends Controller implements LoggerAwareInterface
     {
         $response = null;
         $giftBasketId = (int)$request->get('giftId', 0);
+        $quantity = (int)$request->get('quantity', 1);
 
         /** @noinspection BadExceptionsProcessingInspection */
         try {
@@ -666,10 +711,10 @@ class BasketController extends Controller implements LoggerAwareInterface
                 throw new NotFoundException('Подарок не найден');
             }
             $gift = $gift[$giftBasketId];
-            if ($gift['quantity'] === 1) {
+            if ($gift['quantity'] == $quantity) {
                 $this->basketService->deleteOfferFromBasket($giftBasketId);
             } else {
-                $this->basketService->updateBasketQuantity($giftBasketId, $gift['quantity'] - 1);
+                $this->basketService->updateBasketQuantity($giftBasketId, $gift['quantity'] - $quantity);
             }
         } catch (BaseExceptionInterface $e) {
             $response = JsonErrorResponse::create(

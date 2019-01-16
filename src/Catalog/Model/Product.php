@@ -2572,6 +2572,29 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
+     * @param $aquariumCombination
+     * @return Offer|null
+     */
+    public function getAquarium($aquariumCombination)
+    {
+        $res = (new ProductQuery())
+            ->withFilterParameter('PROPERTY_AQUARIUM_COMBINATION', $aquariumCombination)
+            ->withFilterParameter('!SECTION_CODE', 'tumby-podstavki-akvariumy')
+            ->withFilterParameter('ACTIVE', 'Y')
+            ->exec();
+        if ($res->isEmpty()) {
+            return null;
+        } else {
+            $offer = $res->first()->getOffers()->first();
+            if ($offer->getPrice() > 0) {
+                return $offer;
+            } else {
+                return null;
+            }
+        }
+    }
+
+    /**
      * @param $volume
      * @return ArrayCollection
      * @throws ApplicationCreateException
@@ -2667,6 +2690,38 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         $res = (new ProductQuery())
             ->withFilter([
                 'SECTION_CODE' => 'lampy-i-svetilniki-ryby',
+                'ACTIVE' => 'Y'
+            ])
+            ->withNav(['nPageSize' => 20])
+            ->exec();
+
+        if (!$res->isEmpty()) {
+            while ($product = $res->next()) {
+                $offers = $product->getOffers();
+                /**
+                 * @var Offer $offer
+                 */
+                foreach ($offers as $offer) {
+                    if ($offer->getPrice() > 0 && $offer->getQuantity() > 0) {
+                        $result->add($offer);
+                    }
+                }
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * @return ArrayCollection
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     */
+    public function getDecor(): ArrayCollection
+    {
+        $result = new ArrayCollection();
+        $res = (new ProductQuery())
+            ->withFilter([
+                'SECTION_CODE' => 'decor',
                 'ACTIVE' => 'Y'
             ])
             ->withNav(['nPageSize' => 20])
