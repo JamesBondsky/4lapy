@@ -166,6 +166,8 @@ class OrderStorageService
             }
         }
 
+        $deliveryId = (int)($data['deliveryTypeId']) ? ($data['deliveryTypeId']) : $data['deliveryId'];
+
         /**
          * Чтобы нельзя было, например, обойти проверку капчи,
          * отправив в POST данные со всех форм разом
@@ -197,10 +199,8 @@ class OrderStorageService
                 break;
             case OrderStorageEnum::DELIVERY_STEP:
                 try {
-                    $deliveryCode = $this->deliveryService->getDeliveryCodeById(
-                        (int)$data['deliveryId']
-                    );
-                    if (\in_array($deliveryCode, DeliveryService::DELIVERY_CODES, true)) {
+                    $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
+                    if (\in_array($deliveryCode, array_merge(DeliveryService::DELIVERY_CODES, [DeliveryService::DELIVERY_DOSTAVISTA_CODE]), true)) {
                         switch ($data['delyveryType']) {
                             case 'twoDeliveries':
                                 $data['deliveryInterval'] = $data['deliveryInterval1'];
@@ -216,7 +216,7 @@ class OrderStorageService
                         }
                     } elseif ((int)$data['split'] === 1) {
                         $tmpStorage = clone $storage;
-                        $tmpStorage->setDeliveryId($data['deliveryId']);
+                        $tmpStorage->setDeliveryId($deliveryId);
                         $pickup = clone $this->getSelectedDelivery($tmpStorage);
                         if ($pickup instanceof PickupResultInterface) {
                             $availableStores = $pickup->getBestShops();
@@ -291,7 +291,11 @@ class OrderStorageService
 
             $setter = 'set' . ucfirst($name);
             if (method_exists($storage, $setter)) {
-                $storage->$setter($value);
+                if ($name == 'deliveryId') {
+                    $storage->$setter($data['deliveryTypeId']);
+                } else {
+                    $storage->$setter($value);
+                }
             }
         }
 

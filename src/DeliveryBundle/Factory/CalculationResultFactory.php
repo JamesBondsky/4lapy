@@ -265,6 +265,9 @@ class CalculationResultFactory
                 case 'FREE_PRICE_FROM':
                     $result->setFreeFrom($value);
                     break;
+                case 'STOCK_RESULT':
+                    $result->setStockResult($value);
+                    break;
             }
         }
 

@@ -98,10 +98,17 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                         <input type="hidden" name="delyveryType"
                                value="<?= (!empty($arResult['SPLIT_RESULT']) && $storage->isSplit()) ? 'twoDeliveries' : 'oneDelivery' ?>"
                                class="js-no-valid">
+                        <input type="hidden" name="deliveryTypeId"
+                               value="<?= ($deliveryDostavista && $deliveryDostavista->getDeliveryId()) ? $deliveryDostavista->getDeliveryId() : ($delivery->getDeliveryId() ? $delivery->getDeliveryId() : $pickup->getDeliveryId())?>"
+                               class="js-no-valid">
                         <div class="b-choice-recovery b-choice-recovery--order-step">
                             <?php if ($delivery) { ?>
-                                <input <?= $deliveryService->isDelivery($selectedDelivery) ? 'checked="checked"' : '' ?>
+                                <?
+                                $selectedDel = ($selectedDelivery->getDeliveryCode() == DeliveryService::DELIVERY_DOSTAVISTA_CODE || $selectedDelivery->getDeliveryCode() == DeliveryService::INNER_DELIVERY_CODE) ? $delivery : $selectedDelivery;
+                                ?>
+                                <input <?= $deliveryService->isDelivery($selectedDel) ? 'checked="checked"' : '' ?>
                                         class="b-choice-recovery__input js-recovery-telephone js-delivery"
+                                        data-set-delivery-type="<?= $deliveryDostavista && $deliveryDostavista->getDeliveryId() ? $deliveryDostavista->getDeliveryId() : $delivery->getDeliveryId()?>"
                                         id="order-delivery-address"
                                         type="radio"
                                         name="deliveryId"
@@ -127,36 +134,9 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                         <?= /** @noinspection PhpUnhandledExceptionInspection */
                                         DeliveryTimeHelper::showTime($delivery, ['SHORT' => true]) ?>,
                                         <span class="js-delivery--price"><?= $delivery->getPrice() ?></span>₽
+                                    </span>
                                 </label>
                             <?php }
-                            /*if ($deliveryDostavista) { ?>
-                                <input <?= $deliveryService->isDostavistaDelivery($selectedDelivery) ? 'checked="checked"' : '' ?>
-                                        class="b-choice-recovery__input js-recovery-telephone js-delivery"
-                                        id="order-delivery-dostavista-address"
-                                        type="radio"
-                                        name="deliveryDostavistaId"
-                                        data-text="Экспресс"
-                                        value="<?= $deliveryDostavista->getDeliveryId() ?>"
-                                        data-delivery="<?= $deliveryDostavista->getPrice() ?>"
-                                        data-full="<?= $deliveryDostavista->getStockResult()->getOrderable()->getPrice() ?>"
-                                        data-check="js-list-orders-static"/> <!-- TODO тут проверить -->
-                                <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step"
-                                       for="order-delivery-dostavista-address">
-                                    <span class="b-choice-recovery__main-text">
-                                        <span class="b-choice-recovery__main-text">
-                                            <span class="b-choice-recovery__first">Экспресс</span>
-                                        </span>
-                                    </span>
-                                    <span class="b-choice-recovery__addition-text js-cur-pickup">
-                                        В течение 3 часов,
-                                        <span class="js-delivery--price"><?= $deliveryDostavista->getPrice() ?></span>₽
-                                    </span>
-                                    <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-cur-pickup-mobile">
-                                        В течение 3 часов,
-                                        <span class="js-delivery--price"><?= $deliveryDostavista->getPrice() ?></span>₽
-                                </label>
-                            <?php }*/
-
                             if ($pickup) {
                                 $available = $arResult['PICKUP_STOCKS_AVAILABLE'];
                                 if ($arResult['PARTIAL_PICKUP_AVAILABLE'] && $storage->isSplit()) {
@@ -166,6 +146,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 } ?>
                                 <input <?= $deliveryService->isPickup($selectedDelivery) ? 'checked="checked"' : '' ?>
                                         class="b-choice-recovery__input js-recovery-email js-myself-shop js-delivery"
+                                        data-set-delivery-type="<?= $pickup->getDeliveryId()?>"
                                         id="order-delivery-pick-up"
                                         type="radio"
                                         name="deliveryId"
@@ -215,14 +196,6 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 </li>
                                 <?php
                             } ?>
-                            <?/*php if ($deliveryDostavista) {
-                                ?>
-                                <li class="b-radio-tab__tab js-telephone-recovery"
-                                    <?= $selectedDelivery->getDeliveryId() !== $deliveryDostavista->getDeliveryId() ? 'style="display:none"' : '' ?>>
-                                    <?php include 'include/delivery.php' ?>
-                                </li>
-                                <?php
-                            } */?>
                             <?php if ($pickup) {
                                 ?>
                                 <li class="b-radio-tab__tab js-email-recovery"

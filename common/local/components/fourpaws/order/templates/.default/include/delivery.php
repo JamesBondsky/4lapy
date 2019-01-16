@@ -4,11 +4,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 /**
- * @var array                   $arParams
- * @var array                   $arResult
- * @var OrderStorage            $storage
+ * @var array $arParams
+ * @var array $arResult
+ * @var OrderStorage $storage
  * @var DeliveryResultInterface $delivery
- * @var FourPawsOrderComponent  $component
+ * @var FourPawsOrderComponent $component
  */
 
 use Doctrine\Common\Collections\ArrayCollection;
@@ -223,53 +223,60 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
 </div>
 
 <div class="b-delivery-type-time">
-
-    <div class="b-delivery-type-time__info">
-        Вам доступна Экспресс-доставка: доставим в течении 3 часов за 400 ₽
-    </div>
-    <div class="b-choice-recovery b-choice-recovery--order-step b-choice-recovery--delivery-type-time">
-        <input checked="checked" 
-            class="b-choice-recovery__input" 
-            id="order-express-courier-delivery" 
-            type="radio" 
-            name="typeTimeDeliveryId"
-            data-type-time-delivery="express">
-        <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step" for="order-express-courier-delivery">
-            <span class="b-choice-recovery__main-text">
-                <span class="b-choice-recovery__main-text">Экспресс</span>
-            </span>
-            <span class="b-choice-recovery__addition-text">
-                в&nbsp;течении 3&nbsp;часов, 400&nbsp;₽
-            </span>
-            <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
-                В&nbsp;течении 3&nbsp;часов, 400&nbsp;₽
-            </span>
-        </label>
-        <input class="b-choice-recovery__input" 
-            id="order-default-courier-delivery" 
-            type="radio" 
-            name="typeTimeDeliveryId"
-            data-type-time-delivery="default">
-        <label class="b-choice-recovery__label b-choice-recovery__label--right b-choice-recovery__label--order-step" for="order-default-courier-delivery">
-            <span class="b-choice-recovery__main-text">Обычная</span>
-            <span class="b-choice-recovery__addition-text">
-                суббота, 2&nbsp;сентября, 350&nbsp;₽
-            </span>
-            <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
-                сб, 2&nbsp;сен, 350&nbsp;₽
-            </span>
-        </label>
-    </div>
+    <? if ($deliveryDostavista) { ?>
+        <div class="b-delivery-type-time__info"><?= str_replace(['[time]', '[price]'], [round($deliveryDostavista->getPeriodTo() / 60), $deliveryDostavista->getPrice()], $deliveryDostavista->getData()['TEXT_EXPRESS_DELIVERY']); ?></div>
+        <div class="b-choice-recovery b-choice-recovery--order-step b-choice-recovery--delivery-type-time">
+            <input checked="checked"
+                   data-set-delivery-type="<?= $deliveryDostavista->getDeliveryId() ?>"
+                   class="b-choice-recovery__input"
+                   id="order-express-courier-delivery"
+                   type="radio"
+                   name="typeTimeDeliveryId"
+                   data-type-time-delivery="express">
+            <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step" for="order-express-courier-delivery">
+                <span class="b-choice-recovery__main-text">
+                    <span class="b-choice-recovery__main-text">Экспресс</span>
+                </span>
+                <span class="b-choice-recovery__addition-text">
+                    В&nbsp;течении <?= round($deliveryDostavista->getPeriodTo() / 60) ?>&nbsp;часов, <?= $deliveryDostavista->getPrice() ?>&nbsp;₽
+                </span>
+                <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
+                    В&nbsp;течении <?= round($deliveryDostavista->getPeriodTo() / 60) ?>&nbsp;часов, <?= $deliveryDostavista->getPrice() ?>&nbsp;₽
+                </span>
+            </label>
+            <input class="b-choice-recovery__input"
+                   data-set-delivery-type="<?= $delivery->getDeliveryId() ?>"
+                   id="order-default-courier-delivery"
+                   type="radio"
+                   name="typeTimeDeliveryId"
+                   data-type-time-delivery="default">
+            <label class="b-choice-recovery__label b-choice-recovery__label--right b-choice-recovery__label--order-step" for="order-default-courier-delivery">
+                <span class="b-choice-recovery__main-text">Обычная</span>
+                <span class="b-choice-recovery__addition-text js-cur-pickup">
+                    <?= /** @noinspection PhpUnhandledExceptionInspection */
+                    DeliveryTimeHelper::showTime($delivery) ?>,
+                    <span class="js-delivery--price"><?= $delivery->getPrice() ?></span>₽
+                </span>
+                <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-cur-pickup-mobile">
+                    <?= /** @noinspection PhpUnhandledExceptionInspection */
+                    DeliveryTimeHelper::showTime($delivery, ['SHORT' => true]) ?>,
+                    <span class="js-delivery--price"><?= $delivery->getPrice() ?></span>₽
+                </span>
+            </label>
+        </div>
+    <? } ?>
     <ul class="b-radio-tab">
-        <li class="b-radio-tab__tab" data-content-type-time-delivery="express">
-            <div class="b-input-line">
+        <? if ($deliveryDostavista) { ?>
+            <li class="b-radio-tab__tab" data-content-type-time-delivery="express">
+                <div class="b-input-line">
                     <div class="b-input-line__label-wrapper">
                         <span class="b-input-line__label">Время доставки</span>
                     </div>
                     <div class="b-input b-input--registration-form">
                         <textarea class="b-input__input-field b-input__input-field--time-express-delivery"
-                              id="time-express-delivery"
-                              name="express_time_delivery">Сегодня, 21.07.2017 — в течении 3 часов с момента заказа</textarea>
+                                  id="time-express-delivery"
+                                  name="express_time_delivery"
+                                  disabled="disabled">Сегодня, <?= (new DateTime())->format('d.m.Y') ?> — в течении <?= round($deliveryDostavista->getPeriodTo() / 60) ?> часов с момента заказа</textarea>
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
@@ -283,19 +290,19 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                     </div>
                     <div class="b-input b-input--registration-form">
                         <textarea class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form"
-                              id="comment-express-delivery"
-                              name="comment">This post is here to help demonstrate how easy it is to take an existing site</textarea>
+                                  id="comment-express-delivery"
+                                  name="comment"
+                                  placeholder="Укажите здесь дополнительную информацию к заказу.
+Например, если для доставки заказа курьеру необходимо въехать на территорию с пропускным режимом. В таком случае курьер свяжется с Вами заранее для заказа пропуска на территорию."><?= $storage->getComment() ?></textarea>
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
                     </div>
                 </div>
-        </li>
-        <li class="b-radio-tab__tab" data-content-type-time-delivery="default" style="display:none">
-            <div class="delivery-block__type <?= (!empty($arResult['SPLIT_RESULT']) && $storage->isSplit()) ? 'js-hidden-valid-fields' : 'visible' ?>"
-                 data-delivery="<?= $delivery->getPrice() ?>"
-                 data-full="<?= $orderPrice ?>" data-type="oneDelivery">
-
+            </li>
+        <? } ?>
+        <li class="b-radio-tab__tab" data-content-type-time-delivery="default" <? if ($deliveryDostavista){ ?>style="display:none"<? } ?>>
+            <div class="delivery-block__type <?= (!empty($arResult['SPLIT_RESULT']) && $storage->isSplit()) ? 'js-hidden-valid-fields' : 'visible' ?>" data-delivery="<?= $delivery->getPrice() ?>" data-full="<?= $orderPrice ?>" data-type="oneDelivery">
                 <div class="b-input-line b-input-line--desired-date" data-url="<?= $arResult['URL']['DELIVERY_INTERVALS'] ?>">
                     <div class="b-input-line__label-wrapper">
                         <span class="b-input-line__label">Желаемая дата доставки</span>

@@ -501,6 +501,7 @@ class OrderService implements LoggerAwareInterface
                     $value = $selectedDelivery->getDeliveryDate()->format('d.m.Y');
                     break;
                 case 'DELIVERY_INTERVAL':
+                    //TODO возможно тут нужно доработать
                     /**
                      * У доставок есть выбор интервала доставки
                      */
@@ -658,7 +659,7 @@ class OrderService implements LoggerAwareInterface
             'PORCH',
             'FLOOR',
         ];
-        $skipAddressProperties = !$this->deliveryService->isDelivery($selectedDelivery);
+        $skipAddressProperties = !$this->deliveryService->isDelivery($selectedDelivery) && !!$this->deliveryService->isDostavistaDelivery($selectedDelivery);
 
         /** @var PropertyValue $propertyValue */
         foreach ($propertyValueCollection as $propertyValue) {
@@ -772,6 +773,13 @@ class OrderService implements LoggerAwareInterface
                                 case DeliveryService::ZONE_IVANOVO:
                                 case DeliveryService::ZONE_IVANOVO_REGION:
                                     if ($this->deliveryService->isDelivery($selectedDelivery)) {
+                                        $value = $selectedDelivery->getSelectedStore()->getXmlId();
+                                    } elseif ($baseShop = $selectedDelivery->getBestShops()->getBaseShops()->first()) {
+                                        $value = $baseShop->getXmlId();
+                                    }
+                                    break;
+                                case DeliveryService::ZONE_MOSCOW:
+                                    if ($this->deliveryService->isDostavistaDelivery($selectedDelivery)) {
                                         $value = $selectedDelivery->getSelectedStore()->getXmlId();
                                     } elseif ($baseShop = $selectedDelivery->getBestShops()->getBaseShops()->first()) {
                                         $value = $baseShop->getXmlId();
@@ -970,7 +978,7 @@ class OrderService implements LoggerAwareInterface
 
         $address = null;
         if (!$fastOrder) {
-            if ($this->deliveryService->isDelivery($selectedDelivery)) {
+            if ($this->deliveryService->isDelivery($selectedDelivery) || $this->deliveryService->isDostavistaDelivery($selectedDelivery)) {
                 /**
                  * Для доставки - сохраняем адрес
                  */
@@ -985,15 +993,15 @@ class OrderService implements LoggerAwareInterface
                         $storage->setAddressId($personalAddress->getId());
                     } catch (\Exception $e) {
                         $this->log()->error(sprintf('failed to save address: %s', $e->getMessage()), [
-                            'city'     => $personalAddress->getCity(),
+                            'city' => $personalAddress->getCity(),
                             'location' => $personalAddress->getLocation(),
-                            'userId'   => $personalAddress->getUserId(),
-                            'street'   => $personalAddress->getStreet(),
-                            'house'    => $personalAddress->getHouse(),
-                            'housing'  => $personalAddress->getHousing(),
+                            'userId' => $personalAddress->getUserId(),
+                            'street' => $personalAddress->getStreet(),
+                            'house' => $personalAddress->getHouse(),
+                            'housing' => $personalAddress->getHousing(),
                             'entrance' => $personalAddress->getEntrance(),
-                            'floor'    => $personalAddress->getFloor(),
-                            'flat'     => $personalAddress->getFlat(),
+                            'floor' => $personalAddress->getFloor(),
+                            'flat' => $personalAddress->getFlat(),
                         ]);
                     }
                 }
@@ -1010,9 +1018,10 @@ class OrderService implements LoggerAwareInterface
                             ) {
                                 $address->setRegion($locationPathItem['NAME']);
                             } elseif (
-                                \in_array($locationType, [
-                                    LocationService::TYPE_SUBREGION, LocationService::TYPE_CITY,
-                                ], true)
+                            \in_array($locationType, [
+                                LocationService::TYPE_SUBREGION,
+                                LocationService::TYPE_CITY,
+                            ], true)
                             ) {
                                 $area[] = $locationPathItem['NAME'];
                             }
@@ -1625,6 +1634,7 @@ class OrderService implements LoggerAwareInterface
                     $value = OrderPropertyService::COMMUNICATION_SUBSCRIBE;
                     break;
                 case $this->deliveryService->isDelivery($delivery) && $address && !$address->isValid():
+                case $this->deliveryService->isDostavistaDelivery($delivery) && $address && !$address->isValid():
                     $value = OrderPropertyService::COMMUNICATION_ADDRESS_ANALYSIS;
                     break;
                 // способ получения 07

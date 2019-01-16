@@ -305,10 +305,11 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @param \Symfony\Component\HttpFoundation\Request $request
      *
      * @return JsonResponse
+     * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ObjectPropertyException
      * @throws OrderStorageSaveException
      * @throws SystemException
-     * @throws ObjectPropertyException
      */
     public function validateDeliveryAction(Request $request): JsonResponse
     {
