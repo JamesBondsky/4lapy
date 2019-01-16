@@ -91,7 +91,7 @@ class ReCaptchaService implements LoggerAwareInterface, ReCaptchaInterface
      * @throws SystemException
      * @return bool
      */
-    public function checkCaptcha(string $recaptcha = ''): bool
+    public function checkCaptcha(?string $recaptcha = ''): bool
     {
         /** @noinspection PhpUnhandledExceptionInspection */
         $context = Application::getInstance()->getContext();

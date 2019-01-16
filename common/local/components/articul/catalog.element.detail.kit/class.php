@@ -45,7 +45,8 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
 
             $selectionOffers = new ArrayCollection();
             $additionalItem = null;
-            if (($product->getSection()->getCode() == 'banki-bez-kryshki-akvariumy' || $product->getSection()->getCode() == 'detskie-akvariumy-akvariumy' || $product->getSection()->getCode() == 'komplekty-akvariumy' || $product->getSection()->getCode() == 'tumby-podstavki-akvariumy') && $product->getAquariumCombination() != '') {
+            $productSection = $product->getSection();
+            if ($productSection !== null && ($productSection->getCode() == 'banki-bez-kryshki-akvariumy' || $productSection->getCode() == 'detskie-akvariumy-akvariumy' || $productSection->getCode() == 'komplekty-akvariumy' || $product->getSection()->getCode() == 'tumby-podstavki-akvariumy') && $product->getAquariumCombination() != '') {
                 $isAquarium = $product->getSection()->getCode() != 'tumby-podstavki-akvariumy';
                 if($isAquarium){
                     $additionalItem = $product->getPedestal($product->getAquariumCombination());
