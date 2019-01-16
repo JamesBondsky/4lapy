@@ -8,6 +8,7 @@ use FourPaws\CatalogBundle\Translate\Configuration;
 use FourPaws\CatalogBundle\Translate\ConfigurationInterface;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\StoreBundle\Service\StoreService;
 use Psr\Log\LoggerAwareInterface;
 use JMS\Serializer\SerializerInterface;
@@ -207,7 +208,8 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
             'IBLOCK_ID',
             'NAME',
             'CATALOG_GROUP_2',
-            'XML_ID'
+            'XML_ID',
+            'WEIGHT'
         ];
 
         //единицы измерения
@@ -233,18 +235,14 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
                     'id' => $offer['XML_ID'],
                     'sku' => $offer['ID'],
                     'image' => $offer['PROPERTIES']['IMG']['VALUE'][0],
-                    'price_new' => floatval($offer['CATALOG_PRICE_2']),
-                    'quantity' => intval($offer['CATALOG_QUANTITY']),
-                    'quantity_unit' => $this->arMeasures[$offer['CATALOG_MEASURE']]
+                    'price_new' => floatval($offer['CATALOG_PRICE_2'])
                 ];
             } elseif (floatval($offer['CATALOG_PRICE_2']) == floatval($offer['PROPERTIES']['PRICE_ACTION']['VALUE'])) {
                 $this->arResult['offers'][$offer['XML_ID']] = [
                     'id' => $offer['XML_ID'],
                     'sku' => $offer['ID'],
                     'image' => $offer['PROPERTIES']['IMG']['VALUE'][0],
-                    'price_new' => floatval($offer['PROPERTIES']['PRICE_ACTION']['VALUE']),
-                    'quantity' => intval($offer['CATALOG_QUANTITY']),
-                    'quantity_unit' => $this->arMeasures[$offer['CATALOG_MEASURE']]
+                    'price_new' => floatval($offer['PROPERTIES']['PRICE_ACTION']['VALUE'])
                 ];
             } else {
                 $this->arResult['offers'][$offer['XML_ID']] = [
@@ -252,10 +250,13 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
                     'sku' => $offer['ID'],
                     'image' => $offer['PROPERTIES']['IMG']['VALUE'][0],
                     'price_old' => floatval($offer['CATALOG_PRICE_2']),
-                    'price_new' => floatval($offer['PROPERTIES']['PRICE_ACTION']['VALUE']),
-                    'quantity' => intval($offer['CATALOG_QUANTITY']),
-                    'quantity_unit' => $this->arMeasures[$offer['CATALOG_MEASURE']]
+                    'price_new' => floatval($offer['PROPERTIES']['PRICE_ACTION']['VALUE'])
                 ];
+            }
+
+            if(strpos(mb_strtolower($offer['NAME']), 'корм') !== false){
+                $this->arResult['offers'][$offer['XML_ID']]['quantity'] = (float)WordHelper::showWeightNumber($offer['CATALOG_WEIGHT'], true);
+                $this->arResult['offers'][$offer['XML_ID']]['quantity_unit'] = 'кг';
             }
 
             //штрих-код
@@ -298,7 +299,28 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
 
         $dbProduct = \CIBlockElement::GetList([], $arFilter, false, false, $arSelect);
         while ($arProduct = $dbProduct->Fetch()) {
-            $descr = html_entity_decode(\HTMLToTxt(preg_replace('/<table(.*)<\/table>/', '', str_replace("\r\n", "", $arProduct['DETAIL_TEXT']))));
+            //берем первое предложение из описания
+            $arDescr = explode('.', $arProduct['DETAIL_TEXT']);
+            if (count($arDescr) > 1) {
+                $descr = $arDescr[0] . '.';
+            } else {
+                $descr = $arDescr[0];
+            }
+            $descr = preg_replace(
+                [
+                    '/<table(.*)<\/table>/', //таблица
+                    '/<a(.*)<\/a>/', //ссылки
+                    '/<img(.*)>/' //изображения
+                ],
+                [
+                    '',
+                    '',
+                    ''
+                ],
+                $descr
+            );
+            //удаляем остальные теги
+            $descr = str_replace("\r\n", '', html_entity_decode(\HTMLToTxt($descr)));
             if ($descr != '' && $descr != null && $arProduct['ACTIVE'] == 'Y') {
                 foreach ($products[$arProduct['ID']] as $offer) {
                     $this->arResult['offers'][$offer]['brand'] = $arProduct['PROPERTY_BRAND_NAME'];
@@ -335,7 +357,7 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
         while ($file = $dbFiles->Fetch()) {
             $path = '/' . $uploadDir . '/' . $file['SUBDIR'] . '/' . $file['FILE_NAME'];
             if (!file_exists($_SERVER['DOCUMENT_ROOT'] . $path)) {
-                unset($this->arResult[$key][$files[$file['ID']]]['image']);
+                unset($this->arResult[$key][$files[$file['ID']]]);
             }
 
             $path = \sprintf(
