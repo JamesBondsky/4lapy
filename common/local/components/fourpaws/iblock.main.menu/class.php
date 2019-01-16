@@ -603,6 +603,7 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
             $sPopularPropFieldFull,
             $sBrandPropField.'.NAME',
             $sBrandPropField.'.DETAIL_PAGE_URL',
+            $sBrandPropField.'.PREVIEW_PICTURE',
             $sBrandPropField.'.DETAIL_PICTURE',
         ];
         $arGroupBy = $arSelectBase;
@@ -631,6 +632,7 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
                 'ID' => $arItem[$sBrandPropField.'_VALUE'],
                 'NAME' => $arItem[$sBrandPropField.'_NAME'],
                 'DETAIL_PAGE_URL' => $arItem[$sBrandPropField.'_DETAIL_PAGE_URL'],
+                'PREVIEW_PICTURE' => $arItem[$sBrandPropField.'_PREVIEW_PICTURE'],
                 'DETAIL_PICTURE' => $arItem[$sBrandPropField.'_DETAIL_PICTURE'],
             ];
         }
