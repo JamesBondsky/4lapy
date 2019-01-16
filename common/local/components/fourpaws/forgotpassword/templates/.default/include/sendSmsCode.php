@@ -2,6 +2,11 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
+
+use FourPaws\App\Application as App;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
+
 /** @var string $phone
  * @var string $backUrl
  */ ?>
@@ -41,8 +46,19 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                data-url="/ajax/user/auth/forgotPassword/"
                data-phone="<?= $phone ?>"
                data-action="resendSms"
+               data-recovery-resend-a="true"
                title="Отправить снова">Отправить снова</a>
         </div>
-        <button class="b-button b-button--social b-button--full-width" type="submit">Далее</button>
+
+        <div style="display: none;" data-recovery-resend-captcha="true">
+            <?
+            /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
+            $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
+            echo $recaptchaService->getCaptcha('b-input-line', true, 'recoveryResendSms');
+            ?>
+        </div>
+
+        <br>
+        <button class="b-button b-button--social b-button--full-width" data-recovery-form-send="true">Далее</button>
     </form>
 </div>
