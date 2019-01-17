@@ -455,6 +455,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         if ($deliveryDate) {
             $orderDto->setDeliveryDate($deliveryDate);
         }
+        die();
     }
 
     /**
@@ -613,6 +614,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 break;
             case DeliveryService::DPD_PICKUP_CODE:
                 return SapOrder::DELIVERY_TYPE_CONTRACTOR . '_' . SapOrder::DELIVERY_TYPE_CONTRACTOR_PICKUP;
+                break;
+            case DeliveryService::DELIVERY_DOSTAVISTA_CODE:
+                return SapOrder::DELIVERY_TYPE_DOSTAVISTA;
                 break;
             default:
                 switch ($deliveryZone) {

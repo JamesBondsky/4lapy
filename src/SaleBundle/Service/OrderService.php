@@ -28,6 +28,7 @@ use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentItem;
 use Bitrix\Sale\UserMessageException;
+use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\Catalog\Collection\OfferCollection;
@@ -41,6 +42,7 @@ use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\External\DostavistaService;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
@@ -1087,7 +1089,16 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
-        $this->updateCommWayProperty($order, $selectedDelivery, $fastOrder, $address);
+        $dostavistaSuccess = false;
+        if ($this->deliveryService->isDostavistaDelivery($selectedDelivery)) {
+            //импорт в Достависту
+            $data = [];
+            /** @var DostavistaService $dostavistaService */
+            $dostavistaService = Application::getInstance()->getContainer()->get('dostavista.service');
+            $dostavistaSuccess = $dostavistaService->sendOrder($data)['success'];
+        }
+
+        $this->updateCommWayProperty($order, $selectedDelivery, $fastOrder, $address, $dostavistaSuccess);
 
         try {
             /* @todo костыль - недоступные товары не попадают в корзину заказа, но учитываются в стоимости заказа */
@@ -1598,18 +1609,19 @@ class OrderService implements LoggerAwareInterface
     }
 
     /**
-     * @param Order                      $order
+     * @param Order $order
      * @param CalculationResultInterface $delivery
-     * @param bool                       $isFastOrder
-     * @param Address|null               $address
-     *
+     * @param bool $isFastOrder
+     * @param Address|null $address
+     * @param bool $dostavistaSuccess
      * @throws DeliveryNotFoundException
      */
     protected function updateCommWayProperty(
         Order $order,
         CalculationResultInterface $delivery,
         bool $isFastOrder = false,
-        ?Address $address = null
+        ?Address $address = null,
+        bool $dostavistaSuccess = false
     ): void {
         $commWay = $this->getOrderPropertyByCode($order, 'COM_WAY');
         $value = $commWay->getValue();
@@ -1644,7 +1656,6 @@ class OrderService implements LoggerAwareInterface
                     $value = OrderPropertyService::COMMUNICATION_SUBSCRIBE;
                     break;
                 case $this->deliveryService->isDelivery($delivery) && $address && !$address->isValid():
-                case $this->deliveryService->isDostavistaDelivery($delivery) && $address && !$address->isValid():
                     $value = OrderPropertyService::COMMUNICATION_ADDRESS_ANALYSIS;
                     break;
                 // способ получения 07
@@ -1657,6 +1668,9 @@ class OrderService implements LoggerAwareInterface
                     // способ получения 06
                 case $deliveryFromShop && $stockResult->getDelayed()->isEmpty():
                     $value = OrderPropertyService::COMMUNICATION_SMS;
+                    break;
+                case $this->deliveryService->isDostavistaDelivery($delivery) && (!$address || !$address->isValid() || !$dostavistaSuccess):
+                    $value = OrderPropertyService::COMMUNICATION_DOSTAVISTA_ERROR;
                     break;
             }
         }
