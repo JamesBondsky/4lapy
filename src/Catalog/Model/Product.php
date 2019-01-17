@@ -2603,8 +2603,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     /**
      * @param $volume
      * @return ArrayCollection
-     * @throws ApplicationCreateException
-     * @throws \Bitrix\Main\ArgumentException
      */
     public function getInternalFilters($volume): ArrayCollection
     {
@@ -2633,7 +2631,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                  * @var Offer $offer
                  */
                 foreach ($offers as $offer) {
-                    if ($offer->getPrice() > 0 && $offer->getQuantity() > 0) {
+                    if ($offer->getPrice() > 0) {
                         $result->add($offer);
                     }
                 }
@@ -2645,8 +2643,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     /**
      * @param $volume
      * @return ArrayCollection
-     * @throws ApplicationCreateException
-     * @throws \Bitrix\Main\ArgumentException
      */
     public function getExternalFilters($volume): ArrayCollection
     {
@@ -2676,7 +2672,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                  * @var Offer $offer
                  */
                 foreach ($offers as $offer) {
-                    if ($offer->getPrice() > 0 && $offer->getQuantity() > 0) {
+                    if ($offer->getPrice() > 0) {
                         $result->add($offer);
                     }
                 }
@@ -2687,8 +2683,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
     /**
      * @return ArrayCollection
-     * @throws ApplicationCreateException
-     * @throws \Bitrix\Main\ArgumentException
      */
     public function getLamps(): ArrayCollection
     {
@@ -2703,14 +2697,12 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
         if (!$res->isEmpty()) {
             while ($product = $res->next()) {
-                $offers = $product->getOffers();
                 /**
                  * @var Offer $offer
                  */
-                foreach ($offers as $offer) {
-                    if ($offer->getPrice() > 0 && $offer->getQuantity() > 0) {
-                        $result->add($offer);
-                    }
+                $offer = $product->getOffers()->first();
+                if ($offer->getPrice() > 0) {
+                    $result->add($offer);
                 }
             }
         }
@@ -2719,8 +2711,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
     /**
      * @return ArrayCollection
-     * @throws ApplicationCreateException
-     * @throws \Bitrix\Main\ArgumentException
      */
     public function getDecor(): ArrayCollection
     {
@@ -2735,14 +2725,12 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
         if (!$res->isEmpty()) {
             while ($product = $res->next()) {
-                $offers = $product->getOffers();
                 /**
                  * @var Offer $offer
                  */
-                foreach ($offers as $offer) {
-                    if ($offer->getPrice() > 0 && $offer->getQuantity() > 0) {
-                        $result->add($offer);
-                    }
+                $offer = $product->getOffers()->first();
+                if ($offer->getPrice() > 0) {
+                    $result->add($offer);
                 }
             }
         }
