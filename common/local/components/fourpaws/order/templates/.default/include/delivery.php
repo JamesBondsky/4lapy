@@ -273,10 +273,12 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                         <span class="b-input-line__label">Время доставки</span>
                     </div>
                     <div class="b-input b-input--registration-form">
-                        <textarea class="b-input__input-field b-input__input-field--time-express-delivery"
-                                  id="time-express-delivery"
-                                  name="express_time_delivery"
-                                  disabled="disabled">Сегодня, <?= (new DateTime())->format('d.m.Y') ?> — в течении <?= round($deliveryDostavista->getPeriodTo() / 60) ?> часов с момента заказа</textarea>
+                        <input class="b-input__input-field b-input__input-field--time-express-delivery js-no-valid"
+                               id="time-express-delivery"
+                               name="express_time_delivery"
+                               disabled="disabled"
+                               value="Сегодня, <?= (new DateTime())->format('d.m.Y') ?> — в течении <?= round($deliveryDostavista->getPeriodTo() / 60) ?> часов с момента заказа"
+                        />
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>

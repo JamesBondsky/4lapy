@@ -501,7 +501,6 @@ class OrderService implements LoggerAwareInterface
                     $value = $selectedDelivery->getDeliveryDate()->format('d.m.Y');
                     break;
                 case 'DELIVERY_INTERVAL':
-                    //TODO возможно тут нужно доработать
                     /**
                      * У доставок есть выбор интервала доставки
                      */
@@ -516,13 +515,21 @@ class OrderService implements LoggerAwareInterface
                         } else {
                             continue 2;
                         }
+                    } elseif ($this->deliveryService->isDostavistaDelivery($selectedDelivery)) {
+                        $deliveryTo = (clone $deliveryDate)->modify(sprintf('+%s minutes', $selectedDelivery->getPeriodTo()));
+                        $value = sprintf(
+                            '%s:%s-%s:%s',
+                            $deliveryDate->format('H'),
+                            $deliveryDate->format('i'),
+                            $deliveryTo->format('H'),
+                            $deliveryDate->format('i')
+                        );
                     } else {
                         $value = sprintf(
                             '%s:00-23:59',
                             $deliveryDate->format('H')
                         );
                     }
-
                     break;
                 case 'REGION_COURIER_FROM_DC':
                     $value = ($this->deliveryService->isDelivery($selectedDelivery) && !$selectedDelivery->getStockResult()->getDelayed()->isEmpty())
@@ -659,7 +666,7 @@ class OrderService implements LoggerAwareInterface
             'PORCH',
             'FLOOR',
         ];
-        $skipAddressProperties = !$this->deliveryService->isDelivery($selectedDelivery) && !!$this->deliveryService->isDostavistaDelivery($selectedDelivery);
+        $skipAddressProperties = !$this->deliveryService->isDelivery($selectedDelivery) && !$this->deliveryService->isDostavistaDelivery($selectedDelivery);
 
         /** @var PropertyValue $propertyValue */
         foreach ($propertyValueCollection as $propertyValue) {
@@ -1375,6 +1382,9 @@ class OrderService implements LoggerAwareInterface
                 }
                 break;
             case \in_array($deliveryCode, DeliveryService::DELIVERY_CODES, true):
+                $address = (string)$this->compileOrderAddress($order);
+                break;
+            case ($deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE):
                 $address = (string)$this->compileOrderAddress($order);
                 break;
         }
