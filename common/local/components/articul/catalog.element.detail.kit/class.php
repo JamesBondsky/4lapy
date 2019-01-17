@@ -68,6 +68,9 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
                         }
                         $selectionOffers['lamps'] = $product->getLamps();
                         $selectionOffers['decor'] = $product->getDecor();
+                        if ($selectionOffers['filters']->count() == 0 || $selectionOffers['lamps']->count() == 0 || $selectionOffers['decor']->count() == 0) {
+                            $hideKitBlock = true;
+                        }
                     } else {
                         $hideKitBlock = true;
                     }

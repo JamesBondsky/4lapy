@@ -2579,7 +2579,13 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         $res = (new ProductQuery())
             ->withFilterParameter('PROPERTY_AQUARIUM_COMBINATION', $aquariumCombination)
-            ->withFilterParameter('!SECTION_CODE', 'tumby-podstavki-akvariumy')
+            ->withFilterParameter('SECTION_CODE',
+                [
+                    'banki-bez-kryshki-akvariumy',
+                    'detskie-akvariumy-akvariumy',
+                    'komplekty-akvariumy'
+                ]
+            )
             ->withFilterParameter('ACTIVE', 'Y')
             ->exec();
         if ($res->isEmpty()) {
