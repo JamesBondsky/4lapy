@@ -15,7 +15,7 @@
                      title=""/>
             </span>
             <div class="b-common-item__info-center-block b-common-item__info-center-block--popup-gift">
-                <a class="b-common-item__description-wrap" href="javascript:void(0);" title="">
+                <a class="b-common-item__description-wrap js-link-item-present-order" href="javascript:void(0);" title="">
                     <span class="b-clipped-text b-clipped-text--popup-gift">
                         <span class="js-name-replace">
                             <strong>Хиллс</strong>
@@ -27,13 +27,11 @@
                     </span>
                 </a>
             </div>
-            <div class="b-choose-radio">
-                <input class="b-choose-radio__input js-advice-input" type="checkbox"
-                       name="hills-1" id="id-hills-gift-1" data-offerid="305"
-                       data-image="/static/build/images/content/hills-cat.jpg" data-title="Хиллс"
-                       data-description="для щенков с ягненком и рисом" data-weight="100 г"
-                       data-cost="968"/>
-                <label class="b-choose-radio__label" for="id-hills-gift-1"></label>
+            <div class="b-plus-minus b-plus-minus--presents js-plus-minus-cont">
+                <a class="b-plus-minus__minus js-minus js-minus-gift" href="javascript:void(0);"></a>
+                <input title="" class="b-plus-minus__count js-plus-minus-count js-plus-minus-count-gift" type="text" value="0" data-cont-max="0">
+                <a class="b-plus-minus__plus js-plus js-plus-gift" href="javascript:void(0);"></a>
+                <div class="b-plus-minus__disabled"></div>
             </div>
         </div>
     </section>

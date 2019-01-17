@@ -208,18 +208,15 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
      * @param int $offerId
      * @param int $discountId
      *
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentException
+     * @param int $quantity
+     * @throws BitrixProxyException
      * @throws LoaderException
      * @throws ObjectNotFoundException
-     * @throws RuntimeException
-     * @throws NotFoundException
-     * @throws InvalidArgumentException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws Exception
-     * @throws BitrixProxyException
      */
-    public function selectGift(int $offerId, int $discountId): void
+    public function selectGift(int $offerId, int $discountId, int $quantity = 1): void
     {
         $possibleGiftGroups = Gift::getPossibleGiftGroups($this->order, $discountId);
         if (!isset($possibleGiftGroups[$discountId])) {
@@ -253,6 +250,52 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                 break;
             }
         }
-        $this->addGift($offerId, 1, $discountId, true);
+        $this->addGift($offerId, $quantity, $discountId, true);
+    }
+
+    /**
+     * @param array $offers
+     * @throws BitrixProxyException
+     */
+    public function selectGifts(array $offers): void
+    {
+        $discountId = $offers[0]['actionId'];
+
+        $possibleGiftGroups = Gift::getPossibleGiftGroups($this->order, $discountId);
+        if (!isset($possibleGiftGroups[$discountId])) {
+            throw new NotFoundException('Акция не найдена');
+        }
+
+        $group = $possibleGiftGroups[$discountId];
+        if (\count($group) === 1) {
+            $group = current($group);
+        } else {
+            throw new RuntimeException('TODO');
+        }
+
+        foreach ($offers as $offer) {
+            $offerId = (int)$offer['offerId'];
+            $quantity = (int)$offer['count'];
+            if (!\in_array($offerId, $group['list'], true)) {
+                throw new NotFoundException('Подарок не может быть предоставлен в рамках данной акции');
+            }
+
+//            if ($this->getExistGiftsQuantity($group, false) < 1) {
+//                throw new NotFoundException('Все подарки уже выбраны, сначала необходимо удалить выбранный подарок');
+//            }
+
+            $existGifts = $this->getExistGifts($discountId);
+            $existGiftsIds = [];
+            foreach ($existGifts as $existGift) {
+                $existGiftsIds[$existGift['offerId']] = $existGift;
+            }
+            if (in_array($offerId, array_keys($existGiftsIds))) {
+                $basketId = (int)$existGiftsIds[$offerId]['basketId'];
+                $basketQuantity = (int)$existGiftsIds[$offerId]['quantity'];
+                $this->basketService->updateBasketQuantity($basketId, $basketQuantity + $quantity);
+            } else {
+                $this->addGift($offerId, $quantity, $discountId, true);
+            }
+        }
     }
 }
