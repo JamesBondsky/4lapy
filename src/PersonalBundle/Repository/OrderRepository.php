@@ -116,9 +116,6 @@ class OrderRepository extends BaseRepository
                   ->setOffset($offset);
         }
 
-        echo $query->getQuery();
-        die();
-
         return $this->findBy($query);
     }
 
