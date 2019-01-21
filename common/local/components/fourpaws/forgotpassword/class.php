@@ -34,6 +34,7 @@ use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
+use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 
 /** @noinspection AutoloadingIssuesInspection */
 
@@ -281,15 +282,25 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
 
     /**
      * @param $phone
+     * @param $request
      *
      * @return JsonResponse
      */
-    public function ajaxResendSms($phone): JsonResponse
+    public function ajaxResendSms($phone, $request = null): JsonResponse
     {
         try {
             $phone = PhoneHelper::normalizePhone($phone);
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
+        }
+
+        $recaptcha = $request->get('g-recaptcha-response', '');
+
+        /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
+        $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
+
+        if (!$recaptchaService->checkCaptcha($recaptcha)) {
+            return $this->ajaxMess->getFailCaptchaCheckError();
         }
 
         $users = $this->currentUserProvider->getUserRepository()->findBy(
@@ -356,9 +367,18 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                 return $this->ajaxMess->getWrongPhoneNumberException();
             }
         }
+
         $email = $request->get('email', '');
         $title = 'Восстановление пароля';
         if (empty($step)) {
+
+            /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
+            $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
+
+            if (!$recaptchaService->checkCaptcha($request->get('g-recaptcha-response'))) {
+                return $this->ajaxMess->getFailCaptchaCheckError();
+            }
+
             $recovery = $request->get('recovery', '');
             if ($recovery === 'phone') {
                 $title = 'Восстановление пароля';

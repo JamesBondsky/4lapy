@@ -6,9 +6,13 @@ namespace FourPaws\Helpers;
 class ProtectorHelper
 {
     const TYPE_REGISTER_SMS_SEND = 'registerSendSms';
+    const TYPE_REGISTER_SMS_RESEND = 'registerResendSms';
+    const TYPE_FAST_ORDER_CREATE = 'fastOrderCreate';
 
     static $types = [
         self::TYPE_REGISTER_SMS_SEND,
+        self::TYPE_REGISTER_SMS_RESEND,
+        self::TYPE_FAST_ORDER_CREATE,
     ];
 
     /**

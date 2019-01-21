@@ -13,6 +13,7 @@ use Exception;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\Helpers\ProtectorHelper;
 use FourPawsAuthFormComponent;
 use FourPawsRegisterComponent;
 use InvalidArgumentException;
@@ -117,7 +118,7 @@ class AuthController extends Controller
 
         switch ($action) {
             case 'resendSms':
-                return $registerClass->ajaxResendSms($request->get('phone', ''));
+                return $registerClass->ajaxResendSms($request->get('phone', ''), $request->get(ProtectorHelper::getField(ProtectorHelper::TYPE_REGISTER_SMS_RESEND), false), $request->get('g-recaptcha-response'));
                 break;
             case 'register':
                 return $registerClass->ajaxRegister($request->request->all());
@@ -159,7 +160,7 @@ class AuthController extends Controller
 
                 break;
             case 'resendSms':
-                return $forgotPasswordClass->ajaxResendSms($request->get('phone', ''));
+                return $forgotPasswordClass->ajaxResendSms($request->get('phone', ''), $request);
 
                 break;
             case 'get':

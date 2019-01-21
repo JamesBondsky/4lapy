@@ -45,12 +45,13 @@ class ReCaptchaService implements LoggerAwareInterface, ReCaptchaInterface
 
     /**
      * @param string $additionalClass
-     *
      * @param bool   $isAjax
+     * @param string $callback
+     * @param string $id
      *
      * @return string
      */
-    public function getCaptcha(string $additionalClass = '', bool $isAjax = false): string
+    public function getCaptcha(string $additionalClass = '', bool $isAjax = false, string $callback = '', string $id = ''): string
     {
         if (!$isAjax) {
             $script = '';
@@ -59,8 +60,7 @@ class ReCaptchaService implements LoggerAwareInterface, ReCaptchaInterface
             $script = $this->getJs();
         }
 
-        return $script . '<div class="g-recaptcha' . $additionalClass . '" data-sitekey="' . $this->parameters['key']
-            . '"></div>';
+        return $script . '<div id="'.$id.'" class="g-recaptcha ' . $additionalClass . '" data-sitekey="' . $this->parameters['key'] . '" data-callback="' . $callback . '"></div>';
     }
 
     /**
@@ -91,7 +91,7 @@ class ReCaptchaService implements LoggerAwareInterface, ReCaptchaInterface
      * @throws SystemException
      * @return bool
      */
-    public function checkCaptcha(string $recaptcha = ''): bool
+    public function checkCaptcha(?string $recaptcha = ''): bool
     {
         /** @noinspection PhpUnhandledExceptionInspection */
         $context = Application::getInstance()->getContext();
