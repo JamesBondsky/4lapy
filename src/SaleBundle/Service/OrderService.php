@@ -1841,7 +1841,7 @@ class OrderService implements LoggerAwareInterface
         if ($nearShop == null) {
             $nearShop = $selectedDelivery->getStockResult()->first();
         }
-        $curDate = new \DateTime;
+        $curDate = (new \DateTime)->modify('+10 minutes');
         /** @var DostavistaService $dostavistaService */
         $dostavistaService = Application::getInstance()->getContainer()->get('dostavista.service');
         //импорт в Достависту
@@ -1878,11 +1878,16 @@ class OrderService implements LoggerAwareInterface
         $nearAddressString = $this->storeService->getStoreAddress($nearShop) . ', ' . $nearShop->getAddress();
         $nearAddress = $this->locationService->splitAddress($nearAddressString, $nearShop->getLocation());
 
+        $pointZeroDate = clone $curDate;
+
+        $storePhone = str_replace(['+', '(', ')', ' ', '-'], ['', '', '', '', ''], $nearShop->getPhone());
+        $storePhone = explode(',доб.', $storePhone)[0];
+
         $data['point'][0] = [
             'address' => (string)$nearAddress,
-            'required_time_start' => $curDate->format('c'),
-            'required_time' => $curDate->modify(\sprintf('+%s minutes', $selectedDelivery->getPeriodTo()))->format('c'),
-            'phone' => $nearShop->getPhone(),
+            'required_time_start' => $pointZeroDate->format('c'),
+            'required_time' => $pointZeroDate->modify(\sprintf('+%s minutes', $selectedDelivery->getPeriodTo()))->format('c'),
+            'phone' => $storePhone,
             'client_order_id' => $order->getId()
         ];
 

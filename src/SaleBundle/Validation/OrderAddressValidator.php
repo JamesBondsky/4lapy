@@ -111,9 +111,6 @@ class OrderAddressValidator extends ConstraintValidator
                 if (!$entity->getLng() || !$entity->getLat()) {
                     $this->context->addViolation($constraint->coordsMessage);
                 }
-                if (!$entity->getApartment()) {
-                    $this->context->addViolation($constraint->apartmentMessage);
-                }
             }
         }
     }
