@@ -619,6 +619,16 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
              */
             $this->getDeliveryDate();
         }
+
+        /**
+         * Фикс для праздников
+         */
+        $holidayDateMin = date_create_from_format('d.m.Y H:i:s', '31.12.2018 19:00:00');
+        $holidayDateMax = date_create_from_format('d.m.Y H:i:s', '01.01.2019 23:59:59');
+        if ($this->getDeliveryCode() == '4lapy_pickup' && $this->getDeliveryDate() >= $holidayDateMin && $this->getDeliveryDate() <= $holidayDateMax) {
+            $this->deliveryDate = date_create_from_format('d.m.Y H:i:s', '02.01.2019 09:00:00');
+        }
+
         return parent::isSuccess($internalCall);
     }
 

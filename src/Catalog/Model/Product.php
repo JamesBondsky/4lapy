@@ -2572,10 +2572,37 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
+     * @param $aquariumCombination
+     * @return Offer|null
+     */
+    public function getAquarium($aquariumCombination)
+    {
+        $res = (new ProductQuery())
+            ->withFilterParameter('PROPERTY_AQUARIUM_COMBINATION', $aquariumCombination)
+            ->withFilterParameter('SECTION_CODE',
+                [
+                    'banki-bez-kryshki-akvariumy',
+                    'detskie-akvariumy-akvariumy',
+                    'komplekty-akvariumy'
+                ]
+            )
+            ->withFilterParameter('ACTIVE', 'Y')
+            ->exec();
+        if ($res->isEmpty()) {
+            return null;
+        } else {
+            $offer = $res->first()->getOffers()->first();
+            if ($offer->getPrice() > 0) {
+                return $offer;
+            } else {
+                return null;
+            }
+        }
+    }
+
+    /**
      * @param $volume
      * @return ArrayCollection
-     * @throws ApplicationCreateException
-     * @throws \Bitrix\Main\ArgumentException
      */
     public function getInternalFilters($volume): ArrayCollection
     {
@@ -2604,7 +2631,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                  * @var Offer $offer
                  */
                 foreach ($offers as $offer) {
-                    if ($offer->getPrice() > 0 && $offer->getQuantity() > 0) {
+                    if ($offer->getPrice() > 0) {
                         $result->add($offer);
                     }
                 }
@@ -2616,8 +2643,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     /**
      * @param $volume
      * @return ArrayCollection
-     * @throws ApplicationCreateException
-     * @throws \Bitrix\Main\ArgumentException
      */
     public function getExternalFilters($volume): ArrayCollection
     {
@@ -2647,7 +2672,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                  * @var Offer $offer
                  */
                 foreach ($offers as $offer) {
-                    if ($offer->getPrice() > 0 && $offer->getQuantity() > 0) {
+                    if ($offer->getPrice() > 0) {
                         $result->add($offer);
                     }
                 }
@@ -2658,8 +2683,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
     /**
      * @return ArrayCollection
-     * @throws ApplicationCreateException
-     * @throws \Bitrix\Main\ArgumentException
      */
     public function getLamps(): ArrayCollection
     {
@@ -2674,14 +2697,40 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
         if (!$res->isEmpty()) {
             while ($product = $res->next()) {
-                $offers = $product->getOffers();
                 /**
                  * @var Offer $offer
                  */
-                foreach ($offers as $offer) {
-                    if ($offer->getPrice() > 0 && $offer->getQuantity() > 0) {
-                        $result->add($offer);
-                    }
+                $offer = $product->getOffers()->first();
+                if ($offer->getPrice() > 0) {
+                    $result->add($offer);
+                }
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * @return ArrayCollection
+     */
+    public function getDecor(): ArrayCollection
+    {
+        $result = new ArrayCollection();
+        $res = (new ProductQuery())
+            ->withFilter([
+                'SECTION_CODE' => 'decor',
+                'ACTIVE' => 'Y'
+            ])
+            ->withNav(['nPageSize' => 20])
+            ->exec();
+
+        if (!$res->isEmpty()) {
+            while ($product = $res->next()) {
+                /**
+                 * @var Offer $offer
+                 */
+                $offer = $product->getOffers()->first();
+                if ($offer->getPrice() > 0) {
+                    $result->add($offer);
                 }
             }
         }
