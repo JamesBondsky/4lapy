@@ -20,8 +20,6 @@ use FourPaws\MobileApiBundle\Dto\Request\UserCartRequest;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\MobileApiBundle\Services\Api\OrderService as ApiOrderService;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
-use FourPaws\StoreBundle\Exception\NotFoundException;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use FourPaws\SaleBundle\Discount\Manzana;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;

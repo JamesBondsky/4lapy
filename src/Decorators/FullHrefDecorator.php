@@ -18,6 +18,7 @@ use Bitrix\Main\SystemException;
 class FullHrefDecorator
 {
     private $path;
+    private $query;
     /** @var string Домен */
     private static $host = null;
     /** @var string Протокол: http|https */
@@ -31,8 +32,13 @@ class FullHrefDecorator
     public function __construct(string $url)
     {
         $parsedUrl = parse_url($url);
-        if ($parsedUrl && $parsedUrl['path']) {
-            $this->setPath($parsedUrl['path']);
+        if ($parsedUrl) {
+            if ($parsedUrl['path']) {
+                $this->setPath($parsedUrl['path']);
+            }
+            if ($parsedUrl['query']) {
+                $this->setQuery($parsedUrl['query']);
+            }
         }
     }
     
@@ -42,6 +48,11 @@ class FullHrefDecorator
     public function setPath($path): void
     {
         $this->path = $path;
+    }
+
+    public function setQuery($query): void
+    {
+        $this->query = $query;
     }
     
     /**
@@ -71,7 +82,13 @@ class FullHrefDecorator
         $prefix = $this->getProto();
         $host = $this->getHost();
 
-        return $prefix . '://' . $host . $this->path;
+        $url = $prefix . '://' . $host . $this->path;
+
+        if ($this->query) {
+            $url .= '?' . $this->query;
+        }
+
+        return $url;
     }
     
     /**

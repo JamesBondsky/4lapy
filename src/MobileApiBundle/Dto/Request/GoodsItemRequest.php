@@ -6,7 +6,6 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Request;
 
-use FourPaws\MobileApiBundle\Dto\Object\Catalog\Filter;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\Sort;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;

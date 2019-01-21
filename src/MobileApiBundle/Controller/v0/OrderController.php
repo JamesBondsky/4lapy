@@ -1,6 +1,6 @@
 <?php
 
-/*
+/**
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
@@ -14,7 +14,7 @@ use FourPaws\MobileApiBundle\Dto\Response\OrderInfoResponse;
 use FourPaws\MobileApiBundle\Dto\Response\OrderListResponse;
 use FourPaws\MobileApiBundle\Dto\Response\OrderStatusHistoryResponse;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
-use FourPaws\MobileApiBundle\Services\Api\OrderService as ApiOrderService;
+use FourPaws\MobileApiBundle\Services\Api\PaymentService as ApiOrderService;
 
 /**
  * Class PushController

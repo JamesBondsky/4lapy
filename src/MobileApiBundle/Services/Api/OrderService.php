@@ -94,8 +94,8 @@ class OrderService
     public function getList()
     {
         $orders = $this->getUserOrders();
-        return $orders->map(function(OrderEntity $order) {
-            $this->toApiFormat($order);
+        return $orders->map(function (OrderEntity $order) {
+            return $this->toApiFormat($order);
         });
     }
 
@@ -179,8 +179,7 @@ class OrderService
                 ->setDeliveryPlace($this->getDeliveryAddress($order))
                 ->setUserPhone($order->getPropValue('PHONE'))
                 ->setExtraPhone($order->getPropValue('PHONE_ALT'))
-                ->setCard($order->getPropValue('DISCOUNT_CARD'))
-            ;
+                ->setCard($order->getPropValue('DISCOUNT_CARD'));
         }
 
         return $orderParameter;
@@ -198,8 +197,7 @@ class OrderService
             ->setTitle($order->getPropValue('CITY'))
             ->setStreetName($order->getPropValue('STREET'))
             ->setHouse($order->getPropValue('HOUSE'))
-            ->setFlat($order->getPropValue('APARTMENT'))
-        ;
+            ->setFlat($order->getPropValue('APARTMENT'));
         $cityCode = $order->getPropValue('CITY_CODE');
         if ($cityCode && intval($cityCode)) {
             $location = $this->locationService->findLocationByCode($cityCode);
@@ -208,8 +206,7 @@ class OrderService
                 ->setId($location['CODE'])
                 ->setLongitude($location['LONGITUDE'])
                 ->setLatitude($location['LATITUDE'])
-                ->setPath([$location['PATH'][count($location['PATH']) - 1]['NAME']])
-            ;
+                ->setPath([$location['PATH'][count($location['PATH']) - 1]['NAME']]);
             $deliveryAddress->setCity($city);
         } else {
             $city = (new City())->setTitle($cityCode);
@@ -241,14 +238,12 @@ class OrderService
                     ->setId('bonus_sub')
                     ->setTitle('Списано')
                     ->setValue(0),
-            ])
-        ;
+            ]);
 
         if (strlen($storeCode)) {
             $orderCalculate
                 ->setAvailableGoods($basketProducts->getAvailableInStore($storeCode))
-                ->setNotAvailableGoods($basketProducts->getUnAvailableInStore($storeCode))
-            ;
+                ->setNotAvailableGoods($basketProducts->getUnAvailableInStore($storeCode));
         }
 
         return $orderCalculate;
@@ -305,8 +300,7 @@ class OrderService
             ->setEmail($cartParam->getEmail())
             ->setPhone($cartParam->getUserPhone())
             ->setAltPhone($cartParam->getExtraPhone())
-            ->setComment($cartParam->getComment())
-        ;
+            ->setComment($cartParam->getComment());
 
         try {
             if ($userId = $this->userService->getCurrentUserId()) {
@@ -326,9 +320,8 @@ class OrderService
                     ->setStreet($cartParam->getStreet())
                     ->setHouse($cartParam->getHouse())
                     ->setBuilding($cartParam->getBuilding())
-                    ->setApartment($cartParam->getApartment())
-                ;
-            // ->setDeliveryDate($userCartOrderRequest->getCartParam()->getDeliveryRangeDate())
+                    ->setApartment($cartParam->getApartment());
+                // ->setDeliveryDate($userCartOrderRequest->getCartParam()->getDeliveryRangeDate())
                 break;
             case DeliveryService::DPD_PICKUP_CODE:
                 // toDo указать код магазина из которого нужно забрать товар?
@@ -341,5 +334,4 @@ class OrderService
         $order = $this->appOrderService->createOrder($orderStorage);
         return $this->getOne($order->getId());
     }
-
 }
