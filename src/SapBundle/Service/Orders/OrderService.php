@@ -455,7 +455,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         if ($deliveryDate) {
             $orderDto->setDeliveryDate($deliveryDate);
         }
-        die();
     }
 
     /**

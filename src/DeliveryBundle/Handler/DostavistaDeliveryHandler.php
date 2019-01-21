@@ -187,10 +187,6 @@ class DostavistaDeliveryHandler extends DeliveryHandlerBase
             [
                 'STOCK_RESULT' => $stockResult,
                 'FREE_PRICE_FROM' => (int)$this->config["MAIN"]["FREE_PRICE_FROM"],
-                'DEV_MODE' => COption::GetOptionString('articul.dostavista.delivery', 'dev_mode', 'N'),
-                'TOKEN_PROD' => COption::GetOptionString('articul.dostavista.delivery', 'token_prod', ''),
-                'CLIENT_ID_DEV' => COption::GetOptionString('articul.dostavista.delivery', 'client_id_dev', ''),
-                'TOKEN_DEV' => COption::GetOptionString('articul.dostavista.delivery', 'token_dev', ''),
                 'DELIVERY_START_TIME' => COption::GetOptionString('articul.dostavista.delivery', 'delivery_start_time', '00:00'),
                 'DELIVERY_END_TIME' => COption::GetOptionString('articul.dostavista.delivery', 'delivery_end_time', '23:59'),
                 'TEXT_EXPRESS_DELIVERY' => COption::GetOptionString('articul.dostavista.delivery', 'text_express_delivery', 'Текст с информацией, что пользователю доступна Экспресс-доставка'),

@@ -101,6 +101,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                         <input type="hidden" name="deliveryTypeId"
                                value="<?= ($deliveryDostavista && $deliveryDostavista->getDeliveryId()) ? $deliveryDostavista->getDeliveryId() : ($delivery->getDeliveryId() ? $delivery->getDeliveryId() : $pickup->getDeliveryId())?>"
                                class="js-no-valid">
+                        <input type="hidden" name="deliveryCoords" value="">
                         <div class="b-choice-recovery b-choice-recovery--order-step">
                             <?php if ($delivery) { ?>
                                 <?

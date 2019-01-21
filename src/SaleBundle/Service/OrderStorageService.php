@@ -168,6 +168,12 @@ class OrderStorageService
 
         $deliveryId = (int)($data['deliveryTypeId']) ? ($data['deliveryTypeId']) : $data['deliveryId'];
 
+        if (isset($data['deliveryCoords'])) {
+            $coords = explode(',', $data['deliveryCoords']);
+            $data['lng'] = $coords[0];
+            $data['lat'] = $coords[1];
+        }
+
         /**
          * Чтобы нельзя было, например, обойти проверку капчи,
          * отправив в POST данные со всех форм разом
@@ -261,6 +267,8 @@ class OrderStorageService
                     'secondDeliveryDate',
                     'secondDeliveryInterval',
                     'secondComment',
+                    'lng',
+                    'lat'
                 ];
                 break;
             case OrderStorageEnum::PAYMENT_STEP:

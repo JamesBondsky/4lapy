@@ -26,8 +26,8 @@ class DostavistaService implements LoggerAwareInterface
     {
         $testMode = (\COption::GetOptionString('articul.dostavista.delivery', 'dev_mode', '') == BaseEntity::BITRIX_TRUE);
         if ($testMode) {
-            $clientId = \COption::GetOptionString('articul.dostavista.delivery', 'client_id_test', '');
-            $token = \COption::GetOptionString('articul.dostavista.delivery', 'token_test', '');
+            $clientId = \COption::GetOptionString('articul.dostavista.delivery', 'client_id_dev', '');
+            $token = \COption::GetOptionString('articul.dostavista.delivery', 'token_dev', '');
         } else {
             $clientId = \COption::GetOptionString('articul.dostavista.delivery', 'client_id_prod', '');
             $token = \COption::GetOptionString('articul.dostavista.delivery', 'token_prod', '');
@@ -40,31 +40,33 @@ class DostavistaService implements LoggerAwareInterface
     /**
      * @param array $data
      * @return array
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function sendOrder(array $data)
     {
         //проверяем коннект
-        if (!$this->client->checkConnection()) {
-            $this->logger->error('Сервер достависты не отвечает!');
-            return [
-                'success' => false,
-                'message' => 'Сервер достависты не отвечает!'
+        $res = $this->client->checkConnection();
+        if ($res['success']) {
+            //пробуем отправить заказ в достависту
+            try {
+                $result = $this->client->sendOrder($data);
+                if ($result['success']) {
+                    $this->logger->info('Order ' . $data['point'][1]['client_order_id'] . ' success create in Dostavista service');
+                }
+            } catch (\Exception $e) {
+                $result = [
+                    'success' => false,
+                    'message' => 'Ошибка импорта заказа'
+                ];
+                $this->logger->error('Order ' . $data['point'][1]['client_order_id'] . ' import failed in "Dostavista" service', $result);
+            }
+        } else {
+            $result = [
+                'success' => $res['success'],
+                'message' => $res['message']
             ];
+            $this->logger->error('Connection failed with "Dostavista" service', $result);
         }
-
-        //пробуем отправить заказ в достависту
-        try {
-            $result = $this->client->send($data);
-            $this->logger->info('well done');
-            return [
-                'success' => true,
-                'message' => 'Заказ успешно импортирован в Достависту'
-            ];
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => 'Ошибка импорта заказа'
-            ];
-        }
+        return $result;
     }
 }

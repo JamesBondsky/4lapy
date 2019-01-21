@@ -2,7 +2,7 @@
 $MESS['DOSTAVISTA_TAB_TITLE'] = 'Настройки доставки "Dostavista"';
 $MESS['DOSTAVISTA_DEV_MODE'] = 'Тестовый режим';
 $MESS['DOSTAVISTA_PRODUCTION_MODE_OPTIONS'] = 'Настройки рабочего режима';
-$MESS['DOSTAVISTA_DEV_MODE_OPTIONS'] = 'Настройки рабочего режима';
+$MESS['DOSTAVISTA_DEV_MODE_OPTIONS'] = 'Настройки тестового режима';
 $MESS['DOSTAVISTA_CLIENT_ID_PROD'] = 'Идентификатор клиента для рабочего режима';
 $MESS['DOSTAVISTA_TOKEN_PROD'] = 'Токен для рабочего режима';
 $MESS['DOSTAVISTA_CLIENT_ID_DEV'] = 'Идентификатор клиента для тестового режима';

@@ -20,6 +20,9 @@ class DostavistaDeliveryResult extends BaseResult implements DeliveryResultInter
     protected $days;
     protected $selectedInterval;
 
+    /** @var Store */
+    protected $nearShop;
+
     /**
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -34,13 +37,63 @@ class DostavistaDeliveryResult extends BaseResult implements DeliveryResultInter
     }
 
     /**
-     * @param Store $selectedStore
-     * @return CalculationResultInterface
+     * @return Store
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws StoreNotFoundException
      */
-    public function setSelectedStore(Store $selectedStore): CalculationResultInterface
+    public function getSelectedShop(): Store
     {
-        $this->selectedStore = $selectedStore;
-        return $this;
+        return $this->getSelectedStore();
+    }
+
+    /**
+     * @param Store $selectedStore
+     *
+     * @return PickupResultInterface
+     */
+    public function setSelectedShop(Store $selectedStore): PickupResultInterface
+    {
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
+        return $this->setSelectedStore($selectedStore);
+    }
+
+    /**
+     * @param array $userCoords
+     * @return Store
+     */
+    public function getNearShop(array $userCoords): Store
+    {
+        if (null === $this->nearShop) {
+            $stores = $this->fullstockResult->getStores();
+            $minDistance = null;
+            /** @var Store $store */
+            foreach ($stores as $store) {
+                $storeCoords = [$store->getLongitude(), $store->getLatitude()];
+                $distance = $this->LatLngDist($userCoords, $storeCoords);
+                if ($minDistance == null || $minDistance > $distance) {
+                    $minDistance = $distance;
+                    $this->nearShop = $store;
+                }
+            }
+        }
+
+        return $this->nearShop;
+    }
+
+    /** @noinspection SenselessProxyMethodInspection */
+
+    private function LatLngDist($p, $q) {
+        $R = 6371; // Earth radius in km
+
+        $dLat = (($q[0] - $p[0]) * pi() / 180);
+        $dLon = (($q[1] - $p[1]) * pi() / 180);
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+            cos($p[0] * pi() / 180) * cos($q[0] * pi() / 180) *
+            sin($dLon / 2) * sin($dLon / 2);
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $R * $c;
     }
 
     /**

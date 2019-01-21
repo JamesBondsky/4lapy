@@ -7,6 +7,7 @@
 namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
@@ -20,6 +21,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\BasketItemCollection;
 use Bitrix\Sale\BasketPropertyItem;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
@@ -30,11 +32,14 @@ use Bitrix\Sale\ShipmentItem;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\AppBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\Catalog\Collection\OfferCollection;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DostavistaDeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
@@ -70,6 +75,7 @@ use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
@@ -817,19 +823,10 @@ class OrderService implements LoggerAwareInterface
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
-     * @param Order                           $order
-     * @param OrderStorage                    $storage
+     * @param Order $order
+     * @param OrderStorage $storage
      * @param CalculationResultInterface|null $selectedDelivery
      *
-     * @throws NotFoundException
-     * @throws ValidationException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws NotAuthorizedException
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
-     * @throws BitrixRuntimeException
-     * @throws \RuntimeException
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentNullException
@@ -842,6 +839,7 @@ class OrderService implements LoggerAwareInterface
      * @throws StoreNotFoundException
      * @throws SystemException
      * @throws UserMessageException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function saveOrder(
         Order $order,
@@ -1057,6 +1055,16 @@ class OrderService implements LoggerAwareInterface
                         'address' => $address,
                     ]);
                 }
+
+                //получаем ближайший магазин по координатам адреса пользователя и коодинатам магазинов, где все в наличие
+                if($this->deliveryService->isDostavistaDelivery($selectedDelivery)){
+                    /**
+                     * @var DostavistaDeliveryResult $selectedDelivery
+                     */
+                    $userCoords = [$storage->getLng(), $storage->getLat()];
+                    //ищем ближайший магазин для достависты
+                    $nearShop = $selectedDelivery->getNearShop($userCoords);
+                }
             } else {
                 /**
                  * Для самовывоза разбиваем адрес магазина и сохраняем в свойствах заказа
@@ -1089,16 +1097,7 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
-        $dostavistaSuccess = false;
-        if ($this->deliveryService->isDostavistaDelivery($selectedDelivery)) {
-            //импорт в Достависту
-            $data = [];
-            /** @var DostavistaService $dostavistaService */
-            $dostavistaService = Application::getInstance()->getContainer()->get('dostavista.service');
-            $dostavistaSuccess = $dostavistaService->sendOrder($data)['success'];
-        }
-
-        $this->updateCommWayProperty($order, $selectedDelivery, $fastOrder, $address, $dostavistaSuccess);
+        $this->updateCommWayProperty($order, $selectedDelivery, $fastOrder, $address);
 
         try {
             /* @todo костыль - недоступные товары не попадают в корзину заказа, но учитываются в стоимости заказа */
@@ -1118,6 +1117,11 @@ class OrderService implements LoggerAwareInterface
                         implode(', ', $result->getWarningMessages())
                     )
                 );
+            }
+
+            if ($this->deliveryService->isDostavistaDelivery($selectedDelivery)) {
+                $dostavistaSuccess = $this->sendToDostavista($order, $storage, $selectedDelivery, $nearShop);
+                $this->updateCommWayProperty($order, $selectedDelivery, $fastOrder, $address, $dostavistaSuccess);
             }
         } catch (\Exception $e) {
             /** ошибка при создании заказа - удаляем ошибочный заказ, если он был создан */
@@ -1141,16 +1145,7 @@ class OrderService implements LoggerAwareInterface
      * Выполняет разделение заказов при необходимости
      *
      * @param OrderStorage $storage
-     *
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws ValidationException
-     * @throws NotAuthorizedException
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
-     * @throws BitrixRuntimeException
-     * @throws NotFoundException
-     * @throws \RuntimeException
+     * @return Order
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ArgumentNullException
@@ -1159,6 +1154,7 @@ class OrderService implements LoggerAwareInterface
      * @throws DeliveryNotAvailableException
      * @throws DeliveryNotFoundException
      * @throws LoaderException
+     * @throws NotImplementedException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws ObjectPropertyException
@@ -1167,8 +1163,7 @@ class OrderService implements LoggerAwareInterface
      * @throws StoreNotFoundException
      * @throws SystemException
      * @throws UserMessageException
-     * @return Order
-     * @throws \Exception
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function createOrder(OrderStorage $storage): Order
     {
@@ -1621,7 +1616,7 @@ class OrderService implements LoggerAwareInterface
         CalculationResultInterface $delivery,
         bool $isFastOrder = false,
         ?Address $address = null,
-        bool $dostavistaSuccess = false
+        bool $dostavistaSuccess = null
     ): void {
         $commWay = $this->getOrderPropertyByCode($order, 'COM_WAY');
         $value = $commWay->getValue();
@@ -1669,7 +1664,7 @@ class OrderService implements LoggerAwareInterface
                 case $deliveryFromShop && $stockResult->getDelayed()->isEmpty():
                     $value = OrderPropertyService::COMMUNICATION_SMS;
                     break;
-                case $this->deliveryService->isDostavistaDelivery($delivery) && (!$address || !$address->isValid() || !$dostavistaSuccess):
+                case $this->deliveryService->isDostavistaDelivery($delivery) && !is_null($dostavistaSuccess) && (!$address || !$address->isValid() || !$dostavistaSuccess):
                     $value = OrderPropertyService::COMMUNICATION_DOSTAVISTA_ERROR;
                     break;
             }
@@ -1827,5 +1822,82 @@ class OrderService implements LoggerAwareInterface
     public function getOrderFeedbackLink(Order $order): string
     {
         return sprintf('/sale/order/interview/%d/?HASH=%s', $order->getId(), $order->getHash());
+    }
+
+    /**
+     * @param Order $order
+     * @param OrderStorage $storage
+     * @param CalculationResultInterface $selectedDelivery
+     * @param Store $nearShop
+     * @return bool
+     * @throws AddressSplitException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    private function sendToDostavista(Order $order, OrderStorage $storage, CalculationResultInterface $selectedDelivery, Store $nearShop = null): bool
+    {
+        if ($nearShop == null) {
+            $nearShop = $selectedDelivery->getStockResult()->first();
+        }
+        $curDate = new \DateTime;
+        /** @var DostavistaService $dostavistaService */
+        $dostavistaService = Application::getInstance()->getContainer()->get('dostavista.service');
+        //импорт в Достависту
+        $basket = $order->getBasket();
+        /** @var int $insurance Цена страхования */
+        $insurance = $basket->getPrice();
+        /** @var OfferCollection $offers */
+        $offers = $this->getOrderProducts($order);
+        /** @var int $weigth Вес всех товаров */
+        $weigth = (int)($basket->getWeight() / 1000);
+        $requireCar = ($weigth <= 15) ? 0 : (($weigth <= 200) ? 1 : 2); //0 - пешая доставка; 1 - легковым автомобилем, 2 - грузовым автомобилем.
+        $arSectionsNames = [];
+        /** @var Offer $offer */
+        foreach ($offers as $offer) {
+            $section = $offer->getProduct()->getSection();
+            $arSectionsNames[$section->getId()] = $section->getName();
+        }
+        /** @var string $matter Что везем - названия всех разделов через запятую */
+        $matter = implode(', ', $arSectionsNames);
+        unset($arSectionsNames);
+
+        $data = [
+            'require_car' => $requireCar,
+            'matter' => $matter,
+            //что везем
+            'insurance' => $insurance,
+            //сумма страхования = цене корзины
+            'sms_notification' => (\COption::GetOptionString('articul.dostavista.delivery', 'sms_courier_set', '') == BaseEntity::BITRIX_TRUE) ? 1 : 0,
+            //Отправить sms о назначении курьера на заказ 0/1
+            'recipients_sms_notification' => (\COption::GetOptionString('articul.dostavista.delivery', 'sms_courier_time_phone', '') == BaseEntity::BITRIX_TRUE) ? 1 : 0
+            //Отправить получателям sms с интервалом прибытия и телефоном курьера: 0 - не отправлять, 1 - отправлять.
+        ];
+
+        $nearAddressString = $this->storeService->getStoreAddress($nearShop) . ', ' . $nearShop->getAddress();
+        $nearAddress = $this->locationService->splitAddress($nearAddressString, $nearShop->getLocation());
+
+        $data['point'][0] = [
+            'address' => (string)$nearAddress,
+            'required_time_start' => $curDate->format('c'),
+            'required_time' => $curDate->modify(\sprintf('+%s minutes', $selectedDelivery->getPeriodTo()))->format('c'),
+            'phone' => $nearShop->getPhone(),
+            'client_order_id' => $order->getId()
+        ];
+
+        $data['point'][1] = [
+            'address' => $this->getOrderDeliveryAddress($order),
+            'required_time_start' => $curDate->format('c'),
+            'required_time' => $curDate->modify(\sprintf('+%s minutes', $selectedDelivery->getPeriodTo()))->format('c'),
+            'contact_person' => $storage->getName(),
+            'phone' => $storage->getPhone(),
+            'weight' => $weigth,
+            'client_order_id' => $order->getId(),
+            'note' => $storage->getComment()
+        ];
+
+        $dostavistaSuccess = $dostavistaService->sendOrder($data)['success'];
+        return $dostavistaSuccess;
     }
 }
