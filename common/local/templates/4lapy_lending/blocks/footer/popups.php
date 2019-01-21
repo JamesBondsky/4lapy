@@ -18,34 +18,9 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
      */
     $APPLICATION->ShowViewContent('footer_popup_cont');
 
-    ?><section class="b-popup-pick-city js-popup-section" data-popup="pick-city"></section><?
     $APPLICATION->IncludeComponent('fourpaws:auth.form', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
     $APPLICATION->IncludeComponent('fourpaws:information.popup', '', [], false, ['HIDE_ICONS' => 'Y']);
-    if ($template->hasPersonalReferral()) {
-        $APPLICATION->IncludeComponent('fourpaws:personal.referral', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
-    }
-    if ($template->hasPersonalAddress()) {
-        $APPLICATION->IncludeComponent('fourpaws:personal.address', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
-    }
-    if ($template->hasPersonalPet()) {
-        $APPLICATION->IncludeComponent('fourpaws:personal.pets', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
-    }
-    if ($template->hasPersonalProfile()) {
-        $APPLICATION->IncludeComponent('fourpaws:personal.profile', 'popupChangePassword', [], null,
-            ['HIDE_ICONS' => 'Y']);
-        $APPLICATION->IncludeComponent('fourpaws:personal.profile', 'popupChangeData', [], null,
-            ['HIDE_ICONS' => 'Y']);
-        $APPLICATION->IncludeComponent('fourpaws:personal.profile', 'popupChangePhone', [], null,
-            ['HIDE_ICONS' => 'Y']);
-    }
-    if ($template->hasOrderDeliveryPage()) {
-        $APPLICATION->IncludeComponent('fourpaws:order.shop.list', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
-    }
-    if ($template->hasFastOrder()) {
-        $APPLICATION->IncludeComponent('fourpaws:fast.order', '', [], null, ['HIDE_ICONS' => 'Y']);
-    }
 
     include __DIR__ . '/modal_popup.php';
-
     ?>
 </div>
