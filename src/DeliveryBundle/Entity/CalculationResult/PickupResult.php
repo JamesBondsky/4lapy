@@ -118,6 +118,7 @@ class PickupResult extends BaseResult implements PickupResultInterface
     }
 
     /**
+     * @param bool $withHtmlTags
      * @return string
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -125,7 +126,7 @@ class PickupResult extends BaseResult implements PickupResultInterface
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
      */
-    public function getTextForOffer(): string
+    public function getTextForOffer($withHtmlTags = true): string
     {
         if ($this->getDeliveryCode() === DeliveryService::INNER_PICKUP_CODE) {
             $shopCount = $this->getShopCount();
@@ -161,8 +162,10 @@ class PickupResult extends BaseResult implements PickupResultInterface
                     );
                 }
                 if ($unavailableCount) {
-                    $text .= '<br>';
-                    $text .=  'и из ' . $unavailableCount . ' ' . WordHelper::declension(
+                    if ($withHtmlTags) {
+                        $text .= '<br>';
+                    }
+                    $text .=  ' и из ' . $unavailableCount . ' ' . WordHelper::declension(
                         (int)$unavailableCount,
                         [
                             'магазина',

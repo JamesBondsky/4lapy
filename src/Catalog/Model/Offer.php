@@ -33,6 +33,7 @@ use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\BitrixOrm\Model\Interfaces\ResizeImageInterface;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
+use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Query\ShareQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
@@ -1423,17 +1424,6 @@ class Offer extends IblockElement
     public function isSimpleSaleAction(): bool
     {
         return $this->PROPERTY_PRICE_ACTION > 0 && $this->PROPERTY_COND_FOR_ACTION === self::SIMPLE_SHARE_SALE_CODE;
-    }
-
-    /**
-     * @return bool
-     */
-    public function hasAction(): bool
-    {
-        /**
-         * @todo
-         */
-        return false;
     }
 
     /**

@@ -208,7 +208,7 @@ class Info
      *
      * @return Info
      */
-    public function setDateTo(\DateTime $dateTo): Info
+    public function setDateTo($dateTo): Info
     {
         $this->dateTo = $dateTo;
         return $this;

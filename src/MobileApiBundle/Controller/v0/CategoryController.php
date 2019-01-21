@@ -11,18 +11,18 @@ use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Request\CategoryRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Dto\Response\CategoriesResponse;
-use FourPaws\MobileApiBundle\Services\Api\CategoryService;
+use FourPaws\MobileApiBundle\Services\Api\CategoryService as ApiCategoryService;
 
 class CategoryController extends FOSRestController
 {
     /**
-     * @var CategoryService
+     * @var ApiCategoryService
      */
-    private $categoryService;
+    private $apiCategoryService;
 
-    public function __construct(CategoryService $categoryService)
+    public function __construct(ApiCategoryService $apiCategoryService)
     {
-        $this->categoryService = $categoryService;
+        $this->apiCategoryService = $apiCategoryService;
     }
 
     /**
@@ -35,6 +35,6 @@ class CategoryController extends FOSRestController
      */
     public function getCategoryAction(CategoryRequest $categoryRequest): Response
     {
-        return new Response(new CategoriesResponse($this->categoryService->get($categoryRequest)));
+        return new Response(new CategoriesResponse($this->apiCategoryService->get($categoryRequest)));
     }
 }

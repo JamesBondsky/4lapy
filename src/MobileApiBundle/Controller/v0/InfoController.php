@@ -10,18 +10,18 @@ use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Request\InfoRequest;
 use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
-use FourPaws\MobileApiBundle\Services\Api\InfoService;
+use FourPaws\MobileApiBundle\Services\Api\InfoService as ApiInfoService;
 
 class InfoController extends FOSRestController
 {
     /**
-     * @var InfoService
+     * @var ApiInfoService
      */
-    private $infoService;
+    private $apiInfoService;
 
-    public function __construct(InfoService $infoService)
+    public function __construct(ApiInfoService $apiInfoService)
     {
-        $this->infoService = $infoService;
+        $this->apiInfoService = $apiInfoService;
     }
 
     /**
@@ -39,7 +39,7 @@ class InfoController extends FOSRestController
     {
         return (new ApiResponse())
             ->setData([
-                'info' => $this->infoService->getInfo(
+                'info' => $this->apiInfoService->getInfo(
                     $infoRequest->getType(),
                     $infoRequest->getInfoId(),
                     $infoRequest->getFields(),

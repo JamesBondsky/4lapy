@@ -10,7 +10,7 @@ use FourPaws\MobileApiBundle\Dto\Object\OrderParameter;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class UserCartRequest
+class UserCartRequest implements SimpleUnserializeRequest, GetRequest
 {
     /**
      * Промокод

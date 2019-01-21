@@ -1,6 +1,6 @@
 <?php
 
-/*
+/**
  * @copyright Copyright (c) NotAgency
  */
 

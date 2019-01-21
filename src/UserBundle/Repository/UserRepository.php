@@ -669,7 +669,7 @@ class UserRepository
             throw new UsernameNotFoundException(sprintf('No user with such raw login %s', $rawLogin));
         }
 
-        throw new TooManyUserFoundException('Found more than one user with same raw login');
+        throw new TooManyUserFoundException(sprintf('Found more than one user with same raw login %s', $rawLogin));
     }
 
     /**

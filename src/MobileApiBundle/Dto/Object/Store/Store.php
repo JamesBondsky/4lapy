@@ -7,10 +7,11 @@ use JMS\Serializer\Annotation as Serializer;
 class Store
 {
     /**
-     * @Serializer\Type("int")
-     * @var int
+     * @Serializer\SerializedName("id")
+     * @Serializer\Type("string")
+     * @var string
      */
-    protected $id;
+    protected $code;
 
     /**
      * @var string
@@ -104,19 +105,19 @@ class Store
     protected $availabilityStatus;
 
     /**
-     * @param int $id
+     * @param string $code
      * @return Store
      */
-    public function setId($id): Store {
-        $this->id = $id;
+    public function setCode(string $code): Store {
+        $this->code = $code;
         return $this;
     }
 
     /**
      * @return int
      */
-    public function getId(): int {
-        return $this->id;
+    public function getCode(): int {
+        return $this->code;
     }
 
     /**

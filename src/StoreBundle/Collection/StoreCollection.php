@@ -90,6 +90,17 @@ class StoreCollection extends BaseCollection
     }
 
     /**
+     * @param string $storeCode
+     * @return bool
+     */
+    public function hasStoreCode(string $storeCode): bool
+    {
+        return !$this->filter(function (Store $currentStore) use ($storeCode) {
+            return $currentStore->getXmlId() === $storeCode;
+        })->isEmpty();
+    }
+
+    /**
      * @return string[]
      */
     public function getXmlIds(): array

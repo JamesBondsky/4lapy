@@ -26,7 +26,7 @@ class StoreProductAvailableRequest implements SimpleUnserializeRequest, PostRequ
      * @Serializer\Type("string")
      * @Serializer\SerializedName("shop_id")
      */
-    protected $shopId = '';
+    protected $storeCode = '';
 
     /**
      * @return ProductQuantity[]
@@ -50,19 +50,19 @@ class StoreProductAvailableRequest implements SimpleUnserializeRequest, PostRequ
     /**
      * @return string
      */
-    public function getShopId(): string
+    public function getStoreCode(): string
     {
-        return $this->shopId ?? '';
+        return $this->storeCode ?? '';
     }
 
     /**
-     * @param string $shopId
+     * @param string $storeCode
      *
      * @return StoreProductAvailableRequest
      */
-    public function setShopId(string $shopId): StoreProductAvailableRequest
+    public function setStoreCode(string $storeCode): StoreProductAvailableRequest
     {
-        $this->shopId = $shopId;
+        $this->storeCode = $storeCode;
         return $this;
     }
 }

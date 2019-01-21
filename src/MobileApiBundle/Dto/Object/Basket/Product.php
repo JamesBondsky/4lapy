@@ -48,9 +48,9 @@ class Product
     }
 
     /**
-     * @return ShortProduct
+     * @return null|ShortProduct
      */
-    public function getShortProduct(): ShortProduct
+    public function getShortProduct()
     {
         return $this->shortProduct;
     }

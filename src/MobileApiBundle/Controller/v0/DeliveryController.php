@@ -1,6 +1,6 @@
 <?php
 
-/*
+/**
  * @copyright Copyright (c) NotAgency
  */
 
@@ -10,7 +10,7 @@ use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
-use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\DeliveryBundle\Service\DeliveryService as AppDeliveryService;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryTime;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryTimeAvailable;
 use FourPaws\MobileApiBundle\Dto\Request\DeliveryRangeRequest;
@@ -23,13 +23,13 @@ use FourPaws\MobileApiBundle\Dto\Response\DeliveryRangeResponse;
 class DeliveryController extends FOSRestController
 {
     /**
-     * @var DeliveryService
+     * @var AppDeliveryService
      */
-    private $deliveryService;
+    private $appDeliveryService;
 
-    public function __construct(DeliveryService $deliveryService)
+    public function __construct(AppDeliveryService $appDeliveryService)
     {
-        $this->deliveryService = $deliveryService;
+        $this->appDeliveryService = $appDeliveryService;
     }
 
     /**
@@ -47,7 +47,7 @@ class DeliveryController extends FOSRestController
     public function getDeliveryRangeAction(DeliveryRangeRequest $deliveryRangeRequest): DeliveryRangeResponse
     {
         $locationCode = $deliveryRangeRequest->getCityId();
-        $deliveryResults = $this->deliveryService->getByLocation($locationCode);
+        $deliveryResults = $this->appDeliveryService->getByLocation($locationCode);
         $ranges = [];
         /** @var DeliveryResult $deliveryResult */
         foreach ($deliveryResults as $deliveryResult) {
@@ -60,7 +60,8 @@ class DeliveryController extends FOSRestController
                         ->setId($deliveryResult->getDeliveryDate()->getTimestamp() . $interval->getFrom() . $interval->getTo())
                         ->setTitle($dateStmp . ' ' . $interval->getFrom() . ':00 - ' . $interval->getTo() . ':00')
                         ->setDeliveryDate(new \DateTime($dateStmp))
-                        ->setAvailable((new DeliveryTimeAvailable($deliveryResult->getDeliveryDate())));
+                        ->setAvailable((new DeliveryTimeAvailable($deliveryResult->getDeliveryDate())))
+                        ->setComplete(1);
                 }
             }
         }

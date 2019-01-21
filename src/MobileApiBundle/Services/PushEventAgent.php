@@ -34,7 +34,7 @@ class PushEventAgent
     public static function addPushMessagesToQueue()
     {
         try {
-            $pushEventService = Application::getInstance()->getContainer()->get('push_event.service');
+            $pushEventService = Application::getInstance()->getContainer()->get('FourPaws\MobileApiBundle\Services\PushEventService');
             /** @var $pushEventService PushEventService */
             $pushEventService->handleRowsWithFile();
             $pushEventService->handleRowsWithoutFile();
@@ -60,7 +60,7 @@ class PushEventAgent
     public static function execPushEventsForAndroid()
     {
         try {
-            $pushEventService = Application::getInstance()->getContainer()->get('push_event.service');
+            $pushEventService = Application::getInstance()->getContainer()->get('FourPaws\MobileApiBundle\Services\PushEventService');
             /** @var $pushEventService PushEventService */
             $pushEventService->execPushEventsForAndroid();
         }
@@ -84,7 +84,7 @@ class PushEventAgent
     public static function execPushEventsForIos()
     {
         try {
-            $pushEventService = Application::getInstance()->getContainer()->get('push_event.service');
+            $pushEventService = Application::getInstance()->getContainer()->get('FourPaws\MobileApiBundle\Services\PushEventService');
             /** @var $pushEventService PushEventService */
             $pushEventService->execPushEventsForIos();
         }
@@ -99,7 +99,8 @@ class PushEventAgent
                 )
             );
         }
-        // usleep(15 * 1000000);
+        // делаем задержку между отправками
+        sleep(10);
         return '\\' . __METHOD__ . '();';
     }
 }

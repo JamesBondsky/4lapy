@@ -5,6 +5,7 @@ namespace FourPaws\MobileApiBundle\Dto\Object;
 
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use JMS\Serializer\Annotation as Serializer;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * ОбъектПараметрЗаказа
@@ -59,6 +60,14 @@ class OrderParameter
     protected $deliveryPlace;
 
     /**
+     * ID временного интервала доставки
+     * @Serializer\SerializedName("delivery_range_id")
+     * @Serializer\Type("int")
+     * @var int
+     */
+    protected $deliveryRangeId;
+
+    /**
      * Дата времени доставки
      * @Serializer\SerializedName("delivery_range_date")
      * @Serializer\Type("DateTime<'d.m.Y'>")
@@ -68,7 +77,7 @@ class OrderParameter
 
     /**
      * id магазина для забора товара
-     * @todo По факту является адрессом
+     * @todo По факту является адресом
      * @Serializer\SerializedName("pickup_place")
      * @Serializer\Type("string")
      * @var string
@@ -121,6 +130,95 @@ class OrderParameter
      * @var string
      */
     protected $extraPhone = '';
+
+    /**
+     * Email
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("email")
+     * @var string
+     */
+    protected $email = '';
+
+    /**
+     * First name
+     * @Serializer\Type("string")
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\SerializedName("firstname")
+     * @var string
+     */
+    protected $firstName = '';
+
+    /**
+     * Last name
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("lastname")
+     * @Serializer\SkipWhenEmpty()
+     * @var string
+     */
+    protected $lastName = '';
+
+    /**
+     * Middle name
+     * @Serializer\Type("string")
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\SerializedName("midname")
+     * @var string
+     */
+    protected $midName = '';
+
+    /**
+     * Comment
+     * @Serializer\Type("string")
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\SerializedName("comment")
+     * @var string
+     */
+    protected $comment = '';
+
+    /**
+     * City (manually typed when user is not authorized)
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("city")
+     * @Serializer\SkipWhenEmpty()
+     * @var string
+     */
+    protected $city = '';
+
+    /**
+     * Street (manually typed when user is not authorized)
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("street")
+     * @Serializer\SkipWhenEmpty()
+     * @var string
+     */
+    protected $street = '';
+
+    /**
+     * House (manually typed when user is not authorized)
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("house")
+     * @Serializer\SkipWhenEmpty()
+     * @var string
+     */
+    protected $house = '';
+
+    /**
+     * Building (manually typed when user is not authorized)
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("building")
+     * @Serializer\SkipWhenEmpty()
+     * @var string
+     */
+    protected $building = '';
+
+    /**
+     * Apartment (manually typed when user is not authorized)
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("apartment")
+     * @Serializer\SkipWhenEmpty()
+     * @var string
+     */
+    protected $apartment = '';
 
     /**
      * @return Product[]
@@ -215,6 +313,14 @@ class OrderParameter
     {
         $this->deliveryPlace = $deliveryPlace;
         return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDeliveryRangeId(): int
+    {
+        return $this->deliveryRangeId;
     }
 
     /**
@@ -367,5 +473,91 @@ class OrderParameter
     {
         $this->extraPhone = $extraPhone;
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getEmail(): string
+    {
+        return $this->email;
+    }
+
+    /**
+     * @param string $email
+     *
+     * @return OrderParameter
+     */
+    public function setEmail(string $email): OrderParameter
+    {
+        $this->email = $email;
+        return $this;
+    }
+
+    public function getFullName(): string
+    {
+        $fullName = $this->lastName ?: '';
+        $fullName .= $this->firstName ? ' ' . $this->firstName : '';
+        $fullName .= $this->midName ? ' ' . $this->midName : '';
+        return $fullName;
+    }
+
+    /**
+     * @return string
+     */
+    public function getComment(): string
+    {
+        return $this->comment;
+    }
+
+    /**
+     * @param string $comment
+     *
+     * @return OrderParameter
+     */
+    public function setComment(string $comment): OrderParameter
+    {
+        $this->comment = $comment;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCity(): string
+    {
+        return $this->city;
+    }
+
+    /**
+     * @return string
+     */
+    public function getStreet(): string
+    {
+        return $this->street;
+    }
+
+    /**
+     * @return string
+     */
+    public function getHouse(): string
+    {
+        return $this->house;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBuilding(): string
+    {
+        return $this->building;
+    }
+
+    /**
+     * @return string
+     */
+    public function getApartment(): string
+    {
+        return $this->apartment;
     }
 }

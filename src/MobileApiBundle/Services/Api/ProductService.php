@@ -1,6 +1,6 @@
 <?php
 
-/*
+/**
  * @copyright Copyright (c) NotAgency
  */
 
@@ -270,8 +270,8 @@ class ProductService
 
         // цена
         $price = (new Price())
-            ->setActual($offer->getOldPrice())
-            ->setOld($offer->getPrice());
+            ->setActual($offer->getPrice())
+            ->setOld($offer->getOldPrice());
         $shortProduct->setPrice($price);
 
         // лейблы
@@ -384,8 +384,10 @@ class ProductService
     public function getPickupText(Offer $offer): string
     {
         /** @var $pickupResult PickupResult */
-        $pickupResult = $this->filterPickups($this->getDeliveries($offer));
-        return $pickupResult->getTextForOffer();
+        if ($pickupResult = $this->filterPickups($this->getDeliveries($offer))) {
+            return $pickupResult->getTextForOffer(false);
+        }
+        return '';
     }
 
     /**
@@ -409,7 +411,7 @@ class ProductService
                 ->setPrice($offer->getPrice())
                 ->setOfferId($offer->getId())
                 ->setWeight($offer->getPackageLabel(false, 0))
-                ->setHasSpecialOffer($offer->hasAction())
+                ->setHasSpecialOffer($offer->isShare())
                 ->setIsAvailable($offer->isAvailable());
         }
         return $packingVariants;

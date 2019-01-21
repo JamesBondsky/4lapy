@@ -6,7 +6,6 @@
 
 namespace FourPaws\MobileApiBundle\Services\Session;
 
-use Bitrix\Sale\Fuser;
 use FourPaws\MobileApiBundle\Exception\BitrixException;
 use FourPaws\MobileApiBundle\Exception\ValidationException;
 use FourPaws\MobileApiBundle\Exception\WrongTransformerResultException;

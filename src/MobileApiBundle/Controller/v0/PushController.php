@@ -11,11 +11,9 @@ use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Request\PostPushTokenRequest;
 use FourPaws\MobileApiBundle\Dto\Request\PushMessageRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
-use FourPaws\MobileApiBundle\Security\ApiTokenListener;
-use FourPaws\MobileApiBundle\Services\Api\PushMessagesService;
+use FourPaws\MobileApiBundle\Services\Api\PushMessagesService as ApiPushMessagesService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Swagger\Annotations\Parameter;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 /**
  * Class PushController
@@ -25,15 +23,15 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
 class PushController extends FOSRestController
 {
     /**
-     * @var PushMessagesService
+     * @var ApiPushMessagesService
      */
-    private $pushMessagesService;
+    private $apiPushMessagesService;
 
     public function __construct(
-        PushMessagesService $pushMessagesService
+        ApiPushMessagesService $apiPushMessagesService
     )
     {
-        $this->pushMessagesService = $pushMessagesService;
+        $this->apiPushMessagesService = $apiPushMessagesService;
     }
 
     /**
@@ -44,7 +42,7 @@ class PushController extends FOSRestController
     public function getAction()
     {
         return (new Response())
-            ->setData(['messages' => $this->pushMessagesService->getPushEvents()]);
+            ->setData(['messages' => $this->apiPushMessagesService->getPushEvents()]);
     }
 
     /**
@@ -58,7 +56,7 @@ class PushController extends FOSRestController
     {
         $id = $pushMessageRequest->getId();
         return (new Response())
-            ->setData(['result' => $this->pushMessagesService->markPushEventAsViewed($id)]);
+            ->setData(['result' => $this->apiPushMessagesService->markPushEventAsViewed($id)]);
     }
 
     /**
@@ -72,7 +70,7 @@ class PushController extends FOSRestController
     {
         $id = $pushMessageRequest->getId();
         return (new Response())
-            ->setData(['result' => $this->pushMessagesService->deletePushEvent($id)]);
+            ->setData(['result' => $this->apiPushMessagesService->deletePushEvent($id)]);
     }
 
     /**
@@ -90,7 +88,7 @@ class PushController extends FOSRestController
      */
     public function setPushTokenAction(PostPushTokenRequest $postPushTokenRequest)
     {
-        $result = $this->pushMessagesService->actualizeUserPushParams($postPushTokenRequest);
+        $result = $this->apiPushMessagesService->actualizeUserPushParams($postPushTokenRequest);
 
         return (new Response())
             ->setData(['result' => $result]);

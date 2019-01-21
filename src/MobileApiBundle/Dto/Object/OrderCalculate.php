@@ -41,7 +41,6 @@ class OrderCalculate
      * (используется только при оформлении заказа. При получении корзины не нужен)
      * @Serializer\SerializedName("available_goods")
      * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Basket\Product>")
-     * @Serializer\SkipWhenEmpty()
      * @var Product[]
      */
     protected $availableGoods = [];
@@ -51,7 +50,6 @@ class OrderCalculate
      * (используется только при оформлении заказа. При получении корзины не нужен)
      * @Serializer\SerializedName("not_available_goods")
      * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Basket\Product>")
-     * @Serializer\SkipWhenEmpty()
      * @var Product[]
      */
     protected $notAvailableGoods = [];

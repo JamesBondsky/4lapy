@@ -1,6 +1,6 @@
 <?php
 
-/*
+/**
  * @copyright Copyright (c) NotAgency
  */
 
@@ -13,17 +13,11 @@ use FourPaws\MobileApiBundle\Dto\Request\PostPushTokenRequest;
 use FourPaws\MobileApiBundle\Entity\ApiPushEvent;
 use FourPaws\MobileApiBundle\Repository\ApiPushEventRepository;
 use FourPaws\MobileApiBundle\Repository\ApiUserSessionRepository;
-use FourPaws\UserBundle\Service\UserService;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use FourPaws\MobileApiBundle\Dto\Object\PushEvent as PushEventForApi;
 
 class PushMessagesService
 {
-    /**
-     * @var UserService
-     */
-    private $userService;
-
     /**
      * @var ApiUserSessionRepository
      */
@@ -40,13 +34,11 @@ class PushMessagesService
     private $apiPushEventRepository;
 
     public function __construct(
-        UserService $userService,
         ApiUserSessionRepository $apiUserSessionRepository,
         TokenStorageInterface $tokenStorage,
         ApiPushEventRepository $apiPushEventRepository
     )
     {
-        $this->userService = $userService;
         $this->apiUserSessionRepository = $apiUserSessionRepository;
         $this->tokenStorage = $tokenStorage;
         $this->apiPushEventRepository = $apiPushEventRepository;
@@ -83,6 +75,7 @@ class PushMessagesService
         $pushEvents = $this->apiPushEventRepository->findBy([
             '=PUSH_TOKEN' => $pushToken,
             '=SUCCESS_EXEC' => ApiPushEvent::EXEC_SUCCESS_CODE,
+            '!MESSAGE.UF_TYPE' => null
         ]);
         return (new ArrayCollection($pushEvents))
             ->map(function (ApiPushEvent $pushEvent) {

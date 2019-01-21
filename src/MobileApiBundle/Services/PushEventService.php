@@ -11,6 +11,7 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\App\Application;
 use FourPaws\AppBundle\Enum\CrudGroups;
 use FourPaws\External\ApplePushNotificationService;
+use FourPaws\External\Exception\FireBaseCloudMessagingException;
 use FourPaws\External\FireBaseCloudMessagingService;
 use FourPaws\MobileApiBundle\Entity\ApiPushEvent;
 use FourPaws\MobileApiBundle\Entity\ApiPushMessage;
@@ -174,14 +175,20 @@ class PushEventService
     {
         $pushEvents = $this->apiPushEventRepository->findForAndroid();
         foreach ($pushEvents as $pushEvent) {
-            $response = $this->fireBaseCloudMessagingService->sendNotification(
-                $pushEvent->getPushToken(),
-                $pushEvent->getMessageText(),
-                $pushEvent->getMessageId(),
-                $pushEvent->getMessageType()
-            );
-            $execCode = $response->getStatusCode() === 200 ? ApiPushEvent::EXEC_SUCCESS_CODE : ApiPushEvent::EXEC_FAIL_CODE;
-            $pushEvent->setSuccessExec($execCode);
+            try {
+                $response = $this->fireBaseCloudMessagingService->sendNotification(
+                    $pushEvent->getPushToken(),
+                    $pushEvent->getMessageText(),
+                    $pushEvent->getMessageId(),
+                    $pushEvent->getMessageType()
+                );
+                $execCode = $response->getStatusCode() === 200 ? ApiPushEvent::EXEC_SUCCESS_CODE : ApiPushEvent::EXEC_FAIL_CODE;
+                $pushEvent->setSuccessExec($execCode);
+                $pushEvent->setServiceResponseStatus($response->getStatusCode());
+            }
+            catch (\Exception $e) {
+                $pushEvent->setServiceResponseError($e->getMessage());
+            }
             $this->apiPushEventRepository->update($pushEvent);
         }
     }
@@ -193,12 +200,20 @@ class PushEventService
     {
         $pushEvents = $this->apiPushEventRepository->findForIos();
         foreach ($pushEvents as $pushEvent) {
-            $this->applePushNotificationService->sendNotification(
-                $pushEvent->getPushToken(),
-                $pushEvent->getMessageText(),
-                $pushEvent->getMessageId(),
-                $pushEvent->getMessageType()
-            );
+            try {
+                $logMessages = $this->applePushNotificationService->sendNotification(
+                    $pushEvent->getPushToken(),
+                    $pushEvent->getMessageText(),
+                    $pushEvent->getMessageId(),
+                    $pushEvent->getMessageType()
+                );
+                foreach ($logMessages as $logMessage) {
+                    $this->log()->info($logMessage);
+                }
+            }
+            catch (\Exception $e) {
+                $pushEvent->setServiceResponseError($e->getMessage());
+            }
             $pushEvent->setSuccessExec(ApiPushEvent::EXEC_SUCCESS_CODE);
             $this->apiPushEventRepository->update($pushEvent);
         }

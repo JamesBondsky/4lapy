@@ -8,6 +8,9 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
+use FourPaws\MobileApiBundle\Collection\ProductQuantityCollection;
+use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Request\StoreAvailableRequest;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListAvailableRequest;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListRequest;
@@ -72,11 +75,23 @@ class StoreController extends FOSRestController
      */
     public function getStoreProductAvailableAction(StoreProductAvailableRequest $storeProductAvailableRequest): StoreProductAvailableResponse
     {
-        $shop = $this->apiStoreService->getOne($storeProductAvailableRequest->getShopId());
-        $products = $this->apiStoreService->getShopProductAvailable($storeProductAvailableRequest);
+        $storeCode = $storeProductAvailableRequest->getStoreCode();
+        $shop = $this->apiStoreService->getOne($storeCode);
+        $basketProductCollection = $this->apiStoreService->getStoreProductAvailable($storeProductAvailableRequest->getGoods());
+        $availableProducts = $basketProductCollection->getAvailableInStore($storeCode);
+        $unAvailableProducts = $basketProductCollection->getUnAvailableInStore($storeCode);
+
+        if (!empty($availableProducts) && !empty($unAvailableProducts)) {
+            $shop->setAvailabilityStatus('available_part');
+        } else if (!empty($availableProducts)) {
+            $shop->setAvailabilityStatus('available');
+        } else if (!empty($unAvailableProducts)) {
+            $shop->setAvailabilityStatus('not_available');
+        }
+
         return (new StoreProductAvailableResponse())
-            ->setAvailableGoods($products['available'])
-            ->setNotAvailableGoods($products['unAvailable'])
+            ->setAvailableGoods($availableProducts)
+            ->setNotAvailableGoods($unAvailableProducts)
             ->setShop($shop);
     }
 

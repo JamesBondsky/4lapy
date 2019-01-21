@@ -14,7 +14,7 @@ use FourPaws\MobileApiBundle\Dto\Request\DeliveryAddressUpdateRequest;
 use FourPaws\MobileApiBundle\Dto\Response\DeliveryAddressGetResponse;
 use FourPaws\MobileApiBundle\Dto\Response\FeedbackResponse;
 use FourPaws\MobileApiBundle\Exception\DeliveryAddressAddError;
-use FourPaws\MobileApiBundle\Services\Api\UserDeliveryAddressService;
+use FourPaws\MobileApiBundle\Services\Api\UserDeliveryAddressService as ApiUserDeliveryAddressService;
 use FourPaws\UserBundle\Entity\User;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 
@@ -25,13 +25,13 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 class UserDeliveryController extends FOSRestController
 {
     /**
-     * @var UserDeliveryAddressService
+     * @var ApiUserDeliveryAddressService
      */
-    private $addressService;
+    private $apiUserDeliveryAddressService;
 
-    public function __construct(UserDeliveryAddressService $addressService)
+    public function __construct(ApiUserDeliveryAddressService $apiUserDeliveryAddressService)
     {
-        $this->addressService = $addressService;
+        $this->apiUserDeliveryAddressService = $apiUserDeliveryAddressService;
     }
 
     /**
@@ -52,7 +52,7 @@ class UserDeliveryController extends FOSRestController
         $user = $this->getUser();
 
         return new DeliveryAddressGetResponse(
-            $this->addressService->getAll($user->getId())
+            $this->apiUserDeliveryAddressService->getAll($user->getId())
         );
     }
 
@@ -73,7 +73,7 @@ class UserDeliveryController extends FOSRestController
          * @var User $user
          */
         $user = $this->getUser();
-        $this->addressService->add($user->getId(), $request->getAddress());
+        $this->apiUserDeliveryAddressService->add($user->getId(), $request->getAddress());
 
         return new FeedbackResponse('Адрес доставки успешно добавлен');
     }
@@ -91,7 +91,7 @@ class UserDeliveryController extends FOSRestController
     public function updateAction(DeliveryAddressUpdateRequest $addressUpdateRequest): FeedbackResponse
     {
         $user = $this->getUser();
-        $this->addressService->update($user->getId(), $addressUpdateRequest->getAddress());
+        $this->apiUserDeliveryAddressService->update($user->getId(), $addressUpdateRequest->getAddress());
 
         return new FeedbackResponse('Адрес доставки успешно обновлен');
     }
@@ -105,7 +105,7 @@ class UserDeliveryController extends FOSRestController
     public function removeAction(DeliveryAddressDeleteRequest $addressDeleteRequest): FeedbackResponse
     {
         $user = $this->getUser();
-        $this->addressService->delete($user->getId(), $addressDeleteRequest->getId());
+        $this->apiUserDeliveryAddressService->delete($user->getId(), $addressDeleteRequest->getId());
 
         return new FeedbackResponse('Адрес доставки успешно удален');
     }

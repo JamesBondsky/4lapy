@@ -36,6 +36,13 @@ class DeliveryTime
     protected $available;
 
     /**
+     * @var bool
+     * @Serializer\SerializedName("complete")
+     * @Serializer\Type("bool")
+     */
+    protected $complete;
+
+    /**
      * @return int
      */
     public function getId(): int
@@ -104,6 +111,24 @@ class DeliveryTime
     public function setAvailable(DeliveryTimeAvailable $available): DeliveryTime
     {
         $this->available = $available;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getComplete(): bool
+    {
+        return $this->complete;
+    }
+
+    /**
+     * @param bool $complete
+     * @return DeliveryTime
+     */
+    public function setComplete(bool $complete): DeliveryTime
+    {
+        $this->complete = $complete;
         return $this;
     }
 }

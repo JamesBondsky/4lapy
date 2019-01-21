@@ -44,18 +44,23 @@ class FireBaseCloudMessagingService
         $client->setApiKey(static::API_KEY);
         $client->injectHttpClient(new HttpClient());
 
-        $note = new Notification($messageText, '');
-        $note->setIcon('notification_icon_resource_name')
-            ->setColor('#ffffff')
-            ->setBadge(1);
-
         $message = new Message();
         $message->addRecipient(new Device($token));
-        $message->setNotification($note)
-            ->setData([
-                'id' => $messageId,
-                'type' => $messageType,
-            ]);
+        $message->setData([
+            'body' => [
+                // Обязательная часть (названия полей в данном случае важно) :
+                'aps' => [
+                    'badge' => 1, // красный кружок на иконке приложения с количеством оповещений
+                    'alert' => $messageText, // текст, который будет показан пользователю в push- сообщении
+                    'sound' => 'default', // можно указать звук при получении пуша
+                ],
+                // Опции
+                'options' => [
+                    'id' => $messageId, // Идентификатор события
+                    'type'=> $messageType // Тип события
+                ]
+            ]
+        ]);
 
         $response = $client->send($message);
         if ($response->getStatusCode() !== 200) {

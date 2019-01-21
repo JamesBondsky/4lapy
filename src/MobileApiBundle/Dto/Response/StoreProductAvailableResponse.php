@@ -6,9 +6,7 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Response;
 
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct;
+use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Object\Store\Store;
 use JMS\Serializer\Annotation as Serializer;
 
@@ -21,16 +19,16 @@ class StoreProductAvailableResponse
     /**
      * Массив доступных в магазине товаров
      * @Serializer\SerializedName("available_goods")
-     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct>")
-     * @var ShortProduct[]
+     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Basket\Product>")
+     * @var Product[]
      */
     protected $availableGoods = [];
 
     /**
      * Массив НЕ доступных товаров в магазине
      * @Serializer\SerializedName("not_available_goods")
-     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct>")
-     * @var ShortProduct[]
+     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Basket\Product>")
+     * @var Product[]
      */
     protected $notAvailableGoods = [];
 
@@ -42,7 +40,7 @@ class StoreProductAvailableResponse
     protected $shop;
 
     /**
-     * @return ShortProduct[]
+     * @return Product[]
      */
     public function getAvailableGoods(): array
     {
@@ -50,7 +48,7 @@ class StoreProductAvailableResponse
     }
 
     /**
-     * @param ShortProduct[] $availableGoods
+     * @param Product[] $availableGoods
      *
      * @return StoreProductAvailableResponse
      */
@@ -61,7 +59,7 @@ class StoreProductAvailableResponse
     }
 
     /**
-     * @return ShortProduct[]
+     * @return Product[]
      */
     public function getNotAvailableGoods(): array
     {
@@ -69,7 +67,7 @@ class StoreProductAvailableResponse
     }
 
     /**
-     * @param ShortProduct[] $notAvailableGoods
+     * @param Product[] $notAvailableGoods
      *
      * @return StoreProductAvailableResponse
      */

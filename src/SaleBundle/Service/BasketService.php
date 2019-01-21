@@ -1193,6 +1193,23 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
+     * @param int $basketItemId
+     * @param Basket|null $basket
+     * @return int
+     */
+    public function getProductIdByBasketItemId(int $basketItemId, ?Basket $basket = null)
+    {
+        $basket = $basket instanceof Basket ? $basket : $this->getBasket();
+        /** @var BasketItem $basketItem */
+        foreach ($basket as $basketItem) {
+            if ($basketItem->getId() === $basketItemId) {
+                return $basketItem->getProductId();
+            }
+        }
+        return 0;
+    }
+
+    /**
      *
      * @param array $applyResult - только для того чтобы не генерировать много запросов
      * @param int $discountId - настоящий id правила

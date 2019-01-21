@@ -41,6 +41,7 @@ class SessionFactory
     {
         $session = (new ApiUserSession())
             ->setUserAgent($this->getUserAgent())
+            ->setFUserId($this->getBasketUserId())
             ->setToken($this->tokenGenerator->generate());
         $this->configIp($session);
         return $session;

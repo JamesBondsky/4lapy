@@ -9,7 +9,6 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
-use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Enum\IblockCode;
@@ -27,7 +26,7 @@ use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
 use FourPaws\MobileApiBundle\Dto\Request\GoodsItemRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Exception\NotFoundProductException;
-use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Component\HttpFoundation\Request;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
@@ -41,17 +40,17 @@ class ProductController extends FOSRestController
     private $apiProductService;
 
     /**
-     * @var BasketService
+     * @var AppBasketService
      */
-    private $basketService;
+    private $appBasketService;
 
     public function __construct(
         ApiProductService $apiProductService,
-        BasketService $basketService
+        AppBasketService $appBasketService
     )
     {
         $this->apiProductService = $apiProductService;
-        $this->basketService = $basketService;
+        $this->appBasketService = $appBasketService;
     }
 
     /**
@@ -226,7 +225,7 @@ class ProductController extends FOSRestController
      */
     public function getGoodsPersonalAction()
     {
-        $offerIds = $this->basketService->getPopularOfferIds(10);
+        $offerIds = $this->appBasketService->getPopularOfferIds(10);
         $offers = (new OfferQuery())
             ->withFilter(['=ID' => $offerIds])
             ->exec();

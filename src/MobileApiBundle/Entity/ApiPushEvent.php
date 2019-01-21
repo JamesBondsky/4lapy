@@ -1,6 +1,6 @@
 <?php
 
-/*
+/**
  * @copyright Copyright (c) NotAgency
  */
 
@@ -92,6 +92,22 @@ class ApiPushEvent
      * @Serializer\Groups(groups={"read","update","create"})
      */
     protected $viewed;
+
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("SERVICE_RESPONSE_STATUS")
+     * @Serializer\Groups(groups={"read","update","create"})
+     */
+    protected $serviceResponseStatus;
+
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("SERVICE_RESPONSE_ERROR")
+     * @Serializer\Groups(groups={"read","update","create"})
+     */
+    protected $serviceResponseError;
 
     /** @var UserFieldEnumValue $messageTypeEntity */
     private $messageTypeEntity;
@@ -239,6 +255,42 @@ class ApiPushEvent
     public function setViewed(string $viewed): ApiPushEvent
     {
         $this->viewed = $viewed;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getServiceResponseStatus(): int
+    {
+        return $this->serviceResponseStatus;
+    }
+
+    /**
+     * @param int $serviceResponseStatus
+     * @return ApiPushEvent
+     */
+    public function setServiceResponseStatus(int $serviceResponseStatus): ApiPushEvent
+    {
+        $this->serviceResponseStatus = $serviceResponseStatus;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getServiceResponseError(): string
+    {
+        return $this->serviceResponseError;
+    }
+
+    /**
+     * @param string $serviceResponseError
+     * @return ApiPushEvent
+     */
+    public function setServiceResponseError(string $serviceResponseError): ApiPushEvent
+    {
+        $this->serviceResponseError = $serviceResponseError;
         return $this;
     }
 }

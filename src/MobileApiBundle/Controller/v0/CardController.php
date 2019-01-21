@@ -10,18 +10,18 @@ use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Request\CardActivatedRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
-use FourPaws\MobileApiBundle\Services\Api\CardService;
+use FourPaws\MobileApiBundle\Services\Api\CardService as ApiCardService;
 
 class CardController extends FOSRestController
 {
     /**
-     * @var CardService
+     * @var ApiCardService
      */
-    private $cardService;
+    private $apiCardService;
 
-    public function __construct(CardService $cardService)
+    public function __construct(ApiCardService $apiCardService)
     {
-        $this->cardService = $cardService;
+        $this->apiCardService = $apiCardService;
     }
 
     /**
@@ -33,6 +33,6 @@ class CardController extends FOSRestController
      */
     public function isCardActivatedAction(CardActivatedRequest $request): Response
     {
-        return $this->cardService->isActive($request);
+        return $this->apiCardService->isActive($request);
     }
 }

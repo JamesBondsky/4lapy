@@ -1,6 +1,6 @@
 <?php
 
-/*
+/**
  * @copyright Copyright (c) NotAgency
  */
 
@@ -8,7 +8,6 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FourPaws\MobileApiBundle\Dto\Request\CompatibilityRequest;
-use Swagger\Annotations\Parameter;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
 use FourPaws\MobileApiBundle\Services\Api\CompatibilityService as ApiCompatibilityService;

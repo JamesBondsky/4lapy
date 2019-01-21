@@ -44,6 +44,16 @@ class ApiUserSession
     protected $userId;
 
     /**
+     * ID корзины
+     * Используется, в случае если пользователь не авторизован чтобы узнать его корзину
+     * @var null|int
+     * @Serializer\SerializedName("FUSER_ID")
+     * @Serializer\Type("int")
+     * @Serializer\Groups(groups={"read","update","create"})
+     */
+    protected $fUserId;
+
+    /**
      * @var null|string
      * @Serializer\SerializedName("USER_AGENT")
      * @Serializer\Type("string")
@@ -228,9 +238,28 @@ class ApiUserSession
      *
      * @return ApiUserSession
      */
-    public function setUserId(int $userId): ApiUserSession
+    public function setUserId($userId): ApiUserSession
     {
         $this->userId = $userId;
+        return $this;
+    }
+
+    /**
+     * @return null|int
+     */
+    public function getFUserId()
+    {
+        return $this->fUserId;
+    }
+
+    /**
+     * @param null|int $fUserId
+     *
+     * @return ApiUserSession
+     */
+    public function setFUserId($fUserId): ApiUserSession
+    {
+        $this->fUserId = $fUserId;
         return $this;
     }
 

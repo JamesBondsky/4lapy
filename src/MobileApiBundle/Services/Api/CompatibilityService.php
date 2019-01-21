@@ -1,17 +1,10 @@
 <?php
 
-/*
+/**
  * @copyright Copyright (c) NotAgency
  */
 
 namespace FourPaws\MobileApiBundle\Services\Api;
-
-use \FourPaws\Catalog\Query\BannerQuery;
-use \FourPaws\MobileApiBundle\Dto\Object\Banner;
-use FourPaws\Catalog\Model\Banner as BannerModel;
-use FourPaws\MobileApiBundle\Dto\Response\BannerListResponse;
-use FourPaws\UserBundle\Service\UserService as UserBundleService;
-use Doctrine\Common\Collections\ArrayCollection;
 
 class CompatibilityService
 {

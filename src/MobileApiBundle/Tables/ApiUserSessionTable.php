@@ -58,7 +58,9 @@ class ApiUserSessionTable extends DataManager
                 'unique'        => true,
                 'default_value' => md5(random_bytes(32)),
             ]),
-            'USER_ID'                   => new IntegerField('USER_ID', [
+            'USER_ID'              => new IntegerField('USER_ID', []),
+            'FUSER_ID'             => new IntegerField('FUSER_ID', [ // это поле используется, в случае если пользователь не авторизован чтобы узнать его корзину
+                'default_value' => null,
             ]),
             'PLATFORM'                => new StringField('PLATFORM', [
                 'default_value' => '',

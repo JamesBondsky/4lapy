@@ -56,11 +56,14 @@ class ApiTokenProvider implements AuthenticationProviderInterface
 
         $user = null;
         // if there is userID in the session - authorize this user,
-        // otherwise just return a token
+        // otherwise initialize user basket and return a token
         if ($this->initBySession($session) && $session->getUserId()) {
             $user = $this->bitrixUserProvider->loadUserById($session->getUserId());
             $user->getRolesCollection()->add(new Role('ROLE_API'));
+        } else {
+            $this->initFUserIdByToken($session->getFUserId());
         }
+
 
         return new ApiToken(
             $user ? $user->getRoles() : ['ROLE_API'],
@@ -86,5 +89,17 @@ class ApiTokenProvider implements AuthenticationProviderInterface
         if ($session->getUserId()) {
             return $this->cUser->Authorize($session->getUserId());
         }
+    }
+
+    /**
+     * Для неавторизованных пользователей получаем ID корзины (FUSER_ID) по токену из таблички с сессиями
+     * И подсовываем полученный FUSER_ID в сессию, чтобы битрикс подтягивал нужную корзину
+     * @see \CAllSaleBasket::GetID()
+     *
+     * @param int $fUserId
+     */
+    protected function initFUserIdByToken(int $fUserId): void
+    {
+        $_SESSION['SALE_USER_ID'] = $fUserId;
     }
 }

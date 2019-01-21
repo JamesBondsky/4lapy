@@ -49,6 +49,11 @@ services:
 
 
     # Push messages
-    push_event.service:
+    FourPaws\MobileApiBundle\Services\PushEventService:
         class: FourPaws\MobileApiBundle\Services\PushEventService
+        public: true
+
+    # Product service
+    FourPaws\MobileApiBundle\Services\Api\ProductService:
+        class: FourPaws\MobileApiBundle\Services\Api\ProductService
         public: true

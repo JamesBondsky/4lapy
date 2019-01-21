@@ -15,11 +15,13 @@ use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
+use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Object\ProductQuantity;
 use FourPaws\MobileApiBundle\Dto\Object\Store\Store as ApiStore;
 use FourPaws\MobileApiBundle\Dto\Object\Store\StoreService as ApiStoreServiceDto;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListRequest;
-use FourPaws\MobileApiBundle\Dto\Request\StoreProductAvailableRequest;
+use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Repository\StoreRepository;
@@ -44,12 +46,16 @@ class StoreService
     /** @var ShopInfoService */
     protected $shopInfoService;
 
+    /** @var BasketService */
+    private $basketService;
+
     public function __construct(
         AppStoreService $appStoreService,
         ApiProductService $apiProductService,
         StoreRepository $storeRepository,
         LocationService $locationService,
-        ShopInfoService $shopInfoService
+        ShopInfoService $shopInfoService,
+        BasketService $basketService
     )
     {
         $this->appStoreService = $appStoreService;
@@ -57,6 +63,7 @@ class StoreService
         $this->storeRepository = $storeRepository;
         $this->locationService = $locationService;
         $this->shopInfoService = $shopInfoService;
+        $this->basketService = $basketService;
     }
 
     /**
@@ -90,7 +97,7 @@ class StoreService
     }
 
     /**
-     * @param $storeCode
+     * @param string $storeCode
      * @return ApiStore
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
@@ -111,8 +118,7 @@ class StoreService
         $storeCollection = new StoreCollection();
         foreach ($productsQuantity as $productQuantity) {
             $basketItemId = (int) $productQuantity->getProductId();
-            $basketItem = \CSaleBasket::getList([], ['=ID' => $basketItemId], false, false, [])->fetch();
-            $offerId = $basketItem['PRODUCT_ID'];
+            $offerId = $this->basketService->getProductIdByBasketItemId($basketItemId);
             $quantity = $productQuantity->getQuantity();
             if (!$offerId || !$quantity) {
                 continue;
@@ -138,7 +144,9 @@ class StoreService
                     $storeInfo = $this->appStoreService->getFullStoreInfo($storeCollection);
 
                     $storeCollection = $storeCollection->map(function (Store $store) use ($storeInfo) {
-                        return $this->toApiFormat($store, ...$storeInfo);
+                        $store = $this->toApiFormat($store, ...$storeInfo);
+                        $store->setAvailabilityStatus('available');
+                        return $store;
                     });
 
                 } catch (\Exception $e) {
@@ -146,38 +154,6 @@ class StoreService
             }
         }
         return $storeCollection;
-    }
-
-    /**
-     * @param StoreProductAvailableRequest $storeProductAvailableRequest
-     * @return array
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Bitrix\Main\SystemException
-     */
-    public function getShopProductAvailable(StoreProductAvailableRequest $storeProductAvailableRequest): array
-    {
-        $storeCode = $storeProductAvailableRequest->getShopId();
-        $result = [
-            'available' => [],
-            'unAvailable' => [],
-        ];
-        foreach ($storeProductAvailableRequest->getGoods() as $productQuantity) {
-            $offerId = $productQuantity->getProductId();
-            $quantity = $productQuantity->getQuantity();
-
-            /** @var Offer $offer */
-            $offer = (new OfferQuery())
-                ->withFilter(['ID' => $offerId])
-                ->exec()
-                ->current();
-
-            $shortProduct = $this->apiProductService->convertToShortProduct($offer->getProduct(), $offer);
-
-            $storeCodes = $offer->getAllStocks()->getStores($quantity)->getXmlIds();
-            $result[in_array($storeCode, $storeCodes) ? 'available' : 'unAvailable'][] = $shortProduct;
-        }
-        return $result;
     }
 
     /**
@@ -210,6 +186,32 @@ class StoreService
         }
 
         return $location;
+    }
+
+    /**
+     * @param ProductQuantity[] $productQuantities
+     * @return BasketProductCollection
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public function getStoreProductAvailable(array $productQuantities)
+    {
+        $basketProductCollection = new BasketProductCollection();
+        foreach ($productQuantities as $productQuantity) {
+            $basketItemId = $productQuantity->getProductId();
+            $offerId = $this->basketService->getProductIdByBasketItemId($basketItemId);
+            if ($offer = OfferQuery::getById($offerId)) {
+                $product = $offer->getProduct();
+                $shortProduct = $this->apiProductService->convertToShortProduct($product, $offer);
+                $basketProductCollection->add(
+                    (new Product())
+                        ->setBasketItemId($productQuantity->getProductId())
+                        ->setQuantity($productQuantity->getQuantity())
+                        ->setShortProduct($shortProduct)
+                );
+            }
+        }
+        return $basketProductCollection;
     }
 
     protected function getParams(StoreListRequest $storeListRequest)
@@ -288,7 +290,7 @@ class StoreService
          * }
          */
 
-        $result->setId($store->getId());
+        $result->setCode($store->getXmlId());
         $result->setTitle($title);
         $result->setAvailabilityStatus('');
         $result->setCityId($store->getLocation());

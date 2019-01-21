@@ -10,6 +10,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
@@ -153,5 +154,25 @@ class DpdPickupResult extends BaseResult implements PickupResultInterface
     protected function checkIsDeliverable(Offer $offer): bool
     {
         return parent::checkIsDeliverable($offer) && $offer->getProduct()->isDeliveryAvailable();
+    }
+
+    /**
+     * Возвращает отформатированный текст о доставке для карточки товара на сайте и в мобильном приложении
+     * @param bool $isByRequest
+     * @param bool $withCurrency
+     * @return string
+     */
+    public function getTextForOffer($isByRequest = false, $withCurrency = false): string
+    {
+        $text = DeliveryTimeHelper::showByDate($this->deliveryDate, 0, ['DATE_FORMAT' => 'XX']);
+        if ($isByRequest) {
+            $text .= ' ближайшая';
+        } else if ($this->freeFrom) {
+            $text .= ' бесплатно от ' . $this->freeFrom;
+            if ($withCurrency) {
+                $text .= $this->currency;
+            }
+        }
+        return $text;
     }
 }

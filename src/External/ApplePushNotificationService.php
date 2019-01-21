@@ -1,23 +1,15 @@
 <?php
 
-/*
+/**
  * @copyright Copyright (c) NotAgency
  */
 
 namespace FourPaws\External;
 
-use FourPaws\External\Exception\FireBaseCloudMessagingException;
-use GuzzleHttp\Client as HttpClient;
-use paragraph1\phpFCM\Client;
-use paragraph1\phpFCM\Message;
-use paragraph1\phpFCM\Recipient\Device;
-use paragraph1\phpFCM\Notification;
-
 class ApplePushNotificationService
 {
-    const CERT_PATH = '/var/www/release/common/ssl/push/lapy_prod_merge.pem';
+    const CERT_PATH = '/var/www/release/app/config/apple-push-notification-cert-old.pem';
     const PROCESSES_AMOUNT = 5; // количество потоков для отправки push'ей
-    const DELAY_BETWEEN_SEND = 100000; // задержка между отправками push'ей (в микросекундах)
 
     /** @var \ApnsPHP_Push_Server $server */
     private $server;
@@ -29,13 +21,16 @@ class ApplePushNotificationService
      */
     public function __construct()
     {
-        // $this->server = new \ApnsPHP_Push_Server(\ApnsPHP_Abstract::ENVIRONMENT_PRODUCTION,static::CERT_PATH);
+        $this->server = new ApplePushNotificationServer(
+            \ApnsPHP_Abstract::ENVIRONMENT_PRODUCTION,
+            static::CERT_PATH
+        );
 
+        $this->server->setLogger(new ApplePushNotificationLogger());
         // $this->server->setLogger(new \ApnsPHP_Log_Embedded());
-        // $this->server->getLogger()->lockSend();
-        // $this->server->setProviderCertificatePassphrase('lapy');
-        // $this->server->setProcesses(static::PROCESSES_AMOUNT);
-        // $this->server->start();
+        $this->server->setProviderCertificatePassphrase('lapy');
+        $this->server->setProcesses(static::PROCESSES_AMOUNT);
+        $this->server->start();
     }
 
     /**
@@ -43,11 +38,12 @@ class ApplePushNotificationService
      * @param $messageText
      * @param $messageId
      * @param $messageType
+     * @return array
      * @throws \ApnsPHP_Message_Exception
      */
     public function sendNotification($token, $messageText, $messageId, $messageType)
     {
-        $message = (new \ApnsPHP_Message($token));
+        $message = (new ApplePushNotificationMessage($token));
         $message->setBadge(1);
         $message->setSound();
         $message->setText($messageText);
@@ -56,7 +52,10 @@ class ApplePushNotificationService
 
         $this->server->add($message);
 
-        // делаем задержку между отправками
-        usleep(static::DELAY_BETWEEN_SEND);
+        /**
+         * @var $logger ApplePushNotificationLogger
+         */
+        $logger = $this->server->getLogger();
+        return $logger->getLogMessages();
     }
 }
