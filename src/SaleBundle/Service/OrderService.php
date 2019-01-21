@@ -7,7 +7,6 @@
 namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
-use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
@@ -21,7 +20,6 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
-use Bitrix\Sale\BasketItemCollection;
 use Bitrix\Sale\BasketPropertyItem;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
@@ -79,19 +77,14 @@ use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
-use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
-use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\NotFoundException as UserNotFoundException;
-use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAvatarAuthorizationInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use FourPaws\UserBundle\Service\UserSearchInterface;
 use Psr\Log\LoggerAwareInterface;
-use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class OrderService
@@ -1120,8 +1113,15 @@ class OrderService implements LoggerAwareInterface
             }
 
             if ($this->deliveryService->isDostavistaDelivery($selectedDelivery)) {
-                $dostavistaSuccess = $this->sendToDostavista($order, $storage, $selectedDelivery, $nearShop);
-                $this->updateCommWayProperty($order, $selectedDelivery, $fastOrder, $address, $dostavistaSuccess);
+                $dostavistaOrderId = $this->sendToDostavista($order, $storage, $selectedDelivery, $nearShop);
+                $this->setOrderPropertiesByCode($order,
+                    [
+                        'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE,
+                        'ORDER_ID_DOSTAVISTA' => ($dostavistaOrderId) ? $dostavistaOrderId : 0
+                    ]
+                );
+                $order->save();
+                $this->updateCommWayProperty($order, $selectedDelivery, $fastOrder, $address, ($dostavistaOrderId) ? true : false);
             }
         } catch (\Exception $e) {
             /** ошибка при создании заказа - удаляем ошибочный заказ, если он был создан */
@@ -1829,14 +1829,14 @@ class OrderService implements LoggerAwareInterface
      * @param OrderStorage $storage
      * @param CalculationResultInterface $selectedDelivery
      * @param Store $nearShop
-     * @return bool
+     * @return string
      * @throws AddressSplitException
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    private function sendToDostavista(Order $order, OrderStorage $storage, CalculationResultInterface $selectedDelivery, Store $nearShop = null): bool
+    private function sendToDostavista(Order $order, OrderStorage $storage, CalculationResultInterface $selectedDelivery, Store $nearShop = null): string
     {
         if ($nearShop == null) {
             $nearShop = $selectedDelivery->getStockResult()->first();
@@ -1902,7 +1902,7 @@ class OrderService implements LoggerAwareInterface
             'note' => $storage->getComment()
         ];
 
-        $dostavistaSuccess = $dostavistaService->sendOrder($data)['success'];
-        return $dostavistaSuccess;
+        $dostavistaOrderId = $dostavistaService->sendOrder($data)['order_id'];
+        return $dostavistaOrderId;
     }
 }

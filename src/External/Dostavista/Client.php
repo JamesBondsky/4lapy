@@ -206,7 +206,8 @@ class Client
     {
         if ($res['result'] == 1) {
             $result = [
-                'success' => true
+                'success' => true,
+                'order_id' => $res['order_id']
             ];
         } else {
             $result = ['success' => false];

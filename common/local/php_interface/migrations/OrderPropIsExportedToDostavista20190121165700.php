@@ -7,47 +7,58 @@ use Bitrix\Sale\Internals\OrderPropsTable;
 
 class OrderPropIsExportedToDostavista20190121165700 extends SprintMigrationBase
 {
-    protected const PROP_CODE = 'IS_EXPORTED_TO_DOSTAVISTA';
+    protected const PROP_CODES = [
+        'IS_EXPORTED_TO_DOSTAVISTA' => [
+            'NAME' => 'Экспортировано в Достависту',
+            'TYPE' => 'Y/N'
+        ],
+        'ORDER_ID_DOSTAVISTA' => [
+            'NAME' => '№ заказа в Достависте',
+            'TYPE' => 'NUMBER'
+        ]
+    ];
 
     protected $description = 'Создание свойства заказа "Экспортировано в Достависту"';
-    
+
     public function up()
     {
-        $prop = OrderPropsTable::getList(
-            [
-                'filter' => [
-                    'CODE' => self::PROP_CODE
-                ],
-            ]
-        )->fetch();
-        if (!$prop) {
-            $addResult = OrderPropsTable::add(
+        foreach (self::PROP_CODES as $propCode => $propValues) {
+            $prop = OrderPropsTable::getList(
                 [
-                    'CODE' => self::PROP_CODE,
-                    'NAME' => 'Экспортировано в Достависту',
-                    'TYPE' => 'Y/N',
-                    'REQUIRED' => 'N',
-                    'USER_PROPS' => 'N',
-                    'DESCRIPTION' => '',
-                    'PERSON_TYPE_ID' => 1,
-                    'PROPS_GROUP_ID' => 4,
-                    'UTIL' => 'Y',
-                    'IS_FILTERED' => 'Y',
-                    'SORT' => '5000'
+                    'filter' => [
+                        'CODE' => $propCode
+                    ],
                 ]
-            );
-            if (!$addResult->isSuccess()) {
-                $this->log()->error('Ошибка при добавлении свойства заказа ' . self::PROP_CODE);
+            )->fetch();
+            if (!$prop) {
+                $addResult = OrderPropsTable::add(
+                    [
+                        'CODE' => $propCode,
+                        'NAME' => $propValues['NAME'],
+                        'TYPE' => $propValues['TYPE'],
+                        'REQUIRED' => 'N',
+                        'USER_PROPS' => 'N',
+                        'DESCRIPTION' => '',
+                        'PERSON_TYPE_ID' => 1,
+                        'PROPS_GROUP_ID' => 4,
+                        'UTIL' => 'Y',
+                        'IS_FILTERED' => 'Y',
+                        'SORT' => '5000'
+                    ]
+                );
+                if (!$addResult->isSuccess()) {
+                    $this->log()->error('Ошибка при добавлении свойства заказа ' . $propCode);
 
-                return false;
+                    return false;
+                }
+            } else {
+                $this->log()->warning('Свойство заказа ' . $propCode . ' уже существует');
             }
-        } else {
-            $this->log()->warning('Свойство заказа ' . self::PROP_CODE . ' уже существует');
         }
 
         return true;
     }
-    
+
     public function down()
     {
 
