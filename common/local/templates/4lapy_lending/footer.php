@@ -71,11 +71,6 @@ if ($template->hasMainWrapper()) { ?>
 
     <section data-id-section-lending="where-buy" class="where-buy-lending">
         <div class="where-buy-lending__map" id="mapWhereBuyLending" data-map-where-buy-lending="true"></div>
-        <div class="container-lending">
-            <div class="lending-title lending-title_dark">
-                Где купить
-            </div>
-        </div>
     </section>
 
     <section data-id-section-lending="winners" class="winners-lending" style="background-image: url('/static/build/images/content/bg-splash-lending.png')">
