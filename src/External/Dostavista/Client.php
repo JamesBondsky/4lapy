@@ -15,16 +15,31 @@ class Client
     /**
      * API Url
      */
-    public const DEFAULT_API_URL = 'https://robot.dostavista.ru/bapi';
+    protected const DEFAULT_API_URL = 'https://robot.dostavista.ru/bapi';
     /**
      * API Url test
      */
-    public const DEFAULT_API_URL_TEST = 'https://robotapitest.dostavista.ru/bapi';
+    protected const DEFAULT_API_URL_TEST = 'https://robotapitest.dostavista.ru/bapi';
 
     /**
      * API url add order
      */
-    public const URL_ADD_ORDER = 'https://robotapitest.dostavista.ru/bapi/order';
+    protected const URL_ADD_ORDER = 'https://robot.dostavista.ru/bapi/order';
+
+    /**
+     * API url add order test
+     */
+    protected const URL_ADD_ORDER_TEST = 'https://robotapitest.dostavista.ru/bapi/order';
+
+    /**
+     * API url edit order
+     */
+    protected const URL_EDIT_ORDER = 'https://robot.dostavista.ru/api/business/1.0/edit-order';
+
+    /**
+     * API url edit order test
+     */
+    protected const URL_EDIT_ORDER_TEST = 'https://robotapitest.dostavista.ru/api/business/1.0/edit-order';
 
     /**
      * Test mode flag
@@ -52,6 +67,21 @@ class Client
      * @var string
      */
     protected $url;
+
+    /**
+     * array of dostavista statuses
+     * @var array
+     */
+    protected $statuses = [
+        0 => 'new',
+        1 => 'available',
+        2 => 'active',
+        3 => 'completed',
+        4 => 'reactivated',
+        5 => 'draft',
+        6 => 'canceled',
+        7 => 'delayed'
+    ];
 
 
     /**
@@ -87,7 +117,7 @@ class Client
                         CURLOPT_RETURNTRANSFER => true
                     ]
                 ],
-                'timeout' => 1000
+                'timeout' => 3000
             ]
         ]);
 
@@ -177,14 +207,53 @@ class Client
         return true;
     }
 
-    public function sendOrder($data): array
+    /**
+     * @param $data
+     * @return array
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function addOrder($data): array
     {
         //проверка заполненности обязательных полей
         if ($resCheck = $this->checkOrderFields($data) !== true) {
             return $resCheck;
         }
 
-        $this->url = self::URL_ADD_ORDER;
+        if ($this->testMode) {
+            $this->url = self::URL_ADD_ORDER_TEST;
+        } else {
+            $this->url = self::URL_ADD_ORDER;
+        }
+
+        $options['query'] = array_merge(
+            [
+                'token' => $this->token,
+                'client_id' => $this->clientId
+            ],
+            $data
+        );
+
+        $result = $this->send('POST', $options);
+        return $this->parseSendingResult($result);
+    }
+
+    /**
+     * @param $data
+     * @return array
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function editOrder($orderId, $data): array
+    {
+        //проверка заполненности обязательных полей
+        if ($resCheck = $this->checkOrderFields($data) !== true) {
+            return $resCheck;
+        }
+
+        if ($this->testMode) {
+            $this->url = self::URL_EDIT_ORDER_TEST;
+        } else {
+            $this->url = self::URL_EDIT_ORDER;
+        }
 
         $options['query'] = array_merge(
             [

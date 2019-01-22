@@ -1922,7 +1922,7 @@ class OrderService implements LoggerAwareInterface
             'note' => $storage->getComment()
         ];
 
-        $dostavistaOrderId = $dostavistaService->sendOrder($data)['order_id'];
+        $dostavistaOrderId = $dostavistaService->addOrder($data)['order_id'];
         return $dostavistaOrderId;
     }
 }
