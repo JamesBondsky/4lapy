@@ -44,16 +44,33 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
             $offer = $catalogElementDetailClass->getCurrentOffer($product, $this->arParams['OFFER_ID']);
 
             $selectionOffers = new ArrayCollection();
-            $pedestal = null;
-            if (($product->getSection()->getCode() == 'banki-bez-kryshki-akvariumy' || $product->getSection()->getCode() == 'detskie-akvariumy-akvariumy' || $product->getSection()->getCode() == 'komplekty-akvariumy') && $product->getAquariumCombination() != '') {
-                $pedestal = $product->getPedestal($product->getAquariumCombination());
-                if (!empty($pedestal)) {
-                    $volumeStr = strtolower($offer->getVolumeReference()->getName());
+            $additionalItem = null;
+            $productSection = $product->getSection();
+            if ($productSection !== null && ($productSection->getCode() == 'banki-bez-kryshki-akvariumy' || $productSection->getCode() == 'detskie-akvariumy-akvariumy' || $productSection->getCode() == 'komplekty-akvariumy' || $product->getSection()->getCode() == 'tumby-podstavki-akvariumy') && $product->getAquariumCombination() != '') {
+                $isAquarium = $product->getSection()->getCode() != 'tumby-podstavki-akvariumy';
+                if($isAquarium){
+                    $additionalItem = $product->getPedestal($product->getAquariumCombination());
+                } else {
+                    $additionalItem = $product->getAquarium($product->getAquariumCombination());
+                }
+                if (!empty($additionalItem)) {
+                    if($isAquarium){
+                        $volumeStr = strtolower($offer->getVolumeReference()->getName());
+                    } else {
+                        $volumeStr = strtolower($additionalItem->getVolumeReference()->getName());
+                    }
                     if (mb_strpos($volumeStr, 'л')) {
                         $volume = intval(str_replace(',', '.', preg_replace("/[^0-9]/", '', $volumeStr)));
-                        $selectionOffers['external'] = $product->getExternalFilters($volume);
-                        $selectionOffers['internal'] = $product->getInternalFilters($volume);
+                        if ($volume < 250) {
+                            $selectionOffers['filters'] = $product->getInternalFilters($volume);
+                        } else {
+                            $selectionOffers['filters'] = $product->getExternalFilters($volume);
+                        }
                         $selectionOffers['lamps'] = $product->getLamps();
+                        $selectionOffers['decor'] = $product->getDecor();
+                        if ($selectionOffers['filters']->count() == 0 || $selectionOffers['lamps']->count() == 0 || $selectionOffers['decor']->count() == 0) {
+                            $hideKitBlock = true;
+                        }
                     } else {
                         $hideKitBlock = true;
                     }
@@ -68,7 +85,7 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
                 'HIDE_KIT_BLOCK' => $hideKitBlock,
                 'PRODUCT' => $product,
                 'OFFER' => $offer,
-                'PEDESTAL' => $pedestal,
+                'ADDITIONAL_ITEM' => $additionalItem,
                 'SELECTION_OFFERS' => $selectionOffers
             ];
 
@@ -77,7 +94,7 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
                 'HIDE_BLOCK',
                 'PRODUCT',
                 'OFFER',
-                'PEDESTAL',
+                'ADDITIONAL_ITEM',
                 'OFFERS',
             ]);
 

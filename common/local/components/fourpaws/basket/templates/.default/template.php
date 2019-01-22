@@ -74,7 +74,13 @@ if ($arParams['IS_AJAX']) {
                         $disableClass = '';
 
                         /** @noinspection PhpUndefinedMethodInspection */
-                        if (1 > $component->basketService->getAdder('gift')->getExistGiftsQuantity($group, false)) {
+                        $selectedCount = 0;
+                        foreach($arResult['SELECTED_GIFTS'][$group['discountId']] as $giftOffer){
+                            $selectedCount += $giftOffer['quantity'];
+                        }
+                        $availableGifts = $group['count'] - $selectedCount;
+
+                        if (0 >= $availableGifts) {
                             $disableClass = ' b-link-gift--disabled';
                         }
                         if ($group['list'] instanceof OfferCollection) {
@@ -93,9 +99,19 @@ if ($arParams['IS_AJAX']) {
                                    href="javascript:void(0);"
                                    data-url="/ajax/sale/basket/gift/get/"
                                    data-url-gift="/ajax/sale/basket/gift/select/"
+                                   data-available-gifts="<?= $availableGifts ?>"
                                    data-discount-id="<?= $group['discountId']; ?>" title=""
                                    data-popup-id="popup-choose-gift">
-                                    <span class="b-link-gift__text">Выбрать подарок</span>
+                                    <span class="b-link-gift__text">
+                                        <?php if (
+                                            isset($arResult['SELECTED_GIFTS'][$group['discountId']])
+                                            && !empty($arResult['SELECTED_GIFTS'][$group['discountId']])
+                                        ) { ?>
+                                            Выбрать ещё
+                                        <?php }else{ ?>
+                                            Выбрать подарок
+                                        <?php } ?>
+                                    </span>
                                     <span class="b-icon b-icon--gift">
                                         <?= new SvgDecorator('icon-gift', 18, 18) ?>
                                     </span>
@@ -107,7 +123,7 @@ if ($arParams['IS_AJAX']) {
                             ) { ?>
                                 <div class="b-gift-order__gift-product js-section-remove-stock">
                                     <?php foreach ($arResult['SELECTED_GIFTS'][$group['discountId']] as $gift) {
-                                        for ($i = 0; $i < $gift['quantity']; ++$i) {
+                                            $quantity = $gift['quantity'];
                                             $offer = $component->getOffer((int)$gift['offerId']);
                                             $image = $component->getImage((int)$gift['offerId']);
                                             /**
@@ -149,10 +165,16 @@ if ($arParams['IS_AJAX']) {
                                             <?php
                                                 }
                                                 ?>
+                                                    <span class="b-common-item__description-wrap">
+                                                        <span class="b-clipped-text b-clipped-text--shopping-cart b-clipped-text--gift-order">
+                                                            <span>Количество: <?= $quantity;?></span>
+                                                        </span>
+                                                    </span>
                                                     <a class="b-common-item__delete js-present-delete-item"
                                                        href="javascript:void(0);" title=""
                                                        data-url="/ajax/sale/basket/gift/refuse/"
-                                                       data-gift-id="<?= $gift['basketId']; ?>">
+                                                       data-gift-id="<?= $gift['basketId']; ?>"
+                                                       data-gift-quantity="<?= $quantity; ?>">
                                                         <?php
                                                         if ($giftCanBeRefused) {
                                                             ?>
@@ -169,8 +191,7 @@ if ($arParams['IS_AJAX']) {
                                                     </a>
                                                 </div>
                                             </div>
-                                        <?php }
-                                    } ?>
+                                    <? } ?>
                                 </div>
                             <?php } ?>
                         </div>

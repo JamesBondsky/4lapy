@@ -52,6 +52,8 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
+            <br>
+
 
             <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_REGISTER_SMS_RESEND); ?>
             <a class="b-link-gray js-resend-sms"
@@ -61,18 +63,21 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
                data-action="resendSms"
                data-token-name="<?=$token['field']?>"
                data-token="<?=$token['token']?>"
+               data-register-resend-a="true"
                title="Отправить снова">Отправить снова</a>
         </div>
-        <?php
-        if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] >= 3) {
-            try {
-                $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
-                echo $recaptchaService->getCaptcha('', true);
-            } catch (ApplicationCreateException $e) {
-            }
-        } ?>
-        <button class="b-button b-button--social b-button--full-width">Подтвердить</button>
+
+        <div style="display: none;" data-register-resend-captcha="true">
+            <?
+            /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
+            $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
+            echo $recaptchaService->getCaptcha('b-input-line', true, 'registerResendSms');
+            ?>
+        </div>
+
+        <button class="b-button b-button--social b-button--full-width" data-reg-form-send="true">Подтвердить</button>
     </form>
+
 </div>
 <section class="b-registration__additional-info b-registration__additional-info--step">
     <h3 class="b-registration__title-advantage">Зачем это нужно?</h3>

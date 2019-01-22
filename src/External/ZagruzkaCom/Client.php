@@ -3,6 +3,9 @@
 namespace FourPaws\External\ZagruzkaCom;
 
 
+use FourPaws\External\Exception\SmsQuarantineException;
+use FourPaws\Helpers\SmsQuarantineHelper;
+
 class Client
 {
 
@@ -45,8 +48,13 @@ class Client
     /**
      * @param $sms Sms
      * @return \Psr\Http\Message\ResponseInterface
+     * @throws \Exception
      */
     public function send($sms) {
+
+        if (!SmsQuarantineHelper::canSend($sms->getPhone())) {
+            throw new SmsQuarantineException();
+        }
 
         $query = [
             'serviceId' => $this->login,
@@ -66,6 +74,7 @@ class Client
         ]);
 
         return $result;
+
     }
 
 }

@@ -5,7 +5,7 @@
 /**
  * @var Product $product
  * @var Offer $offer
- * @var Offer $pedestal
+ * @var Offer $additionalItem
  * @var Offer $currentOffer
  * @var OfferCollection $offerGroup
  */
@@ -19,18 +19,18 @@ use FourPaws\Helpers\WordHelper;
 
 if (!$arResult['HIDE_KIT_BLOCK']) {
     $arMessages = [
-        'external' => 'Другие внешние фильтры',
-        'internal' => 'Другие внутренние фильтры',
+        'filters' => 'Другие фильтры',
+        'decor' => 'Другие декорации',
         'lamps' => 'Другие лампы и светильники',
     ];
     $product = $arResult['PRODUCT'];
     $offer = $arResult['OFFER'];
-    $pedestal = $arResult['PEDESTAL'];
+    $additionalItem = $arResult['ADDITIONAL_ITEM'];
     $selectionOffers = $arResult['SELECTION_OFFERS'];
     $totalPrice = $offer->getCatalogPrice() +
-        $pedestal->getCatalogPrice() +
-        $selectionOffers['external']->first()->getCatalogPrice() +
-        $selectionOffers['internal']->first()->getCatalogPrice() +
+        $additionalItem->getCatalogPrice() +
+        $selectionOffers['filters']->first()->getCatalogPrice() +
+        $selectionOffers['decor']->first()->getCatalogPrice() +
         $selectionOffers['lamps']->first()->getCatalogPrice();
     ?>
     <div class="b-product-card__complect">
@@ -68,26 +68,26 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
                         </div>
 
                         <div class="b-product-card-complect__list-item slide">
-                            <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $pedestal->getId(); ?>_1" data-offerprice="<?= $pedestal->getCatalogPrice(); ?>" data-product-info='{"productid": <?= $pedestal->getProduct()->getId(); ?>, "offerid": <?= $pedestal->getId(); ?>, "offerprice": <?= $pedestal->getCatalogPrice(); ?>}' tabindex="0">
+                            <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $additionalItem->getId(); ?>_1" data-offerprice="<?= $additionalItem->getCatalogPrice(); ?>" data-product-info='{"productid": <?= $additionalItem->getProduct()->getId(); ?>, "offerid": <?= $additionalItem->getId(); ?>, "offerprice": <?= $additionalItem->getCatalogPrice(); ?>}' tabindex="0">
                                 <div class="b-common-item__image-wrap">
-                                    <a class="b-common-item__image-link js-item-link" href="<?= $pedestal->getDetailPageUrl(); ?>" tabindex="0">
-                                        <img class="b-common-item__image" src="<?= $pedestal->getResizeImages(240, 240)->first(); ?>" alt="<?= $pedestal->getName(); ?>" title="">
+                                    <a class="b-common-item__image-link js-item-link" href="<?= $additionalItem->getDetailPageUrl(); ?>" tabindex="0">
+                                        <img class="b-common-item__image" src="<?= $additionalItem->getResizeImages(240, 240)->first(); ?>" alt="<?= $additionalItem->getName(); ?>" title="">
                                     </a>
                                 </div>
                                 <div class="b-common-item__info-center-block">
-                                    <a class="b-common-item__description-wrap" href="<?= $pedestal->getDetailPageUrl(); ?>" tabindex="0">
+                                    <a class="b-common-item__description-wrap" href="<?= $additionalItem->getDetailPageUrl(); ?>" tabindex="0">
                                     <span class="b-clipped-text b-clipped-text--three">
                                         <span>
-                                            <span class="span-strong"><?= $pedestal->getProduct()->getBrandName(); ?></span> <?= $pedestal->getName(); ?>
+                                            <span class="span-strong"><?= $additionalItem->getProduct()->getBrandName(); ?></span> <?= $additionalItem->getName(); ?>
                                         </span>
                                     </span>
                                     </a>
                                     <div class="b-common-item__info">
                                         <div class="b-common-item__property">
-                                            <span class="b-common-item__property-value"><?= WordHelper::showLengthNumber($pedestal->getCatalogProduct()->getLength()); ?>x<?= WordHelper::showLengthNumber($pedestal->getCatalogProduct()->getWidth()); ?>x<?= WordHelper::showLengthNumber($pedestal->getCatalogProduct()->getHeight()); ?> см</span>
+                                            <span class="b-common-item__property-value"><?= WordHelper::showLengthNumber($additionalItem->getCatalogProduct()->getLength()); ?>x<?= WordHelper::showLengthNumber($additionalItem->getCatalogProduct()->getWidth()); ?>x<?= WordHelper::showLengthNumber($additionalItem->getCatalogProduct()->getHeight()); ?> см</span>
                                         </div>
                                         <div class="b-common-item__price">
-                                            <span class="b-common-item__price-value"><?= $pedestal->getCatalogPrice(); ?></span>
+                                            <span class="b-common-item__price-value"><?= $additionalItem->getCatalogPrice(); ?></span>
                                             <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
                                         </div>
                                     </div>
@@ -99,12 +99,12 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
                             <?
                             $currentOffer = $offerGroup->first();
                             switch ($groupKey) {
-                                case 'external':
-                                case 'internal':
+                                case 'filters':
                                     $propVal = $currentOffer->getProduct()->getPowerMax();
                                     $propUnit = ' л/ч';
                                     break;
                                 case 'lamps':
+                                case 'decor':
                                     $propVal = WordHelper::showWeightNumber($currentOffer->getCatalogProduct()->getWeight(), true);
                                     $propUnit = ' кг';
                                     break;
@@ -226,12 +226,12 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
                             }
                             $currentOfferImage = $currentOffer->getResizeImages(240, 240)->first();
                             switch ($groupKey) {
-                                case 'external':
-                                case 'internal':
+                                case 'filters':
                                     $propVal = $currentOffer->getProduct()->getPowerMax();
                                     $propUnit = ' л/ч';
                                     break;
                                 case 'lamps':
+                                case 'decor':
                                     $propVal = WordHelper::showWeightNumber($currentOffer->getCatalogProduct()->getWeight(), true);
                                     $propUnit = ' кг';
                                     break;
