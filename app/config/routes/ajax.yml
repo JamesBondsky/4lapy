@@ -66,3 +66,8 @@ comments.next:
   path: /comments/next/
   defaults: { _controller: '\FourPaws\AppBundle\AjaxController\CommentsController::nextAction' }
   methods: [GET]
+
+#dostavista:
+#    resource: '@FourPaws/External/Dostavista/AjaxController'
+#    type: annotation
+#    prefix: '/dostavista'

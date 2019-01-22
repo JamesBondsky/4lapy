@@ -23,13 +23,18 @@ use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
+use Bitrix\Sale\PropertyValue;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DostavistaDeliveryResult;
 use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\Helpers\BusinessValueHelper;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\LocationBundle\Entity\Address;
+use FourPaws\LocationBundle\Exception\AddressSplitException;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Dto\Fiscalization\CartItems;
 use FourPaws\SaleBundle\Dto\Fiscalization\CustomerDetails;
@@ -42,6 +47,7 @@ use FourPaws\SaleBundle\Dto\Fiscalization\OrderBundle;
 use FourPaws\SaleBundle\Dto\SberbankOrderInfo\Attribute;
 use FourPaws\SaleBundle\Dto\SberbankOrderInfo\OrderBundle\Item as SberbankOrderItem;
 use FourPaws\SaleBundle\Dto\SberbankOrderInfo\OrderInfo;
+use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Exception\FiscalValidation\FiscalAmountExceededException;
 use FourPaws\SaleBundle\Exception\FiscalValidation\FiscalAmountException;
@@ -869,19 +875,22 @@ class PaymentService implements LoggerAwareInterface
      * @param Order $order
      * @param OrderInfo $response
      *
+     * @throws AddressSplitException
      * @throws ArgumentException
      * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
      * @throws NotImplementedException
      * @throws ObjectException
      * @throws ObjectNotFoundException
-     * @throws PaymentException
+     * @throws ObjectPropertyException
      * @throws SberBankOrderNumberNotFoundException
      * @throws SberbankOrderNotPaidException
      * @throws SberbankOrderPaymentDeclinedException
      * @throws SberbankPaymentException
      * @throws SystemException
-     * @throws \Exception
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     protected function processOnlinePayment(Order $order, OrderInfo $response): void
     {
@@ -913,6 +922,146 @@ class PaymentService implements LoggerAwareInterface
             $onlinePayment->setField('PS_STATUS_MESSAGE', $response->getPaymentAmountInfo()->getPaymentState());
             $onlinePayment->save();
             $order->save();
+
+            $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+            $deliveryCode = $deliveryService->getDeliveryCodeById($order->getField('DELIVERY_ID'));
+            //проверяем способ доставки, если достависта, то отправляем заказ в достависту
+            if($deliveryService->isDostavistaDeliveryCode($deliveryCode)){
+                $storeService = Application::getInstance()->getContainer()->get('store.service');
+                $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+
+                $userCoords = explode(',', $order->getField('USER_COORDS_DOSTAVISTA'));
+                $storeXmlId = $order->getField('STORE_FOR_DOSTAVISTA');
+                /** @var Store $selectedStore */
+                $nearShop = $storeService->getStoreByXmlId($storeXmlId);
+                //TODO доделать
+                $dostavistaOrderId = $orderService->sendToDostavista($order, $order->getField('NAME'), $order->getField('PHONE'), $order->getField('COMMENTS'), $selectedDelivery, $nearShop);
+            }
+
+
+//
+//
+//
+//            $orderStorageService = Application::getInstance()->getContainer()->get(OrderStorageService::class);
+//            $fuserId = $order->getUserId();
+////            $fuserId = $order->getBasket()->getFUserId();
+//            /** @var OrderStorage $storage */
+//            $storage = $orderStorageService->getStorage($fuserId);
+//            $selectedDelivery = $orderStorageService->getSelectedDelivery($storage);
+//            if ($deliveryService->isDostavistaDelivery($selectedDelivery)) {
+//                $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+//                $addressService = Application::getInstance()->getContainer()->get('address.service');
+//                $locationService = Application::getInstance()->getContainer()->get('location.service');
+//                $fastOrder = $storage->isFastOrder();
+//                $userCoords = [$storage->getLng(), $storage->getLat()];
+//                /**
+//                 * @var DostavistaDeliveryResult $selectedDelivery
+//                 */
+//                $nearShop = $selectedDelivery->getNearShop($userCoords);
+//                if ($nearShop == null) {
+//                    $nearShop = $selectedDelivery->getStockResult()->first();
+//                }
+//
+//                /** @var Address $address */
+//                $address = null;
+//                $needCreateAddress = false;
+//                /**
+//                 * Для доставки - сохраняем адрес
+//                 */
+//                $address = $orderService->compileOrderAddress($order);
+//
+//                if ($needCreateAddress) {
+//                    $personalAddress = $addressService->createFromLocation($address)
+//                        ->setUserId($order->getUserId());
+//
+//                    try {
+//                        $addressService->add($personalAddress);
+//                        $storage->setAddressId($personalAddress->getId());
+//                    } catch (\Exception $e) {
+//                        $this->log()->error(sprintf('failed to save address: %s', $e->getMessage()), [
+//                            'city' => $personalAddress->getCity(),
+//                            'location' => $personalAddress->getLocation(),
+//                            'userId' => $personalAddress->getUserId(),
+//                            'street' => $personalAddress->getStreet(),
+//                            'house' => $personalAddress->getHouse(),
+//                            'housing' => $personalAddress->getHousing(),
+//                            'entrance' => $personalAddress->getEntrance(),
+//                            'floor' => $personalAddress->getFloor(),
+//                            'flat' => $personalAddress->getFlat(),
+//                        ]);
+//                    }
+//                }
+//
+//                try {
+//                    if (!$address->getRegion()) {
+//                        $location = $locationService->findLocationByCode($storage->getCityCode());
+//                        $area = [];
+//                        foreach ($location['PATH'] as $locationPathItem) {
+//                            $locationCode = $locationPathItem['CODE'];
+//                            $locationType = $locationPathItem['TYPE']['CODE'];
+//                            if (($locationType === LocationService::TYPE_REGION) ||
+//                                ($locationType === LocationService::TYPE_CITY && $locationCode === LocationService::LOCATION_CODE_MOSCOW)
+//                            ) {
+//                                $address->setRegion($locationPathItem['NAME']);
+//                            } elseif (
+//                            \in_array($locationType, [
+//                                LocationService::TYPE_SUBREGION,
+//                                LocationService::TYPE_CITY,
+//                            ], true)
+//                            ) {
+//                                $area[] = $locationPathItem['NAME'];
+//                            }
+//                        }
+//                        $address->setArea(\implode(', ', $area));
+//                    }
+//
+//                    $address = $locationService->splitAddress((string)$address, $storage->getCityCode());
+//                    if (!$address->getStreet()) {
+//                        $address->setValid(false);
+//                        $address->setStreet($storage->getStreet());
+//                    }
+//                    $orderService->setOrderPropertiesByCode($order, [
+//                        'AREA' => $address->getArea(),
+//                        'REGION' => $address->getRegion(),
+//                        'STREET' => $address->getStreet(),
+//                        'STREET_PREFIX' => $address->getStreetPrefix(),
+//                        'ZIP_CODE' => $address->getZipCode(),
+//                    ]);
+//                } catch (AddressSplitException $e) {
+//                    $this->log()->error(sprintf('failed to split delivery address: %s', $e->getMessage()), [
+//                        'fuserId' => $storage->getFuserId(),
+//                        'userId' => $storage->getUserId(),
+//                        'address' => $address,
+//                    ]);
+//                }
+//
+//                //получаем ближайший магазин по координатам адреса пользователя и коодинатам магазинов, где все в наличие
+//                if ($deliveryService->isDostavistaDelivery($selectedDelivery)) {
+//                    /**
+//                     * @var DostavistaDeliveryResult $selectedDelivery
+//                     */
+//                    $userCoords = [$storage->getLng(), $storage->getLat()];
+//                    //ищем ближайший магазин для достависты
+//                    $nearShop = $selectedDelivery->getNearShop($userCoords);
+//                }
+//                /** @var Payment $payment */
+//                foreach ($order->getPaymentCollection() as $payment) {
+//                    if (
+//                        ($payment->getPaySystem()->getField('CODE') === OrderPayment::PAYMENT_INNER || $payment->getPaySystem()->getField('CODE') === OrderPayment::PAYMENT_INNER) && $payment->isPaid() ||
+//                        $payment->getPaySystem()->getField('CODE') !== OrderPayment::PAYMENT_ONLINE && $payment->getPaySystem()->getField('CODE') !== OrderPayment::PAYMENT_INNER
+//                    ) {
+//                        $dostavistaOrderId = $orderService->sendToDostavista($order, $storage, $selectedDelivery, $nearShop);
+//                        $orderService->setOrderPropertiesByCode($order,
+//                            [
+//                                'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE,
+//                                'ORDER_ID_DOSTAVISTA' => ($dostavistaOrderId) ? $dostavistaOrderId : 0
+//                            ]
+//                        );
+//                        $order->save();
+//                        $orderService->updateCommWayProperty($order, $selectedDelivery, $fastOrder, $address, ($dostavistaOrderId) ? true : false);
+//                    }
+//                }
+//            }
         } else {
             if ($response->getOrderStatus() === Sberbank::ORDER_STATUS_DECLINED) {
                 throw new SberbankOrderPaymentDeclinedException('Order not paid');

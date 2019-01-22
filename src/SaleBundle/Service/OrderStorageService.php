@@ -213,8 +213,12 @@ class OrderStorageService
                                 $data['secondDeliveryInterval'] = $data['deliveryInterval2'];
                                 $data['deliveryDate'] = $data['deliveryDate1'];
                                 $data['secondDeliveryDate'] = $data['deliveryDate2'];
-                                $data['comment'] = $data['comment1'];
-                                $data['secondComment'] = $data['comment2'];
+                                if($deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE){
+                                    $data['comment'] = $data['comment_dostavista'];
+                                } else {
+                                    $data['comment'] = $data['comment1'];
+                                    $data['secondComment'] = $data['comment2'];
+                                }
                                 $data['split'] = 1;
                                 break;
                             default:
@@ -299,10 +303,19 @@ class OrderStorageService
 
             $setter = 'set' . ucfirst($name);
             if (method_exists($storage, $setter)) {
-                if ($name == 'deliveryId') {
-                    $storage->$setter($data['deliveryTypeId']);
-                } else {
-                    $storage->$setter($value);
+                switch ($name) {
+                    case 'deliveryId':
+                        $storage->$setter($data['deliveryTypeId']);
+                        break;
+                    case 'comment':
+                        if($step == OrderStorageEnum::DELIVERY_STEP && $deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE){
+                            $storage->$setter($data['comment_dostavista']);
+                        } elseif(isset($data['comment'])) {
+                            $storage->$setter($data['comment']);
+                        }
+                        break;
+                    default:
+                        $storage->$setter($value);
                 }
             }
         }

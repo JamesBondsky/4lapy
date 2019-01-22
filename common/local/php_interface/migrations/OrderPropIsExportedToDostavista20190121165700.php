@@ -15,6 +15,14 @@ class OrderPropIsExportedToDostavista20190121165700 extends SprintMigrationBase
         'ORDER_ID_DOSTAVISTA' => [
             'NAME' => '№ заказа в Достависте',
             'TYPE' => 'NUMBER'
+        ],
+        'USER_COORDS_DOSTAVISTA' => [
+            'NAME' => 'Координаты пользователя',
+            'TYPE' => 'STRING'
+        ],
+        'STORE_FOR_DOSTAVISTA' => [
+            'NAME' => 'Символьный код магазина',
+            'TYPE' => 'STRING'
         ]
     ];
 
@@ -22,6 +30,7 @@ class OrderPropIsExportedToDostavista20190121165700 extends SprintMigrationBase
 
     public function up()
     {
+        $i = 0;
         foreach (self::PROP_CODES as $propCode => $propValues) {
             $prop = OrderPropsTable::getList(
                 [
@@ -43,7 +52,7 @@ class OrderPropIsExportedToDostavista20190121165700 extends SprintMigrationBase
                         'PROPS_GROUP_ID' => 4,
                         'UTIL' => 'Y',
                         'IS_FILTERED' => 'Y',
-                        'SORT' => '5000'
+                        'SORT' => 8000 + $i
                     ]
                 );
                 if (!$addResult->isSuccess()) {
@@ -54,6 +63,7 @@ class OrderPropIsExportedToDostavista20190121165700 extends SprintMigrationBase
             } else {
                 $this->log()->warning('Свойство заказа ' . $propCode . ' уже существует');
             }
+            $i+=100;
         }
 
         return true;

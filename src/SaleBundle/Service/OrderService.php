@@ -548,7 +548,9 @@ class OrderService implements LoggerAwareInterface
          * Заполнение складов довоза товара для элементов корзины (кроме доставок 04 и 06)
          */
         if ($this->deliveryService->isDostavistaDelivery($selectedDelivery)) {
-            $userCoords = [$storage->getLng(), $storage->getLat()];
+            $lng = $storage->getLng();
+            $lat = $storage->getLat();
+            $userCoords = [$lng, $lat];
             /**
              * @var DostavistaDeliveryResult $selectedDelivery
              */
@@ -561,6 +563,12 @@ class OrderService implements LoggerAwareInterface
                 $item,
                 'SHIPMENT_PLACE_CODE',
                 $nearShop->getXmlId()
+            );
+            $this->setOrderPropertiesByCode($order,
+                [
+                    'USER_COORDS_DOSTAVISTA' => $lng . ',' . $lat,
+                    'STORE_FOR_DOSTAVISTA' => $nearShop->getXmlId()
+                ]
             );
         } elseif (!($selectedDelivery->getStockResult()->getDelayed()->isEmpty() &&
             (
@@ -1065,13 +1073,21 @@ class OrderService implements LoggerAwareInterface
                 }
 
                 //получаем ближайший магазин по координатам адреса пользователя и коодинатам магазинов, где все в наличие
-                if($this->deliveryService->isDostavistaDelivery($selectedDelivery)){
+                if ($this->deliveryService->isDostavistaDelivery($selectedDelivery)) {
+                    $lng = $storage->getLng();
+                    $lat = $storage->getLat();
                     /**
                      * @var DostavistaDeliveryResult $selectedDelivery
                      */
-                    $userCoords = [$storage->getLng(), $storage->getLat()];
+                    $userCoords = [$lng, $lat];
                     //ищем ближайший магазин для достависты
                     $nearShop = $selectedDelivery->getNearShop($userCoords);
+                    $this->setOrderPropertiesByCode($order,
+                        [
+                            'USER_COORDS_DOSTAVISTA' => $lng . ',' . $lat,
+                            'STORE_FOR_DOSTAVISTA' => $nearShop->getXmlId()
+                        ]
+                    );
                 }
             } else {
                 /**
@@ -1130,8 +1146,11 @@ class OrderService implements LoggerAwareInterface
             if ($this->deliveryService->isDostavistaDelivery($selectedDelivery)) {
                 /** @var Payment $payment */
                 foreach ($order->getPaymentCollection() as $payment) {
-                    if ($payment->getPaySystem()->getField('CODE') === OrderPayment::PAYMENT_ONLINE && $payment->isPaid() || $payment->getPaySystem()->getField('CODE') !== OrderPayment::PAYMENT_ONLINE) {
-                        $dostavistaOrderId = $this->sendToDostavista($order, $storage, $selectedDelivery, $nearShop);
+                    if (
+                        ($payment->getPaySystem()->getField('CODE') === OrderPayment::PAYMENT_INNER || $payment->getPaySystem()->getField('CODE') === OrderPayment::PAYMENT_INNER) && $payment->isPaid() ||
+                        $payment->getPaySystem()->getField('CODE') !== OrderPayment::PAYMENT_ONLINE && $payment->getPaySystem()->getField('CODE') !== OrderPayment::PAYMENT_INNER
+                    ) {
+                        $dostavistaOrderId = $this->sendToDostavista($order, $storage->getName(), $storage->getPhone(), $storage->getComment(), $selectedDelivery, $nearShop);
                         $this->setOrderPropertiesByCode($order,
                             [
                                 'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE,
@@ -1631,7 +1650,7 @@ class OrderService implements LoggerAwareInterface
      * @param bool $dostavistaSuccess
      * @throws DeliveryNotFoundException
      */
-    protected function updateCommWayProperty(
+    public function updateCommWayProperty(
         Order $order,
         CalculationResultInterface $delivery,
         bool $isFastOrder = false,
@@ -1719,7 +1738,7 @@ class OrderService implements LoggerAwareInterface
      *
      * @return Address
      */
-    protected function compileOrderAddress(Order $order): Address
+    public function compileOrderAddress(Order $order): Address
     {
         $properties = $this->getOrderPropertiesByCode($order, [
             'REGION',
@@ -1844,11 +1863,14 @@ class OrderService implements LoggerAwareInterface
         return sprintf('/sale/order/interview/%d/?HASH=%s', $order->getId(), $order->getHash());
     }
 
+
     /**
      * @param Order $order
-     * @param OrderStorage $storage
+     * @param string $name
+     * @param string $phone
+     * @param string $comment
      * @param CalculationResultInterface $selectedDelivery
-     * @param Store $nearShop
+     * @param Store|null $nearShop
      * @return string
      * @throws AddressSplitException
      * @throws ArgumentException
@@ -1856,7 +1878,7 @@ class OrderService implements LoggerAwareInterface
      * @throws SystemException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    private function sendToDostavista(Order $order, OrderStorage $storage, CalculationResultInterface $selectedDelivery, Store $nearShop = null): string
+    public function sendToDostavista(Order $order, string $name, string $phone, string $comment, CalculationResultInterface $selectedDelivery, Store $nearShop = null): string
     {
         if ($nearShop == null) {
             $nearShop = $selectedDelivery->getStockResult()->first();
@@ -1908,18 +1930,20 @@ class OrderService implements LoggerAwareInterface
             'required_time_start' => $pointZeroDate->format('c'),
             'required_time' => $pointZeroDate->modify(\sprintf('+%s minutes', $selectedDelivery->getPeriodTo()))->format('c'),
             'phone' => $storePhone,
-            'client_order_id' => $order->getId()
+            'client_order_id' => $order->getId(),
+            'taking' => 0
         ];
 
         $data['point'][1] = [
             'address' => $this->getOrderDeliveryAddress($order),
             'required_time_start' => $curDate->format('c'),
             'required_time' => $curDate->modify(\sprintf('+%s minutes', $selectedDelivery->getPeriodTo()))->format('c'),
-            'contact_person' => $storage->getName(),
-            'phone' => $storage->getPhone(),
+            'contact_person' => $name,
+            'phone' => $phone,
             'weight' => $weigth,
             'client_order_id' => $order->getId(),
-            'note' => $storage->getComment()
+            'note' => $comment,
+            'taking' => 0
         ];
 
         $dostavistaOrderId = $dostavistaService->addOrder($data)['order_id'];
