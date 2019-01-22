@@ -547,7 +547,22 @@ class OrderService implements LoggerAwareInterface
         /**
          * Заполнение складов довоза товара для элементов корзины (кроме доставок 04 и 06)
          */
-        if (!($selectedDelivery->getStockResult()->getDelayed()->isEmpty() &&
+        if ($this->deliveryService->isDostavistaDelivery($selectedDelivery)) {
+            $userCoords = [$storage->getLng(), $storage->getLat()];
+            /**
+             * @var DostavistaDeliveryResult $selectedDelivery
+             */
+            $nearShop = $selectedDelivery->getNearShop($userCoords);
+            if ($nearShop == null) {
+                $nearShop = $selectedDelivery->getStockResult()->first();
+            }
+            $selectedDelivery->getStockResult();
+            $this->basketService->setBasketItemPropertyValue(
+                $item,
+                'SHIPMENT_PLACE_CODE',
+                $nearShop->getXmlId()
+            );
+        } elseif (!($selectedDelivery->getStockResult()->getDelayed()->isEmpty() &&
             (
                 ($this->deliveryService->isInnerDelivery($selectedDelivery) && $selectedDelivery->getSelectedStore()->isShop()) ||
                 $this->deliveryService->isInnerPickup($selectedDelivery)
@@ -1113,15 +1128,20 @@ class OrderService implements LoggerAwareInterface
             }
 
             if ($this->deliveryService->isDostavistaDelivery($selectedDelivery)) {
-                $dostavistaOrderId = $this->sendToDostavista($order, $storage, $selectedDelivery, $nearShop);
-                $this->setOrderPropertiesByCode($order,
-                    [
-                        'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE,
-                        'ORDER_ID_DOSTAVISTA' => ($dostavistaOrderId) ? $dostavistaOrderId : 0
-                    ]
-                );
-                $order->save();
-                $this->updateCommWayProperty($order, $selectedDelivery, $fastOrder, $address, ($dostavistaOrderId) ? true : false);
+                /** @var Payment $payment */
+                foreach ($order->getPaymentCollection() as $payment) {
+                    if ($payment->getPaySystem()->getField('CODE') === OrderPayment::PAYMENT_ONLINE && $payment->isPaid() || $payment->getPaySystem()->getField('CODE') !== OrderPayment::PAYMENT_ONLINE) {
+                        $dostavistaOrderId = $this->sendToDostavista($order, $storage, $selectedDelivery, $nearShop);
+                        $this->setOrderPropertiesByCode($order,
+                            [
+                                'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE,
+                                'ORDER_ID_DOSTAVISTA' => ($dostavistaOrderId) ? $dostavistaOrderId : 0
+                            ]
+                        );
+                        $order->save();
+                        $this->updateCommWayProperty($order, $selectedDelivery, $fastOrder, $address, ($dostavistaOrderId) ? true : false);
+                    }
+                }
             }
         } catch (\Exception $e) {
             /** ошибка при создании заказа - удаляем ошибочный заказ, если он был создан */
