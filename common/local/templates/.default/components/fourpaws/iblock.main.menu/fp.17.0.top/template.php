@@ -121,10 +121,12 @@ foreach ($arResult['MENU_TREE'] as $arFirstLevelItem) {
                         <li class="b-menu-main__item">
                             <a class="b-menu-main__link js-active-submenu <?=$arSecondLevelItem['NESTED'] ? ' js-open-step-mobile' : ''?>"<?= $arSecondLevelItem['_LINK_ATTR2_'] ?>
                                href="<?= $arSecondLevelItem['_URL_'] ?>">
+                               <!--noindex-->
                                 <?php echo $arSecondLevelItem['_TEXT_'];
                                 if ($arSecondLevelItem['NESTED']) {
                                     echo $sArrowDownIcoSecond;
                                 } ?>
+                                <!--/noindex-->
                             </a>
                             <?php if ($arSecondLevelItem['NESTED']) { ?>
                                 <div class="b-menu-main__submenu js-submenu js-step-mobile">
@@ -140,10 +142,12 @@ foreach ($arResult['MENU_TREE'] as $arFirstLevelItem) {
                                             <div class="b-submenu-column">
                                                 <a class="b-link b-link--submenu <?=$arThirdLevelItem['NESTED'] ? ' js-open-step-mobile js-open-step-mobile--submenu' : ''?>"<?= $arThirdLevelItem['_LINK_ATTR2_'] ?>
                                                    href="<?= $arThirdLevelItem['_URL_'] ?>">
+                                                   <!--noindex-->
                                                     <?php echo '<span class="b-link__text b-link__text--submenu">' . $arThirdLevelItem['_TEXT_'] . '</span>';
                                                     if ($arThirdLevelItem['NESTED']) {
                                                         echo $sArrowDownIcoThird;
                                                     } ?>
+                                                    <!--/noindex-->
                                                 </a>
                                                 <?php if ($arThirdLevelItem['NESTED']) { ?>
                                                     <ul class="b-submenu-column__list js-step-mobile">
@@ -159,8 +163,10 @@ foreach ($arResult['MENU_TREE'] as $arFirstLevelItem) {
                                                                 <li class="b-submenu-column__item">
                                                                     <a class="b-submenu-column__link"<?= $arFourthLevelItem['_LINK_ATTR1_'] ?>
                                                                        href="<?= $arFourthLevelItem['_URL_'] ?>">
+                                                                        <!--noindex-->
                                                                         <?php echo $arFourthLevelItem['_TEXT_'];
                                                                         //                                                                        echo $sArrowDownIcoFourth; ?>
+                                                                        <!--/noindex-->
                                                                     </a>
                                                                 </li>
                                                             <?php }
@@ -178,10 +184,14 @@ foreach ($arResult['MENU_TREE'] as $arFirstLevelItem) {
                                             <div class="b-menu-main__title js-open-step-mobile">
                                                 <?php //* ?>
                                                 <a class="b-link b-link--brand-menu js-not-href js-not-href--brand-menu"
-                                                   href="<?= $sTmpUrl ?>" title="<?= $sTmpTitle ?>"><?php
+                                                   href="<?= $sTmpUrl ?>" title="<?= $sTmpTitle ?>">
+                                                   <!--noindex-->
+                                                   <?php
                                                     echo '<span class="b-link__text b-link__text--brand-menu">' . $sTmpText . '</span>';
                                                     echo $sArrowDownIcoThird;
-                                                    ?></a><?php
+                                                    ?>
+                                                    <!--/noindex-->
+                                                </a><?php
                                                 /*/
                                                 ?><span class="b-link b-link--brand-menu js-not-href js-not-href--brand-menu"><?php
                                                     echo '<span class="b-link__text b-link__text--brand-menu">'.$sTmpText.'</span>';
