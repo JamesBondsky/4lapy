@@ -1956,9 +1956,9 @@ class OrderService implements LoggerAwareInterface
         $hours = $pointZeroDate->format('H');
         $minutes = $pointZeroDate->format('i');
 
-        if (0 <= $minutes && $minutes < 30) {
+        if (0 <= $minutes && $minutes <= 30) {
             $minutes = 0;
-        } elseif (30 <= $minutes && $minutes <= 59) {
+        } elseif (30 < $minutes && $minutes <= 59) {
             $minutes = 30;
         }
 
