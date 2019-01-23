@@ -71,6 +71,7 @@ use JMS\Serializer\ArrayTransformerInterface;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Bitrix\Sale\Delivery\Services\Table as ServicesTable;
 
 /**
  * Class PaymentService
@@ -923,145 +924,56 @@ class PaymentService implements LoggerAwareInterface
             $onlinePayment->save();
             $order->save();
 
+            /** Отправка данных в достависту */
             $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
-            $deliveryCode = $deliveryService->getDeliveryCodeById($order->getField('DELIVERY_ID'));
+            $deliveryId = $order->getField('DELIVERY_ID');
+            $deliveryCode = $deliveryService->getDeliveryCodeById($deliveryId);
+            $deliveryData = ServicesTable::getById($deliveryId)->fetch();
             //проверяем способ доставки, если достависта, то отправляем заказ в достависту
-            if($deliveryService->isDostavistaDeliveryCode($deliveryCode)){
+            if ($deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
                 $storeService = Application::getInstance()->getContainer()->get('store.service');
+                /** @var LocationService $locationService */
+                $locationService = Application::getInstance()->getContainer()->get('location.service');
                 $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
-
-                $userCoords = explode(',', $order->getField('USER_COORDS_DOSTAVISTA'));
-                $storeXmlId = $order->getField('STORE_FOR_DOSTAVISTA');
+                $orderPropertyCollection = $order->getPropertyCollection();
+                $comments = $order->getField('USER_DESCRIPTION');
+                if (is_null($comments)) {
+                    $comments = '';
+                }
+                /** @var PropertyValue $item */
+                foreach ($orderPropertyCollection as $item) {
+                    switch ($item->getProperty()['CODE']) {
+                        case 'STORE_FOR_DOSTAVISTA':
+                            $storeXmlId = $item->getValue();
+                            break;
+                        case 'NAME':
+                            $name = $item->getValue();
+                            break;
+                        case 'PHONE':
+                            $phone = $item->getValue();
+                            break;
+                    }
+                }
                 /** @var Store $selectedStore */
                 $nearShop = $storeService->getStoreByXmlId($storeXmlId);
-                //TODO доделать
-                $dostavistaOrderId = $orderService->sendToDostavista($order, $order->getField('NAME'), $order->getField('PHONE'), $order->getField('COMMENTS'), $selectedDelivery, $nearShop);
+                $periodTo = $deliveryData['CONFIG']['MAIN']['PERIOD']['TO'];
+                $address = $orderService->compileOrderAddress($order)->setValid(true);
+//              $address->setValid($locationService->validateAddress($address));
+                if (!(isset($order) && $name && $phone && $periodTo && $nearShop)) {
+                    $dostavistaOrderId = 0;
+                } else {
+                    $dostavistaOrderId = $orderService->sendToDostavista($order, $name, $phone, $comments, $periodTo, $nearShop);
+                }
+                $orderService->setOrderPropertiesByCode(
+                    $order,
+                    [
+                        'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE,
+                        'ORDER_ID_DOSTAVISTA' => ($dostavistaOrderId) ? $dostavistaOrderId : 0
+                    ]
+                );
+                $orderService->updateCommWayPropertyEx($order, $deliveryCode, $address, ($dostavistaOrderId) ? true : false);
+                $order->save();
             }
-
-
-//
-//
-//
-//            $orderStorageService = Application::getInstance()->getContainer()->get(OrderStorageService::class);
-//            $fuserId = $order->getUserId();
-////            $fuserId = $order->getBasket()->getFUserId();
-//            /** @var OrderStorage $storage */
-//            $storage = $orderStorageService->getStorage($fuserId);
-//            $selectedDelivery = $orderStorageService->getSelectedDelivery($storage);
-//            if ($deliveryService->isDostavistaDelivery($selectedDelivery)) {
-//                $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
-//                $addressService = Application::getInstance()->getContainer()->get('address.service');
-//                $locationService = Application::getInstance()->getContainer()->get('location.service');
-//                $fastOrder = $storage->isFastOrder();
-//                $userCoords = [$storage->getLng(), $storage->getLat()];
-//                /**
-//                 * @var DostavistaDeliveryResult $selectedDelivery
-//                 */
-//                $nearShop = $selectedDelivery->getNearShop($userCoords);
-//                if ($nearShop == null) {
-//                    $nearShop = $selectedDelivery->getStockResult()->first();
-//                }
-//
-//                /** @var Address $address */
-//                $address = null;
-//                $needCreateAddress = false;
-//                /**
-//                 * Для доставки - сохраняем адрес
-//                 */
-//                $address = $orderService->compileOrderAddress($order);
-//
-//                if ($needCreateAddress) {
-//                    $personalAddress = $addressService->createFromLocation($address)
-//                        ->setUserId($order->getUserId());
-//
-//                    try {
-//                        $addressService->add($personalAddress);
-//                        $storage->setAddressId($personalAddress->getId());
-//                    } catch (\Exception $e) {
-//                        $this->log()->error(sprintf('failed to save address: %s', $e->getMessage()), [
-//                            'city' => $personalAddress->getCity(),
-//                            'location' => $personalAddress->getLocation(),
-//                            'userId' => $personalAddress->getUserId(),
-//                            'street' => $personalAddress->getStreet(),
-//                            'house' => $personalAddress->getHouse(),
-//                            'housing' => $personalAddress->getHousing(),
-//                            'entrance' => $personalAddress->getEntrance(),
-//                            'floor' => $personalAddress->getFloor(),
-//                            'flat' => $personalAddress->getFlat(),
-//                        ]);
-//                    }
-//                }
-//
-//                try {
-//                    if (!$address->getRegion()) {
-//                        $location = $locationService->findLocationByCode($storage->getCityCode());
-//                        $area = [];
-//                        foreach ($location['PATH'] as $locationPathItem) {
-//                            $locationCode = $locationPathItem['CODE'];
-//                            $locationType = $locationPathItem['TYPE']['CODE'];
-//                            if (($locationType === LocationService::TYPE_REGION) ||
-//                                ($locationType === LocationService::TYPE_CITY && $locationCode === LocationService::LOCATION_CODE_MOSCOW)
-//                            ) {
-//                                $address->setRegion($locationPathItem['NAME']);
-//                            } elseif (
-//                            \in_array($locationType, [
-//                                LocationService::TYPE_SUBREGION,
-//                                LocationService::TYPE_CITY,
-//                            ], true)
-//                            ) {
-//                                $area[] = $locationPathItem['NAME'];
-//                            }
-//                        }
-//                        $address->setArea(\implode(', ', $area));
-//                    }
-//
-//                    $address = $locationService->splitAddress((string)$address, $storage->getCityCode());
-//                    if (!$address->getStreet()) {
-//                        $address->setValid(false);
-//                        $address->setStreet($storage->getStreet());
-//                    }
-//                    $orderService->setOrderPropertiesByCode($order, [
-//                        'AREA' => $address->getArea(),
-//                        'REGION' => $address->getRegion(),
-//                        'STREET' => $address->getStreet(),
-//                        'STREET_PREFIX' => $address->getStreetPrefix(),
-//                        'ZIP_CODE' => $address->getZipCode(),
-//                    ]);
-//                } catch (AddressSplitException $e) {
-//                    $this->log()->error(sprintf('failed to split delivery address: %s', $e->getMessage()), [
-//                        'fuserId' => $storage->getFuserId(),
-//                        'userId' => $storage->getUserId(),
-//                        'address' => $address,
-//                    ]);
-//                }
-//
-//                //получаем ближайший магазин по координатам адреса пользователя и коодинатам магазинов, где все в наличие
-//                if ($deliveryService->isDostavistaDelivery($selectedDelivery)) {
-//                    /**
-//                     * @var DostavistaDeliveryResult $selectedDelivery
-//                     */
-//                    $userCoords = [$storage->getLng(), $storage->getLat()];
-//                    //ищем ближайший магазин для достависты
-//                    $nearShop = $selectedDelivery->getNearShop($userCoords);
-//                }
-//                /** @var Payment $payment */
-//                foreach ($order->getPaymentCollection() as $payment) {
-//                    if (
-//                        ($payment->getPaySystem()->getField('CODE') === OrderPayment::PAYMENT_INNER || $payment->getPaySystem()->getField('CODE') === OrderPayment::PAYMENT_INNER) && $payment->isPaid() ||
-//                        $payment->getPaySystem()->getField('CODE') !== OrderPayment::PAYMENT_ONLINE && $payment->getPaySystem()->getField('CODE') !== OrderPayment::PAYMENT_INNER
-//                    ) {
-//                        $dostavistaOrderId = $orderService->sendToDostavista($order, $storage, $selectedDelivery, $nearShop);
-//                        $orderService->setOrderPropertiesByCode($order,
-//                            [
-//                                'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE,
-//                                'ORDER_ID_DOSTAVISTA' => ($dostavistaOrderId) ? $dostavistaOrderId : 0
-//                            ]
-//                        );
-//                        $order->save();
-//                        $orderService->updateCommWayProperty($order, $selectedDelivery, $fastOrder, $address, ($dostavistaOrderId) ? true : false);
-//                    }
-//                }
-//            }
         } else {
             if ($response->getOrderStatus() === Sberbank::ORDER_STATUS_DECLINED) {
                 throw new SberbankOrderPaymentDeclinedException('Order not paid');

@@ -1150,8 +1150,12 @@ class OrderService implements LoggerAwareInterface
                         ($payment->getPaySystem()->getField('CODE') === OrderPayment::PAYMENT_INNER || $payment->getPaySystem()->getField('CODE') === OrderPayment::PAYMENT_INNER) && $payment->isPaid() ||
                         $payment->getPaySystem()->getField('CODE') !== OrderPayment::PAYMENT_ONLINE && $payment->getPaySystem()->getField('CODE') !== OrderPayment::PAYMENT_INNER
                     ) {
-                        $dostavistaOrderId = $this->sendToDostavista($order, $storage->getName(), $storage->getPhone(), $storage->getComment(), $selectedDelivery, $nearShop);
-                        $this->setOrderPropertiesByCode($order,
+                        if ($nearShop == null) {
+                            $nearShop = $selectedDelivery->getStockResult()->first();
+                        }
+                        $dostavistaOrderId = $this->sendToDostavista($order, $storage->getName(), $storage->getPhone(), $storage->getComment(), $selectedDelivery->getPeriodTo(), $nearShop);
+                        $this->setOrderPropertiesByCode(
+                            $order,
                             [
                                 'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE,
                                 'ORDER_ID_DOSTAVISTA' => ($dostavistaOrderId) ? $dostavistaOrderId : 0
@@ -1714,6 +1718,34 @@ class OrderService implements LoggerAwareInterface
 
     /**
      * @param Order $order
+     * @param CalculationResultInterface $delivery
+     * @param bool $isFastOrder
+     * @param Address|null $address
+     * @param bool $dostavistaSuccess
+     * @throws DeliveryNotFoundException
+     */
+    public function updateCommWayPropertyEx(
+        Order $order,
+        $deliveryCode,
+        ?Address $address = null,
+        bool $dostavistaSuccess = null
+    ): void {
+        $commWay = $this->getOrderPropertyByCode($order, 'COM_WAY');
+        $value = $commWay->getValue();
+
+        if (!$changed) {
+            switch (true) {
+                case $deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE && !is_null($dostavistaSuccess) && (!$address || !$address->isValid() || !$dostavistaSuccess):
+                    $value = OrderPropertyService::COMMUNICATION_DOSTAVISTA_ERROR;
+                    break;
+            }
+        }
+
+        $commWay->setValue($value);
+    }
+
+    /**
+     * @param Order $order
      *
      * @throws NotFoundException
      * @throws ArgumentException
@@ -1878,11 +1910,8 @@ class OrderService implements LoggerAwareInterface
      * @throws SystemException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function sendToDostavista(Order $order, string $name, string $phone, string $comment, CalculationResultInterface $selectedDelivery, Store $nearShop = null): string
+    public function sendToDostavista(Order $order, string $name, string $phone, string $comment, string $periodTo, Store $nearShop = null): string
     {
-        if ($nearShop == null) {
-            $nearShop = $selectedDelivery->getStockResult()->first();
-        }
         $curDate = (new \DateTime)->modify('+10 minutes');
         /** @var DostavistaService $dostavistaService */
         $dostavistaService = Application::getInstance()->getContainer()->get('dostavista.service');
@@ -1921,14 +1950,27 @@ class OrderService implements LoggerAwareInterface
         $nearAddress = $this->locationService->splitAddress($nearAddressString, $nearShop->getLocation());
 
         $pointZeroDate = clone $curDate;
+        $requireTimeStart = $pointZeroDate->format('c');
+
+        $pointZeroDate->modify(\sprintf('+%s minutes', $periodTo));
+        $hours = $pointZeroDate->format('H');
+        $minutes = $pointZeroDate->format('i');
+
+        if (0 <= $minutes && $minutes < 30) {
+            $minutes = 0;
+        } elseif (30 <= $minutes && $minutes <= 59) {
+            $minutes = 30;
+        }
+
+        $pointZeroDate->setTime($hours, $minutes, 0);
 
         $storePhone = str_replace(['+', '(', ')', ' ', '-'], ['', '', '', '', ''], $nearShop->getPhone());
         $storePhone = explode(',доб.', $storePhone)[0];
 
         $data['point'][0] = [
             'address' => (string)$nearAddress,
-            'required_time_start' => $pointZeroDate->format('c'),
-            'required_time' => $pointZeroDate->modify(\sprintf('+%s minutes', $selectedDelivery->getPeriodTo()))->format('c'),
+            'required_time_start' => $requireTimeStart,
+            'required_time' => $pointZeroDate->format('c'),
             'phone' => $storePhone,
             'client_order_id' => $order->getId(),
             'taking' => 0
@@ -1936,8 +1978,8 @@ class OrderService implements LoggerAwareInterface
 
         $data['point'][1] = [
             'address' => $this->getOrderDeliveryAddress($order),
-            'required_time_start' => $curDate->format('c'),
-            'required_time' => $curDate->modify(\sprintf('+%s minutes', $selectedDelivery->getPeriodTo()))->format('c'),
+            'required_time_start' => $requireTimeStart,
+            'required_time' => $pointZeroDate->format('c'),
             'contact_person' => $name,
             'phone' => $phone,
             'weight' => $weigth,
