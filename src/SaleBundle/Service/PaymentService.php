@@ -933,7 +933,7 @@ class PaymentService implements LoggerAwareInterface
             if ($deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
                 $storeService = Application::getInstance()->getContainer()->get('store.service');
                 /** @var LocationService $locationService */
-                $locationService = Application::getInstance()->getContainer()->get('location.service');
+//                $locationService = Application::getInstance()->getContainer()->get('location.service');
                 $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
                 $orderPropertyCollection = $order->getPropertyCollection();
                 $comments = $order->getField('USER_DESCRIPTION');

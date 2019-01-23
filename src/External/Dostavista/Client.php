@@ -155,7 +155,7 @@ class Client
 
     /**
      * @param $data
-     * @return array|bool
+     * @return array
      */
     public function checkOrderFields($data)
     {
@@ -204,7 +204,7 @@ class Client
                 ]
             ];
         }
-        return true;
+        return [];
     }
 
     /**
@@ -215,7 +215,7 @@ class Client
     public function addOrder($data): array
     {
         //проверка заполненности обязательных полей
-        if ($resCheck = $this->checkOrderFields($data) !== true) {
+        if (count($resCheck = $this->checkOrderFields($data)) > 0) {
             return $resCheck;
         }
 
@@ -238,17 +238,13 @@ class Client
     }
 
     /**
+     * @param $orderId
      * @param $data
      * @return array
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function editOrder($orderId, $data): array
     {
-        //проверка заполненности обязательных полей
-        if ($resCheck = $this->checkOrderFields($data) !== true) {
-            return $resCheck;
-        }
-
         if ($this->testMode) {
             $this->url = self::URL_EDIT_ORDER_TEST;
         } else {
@@ -258,7 +254,8 @@ class Client
         $options['query'] = array_merge(
             [
                 'token' => $this->token,
-                'client_id' => $this->clientId
+                'client_id' => $this->clientId,
+                'order_id' => (int) $orderId
             ],
             $data
         );

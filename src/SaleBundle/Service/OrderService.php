@@ -1972,7 +1972,7 @@ class OrderService implements LoggerAwareInterface
             'required_time_start' => $requireTimeStart,
             'required_time' => $pointZeroDate->format('c'),
             'phone' => $storePhone,
-            'client_order_id' => $order->getId(),
+            'client_order_id' => $order->getField('ACCOUNT_NUMBER'),
             'taking' => 0
         ];
 
@@ -1983,7 +1983,7 @@ class OrderService implements LoggerAwareInterface
             'contact_person' => $name,
             'phone' => $phone,
             'weight' => $weigth,
-            'client_order_id' => $order->getId(),
+            'client_order_id' => $order->getField('ACCOUNT_NUMBER'),
             'note' => $comment,
             'taking' => 0
         ];

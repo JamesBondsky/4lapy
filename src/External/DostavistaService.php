@@ -71,12 +71,12 @@ class DostavistaService implements LoggerAwareInterface
     }
 
     /**
-     * @param int $orderId
+     * @param string $orderId
      * @param array $data
      * @return array
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function editOrder(int $orderId, array $data)
+    public function editOrder(string $orderId, array $data)
     {
         //проверяем коннект
         $res = $this->client->checkConnection();

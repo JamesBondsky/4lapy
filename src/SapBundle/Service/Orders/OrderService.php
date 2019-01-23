@@ -7,6 +7,7 @@
 namespace FourPaws\SapBundle\Service\Orders;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Catalog\Product\Basket as CatalogBasket;
@@ -31,6 +32,7 @@ use Bitrix\Sale\Shipment;
 use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
+use FourPaws\App\Application;
 use FourPaws\App\Env;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -70,6 +72,9 @@ use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
+use FourPaws\SaleBundle\Service\OrderService as SaleOrderService;
+
+
 
 /**
  * Class OrderService
@@ -828,6 +833,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                                      ->getDeliveryPointCode())
                     ? DeliveryService::DPD_PICKUP_CODE
                     : DeliveryService::DPD_DELIVERY_CODE;
+                break;
+            case SapOrder::DELIVERY_TYPE_DOSTAVISTA:
+                $deliveryCode = DeliveryService::DELIVERY_DOSTAVISTA_CODE;
+                break;
         }
 
 
@@ -1049,14 +1058,12 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     }
 
     /**
-     * @param Order      $order
+     * @param Order $order
      * @param OrderDtoIn $orderDto
      *
-     * @throws NotFoundOrderShipmentException
-     * @throws NotFoundOrderStatusException
-     * @throws ArgumentException
      * @return string
-     *
+     * @throws ArgumentException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     private function setStatusFromDto(Order $order, OrderDtoIn $orderDto): string
     {
@@ -1080,6 +1087,29 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 'STATUS_ID',
                 $this->statusService->getStatusBySapStatus($deliveryCode, $orderDto->getStatus())
             );
+            $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+            if ($deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
+                /** @var OrderService $locationService */
+                $dostavistaService = Application::getInstance()->getContainer()->get('dostavista.service');
+                $orderService = Application::getInstance()->getContainer()->get(SaleOrderService::class);
+                $dostavistaStatus = StatusService::STATUS_SITE_DOSTAVISTA_MAP[$orderDto->getStatus()];
+                if ($dostavistaStatus) {
+                    foreach($order->getPropertyCollection() as $item){
+                        if ($item->getProperty()['CODE'] == 'ORDER_ID_DOSTAVISTA') {
+                            $dostavistaOrder = $item->getValue();
+                            break;
+                        }
+                    }
+                    $dostavistaOrderId = $dostavistaService->editOrder($dostavistaOrder, ['status' => $dostavistaStatus]);
+                    $orderService->setOrderPropertiesByCode(
+                        $order,
+                        [
+                            'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE,
+                            'ORDER_ID_DOSTAVISTA' => ($dostavistaOrderId) ? $dostavistaOrderId : 0
+                        ]
+                    );
+                }
+            }
         }
 
         return $status;
