@@ -12,6 +12,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\MainTemplate;
 use FourPaws\Enum\UserGroup;
 use FourPaws\External\Manzana\Model\Client;
+use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
@@ -27,6 +28,7 @@ use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use FourPaws\UserBundle\Service\UserPasswordService;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use FourPaws\UserBundle\Service\UserSearchInterface;
+use FourPaws\UserBundle\Service\UserService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use WebArch\BitrixCache\BitrixCache;
@@ -265,12 +267,18 @@ class Event extends BaseServiceHandler
 
             unset($_SESSION['NOT_MANZANA_UPDATE']);
 
+            /**
+             * @var UserService $userService
+             */
             $userService = $container->get(CurrentUserProviderInterface::class);
             $user = $userService->getUserRepository()->find((int)$fields['ID']);
             if ($user === null) {
                 return false;
             }
 
+            /**
+             * @var ManzanaService $manzanaService
+             */
             $manzanaService = $container->get('manzana.service');
 
             $client = new Client();
