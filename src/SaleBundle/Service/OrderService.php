@@ -1912,7 +1912,7 @@ class OrderService implements LoggerAwareInterface
      */
     public function sendToDostavista(Order $order, string $name, string $phone, string $comment, string $periodTo, Store $nearShop = null): string
     {
-        $curDate = (new \DateTime)->modify('+10 minutes');
+        $curDate = (new \DateTime)->modify('+5 minutes');
         /** @var DostavistaService $dostavistaService */
         $dostavistaService = Application::getInstance()->getContainer()->get('dostavista.service');
         //импорт в Достависту
