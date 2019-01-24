@@ -32,7 +32,7 @@ $APPLICATION->SetTitle('');
                     </div>
                 </div>
                 <div class="form-group">
-                    <input type="text" id="SUM_REG_CHECK_GRANDIN" name="SUM_REG_CHECK_GRANDIN" value="" placeholder="Сумма чека (не менее 1800р)" >
+                    <input data-price-check-landing="true" type="price" id="SUM_REG_CHECK_GRANDIN" name="SUM_REG_CHECK_GRANDIN" value="" placeholder="Сумма чека (не менее 1800р)" >
                     <div class="b-error">
                         <span class="js-message"></span>
                     </div>
