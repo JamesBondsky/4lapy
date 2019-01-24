@@ -97,52 +97,10 @@ class PaymentService
                     throw new \Exception($response['error']['message'], $response['error']['code']);
                 }
                 break;
-
             default:
-                // $this->addError('required_params_missed');
+                throw new \Exception("Unsupported pay type " . $payType);
                 break;
         }
-
-        if ($payType == 'applepay' || $payType == 'android') {
-
-            var_dump($response);
-
-            if (($response['orderStatus']['orderStatus'] == 1)) { //hold
-                $arFieldsBlock = array(
-                    "PS_SUM" => $response['orderStatus']["amount"] / 100,
-                    // "PS_CURRENCY" => $sbrf->getCurrenciesISO($response['orderStatus']["currency"]),
-                    // "PS_RESPONSE_DATE" => Date(CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL", LANG))),
-                    "PAYED" => "N",
-                    "PS_STATUS" => "N",
-                    "PS_STATUS_CODE" => "Hold",
-                    "PS_STATUS_DESCRIPTION" => GetMessage("WF.SBRF_PS_CURSTAT") . GetMessage("WF.SBRF_PS_STATUS_DESC_HOLD") . "; " . GetMessage("WF.SBRF_PS_CARDNUMBER") . $response['orderStatus']["cardAuthInfo"]["pan"] . "; " . GetMessage("WF.SBRF_PS_CARDHOLDER") . $response['orderStatus']['cardAuthInfo']["cardholderName"] . "; OrderNumber:" . $response['orderStatus']['orderNumber'],
-                    "PS_STATUS_MESSAGE" => $response['orderStatus']["paymentAmountInfo"]["paymentState"],
-                    "PAY_VOUCHER_NUM" => $response['data']['orderId'], //дописываем айдишник транзакции к заказу, чтоб потом передать в сап
-                    // "PAY_VOUCHER_DATE" => Date(CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL", LANG)))
-                );
-                var_dump($arFieldsBlock);
-                // $Order->Update($OrderNumber, $arFieldsBlock);
-            }
-            if (($response['orderStatus']['orderStatus'] == 2)) { //success
-                $arFieldsSuccess = array(
-                    "PS_SUM" => $response['orderStatus']["amount"] / 100,
-                    // "PS_CURRENCY" => $sbrf->getCurrenciesISO($response['orderStatus']["currency"]),
-                    // "PS_RESPONSE_DATE" => Date(CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL", LANG))),
-                    "PAYED" => "Y",
-                    "PS_STATUS" => "Y",
-                    "PS_STATUS_CODE" => "Pay",
-                    "PS_STATUS_DESCRIPTION" => GetMessage("WF.SBRF_PS_CURSTAT") . GetMessage("WF.SBRF_PS_STATUS_DESC_PAY") . "; " . GetMessage("WF.SBRF_PS_CARDNUMBER") . $response['orderStatus']["cardAuthInfo"]["pan"] . "; " . GetMessage("WF.SBRF_PS_CARDHOLDER") . $response['orderStatus']['cardAuthInfo']["cardholderName"] . "; OrderNumber:" . $response['orderStatus']['orderNumber'],
-                    // "PS_STATUS_MESSAGE" => self::toWIN($response['orderStatus']["paymentAmountInfo"]["paymentState"]),
-                    "PAY_VOUCHER_NUM" => $response['data']['orderId'], //дописываем айдишник транзакции к заказу, чтоб потом передать в сап
-                    // "PAY_VOUCHER_DATE" => Date(CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL", LANG)))
-                );
-                var_dump($arFieldsSuccess);
-                // $Order->PayOrder($OrderNumber, "Y", true, true);
-                // $Order->Update($OrderNumber, $arFieldsSuccess);
-                // $message = GetMessage("WF.SBRF_PAY_SUCCESS_TEXT", array("#ORDER_ID#" => $arOrder["ID"]));
-            }
-        }
-
 
         return $url;
     }
