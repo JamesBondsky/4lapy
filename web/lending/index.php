@@ -26,7 +26,7 @@ $APPLICATION->SetTitle('');
             </div>
             <form data-form-registr-chek-landing="true" class="form-landing registr-check-landing__form js-form-validation" method="post" action="/" name="" enctype="multipart/form-data">
                 <div class="form-group">
-                    <input type="dateDatepicker" id="DATE_REG_CHECK_GRANDIN" name="DATE_REG_CHECK_GRANDIN" value="" placeholder="Дата чека" data-datepicker="true" >
+                    <input type="dateDatepicker" id="DATE_REG_CHECK_GRANDIN" name="DATE_REG_CHECK_GRANDIN" value="" placeholder="Дата чека" data-datepicker-landing="true" >
                     <div class="b-error">
                         <span class="js-message"></span>
                     </div>
