@@ -37,7 +37,6 @@ use FourPaws\Search\Model\Navigation;
 use FourPaws\Search\SearchService;
 use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\UserBundle\Service\UserService;
-use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct\BundleItem as BundleItemOffer;
 use Symfony\Component\HttpFoundation\Request;
 
 
@@ -153,7 +152,10 @@ class ProductService
     {
         /** @var Offer $currentOffer */
         $currentOffer = $this->getCurrentOfferForList($product);
-        return $this->convertToFullProduct($product, $currentOffer);
+        $fullProduct = $this->convertToFullProduct($product, $currentOffer);
+        // товары всегда доступны в каталоге (недоступные просто не должны быть в выдаче)
+        $fullProduct->setIsAvailable(true);
+        return $fullProduct;
     }
 
     /**
@@ -206,6 +208,7 @@ class ProductService
         $product = $offer->getProduct();
 
         $fullProduct = $this->convertToFullProduct($product, $offer);
+        $fullProduct->setIsAvailable($offer->isAvailable()); // returns ShortProduct
         $fullProduct
             ->setNutritionRecommendations($product->getNormsOfUse()->getText())
             ->setNutritionFacts($product->getComposition()->getText())
@@ -217,6 +220,7 @@ class ProductService
             ->setPickup($this->getPickupText($offer))                   // товар под заказ
             // ->setCrossSale($this->getCrossSale($offer))              // похожие товары
             ->setBundle($this->getBundle($offer))                       // с этим товаром покупают
+            ->setPictureList($this->getPictureList($product))
             ;
 
         return $fullProduct;
@@ -420,29 +424,31 @@ class ProductService
     /**
      * Акция товара
      * @param Offer $offer
-     * @return FullProduct\SpecialOffer
+     * @return FullProduct\SpecialOffer|null
      * @throws \Bitrix\Main\SystemException
      */
-    public function getSpecialOffer(Offer $offer): FullProduct\SpecialOffer
+    public function getSpecialOffer(Offer $offer)
     {
         /** @var Share $specialOfferModel */
         $specialOfferModel = $offer->getShare()->current();
         $specialOffer = (new FullProduct\SpecialOffer());
-        if ($specialOfferModel) {
-            $specialOffer
-                ->setId($specialOfferModel->getId())
-                ->setName($specialOfferModel->getName())
-                ->setDescription($specialOfferModel->getPreviewText());
-
-            if ($specialOfferModel->getDateActiveFrom() && $specialOfferModel->getDateActiveTo()) {
-                $dateFrom = DateHelper::replaceRuMonth($specialOfferModel->getDateActiveFrom()->format('d #n# Y'), DateHelper::GENITIVE);
-                $dateTo = DateHelper::replaceRuMonth($specialOfferModel->getDateActiveTo()->format('d #n# Y'), DateHelper::GENITIVE);
-                $specialOffer->setDate($dateFrom . " - " . $dateTo);
-            }
-            if ($specialOfferModel->hasLabelImage()) {
-                $specialOffer->setImage($specialOfferModel->getPropertyLabelImageFileSrc());
-            }
+        if (!$specialOfferModel) {
+            return null;
         }
+        $specialOffer
+            ->setId($specialOfferModel->getId())
+            ->setName($specialOfferModel->getName())
+            ->setDescription($specialOfferModel->getPreviewText());
+
+        if ($specialOfferModel->getDateActiveFrom() && $specialOfferModel->getDateActiveTo()) {
+            $dateFrom = DateHelper::replaceRuMonth($specialOfferModel->getDateActiveFrom()->format('d #n# Y'), DateHelper::GENITIVE);
+            $dateTo = DateHelper::replaceRuMonth($specialOfferModel->getDateActiveTo()->format('d #n# Y'), DateHelper::GENITIVE);
+            $specialOffer->setDate($dateFrom . " - " . $dateTo);
+        }
+        if ($specialOfferModel->hasLabelImage()) {
+            $specialOffer->setImage($specialOfferModel->getPropertyLabelImageFileSrc());
+        }
+
         return $specialOffer;
     }
 
@@ -503,11 +509,13 @@ class ProductService
     /**
      * С этим товаром часто берут
      * @param Offer $offer
-     * @return FullProduct\Bundle
+     * @return FullProduct\Bundle:null
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public function getBundle(Offer $offer)
     {
@@ -515,30 +523,25 @@ class ProductService
         $oldTotalPrice = 0;
         $totalPrice = 0;
         $bonusAmount = 0;
-        if ($bundle = $offer->getBundle()) {
-            $percent = $this->userService->getCurrentUserBonusPercent();
-            /** @var BundleItem $bundleItem */
-            foreach ($bundle->getProducts() as $bundleItem) {
-                $bundleItemOffer = $bundleItem->getOffer();
-                $bundleItems[] = (new BundleItemOffer())
-                    ->setOfferId($bundleItemOffer->getId())
-                    ->setTitle($bundleItemOffer->getName())
-                    ->setPrice(
-                        (new Price)
-                            ->setActual($bundleItemOffer->getPrice())
-                            ->setOld($bundleItemOffer->getOldPrice())
-                    )
-                    ->setImage($bundleItemOffer->getImages()->current())
-                    ->setQuantity($bundleItemOffer->getQuantity())
-                    ->setWeight($bundleItemOffer->getCatalogProduct()->getWeight());
+        if (!$bundle = $offer->getBundle()) {
+            return null;
+        }
+        $percent = $this->userService->getCurrentUserBonusPercent();
+        /** @var BundleItem $bundleItem */
+        foreach ($bundle->getProducts() as $bundleItem) {
+            $bundleItemOffer = $bundleItem->getOffer();
+            $bundleItemProduct = $bundleItemOffer->getProduct();
 
-                $totalPrice += $bundleItemOffer->getCatalogPrice() * $bundleItem->getQuantity();
-                $oldTotalPrice += $bundleItemOffer->getCatalogOldPrice() * $bundleItem->getQuantity();
-                $bonusAmount += $bundleItemOffer->getBonusCount($percent, $bundleItem->getQuantity());
-            }
+            $product = $this->convertToShortProduct($bundleItemProduct, $bundleItemOffer);
+
+            $bundleItems[] = $product;
+
+            $totalPrice += $bundleItemOffer->getCatalogPrice() * $bundleItem->getQuantity();
+            $oldTotalPrice += $bundleItemOffer->getCatalogOldPrice() * $bundleItem->getQuantity();
+            $bonusAmount += $bundleItemOffer->getBonusCount($percent, $bundleItem->getQuantity());
         }
         return (new FullProduct\Bundle())
-            ->setBundleItems($bundleItems)
+            ->setGoods($bundleItems)
             ->setTotalPrice(
                 (new Price)
                     ->setActual($totalPrice)
@@ -607,6 +610,23 @@ class ProductService
 
 
         return $unionOffers[$type][$val];
+    }
+
+    protected function getPictureList(Product $product)
+    {
+        $offers = $product->getOffersSorted();
+        if (empty($offers)) {
+            return [];
+        }
+
+        $images = [];
+        /** @var Offer $offer */
+        foreach ($offers as $offer) {
+            if ($offerImages = $offer->getImages()) {
+                $images[] = (string) $offerImages->current();
+            }
+        }
+        return $images;
     }
 
 }

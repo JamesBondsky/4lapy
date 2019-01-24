@@ -8,12 +8,13 @@ use Symfony\Component\Validator\Constraints as Assert;
 class PayRequest implements SimpleUnserializeRequest, PostRequest
 {
     /**
+     * Номер заказа
      * @Serializer\Type("int")
      * @Serializer\SerializedName("order_id")
      * @Assert\NotBlank()
      * @var int
      */
-    protected $orderId;
+    protected $orderNumber;
 
     /**
      * @Serializer\Type("string")
@@ -29,14 +30,14 @@ class PayRequest implements SimpleUnserializeRequest, PostRequest
      * @Serializer\SerializedName("payToken")
      * @var string
      */
-    protected $payToken;
+    protected $payToken = '';
 
     /**
      * @return int
      */
-    public function getOrderId(): int
+    public function getOrderNumber(): int
     {
-        return $this->orderId;
+        return $this->orderNumber;
     }
 
     /**
@@ -52,6 +53,6 @@ class PayRequest implements SimpleUnserializeRequest, PostRequest
      */
     public function getPayToken(): string
     {
-        return $this->payToken;
+        return $this->payToken ?: '';
     }
 }

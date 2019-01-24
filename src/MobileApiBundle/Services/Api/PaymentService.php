@@ -14,23 +14,23 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sberbank.ecom/payment/rbs.php';
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use Bitrix\Main\Web\Uri;
 use Bitrix\Sale\Payment;
 use FourPaws\App\Application;
 use FourPaws\Decorators\FullHrefDecorator;
+use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Exception\NotFoundException;
-use FourPaws\PersonalBundle\Service\OrderService as PersonalOrderService;
 use FourPaws\SaleBundle\Service\PaymentService as AppPaymentService;
+use FourPaws\PersonalBundle\Repository\OrderRepository;
 
 class PaymentService
 {
     use LazyLoggerAwareTrait;
 
     /**
-     * @var PersonalOrderService
+     * @var OrderRepository
      */
-    private $personalOrderService;
+    private $orderRepository;
 
     /**
      * @var AppPaymentService
@@ -39,16 +39,27 @@ class PaymentService
 
 
     public function __construct(
-        PersonalOrderService $personalOrderService,
+        OrderRepository $orderRepository,
         AppPaymentService $appPaymentService
     )
     {
-        $this->personalOrderService = $personalOrderService;
+        $this->orderRepository = $orderRepository;
         $this->appPaymentService = $appPaymentService;
     }
 
+    protected function getPaymentGatewaySettings()
+    {
+        return [
+            'test_mode' => true,
+            'two_stage' => false,
+            'logging' => true,
+            'user_name' => '4lapy-api',
+            'password' => '4lapy',
+        ];
+    }
+
     /**
-     * @param int $orderId
+     * @param int $orderNumber
      * @param string $payType
      * @param string $payToken
      * @return string
@@ -58,16 +69,24 @@ class PaymentService
      * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      * @throws \Exception
      */
-    public function getPaymentUrl(int $orderId, string $payType, string $payToken = ''): string
+    public function getPaymentUrl(int $orderNumber, string $payType, string $payToken = ''): string
     {
-        $order = $this->personalOrderService->getOrderById($orderId);
-        $bitrixOrder = $order->getBitrixOrder();
+        /**
+         * @var $order Order
+         */
+        $order = $this->orderRepository->findBy([
+            'filter' => [
+                'ACCOUNT_NUMBER' => $orderNumber
+            ]
+        ])->current();
         if (!$order) {
-            throw new NotFoundException("Заказ ID $orderId не найден");
+            throw new NotFoundException("Заказ с номером $orderNumber не найден");
         }
 
+        $bitrixOrder = $order->getBitrixOrder();
+
         if (!$bitrixOrder->getPaymentCollection()->count()) {
-            throw new \Exception("У заказа ID $orderId не указана платежная система");
+            throw new \Exception("У заказа $orderNumber не указана платежная система");
         }
 
         $paymentItem = null;
@@ -83,16 +102,10 @@ class PaymentService
         }
 
         if (!$paymentItem) {
-            throw new \Exception("У заказа ID $orderId не выбран способ оплаты - онлайн");
+            throw new \Exception("У заказа $orderNumber не выбран способ оплаты - онлайн");
         }
 
-        $rbs = new \RBS([
-            'test_mode' => true,
-            'two_stage' => false,
-            'logging' => true,
-            'user_name' => '4lapy-api',
-            'password' => '4lapy',
-        ]);
+        $rbs = new \RBS($this->getPaymentGatewaySettings());
 
         $fiscalization = \COption::GetOptionString('sberbank.ecom', 'FISCALIZATION', serialize([]));
         /** @noinspection UnserializeExploitsInspection */
@@ -152,5 +165,121 @@ class PaymentService
 
 
         return $url;
+    }
+
+    /**
+     * ЗАПРОС ОПЛАТЫ ЗАКАЗА APPLEPAY
+     *
+     * Метод payment.do
+     *
+     * @param string $orderid номер заказа в Bitrix
+     * @param string $paymentToken
+     * @return mixed[]
+     * @throws \Bitrix\Main\ArgumentException
+     */
+    protected function payment($orderId, $paymentToken, $device, $amount = 0) {
+        $data = array(
+            'merchant' => '4lapy',
+            'orderNumber' => $orderId,
+            'paymentToken' => $paymentToken,
+            'preAuth' => true
+        );
+        // echo "<pre>";print_r($data);echo "</pre>"."\r\n";
+        if ($device == 'android')
+        {
+            $data['amount'] = $amount;
+            // $data['ip'] = '89.108.84.88';
+        }
+        $response = $this->gateway('payment.do', $data, $device);
+        // echo "<pre>";print_r($response);echo "</pre>"."\r\n";
+        return $response;
+    }
+
+    /**
+     * Копия метода RBS::gateway потому что он приватный и его нельзя использовать в дочерних классах :(
+     * @param $method
+     * @param $data
+     * @return array|bool|mixed|string
+     * @throws \Bitrix\Main\ArgumentException
+     */
+    protected function gateway($method, $data, $device)
+    {
+        $settings = $this->getPaymentGatewaySettings();
+
+        $data['userName'] = $settings['user_name'];
+        $data['password'] = $settings['password'];
+        $data['CMS'] = 'Bitrix ' . SM_VERSION;
+        $data['jsonParams'] = json_encode( array('CMS' => $data['CMS']) );
+        $dataEncoded = http_build_query($data);
+
+        if (SITE_CHARSET != 'UTF-8') {
+            global $APPLICATION;
+            $dataEncoded = $APPLICATION->ConvertCharset($dataEncoded, 'windows-1251', 'UTF-8');
+            $data = $APPLICATION->ConvertCharsetArray($data, 'windows-1251', 'UTF-8');
+        }
+
+
+        if ($settings['test_mode']) {
+            $url = \RBS::test_url;
+        } else {
+            $url = \RBS::prod_url;
+        }
+
+        if(isset($device) and in_array($device, array('android', 'applepay'))) {
+            if ($settings['test_mode']) {
+                $url = self::test_url_apple_android;
+            }
+            else
+            {
+                $url = self::prod_url_apple_android;
+            }
+
+            $url .= $device . '/';
+
+            $data = json_encode($data);
+
+            // $obHttp->SetAdditionalHeaders(array("Content-Type"=>"application/json"));
+        }
+
+        var_dump($url);
+        die();
+
+
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => $url . $method,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $dataEncoded,
+            CURLOPT_HTTPHEADER => array('CMS: Bitrix'),
+            CURLOPT_SSLVERSION => 6
+        ));
+        $response = curl_exec($curl);
+        curl_close($curl);
+
+        if (!$response) {
+
+            $client = new \Bitrix\Main\Web\HttpClient(array(
+                'waitResponse' => true
+            ));
+            $client->setHeader('CMS', 'Bitrix');
+            $response = $client->post($url . $method, $data);
+        }
+
+        if (!$response) {
+            $response = array(
+                'errorCode' => 999,
+                'errorMessage' => 'The server does not have SSL/TLS encryption on port 443',
+            );
+        } else {
+            if (SITE_CHARSET != 'UTF-8') {
+                global $APPLICATION;
+                $APPLICATION->ConvertCharset($response, 'windows-1251', 'UTF-8');
+            }
+            $response = \Bitrix\Main\Web\Json::decode($response);
+
+            $this->log()->info('PaymentService' . $url . $method . ' REQUEST: ' . json_encode($data) . ' RESPONSE: ' . json_encode($response), 'sberbank.ecom');
+        }
+        return $response;
     }
 }

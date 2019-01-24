@@ -311,6 +311,19 @@ class OrderService
             // it's okay if user could be not authorized while making order
         }
 
+        $paymentType = $cartParam->getPaymentType();
+        if ($paymentType === 'cash') {
+            $paymentId = 1;
+        } else if (in_array($paymentType, ['cashless', 'applepay', 'android'])) {
+            $paymentId = 3;
+        } else {
+            $paymentId = null;
+        }
+
+        if ($paymentId) {
+            $orderStorage->setPaymentId($paymentId);
+        }
+
         switch ($deliveryType) {
             case DeliveryService::INNER_DELIVERY_CODE:
                 $orderStorage
@@ -320,7 +333,8 @@ class OrderService
                     ->setStreet($cartParam->getStreet())
                     ->setHouse($cartParam->getHouse())
                     ->setBuilding($cartParam->getBuilding())
-                    ->setApartment($cartParam->getApartment());
+                    ->setApartment($cartParam->getApartment())
+                ;
                 // ->setDeliveryDate($userCartOrderRequest->getCartParam()->getDeliveryRangeDate())
                 break;
             case DeliveryService::DPD_PICKUP_CODE:

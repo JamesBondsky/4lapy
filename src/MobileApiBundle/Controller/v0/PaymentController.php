@@ -44,7 +44,7 @@ class PaymentController extends FOSRestController
     public function postPayAction(PayRequest $payRequest): PayResponse
     {
         $url = $this->apiPaymentService->getPaymentUrl(
-            $payRequest->getOrderId(),
+            $payRequest->getOrderNumber(),
             $payRequest->getPayType(),
             $payRequest->getPayToken()
         );

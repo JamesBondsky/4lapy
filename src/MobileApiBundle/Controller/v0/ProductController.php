@@ -80,7 +80,10 @@ class ProductController extends FOSRestController
         /** @var Offer $offer */
         foreach ($collection->getValues() as $offer) {
             $product = $offer->getProduct();
-            $goods[] = $this->apiProductService->convertToShortProduct($product, $offer);
+            $shortProduct = $this->apiProductService->convertToShortProduct($product, $offer);
+            // товары всегда доступны в каталоге (недоступные просто не должны быть в выдаче)
+            $shortProduct->setIsAvailable(true);
+            $goods[] = $shortProduct;
         }
         $cdbResult = $collection->getCdbResult();
 
