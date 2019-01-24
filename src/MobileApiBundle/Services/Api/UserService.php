@@ -210,18 +210,20 @@ class UserService
     protected function getCard()
     {
         $user = $this->userBundleService->getCurrentUser();
+        if (!$user->getDiscountCardNumber()) {
+            return null;
+        }
         try {
             $card = $this->appManzanaService->searchCardByNumber($user->getDiscountCardNumber());
         } catch (CardNotFoundException $exception) {
-            return null;
+            // return null;
+            // получаем баланс из аккаунта битрикса
         }
         return (new ClientCard())
             ->setTitle('Карта клиента')
-            ->setPicture(new FullHrefDecorator('/upload/card/img.png')) // не используется
-            ->setBalance($card->plBalance)
+            ->setBalance($card->plBalance ?: 0)
             ->setNumber($user->getDiscountCardNumber())
-            ->setBarCode('') // не используется
-            ->setSaleAmount($card->plQuantity);
+            ->setSaleAmount(3);
     }
 
     /**

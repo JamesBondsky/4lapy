@@ -66,6 +66,6 @@ class DeliveryController extends FOSRestController
             }
         }
 
-        return (new DeliveryRangeResponse())->setRanges($ranges);
+        return new DeliveryRangeResponse($ranges);
     }
 }

@@ -21,16 +21,6 @@ class ClientCard
     protected $title = '';
 
     /**
-     * absolute url
-     *
-     * @Assert\Url()
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("picture")
-     * @var string
-     */
-    protected $picture;
-
-    /**
      * @Serializer\Type("float")
      * @Serializer\SerializedName("balance")
      * @var float
@@ -43,13 +33,6 @@ class ClientCard
      * @var string
      */
     protected $number = '';
-
-    /**
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("barcode")
-     * @var string
-     */
-    protected $barCode = '';
 
     /**
      * @Serializer\Type("float")
@@ -74,25 +57,6 @@ class ClientCard
     public function setTitle(string $title): ClientCard
     {
         $this->title = $title;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getPicture(): string
-    {
-        return $this->picture;
-    }
-
-    /**
-     * @param string $picture
-     *
-     * @return ClientCard
-     */
-    public function setPicture(string $picture): ClientCard
-    {
-        $this->picture = $picture;
         return $this;
     }
 
@@ -131,25 +95,6 @@ class ClientCard
     public function setNumber(string $number): ClientCard
     {
         $this->number = $number;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getBarCode(): string
-    {
-        return $this->barCode;
-    }
-
-    /**
-     * @param string $barCode
-     *
-     * @return ClientCard
-     */
-    public function setBarCode(string $barCode): ClientCard
-    {
-        $this->barCode = $barCode;
         return $this;
     }
 

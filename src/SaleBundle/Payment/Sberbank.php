@@ -36,6 +36,9 @@ class Sberbank
      */
     private const prod_url = \API_PROD_URL;
 
+    private const prod_url_apple_android = 'https://securepayments.sberbank.ru/payment/';
+    private const test_url_apple_android = 'https://3dsec.sberbank.ru/payment/';
+
     private const TEST_MERCHANT = '4lapy';
     private const PROD_MERCHANT = 'sbersafe';
 
@@ -113,13 +116,23 @@ class Sberbank
     }
 
     /**
+     * @param bool $isMobilePayment
+     * @param string $mobilePaymentSystem
      * @return string
      */
-    public function getApiUrl(): string
+    public function getApiUrl($isMobilePayment = false, $mobilePaymentSystem = ''): string
     {
-        return $this->test_mode
-            ? self::test_url
-            : self::prod_url;
+        if ($isMobilePayment) {
+            $url = $this->test_mode
+                ? self::test_url_apple_android
+                : self::prod_url_apple_android;
+            return $url . $mobilePaymentSystem . '/';
+        } else {
+            return $this->test_mode
+                ? self::test_url
+                : self::prod_url;
+
+        }
     }
 
     /**
@@ -139,18 +152,24 @@ class Sberbank
      *
      * @param string $method метод запроса в ПШ
      * @param mixed[] $data данные в запросе
+     * @param bool $isMobilePayment платеж через "applepay"|"android" ?
+     * @param string $mobilePaymentSystem "applepay"|"android"
      *
      * @return mixed[]
      *
      * @throws ArgumentException
      */
-    protected function gatewayQuery($method, $data): array
+    protected function gatewayQuery($method, $data, bool $isMobilePayment = false, $mobilePaymentSystem = ''): array
     {
-        $data['userName'] = $this->user_name;
-        $data['password'] = $this->password;
-        $data['CMS'] = 'Bitrix';
-        $data['Module-Version'] = RBS_VERSION;
-        $dataEncoded = \http_build_query($data);
+        if ($isMobilePayment) {
+            $dataEncoded = \json_encode($data);
+        } else {
+            $data['CMS'] = 'Bitrix';
+            $data['Module-Version'] = RBS_VERSION;
+            $data['userName'] = $this->user_name;
+            $data['password'] = $this->password;
+            $dataEncoded = \http_build_query($data);
+        }
 
         if (\SITE_CHARSET !== 'UTF-8') {
             global $APPLICATION;
@@ -159,7 +178,15 @@ class Sberbank
             $data = $APPLICATION->ConvertCharsetArray($data, 'windows-1251', 'UTF-8');
         }
 
-        $url = $this->getApiUrl();
+        $url = $this->getApiUrl($isMobilePayment, $mobilePaymentSystem);
+
+        $headers = [
+            'CMS: Bitrix',
+            'Module-Version: ' . RBS_VERSION
+        ];
+        if ($mobilePaymentSystem) {
+            $headers[] = 'Content-Type: application/json';
+        }
 
         $curl = \curl_init();
         \curl_setopt_array($curl, [
@@ -167,7 +194,7 @@ class Sberbank
             \CURLOPT_RETURNTRANSFER => true,
             \CURLOPT_POST => true,
             \CURLOPT_POSTFIELDS => $dataEncoded,
-            \CURLOPT_HTTPHEADER => ['CMS: Bitrix', 'Module-Version: ' . RBS_VERSION],
+            \CURLOPT_HTTPHEADER => $headers,
             \CURLOPT_SSLVERSION => 6,
         ]);
         $response = \curl_exec($curl);
@@ -224,6 +251,32 @@ class Sberbank
         );
 
         \AddMessage2Log($message);
+    }
+
+    /**
+     * ЗАПРОС ОПЛАТЫ ЗАКАЗА APPLEPAY
+     *
+     * Метод payment.do
+     *
+     * @param int $orderId Номер заказа в Bitrix
+     * @param string $paymentToken
+     * @param string $mobilePaymentSystem
+     * @param float $amount
+     * @return array|mixed[]
+     * @throws \Bitrix\Main\ArgumentException
+     */
+    public function paymentViaMobile(int $orderId, string $paymentToken, string $mobilePaymentSystem, float $amount = 0) {
+        $data = array(
+            'merchant' => '4lapy',
+            'orderNumber' => $orderId,
+            'paymentToken' => $paymentToken,
+            'preAuth' => true
+        );
+        if ($mobilePaymentSystem === 'android') {
+            $data['amount'] = $amount;
+        }
+        $response = $this->gatewayQuery('payment.do', $data, true, $mobilePaymentSystem);
+        return $response;
     }
 
     /**
