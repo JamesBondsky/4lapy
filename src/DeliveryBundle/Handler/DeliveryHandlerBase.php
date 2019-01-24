@@ -197,6 +197,9 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
 
         /** @var Store $store */
         foreach ($stores->getIterator() as $store) {
+            if (!$store->isExpressStore()) {
+                continue;
+            }
             $allOfferAvaliable = true;
             foreach ($offerData as $offerId => $priceForAmountCollection) {
                 $offer = $offers[$offerId];

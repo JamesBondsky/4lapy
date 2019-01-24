@@ -256,10 +256,7 @@ class DostavistaDeliveryHandler extends DeliveryHandlerBase
                             "TYPE" => array(
                                 "TYPE" => "ENUM",
                                 "OPTIONS" => array(
-                                    "MIN" => Loc::getMessage("SALE_DLVR_HANDL_CONF_PERIOD_MIN"),
-                                    "H" => Loc::getMessage("SALE_DLVR_HANDL_CONF_PERIOD_HOUR"),
-                                    "D" => Loc::getMessage("SALE_DLVR_HANDL_CONF_PERIOD_DAY"),
-                                    "M" => Loc::getMessage("SALE_DLVR_HANDL_CONF_PERIOD_MONTH")
+                                    "MIN" => Loc::getMessage("SALE_DLVR_HANDL_CONF_PERIOD_MIN")
                                 )
                             )
                         )

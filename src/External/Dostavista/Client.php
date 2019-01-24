@@ -251,14 +251,14 @@ class Client
             $this->url = self::URL_EDIT_ORDER;
         }
 
-        $options['query'] = array_merge(
+        $options['body'] = json_encode(array_merge(
             [
                 'token' => $this->token,
                 'client_id' => $this->clientId,
                 'order_id' => (int) $orderId
             ],
             $data
-        );
+        ));
 
         $result = $this->send('POST', $options);
         return $this->parseSendingResult($result);

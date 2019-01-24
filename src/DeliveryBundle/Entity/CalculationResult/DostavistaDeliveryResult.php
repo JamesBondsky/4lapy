@@ -69,6 +69,9 @@ class DostavistaDeliveryResult extends BaseResult implements DeliveryResultInter
             $minDistance = null;
             /** @var Store $store */
             foreach ($stores as $store) {
+                if (!$store->isExpressStore()) {
+                    continue;
+                }
                 $storeCoords = [$store->getLongitude(), $store->getLatitude()];
                 $distance = $this->LatLngDist($userCoords, $storeCoords);
                 if ($minDistance == null || $minDistance > $distance) {
