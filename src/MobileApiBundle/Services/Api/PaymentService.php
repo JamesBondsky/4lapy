@@ -4,18 +4,24 @@
  * @copyright Copyright (c) NotAgency
  */
 
+
 namespace FourPaws\MobileApiBundle\Services\Api;
+
+/**
+ * Подключение класса RBS
+ */
+/** @noinspection PhpIncludeInspection */
+require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sberbank.ecom/payment/rbs.php';
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Sale\Payment;
+use FourPaws\App\Application;
 use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\PersonalBundle\Service\OrderService as PersonalOrderService;
 use FourPaws\SaleBundle\Service\PaymentService as AppPaymentService;
-use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
-use FourPaws\SapBundle\Exception\PaymentException;
 
 class PaymentService
 {
@@ -43,14 +49,16 @@ class PaymentService
 
     /**
      * @param int $orderId
+     * @param string $payType
+     * @param string $payToken
      * @return string
      * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\NotImplementedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      * @throws \Exception
      */
-    public function getPaymentUrl(int $orderId): string
+    public function getPaymentUrl(int $orderId, string $payType, string $payToken = ''): string
     {
         $order = $this->personalOrderService->getOrderById($orderId);
         $bitrixOrder = $order->getBitrixOrder();
@@ -62,12 +70,9 @@ class PaymentService
             throw new \Exception("У заказа ID $orderId не указана платежная система");
         }
 
-
-
-        $url = new Uri('');
-
         $paymentItem = null;
         foreach ($bitrixOrder->getPaymentCollection() as $payment) {
+            /** @var $payment Payment */
             if ($payment->isInner()) {
                 continue;
             }
@@ -81,58 +86,71 @@ class PaymentService
             throw new \Exception("У заказа ID $orderId не выбран способ оплаты - онлайн");
         }
 
-        $service = PaySystemManager::getObjectById($paymentItem->getPaymentSystemId());
+        $rbs = new \RBS([
+            'test_mode' => true,
+            'two_stage' => false,
+            'logging' => true,
+            'user_name' => '4lapy-api',
+            'password' => '4lapy',
+        ]);
 
-        if ($service) {
-            // $context = BitrixApp::getInstance()->getContext();
-            $isOk = false;
-            try {
-                // $_SESSION['ORDER_PAYMENT_URL'] = $this->getPaymentUrl();
-                $result = $service->initiatePay(
-                    $paymentItem// ,
-                    // $context->getRequest()
+        $fiscalization = \COption::GetOptionString('sberbank.ecom', 'FISCALIZATION', serialize([]));
+        /** @noinspection UnserializeExploitsInspection */
+        $fiscalization = unserialize($fiscalization, []);
+
+        /* Фискализация */
+        $fiscal = [];
+        if ($fiscalization['ENABLE'] === 'Y') {
+            /**
+             * @var PaymentService $paymentService
+             * @global             $USER
+             */
+            $paymentService = Application::getInstance()->getContainer()->get(AppPaymentService::class);
+            $fiscal = $paymentService->getFiscalization($order->getBitrixOrder(), (int)$fiscalization['TAX_SYSTEM']);
+            $amount = $paymentService->getFiscalTotal($fiscal);
+            $fiscal = $paymentService->fiscalToArray($fiscal)['fiscal'];
+        }
+
+        $returnUrl = '/sale/payment/result.php?ORDER_ID=' . $order->getId();
+
+        $url = '';
+
+        switch ($payType) {
+            case 'cashless':
+                $response = $rbs->register_order(
+                    $order->getAccountNumber(),
+                    $amount, //toDo - уточнить что это за amount
+                    (string)new FullHrefDecorator($returnUrl),
+                    $order->getCurrency(),
+                    $order->getBitrixOrder()->getField('USER_DESCRIPTION'),
+                    $fiscal
                 );
-
-                var_dump($result);
-                $isOk = true;
-            } /** @noinspection PhpRedundantCatchClauseInspection */ catch (PaymentException $e) {
-                unset($_SESSION['ORDER_PAYMENT_URL']);
-                $this->log()->notice(sprintf('payment initiate error: %s', $e->getMessage()), [
-                    'order' => $order->getId(),
-                    'code' => $e->getCode()
-                ]);
-            } catch (\Exception $e) {
-                unset($_SESSION['ORDER_PAYMENT_URL']);
-                $this->log()->error(sprintf('payment error: %s: %s', \get_class($e) , $e->getMessage()), [
-                    'order' => $order->getId(),
-                    'code' => $e->getCode()
-                ]);
-            }
-
-            /*
-            if (!$isOk) {
-                $url = $this->getCompleteUrl($order);
-                try {
-                    $this->appPaymentService->processOnlinePaymentByOrderNumber($bitrixOrder);
-                    if (null !== $relatedOrder && !$relatedOrder->isPaid()) {
-                        $url = $this->getPaymentUrl();
-                    }
-                } catch (SberbankPaymentException $e) {
-                    $this->log()->notice(sprintf('payment check error: %s', $e->getMessage()), [
-                        'order' => $order->getId(),
-                        'code' => $e->getCode()
-                    ]);
-                    $this->appPaymentService->processOnlinePaymentError($bitrixOrder);
+                if ($response['errorMessage']) {
+                    throw new \Exception($response['errorMessage']);
                 }
+                $url = $response['formUrl'];
+                break;
+            case 'applepay':
+                // log_(array($OrderNumberDesc, $pay_token, 'applepay'));
+                // toDo в библиотеке RBS нет поддержки метода payment.do который используется для applepay и для android
+                // $response = $sbrf->payment($OrderNumberDesc, $pay_token, 'applepay');
+                // log_($response);
+                // log_('------------------------------------------------------------');
+                break;
+            case 'android':
+                // log_(array($OrderNumberDesc, $pay_token, 'applepay'));
+                // toDo в библиотеке RBS нет поддержки метода payment.do который используется для applepay и для android
+                // $response = $sbrf->payment($OrderNumberDesc, $pay_token, 'android');
+                // log_($response);
+                // log_('------------------------------------------------------------');
+                break;
 
-            }
-            */
+            default:
+                // $this->addError('required_params_missed');
+                break;
         }
 
 
-
-
-        $hrefDecorator = new FullHrefDecorator((string) $url->getUri());
-        return $hrefDecorator->getFullPublicPath();
+        return $url;
     }
 }

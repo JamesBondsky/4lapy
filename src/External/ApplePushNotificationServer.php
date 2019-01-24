@@ -36,6 +36,7 @@ class ApplePushNotificationServer extends \ApnsPHP_Push_Server
             );
 
             $aQueue = $this->_getQueue(self::SHM_MESSAGES_QUEUE_KEY_START, $this->_nCurrentProcess);
+            var_dump($aQueue);
             foreach($aQueue as $message) {
                 \ApnsPHP_Push::add($message);
             }

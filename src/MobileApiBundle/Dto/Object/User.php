@@ -96,19 +96,19 @@ class User
     }
 
     /**
-     * @return ClientCard
+     * @return null|ClientCard
      */
-    public function getCard(): ClientCard
+    public function getCard()
     {
         return $this->card;
     }
 
     /**
-     * @param ClientCard $card
+     * @param null|ClientCard $card
      *
      * @return User
      */
-    public function setCard(ClientCard $card): User
+    public function setCard($card): User
     {
         $this->card = $card;
         return $this;

@@ -8,6 +8,8 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\SmsService;
+use FourPaws\MobileApiBundle\Dto\Response\CaptchaSendValidationResponse;
+use FourPaws\MobileApiBundle\Dto\Response\CaptchaVerifyResponse;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\MobileApiBundle\Services\BitrixCaptchaService;
 use FourPaws\UserBundle\Repository\UserRepository;
@@ -25,34 +27,42 @@ class CaptchaService
      */
     private $bitrixCaptchaService;
 
-    public function __construct(UserRepository $userRepository)
+    /**
+     * @var SmsService
+     */
+    private $smsService;
+
+
+    public function __construct(
+        UserRepository $userRepository,
+        SmsService $smsService
+    )
     {
+        $this->smsService = $smsService;
         $this->userRepository = $userRepository;
     }
 
     /**
-     * @param string $login
+     * @param string $phoneOrEmail
      * @param string $sender
-     * @return array
+     * @return CaptchaSendValidationResponse
      * @throws ApplicationCreateException
      * @throws \Bitrix\Main\ArgumentTypeException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\UserBundle\Exception\NotFoundException
      */
-    public function sendValidation($login, $sender)
+    public function sendValidation(string $phoneOrEmail, string $sender): CaptchaSendValidationResponse
     {
-        $loginType = $this->guessLoginType($login);
+        $loginType = $this->guessLoginType($phoneOrEmail);
 
         if ($loginType) {
             if ($loginType == 'phone') {
-                $this->sendValidationInSms($login, $sender);
+                $this->sendValidationInSms($phoneOrEmail, $sender);
             } elseif (in_array($sender, ['edit_info', 'card_activation'])) {
-                $this->sendValidationInEmail($login, $sender);
+                $this->sendValidationInEmail($phoneOrEmail, $sender);
             }
-            return [
-                'captcha_id' => $this->bitrixCaptchaService->getId(),
-                'feedback_text' => 'Код подтверждения успешно отправлен',
-            ];
+            return (new CaptchaSendValidationResponse('Код подтверждения успешно отправлен'))
+                ->setCaptchaId($this->bitrixCaptchaService->getId());
         }
     }
 
@@ -60,29 +70,26 @@ class CaptchaService
      * @param $login
      * @param $captchaId
      * @param $captchaValue
-     * @return array
+     * @return CaptchaVerifyResponse
      */
-    public function verify($login, $captchaId, $captchaValue)
+    public function verify($login, $captchaId, $captchaValue): CaptchaVerifyResponse
     {
         $loginType = $this->guessLoginType($login);
         if ($GLOBALS['APPLICATION']->CaptchaCheckCode($captchaValue, $captchaId)) {
             $this->bitrixCaptchaService = new BitrixCaptchaService();
 
-            $result = [
-                'captcha_id' => "{$this->bitrixCaptchaService->getCode()}:{$this->bitrixCaptchaService->getId()}"
-            ];
+            $captchaId = "{$this->bitrixCaptchaService->getCode()}:{$this->bitrixCaptchaService->getId()}";
 
             if ($loginType == 'phone') {
-                $result['feedback_text'] = 'Номер телефона подтвержден';
+                $text = 'Номер телефона подтвержден';
             } else {
-                $result['feedback_text'] = 'E-mail подтвержден';
+                $text = 'E-mail подтвержден';
             }
+            return (new CaptchaVerifyResponse($text))
+                ->setCaptchaId($captchaId);
         } else {
             throw new RuntimeException('Некорректный код');
         }
-
-
-        return $result;
     }
 
     /**
@@ -104,7 +111,7 @@ class CaptchaService
         ) {
             $this->bitrixCaptchaService = new BitrixCaptchaService();
             $verificationCode = $this->bitrixCaptchaService->getCode();
-            (new SmsService())->sendSmsImmediate('Код подтверждения: ' . $verificationCode, $phone);
+            $this->smsService->sendSmsImmediate('Код подтверждения: ' . $verificationCode, $phone);
             if ($user) {
                 $this->saveUserVerificationCode(current($user)->getId(), $verificationCode);
             }

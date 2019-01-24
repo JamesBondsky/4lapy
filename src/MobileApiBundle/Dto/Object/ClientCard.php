@@ -118,7 +118,7 @@ class ClientCard
     /**
      * @return string
      */
-    public function getNimber(): string
+    public function getNumber(): string
     {
         return $this->number;
     }

@@ -25,6 +25,7 @@ use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\TooManyActiveCardFound;
 use FourPaws\External\Manzana\Model\Client;
+use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
@@ -837,6 +838,9 @@ class UserService implements
             return false;
         }
         try {
+            /**
+             * @var ManzanaService $manzanaService
+             */
             $manzanaService = App::getInstance()
                                  ->getContainer()
                                  ->get('manzana.service');

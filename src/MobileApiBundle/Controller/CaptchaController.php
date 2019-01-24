@@ -6,8 +6,9 @@ use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Request\CaptchaCreateRequest;
 use FourPaws\MobileApiBundle\Dto\Request\CaptchaVerifyRequest;
-use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
 use FourPaws\MobileApiBundle\Services\Api\CaptchaService as ApiCaptchaService;
+use FourPaws\MobileApiBundle\Dto\Response\CaptchaVerifyResponse;
+use FourPaws\MobileApiBundle\Dto\Response\CaptchaSendValidationResponse;
 
 class CaptchaController extends FOSRestController
 {
@@ -26,7 +27,7 @@ class CaptchaController extends FOSRestController
      * @Rest\View()
      *
      * @param CaptchaCreateRequest $captchaCreateRequest
-     * @return ApiResponse
+     * @return CaptchaSendValidationResponse
      * @throws \Bitrix\Main\ArgumentTypeException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
@@ -34,11 +35,10 @@ class CaptchaController extends FOSRestController
      */
     public function sendCaptchaValidationAction(CaptchaCreateRequest $captchaCreateRequest)
     {
-        $data = $this->apiCaptchaService->sendValidation(
+        return $this->apiCaptchaService->sendValidation(
             $captchaCreateRequest->getLogin(),
             $captchaCreateRequest->getSender()
         );
-        return (new ApiResponse())->setData($data);
     }
 
     /**
@@ -46,15 +46,14 @@ class CaptchaController extends FOSRestController
      * @Rest\View()
      *
      * @param CaptchaVerifyRequest $captchaVerifyRequest
-     * @return ApiResponse
+     * @return CaptchaVerifyResponse
      */
     public function verifyCaptchaAction(CaptchaVerifyRequest $captchaVerifyRequest)
     {
-        $data = $this->apiCaptchaService->verify(
+        return $this->apiCaptchaService->verify(
             $captchaVerifyRequest->getLogin(),
             $captchaVerifyRequest->getCaptchaId(),
             $captchaVerifyRequest->getCaptchaValue()
         );
-        return (new ApiResponse())->setData($data);
     }
 }

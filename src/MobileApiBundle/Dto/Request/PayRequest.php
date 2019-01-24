@@ -27,7 +27,6 @@ class PayRequest implements SimpleUnserializeRequest, PostRequest
     /**
      * @Serializer\Type("string")
      * @Serializer\SerializedName("payToken")
-     * @Assert\NotBlank()
      * @var string
      */
     protected $payToken;

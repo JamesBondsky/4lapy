@@ -193,23 +193,22 @@ class PushEventService
         }
     }
 
-    /**
-     * @throws \ApnsPHP_Message_Exception
-     */
     public function execPushEventsForIos()
     {
         $pushEvents = $this->apiPushEventRepository->findForIos();
         foreach ($pushEvents as $pushEvent) {
             try {
-                $logMessages = $this->applePushNotificationService->sendNotification(
+                $this->applePushNotificationService->sendNotification(
                     $pushEvent->getPushToken(),
                     $pushEvent->getMessageText(),
                     $pushEvent->getMessageId(),
                     $pushEvent->getMessageType()
                 );
-                foreach ($logMessages as $logMessage) {
+
+                foreach ($this->applePushNotificationService->getLogMessages() as $logMessage) {
                     $this->log()->info($logMessage);
                 }
+
             }
             catch (\Exception $e) {
                 $pushEvent->setServiceResponseError($e->getMessage());

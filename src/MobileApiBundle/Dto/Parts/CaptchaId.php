@@ -5,33 +5,31 @@ namespace FourPaws\MobileApiBundle\Dto\Parts;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
-trait Captcha
+trait CaptchaId
 {
-    use CaptchaId;
-
     /**
      * @Assert\NotBlank()
      * @Serializer\Type("string")
-     * @Serializer\SerializedName("captcha_value")
+     * @Serializer\SerializedName("captcha_id")
      * @var string
      */
-    protected $captchaValue = '';
+    protected $captchaId = '';
 
     /**
      * @return string
      */
-    public function getCaptchaValue(): string
+    public function getCaptchaId(): string
     {
-        return $this->captchaValue;
+        return $this->captchaId;
     }
 
     /**
-     * @param string $captchaValue
+     * @param string $captchaId
      * @return $this
      */
-    public function setCaptchaValue(string $captchaValue)
+    public function setCaptchaId(string $captchaId)
     {
-        $this->captchaValue = $captchaValue;
+        $this->captchaId = $captchaId;
         return $this;
     }
 }

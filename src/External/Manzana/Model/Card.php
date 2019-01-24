@@ -65,6 +65,7 @@ class Card
     /**
      * @Type("manzana_date_time_short")
      * @SerializedName("BirthDate")
+     * @var \DateTimeImmutable
      */
     public $birthDate;
     

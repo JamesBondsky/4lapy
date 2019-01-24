@@ -16,6 +16,7 @@ use FourPaws\MobileApiBundle\Services\Api\UserService as ApiUserService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Swagger\Annotations\Parameter;
 use Swagger\Annotations\Response;
+use FourPaws\MobileApiBundle\Dto\Response\PersonalBonusResponse;
 
 class UserController extends FOSRestController
 {
@@ -99,17 +100,14 @@ class UserController extends FOSRestController
      * @Security("has_role('REGISTERED_USERS')")
      * @param PostUserInfoRequest $userInfoRequest
      *
-     * @throws \FourPaws\UserBundle\Exception\ValidationException
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
-     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
      * @return ApiResponse
+     * @throws \FourPaws\External\Exception\ManzanaServiceException
+     * @throws \FourPaws\External\Manzana\Exception\CardNotFoundException
      */
     public function postUserInfoAction(PostUserInfoRequest $userInfoRequest): ApiResponse
     {
         return (new ApiResponse())
-            ->setData($this->apiUserService->update($userInfoRequest));
+            ->setData($this->apiUserService->update($userInfoRequest->getUser()));
     }
 
     /**
@@ -134,5 +132,19 @@ class UserController extends FOSRestController
     {
         return (new ApiResponse())
             ->setData($this->apiUserService->isExist($existRequest));
+    }
+
+    /**
+     * @Rest\Get("/personal_bonus/")
+     * @Rest\View()
+     *
+     * @return PersonalBonusResponse
+     * @throws \FourPaws\External\Exception\ManzanaServiceException
+     * @throws \FourPaws\External\Manzana\Exception\CardNotFoundException
+     */
+    public function getPersonalBonusAction(): PersonalBonusResponse
+    {
+        return (new PersonalBonusResponse())
+            ->setPersonalBonus($this->apiUserService->getPersonalBonus());
     }
 }

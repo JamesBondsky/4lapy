@@ -12,7 +12,7 @@ class ApplePushNotificationLogger extends \ApnsPHP_Log_Embedded
 
     public function log($sMessage)
     {
-       $this->logMessages[] = $sMessage;
+        $this->logMessages[] = $sMessage;
     }
 
     public function getLogMessages()
