@@ -296,6 +296,14 @@ class AjaxMess
     /**
      * @return JsonResponse
      */
+    public function getNotAuthError(): JsonResponse
+    {
+        return $this->getJsonError('errorNotAuth', 'Пользователь не авторизован');
+    }
+
+    /**
+     * @return JsonResponse
+     */
     public function getNoActionError(): JsonResponse
     {
         return $this->getJsonError('noAction', 'Не найдено действие для выполнения');

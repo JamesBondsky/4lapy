@@ -18,46 +18,46 @@ $APPLICATION->SetTitle('');
                 <div class="registr-check-landing__form-info">
                     Все поля обязательны для заполнения
                 </div>
-                <form data-form-registr-chek-landing="true" class="form-landing registr-check-landing__form js-form-validation" method="post" action="/" name="" enctype="multipart/form-data">
+                <form data-form-registr-chek-landing="true" class="form-landing registr-check-landing__form js-form-validation" method="post" action="/ajax/grandin/request/add/" name="" enctype="multipart/form-data">
                     <div class="form-group">
-                        <input type="dateDatepicker" id="DATE_REG_CHECK_GRANDIN" name="DATE_REG_CHECK_GRANDIN" value="" placeholder="Дата чека" data-datepicker-landing="true" >
+                        <input type="dateDatepicker" id="DATE_REG_CHECK_GRANDIN" name="date" value="" placeholder="Дата чека" data-datepicker-landing="true" >
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
                     </div>
                     <div class="form-group">
-                        <input data-price-check-landing="true" type="price" id="SUM_REG_CHECK_GRANDIN" name="SUM_REG_CHECK_GRANDIN" value="" placeholder="Сумма чека (не менее 1800р)" >
+                        <input data-price-check-landing="true" type="price" id="SUM_REG_CHECK_GRANDIN" name="sum" value="" placeholder="Сумма чека (не менее 1800р)" >
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
                     </div>
                     <div class="form-group">
-                        <input type="text" id="SURNAME_REG_CHECK_GRANDIN" name="SURNAME_REG_CHECK_GRANDIN" value="" placeholder="Фамилия" >
+                        <input type="text" id="SURNAME_REG_CHECK_GRANDIN" name="surname" value="" placeholder="Фамилия" >
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
                     </div>
                     <div class="form-group">
-                        <input type="text" id="NAME_REG_CHECK_GRANDIN" name="NAME_REG_CHECK_GRANDIN" value="" placeholder="Имя" >
+                        <input type="text" id="NAME_REG_CHECK_GRANDIN" name="name" value="" placeholder="Имя" >
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
                     </div>
                     <div class="form-group">
-                        <input type="tel" id="PHONE_REG_CHECK_GRANDIN" name="PHONE_REG_CHECK_GRANDIN" value="" placeholder="Телефон" >
+                        <input type="tel" id="PHONE_REG_CHECK_GRANDIN" name="phone" value="" placeholder="Телефон" >
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
                     </div>
                     <div class="form-group">
-                        <input type="email" id="EMAIL_REG_CHECK_GRANDIN" name="EMAIL_REG_CHECK_GRANDIN" value="" placeholder="E-mail" >
+                        <input type="email" id="EMAIL_REG_CHECK_GRANDIN" name="email" value="" placeholder="E-mail" >
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
                     </div>
 
                     <div class="read-rules">
-                        <input type="checkbox" id="READ_RULES_REG_CHECK_GRANDIN" name="READ_RULES_REG_CHECK_GRANDIN" value="Y" checked>
+                        <input type="checkbox" id="READ_RULES_REG_CHECK_GRANDIN" name="rules" value="Y" checked>
                         <label for="READ_RULES_REG_CHECK_GRANDIN"><span></span> с <a href="#" target="_blank">правилами акции</a> ознакомлен</label>
                         <div class="b-error">
                             <span class="js-message"></span>
