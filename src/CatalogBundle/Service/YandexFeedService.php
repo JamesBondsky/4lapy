@@ -201,7 +201,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         Configuration $configuration,
         string $stockID = null
     ): YandexFeedService {
-        $limit = 5;
+        $limit = 500;
         $offers = $feed->getShop()
             ->getOffers();
 
@@ -247,8 +247,8 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         $this->saveFeed($this->getStorageKey(), $feed);
 
         $cdbResult = $offerCollection->getCdbResult();
-        if ($this->getPageNumber($offset, $limit) === 2) {
-//            throw new OffersIsOver('All offers was been processed.');
+        if ($this->getPageNumber($offset, $limit) === (int)$cdbResult->NavPageCount) {
+            throw new OffersIsOver('All offers was been processed.');
         }
 
         return $this;
