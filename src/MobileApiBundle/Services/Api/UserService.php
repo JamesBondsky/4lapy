@@ -17,6 +17,8 @@ use FourPaws\MobileApiBundle\Dto\Request\LoginRequest;
 use FourPaws\MobileApiBundle\Dto\Response\PostUserInfoResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserLoginResponse;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
+use FourPaws\MobileApiBundle\Exception\TokenNotFoundException;
+use FourPaws\MobileApiBundle\Security\ApiToken;
 use FourPaws\MobileApiBundle\Services\Session\SessionHandler;
 use FourPaws\UserBundle\Entity\User as AppUser;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
@@ -26,6 +28,8 @@ use FourPaws\MobileApiBundle\Services\Api\CaptchaService as ApiCaptchaService;
 use FourPaws\External\ManzanaService as AppManzanaService;
 use FourPaws\MobileApiBundle\Dto\Object\PersonalBonus;
 use FourPaws\PersonalBundle\Entity\CardBonus;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Exception\SessionUnavailableException;
 
 class UserService
 {
@@ -54,12 +58,18 @@ class UserService
      */
     private $appManzanaService;
 
+    /**
+     * @var TokenStorageInterface
+     */
+    private $tokenStorage;
+
     public function __construct(
         UserBundleService $userBundleService,
         UserRepository $userRepository,
         ApiCaptchaService $apiCaptchaService,
         SessionHandler $sessionHandler,
-        AppManzanaService $appManzanaService
+        AppManzanaService $appManzanaService,
+        TokenStorageInterface $tokenStorage
     )
     {
         $this->userBundleService = $userBundleService;
@@ -67,6 +77,7 @@ class UserService
         $this->apiCaptchaService = $apiCaptchaService;
         $this->sessionHandler = $sessionHandler;
         $this->appManzanaService = $appManzanaService;
+        $this->tokenStorage = $tokenStorage;
     }
 
     /**
@@ -75,8 +86,8 @@ class UserService
      * @return UserLoginResponse
      * @throws \Bitrix\Main\Db\SqlQueryException
      * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\UserBundle\Exception\NotFoundException
      * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @throws \FourPaws\External\Exception\ManzanaServiceException
      */
     public function loginOrRegister(LoginRequest $loginRequest): UserLoginResponse
     {
@@ -130,7 +141,6 @@ class UserService
      *
      * @return PostUserInfoResponse
      * @throws \FourPaws\External\Exception\ManzanaServiceException
-     * @throws \FourPaws\External\Manzana\Exception\CardNotFoundException
      */
     public function update(User $user): PostUserInfoResponse
     {
@@ -160,33 +170,41 @@ class UserService
     }
 
     /**
-     * @param LoginExistRequest $existRequest
+     * @param string $login
      *
-     * @return array
+     * @return bool
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      */
-    public function isExist(LoginExistRequest $existRequest): array
+    public function doesExist(string $login): bool
     {
-        $exist = $this->userBundleService->getUserRepository()->isExist($existRequest->getLogin());
         /**
          * @todo Необходимо предусмотреть максимальное кол-во попыток
          */
-
-        return [
-            'exist'         => $exist,
-            'feedback_text' => $exist ? '' : 'Проверьте правильность заполнения поля. Введите ваш E-mail или номер телефона',
-        ];
+        return $this->userRepository->doesExist($login);
     }
 
     /**
+     * Берем данные о пользователе из переданного токена
      * @return User
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\External\Exception\ManzanaServiceException
      */
     public function getCurrentApiUser(): User
     {
-        $user = $this->userBundleService->getCurrentUser();
+        /**
+         * @var ApiToken $token | null
+         */
+        if (!$token = $this->tokenStorage->getToken()) {
+            throw new TokenNotFoundException();
+        }
+        if (!$session = $token->getApiUserSession()) {
+            throw new SessionUnavailableException();
+        }
+        $user = $this->userRepository->find($session->getUserId());
         $apiUser = new User();
         $apiUser
             ->setId($user->getId())

@@ -121,17 +121,21 @@ class UserController extends FOSRestController
      *     required=true,
      *     description="user phone"
      * )
-     * @param LoginExistRequest $existRequest
+     * @param LoginExistRequest $loginExistRequest
      *
      * @return ApiResponse
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      */
-    public function isExistAction(LoginExistRequest $existRequest): ApiResponse
+    public function loginExistAction(LoginExistRequest $loginExistRequest): ApiResponse
     {
+        $doesLoginExist = $this->apiUserService->doesExist($loginExistRequest->getLogin());
         return (new ApiResponse())
-            ->setData($this->apiUserService->isExist($existRequest));
+            ->setData([
+                'exist'         => $doesLoginExist,
+                'feedback_text' => $doesLoginExist ? '' : 'Проверьте правильность заполнения поля. Введите ваш E-mail или номер телефона',
+            ]);
     }
 
     /**
