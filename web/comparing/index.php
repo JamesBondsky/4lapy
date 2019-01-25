@@ -6,7 +6,7 @@ $APPLICATION->IncludeComponent(
     "articul:comparing",
     "",
     [
-        'SEF_FOLDER' => '/comparing/',
+        'SEF_FOLDER' => '/comparing/'
     ]
 );
 
