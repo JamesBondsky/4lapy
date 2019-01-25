@@ -6,8 +6,8 @@ $APPLICATION->SetPageProperty('description', '');
 $APPLICATION->SetTitle('');
 ?>
 
-<section id="registr-check" data-id-section-lending="registr-check" class="registr-check-lending">
-    <div class="container-lending">
+<section id="registr-check" data-id-section-landing="registr-check" class="registr-check-landing">
+    <div class="container-landing">
 
         <?if ($USER->IsAuthorized()) {?>
 
