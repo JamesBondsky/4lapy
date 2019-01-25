@@ -438,15 +438,17 @@ class ProductService
         $specialOffer
             ->setId($specialOfferModel->getId())
             ->setName($specialOfferModel->getName())
-            ->setDescription($specialOfferModel->getPreviewText());
+            ->setDescription($specialOfferModel->getPreviewText())
+            ->setImage($specialOfferModel->getPreviewPictureSrc());
 
         if ($specialOfferModel->getDateActiveFrom() && $specialOfferModel->getDateActiveTo()) {
             $dateFrom = DateHelper::replaceRuMonth($specialOfferModel->getDateActiveFrom()->format('d #n# Y'), DateHelper::GENITIVE);
             $dateTo = DateHelper::replaceRuMonth($specialOfferModel->getDateActiveTo()->format('d #n# Y'), DateHelper::GENITIVE);
             $specialOffer->setDate($dateFrom . " - " . $dateTo);
         }
+
         if ($specialOfferModel->hasLabelImage()) {
-            $specialOffer->setImage($specialOfferModel->getPropertyLabelImageFileSrc());
+            // $specialOffer->setImage($specialOfferModel->getPropertyLabelImageFileSrc());
         }
 
         return $specialOffer;

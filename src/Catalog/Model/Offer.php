@@ -1472,22 +1472,26 @@ class Offer extends IblockElement
     public function getShare(): ShareCollection
     {
         if ($this->share === null) {
-            $this->share = (new ShareQuery())->withOrder(['SORT' => 'ASC', 'ACTIVE_FROM' => 'DESC'])->withFilter(
-                [
+            $this->share = (new ShareQuery())
+                ->withOrder([
+                    'SORT' => 'ASC',
+                    'ACTIVE_FROM' => 'DESC'
+                ])
+                ->withFilter([
                     'ACTIVE'            => 'Y',
                     'ACTIVE_DATE'       => 'Y',
                     'PROPERTY_PRODUCTS' => $this->getXmlId(),
-                ]
-            )->withSelect(
-                [
+                ])
+                ->withSelect([
                     'ID',
                     'NAME',
                     'IBLOCK_ID',
+                    'PREVIEW_PICTURE',
                     'PREVIEW_TEXT',
                     'DATE_ACTIVE_FROM',
                     'DATE_ACTIVE_TO',
-                ]
-            )->exec();
+                ])
+                ->exec();
         }
 
         return $this->share;
