@@ -2,14 +2,14 @@
     die();
 }
 
-if($arResult['SUCCESS']){
+/*if($arResult['SUCCESS']){
     echo 'Импорт прошёл успешно';
 }
 else{
     echo 'Произошла ошибка при импорте: '.$arResult['ERROR'];
-}
+}*/
 
-
+dump($arResult);
 
 ?>
 
