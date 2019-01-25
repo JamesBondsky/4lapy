@@ -121,18 +121,18 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             $feed = $this->loadFeed($this->getStorageKey());
 
             try {
-            $this->processOffers($feed, $configuration, $stockID);
+                $this->processOffers($feed, $configuration, $stockID);
             } catch (OffersIsOver $isOver) {
                 $feed = $this->loadFeed($this->getStorageKey());
                 $feed->getShop()
                     ->setOffset(null);
 
-            $this->processPromos($feed, $configuration, $stockID);
+                $this->processPromos($feed, $configuration, $stockID);
 
-            $this->publicFeed($feed, Application::getAbsolutePath($configuration->getExportFile()));
-            $this->clearFeed($this->getStorageKey());
+                $this->publicFeed($feed, Application::getAbsolutePath($configuration->getExportFile()));
+                $this->clearFeed($this->getStorageKey());
 
-            return false;
+                return false;
             }
         }
 
@@ -822,7 +822,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 if (strpos($share['DATE_ACTIVE_TO'], ' ') === false) {
                     $share['DATE_ACTIVE_TO'] .= ' 23:59:59';
                 }
-                if(count($matches) == 0){
+                if (count($matches) == 0) {
                     continue;
                 }
                 $arType = explode('+', str_replace(' ', '', $matches[0]));
