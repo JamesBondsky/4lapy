@@ -120,12 +120,12 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         } else {
             $feed = $this->loadFeed($this->getStorageKey());
 
-//            try {
+            try {
             $this->processOffers($feed, $configuration, $stockID);
-//            } catch (OffersIsOver $isOver) {
-//                $feed = $this->loadFeed($this->getStorageKey());
-//                $feed->getShop()
-//                    ->setOffset(null);
+            } catch (OffersIsOver $isOver) {
+                $feed = $this->loadFeed($this->getStorageKey());
+                $feed->getShop()
+                    ->setOffset(null);
 
             $this->processPromos($feed, $configuration, $stockID);
 
@@ -133,7 +133,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             $this->clearFeed($this->getStorageKey());
 
             return false;
-//            }
+            }
         }
 
         return true;
