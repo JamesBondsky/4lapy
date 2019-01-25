@@ -27,6 +27,9 @@ use FourPaws\CatalogBundle\Dto\Yandex\DeliveryOption;
 use FourPaws\CatalogBundle\Dto\Yandex\Param;
 use FourPaws\CatalogBundle\Dto\Yandex\Feed;
 use FourPaws\CatalogBundle\Dto\Yandex\Offer as YandexOffer;
+use FourPaws\CatalogBundle\Dto\Yandex\Promo;
+use FourPaws\CatalogBundle\Dto\Yandex\Purchase;
+use FourPaws\CatalogBundle\Dto\Yandex\Product;
 use FourPaws\CatalogBundle\Dto\Yandex\Shop;
 use FourPaws\CatalogBundle\Exception\ArgumentException;
 use FourPaws\CatalogBundle\Exception\OffersIsOver;
@@ -117,18 +120,20 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         } else {
             $feed = $this->loadFeed($this->getStorageKey());
 
-            try {
-                $this->processOffers($feed, $configuration, $stockID);
-            } catch (OffersIsOver $isOver) {
-                $feed = $this->loadFeed($this->getStorageKey());
-                $feed->getShop()
-                    ->setOffset(null);
+//            try {
+            $this->processOffers($feed, $configuration, $stockID);
+//            } catch (OffersIsOver $isOver) {
+//                $feed = $this->loadFeed($this->getStorageKey());
+//                $feed->getShop()
+//                    ->setOffset(null);
 
-                $this->publicFeed($feed, Application::getAbsolutePath($configuration->getExportFile()));
-                $this->clearFeed($this->getStorageKey());
+            $this->processPromos($feed, $configuration, $stockID);
 
-                return false;
-            }
+            $this->publicFeed($feed, Application::getAbsolutePath($configuration->getExportFile()));
+            $this->clearFeed($this->getStorageKey());
+
+            return false;
+//            }
         }
 
         return true;
@@ -196,7 +201,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         Configuration $configuration,
         string $stockID = null
     ): YandexFeedService {
-        $limit = 500;
+        $limit = 5;
         $offers = $feed->getShop()
             ->getOffers();
 
@@ -242,8 +247,8 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         $this->saveFeed($this->getStorageKey(), $feed);
 
         $cdbResult = $offerCollection->getCdbResult();
-        if ($this->getPageNumber($offset, $limit) === (int)$cdbResult->NavPageCount) {
-            throw new OffersIsOver('All offers was been processed.');
+        if ($this->getPageNumber($offset, $limit) === 2) {
+//            throw new OffersIsOver('All offers was been processed.');
         }
 
         return $this;
@@ -756,5 +761,132 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         }
 
         return $this->rcStock;
+    }
+
+
+    /**
+     * @param Feed $feed
+     * @param ConfigurationInterface $configuration
+     * @param string|null $stockID
+     * @throws IblockNotFoundException
+     */
+    private function processPromos(Feed $feed, ConfigurationInterface $configuration, string $stockID = null)
+    {
+        $promos = $feed->getShop()->getPromos();
+        $host = $configuration->getServerName();
+
+        $arOrder = [
+            'ID' => 'ASC'
+        ];
+
+        $time = ConvertTimeStamp(time(), 'FULL');
+
+        $arFilter = [
+            'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES),
+            'ACTIVE' => 'Y',
+            '<=DATE_ACTIVE_FROM' => $time,
+            '>=DATE_ACTIVE_TO' => $time,
+            '!PROPERTY_PRODUCTS' => false
+        ];
+
+        $arSelect = [
+            'ID',
+            'IBLOCK_ID',
+            'NAME',
+            'DATE_ACTIVE_FROM',
+            'DATE_ACTIVE_TO',
+            'PREVIEW_TEXT',
+            'DETAIL_TEXT',
+            'DETAIL_PAGE_URL'
+        ];
+
+        $dbShare = \CIBlockElement::GetList($arOrder, $arFilter, false, false, $arSelect);
+
+        while ($cibeShare = $dbShare->GetNextElement()) {
+            $share = $cibeShare->GetFields();
+            $share['PROPERTIES'] = $cibeShare->GetProperties();
+            $matches = [];
+            if (
+                $share['DATE_ACTIVE_FROM'] != '' &&
+                $share['DATE_ACTIVE_TO'] != '' &&
+                (
+                    $share['PROPERTIES']['SHARE_TYPE']['VALUE'] == '' ||
+                    $share['PROPERTIES']['SHARE_TYPE']['VALUE'] == 'aktsiya-v-im-roznitse' ||
+                    $share['PROPERTIES']['SHARE_TYPE']['VALUE'] == 'aktsiya-v-roznitse'
+                ) &&
+                preg_match('/[\s]?[0-9]{1,2}[+]{1}[0-9]{1,2}[\s]?/', $share['NAME'], $matches) !== false
+            ) {
+                if (strpos($share['DATE_ACTIVE_FROM'], ' ') === false) {
+                    $share['DATE_ACTIVE_FROM'] .= ' 00:00:00';
+                }
+                if (strpos($share['DATE_ACTIVE_TO'], ' ') === false) {
+                    $share['DATE_ACTIVE_TO'] .= ' 23:59:59';
+                }
+                if(count($matches) == 0){
+                    continue;
+                }
+                $arType = explode('+', str_replace(' ', '', $matches[0]));
+                $requiredQuantity = (int)$arType[0];
+                $freeQuantity = (int)$arType[1];
+
+                $offers = array_unique($share['PROPERTIES']['PRODUCTS']['VALUE']);
+                $offers = array_flip($offers);
+
+                $filter = [
+                    'XML_ID' => array_keys($offers)
+                ];
+
+                if (!empty($stockID)) {
+                    $filter['>CATALOG_STORE_AMOUNT_' . $stockID] = '1';
+                } else {
+                    $filter['>CATALOG_STORE_AMOUNT_' . $this->getRcStock()->getId()] = '1';
+                }
+
+                $offerCollection = (new OfferQuery())
+                    ->withFilter($filter)
+                    ->exec();
+
+                /** @var Offer $offer */
+                foreach ($offerCollection as $offer) {
+                    $offers[$offer->getXmlId()] = true;
+                }
+
+                foreach ($offers as $offerId => $offer) {
+                    if ($offer !== true) {
+                        unset($offers[$offerId]);
+                    }
+                }
+
+                $offers = array_keys($offers);
+                $productCollection = new ArrayCollection();
+                foreach ($offers as $offer) {
+                    $product = new Product();
+                    $product->setOfferId($offer);
+                    $productCollection->add($product);
+                }
+
+                if ($productCollection->count() > 0) {
+                    $purchase = new Purchase();
+                    $purchase
+                        ->setRequiredQuantity($requiredQuantity)
+                        ->setFreeQuantity($freeQuantity)
+                        ->setProduct($productCollection);
+                    $descr = ($share['PREVIEW_TEXT']) ? $share['PREVIEW_TEXT'] : $share['DETAIL_TEXT'];
+                    $descr = str_replace("\r\n", '', html_entity_decode(\HTMLToTxt($descr)));
+                    $promo = new Promo();
+                    $promo
+                        ->setId($share['ID'])
+                        ->setType($requiredQuantity . ' plus ' . $freeQuantity)
+                        ->setUrl((new FullHrefDecorator($share['DETAIL_PAGE_URL']))->setHost($host)->__toString())
+                        ->setStartDate(\DateTime::createFromFormat('d.m.Y H:i:s', $share['DATE_ACTIVE_FROM'])->format('Y-m-d H:i:s'))
+                        ->setEndDate(\DateTime::createFromFormat('d.m.Y H:i:s', $share['DATE_ACTIVE_TO'])->format('Y-m-d H:i:s'))
+                        ->setDescription($descr)
+                        ->setPurchase($purchase);
+                    $promos->add($promo);
+                }
+            }
+        }
+
+        $feed->getShop()->setPromos($promos);
     }
 }
