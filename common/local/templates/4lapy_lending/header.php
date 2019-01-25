@@ -45,96 +45,96 @@ $markup = PawsApplication::markup();
     $asset->addJs('https://www.google.com/recaptcha/api.js?hl=ru');
     ?>
 </head>
-<body class="body-lending">
+<body class="body-landing">
 <?php $APPLICATION->ShowPanel(); ?>
 
-<header class="header-lending" data-header-lending="true">
-    <div class="container-lending">
-        <div class="header-lending__content">
-            <div class="header-lending__logo">
+<header class="header-landing" data-header-landing="true">
+    <div class="container-landing">
+        <div class="header-landing__content">
+            <div class="header-landing__logo">
                 <img src="/static/build/images/content/grandin-logo.svg" alt="Grandin" title="Grandin"/>
             </div>
-            <div class="header-lending-menu" data-mobile-menu-lending="true">
-                <ul class="header-lending-menu__list" data-list-mobile-menu-lending="true">
-                    <li  class="header-lending-menu__item">
-                        <a href="#" class="header-lending-menu__link" target="_blank">Правила акции</a>
+            <div class="header-landing-menu" data-mobile-menu-landing="true">
+                <ul class="header-landing-menu__list" data-list-mobile-menu-landing="true">
+                    <li  class="header-landing-menu__item">
+                        <a href="#" class="header-landing-menu__link" target="_blank">Правила акции</a>
                     </li>
                     <!-- Если НЕ авторизован -->
-                    <li class="header-lending-menu__item">
-                        <a href="javascript:void(0);"  class="header-lending-menu__link js-open-popup" data-popup-id="authorization">Принять участие</a>
+                    <li class="header-landing-menu__item">
+                        <a href="javascript:void(0);"  class="header-landing-menu__link js-open-popup" data-popup-id="authorization">Принять участие</a>
                     </li>
                     <!-- End Если НЕ авторизован -->
                     <!-- Если авторизован -->
-                    <li class="header-lending-menu__item">
-                        <a href="javascript:void(0);"  class="header-lending-menu__link" data-btn-scroll-lending="regulations">Принять участие</a>
+                    <li class="header-landing-menu__item">
+                        <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="regulations">Принять участие</a>
                     </li>
                     <!-- End Если авторизован -->
-                    <li  class="header-lending-menu__item">
-                        <a href="javascript:void(0);"  class="header-lending-menu__link" data-btn-scroll-lending="prizes">Призы</a>
+                    <li  class="header-landing-menu__item">
+                        <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="prizes">Призы</a>
                     </li>
-                    <li  class="header-lending-menu__item">
-                        <a href="javascript:void(0);"  class="header-lending-menu__link" data-btn-scroll-lending="winners">Победители</a>
+                    <li  class="header-landing-menu__item">
+                        <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="winners">Победители</a>
                     </li>
-                    <li  class="header-lending-menu__item">
-                        <a href="javascript:void(0);"  class="header-lending-menu__link" data-btn-scroll-lending="where-buy">Где купить</a>
+                    <li  class="header-landing-menu__item">
+                        <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="where-buy">Где купить</a>
                     </li>
-                    <li  class="header-lending-menu__item">
-                        <a href="javascript:void(0);"  class="header-lending-menu__link" data-btn-scroll-lending="contacts">Контакты</a>
+                    <li  class="header-landing-menu__item">
+                        <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="contacts">Контакты</a>
                     </li>
                 </ul>
             </div>
-            <div class="header-lending__toggle-mobile-menu" data-toggle-mobile-menu-lending="true"><span></span></div>
+            <div class="header-landing__toggle-mobile-menu" data-toggle-mobile-menu-landing="true"><span></span></div>
         </div>
     </div>
 </header>
 
-<div class="top-lending" data-top-lending="true">
-    <section class="splash-screen-lending">
-        <div class="splash-screen-lending__bg" style="background-image: url('/static/build/images/content/bg-splash-lending.png')"></div>
-        <div class="splash-screen-lending__dog" style="background-image: url('/static/build/images/content/lending-splash-screen_dog.png')"></div>
-        <div class="splash-screen-lending__cat" style="background-image: url('/static/build/images/content/lending-splash-screen_cat.png')"></div>
-        <div class="splash-screen-lending__feed-left" style="background-image: url('/static/build/images/content/lending-splash-screen_left.png')"></div>
-        <div class="splash-screen-lending__feed-right" style="background-image: url('/static/build/images/content/lending-splash-screen_right.png')"></div>
+<div class="top-landing" data-top-landing="true">
+    <section class="splash-screen-landing">
+        <div class="splash-screen-landing__bg" style="background-image: url('/static/build/images/content/bg-splash-landing.png')"></div>
+        <div class="splash-screen-landing__dog" style="background-image: url('/static/build/images/content/landing-splash-screen_dog.png')"></div>
+        <div class="splash-screen-landing__cat" style="background-image: url('/static/build/images/content/landing-splash-screen_cat.png')"></div>
+        <div class="splash-screen-landing__feed-left" style="background-image: url('/static/build/images/content/landing-splash-screen_left.png')"></div>
+        <div class="splash-screen-landing__feed-right" style="background-image: url('/static/build/images/content/landing-splash-screen_right.png')"></div>
 
-        <div class="container-lending">
-            <div class="splash-screen-lending__content">
-                <div class="splash-screen-lending__title">
+        <div class="container-landing">
+            <div class="splash-screen-landing__content">
+                <div class="splash-screen-landing__title">
                     <span>Как выиграть</span>
-                    <span class="splash-screen-lending__title-wide">запас корма</span>
+                    <span class="splash-screen-landing__title-wide">запас корма</span>
                 </div>
-                <div class="splash-screen-lending__subtitle">
-                    <span class="splash-screen-lending__subtitle-label">на год</span>
+                <div class="splash-screen-landing__subtitle">
+                    <span class="splash-screen-landing__subtitle-label">на год</span>
                     <span>вперёд</span>
                 </div>
-                <div class="splash-screen-lending__date">С 1 по 28 февраля 2019 г</div>
+                <div class="splash-screen-landing__date">С 1 по 28 февраля 2019 г</div>
 
                 <!-- Если авторизован -->
-                <div class="splash-screen-lending__btn-wrap">
-                    <div class="splash-screen-lending__btn" data-btn-scroll-lending="registr-check">Зарегистрировать чек</div>
+                <div class="splash-screen-landing__btn-wrap">
+                    <div class="splash-screen-landing__btn" data-btn-scroll-landing="registr-check">Зарегистрировать чек</div>
                 </div>
                 <!-- End Если авторизован -->
             </div>
         </div>
     </section>
 
-    <section data-id-section-lending="regulations" class="regulations-lending">
-        <div class="container-lending">
-            <div class="lending-title">Как принять участие в&nbsp;акции</div>
-            <ol class="regulations-lending__list">
+    <section data-id-section-landing="regulations" class="regulations-landing">
+        <div class="container-landing">
+            <div class="landing-title">Как принять участие в&nbsp;акции</div>
+            <ol class="regulations-landing__list">
                 <li>Купите любые корма Grandin на&nbsp;сумму от&nbsp;1800&nbsp;р. и&nbsp;получите миску Grandin в&nbsp;подарок</li>
                 <li>Зарегистрируйте покупку, и&nbsp;вы сможете принять участие в&nbsp;розыгрыше призов</li>
                 <li>Проверяйте результаты розыгрыша каждую&nbsp;пятницу</li>
             </ol>
             <!-- Если НЕ авторизован -->
-            <div class="regulations-lending__btn">
-                <div class="lending-btn js-open-popup" data-popup-id="authorization">Принять участие</div>
+            <div class="regulations-landing__btn">
+                <div class="landing-btn js-open-popup" data-popup-id="authorization">Принять участие</div>
             </div>
             <!-- End Если НЕ авторизован -->
         </div>
     </section>
 </div>
 
-<div class="b-page-wrapper lending-page-wrapper <?= $template->getWrapperClass() ?> js-this-scroll">
+<div class="b-page-wrapper landing-page-wrapper <?= $template->getWrapperClass() ?> js-this-scroll">
 
     <?php if ($template->hasMainWrapper()) { ?>
     <main class="b-wrapper<?= $template->getIndexMainClass() ?>" role="main">

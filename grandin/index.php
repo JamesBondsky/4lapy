@@ -11,50 +11,71 @@ $APPLICATION->SetTitle('');
 
         <?if ($USER->IsAuthorized()) {?>
 
-            <div class="registr-check-lending__form-wrap" data-wrap-form-registr-chek-lending="true">
-                <div class="lending-title lending-title_dark">
+            <div class="registr-check-landing__form-wrap" data-wrap-form-registr-chek-landing="true">
+                <div class="landing-title landing-title_dark">
                     Регистрация чека
                 </div>
-                <div class="registr-check-lending__form-info">
+                <div class="registr-check-landing__form-info">
                     Все поля обязательны для заполнения
                 </div>
-                <form data-form-registr-chek-lending="true" class="form-lending registr-check-lending__form" method="post" action="/" name="" enctype="multipart/form-data">
+                <form data-form-registr-chek-landing="true" class="form-landing registr-check-landing__form js-form-validation" method="post" action="/" name="" enctype="multipart/form-data">
                     <div class="form-group">
-                        <input type="text" id="DATE_REG_CHECK_GRANDIN" name="DATE_REG_CHECK_GRANDIN" value="" placeholder="Дата чека" required >
+                        <input type="dateDatepicker" id="DATE_REG_CHECK_GRANDIN" name="DATE_REG_CHECK_GRANDIN" value="" placeholder="Дата чека" data-datepicker-landing="true" >
+                        <div class="b-error">
+                            <span class="js-message"></span>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <input type="text" id="SUM_REG_CHECK_GRANDIN" name="SUM_REG_CHECK_GRANDIN" value="" placeholder="Сумма чека (не менее 1800р)" required >
+                        <input data-price-check-landing="true" type="price" id="SUM_REG_CHECK_GRANDIN" name="SUM_REG_CHECK_GRANDIN" value="" placeholder="Сумма чека (не менее 1800р)" >
+                        <div class="b-error">
+                            <span class="js-message"></span>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <input type="text" id="SURNAME_REG_CHECK_GRANDIN" name="SURNAME_REG_CHECK_GRANDIN" value="" placeholder="Фамилия" required >
+                        <input type="text" id="SURNAME_REG_CHECK_GRANDIN" name="SURNAME_REG_CHECK_GRANDIN" value="" placeholder="Фамилия" >
+                        <div class="b-error">
+                            <span class="js-message"></span>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <input type="text" id="NAME_REG_CHECK_GRANDIN" name="NAME_REG_CHECK_GRANDIN" value="" placeholder="Имя" required >
+                        <input type="text" id="NAME_REG_CHECK_GRANDIN" name="NAME_REG_CHECK_GRANDIN" value="" placeholder="Имя" >
+                        <div class="b-error">
+                            <span class="js-message"></span>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <input type="text" id="PHONE_REG_CHECK_GRANDIN" name="PHONE_REG_CHECK_GRANDIN" value="" placeholder="Телефон" required >
+                        <input type="tel" id="PHONE_REG_CHECK_GRANDIN" name="PHONE_REG_CHECK_GRANDIN" value="" placeholder="Телефон" >
+                        <div class="b-error">
+                            <span class="js-message"></span>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <input type="email" id="EMAIL_REG_CHECK_GRANDIN" name="EMAIL_REG_CHECK_GRANDIN" value="" placeholder="E-mail" required >
+                        <input type="email" id="EMAIL_REG_CHECK_GRANDIN" name="EMAIL_REG_CHECK_GRANDIN" value="" placeholder="E-mail" >
+                        <div class="b-error">
+                            <span class="js-message"></span>
+                        </div>
                     </div>
 
                     <div class="read-rules">
                         <input type="checkbox" id="READ_RULES_REG_CHECK_GRANDIN" name="READ_RULES_REG_CHECK_GRANDIN" value="Y" checked>
                         <label for="READ_RULES_REG_CHECK_GRANDIN"><span></span> с <a href="#" target="_blank">правилами акции</a> ознакомлен</label>
+                        <div class="b-error">
+                            <span class="js-message"></span>
+                        </div>
                     </div>
 
-                    <div class="registr-check-lending__btn-form">
-                        <input type="submit" class="lending-btn lending-btn_dark" value="Отправить">
+                    <div class="registr-check-landing__btn-form">
+                        <button type="submit" class="landing-btn landing-btn_dark" >Отправить</button>
                     </div>
                 </form>
 
-                <div class="registr-check-lending__response" data-response-form-lending="true"></div>
+                <div class="registr-check-landing__response" data-response-form-landing="true"></div>
             </div>
 
         <?} else {?>
 
-            <div class="registr-check-lending__message">
-                <div class="lending-title lending-title_dark">
+            <div class="registr-check-landing__message">
+                <div class="landing-title landing-title_dark">
                     Регистрируйте чеки<br/> и&nbsp;выигрывайте призы каждую неделю
                 </div>
             </div>
