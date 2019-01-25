@@ -14,8 +14,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 $css = '/static/build/css/main.css';
 
 $arTemplate = [
-    'NAME'          => 'Шаблон лендинга',
-    'DESCRIPTION'   => 'Шаблон лендинга',
+    'NAME'          => 'Шаблон лендинга Grandin' ,
+    'DESCRIPTION'   => 'Шаблон лендинга Grandin',
     'EDITOR_STYLES' => [
         $css,
     ],
