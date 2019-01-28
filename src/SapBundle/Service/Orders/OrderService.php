@@ -1093,20 +1093,30 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 $dostavistaService = Application::getInstance()->getContainer()->get('dostavista.service');
                 $orderService = Application::getInstance()->getContainer()->get(SaleOrderService::class);
                 $dostavistaStatus = StatusService::STATUS_SITE_DOSTAVISTA_MAP[$orderDto->getStatus()];
-                if ($dostavistaStatus) {
-                    foreach($order->getPropertyCollection() as $item){
+                if ($dostavistaStatus == StatusService::STATUS_SITE_DOSTAVISTA_MAP[6]) {
+                    foreach ($order->getPropertyCollection() as $item) {
                         if ($item->getProperty()['CODE'] == 'ORDER_ID_DOSTAVISTA') {
                             $dostavistaOrder = $item->getValue();
                             break;
                         }
                     }
-                    $dostavistaOrderId = $dostavistaService->editOrder($dostavistaOrder, ['status' => $dostavistaStatus]);
-                    $orderService->setOrderPropertiesByCode(
-                        $order,
-                        [
-                            'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE
-                        ]
-                    );
+                    if ($dostavistaOrder) {
+                        $dostavistaOrderId = $dostavistaService->cancelOrder($dostavistaOrder);
+                        $orderService->setOrderPropertiesByCode(
+                            $order,
+                            [
+                                'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE
+                            ]
+                        );
+                    } else {
+                        $this->log()
+                            ->error(
+                                \sprintf(
+                                    'Номер заказа для достависты заказа %s не найден.',
+                                    $order->getId()
+                                )
+                            );
+                    }
                 }
             }
         }

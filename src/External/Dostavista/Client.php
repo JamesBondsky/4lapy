@@ -15,31 +15,31 @@ class Client
     /**
      * API Url
      */
-    protected const DEFAULT_API_URL = 'https://robot.dostavista.ru/bapi';
+    protected const DEFAULT_API_URL = 'https://robot.dostavista.ru/api/business/1.0';
     /**
      * API Url test
      */
-    protected const DEFAULT_API_URL_TEST = 'https://robotapitest.dostavista.ru/bapi';
+    protected const DEFAULT_API_URL_TEST = 'https://robotapitest.dostavista.ru/api/business/1.0';
 
     /**
      * API url add order
      */
-    protected const URL_ADD_ORDER = 'https://robot.dostavista.ru/bapi/order';
+    protected const URL_ADD_ORDER = 'https://robot.dostavista.ru/api/business/1.0/create-order';
 
     /**
      * API url add order test
      */
-    protected const URL_ADD_ORDER_TEST = 'https://robotapitest.dostavista.ru/bapi/order';
+    protected const URL_ADD_ORDER_TEST = 'https://robotapitest.dostavista.ru/api/business/1.0/create-order';
 
     /**
-     * API url edit order
+     * API url cancel order
      */
-    protected const URL_EDIT_ORDER = 'https://robot.dostavista.ru/api/business/1.0/edit-order';
+    protected const URL_CANCEL_ORDER = 'https://robot.dostavista.ru/api/business/1.0/cancel-order';
 
     /**
-     * API url edit order test
+     * API url cancel order test
      */
-    protected const URL_EDIT_ORDER_TEST = 'https://robotapitest.dostavista.ru/api/business/1.0/edit-order';
+    protected const URL_CANCEL_ORDER_TEST = 'https://robotapitest.dostavista.ru/api/business/1.0/cancel-order';
 
     /**
      * Test mode flag
@@ -67,21 +67,6 @@ class Client
      * @var string
      */
     protected $url;
-
-    /**
-     * array of dostavista statuses
-     * @var array
-     */
-    protected $statuses = [
-        0 => 'new',
-        1 => 'available',
-        2 => 'active',
-        3 => 'completed',
-        4 => 'reactivated',
-        5 => 'draft',
-        6 => 'canceled',
-        7 => 'delayed'
-    ];
 
 
     /**
@@ -114,10 +99,16 @@ class Client
             'defaults' => [
                 'config' => [
                     'curl' => [
-                        CURLOPT_RETURNTRANSFER => true
+                        CURLOPT_RETURNTRANSFER => true,
+                        CURLOPT_HTTPHEADER => [
+                            'X-DV-Auth-Token' => $this->token
+                        ]
                     ]
                 ],
                 'timeout' => 3000
+            ],
+            'headers' => [
+                'X-DV-Auth-Token' => $this->token
             ]
         ]);
 
@@ -127,7 +118,7 @@ class Client
             return $body;
         } catch (RequestException $e) {
             return [
-                'result' => 0,
+                'is_successful' => false,
                 'error_code' => [
                     $e->getCode()
                 ],
@@ -144,12 +135,7 @@ class Client
      */
     public function checkConnection(): array
     {
-        $options['query'] = [
-            'token' => $this->token,
-            'client_id' => $this->clientId
-        ];
-
-        $result = $this->send('GET', $options);
+        $result = $this->send('GET', []);
         return $this->parseSendingResult($result);
     }
 
@@ -161,7 +147,7 @@ class Client
     {
         if (!in_array('matter', $data)) {
             return [
-                'result' => 0,
+                'is_successful' => false,
                 'error_code' => [
                     '404'
                 ],
@@ -170,9 +156,9 @@ class Client
                 ]
             ];
         }
-        if (!in_array('point', $data) || !is_array($data['point']) || count($data['point']) != 2) {
+        if (!in_array('points', $data) || !is_array($data['points']) || count($data['points']) != 2) {
             return [
-                'result' => 0,
+                'is_successful' => false,
                 'error_code' => [
                     '404'
                 ],
@@ -181,9 +167,9 @@ class Client
                 ]
             ];
         }
-        if (!is_array($data['point'][0]) || !isset($data['point'][0]['address']) || !isset($data['point'][0]['required_time_start']) || !isset($data['point'][0]['required_time']) || !isset($data['point'][0]['phone'])) {
+        if (!is_array($data['points'][0]) || !isset($data['points'][0]['address']) || !isset($data['points'][0]['required_start_datetime']) || !isset($data['points'][0]['required_finish_datetime']) || !isset($data['points'][0]['contact_person']['phone'])) {
             return [
-                'result' => 0,
+                'is_successful' => false,
                 'error_code' => [
                     '404'
                 ],
@@ -193,9 +179,9 @@ class Client
             ];
         }
 
-        if (!is_array($data['point'][1]) || !isset($data['point'][1]['address']) || !isset($data['point'][1]['required_time_start']) || !isset($data['point'][1]['required_time']) || !isset($data['point'][1]['phone'])) {
+        if (!is_array($data['points'][1]) || !isset($data['points'][1]['address']) || !isset($data['points'][1]['required_start_datetime']) || !isset($data['points'][1]['required_finish_datetime']) || !isset($data['points'][1]['contact_person']['phone'])) {
             return [
-                'result' => 0,
+                'is_successful' => false,
                 'error_code' => [
                     '404'
                 ],
@@ -225,13 +211,7 @@ class Client
             $this->url = self::URL_ADD_ORDER;
         }
 
-        $options['query'] = array_merge(
-            [
-                'token' => $this->token,
-                'client_id' => $this->clientId
-            ],
-            $data
-        );
+        $options['body'] = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         $result = $this->send('POST', $options);
         return $this->parseSendingResult($result);
@@ -239,26 +219,18 @@ class Client
 
     /**
      * @param $orderId
-     * @param $data
      * @return array
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function editOrder($orderId, $data): array
+    public function cancelOrder($orderId): array
     {
         if ($this->testMode) {
-            $this->url = self::URL_EDIT_ORDER_TEST;
+            $this->url = self::URL_CANCEL_ORDER_TEST;
         } else {
-            $this->url = self::URL_EDIT_ORDER;
+            $this->url = self::URL_CANCEL_ORDER;
         }
 
-        $options['body'] = json_encode(array_merge(
-            [
-                'token' => $this->token,
-                'client_id' => $this->clientId,
-                'order_id' => (int) $orderId
-            ],
-            $data
-        ));
+        $options['body'] = json_encode(['order_id' => (int)$orderId], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         $result = $this->send('POST', $options);
         return $this->parseSendingResult($result);
@@ -270,10 +242,10 @@ class Client
      */
     protected function parseSendingResult($res): array
     {
-        if ($res['result'] == 1) {
+        if ($res['is_successful'] == true) {
             $result = [
                 'success' => true,
-                'order_id' => $res['order_id']
+                'order_id' => $res['order']['order_id']
             ];
         } else {
             $result = ['success' => false];

@@ -72,27 +72,26 @@ class DostavistaService implements LoggerAwareInterface
 
     /**
      * @param string $orderId
-     * @param array $data
      * @return array
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function editOrder(string $orderId, array $data)
+    public function cancelOrder(string $orderId)
     {
         //проверяем коннект
         $res = $this->client->checkConnection();
         if ($res['success']) {
-            //пробуем отправить заказ в достависту
+            //пробуем отменить заказ в достависте
             try {
-                $result = $this->client->editOrder($orderId, $data);
+                $result = $this->client->cancelOrder($orderId);
                 if ($result['success']) {
-                    $this->logger->info('Order ' . $data['point'][1]['client_order_id'] . ' success create in Dostavista service');
+                    $this->logger->info('Order ' . $orderId . ' success canceled in Dostavista service');
                 }
             } catch (\Exception $e) {
                 $result = [
                     'success' => false,
                     'message' => 'Ошибка импорта заказа'
                 ];
-                $this->logger->error('Order ' . $data['point'][1]['client_order_id'] . ' import failed in "Dostavista" service', $result);
+                $this->logger->error('Order ' . $orderId . ' cancel failed in "Dostavista" service', $result);
             }
         } else {
             $result = [

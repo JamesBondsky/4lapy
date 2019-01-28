@@ -1923,7 +1923,7 @@ class OrderService implements LoggerAwareInterface
         $offers = $this->getOrderProducts($order);
         /** @var int $weigth Вес всех товаров */
         $weigth = (int)($basket->getWeight() / 1000);
-        $requireCar = ($weigth <= 15) ? 0 : (($weigth <= 200) ? 1 : 2); //0 - пешая доставка; 1 - легковым автомобилем, 2 - грузовым автомобилем.
+//        $requireCar = ($weigth <= 15) ? 0 : (($weigth <= 200) ? 1 : 2); //0 - пешая доставка; 1 - легковым автомобилем, 2 - грузовым автомобилем.
         $arSectionsNames = [];
         /** @var Offer $offer */
         foreach ($offers as $offer) {
@@ -1935,14 +1935,15 @@ class OrderService implements LoggerAwareInterface
         unset($arSectionsNames);
 
         $data = [
-            'require_car' => $requireCar,
+//            'require_car' => $requireCar,
+            'total_weight_kg' => $weigth,
             'matter' => $matter,
             //что везем
-            'insurance' => $insurance,
+            'insurance_amount' => $insurance,
             //сумма страхования = цене корзины
-            'sms_notification' => (\COption::GetOptionString('articul.dostavista.delivery', 'sms_courier_set', '') == BaseEntity::BITRIX_TRUE) ? 1 : 0,
+            'is_client_notification_enabled' => (\COption::GetOptionString('articul.dostavista.delivery', 'sms_courier_set', '') == BaseEntity::BITRIX_TRUE) ? 1 : 0,
             //Отправить sms о назначении курьера на заказ 0/1
-            'recipients_sms_notification' => (\COption::GetOptionString('articul.dostavista.delivery', 'sms_courier_time_phone', '') == BaseEntity::BITRIX_TRUE) ? 1 : 0
+            'is_contact_person_notification_enabled' => (\COption::GetOptionString('articul.dostavista.delivery', 'sms_courier_time_phone', '') == BaseEntity::BITRIX_TRUE) ? 1 : 0
             //Отправить получателям sms с интервалом прибытия и телефоном курьера: 0 - не отправлять, 1 - отправлять.
         ];
 
@@ -1967,25 +1968,30 @@ class OrderService implements LoggerAwareInterface
         $storePhone = str_replace(['+', '(', ')', ' ', '-'], ['', '', '', '', ''], $nearShop->getPhone());
         $storePhone = explode(',доб.', $storePhone)[0];
 
-        $data['point'][0] = [
+        $data['points'][0] = [
             'address' => (string)$nearAddress,
-            'required_time_start' => $requireTimeStart,
-            'required_time' => $pointZeroDate->format('c'),
-            'phone' => $storePhone,
+            'contact_person' => [
+                'phone' => $storePhone
+            ],
             'client_order_id' => $order->getField('ACCOUNT_NUMBER'),
-            'taking' => 0
+            'required_start_datetime' => $requireTimeStart,
+            'required_finish_datetime' => $pointZeroDate->format('c'),
+            'taking_amount' => 0,
+            'buyout_amount' => 0
         ];
 
-        $data['point'][1] = [
+        $data['points'][1] = [
             'address' => $this->getOrderDeliveryAddress($order),
-            'required_time_start' => $requireTimeStart,
-            'required_time' => $pointZeroDate->format('c'),
-            'contact_person' => $name,
-            'phone' => $phone,
-            'weight' => $weigth,
+            'contact_person' => [
+                'phone' => $phone,
+                'name' => $name
+            ],
             'client_order_id' => $order->getField('ACCOUNT_NUMBER'),
-            'note' => $comment,
-            'taking' => 0
+            'required_start_datetime' => $requireTimeStart,
+            'required_finish_datetime' => $pointZeroDate->format('c'),
+            'taking_amount' => 0,
+            'buyout_amount' => 0,
+            'note' => $comment
         ];
 
         $dostavistaOrderId = $dostavistaService->addOrder($data)['order_id'];
