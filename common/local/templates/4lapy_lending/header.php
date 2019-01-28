@@ -54,7 +54,7 @@ $markup = PawsApplication::markup();
         $(function() {
             setTimeout(function() {
 
-                if(true
+                if(false
                     || window.location.pathname == '/personal/register/'
                     || window.location.pathname == '/personal/forgot-password/'
                 ) {
@@ -97,9 +97,13 @@ $markup = PawsApplication::markup();
                     <li  class="header-landing-menu__item">
                         <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="prizes">Призы</a>
                     </li>
+
+                    <?/**
                     <li  class="header-landing-menu__item">
                         <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="winners">Победители</a>
                     </li>
+                    */?>
+
                     <li  class="header-landing-menu__item">
                         <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="where-buy">Где купить</a>
                     </li>
