@@ -82,7 +82,11 @@ class GrandinController extends Controller
             return $this->ajaxMess->getAddError($iblockElement->LAST_ERROR);
         }
 
-        return JsonSuccessResponse::create('Спасибо за регистрацию');
+        $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD);
+        return JsonSuccessResponse::createWithData('Спасибо за регистрацию', [
+            'field' => $token['field'],
+            'value' => $token['token'],
+        ]);
     }
 
 }
