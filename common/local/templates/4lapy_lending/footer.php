@@ -73,6 +73,8 @@ if ($template->hasMainWrapper()) { ?>
         <div class="where-buy-landing__map" id="mapWhereBuylanding" data-map-where-buy-landing="true"></div>
     </section>
 
+
+    <?/**
     <section data-id-section-landing="winners" class="winners-landing" style="background-image: url('/static/build/images/content/bg-splash-landing.png')">
         <div class="winners-landing__bg-left" style="background-image: url('/static/build/images/content/landing-winners-left.png')"></div>
         <div class="winners-landing__bg-right" style="background-image: url('/static/build/images/content/landing-winners-right.png')"></div>
@@ -415,48 +417,42 @@ if ($template->hasMainWrapper()) { ?>
             </div>
         </div>
     </section>
+    **/ ?>
 
     <section data-id-section-landing="contacts" class="feedback-landing" data-wrap-form-feedback-landing="true">
         <div class="feedback-landing__container container-landing">
             <div class="landing-title landing-title_dark">
                 Обратная связь
             </div>
-            <form data-form-feedback-landing="true" class="form-landing feedback-landing__form js-form-validation" method="post" action="/" name="" enctype="multipart/form-data">
-                <div class="form-group form-group_full">
-                    <textarea id="QUESTION_REG_FEEDBACK_GRANDIN" name="QUESTION_REG_FEEDBACK_GRANDIN" value="" placeholder="напишите ваш вопрос"></textarea>
-                    <div class="b-error">
-                        <span class="js-message"></span>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <input type="text" id="FIO_REG_FEEDBACK_GRANDIN" name="FIO_REG_FEEDBACK_GRANDIN" value="" placeholder="имя, фамилия">
-                    <div class="b-error">
-                        <span class="js-message"></span>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <input type="tel" name="phone" value="" id="PHONE_REG_FEEDBACK_GRANDIN" placeholder="номер телефона">
-                    <div class="b-error">
-                        <span class="js-message"></span>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <input type="email" id="EMAIL_REG_FEEDBACK_GRANDIN" name="EMAIL_REG_FEEDBACK_GRANDIN" value="" placeholder="e-mail" >
-                    <div class="b-error">
-                        <span class="js-message"></span>
-                    </div>
-                </div>
-                <div class="feedback-landing__form-info">
-                    Обратите внимание, что все поля данной формы должны быть заполнены
-                </div>
-                <div class="feedback-landing__btn-form">
-                    <button type="submit" class="landing-btn">Отправить</button>
-                </div>
-            </form>
+
+            <?php
+                $APPLICATION->IncludeComponent(
+                    'bitrix:form.result.new',
+                    'feedback',
+                    [
+                        'CACHE_TIME'             => '3600000',
+                        'CACHE_TYPE'             => 'A',
+                        'CHAIN_ITEM_LINK'        => '',
+                        'CHAIN_ITEM_TEXT'        => '',
+                        'EDIT_URL'               => '',
+                        'IGNORE_CUSTOM_TEMPLATE' => 'Y',
+                        'LIST_URL'               => '',
+                        'SEF_MODE'               => 'N',
+                        'SUCCESS_URL'            => '',
+                        'USE_EXTENDED_ERRORS'    => 'Y',
+                        'VARIABLE_ALIASES'       => [
+                            'RESULT_ID'   => 'RESULT_ID',
+                            'WEB_FORM_ID' => 'WEB_FORM_ID',
+                        ],
+                        'WEB_FORM_ID'            => \FourPaws\Helpers\FormHelper::getIdByCode(\FourPaws\Enum\Form::FEEDBACK),
+                    ]
+                );
+            ?>
 
             <div class="registr-check-landing__response" data-response-form-landing="true"></div>
         </div>
     </section>
+
 </div>
 
 <footer class="footer-landing">

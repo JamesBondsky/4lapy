@@ -1,0 +1,8 @@
+bitrix
+static
+local
+upload
+.access.php
+symfony_router.php
+urlrewrite.php
+favicon.ico

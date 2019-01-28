@@ -31,4 +31,6 @@ class IblockCode
     public const RELATED_LINKS    = 'related_links';
 
     public const FAQ  = 'faq';
+
+    public const GRANDIN_REQUEST = 'grandin_request';
 }

@@ -8,7 +8,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var \CMain $APPLICATION
  */
 
-use Bitrix\Main\Application;use Bitrix\Main\Page\Asset;use FourPaws\App\Application as PawsApplication;use FourPaws\App\MainTemplate;use FourPaws\Decorators\SvgDecorator;use FourPaws\Enum\IblockCode;use FourPaws\Enum\IblockType;use FourPaws\SaleBundle\Service\BasketViewService;use FourPaws\UserBundle\Enum\UserLocationEnum;
+use Bitrix\Main\Application;
+use Bitrix\Main\Page\Asset;
+use FourPaws\App\Application as PawsApplication;
+use FourPaws\App\MainTemplate;
+use FourPaws\UserBundle\Enum\UserLocationEnum;
 
 /** @var MainTemplate $template */
 $template = MainTemplate::getInstance(Application::getInstance()
@@ -44,6 +48,26 @@ $markup = PawsApplication::markup();
     $asset->addJs('//api-maps.yandex.ru/2.1/?apikey=ad666cd3-80be-4111-af2d-209dddf2c55e&lang=ru_RU');
     $asset->addJs('https://www.google.com/recaptcha/api.js?hl=ru');
     ?>
+
+    <?/** уходи */?>
+    <script>
+        $(function() {
+            setTimeout(function() {
+
+                if(true
+                    || window.location.pathname == '/personal/register/'
+                    || window.location.pathname == '/personal/forgot-password/'
+                ) {
+                    $([document.documentElement, document.body]).animate({
+                        scrollTop: $('.landing-page-wrapper').offset().top - 100
+                    }, 2000);
+                }
+
+            }, 500);
+        });
+    </script>
+
+
 </head>
 <body class="body-landing">
 <?php $APPLICATION->ShowPanel(); ?>
@@ -59,16 +83,17 @@ $markup = PawsApplication::markup();
                     <li  class="header-landing-menu__item">
                         <a href="#" class="header-landing-menu__link" target="_blank">Правила акции</a>
                     </li>
-                    <!-- Если НЕ авторизован -->
-                    <li class="header-landing-menu__item">
-                        <a href="javascript:void(0);"  class="header-landing-menu__link js-open-popup" data-popup-id="authorization">Принять участие</a>
-                    </li>
-                    <!-- End Если НЕ авторизован -->
-                    <!-- Если авторизован -->
-                    <li class="header-landing-menu__item">
-                        <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="regulations">Принять участие</a>
-                    </li>
-                    <!-- End Если авторизован -->
+
+                    <?if ($USER->IsAuthorized()) {?>
+                        <li class="header-landing-menu__item">
+                            <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="regulations">Принять участие</a>
+                        </li>
+                    <?} else {?>
+                        <li class="header-landing-menu__item">
+                            <a href="javascript:void(0);"  class="header-landing-menu__link js-open-popup" data-popup-id="authorization">Принять участие</a>
+                        </li>
+                    <?}?>
+
                     <li  class="header-landing-menu__item">
                         <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="prizes">Призы</a>
                     </li>
@@ -108,11 +133,16 @@ $markup = PawsApplication::markup();
                 </div>
                 <div class="splash-screen-landing__date">С 1 по 28 февраля 2019 г</div>
 
-                <!-- Если авторизован -->
-                <div class="splash-screen-landing__btn-wrap">
-                    <div class="splash-screen-landing__btn" data-btn-scroll-landing="registr-check">Зарегистрировать чек</div>
-                </div>
-                <!-- End Если авторизован -->
+                <?if ($USER->IsAuthorized()) {?>
+                    <div class="splash-screen-landing__btn-wrap">
+                        <div class="splash-screen-landing__btn" data-btn-scroll-landing="registr-check">Зарегистрировать чек</div>
+                    </div>
+                <?} else {?>
+                    <div class="splash-screen-landing__btn-wrap">
+                        <div class="splash-screen-landing__btn js-open-popup" data-popup-id="authorization">Зарегистрировать чек</div>
+                    </div>
+                <?}?>
+
             </div>
         </div>
     </section>
@@ -125,11 +155,17 @@ $markup = PawsApplication::markup();
                 <li>Зарегистрируйте покупку, и&nbsp;вы сможете принять участие в&nbsp;розыгрыше призов</li>
                 <li>Проверяйте результаты розыгрыша каждую&nbsp;пятницу</li>
             </ol>
-            <!-- Если НЕ авторизован -->
-            <div class="regulations-landing__btn">
-                <div class="landing-btn js-open-popup" data-popup-id="authorization">Принять участие</div>
-            </div>
-            <!-- End Если НЕ авторизован -->
+
+            <?if ($USER->IsAuthorized()) {?>
+                <div class="regulations-landing__btn">
+                    <div class="landing-btn" data-btn-scroll-landing="registr-check">Принять участие</div>
+                </div>
+            <?} else {?>
+                <div class="regulations-landing__btn">
+                    <div class="landing-btn js-open-popup" data-popup-id="authorization">Принять участие</div>
+                </div>
+            <?}?>
+
         </div>
     </section>
 </div>
