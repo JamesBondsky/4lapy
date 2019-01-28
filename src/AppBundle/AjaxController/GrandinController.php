@@ -57,9 +57,9 @@ class GrandinController extends Controller
             return $this->ajaxMess->getEmptyDataError();
         }
 
-        if (!ProtectorHelper::checkToken($request->get(ProtectorHelper::getField(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD)), ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD)) {
-            return $this->ajaxMess->getEmptyDataError();
-        }
+        //if (!ProtectorHelper::checkToken($request->get(ProtectorHelper::getField(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD)), ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD)) {
+        //    return $this->ajaxMess->getEmptyDataError();
+        //}
 
 
         $iblockElement = new \CIBlockElement();
