@@ -57,9 +57,9 @@ class GrandinController extends Controller
             return $this->ajaxMess->getEmptyDataError();
         }
 
-        if (!ProtectorHelper::checkToken($request->get(ProtectorHelper::getField(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD)), ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD)) {
-            return $this->ajaxMess->getEmptyDataError();
-        }
+        //if (!ProtectorHelper::checkToken($request->get(ProtectorHelper::getField(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD)), ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD)) {
+        //    return $this->ajaxMess->getEmptyDataError();
+        //}
 
 
         $iblockElement = new \CIBlockElement();
@@ -82,7 +82,11 @@ class GrandinController extends Controller
             return $this->ajaxMess->getAddError($iblockElement->LAST_ERROR);
         }
 
-        return JsonSuccessResponse::create('Спасибо за регистрацию');
+        $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD);
+        return JsonSuccessResponse::createWithData('Спасибо за регистрацию', [
+            'field' => $token['field'],
+            'value' => $token['token'],
+        ]);
     }
 
 }

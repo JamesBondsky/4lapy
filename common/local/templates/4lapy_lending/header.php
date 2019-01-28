@@ -148,7 +148,7 @@ $markup = PawsApplication::markup();
                     </div>
                 <?} else {?>
                     <div class="splash-screen-landing__btn-wrap">
-                        <div class="splash-screen-landing__btn js-open-popup" data-popup-id="authorization">Зарегистрировать чек</div>
+                        <div class="splash-screen-landing__btn js-open-popup" data-popup-id="authorization">Принять участие</div>
                     </div>
                 <?}?>
 
@@ -167,7 +167,7 @@ $markup = PawsApplication::markup();
 
             <?if ($USER->IsAuthorized()) {?>
                 <div class="regulations-landing__btn">
-                    <div class="landing-btn" data-btn-scroll-landing="registr-check">Принять участие</div>
+                    <div class="landing-btn" data-btn-scroll-landing="registr-check">Зарегистрировать чек</div>
                 </div>
             <?} else {?>
                 <div class="regulations-landing__btn">
