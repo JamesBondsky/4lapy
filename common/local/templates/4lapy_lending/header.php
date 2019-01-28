@@ -8,7 +8,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var \CMain $APPLICATION
  */
 
-use Bitrix\Main\Application;use Bitrix\Main\Page\Asset;use FourPaws\App\Application as PawsApplication;use FourPaws\App\MainTemplate;use FourPaws\Decorators\SvgDecorator;use FourPaws\Enum\IblockCode;use FourPaws\Enum\IblockType;use FourPaws\SaleBundle\Service\BasketViewService;use FourPaws\UserBundle\Enum\UserLocationEnum;
+use Bitrix\Main\Application;
+use Bitrix\Main\Page\Asset;
+use FourPaws\App\Application as PawsApplication;
+use FourPaws\App\MainTemplate;
+use FourPaws\UserBundle\Enum\UserLocationEnum;
 
 /** @var MainTemplate $template */
 $template = MainTemplate::getInstance(Application::getInstance()
@@ -44,6 +48,26 @@ $markup = PawsApplication::markup();
     $asset->addJs('//api-maps.yandex.ru/2.1/?apikey=ad666cd3-80be-4111-af2d-209dddf2c55e&lang=ru_RU');
     $asset->addJs('https://www.google.com/recaptcha/api.js?hl=ru');
     ?>
+
+    <?/** уходи */?>
+    <script>
+        $(function() {
+            setTimeout(function() {
+
+                if(true
+                    || window.location.pathname == '/personal/register/'
+                    || window.location.pathname == '/personal/forgot-password/'
+                ) {
+                    $([document.documentElement, document.body]).animate({
+                        scrollTop: $('.landing-page-wrapper').offset().top - 100
+                    }, 2000);
+                }
+
+            }, 500);
+        });
+    </script>
+
+
 </head>
 <body class="body-landing">
 <?php $APPLICATION->ShowPanel(); ?>
