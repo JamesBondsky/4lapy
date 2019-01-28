@@ -8,11 +8,10 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\Type\Date;
-use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\External\Manzana\Exception\CardNotFoundException;
+use FourPaws\MobileApiBundle\Dto\Object\City;
 use FourPaws\MobileApiBundle\Dto\Object\ClientCard;
 use FourPaws\MobileApiBundle\Dto\Object\User;
-use FourPaws\MobileApiBundle\Dto\Request\LoginExistRequest;
 use FourPaws\MobileApiBundle\Dto\Request\LoginRequest;
 use FourPaws\MobileApiBundle\Dto\Response\PostUserInfoResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserLoginResponse;
@@ -30,6 +29,7 @@ use FourPaws\MobileApiBundle\Dto\Object\PersonalBonus;
 use FourPaws\PersonalBundle\Entity\CardBonus;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Exception\SessionUnavailableException;
+use FourPaws\MobileApiBundle\Services\Api\CityService as ApiCityService;
 
 class UserService
 {
@@ -63,13 +63,19 @@ class UserService
      */
     private $tokenStorage;
 
+    /**
+     * @var ApiCityService
+     */
+    private $apiCityService;
+
     public function __construct(
         UserBundleService $userBundleService,
         UserRepository $userRepository,
         ApiCaptchaService $apiCaptchaService,
         SessionHandler $sessionHandler,
         AppManzanaService $appManzanaService,
-        TokenStorageInterface $tokenStorage
+        TokenStorageInterface $tokenStorage,
+        ApiCityService $apiCityService
     )
     {
         $this->userBundleService = $userBundleService;
@@ -78,6 +84,7 @@ class UserService
         $this->sessionHandler = $sessionHandler;
         $this->appManzanaService = $appManzanaService;
         $this->tokenStorage = $tokenStorage;
+        $this->apiCityService = $apiCityService;
     }
 
     /**
@@ -155,7 +162,8 @@ class UserService
             ->setPersonalPhone($user->getPhone() ?? $currentUser->getPersonalPhone())
             ->setName($user->getFirstName() ?? $currentUser->getName())
             ->setLastName($user->getLastName() ?? $currentUser->getLastName())
-            ->setSecondName($user->getMidName() ?? $currentUser->getSecondName());
+            ->setSecondName($user->getMidName() ?? $currentUser->getSecondName())
+            ->setLocation($user->getLocationId() ?? $currentUser->getLocation());
 
         if ('' === $user->getBirthDate()) {
             $currentUser->setBirthday(null);
@@ -205,6 +213,7 @@ class UserService
             throw new SessionUnavailableException();
         }
         $user = $this->userRepository->find($session->getUserId());
+        $userLocation = $this->getLocation($user);
         $apiUser = new User();
         $apiUser
             ->setId($user->getId())
@@ -213,7 +222,9 @@ class UserService
             ->setLastName($user->getLastName())
             ->setMidName($user->getSecondName())
             ->setPhone($user->getPersonalPhone())
-            ->setCard($this->getCard())
+            ->setCard($this->getCard($user))
+            ->setLocation($userLocation)
+            ->setLocationId($userLocation->getId())
         ;
         if ($user->getBirthday()) {
             $apiUser->setBirthDate($user->getBirthday()->format('d.m.Y'));
@@ -222,12 +233,12 @@ class UserService
     }
 
     /**
+     * @param AppUser $user
      * @return ClientCard|null
      * @throws \FourPaws\External\Exception\ManzanaServiceException
      */
-    protected function getCard()
+    protected function getCard(AppUser $user)
     {
-        $user = $this->userBundleService->getCurrentUser();
         if (!$user->getDiscountCardNumber()) {
             return null;
         }
@@ -245,6 +256,15 @@ class UserService
     }
 
     /**
+     * @param AppUser $user
+     * @return City
+     */
+    protected function getLocation(AppUser $user)
+    {
+        return $this->apiCityService->searchByCode($user->getLocation())->current();
+    }
+
+    /**
      * Актуализирует группы пользователя в битрикс
      * Если у пользователя есть заказы с флагом "из мобильного приложения" - помещаем в группу "Делал заказы из МП"
      * Если нет заказов с флагом "из мобильного приложения" - помещаем в группу "Не делал заказы из МП"
@@ -258,8 +278,11 @@ class UserService
 
     /**
      * @return PersonalBonus
+     * @throws CardNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\External\Exception\ManzanaServiceException
-     * @throws \FourPaws\External\Manzana\Exception\CardNotFoundException
      */
     public function getPersonalBonus()
     {

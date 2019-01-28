@@ -109,17 +109,15 @@ class StoreService
 
     /**
      * @param ProductQuantity[] $productsQuantity
-     * @param string $locationCode
      * @return Collection
      * @throws \Exception
      */
-    public function getListAvailable(array $productsQuantity, string $locationCode = ''): Collection
+    public function getListAvailable(array $productsQuantity): Collection
     {
         $storeCollection = new StoreCollection();
         foreach ($productsQuantity as $productQuantity) {
-            $basketItemId = (int) $productQuantity->getProductId();
-            $offerId = $this->basketService->getProductIdByBasketItemId($basketItemId);
-            $quantity = $productQuantity->getQuantity();
+            $offerId = (int) $productQuantity->getProductId();
+            $quantity = (int) $productQuantity->getQuantity();
             if (!$offerId || !$quantity) {
                 continue;
             }
@@ -135,11 +133,13 @@ class StoreService
                         return $stockAmount >= $quantity;
                     });
 
+                    /*
                     if ($locationCode) {
                         $storeCollection = $storeCollection->filter(function (Store $store) use ($locationCode) {
                             return $store->getLocation() === $locationCode;
                         });
                     }
+                    */
 
                     $storeInfo = $this->appStoreService->getFullStoreInfo($storeCollection);
 
@@ -154,6 +154,25 @@ class StoreService
             }
         }
         return $storeCollection;
+    }
+
+    /**
+     * @param ProductQuantity[] $productsQuantity
+     * @param string $locationCode
+     * @return Collection
+     * @throws \Exception
+     */
+    public function getBasketListAvailable(array $productsQuantity, string $locationCode)
+    {
+        $offersQuantity = [];
+        foreach ($productsQuantity as $productQuantity) {
+            $basketItemId = (int) $productQuantity->getProductId();
+            $offerId = $this->basketService->getProductIdByBasketItemId($basketItemId);
+            $offersQuantity[] = (new ProductQuantity())
+                ->setProductId($offerId)
+                ->setQuantity($productQuantity->getQuantity());
+        }
+        return $this->getListAvailable($offersQuantity);
     }
 
     /**

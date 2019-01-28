@@ -58,7 +58,7 @@ class StoreController extends FOSRestController
     public function getStoreListAvailableAction(StoreListAvailableRequest $storeListAvailableRequest): StoreListResponse
     {
         return new StoreListResponse(
-            $this->apiStoreService->getListAvailable(
+            $this->apiStoreService->getBasketListAvailable(
                 $storeListAvailableRequest->getGoods(),
                 $storeListAvailableRequest->getCityId()
             )
