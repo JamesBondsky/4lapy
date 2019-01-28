@@ -17,6 +17,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\LocationBundle\LocationService;
 
 $storage = $arResult['STORAGE'];
 $deliveryService = $component->getDeliveryService();
@@ -63,6 +64,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                        type="radio"
                        name="addressId"
                        id="order-address-<?= $address->getId() ?>"
+                       <? if (LocationService::LOCATION_CODE_MOSCOW == $address->getLocation() && $deliveryDostavista) { ?>data-allow-express-delivery="true"<? } ?>
                     <?= $selectedAddressId === $address->getId() ? 'checked="checked"' : '' ?>
                        value="<?= $address->getId() ?>"/>
                 <label class="b-radio__label b-radio__label--tablet-big"
