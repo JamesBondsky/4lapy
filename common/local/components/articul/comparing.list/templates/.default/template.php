@@ -4,10 +4,17 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
 }
 ?>
 
+
 <div class="b-container">
     <h1 class="b-title b-title--block b-title--h1-compare">Сравнение кормов</h1>
     <hr class="b-hr b-hr--compare">
 </div>
+
+<? if(empty($arResult['PRODUCTS'])): ?>
+    <div class="b-container">
+        <div>На данный момент нет товаров, подходящих для сравнения.</div>
+    </div>
+<? else: ?>
 
 <div class="b-container">
     <section class="b-common-section">
@@ -84,3 +91,4 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
     </section>
 </div>
 
+<? endif ?>

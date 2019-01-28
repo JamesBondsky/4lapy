@@ -168,7 +168,7 @@ class CompareCreateIblockAndMenuItem20190122124548 extends \Adv\Bitrixtools\Migr
                 'SORT'               => '400',
                 'CODE'               => 'MINERALS',
                 'DEFAULT_VALUE'      => '',
-                'PROPERTY_TYPE'      => 'L',
+                'PROPERTY_TYPE'      => 'S',
                 'ROW_COUNT'          => '1',
                 'COL_COUNT'          => '30',
                 'LIST_TYPE'          => 'C',
@@ -186,13 +186,6 @@ class CompareCreateIblockAndMenuItem20190122124548 extends \Adv\Bitrixtools\Migr
                 'USER_TYPE'          => null,
                 'USER_TYPE_SETTINGS' => null,
                 'HINT'               => '',
-                'VALUES'             => [
-                    [
-                        "VALUE" => "Да",
-                        "DEF" => "N",
-                        "SORT" => "200"
-                    ]
-                ]
             ],
             [
                 'NAME'               => 'Наличие злаков',
@@ -296,6 +289,16 @@ class CompareCreateIblockAndMenuItem20190122124548 extends \Adv\Bitrixtools\Migr
         $this->getHelper()->Iblock()->addElementIfNotExists($iblockIdMenu, $menuItem, $menuItemProps);
         $this->log()->info('Пункт меню успешно создан');
 
+        $adminFile = $_SERVER['DOCUMENT_ROOT'].'/local/php_interface/migration_sources/compare_import.php';
+        $adminFileDestination = $_SERVER['DOCUMENT_ROOT'].'/bitrix/admin/compare_import.php';
+        $r = copy($adminFile, $adminFileDestination);
+        if($r){
+            $this->log()->info('Файл раздела для импорта в административной части успешно создан');
+        }
+        else{
+            $this->log()->info('Не удалось скопировать файл раздела для импорта в административной части');
+        }
+
         return true;
     }
 
@@ -304,6 +307,11 @@ class CompareCreateIblockAndMenuItem20190122124548 extends \Adv\Bitrixtools\Migr
 
         $iblockIdMenu = $this->getHelper()->Iblock()->getIblockId(IblockCode::MAIN_MENU);
         $this->getHelper()->Iblock()->deleteElementIfExists($iblockIdMenu, 'comparing');
+
+        $adminFile = $_SERVER['DOCUMENT_ROOT'].'/bitrix/admin/compare_import.php';
+        if(file_exists($adminFile)){
+            unlink($adminFile);
+        }
 
         return true;
     }
