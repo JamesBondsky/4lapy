@@ -11,6 +11,7 @@ use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\Helpers\ProtectorHelper;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -55,6 +56,11 @@ class GrandinController extends Controller
         if (count(array_filter($arFields)) < count($arFields)) {
             return $this->ajaxMess->getEmptyDataError();
         }
+
+        if (!ProtectorHelper::checkToken($request->get(ProtectorHelper::getField(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD)), ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD)) {
+            return $this->ajaxMess->getEmptyDataError();
+        }
+
 
         $iblockElement = new \CIBlockElement();
         $resultAdd = $iblockElement->Add([
