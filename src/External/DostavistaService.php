@@ -84,7 +84,9 @@ class DostavistaService implements LoggerAwareInterface
             try {
                 $result = $this->client->cancelOrder($orderId);
                 if ($result['success']) {
-                    $this->logger->info('Order ' . $orderId . ' success canceled in Dostavista service');
+                    $this->logger->info('Order ' . $orderId . ' success canceled in Dostavista service', $result);
+                } else {
+                    $this->logger->info('Order ' . $orderId . ' error canceled in Dostavista service', $result);
                 }
             } catch (\Exception $e) {
                 $result = [

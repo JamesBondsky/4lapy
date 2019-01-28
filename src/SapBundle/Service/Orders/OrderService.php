@@ -1102,12 +1102,14 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     }
                     if ($dostavistaOrder) {
                         $dostavistaOrderId = $dostavistaService->cancelOrder($dostavistaOrder);
-                        $orderService->setOrderPropertiesByCode(
-                            $order,
-                            [
-                                'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE
-                            ]
-                        );
+                        if (!is_array($dostavistaOrderId)) {
+                            $orderService->setOrderPropertiesByCode(
+                                $order,
+                                [
+                                    'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId !== 0 && !is_array($dostavistaOrderId)) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE
+                                ]
+                            );
+                        }
                     } else {
                         $this->log()
                             ->error(

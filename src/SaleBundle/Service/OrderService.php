@@ -1995,6 +1995,11 @@ class OrderService implements LoggerAwareInterface
         ];
 
         $dostavistaOrderId = $dostavistaService->addOrder($data)['order_id'];
+        
+        if (is_array($dostavistaOrderId)) {
+            $dostavistaOrderId = 0;
+        }
+        
         return $dostavistaOrderId;
     }
 }
