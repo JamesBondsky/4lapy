@@ -32,6 +32,11 @@ $markup = PawsApplication::markup();
     <meta name="google" content="notranslate">
     <meta name="format-detection" content="telephone=no">
     <meta name="yandex-verification" content="6266e34669b85ed6">
+
+    <meta property="og:title" content="Как выиграть запас корма Grandin на год вперед?"/>
+    <meta property="og:description" content="Для участия в акции купите любой корм Grandin на сумму от 1800 рублей и зарегистрируйте покупку  на сайте акции grandin.4lapy.ru."/>
+    <meta property="og:image" content="<?='https://'.$_SERVER['SERVER_NAME'].'/static/build/images/content/landing-grandin-share.png'?>"/>
+
     <?php /** @todo Mobe onto right place  */ ?>
     <script src="/static/build/js/jquery/jquery.min.js"></script>
     <script data-skip-moving="true">

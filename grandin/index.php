@@ -6,11 +6,7 @@ use FourPaws\Helpers\ProtectorHelper;
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
 $APPLICATION->SetPageProperty('title', '');
-$APPLICATION->SetPageProperty('description', 'Ответ простой. Принять участие в акции Grandin с 1 по 28 февраля.
-Для участия в акции купите любой корм Grandin на сумму от 1800 рублей и зарегистрируйте покупку  на сайте акции grandin.4lapy.ru.
-Каждую неделю разыгрывается по 10 призов – запас корма Grandin на 2 месяца.
-1 марта состоится розыгрыш 10 главных призов – запас корма Grandin на год.
-Подробности акции смотрите по ссылке: http://grandin.4lapy.ru');
+$APPLICATION->SetPageProperty('description', 'Для участия в акции купите любой корм Grandin на сумму от 1800 рублей и зарегистрируйте покупку  на сайте акции grandin.4lapy.ru.');
 $APPLICATION->SetTitle('Как выиграть запас корма Grandin на год вперед?');
 ?>
 

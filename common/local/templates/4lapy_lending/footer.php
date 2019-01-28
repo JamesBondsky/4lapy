@@ -466,15 +466,11 @@ if ($template->hasMainWrapper()) { ?>
                     Рассказать о нас
                 </div>
                 <div class="footer-landing__share-content">
-                    <a href="#" class="item item--vk">
-                        <?= new SvgDecorator('icon-landing-vk', 46, 43) ?>
-                    </a>
-                    <a href="#" class="item item--fb">
-                        <?= new SvgDecorator('icon-landing-fb', 22, 43) ?>
-                    </a>
-                    <a href="#" class="item item--ok">
-                        <?= new SvgDecorator('icon-landing-ok', 23, 43) ?>
-                    </a>
+                    <div class="ya-share2" 
+                        data-services="vkontakte,facebook,odnoklassniki" 
+                        data-title="Как выиграть запас корма Grandin на год вперед?"
+                        data-description="Для участия в акции купите любой корм Grandin на сумму от 1800 рублей и зарегистрируйте покупку  на сайте акции grandin.4lapy.ru."
+                        data-image="<?='https://'.$_SERVER['SERVER_NAME'].'/static/build/images/content/landing-grandin-share.png'?>"></div>
                 </div>
             </div>
             <div class="footer-landing__copyright">
@@ -490,6 +486,8 @@ if ($template->hasMainWrapper()) { ?>
 </div>
 <?php require_once __DIR__ . '/blocks/footer/popups.php' ?>
 <script src="<?= $markup->getJsFile() ?>"></script>
+<script src="//yastatic.net/es5-shims/0.0.2/es5-shims.min.js"></script>
+<script src="//yastatic.net/share2/share.js"></script>
 
 </body>
 </html>
