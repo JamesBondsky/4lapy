@@ -10,6 +10,7 @@ $APPLICATION->SetTitle('');
     <div class="container-landing">
 
         <?if ($USER->IsAuthorized()) {?>
+            <? $arUser = \CUser::GetById($USER->GetID())->Fetch(); ?>
 
             <div class="registr-check-landing__form-wrap" data-wrap-form-registr-chek-landing="true">
                 <div class="landing-title landing-title_dark">
@@ -32,25 +33,25 @@ $APPLICATION->SetTitle('');
                         </div>
                     </div>
                     <div class="form-group">
-                        <input type="text" id="SURNAME_REG_CHECK_GRANDIN" name="surname" value="" placeholder="Фамилия" >
+                        <input type="text" id="SURNAME_REG_CHECK_GRANDIN" name="surname" value="<?=$arUser['LAST_NAME']?:''?>" placeholder="Фамилия" >
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
                     </div>
                     <div class="form-group">
-                        <input type="text" id="NAME_REG_CHECK_GRANDIN" name="name" value="" placeholder="Имя" >
+                        <input type="text" id="NAME_REG_CHECK_GRANDIN" name="name" value="<?=$arUser['NAME']?:''?>" placeholder="Имя" >
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
                     </div>
                     <div class="form-group">
-                        <input type="tel" id="PHONE_REG_CHECK_GRANDIN" name="phone" value="" placeholder="Телефон" >
+                        <input type="tel" id="PHONE_REG_CHECK_GRANDIN" name="phone" value="<?=$arUser['PERSONAL_PHONE']?:''?>" placeholder="Телефон" >
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
                     </div>
                     <div class="form-group">
-                        <input type="email" id="EMAIL_REG_CHECK_GRANDIN" name="email" value="" placeholder="E-mail" >
+                        <input type="email" id="EMAIL_REG_CHECK_GRANDIN" name="email" value="<?=$arUser['EMAIL']?:''?>" placeholder="E-mail" >
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>

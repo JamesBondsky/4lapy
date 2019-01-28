@@ -83,6 +83,12 @@ class GrandinCreateIBlock20190125193825 extends \Adv\Bitrixtools\Migration\Sprin
                 'CODE' => 'EMAIL',
                 'PROPERTY_TYPE' => 'S',
             ],
+            [
+                'NAME' => 'С правилами акции ознакомлен',
+                'SORT' => 700,
+                'CODE' => 'RULES',
+                'PROPERTY_TYPE' => 'N:WebArch\BitrixIblockPropertyType\YesNoType',
+            ],
         ];
 
         foreach ($properties as $property) {

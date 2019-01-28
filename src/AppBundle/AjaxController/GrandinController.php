@@ -51,6 +51,11 @@ class GrandinController extends Controller
             return $this->ajaxMess->getNotAuthError();
         }
 
+        $arFields = [$request->get('date'), $request->get('sum'), $request->get('surname'), $request->get('name'), $request->get('phone'), $request->get('email'), $request->get('rules')];
+        if (count(array_filter($arFields)) < count($arFields)) {
+            return $this->ajaxMess->getEmptyDataError();
+        }
+
         $iblockElement = new \CIBlockElement();
         $resultAdd = $iblockElement->Add([
             'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::GRANDIN_REQUEST),
@@ -63,6 +68,7 @@ class GrandinController extends Controller
                 'NAME' => $request->get('name'),
                 'PHONE' => $request->get('phone'),
                 'EMAIL' => $request->get('email'),
+                'RULES' => $request->get('rules') == 'Y',
             ],
         ]);
 
