@@ -35,6 +35,7 @@ class Promo
     /**
      * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("string")
+     * @Serializer\SerializedName("start-date")
      *
      * @var string
      */
@@ -43,6 +44,7 @@ class Promo
     /**
      * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("string")
+     * @Serializer\SerializedName("end-date")
      *
      * @var string
      */

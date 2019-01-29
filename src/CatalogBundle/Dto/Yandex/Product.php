@@ -19,6 +19,7 @@ class Product
      * @Serializer\Type("string")
      * @Required()
      * @Serializer\SkipWhenEmpty()
+     * @Serializer\SerializedName("offer-id")
      *
      * @var string
      */

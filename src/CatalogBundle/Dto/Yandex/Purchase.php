@@ -16,6 +16,7 @@ class Purchase
 {
     /**
      * @Serializer\XmlElement(cdata=false)
+     * @Serializer\SerializedName("required-quantity")
      *
      * @var string
      */
@@ -23,6 +24,7 @@ class Purchase
 
     /**
      * @Serializer\XmlElement(cdata=false)
+     * @Serializer\SerializedName("free-quantity")
      *
      * @var string
      */
