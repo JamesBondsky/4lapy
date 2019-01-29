@@ -89,7 +89,6 @@ class UserService
 
     /**
      * @param LoginRequest $loginRequest
-     *
      * @return UserLoginResponse
      * @throws \Bitrix\Main\Db\SqlQueryException
      * @throws \Bitrix\Main\SystemException
@@ -99,8 +98,11 @@ class UserService
     public function loginOrRegister(LoginRequest $loginRequest): UserLoginResponse
     {
         try {
-            $isVerified = $GLOBALS['APPLICATION']->CaptchaCheckCode($loginRequest->getCaptchaValue(), $loginRequest->getCaptchaId())
-            || in_array($loginRequest->getLogin(), [
+            $isVerified = $GLOBALS['APPLICATION']->CaptchaCheckCode(
+                    $loginRequest->getCaptchaValue(),
+                    $loginRequest->getCaptchaId()
+                )
+                || in_array($loginRequest->getLogin(), [
                     '9778016362',
                     '9660949453',
                     '9299821844',
@@ -147,6 +149,9 @@ class UserService
      * @param User $user
      *
      * @return PostUserInfoResponse
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\External\Exception\ManzanaServiceException
      */
     public function update(User $user): PostUserInfoResponse
@@ -172,6 +177,9 @@ class UserService
                 $currentUser->setBirthday(new Date($user->getBirthDate(), 'd.m.Y'));
             } catch (ObjectException $e) {
             }
+        }
+        if ($user->getCard()) {
+            $currentUser->setDiscountCardNumber($user->getCard()->getNumber());
         }
         $this->userBundleService->getUserRepository()->update($currentUser);
         return new PostUserInfoResponse($this->getCurrentApiUser());
@@ -213,7 +221,7 @@ class UserService
             throw new SessionUnavailableException();
         }
         $user = $this->userRepository->find($session->getUserId());
-        $userLocation = $this->getLocation($user);
+        ;
         $apiUser = new User();
         $apiUser
             ->setId($user->getId())
@@ -223,11 +231,14 @@ class UserService
             ->setMidName($user->getSecondName())
             ->setPhone($user->getPersonalPhone())
             ->setCard($this->getCard($user))
-            ->setLocation($userLocation)
-            ->setLocationId($userLocation->getId())
         ;
         if ($user->getBirthday()) {
             $apiUser->setBirthDate($user->getBirthday()->format('d.m.Y'));
+        }
+        if ($userLocation = $this->getLocation($user)) {
+            $apiUser
+                ->setLocation($userLocation)
+                ->setLocationId($userLocation->getId());
         }
         return $apiUser;
     }
