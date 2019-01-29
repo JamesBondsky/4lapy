@@ -26,6 +26,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\DateHelper;
+use FourPaws\Helpers\ImageHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct;
@@ -210,8 +211,6 @@ class ProductService
         $fullProduct = $this->convertToFullProduct($product, $offer);
         $fullProduct->setIsAvailable($offer->isAvailable()); // returns ShortProduct
         $fullProduct
-            ->setNutritionRecommendations($product->getNormsOfUse()->getText())
-            ->setNutritionFacts($product->getComposition()->getText())
             ->setPackingVariants($this->getPackingVariants($product))   // фасовки
             ->setSpecialOffer($this->getSpecialOffer($offer))           // акция
             ->setFlavours($this->getFlavours($offer))                   // вкус
@@ -222,6 +221,22 @@ class ProductService
             ->setBundle($this->getBundle($offer))                       // с этим товаром покупают
             ->setPictureList($this->getPictureList($product))
             ;
+
+        if ($product->getNormsOfUse()->getText() || $product->getLayoutRecommendations()->getText()) {
+            if ($product->getLayoutRecommendations()->getText() != '' && $product->getLayoutRecommendations()->getText() != null) {
+                $fullProduct->setNutritionRecommendations($product->getLayoutRecommendations()->getText());
+            } else {
+                $fullProduct->setNutritionRecommendations($product->getNormsOfUse()->getText());
+            }
+        }
+
+        if ($product->getComposition()->getText() || $product->getLayoutComposition()->getText()) {
+            if ($product->getLayoutComposition()->getText() != '' && $product->getLayoutComposition()->getText() != null) {
+                $fullProduct->setNutritionFacts($product->getLayoutComposition()->getText());
+            } else {
+                $fullProduct->setNutritionFacts($product->getComposition()->getText());
+            }
+        }
 
         return $fullProduct;
     }
@@ -302,8 +317,10 @@ class ProductService
     public function convertToFullProduct(Product $product, Offer $offer): FullProduct
     {
         $shortProduct = $this->convertToShortProduct($product, $offer);
+        $detailText = $product->getDetailText()->getText();
+        $detailText = ImageHelper::appendDomainToSrc($detailText);
         $fullProduct = (new FullProduct())
-            ->setDetailsHtml($product->getDetailText()->getText());;
+            ->setDetailsHtml($detailText);
 
         // toDo: is there any better way to merge ShortProduct into FullProduct?
         $fullProduct
@@ -447,10 +464,6 @@ class ProductService
             $specialOffer->setDate($dateFrom . " - " . $dateTo);
         }
 
-        if ($specialOfferModel->hasLabelImage()) {
-            // $specialOffer->setImage($specialOfferModel->getPropertyLabelImageFileSrc());
-        }
-
         return $specialOffer;
     }
 
@@ -516,8 +529,6 @@ class ProductService
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public function getBundle(Offer $offer)
     {
@@ -625,10 +636,12 @@ class ProductService
         /** @var Offer $offer */
         foreach ($offers as $offer) {
             if ($offerImages = $offer->getImages()) {
-                $images[] = (string) $offerImages->current();
+                foreach ($offerImages as $image) {
+                    $images[] = $image;
+                }
             }
         }
-        return $images;
+        return array_unique($images);
     }
 
 }
