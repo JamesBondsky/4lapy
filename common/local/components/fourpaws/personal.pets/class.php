@@ -155,22 +155,4 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
             $this->arResult['PET_TYPES'][] = $item;
         }
     }
-
-    /**
-     * @throws \Exception
-     */
-    private function getPetBreed(): array
-    {
-        $this->arResult['PET_TYPES'] = [];
-        $res =
-            HLBlockFactory::createTableObject(Pet::PET_TYPE)::query()->setFilter(['UF_USE_BY_PET' => 1])->setSelect(
-                [
-                    'ID',
-                    'UF_NAME',
-                ]
-            )->setOrder(['UF_SORT' => 'asc'])->exec();
-        while ($item = $res->fetch()) {
-            $this->arResult['PET_TYPES'][] = $item;
-        }
-    }
 }
