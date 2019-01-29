@@ -23,7 +23,7 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
                 <div class="registr-check-landing__form-info">
                     Все поля обязательны для заполнения
                 </div>
-                <form data-form-registr-chek-landing="true" class="form-landing registr-check-landing__form js-form-validation" method="post" action="/ajax/grandin/request/add/" name="" enctype="multipart/form-data">
+                <form data-form-registr-check-landing="true" class="form-landing registr-check-landing__form js-form-validation" method="post" action="/ajax/grandin/request/add/" name="" enctype="multipart/form-data">
                     <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD); ?>
                     <input class="js-no-valid" type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
 
@@ -60,6 +60,19 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
                     </div>
                     <div class="form-group">
                         <input type="email" id="EMAIL_REG_CHECK_GRANDIN" name="email" value="<?=$arUser['EMAIL']?:''?>" placeholder="E-mail" >
+                        <div class="b-error">
+                            <span class="js-message"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group form-group_select js-wrap-select-form-registr-check-landing">
+                        <select class="b-select__block" id="PET_TYPE_REG_CHECK_GRANDIN" name="petType" data-select-form-registr-check-landing="true">
+                            <option value="" disabled="disabled" selected="selected">Выберите вид</option>
+                            <option value="1">Кошка</option>
+                            <option value="2">Собака мелкой породы</option>
+                            <option value="3">Собака средней или крупной породы</option>
+                        </select>
+
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
