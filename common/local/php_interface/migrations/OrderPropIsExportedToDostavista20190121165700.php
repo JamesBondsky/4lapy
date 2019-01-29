@@ -17,11 +17,11 @@ class OrderPropIsExportedToDostavista20190121165700 extends SprintMigrationBase
             'TYPE' => 'NUMBER'
         ],
         'USER_COORDS_DOSTAVISTA' => [
-            'NAME' => 'Координаты пользователя',
+            'NAME' => 'Координаты пользователя для Достависты',
             'TYPE' => 'STRING'
         ],
         'STORE_FOR_DOSTAVISTA' => [
-            'NAME' => 'Символьный код магазина',
+            'NAME' => 'Символьный код магазина для Достависты',
             'TYPE' => 'STRING'
         ]
     ];
