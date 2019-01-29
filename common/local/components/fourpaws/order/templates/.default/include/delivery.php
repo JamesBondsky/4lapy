@@ -64,7 +64,6 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                        type="radio"
                        name="addressId"
                        id="order-address-<?= $address->getId() ?>"
-                       <? if (LocationService::LOCATION_CODE_MOSCOW == $address->getLocation() && $deliveryDostavista) { ?>data-allow-express-delivery="true"<? } ?>
                     <?= $selectedAddressId === $address->getId() ? 'checked="checked"' : '' ?>
                        value="<?= $address->getId() ?>"/>
                 <label class="b-radio__label b-radio__label--tablet-big"
