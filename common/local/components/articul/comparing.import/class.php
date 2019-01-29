@@ -123,7 +123,7 @@ class ComparingImportComponent extends \CBitrixComponent
                 if(!$headersFlag){
 
                     foreach($this->row as $i => $header){
-                        $fieldId = $this->getFieldIdByName($header);
+                        $fieldId = $this->getFieldIdByName($this->fromExcel($header));
 
                         if($fieldId === false){
                             $this->endWithErrors('Неизвестное поле: "'.$header.'"');
@@ -140,14 +140,14 @@ class ComparingImportComponent extends \CBitrixComponent
                     continue;
                 }
 
-                $name = $this->getFieldValueByCode('NAME');
+                $name = $this->fromExcel($this->getFieldValueByCode('NAME'));
                 if(empty($name)){
                     $this->endWithErrors('Не имя для элемента с номером '.$localId);
                     return false;
                 }
                 $this->elementNames[] = $name;
 
-                $sectionName = $this->getFieldValueByCode('SECTION_NAME');
+                $sectionName = $this->fromExcel($this->getFieldValueByCode('SECTION_NAME'));
                 if(empty($sectionName)){
                     $this->endWithErrors('Не указано название раздела для товара "'.$name.'"');
                     return false;
@@ -367,8 +367,10 @@ class ComparingImportComponent extends \CBitrixComponent
                 if($code == 'PRODUCT'){
                     continue;
                 }
+
                 $fieldId = $this->propertyIds[$code];
                 $arFormatItem[$fieldId] = $arItem['PROPERTY_'.$code.'_VALUE'];
+
                 if(empty($arHeaders[$fieldId])){
                     $arHeaders[$fieldId] = $arProperty['NAME'];
                 }
@@ -380,9 +382,11 @@ class ComparingImportComponent extends \CBitrixComponent
         ksort($arHeaders);
 
         $fp = fopen('php://output', 'wb');
-        fputcsv($fp, $arHeaders);
+        //fputcsv($fp, $arHeaders);
+        fputcsv($fp, array_map([$this, 'forExcel'], $arHeaders));
         foreach($arItems as $arItem){
-            fputcsv($fp, $arItem);
+            //fputcsv($fp, $arItem);
+            fputcsv($fp, array_map([$this, 'forExcel'], $arItem));
         }
         fclose($fp);
 
@@ -427,23 +431,28 @@ class ComparingImportComponent extends \CBitrixComponent
         return false;
     }
 
-    private function log($mess){
+    private function log($mess)
+    {
         $this->log[] = $mess;
     }
 
-    private function getElementEditUrl($id){
+    private function getElementEditUrl($id)
+    {
         $url = '/bitrix/admin/iblock_element_edit.php?IBLOCK_ID='.$this->comparingIblockId.'&type=publications&ID='.$id;
         return $url;
     }
-    private function getSectionViewUrl($id){
+    private function getSectionViewUrl($id)
+    {
         $url = '/bitrix/admin/iblock_list_admin.php?IBLOCK_ID='.$this->comparingIblockId.'&type=publications&lang=ru&find_section_section='.$id;
         return $url;
     }
 
-    private function getPropertyIdByCode($code){
+    private function getPropertyIdByCode($code)
+    {
         return $this->properties[$code]['ID'];
     }
-    private function getFieldIdByName($name){
+    private function getFieldIdByName($name)
+    {
         if($name == "Название товара"){
             return $this->fields['NAME'];
         }
@@ -460,7 +469,8 @@ class ComparingImportComponent extends \CBitrixComponent
         return false;
     }
 
-    private function getProperties(){
+    private function getProperties()
+    {
         $rsProperties = PropertyTable::getList([
             'filter' => [
                 'IBLOCK_ID' => $this->comparingIblockId,
@@ -474,6 +484,16 @@ class ComparingImportComponent extends \CBitrixComponent
         while($arProperty = $rsProperties->fetch()){
             $this->properties[$arProperty['CODE']] = $arProperty;
         }
+    }
+
+    private function forExcel($string) :string
+    {
+        return mb_convert_encoding($string, 'cp-1251');
+    }
+
+    private function fromExcel($string) :string
+    {
+        return mb_convert_encoding($string, 'utf-8', 'cp-1251');
     }
 
 }
