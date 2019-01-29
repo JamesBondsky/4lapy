@@ -119,7 +119,7 @@ class ComparingImportComponent extends \CBitrixComponent
         if(empty($handle) === false) {
             $this->getProperties();
 
-            while(($this->row = fgetcsv($handle, 1000, ",")) !== FALSE){
+            while(($this->row = fgetcsv($handle, 1000, ";")) !== FALSE){
                 if(!$headersFlag){
 
                     foreach($this->row as $i => $header){
@@ -383,10 +383,10 @@ class ComparingImportComponent extends \CBitrixComponent
 
         $fp = fopen('php://output', 'wb');
         //fputcsv($fp, $arHeaders);
-        fputcsv($fp, array_map([$this, 'forExcel'], $arHeaders));
+        fputcsv($fp, array_map([$this, 'forExcel'], $arHeaders), ';');
         foreach($arItems as $arItem){
             //fputcsv($fp, $arItem);
-            fputcsv($fp, array_map([$this, 'forExcel'], $arItem));
+            fputcsv($fp, array_map([$this, 'forExcel'], $arItem), ';');
         }
         fclose($fp);
 
