@@ -66,3 +66,9 @@ comments.next:
   path: /comments/next/
   defaults: { _controller: '\FourPaws\AppBundle\AjaxController\CommentsController::nextAction' }
   methods: [GET]
+
+grandin.request.add:
+  path: /grandin/request/add/
+  defaults: { _controller: '\FourPaws\AppBundle\AjaxController\GrandinController::addRequestAction' }
+  methods: [POST]
+
