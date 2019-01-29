@@ -25,7 +25,7 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
                 </div>
                 <form data-form-registr-chek-landing="true" class="form-landing registr-check-landing__form js-form-validation" method="post" action="/ajax/grandin/request/add/" name="" enctype="multipart/form-data">
                     <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD); ?>
-                    <input type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
+                    <input class="js-no-valid" type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
 
 
                     <div class="form-group">
@@ -94,5 +94,14 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
 
     </div>
 </section>
+
+<script type="text/javascript">
+    var autocompleteFormRegistrCheckLanding = {
+        surname: '<?=$arUser["LAST_NAME"]?:""?>',
+        name: '<?=$arUser["NAME"]?:""?>',
+        phone: '<?=$arUser["PERSONAL_PHONE"]?:""?>',
+        email: '<?=$arUser["EMAIL"]?:""?>'
+    }
+</script>
 
 <?php require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php'; ?>
