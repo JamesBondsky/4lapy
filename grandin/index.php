@@ -35,7 +35,7 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
                         </div>
                     </div>
                     <div class="form-group">
-                        <input data-price-check-landing="true" type="minPrice" data-min-price-landing="1800" id="SUM_REG_CHECK_GRANDIN" name="sum" value="" placeholder="Сумма чека (не менее 1800р)" >
+                        <input data-price-check-landing="true" type="minPriceLanding" data-min-price-landing="1800" id="SUM_REG_CHECK_GRANDIN" name="sum" value="" placeholder="Сумма чека (не менее 1800р)" >
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
