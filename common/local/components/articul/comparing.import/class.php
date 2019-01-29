@@ -182,10 +182,16 @@ class ComparingImportComponent extends \CBitrixComponent
 
                 $arProperties = [];
                 foreach($this->propertyIds as $code => $id){
-                    $arProperties[$this->properties[$code]['ID']] = $this->row[$id];
+                    $value = $this->row[$id];
+
+                    if( ($code == 'FRESH_MEAT' || $code == 'PROTEIN') && substr($value, -1) == "%" ){
+                        $value = substr($value, 0, -1);
+                    }
+
+                    $arProperties[$this->properties[$code]['ID']] = $value;
 
                     if($code == 'ARTICLE'){
-                        $this->offerXmlIds[] = $this->row[$id];
+                        $this->offerXmlIds[] = $value;
                     }
                 }
 
