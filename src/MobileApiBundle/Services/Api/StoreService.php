@@ -133,14 +133,6 @@ class StoreService
                         return $stockAmount >= $quantity;
                     });
 
-                    /*
-                    if ($locationCode) {
-                        $storeCollection = $storeCollection->filter(function (Store $store) use ($locationCode) {
-                            return $store->getLocation() === $locationCode;
-                        });
-                    }
-                    */
-
                     $storeInfo = $this->appStoreService->getFullStoreInfo($storeCollection);
 
                     $storeCollection = $storeCollection->map(function (Store $store) use ($storeInfo) {
