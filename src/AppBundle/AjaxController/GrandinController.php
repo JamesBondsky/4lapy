@@ -8,6 +8,7 @@ use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\AppBundle\Exception\JsonResponseException;
 use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -25,6 +26,13 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class GrandinController extends Controller
 {
+
+    static $petTypes = [
+        'cat' => 'Кошка',
+        'smallDog' => 'Собака мелкой породы',
+        'otherDog' => 'Собака средней или крупной породы',
+    ];
+
     /** @var AjaxMess */
     private $ajaxMess;
 
@@ -48,45 +56,60 @@ class GrandinController extends Controller
     {
         global $USER;
 
-        if (!$USER->IsAuthorized()) {
-            return $this->ajaxMess->getNotAuthError();
+        try {
+
+            if (!$USER->IsAuthorized()) {
+                throw new JsonResponseException($this->ajaxMess->getNotAuthorizedException());
+            }
+
+            $arFields = [$request->get('date'), $request->get('sum'), $request->get('surname'), $request->get('name'), $request->get('phone'), $request->get('email'), $request->get('rules'), $request->get('petType')];
+            if (count(array_filter($arFields)) < count($arFields)) {
+                throw new JsonResponseException($this->ajaxMess->getEmptyDataError());
+            }
+
+            if (!ProtectorHelper::checkToken($request->get(ProtectorHelper::getField(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD)), ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD)) {
+                throw new JsonResponseException($this->ajaxMess->getWrongParamsError());
+            }
+
+            if (!in_array($request->get('petType'), array_keys(self::$petTypes))) {
+                throw new JsonResponseException($this->ajaxMess->getWrongDataError());
+            }
+
+            $iblockElement = new \CIBlockElement();
+            $resultAdd = $iblockElement->Add([
+                'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::GRANDIN_REQUEST),
+                'NAME' => 'Заявка ' . implode(' ', [$USER->GetID(), $request->get('surname'), $request->get('name')]),
+                'PROPERTY_VALUES' => [
+                    'USER' => $USER->GetID(),
+                    'DATE' => $request->get('date'),
+                    'SUM' => $request->get('sum'),
+                    'SURNAME' => $request->get('surname'),
+                    'NAME' => $request->get('name'),
+                    'PHONE' => $request->get('phone'),
+                    'EMAIL' => $request->get('email'),
+                    'RULES' => $request->get('rules') == 'Y',
+                    'PET_TYPE' => self::$petTypes[$request->get('petType')],
+                ],
+            ]);
+
+            if (!$resultAdd) {
+                throw new JsonResponseException($this->ajaxMess->getAddError($iblockElement->LAST_ERROR));
+            }
+
+            $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD);
+            return JsonSuccessResponse::createWithData('Спасибо за регистрацию', [
+                'field' => $token['field'],
+                'value' => $token['token'],
+            ]);
+
+        } catch (JsonResponseException $e) {
+
+            $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD);
+            $token['value'] = $token['token'];
+            unset($token['token']);
+
+            return $e->getJsonResponse()->extendData($token);
         }
-
-        $arFields = [$request->get('date'), $request->get('sum'), $request->get('surname'), $request->get('name'), $request->get('phone'), $request->get('email'), $request->get('rules')];
-        if (count(array_filter($arFields)) < count($arFields)) {
-            return $this->ajaxMess->getEmptyDataError();
-        }
-
-        //if (!ProtectorHelper::checkToken($request->get(ProtectorHelper::getField(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD)), ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD)) {
-        //    return $this->ajaxMess->getEmptyDataError();
-        //}
-
-
-        $iblockElement = new \CIBlockElement();
-        $resultAdd = $iblockElement->Add([
-            'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::GRANDIN_REQUEST),
-            'NAME' => 'Заявка '.implode(' ', [$USER->GetID(), $request->get('surname'), $request->get('name')]),
-            'PROPERTY_VALUES' => [
-                'USER' => $USER->GetID(),
-                'DATE' => $request->get('date'),
-                'SUM' => $request->get('sum'),
-                'SURNAME' => $request->get('surname'),
-                'NAME' => $request->get('name'),
-                'PHONE' => $request->get('phone'),
-                'EMAIL' => $request->get('email'),
-                'RULES' => $request->get('rules') == 'Y',
-            ],
-        ]);
-
-        if (!$resultAdd) {
-            return $this->ajaxMess->getAddError($iblockElement->LAST_ERROR);
-        }
-
-        $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD);
-        return JsonSuccessResponse::createWithData('Спасибо за регистрацию', [
-            'field' => $token['field'],
-            'value' => $token['token'],
-        ]);
     }
 
 }

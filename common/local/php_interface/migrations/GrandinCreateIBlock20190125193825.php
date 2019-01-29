@@ -89,6 +89,12 @@ class GrandinCreateIBlock20190125193825 extends \Adv\Bitrixtools\Migration\Sprin
                 'CODE' => 'RULES',
                 'PROPERTY_TYPE' => 'N:WebArch\BitrixIblockPropertyType\YesNoType',
             ],
+            [
+                'NAME' => 'Вид животного',
+                'SORT' => 800,
+                'CODE' => 'PET_TYPE',
+                'PROPERTY_TYPE' => 'S',
+            ],
         ];
 
         foreach ($properties as $property) {

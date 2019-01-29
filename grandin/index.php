@@ -1,6 +1,7 @@
 <?php
 
 use FourPaws\Helpers\ProtectorHelper;
+use FourPaws\AppBundle\AjaxController\GrandinController;
 
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
@@ -26,7 +27,6 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
                 <form data-form-registr-check-landing="true" class="form-landing registr-check-landing__form js-form-validation" method="post" action="/ajax/grandin/request/add/" name="" enctype="multipart/form-data">
                     <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD); ?>
                     <input class="js-no-valid" type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
-
 
                     <div class="form-group">
                         <input type="dateDatepicker" id="DATE_REG_CHECK_GRANDIN" name="date" value="" placeholder="Дата чека" data-datepicker-landing="true" >
@@ -68,9 +68,11 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
                     <div class="form-group form-group_select js-wrap-select-form-registr-check-landing">
                         <select class="b-select__block" id="PET_TYPE_REG_CHECK_GRANDIN" name="petType" data-select-form-registr-check-landing="true">
                             <option value="" disabled="disabled" selected="selected">Выберите вид</option>
-                            <option value="1">Кошка</option>
-                            <option value="2">Собака мелкой породы</option>
-                            <option value="3">Собака средней или крупной породы</option>
+
+                            <? foreach (GrandinController::$petTypes as $key => $value) { ?>
+                                <option value="<?=$key?>"><?=$value?></option>
+                            <?}?>
+
                         </select>
 
                         <div class="b-error">
