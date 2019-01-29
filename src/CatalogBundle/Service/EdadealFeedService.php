@@ -170,22 +170,20 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
                     'date_end' => \DateTime::createFromFormat('d.m.Y H:i:s',
                         $share['DATE_ACTIVE_TO'])->format(\DateTime::RFC3339),
                     'is_main' => true,
-                    'image' => $share['PREVIEW_PICTURE'],
+                    'image' => $path = \sprintf(
+                        'http%s://%s%s',
+                        $configuration->isHttps() ? 's' : '',
+                        $configuration->getServerName(),
+                        '/upload/edadeal/edadeal.jpg'
+                    ),
                     'offers' => $products !== null ? $products : [],
                     'target_shops' => $this->stores,
                     'label' => $share['PROPERTIES']['LABEL']['VALUE']
                 ];
 
-                if (!empty($share['PREVIEW_PICTURE'])) {
-                    $files[$share['PREVIEW_PICTURE']] = $share['ID'];
-                }
-
                 $this->offers = array_merge($this->offers, $products !== null ? $products : []);
             }
         }
-
-        //файлы акций
-        $this->setFilesPaths($configuration, $files, 'catalogs');
     }
 
     /**
