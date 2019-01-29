@@ -160,7 +160,7 @@ $markup = PawsApplication::markup();
         <div class="container-landing">
             <div class="landing-title">Как принять участие в&nbsp;акции</div>
             <ol class="regulations-landing__list">
-                <li>Купите любые корма Grandin на&nbsp;сумму от&nbsp;1800&nbsp;р. и&nbsp;получите миску Grandin в&nbsp;подарок</li>
+                <li>Купите любые корма Grandin на&nbsp;сумму от&nbsp;1800&nbsp;рублей и&nbsp;получите миску Grandin в&nbsp;подарок</li>
                 <li>Зарегистрируйте покупку, и&nbsp;вы сможете принять участие в&nbsp;розыгрыше призов</li>
                 <li>Проверяйте результаты розыгрыша каждую&nbsp;пятницу</li>
             </ol>
