@@ -26,4 +26,25 @@ class ImageHelper
         }
         return $dom->saveHTML($dom->documentElement);
     }
+
+    /**
+     * Конвертирует svg изображение в png
+     * @param string $filePath
+     * @return string
+     * @see https://stackoverflow.com/a/4809562/2393499
+     * @throws \ImagickException
+     */
+    public static function convertSvgToPng(string $filePath): string
+    {
+        // toDo when imagick will be installed...
+        return $filePath;
+        $filePath = $_SERVER['DOCUMENT_ROOT'] . $filePath;
+        $im = new \Imagick();
+        $svg = file_get_contents($filePath);
+        $im->readImageBlob($svg);
+        $im->setImageFormat('png24');
+        // $im->writeImage('/path/to/colored/us-map.png');
+        $im->clear();
+        $im->destroy();
+    }
 }

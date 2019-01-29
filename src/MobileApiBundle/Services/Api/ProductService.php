@@ -8,6 +8,7 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
+use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Collection\OfferCollection;
@@ -19,6 +20,7 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\CatalogBundle\Service\CategoriesService;
 use FourPaws\CatalogBundle\Service\FilterHelper;
 use FourPaws\CatalogBundle\Service\SortService;
+use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
@@ -43,6 +45,9 @@ use Symfony\Component\HttpFoundation\Request;
 
 class ProductService
 {
+    const LIST_IMAGE_WIDTH = 200;
+    const LIST_IMAGE_HEIGHT = 250;
+
     /**
      * @var UserService
      */
@@ -250,20 +255,33 @@ class ProductService
      * @param Offer $offer
      * @return array<ShortProduct\Tag()>
      * @throws \Bitrix\Main\SystemException
+     * @throws \ImagickException
      */
     public function getTags(Offer $offer)
     {
         $tags = [];
         if ($offer->isHit()) {
-            $tags[] = (new ShortProduct\Tag())->setImg(MarkHelper::MARK_HIT_IMAGE_SRC);
+            $tags[] = $this->getTag(MarkHelper::MARK_HIT_IMAGE_SRC);
         }
         if ($offer->isNew()) {
-            $tags[] = (new ShortProduct\Tag())->setImg(MarkHelper::MARK_NEW_IMAGE_SRC);
+            $tags[] = $this->getTag(MarkHelper::MARK_NEW_IMAGE_SRC);
         }
         if ($offer->isSale()) {
-            $tags[] = (new ShortProduct\Tag())->setImg(MarkHelper::MARK_SALE_IMAGE_SRC);
+            $tags[] = $this->getTag(MarkHelper::MARK_SALE_IMAGE_SRC);
         }
         return $tags;
+    }
+
+    /**
+     * @param string $svg
+     * @return ShortProduct\Tag
+     * @throws \Bitrix\Main\SystemException
+     * @throws \ImagickException
+     */
+    public function getTag(string $svg)
+    {
+        $png = ImageHelper::convertSvgToPng($svg);
+        return (new ShortProduct\Tag())->setImg($png);
     }
 
     /**
@@ -273,6 +291,7 @@ class ProductService
      * @return ShortProduct
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \ImagickException
      */
     public function convertToShortProduct(Product $product, Offer $offer, $quantity = 1): ShortProduct
     {
@@ -282,10 +301,22 @@ class ProductService
             ->setXmlId($offer->getXmlId())
             ->setBrandName($product->getBrandName())
             ->setWebPage($offer->getCanonicalPageUrl())
-            ->setPicture($offer->getImages() ? $offer->getImages()->first() : '')
-            ->setPicturePreview($offer->getResizeImages(200, 250) ? $offer->getResizeImages(200, 250)->first() : '')
             ->setIsByRequest($offer->isByRequest())
             ->setIsAvailable($offer->isAvailable());
+
+        // большая картинка
+        if ($images = $offer->getImages()) {
+            /** @var Image $picture */
+            $picture = $images->first();
+            $pictureSrc = \CFile::getPath($picture->getId());
+            $pictureSrc = (new FullHrefDecorator($pictureSrc))->getFullPublicPath();
+            $shortProduct->setPicture($pictureSrc);
+        }
+
+        // картинка ресайз (возможно не используется, но это не точно)
+        if ($resizeImages = $offer->getResizeImages(static::LIST_IMAGE_WIDTH, static::LIST_IMAGE_HEIGHT)) {
+            $shortProduct->setPicturePreview($resizeImages->first());
+        }
 
         // цена
         $price = (new Price())

@@ -105,7 +105,6 @@ class ProductController extends FOSRestController
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\Catalog\Exception\CategoryNotFoundException
      */
     public function getGoodsListAction(Request $request, GoodsListRequest $goodsListRequest)
     {
