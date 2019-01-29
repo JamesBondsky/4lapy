@@ -75,6 +75,10 @@ class GrandinController extends Controller
                 throw new JsonResponseException($this->ajaxMess->getWrongDataError());
             }
 
+            if ($request->get('sum') < 1800) {
+                throw new JsonResponseException($this->ajaxMess->getWrongDataError());
+            }
+
             $iblockElement = new \CIBlockElement();
             $resultAdd = $iblockElement->Add([
                 'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::GRANDIN_REQUEST),
