@@ -35,7 +35,7 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
                         </div>
                     </div>
                     <div class="form-group">
-                        <input data-price-check-landing="true" type="price" id="SUM_REG_CHECK_GRANDIN" name="sum" value="" placeholder="Сумма чека (не менее 1800р)" >
+                        <input data-price-check-landing="true" type="minPriceLanding" data-min-price-landing="1800" id="SUM_REG_CHECK_GRANDIN" name="sum" value="" placeholder="Сумма чека (не менее 1800р)" >
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
@@ -66,6 +66,7 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
                     </div>
 
                     <div class="form-group form-group_select js-wrap-select-form-registr-check-landing">
+                    	<label for="petType">Мой питомец</label>
                         <select class="b-select__block" id="PET_TYPE_REG_CHECK_GRANDIN" name="petType" data-select-form-registr-check-landing="true">
                             <option value="" disabled="disabled" selected="selected">Выберите вид</option>
                             <option value="1">Кошка</option>
@@ -107,14 +108,5 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
 
     </div>
 </section>
-
-<script type="text/javascript">
-    var autocompleteFormRegistrCheckLanding = {
-        surname: '<?=$arUser["LAST_NAME"]?:""?>',
-        name: '<?=$arUser["NAME"]?:""?>',
-        phone: '<?=$arUser["PERSONAL_PHONE"]?:""?>',
-        email: '<?=$arUser["EMAIL"]?:""?>'
-    }
-</script>
 
 <?php require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php'; ?>
