@@ -137,7 +137,7 @@ $markup = PawsApplication::markup();
                 <div class="splash-screen-landing__date">С 1 по 28 февраля 2019 г</div>
 
                 <div class="splash-screen-landing__btn-wrap">
-                    <div class="splash-screen-landing__btn" data-btn-scroll-landing="regulations">Узнать подробности</div>
+                    <div class="landing-btn" data-btn-scroll-landing="regulations">Узнать подробности</div>
                 </div>
 
             </div>
