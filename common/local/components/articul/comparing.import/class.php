@@ -42,6 +42,8 @@ class ComparingImportComponent extends \CBitrixComponent
         'PORTION_WEIGHT' => 8,
     ];
 
+    private $delimiter = ';';
+
     public function onPrepareComponentParams($params): array
     {
         return parent::onPrepareComponentParams($params);
@@ -119,7 +121,7 @@ class ComparingImportComponent extends \CBitrixComponent
         if(empty($handle) === false) {
             $this->getProperties();
 
-            while(($this->row = fgetcsv($handle, 1000, ";")) !== FALSE){
+            while(($this->row = fgetcsv($handle, 1000, $this->delimiter)) !== FALSE){
                 if(!$headersFlag){
 
                     foreach($this->row as $i => $header){
@@ -182,7 +184,7 @@ class ComparingImportComponent extends \CBitrixComponent
 
                 $arProperties = [];
                 foreach($this->propertyIds as $code => $id){
-                    $value = $this->row[$id];
+                    $value = $this->fromExcel($this->row[$id]);
 
                     if( ($code == 'FRESH_MEAT' || $code == 'PROTEIN') && substr($value, -1) == "%" ){
                         $value = substr($value, 0, -1);
@@ -389,10 +391,10 @@ class ComparingImportComponent extends \CBitrixComponent
 
         $fp = fopen('php://output', 'wb');
         //fputcsv($fp, $arHeaders);
-        fputcsv($fp, array_map([$this, 'forExcel'], $arHeaders), ';');
+        fputcsv($fp, array_map([$this, 'forExcel'], $arHeaders), $this->delimiter);
         foreach($arItems as $arItem){
             //fputcsv($fp, $arItem);
-            fputcsv($fp, array_map([$this, 'forExcel'], $arItem), ';');
+            fputcsv($fp, array_map([$this, 'forExcel'], $arItem), $this->delimiter);
         }
         fclose($fp);
 
@@ -500,6 +502,7 @@ class ComparingImportComponent extends \CBitrixComponent
     private function fromExcel($string) :string
     {
         return mb_convert_encoding($string, 'utf-8', 'cp-1251');
+        //return iconv('cp1251', 'utf-8', $string);
     }
 
 }
