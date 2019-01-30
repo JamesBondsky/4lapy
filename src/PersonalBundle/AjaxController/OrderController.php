@@ -79,7 +79,14 @@ class OrderController extends Controller implements LoggerAwareInterface
             $this->orderService->loadManzanaOrders($user, $page);
             $orders = $this->orderService->getUserOrders($user, $page);
 
-            $html = '';
+            $navResult = new \CDBResult();
+            $navResult->NavNum = 'nav-more-orders';
+            $navResult->NavPageSize = OrderService::ORDER_PAGE_LIMIT;
+            $navResult->NavPageNomer = $page;
+
+            $orderCount = $this->orderService->getUserOrdersCount($user);
+
+            $html = '<div class="b-account__accordion b-account__accordion--last">';
 
             /** @var Order $firstOrder */
             $firstOrder = $orders->first();
@@ -115,6 +122,28 @@ class OrderController extends Controller implements LoggerAwareInterface
 
                 $html .= ob_get_clean();
             }
+
+            $html .= '</ul></div>';
+
+            $navResult->NavRecordCount = $orderCount;
+            $navResult->NavPageCount = ceil($orderCount / OrderService::ORDER_PAGE_LIMIT);
+
+            $html .= '<div class="b-pagination b-pagination--referal">';
+            ob_start();
+            $APPLICATION->IncludeComponent(
+                'bitrix:system.pagenavigation',
+                'personal_order_pagination',
+                [
+                    'NAV_TITLE' => '',
+                    'NAV_RESULT' => $navResult,
+                    'SHOW_ALWAYS' => false,
+                    'PAGE_PARAMETER' => 'page',
+                    'AJAX_MODE' => 'N',
+                ],
+                null
+            );
+            $html .= ob_get_clean();
+            $html .= '</div>';
 
             $result = JsonSuccessResponse::createWithData('', [
                 'html'  => $html,
