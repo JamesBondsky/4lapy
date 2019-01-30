@@ -14,11 +14,13 @@ use FourPaws\MobileApiBundle\Dto\Object\DeliveryAddress;
 use FourPaws\MobileApiBundle\Dto\Object\Detailing;
 use FourPaws\MobileApiBundle\Dto\Object\Order;
 use FourPaws\MobileApiBundle\Dto\Object\OrderCalculate;
+use FourPaws\MobileApiBundle\Dto\Object\OrderHistory;
 use FourPaws\MobileApiBundle\Dto\Object\OrderParameter;
 use FourPaws\MobileApiBundle\Dto\Object\OrderStatus;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartOrderRequest;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
+use FourPaws\PersonalBundle\Entity\OrderStatusChange;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\OrderService as AppOrderService;
@@ -129,11 +131,36 @@ class OrderService
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      * @throws \Exception
      */
-    public function getOneByUserAndNumber(int $orderNumber)
+    public function getOneByNumberForCurrentUser(int $orderNumber)
     {
         $user = $this->userService->getCurrentUser();
         $order = $this->personalOrderService->getUserOrderByNumber($user, $orderNumber);
         return $this->toApiFormat($order);
+    }
+
+    /**
+     * @param int $orderNumber
+     * @return array
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getHistoryForCurrentUser(int $orderNumber)
+    {
+        $user = $this->userService->getCurrentUser();
+        $order = $this->personalOrderService->getUserOrderByNumber($user, $orderNumber);
+        return $this->personalOrderService->getOrderStatuses($order)->map(function($status) {
+            /** @var $status OrderStatusChange */
+            $dateChangeStmp = $status->getDateCreate()->getTimestamp();
+            $dateChange = (new \DateTime())->setTimestamp($dateChangeStmp);
+            $status = (new OrderStatus())
+                ->setCode($status->getOrderStatus()->getId())
+                ->setTitle($status->getOrderStatus()->getName());
+            return (new OrderHistory())
+                ->setStatus($status)
+                ->setDateChange($dateChange);
+        })->toArray();
     }
 
     /**

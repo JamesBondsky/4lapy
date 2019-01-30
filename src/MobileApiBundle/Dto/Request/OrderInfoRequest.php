@@ -8,29 +8,30 @@ use Symfony\Component\Validator\Constraints as Assert;
 class OrderInfoRequest implements SimpleUnserializeRequest, GetRequest
 {
     /**
+     * Номер заказа
      * @Serializer\SerializedName("id")
      * @Serializer\Type("int")
      * @Assert\NotBlank()
      * @Assert\GreaterThan(0)
      * @var int
      */
-    protected $id;
+    protected $orderNumber;
 
     /**
      * @return int
      */
-    public function getId(): int
+    public function getOrderNumber(): int
     {
-        return $this->id;
+        return $this->orderNumber;
     }
 
     /**
-     * @param int $id
+     * @param int $orderNumber
      * @return OrderInfoRequest
      */
-    public function setId(int $id): OrderInfoRequest
+    public function setOrderNumber(int $orderNumber): OrderInfoRequest
     {
-        $this->id = $id;
+        $this->orderNumber = $orderNumber;
         return $this;
     }
 }

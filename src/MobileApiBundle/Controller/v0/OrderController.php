@@ -52,10 +52,16 @@ class OrderController extends FOSRestController
      * @Rest\View()
      * @param OrderStatusHistoryRequest $orderStatusHistoryRequest
      * @return OrderStatusHistoryResponse
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
     public function getOrderStatusHistoryAction(OrderStatusHistoryRequest $orderStatusHistoryRequest)
     {
-        return (new OrderStatusHistoryResponse());
+        $orderNumber = $orderStatusHistoryRequest->getOrderNumber();
+        $statusHistory = $this->apiOrderService->getHistoryForCurrentUser($orderNumber);
+        return new OrderStatusHistoryResponse($statusHistory);
     }
 
     /**
@@ -73,7 +79,8 @@ class OrderController extends FOSRestController
      */
     public function getOrderInfoAction(OrderInfoRequest $orderInfoRequest)
     {
-        $order = $this->apiOrderService->getOneByUserAndNumber($orderInfoRequest->getId());
-        return (new OrderInfoResponse())->setOrder($order);
+        $orderNumber = $orderInfoRequest->getOrderNumber();
+        $order = $this->apiOrderService->getOneByNumberForCurrentUser($orderNumber);
+        return new OrderInfoResponse($order);
     }
 }

@@ -28,6 +28,7 @@ use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentItem;
 use Bitrix\Sale\UserMessageException;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\Catalog\Collection\OfferCollection;
@@ -67,6 +68,7 @@ use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
+use FourPaws\SaleBundle\Repository\OrderStatusRepository;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -177,21 +179,21 @@ class OrderService implements LoggerAwareInterface
     /**
      * OrderService constructor.
      *
-     * @param AddressService                    $addressService
-     * @param BasketService                     $basketService
-     * @param PaymentService                    $paymentService
-     * @param CurrentUserProviderInterface      $currentUserProvider
-     * @param UserSearchInterface               $userProvider
-     * @param DeliveryService                   $deliveryService
-     * @param LocationService                   $locationService
-     * @param StoreService                      $storeService
-     * @param OrderStorageService               $orderStorageService
-     * @param OrderSplitService                 $orderSplitService
-     * @param UserAvatarAuthorizationInterface  $userAvatarAuthorization
+     * @param AddressService $addressService
+     * @param BasketService $basketService
+     * @param PaymentService $paymentService
+     * @param CurrentUserProviderInterface $currentUserProvider
+     * @param UserSearchInterface $userProvider
+     * @param DeliveryService $deliveryService
+     * @param LocationService $locationService
+     * @param StoreService $storeService
+     * @param OrderStorageService $orderStorageService
+     * @param OrderSplitService $orderSplitService
+     * @param UserAvatarAuthorizationInterface $userAvatarAuthorization
      * @param UserRegistrationProviderInterface $userRegistrationProvider
-     * @param ManzanaPosService                 $manzanaPosService
-     * @param ManzanaService                    $manzanaService
-     * @param CouponStorageInterface            $couponStorage
+     * @param ManzanaPosService $manzanaPosService
+     * @param ManzanaService $manzanaService
+     * @param CouponStorageInterface $couponStorage
      */
     public function __construct(
         AddressService $addressService,
@@ -225,7 +227,6 @@ class OrderService implements LoggerAwareInterface
         $this->manzanaPosService = $manzanaPosService;
         $this->manzanaService = $manzanaService;
         $this->couponStorage = $couponStorage;
-
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection */
