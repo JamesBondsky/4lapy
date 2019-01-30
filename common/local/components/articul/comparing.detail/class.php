@@ -176,7 +176,7 @@ class ComparingDetailComponent extends \CBitrixComponent
             foreach($this->properties as $code => $property){
 
                 $value = $arProduct['PROPERTY_'.$code.'_VALUE'];
-                if(!empty($value) && in_array($code, array_keys($this->propertyMeasure))){
+                if(!empty($value) && in_array($code, array_keys($this->propertyMeasure)) && substr($value, -1) != $this->propertyMeasure[$code]){
                     $value .= $this->propertyMeasure[$code];
                 }
 
