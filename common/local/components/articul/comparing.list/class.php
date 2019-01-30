@@ -12,7 +12,9 @@ use Bitrix\Iblock\PropertyTable;
 use Bitrix\Main\Entity\Base;
 
 
-
+/**
+ * Class ComparingListComponent
+ */
 class ComparingListComponent extends \CBitrixComponent
 {
     private $comparingIblockId;
@@ -87,59 +89,46 @@ class ComparingListComponent extends \CBitrixComponent
         }
     }
 
-    private function fetchProducts()
+
+    private function getProperty($iblockId, $code)
     {
-        $compareLinkProperty = PropertyTable::getList([
+        $property = PropertyTable::getList([
             'filter' => [
-                'IBLOCK_ID' => $this->comparingIblockId,
-                'CODE' => IblockProperty::COMPARING_LINK,
+                'IBLOCK_ID' => $iblockId,
+                'CODE' => $code,
             ],
             'select' => ['ID'],
         ])->fetch();
 
-        $compareLinkEntity = Base::compileEntity(
+        return $property;
+    }
+
+
+    private function getPropertyEntity($iblockId, $propertyId, $type = 'integer')
+    {
+        $entity = Base::compileEntity(
             'PROPERTY_COMPARING_PRODUCT',
             [
                 'IBLOCK_ELEMENT_ID' => ['data_type' => 'integer'],
-                'PROPERTY_'.$compareLinkProperty['ID'] => ['data_type' => 'integer'],
+                'PROPERTY_'.$propertyId => ['data_type' => $type],
             ],
-            ['table_name' => 'b_iblock_element_prop_s'.$this->comparingIblockId]
+            ['table_name' => 'b_iblock_element_prop_s'.$iblockId]
         );
 
-        $brandProperty = PropertyTable::getList([
-            'filter' => [
-                'IBLOCK_ID' => $this->productsIblockId,
-                'CODE' => IblockProperty::PRODUCTS_BRAND,
-            ],
-            'select' => ['ID'],
-        ])->fetch();
+        return $entity;
+    }
 
-        $brandEntity = Base::compileEntity(
-            'PROPERTY_BRAND',
-            [
-                'IBLOCK_ELEMENT_ID' => ['data_type' => 'integer'],
-                'PROPERTY_'.$brandProperty['ID'] => ['data_type' => 'integer'],
-            ],
-            ['table_name' => 'b_iblock_element_prop_s'.$this->productsIblockId]
-        );
 
-        $imageProperty = PropertyTable::getList([
-            'filter' => [
-                'IBLOCK_ID' => $this->offersIblockId,
-                'CODE' => IblockProperty::OFFERS_IMG,
-            ],
-            'select' => ['ID'],
-        ])->fetch();
+    private function fetchProducts()
+    {
+        $compareLinkProperty = $this->getProperty($this->comparingIblockId, IblockProperty::COMPARING_LINK);
+        $compareLinkEntity = $this->getPropertyEntity($this->comparingIblockId, $compareLinkProperty['ID']);
 
-        $imageEntity = Base::compileEntity(
-            'PROPERTY_IMAGE',
-            [
-                'IBLOCK_ELEMENT_ID' => ['data_type' => 'integer'],
-                'PROPERTY_'.$imageProperty['ID'] => ['data_type' => 'integer'],
-            ],
-            ['table_name' => 'b_iblock_element_prop_s'.$this->offersIblockId]
-        );
+        $brandProperty = $this->getProperty($this->productsIblockId, IblockProperty::PRODUCTS_BRAND);
+        $brandEntity = $this->getPropertyEntity($this->productsIblockId, $brandProperty['ID']);
 
+        $imageProperty = $this->getProperty($this->offersIblockId, IblockProperty::OFFERS_IMG);
+        $imageEntity = $this->getPropertyEntity($this->offersIblockId, $imageProperty['ID']);
 
         $rsOfferProperties = PropertyTable::getList([
             'filter' => [
@@ -162,6 +151,20 @@ class ComparingListComponent extends \CBitrixComponent
                 'CODE',
             ],
         ]);
+
+        /*$selectFields = [
+            'ID',
+            'NAME' => 'PRODUCT.NAME',
+            'SORT',
+            'CODE',
+            'IBLOCK_SECTION_ID',
+            'BRAND_ID' => 'PROPERTY_BRAND.PROPERTY_'.$brandProperty['ID'],
+            'IMAGE' => 'PROPERTY_IMAGE.PROPERTY_'.$imageProperty['ID'],
+            'PRODUCT_ID' => 'PRODUCT.ID',
+            'OFFER_ID' => 'OFFER.ID',
+            'WEIGHT' => 'CATALOG_PRODUCT.WEIGHT',
+        ];
+        $this->getAllProperties()*/
 
         $selectFields = [
             'ID',

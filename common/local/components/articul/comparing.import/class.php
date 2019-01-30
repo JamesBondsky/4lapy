@@ -24,15 +24,19 @@ class ComparingImportComponent extends \CBitrixComponent
 
     private $filename;
     private $row;
-    private $fields = [
-        'NAME' => 0,
-        'SECTION_NAME' => 1,
-    ];
 
     public $log;
     public $errors;
 
-    private $propertyIds = [
+    /**
+     * Порядок полей в файле импорта
+     * [ключ => номер столбца]
+     */
+    private $fieldsOrderIds = [
+        'NAME' => 0,
+        'SECTION_NAME' => 1,
+    ];
+    private $propertyOrderIds = [
         'ARTICLE'    => 2,
         'FRESH_MEAT' => 3,
         'PROTEIN'    => 4,
@@ -76,7 +80,7 @@ class ComparingImportComponent extends \CBitrixComponent
                 return false;
             }
 
-            $this->filename = $_SERVER['DOCUMENT_ROOT'].'/upload/compare.import.csv';
+            $this->filename = $_SERVER['DOCUMENT_ROOT'].'/upload/compare.import_'.date('Y-m-d H-i-s').'.csv';
             if(!move_uploaded_file($tmpPath, $this->filename)){
                 $this->endWithErrors("Не удалось загрузить файл на сервер");
                 return false;
@@ -125,15 +129,16 @@ class ComparingImportComponent extends \CBitrixComponent
                 if(!$headersFlag){
 
                     foreach($this->row as $i => $header){
-                        $fieldId = $this->getFieldIdByName($this->fromExcel($header));
+                        $headerName = $this->fromExcel($header);
+                        $fieldId = $this->getFieldIdByName($headerName);
 
                         if($fieldId === false){
-                            $this->endWithErrors('Неизвестное поле: "'.$header.'"');
+                            $this->endWithErrors('Неизвестное поле: "'.$headerName.'". Проверьте кодировку файла');
                             return false;
                         }
 
                         if($fieldId != $i){
-                            $this->endWithErrors('Неверный порядок полей. Поле "'.$header.'" должно быть '.($fieldId+1).' по порядку');
+                            $this->endWithErrors('Неверный порядок полей. Поле "'.$headerName.'" должно быть '.($fieldId+1).' по порядку');
                             return false;
                         }
                     }
@@ -183,7 +188,7 @@ class ComparingImportComponent extends \CBitrixComponent
                 }
 
                 $arProperties = [];
-                foreach($this->propertyIds as $code => $id){
+                foreach($this->propertyOrderIds as $code => $id){
                     $value = $this->fromExcel($this->row[$id]);
 
                     if( ($code == 'FRESH_MEAT' || $code == 'PROTEIN') && substr($value, -1) == "%" ){
@@ -193,6 +198,10 @@ class ComparingImportComponent extends \CBitrixComponent
                     $arProperties[$this->properties[$code]['ID']] = $value;
 
                     if($code == 'ARTICLE'){
+                        if(empty($value)){
+                            $this->endWithErrors(sprintf('Не заполнено обязательное поле "Артикул" для %s', $this->row[0]));
+                        }
+                        
                         $this->offerXmlIds[] = $value;
                     }
                 }
@@ -312,7 +321,7 @@ class ComparingImportComponent extends \CBitrixComponent
         $arItems = [];
         $arHeaders = [
             0 => 'Название товара',
-            1 => 'Название категории',
+            1 => 'Название группы сравнения',
         ];
 
         $this->getProperties();
@@ -376,7 +385,7 @@ class ComparingImportComponent extends \CBitrixComponent
                     continue;
                 }
 
-                $fieldId = $this->propertyIds[$code];
+                $fieldId = $this->propertyOrderIds[$code];
                 $arFormatItem[$fieldId] = $arItem['PROPERTY_'.$code.'_VALUE'];
 
                 if(empty($arHeaders[$fieldId])){
@@ -407,11 +416,11 @@ class ComparingImportComponent extends \CBitrixComponent
                 throw new Exception("data-row not found");
             }
 
-            if(isset($this->fields[$code])){
-                $fieldId = $this->fields[$code];
+            if(isset($this->fieldsOrderIds[$code])){
+                $fieldId = $this->fieldsOrderIds[$code];
             }
-            elseif(isset($this->propertyIds[$code])){
-                $fieldId = $this->propertyIds[$code];
+            elseif(isset($this->propertyOrderIds[$code])){
+                $fieldId = $this->propertyOrderIds[$code];
             }
             else{
                 throw new Exception("Field '".$code."' not found");
@@ -462,15 +471,15 @@ class ComparingImportComponent extends \CBitrixComponent
     private function getFieldIdByName($name)
     {
         if($name == "Название товара"){
-            return $this->fields['NAME'];
+            return $this->fieldsOrderIds['NAME'];
         }
-        if($name == "Название категории"){
-            return $this->fields['SECTION_NAME'];
+        if($name == "Название группы сравнения"){
+            return $this->fieldsOrderIds['SECTION_NAME'];
         }
 
         foreach($this->properties as $property){
             if($property['NAME'] == $name){
-                return $this->propertyIds[$property['CODE']];
+                return $this->propertyOrderIds[$property['CODE']];
             }
         }
 
@@ -502,7 +511,6 @@ class ComparingImportComponent extends \CBitrixComponent
     private function fromExcel($string) :string
     {
         return mb_convert_encoding($string, 'utf-8', 'cp-1251');
-        //return iconv('cp1251', 'utf-8', $string);
     }
 
 }
