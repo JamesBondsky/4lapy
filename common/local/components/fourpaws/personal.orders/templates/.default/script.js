@@ -1,23 +1,17 @@
 $(document).ready(function () {
-    var $button = $('.js-orders-more');
-    $button.on('click', function(e) {
+    $('.js-orders-more').on('click', function (e) {
+        var _self = $(this),
+            url = $(this).data('url'),
+            page = $(this).data('page');
         e.preventDefault();
-        $button.prop('disabled', true);
-
         $.ajax({
-            url: $button.attr('data-url') + '?page=' + $button.attr('data-page'),
+            url: url + '?page=' + page,
             type: 'GET',
             success: function (data) {
                 if (!data.success) {
                     return;
                 }
-
-                $button.attr('data-page', parseInt($button.attr('data-page')) + 1);
-                if (data.data.count < 10) {
-                    $button.hide();
-                }
-                $button.prop('disabled', false);
-                $('.b-account__accordion-order-list').append(data.data.html);
+                $('#personal-order-list').html(data.data.html);
             },
             beforeSend: function () {
                 $('.b-preloader').addClass('active');

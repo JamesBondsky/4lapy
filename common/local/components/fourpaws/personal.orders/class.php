@@ -101,8 +101,14 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
             }
             $this->orderService->loadManzanaOrders($user);
 
+
+            $nav = new \Bitrix\Main\UI\PageNavigation("nav-more-orders");
+            $nav->allowAllRecords(false)
+                ->setPageSize(OrderService::ORDER_PAGE_LIMIT)
+                ->initFromUri();
             $orders = $this->orderService->getUserOrders($user);
             $orderCount = $this->orderService->getUserOrdersCount($user);
+            $nav->setRecordCount($orderCount);
         } catch (NotAuthorizedException $e) {
             define('NEED_AUTH', true);
 
@@ -111,6 +117,7 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
 
         $this->arResult['TOTAL_ORDER_COUNT'] = $orderCount;
         $this->arResult['ORDERS'] = $orders ?? new ArrayCollection();
+        $this->arResult['NAV'] = $nav;
     }
 
     /**
