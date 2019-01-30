@@ -35,3 +35,8 @@ old_items.sale:
     path: /actions_and_programs/{path}/
     defaults: { _controller: '\FourPaws\AppBundle\Controller\OldPublicationController::oldSaleDetailAction' }
     methods: [GET]
+
+dostavista:
+    path: /dostavista/order_change/
+    defaults: { _controller: 'FourPaws\External\Dostavista\Controller\DostavistaController::deliveryDostavistaOrderChangeAction' }
+    methods: [GET]

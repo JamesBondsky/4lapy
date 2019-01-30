@@ -175,6 +175,68 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
     }
 
     /**
+     * Метод для Достависты
+     * Проверяет наличие остатков каждого оффера в каждом магазине Москвы
+     * Если все товары есть в наличие, то доставка будет активна
+     * @param Basket $basket
+     * @param ArrayCollection $offers
+     * @param StoreCollection $stores
+     * @return StockResultCollection
+     */
+    public static function getStocksForAllAvailableOffers(
+        Basket $basket,
+        ArrayCollection $offers,
+        StoreCollection $stores
+    ): StockResultCollection {
+        $stockResultCollection = new StockResultCollection();
+        $offerData = static::getBasketPrices($basket);
+
+        if (null === $stockResultCollection) {
+            $stockResultCollection = new StockResultCollection();
+        }
+
+        /** @var Store $store */
+        foreach ($stores->getIterator() as $store) {
+            if (!$store->isExpressStore()) {
+                continue;
+            }
+            $allOfferAvaliable = true;
+            foreach ($offerData as $offerId => $priceForAmountCollection) {
+                $offer = $offers[$offerId];
+                /**
+                 * Если такое произошло, значит оффер был подарком и был удален из корзины
+                 */
+                if (null === $offer) {
+                    continue;
+                }
+
+                $stockResult = new StockResult();
+                $stockResult->setPriceForAmount($priceForAmountCollection)
+                    ->setOffer($offer)
+                    ->setStore($store);
+
+                $amount = $stockResult->getAmount();
+                $stocks = $offer->getAllStocks();
+                if ($availableAmount = $stocks->filterByStore($store)->getTotalAmount()) {
+                    if ($availableAmount < $amount) {
+                        $allOfferAvaliable = false;
+                    }
+                } else {
+                    $allOfferAvaliable = false;
+                }
+                if (!$allOfferAvaliable) {
+                    break;
+                }
+            }
+            if ($allOfferAvaliable) {
+                $stockResultCollection->add($stockResult);
+            }
+        }
+
+        return $stockResultCollection;
+    }
+
+    /**
      * @param Basket          $basket
      *
      * @return PriceForAmountCollection[]
@@ -343,6 +405,16 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                                 ->getStores()
                                 ->getBaseShops();
                         }
+                        break;
+                }
+                break;
+            case DeliveryService::DELIVERY_DOSTAVISTA_CODE:
+                switch ($deliveryZone) {
+                    case DeliveryService::ZONE_MOSCOW:
+                        /**
+                         * условие доставки в эту зону - наличие всех офферов в одном магазине
+                         */
+                        $result = $storeService->getStoresByLocation($locationCode, StoreService::TYPE_SHOP)->getStores();
                         break;
                 }
                 break;

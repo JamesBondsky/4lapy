@@ -23,13 +23,18 @@ use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
+use Bitrix\Sale\PropertyValue;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DostavistaDeliveryResult;
 use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\Helpers\BusinessValueHelper;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\LocationBundle\Entity\Address;
+use FourPaws\LocationBundle\Exception\AddressSplitException;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Dto\Fiscalization\CartItems;
 use FourPaws\SaleBundle\Dto\Fiscalization\CustomerDetails;
@@ -42,6 +47,7 @@ use FourPaws\SaleBundle\Dto\Fiscalization\OrderBundle;
 use FourPaws\SaleBundle\Dto\SberbankOrderInfo\Attribute;
 use FourPaws\SaleBundle\Dto\SberbankOrderInfo\OrderBundle\Item as SberbankOrderItem;
 use FourPaws\SaleBundle\Dto\SberbankOrderInfo\OrderInfo;
+use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Exception\FiscalValidation\FiscalAmountExceededException;
 use FourPaws\SaleBundle\Exception\FiscalValidation\FiscalAmountException;
@@ -65,6 +71,7 @@ use JMS\Serializer\ArrayTransformerInterface;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Bitrix\Sale\Delivery\Services\Table as ServicesTable;
 
 /**
  * Class PaymentService
@@ -869,19 +876,22 @@ class PaymentService implements LoggerAwareInterface
      * @param Order $order
      * @param OrderInfo $response
      *
+     * @throws AddressSplitException
      * @throws ArgumentException
      * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
      * @throws NotImplementedException
      * @throws ObjectException
      * @throws ObjectNotFoundException
-     * @throws PaymentException
+     * @throws ObjectPropertyException
      * @throws SberBankOrderNumberNotFoundException
      * @throws SberbankOrderNotPaidException
      * @throws SberbankOrderPaymentDeclinedException
      * @throws SberbankPaymentException
      * @throws SystemException
-     * @throws \Exception
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     protected function processOnlinePayment(Order $order, OrderInfo $response): void
     {
@@ -913,6 +923,57 @@ class PaymentService implements LoggerAwareInterface
             $onlinePayment->setField('PS_STATUS_MESSAGE', $response->getPaymentAmountInfo()->getPaymentState());
             $onlinePayment->save();
             $order->save();
+
+            /** Отправка данных в достависту */
+            $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+            $deliveryId = $order->getField('DELIVERY_ID');
+            $deliveryCode = $deliveryService->getDeliveryCodeById($deliveryId);
+            $deliveryData = ServicesTable::getById($deliveryId)->fetch();
+            //проверяем способ доставки, если достависта, то отправляем заказ в достависту
+            if ($deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
+                $storeService = Application::getInstance()->getContainer()->get('store.service');
+                /** @var LocationService $locationService */
+//                $locationService = Application::getInstance()->getContainer()->get('location.service');
+                $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+                $orderPropertyCollection = $order->getPropertyCollection();
+                $comments = $order->getField('USER_DESCRIPTION');
+                if (is_null($comments)) {
+                    $comments = '';
+                }
+                /** @var PropertyValue $item */
+                foreach ($orderPropertyCollection as $item) {
+                    switch ($item->getProperty()['CODE']) {
+                        case 'STORE_FOR_DOSTAVISTA':
+                            $storeXmlId = $item->getValue();
+                            break;
+                        case 'NAME':
+                            $name = $item->getValue();
+                            break;
+                        case 'PHONE':
+                            $phone = $item->getValue();
+                            break;
+                    }
+                }
+                /** @var Store $selectedStore */
+                $nearShop = $storeService->getStoreByXmlId($storeXmlId);
+                $periodTo = $deliveryData['CONFIG']['MAIN']['PERIOD']['TO'];
+                $address = $orderService->compileOrderAddress($order)->setValid(true);
+//              $address->setValid($locationService->validateAddress($address));
+                if (!(isset($order) && $name && $phone && $periodTo && $nearShop)) {
+                    $dostavistaOrderId = 0;
+                } else {
+                    $dostavistaOrderId = $orderService->sendToDostavista($order, $name, $phone, $comments, $periodTo, $nearShop);
+                }
+                $orderService->setOrderPropertiesByCode(
+                    $order,
+                    [
+                        'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE,
+                        'ORDER_ID_DOSTAVISTA' => ($dostavistaOrderId) ? $dostavistaOrderId : 0
+                    ]
+                );
+                $orderService->updateCommWayPropertyEx($order, $deliveryCode, $address, ($dostavistaOrderId) ? true : false);
+                $order->save();
+            }
         } else {
             if ($response->getOrderStatus() === Sberbank::ORDER_STATUS_DECLINED) {
                 throw new SberbankOrderPaymentDeclinedException('Order not paid');
