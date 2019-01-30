@@ -244,6 +244,32 @@ class OrderService
 
     /**
      * @param User $user
+     * @param int $orderId
+     * @return Order
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function getUserOrderById(User $user, int $orderId)
+    {
+        return $this->orderRepository->getUserOrderById($user->getId(), $orderId);
+    }
+
+    /**
+     * @param User $user
+     * @param int $orderNumber
+     * @return Order
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function getUserOrderByNumber(User $user, int $orderNumber)
+    {
+        return $this->orderRepository->getUserOrderByNumber($user->getId(), $orderNumber);
+    }
+
+    /**
+     * @param User $user
      *
      * @return int
      * @throws ArgumentException
@@ -448,6 +474,24 @@ class OrderService
         $params = [
             'filter' => [
                 'ID' => $orderId,
+            ],
+        ];
+        $collection = $this->orderRepository->findBy($params);
+
+        return $collection->count() ? $collection->first() : null;
+    }
+
+    /**
+     * @param int $orderNumber
+     *
+     * @return Order|null
+     * @throws \Exception
+     */
+    public function getOrderByNumber(int $orderNumber)
+    {
+        $params = [
+            'filter' => [
+                'ACCOUNT_NUMBER' => $orderNumber,
             ],
         ];
         $collection = $this->orderRepository->findBy($params);

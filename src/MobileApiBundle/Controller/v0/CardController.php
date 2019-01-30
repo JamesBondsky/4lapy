@@ -121,14 +121,16 @@ class CardController extends FOSRestController
      * @Security("has_role('REGISTERED_USERS')")
      * @param UserAddCartRequest $userAddCartRequest
      * @return FeedbackResponse
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\External\Exception\ManzanaServiceException
-     * @throws \FourPaws\External\Manzana\Exception\CardNotFoundException
      */
     public function getUserAddCardAction(UserAddCartRequest $userAddCartRequest)
     {
         $user = (new User())
             ->setCard((new ClientCard())
-                ->setNumber($userAddCartRequest->getCardNumber())
+                ->setNumber($userAddCartRequest->getNewCardNumber())
             )
             ->setFirstName($userAddCartRequest->getFirstName())
             ->setLastName($userAddCartRequest->getLastName())

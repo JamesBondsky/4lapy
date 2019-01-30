@@ -100,7 +100,7 @@ class OrderService
     }
 
     /**
-     * @param int $orderId
+     * @param int $orderNumber
      * @return Order
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
@@ -111,9 +111,28 @@ class OrderService
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      * @throws \Exception
      */
-    public function getOne(int $orderId)
+    public function getOneByNumber(int $orderNumber)
     {
-        $order = $this->personalOrderService->getOrderById($orderId);
+        $order = $this->personalOrderService->getOrderByNumber($orderNumber);
+        return $this->toApiFormat($order);
+    }
+
+    /**
+     * @param int $orderNumber
+     * @return Order
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws \Exception
+     */
+    public function getOneByUserAndNumber(int $orderNumber)
+    {
+        $user = $this->userService->getCurrentUser();
+        $order = $this->personalOrderService->getUserOrderByNumber($user, $orderNumber);
         return $this->toApiFormat($order);
     }
 
@@ -346,6 +365,6 @@ class OrderService
         }
 
         $order = $this->appOrderService->createOrder($orderStorage);
-        return $this->getOne($order->getId());
+        return $this->getOneByNumber($order->getField('ACCOUNT_NUMBER'));
     }
 }

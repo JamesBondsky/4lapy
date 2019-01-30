@@ -162,6 +162,8 @@ class Sberbank
     protected function gatewayQuery($method, $data, bool $isMobilePayment = false, $mobilePaymentSystem = ''): array
     {
         if ($isMobilePayment) {
+            $data['merchant'] = $this->getMerchantName();
+            $data['preAuth'] = true;
             $dataEncoded = \json_encode($data);
         } else {
             $data['CMS'] = 'Bitrix';

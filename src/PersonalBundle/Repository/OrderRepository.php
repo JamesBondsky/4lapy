@@ -80,24 +80,28 @@ class OrderRepository extends BaseRepository
      * @param int $userId
      * @param int $limit
      * @param int $offset
-     *
+     * @param array $additionalFilter
      * @return ArrayCollection
      * @throws ArgumentException
-     * @throws SystemException
      * @throws ObjectPropertyException
+     * @throws SystemException
      */
-    public function getUserOrders(int $userId, int $limit = 0, int $offset = 0): ArrayCollection
+    public function getUserOrders(int $userId, int $limit = 0, int $offset = 0, array $additionalFilter = []): ArrayCollection
     {
         $closedOrderStatuses = \implode(',', \array_map(function ($status) {
             return sprintf('"%s"', $status);
         }, \array_merge(OrderService::STATUS_CANCEL, OrderService::STATUS_FINAL)));
+
+
+        $filter = $additionalFilter;
+        $filter['USER_ID'] = $userId;
 
         $query = $this->getDataManager()::query()
                       ->setSelect([
                           'IS_ACTIVE',
                           '*',
                       ])
-                      ->setFilter(['USER_ID' => $userId])
+                      ->setFilter($filter)
                       ->setOrder([
                           'IS_ACTIVE'   => 'DESC',
                           'DATE_INSERT' => 'DESC',
@@ -117,6 +121,32 @@ class OrderRepository extends BaseRepository
         }
 
         return $this->findBy($query);
+    }
+
+    /**
+     * @param int $userId
+     * @param int $orderId
+     * @return Order
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function getUserOrderById(int $userId, int $orderId)
+    {
+        return $this->getUserOrders($userId, 1, 0, ['ID' => $orderId])->current();
+    }
+
+    /**
+     * @param int $userId
+     * @param int $orderNumber
+     * @return Order
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function getUserOrderByNumber(int $userId, int $orderNumber)
+    {
+        return $this->getUserOrders($userId, 1, 0, ['ACCOUNT_NUMBER' => $orderNumber])->current();
     }
 
     /**

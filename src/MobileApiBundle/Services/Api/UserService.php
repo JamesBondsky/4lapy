@@ -186,6 +186,16 @@ class UserService
     }
 
     /**
+     * @param string $locationId
+     * @return bool
+     */
+    public function updateLocationId(string $locationId)
+    {
+        $currentUser = $this->userBundleService->getCurrentUser()->setLocation($locationId);
+        return $this->userBundleService->getUserRepository()->update($currentUser);
+    }
+
+    /**
      * @param string $login
      *
      * @return bool
@@ -300,12 +310,12 @@ class UserService
         $user = $this->getCurrentApiUser();
         $card = $this->appManzanaService->searchCardByNumber($user->getCard()->getNumber());
         $cardBonus = (new CardBonus());
-        $cardBonus->setSumDiscounted($card->plDiscountSumm);
+        $cardBonus->setSumDiscounted($card->plDiscountSumm ?? 0);
 
         return (new PersonalBonus())
-            ->setAmount($card->plDiscountSumm)
-            ->setTotalIncome($card->plDebet)
-            ->setTotalOutgo($card->plCredit)
+            ->setAmount($card->plDiscountSumm ?? 0)
+            ->setTotalIncome($card->plDebet ?? 0)
+            ->setTotalOutgo($card->plCredit ?? 0)
             ->setNextStage($cardBonus->getSumToNext());
     }
 }

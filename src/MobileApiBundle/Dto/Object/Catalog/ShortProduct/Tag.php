@@ -71,8 +71,7 @@ class Tag
      */
     public function setImg(string $img): Tag
     {
-        $hrefDecorator = new FullHrefDecorator($img);
-        $this->img = $hrefDecorator->getFullPublicPath();
+        $this->img = (new FullHrefDecorator($img))->getFullPublicPath();
         return $this;
     }
 }

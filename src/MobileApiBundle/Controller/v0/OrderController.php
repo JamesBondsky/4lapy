@@ -49,19 +49,31 @@ class OrderController extends FOSRestController
 
     /**
      * @Rest\Get(path="/order_status_history/")
-     * @see OrderStatusHistoryRequest
-     * @see OrderStatusHistoryResponse
+     * @Rest\View()
+     * @param OrderStatusHistoryRequest $orderStatusHistoryRequest
+     * @return OrderStatusHistoryResponse
      */
-    public function getOrderStatusHistoryAction()
+    public function getOrderStatusHistoryAction(OrderStatusHistoryRequest $orderStatusHistoryRequest)
     {
+        return (new OrderStatusHistoryResponse());
     }
 
     /**
      * @Rest\Get(path="/order_info/")
-     * @see OrderInfoRequest
-     * @see OrderInfoResponse
+     * @Rest\View()
+     * @param OrderInfoRequest $orderInfoRequest
+     * @return OrderInfoResponse
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
-    public function getOrderInfoAction()
+    public function getOrderInfoAction(OrderInfoRequest $orderInfoRequest)
     {
+        $order = $this->apiOrderService->getOneByUserAndNumber($orderInfoRequest->getId());
+        return (new OrderInfoResponse())->setOrder($order);
     }
 }

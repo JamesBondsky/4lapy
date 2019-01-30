@@ -149,22 +149,21 @@ class StoreService
     }
 
     /**
-     * @param ProductQuantity[] $productsQuantity
-     * @param string $locationCode
-     * @return Collection
+     * @param ProductQuantity[] $basketQuantity
+     * @return ProductQuantity[]
      * @throws \Exception
      */
-    public function getBasketListAvailable(array $productsQuantity, string $locationCode)
+    public function convertBasketQuantityToOfferQuantity(array $basketQuantity): array
     {
         $offersQuantity = [];
-        foreach ($productsQuantity as $productQuantity) {
+        foreach ($basketQuantity as $productQuantity) {
             $basketItemId = (int) $productQuantity->getProductId();
             $offerId = $this->basketService->getProductIdByBasketItemId($basketItemId);
             $offersQuantity[] = (new ProductQuantity())
                 ->setProductId($offerId)
                 ->setQuantity($productQuantity->getQuantity());
         }
-        return $this->getListAvailable($offersQuantity);
+        return $offersQuantity;
     }
 
     /**

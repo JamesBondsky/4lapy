@@ -862,7 +862,7 @@ class PaymentService implements LoggerAwareInterface
      */
     public function processApplePay(Order $order, $paymentToken)
     {
-        $response = $this->getSberbankProcessing()->paymentViaMobile($order->getId(), $paymentToken, 'applepay');
+        $response = $this->getSberbankProcessing()->paymentViaMobile($order->getField('ACCOUNT_NUMBER'), $paymentToken, 'applepay');
         $this->processOnlinePaymentViaMobile($order, $response);
     }
 
@@ -886,7 +886,7 @@ class PaymentService implements LoggerAwareInterface
      */
     public function processGooglePay(Order $order, $paymentToken, $amount)
     {
-        $response = $this->getSberbankProcessing()->paymentViaMobile($order->getId(), $paymentToken, 'android', $amount);
+        $response = $this->getSberbankProcessing()->paymentViaMobile($order->getField('ACCOUNT_NUMBER'), $paymentToken, 'android', $amount);
         $this->processOnlinePaymentViaMobile($order, $response);
     }
 

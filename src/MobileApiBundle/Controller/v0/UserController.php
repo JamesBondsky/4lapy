@@ -105,6 +105,9 @@ class UserController extends FOSRestController
      * @param PostUserInfoRequest $userInfoRequest
      * @return ApiResponse
      *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\External\Exception\ManzanaServiceException
      */
     public function postUserInfoAction(PostUserInfoRequest $userInfoRequest): ApiResponse

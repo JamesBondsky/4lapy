@@ -10,6 +10,7 @@ use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\External\ManzanaService as AppManzanaService;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\UserService as AppUserService;
 use FourPaws\MobileApiBundle\Services\Api\UserService as ApiUserService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
@@ -46,27 +47,30 @@ class LaunchController extends FOSRestController
     /**
      * @Rest\Get("/app_launch/")
      * @Rest\View()
-     *
-     * @Security("has_role('REGISTERED_USERS')", message="Вы не авторизованы")
      */
     public function launchAction()
     {
-        $this->apiUserService->actualizeUserGroupsForApp();
-        $user = $this->appUserService->getCurrentUser();
+        try {
+            $user = $this->appUserService->getCurrentUser();
 
-        // синхронизация с манзаной
-        // toDo проверить этот сценарий: подключение к манзане -> поиск контакта по номеру карты -> передача ff_mobile_app и ff_mobile_app_date в методе contact_update
-        $client = new ManzanaClient();
-        if ($_SESSION['MANZANA_CONTACT_ID']) {
-            $client->contactId = $_SESSION['MANZANA_CONTACT_ID'];
-            $client->ffMobileApp = 1;
-            $client->ffMobileAppDate = (new \Bitrix\Main\Type\DateTime())->format('c');
-        //    unset($_SESSION['MANZANA_CONTACT_ID']);
+            $this->apiUserService->actualizeUserGroupsForApp();
+
+            // синхронизация с манзаной
+            // toDo проверить этот сценарий: подключение к манзане -> поиск контакта по номеру карты -> передача ff_mobile_app и ff_mobile_app_date в методе contact_update
+            $client = new ManzanaClient();
+            if ($_SESSION['MANZANA_CONTACT_ID']) {
+                $client->contactId = $_SESSION['MANZANA_CONTACT_ID'];
+                $client->ffMobileApp = 1;
+                $client->ffMobileAppDate = (new \Bitrix\Main\Type\DateTime())->format('c');
+                //    unset($_SESSION['MANZANA_CONTACT_ID']);
+            }
+
+            /** устанавливаем всегда все поля для передачи - что на обновление что на регистарцию */
+            $this->appUserService->setClientPersonalDataByCurUser($client, $user);
+            $this->appManzanaService->updateContactAsync($client);
+        } catch (NotAuthorizedException $e) {
+            // it's okay if user is not authorized, do nothing
         }
-
-        /** устанавливаем всегда все поля для передачи - что на обновление что на регистарцию */
-        $this->appUserService->setClientPersonalDataByCurUser($client, $user);
-        $this->appManzanaService->updateContactAsync($client);
 
         // toDo уточнить зачем на старом сайте в IBLOCK_ID=54 сохранялись номера карт с комментарием "тут будем запрашивать чеки по карте"
         /*
