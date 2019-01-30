@@ -200,4 +200,44 @@ class PetController extends Controller
 
         return $this->ajaxMess->getSystemError();
     }
+
+    /**
+     * @Route("/getBreeds/", methods={"GET"})
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
+    public function getBreeds(Request $request): JsonResponse
+    {
+        if (!$this->userAuthorization->isAuthorized()) {
+            return $this->ajaxMess->getNeedAuthError();
+        }
+        $typeId = (int)$request->get('id');
+        if ($typeId < 1) {
+            $this->ajaxMess->getNotIdError(' для получения списка');
+        }
+
+        try {
+            $arItems = $this->petService->getPetBreed($typeId);
+            return JsonSuccessResponse::createWithData(
+                '',
+                $arItems,
+                200,
+                [],
+                ['reload' => true]
+            );
+        } catch (SecurityException|NotFoundException $e) {
+            return $this->ajaxMess->getSecurityError();
+        } catch (NotAuthorizedException $e) {
+            return $this->ajaxMess->getNeedAuthError();
+        } catch (ValidationException|InvalidIdentifierException|ConstraintDefinitionException|ObjectPropertyException $e) {
+            $logger = LoggerFactory::create('params');
+            $logger->error('Ошибка параметров - ' . $e->getMessage());
+        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+        }
+
+        return $this->ajaxMess->getSystemError();
+    }
 }
