@@ -66,18 +66,22 @@ class DostavistaDeliveryResult extends BaseResult implements DeliveryResultInter
     {
         if (null === $this->nearShop) {
             $stores = $this->fullstockResult->getStores();
-            $minDistance = null;
-            /** @var Store $store */
-            foreach ($stores as $store) {
-                if (!$store->isExpressStore()) {
-                    continue;
+            if ($userCoords[0] != '' && $userCoords[1] != '') {
+                $minDistance = null;
+                /** @var Store $store */
+                foreach ($stores as $store) {
+                    if (!$store->isExpressStore()) {
+                        continue;
+                    }
+                    $storeCoords = [$store->getLatitude(), $store->getLongitude()];
+                    $distance = $this->LatLngDist($userCoords, $storeCoords);
+                    if ($minDistance == null || $minDistance > $distance) {
+                        $minDistance = $distance;
+                        $this->nearShop = $store;
+                    }
                 }
-                $storeCoords = [$store->getLongitude(), $store->getLatitude()];
-                $distance = $this->LatLngDist($userCoords, $storeCoords);
-                if ($minDistance == null || $minDistance > $distance) {
-                    $minDistance = $distance;
-                    $this->nearShop = $store;
-                }
+            } else {
+                $this->nearShop = $stores->first();
             }
         }
 
