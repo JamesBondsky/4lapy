@@ -27,7 +27,7 @@ class articul_dostavista_delivery extends CModule
         'NAME' => '',
         'ACTIVE' => 'Y',
         'DESCRIPTION' => '',
-        'SORT' => 100,
+        'SORT' => 1000,
         'LOGOTIP' => null,
         'CONFIG' => null,
         'CLASS_NAME' => null,
