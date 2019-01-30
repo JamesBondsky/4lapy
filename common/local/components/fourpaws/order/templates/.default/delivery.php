@@ -99,7 +99,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                value="<?= (!empty($arResult['SPLIT_RESULT']) && $storage->isSplit()) ? 'twoDeliveries' : 'oneDelivery' ?>"
                                class="js-no-valid">
                         <input type="hidden" name="deliveryTypeId"
-                               value="<?= ($deliveryDostavista && $deliveryDostavista->getDeliveryId()) ? $deliveryDostavista->getDeliveryId() : ($delivery->getDeliveryId() ? $delivery->getDeliveryId() : $pickup->getDeliveryId())?>"
+                               value="<?= $delivery->getDeliveryId() ?>"
                                class="js-no-valid">
                         <input type="hidden" name="deliveryCoords" value="">
                         <div class="b-choice-recovery b-choice-recovery--order-step">
@@ -109,7 +109,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 ?>
                                 <input <?= $deliveryService->isDelivery($selectedDel) ? 'checked="checked"' : '' ?>
                                         class="b-choice-recovery__input js-recovery-telephone js-delivery"
-                                        data-set-delivery-type="<?= $deliveryDostavista && $deliveryDostavista->getDeliveryId() ? $deliveryDostavista->getDeliveryId() : $delivery->getDeliveryId()?>"
+                                        data-set-delivery-type="<?= $delivery->getDeliveryId() ?>"
                                         id="order-delivery-address"
                                         type="radio"
                                         name="deliveryId"
