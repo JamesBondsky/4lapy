@@ -227,12 +227,13 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
         <? if ($deliveryDostavista) { ?>
             <div class="b-delivery-type-time__info"><?= str_replace(['[time]', '[price]'], [round($deliveryDostavista->getPeriodTo() / 60), $deliveryDostavista->getPrice()], $deliveryDostavista->getData()['TEXT_EXPRESS_DELIVERY']); ?></div>
             <div class="b-choice-recovery b-choice-recovery--order-step b-choice-recovery--delivery-type-time">
-                <input checked="checked"
-                       data-set-delivery-type="<?= $deliveryDostavista->getDeliveryId() ?>"
+                <input data-set-delivery-type="<?= $deliveryDostavista->getDeliveryId() ?>"
                        class="b-choice-recovery__input"
                        id="order-express-courier-delivery"
                        type="radio"
                        name="typeTimeDeliveryId"
+                       data-delivery="<?= $deliveryDostavista->getPrice() ?>"
+                       data-full="<?= $delivery->getStockResult()->getOrderable()->getPrice() ?>"
                        data-type-time-delivery="express">
                 <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step" for="order-express-courier-delivery">
                 <span class="b-choice-recovery__main-text">
@@ -245,11 +246,14 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                     В&nbsp;течении <?= round($deliveryDostavista->getPeriodTo() / 60) ?>&nbsp;часов, <?= $deliveryDostavista->getPrice() ?>&nbsp;₽
                 </span>
                 </label>
-                <input class="b-choice-recovery__input"
+                <input checked="checked"
+                       class="b-choice-recovery__input"
                        data-set-delivery-type="<?= $delivery->getDeliveryId() ?>"
                        id="order-default-courier-delivery"
                        type="radio"
                        name="typeTimeDeliveryId"
+                       data-delivery="<?= $delivery->getPrice() ?>"
+                       data-full="<?= $delivery->getStockResult()->getOrderable()->getPrice() ?>"
                        data-type-time-delivery="default">
                 <label class="b-choice-recovery__label b-choice-recovery__label--right b-choice-recovery__label--order-step" for="order-default-courier-delivery">
                     <span class="b-choice-recovery__main-text">Обычная</span>

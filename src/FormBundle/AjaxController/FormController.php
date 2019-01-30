@@ -117,7 +117,7 @@ class FormController extends Controller implements LoggerAwareInterface
 
         if (null === $response) {
             $response = JsonSuccessResponse::createWithData(
-                'Ваша завка принята',
+                'Ваша заявка принята',
                 [
                     'reload'  => true,
                     'command' => $this->dataLayerService->renderFeedback($this->formService->getFormFieldValueByCode($data, 'theme', $formId)),
@@ -273,7 +273,7 @@ class FormController extends Controller implements LoggerAwareInterface
 
         if (null === $response) {
             $response = JsonSuccessResponse::createWithData(
-                'Ваша завка принята',
+                'Ваша заявка принята',
                 [
                     'command' => $this->dataLayerService->renderCallback(),
                 ]
