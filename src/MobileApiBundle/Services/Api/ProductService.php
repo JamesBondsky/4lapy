@@ -419,7 +419,7 @@ class ProductService
         if (!$deliveryResult) {
             return '';
         }
-        return $deliveryResult->getTextForOffer($offer->isByRequest(), true);
+        return $deliveryResult->getTextForOffer($offer->getPrice(), $offer->isByRequest(), true);
     }
 
     /**

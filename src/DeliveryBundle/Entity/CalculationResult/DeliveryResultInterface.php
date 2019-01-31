@@ -67,12 +67,4 @@ interface DeliveryResultInterface extends CalculationResultInterface
      * @return int
      */
     public function getIntervalOffset(): int;
-
-    /**
-     * Возвращает отформатированный текст о доставке для карточки товара на сайте и в мобильном приложении
-     * @param bool $isByRequest
-     * @param bool $withCurrency
-     * @return string
-     */
-    public function getTextForOffer($isByRequest = false, $withCurrency = false): string;
 }
