@@ -19,9 +19,18 @@ use FourPaws\Helpers\WordHelper;
 
 if (!$arResult['HIDE_KIT_BLOCK']) {
     $arMessages = [
-        'filters' => 'Другие фильтры',
-        'decor' => 'Другие декорации',
-        'lamps' => 'Другие лампы и светильники',
+        'filters' => [
+            'another' => 'Другие фильтры',
+            'all' => 'Все фильтры'
+        ],
+        'decor' => [
+            'another' => 'Другие декорации',
+            'all' => 'Все декорации'
+        ],
+        'lamps' => [
+            'another' => 'Другие лампы и светильники',
+            'all' => 'Все лампы и светильники'
+        ]
     ];
     $product = $arResult['PRODUCT'];
     $offer = $arResult['OFFER'];
@@ -111,7 +120,11 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
                             }
                             ?>
                             <div class="b-product-card-complect__list-item slide">
-                                <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $currentOffer->getId(); ?>_1" data-offerprice="<?= $currentOffer->getCatalogPrice(); ?>" data-product-info='{"productid": <?= $currentOffer->getProduct()->getId(); ?>, "offerid": <?= $currentOffer->getId(); ?>, "offerprice": <?= $currentOffer->getCatalogPrice(); ?>, "groupid": "<?= $groupKey ?>"}' data-product-group-title="<?= $arMessages[$groupKey]; ?>" tabindex="0">
+                                <div class="b-common-item js-product-complect-item js-advice-item"
+                                     data-offerid="<?= $currentOffer->getId(); ?>_1"
+                                     data-offerprice="<?= $currentOffer->getCatalogPrice(); ?>"
+                                     data-product-info='{"productid": <?= $currentOffer->getProduct()->getId(); ?>, "offerid": <?= $currentOffer->getId(); ?>, "offerprice": <?= $currentOffer->getCatalogPrice(); ?>, "groupid": "<?= $groupKey ?>"}'
+                                     data-product-group-title="<?= $arMessages[$groupKey]['another']; ?>" tabindex="0">
                                     <div class="b-common-item__image-wrap">
                                         <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getDetailPageUrl(); ?>" tabindex="0">
                                             <img class="b-common-item__image" src="<?= $currentOffer->getResizeImages(240, 240)->first(); ?>" alt="<?= $currentOffer->getName(); ?>" title="">
@@ -139,7 +152,10 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
                                         <? if ($offerGroup->count() > 1) { ?>
                                             <div class="b-common-item__replace">
                                                 <a href="javascript:void(0)" class="b-common-item__replace-link js-product-complect-replace js-this-product-complect">
-                                                    <span class="b-common-item__replace-text js-product-complect-replace-text">Поменять</span>
+                                                    <span class="b-common-item__replace-text js-product-complect-replace-text"
+                                                          data-link-text="<?= $arMessages[$groupKey]['all']; ?>"
+                                                          data-link-href="<?= $currentOffer->getProduct()->getSection()->getSectionPageUrl(); ?>"
+                                                    >Поменять</span>
                                                     <span class="b-icon b-icon--replace-complect b-icon--left-3"><?= new SvgDecorator('icon-arrow-down', 10, 12) ?></span>
                                                 </a>
                                             </div>
@@ -305,7 +321,7 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
                     ?>
                 </div>
                 <div class="b-product-card-complect__link-wrap">
-                    <a href="#" class="b-product-card-complect__link">Ссылка</a>
+                    <a href="#" class="b-product-card-complect__link" id="all-items-aquariums">Ссылка</a>
                 </div>
             </div>
         </div>
