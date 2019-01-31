@@ -74,6 +74,9 @@ class ProductsByProp extends CBitrixComponent
             $params['CACHE_TYPE'] = 'A';
         }
 
+        $params['SORT'] = $params['SORT'] ? $params['SORT'] : 'SORT';
+        $params['ORDER'] = $params['ORDER'] ? $params['ORDER'] : 'ASC';
+
         return parent::onPrepareComponentParams($params);
     }
 
@@ -126,6 +129,8 @@ class ProductsByProp extends CBitrixComponent
                     '=' . $this->arParams['FILTER_FIELD'] => $products,
                     'ACTIVE'                              => 'Y',
                     '>CATALOG_PRICE_2'                    => 0,
+                ])->withOrder([
+                    $this->arParams['SORT'] => $this->arParams['ORDER']
                 ])->exec();
             }
 
