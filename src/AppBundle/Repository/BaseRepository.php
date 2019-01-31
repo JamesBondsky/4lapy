@@ -84,7 +84,8 @@ class BaseRepository
         }
         $validationResult = $this->validator->validate($this->entity, null, ['create']);
         if ($validationResult->count() > 0) {
-            throw new ValidationException('Wrong entity passed to create');
+            $firstResult = $validationResult->get(0);
+            throw new ValidationException('Invalid entity. Property path: ' . $firstResult->getPropertyPath() . '. Message: ' . $firstResult->getMessage());
         }
 
         $data = $this->arrayTransformer->toArray($this->entity, SerializationContext::create()->setGroups(['create']));

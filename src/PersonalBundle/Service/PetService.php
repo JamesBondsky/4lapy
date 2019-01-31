@@ -8,14 +8,17 @@ namespace FourPaws\PersonalBundle\Service;
 
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Security\SecurityException;
+use Bitrix\Main\UserFieldTable;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\BaseEntity;
+use FourPaws\AppBundle\Entity\UserFieldEnumValue;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\HighloadHelper;
 use FourPaws\PersonalBundle\Entity\Pet;
 use FourPaws\PersonalBundle\Models\PetCongratulationsNotify;
 use FourPaws\PersonalBundle\Repository\PetRepository;
@@ -28,6 +31,7 @@ use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use FourPaws\AppBundle\Service\UserFieldEnumService;
 
 /**
  * Class PetService
@@ -48,23 +52,28 @@ class PetService
     private $manzanaService;
 
     /**
+     * @var UserFieldEnumService
+     */
+    private $userFieldEnumService;
+
+    /**
      * PetService constructor.
      *
-     * @param PetRepository                $petRepository
+     * @param PetRepository $petRepository
      * @param CurrentUserProviderInterface $currentUserProvider
-     * @param ManzanaService               $manzanaService
-     *
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
+     * @param ManzanaService $manzanaService
+     * @param UserFieldEnumService $userFieldEnumService
      */
     public function __construct(
         PetRepository $petRepository,
         CurrentUserProviderInterface $currentUserProvider,
-        ManzanaService $manzanaService
+        ManzanaService $manzanaService,
+        UserFieldEnumService $userFieldEnumService
     ) {
         $this->petRepository = $petRepository;
         $this->currentUser = $currentUserProvider;
         $this->manzanaService = $manzanaService;
+        $this->userFieldEnumService = $userFieldEnumService;
     }
 
     /**
@@ -309,5 +318,35 @@ class PetService
                 ->setOwnerName($pet['USER_NAME']);
         }
         return $result;
+    }
+
+    /**
+     * @return \FourPaws\AppBundle\Collection\UserFieldEnumCollection
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\LoaderException
+     */
+    public function getGenders()
+    {
+        $userFieldId = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
+            [
+                'FIELD_NAME' => 'UF_GENDER',
+                'ENTITY_ID' => 'HLBLOCK_' . HighloadHelper::getIdByName('Pet'),
+            ]
+        )->exec()->fetch()['ID'];
+        return $this->userFieldEnumService->getEnumValueCollection($userFieldId);
+    }
+
+    /**
+     * @param string $genderCode
+     * @return UserFieldEnumValue
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\LoaderException
+     */
+    public function getGenderByCode(string $genderCode)
+    {
+        return $this->getGenders()->filter(function ($gender) use($genderCode) {
+            /** @var UserFieldEnumValue $gender */
+            return $genderCode === $gender->getXmlId();
+        })->current();
     }
 }
