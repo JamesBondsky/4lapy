@@ -304,6 +304,9 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
                     }
                     ?>
                 </div>
+                <div class="b-product-card-complect__link-wrap">
+                    <a href="#" class="b-product-card-complect__link">Ссылка</a>
+                </div>
             </div>
         </div>
     </div>
