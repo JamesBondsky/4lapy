@@ -125,7 +125,7 @@ final class MarkHelper
             return self::MARK_GIFT_IMAGE;
         }
 
-        if ($offer->isSale() || $offer->isSimpleSaleAction()) {
+        if ($offer->isSale() || $offer->isSimpleSaleAction() || $offer->isSimpleDiscountAction()) {
             return self::MARK_SALE_IMAGE;
         }
 
@@ -173,7 +173,7 @@ final class MarkHelper
             }
         }
 
-        if ($offer->isSale() || $offer->isSimpleSaleAction()) {
+        if ($offer->isSale() || $offer->isSimpleSaleAction() || $offer->isSimpleDiscountAction()) {
             /** @todo возможно другой шаблон */
             return self::DEFAULT_TEMPLATE;
         }
