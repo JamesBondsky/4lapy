@@ -3,33 +3,35 @@
 namespace FourPaws\MobileApiBundle\Dto\Request;
 
 use JMS\Serializer\Annotation as Serializer;
+use Symfony\Component\Validator\Constraints as Assert;
 
-class OrderStatusHistoryRequest
+class OrderStatusHistoryRequest implements SimpleUnserializeRequest, GetRequest
 {
     /**
-     * id заказа
-     * @Serializer\Type("string")
+     * Номер заказа
+     * @Serializer\Type("int")
      * @Serializer\SerializedName("id")
-     * @var string
+     * @Assert\NotBlank()
+     * @Assert\GreaterThan(0)
+     * @var int
      */
-    protected $id = '';
+    protected $orderNumber;
 
     /**
-     * @return string
+     * @return int
      */
-    public function getId(): string
+    public function getOrderNumber(): int
     {
-        return $this->id;
+        return $this->orderNumber;
     }
 
     /**
-     * @param string $id
-     *
+     * @param int $orderNumber
      * @return OrderStatusHistoryRequest
      */
-    public function setId(string $id): OrderStatusHistoryRequest
+    public function setOrderNumber(int $orderNumber): OrderStatusHistoryRequest
     {
-        $this->id = $id;
+        $this->orderNumber = $orderNumber;
         return $this;
     }
 }

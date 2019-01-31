@@ -316,7 +316,7 @@ class UserRepository
      * @throws \Bitrix\Main\SystemException
      * @return bool
      */
-    public function isExist(string $rawLogin, bool $onlyActive = true): bool
+    public function doesExist(string $rawLogin, bool $onlyActive = true): bool
     {
         try {
             $this->findIdAndLoginByRawLogin($rawLogin, $onlyActive);

@@ -7,13 +7,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 trait Captcha
 {
-    /**
-     * @Assert\NotBlank()
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("captcha_id")
-     * @var string
-     */
-    protected $captchaId = '';
+    use CaptchaId;
 
     /**
      * @Assert\NotBlank()
@@ -26,24 +20,6 @@ trait Captcha
     /**
      * @return string
      */
-    public function getCaptchaId(): string
-    {
-        return $this->captchaId;
-    }
-
-    /**
-     * @param string $captchaId
-     * @return Captcha
-     */
-    public function setCaptchaId(string $captchaId): Captcha
-    {
-        $this->captchaId = $captchaId;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
     public function getCaptchaValue(): string
     {
         return $this->captchaValue;
@@ -51,9 +27,9 @@ trait Captcha
 
     /**
      * @param string $captchaValue
-     * @return Captcha
+     * @return $this
      */
-    public function setCaptchaValue(string $captchaValue): Captcha
+    public function setCaptchaValue(string $captchaValue)
     {
         $this->captchaValue = $captchaValue;
         return $this;

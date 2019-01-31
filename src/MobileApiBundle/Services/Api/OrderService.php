@@ -14,11 +14,13 @@ use FourPaws\MobileApiBundle\Dto\Object\DeliveryAddress;
 use FourPaws\MobileApiBundle\Dto\Object\Detailing;
 use FourPaws\MobileApiBundle\Dto\Object\Order;
 use FourPaws\MobileApiBundle\Dto\Object\OrderCalculate;
+use FourPaws\MobileApiBundle\Dto\Object\OrderHistory;
 use FourPaws\MobileApiBundle\Dto\Object\OrderParameter;
 use FourPaws\MobileApiBundle\Dto\Object\OrderStatus;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartOrderRequest;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
+use FourPaws\PersonalBundle\Entity\OrderStatusChange;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\OrderService as AppOrderService;
@@ -100,7 +102,7 @@ class OrderService
     }
 
     /**
-     * @param int $orderId
+     * @param int $orderNumber
      * @return Order
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
@@ -111,10 +113,54 @@ class OrderService
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      * @throws \Exception
      */
-    public function getOne(int $orderId)
+    public function getOneByNumber(int $orderNumber)
     {
-        $order = $this->personalOrderService->getOrderById($orderId);
+        $order = $this->personalOrderService->getOrderByNumber($orderNumber);
         return $this->toApiFormat($order);
+    }
+
+    /**
+     * @param int $orderNumber
+     * @return Order
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws \Exception
+     */
+    public function getOneByNumberForCurrentUser(int $orderNumber)
+    {
+        $user = $this->userService->getCurrentUser();
+        $order = $this->personalOrderService->getUserOrderByNumber($user, $orderNumber);
+        return $this->toApiFormat($order);
+    }
+
+    /**
+     * @param int $orderNumber
+     * @return array
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getHistoryForCurrentUser(int $orderNumber)
+    {
+        $user = $this->userService->getCurrentUser();
+        $order = $this->personalOrderService->getUserOrderByNumber($user, $orderNumber);
+        return $this->personalOrderService->getOrderStatuses($order)->map(function($status) {
+            /** @var $status OrderStatusChange */
+            $dateChangeStmp = $status->getDateCreate()->getTimestamp();
+            $dateChange = (new \DateTime())->setTimestamp($dateChangeStmp);
+            $status = (new OrderStatus())
+                ->setCode($status->getOrderStatus()->getId())
+                ->setTitle($status->getOrderStatus()->getName());
+            return (new OrderHistory())
+                ->setStatus($status)
+                ->setDateChange($dateChange);
+        })->toArray();
     }
 
     /**
@@ -311,6 +357,19 @@ class OrderService
             // it's okay if user could be not authorized while making order
         }
 
+        $paymentType = $cartParam->getPaymentType();
+        if ($paymentType === 'cash') {
+            $paymentId = 1;
+        } else if (in_array($paymentType, ['cashless', 'applepay', 'android'])) {
+            $paymentId = 3;
+        } else {
+            $paymentId = null;
+        }
+
+        if ($paymentId) {
+            $orderStorage->setPaymentId($paymentId);
+        }
+
         switch ($deliveryType) {
             case DeliveryService::INNER_DELIVERY_CODE:
                 $orderStorage
@@ -320,7 +379,8 @@ class OrderService
                     ->setStreet($cartParam->getStreet())
                     ->setHouse($cartParam->getHouse())
                     ->setBuilding($cartParam->getBuilding())
-                    ->setApartment($cartParam->getApartment());
+                    ->setApartment($cartParam->getApartment())
+                ;
                 // ->setDeliveryDate($userCartOrderRequest->getCartParam()->getDeliveryRangeDate())
                 break;
             case DeliveryService::DPD_PICKUP_CODE:
@@ -332,6 +392,6 @@ class OrderService
         }
 
         $order = $this->appOrderService->createOrder($orderStorage);
-        return $this->getOne($order->getId());
+        return $this->getOneByNumber($order->getField('ACCOUNT_NUMBER'));
     }
 }

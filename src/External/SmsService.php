@@ -138,7 +138,7 @@ class SmsService implements LoggerAwareInterface
             );
         } catch (SmsSendErrorException $e) {
             $this->logger->error(
-                \sprintf('Sms send error: %s.', $e->getMessage()),
+                \sprintf('Sms send error[%s]: %s.', $e->getCode(), $e->getMessage()),
                 $logContext
             );
         }

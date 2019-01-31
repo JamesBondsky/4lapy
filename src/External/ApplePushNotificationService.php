@@ -38,7 +38,6 @@ class ApplePushNotificationService
      * @param $messageText
      * @param $messageId
      * @param $messageType
-     * @return array
      * @throws \ApnsPHP_Message_Exception
      */
     public function sendNotification($token, $messageText, $messageId, $messageType)
@@ -51,7 +50,13 @@ class ApplePushNotificationService
         $message->setCustomProperty('id', $messageId);
 
         $this->server->add($message);
+    }
 
+    /**
+     * @return array
+     */
+    public function getLogMessages()
+    {
         /**
          * @var $logger ApplePushNotificationLogger
          */

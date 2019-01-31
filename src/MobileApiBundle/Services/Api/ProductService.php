@@ -8,6 +8,7 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
+use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Collection\OfferCollection;
@@ -19,6 +20,7 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\CatalogBundle\Service\CategoriesService;
 use FourPaws\CatalogBundle\Service\FilterHelper;
 use FourPaws\CatalogBundle\Service\SortService;
+use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
@@ -26,6 +28,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\DateHelper;
+use FourPaws\Helpers\ImageHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct;
@@ -37,12 +40,14 @@ use FourPaws\Search\Model\Navigation;
 use FourPaws\Search\SearchService;
 use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\UserBundle\Service\UserService;
-use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct\BundleItem as BundleItemOffer;
 use Symfony\Component\HttpFoundation\Request;
 
 
 class ProductService
 {
+    const LIST_IMAGE_WIDTH = 200;
+    const LIST_IMAGE_HEIGHT = 250;
+
     /**
      * @var UserService
      */
@@ -153,7 +158,10 @@ class ProductService
     {
         /** @var Offer $currentOffer */
         $currentOffer = $this->getCurrentOfferForList($product);
-        return $this->convertToFullProduct($product, $currentOffer);
+        $fullProduct = $this->convertToFullProduct($product, $currentOffer);
+        // товары всегда доступны в каталоге (недоступные просто не должны быть в выдаче)
+        $fullProduct->setIsAvailable(true);
+        return $fullProduct;
     }
 
     /**
@@ -206,9 +214,8 @@ class ProductService
         $product = $offer->getProduct();
 
         $fullProduct = $this->convertToFullProduct($product, $offer);
+        $fullProduct->setIsAvailable($offer->isAvailable()); // returns ShortProduct
         $fullProduct
-            ->setNutritionRecommendations($product->getNormsOfUse()->getText())
-            ->setNutritionFacts($product->getComposition()->getText())
             ->setPackingVariants($this->getPackingVariants($product))   // фасовки
             ->setSpecialOffer($this->getSpecialOffer($offer))           // акция
             ->setFlavours($this->getFlavours($offer))                   // вкус
@@ -217,7 +224,24 @@ class ProductService
             ->setPickup($this->getPickupText($offer))                   // товар под заказ
             // ->setCrossSale($this->getCrossSale($offer))              // похожие товары
             ->setBundle($this->getBundle($offer))                       // с этим товаром покупают
+            ->setPictureList($this->getPictureList($product))
             ;
+
+        if ($product->getNormsOfUse()->getText() || $product->getLayoutRecommendations()->getText()) {
+            if ($product->getLayoutRecommendations()->getText() != '' && $product->getLayoutRecommendations()->getText() != null) {
+                $fullProduct->setNutritionRecommendations($product->getLayoutRecommendations()->getText());
+            } else {
+                $fullProduct->setNutritionRecommendations($product->getNormsOfUse()->getText());
+            }
+        }
+
+        if ($product->getComposition()->getText() || $product->getLayoutComposition()->getText()) {
+            if ($product->getLayoutComposition()->getText() != '' && $product->getLayoutComposition()->getText() != null) {
+                $fullProduct->setNutritionFacts($product->getLayoutComposition()->getText());
+            } else {
+                $fullProduct->setNutritionFacts($product->getComposition()->getText());
+            }
+        }
 
         return $fullProduct;
     }
@@ -231,20 +255,33 @@ class ProductService
      * @param Offer $offer
      * @return array<ShortProduct\Tag()>
      * @throws \Bitrix\Main\SystemException
+     * @throws \ImagickException
      */
     public function getTags(Offer $offer)
     {
         $tags = [];
         if ($offer->isHit()) {
-            $tags[] = (new ShortProduct\Tag())->setImg(MarkHelper::MARK_HIT_IMAGE_SRC);
+            $tags[] = $this->getTag(MarkHelper::MARK_HIT_IMAGE_SRC);
         }
         if ($offer->isNew()) {
-            $tags[] = (new ShortProduct\Tag())->setImg(MarkHelper::MARK_NEW_IMAGE_SRC);
+            $tags[] = $this->getTag(MarkHelper::MARK_NEW_IMAGE_SRC);
         }
         if ($offer->isSale()) {
-            $tags[] = (new ShortProduct\Tag())->setImg(MarkHelper::MARK_SALE_IMAGE_SRC);
+            $tags[] = $this->getTag(MarkHelper::MARK_SALE_IMAGE_SRC);
         }
         return $tags;
+    }
+
+    /**
+     * @param string $svg
+     * @return ShortProduct\Tag
+     * @throws \Bitrix\Main\SystemException
+     * @throws \ImagickException
+     */
+    public function getTag(string $svg)
+    {
+        $png = ImageHelper::convertSvgToPng($svg);
+        return (new ShortProduct\Tag())->setImg($png);
     }
 
     /**
@@ -254,6 +291,7 @@ class ProductService
      * @return ShortProduct
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \ImagickException
      */
     public function convertToShortProduct(Product $product, Offer $offer, $quantity = 1): ShortProduct
     {
@@ -263,10 +301,22 @@ class ProductService
             ->setXmlId($offer->getXmlId())
             ->setBrandName($product->getBrandName())
             ->setWebPage($offer->getCanonicalPageUrl())
-            ->setPicture($offer->getImages() ? $offer->getImages()->first() : '')
-            ->setPicturePreview($offer->getResizeImages(200, 250) ? $offer->getResizeImages(200, 250)->first() : '')
             ->setIsByRequest($offer->isByRequest())
             ->setIsAvailable($offer->isAvailable());
+
+        // большая картинка
+        if ($images = $offer->getImages()) {
+            /** @var Image $picture */
+            $picture = $images->first();
+            $pictureSrc = \CFile::getPath($picture->getId());
+            $pictureSrc = (new FullHrefDecorator($pictureSrc))->getFullPublicPath();
+            $shortProduct->setPicture($pictureSrc);
+        }
+
+        // картинка ресайз (возможно не используется, но это не точно)
+        if ($resizeImages = $offer->getResizeImages(static::LIST_IMAGE_WIDTH, static::LIST_IMAGE_HEIGHT)) {
+            $shortProduct->setPicturePreview($resizeImages->first());
+        }
 
         // цена
         $price = (new Price())
@@ -298,8 +348,10 @@ class ProductService
     public function convertToFullProduct(Product $product, Offer $offer): FullProduct
     {
         $shortProduct = $this->convertToShortProduct($product, $offer);
+        $detailText = $product->getDetailText()->getText();
+        $detailText = ImageHelper::appendDomainToSrc($detailText);
         $fullProduct = (new FullProduct())
-            ->setDetailsHtml($product->getDetailText()->getText());;
+            ->setDetailsHtml($detailText);
 
         // toDo: is there any better way to merge ShortProduct into FullProduct?
         $fullProduct
@@ -420,29 +472,29 @@ class ProductService
     /**
      * Акция товара
      * @param Offer $offer
-     * @return FullProduct\SpecialOffer
+     * @return FullProduct\SpecialOffer|null
      * @throws \Bitrix\Main\SystemException
      */
-    public function getSpecialOffer(Offer $offer): FullProduct\SpecialOffer
+    public function getSpecialOffer(Offer $offer)
     {
         /** @var Share $specialOfferModel */
         $specialOfferModel = $offer->getShare()->current();
         $specialOffer = (new FullProduct\SpecialOffer());
-        if ($specialOfferModel) {
-            $specialOffer
-                ->setId($specialOfferModel->getId())
-                ->setName($specialOfferModel->getName())
-                ->setDescription($specialOfferModel->getPreviewText());
-
-            if ($specialOfferModel->getDateActiveFrom() && $specialOfferModel->getDateActiveTo()) {
-                $dateFrom = DateHelper::replaceRuMonth($specialOfferModel->getDateActiveFrom()->format('d #n# Y'), DateHelper::GENITIVE);
-                $dateTo = DateHelper::replaceRuMonth($specialOfferModel->getDateActiveTo()->format('d #n# Y'), DateHelper::GENITIVE);
-                $specialOffer->setDate($dateFrom . " - " . $dateTo);
-            }
-            if ($specialOfferModel->hasLabelImage()) {
-                $specialOffer->setImage($specialOfferModel->getPropertyLabelImageFileSrc());
-            }
+        if (!$specialOfferModel) {
+            return null;
         }
+        $specialOffer
+            ->setId($specialOfferModel->getId())
+            ->setName($specialOfferModel->getName())
+            ->setDescription($specialOfferModel->getPreviewText())
+            ->setImage($specialOfferModel->getPreviewPictureSrc());
+
+        if ($specialOfferModel->getDateActiveFrom() && $specialOfferModel->getDateActiveTo()) {
+            $dateFrom = DateHelper::replaceRuMonth($specialOfferModel->getDateActiveFrom()->format('d #n# Y'), DateHelper::GENITIVE);
+            $dateTo = DateHelper::replaceRuMonth($specialOfferModel->getDateActiveTo()->format('d #n# Y'), DateHelper::GENITIVE);
+            $specialOffer->setDate($dateFrom . " - " . $dateTo);
+        }
+
         return $specialOffer;
     }
 
@@ -503,7 +555,7 @@ class ProductService
     /**
      * С этим товаром часто берут
      * @param Offer $offer
-     * @return FullProduct\Bundle
+     * @return FullProduct\Bundle:null
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
@@ -515,30 +567,25 @@ class ProductService
         $oldTotalPrice = 0;
         $totalPrice = 0;
         $bonusAmount = 0;
-        if ($bundle = $offer->getBundle()) {
-            $percent = $this->userService->getCurrentUserBonusPercent();
-            /** @var BundleItem $bundleItem */
-            foreach ($bundle->getProducts() as $bundleItem) {
-                $bundleItemOffer = $bundleItem->getOffer();
-                $bundleItems[] = (new BundleItemOffer())
-                    ->setOfferId($bundleItemOffer->getId())
-                    ->setTitle($bundleItemOffer->getName())
-                    ->setPrice(
-                        (new Price)
-                            ->setActual($bundleItemOffer->getPrice())
-                            ->setOld($bundleItemOffer->getOldPrice())
-                    )
-                    ->setImage($bundleItemOffer->getImages()->current())
-                    ->setQuantity($bundleItemOffer->getQuantity())
-                    ->setWeight($bundleItemOffer->getCatalogProduct()->getWeight());
+        if (!$bundle = $offer->getBundle()) {
+            return null;
+        }
+        $percent = $this->userService->getCurrentUserBonusPercent();
+        /** @var BundleItem $bundleItem */
+        foreach ($bundle->getProducts() as $bundleItem) {
+            $bundleItemOffer = $bundleItem->getOffer();
+            $bundleItemProduct = $bundleItemOffer->getProduct();
 
-                $totalPrice += $bundleItemOffer->getCatalogPrice() * $bundleItem->getQuantity();
-                $oldTotalPrice += $bundleItemOffer->getCatalogOldPrice() * $bundleItem->getQuantity();
-                $bonusAmount += $bundleItemOffer->getBonusCount($percent, $bundleItem->getQuantity());
-            }
+            $product = $this->convertToShortProduct($bundleItemProduct, $bundleItemOffer);
+
+            $bundleItems[] = $product;
+
+            $totalPrice += $bundleItemOffer->getCatalogPrice() * $bundleItem->getQuantity();
+            $oldTotalPrice += $bundleItemOffer->getCatalogOldPrice() * $bundleItem->getQuantity();
+            $bonusAmount += $bundleItemOffer->getBonusCount($percent, $bundleItem->getQuantity());
         }
         return (new FullProduct\Bundle())
-            ->setBundleItems($bundleItems)
+            ->setGoods($bundleItems)
             ->setTotalPrice(
                 (new Price)
                     ->setActual($totalPrice)
@@ -607,6 +654,25 @@ class ProductService
 
 
         return $unionOffers[$type][$val];
+    }
+
+    protected function getPictureList(Product $product)
+    {
+        $offers = $product->getOffersSorted();
+        if (empty($offers)) {
+            return [];
+        }
+
+        $images = [];
+        /** @var Offer $offer */
+        foreach ($offers as $offer) {
+            if ($offerImages = $offer->getImages()) {
+                foreach ($offerImages as $image) {
+                    $images[] = $image;
+                }
+            }
+        }
+        return array_unique($images);
     }
 
 }

@@ -8,7 +8,7 @@ use JMS\Serializer\Annotation as Serializer;
 
 /**
  * Объект баннер
- * Class Order
+ * Class Banner
  * @package FourPaws\MobileApiBundle\Dto\Object
  */
 class Banner

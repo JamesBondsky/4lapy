@@ -39,10 +39,15 @@ class PaymentController extends FOSRestController
      * @throws \Bitrix\Main\NotImplementedException
      * @throws \Bitrix\Main\ObjectNotFoundException
      * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
+     * @throws \Bitrix\Main\SystemException
      */
     public function postPayAction(PayRequest $payRequest): PayResponse
     {
-        $url = $this->apiPaymentService->getPaymentUrl($payRequest->getOrderId());
+        $url = $this->apiPaymentService->getPaymentUrl(
+            $payRequest->getOrderNumber(),
+            $payRequest->getPayType(),
+            $payRequest->getPayToken()
+        );
         return (new PayResponse())
             ->setFormUrl($url);
     }

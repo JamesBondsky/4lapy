@@ -6,7 +6,7 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct;
 
-use FourPaws\Decorators\FullHrefDecorator;
+use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
 use JMS\Serializer\Annotation as Serializer;
 
@@ -20,11 +20,11 @@ use JMS\Serializer\Annotation as Serializer;
 class Bundle
 {
     /**
-     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct\BundleItem>")
+     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct>")
      * @Serializer\SerializedName("goods")
-     * @var BundleItem[]
+     * @var ShortProduct[]
      */
-    protected $bundleItems = [];
+    protected $goods = [];
 
     /**
      * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\Price")
@@ -42,20 +42,20 @@ class Bundle
 
 
     /**
-     * @return BundleItem[]
+     * @return ShortProduct[]
      */
-    public function getBundleItems(): array
+    public function getGoods(): array
     {
-        return $this->bundleItems;
+        return $this->goods;
     }
 
     /**
-     * @param BundleItem[] $bundleItems
+     * @param ShortProduct[] $goods
      * @return Bundle
      */
-    public function setBundleItems(array $bundleItems): Bundle
+    public function setGoods(array $goods): Bundle
     {
-        $this->bundleItems = $bundleItems;
+        $this->goods = $goods;
         return $this;
     }
 
@@ -86,7 +86,7 @@ class Bundle
     }
 
     /**
-     * @param int $totalPrice
+     * @param int $bonusAmount
      * @return Bundle
      */
     public function setBonusAmount(int $bonusAmount): Bundle

@@ -2,17 +2,12 @@
 
 namespace FourPaws\MobileApiBundle\Security;
 
-use Bitrix\Sale\Fuser;
 use FourPaws\MobileApiBundle\Entity\ApiUserSession;
-use FourPaws\MobileApiBundle\Exception\InvalidIdentifierException as MobileInvalidIdentifierException;
 use FourPaws\MobileApiBundle\Exception\InvalidTokenException;
 use FourPaws\MobileApiBundle\Repository\ApiUserSessionRepository;
-use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
-use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Security\BitrixUserProviderInterface;
 use Symfony\Component\Security\Core\Authentication\Provider\AuthenticationProviderInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
-use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\Role\Role;
 
 class ApiTokenProvider implements AuthenticationProviderInterface

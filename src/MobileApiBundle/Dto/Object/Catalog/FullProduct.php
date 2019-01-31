@@ -6,6 +6,7 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Object\Catalog;
 
+use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct\Bundle;
 use FourPaws\MobileApiBundle\Dto\Object\CatalogCategory;
 use JMS\Serializer\Annotation as Serializer;
@@ -54,7 +55,7 @@ class FullProduct extends ShortProduct
     protected $packingVariants = [];
 
     /**
-     * @var SpecialOffer
+     * @var SpecialOffer|null
      * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct\SpecialOffer")
      * @Serializer\SerializedName("specialOffer")
      */
@@ -93,7 +94,7 @@ class FullProduct extends ShortProduct
     /**
      * С этим товаром покупают
      *
-     * @var Bundle
+     * @var Bundle|null
      * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct\Bundle")
      * @Serializer\SerializedName("bundle")
      */
@@ -161,8 +162,12 @@ class FullProduct extends ShortProduct
      *
      * @return FullProduct
      */
-    public function setPictureList($pictureList): FullProduct
+    public function setPictureList(array $pictureList): FullProduct
     {
+        $pictureList = array_map(function($picture) {
+            $hrefDecorator = new FullHrefDecorator($picture);
+            return $hrefDecorator->getFullPublicPath();
+        }, $pictureList);
         $this->pictureList = $pictureList;
         return $this;
     }
@@ -214,11 +219,11 @@ class FullProduct extends ShortProduct
     }
 
     /**
-     * @param SpecialOffer $specialOffer
+     * @param SpecialOffer|null $specialOffer
      *
      * @return FullProduct
      */
-    public function setSpecialOffer(SpecialOffer $specialOffer): FullProduct
+    public function setSpecialOffer($specialOffer): FullProduct
     {
         $this->specialOffer = $specialOffer;
         return $this;
@@ -306,10 +311,10 @@ class FullProduct extends ShortProduct
     }
 
     /**
-     * @param Bundle $bundle
+     * @param Bundle|null $bundle
      * @return FullProduct
      */
-    public function setBundle(Bundle $bundle): FullProduct
+    public function setBundle($bundle): FullProduct
     {
         $this->bundle = $bundle;
         return $this;

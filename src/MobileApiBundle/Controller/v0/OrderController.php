@@ -14,7 +14,7 @@ use FourPaws\MobileApiBundle\Dto\Response\OrderInfoResponse;
 use FourPaws\MobileApiBundle\Dto\Response\OrderListResponse;
 use FourPaws\MobileApiBundle\Dto\Response\OrderStatusHistoryResponse;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
-use FourPaws\MobileApiBundle\Services\Api\PaymentService as ApiOrderService;
+use FourPaws\MobileApiBundle\Services\Api\OrderService as ApiOrderService;
 
 /**
  * Class PushController
@@ -49,19 +49,38 @@ class OrderController extends FOSRestController
 
     /**
      * @Rest\Get(path="/order_status_history/")
-     * @see OrderStatusHistoryRequest
-     * @see OrderStatusHistoryResponse
+     * @Rest\View()
+     * @param OrderStatusHistoryRequest $orderStatusHistoryRequest
+     * @return OrderStatusHistoryResponse
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
-    public function getOrderStatusHistoryAction()
+    public function getOrderStatusHistoryAction(OrderStatusHistoryRequest $orderStatusHistoryRequest)
     {
+        $orderNumber = $orderStatusHistoryRequest->getOrderNumber();
+        $statusHistory = $this->apiOrderService->getHistoryForCurrentUser($orderNumber);
+        return new OrderStatusHistoryResponse($statusHistory);
     }
 
     /**
      * @Rest\Get(path="/order_info/")
-     * @see OrderInfoRequest
-     * @see OrderInfoResponse
+     * @Rest\View()
+     * @param OrderInfoRequest $orderInfoRequest
+     * @return OrderInfoResponse
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
-    public function getOrderInfoAction()
+    public function getOrderInfoAction(OrderInfoRequest $orderInfoRequest)
     {
+        $orderNumber = $orderInfoRequest->getOrderNumber();
+        $order = $this->apiOrderService->getOneByNumberForCurrentUser($orderNumber);
+        return new OrderInfoResponse($order);
     }
 }

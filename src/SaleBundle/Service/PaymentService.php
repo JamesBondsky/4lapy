@@ -26,6 +26,7 @@ use Bitrix\Sale\Payment;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\Helpers\BusinessValueHelper;
 use FourPaws\Helpers\DateHelper;
@@ -466,22 +467,25 @@ class PaymentService implements LoggerAwareInterface
         return $this->getSberbankProcessing()->parseResponse($response);
     }
 
+    private function getSberbankSettings(): array
+    {
+        /** @noinspection PhpIncludeInspection */
+        return BusinessValueHelper::getPaysystemSettings(3, [
+            'USER_NAME',
+            'PASSWORD',
+            'TEST_MODE',
+            'TWO_STAGE',
+            'LOGGING',
+        ]);
+    }
+
     /**
      * @return Sberbank
      */
     private function getSberbankProcessing(): Sberbank
     {
         if (null === $this->sberbankProcessing) {
-            /** @noinspection PhpIncludeInspection */
-            require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sberbank.ecom/config.php';
-            $settings = BusinessValueHelper::getPaysystemSettings(3, [
-                'USER_NAME',
-                'PASSWORD',
-                'TEST_MODE',
-                'TWO_STAGE',
-                'LOGGING',
-            ]);
-
+            $settings = $this->getSberbankSettings();
             $this->sberbankProcessing = new Sberbank(
                 $settings['USER_NAME'],
                 $settings['PASSWORD'],
@@ -681,6 +685,103 @@ class PaymentService implements LoggerAwareInterface
     }
 
     /**
+     * @param Order $order
+     * @param $amount
+     * @return string
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws InvalidPathException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws PaymentException
+     * @throws SberBankOrderNumberNotFoundException
+     * @throws SystemException
+     */
+    public function registerOrder(Order $order, $amount): string
+    {
+        $fiscalization = \COption::GetOptionString('sberbank.ecom', 'FISCALIZATION', serialize([]));
+        /** @noinspection UnserializeExploitsInspection */
+        $fiscalization = unserialize($fiscalization, []);
+
+        /* Фискализация */
+        $fiscal = [];
+        if ($fiscalization['ENABLE'] === 'Y') {
+            $fiscal = $this->getFiscalization($order, (int)$fiscalization['TAX_SYSTEM']);
+            $amount = $this->getFiscalTotal($fiscal);
+            $fiscal = $this->fiscalToArray($fiscal)['fiscal'];
+        }
+        /* END Фискализация */
+
+        $settings = $this->getSberbankSettings();
+
+        /**
+         * Подключение файла настроек
+         */
+        /** @noinspection PhpIncludeInspection */
+        require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sberbank.ecom/config.php';
+
+        /**
+         * Подключение класса RBS
+         */
+        /** @noinspection PhpIncludeInspection */
+        require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sberbank.ecom/payment/rbs.php';
+
+        /** @noinspection PhpMethodParametersCountMismatchInspection */
+        $rbs = new \RBS(array_change_key_case($settings));
+
+        $response = $rbs->register_order(
+            $order->getField('ACCOUNT_NUMBER'),
+            $amount,
+            $this->getReturnUrl($order->getId(), $order->getHash()),
+            $order->getCurrency(),
+            $order->getField('USER_DESCRIPTION'),
+            $fiscal
+        );
+
+        switch ((int)$response['errorCode']) {
+            case 0:
+                $formUrl = $response['formUrl'];
+                break;
+            case 1:
+                try {
+                    $orderInfo = $this->getSberbankOrderStatusByOrderNumber($order->getField('ACCOUNT_NUMBER'));
+                    if (!\in_array($orderInfo->getOrderStatus(), [
+                        Sberbank::ORDER_STATUS_HOLD,
+                        Sberbank::ORDER_STATUS_PAID,
+                    ], true)) {
+                        $formUrl = $this->getSberbankPaymentUrl($orderInfo);
+                        break;
+                    }
+                } catch (SberbankOrderNotFoundException $e) {
+                    // обработка ниже
+                }
+            // no break
+            default:
+                throw new PaymentException(
+                    $response['errorMessage'] ?? "Неизвестная ошибка. Попробуйте оплатить заказ позднее.",
+                    $response['errorCode']
+                );
+        }
+        return $formUrl;
+    }
+
+    /**
+     * Url, на который произойдет редирект после успешного платежа
+     * @param $orderId
+     * @param $hash
+     * @return string
+     */
+    protected function getReturnUrl($orderId, $hash)
+    {
+        $url = '/sale/payment/result.php';
+        $query = http_build_query([
+            'ORDER_ID' => $orderId,
+            'HASH' => $hash
+        ]);
+        return (string) new FullHrefDecorator($url . '?' . $query);
+    }
+
+    /**
      * @param string $number
      *
      * @return OrderInfo
@@ -741,6 +842,52 @@ class PaymentService implements LoggerAwareInterface
         );
 
         return $url;
+    }
+
+    /**
+     * @param Order $order
+     * @param $paymentToken
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
+     * @throws ObjectException
+     * @throws ObjectNotFoundException
+     * @throws PaymentException
+     * @throws SberBankOrderNumberNotFoundException
+     * @throws SberbankOrderNotPaidException
+     * @throws SberbankOrderPaymentDeclinedException
+     * @throws SberbankPaymentException
+     * @throws SystemException
+     */
+    public function processApplePay(Order $order, $paymentToken)
+    {
+        $response = $this->getSberbankProcessing()->paymentViaMobile($order->getField('ACCOUNT_NUMBER'), $paymentToken, 'applepay');
+        $this->processOnlinePaymentViaMobile($order, $response);
+    }
+
+    /**
+     * @param Order $order
+     * @param $paymentToken
+     * @param $amount
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
+     * @throws ObjectException
+     * @throws ObjectNotFoundException
+     * @throws PaymentException
+     * @throws SberBankOrderNumberNotFoundException
+     * @throws SberbankOrderNotFoundException
+     * @throws SberbankOrderNotPaidException
+     * @throws SberbankOrderPaymentDeclinedException
+     * @throws SberbankPaymentException
+     * @throws SystemException
+     */
+    public function processGooglePay(Order $order, $paymentToken, $amount)
+    {
+        $response = $this->getSberbankProcessing()->paymentViaMobile($order->getField('ACCOUNT_NUMBER'), $paymentToken, 'android', $amount);
+        $this->processOnlinePaymentViaMobile($order, $response);
     }
 
     /**
@@ -919,7 +1066,7 @@ class PaymentService implements LoggerAwareInterface
             }
 
             if ($response->getOrderStatus() === Sberbank::ORDER_STATUS_CREATED) {
-                throw new SberbankOrderNotPaidException('Order still can be paid');
+                throw new SberbankOrderNotPaidException('Order still can be paid. ' . $response->getErrorMessage());
             }
 
             throw new SberbankPaymentException(
@@ -927,6 +1074,78 @@ class PaymentService implements LoggerAwareInterface
                 $response->getErrorCode()
             );
         }
+    }
+
+    /**
+     * @param Order $order
+     * @param array $response
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
+     * @throws ObjectException
+     * @throws ObjectNotFoundException
+     * @throws PaymentException
+     * @throws SberBankOrderNumberNotFoundException
+     * @throws SberbankOrderNotFoundException
+     * @throws SberbankOrderNotPaidException
+     * @throws SberbankOrderPaymentDeclinedException
+     * @throws SberbankPaymentException
+     * @throws SystemException
+     */
+    protected function processOnlinePaymentViaMobile(Order $order, array $response)
+    {
+        $orderInfo = (new OrderInfo());
+        if (!empty($response['error'])) {
+            $orderInfo->setErrorCode($response['error']['code']);
+            $orderInfo->setErrorMessage($response['error']['message']);
+        } else {
+            //toDo - мэппинг ответа в случае успеха
+            var_dump($response);
+
+            /*
+             * if (($response['orderStatus']['orderStatus'] == 1)) { //hold
+                $arFieldsBlock = array(
+                    "PS_SUM" => $response['orderStatus']["amount"] / 100,
+                    // "PS_CURRENCY" => $sbrf->getCurrenciesISO($response['orderStatus']["currency"]),
+                    // "PS_RESPONSE_DATE" => Date(CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL", LANG))),
+                    "PAYED" => "N",
+                    "PS_STATUS" => "N",
+                    "PS_STATUS_CODE" => "Hold",
+                    "PS_STATUS_DESCRIPTION" => GetMessage("WF.SBRF_PS_CURSTAT") . GetMessage("WF.SBRF_PS_STATUS_DESC_HOLD") . "; " . GetMessage("WF.SBRF_PS_CARDNUMBER") . $response['orderStatus']["cardAuthInfo"]["pan"] . "; " . GetMessage("WF.SBRF_PS_CARDHOLDER") . $response['orderStatus']['cardAuthInfo']["cardholderName"] . "; OrderNumber:" . $response['orderStatus']['orderNumber'],
+                    "PS_STATUS_MESSAGE" => $response['orderStatus']["paymentAmountInfo"]["paymentState"],
+                    "PAY_VOUCHER_NUM" => $response['data']['orderId'], //дописываем айдишник транзакции к заказу, чтоб потом передать в сап
+                    // "PAY_VOUCHER_DATE" => Date(CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL", LANG)))
+                );
+                var_dump($arFieldsBlock);
+                // $Order->Update($OrderNumber, $arFieldsBlock);
+            }
+            if (($response['orderStatus']['orderStatus'] == 2)) { //success
+                $arFieldsSuccess = array(
+                    "PS_SUM" => $response['orderStatus']["amount"] / 100,
+                    // "PS_CURRENCY" => $sbrf->getCurrenciesISO($response['orderStatus']["currency"]),
+                    // "PS_RESPONSE_DATE" => Date(CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL", LANG))),
+                    "PAYED" => "Y",
+                    "PS_STATUS" => "Y",
+                    "PS_STATUS_CODE" => "Pay",
+                    "PS_STATUS_DESCRIPTION" => GetMessage("WF.SBRF_PS_CURSTAT") . GetMessage("WF.SBRF_PS_STATUS_DESC_PAY") . "; " . GetMessage("WF.SBRF_PS_CARDNUMBER") . $response['orderStatus']["cardAuthInfo"]["pan"] . "; " . GetMessage("WF.SBRF_PS_CARDHOLDER") . $response['orderStatus']['cardAuthInfo']["cardholderName"] . "; OrderNumber:" . $response['orderStatus']['orderNumber'],
+                    // "PS_STATUS_MESSAGE" => self::toWIN($response['orderStatus']["paymentAmountInfo"]["paymentState"]),
+                    "PAY_VOUCHER_NUM" => $response['data']['orderId'], //дописываем айдишник транзакции к заказу, чтоб потом передать в сап
+                    // "PAY_VOUCHER_DATE" => Date(CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL", LANG)))
+                );
+                var_dump($arFieldsSuccess);
+                // $Order->PayOrder($OrderNumber, "Y", true, true);
+                // $Order->Update($OrderNumber, $arFieldsSuccess);
+                // $message = GetMessage("WF.SBRF_PAY_SUCCESS_TEXT", array("#ORDER_ID#" => $arOrder["ID"]));
+            }
+             */
+
+        }
+
+        if ($orderInfo->getErrorCode() === Sberbank::ERROR_ORDER_NOT_FOUND) {
+            throw new SberbankOrderNotFoundException($orderInfo->getErrorMessage(), $orderInfo->getErrorCode());
+        }
+        $this->processOnlinePayment($order, $orderInfo);
     }
 
     /**

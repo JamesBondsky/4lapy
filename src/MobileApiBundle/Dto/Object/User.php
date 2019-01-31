@@ -77,6 +77,24 @@ class User
     protected $card;
 
     /**
+     * @Serializer\Groups("response")
+     * @Serializer\SerializedName("location")
+     * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\City")
+     * @var null|City
+     */
+    protected $location;
+
+    /**
+     * @Serializer\Exclude(if="context.getDirection() === 1")
+     * @see Read more about exclusion strategy here https://github.com/schmittjoh/JMSSerializerBundle/issues/619#issuecomment-347926659
+     * @Serializer\SerializedName("locationId")
+     * @Serializer\Type("string")
+     * @var string
+     */
+    protected $locationId;
+
+
+    /**
      * @return int
      */
     public function getId(): int
@@ -96,19 +114,19 @@ class User
     }
 
     /**
-     * @return ClientCard
+     * @return null|ClientCard
      */
-    public function getCard(): ClientCard
+    public function getCard()
     {
         return $this->card;
     }
 
     /**
-     * @param ClientCard $card
+     * @param null|ClientCard $card
      *
      * @return User
      */
-    public function setCard(ClientCard $card): User
+    public function setCard($card): User
     {
         $this->card = $card;
         return $this;
@@ -244,6 +262,42 @@ class User
     public function setSecondPhone(string $secondPhone): User
     {
         $this->secondPhone = $secondPhone;
+        return $this;
+    }
+
+    /**
+     * @return City|null
+     */
+    public function getLocation()
+    {
+        return $this->location;
+    }
+
+    /**
+     * @param City $location
+     * @return User
+     */
+    public function setLocation(City $location): User
+    {
+        $this->location = $location;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLocationId()
+    {
+        return $this->locationId;
+    }
+
+    /**
+     * @param string $locationId
+     * @return User
+     */
+    public function setLocationId(string $locationId): User
+    {
+        $this->locationId = $locationId;
         return $this;
     }
 }

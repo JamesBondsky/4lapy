@@ -16,6 +16,7 @@ use FourPaws\MobileApiBundle\Services\Api\UserService as ApiUserService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Swagger\Annotations\Parameter;
 use Swagger\Annotations\Response;
+use FourPaws\MobileApiBundle\Dto\Response\PersonalBonusResponse;
 
 class UserController extends FOSRestController
 {
@@ -31,6 +32,8 @@ class UserController extends FOSRestController
 
     /**
      * @Rest\Post(path="/user_login/", name="user_login")
+     * @Rest\View()
+     *
      * @Parameter(
      *     name="token",
      *     in="query",
@@ -41,18 +44,16 @@ class UserController extends FOSRestController
      * @Response(
      *     response="200"
      * )
-     * @param LoginRequest $loginRequest
+     * @Security("!has_role('REGISTERED_USERS')", message="Вы уже авторизованы")
      *
+     * @param LoginRequest $loginRequest
+     * @internal param Request $request
      * @return ApiResponse
+     *
      * @throws \Bitrix\Main\Db\SqlQueryException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
-     * @throws \FourPaws\UserBundle\Exception\NotFoundException
-     * @internal param Request $request
-     *
-     * @Security("!has_role('REGISTERED_USERS')", message="Вы уже авторизованы")
-     *
-     * @Rest\View()
+     * @throws \FourPaws\External\Exception\ManzanaServiceException
      */
     public function loginAction(LoginRequest $loginRequest): ApiResponse
     {
@@ -62,13 +63,12 @@ class UserController extends FOSRestController
 
     /**
      * @Rest\Get(path="/logout/", name="logout")
+     * @Rest\View()
      * @Response(
      *     response="200"
      * )
-     *
      * @Security("has_role('REGISTERED_USERS')", message="Вы не авторизованы")
      *
-     * @Rest\View()
      * @throws \FourPaws\MobileApiBundle\Exception\RuntimeException
      */
     public function logoutAction(): ApiResponse
@@ -81,9 +81,13 @@ class UserController extends FOSRestController
      * @Rest\Get(path="/user_info/")
      * @Rest\View()
      * @Security("has_role('REGISTERED_USERS')", message="Вы не авторизованы")
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     *
+     * @return ApiResponse
+     *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\External\Exception\ManzanaServiceException
      */
     public function getUserInfoAction()
     {
@@ -97,19 +101,19 @@ class UserController extends FOSRestController
      * @Rest\Post(path="/user_info/")
      * @Rest\View()
      * @Security("has_role('REGISTERED_USERS')")
-     * @param PostUserInfoRequest $userInfoRequest
      *
-     * @throws \FourPaws\UserBundle\Exception\ValidationException
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
-     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
+     * @param PostUserInfoRequest $userInfoRequest
      * @return ApiResponse
+     *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\External\Exception\ManzanaServiceException
      */
     public function postUserInfoAction(PostUserInfoRequest $userInfoRequest): ApiResponse
     {
         return (new ApiResponse())
-            ->setData($this->apiUserService->update($userInfoRequest));
+            ->setData($this->apiUserService->update($userInfoRequest->getUser()));
     }
 
     /**
@@ -123,16 +127,38 @@ class UserController extends FOSRestController
      *     required=true,
      *     description="user phone"
      * )
-     * @param LoginExistRequest $existRequest
      *
+     * @param LoginExistRequest $loginExistRequest
      * @return ApiResponse
+     *
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      */
-    public function isExistAction(LoginExistRequest $existRequest): ApiResponse
+    public function loginExistAction(LoginExistRequest $loginExistRequest): ApiResponse
     {
+        $doesLoginExist = $this->apiUserService->doesExist($loginExistRequest->getLogin());
         return (new ApiResponse())
-            ->setData($this->apiUserService->isExist($existRequest));
+            ->setData([
+                'exist'         => $doesLoginExist,
+                'feedback_text' => $doesLoginExist ? '' : 'Проверьте правильность заполнения поля. Введите ваш E-mail или номер телефона',
+            ]);
+    }
+
+    /**
+     * @Rest\Get("/personal_bonus/")
+     * @Rest\View()
+     *
+     * @return PersonalBonusResponse
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\External\Exception\ManzanaServiceException
+     * @throws \FourPaws\External\Manzana\Exception\CardNotFoundException
+     */
+    public function getPersonalBonusAction(): PersonalBonusResponse
+    {
+        return (new PersonalBonusResponse())
+            ->setPersonalBonus($this->apiUserService->getPersonalBonus());
     }
 }

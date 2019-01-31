@@ -13,6 +13,11 @@ trait FeedbackText
      */
     protected $feedbackText = '';
 
+    public function __construct(string $feedbackText)
+    {
+        $this->feedbackText = $feedbackText;
+    }
+
     /**
      * @return string
      */
@@ -23,9 +28,9 @@ trait FeedbackText
 
     /**
      * @param string $feedbackText
-     * @return FeedbackText
+     * @return $this
      */
-    public function setFeedbackText(string $feedbackText): FeedbackText
+    public function setFeedbackText(string $feedbackText)
     {
         $this->feedbackText = $feedbackText;
         return $this;

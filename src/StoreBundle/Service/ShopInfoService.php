@@ -86,7 +86,6 @@ class ShopInfoService
 
     /**
      * @param Offer $offer
-     *
      * @return StoreCollection
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -95,8 +94,8 @@ class ShopInfoService
      * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
-     * @throws UserMessageException
      * @throws SystemException
+     * @throws UserMessageException
      */
     public function getShopsByOffer(Offer $offer): StoreCollection
     {
@@ -183,7 +182,6 @@ class ShopInfoService
      * @throws ObjectNotFoundException
      * @throws SystemException
      * @throws UserMessageException
-     * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Exception
      * @throws ServiceCircularReferenceException
      * @throws ServiceNotFoundException
@@ -567,17 +565,17 @@ class ShopInfoService
 
     /**
      * @param Offer $offer
-     *
      * @return PickupResultInterface
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws DeliveryNotFoundException
      * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
-     * @throws UserMessageException
-     * @throws DeliveryNotFoundException
      * @throws PickupUnavailableException
      * @throws SystemException
+     * @throws UserMessageException
+     * @throws \Bitrix\Main\ObjectPropertyException
      */
     protected function getPickupResult(Offer $offer): PickupResultInterface
     {
@@ -587,6 +585,7 @@ class ShopInfoService
         }
 
         if (null === $results[$offer->getId()]) {
+
             $currentLocation = $this->locationService->getCurrentLocation();
             if ($this->deliveryService->getCurrentDeliveryZone() === DeliveryService::ZONE_4) {
                 $regionalStores = $this->storeService->getShopsByLocation($currentLocation);
@@ -595,7 +594,7 @@ class ShopInfoService
                 }
             }
 
-            $availableDeliveries = $this->deliveryService->getByProduct($offer, $currentLocation);
+            $availableDeliveries = $this->deliveryService->getByProduct($offer, $currentLocation, [], null);
             $pickup = null;
             foreach ($availableDeliveries as $availableDelivery) {
                 if ($this->deliveryService->isInnerPickup($availableDelivery)) {

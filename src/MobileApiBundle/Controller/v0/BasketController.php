@@ -211,7 +211,7 @@ class BasketController extends FOSRestController
 
         if (!$storeCode) {
             // central main warehouse
-            // toDo it should be a global constant somewhere
+            // toDo DC01 should be a global constant somewhere
             $storeCode = 'DC01';
         }
 

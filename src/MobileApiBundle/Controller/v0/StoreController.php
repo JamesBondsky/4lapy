@@ -8,9 +8,6 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
-use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
-use FourPaws\MobileApiBundle\Collection\ProductQuantityCollection;
-use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Request\StoreAvailableRequest;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListAvailableRequest;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListRequest;
@@ -18,6 +15,7 @@ use FourPaws\MobileApiBundle\Dto\Request\StoreProductAvailableRequest;
 use FourPaws\MobileApiBundle\Dto\Response\StoreListResponse;
 use FourPaws\MobileApiBundle\Dto\Response\StoreProductAvailableResponse;
 use FourPaws\MobileApiBundle\Services\Api\StoreService as ApiStoreService;
+use FourPaws\MobileApiBundle\Services\Api\UserService as ApiUserService;
 
 class StoreController extends FOSRestController
 {
@@ -26,12 +24,19 @@ class StoreController extends FOSRestController
      */
     private $apiStoreService;
 
+    /**
+     * @var ApiUserService
+     */
+    private $apiUserService;
+
 
     public function __construct(
-        ApiStoreService $apiStoreService
+        ApiStoreService $apiStoreService,
+        ApiUserService $apiUserService
     )
     {
         $this->apiStoreService = $apiStoreService;
+        $this->apiUserService = $apiUserService;
     }
 
     /**
@@ -57,11 +62,13 @@ class StoreController extends FOSRestController
      */
     public function getStoreListAvailableAction(StoreListAvailableRequest $storeListAvailableRequest): StoreListResponse
     {
+        if ($storeListAvailableRequest->getCityId()) {
+            $this->apiUserService->updateLocationId($storeListAvailableRequest->getCityId());
+        }
+        $productQuantity = $this->apiStoreService->convertBasketQuantityToOfferQuantity($storeListAvailableRequest->getGoods());
+
         return new StoreListResponse(
-            $this->apiStoreService->getListAvailable(
-                $storeListAvailableRequest->getGoods(),
-                $storeListAvailableRequest->getCityId()
-            )
+            $this->apiStoreService->getListAvailable($productQuantity)
         );
     }
 

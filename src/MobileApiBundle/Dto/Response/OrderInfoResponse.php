@@ -14,6 +14,14 @@ class OrderInfoResponse
     protected $order;
 
     /**
+     * @param Order $order
+     */
+    public function __construct(Order $order)
+    {
+        $this->setOrder($order);
+    }
+
+    /**
      * @return Order
      */
     public function getOrder(): Order

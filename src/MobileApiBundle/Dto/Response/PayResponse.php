@@ -2,8 +2,6 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Response;
 
-use FourPaws\MobileApiBundle\Dto\Object\Banner;
-use FourPaws\MobileApiBundle\Dto\Object\Order;
 use JMS\Serializer\Annotation as Serializer;
 
 class PayResponse

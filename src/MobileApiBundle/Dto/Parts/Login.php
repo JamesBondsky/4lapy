@@ -29,9 +29,9 @@ trait Login
 
     /**
      * @param string $login
-     * @return Login
+     * @return $this
      */
-    public function setLogin(string $login): Login
+    public function setLogin(string $login)
     {
         $this->login = $login;
         return $this;
