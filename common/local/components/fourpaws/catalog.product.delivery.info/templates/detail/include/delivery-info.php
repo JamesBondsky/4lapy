@@ -23,7 +23,7 @@ $offer = $arParams['OFFER'];
         <?= DeliveryTimeHelper::showByDate($delivery['DELIVERY_DATE'], 0, ['DATE_FORMAT' => 'XX']) ?>
         <?php if ($offer->isByRequest()) { ?>
             ближайшая
-        <?php } elseif ($offer->getPrice() > $delivery['FREE_FROM']) { ?>
+        <?php } elseif ($delivery['FREE_FROM'] && $offer->getPrice() > $delivery['FREE_FROM']) { ?>
             бесплатно
         <?php } elseif ($delivery['FREE_FROM']) { ?>
             бесплатно от <?= $delivery['FREE_FROM'] ?>
