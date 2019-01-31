@@ -19,7 +19,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var ArrayCollection $orders
  */
 ?>
-<div class="b-account__accordion personal_order_list" id="personal-order-list">
+<div class="b-account__accordion b-account__accordion--mobile-white personal_order_list" id="personal-order-list">
     <?
     if (!$orders->isEmpty()) {
         ?>
@@ -73,21 +73,23 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         </div>
     <?php }
     if ($arResult['NAV'] instanceof CDBResult) { ?>
-        <div class="b-pagination b-pagination--referal">
-            <?php
-            $APPLICATION->IncludeComponent(
-                'bitrix:system.pagenavigation',
-                'personal_order_pagination',
-                [
-                    'NAV_TITLE' => '',
-                    'NAV_RESULT' => $arResult['NAV'],
-                    'SHOW_ALWAYS' => false,
-                    'PAGE_PARAMETER' => 'page',
-                    'AJAX_MODE' => 'N',
-                ],
-                null
-            );
-            ?>
+        <div class="b-container b-container--personal-orders">
+            <div class="b-pagination">
+                <?php
+                $APPLICATION->IncludeComponent(
+                    'bitrix:system.pagenavigation',
+                    'personal_order_pagination',
+                    [
+                        'NAV_TITLE' => '',
+                        'NAV_RESULT' => $arResult['NAV'],
+                        'SHOW_ALWAYS' => false,
+                        'PAGE_PARAMETER' => 'page',
+                        'AJAX_MODE' => 'N',
+                    ],
+                    null
+                );
+                ?>
+            </div>
         </div>
     <?php } ?>
 </div>
