@@ -19,4 +19,6 @@ class IblockProperty
     public const OFFERS_PRICE_ACTION = 'PRICE_ACTION';
 
     public const COMPARING_LINK = 'PRODUCT';
+
+    public const SHARE_PRODUCTS = 'PRODUCTS';
 }

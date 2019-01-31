@@ -9,6 +9,7 @@ use FourPaws\Helpers\TaggedCacheHelper;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Iblock\ElementTable;
 use Bitrix\Iblock\PropertyTable;
+use Bitrix\Iblock\ElementPropertyTable;
 use Bitrix\Main\Entity\Base;
 
 
@@ -21,9 +22,11 @@ class ComparingListComponent extends \CBitrixComponent
     private $brandsIblockId;
     private $productsIblockId;
     private $offersIblockId;
+    private $shareIblockId;
 
     private $brandIds;
     private $imageIds;
+    private $offerIds;
 
     public const MARK_SALE_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/s-proc.svg" alt="" role="presentation"/>';
     public const MARK_GIFT_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/s-gift.svg" alt="" role="presentation"/>';
@@ -77,11 +80,13 @@ class ComparingListComponent extends \CBitrixComponent
             $this->brandsIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::BRANDS);
             $this->productsIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS);
             $this->offersIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS);
+            $this->shareIblockId = IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES);
 
             TaggedCacheHelper::addManagedCacheTag('iblock_id_' . $this->comparingIblockId);
             TaggedCacheHelper::addManagedCacheTag('iblock_id_' . $this->brandsIblockId);
 
             $this->fetchProducts();
+            $this->fetchShares();
             $this->fetchImages();
             $this->fetchBrands();
 
@@ -252,6 +257,10 @@ class ComparingListComponent extends \CBitrixComponent
                 $this->brandIds[] = $brandId;
             }
 
+            if(!in_array($arProduct['PRODUCT_ID'], $this->offerIds)){
+                $this->offerIds[] = $arProduct['PRODUCT_ID'];
+            }
+
             $arImage = unserialize($arProduct['IMAGE']);
 
             $imageId = $arImage['VALUE'][0];
@@ -340,6 +349,73 @@ class ComparingListComponent extends \CBitrixComponent
         }
 
         $this->arResult['BRANDS'] = $arBrands;
+    }
+
+    private function fetchShares() {
+        if(empty($this->offerIds)){
+            return false;
+        }
+
+        $shareProperty = $this->getProperty($this->shareIblockId, IblockProperty::SHARE_PRODUCTS);
+        //$shareEntity = $this->getPropertyEntity($this->shareIblockId, $shareProperty['ID']);
+
+        $offerPropertiesEntity = Base::compileEntity(
+            'SHARE_PROPERTIES',
+            [
+                'ID' => ['data_type' => 'integer'],
+                'IBLOCK_PROPERTY_ID' => ['data_type' => 'integer'],
+                'IBLOCK_ELEMENT_ID'  => ['data_type' => 'integer'],
+                'VALUE'  => ['data_type' => 'string'],
+            ],
+            ['table_name' => 'b_iblock_element_property']
+        );
+
+        $rsShares = ElementTable::getList([
+            'order' => [
+                'SORT' => 'ASC',
+                'NAME' => 'ASC',
+            ],
+            'filter' => [
+                'ACTIVE'       => 'Y',
+                '<ACTIVE_FROM' => new \Bitrix\Main\Type\DateTime(),
+                '>ACTIVE_TO'   => new \Bitrix\Main\Type\DateTime(),
+                'PROPERTIES.VALUE' => $this->offerIds,
+                'PROPERTIES.IBLOCK_PROPERTY_ID' => $shareProperty['ID'],
+            ],
+            'select' => [
+                'ID',
+                'SORT',
+                'NAME',
+                'CODE',
+                'PROPERTY_' => 'PROPERTIES.*',
+            ],
+            'runtime' => [
+                'PROPERTIES' => [
+                    'data_type' => $offerPropertiesEntity->getDataClass(),
+                    'reference' => array('=this.ID' => 'ref.IBLOCK_ELEMENT_ID'),
+                    'join_type' => 'inner'
+                ],
+            ],
+        ]);
+
+        //TODO: Доделать вывод шильдиков акций
+        //dump($rsShares);
+
+        $arShares = [];
+        while ($arShare = $rsShares->fetch()) {
+            //dump($arShare);
+            $arShares[$arShare['ID']] = [
+                'ID' => $arShare['ID'],
+                'NAME' => $arShare['NAME'],
+                'SORT' => $arShare['SORT'],
+                'CODE' => $arShare['CODE'],
+                //'PREVIEW_PICTURE' => $this->formatFile('PREVIEW_PICTURE_', $arBrand),
+            ];
+        }
+
+        //dump($arShares);
+
+        //$this->arResult['BRANDS'] = $arBrands;
     }
 
     private function fetchImages(){
