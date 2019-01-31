@@ -18,6 +18,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 class Pet extends BaseEntity
 {
     const PET_TYPE = 'ForWho';
+    const PET_BREED = 'PetBreed';
 
     /**
      * @var string
