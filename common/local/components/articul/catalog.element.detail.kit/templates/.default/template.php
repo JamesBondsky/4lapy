@@ -151,7 +151,7 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
                                         </div>
                                         <? if ($offerGroup->count() > 1) { ?>
                                             <div class="b-common-item__replace">
-                                                <a href="javascript:void(0)" class="b-common-item__replace-link js-product-complect-replace js-this-product-complect">
+                                                <a href="javascript:void(0)" class="b-common-item__replace-link js-product-complect-replace js-this-product-complect<?= ($groupKey == 'filters') ? ' hide-all-link' : ''?>">
                                                     <span class="b-common-item__replace-text js-product-complect-replace-text"
                                                           data-link-text="<?= $arMessages[$groupKey]['all']; ?>"
                                                           data-link-href="<?= $currentOffer->getProduct()->getSection()->getSectionPageUrl(); ?>"
