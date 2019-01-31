@@ -120,7 +120,7 @@ $markup = PawsApplication::markup();
     <section class="splash-screen-landing">
         <div class="splash-screen-landing__bg" style="background-image: url('/static/build/images/content/bg-splash-landing.png')"></div>
         <div class="splash-screen-landing__dog" style="background-image: url('/static/build/images/content/landing-splash-screen_dog.png')"></div>
-        <div class="splash-screen-landing__cat" style="background-image: url('/static/build/images/content/landing-splash-screen_cat.png')"></div>
+        <div class="splash-screen-landing__cat" style="background-image: url('/static/build/images/content/landing-splash-screen_cat.png?v=1')"></div>
         <div class="splash-screen-landing__feed-left" style="background-image: url('/static/build/images/content/landing-splash-screen_left.png')"></div>
         <div class="splash-screen-landing__feed-right" style="background-image: url('/static/build/images/content/landing-splash-screen_right.png')"></div>
 
