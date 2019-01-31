@@ -99,8 +99,8 @@ class OrderRepository extends BaseRepository
                       ])
                       ->setFilter(['USER_ID' => $userId])
                       ->setOrder([
-                          'IS_ACTIVE'   => 'DESC',
                           'DATE_INSERT' => 'DESC',
+                          'IS_ACTIVE'   => 'DESC',
                       ])
                       ->registerRuntimeField(new ExpressionField(
                           'IS_ACTIVE',
