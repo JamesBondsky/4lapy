@@ -22,6 +22,8 @@ $(document).ready(function () {
                 });
                 $('.b-preloader').removeClass('active');
                 $('body').trigger('stop-preloader');
+
+                $('html, body').animate({scrollTop: 0}, 500);
             },
             beforeSend: function () {
                 $('.b-preloader').addClass('active');

@@ -128,7 +128,7 @@ class OrderController extends Controller implements LoggerAwareInterface
             $navResult->NavRecordCount = $orderCount;
             $navResult->NavPageCount = ceil($orderCount / OrderService::ORDER_PAGE_LIMIT);
 
-            $html .= '<div class="b-pagination b-pagination--referal">';
+            $html .= '<div class="b-container b-container--personal-orders"><div class="b-pagination">';
             ob_start();
             $APPLICATION->IncludeComponent(
                 'bitrix:system.pagenavigation',
@@ -143,7 +143,7 @@ class OrderController extends Controller implements LoggerAwareInterface
                 null
             );
             $html .= ob_get_clean();
-            $html .= '</div>';
+            $html .= '</div></div>';
 
             $result = JsonSuccessResponse::createWithData('', [
                 'html'  => $html,
