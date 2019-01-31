@@ -7,6 +7,7 @@ use FourPaws\Enum\IblockType;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Main\Entity\Base;
 use Bitrix\Iblock\ElementTable;
+use Bitrix\Iblock\SectionTable;
 use Bitrix\Iblock\PropertyTable;
 
 class ComparingImportComponent extends \CBitrixComponent
@@ -19,6 +20,9 @@ class ComparingImportComponent extends \CBitrixComponent
 
     private $offerXmlIds;
     private $offers;
+
+    private $sectionHeaders;
+    private $sections;
 
     private $properties;
 
@@ -35,15 +39,16 @@ class ComparingImportComponent extends \CBitrixComponent
     private $fieldsOrderIds = [
         'NAME' => 0,
         'SECTION_NAME' => 1,
+        'SECTION_HEADER' => 2,
     ];
     private $propertyOrderIds = [
-        'ARTICLE'    => 2,
-        'FRESH_MEAT' => 3,
-        'PROTEIN'    => 4,
-        'MINERALS'   => 5,
-        'CEREALS'    => 6,
-        'COMPOSITION'    => 7,
-        'PORTION_WEIGHT' => 8,
+        'ARTICLE'    => 3,
+        'FRESH_MEAT' => 4,
+        'PROTEIN'    => 5,
+        'MINERALS'   => 6,
+        'CEREALS'    => 7,
+        'COMPOSITION'    => 8,
+        'PORTION_WEIGHT' => 9,
     ];
 
     private $delimiter = ';';
@@ -79,6 +84,12 @@ class ComparingImportComponent extends \CBitrixComponent
                 $this->endWithErrors("Не удалось считать файл");
                 return false;
             }
+
+            // TODO: Сделать отдельную директорию для файлов импорта
+            /*$dir = $_SERVER['DOCUMENT_ROOT'].'/upload/compare_import';
+            if(!file_exists($dir)){
+                mkdir($dir);
+            }*/
 
             $this->filename = $_SERVER['DOCUMENT_ROOT'].'/upload/compare.import_'.date('Y-m-d H-i-s').'.csv';
             if(!move_uploaded_file($tmpPath, $this->filename)){
@@ -133,7 +144,7 @@ class ComparingImportComponent extends \CBitrixComponent
                         $fieldId = $this->getFieldIdByName($headerName);
 
                         if($fieldId === false){
-                            $this->endWithErrors('Неизвестное поле: "'.$headerName.'". Проверьте кодировку файла');
+                            $this->endWithErrors('Неизвестное поле: "'.$headerName.'"');
                             return false;
                         }
 
@@ -149,14 +160,17 @@ class ComparingImportComponent extends \CBitrixComponent
 
                 $name = $this->fromExcel($this->getFieldValueByCode('NAME'));
                 if(empty($name)){
-                    $this->endWithErrors('Не имя для элемента с номером '.$localId);
+                    $this->endWithErrors('Не задано имя для элемента с номером '.$localId);
                     return false;
                 }
                 $this->elementNames[] = $name;
 
+                dump($name);
+                dump($this->row);
+
                 $sectionName = $this->fromExcel($this->getFieldValueByCode('SECTION_NAME'));
                 if(empty($sectionName)){
-                    $this->endWithErrors('Не указано название раздела для товара "'.$name.'"');
+                    $this->endWithErrors('Не указано название группы сравнения для товара "'.$name.'"');
                     return false;
                 }
 
@@ -165,9 +179,7 @@ class ComparingImportComponent extends \CBitrixComponent
                     'filter' => ['NAME' => $sectionName],
                 ])->fetch();
 
-
                 if(empty($arSection)){
-
                     $obSection = new \CIBlockSection;
                     $sectionId = $obSection->Add([
                         'IBLOCK_ID' => $this->comparingIblockId,
@@ -176,7 +188,7 @@ class ComparingImportComponent extends \CBitrixComponent
                     ]);
 
                     if (!$sectionId){
-                        $this->errors[] = "Не удалось создать раздел: ".$sectionName;
+                        $this->errors[] = "Не удалось создать группу сравнения: ".$sectionName;
                         break;
                     }
                     else{
@@ -186,6 +198,19 @@ class ComparingImportComponent extends \CBitrixComponent
                 else{
                     $sectionId = $arSection['ID'];
                 }
+
+                dump($this->fromExcel($this->getFieldValueByCode('SECTION_HEADER')));
+
+                $sectionHeader = $this->fromExcel($this->getFieldValueByCode('SECTION_HEADER'));
+                if(empty($sectionHeader)){
+                    $this->endWithErrors('Не указано название для отображения группы сравения "'.$name.'"');
+                    return false;
+                }
+                if(!empty($this->sectionHeaders[$sectionId]) && $this->sectionHeaders[$sectionId] != $sectionHeader){
+                    $this->endWithErrors('Название для отображения группы сравения должно быть одинаковым для всех товаров ["'.$name.'"]');
+                    return false;
+                }
+                $this->sectionHeaders[$sectionId] = $sectionHeader;
 
                 $arProperties = [];
                 foreach($this->propertyOrderIds as $code => $id){
@@ -275,6 +300,32 @@ class ComparingImportComponent extends \CBitrixComponent
                     $arUpdateItems[] = array_merge($arItem, ['PROPERTY_VALUES' => $arProperties]);
                 }
             }
+
+            $rsSections = SectionTable::getList([
+                'select' => [
+                    'ID',
+                    'NAME',
+                    'HEADER' => 'IPROPERTY.TEMPLATE',
+                ],
+                'filter' => [
+                    'IPROPERTY.ENTITY_TYPE' => 'S',
+                    'ID' => array_keys($this->sectionHeaders),
+                ],
+                'runtime' => [
+                    'IPROPERTY' => [
+                        'data_type' => '\Bitrix\Iblock\InheritedProperty',
+                        'reference' => ['=this.ID' => 'ref.ENTITY_ID'],
+                        'join_type' => 'left'
+                    ]
+                ]
+            ]);
+            while($arSection = $rsSections->fetch()){
+                $this->sections[$arSection['ID']] = $arSection;
+            }
+
+            dump($this->sections);
+
+
             fclose($handle);
         }
 
@@ -282,8 +333,8 @@ class ComparingImportComponent extends \CBitrixComponent
             return false;
         }
 
-        $obElement = new \CIBlockElement;
         foreach($arAddItems as $arItem){
+            $obElement = new \CIBlockElement;
             $id = $obElement->Add($arItem);
             if(!$id){
                 $this->errors[] = 'Не удалось добавить элемент: '.$obElement->LAST_ERROR.' ['.$arItem['NAME'].']';
@@ -295,6 +346,8 @@ class ComparingImportComponent extends \CBitrixComponent
         }
 
         foreach($arUpdateItems as $arItem){
+            $obElement = new \CIBlockElement;
+
             $itemId = $arItem['ID'];
             unset($arItem['ID']);
 
@@ -322,6 +375,7 @@ class ComparingImportComponent extends \CBitrixComponent
         $arHeaders = [
             0 => 'Название товара',
             1 => 'Название группы сравнения',
+            2 => 'Название для отображения группы сравнения',
         ];
 
         $this->getProperties();
@@ -331,6 +385,7 @@ class ComparingImportComponent extends \CBitrixComponent
             'NAME',
             'SECTION_ID' => 'SECTION.ID',
             'SECTION_NAME' => 'SECTION.NAME',
+            'SECTION_HEADER' => 'IPROPERTY.TEMPLATE',
         ];
 
         $rsProperties = PropertyTable::getList([
@@ -370,6 +425,11 @@ class ComparingImportComponent extends \CBitrixComponent
                 'SECTION' => [
                     'data_type' => '\Bitrix\Iblock\SectionTable',
                     'reference' => ['=this.IBLOCK_SECTION_ID' => 'ref.ID'],
+                ],
+                'IPROPERTY' => [
+                    'data_type' => '\Bitrix\Iblock\InheritedProperty',
+                    'reference' => ['=this.SECTION.ID' => 'ref.ENTITY_ID'],
+                    'join_type' => 'left'
                 ]
             ],
         ]);
@@ -378,6 +438,7 @@ class ComparingImportComponent extends \CBitrixComponent
             $arFormatItem = [
                 0 => $arItem['NAME'],
                 1 => $arItem['SECTION_NAME'],
+                2 => $arItem['SECTION_HEADER'],
             ];
 
             foreach($this->properties as $code => $arProperty){
@@ -399,10 +460,8 @@ class ComparingImportComponent extends \CBitrixComponent
         ksort($arHeaders);
 
         $fp = fopen('php://output', 'wb');
-        //fputcsv($fp, $arHeaders);
         fputcsv($fp, array_map([$this, 'forExcel'], $arHeaders), $this->delimiter);
         foreach($arItems as $arItem){
-            //fputcsv($fp, $arItem);
             fputcsv($fp, array_map([$this, 'forExcel'], $arItem), $this->delimiter);
         }
         fclose($fp);
@@ -475,6 +534,9 @@ class ComparingImportComponent extends \CBitrixComponent
         }
         if($name == "Название группы сравнения"){
             return $this->fieldsOrderIds['SECTION_NAME'];
+        }
+        if($name == "Название для отображения группы сравнения"){
+            return $this->fieldsOrderIds['SECTION_HEADER'];
         }
 
         foreach($this->properties as $property){

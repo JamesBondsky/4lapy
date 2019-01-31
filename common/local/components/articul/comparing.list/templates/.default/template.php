@@ -6,7 +6,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
 
 
 <div class="b-container">
-    <h1 class="b-title b-title--block b-title--h1-compare">Сравнение кормов</h1>
+    <h1 class="b-title b-title--block b-title--h1-compare"><?=$arParams['TEXT_HEADER']?></h1>
     <hr class="b-hr b-hr--compare">
 </div>
 
@@ -19,7 +19,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
 <div class="b-container">
     <section class="b-common-section">
         <div class="b-common-section__title-box">
-            <h2 class="b-title b-title--h2-compare">Выберите бренд</h2>
+            <h2 class="b-title b-title--h2-compare"><?=$arParams['TEXT_SELECT_BRAND']?></h2>
         </div>
         <div class="b-common-section__content b-common-section__content--compare" data-slider-brand-feed-comparison="true">
             <div class="b-popular-brand__wrap b-popular-brand__wrap--feed-comparison">
@@ -38,7 +38,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
 
     <section class="b-common-section hide" data-section-products-feed-compare="true">
         <div class="b-common-section__title-box">
-            <h2 class="b-title b-title--h2-compare">Выберите корм</h2>
+            <h2 class="b-title b-title--h2-compare"><?=$arParams['TEXT_SELECT_PRODUCT']?></h2>
         </div>
         <? foreach($arResult['PRODUCTS'] as $brandId => $arProducts): ?>
         <div class="b-common-section__content b-common-section__content--compare hide" data-products-feed-compare="<?=$brandId?>">
@@ -81,7 +81,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
                 </div>
                 <div class="b-common-item__btn-compare-wrap">
                     <a data-btn-compare-products-compare="true" class="b-common-item__btn-compare" href="<?=$arProduct['OFFERS'][0]['DETAIL_PAGE_URL']?>">
-                        Сравнить
+                        <?=$arParams['TEXT_BUTTON']?>
                     </a>
                 </div>
             </div>

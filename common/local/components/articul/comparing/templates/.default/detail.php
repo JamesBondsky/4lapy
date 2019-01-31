@@ -4,6 +4,8 @@ $APPLICATION->IncludeComponent(
     "",
     [
         'SECTION_ID' => $arResult['VARIABLES']['SECTION_ID'],
-    ]
+        'TEXT_HEADER' => $arParams['TEXT_HEADER'],
+    ],
+    $component
 );
 ?>

@@ -1,10 +1,12 @@
 <? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
     die();
 }
+
+IncludeTemplateLangFile(__FILE__);
 ?>
 
 <div class="b-container">
-    <h1 class="b-title b-title--block b-title--h1-compare b-title--h1-compare-detail">Сравнение кормов</h1>
+    <h1 class="b-title b-title--block b-title--h1-compare b-title--h1-compare-detail"><?=$arParams['TEXT_HEADER']?></h1>
 
     <div class="b-table-feed-compare">
         <a href="/comparing/" class="b-table-feed-compare__btn">

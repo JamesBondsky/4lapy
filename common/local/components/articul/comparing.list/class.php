@@ -106,8 +106,10 @@ class ComparingListComponent extends \CBitrixComponent
 
     private function getPropertyEntity($iblockId, $propertyId, $type = 'integer')
     {
+        $tableName = 'PROPERTY_ENTITY_'.$propertyId;
+
         $entity = Base::compileEntity(
-            'PROPERTY_COMPARING_PRODUCT',
+            $tableName,
             [
                 'IBLOCK_ELEMENT_ID' => ['data_type' => 'integer'],
                 'PROPERTY_'.$propertyId => ['data_type' => $type],
@@ -152,20 +154,12 @@ class ComparingListComponent extends \CBitrixComponent
             ],
         ]);
 
-        /*$selectFields = [
-            'ID',
-            'NAME' => 'PRODUCT.NAME',
-            'SORT',
-            'CODE',
-            'IBLOCK_SECTION_ID',
-            'BRAND_ID' => 'PROPERTY_BRAND.PROPERTY_'.$brandProperty['ID'],
-            'IMAGE' => 'PROPERTY_IMAGE.PROPERTY_'.$imageProperty['ID'],
-            'PRODUCT_ID' => 'PRODUCT.ID',
-            'OFFER_ID' => 'OFFER.ID',
-            'WEIGHT' => 'CATALOG_PRODUCT.WEIGHT',
-        ];
-        $this->getAllProperties()*/
 
+        /**
+         * TODO: Вынести это в отдельную функцию
+         * Форматируется список полей в выборке, чтобы получить все свойства элемента
+         * [PROPERTY_#CODE#_VALUE => #VALUE#]
+         */
         $selectFields = [
             'ID',
             'NAME' => 'PRODUCT.NAME',
@@ -184,7 +178,10 @@ class ComparingListComponent extends \CBitrixComponent
             $selectFields['PROPERTY_'.$arProperty['CODE'].'_VALUE'] = 'OFFER_PROPERTIES.PROPERTY_'.$arProperty['ID'];
             $propertyFields['PROPERTY_'.$arProperty['ID']] = ['data_type' => $this->getPropertyTypeByCode($arProperty['CODE'])];
 
-            $offerProperties[$arProperty['CODE']] = $arProperty['ID'];
+            //$offerProperties[$arProperty['CODE']] = $arProperty['ID'];
+            if(!in_array($arProperty['CODE'], array_keys($offerProperties))){
+                $offerProperties[$arProperty['CODE']] = $arProperty['ID'];
+            }
         }
 
         $offerPropertiesEntity = Base::compileEntity(

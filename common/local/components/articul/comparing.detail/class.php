@@ -96,6 +96,10 @@ class ComparingDetailComponent extends \CBitrixComponent
             ],
         ]);
 
+        /**
+         * Форматируется список полей в выборке, чтобы получить все свойства элемента
+         * [PROPERTY_#CODE#_VALUE => #VALUE#]
+         */
         $selectFields = [
             'ID',
             'NAME',
@@ -110,7 +114,7 @@ class ComparingDetailComponent extends \CBitrixComponent
             $selectFields['PROPERTY_'.$arProperty['CODE'].'_VALUE'] = 'PROPERTIES.PROPERTY_'.$arProperty['ID'];
             $propertyFields['PROPERTY_'.$arProperty['ID']] = ['data_type' => 'string'];
 
-            if(!in_array($arProperty['CODE'], $this->properties)){
+            if(!in_array($arProperty['CODE'], array_keys($this->properties))){
                 $this->properties[$arProperty['CODE']] = $arProperty;
             }
         }
