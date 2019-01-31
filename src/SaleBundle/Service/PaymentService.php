@@ -805,16 +805,18 @@ class PaymentService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
-     * @throws ApplicationCreateException
+     * @throws AddressSplitException
      * @throws ArgumentException
      * @throws ArgumentNullException
-     * @throws NotFoundException
+     * @throws ArgumentOutOfRangeException
      * @throws NotImplementedException
+     * @throws ObjectException
+     * @throws ObjectNotFoundException
      * @throws ObjectPropertyException
      * @throws SystemException
-     * @throws \RuntimeException
-     * @throws ServiceCircularReferenceException
-     * @throws ServiceNotFoundException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function processOnlinePaymentError(Order $order): void
     {
@@ -865,6 +867,16 @@ class PaymentService implements LoggerAwareInterface
             if (!$relatedOrder->isPaid()) {
                 $updateOrder($relatedOrder);
             }
+        }
+
+        /** Отправка данных в достависту если доставка Достависта */
+        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+        $deliveryId = $order->getField('DELIVERY_ID');
+        $deliveryCode = $deliveryService->getDeliveryCodeById($deliveryId);
+        $deliveryData = ServicesTable::getById($deliveryId)->fetch();
+        //проверяем способ доставки, если достависта, то отправляем заказ в достависту
+        if ($deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
+            $this->sendOnlinePaymentDostavistaOrder($order, $deliveryCode, $deliveryData, false);
         }
 
         if ($discountEnabled) {
@@ -924,55 +936,14 @@ class PaymentService implements LoggerAwareInterface
             $onlinePayment->save();
             $order->save();
 
-            /** Отправка данных в достависту */
+            /** Отправка данных в достависту если доставка Достависта */
             $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
             $deliveryId = $order->getField('DELIVERY_ID');
             $deliveryCode = $deliveryService->getDeliveryCodeById($deliveryId);
             $deliveryData = ServicesTable::getById($deliveryId)->fetch();
             //проверяем способ доставки, если достависта, то отправляем заказ в достависту
             if ($deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
-                $storeService = Application::getInstance()->getContainer()->get('store.service');
-                /** @var LocationService $locationService */
-//                $locationService = Application::getInstance()->getContainer()->get('location.service');
-                $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
-                $orderPropertyCollection = $order->getPropertyCollection();
-                $comments = $order->getField('USER_DESCRIPTION');
-                if (is_null($comments)) {
-                    $comments = '';
-                }
-                /** @var PropertyValue $item */
-                foreach ($orderPropertyCollection as $item) {
-                    switch ($item->getProperty()['CODE']) {
-                        case 'STORE_FOR_DOSTAVISTA':
-                            $storeXmlId = $item->getValue();
-                            break;
-                        case 'NAME':
-                            $name = $item->getValue();
-                            break;
-                        case 'PHONE':
-                            $phone = $item->getValue();
-                            break;
-                    }
-                }
-                /** @var Store $selectedStore */
-                $nearShop = $storeService->getStoreByXmlId($storeXmlId);
-                $periodTo = $deliveryData['CONFIG']['MAIN']['PERIOD']['TO'];
-                $address = $orderService->compileOrderAddress($order)->setValid(true);
-//              $address->setValid($locationService->validateAddress($address));
-                if (!(isset($order) && $name && $phone && $periodTo && $nearShop)) {
-                    $dostavistaOrderId = 0;
-                } else {
-                    $dostavistaOrderId = $orderService->sendToDostavista($order, $name, $phone, $comments, $periodTo, $nearShop);
-                }
-                $orderService->setOrderPropertiesByCode(
-                    $order,
-                    [
-                        'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE,
-                        'ORDER_ID_DOSTAVISTA' => ($dostavistaOrderId) ? $dostavistaOrderId : 0
-                    ]
-                );
-                $orderService->updateCommWayPropertyEx($order, $deliveryCode, $address, ($dostavistaOrderId) ? true : false);
-                $order->save();
+                $this->sendOnlinePaymentDostavistaOrder($order, $deliveryCode, $deliveryData, true);
             }
         } else {
             if ($response->getOrderStatus() === Sberbank::ORDER_STATUS_DECLINED) {
@@ -988,6 +959,67 @@ class PaymentService implements LoggerAwareInterface
                 $response->getErrorCode()
             );
         }
+    }
+
+    /**
+     * @param Order $order
+     * @param string $deliveryCode
+     * @param array $deliveryData
+     * @param bool $isPaid
+     * @throws AddressSplitException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
+     * @throws ObjectException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    protected function sendOnlinePaymentDostavistaOrder(Order $order, string $deliveryCode, array $deliveryData, bool $isPaid = false)
+    {
+        $storeService = Application::getInstance()->getContainer()->get('store.service');
+        $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+        $orderPropertyCollection = $order->getPropertyCollection();
+        $comments = $order->getField('USER_DESCRIPTION');
+        if (is_null($comments)) {
+            $comments = '';
+        }
+        /** @var PropertyValue $item */
+        foreach ($orderPropertyCollection as $item) {
+            switch ($item->getProperty()['CODE']) {
+                case 'STORE_FOR_DOSTAVISTA':
+                    $storeXmlId = $item->getValue();
+                    break;
+                case 'NAME':
+                    $name = $item->getValue();
+                    break;
+                case 'PHONE':
+                    $phone = $item->getValue();
+                    break;
+            }
+        }
+        /** @var Store $selectedStore */
+        $nearShop = $storeService->getStoreByXmlId($storeXmlId);
+        $periodTo = $deliveryData['CONFIG']['MAIN']['PERIOD']['TO'];
+        $address = $orderService->compileOrderAddress($order)->setValid(true);
+        if (!(isset($order) && $name && $phone && $periodTo && $nearShop)) {
+            $dostavistaOrderId = 0;
+        } else {
+            $dostavistaOrderId = $orderService->sendToDostavista($order, $name, $phone, $comments, $periodTo, $nearShop, $isPaid);
+        }
+        $orderService->setOrderPropertiesByCode(
+            $order,
+            [
+                'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE,
+                'ORDER_ID_DOSTAVISTA' => ($dostavistaOrderId) ? $dostavistaOrderId : 0
+            ]
+        );
+        $orderService->updateCommWayPropertyEx($order, $deliveryCode, $address, ($dostavistaOrderId) ? true : false);
+        $order->save();
     }
 
     /**

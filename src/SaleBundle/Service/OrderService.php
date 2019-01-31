@@ -1153,7 +1153,7 @@ class OrderService implements LoggerAwareInterface
                         if ($nearShop == null) {
                             $nearShop = $selectedDelivery->getStockResult()->first();
                         }
-                        $dostavistaOrderId = $this->sendToDostavista($order, $storage->getName(), $storage->getPhone(), $storage->getComment(), $selectedDelivery->getPeriodTo(), $nearShop);
+                        $dostavistaOrderId = $this->sendToDostavista($order, $storage->getName(), $storage->getPhone(), $storage->getComment(), $selectedDelivery->getPeriodTo(), $nearShop, true);
                         $this->setOrderPropertiesByCode(
                             $order,
                             [
@@ -1901,8 +1901,9 @@ class OrderService implements LoggerAwareInterface
      * @param string $name
      * @param string $phone
      * @param string $comment
-     * @param CalculationResultInterface $selectedDelivery
+     * @param string $periodTo
      * @param Store|null $nearShop
+     * @param bool $isPaid
      * @return string
      * @throws AddressSplitException
      * @throws ArgumentException
@@ -1910,7 +1911,7 @@ class OrderService implements LoggerAwareInterface
      * @throws SystemException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function sendToDostavista(Order $order, string $name, string $phone, string $comment, string $periodTo, Store $nearShop = null): string
+    public function sendToDostavista(Order $order, string $name, string $phone, string $comment, string $periodTo, Store $nearShop = null, bool $isPaid = false): string
     {
         $curDate = (new \DateTime)->modify('+5 minutes');
         /** @var DostavistaService $dostavistaService */
@@ -1919,11 +1920,15 @@ class OrderService implements LoggerAwareInterface
         $basket = $order->getBasket();
         /** @var int $insurance Цена страхования */
         $insurance = $basket->getPrice();
+        $deliveryPrice = $order->getDeliveryPrice();
+        $takingAmount = 0;
+        if (!$isPaid) {
+            $takingAmount += $insurance + $deliveryPrice;
+        }
         /** @var OfferCollection $offers */
         $offers = $this->getOrderProducts($order);
         /** @var int $weigth Вес всех товаров */
         $weigth = (int)($basket->getWeight() / 1000);
-//        $requireCar = ($weigth <= 15) ? 0 : (($weigth <= 200) ? 1 : 2); //0 - пешая доставка; 1 - легковым автомобилем, 2 - грузовым автомобилем.
         $arSectionsNames = [];
         /** @var Offer $offer */
         foreach ($offers as $offer) {
@@ -1935,7 +1940,6 @@ class OrderService implements LoggerAwareInterface
         unset($arSectionsNames);
 
         $data = [
-//            'require_car' => $requireCar,
             'total_weight_kg' => $weigth,
             'matter' => $matter,
             //что везем
@@ -1990,7 +1994,7 @@ class OrderService implements LoggerAwareInterface
             'client_order_id' => $order->getField('ACCOUNT_NUMBER'),
             'required_start_datetime' => $requireTimeStart,
             'required_finish_datetime' => $pointZeroDate->format('c'),
-            'taking_amount' => 0,
+            'taking_amount' => $takingAmount,
             'buyout_amount' => 0,
             'note' => $comment
         ];
