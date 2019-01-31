@@ -82,31 +82,31 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     private $rcStock;
 
     private $arStocks = [
-        self::YAROSLAVL_STOCK = [
+        self::YAROSLAVL_STOCK => [
             'url' => 'yaroslavl.market.yandex.ru',
             'location_code' => '0000263227'
         ],
-        self::VORONEZH_STOCK = [
+        self::VORONEZH_STOCK => [
             'url' => 'voronezh.yandex.ru',
             'location_code' => '0000293598'
         ],
-        self::TULA_STOCK = [
+        self::TULA_STOCK => [
             'url' => 'tula.market.yandex.ru',
             'location_code' => '0000250453'
         ],
-        self::IVANOVO_STOCK = [
+        self::IVANOVO_STOCK => [
             'url' => 'ivanovo.market.yandex.ru',
             'location_code' => '0000121319'
         ],
-        self::VLADIMIR_STOCK = [
+        self::VLADIMIR_STOCK => [
             'url' => 'vladimir.market.yandex.ru',
             'location_code' => '0000312126'
         ],
-        self::NN_STOCK = [
+        self::NN_STOCK => [
             'url' => 'nn.market.yandex.ru',
             'location_code' => '0000600317'
         ],
-        self::OBNINSK_STOCK = [
+        self::OBNINSK_STOCK => [
             'url' => 'obninsk.market.yandex.ru',
             'location_code' => '0000148783'
         ]
