@@ -75,4 +75,14 @@ class JsonResponse extends BaseJsonResponse
 
         return $headers;
     }
+
+
+    public function extendData(array $data)
+    {
+        $currentData = json_decode($this->getContent(), true);
+        $currentData['data'] = array_merge($currentData['data'], $data);
+        $this->setContent(json_encode($currentData));
+
+        return $this;
+    }
 }

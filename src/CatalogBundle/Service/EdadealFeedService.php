@@ -133,6 +133,7 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
             'DATE_ACTIVE_FROM',
             'DATE_ACTIVE_TO',
             'PREVIEW_PICTURE',
+            'PREVIEW_TEXT',
             'DETAIL_TEXT'
         ];
 
@@ -159,9 +160,11 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
 
                 $products = array_unique($share['PROPERTIES']['PRODUCTS']['VALUE']);
 
+                $descr = ($share['PREVIEW_TEXT']) ? $share['PREVIEW_TEXT'] : $share['DETAIL_TEXT'];
+
                 $this->arResult['catalogs'][$share['ID']] = [
                     'id' => $share['ID'],
-                    'conditions' => \HTMLToTxt($share['DETAIL_TEXT']),
+                    'conditions' => str_replace("\r\n", '', html_entity_decode(\HTMLToTxt($descr))),
                     'date_start' => \DateTime::createFromFormat('d.m.Y H:i:s',
                         $share['DATE_ACTIVE_FROM'])->format(\DateTime::RFC3339),
                     'date_end' => \DateTime::createFromFormat('d.m.Y H:i:s',
@@ -230,18 +233,16 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
                 continue;
             }
 
-            if ($offer['PROPERTIES']['PRICE_ACTION']['VALUE'] == '' || $offer['PROPERTIES']['PRICE_ACTION']['VALUE'] == 0) {
+            if (
+            (floatval($offer['PROPERTIES']['PRICE_ACTION']['VALUE']) < floatval($offer['CATALOG_PRICE_2'])
+                && $offer['PROPERTIES']['PRICE_ACTION']['VALUE'] != ''
+                && $offer['PROPERTIES']['PRICE_ACTION']['VALUE'] != 0)
+            ) {
                 $this->arResult['offers'][$offer['XML_ID']] = [
                     'id' => $offer['XML_ID'],
                     'sku' => $offer['ID'],
                     'image' => $offer['PROPERTIES']['IMG']['VALUE'][0],
-                    'price_new' => floatval($offer['CATALOG_PRICE_2'])
-                ];
-            } elseif (floatval($offer['CATALOG_PRICE_2']) == floatval($offer['PROPERTIES']['PRICE_ACTION']['VALUE'])) {
-                $this->arResult['offers'][$offer['XML_ID']] = [
-                    'id' => $offer['XML_ID'],
-                    'sku' => $offer['ID'],
-                    'image' => $offer['PROPERTIES']['IMG']['VALUE'][0],
+                    'price_old' => floatval($offer['CATALOG_PRICE_2']),
                     'price_new' => floatval($offer['PROPERTIES']['PRICE_ACTION']['VALUE'])
                 ];
             } else {
@@ -249,8 +250,7 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
                     'id' => $offer['XML_ID'],
                     'sku' => $offer['ID'],
                     'image' => $offer['PROPERTIES']['IMG']['VALUE'][0],
-                    'price_old' => floatval($offer['CATALOG_PRICE_2']),
-                    'price_new' => floatval($offer['PROPERTIES']['PRICE_ACTION']['VALUE'])
+                    'price_new' => floatval($offer['CATALOG_PRICE_2'])
                 ];
             }
 
