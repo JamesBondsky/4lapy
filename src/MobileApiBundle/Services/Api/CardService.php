@@ -107,8 +107,8 @@ class CardService
 
         $cardProfile = (new ChangeCardProfile())
             ->setNewCardNumber($cardNumber)
-            ->setLastName($card->lastName)
-            ->setFirstName($card->firstName)
+            ->setLastName($card->lastName ?? '')
+            ->setFirstName($card->firstName ?? '')
             ->setPhone($userPhone);
 
         if ($card->birthDate) {
@@ -117,7 +117,7 @@ class CardService
         }
 
         if (stristr($card->email, '@register.phone') === false) {
-            $cardProfile->setEmail($card->email);
+            $cardProfile->setEmail($card->email ?? '');
         }
 
         if ($card->secondName) {
