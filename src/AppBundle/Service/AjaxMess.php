@@ -211,6 +211,14 @@ class AjaxMess
     /**
      * @return JsonResponse
      */
+    public function getWrongDataError(): JsonResponse
+    {
+        return $this->getJsonError('wrongData', 'Не все обязательные поля корректно заполнены');
+    }
+
+    /**
+     * @return JsonResponse
+     */
     public function getNotActiveUserError(): JsonResponse
     {
         return $this->getJsonError('notActiveUser',
@@ -296,6 +304,14 @@ class AjaxMess
     /**
      * @return JsonResponse
      */
+    public function getNotAuthError(): JsonResponse
+    {
+        return $this->getJsonError('errorNotAuth', 'Пользователь не авторизован');
+    }
+
+    /**
+     * @return JsonResponse
+     */
     public function getNoActionError(): JsonResponse
     {
         return $this->getJsonError('noAction', 'Не найдено действие для выполнения');
@@ -308,6 +324,15 @@ class AjaxMess
     {
         return $this->getJsonError('errorEmailSend', 'Отправка письма не удалась, пожалуйста, попробуйте позднее');
     }
+
+    /**
+     * @return JsonResponse
+     */
+    public function getWrongParamsError(): JsonResponse
+    {
+        return $this->getJsonError('errorParams', 'Отправка не удалась, пожалуйста, попробуйте позднее');
+    }
+
 
     /**
      * @return JsonResponse

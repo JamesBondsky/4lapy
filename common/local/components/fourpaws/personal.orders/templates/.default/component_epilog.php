@@ -48,3 +48,5 @@ if ($discount > 0) {
         }
     }
 }
+
+$APPLICATION->SetTitle('Мои заказы');

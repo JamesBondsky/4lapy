@@ -32,6 +32,14 @@ $arUrlRewrite=array (
     'PATH' => '/shares/index.php',
     'SORT' => 100,
   ),
+  8 =>
+  array (
+    'CONDITION' => '#^/comparing/#',
+    'RULE' => '',
+    'ID' => 'articul:comparing',
+    'PATH' => '/comparing/index.php',
+    'SORT' => 100,
+  ),
   2 => 
   array (
     'CONDITION' => '#^/news/#',

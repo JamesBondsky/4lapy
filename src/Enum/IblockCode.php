@@ -36,4 +36,7 @@ class IblockCode
 
     public const SOCIALS  = 'socials';
 
+    public const COMPARING  = 'comparing';
+
+    public const GRANDIN_REQUEST = 'grandin_request';
 }
