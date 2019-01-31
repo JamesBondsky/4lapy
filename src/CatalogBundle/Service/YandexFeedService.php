@@ -127,7 +127,9 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 $feed->getShop()
                     ->setOffset(null);
 
-                $this->processPromos($feed, $configuration, $stockID);
+                if ($stockID == 207) {
+                    $this->processPromos($feed, $configuration, $stockID);
+                }
 
                 $this->publicFeed($feed, Application::getAbsolutePath($configuration->getExportFile()));
                 $this->clearFeed($this->getStorageKey());
