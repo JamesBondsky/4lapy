@@ -86,18 +86,12 @@ $markup = PawsApplication::markup();
             <div class="header-landing-menu" data-mobile-menu-landing="true">
                 <ul class="header-landing-menu__list" data-list-mobile-menu-landing="true">
                     <li  class="header-landing-menu__item">
-                        <a href="#" class="header-landing-menu__link" target="_blank">Правила акции</a>
+                        <a href="/grandin_rules.pdf" class="header-landing-menu__link" target="_blank">Правила акции</a>
                     </li>
 
-                    <?if ($USER->IsAuthorized()) {?>
-                        <li class="header-landing-menu__item">
-                            <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="regulations">Принять участие</a>
-                        </li>
-                    <?} else {?>
-                        <li class="header-landing-menu__item">
-                            <a href="javascript:void(0);"  class="header-landing-menu__link js-open-popup" data-popup-id="authorization">Принять участие</a>
-                        </li>
-                    <?}?>
+                    <li class="header-landing-menu__item">
+                        <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="regulations">Принять участие</a>
+                    </li>
 
                     <li  class="header-landing-menu__item">
                         <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="prizes">Призы</a>
@@ -142,15 +136,9 @@ $markup = PawsApplication::markup();
                 </div>
                 <div class="splash-screen-landing__date">С 1 по 28 февраля 2019 г</div>
 
-                <?if ($USER->IsAuthorized()) {?>
-                    <div class="splash-screen-landing__btn-wrap">
-                        <div class="splash-screen-landing__btn" data-btn-scroll-landing="registr-check">Зарегистрировать чек</div>
-                    </div>
-                <?} else {?>
-                    <div class="splash-screen-landing__btn-wrap">
-                        <div class="splash-screen-landing__btn js-open-popup" data-popup-id="authorization">Принять участие</div>
-                    </div>
-                <?}?>
+                <div class="splash-screen-landing__btn-wrap">
+                    <div class="landing-btn" data-btn-scroll-landing="regulations">Узнать подробности</div>
+                </div>
 
             </div>
         </div>
@@ -160,7 +148,7 @@ $markup = PawsApplication::markup();
         <div class="container-landing">
             <div class="landing-title">Как принять участие в&nbsp;акции</div>
             <ol class="regulations-landing__list">
-                <li>Купите любые корма Grandin на&nbsp;сумму от&nbsp;1800&nbsp;рублей и&nbsp;получите миску Grandin в&nbsp;подарок</li>
+                <li>Купите любые корма Grandin на&nbsp;сумму от&nbsp;1800&nbsp;рублей и&nbsp;получите миску Grandin в&nbsp;подарок*</li>
                 <li>Зарегистрируйте покупку, и&nbsp;вы сможете принять участие в&nbsp;розыгрыше призов</li>
                 <li>Проверяйте результаты розыгрыша каждую&nbsp;пятницу</li>
             </ol>
