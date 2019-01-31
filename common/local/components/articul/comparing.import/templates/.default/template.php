@@ -58,7 +58,7 @@ if(isset($arResult['SUCCESS'])){
     }
     else{
         if(!empty($arResult['ERRORS'])){
-            echo '<span style="color: yellow">Импорт прошёл частично, найдены следующие ошибки:</span> <br>';
+            echo '<span style="color: #d88f21">Импорт прошёл частично, найдены следующие ошибки:</span> <br>';
             echo implode('<br>', $arResult['ERRORS']);
         }
         else{

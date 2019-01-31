@@ -78,7 +78,7 @@ class ComparingImportComponent extends \CBitrixComponent
             }
 
             $handle = fopen($tmpPath, "r");
-            $r = fgetcsv($handle, 1000, ",");
+            $r = fgetcsv($handle, 0, ",");
 
             if(is_null($r)){
                 $this->endWithErrors("Не удалось считать файл");
@@ -136,7 +136,7 @@ class ComparingImportComponent extends \CBitrixComponent
         if(empty($handle) === false) {
             $this->getProperties();
 
-            while(($this->row = fgetcsv($handle, 1000, $this->delimiter)) !== FALSE){
+            while(($this->row = fgetcsv($handle, 0, $this->delimiter)) !== FALSE){
                 if(!$headersFlag){
 
                     foreach($this->row as $i => $header){
@@ -164,9 +164,6 @@ class ComparingImportComponent extends \CBitrixComponent
                     return false;
                 }
                 $this->elementNames[] = $name;
-
-                dump($name);
-                dump($this->row);
 
                 $sectionName = $this->fromExcel($this->getFieldValueByCode('SECTION_NAME'));
                 if(empty($sectionName)){
@@ -198,8 +195,6 @@ class ComparingImportComponent extends \CBitrixComponent
                 else{
                     $sectionId = $arSection['ID'];
                 }
-
-                dump($this->fromExcel($this->getFieldValueByCode('SECTION_HEADER')));
 
                 $sectionHeader = $this->fromExcel($this->getFieldValueByCode('SECTION_HEADER'));
                 if(empty($sectionHeader)){
@@ -309,6 +304,7 @@ class ComparingImportComponent extends \CBitrixComponent
                 ],
                 'filter' => [
                     'IPROPERTY.ENTITY_TYPE' => 'S',
+                    'IPROPERTY.CODE' => 'SECTION_PAGE_TITLE',
                     'ID' => array_keys($this->sectionHeaders),
                 ],
                 'runtime' => [
@@ -323,8 +319,12 @@ class ComparingImportComponent extends \CBitrixComponent
                 $this->sections[$arSection['ID']] = $arSection;
             }
 
-            dump($this->sections);
-
+            $arUpdateSections = [];
+            foreach($this->sectionHeaders as $id => $title){
+                if($title != $this->sections[$id]['HEADER']){
+                    $arUpdateSections[$id] = ['IPROPERTY_TEMPLATES' => ['SECTION_PAGE_TITLE' => $title]];
+                }
+            }
 
             fclose($handle);
         }
@@ -358,6 +358,19 @@ class ComparingImportComponent extends \CBitrixComponent
             else{
                 $this->arResult['UPDATED'][] = $itemId;
                 $this->log('Обновлён элемент: <a target="_blank" href="'.$this->getElementEditUrl($itemId).'">'.$arItem['NAME'].' ['.$itemId.']</a>');
+            }
+        }
+
+        foreach($arUpdateSections as $itemId => $arItem){
+            $obSection = new \CIBlockSection;
+
+            $result = $obSection->Update($itemId, $arItem);
+            if(!$result){
+                $this->errors[] = 'Не удалось обновить отображаемое название для группы сравнения: '.$obSection->LAST_ERROR.' ['.$itemId.']';
+            }
+            else{
+                $this->arResult['UPDATED'][] = $itemId;
+                $this->log('Обновлено отображаемое название для группы сравнения: <a target="_blank" href="'.$this->getSectionViewUrl($itemId).'">'.$this->sections[$itemId]['NAME'].' ['.$itemId.']</a>');
             }
         }
 
@@ -519,7 +532,7 @@ class ComparingImportComponent extends \CBitrixComponent
     }
     private function getSectionViewUrl($id)
     {
-        $url = '/bitrix/admin/iblock_list_admin.php?IBLOCK_ID='.$this->comparingIblockId.'&type=publications&lang=ru&find_section_section='.$id;
+        $url = '/bitrix/admin/iblock_section_edit.php?IBLOCK_ID='.$this->comparingIblockId.'&type=publications&lang=ru&ID='.$id;
         return $url;
     }
 
@@ -567,12 +580,12 @@ class ComparingImportComponent extends \CBitrixComponent
 
     private function forExcel($string) :string
     {
-        return mb_convert_encoding($string, 'cp-1251');
+        return trim(mb_convert_encoding($string, 'cp-1251'));
     }
 
     private function fromExcel($string) :string
     {
-        return mb_convert_encoding($string, 'utf-8', 'cp-1251');
+        return trim(mb_convert_encoding($string, 'utf-8', 'cp-1251'));
     }
 
 }

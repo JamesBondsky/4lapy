@@ -108,6 +108,7 @@ class ComparingDetailComponent extends \CBitrixComponent
             'IBLOCK_SECTION_ID',
             'IMAGE' => 'PROPERTY_IMAGE.PROPERTY_'.$imageProperty['ID'],
             'WEIGHT' => 'CATALOG_PRODUCT.WEIGHT',
+            'SECTION_HEADER' => 'IPROPERTY.TEMPLATE',
         ];
         $propertyFields = ['IBLOCK_ELEMENT_ID' => ['data_type' => 'integer']];
         while($arProperty = $rsProperties->fetch()){
@@ -153,6 +154,11 @@ class ComparingDetailComponent extends \CBitrixComponent
                     'reference' => ['=this.PROPERTIES.PROPERTY_'.$this->getPropIdByCode(IblockProperty::COMPARING_LINK) => 'ref.ID'],
                     'join_type' => 'inner',
                 ],
+                'IPROPERTY' => [
+                    'data_type' => '\Bitrix\Iblock\InheritedProperty',
+                    'reference' => ['=this.IBLOCK_SECTION_ID' => 'ref.ENTITY_ID'],
+                    'join_type' => 'left'
+                ]
             ],
         ]);
 
@@ -162,6 +168,10 @@ class ComparingDetailComponent extends \CBitrixComponent
             TaggedCacheHelper::addManagedCacheTags([
                 'catalog:offer:' . $arProduct['PRODUCT_ID'],
             ]);
+
+            if(empty($this->arResult['SECTION_HEADER']) && !empty($arProduct['SECTION_HEADER'])){
+                $this->arResult['SECTION_HEADER'] = $arProduct['SECTION_HEADER'];
+            }
 
             $arImage = unserialize($arProduct['IMAGE']);
             $imageId = $arImage['VALUE'][0];
@@ -203,6 +213,10 @@ class ComparingDetailComponent extends \CBitrixComponent
                 'WEIGHT' => $weight,
                 'PROPERTIES' => $properties,
             ];
+        }
+
+        if(empty($this->arResult['SECTION_HEADER'])){
+            $this->arResult['SECTION_HEADER'] = "Сравнение кормов";
         }
 
         $this->arResult['PRODUCTS'] = $arProducts;
