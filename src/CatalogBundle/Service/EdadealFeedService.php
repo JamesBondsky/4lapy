@@ -160,7 +160,7 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
 
                 $products = array_unique($share['PROPERTIES']['PRODUCTS']['VALUE']);
 
-                $descr = ($share['PREVIEW_TEXT']) ? $share['PREVIEW_TEXT'] : $share['DETAIL_TEXT'];
+                $descr = 'Акция действительна в магазинах торговой сети "Четыре Лапы" при наличии товара в магазине. Количество товара ограничено.';
 
                 $this->arResult['catalogs'][$share['ID']] = [
                     'id' => $share['ID'],
