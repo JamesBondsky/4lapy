@@ -27,7 +27,7 @@ $aMenuLinks = [
         '/personal/bonus/',
     ],
     [
-        'Последние заказы',
+        'Мои заказы',
         '/personal/orders/',
     ],
     [
