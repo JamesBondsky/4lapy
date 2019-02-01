@@ -31,6 +31,8 @@ class PetsController extends FOSRestController
     /**
      * @Rest\Get("/pets_category/")
      * @Rest\View()
+     *
+     * @throws \Exception
      */
     public function getPetCategoryAction()
     {

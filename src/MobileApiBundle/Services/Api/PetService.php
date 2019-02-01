@@ -7,13 +7,10 @@
 namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Bitrix\Main\Type\Date;
-use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\AppBundle\Entity\UserFieldEnumValue;
 use FourPaws\AppBundle\Exception\NotFoundException;
-use FourPaws\BitrixOrm\Model\HlbReferenceItem;
-use FourPaws\BitrixOrm\Query\HlbReferenceQuery;
 use FourPaws\CatalogBundle\Service\CategoriesService;
 use FourPaws\CatalogBundle\Service\FilterService;
-use FourPaws\App\Application;
 use FourPaws\MobileApiBundle\Dto\Object\Pet;
 use FourPaws\MobileApiBundle\Dto\Object\PetGender;
 use FourPaws\MobileApiBundle\Dto\Object\PetPhoto;
@@ -67,79 +64,48 @@ class PetService
         $this->userBundleService = $userBundleService;
     }
 
+    /**
+     * @return array
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Exception
+     */
     public function getPetCategories()
     {
-        $arResult = array();
+        $result = [];
 
-        $breeds = $this->getPetBreeds();
-        $genders = $this->appPetService->getGenders();
-
-        // toDo доделать когда в базе данных будет связь между категорией животного и его породой / полом
-        var_dump($breeds);
-        var_dump($genders);
-        die();
-
-        $oCategoryes = CIBlockSection::GetList(
-            array(
-                'LEFT_MARGIN' => 'ASC'
-            ),
-            array(
-                'IBLOCK_ID' => CIBlockTools::GetIBlockId('kinds'),
-                'ACTIVE' => 'Y'
-            ),
-            false,
-            array(
-                'ID',
-                'NAME',
-                'IBLOCK_SECTION_ID',
-                'SORT',
-                'UF_GENDER'
-            )
-        );
-
-        while ($arCategory = $oCategoryes->Fetch())
-        {
-            $sid = $arCategory['ID'];
-            $psid = (int)$arCategory['IBLOCK_SECTION_ID'];
-
-            $arResult[$psid]['subcategories'][$sid] = array(
-                'id' => $arCategory['ID'],
-                'title' => $arCategory['NAME'],
-                'gender' => array()
-            );
-
-
-            if (is_array($arCategory['UF_GENDER'])) {
-                foreach ($arCategory['UF_GENDER'] as $sexId)
-                {
-                    $arResult[$psid]['subcategories'][$sid]['gender'][] = array(
-                        'id' => (string)$sexId,
-                        'title' => $arGenders[$sexId]
-                    );
+        $types = $this->appPetService->getPetTypes();
+        $genders = [];
+        foreach ($this->appPetService->getGenders() as $gender) {
+            /** @var UserFieldEnumValue $gender */
+            $genders[] = [
+                'id' => $gender->getId(),
+                'title' => $gender->getValue()
+            ];
+        }
+        $breeds = $this->appPetService->getPetBreedAll();
+        foreach ($types as $type) {
+            $result[$type['ID']] = [
+                'id' => $type['ID'],
+                'title' => $type['UF_NAME'],
+                'gender' => $genders,
+                'subcategories' => [
+                    'id' => $type['ID'],
+                    'title' => $type['UF_NAME'],
+                    'gender' => $genders,
+                    'breeds' => []
+                ]
+            ];
+            foreach ($breeds as $breed) {
+                if ($breed['UF_PET_TYPE'] === $type['ID']) {
+                    $result[$type['ID']]['subcategories']['breeds'][] = [
+                        'id' => $breed['ID'],
+                        'title' => $breed['UF_NAME']
+                    ];
                 }
             }
-
-            if ($psid) {
-                $arResult[$psid]['subcategories'][$sid]['gender'] = $arResult[$psid]['gender'];
-                $arResult[$psid]['subcategories'][$sid]['breeds'] = (array)$arBreeds[$sid];
-            } else {
-                $arResult[$psid]['subcategories'][$sid]['sort'] = $arCategory['SORT'];
-                $arResult[$psid]['gender'] = $arCategory['UF_GENDER'];
-            }
-
-            $arResult[$sid] = &$arResult[$psid]['subcategories'][$sid];
         }
-
-        $arResult = array_shift($arResult);
-        $arResult = array_shift($arResult);
-
-        usort($arResult, $this->customSort);
-
-        foreach ($arResult as $categoryId => $arCategory)
-        {
-            unset($arResult[$categoryId]['sort']);
-            usort($arResult[$categoryId]['subcategories'], $this->customSort);
-        }
+        return array_values($result);
     }
 
     /**
@@ -218,7 +184,7 @@ class PetService
         $petEntity
             ->setName($userPetUpdateRequest->getName())
             ->setType($userPetUpdateRequest->getCategoryId())
-            ->setBreed('Whatever')
+            ->setBreed($userPetUpdateRequest->getBreedId())
         ;
 
         if ($birthday = $userPetUpdateRequest->getBirthday()) {
@@ -255,7 +221,6 @@ class PetService
      * @param \FourPaws\PersonalBundle\Entity\Pet $pet
      * @return Pet
      * @throws \Bitrix\Main\SystemException
-     * @throws \Bitrix\Main\LoaderException
      */
     public function map($pet)
     {
@@ -265,14 +230,16 @@ class PetService
             ->setId($pet->getId())
             ->setName($pet->getName())
             ->setCategoryId($pet->getType())
-            // ->setBreedId($pet['UF_BREED']) // toDo: когда доделают справочник пород
+            ->setBreedId($pet['UF_BREED'])
             ->setBirthday($birthday)
             ->setBirthdayString($pet->getAgeString())
             ->setPhoto(
-                (new PetPhoto())
-                    ->setId($pet->getPhoto())
-                    ->setPreview($pet->getImgPath())
-                    ->setSrc($pet->getResizePopupImgPath())
+                [
+                    (new PetPhoto())
+                        ->setId($pet->getPhoto())
+                        ->setPreview($pet->getImgPath())
+                        ->setSrc($pet->getResizePopupImgPath())
+                ]
             )
         ;
         if ($genderCode = $pet->getGender()) {
@@ -283,40 +250,6 @@ class PetService
             );
         }
         return $result;
-    }
-
-    /**
-     * @return array
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     */
-    public function getPetBreeds()
-    {
-        $breeds = [];
-        $dataManager = Application::getHlBlockDataManager('bx.hlblock.petbreed');
-        $reference = (new HlbReferenceQuery($dataManager::query()))->exec();
-        /**
-         * @var $item HlbReferenceItem
-         */
-        foreach ($reference->getValues() as $item) {
-            $breeds[$item->getXmlId()] = [
-                'id' => $item->getXmlId(),
-                'title' => $item->getName()
-            ];
-        }
-        return $breeds;
-    }
-
-    private function customSort($a, $b)
-    {
-        if (isset($a['sort']) && $a['sort'] != $b['sort']) {
-            return $a['sort'] > $b['sort'] ? 1 : -1;
-        }
-        if ($a['title'] == 'Другое') {
-            return 1;
-        } elseif ($b['title'] == 'Другое') {
-            return -1;
-        }
-        return strcmp($a['title'], $b['title']);
     }
 
 }

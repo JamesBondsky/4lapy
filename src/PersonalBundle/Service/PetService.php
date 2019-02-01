@@ -322,7 +322,51 @@ class PetService
         return $result;
     }
 
+    /**
+     * @throws \Exception
+     */
+    public function getPetTypes()
+    {
+        return HLBlockFactory::createTableObject(Pet::PET_TYPE)::query()
+            ->setFilter([
+                'UF_USE_BY_PET' => 1
+            ])
+            ->setSelect([
+                'ID',
+                'UF_NAME',
+            ])
+            ->setOrder([
+                'UF_SORT' => 'asc'
+            ])
+            ->exec()
+            ->fetchAll();
+    }
 
+    /**
+     * @return array
+     * @throws \Exception
+     */
+    public function getPetBreedAll(): array
+    {
+        //if ($this->startResultCache()){
+        // Для тегированного кеша нет функционала для highload-иб
+        /*TaggedCacheHelper::addManagedCacheTags([
+            'hlb:field:pets_user:' . $this->currentUserProvider->getCurrentUserId()
+        ]);*/
+
+        return HLBlockFactory::createTableObject(Pet::PET_BREED)::query()
+            ->setSelect([
+                'ID',
+                'UF_NAME',
+                'UF_PET_TYPE'
+            ])
+            ->setOrder([
+                'UF_NAME' => 'asc'
+            ])
+            ->exec()
+            ->fetchAll();
+        //}
+    }
 
     public function getPetBreed(int $typeId): array
     {
