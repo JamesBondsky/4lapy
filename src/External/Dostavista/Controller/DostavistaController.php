@@ -20,6 +20,8 @@ class DostavistaController
         $queryStr = $request->getQueryString();
         $data = $request->request->all();
 
+        file_put_contents($_SERVER['DOCUMENT_ROOT'] .  '/callback.txt', $data);
+
         $testMode = (\COption::GetOptionString('articul.dostavista.delivery', 'dev_mode', '') == BaseEntity::BITRIX_TRUE);
         if ($testMode) {
             $token = \COption::GetOptionString('articul.dostavista.delivery', 'token_dev', '');

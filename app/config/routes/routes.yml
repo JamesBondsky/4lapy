@@ -39,4 +39,4 @@ old_items.sale:
 dostavista:
     path: /dostavista/order_change/
     defaults: { _controller: 'FourPaws\External\Dostavista\Controller\DostavistaController::deliveryDostavistaOrderChangeAction' }
-    methods: [GET]
+    methods: [POST]

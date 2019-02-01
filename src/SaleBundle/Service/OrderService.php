@@ -1153,7 +1153,7 @@ class OrderService implements LoggerAwareInterface
                         if ($nearShop == null) {
                             $nearShop = $selectedDelivery->getStockResult()->first();
                         }
-                        $dostavistaOrderId = $this->sendToDostavista($order, $storage->getName(), $storage->getPhone(), $storage->getComment(), $selectedDelivery->getPeriodTo(), $nearShop, true);
+                        $dostavistaOrderId = $this->sendToDostavista($order, $storage->getName(), $storage->getPhone(), $storage->getComment(), $selectedDelivery->getPeriodTo(), $nearShop, false);
                         $this->setOrderPropertiesByCode(
                             $order,
                             [
