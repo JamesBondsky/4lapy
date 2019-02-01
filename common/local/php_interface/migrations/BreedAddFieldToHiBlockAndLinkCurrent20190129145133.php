@@ -126,14 +126,14 @@ class BreedAddFieldToHiBlockAndLinkCurrent20190129145133 extends \Adv\Bitrixtool
                 "DISPLAY" => "LIST",
                 "LIST_HEIGHT" => 5,
                 "HLBLOCK_ID" => $this->petTypeIblockId,
-                "HLFIELD_ID" => 0,
+                "HLFIELD_ID" => 2,
                 "DEFAULT_VALUE" => 0,
             ],
             "EDIT_FORM_LABEL" => [
-                "ru" => "Порода"
+                "ru" => "Тип питомца"
             ],
             "LIST_COLUMN_LABEL" => [
-                "ru" => "Порода"
+                "ru" => "Тип питомца"
             ],
             "LIST_FILTER_LABEL" => [
                 "ru" => ""
@@ -176,7 +176,7 @@ class BreedAddFieldToHiBlockAndLinkCurrent20190129145133 extends \Adv\Bitrixtool
      */
     public function down()
     {
-        if ($this->deleteField("HLBLOCK_".$this->petBreedIblockId, 'UF_PET_TYPE')) {
+        if (!$this->deleteField("HLBLOCK_".$this->petBreedIblockId, 'UF_PET_TYPE')) {
             return false;
         }
 
