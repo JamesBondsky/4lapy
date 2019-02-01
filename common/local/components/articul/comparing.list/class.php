@@ -26,7 +26,7 @@ class ComparingListComponent extends \CBitrixComponent
 
     private $brandIds;
     private $imageIds;
-    private $offerIds;
+    private $offerXmlIds;
 
     public const MARK_SALE_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/s-proc.svg" alt="" role="presentation"/>';
     public const MARK_GIFT_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/s-gift.svg" alt="" role="presentation"/>';
@@ -175,6 +175,7 @@ class ComparingListComponent extends \CBitrixComponent
             'IMAGE' => 'PROPERTY_IMAGE.PROPERTY_'.$imageProperty['ID'],
             'PRODUCT_ID' => 'PRODUCT.ID',
             'OFFER_ID' => 'OFFER.ID',
+            'OFFER_XML_ID' => 'OFFER.XML_ID',
             'WEIGHT' => 'CATALOG_PRODUCT.WEIGHT',
         ];
         $propertyFields = ['IBLOCK_ELEMENT_ID' => ['data_type' => 'integer']];
@@ -257,8 +258,8 @@ class ComparingListComponent extends \CBitrixComponent
                 $this->brandIds[] = $brandId;
             }
 
-            if(!in_array($arProduct['PRODUCT_ID'], $this->offerIds)){
-                $this->offerIds[] = $arProduct['PRODUCT_ID'];
+            if(!in_array($arProduct['OFFER_XML_ID'], $this->offerXmlIds)){
+                $this->offerXmlIds[] = $arProduct['OFFER_XML_ID'];
             }
 
             $arImage = unserialize($arProduct['IMAGE']);
@@ -352,12 +353,68 @@ class ComparingListComponent extends \CBitrixComponent
     }
 
     private function fetchShares() {
-        if(empty($this->offerIds)){
+        if(empty($this->offerXmlIds)){
             return false;
         }
 
-        $shareProperty = $this->getProperty($this->shareIblockId, IblockProperty::SHARE_PRODUCTS);
+        //$shareProperty = $this->getProperty($this->shareIblockId, IblockProperty::SHARE_PRODUCTS);
         //$shareEntity = $this->getPropertyEntity($this->shareIblockId, $shareProperty['ID']);
+
+        $sharePropertiesEntity = Base::compileEntity(
+            'SHARE_PROPERTIES',
+            [
+                'ID' => ['data_type' => 'integer'],
+                'IBLOCK_PROPERTY_ID' => ['data_type' => 'integer'],
+                'IBLOCK_ELEMENT_ID'  => ['data_type' => 'integer'],
+                'VALUE'  => ['data_type' => 'string'],
+            ],
+            ['table_name' => 'b_iblock_element_property']
+        );
+
+        $rsShareProperties = $sharePropertiesEntity->getDataClass()->getList([
+            'filter' => [
+                'IBLOCK_ID' => $this->offersIblockId,
+                'CODE' => [
+                    'CML2_LINK',
+                    'IMG',
+                    'PRICE_ACTION',
+                    'COND_FOR_ACTION',
+                    'COND_VALUE',
+                    'IS_HIT',
+                    'IS_NEW',
+                    'IS_SALE',
+                    'IS_POPULAR',
+                ],
+            ],
+            'select' => [
+                'ID',
+                'NAME',
+                'CODE',
+            ],
+        ]);
+
+
+        $selectFields = [
+            'ID',
+            'NAME' => 'PRODUCT.NAME',
+        ];
+        $propertyFields = ['IBLOCK_ELEMENT_ID' => ['data_type' => 'integer']];
+        $offerProperties = [];
+        while($arProperty = $rsShareProperties->fetch()){
+            $selectFields['PROPERTY_'.$arProperty['CODE'].'_VALUE'] = 'OFFER_PROPERTIES.PROPERTY_'.$arProperty['ID'];
+            $propertyFields['PROPERTY_'.$arProperty['ID']] = ['data_type' => $this->getPropertyTypeByCode($arProperty['CODE'])];
+
+            if(!in_array($arProperty['CODE'], array_keys($offerProperties))){
+                $offerProperties[$arProperty['CODE']] = $arProperty['ID'];
+            }
+        }
+
+        return;
+
+
+
+
+
 
         $offerPropertiesEntity = Base::compileEntity(
             'SHARE_PROPERTIES',
@@ -377,17 +434,14 @@ class ComparingListComponent extends \CBitrixComponent
             ],
             'filter' => [
                 'ACTIVE'       => 'Y',
-                '<ACTIVE_FROM' => new \Bitrix\Main\Type\DateTime(),
+                '<=ACTIVE_FROM' => new \Bitrix\Main\Type\DateTime(),
                 '>ACTIVE_TO'   => new \Bitrix\Main\Type\DateTime(),
-                'PROPERTIES.VALUE' => $this->offerIds,
+                'PROPERTIES.VALUE' => $this->offerXmlIds,
                 'PROPERTIES.IBLOCK_PROPERTY_ID' => $shareProperty['ID'],
             ],
             'select' => [
                 'ID',
-                'SORT',
                 'NAME',
-                'CODE',
-                'PROPERTY_' => 'PROPERTIES.*',
             ],
             'runtime' => [
                 'PROPERTIES' => [
@@ -398,22 +452,33 @@ class ComparingListComponent extends \CBitrixComponent
             ],
         ]);
 
-        //TODO: Доделать вывод шильдиков акций
-        //dump($rsShares);
-
-        $arShares = [];
+        $arShareIds = [];
         while ($arShare = $rsShares->fetch()) {
-            //dump($arShare);
-            $arShares[$arShare['ID']] = [
-                'ID' => $arShare['ID'],
-                'NAME' => $arShare['NAME'],
-                'SORT' => $arShare['SORT'],
-                'CODE' => $arShare['CODE'],
-                //'PREVIEW_PICTURE' => $this->formatFile('PREVIEW_PICTURE_', $arBrand),
-            ];
+            $arShareIds[] = $arShare['ID'];
         }
 
-        //dump($arShares);
+        $rsShares = ElementTable::getList([
+            'order' => [
+                'SORT' => 'ASC',
+                'NAME' => 'ASC',
+            ],
+            'filter' => [
+                'ID' => 'Y',
+            ],
+            'select' => [
+                'ID',
+                'NAME',
+            ],
+            'runtime' => [
+                'PROPERTIES' => [
+                    'data_type' => $offerPropertiesEntity->getDataClass(),
+                    'reference' => array('=this.ID' => 'ref.IBLOCK_ELEMENT_ID'),
+                    'join_type' => 'inner'
+                ],
+            ],
+        ]);
+
+        dump($arShareIds);
 
         //$this->arResult['BRANDS'] = $arBrands;
     }
