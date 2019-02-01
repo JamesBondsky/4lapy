@@ -360,7 +360,7 @@ class ComparingListComponent extends \CBitrixComponent
         //$shareProperty = $this->getProperty($this->shareIblockId, IblockProperty::SHARE_PRODUCTS);
         //$shareEntity = $this->getPropertyEntity($this->shareIblockId, $shareProperty['ID']);
 
-        $sharePropertiesEntity = Base::compileEntity(
+        /*$sharePropertiesEntity = Base::compileEntity(
             'SHARE_PROPERTIES',
             [
                 'ID' => ['data_type' => 'integer'],
@@ -369,21 +369,15 @@ class ComparingListComponent extends \CBitrixComponent
                 'VALUE'  => ['data_type' => 'string'],
             ],
             ['table_name' => 'b_iblock_element_property']
-        );
+        );*/
 
-        $rsShareProperties = $sharePropertiesEntity->getDataClass()->getList([
+        $rsShareProperties = PropertyTable::getList([
             'filter' => [
-                'IBLOCK_ID' => $this->offersIblockId,
+                'IBLOCK_ID' => $this->shareIblockId,
                 'CODE' => [
-                    'CML2_LINK',
-                    'IMG',
-                    'PRICE_ACTION',
-                    'COND_FOR_ACTION',
-                    'COND_VALUE',
-                    'IS_HIT',
-                    'IS_NEW',
-                    'IS_SALE',
-                    'IS_POPULAR',
+                    'LABEL',
+                    'LABEL_IMAGE',
+                    'PRODUCTS'
                 ],
             ],
             'select' => [
@@ -393,30 +387,14 @@ class ComparingListComponent extends \CBitrixComponent
             ],
         ]);
 
-
-        $selectFields = [
-            'ID',
-            'NAME' => 'PRODUCT.NAME',
-        ];
-        $propertyFields = ['IBLOCK_ELEMENT_ID' => ['data_type' => 'integer']];
-        $offerProperties = [];
+        $shareProperties = [];
+        $addSelectedFields = [];
         while($arProperty = $rsShareProperties->fetch()){
-            $selectFields['PROPERTY_'.$arProperty['CODE'].'_VALUE'] = 'OFFER_PROPERTIES.PROPERTY_'.$arProperty['ID'];
-            $propertyFields['PROPERTY_'.$arProperty['ID']] = ['data_type' => $this->getPropertyTypeByCode($arProperty['CODE'])];
-
-            if(!in_array($arProperty['CODE'], array_keys($offerProperties))){
-                $offerProperties[$arProperty['CODE']] = $arProperty['ID'];
-            }
+            $shareProperties[$arProperty['CODE']] = $arProperty;
+            //$addSelectedFields['PROEPRTY_'.$arProperty['CODE'].'_VALUE'] = $
         }
 
-        return;
-
-
-
-
-
-
-        $offerPropertiesEntity = Base::compileEntity(
+        $sharePropertiesEntity = Base::compileEntity(
             'SHARE_PROPERTIES',
             [
                 'ID' => ['data_type' => 'integer'],
@@ -437,7 +415,7 @@ class ComparingListComponent extends \CBitrixComponent
                 '<=ACTIVE_FROM' => new \Bitrix\Main\Type\DateTime(),
                 '>ACTIVE_TO'   => new \Bitrix\Main\Type\DateTime(),
                 'PROPERTIES.VALUE' => $this->offerXmlIds,
-                'PROPERTIES.IBLOCK_PROPERTY_ID' => $shareProperty['ID'],
+                'PROPERTIES.IBLOCK_PROPERTY_ID' => $shareProperties['PRODUCTS']['ID'],
             ],
             'select' => [
                 'ID',
@@ -445,7 +423,7 @@ class ComparingListComponent extends \CBitrixComponent
             ],
             'runtime' => [
                 'PROPERTIES' => [
-                    'data_type' => $offerPropertiesEntity->getDataClass(),
+                    'data_type' => $sharePropertiesEntity->getDataClass(),
                     'reference' => array('=this.ID' => 'ref.IBLOCK_ELEMENT_ID'),
                     'join_type' => 'inner'
                 ],
@@ -471,7 +449,7 @@ class ComparingListComponent extends \CBitrixComponent
             ],
             'runtime' => [
                 'PROPERTIES' => [
-                    'data_type' => $offerPropertiesEntity->getDataClass(),
+                    'data_type' => $sharePropertiesEntity->getDataClass(),
                     'reference' => array('=this.ID' => 'ref.IBLOCK_ELEMENT_ID'),
                     'join_type' => 'inner'
                 ],
