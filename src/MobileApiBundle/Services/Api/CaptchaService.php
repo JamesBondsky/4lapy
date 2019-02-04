@@ -13,6 +13,7 @@ use FourPaws\MobileApiBundle\Dto\Response\CaptchaVerifyResponse;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\MobileApiBundle\Services\BitrixCaptchaService;
 use FourPaws\UserBundle\Repository\UserRepository;
+use FourPaws\UserBundle\Service\UserService as AppUserService;
 
 class CaptchaService
 {
@@ -21,6 +22,11 @@ class CaptchaService
      * @var UserRepository
      */
     private $userRepository;
+
+    /**
+     * @var AppUserService
+     */
+    private $appUserService;
 
     /**
      * @var BitrixCaptchaService
@@ -35,11 +41,13 @@ class CaptchaService
 
     public function __construct(
         UserRepository $userRepository,
+        AppUserService $appUserService,
         SmsService $smsService
     )
     {
         $this->smsService = $smsService;
         $this->userRepository = $userRepository;
+        $this->appUserService = $appUserService;
     }
 
     /**
@@ -133,7 +141,7 @@ class CaptchaService
 
         if ($sender == 'edit_info' && $user) {
             throw new RuntimeException('Этот email уже был использован для отправки капчи');
-        } elseif ($sender == 'card_activation' && $user && $user['ID'] != $this->userRepository->getCurrentUserId()) {
+        } elseif ($sender == 'card_activation' && $user && $user['ID'] != $this->appUserService->getCurrentUserId()) {
             throw new RuntimeException('Этот email уже был использован для отправки капчи');
         }
 
