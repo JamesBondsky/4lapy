@@ -30,6 +30,14 @@ services:
     class: FourPaws\Search\Consumer\CatalogSyncConsumer
     arguments: ['@jms_serializer', '@search.service']
 
+  dostavista.orders_add_consumer:
+    class: FourPaws\External\Dostavista\Consumer\DostavistaOrdersAddConsumer
+    arguments: ['@jms_serializer', '@dostavista.service']
+
+  dostavista.orders_cancel_consumer:
+    class: FourPaws\External\Dostavista\Consumer\DostavistaOrdersCancelConsumer
+    arguments: ['@jms_serializer', '@dostavista.service']
+
   search.service:
     class: FourPaws\Search\SearchService
     arguments:

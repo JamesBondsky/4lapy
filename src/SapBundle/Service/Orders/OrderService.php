@@ -1,13 +1,8 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
-
 namespace FourPaws\SapBundle\Service\Orders;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
-use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Catalog\Product\Basket as CatalogBasket;
@@ -39,6 +34,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\External\Dostavista\Model\CancelOrder;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\PhoneHelper;
@@ -72,7 +68,6 @@ use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
-use FourPaws\SaleBundle\Service\OrderService as SaleOrderService;
 
 
 
@@ -1091,7 +1086,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             if ($deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
                 /** @var OrderService $locationService */
                 $dostavistaService = Application::getInstance()->getContainer()->get('dostavista.service');
-                $orderService = Application::getInstance()->getContainer()->get(SaleOrderService::class);
                 $dostavistaStatus = StatusService::STATUS_SITE_DOSTAVISTA_MAP[$orderDto->getStatus()];
                 if ($dostavistaStatus == StatusService::STATUS_SITE_DOSTAVISTA_MAP[6]) {
                     foreach ($order->getPropertyCollection() as $item) {
@@ -1101,15 +1095,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                         }
                     }
                     if ($dostavistaOrder) {
-                        $dostavistaOrderId = $dostavistaService->cancelOrder($dostavistaOrder);
-                        if (!is_array($dostavistaOrderId)) {
-                            $orderService->setOrderPropertiesByCode(
-                                $order,
-                                [
-                                    'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId !== 0 && !is_array($dostavistaOrderId)) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE
-                                ]
-                            );
-                        }
+                        $cancelOrder = new CancelOrder();
+                        $cancelOrder->bitrixOrderId = $order->getId();
+                        $cancelOrder->dostavistaOrderId = $dostavistaOrder;
+                        $dostavistaService->dostavistaOrderCancel($cancelOrder);
                     } else {
                         $this->log()
                             ->error(

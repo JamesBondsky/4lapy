@@ -1,9 +1,5 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
-
 namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
@@ -26,15 +22,11 @@ use Bitrix\Sale\Payment;
 use Bitrix\Sale\PropertyValue;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
-use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\DostavistaDeliveryResult;
 use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\Helpers\BusinessValueHelper;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\PhoneHelper;
-use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\LocationBundle\Exception\AddressSplitException;
-use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Dto\Fiscalization\CartItems;
 use FourPaws\SaleBundle\Dto\Fiscalization\CustomerDetails;
@@ -47,7 +39,6 @@ use FourPaws\SaleBundle\Dto\Fiscalization\OrderBundle;
 use FourPaws\SaleBundle\Dto\SberbankOrderInfo\Attribute;
 use FourPaws\SaleBundle\Dto\SberbankOrderInfo\OrderBundle\Item as SberbankOrderItem;
 use FourPaws\SaleBundle\Dto\SberbankOrderInfo\OrderInfo;
-use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Exception\FiscalValidation\FiscalAmountExceededException;
 use FourPaws\SaleBundle\Exception\FiscalValidation\FiscalAmountException;
@@ -69,8 +60,6 @@ use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\StoreBundle\Entity\Store;
 use JMS\Serializer\ArrayTransformerInterface;
 use Psr\Log\LoggerAwareInterface;
-use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Bitrix\Sale\Delivery\Services\Table as ServicesTable;
 
 /**
@@ -1006,20 +995,9 @@ class PaymentService implements LoggerAwareInterface
         $nearShop = $storeService->getStoreByXmlId($storeXmlId);
         $periodTo = $deliveryData['CONFIG']['MAIN']['PERIOD']['TO'];
         $address = $orderService->compileOrderAddress($order)->setValid(true);
-        if (!(isset($order) && $name && $phone && $periodTo && $nearShop)) {
-            $dostavistaOrderId = 0;
-        } else {
-            $dostavistaOrderId = $orderService->sendToDostavista($order, $name, $phone, $comments, $periodTo, $nearShop, $isPaid);
+        if (isset($order) && $name && $phone && $periodTo && $nearShop) {
+            $orderService->sendToDostavista($order, $name, $phone, $comments, $periodTo, $nearShop, $isPaid);
         }
-        $orderService->setOrderPropertiesByCode(
-            $order,
-            [
-                'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE,
-                'ORDER_ID_DOSTAVISTA' => ($dostavistaOrderId) ? $dostavistaOrderId : 0
-            ]
-        );
-        $orderService->updateCommWayPropertyEx($order, $deliveryCode, $address, ($dostavistaOrderId) ? true : false);
-        $order->save();
     }
 
     /**

@@ -5,8 +5,12 @@ namespace FourPaws\External;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\External\Dostavista\Client;
+use FourPaws\External\Dostavista\Model\CancelOrder;
+use FourPaws\External\Dostavista\Model\Order;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
+use FourPaws\App\Application as App;
+use JMS\Serializer\Serializer;
 
 /**
  * Class SmsService
@@ -18,12 +22,17 @@ class DostavistaService implements LoggerAwareInterface
     use LoggerAwareTrait;
 
     /**
+     * @var Serializer $serializer
+     */
+    protected $serializer;
+    /**
      * @var Client
      */
     protected $client;
 
-    public function __construct()
+    public function __construct(Serializer $serializer)
     {
+        $this->serializer = $serializer;
         $testMode = (\COption::GetOptionString('articul.dostavista.delivery', 'dev_mode', '') == BaseEntity::BITRIX_TRUE);
         if ($testMode) {
             $clientId = \COption::GetOptionString('articul.dostavista.delivery', 'client_id_dev', '');
@@ -63,7 +72,8 @@ class DostavistaService implements LoggerAwareInterface
         } else {
             $result = [
                 'success' => $res['success'],
-                'message' => $res['message']
+                'message' => $res['message'],
+                'connection' => false
             ];
             $this->logger->error('Connection failed with "Dostavista" service', $result);
         }
@@ -98,10 +108,31 @@ class DostavistaService implements LoggerAwareInterface
         } else {
             $result = [
                 'success' => $res['success'],
-                'message' => $res['message']
+                'message' => $res['message'],
+                'connection' => false
             ];
             $this->logger->error('Connection failed with "Dostavista" service', $result);
         }
         return $result;
+    }
+
+    /**
+     * @param Order $order
+     */
+    public function dostavistaOrderAdd(Order $order)
+    {
+        /** @noinspection MissingService */
+        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.dostavista_orders_add_producer');
+        $producer->publish($this->serializer->serialize($order, 'json'));
+    }
+
+    /**
+     * @param CancelOrder $order
+     */
+    public function dostavistaOrderCancel(CancelOrder $order)
+    {
+        /** @noinspection MissingService */
+        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.dostavista_orders_cancel_producer');
+        $producer->publish($this->serializer->serialize($order, 'json'));
     }
 }

@@ -1,9 +1,5 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
-
 namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
@@ -85,6 +81,9 @@ use FourPaws\UserBundle\Service\UserAvatarAuthorizationInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use FourPaws\UserBundle\Service\UserSearchInterface;
 use Psr\Log\LoggerAwareInterface;
+use FourPaws\External\Dostavista\Model\Order as DostavistaOrder;
+use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\External\Dostavista\Model;
 
 /**
  * Class OrderService
@@ -1153,16 +1152,7 @@ class OrderService implements LoggerAwareInterface
                         if ($nearShop == null) {
                             $nearShop = $selectedDelivery->getStockResult()->first();
                         }
-                        $dostavistaOrderId = $this->sendToDostavista($order, $storage->getName(), $storage->getPhone(), $storage->getComment(), $selectedDelivery->getPeriodTo(), $nearShop, false);
-                        $this->setOrderPropertiesByCode(
-                            $order,
-                            [
-                                'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE,
-                                'ORDER_ID_DOSTAVISTA' => ($dostavistaOrderId) ? $dostavistaOrderId : 0
-                            ]
-                        );
-                        $order->save();
-                        $this->updateCommWayProperty($order, $selectedDelivery, $fastOrder, $address, ($dostavistaOrderId) ? true : false);
+                        $this->sendToDostavista($order, $storage->getName(), $storage->getPhone(), $storage->getComment(), $selectedDelivery->getPeriodTo(), $nearShop, false);
                     }
                 }
             }
@@ -1897,6 +1887,8 @@ class OrderService implements LoggerAwareInterface
 
 
     /**
+     * Собирает массив для передачи в очередь RabbitMQ
+     *
      * @param Order $order
      * @param string $name
      * @param string $phone
@@ -1904,26 +1896,23 @@ class OrderService implements LoggerAwareInterface
      * @param string $periodTo
      * @param Store|null $nearShop
      * @param bool $isPaid
-     * @return string
+     * @return void
      * @throws AddressSplitException
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function sendToDostavista(Order $order, string $name, string $phone, string $comment, string $periodTo, Store $nearShop = null, bool $isPaid = false): string
+    public function sendToDostavista(Order $order, string $name, string $phone, string $comment, string $periodTo, Store $nearShop = null, bool $isPaid = false): void
     {
         $curDate = (new \DateTime)->modify('+5 minutes');
-        /** @var DostavistaService $dostavistaService */
-        $dostavistaService = Application::getInstance()->getContainer()->get('dostavista.service');
-        //импорт в Достависту
         $basket = $order->getBasket();
         /** @var int $insurance Цена страхования */
         $insurance = $basket->getPrice();
         $deliveryPrice = $order->getDeliveryPrice();
         $takingAmount = 0;
         if (!$isPaid) {
-            $takingAmount += $insurance + $deliveryPrice;
+            $takingAmount += (int)$insurance + $deliveryPrice;
         }
         /** @var OfferCollection $offers */
         $offers = $this->getOrderProducts($order);
@@ -1940,6 +1929,7 @@ class OrderService implements LoggerAwareInterface
         unset($arSectionsNames);
 
         $data = [
+            'bitrix_order_id' => $order->getId(),
             'total_weight_kg' => $weigth,
             'matter' => $matter,
             //что везем
@@ -1999,12 +1989,52 @@ class OrderService implements LoggerAwareInterface
             'note' => $comment
         ];
 
-        $dostavistaOrderId = $dostavistaService->addOrder($data)['order_id'];
-        
-        if (is_array($dostavistaOrderId)) {
-            $dostavistaOrderId = 0;
+        $this->addDostavistaOrderToQueue($data);
+    }
+
+    /**
+     * Структура данных + запись в очередь
+     *
+     * @param array $data
+     * @return void
+     */
+    public function addDostavistaOrderToQueue(array $data): void
+    {
+        /** @var DostavistaService $dostavistaService */
+        $dostavistaService = Application::getInstance()->getContainer()->get('dostavista.service');
+        $dostavistaOrder = new DostavistaOrder();
+        $dostavistaOrder->bitrixOrderId = $data['bitrix_order_id'];
+        $dostavistaOrder->totalWeigthKg = $data['total_weight_kg'];
+        $dostavistaOrder->matter = $data['matter'];
+        $dostavistaOrder->insuranceAmount = $data['insurance_amount'];
+        $dostavistaOrder->isClientNotificationEnabled = $data['is_client_notification_enabled'];
+        $dostavistaOrder->isContactPersonNotificationEnabled = $data['is_contact_person_notification_enabled'];
+
+        $pointCollection = new ArrayCollection();
+        foreach ($data['points'] as $point) {
+            $contactPerson = new Model\ContactPerson();
+            $contactPerson->phone = $point['contact_person']['phone'];
+            if (!empty($point['contact_person']['name'])) {
+                $contactPerson->name = $point['contact_person']['name'];
+            } else {
+                $contactPerson->name = '';
+            }
+
+            $modelPoint = new Model\Point();
+            $modelPoint->address = $point['address'];
+            $modelPoint->contactPerson = $contactPerson;
+            $modelPoint->clientOrderId = $point['client_order_id'];
+            $modelPoint->requiredStartDatetime = $point['required_start_datetime'];
+            $modelPoint->requiredFinishDatetime = $point['required_finish_datetime'];
+            $modelPoint->takingAmount = $point['taking_amount'];
+            $modelPoint->buyoutAmount = $point['buyout_amount'];
+            $modelPoint->note = $point['note'];
+
+            $pointCollection->add($modelPoint);
         }
-        
-        return $dostavistaOrderId;
+
+        $dostavistaOrder->points = $pointCollection;
+
+        $dostavistaService->dostavistaOrderAdd($dostavistaOrder);
     }
 }

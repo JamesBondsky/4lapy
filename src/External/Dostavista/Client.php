@@ -135,6 +135,11 @@ class Client
      */
     public function checkConnection(): array
     {
+        if ($this->testMode) {
+            $this->url = self::DEFAULT_API_URL_TEST;
+        } else {
+            $this->url = self::DEFAULT_API_URL;
+        }
         $result = $this->send('GET', []);
         return $this->parseSendingResult($result);
     }
