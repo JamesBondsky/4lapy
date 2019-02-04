@@ -49,7 +49,7 @@ class StatusService implements LoggerAwareInterface
      * 10 - “Отменен”       “Отменен”               6 - “Отменен”
      * 16 - “Отложен”       Статус не изменяется    K - “Треб. соглас. операт.”
      */
-    private const STATUS_DOSTAVISTA_MAP = [
+    public const STATUS_DOSTAVISTA_MAP = [
         'O' => OrderStatus::STATUS_NEW_COURIER,
         'L' => OrderStatus::STATUS_NEW_COURIER,
         'M' => OrderStatus::STATUS_DELIVERING,

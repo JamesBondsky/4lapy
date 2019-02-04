@@ -7,6 +7,7 @@ $MESS['DOSTAVISTA_CLIENT_ID_PROD'] = 'Идентификатор клиента 
 $MESS['DOSTAVISTA_TOKEN_PROD'] = 'Токен для рабочего режима';
 $MESS['DOSTAVISTA_CLIENT_ID_DEV'] = 'Идентификатор клиента для тестового режима';
 $MESS['DOSTAVISTA_TOKEN_DEV'] = 'Токен для тестового режима';
+$MESS['DOSTAVISTA_CALLBACK_SECRET_KEY'] = 'CALLBACK секретный ключ';
 $MESS['DOSTAVISTA_SMS_HEADING'] = 'Отправка sms';
 
 $MESS['DOSTAVISTA_APPLY_BUTTON'] = 'Сохранить';

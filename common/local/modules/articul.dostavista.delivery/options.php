@@ -33,15 +33,15 @@ $tabs = [
                     'checkbox'
                 ]
             ],
-//            [
-//                'bapi_callback_url',
-//                'URL для получения изменений заказов',
-//                '',
-//                [
-//                    'text',
-//                    30
-//                ]
-//            ],
+            [
+                'callback_secret_key',
+                GetMessage('DOSTAVISTA_CALLBACK_SECRET_KEY'),
+                '',
+                [
+                    'text',
+                    30
+                ]
+            ],
             [
                 'heading' => true,
                 'title' => GetMessage('DOSTAVISTA_PRODUCTION_MODE_OPTIONS'),
@@ -120,24 +120,6 @@ $tabs = [
                 'name' => 'delivery_end_time',
                 'label' => 'Время окончания работы доставки'
             ],
-//            [
-//                'minute_delivery_from',
-//                'Время в минутах прибытия на адрес доставки ОТ',
-//                '',
-//                [
-//                    'text',
-//                    30
-//                ]
-//            ],
-//            [
-//                'minute_delivery_to',
-//                'Время в минутах прибытия на адрес доставки ДО',
-//                '',
-//                [
-//                    'text',
-//                    30
-//                ]
-//            ],
             [
                 'heading' => true,
                 'title' => 'Контент'
