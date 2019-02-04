@@ -36,6 +36,10 @@ class BreedAddFieldToHiBlockAndLinkCurrent20190129145133 extends \Adv\Bitrixtool
      * @var int
      */
     private $petBreedIblockId;
+    /**
+     * @var int
+     */
+    private $petsIblockId;
 
     /**
      *
@@ -45,6 +49,8 @@ class BreedAddFieldToHiBlockAndLinkCurrent20190129145133 extends \Adv\Bitrixtool
      *
      */
     protected const HL_PET_BREED = 'PetBreed';
+
+    protected const HL_PETS = 'Pet';
 
     /**
      * @var array
@@ -57,6 +63,15 @@ class BreedAddFieldToHiBlockAndLinkCurrent20190129145133 extends \Adv\Bitrixtool
         'fish' => 18,
         'other' => 21,
     ];
+
+    /*protected $petTypes = [
+        'cats' => 'Кошки',
+        'dogs' => 'Собаки',
+        'birds' => 'Птицы',
+        'rodents' => 'Грызуны',
+        'fish' => 'Рыбы',
+        'other' => 'Прочее',
+    ];*/
 
     /**
      * ID пород, привязываемых к типу питомцев.
@@ -103,6 +118,7 @@ class BreedAddFieldToHiBlockAndLinkCurrent20190129145133 extends \Adv\Bitrixtool
 
         $this->petTypeIblockId = $this->hlBlockHelper->getHlblockId(static::HL_PET_TYPE);
         $this->petBreedIblockId = $this->hlBlockHelper->getHlblockId(static::HL_PET_BREED);
+        $this->petsIblockId = $this->hlBlockHelper->getHlblockId(static::HL_PETS);
     }
 
     /**
@@ -111,6 +127,9 @@ class BreedAddFieldToHiBlockAndLinkCurrent20190129145133 extends \Adv\Bitrixtool
      */
     public function up()
     {
+        $obEntity = new \CUserTypeEntity;
+        $uLinkField = $obEntity->GetList([], ['ENTITY_ID' => 'HLBLOCK_'.$this->petTypeIblockId, 'FIELD_NAME' => 'UF_NAME'])->Fetch();
+
         $ufield = [
             'FIELD_NAME' => 'UF_PET_TYPE',
             'USER_TYPE_ID' => 'hlblock',
@@ -126,7 +145,7 @@ class BreedAddFieldToHiBlockAndLinkCurrent20190129145133 extends \Adv\Bitrixtool
                 "DISPLAY" => "LIST",
                 "LIST_HEIGHT" => 5,
                 "HLBLOCK_ID" => $this->petTypeIblockId,
-                "HLFIELD_ID" => 2,
+                "HLFIELD_ID" => $uLinkField['ID'],
                 "DEFAULT_VALUE" => 0,
             ],
             "EDIT_FORM_LABEL" => [
@@ -145,8 +164,44 @@ class BreedAddFieldToHiBlockAndLinkCurrent20190129145133 extends \Adv\Bitrixtool
                 "ru" => ""
             ]
         ];
-
         $this->addField("HLBLOCK_".$this->petBreedIblockId, $ufield);
+
+        $uLinkField = $obEntity->GetList([], ['ENTITY_ID' => 'HLBLOCK_'.$this->petBreedIblockId, 'FIELD_NAME' => 'UF_NAME'])->Fetch();
+        $ufield = [
+            'FIELD_NAME' => 'UF_BREED_ID',
+            'USER_TYPE_ID' => 'hlblock',
+            'XML_ID' => 'UF_BREED_ID',
+            'SORT' => 500,
+            'MULTIPLE' => 'N',
+            'MANDATORY' => 'N',
+            'SHOW_FILTER' => 'N',
+            'SHOW_IN_LIST' => 'Y',
+            'EDIT_IN_LIST' => 'Y',
+            'IS_SEARCHABLE' => 'N',
+            'SETTINGS' => [
+                "DISPLAY" => "LIST",
+                "LIST_HEIGHT" => 5,
+                "HLBLOCK_ID" => $this->petBreedIblockId,
+                "HLFIELD_ID" => $uLinkField['ID'],
+                "DEFAULT_VALUE" => 0,
+            ],
+            "EDIT_FORM_LABEL" => [
+                "ru" => "ID Породы"
+            ],
+            "LIST_COLUMN_LABEL" => [
+                "ru" => "ID Породы"
+            ],
+            "LIST_FILTER_LABEL" => [
+                "ru" => ""
+            ],
+            "ERROR_MESSAGE" => [
+                "ru" => ""
+            ],
+            "HELP_MESSAGE" => [
+                "ru" => ""
+            ]
+        ];
+        $this->addField("HLBLOCK_".$this->petsIblockId, $ufield);
 
         $obPetBreed = HLBlockFactory::createTableObject(self::HL_PET_BREED);
 
@@ -155,14 +210,14 @@ class BreedAddFieldToHiBlockAndLinkCurrent20190129145133 extends \Adv\Bitrixtool
                 $petTypeId = $this->petTypes[$type];
                 if(is_array($breedId)){
                     for($id = $breedId[0]; $id <= $breedId[1]; $id++){
-                        $r = $obPetBreed->update($id, [$ufield['FIELD_NAME'] => $petTypeId]);
+                        $r = $obPetBreed->update($id, ['UF_PET_TYPE' => $petTypeId]);
                         if(!$r->isSuccess()){
                             $this->log()->error(sprintf('Не удалось обновить элемент %s', $id));
                         }
                     }
                 }
                 else{
-                    $r = $obPetBreed->update($breedId, [$ufield['FIELD_NAME'] => $petTypeId]);
+                    $r = $obPetBreed->update($breedId, ['UF_PET_TYPE' => $petTypeId]);
                     if(!$r->isSuccess()){
                         $this->log()->error(sprintf('Не удалось обновить элемент %s', $breedId));
                     }
@@ -176,9 +231,8 @@ class BreedAddFieldToHiBlockAndLinkCurrent20190129145133 extends \Adv\Bitrixtool
      */
     public function down()
     {
-        if (!$this->deleteField("HLBLOCK_".$this->petBreedIblockId, 'UF_PET_TYPE')) {
-            return false;
-        }
+        $this->deleteField("HLBLOCK_".$this->petBreedIblockId, 'UF_PET_TYPE');
+        $this->deleteField("HLBLOCK_".$this->petsIblockId, 'UF_BREED_ID');
 
         return true;
     }
@@ -240,7 +294,6 @@ class BreedAddFieldToHiBlockAndLinkCurrent20190129145133 extends \Adv\Bitrixtool
                 $fieldName,
                 $entityId
             ));
-            return false;
         }
 
         return true;
