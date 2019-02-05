@@ -732,7 +732,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         $arHtmlProps = ['PROPERTY_SPECIFICATIONS_VALUE', 'PROPERTY_COMPOSITION_VALUE', 'PROPERTY_NORMS_OF_USE_VALUE'];
         foreach ($arHtmlProps as $propKey) {
-            if ($fields['~'] . $propKey) {
+            if ($fields['~' . $propKey]) {
                 $descr = htmlspecialchars_decode($fields['~' . $propKey]['TEXT']);
                 $fields[$propKey]['TEXT'] = ($descr != '0' && $descr != 'HTML') ? $descr : '';
                 $fields[$propKey]['TYPE'] = '';
