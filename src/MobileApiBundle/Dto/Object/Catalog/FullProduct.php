@@ -48,8 +48,8 @@ class FullProduct extends ShortProduct
     protected $detailsHtml = [];
 
     /**
-     * @var PackingVariant[]
-     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct\PackingVariant>")
+     * @var FullProduct[]
+     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct>")
      * @Serializer\SerializedName("packingVariants")
      */
     protected $packingVariants = [];
@@ -131,6 +131,22 @@ class FullProduct extends ShortProduct
     protected $pickup;
 
     /**
+     * Вес фасовки
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("weight")
+     */
+    protected $weight;
+
+    /**
+     * Есть ли акции?
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("hasSpecialOffer")
+     */
+    protected $hasSpecialOffer = false;
+
+    /**
      * @return CatalogCategory
      */
     public function getCategory(): CatalogCategory
@@ -200,7 +216,7 @@ class FullProduct extends ShortProduct
     }
 
     /**
-     * @param PackingVariant[] $packingVariants
+     * @param FullProduct[] $packingVariants
      *
      * @return FullProduct
      */
@@ -372,6 +388,44 @@ class FullProduct extends ShortProduct
     public function setPickup(string $pickup): FullProduct
     {
         $this->pickup = $pickup;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getWeight(): string
+    {
+        return $this->weight;
+    }
+
+    /**
+     * @param string $weight
+     *
+     * @return FullProduct
+     */
+    public function setWeight(string $weight): FullProduct
+    {
+        $this->weight = $weight;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getHasSpecialOffer(): bool
+    {
+        return $this->hasSpecialOffer;
+    }
+
+    /**
+     * @param bool $hasSpecialOffer
+     *
+     * @return FullProduct
+     */
+    public function setHasSpecialOffer(bool $hasSpecialOffer): FullProduct
+    {
+        $this->hasSpecialOffer = $hasSpecialOffer;
         return $this;
     }
 }

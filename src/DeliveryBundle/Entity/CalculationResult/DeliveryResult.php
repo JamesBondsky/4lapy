@@ -128,15 +128,18 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
 
     /**
      * Возвращает отформатированный текст о доставке для карточки товара на сайте и в мобильном приложении
+     * @param float $offerPrice
      * @param bool $isByRequest
      * @param bool $withCurrency
      * @return string
      */
-    public function getTextForOffer($isByRequest = false, $withCurrency = false): string
+    public function getTextForOffer(float $offerPrice, $isByRequest = false, $withCurrency = false): string
     {
         $text = DeliveryTimeHelper::showByDate($this->deliveryDate, 0, ['DATE_FORMAT' => 'XX']);
         if ($isByRequest) {
             $text .= ' ближайшая';
+        } elseif ($this->freeFrom && $offerPrice > $this->freeFrom) {
+            $text .= ' бесплатно ';
         } else if ($this->freeFrom) {
             $text .= ' бесплатно от ' . $this->freeFrom;
             if ($withCurrency) {

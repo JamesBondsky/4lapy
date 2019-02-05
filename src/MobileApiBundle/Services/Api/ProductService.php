@@ -153,6 +153,7 @@ class ProductService
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws \ImagickException
      */
     protected function mapProductForList(Product $product): FullProduct
     {
@@ -177,6 +178,7 @@ class ProductService
         $offers = $product->getOffersSorted();
         $foundOfferWithImages = false;
         $currentOffer = $offers->last();
+        /** @var Offer $offer */
         foreach ($offers as $offer) {
             $offer->setProduct($product);
 
@@ -185,6 +187,7 @@ class ProductService
             }
         }
 
+        // toDo рефакторинг
         // костыль потому что в allStocks вместо объекта StockCollection приходит просто массив с кодами магазинов...
         // взято из метода FourPaws\Catalog\Model\getAllStocks()
         $stockService = Application::getInstance()->getContainer()->get(StockService::class);
@@ -204,6 +207,7 @@ class ProductService
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws \ImagickException
      */
     public function getOne(int $id): FullProduct
     {
@@ -216,7 +220,6 @@ class ProductService
         $fullProduct = $this->convertToFullProduct($product, $offer);
         $fullProduct->setIsAvailable($offer->isAvailable()); // returns ShortProduct
         $fullProduct
-            ->setPackingVariants($this->getPackingVariants($product))   // фасовки
             ->setSpecialOffer($this->getSpecialOffer($offer))           // акция
             ->setFlavours($this->getFlavours($offer))                   // вкус
             ->setAvailability($offer->getAvailabilityText())            // товар под заказ
@@ -337,21 +340,23 @@ class ProductService
     /**
      * @param Product $product
      * @param Offer $offer
+     * @param bool $needPackingVariants
      * @return FullProduct
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws \ImagickException
      */
-    public function convertToFullProduct(Product $product, Offer $offer): FullProduct
+    public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = true): FullProduct
     {
         $shortProduct = $this->convertToShortProduct($product, $offer);
         $detailText = $product->getDetailText()->getText();
         $detailText = ImageHelper::appendDomainToSrc($detailText);
         $fullProduct = (new FullProduct())
             ->setDetailsHtml($detailText);
+
+        if ($needPackingVariants) {
+            $fullProduct->setPackingVariants($this->getPackingVariants($product));   // фасовки
+        }
 
         // toDo: is there any better way to merge ShortProduct into FullProduct?
         $fullProduct
@@ -419,7 +424,7 @@ class ProductService
         if (!$deliveryResult) {
             return '';
         }
-        return $deliveryResult->getTextForOffer($offer->isByRequest(), true);
+        return $deliveryResult->getTextForOffer($offer->getPrice(), $offer->isByRequest(), true);
     }
 
     /**
@@ -445,9 +450,10 @@ class ProductService
     /**
      * Фасовки товара
      * @param Product $product
-     * @return FullProduct\PackingVariant[]
+     * @return FullProduct[]
+     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws \ImagickException
      */
     public function getPackingVariants(Product $product): array
     {
@@ -459,12 +465,23 @@ class ProductService
         $packingVariants = [];
         /** @var Offer $offer */
         foreach ($offers as $offer) {
+            // toDo рефакторинг
+            // костыль потому что в allStocks вместо объекта StockCollection приходит просто массив с кодами магазинов...
+            // взято из метода FourPaws\Catalog\Model\getAllStocks()
+            $stockService = Application::getInstance()->getContainer()->get(StockService::class);
+            $offer->withAllStocks($stockService->getStocksByOffer($offer));
+            // end костыль
+
+            /*
             $packingVariants[] = (new FullProduct\PackingVariant())
                 ->setPrice($offer->getPrice())
                 ->setOfferId($offer->getId())
                 ->setWeight($offer->getPackageLabel(false, 0))
                 ->setHasSpecialOffer($offer->isShare())
                 ->setIsAvailable($offer->isAvailable());
+
+            */
+            $packingVariants[] = $this->convertToFullProduct($product, $offer, false);
         }
         return $packingVariants;
     }
@@ -560,6 +577,7 @@ class ProductService
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \ImagickException
      */
     public function getBundle(Offer $offer)
     {

@@ -13,6 +13,7 @@ use FourPaws\MobileApiBundle\Dto\Response\CaptchaVerifyResponse;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\MobileApiBundle\Services\BitrixCaptchaService;
 use FourPaws\UserBundle\Repository\UserRepository;
+use FourPaws\UserBundle\Service\UserService as AppUserService;
 
 class CaptchaService
 {
@@ -21,6 +22,11 @@ class CaptchaService
      * @var UserRepository
      */
     private $userRepository;
+
+    /**
+     * @var AppUserService
+     */
+    private $appUserService;
 
     /**
      * @var BitrixCaptchaService
@@ -35,11 +41,13 @@ class CaptchaService
 
     public function __construct(
         UserRepository $userRepository,
+        AppUserService $appUserService,
         SmsService $smsService
     )
     {
         $this->smsService = $smsService;
         $this->userRepository = $userRepository;
+        $this->appUserService = $appUserService;
     }
 
     /**
@@ -129,12 +137,14 @@ class CaptchaService
      */
     private function sendValidationInEmail($email, $sender)
     {
-        $user = $this->userRepository->findOneByEmail($email);
+        if (!$user = $this->appUserService->findOneByEmail($email)) {
+            throw new RuntimeException("Пользователь с email $email не найден в базе данных");
+        }
+        $currentUserId = $this->appUserService->getCurrentUserId();
+        $userId = $user->getId();
 
-        if ($sender == 'edit_info' && $user) {
-            throw new RuntimeException('Этот email уже был использован для отправки капчи');
-        } elseif ($sender == 'card_activation' && $user && $user['ID'] != $this->userRepository->getCurrentUserId()) {
-            throw new RuntimeException('Этот email уже был использован для отправки капчи');
+        if (in_array($sender, ['card_activation', 'edit_info']) && $userId != $currentUserId) {
+            throw new RuntimeException("Пользователь авторизован c ID $currentUserId, а переданный email $email зарегестрирован у пользователя с ID $userId");
         }
 
         $this->bitrixCaptchaService = new BitrixCaptchaService();
@@ -152,7 +162,7 @@ class CaptchaService
         if (!$sendResult) {
             throw new RuntimeException('Ошибка отправки кода верификации');
         }
-        $this->saveUserVerificationCode($user->getId(), $verificationCode);
+        $this->saveUserVerificationCode($userId, $verificationCode);
     }
 
     /**

@@ -235,7 +235,7 @@ trait Pet
      * @param PetPhoto $photo
      * @return $this
      */
-    public function setPhoto(PetPhoto $photo)
+    public function setPhoto($photo)
     {
         $this->photo = $photo;
         return $this;

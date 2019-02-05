@@ -154,16 +154,28 @@ class PetService
     }
 
     /**
-     * @throws ObjectPropertyException
-     * @throws NotAuthorizedException
-     * @throws InvalidIdentifierException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @return ArrayCollection
-     */
+ * @throws ObjectPropertyException
+ * @throws NotAuthorizedException
+ * @throws InvalidIdentifierException
+ * @throws ServiceNotFoundException
+ * @throws ServiceCircularReferenceException
+ * @return ArrayCollection
+ */
     public function getCurUserPets(): ArrayCollection
     {
         return $this->petRepository->findByCurUser();
+    }
+
+    /**
+     * @param int $id
+     * @return Pet
+     * @throws ObjectPropertyException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getCurUserPetById(int $id): Pet
+    {
+        return $this->petRepository->findByCurUserAndId($id)->current();
     }
 
     /**
@@ -322,7 +334,51 @@ class PetService
         return $result;
     }
 
+    /**
+     * @throws \Exception
+     */
+    public function getPetTypes()
+    {
+        return HLBlockFactory::createTableObject(Pet::PET_TYPE)::query()
+            ->setFilter([
+                'UF_USE_BY_PET' => 1
+            ])
+            ->setSelect([
+                'ID',
+                'UF_NAME',
+            ])
+            ->setOrder([
+                'UF_SORT' => 'asc'
+            ])
+            ->exec()
+            ->fetchAll();
+    }
 
+    /**
+     * @return array
+     * @throws \Exception
+     */
+    public function getPetBreedAll(): array
+    {
+        //if ($this->startResultCache()){
+        // Для тегированного кеша нет функционала для highload-иб
+        /*TaggedCacheHelper::addManagedCacheTags([
+            'hlb:field:pets_user:' . $this->currentUserProvider->getCurrentUserId()
+        ]);*/
+
+        return HLBlockFactory::createTableObject(Pet::PET_BREED)::query()
+            ->setSelect([
+                'ID',
+                'UF_NAME',
+                'UF_PET_TYPE'
+            ])
+            ->setOrder([
+                'UF_NAME' => 'asc'
+            ])
+            ->exec()
+            ->fetchAll();
+        //}
+    }
 
     public function getPetBreed(int $typeId): array
     {
@@ -341,11 +397,31 @@ class PetService
                     ]
                 )->setOrder(['UF_NAME' => 'asc'])->exec();
             while ($item = $res->fetch()) {
-                $arBreeds[] = $item['UF_NAME'];
+                $arBreeds[$item['ID']] = $item['UF_NAME'];
             }
 
             return $arBreeds;
         //}
+    }
+
+    /**
+     * @param int $petId
+     * @return bool
+     * @throws NotFoundException
+     * @throws ObjectPropertyException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
+     */
+    public function deletePetPhoto(int $petId)
+    {
+        /** @var Pet $pet */
+        $pet = $this->petRepository->findById($petId);
+        if ($photoId = $pet->getPhoto()) {
+            \CFile::delete($photoId);
+        }
+        $pet->setPhoto(0);
+        return $this->petRepository->setEntity($pet)->update();
     }
 
     /**

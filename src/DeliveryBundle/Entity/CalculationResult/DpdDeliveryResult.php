@@ -109,24 +109,4 @@ class DpdDeliveryResult extends BaseResult implements DeliveryResultInterface
     {
         return parent::checkIsDeliverable($offer) && $offer->getProduct()->isDeliveryAvailable();
     }
-
-    /**
-     * Возвращает отформатированный текст о доставке для карточки товара на сайте и в мобильном приложении
-     * @param bool $isByRequest
-     * @param bool $withCurrency
-     * @return string
-     */
-    public function getTextForOffer($isByRequest = false, $withCurrency = false): string
-    {
-        $text = DeliveryTimeHelper::showByDate($this->deliveryDate, 0, ['DATE_FORMAT' => 'XX']);
-        if ($isByRequest) {
-            $text .= ' ближайшая';
-        } else if ($this->freeFrom) {
-            $text .= ' бесплатно от ' . $this->freeFrom;
-            if ($withCurrency) {
-                $text .= $this->currency;
-            }
-        }
-        return $text;
-    }
 }

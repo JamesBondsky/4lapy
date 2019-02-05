@@ -69,6 +69,16 @@ class Pet extends BaseEntity
     protected $breed;
 
     /**
+     * @var string
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("UF_BREED_ID")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $breedId;
+
+    /**
      * @var Date|null
      * @Serializer\Type("bitrix_date")
      * @Serializer\SerializedName("UF_BIRTHDAY")
@@ -291,6 +301,26 @@ class Pet extends BaseEntity
     public function setBreed(string $breed) : Pet
     {
         $this->breed = $breed;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBreedId() : string
+    {
+        return $this->breedId ?? '';
+    }
+
+    /**
+     * @param string $breed
+     *
+     * @return Pet
+     */
+    public function setBreedId(string $breedId) : Pet
+    {
+        $this->breedId = $breedId;
 
         return $this;
     }
