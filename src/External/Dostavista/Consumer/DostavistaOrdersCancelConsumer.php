@@ -34,18 +34,19 @@ class DostavistaOrdersCancelConsumer extends DostavistaConsumerBase
             $response = $this->dostavistaService->cancelOrder($dostavistaOrder);
             if ($response['connection'] === false) {
                 $result = static::MSG_REJECT;
-            }
-            $dostavistaOrderId = $response['order_id'];
-            if (is_array($dostavistaOrderId) || empty($dostavistaOrderId)) {
-                return static::MSG_REJECT;
             } else {
-                $this->orderService->setOrderPropertiesByCode(
-                    $order,
-                    [
-                        'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId !== 0 && !is_array($dostavistaOrderId)) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE
-                    ]
-                );
-                $order->save();
+                $dostavistaOrderId = $response['order_id'];
+                if (is_array($dostavistaOrderId) || empty($dostavistaOrderId)) {
+                    $result = static::MSG_REJECT;
+                } else {
+                    $this->orderService->setOrderPropertiesByCode(
+                        $order,
+                        [
+                            'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId !== 0 && !is_array($dostavistaOrderId)) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE
+                        ]
+                    );
+                    $order->save();
+                }
             }
         } catch (\Exception $e) {
             $result = static::MSG_REJECT;
