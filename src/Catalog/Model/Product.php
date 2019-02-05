@@ -730,35 +730,18 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      */
     public function __construct(array $fields = [])
     {
-        if ($fields['~PROPERTY_SPECIFICATIONS_VALUE']) {
-            $fields['PROPERTY_SPECIFICATIONS_VALUE']['TEXT'] = htmlspecialchars_decode($fields['~PROPERTY_SPECIFICATIONS_VALUE']['TEXT']);
-            $fields['PROPERTY_SPECIFICATIONS_VALUE']['TYPE'] = '';
-        } else {
-            $fields['PROPERTY_SPECIFICATIONS_VALUE'] = [
-                'TYPE' => 'HTML',
-                'TEXT' => '',
-            ];
-        }
-
-
-        if ($fields['~PROPERTY_COMPOSITION_VALUE']) {
-            $fields['PROPERTY_COMPOSITION_VALUE']['TEXT'] = htmlspecialchars_decode($fields['~PROPERTY_COMPOSITION_VALUE']['TEXT']);
-            $fields['PROPERTY_COMPOSITION_VALUE']['TYPE'] = '';
-        } else {
-            $fields['PROPERTY_COMPOSITION_VALUE'] = [
-                'TYPE' => 'HTML',
-                'TEXT' => '',
-            ];
-        }
-
-        if ($fields['~PROPERTY_NORMS_OF_USE_VALUE']) {
-            $fields['PROPERTY_NORMS_OF_USE_VALUE']['TEXT'] = htmlspecialchars_decode($fields['~PROPERTY_NORMS_OF_USE_VALUE']['TEXT']);
-            $fields['PROPERTY_NORMS_OF_USE_VALUE']['TYPE'] = '';
-        } else {
-            $fields['PROPERTY_NORMS_OF_USE_VALUE'] = [
-                'TYPE' => 'HTML',
-                'TEXT' => '',
-            ];
+        $arHtmlProps = ['PROPERTY_SPECIFICATIONS_VALUE', 'PROPERTY_COMPOSITION_VALUE', 'PROPERTY_NORMS_OF_USE_VALUE'];
+        foreach ($arHtmlProps as $propKey) {
+            if ($fields['~'] . $propKey) {
+                $descr = htmlspecialchars_decode($fields['~' . $propKey]['TEXT']);
+                $fields[$propKey]['TEXT'] = ($descr != '0' && $descr != 'HTML') ? $descr : '';
+                $fields[$propKey]['TYPE'] = '';
+            } else {
+                $fields[$propKey] = [
+                    'TYPE' => 'HTML',
+                    'TEXT' => '',
+                ];
+            }
         }
 
         parent::__construct($fields);
