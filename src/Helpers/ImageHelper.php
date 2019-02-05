@@ -2,6 +2,7 @@
 
 namespace FourPaws\Helpers;
 
+use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\Decorators\FullHrefDecorator;
 
 class ImageHelper
@@ -29,22 +30,33 @@ class ImageHelper
 
     /**
      * Конвертирует svg изображение в png
-     * @param string $filePath
+     * @param string $svgFilePath
      * @return string
      * @see https://stackoverflow.com/a/4809562/2393499
      * @throws \ImagickException
+     * @throws NotFoundException
      */
-    public static function convertSvgToPng(string $filePath): string
+    public static function convertSvgToPng(string $svgFilePath): string
     {
-        // toDo when imagick will be installed...
-        return $filePath;
-        $filePath = $_SERVER['DOCUMENT_ROOT'] . $filePath;
+        // toDo не работет, доставить https://stackoverflow.com/a/45331159/2393499
+        return $svgFilePath;
+        $svgFilePathInfo = pathinfo($svgFilePath);
+        $svgFullFilePath = $_SERVER['DOCUMENT_ROOT'] . $svgFilePath;
+        $pngFilePath = $svgFilePathInfo['dirname'] . '/' . $svgFilePathInfo['filename'] . '.png';
+        $pngFullFilePath = $_SERVER['DOCUMENT_ROOT'] . $pngFilePath;
+        if (file_exists($pngFullFilePath)) {
+            return $pngFilePath;
+        }
+        if (!file_exists($svgFullFilePath)) {
+            throw new NotFoundException("$svgFilePath does not exist");
+        }
         $im = new \Imagick();
-        $svg = file_get_contents($filePath);
+        $svg = file_get_contents($svgFullFilePath);
         $im->readImageBlob($svg);
         $im->setImageFormat('png24');
-        // $im->writeImage('/path/to/colored/us-map.png');
+        $im->writeImage($pngFullFilePath);
         $im->clear();
         $im->destroy();
+        return $pngFilePath;
     }
 }
