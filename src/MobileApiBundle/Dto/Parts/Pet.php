@@ -73,9 +73,9 @@ trait Pet
     protected $birthdayString;
 
     /**
-     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\PetPhoto>")
+     * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\PetPhoto")
      * @Serializer\SerializedName("photo")
-     * @var PetPhoto[]
+     * @var PetPhoto
      */
     protected $photo;
 
@@ -224,18 +224,18 @@ trait Pet
     }
 
     /**
-     * @return PetPhoto[]
+     * @return PetPhoto
      */
-    public function getPhoto(): array
+    public function getPhoto(): PetPhoto
     {
         return $this->photo;
     }
 
     /**
-     * @param PetPhoto[] $photo
+     * @param PetPhoto $photo
      * @return $this
      */
-    public function setPhoto(array $photo)
+    public function setPhoto($photo)
     {
         $this->photo = $photo;
         return $this;

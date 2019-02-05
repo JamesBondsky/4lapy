@@ -16,6 +16,8 @@ use FourPaws\MobileApiBundle\Dto\Object\PetGender;
 use FourPaws\MobileApiBundle\Dto\Object\PetPhoto;
 use FourPaws\MobileApiBundle\Dto\Request\UserPetAddRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserPetDeleteRequest;
+use FourPaws\MobileApiBundle\Dto\Request\UserPetPhotoAddRequest;
+use FourPaws\MobileApiBundle\Dto\Request\UserPetPhotoDeleteRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserPetUpdateRequest;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\PersonalBundle\Service\PetService as AppPetService;
@@ -79,7 +81,7 @@ class PetService
         foreach ($this->appPetService->getGenders() as $gender) {
             /** @var UserFieldEnumValue $gender */
             $genders[] = [
-                'id' => $gender->getId(),
+                'id' => $gender->getXmlId(),
                 'title' => $gender->getValue()
             ];
         }
@@ -89,16 +91,11 @@ class PetService
                 'id' => $type['ID'],
                 'title' => $type['UF_NAME'],
                 'gender' => $genders,
-                'subcategories' => [
-                    'id' => $type['ID'],
-                    'title' => $type['UF_NAME'],
-                    'gender' => $genders,
-                    'breeds' => []
-                ]
+                'breeds' => []
             ];
             foreach ($breeds as $breed) {
                 if ($breed['UF_PET_TYPE'] === $type['ID']) {
-                    $result[$type['ID']]['subcategories']['breeds'][] = [
+                    $result[$type['ID']]['breeds'][] = [
                         'id' => $breed['ID'],
                         'title' => $breed['UF_NAME']
                     ];
@@ -218,6 +215,54 @@ class PetService
     }
 
     /**
+     * @param UserPetPhotoAddRequest $userPetPhotoAddRequest
+     * @return \Doctrine\Common\Collections\ArrayCollection
+     * @throws NotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
+     */
+    public function addUserPetPhoto(UserPetPhotoAddRequest $userPetPhotoAddRequest)
+    {
+        $id = $userPetPhotoAddRequest->getPetId();
+        $photo = $userPetPhotoAddRequest->getPhoto();
+        $pet = $this->appPetService->getCurUserPetById($id);
+        if (!$pet) {
+            throw new NotFoundException("Питомец с ID $id не найден у текущего пользователя");
+        }
+
+        // toDo доделать загрузку фото
+        // $fileData = \CFile::MakeFileArray($photo);
+        // $photoId = \CFile::SaveFile($fileData);
+        // $pet->setPhoto($photoId);
+
+        $this->petRepository->setEntity($pet)->update();
+        return $this->getUserPetAll();
+    }
+
+    /**
+     * @param UserPetPhotoDeleteRequest $userPetPhotoDeleteRequest
+     * @return \Doctrine\Common\Collections\ArrayCollection
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
+     */
+    public function deleteUserPetPhoto(UserPetPhotoDeleteRequest $userPetPhotoDeleteRequest)
+    {
+        $id = $userPetPhotoDeleteRequest->getPetId();
+        $pet = $this->appPetService->getCurUserPetById($id);
+        if (!$pet) {
+            throw new NotFoundException("Питомец с ID $id не найден у текущего пользователя");
+        }
+        if ($pet->getPhoto()) {
+            $this->appPetService->deletePetPhoto($pet->getId());
+        }
+        return $this->getUserPetAll();
+    }
+
+    /**
      * @param \FourPaws\PersonalBundle\Entity\Pet $pet
      * @return Pet
      * @throws \Bitrix\Main\SystemException
@@ -230,16 +275,14 @@ class PetService
             ->setId($pet->getId())
             ->setName($pet->getName())
             ->setCategoryId($pet->getType())
-            ->setBreedId($pet['UF_BREED'])
+            // ->setBreedId($pet->getBreed())
             ->setBirthday($birthday)
             ->setBirthdayString($pet->getAgeString())
             ->setPhoto(
-                [
-                    (new PetPhoto())
-                        ->setId($pet->getPhoto())
-                        ->setPreview($pet->getImgPath())
-                        ->setSrc($pet->getResizePopupImgPath())
-                ]
+                (new PetPhoto())
+                    ->setId($pet->getPhoto())
+                    ->setPreview($pet->getImgPath())
+                    ->setSrc($pet->getResizePopupImgPath())
             )
         ;
         if ($genderCode = $pet->getGender()) {
