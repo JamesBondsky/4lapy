@@ -144,9 +144,9 @@ class ShortProduct
     /**
      * @param int $id
      *
-     * @return ShortProduct
+     * @return $this
      */
-    public function setId(int $id): ShortProduct
+    public function setId(int $id)
     {
         $this->id = $id;
         return $this;
@@ -163,9 +163,9 @@ class ShortProduct
     /**
      * @param string $title
      *
-     * @return ShortProduct
+     * @return $this
      */
-    public function setTitle(string $title): ShortProduct
+    public function setTitle(string $title)
     {
         $this->title = $title;
         return $this;
@@ -182,10 +182,10 @@ class ShortProduct
     /**
      * @param string $webPage
      *
-     * @return ShortProduct
+     * @return $this
      * @throws \Bitrix\Main\SystemException
      */
-    public function setWebPage(string $webPage): ShortProduct
+    public function setWebPage(string $webPage)
     {
         $hrefDecorator = new FullHrefDecorator($webPage);
         $this->webPage = $hrefDecorator->getFullPublicPath();
@@ -203,9 +203,9 @@ class ShortProduct
     /**
      * @param string $xmlId
      *
-     * @return ShortProduct
+     * @return $this
      */
-    public function setXmlId(string $xmlId): ShortProduct
+    public function setXmlId(string $xmlId)
     {
         $this->xmlId = $xmlId;
         return $this;
@@ -222,10 +222,10 @@ class ShortProduct
     /**
      * @param string $picture
      *
-     * @return ShortProduct
+     * @return $this
      * @throws \Bitrix\Main\SystemException
      */
-    public function setPicture(string $picture): ShortProduct
+    public function setPicture(string $picture)
     {
         if (!empty($picture)) {
             $hrefDecorator = new FullHrefDecorator($picture);
@@ -245,10 +245,10 @@ class ShortProduct
     /**
      * @param string $picturePreview
      *
-     * @return ShortProduct
+     * @return $this
      * @throws \Bitrix\Main\SystemException
      */
-    public function setPicturePreview(string $picturePreview): ShortProduct
+    public function setPicturePreview(string $picturePreview)
     {
         $hrefDecorator = new FullHrefDecorator($picturePreview);
         $this->picturePreview = $hrefDecorator->getFullPublicPath();
@@ -266,9 +266,9 @@ class ShortProduct
     /**
      * @param int $inPack
      *
-     * @return ShortProduct
+     * @return $this
      */
-    public function setInPack(int $inPack): ShortProduct
+    public function setInPack(int $inPack)
     {
         $this->inPack = $inPack;
         return $this;
@@ -285,9 +285,9 @@ class ShortProduct
     /**
      * @param Price $price
      *
-     * @return ShortProduct
+     * @return $this
      */
-    public function setPrice(Price $price): ShortProduct
+    public function setPrice(Price $price)
     {
         $this->price = $price;
         return $this;
@@ -304,7 +304,7 @@ class ShortProduct
     /**
      * @param Collection|Tag[] $tag
      *
-     * @return ShortProduct
+     * @return $this
      */
     public function setTag($tag)
     {
@@ -322,9 +322,9 @@ class ShortProduct
 
     /**
      * @param string $brandName
-     * @return ShortProduct
+     * @return $this
      */
-    public function setBrandName(string $brandName): ShortProduct
+    public function setBrandName(string $brandName)
     {
         $this->brandName = $brandName;
         return $this;
@@ -341,9 +341,9 @@ class ShortProduct
     /**
      * @param int $bonusUser
      *
-     * @return ShortProduct
+     * @return $this
      */
-    public function setBonusUser(int $bonusUser): ShortProduct
+    public function setBonusUser(int $bonusUser)
     {
         $this->bonusUser = $bonusUser;
         return $this;
@@ -360,9 +360,9 @@ class ShortProduct
     /**
      * @param int $bonusAll
      *
-     * @return ShortProduct
+     * @return $this
      */
-    public function setBonusAll(int $bonusAll): ShortProduct
+    public function setBonusAll(int $bonusAll)
     {
         $this->bonusAll = $bonusAll;
         return $this;
@@ -378,9 +378,9 @@ class ShortProduct
 
     /**
      * @param bool $isByRequest
-     * @return ShortProduct
+     * @return $this
      */
-    public function setIsByRequest(bool $isByRequest): ShortProduct
+    public function setIsByRequest(bool $isByRequest)
     {
         $this->isByRequest = $isByRequest;
         return $this;
@@ -396,9 +396,9 @@ class ShortProduct
 
     /**
      * @param bool $isAvailable
-     * @return ShortProduct
+     * @return $this
      */
-    public function setIsAvailable(bool $isAvailable): ShortProduct
+    public function setIsAvailable(bool $isAvailable)
     {
         $this->isAvailable = $isAvailable;
         return $this;
