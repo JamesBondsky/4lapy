@@ -8,6 +8,7 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
+use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\Catalog\Collection\FilterCollection;
@@ -263,27 +264,29 @@ class ProductService
     public function getTags(Offer $offer)
     {
         $tags = [];
-        if ($offer->isHit()) {
-            $tags[] = $this->getTag(MarkHelper::MARK_HIT_IMAGE_SRC);
-        }
-        if ($offer->isNew()) {
-            $tags[] = $this->getTag(MarkHelper::MARK_NEW_IMAGE_SRC);
-        }
-        if ($offer->isSale()) {
-            $tags[] = $this->getTag(MarkHelper::MARK_SALE_IMAGE_SRC);
+        if (
+            ($offer->isHit() && $tag = $this->getTag(MarkHelper::MARK_HIT_IMAGE_SRC))
+            || ($offer->isNew() && $tag = $this->getTag(MarkHelper::MARK_NEW_IMAGE_SRC))
+            || ($offer->isSale() && $tag = $this->getTag(MarkHelper::MARK_SALE_IMAGE_SRC))
+        ) {
+            $tags[] = $tag;
         }
         return $tags;
     }
 
     /**
      * @param string $svg
-     * @return ShortProduct\Tag
+     * @return ShortProduct\Tag|false
      * @throws \Bitrix\Main\SystemException
      * @throws \ImagickException
      */
     public function getTag(string $svg)
     {
-        $png = ImageHelper::convertSvgToPng($svg);
+        try {
+            $png = ImageHelper::convertSvgToPng($svg);
+        } catch (NotFoundException $e) {
+            return false;
+        }
         return (new ShortProduct\Tag())->setImg($png);
     }
 
@@ -352,10 +355,13 @@ class ProductService
         $detailText = $product->getDetailText()->getText();
         $detailText = ImageHelper::appendDomainToSrc($detailText);
         $fullProduct = (new FullProduct())
-            ->setDetailsHtml($detailText);
+            ->setDetailsHtml($detailText)
+            ->setWeight($offer->getPackageLabel(false, 0))
+            ->setHasSpecialOffer($offer->isShare())
+        ;
 
         if ($needPackingVariants) {
-            $fullProduct->setPackingVariants($this->getPackingVariants($product));   // фасовки
+            $fullProduct->setPackingVariants($this->getPackingVariants($product, $offer));   // фасовки
         }
 
         // toDo: is there any better way to merge ShortProduct into FullProduct?
@@ -371,7 +377,8 @@ class ProductService
             ->setTag($shortProduct->getTag())
             ->setBonusAll($shortProduct->getBonusAll())
             ->setBonusUser($shortProduct->getBonusUser())
-            ->setIsByRequest($shortProduct->getIsByRequest());
+            ->setIsByRequest($shortProduct->getIsByRequest())
+            ->setIsAvailable($shortProduct->getIsAvailable());
 
         return $fullProduct;
     }
@@ -450,12 +457,13 @@ class ProductService
     /**
      * Фасовки товара
      * @param Product $product
+     * @param Offer $currentOffer
      * @return FullProduct[]
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \ImagickException
      */
-    public function getPackingVariants(Product $product): array
+    public function getPackingVariants(Product $product, Offer $currentOffer): array
     {
         $offers = $product->getOffersSorted();
         if (empty($offers)) {
@@ -465,6 +473,9 @@ class ProductService
         $packingVariants = [];
         /** @var Offer $offer */
         foreach ($offers as $offer) {
+            if ($offer->getId() === $currentOffer->getId()) {
+                continue;
+            }
             // toDo рефакторинг
             // костыль потому что в allStocks вместо объекта StockCollection приходит просто массив с кодами магазинов...
             // взято из метода FourPaws\Catalog\Model\getAllStocks()
@@ -472,15 +483,6 @@ class ProductService
             $offer->withAllStocks($stockService->getStocksByOffer($offer));
             // end костыль
 
-            /*
-            $packingVariants[] = (new FullProduct\PackingVariant())
-                ->setPrice($offer->getPrice())
-                ->setOfferId($offer->getId())
-                ->setWeight($offer->getPackageLabel(false, 0))
-                ->setHasSpecialOffer($offer->isShare())
-                ->setIsAvailable($offer->isAvailable());
-
-            */
             $packingVariants[] = $this->convertToFullProduct($product, $offer, false);
         }
         return $packingVariants;

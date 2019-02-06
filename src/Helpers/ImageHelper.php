@@ -38,11 +38,14 @@ class ImageHelper
      */
     public static function convertSvgToPng(string $svgFilePath): string
     {
-        // toDo не работет, доставить https://stackoverflow.com/a/45331159/2393499
-        return $svgFilePath;
         $svgFilePathInfo = pathinfo($svgFilePath);
         $svgFullFilePath = $_SERVER['DOCUMENT_ROOT'] . $svgFilePath;
-        $pngFilePath = $svgFilePathInfo['dirname'] . '/' . $svgFilePathInfo['filename'] . '.png';
+        $pngFileDir = '/upload/svg2png' . $svgFilePathInfo['dirname'] . '/';
+        $pngFilePath = $pngFileDir . $svgFilePathInfo['filename'] . '.png';
+
+        \CheckDirPath($_SERVER['DOCUMENT_ROOT'] . $pngFileDir);
+
+
         $pngFullFilePath = $_SERVER['DOCUMENT_ROOT'] . $pngFilePath;
         if (file_exists($pngFullFilePath)) {
             return $pngFilePath;
@@ -50,8 +53,15 @@ class ImageHelper
         if (!file_exists($svgFullFilePath)) {
             throw new NotFoundException("$svgFilePath does not exist");
         }
+
         $im = new \Imagick();
         $svg = file_get_contents($svgFullFilePath);
+
+        if (strpos($svg, '<?xml') === false) {
+            // handle invalid files
+            $svg = '<?xml version="1.0" encoding="utf-8"?>' . $svg;
+        }
+
         $im->readImageBlob($svg);
         $im->setImageFormat('png24');
         $im->writeImage($pngFullFilePath);

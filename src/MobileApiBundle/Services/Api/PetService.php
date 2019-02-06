@@ -146,7 +146,8 @@ class PetService
             ->setName($addUserPetRequest->getName())
             ->setType($addUserPetRequest->getCategoryId())
             ->setUserId($currentUser->getId())
-            ->setBreed('Whatever')
+            ->setBreed($addUserPetRequest->getBreedOther())
+            ->setBreedId($addUserPetRequest->getBreedId())
            ;
 
         if ($birthday = $addUserPetRequest->getBirthday()) {
@@ -181,7 +182,8 @@ class PetService
         $petEntity
             ->setName($userPetUpdateRequest->getName())
             ->setType($userPetUpdateRequest->getCategoryId())
-            ->setBreed($userPetUpdateRequest->getBreedId())
+            ->setBreed($userPetUpdateRequest->getBreedOther())
+            ->setBreedId($userPetUpdateRequest->getBreedId())
         ;
 
         if ($birthday = $userPetUpdateRequest->getBirthday()) {
@@ -275,7 +277,7 @@ class PetService
             ->setId($pet->getId())
             ->setName($pet->getName())
             ->setCategoryId($pet->getType())
-            ->setBreedId($pet->getBreedId())
+            ->setBreedId(intval($pet->getBreedId()))
             ->setBreedOther($pet->getBreed())
             ->setBirthday($birthday)
             ->setBirthdayString($pet->getAgeString())
