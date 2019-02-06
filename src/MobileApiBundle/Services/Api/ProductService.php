@@ -160,7 +160,8 @@ class ProductService
     {
         /** @var Offer $currentOffer */
         $currentOffer = $this->getCurrentOfferForList($product);
-        $fullProduct = $this->convertToFullProduct($product, $currentOffer);
+        $fullProduct = $this->convertToFullProduct($product, $currentOffer, true);
+
         // товары всегда доступны в каталоге (недоступные просто не должны быть в выдаче)
         $fullProduct->setIsAvailable(true);
         return $fullProduct;
@@ -218,7 +219,7 @@ class ProductService
         }
         $product = $offer->getProduct();
 
-        $fullProduct = $this->convertToFullProduct($product, $offer);
+        $fullProduct = $this->convertToFullProduct($product, $offer, true);
         $fullProduct->setIsAvailable($offer->isAvailable()); // returns ShortProduct
         $fullProduct
             ->setSpecialOffer($this->getSpecialOffer($offer))           // акция
@@ -228,7 +229,7 @@ class ProductService
             ->setPickup($this->getPickupText($offer))                   // товар под заказ
             // ->setCrossSale($this->getCrossSale($offer))              // похожие товары
             ->setBundle($this->getBundle($offer))                       // с этим товаром покупают
-            ->setPictureList($this->getPictureList($product))
+            ->setPictureList($this->getPictureList($product))           // картинки
             ;
 
         if ($product->getNormsOfUse()->getText() || $product->getLayoutRecommendations()->getText()) {
@@ -349,7 +350,7 @@ class ProductService
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \ImagickException
      */
-    public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = true): FullProduct
+    public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = false): FullProduct
     {
         $shortProduct = $this->convertToShortProduct($product, $offer);
         $detailText = $product->getDetailText()->getText();
@@ -359,10 +360,6 @@ class ProductService
             ->setWeight($offer->getPackageLabel(false, 0))
             ->setHasSpecialOffer($offer->isShare())
         ;
-
-        if ($needPackingVariants) {
-            $fullProduct->setPackingVariants($this->getPackingVariants($product, $offer));   // фасовки
-        }
 
         // toDo: is there any better way to merge ShortProduct into FullProduct?
         $fullProduct
@@ -379,6 +376,10 @@ class ProductService
             ->setBonusUser($shortProduct->getBonusUser())
             ->setIsByRequest($shortProduct->getIsByRequest())
             ->setIsAvailable($shortProduct->getIsAvailable());
+
+        if ($needPackingVariants) {
+            $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct));   // фасовки
+        }
 
         return $fullProduct;
     }
@@ -457,33 +458,37 @@ class ProductService
     /**
      * Фасовки товара
      * @param Product $product
-     * @param Offer $currentOffer
+     * @param FullProduct $currentFullProduct
      * @return FullProduct[]
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \ImagickException
      */
-    public function getPackingVariants(Product $product, Offer $currentOffer): array
+    public function getPackingVariants(Product $product, FullProduct $currentFullProduct): array
     {
         $offers = $product->getOffersSorted();
-        if (empty($offers)) {
+        // если в предложениях только текущий продукт
+        $hasOnlyCurrentOffer = (count($offers) === 1 && $offers->current()->getId() === $currentFullProduct->getId());
+        if (empty($offers) ||  $hasOnlyCurrentOffer) {
             return [];
         }
 
         $packingVariants = [];
         /** @var Offer $offer */
         foreach ($offers as $offer) {
-            if ($offer->getId() === $currentOffer->getId()) {
-                continue;
-            }
-            // toDo рефакторинг
-            // костыль потому что в allStocks вместо объекта StockCollection приходит просто массив с кодами магазинов...
-            // взято из метода FourPaws\Catalog\Model\getAllStocks()
-            $stockService = Application::getInstance()->getContainer()->get(StockService::class);
-            $offer->withAllStocks($stockService->getStocksByOffer($offer));
-            // end костыль
-
-            $packingVariants[] = $this->convertToFullProduct($product, $offer, false);
+            // if ($offer->getId() === $currentFullProduct->getId()) {
+                // toDo если переиспользовать $currentFullProduct - в массиве $packingVariants в итоге попадает null вместо объекта
+            //    $fullProduct = clone $currentFullProduct;
+            // } else {
+                // toDo рефакторинг костыля
+                // костыль потому что в allStocks вместо объекта StockCollection приходит просто массив с кодами магазинов...
+                // взято из метода FourPaws\Catalog\Model\getAllStocks()
+                $stockService = Application::getInstance()->getContainer()->get(StockService::class);
+                $offer->withAllStocks($stockService->getStocksByOffer($offer));
+                // end костыль
+                $fullProduct = $this->convertToFullProduct($product, $offer);
+            // }
+            $packingVariants[] = $fullProduct;
         }
         return $packingVariants;
     }

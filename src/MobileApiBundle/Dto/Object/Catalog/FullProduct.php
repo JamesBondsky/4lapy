@@ -208,11 +208,11 @@ class FullProduct extends ShortProduct
     }
 
     /**
-     * @return PackingVariant[]
+     * @return FullProduct[]
      */
-    public function getPackingVariants()
+    public function getPackingVariants(): array
     {
-        return $this->packingVariants;
+        return $this->packingVariants ?? [];
     }
 
     /**
@@ -220,7 +220,7 @@ class FullProduct extends ShortProduct
      *
      * @return FullProduct
      */
-    public function setPackingVariants($packingVariants): FullProduct
+    public function setPackingVariants(array $packingVariants): FullProduct
     {
         $this->packingVariants = $packingVariants;
         return $this;
