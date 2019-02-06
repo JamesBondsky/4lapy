@@ -29,7 +29,8 @@ use FourPaws\Helpers\WordHelper;
 $product = $arResult['PRODUCT'];
 $offers = $product->getOffersSorted();
 
-$pickupText = Loc::getMessage('CATALOG_ITEM_SNIPPET_VERTICAL.ORDER_BY_REQUEST');
+$byRequestText = Loc::getMessage('CATALOG_ITEM_SNIPPET_VERTICAL.ORDER_BY_REQUEST');
+$pickupText = Loc::getMessage('CATALOG_ITEM_SNIPPET_VERTICAL.ONLY_PICKUP');
 
 /**
  * @var $ecommerceService    GoogleEcommerceService
@@ -142,7 +143,7 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
                             $addAttr = ' data-price="' . $offer->getCatalogPrice() . '"';
                             $addAttr .= ' data-offerid="' . $offer->getId() . '"';
                             $addAttr .= ' data-image="' . $offerImage . '"';
-                            $addAttr .= ' data-pickup="' . ($offer->isByRequest() ? $pickupText : '') . '"';
+                            $addAttr .= ' data-pickup="' . ($offer->isByRequest() ? $byRequestText : '') . '"';
                             $addAttr .= ' data-name="' . $offer->getName() . '"';
                             $addAttr .= ' data-link="' . $offer->getLink() . '"';
                             $addAttr .= ' data-onclick="' . $getOnClick($offer) . '"';
@@ -179,7 +180,7 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
                                data-discount="<?= ($offer->getDiscountPrice() ?: '') ?>"
                                data-onclick="<?= $getOnClick($currentOffer) ?>"
                                data-onmousedown="<?= $getOnMouseDown($currentOffer) ?>"
-                               data-pickup="<?= $currentOffer->isByRequest() ? $pickupText : '' ?>"
+                               data-pickup="<?= $currentOffer->isByRequest() ? $byRequestText : '' ?>"
                                data-available="<?= !$currentOffer->isAvailable() ? 'Нет в наличии' : '' ?>"
                                data-price="<?= $currentOffer->getCatalogPrice() ?>"
                                data-offerid="<?= $currentOffer->getId() ?>"
@@ -222,6 +223,14 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
             <?php }
 
             if ($currentOffer->isByRequest()) {
+                ?>
+                <div class="b-common-item__info-wrap">
+                    <span class="b-common-item__text">
+                        <?= $byRequestText ?>
+                    </span>
+                </div>
+            <?php }
+            else if (!$currentOffer->isDeliveryAvailable() && $currentOffer->isPickupAvailable()) {
                 ?>
                 <div class="b-common-item__info-wrap">
                     <span class="b-common-item__text">
