@@ -66,6 +66,6 @@ class BxCollection
             return !$shipment->isSystem();
         });
 
-        return \current($filtered);
+        return \current($filtered) ?: null;
     }
 }
