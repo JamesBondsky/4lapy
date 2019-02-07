@@ -30,7 +30,7 @@ $product = $arResult['PRODUCT'];
 $offers = $product->getOffersSorted();
 
 $byRequestText = Loc::getMessage('CATALOG_ITEM_SNIPPET_VERTICAL.ORDER_BY_REQUEST');
-$pickupText = Loc::getMessage('CATALOG_ITEM_SNIPPET_VERTICAL.ONLY_PICKUP');
+//$pickupText = Loc::getMessage('CATALOG_ITEM_SNIPPET_VERTICAL.ONLY_PICKUP');
 
 /**
  * @var $ecommerceService    GoogleEcommerceService
@@ -230,14 +230,14 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
                     </span>
                 </div>
             <?php }
-            else if (!$currentOffer->isDeliveryAvailable() && $currentOffer->isPickupAvailable()) {
+            /*else if (!$currentOffer->isDeliveryAvailable() && $currentOffer->isPickupAvailable()) {
                 ?>
                 <div class="b-common-item__info-wrap">
                     <span class="b-common-item__text">
                         <?= $pickupText ?>
                     </span>
                 </div>
-            <?php }
+            <?php }*/
 
             /** @todo инфо о доставке/самовывозе */
             $addInfo = ob_get_clean();

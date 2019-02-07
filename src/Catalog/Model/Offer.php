@@ -64,6 +64,9 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class Offer extends IblockElement
 {
+    /**
+     *
+     */
     public const SIMPLE_SHARE_SALE_CODE = 'VKA0';
 
     public const SIMPLE_SHARE_DISCOUNT_CODE = 'ZRBT';
@@ -311,6 +314,16 @@ class Offer extends IblockElement
      * @var bool
      */
     protected $isByRequest;
+
+    /**
+     * @var bool
+     */
+    protected $isDeliverable;
+
+    /**
+     * @var bool
+     */
+    protected $isPickupAvailable;
 
     /**
      * @Type("string")
@@ -1312,6 +1325,7 @@ class Offer extends IblockElement
 
     /**
      * Максимальное доступное для доставки количество товара в текущем местоположении
+     * @todo сейчас метод всегда возвращает либо 0 либо 1, а не действительное количество
      * @todo заменить getQuantity() на этот метод после оптимизации расчета доставок
      *
      * @return int
@@ -1333,6 +1347,55 @@ class Offer extends IblockElement
         }
 
         return $this->deliverableQuantity;
+    }
+
+
+    /**
+     * Доступность оффера для доставки в текущем регионе
+     *
+     * @return int
+     *
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     */
+    public function isDeliverable(): bool
+    {
+        if (null === $this->isDeliverable) {
+            $this->isDeliverable = ($this->getAvailableAmount('', DeliveryService::DELIVERY_CODES) > 0);
+        }
+
+        return $this->isDeliverable;
+    }
+
+    /**
+     * Доступность оффера для самовывоза в текущем регионе
+     *
+     * @return int
+     *
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     */
+    public function isPickupAvailable(): bool
+    {
+        if (null === $this->isPickupAvailable) {
+            $this->isPickupAvailable = ($this->getAvailableAmount('', DeliveryService::PICKUP_CODES) > 0);
+        }
+
+        return $this->isPickupAvailable;
     }
 
     /**
@@ -1654,6 +1717,45 @@ class Offer extends IblockElement
     }
 
     /**
+     * Возвращает доступное количество товара на складах
+     *
+     * @todo сделать рассчёт действительного количества, а не для 1 штуки
+     *
+     * @param bool $locationId : id местоположения
+     * @param int  $deliveryCodes : символьные коды служб доставки
+     *
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     * @return int
+     */
+    protected function getAvailableAmount(string $locationId = '', $deliveryCodes = []): int
+    {
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+        $deliveries = $deliveryService->getByLocation($locationId, $deliveryCodes);
+        $max = 0;
+        foreach ($deliveries as $delivery) {
+
+            // Из-за того, что здесь не передаётся количество оффера, максимальное количество не будет >1
+            $delivery->setStockResult($deliveryService->getStockResultForOffer($this, $delivery));
+
+            if ($delivery->isSuccess()) {
+                $availableAmount = $delivery->getStockResult()->getOrderable()->getAmount();
+                $max = $max > $availableAmount ? $max : $availableAmount;
+            }
+        }
+
+        return $max;
+    }
+
+    /**
      * @todo использовать этот метод для расчета скидочных цен
      *
      * Check and set optimal price, discount, old price with bitrix discount
@@ -1716,35 +1818,6 @@ class Offer extends IblockElement
         }
 
         $this->isCounted = true;
-    }
-
-    /**
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws LoaderException
-     * @throws NotFoundException
-     * @throws NotSupportedException
-     * @throws ObjectNotFoundException
-     * @throws StoreNotFoundException
-     * @return int
-     */
-    protected function getAvailableAmount(): int
-    {
-        /** @var DeliveryService $deliveryService */
-        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
-        $deliveries = $deliveryService->getByLocation();
-        $max = 0;
-        foreach ($deliveries as $delivery) {
-            $delivery->setStockResult($deliveryService->getStockResultForOffer($this, $delivery));
-            if ($delivery->isSuccess()) {
-                $availableAmount = $delivery->getStockResult()->getOrderable()->getAmount();
-                $max = $max > $availableAmount ? $max : $availableAmount;
-            }
-        }
-
-        return $max;
     }
 
     /**
