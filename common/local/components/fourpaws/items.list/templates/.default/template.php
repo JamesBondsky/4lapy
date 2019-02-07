@@ -87,7 +87,7 @@ use FourPaws\Decorators\SvgDecorator; ?>
                                 ?>
                                 <span class="b-news-item__label"><?= $item['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'] ?></span>
                             <?php } ?>
-                            <h4 class="b-news-item__header"><?= $item['NAME'] ?></h4>
+                            <h3 class="b-news-item__header"><?= $item['NAME'] ?></h3>
                             <?php if (!empty($item['PREVIEW_TEXT'])) { ?>
                                 <p class="b-news-item__description"><?= htmlspecialcharsback(
                                         $item['PREVIEW_TEXT']

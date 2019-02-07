@@ -42,7 +42,7 @@ if (empty($arResult['ITEMS'])) {
                 }
             }
 
-            ?><div class="b-info-blocks__item-title"><?=$arItem['NAME']?></div>
+            ?><h2 class="b-info-blocks__item-title"><?=$arItem['NAME']?></h2>
             <div class="b-info-blocks__item-description"><?php
                 if (isset($arParams['DISPLAY_PREVIEW_TEXT']) && $arParams['DISPLAY_PREVIEW_TEXT'] === 'Y') {
                     echo htmlspecialcharsback($arItem['PREVIEW_TEXT']);
