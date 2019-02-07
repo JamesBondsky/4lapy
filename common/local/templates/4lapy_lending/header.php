@@ -69,6 +69,19 @@ $markup = PawsApplication::markup();
                 }
 
             }, 500);
+
+            <?
+            $pageAnchor = $_GET['anchor'];
+            if ($pageAnchor)
+            {
+                ?>
+                $([document.documentElement, document.body]).animate({
+                    scrollTop: $('#registr-check').offset().top
+                }, 2000);
+                <?
+                //FIXME убрать параметр anchor из URL`а
+            }
+            ?>
         });
     </script>
 
