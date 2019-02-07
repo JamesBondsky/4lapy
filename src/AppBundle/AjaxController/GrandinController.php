@@ -79,18 +79,21 @@ class GrandinController extends Controller
                 throw new JsonResponseException($this->ajaxMess->getWrongDataError());
             }
 
+            $email = $request->get('email');
+            $userId = $USER->GetID();
+
             $iblockElement = new \CIBlockElement();
             $resultAdd = $iblockElement->Add([
                 'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::GRANDIN_REQUEST),
                 'NAME' => 'Заявка ' . implode(' ', [$USER->GetID(), $request->get('surname'), $request->get('name')]),
                 'PROPERTY_VALUES' => [
-                    'USER' => $USER->GetID(),
+                    'USER' => $userId,
                     'DATE' => $request->get('date'),
                     'SUM' => $request->get('sum'),
                     'SURNAME' => $request->get('surname'),
                     'NAME' => $request->get('name'),
                     'PHONE' => $request->get('phone'),
-                    'EMAIL' => $request->get('email'),
+                    'EMAIL' => $email,
                     'RULES' => $request->get('rules') == 'Y',
                     'PET_TYPE' => self::$petTypes[$request->get('petType')],
                 ],
@@ -98,6 +101,26 @@ class GrandinController extends Controller
 
             if (!$resultAdd) {
                 throw new JsonResponseException($this->ajaxMess->getAddError($iblockElement->LAST_ERROR));
+            }
+
+            try {
+                $sender = App::getInstance()->getContainer()->get('expertsender.service');
+                $sender->sendAfterCheckReg([
+                    'userEmail' => $email,
+                    'userId' => $userId,
+                ]);
+            }
+            catch (\Exception $exception)
+            {
+                //FIXME залогировать
+                /*$instance = static::getInstance();
+                $instance->log()->critical(
+                    sprintf(
+                        '%s exception: %s',
+                        __METHOD__,
+                        $exception->getMessage()
+                    )
+                );*/
             }
 
             $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD);
