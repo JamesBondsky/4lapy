@@ -1197,13 +1197,13 @@ class ExpertsenderService implements LoggerAwareInterface
      * @throws ExpertsenderServiceApiException
      * @throws ExpertsenderServiceException
      */
-    public function sendAfterCheckReg(User $user): bool
+    public function sendAfterCheckReg(array $params): bool
     {
-        if($user->hasEmail()) {
-            $transactionId = self::NEW_CHECK_REG_LIST_ID;
+        $email = $params['userEmail'];
+        $userId = $params['userId'];
 
-            $email = $user->getEmail();
-            $userId = $user->getId();
+        if($email) {
+            $transactionId = self::NEW_CHECK_REG_LIST_ID;
 
             $this->log()->info(
                 __FUNCTION__,

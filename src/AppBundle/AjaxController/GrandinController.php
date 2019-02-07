@@ -80,13 +80,14 @@ class GrandinController extends Controller
             }
 
             $email = $request->get('email');
+            $userId = $USER->GetID();
 
             $iblockElement = new \CIBlockElement();
             $resultAdd = $iblockElement->Add([
                 'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::GRANDIN_REQUEST),
                 'NAME' => 'Заявка ' . implode(' ', [$USER->GetID(), $request->get('surname'), $request->get('name')]),
                 'PROPERTY_VALUES' => [
-                    'USER' => $USER->GetID(),
+                    'USER' => $userId,
                     'DATE' => $request->get('date'),
                     'SUM' => $request->get('sum'),
                     'SURNAME' => $request->get('surname'),
@@ -104,7 +105,10 @@ class GrandinController extends Controller
 
             try {
                 $sender = App::getInstance()->getContainer()->get('expertsender.service');
-                $sender->sendAfterCheckReg($email);
+                $sender->sendAfterCheckReg([
+                    'userEmail' => $email,
+                    'userId' => $userId,
+                ]);
             }
             catch (\Exception $exception)
             {
