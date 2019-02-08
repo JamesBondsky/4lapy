@@ -113,11 +113,9 @@ $markup = PawsApplication::markup();
                         <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="prizes">Призы</a>
                     </li>
 
-                    <?/**
                     <li  class="header-landing-menu__item">
                         <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="winners">Победители</a>
                     </li>
-                    */?>
 
                     <li  class="header-landing-menu__item">
                         <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="where-buy">Где купить</a>
@@ -189,8 +187,3 @@ $markup = PawsApplication::markup();
     <main class="b-wrapper<?= $template->getIndexMainClass() ?>" role="main">
 
 <?php }
-
-if ($template->hasContent()) {
-    $asset->addCss('/include/static/style.css');
-    $asset->addJs('/include/static/scripts.js');
-}

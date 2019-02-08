@@ -74,7 +74,7 @@ if ($template->hasMainWrapper()) { ?>
     </section>
 
 
-    <?/**
+
     <section data-id-section-landing="winners" class="winners-landing" style="background-image: url('/static/build/images/content/bg-splash-landing.png')">
         <div class="winners-landing__bg-left" style="background-image: url('/static/build/images/content/landing-winners-left.png')"></div>
         <div class="winners-landing__bg-right" style="background-image: url('/static/build/images/content/landing-winners-right.png')"></div>
@@ -90,7 +90,7 @@ if ($template->hasMainWrapper()) { ?>
                                 <span class="b-tab-title__text">8.02</span>
                             </a>
                         </li>
-                        <li class="b-tab-title__item js-tab-item">
+                        <?/**<li class="b-tab-title__item js-tab-item">
                             <a class="b-tab-title__link js-tab-link" href="javascript:void(0);" data-tab="winners-landing2">
                                 <span class="b-tab-title__text">15.02</span>
                             </a>
@@ -109,7 +109,7 @@ if ($template->hasMainWrapper()) { ?>
                             <a class="b-tab-title__link js-tab-link" href="javascript:void(0);" data-tab="winners-landing5">
                                 <span class="b-tab-title__text">Главные призы</span>
                             </a>
-                        </li>
+                        </li>**/ ?>
                     </ul>
                 </div>
                 <div class="b-tab-content">
@@ -117,56 +117,77 @@ if ($template->hasMainWrapper()) { ?>
                         <div class="winners-landing__list">
                             <div class="item__wrap">
                                 <div class="item">
-                                    <div class="item__name" title="Иванова Ольга">Иванова Ольга</div>
+                                    <div class="item__name" title="Строгонова Светлана">Строгонова Светлана</div>
                                     <div class="item__dotes"></div>
-                                    <div class="item__phone">*(***)****356</div>
+                                    <div class="item__phone">*(***)****762</div>
                                 </div>
                             </div>
                             <div class="item__wrap">
                                 <div class="item">
-                                    <div class="item__name" title="Седов Максим">Седов Максим</div>
+                                    <div class="item__name" title="Сериков Сергей">Сериков Сергей</div>
                                     <div class="item__dotes"></div>
-                                    <div class="item__phone">*(***)****356</div>
+                                    <div class="item__phone">*(***)****654</div>
                                 </div>
                             </div>
                             <div class="item__wrap">
                                 <div class="item">
-                                    <div class="item__name" title="Кириллов Олег">Кириллов Олег</div>
+                                    <div class="item__name" title="Москва Алина">Москва Алина</div>
                                     <div class="item__dotes"></div>
-                                    <div class="item__phone">*(***)****356</div>
+                                    <div class="item__phone">*(***)****334</div>
                                 </div>
                             </div>
                             <div class="item__wrap">
                                 <div class="item">
-                                    <div class="item__name" title="Григорий Лялин">Григорий Лялин</div>
+                                    <div class="item__name" title="Сергеева Светлана">Сергеева Светлана</div>
                                     <div class="item__dotes"></div>
-                                    <div class="item__phone">*(***)****356</div>
+                                    <div class="item__phone">*(***)****625</div>
                                 </div>
                             </div>
                             <div class="item__wrap">
                                 <div class="item">
-                                    <div class="item__name" title="Сандалова Александра">Сандалова Александра</div>
+                                    <div class="item__name" title="Прокофьева светлана">Прокофьева светлана</div>
                                     <div class="item__dotes"></div>
-                                    <div class="item__phone">*(***)****356</div>
+                                    <div class="item__phone">*(***)****311</div>
                                 </div>
                             </div>
                             <div class="item__wrap">
                                 <div class="item">
-                                    <div class="item__name" title="Пронина Ирина">Пронина Ирина</div>
+                                    <div class="item__name" title="Ляпина Татьяна">Ляпина Татьяна</div>
                                     <div class="item__dotes"></div>
-                                    <div class="item__phone">*(***)****356</div>
+                                    <div class="item__phone">*(***)****967</div>
                                 </div>
                             </div>
                             <div class="item__wrap">
                                 <div class="item">
-                                    <div class="item__name" title="Иванова Ольга">Иванова Ольга</div>
+                                    <div class="item__name" title="Мелентьева Ксения">Мелентьева Ксения</div>
                                     <div class="item__dotes"></div>
-                                    <div class="item__phone">*(***)****356</div>
+                                    <div class="item__phone">*(***)****855</div>
+                                </div>
+                            </div>
+                            <div class="item__wrap">
+                                <div class="item">
+                                    <div class="item__name" title="гиззатуллина окасана">гиззатуллина окасана</div>
+                                    <div class="item__dotes"></div>
+                                    <div class="item__phone">*(***)****177</div>
+                                </div>
+                            </div>
+                            <div class="item__wrap">
+                                <div class="item">
+                                    <div class="item__name" title="Казаков Владимир">Казаков Владимир</div>
+                                    <div class="item__dotes"></div>
+                                    <div class="item__phone">*(***)****059</div>
+                                </div>
+                            </div>
+                            <div class="item__wrap">
+                                <div class="item">
+                                    <div class="item__name" title="Petrova Anna">Petrova Anna</div>
+                                    <div class="item__dotes"></div>
+                                    <div class="item__phone">*(***)****307</div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="b-tab-content__container js-tab-content" data-tab-content="winners-landing2">
+                    <?/**<div class="b-tab-content__container js-tab-content" data-tab-content="winners-landing2">
                         <div class="winners-landing__list">
                             <div class="item__wrap">
                                 <div class="item">
@@ -412,12 +433,12 @@ if ($template->hasMainWrapper()) { ?>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div>**/ ?>
                 </div>
             </div>
         </div>
     </section>
-    **/ ?>
+
 
     <section data-id-section-landing="contacts" class="feedback-landing" data-wrap-form-feedback-landing="true">
         <div class="feedback-landing__container container-landing">
