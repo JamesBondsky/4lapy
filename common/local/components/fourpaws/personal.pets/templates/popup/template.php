@@ -72,6 +72,7 @@
                     <label class="b-input-line__label" for="breed-pet">Порода</label>
                 </div>
                 <div class="b-input b-input--registration-form">
+                    <input class="js-id-breed-pet-form-add-pet js-no-valid" name="UF_BREED_ID" value="" type="hidden">
                     <div class="b-select b-select--select2" data-wrap-breed-pet-form-add-pet="true" data-id="breed-pet" data-name="UF_BREED">
                       <select class="b-select__block" id="breed-pet" name="UF_BREED">
                         <option value="" disabled="disabled" selected="selected">Выберите породу</option>
