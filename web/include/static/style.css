@@ -60,7 +60,7 @@ margin: 0 22px 0 0;
 .subscribe_item:nth-child(4), .partners_item:nth-child(3), .delivery_item:nth-child(3), .bonus_item:nth-child(3) {
 margin: 0;
 }
-.subscribe_item h5{
+.subscribe_item h5, .subscribe_item h3 {
 color: #138550;
     text-transform: uppercase;
     font-size: 16px;
@@ -69,7 +69,8 @@ color: #138550;
     text-align: left;
     margin-bottom: 10px;
 }
-.partners_item h5{
+.partners_item h5,
+.partners_item h3{
 color: #138550;
     text-transform: uppercase;
     font-size: 16px;
@@ -78,7 +79,7 @@ color: #138550;
     text-align: left;
     margin-bottom: 10px;
 }
-.delivery_item h5{
+.delivery_item h5, .delivery_item h3{
 color: #138550;
     text-transform: uppercase;
     font-size: 16px;
@@ -87,7 +88,7 @@ color: #138550;
     text-align: center;
     margin-bottom: 10px;
 }
-.bonus_item h5{
+.bonus_item h5, .bonus_item h3 {
     color: #138550;
     text-transform: uppercase;
     font-size: 16px;
@@ -191,7 +192,8 @@ width: 100%;
 top: 50%;
 margin-top: -100px;
 }
-.subscribe_top_block .right_text_wrap h5 {
+.subscribe_top_block .right_text_wrap h5,
+.subscribe_top_block .right_text_wrap .right_text_wrap__title {
     color: #ffffff;
 }
 .left_top_block, .right_top_block {
@@ -282,6 +284,7 @@ width: 55%;
 margin: 0 0 0 150px;
 min-width: 360px;
 }
+.right_text_wrap .right_text_wrap__title,
 .right_text_wrap h5 {
 font-family: 'Pacifico', cursive;
 font-size: 50px;
@@ -436,7 +439,7 @@ margin: 0 auto;
 position: relative;
 text-align: center;
 }
-.green_ribbon .ribbon_body h2, .green_ribbon .ribbon_body hr {
+.green_ribbon .ribbon_body h2, .green_ribbon .ribbon_body hr, .green_ribbon .ribbon_body h3 {
 color: #0c8449;
 }
 .green_ribbon .ribbon_body hr {
@@ -554,7 +557,7 @@ width: 30%;
 max-width: 310px;
 margin: 0 1.5%;
 }
-.column h5 {
+.column h5, .column h3 {
 color: #138550;
 text-transform: uppercase;
 font-size: 18px;
@@ -646,11 +649,11 @@ margin-left: -350px;
 color: #000000;
 text-align: center;
 }
-.hand_ribbon_body h4 {
+.hand_ribbon_body h4, .hand_ribbon_body h3 {
 color: #ffffff;
 font-weight: bold;
 }
-.phone_ribbon_body h4, .phone_ribbon_body a {
+.phone_ribbon_body h4, .phone_ribbon_body a, .phone_ribbon_body .phone_ribbon_body__title {
 color: #000000;
 font-weight: bold;
 margin-bottom: 10px;
@@ -705,7 +708,7 @@ align-items: flex-start;
 align-content: center;
 height: 100%;
 }
-.feed_ribbon_body h4 {
+.feed_ribbon_body h4, .feed_ribbon_body h3 {
 color: #23394c;
 font-weight: bold;
 }
@@ -747,7 +750,8 @@ margin-bottom: 30px;
 text-align: center;
 margin-bottom: 30px;
 }
-.partners_block_head h2, .gray_block_head h2 {
+.partners_block_head h2, .gray_block_head h2,
+.partners_block_head h3, .gray_block_head h3{
 color: #0c8449;
 }
 .review_block_inner_wrap {
@@ -1072,11 +1076,12 @@ margin-top: 20px;
     width: 200px;
     text-align: center;
 }
-.digit_item h3 {
+.digit_item .b-title {
     color: #0c8449;
     font-weight: bold;
     font-size: 50px;
     line-height: 50px;
+    margin-top: 0;
 }
 .digit_item p {
     margin: 0;
@@ -1252,11 +1257,12 @@ figure.slider figure figcaption {
     margin-left: -100px;
     border-top: 2px solid #0c8449;
 }
-.digit_item h2 {
+.digit_item h2,
+.digit_item .b-title {
     font-size: 50px;
     margin-right: 0;
 }
-.digit_item h5 {
+.digit_item h5, .digit_item h3 {
     margin-top: 10px;
 }
 .column_p_wrap {
@@ -1373,7 +1379,7 @@ position: relative;
     margin: 20% 0;
     left: 25%;
 }
-.variant_text h5 {
+.variant_text h5, .variant_text h3 {
     color: #138550;
     text-transform: uppercase;
     font-size: 18px;
@@ -1429,7 +1435,8 @@ width:25%;
     float: right;
 width:25%;
 }
-.new_hand_ribbon_body .left_block h5, .new_hand_ribbon_body .right_block h5 {
+.new_hand_ribbon_body .left_block h5, .new_hand_ribbon_body .right_block h5,
+.new_hand_ribbon_body .left_block h3, .new_hand_ribbon_body .right_block h3{
     color: #ffffff;
     font-size: 35px;
     line-height: 35px;
@@ -1458,6 +1465,11 @@ margin-bottom: 40px;
 height: 200px
 margin-top: 40px;
 margin-bottom: 40px;
+}
+
+.about_head h1.b-title {
+    margin-bottom: 0;
+    margin-top: 0;
 }
 
 
@@ -1976,7 +1988,7 @@ figure.slider figure {
     max-width: 100%;
 }
 
-.subscribe_item h5 {
+.subscribe_item h5, .subscribe_item h3 {
     text-align: center;
 }
 }

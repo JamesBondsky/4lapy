@@ -2,7 +2,7 @@
 <div id="about_wrap">
 	<div class="about_body">
 		<div class="about_head">
-			<h2 class="b-title">Оформление заказа</h2>
+			<h1 class="b-title">Оформление заказа</h1>
 			<p>
 				 Вы можете воспользоваться любым из предложенных способов оформления заказа. <br>
 				 Для нас важно, чтобы каждый покупатель чувствовал комфорт и удобство при совершении покупок.<br>
@@ -19,7 +19,7 @@
 		</div>
 		<div class="variant_item">
 			<div class="variant_text">
-				<h5>На сайте</h5>
+				<h3>На сайте</h3>
 				<p>
 					 Удобные возможности сайта
 				</p>
@@ -38,7 +38,7 @@
 		</div>
 		<div class="variant_item">
 			<div class="variant_text">
-				<h5>По телефону</h5>
+				<h3>По телефону</h3>
 				<p>
 					 Быстрый заказ по телефону
 				</p>
@@ -57,7 +57,7 @@
 		</div>
 		<div class="variant_item">
 			<div class="variant_text">
-				<h5>В мобильном приложении</h5>
+				<h3>В мобильном приложении</h3>
 				<p>
 					 Преимущества мобильного приложения
 				</p>
@@ -90,21 +90,21 @@
 			<div class="delivery_wrap">
 				<div class="delivery_item">
  <img src="/include/static/images/order01.png" alt="">
-					<h5>В магазине</h5>
+					<h3>В магазине</h3>
 					<p>
 						 Выберите удобный для вас магазин Четыре Лапы. Заказ будет собран в течение часа и готов к выдачи без очереди
 					</p>
 				</div>
 				<div class="delivery_item">
  <img src="/include/static/images/order02.png" alt="">
-					<h5>Курьерская доставка</h5>
+					<h3>Курьерская доставка</h3>
 					<p>
 						 Удобная и быстрая доставка на дом или в офис. Необходимо только указать адрес и выбрать удобный интервал
 					</p>
 				</div>
 				<div class="delivery_item">
  <img src="/include/static/images/order03.png" alt="">
-					<h5>В пункте самвывоза</h5>
+					<h3>В пункте самвывоза</h3>
 					<p>
 						 Выберете наиболее удобный пункт самовывоза из более чем 1000 пунктов выдачи&nbsp;по всей России
 					</p>
@@ -119,14 +119,14 @@
 	<div class="new_hand_ribbon">
 		<div class="new_hand_ribbon_body">
 			<div class="left_block">
-				<h5>С нами выгодно</h5>
+				<h3>С нами выгодно</h3>
 				<p>
 					 Возврат бонусами на карту до 7% от стоимости покупок<br>
 					 1 бонус = 1 рубль
 				</p>
 			</div>
 			<div class="right_block">
-				<h5>Оплата бонусами</h5>
+				<h3>Оплата бонусами</h3>
 				<p>
 					 Оплачивайте бонусами до 90% следующих покупок
 				</p>
@@ -144,21 +144,21 @@
 			<div class="partners_wrap">
 				<div class="partners_item">
  <img src="/include/static/images/pay_method1.jpg" alt="">
-					<h5>Оплата картой</h5>
+					<h3>Оплата картой</h3>
 					<p>
 						 Чтобы оплатить заказ на сайте, на этапе оплаты нажмите кнопку «Оплатить банковской картой»<br>
 					</p>
 				</div>
 				<div class="partners_item">
  <img src="/include/static/images/pay_method2.jpg" alt="">
-					<h5>Курьеру при получении</h5>
+					<h3>Курьеру при получении</h3>
 					<p>
 						 Вы можете оплатить заказ курьеру при получении, как наличными, так и банковской картой&nbsp;<br>
 					</p>
 				</div>
 				<div class="partners_item">
  <img src="/include/static/images/pay_method3.jpg" alt="">
-					<h5>На кассе в магазине</h5>
+					<h3>На кассе в магазине</h3>
 					<p>
 						 Покупки в магазине вы можете оплатить наличными, банковской картой или бонусными баллами
 					</p>

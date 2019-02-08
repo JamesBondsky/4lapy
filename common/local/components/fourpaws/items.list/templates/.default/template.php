@@ -94,7 +94,7 @@ use FourPaws\Decorators\SvgDecorator; ?>
                                     ) ?></p>
                             <?php } ?>
                             <?php if (!empty($item['DISPLAY_ACTIVE_FROM'])) { ?>
-                                <span class="b-news-item__date"><?= $item['DISPLAY_ACTIVE_FROM'] ?></span>
+                                <time datetime=<?= $item['DISPLAY_ACTIVE_FROM'] ?>" class="b-news-item__date"><?= $item['DISPLAY_ACTIVE_FROM'] ?></time>
                             <?php } ?>
                             <?php if (!empty($item['DETAIL_PAGE_URL'])){ ?>
                         </a>

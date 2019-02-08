@@ -2,7 +2,7 @@
 <div id="about_wrap">
 	<div class="about_body">
 		<div class="about_head">
-			<h2 class="b-title">Бонусная программа</h2>
+			<h1 class="b-title">Бонусная программа</h1>
 		</div>
 		<div class="about_asvantages_head">
 			<div>
@@ -30,8 +30,8 @@
  <img src="/include/static/images/bonus_left.jpg" alt="">
 			<div class="right_top_block">
 				<div class="right_text_wrap">
-					<h5>Стань участником<br>
-					 бонусной программы</h5>
+					<h3 class="right_text_wrap__title">Стань участником<br>
+					 бонусной программы</h3>
 					<p>
 						 Бонусная программа&nbsp;позволит получать накопительные бонусы на карту Четыре Лапы. Копите или тратьте бонусные баллы на любые покупки в магазине, на сайте или в мобильном приложении, получайте дополнительные подарочные бонусы и совершайте покупки с выгодой!
 					</p>
@@ -54,21 +54,21 @@
 		<div class="bonus_middle_block">
 			<div class="bonus_wrap">
 				<div class="bonus_item">
-					<h5>Шаг 1</h5>
+					<h3>Шаг 1</h3>
  <img src="/include/static/images/bon_3.jpg" alt="">
 					<p>
 						 Сделайте единовременную покупку любых товаров на сумму от 500 рублей <span class="hide_block_wrap">*<span class="hide_block">Для городов Волгоград, Воронеж, Калуга, Владимир, Иваново, Кострома, Липецк, Луховицы, Нижний Новгород, Орел, Рязань, Тверь, Ярославль - покупка на 300 рублей.</span></span>
 					</p>
 				</div>
 				<div class="bonus_item">
-					<h5>Шаг 2</h5>
+					<h3>Шаг 2</h3>
  <img src="/include/static/images/bon_2.jpg" alt="">
 					<p>
 						 Получите карту на кассе или виртуальную карту на сайте или в мобильном приложении
 					</p>
 				</div>
 				<div class="bonus_item">
-					<h5>Шаг 3</h5>
+					<h3>Шаг 3</h3>
  <img src="/include/static/images/bon_1.jpg" alt="">
 					<p>
 						 Оплачивайте до 90% следующих покупок бонусами
@@ -94,7 +94,7 @@
 					<div class="column_top">
  <img src="/include/static/images/ic5_3.png" alt="">
 						<div class="column_text_wrap">
-							<h5>Быстро!</h5>
+							<h3>Быстро!</h3>
 							<div class="column_p_wrap">
 								<p>
 									 Тратить бонусы можно сразу после регистрации<br>
@@ -107,7 +107,7 @@
 					<div class="column_top">
  <img src="/include/static/images/ic5_1.png" alt="">
 						<div class="column_text_wrap">
-							<h5>Удобно!</h5>
+							<h3>Удобно!</h3>
 							<div class="column_p_wrap">
 								<p>
 									 Оплачивайте до 90% следующих покупок
@@ -120,7 +120,7 @@
 					<div class="column_top">
  <img src="/include/static/images/ic5_2.png" alt="">
 						<div class="column_text_wrap">
-							<h5>Выгодно!</h5>
+							<h3>Выгодно!</h3>
 							<div class="column_p_wrap">
 								<p>
 									 Один начисленный бонус равен одному рублю
@@ -141,7 +141,7 @@
  <img src="/include/static/images/bonus_banner.jpg" alt="">
 			<div class="right_top_block">
 				<div class="right_text_wrap">
-					<h5>Виртуальная бонусная&nbsp;карта</h5>
+					<h3 class="right_text_wrap__title">Виртуальная бонусная&nbsp;карта</h3>
 					<p>
 						 Больше не&nbsp;нужно носить карту с&nbsp;собой! Скачивайте приложение на&nbsp;App Store или Google Play, регистрируйте карту и&nbsp;используйте смартфон для оплаты покупок бонусами в&nbsp;приложении или в&nbsp;магазине Четыре Лапы.
 					</p>
@@ -166,7 +166,7 @@
 	</div>
 	<div class="phone_ribbon">
 		<div class="phone_ribbon_body partners_phone">
-			<h4>Задайте нам вопрос!</h4>
+			<h3 class="phone_ribbon_body__title">Задайте нам вопрос!</h3>
 			<p>
 				 Позвоните по телефону <b>8-800-770-00-22</b> или закажите обратный звонок.
 			</p>

@@ -1,7 +1,7 @@
 <div id="about_wrap">
 	<div class="about_body">
 		<div class="about_head">
-			<h2 class="b-title">Партнерская программа</h2>
+			<h1 class="b-title">Партнерская программа</h1>
 		</div>
 		<div class="about_asvantages_head">
 			<div>
@@ -30,9 +30,9 @@
 			<div class="right_top_block">
 				<div class="right_text_wrap">
 					<div class="head_wrap">
-						<h5>
+						<h2 class="right_text_wrap__title">
 						Возможности<br>
-						 для партнеров!</h5>
+						 для партнеров!</h2>
 					</div>
 					<p>
 						 Компания Четыре Лапы сотрудничает со множеством клубов, питомниками и благотворительными фондами. Принимая участие в партнерской программе&nbsp;наши партнеры получают уникальные преимущества и скидки.
@@ -57,21 +57,21 @@
 			<div class="partners_wrap">
 				<div class="partners_item">
  <img src="/include/static/images/partner_1.jpg" alt="">
-					<h5>Скидки и подарки</h5>
+					<h3>Скидки и подарки</h3>
 					<p>
 						 Для клиентов наших партнеров (покупателей щенков/котят) мы предоставим сертификат на скидку 15% и подарок
 					</p>
 				</div>
 				<div class="partners_item">
  <img src="/include/static/images/partner_2.jpg" alt="">
-					<h5>Размещение на сайте</h5>
+					<h3>Размещение на сайте</h3>
 					<p>
 						 Информацию о вашей организации смогут увидеть множество посетителей сайта <a href="http://4lapy.ru"><b>4lapy.ru</b></a>
 					</p>
 				</div>
 				<div class="partners_item">
  <img src="/include/static/images/partner_3.jpg" alt="">
-					<h5>Реклама в магазинах</h5>
+					<h3>Реклама в магазинах</h3>
 					<p>
 						 Ваши рекламные материалы будут размещены в магазинах Четыре Лапы&nbsp;на стойках «Наши Партнёры»
 					</p>
@@ -85,8 +85,8 @@
 	</div>
 	<div class="green_ribbon">
 		<div class="partners_block_head">
-			<h2 class="b-title b-title--viewed">30% скидка для питомников-партнёров<br>
-			 на сухие корма торговых марок:</h2>
+			<h3 class="b-title b-title--viewed">30% скидка для питомников-партнёров<br>
+			 на сухие корма торговых марок:</h3>
 			<hr class="green_line">
 		</div>
 		<div class="partners_logo_wrap">
@@ -108,7 +108,7 @@
 	</div>
 	<div class="partners_ribbon">
 		<div class="partners_block_head">
-			<h2 class="b-title b-title--viewed">10% скидка для питомников-партнеров</h2>
+			<h3 class="b-title b-title--viewed">10% скидка для питомников-партнеров</h3>
 			<hr class="green_line">
 		</div>
 		<div class="partners_small_logo_wrap">
@@ -196,8 +196,8 @@
 	</div>
 	<div class="green_ribbon">
 		<div class="ribbon_body">
-			<h2 class="b-title b-title--viewed">5% возвращаем бонусами<br>
- <span style="font-size: 13pt;">консервы, лакомства, аксессуары, наполнители, игрушки</span></h2>
+			<h3 class="b-title b-title--viewed">5% возвращаем бонусами<br>
+ <span style="font-size: 13pt;">консервы, лакомства, аксессуары, наполнители, игрушки</span></h3>
 			<hr class="green_line">
 		</div>
 	</div>
@@ -349,7 +349,7 @@
 	</div>
 	<div class="phone_ribbon">
 		<div class="phone_ribbon_body partners_phone">
-			<h4>Задайте нам вопрос!</h4>
+			<h3 class="phone_ribbon_body__title">Задайте нам вопрос!</h3>
 			<p>
 				 Более точную информацию по партнерской программе Вы можете получить по телефонам:<br>
 				 8 (800) 770-00-22, + 7 (495) 221-72-26 <small>(доб. 2078, 2079)</small>

@@ -29,7 +29,7 @@ if (empty($arResult['ITEMS'])) {
             ]
         );
 
-        ?><a class="b-info-blocks__item" href="<?=$arItem['DETAIL_PAGE_URL']?>" id="<?=$this->GetEditAreaId($arItem['ID'])?>">
+        ?><article class="b-info-blocks__item"><a class="b-info-blocks__item-link" href="<?=$arItem['DETAIL_PAGE_URL']?>" id="<?=$this->GetEditAreaId($arItem['ID'])?>">
             <div class="b-info-blocks__item-img"><?php
                 if (!empty($arItem['PRINT_PICTURE']['SRC'])) {
                     ?><img src="<?=$arItem['PRINT_PICTURE']['SRC']?>" alt="<?=$arItem['PRINT_PICTURE']['ALT']?>" title="<?=$arItem['PRINT_PICTURE']['TITLE']?>"><?php
@@ -57,9 +57,9 @@ if (empty($arResult['ITEMS'])) {
                     $dateStr .= ' по ' . $arItem['DISPLAY_ACTIVE_TO'];
                 }
                 ?>
-                <div class="b-info-blocks__item-date"><?=trim(ToLower($dateStr))?></div><?php
+                <time datetime="<?=trim(ToLower($dateStr))?>" class="b-info-blocks__item-date"><?=trim(ToLower($dateStr))?></time><?php
             }
-        ?></a><?php
+        ?></a></article><?php
     }
 ?></div><?php
 
