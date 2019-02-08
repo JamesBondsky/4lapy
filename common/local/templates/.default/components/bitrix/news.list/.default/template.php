@@ -48,16 +48,20 @@ if (empty($arResult['ITEMS'])) {
                     echo htmlspecialcharsback($arItem['PREVIEW_TEXT']);
                 }
             ?></div><?php
-            if (!empty($arItem['DISPLAY_ACTIVE_FROM']) || !empty($arItem['DISPLAY_ACTIVE_TO'])) {
+            if ((!empty($arItem['DISPLAY_ACTIVE_FROM']) && !empty($arItem['ACTIVE_FROM'])) ||
+                (!empty($arItem['DISPLAY_ACTIVE_TO']) && !empty($arItem['ACTIVE_TO']))) {
                 $dateStr = '';
+                $dateAttrStr = '';
                 if (!empty($arItem['DISPLAY_ACTIVE_FROM'])){
                     $dateStr = 'c ' . $arItem['DISPLAY_ACTIVE_FROM'];
+                    $dateAttrStr = ConvertDateTime($arItem['ACTIVE_FROM'], 'YYYY-MM-DD', 'ru');
                 }
                 if (!empty($arItem['DISPLAY_ACTIVE_TO'])){
                     $dateStr .= ' по ' . $arItem['DISPLAY_ACTIVE_TO'];
+                    $dateAttrStr = ConvertDateTime($arItem['ACTIVE_TO'], 'YYYY-MM-DD', 'ru');
                 }
                 ?>
-                <time datetime="<?=trim(ToLower($dateStr))?>" class="b-info-blocks__item-date"><?=trim(ToLower($dateStr))?></time><?php
+                <time datetime="<?= $dateAttrStr ?>" class="b-info-blocks__item-date"><?=trim(ToLower($dateStr))?></time><?php
             }
         ?></a></article><?php
     }

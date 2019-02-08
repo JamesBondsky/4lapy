@@ -93,8 +93,8 @@ use FourPaws\Decorators\SvgDecorator; ?>
                                         $item['PREVIEW_TEXT']
                                     ) ?></p>
                             <?php } ?>
-                            <?php if (!empty($item['DISPLAY_ACTIVE_FROM'])) { ?>
-                                <time datetime=<?= $item['DISPLAY_ACTIVE_FROM'] ?>" class="b-news-item__date"><?= $item['DISPLAY_ACTIVE_FROM'] ?></time>
+                            <?php if (!empty($item['DISPLAY_ACTIVE_FROM']) && !empty($item['ACTIVE_FROM'])) { ?>
+                                <time datetime="<?= ConvertDateTime($item['ACTIVE_FROM'], 'YYYY-MM-DD', 'ru') ?>" class="b-news-item__date"><?= $item['DISPLAY_ACTIVE_FROM'] ?></time>
                             <?php } ?>
                             <?php if (!empty($item['DETAIL_PAGE_URL'])){ ?>
                         </a>
