@@ -112,15 +112,12 @@ class GrandinController extends Controller
             }
             catch (\Exception $exception)
             {
-                //FIXME залогировать
-                /*$instance = static::getInstance();
-                $instance->log()->critical(
-                    sprintf(
-                        '%s exception: %s',
-                        __METHOD__,
-                        $exception->getMessage()
-                    )
-                );*/
+                $logger = LoggerFactory::create('expertSender');
+                $logger->error(sprintf(
+                    'Error while sending mail. %s exception: %s',
+                    __METHOD__,
+                    $exception->getMessage()
+                ));
             }
 
             $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD);
