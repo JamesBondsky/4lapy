@@ -332,7 +332,7 @@ class PetService
                     ]
                 )->setOrder(['UF_NAME' => 'asc'])->exec();
             while ($item = $res->fetch()) {
-                $arBreeds[] = $item['UF_NAME'];
+                $arBreeds[$item['ID']] = $item['UF_NAME'];
             }
 
             return $arBreeds;

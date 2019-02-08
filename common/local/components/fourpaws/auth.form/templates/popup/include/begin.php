@@ -23,6 +23,20 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
     } else {
         $backUrl = !empty($backUrl) ? $backUrl : $requestUri;
     }
+    if ($arParams['BACK_URL_HASH'])
+    {
+        //$backUrl .= '#' . $arParams['BACK_URL_HASH']; // backurl срабатывает, но форма не закрывается и
+        // страница не перезагружается (хотя JsonSuccessResponse в www/deploy/release/common/local/components/fourpaws/auth.form/class.php:413 формируется нормально
+
+        // Временное решение вместо # FIXME заменить на #
+        if (strpos($backUrl, '?') === false) {
+            $backUrl .= '?anchor=' . $arParams['BACK_URL_HASH'];
+        }
+        else
+        {
+            $backUrl = preg_replace('/anchor=([^&]*[&]?)/', '', $backUrl) . '&anchor=' . $arParams['BACK_URL_HASH']; //FIXME Сделано для быстроты реализации, нужно сделать более корректный метод установки параметра
+        }
+    }
     ?>
     <div class="b-registration b-registration--popup-authorization js-auth-block js-ajax-replace-block">
         <header class="b-registration__header">
