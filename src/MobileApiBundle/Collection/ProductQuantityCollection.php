@@ -27,36 +27,6 @@ class ProductQuantityCollection extends ArrayCollection
 
     /**
      * @param string $storeCode
-     * @return ProductQuantity[]
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
-     */
-    public function getAvailableInStore(string $storeCode): array
-    {
-        if (!$this->isAvailabilityActualized($storeCode)) {
-            $this->actualizeAvailability($storeCode);
-        }
-
-        return $this->availableProducts[$storeCode];
-    }
-
-    /**
-     * @param string $storeCode
-     * @return ProductQuantity[]
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
-     */
-    public function getUnAvailableInStore(string $storeCode): array
-    {
-        if (!$this->isAvailabilityActualized($storeCode)) {
-            $this->actualizeAvailability($storeCode);
-        }
-
-        return $this->unAvailableProducts[$storeCode];
-    }
-
-    /**
-     * @param string $storeCode
      * @return bool
      */
     protected function isAvailabilityActualized(string $storeCode): bool

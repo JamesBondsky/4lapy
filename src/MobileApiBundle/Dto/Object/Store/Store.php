@@ -2,6 +2,10 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Object\Store;
 
+use Bitrix\Main\SystemException;
+use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\Decorators\FullHrefDecorator;
+use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
 use JMS\Serializer\Annotation as Serializer;
 
 class Store
@@ -16,12 +20,6 @@ class Store
     /**
      * @var string
      * @Serializer\Type("string")
-     * @Serializer\SerializedName("city_id")
-     */
-    protected $cityId;
-    /**
-     * @var string
-     * @Serializer\Type("string")
      * @Serializer\SerializedName("title")
      */
     protected $title;
@@ -29,12 +27,14 @@ class Store
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("picture")
+     * @Serializer\Groups({"withProductInfo", "withShopDetails"})
      */
     protected $picture;
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("details")
+     * @Serializer\Groups({"withProductInfo", "withShopDetails"})
      */
     protected $details;
     /**
@@ -80,21 +80,10 @@ class Store
      */
     protected $phone;
     /**
-     * @var string
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("phone_ext")
-     */
-    protected $phoneExt;
-    /**
-     * @var string
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("url")
-     */
-    protected $url;
-    /**
      * @var StoreService[]
      * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Store\StoreService>")
      * @Serializer\SerializedName("service")
+     * @Serializer\Groups({"withProductInfo", "withShopDetails"})
      */
     protected $service;
 
@@ -118,9 +107,63 @@ class Store
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("pickupDate")
-     * @Serializer\Groups({"withProductInfo"})
+     * @Serializer\Groups({"withProductInfo", "withPickupInfo"})
      */
     protected $pickupDate;
+
+    /**
+     * @var string
+     *
+     * @Serializer\SerializedName("pickupAllGoodsShortDate")
+     * @Serializer\Type("string")
+     * @Serializer\Groups({"withPickupInfo"})
+     */
+    protected $pickupAllGoodsShortDate;
+
+    /**
+     * @var string
+     *
+     * @Serializer\SerializedName("pickupAllGoodsFullDate")
+     * @Serializer\Type("string")
+     * @Serializer\Groups({"withPickupInfo"})
+     */
+    protected $pickupAllGoodsFullDate;
+
+    /**
+     * @var string
+     *
+     * @Serializer\SerializedName("pickupFewGoodsShortDate")
+     * @Serializer\Type("string")
+     * @Serializer\Groups({"withPickupInfo"})
+     */
+    protected $pickupFewGoodsShortDate;
+
+    /**
+     * @var string
+     *
+     * @Serializer\SerializedName("pickupFewGoodsFullDate")
+     * @Serializer\Type("string")
+     * @Serializer\Groups({"withPickupInfo"})
+     */
+    protected $pickupFewGoodsFullDate;
+
+    /**
+     * @var ArrayCollection
+     *
+     * @Serializer\SerializedName("availableGoods")
+     * @Serializer\Type("FourPaws\MobileApiBundle\Collection\BasketProductCollection")
+     * @Serializer\Groups({"withPickupInfo"})
+     */
+    protected $availableGoods;
+
+    /**
+     * @var ArrayCollection
+     *
+     * @Serializer\SerializedName("delayedGoods")
+     * @Serializer\Type("FourPaws\MobileApiBundle\Collection\BasketProductCollection")
+     * @Serializer\Groups({"withPickupInfo"})
+     */
+    protected $delayedGoods;
 
     /**
      * @param string $code
@@ -136,25 +179,6 @@ class Store
      */
     public function getCode(): int {
         return $this->code;
-    }
-
-    /**
-     * @return string
-     */
-    public function getCityId(): string
-    {
-        return $this->cityId;
-    }
-
-    /**
-     * @param string $cityId
-     *
-     * @return Store
-     */
-    public function setCityId(string $cityId): Store
-    {
-        $this->cityId = $cityId;
-        return $this;
     }
 
     /**
@@ -191,7 +215,7 @@ class Store
      */
     public function setPicture(string $picture): Store
     {
-        $this->picture = $picture;
+        $this->picture = (string) new FullHrefDecorator($picture);
         return $this;
     }
 
@@ -348,44 +372,6 @@ class Store
     }
 
     /**
-     * @return string
-     */
-    public function getPhoneExt(): string
-    {
-        return $this->phoneExt;
-    }
-
-    /**
-     * @param string $phoneExt
-     *
-     * @return Store
-     */
-    public function setPhoneExt(string $phoneExt): Store
-    {
-        $this->phoneExt = $phoneExt;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getUrl(): string
-    {
-        return $this->url;
-    }
-
-    /**
-     * @param string $url
-     *
-     * @return Store
-     */
-    public function setUrl(string $url): Store
-    {
-        $this->url = $url;
-        return $this;
-    }
-
-    /**
      * @return StoreService[]
      */
     public function getService(): array
@@ -459,4 +445,118 @@ class Store
         $this->pickupDate = $pickupDate;
         return $this;
     }
+
+    /**
+     * @return string
+     */
+    public function getPickupAllGoodsShortDate(): string
+    {
+        return $this->pickupAllGoodsShortDate;
+    }
+
+    /**
+     * @param string $pickupAllGoodsShortDate
+     *
+     * @return Store
+     */
+    public function setPickupAllGoodsShortDate(string $pickupAllGoodsShortDate): Store
+    {
+        $this->pickupAllGoodsShortDate = $pickupAllGoodsShortDate;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPickupAllGoodsFullDate(): string
+    {
+        return $this->pickupAllGoodsFullDate;
+    }
+
+    /**
+     * @param string $pickupAllGoodsFullDate
+     *
+     * @return Store
+     */
+    public function setPickupAllGoodsFullDate(string $pickupAllGoodsFullDate): Store
+    {
+        $this->pickupAllGoodsFullDate = $pickupAllGoodsFullDate;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPickupFewGoodsShortDate(): string
+    {
+        return $this->pickupFewGoodsShortDate;
+    }
+
+    /**
+     * @param string $pickupFewGoodsShortDate
+     *
+     * @return Store
+     */
+    public function setPickupFewGoodsShortDate(string $pickupFewGoodsShortDate): Store
+    {
+        $this->pickupFewGoodsShortDate = $pickupFewGoodsShortDate;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPickupFewGoodsFullDate(): string
+    {
+        return $this->pickupFewGoodsFullDate;
+    }
+
+    /**
+     * @param string $pickupFewGoodsFullDate
+     *
+     * @return Store
+     */
+    public function setPickupFewGoodsFullDate(string $pickupFewGoodsFullDate): Store
+    {
+        $this->pickupFewGoodsFullDate = $pickupFewGoodsFullDate;
+        return $this;
+    }
+
+    /**
+     * @return ArrayCollection
+     */
+    public function getAvailableGoods(): ArrayCollection
+    {
+        return $this->availableGoods;
+    }
+
+    /**
+     * @param BasketProductCollection $availableGoods
+     * @return Store
+     */
+    public function setAvailableGoods(BasketProductCollection $availableGoods): Store
+    {
+        $this->availableGoods = $availableGoods;
+        return $this;
+    }
+
+    /**
+     * @return ArrayCollection
+     */
+    public function getDelayedGoods(): ArrayCollection
+    {
+        return $this->delayedGoods;
+    }
+
+    /**
+     * @param BasketProductCollection $delayedGoods
+     *
+     * @return Store
+     */
+    public function setDelayedGoods(BasketProductCollection $delayedGoods): Store
+    {
+        $this->delayedGoods = $delayedGoods;
+        return $this;
+    }
+
 }

@@ -55,12 +55,12 @@ class ProductController extends FOSRestController
 
     /**
      * @Rest\Get(path="/special_offers/")
-     * @Rest\View()
+     * @Rest\View(serializerGroups={"Default", "specialOffers"})
      *
      * @param SpecialOffersRequest $specialOffersRequest
      * @return ApiResponse
-     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function getSpecialOffersAction(SpecialOffersRequest $specialOffersRequest): ApiResponse
     {
@@ -98,7 +98,7 @@ class ProductController extends FOSRestController
 
     /**
      * @Rest\Get("/goods_list/")
-     * @Rest\View()
+     * @Rest\View(serializerGroups={"Default", "productsList"})
      * @param Request $request
      * @param GoodsListRequest $goodsListRequest
      * @return Response\ProductListResponse
@@ -124,7 +124,7 @@ class ProductController extends FOSRestController
 
     /**
      * @Rest\Get("/goods_item/")
-     * @Rest\View()
+     * @Rest\View(serializerGroups={"Default", "product"})
      * @param GoodsItemRequest $goodsItemRequest
      * @return Response
      * @throws \Bitrix\Main\ArgumentException
@@ -144,7 +144,7 @@ class ProductController extends FOSRestController
 
     /**
      * @Rest\Get("/goods_search/")
-     * @Rest\View()
+     * @Rest\View(serializerGroups={"Default", "productsList"})
      * @param Request $request
      * @param GoodsSearchRequest $goodsSearchRequest
      * @return Response\ProductListResponse
@@ -172,7 +172,7 @@ class ProductController extends FOSRestController
 
     /**
      * @Rest\Get("/goods_search_barcode/")
-     * @Rest\View()
+     * @Rest\View(serializerGroups={"Default", "productsList"})
      *
      * @param Request $request
      * @param GoodsSearchBarcodeRequest $goodsSearchBarcodeRequest
@@ -214,16 +214,13 @@ class ProductController extends FOSRestController
 
     /**
      * @Rest\Get("/personal_goods/")
-     * @Rest\View()
+     * @Rest\View(serializerGroups={"Default", "productsList"})
      * @Security("has_role('REGISTERED_USERS')", message="Вы не авторизованы")
      * @return Response\ProductListResponse
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public function getGoodsPersonalAction()
     {
@@ -245,16 +242,12 @@ class ProductController extends FOSRestController
 
     /**
      * @Rest\Get("/goods_by_special_offer/")
-     * @Rest\View()
+     * @Rest\View(serializerGroups={"Default", "productsList"})
      * @param GoodsBySpecialOfferRequest $goodsBySpecialOfferRequest
      * @return Response\ProductListResponse
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public function getGoodsByOfferAction(GoodsBySpecialOfferRequest $goodsBySpecialOfferRequest)
     {
@@ -290,7 +283,7 @@ class ProductController extends FOSRestController
 
     /**
      * @Rest\Get("/goods_list_by_request/")
-     * @Rest\View()
+     * @Rest\View(serializerGroups={"Default", "productsList"})
      * @param GoodsListByRequestRequest $goodsListByRequestRequest
      * @return Response
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
@@ -318,7 +311,7 @@ class ProductController extends FOSRestController
 
     /**
      * @Rest\Get("/goods_item_by_request/")
-     * @Rest\View()
+     * @Rest\View(serializerGroups={"Default", "productsList"})
      * @param GoodsItemRequest $goodsItemRequest
      * @return GoodsItemByRequestResponse
      * @throws \Bitrix\Main\ArgumentException

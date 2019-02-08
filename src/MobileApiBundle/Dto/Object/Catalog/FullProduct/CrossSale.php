@@ -94,12 +94,10 @@ class CrossSale
      * @param string $image
      *
      * @return CrossSale
-     * @throws \Bitrix\Main\SystemException
      */
     public function setImage(string $image): CrossSale
     {
-        $hrefDecorator = new FullHrefDecorator($image);
-        $this->image = $hrefDecorator->getFullPublicPath();
+        $this->image = (string) new FullHrefDecorator($image);
         return $this;
     }
 

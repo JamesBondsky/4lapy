@@ -6,10 +6,6 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Object\Catalog;
 
-use Doctrine\Common\Collections\Collection;
-use FourPaws\Decorators\FullHrefDecorator;
-use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct\Tag;
-use FourPaws\MobileApiBundle\Dto\Object\Price;
 use JMS\Serializer\Annotation as Serializer;
 
 class InputFilter

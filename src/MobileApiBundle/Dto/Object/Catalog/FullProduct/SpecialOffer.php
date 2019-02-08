@@ -86,12 +86,10 @@ class SpecialOffer
      * @param string $image
      *
      * @return SpecialOffer
-     * @throws \Bitrix\Main\SystemException
      */
     public function setImage(string $image): SpecialOffer
     {
-        $hrefDecorator = new FullHrefDecorator($image);
-        $this->image = $hrefDecorator->getFullPublicPath();
+        $this->image = (string) new FullHrefDecorator($image);
         return $this;
     }
 

@@ -54,7 +54,6 @@ class BannerService
     /**
      * @param BannerModel $bannerModel
      * @return Banner
-     * @throws \Bitrix\Main\SystemException
      */
     protected function map(BannerModel $bannerModel) {
         $banner = (new Banner())

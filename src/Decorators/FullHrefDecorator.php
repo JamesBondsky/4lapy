@@ -31,8 +31,7 @@ class FullHrefDecorator
      */
     public function __construct(string $url)
     {
-        $parsedUrl = parse_url($url);
-        if ($parsedUrl) {
+        if ($parsedUrl = parse_url($url)) {
             if ($parsedUrl['path']) {
                 $this->setPath($parsedUrl['path']);
             }
@@ -65,7 +64,7 @@ class FullHrefDecorator
         } catch (SystemException $e) {
             try {
                 $logger = LoggerFactory::create('fullHrefDecorator');
-                $logger->critical('Системная ошибка при получении пукбличного пути ' . $e->getTraceAsString());
+                $logger->critical('Системная ошибка при получении публичного пути ' . $e->getTraceAsString());
             } catch (\RuntimeException $e) {
             }
             
@@ -79,6 +78,9 @@ class FullHrefDecorator
      */
     public function getFullPublicPath() : string
     {
+        if (!$this->path) {
+            return '';
+        }
         $prefix = $this->getProto();
         $host = $this->getHost();
 

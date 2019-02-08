@@ -78,6 +78,15 @@ class Shop
     protected $metro = '';
 
     /**
+     * @Serializer\SerializedName("metroColor")
+     * @Serializer\Type("string")
+     * @Serializer\SkipWhenEmpty()
+     *
+     * @var string
+     */
+    protected $metroColor = '';
+
+    /**
      * @Serializer\SerializedName("metroClass")
      * @Serializer\Type("string")
      * @Serializer\SkipWhenEmpty()
@@ -313,6 +322,26 @@ class Shop
     public function setMetro(string $metro): Shop
     {
         $this->metro = $metro;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMetroColor(): string
+    {
+        return $this->metroColor;
+    }
+
+    /**
+     * @param string $metroColor
+     *
+     * @return Shop
+     */
+    public function setMetroColor(string $metroColor): Shop
+    {
+        $this->metroColor = $metroColor;
 
         return $this;
     }

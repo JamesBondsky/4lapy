@@ -3,6 +3,7 @@
 namespace FourPaws\MobileApiBundle\Dto\Object;
 
 use Bitrix\Main\Application;
+use Bitrix\Main\SystemException;
 use FourPaws\Decorators\FullHrefDecorator;
 use JMS\Serializer\Annotation as Serializer;
 
@@ -94,12 +95,10 @@ class Banner
     /**
      * @param int $fileId
      * @return Banner
-     * @throws \Bitrix\Main\SystemException
      */
     public function setPicture($fileId): Banner {
         $src = \CFile::getPath($fileId);
-        $hrefDecorator = new FullHrefDecorator($src);
-        $this->picture = $hrefDecorator->getFullPublicPath();
+        $this->picture = (string) new FullHrefDecorator($src);
         return $this;
     }
 
@@ -153,11 +152,9 @@ class Banner
      * @param string $link
      * @param string $cityId
      * @return Banner
-     * @throws \Bitrix\Main\SystemException
      */
     public function setLink($link, $cityId = ''): Banner {
-        $hrefDecorator = new FullHrefDecorator($link);
-        $this->link = $hrefDecorator->getFullPublicPath();
+        $this->link = (string) new FullHrefDecorator($link);
         $this->cityId = $cityId;
         $this->preparedLink = $this->getPreparedLink();
         return $this;
@@ -172,21 +169,22 @@ class Banner
 
     /**
      * @return string
-     * @throws \Bitrix\Main\SystemException
      */
     public function getPreparedLink(): string {
         $type = $this->getType();
         $methodName = $this->getMethodNameByType($type);
         $queryData = $this->getQueryDataByType($type);
 
-        $host = Application::getInstance()->getContext()->getRequest()->getHttpHost();
-
+        $preparedLink = $this->link;
         if ($methodName) {
-            $preparedLink = 'https://' . $host . '/api/' . $methodName . '/?' . http_build_query($queryData);
-        } else {
-            $preparedLink = $this->link;
-        }
+            try {
+                $host = Application::getInstance()->getContext()->getRequest()->getHttpHost();
+                $preparedLink = 'https://' . $host . '/api/' . $methodName . '/?' . http_build_query($queryData);
 
+            } catch (SystemException $e) {
+                // do nothing
+            }
+        }
         return $preparedLink;
     }
 

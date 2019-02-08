@@ -181,8 +181,7 @@ class FullProduct extends ShortProduct
     public function setPictureList(array $pictureList): FullProduct
     {
         $pictureList = array_map(function($picture) {
-            $hrefDecorator = new FullHrefDecorator($picture);
-            return $hrefDecorator->getFullPublicPath();
+            return (string) new FullHrefDecorator($picture);
         }, $pictureList);
         $this->pictureList = $pictureList;
         return $this;

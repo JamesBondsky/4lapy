@@ -110,12 +110,10 @@ class BundleItem
      * @param string $image
      *
      * @return BundleItem
-     * @throws \Bitrix\Main\SystemException
      */
     public function setImage(string $image): BundleItem
     {
-        $hrefDecorator = new FullHrefDecorator($image);
-        $this->image = $hrefDecorator->getFullPublicPath();
+        $this->image = (string) new FullHrefDecorator($image);
         return $this;
     }
 

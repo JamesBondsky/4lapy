@@ -2,6 +2,7 @@
 
 namespace FourPaws\Helpers;
 
+use Bitrix\Main\SystemException;
 use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\Decorators\FullHrefDecorator;
 
@@ -11,7 +12,6 @@ class ImageHelper
      * Парсит все теги <img> в строке и добавляет домен в src, которые начинаются со слеша
      * @param string $html
      * @return string
-     * @throws \Bitrix\Main\SystemException
      */
     public static function appendDomainToSrc(string $html): string
     {
@@ -22,8 +22,12 @@ class ImageHelper
         /** @var \DOMElement $image */
         foreach ($images as $image) {
             $src = $image->getAttribute('src');
-            $src = (new FullHrefDecorator($src))->getFullPublicPath();
-            $image->setAttribute('src', $src);
+            try {
+                $src = (new FullHrefDecorator($src))->getFullPublicPath();
+                $image->setAttribute('src', $src);
+            } catch (SystemException $e) {
+                // do nothing
+            }
         }
         return $dom->saveHTML($dom->documentElement);
     }

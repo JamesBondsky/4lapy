@@ -69,28 +69,6 @@ class BasketProductCollection extends ProductQuantityCollection
     }
 
     /**
-     * @param string $storeCode
-     * @return Product[]
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
-     */
-    public function getAvailableInStore(string $storeCode): array
-    {
-        return parent::getAvailableInStore($storeCode);
-    }
-
-    /**
-     * @param string $storeCode
-     * @return Product[]
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
-     */
-    public function getUnAvailableInStore(string $storeCode): array
-    {
-        return parent::getUnAvailableInStore($storeCode);
-    }
-
-    /**
      * @var Product $product
      * @return int
      */

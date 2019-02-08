@@ -38,7 +38,6 @@ class ShortProduct
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("webpage")
-     * @todo path?
      */
     protected $webPage = '';
 
@@ -75,6 +74,7 @@ class ShortProduct
      * @var int
      * @Serializer\Type("int")
      * @Serializer\SerializedName("in_pack")
+     * @Serializer\Groups({"specialOffers", "productsList", "product"})
      */
     protected $inPack = 1;
 
@@ -91,6 +91,7 @@ class ShortProduct
      * @var Collection|Tag[]
      * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct\Tag>")
      * @Serializer\SerializedName("tag")
+     * @Serializer\Groups({"specialOffers", "productsList", "product"})
      */
     protected $tag = [];
 
@@ -107,6 +108,7 @@ class ShortProduct
      * @var int
      * @Serializer\Type("int")
      * @Serializer\SerializedName("bonus_user")
+     * @Serializer\Groups({"specialOffers", "productsList", "product"})
      */
     protected $bonusUser = 0;
 
@@ -116,6 +118,7 @@ class ShortProduct
      * @var int
      * @Serializer\Type("int")
      * @Serializer\SerializedName("bonus_all")
+     * @Serializer\Groups({"specialOffers", "productsList", "product"})
      */
     protected $bonusAll = 0;
 
@@ -123,6 +126,7 @@ class ShortProduct
      * @var bool
      * @Serializer\Type("bool")
      * @Serializer\SerializedName("isByRequest")
+     * @Serializer\Groups({"specialOffers", "productsList", "product"})
      */
     protected $isByRequest = false;
 
@@ -130,6 +134,7 @@ class ShortProduct
      * @var bool
      * @Serializer\Type("bool")
      * @Serializer\SerializedName("isAvailable")
+     * @Serializer\Groups({"specialOffers", "productsList", "product"})
      */
     protected $isAvailable = false;
 
@@ -183,12 +188,10 @@ class ShortProduct
      * @param string $webPage
      *
      * @return $this
-     * @throws \Bitrix\Main\SystemException
      */
     public function setWebPage(string $webPage)
     {
-        $hrefDecorator = new FullHrefDecorator($webPage);
-        $this->webPage = $hrefDecorator->getFullPublicPath();
+        $this->webPage = (string) new FullHrefDecorator($webPage);
         return $this;
     }
 
@@ -223,14 +226,10 @@ class ShortProduct
      * @param string $picture
      *
      * @return $this
-     * @throws \Bitrix\Main\SystemException
      */
     public function setPicture(string $picture)
     {
-        if (!empty($picture)) {
-            $hrefDecorator = new FullHrefDecorator($picture);
-            $this->picture = $hrefDecorator->getFullPublicPath();
-        }
+        $this->picture = (string) new FullHrefDecorator($picture);
         return $this;
     }
 
@@ -246,12 +245,10 @@ class ShortProduct
      * @param string $picturePreview
      *
      * @return $this
-     * @throws \Bitrix\Main\SystemException
      */
     public function setPicturePreview(string $picturePreview)
     {
-        $hrefDecorator = new FullHrefDecorator($picturePreview);
-        $this->picturePreview = $hrefDecorator->getFullPublicPath();
+        $this->picturePreview = (string) new FullHrefDecorator($picturePreview);
         return $this;
     }
 

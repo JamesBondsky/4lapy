@@ -77,15 +77,15 @@ class BasketService
      * @param $offerId int
      * @param $quantity int
      * @return Product
-     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function getBasketProduct($basketItemId, $offerId, $quantity)
     {
         $offer = OfferQuery::getById($offerId);
 
         $product = $offer->getProduct();
-        $shortProduct = $this->apiProductService->convertToShortProduct($product, $offer, $quantity);
+        $shortProduct = $this->apiProductService->convertToShortProduct($product, $offer, $quantity, true);
 
         return (new Product())
             ->setBasketItemId($basketItemId)

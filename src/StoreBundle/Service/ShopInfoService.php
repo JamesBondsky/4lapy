@@ -469,6 +469,7 @@ class ShopInfoService
         if ($metroId = $store->getMetro()) {
             $shop
                 ->setMetro('м. ' . $metroList[$metroId]['UF_NAME'])
+                ->setMetroColor($metroList[$metroId]['BRANCH']['UF_COLOUR_CODE'])
                 ->setMetroCssClass('--' . $metroList[$metroId]['BRANCH']['UF_CLASS']);
         }
 

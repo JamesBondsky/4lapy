@@ -149,12 +149,7 @@ class ProductService
      * @param Product $product
      * @return FullProduct
      * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
-     * @throws \ImagickException
      */
     protected function mapProductForList(Product $product): FullProduct
     {
@@ -205,11 +200,10 @@ class ProductService
      * @return FullProduct
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
-     * @throws \ImagickException
+     * @throws \Bitrix\Main\SystemException
      */
     public function getOne(int $id): FullProduct
     {
@@ -259,8 +253,6 @@ class ProductService
     /**
      * @param Offer $offer
      * @return array<ShortProduct\Tag()>
-     * @throws \Bitrix\Main\SystemException
-     * @throws \ImagickException
      */
     public function getTags(Offer $offer)
     {
@@ -278,13 +270,13 @@ class ProductService
     /**
      * @param string $svg
      * @return ShortProduct\Tag|false
-     * @throws \Bitrix\Main\SystemException
-     * @throws \ImagickException
      */
     public function getTag(string $svg)
     {
         try {
             $png = ImageHelper::convertSvgToPng($svg);
+        } catch (\ImagickException $e) {
+            return false;
         } catch (NotFoundException $e) {
             return false;
         }
@@ -295,12 +287,12 @@ class ProductService
      * @param Product $product
      * @param Offer $offer
      * @param int $quantity
+     * @param bool $forBasket
      * @return ShortProduct
-     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \ImagickException
+     * @throws \Bitrix\Main\ArgumentException
      */
-    public function convertToShortProduct(Product $product, Offer $offer, $quantity = 1): ShortProduct
+    public function convertToShortProduct(Product $product, Offer $offer, $quantity = 1, $forBasket = false): ShortProduct
     {
         $shortProduct = (new ShortProduct())
             ->setId($offer->getId())
@@ -308,15 +300,13 @@ class ProductService
             ->setXmlId($offer->getXmlId())
             ->setBrandName($product->getBrandName())
             ->setWebPage($offer->getCanonicalPageUrl())
-            ->setIsByRequest($offer->isByRequest())
-            ->setIsAvailable($offer->isAvailable());
+            ;
 
         // большая картинка
         if ($images = $offer->getImages()) {
             /** @var Image $picture */
             $picture = $images->first();
             $pictureSrc = \CFile::getPath($picture->getId());
-            $pictureSrc = (new FullHrefDecorator($pictureSrc))->getFullPublicPath();
             $shortProduct->setPicture($pictureSrc);
         }
 
@@ -331,12 +321,21 @@ class ProductService
             ->setOld($offer->getOldPrice());
         $shortProduct->setPrice($price);
 
-        // лейблы
-        $shortProduct->setTag($this->getTags($offer));
 
-        // бонусы
-        $shortProduct->setBonusAll($offer->getBonusCount(3, $quantity));
-        $shortProduct->setBonusUser($offer->getBonusCount($this->userService->getDiscount(), $quantity));
+        // ТПЗ, лейблы и бонусы нужны только для каталога
+        if (!$forBasket) {
+            // ТПЗ
+            $shortProduct
+                ->setIsByRequest($offer->isByRequest())
+                ->setIsAvailable($offer->isAvailable());
+
+            // лейблы
+            $shortProduct->setTag($this->getTags($offer));
+
+            // бонусы
+            $shortProduct->setBonusAll($offer->getBonusCount(3, $quantity));
+            $shortProduct->setBonusUser($offer->getBonusCount($this->userService->getDiscount(), $quantity));
+        }
 
         return $shortProduct;
     }
@@ -346,9 +345,8 @@ class ProductService
      * @param Offer $offer
      * @param bool $needPackingVariants
      * @return FullProduct
-     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \ImagickException
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = false): FullProduct
     {
@@ -460,9 +458,7 @@ class ProductService
      * @param Product $product
      * @param FullProduct $currentFullProduct
      * @return FullProduct[]
-     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \ImagickException
      */
     public function getPackingVariants(Product $product, FullProduct $currentFullProduct): array
     {
@@ -497,7 +493,6 @@ class ProductService
      * Акция товара
      * @param Offer $offer
      * @return FullProduct\SpecialOffer|null
-     * @throws \Bitrix\Main\SystemException
      */
     public function getSpecialOffer(Offer $offer)
     {
@@ -584,7 +579,6 @@ class ProductService
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \ImagickException
      */
     public function getBundle(Offer $offer)
     {

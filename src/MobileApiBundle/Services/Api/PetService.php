@@ -267,7 +267,6 @@ class PetService
     /**
      * @param \FourPaws\PersonalBundle\Entity\Pet $pet
      * @return Pet
-     * @throws \Bitrix\Main\SystemException
      */
     public function map($pet)
     {
