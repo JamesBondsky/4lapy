@@ -119,7 +119,7 @@ class BasketController extends FOSRestController
 
 
     /**
-     * @Rest\Post(path="/user_cart_info")
+     * @Rest\Post(path="/user_cart_info/")
      */
     public function userCartInfoAction()
     {
@@ -262,5 +262,14 @@ class BasketController extends FOSRestController
         $cartOrder = $this->apiOrderService->createOrder($userCartOrderRequest, $deliveryType);
         return (new UserCartOrderResponse())
             ->setCartOrder($cartOrder);
+    }
+
+    /**
+     * @Rest\Get(path="/user_cart_delivery/")
+     * @Rest\View()
+     */
+    public function getUserCartDeliveryAction()
+    {
+        $this->apiOrderService->getDeliveryVariants();
     }
 }

@@ -97,12 +97,30 @@ class Store
      * @Serializer\SerializedName("service")
      */
     protected $service;
+
+    /**
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("isByRequest")
+     * @Serializer\Groups({"withProductInfo"})
+     */
+    protected $isByRequest;
+
     /**
      * @var string
      * @Serializer\Type("string")
-     * @Serializer\SerializedName("availability_status")
+     * @Serializer\SerializedName("productQuantityString")
+     * @Serializer\Groups({"withProductInfo"})
      */
-    protected $availabilityStatus;
+    protected $productQuantityString;
+
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("pickupDate")
+     * @Serializer\Groups({"withProductInfo"})
+     */
+    protected $pickupDate;
 
     /**
      * @param string $code
@@ -387,21 +405,58 @@ class Store
     }
 
     /**
-     * @return string
+     * @return bool
      */
-    public function getAvailabilityStatus(): string
+    public function getIsByRequest(): bool
     {
-        return $this->availabilityStatus;
+        return $this->isByRequest;
     }
 
     /**
-     * @param string $availabilityStatus
+     * @param bool $isByRequest
+     * @return Store
+     */
+    public function setIsByRequest(bool $isByRequest): Store
+    {
+        $this->isByRequest = $isByRequest;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getProductQuantityString(): string
+    {
+        return $this->productQuantityString;
+    }
+
+    /**
+     * @param string $productQuantityString
      *
      * @return Store
      */
-    public function setAvailabilityStatus(string $availabilityStatus): Store
+    public function setProductQuantityString(string $productQuantityString): Store
     {
-        $this->availabilityStatus = $availabilityStatus;
+        $this->productQuantityString = $productQuantityString;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPickupDate(): string
+    {
+        return $this->pickupDate;
+    }
+
+    /**
+     * @param string $pickupDate
+     *
+     * @return Store
+     */
+    public function setPickupDate(string $pickupDate): Store
+    {
+        $this->pickupDate = $pickupDate;
         return $this;
     }
 }

@@ -40,8 +40,10 @@ class StoreController extends FOSRestController
     }
 
     /**
+     *
+     *
      * @Rest\Get(path="/shop_list/")
-     * @Rest\View()
+     * @Rest\View(serializerGroups={"Default"})
      * @param StoreListRequest $storeListRequest
      *
      * @throws \Exception
@@ -53,8 +55,53 @@ class StoreController extends FOSRestController
     }
 
     /**
+     * Используется для вывода магазинов в карточке товара с указанием кол-ва товара, сроком поставки и т.д.
+     *
+     * @Rest\Get(path="/get_shops_available/")
+     * @Rest\View(serializerGroups={"Default", "withProductInfo"})
+     * @param StoreAvailableRequest $storeAvailableRequest
+     *
+     * @throws \Exception
+     * @return StoreListResponse
+     */
+    public function getShopsForProductCardAction(StoreAvailableRequest $storeAvailableRequest): StoreListResponse
+    {
+        return new StoreListResponse(
+            $this->apiStoreService->getListAvailable(
+                $storeAvailableRequest->getGoods()
+            )
+        );
+    }
+
+    /**
+     * Используется в корзине для проверки доступности товара в выбранном магазине
+     *
+     * @Rest\Post(path="/shop_goods_available/")
+     * @Rest\View(serializerGroups={"Default"})
+     * @param StoreProductAvailableRequest $storeProductAvailableRequest
+     *
+     * @throws \Exception
+     * @return StoreProductAvailableResponse
+     */
+    public function getStoreProductAvailableAction(StoreProductAvailableRequest $storeProductAvailableRequest): StoreProductAvailableResponse
+    {
+        $storeCode = $storeProductAvailableRequest->getStoreCode();
+        $shop = $this->apiStoreService->getOne($storeCode);
+        $basketProductCollection = $this->apiStoreService->getStoreProductAvailable($storeProductAvailableRequest->getGoods());
+        $availableProducts = $basketProductCollection->getAvailableInStore($storeCode);
+        $unAvailableProducts = $basketProductCollection->getUnAvailableInStore($storeCode);
+
+        return (new StoreProductAvailableResponse())
+            ->setAvailableGoods($availableProducts)
+            ->setNotAvailableGoods($unAvailableProducts)
+            ->setShop($shop);
+    }
+
+    /**
+     * Используется в корзине для вывода возможных магазинов для самовывоза
+     *
      * @Rest\Get(path="/shops_list_availableV2/")
-     * @Rest\View()
+     * @Rest\View(serializerGroups={"Default", "withProductInfo"})
      * @param StoreListAvailableRequest $storeListAvailableRequest
      *
      * @throws \Exception
@@ -69,55 +116,6 @@ class StoreController extends FOSRestController
 
         return new StoreListResponse(
             $this->apiStoreService->getListAvailable($productQuantity)
-        );
-    }
-
-    /**
-     * @Rest\Post(path="/shop_goods_available/")
-     * @Rest\View()
-     * @param StoreProductAvailableRequest $storeProductAvailableRequest
-     *
-     * @throws \Exception
-     * @return StoreProductAvailableResponse
-     */
-    public function getStoreProductAvailableAction(StoreProductAvailableRequest $storeProductAvailableRequest): StoreProductAvailableResponse
-    {
-        $storeCode = $storeProductAvailableRequest->getStoreCode();
-        $shop = $this->apiStoreService->getOne($storeCode);
-        $basketProductCollection = $this->apiStoreService->getStoreProductAvailable($storeProductAvailableRequest->getGoods());
-        $availableProducts = $basketProductCollection->getAvailableInStore($storeCode);
-        $unAvailableProducts = $basketProductCollection->getUnAvailableInStore($storeCode);
-
-        if (!empty($availableProducts) && !empty($unAvailableProducts)) {
-            $shop->setAvailabilityStatus('available_part');
-        } else if (!empty($availableProducts)) {
-            $shop->setAvailabilityStatus('available');
-        } else if (!empty($unAvailableProducts)) {
-            $shop->setAvailabilityStatus('not_available');
-        }
-
-        return (new StoreProductAvailableResponse())
-            ->setAvailableGoods($availableProducts)
-            ->setNotAvailableGoods($unAvailableProducts)
-            ->setShop($shop);
-    }
-
-    /**
-     * Метод используется в карточке товара для отображения магазинов, в которых доступен товар в нужном кол-ве
-     *
-     * @Rest\Get(path="/get_shops_available/")
-     * @Rest\View()
-     * @param StoreAvailableRequest $storeAvailableRequest
-     *
-     * @throws \Exception
-     * @return StoreListResponse
-     */
-    public function getShopsAvailableAction(StoreAvailableRequest $storeAvailableRequest): StoreListResponse
-    {
-        return new StoreListResponse(
-            $this->apiStoreService->getListAvailable(
-                $storeAvailableRequest->getGoods()
-            )
         );
     }
 }

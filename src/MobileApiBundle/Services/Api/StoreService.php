@@ -7,12 +7,10 @@
 namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Bitrix\Main\Web\Uri;
-use Bitrix\Sale\Basket;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\BitrixOrm\Model\Image;
-use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
@@ -23,6 +21,7 @@ use FourPaws\MobileApiBundle\Dto\Object\Store\StoreService as ApiStoreServiceDto
 use FourPaws\MobileApiBundle\Dto\Request\StoreListRequest;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Dto\ShopList\Shop;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Repository\StoreRepository;
 use FourPaws\StoreBundle\Service\ShopInfoService;
@@ -80,19 +79,16 @@ class StoreService
             ...$this->getParams($storeListRequest)
         );
         if (0 === $appStoreCollection->count()) {
-            $cloneRequest = clone $storeListRequest;
-            $cloneRequest->setMetroStation([]);
-            /**
-             * @todo nearest city
-             */
+            // если магазинов в городе / метро не найдено - запрашиваем все магазины подряд
             $appStoreCollection = $this->appStoreService->getStores(
                 $this->appStoreService::TYPE_SHOP,
-                ...$this->getParams($cloneRequest)
+                [],
+                $this->getOrder($storeListRequest)
             );
         }
-        $storeInfo = $this->appStoreService->getFullStoreInfo($appStoreCollection);
-        return $appStoreCollection->map(function (Store $store) use ($storeInfo) {
-            return $this->toApiFormat($store, ...$storeInfo);
+        [$services, $metro] = $this->appStoreService->getFullStoreInfo($appStoreCollection);
+        return $appStoreCollection->map(function (Store $store) use ($services, $metro) {
+            return $this->toApiFormat($store, $services, $metro);
         });
     }
 
@@ -123,23 +119,27 @@ class StoreService
             }
             if ($offer = OfferQuery::getById($offerId)) {
                 try {
-                    $storeCollection = $this->shopInfoService->getShopsByOffer($offer);
-                    $storeCollection = $storeCollection->filter(function (Store $store) use ($offer, $quantity) {
+                    $rawStoreCollection = $this->shopInfoService->getShopsByOffer($offer);
+                    [$servicesList, $metroList] = $this->appStoreService->getFullStoreInfo($rawStoreCollection);
+                    /** @var Store $store */
+                    foreach ($rawStoreCollection as $store) {
                         try {
                             $stockAmount = $this->shopInfoService->getStockAmount($store, $offer);
                         }  catch (\Exception $e) {
                             $stockAmount = 0;
                         }
-                        return $stockAmount >= $quantity;
-                    });
 
-                    $storeInfo = $this->appStoreService->getFullStoreInfo($storeCollection);
+                        $shop = $this->shopInfoService->getStoreInfo(
+                            $store,
+                            $metroList,
+                            $servicesList,
+                            $offer
+                        );
 
-                    $storeCollection = $storeCollection->map(function (Store $store) use ($storeInfo) {
-                        $store = $this->toApiFormat($store, ...$storeInfo);
-                        $store->setAvailabilityStatus('available');
-                        return $store;
-                    });
+                        if ($stockAmount >= $quantity) {
+                            $storeCollection->add($this->toApiFormat($store, $servicesList, $metroList, $stockAmount, $shop));
+                        }
+                    }
 
                 } catch (\Exception $e) {
                 }
@@ -203,6 +203,7 @@ class StoreService
      * @return BasketProductCollection
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \ImagickException
      */
     public function getStoreProductAvailable(array $productQuantities)
     {
@@ -258,7 +259,15 @@ class StoreService
         return $result;
     }
 
-    protected function toApiFormat(Store $store, array $servicesList = [], array $metroList = []): ApiStore
+    /**
+     * @param Store $store
+     * @param array $servicesList
+     * @param array $metroList
+     * @param int|null $stockAmount
+     * @param Shop|null $shop
+     * @return ApiStore
+     */
+    protected function toApiFormat(Store $store, array $servicesList = [], array $metroList = [], int $stockAmount = -1, Shop $shop = null): ApiStore
     {
         $result = new ApiStore();
 
@@ -287,22 +296,8 @@ class StoreService
         }
 
         $result->setAddress($metroAddressText . $store->getAddress());
-        /** @todo для запроса "shops_list_available"
-         * рассчет
-         * if ($this->pickupDelivery) {
-         * $stockResult = $this->getStockResult($this->pickupDelivery);
-         * $storeAmount = reset($this->offers)->getStocks()
-         * ->filterByStores(
-         * $this->storeService->getByCurrentLocation(
-         * StoreService::TYPE_STORE
-         * )
-         * )->getTotalAmount();
-         * }
-         */
-
         $result->setCode($store->getXmlId());
         $result->setTitle($title);
-        $result->setAvailabilityStatus('');
         $result->setCityId($store->getLocation());
         $result->setDetails($store->getDescription());
         $result->setLatitude($store->getLatitude());
@@ -319,6 +314,16 @@ class StoreService
         $uri->addParams(['city' => $store->getLocation(), 'id' => $store->getId()]);
         $result->setUrl($uri->getUri());
         $result->setWorkTime($store->getScheduleString());
+
+        if ($stockAmount >= 0) {
+            $result->setIsByRequest($stockAmount === 0);
+        }
+
+        if ($shop) {
+            $result->setProductQuantityString($shop->getAvailableAmount());
+            $result->setPickupDate($shop->getPickupDate());
+        }
+
         return $result;
     }
 }

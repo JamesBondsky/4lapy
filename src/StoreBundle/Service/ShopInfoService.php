@@ -196,51 +196,26 @@ class ShopInfoService
         $shops = new ArrayCollection();
         $services = new ArrayCollection();
 
-        $subregionCode = $this->locationService->findLocationSubRegion($locationCode)['CODE'] ?? '';
+        $subRegionCode = $this->locationService->findLocationSubRegion($locationCode)['CODE'] ?? '';
         $regionCode = $this->locationService->findLocationRegion($locationCode)['CODE'] ?? '';
         $availableStores = new StoreCollection();
 
         /** @var Store $store */
         foreach ($stores as $store) {
             try {
-                $shop = $this->getStoreInfo($store, $metroList, $servicesList);
+                $shop = $this->getStoreInfo(
+                    $store,
+                    $metroList,
+                    $servicesList,
+                    $offer
+                );
+                $shop->setLocationType(
+                    (($store->getLocation() === $locationCode) || ($store->getSubRegion() && $store->getSubRegion() === $subRegionCode))
+                        ? StoreLocationType::SUBREGIONAL
+                        : StoreLocationType::REGIONAL
+                );
 
-                if ($offer) {
-                    $pickupResult = $this->getPickupResultByStore($store, $offer);
 
-                    /** @var StockResult $stockResultByStore */
-                    $stockResultByStore = $pickupResult->getStockResult()->first();
-                    $amount = $stockResultByStore->getOffer()
-                        ->getAllStocks()
-                        ->filterByStore($store)
-                        ->getTotalAmount();
-
-                    $amountString = 'под заказ';
-                    if ($amount) {
-                        $amountString = $amount > 5 ? 'много' : 'мало';
-                    }
-
-                    $shop
-                        ->setPickupDate(
-                            DeliveryTimeHelper::showTime(
-                                $pickupResult,
-                                [
-                                    'SHOW_TIME' => true,
-                                    'SHORT'     => true,
-                                ]
-                            )
-                        )
-                        ->setAvailableAmount(str_replace(' ', '&nbsp;', $amountString))
-                        ->setAvailability(
-                            $stockResultByStore->getType() === StockResult::TYPE_AVAILABLE
-                                ? OrderAvailability::AVAILABLE
-                                : OrderAvailability::DELAYED
-                        )->setLocationType(
-                            (($store->getLocation() === $locationCode) || ($store->getSubRegion() && $store->getSubRegion() === $subregionCode))
-                                ? StoreLocationType::SUBREGIONAL
-                                : StoreLocationType::REGIONAL
-                        );
-                }
             } catch (PickupUnavailableException|EmptyCoordinatesException|EmptyAddressException $e) {
                 continue;
             }
@@ -270,7 +245,7 @@ class ShopInfoService
             $mapCenter = $this->storeService->getMapCenter(
                 $availableStores,
                 $locationCode,
-                $subregionCode,
+                $subRegionCode,
                 $regionCode
             );
         } else {
@@ -448,15 +423,26 @@ class ShopInfoService
      * @param Store $store
      * @param array $metroList
      * @param array $servicesList
+     * @param Offer|null $offer
      *
      * @return Shop
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws DeliveryNotFoundException
      * @throws EmptyAddressException
      * @throws EmptyCoordinatesException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws PickupUnavailableException
+     * @throws SystemException
+     * @throws UserMessageException
      */
-    protected function getStoreInfo(
+    public function getStoreInfo(
         Store $store,
         array $metroList,
-        array $servicesList
+        array $servicesList,
+        Offer $offer = null
     ): Shop
     {
         if (!$store->getAddress()) {
@@ -506,6 +492,39 @@ class ShopInfoService
             }
         }
         $shop->setServices($services);
+
+        if ($offer) {
+            $pickupResult = $this->getPickupResultByStore($store, $offer);
+
+            /** @var StockResult $stockResultByStore */
+            $stockResultByStore = $pickupResult->getStockResult()->first();
+            $amount = $stockResultByStore->getOffer()
+                ->getAllStocks()
+                ->filterByStore($store)
+                ->getTotalAmount();
+
+            $amountString = 'под заказ';
+            if ($amount) {
+                $amountString = $amount > 5 ? 'много' : 'мало';
+            }
+
+            $shop
+                ->setPickupDate(
+                    DeliveryTimeHelper::showTime(
+                        $pickupResult,
+                        [
+                            'SHOW_TIME' => true,
+                            'SHORT'     => true,
+                        ]
+                    )
+                )
+                ->setAvailableAmount(str_replace(' ', '&nbsp;', $amountString))
+                ->setAvailability(
+                    $stockResultByStore->getType() === StockResult::TYPE_AVAILABLE
+                        ? OrderAvailability::AVAILABLE
+                        : OrderAvailability::DELAYED
+                );
+        }
 
         return $shop;
     }

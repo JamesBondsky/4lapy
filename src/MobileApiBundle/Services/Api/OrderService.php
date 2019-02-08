@@ -7,7 +7,11 @@
 namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Helpers\CurrencyHelper;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
 use FourPaws\MobileApiBundle\Dto\Object\City;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryAddress;
@@ -30,6 +34,8 @@ use FourPaws\UserBundle\Service\UserService;
 use FourPaws\MobileApiBundle\Services\Api\StoreService as ApiStoreService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\Order as OrderEntity;
+use FourPaws\SaleBundle\Service\OrderSplitService;
+use FourPaws\DeliveryBundle\Service\DeliveryService as AppDeliveryService;
 
 class OrderService
 {
@@ -59,6 +65,11 @@ class OrderService
     private $personalOrderService;
 
     /**
+     * @var OrderSplitService $orderSplitService
+     */
+    private $orderSplitService;
+
+    /**
      * @var UserService
      */
     private $userService;
@@ -68,6 +79,11 @@ class OrderService
      */
     private $locationService;
 
+    /**
+     * @var AppDeliveryService
+     */
+    private $appDeliveryService;
+
     public function __construct(
         ApiBasketService $apiBasketService,
         OrderStorageService $orderStorageService,
@@ -75,7 +91,9 @@ class OrderService
         PersonalOrderService $personalOrderService,
         UserService $userService,
         ApiStoreService $apiStoreService,
-        LocationService $locationService
+        LocationService $locationService,
+        OrderSplitService $orderSplitService,
+        AppDeliveryService $appDeliveryService
     )
     {
         $this->apiBasketService = $apiBasketService;
@@ -85,6 +103,8 @@ class OrderService
         $this->personalOrderService = $personalOrderService;
         $this->userService = $userService;
         $this->locationService = $locationService;
+        $this->orderSplitService = $orderSplitService;
+        $this->appDeliveryService = $appDeliveryService;
     }
 
     /**
@@ -311,6 +331,99 @@ class OrderService
             $products[] = $this->apiBasketService->getBasketProduct($orderItem->getId(), $orderItem->getProductId(), $orderItem->getQuantity());
         }
         return new BasketProductCollection($products);
+    }
+
+    public function getDeliveryVariants()
+    {
+        $orderStorage = (new OrderStorage());
+        $selectedDelivery = $this->orderStorageService->getSelectedDelivery($orderStorage);
+        $orderStorage->setDeliveryId($selectedDelivery->getDeliveryId());
+        $splitResult1 = [];
+        $splitResult2 = [];
+        if ($this->orderSplitService->canSplitOrder($selectedDelivery)) {
+            [$splitResult1, $splitResult2] = $this->orderSplitService->splitOrder($orderStorage);
+        }
+
+        $deliveryResult1 = $splitResult1->getDelivery()->getStockResult()->getOrderable();
+        $deliveryResult2 = $splitResult2->getDelivery()->getStockResult()->getOrderable();
+        [$deliveryResult1Items, $deliveryResult1Weight] = $this->getOrderItemData($deliveryResult1);
+        [$deliveryResult2Items, $deliveryResult2Weight] = $this->getOrderItemData($deliveryResult2);
+
+        $deliveryResult1Quantity = $deliveryResult1->getAmount();
+        $deliveryResult1Price = $deliveryResult1->getPrice();
+        $deliveryResult2Quantity = $deliveryResult2->getAmount();
+        $deliveryResult2Price = $deliveryResult2->getPrice();
+
+
+        $order1title = $deliveryResult1Quantity
+            . ' '  . WordHelper::declension($deliveryResult1Quantity, ['товар', 'товара', 'товаров'])
+            . '(' . WordHelper::showWeight($deliveryResult1Weight, true) . ') '
+            . 'на сумму ' .  CurrencyHelper::formatPrice($deliveryResult1Price, false);
+
+        $order2title = $deliveryResult2Quantity
+            . ' '  . WordHelper::declension($deliveryResult2Quantity, ['товар', 'товара', 'товаров'])
+            . '(' . WordHelper::showWeight($deliveryResult2Weight, true) . ')'
+            . ' на сумму ' .  CurrencyHelper::formatPrice($deliveryResult2Price, false);
+
+        // 1 заказ
+        $nextDeliveries1 = $this->appDeliveryService->getNextDeliveries($splitResult1->getDelivery(), 10);
+        var_dump(FormatDate('j F', $nextDeliveries1[0]->getDeliveryDate()->getTimestamp()));
+        var_dump($order1title);
+        var_dump($deliveryResult1Items);
+        var_dump($deliveryResult1Price);
+        $dates1 = [];
+        foreach ($nextDeliveries1 as $i => $nextDelivery) {
+            $date['date'] = FormatDate('l, d.m.Y', $nextDelivery->getDeliveryDate()->getTimestamp());
+            $date['intervals'] = [];
+            foreach ($nextDelivery->getAvailableIntervals() as $interval) {
+                $date['intervals'][] = (string) $interval;
+            }
+            $dates1[] = $date;
+        }
+        var_dump($dates1);
+
+        // 2 заказ
+        $nextDeliveries2 = $this->appDeliveryService->getNextDeliveries($splitResult2->getDelivery(), 10);
+        var_dump(FormatDate('j F', $nextDeliveries2[0]->getDeliveryDate()->getTimestamp()));
+        var_dump($order2title);
+        var_dump($deliveryResult2Items);
+        var_dump($deliveryResult2Price);
+        $dates2 = [];
+        foreach ($nextDeliveries2 as $i => $nextDelivery) {
+            $date['date'] = FormatDate('l, d.m.Y', $nextDelivery->getDeliveryDate()->getTimestamp());
+            $date['intervals'] = [];
+            foreach ($nextDelivery->getAvailableIntervals() as $interval) {
+                $date['intervals'][] = (string) $interval;
+            }
+            $dates2[] = $date;
+        }
+        var_dump($dates2);
+
+        // тотал
+        var_dump($selectedDelivery->getStockResult()->getOrderable()->getPrice());
+        die();
+    }
+
+    public function getOrderItemData(StockResultCollection $stockResultCollection): array
+    {
+        $itemData    = [];
+        $totalWeight = 0;
+        /** @var StockResult $item */
+        foreach ($stockResultCollection->getIterator() as $item) {
+            $weight                         = $item->getOffer()->getCatalogProduct()->getWeight() * $item->getAmount();
+            $offerId                        = $item->getOffer()->getId();
+            $itemData[$offerId]['name']     = $item->getOffer()->getName();
+            $itemData[$offerId]['quantity'] += $item->getAmount();
+            $itemData[$offerId]['price']    += $item->getPrice();
+            $itemData[$offerId]['weight']   += $weight;
+
+            $totalWeight += $weight;
+        }
+
+        return [
+            $itemData,
+            $totalWeight,
+        ];
     }
 
     /**
