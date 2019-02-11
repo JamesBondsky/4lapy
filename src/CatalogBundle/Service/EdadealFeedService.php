@@ -36,6 +36,10 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
     /** @var \FourPaws\StoreBundle\Entity\StoreSearchResult */
     private $stores;
 
+    private const TARGET_REGIONS = [
+        'Россия'
+    ];
+
     use LazyLoggerAwareTrait;
 
     /**
@@ -177,6 +181,7 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
                         '/upload/edadeal/edadeal.jpg'
                     ),
                     'offers' => $products !== null ? $products : [],
+                    'target_regions' => static::TARGET_REGIONS,
                     'target_shops' => $this->stores,
                     'label' => $share['PROPERTIES']['LABEL']['VALUE']
                 ];
