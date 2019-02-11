@@ -10,6 +10,9 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\Helpers\ProtectorHelper;
+use FourPaws\App\Application as App;
+use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 
 /** @global \FourPaws\Components\FourPawsFastOrderComponent $component */
 
@@ -54,7 +57,7 @@ if ($request->offsetExists('phone')) {
     $phone = $request->get('phone');
 }
 
-$isDisabled = $isAuth ? 'disabled' : '';
+$isDisabled = $isAuth ? 'readonly' : '';
 
 /** @var array $basketRows */
 $basketRows = $arResult['BASKET_ROWS'];
@@ -284,7 +287,20 @@ $basketRows = $arResult['BASKET_ROWS'];
     <div class="b-error b-error--error">
         <span class="js-message"></span>
     </div>
+
+    <div class="b-popup-one-click__description">
+        <?
+        /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
+        $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
+        echo $recaptchaService->getCaptcha('', true);
+        ?>
+    </div>
+
     <button class="b-button b-button--one-click">Отправить</button>
+
+    <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_FAST_ORDER_CREATE); ?>
+    <input type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
+
 </form>
 <div class="b-preloader b-preloader--fixed">
     <div class="b-preloader__spinner">

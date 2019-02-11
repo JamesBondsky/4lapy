@@ -27,6 +27,9 @@ use FourPaws\CatalogBundle\Dto\Yandex\DeliveryOption;
 use FourPaws\CatalogBundle\Dto\Yandex\Param;
 use FourPaws\CatalogBundle\Dto\Yandex\Feed;
 use FourPaws\CatalogBundle\Dto\Yandex\Offer as YandexOffer;
+use FourPaws\CatalogBundle\Dto\Yandex\Promo;
+use FourPaws\CatalogBundle\Dto\Yandex\Purchase;
+use FourPaws\CatalogBundle\Dto\Yandex\Product;
 use FourPaws\CatalogBundle\Dto\Yandex\Shop;
 use FourPaws\CatalogBundle\Exception\ArgumentException;
 use FourPaws\CatalogBundle\Exception\OffersIsOver;
@@ -58,6 +61,14 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
+    const YAROSLAVL_STOCK = 47,
+        VORONEZH_STOCK = 151,
+        TULA_STOCK = 168,
+        IVANOVO_STOCK = 36,
+        VLADIMIR_STOCK = 163,
+        NN_STOCK = 207,
+        OBNINSK_STOCK = 65;
+
     private const MINIMAL_AVAILABLE_IN_RC = 2;
 
     private $deliveryInfo;
@@ -69,6 +80,37 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      * @var Store
      */
     private $rcStock;
+
+    private $arStocks = [
+        self::YAROSLAVL_STOCK => [
+            'url' => 'yaroslavl.market.yandex.ru',
+            'location_code' => '0000263227'
+        ],
+        self::VORONEZH_STOCK => [
+            'url' => 'voronezh.yandex.ru',
+            'location_code' => '0000293598'
+        ],
+        self::TULA_STOCK => [
+            'url' => 'tula.market.yandex.ru',
+            'location_code' => '0000250453'
+        ],
+        self::IVANOVO_STOCK => [
+            'url' => 'ivanovo.market.yandex.ru',
+            'location_code' => '0000121319'
+        ],
+        self::VLADIMIR_STOCK => [
+            'url' => 'vladimir.market.yandex.ru',
+            'location_code' => '0000312126'
+        ],
+        self::NN_STOCK => [
+            'url' => 'nn.market.yandex.ru',
+            'location_code' => '0000600317'
+        ],
+        self::OBNINSK_STOCK => [
+            'url' => 'obninsk.market.yandex.ru',
+            'location_code' => '0000148783'
+        ]
+    ];
 
     /**
      * YandexFeedService constructor.
@@ -123,6 +165,10 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 $feed = $this->loadFeed($this->getStorageKey());
                 $feed->getShop()
                     ->setOffset(null);
+
+                if ($stockID == self::NN_STOCK) {
+                    $this->processPromos($feed, $configuration, $stockID);
+                }
 
                 $this->publicFeed($feed, Application::getAbsolutePath($configuration->getExportFile()));
                 $this->clearFeed($this->getStorageKey());
@@ -195,7 +241,8 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         Feed $feed,
         Configuration $configuration,
         string $stockID = null
-    ): YandexFeedService {
+    ): YandexFeedService
+    {
         $limit = 500;
         $offers = $feed->getShop()
             ->getOffers();
@@ -302,29 +349,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         $url = 'market.yandex.ru';
 
         if (!empty($stockID)) {
-            switch ($stockID) {
-                case '47':
-                    $url = 'yaroslavl.market.yandex.ru';
-                    break;
-                case '151':
-                    $url = 'voronezh.yandex.ru';
-                    break;
-                case '168':
-                    $url = 'tula.market.yandex.ru';
-                    break;
-                case '36':
-                    $url = 'ivanovo.market.yandex.ru';
-                    break;
-                case '163':
-                    $url = 'vladimir.market.yandex.ru';
-                    break;
-                case '207':
-                    $url = 'nn.market.yandex.ru';
-                    break;
-                case '65':
-                    $url = 'obninsk.market.yandex.ru';
-                    break;
-            }
+            $url = $this->arStocks[$stockID]['url'];
         }
 
         $currentImage = (new FullHrefDecorator($offer->getImages()
@@ -614,30 +639,9 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 false,
                 ['HIDE_ICONS' => 'Y'])['DELIVERIES'];
         } else {
-            switch ($stockID) {
-                case '47':
-                    $locationCode = '0000263227';
-                    break;
-                case '151':
-                    $locationCode = '0000293598';
-                    break;
-                case '168':
-                    $locationCode = '0000250453';
-                    break;
-                case '36':
-                    $locationCode = '0000121319';
-                    break;
-                case '163':
-                    $locationCode = '0000312126';
-                    break;
-                case '207':
-                    $locationCode = '0000600317';
-                    break;
-                case '65':
-                    $locationCode = '0000148783';
-                    break;
-                default:
-                    $locationCode = '0000073738';
+            $locationCode = '0000073738';
+            if (!empty($stockID)) {
+                $locationCode = $this->arStocks[$stockID]['location_code'];
             }
             $deliveryInfo = $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
                 'empty',
@@ -756,5 +760,132 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         }
 
         return $this->rcStock;
+    }
+
+
+    /**
+     * @param Feed $feed
+     * @param ConfigurationInterface $configuration
+     * @param string|null $stockID
+     * @throws IblockNotFoundException
+     */
+    private function processPromos(Feed $feed, ConfigurationInterface $configuration, string $stockID = null)
+    {
+        $promos = $feed->getShop()->getPromos();
+        $host = $configuration->getServerName();
+
+        $arOrder = [
+            'ID' => 'ASC'
+        ];
+
+        $time = ConvertTimeStamp(time(), 'FULL');
+
+        $arFilter = [
+            'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES),
+            'ACTIVE' => 'Y',
+            '<=DATE_ACTIVE_FROM' => $time,
+            '>=DATE_ACTIVE_TO' => $time,
+            '!PROPERTY_PRODUCTS' => false
+        ];
+
+        $arSelect = [
+            'ID',
+            'IBLOCK_ID',
+            'NAME',
+            'DATE_ACTIVE_FROM',
+            'DATE_ACTIVE_TO',
+            'PREVIEW_TEXT',
+            'DETAIL_TEXT',
+            'DETAIL_PAGE_URL'
+        ];
+
+        $dbShare = \CIBlockElement::GetList($arOrder, $arFilter, false, false, $arSelect);
+
+        while ($cibeShare = $dbShare->GetNextElement()) {
+            $share = $cibeShare->GetFields();
+            $share['PROPERTIES'] = $cibeShare->GetProperties();
+            $matches = [];
+            if (
+                $share['DATE_ACTIVE_FROM'] != '' &&
+                $share['DATE_ACTIVE_TO'] != '' &&
+                (
+                    $share['PROPERTIES']['SHARE_TYPE']['VALUE'] == '' ||
+                    $share['PROPERTIES']['SHARE_TYPE']['VALUE'] == 'aktsiya-v-im-roznitse' ||
+                    $share['PROPERTIES']['SHARE_TYPE']['VALUE'] == 'aktsiya-v-roznitse'
+                ) &&
+                preg_match('/[\s]?[0-9]{1,2}[+]{1}[0-9]{1,2}[\s]?/', $share['NAME'], $matches) !== false
+            ) {
+                if (strpos($share['DATE_ACTIVE_FROM'], ' ') === false) {
+                    $share['DATE_ACTIVE_FROM'] .= ' 00:00:00';
+                }
+                if (strpos($share['DATE_ACTIVE_TO'], ' ') === false) {
+                    $share['DATE_ACTIVE_TO'] .= ' 23:59:59';
+                }
+                if (count($matches) == 0) {
+                    continue;
+                }
+                $arType = explode('+', str_replace(' ', '', $matches[0]));
+                $requiredQuantity = (int)$arType[0];
+                $freeQuantity = (int)$arType[1];
+
+                $offers = array_unique($share['PROPERTIES']['PRODUCTS']['VALUE']);
+                $offers = array_flip($offers);
+
+                $filter = [
+                    'XML_ID' => array_keys($offers)
+                ];
+
+                if (!empty($stockID)) {
+                    $filter['>CATALOG_STORE_AMOUNT_' . $stockID] = '1';
+                } else {
+                    $filter['>CATALOG_STORE_AMOUNT_' . $this->getRcStock()->getId()] = '1';
+                }
+
+                $offerCollection = (new OfferQuery())
+                    ->withFilter($filter)
+                    ->exec();
+
+                /** @var Offer $offer */
+                foreach ($offerCollection as $offer) {
+                    $offers[$offer->getXmlId()] = true;
+                }
+
+                foreach ($offers as $offerId => $offer) {
+                    if ($offer !== true) {
+                        unset($offers[$offerId]);
+                    }
+                }
+
+                $offers = array_keys($offers);
+                $productCollection = new ArrayCollection();
+                foreach ($offers as $offer) {
+                    $product = new Product();
+                    $product->setOfferId($offer);
+                    $productCollection->add($product);
+                }
+
+                if ($productCollection->count() > 0) {
+                    $purchase = new Purchase();
+                    $purchase
+                        ->setRequiredQuantity($requiredQuantity)
+                        ->setFreeQuantity($freeQuantity)
+                        ->setProduct($productCollection);
+                    $descr = ($share['PREVIEW_TEXT']) ? $share['PREVIEW_TEXT'] : $share['DETAIL_TEXT'];
+                    $descr = str_replace("\r\n", '', html_entity_decode(\HTMLToTxt($descr)));
+                    $promo = new Promo();
+                    $promo
+                        ->setId($share['ID'])
+                        ->setType($requiredQuantity . ' plus ' . $freeQuantity)
+                        ->setUrl((new FullHrefDecorator($share['DETAIL_PAGE_URL']))->setHost($host)->__toString())
+                        ->setStartDate(\DateTime::createFromFormat('d.m.Y H:i:s', $share['DATE_ACTIVE_FROM'])->format('Y-m-d H:i:s'))
+                        ->setEndDate(\DateTime::createFromFormat('d.m.Y H:i:s', $share['DATE_ACTIVE_TO'])->format('Y-m-d H:i:s'))
+                        ->setDescription($descr)
+                        ->setPurchase($purchase);
+                    $promos->add($promo);
+                }
+            }
+        }
+
+        $feed->getShop()->setPromos($promos);
     }
 }

@@ -83,6 +83,16 @@ class WordHelper
      *
      * @return string
      */
+    public static function showLengthNumber(?float $lengthMm): string
+    {
+        return static::numberFormat($lengthMm / 10, 1, true);
+    }
+
+    /**
+     * @param float $lengthMm - длинна в миллиметрах
+     *
+     * @return string
+     */
     public static function showLength(?float $lengthMm): string
     {
         return static::numberFormat($lengthMm / 10, 1, true) . ' см';

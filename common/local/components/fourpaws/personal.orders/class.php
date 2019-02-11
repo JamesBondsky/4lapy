@@ -101,8 +101,18 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
             }
             $this->orderService->loadManzanaOrders($user);
 
+
+            $navResult = new CDBResult();
+            $navResult->NavNum = 'nav-more-orders';
+            $navResult->NavPageSize = OrderService::ORDER_PAGE_LIMIT;
+            $navResult->NavPageNomer = 1;
+
             $orders = $this->orderService->getUserOrders($user);
             $orderCount = $this->orderService->getUserOrdersCount($user);
+
+            $navResult->NavRecordCount = $orderCount;
+            $navResult->NavPageCount = ceil($orderCount / OrderService::ORDER_PAGE_LIMIT);
+
         } catch (NotAuthorizedException $e) {
             define('NEED_AUTH', true);
 
@@ -111,6 +121,7 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
 
         $this->arResult['TOTAL_ORDER_COUNT'] = $orderCount;
         $this->arResult['ORDERS'] = $orders ?? new ArrayCollection();
+        $this->arResult['NAV'] = $navResult;
     }
 
     /**

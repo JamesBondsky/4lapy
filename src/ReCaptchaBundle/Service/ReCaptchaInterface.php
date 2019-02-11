@@ -14,12 +14,13 @@ interface ReCaptchaInterface
 {
     /**
      * @param string $additionalClass
-     *
      * @param bool   $isAjax
+     * @param string $callback
+     * @param string $id
      *
      * @return string
      */
-    public function getCaptcha(string $additionalClass = '', bool $isAjax = false): string;
+    public function getCaptcha(string $additionalClass = '', bool $isAjax = false, string $callback = '', string $id = ''): string;
 
     /**
      * @return array
@@ -40,5 +41,5 @@ interface ReCaptchaInterface
      * @throws SystemException
      * @return bool
      */
-    public function checkCaptcha(string $recaptcha = ''): bool;
+    public function checkCaptcha(?string $recaptcha = ''): bool;
 }

@@ -24,7 +24,7 @@ use FourPaws\Catalog\Collection\CategoryCollection;
 use FourPaws\Catalog\Query\BrandQuery;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\Catalog\Table\CatalogPriceTable;
+use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Search\Model\HitMetaInfoAwareInterface;
 use FourPaws\Search\Model\HitMetaInfoAwareTrait;
@@ -700,6 +700,27 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @Groups({"elastic"})
      */
     protected $searchBooster = '';
+
+    /**
+     * @var string
+     * @Type("string")
+     * @Accessor(getter="getAquariumCombination")
+     */
+    protected $PROPERTY_AQUARIUM_COMBINATION;
+
+    /**
+     * @var string
+     * @Type("string")
+     * @Accessor(getter="getPowerMin")
+     */
+    protected $PROPERTY_POWER_MIN;
+
+    /**
+     * @var string
+     * @Type("string")
+     * @Accessor(getter="getPowerMax")
+     */
+    protected $PROPERTY_POWER_MAX;
 
     /**
      * BitrixArrayItemBase constructor.
@@ -2466,5 +2487,255 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         }
 
         return trim(str_replace('  ', ' ', $this->searchBooster));
+    }
+
+    /**
+     * @param $aquariumCombination
+     * @return Product
+     */
+    public function withAquariumCombination($aquariumCombination): Product
+    {
+        $this->PROPERTY_AQUARIUM_COMBINATION = $aquariumCombination;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAquariumCombination(): string
+    {
+        return $this->PROPERTY_AQUARIUM_COMBINATION;
+    }
+
+    /**
+     * @param $powerMin
+     * @return Product
+     */
+    public function withPowerMin($powerMin): Product
+    {
+        $this->PROPERTY_POWER_MIN = $powerMin;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPowerMin(): string
+    {
+        return $this->PROPERTY_POWER_MIN;
+    }
+
+    /**
+     * @param $powerMax
+     * @return Product
+     */
+    public function withPowerMax($powerMax): Product
+    {
+        $this->PROPERTY_POWER_MAX = $powerMax;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPowerMax(): string
+    {
+        return $this->PROPERTY_POWER_MAX;
+    }
+
+
+    /**
+     * @param $aquariumCombination
+     * @return Offer|null
+     */
+    public function getPedestal($aquariumCombination)
+    {
+        $res = (new ProductQuery())
+            ->withFilterParameter('PROPERTY_AQUARIUM_COMBINATION', $aquariumCombination)
+            ->withFilterParameter('SECTION_CODE', 'tumby-podstavki-akvariumy')
+            ->withFilterParameter('ACTIVE', 'Y')
+            ->exec();
+        if ($res->isEmpty()) {
+            return null;
+        } else {
+            $offer = $res->first()->getOffers()->first();
+            if ($offer->getPrice() > 0) {
+                return $offer;
+            } else {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * @param $aquariumCombination
+     * @return Offer|null
+     */
+    public function getAquarium($aquariumCombination)
+    {
+        $res = (new ProductQuery())
+            ->withFilterParameter('PROPERTY_AQUARIUM_COMBINATION', $aquariumCombination)
+            ->withFilterParameter('SECTION_CODE',
+                [
+                    'banki-bez-kryshki-akvariumy',
+                    'detskie-akvariumy-akvariumy',
+                    'komplekty-akvariumy'
+                ]
+            )
+            ->withFilterParameter('ACTIVE', 'Y')
+            ->exec();
+        if ($res->isEmpty()) {
+            return null;
+        } else {
+            $offer = $res->first()->getOffers()->first();
+            if ($offer->getPrice() > 0) {
+                return $offer;
+            } else {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * @param $volume
+     * @return ArrayCollection
+     */
+    public function getInternalFilters($volume): ArrayCollection
+    {
+        $result = new ArrayCollection();
+        $res = (new ProductQuery())
+            ->withFilter([
+                [
+                    'LOGIC' => 'OR',
+                    'PROPERTY_POWER_MIN' => false,
+                    '<=PROPERTY_POWER_MIN' => $volume
+                ],
+                [
+                    'LOGIC' => 'AND',
+                    '!PROPERTY_POWER_MAX' => false,
+                    '>=PROPERTY_POWER_MAX' => $volume
+                ],
+                'SECTION_CODE' => 'vnutrennie-filtry-ryby',
+                'ACTIVE' => 'Y'
+            ])
+            ->withOrder(['PROPERTY_POWER_MAX' => 'ASC'])
+            ->exec();
+        if (!$res->isEmpty()) {
+            while ($product = $res->next()) {
+                $offers = $product->getOffers();
+                /**
+                 * @var Offer $offer
+                 */
+                foreach ($offers as $offer) {
+                    if ($offer->getPrice() > 0) {
+                        $result->add($offer);
+                    }
+                }
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * @param $volume
+     * @return ArrayCollection
+     */
+    public function getExternalFilters($volume): ArrayCollection
+    {
+        $result = new ArrayCollection();
+        $res = (new ProductQuery())
+            ->withFilter([
+                [
+                    'LOGIC' => 'OR',
+                    'PROPERTY_POWER_MIN' => false,
+                    '<=PROPERTY_POWER_MIN' => $volume
+                ],
+                [
+                    'LOGIC' => 'AND',
+                    '!PROPERTY_POWER_MAX' => false,
+                    '>=PROPERTY_POWER_MAX' => $volume
+                ],
+                'SECTION_CODE' => 'vneshnie-filtry-ryby',
+                'ACTIVE' => 'Y'
+            ])
+            ->withOrder(['PROPERTY_POWER_MAX' => 'ASC'])
+            ->exec();
+
+        if (!$res->isEmpty()) {
+            while ($product = $res->next()) {
+                $offers = $product->getOffers();
+                /**
+                 * @var Offer $offer
+                 */
+                foreach ($offers as $offer) {
+                    if ($offer->getPrice() > 0) {
+                        $result->add($offer);
+                    }
+                }
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * @return ArrayCollection
+     */
+    public function getLamps(): ArrayCollection
+    {
+        $result = new ArrayCollection();
+        $res = (new ProductQuery())
+            ->withFilter([
+                'SECTION_CODE' => 'lampy-i-svetilniki-ryby',
+                'ACTIVE' => 'Y'
+            ])
+            ->withNav(['nPageSize' => 20])
+            ->exec();
+
+        if (!$res->isEmpty()) {
+            while ($product = $res->next()) {
+                /**
+                 * @var Offer $offer
+                 */
+                $offer = $product->getOffers()->first();
+                if ($offer->getPrice() > 0) {
+                    $result->add($offer);
+                }
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * @return ArrayCollection
+     */
+    public function getDecor(): ArrayCollection
+    {
+        $result = new ArrayCollection();
+        foreach (['grunty-ryby', 'elementy-dekora-ryby', 'plastikovye-rasteniya-ryby', 'ukrasheniya-steklyannye-ryby', 'koryagi-i-kamni-ryby'] as $sectionCode) {
+            $res = (new ProductQuery())
+                ->withFilter([
+                    'SECTION_CODE' => $sectionCode,
+                    'ACTIVE' => 'Y'
+                ])
+                ->withNav(['nPageSize' => 4])
+                ->exec();
+
+            if (!$res->isEmpty()) {
+                while ($product = $res->next()) {
+                    /**
+                     * @var Offer $offer
+                     */
+                    $offer = $product->getOffers()->first();
+                    if ($offer->getPrice() > 0) {
+                        $result->add($offer);
+                    }
+                }
+            }
+        }
+
+        return $result;
     }
 }

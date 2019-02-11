@@ -28,6 +28,7 @@ use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\Helpers\ProtectorHelper;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\BaseExceptionInterface;
 use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
@@ -47,6 +48,8 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use SplObjectStorage;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
+use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
+
 
 /**
  * Class FastOrderController
@@ -213,9 +216,22 @@ class FastOrderController extends Controller
      * @param Request $request
      *
      * @return JsonResponse
+     * @throws \Exception
      */
     public function createAction(Request $request): JsonResponse
     {
+
+        if (!ProtectorHelper::checkToken($request->get(ProtectorHelper::getField(ProtectorHelper::TYPE_FAST_ORDER_CREATE)), ProtectorHelper::TYPE_FAST_ORDER_CREATE)) {
+            return $this->ajaxMess->getOrderCreateError('Оформление быстрого заказа невозможно, пожалуйста обратитесь к администратору или попробуйте полный процесс оформления');
+        }
+
+        /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
+        $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
+
+        if (!$recaptchaService->checkCaptcha($request->get('g-recaptcha-response'))) {
+            return $this->ajaxMess->getOrderCreateError('Оформление быстрого заказа невозможно, пожалуйста обратитесь к администратору или попробуйте полный процесс оформления');
+        }
+
         $orderStorage = new OrderStorage();
 
         try {
