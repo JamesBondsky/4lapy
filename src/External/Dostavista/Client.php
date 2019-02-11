@@ -205,6 +205,12 @@ class Client
      */
     public function addOrder($data): array
     {
+        //фикс времени начала доставки для доставкисты
+        $curDate = (new \DateTime)->modify('+1 minutes');
+        $requireTimeStart = $curDate->format('c');
+        $data['points'][0]['required_start_datetime'] = $requireTimeStart;
+        $data['points'][1]['required_start_datetime'] = $requireTimeStart;
+
         //проверка заполненности обязательных полей
         if (count($resCheck = $this->checkOrderFields($data)) > 0) {
             return $resCheck;
