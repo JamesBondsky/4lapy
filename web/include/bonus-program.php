@@ -1,4 +1,4 @@
-<li nk="" href="https://fonts.googleapis.com/css?family=Pacifico" rel="stylesheet">
+<div class="about__wrap-top">
 <div id="about_wrap">
 	<div class="about_body">
 		<div class="about_head">
@@ -173,4 +173,4 @@
 		</div>
 	</div>
 </div>
- </li>
+ </div>
