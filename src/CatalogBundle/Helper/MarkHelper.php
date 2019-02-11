@@ -98,20 +98,9 @@ final class MarkHelper
      */
     private static function getMarkImage(Offer $offer, int $shareId = 0): string
     {
-        if ($offer->isHit() || $offer->isPopular()) {
-            return self::MARK_HIT_IMAGE;
-        }
-
-        if ($offer->isNew()) {
-            return self::MARK_NEW_IMAGE;
-        }
-
-        if ($offer->isSale() || $offer->isSimpleSaleAction()) {
-            return self::MARK_SALE_IMAGE;
-        }
-
         if ($offer->isShare()) {
-            /** @var Share $share
+            /**
+             * @var Share $share
              * @var Share $shareItem
              */
             $share = null;
@@ -136,6 +125,18 @@ final class MarkHelper
             return self::MARK_GIFT_IMAGE;
         }
 
+        if ($offer->isSale() || $offer->isSimpleSaleAction() || $offer->isSimpleDiscountAction()) {
+            return self::MARK_SALE_IMAGE;
+        }
+
+        if ($offer->isHit() || $offer->isPopular()) {
+            return self::MARK_HIT_IMAGE;
+        }
+
+        if ($offer->isNew()) {
+            return self::MARK_NEW_IMAGE;
+        }
+
         return '';
     }
 
@@ -147,29 +148,42 @@ final class MarkHelper
      */
     private static function getMarkTemplate(Offer $offer, int $shareId = 0): string
     {
+        if ($offer->isShare()) {
+            /**
+             * @var Share $share
+             * @var Share $shareItem
+             */
+            $share = null;
+            if ($shareId > 0) {
+                foreach ($offer->getShare() as $shareItem) {
+                    if ($shareItem->getId() === $shareId) {
+                        $share = $shareItem;
+
+                    }
+                }
+            }
+            if ($share === null) {
+                $share = $offer->getShare()->first();
+            }
+            if ($share->hasLabelImage()) {
+                return self::DEFAULT_TRANSPARENT_TEMPLATE;
+            }
+            if ($share->hasLabel()) {
+                return self::DEFAULT_TEMPLATE;
+            }
+        }
+
+        if ($offer->isSale() || $offer->isSimpleSaleAction() || $offer->isSimpleDiscountAction()) {
+            /** @todo возможно другой шаблон */
+            return self::DEFAULT_TEMPLATE;
+        }
+
         if ($offer->isHit() || $offer->isPopular()) {
             return self::YELLOW_TEMPLATE;
         }
 
         if ($offer->isNew()) {
             return self::GREEN_TEMPLATE;
-        }
-
-        if ($offer->isSale()) {
-            /** @todo возможно другой шаблон */
-            return self::DEFAULT_TEMPLATE;
-        }
-
-        $share = null;
-        if ($shareId > 0) {
-            foreach ($offer->getShare() as $shareItem) {
-                if ($shareItem->getId() === $shareId) {
-                    $share = $shareItem;
-                    if ($share->hasLabelImage()) {
-                        return self::DEFAULT_TRANSPARENT_TEMPLATE;
-                    }
-                }
-            }
         }
 
         return self::DEFAULT_TEMPLATE;

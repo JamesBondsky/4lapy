@@ -202,6 +202,14 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                         $this->arResult['USER_NAME'] = $curUser->getName();
                         global $APPLICATION;
                         $APPLICATION->SetTitle('Ура, можно покупать!');
+
+
+                        /** [todo] Просто комшмарный костыль что бы на лендинге грандина после регистрации кидало на главную */
+                        if (SITE_ID == 's2') {
+                            LocalRedirect('/#registr-check');
+                        }
+
+
                     } else {
                         $this->showError('Проверка не пройдена');
 

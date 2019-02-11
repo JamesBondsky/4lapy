@@ -15,4 +15,6 @@ class IblockType
     public const REFERENCE_BOOKS = 'reference_books';
 
     public const PUBLICATION = 'publications';
+
+    public const GRANDIN = 'grandin';
 }

@@ -101,6 +101,17 @@ class Shop
     protected $offers;
 
     /**
+     * Акции
+     *
+     * @Serializer\XmlList(inline=false, entry="promo")
+     * @Serializer\Type("ArrayCollection<FourPaws\CatalogBundle\Dto\Yandex\Promo>")
+     * @Serializer\SkipWhenEmpty()
+     *
+     * @var Promo[]|Collection
+     */
+    protected $promos;
+
+    /**
      * @return string
      */
     public function getName(): string
@@ -256,6 +267,25 @@ class Shop
     public function setOffset(?int $offset): Shop
     {
         $this->offset = $offset;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Promo[]
+     */
+    public function getPromos()
+    {
+        return $this->promos;
+    }
+
+    /**
+     * @param Collection|Promo[] $promos
+     * @return Shop
+     */
+    public function setPromos($promos): Shop
+    {
+        $this->promos = $promos;
 
         return $this;
     }
