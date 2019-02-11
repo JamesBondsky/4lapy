@@ -231,28 +231,25 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
                 continue;
             }
 
+            $this->arResult['offers'][$offer['XML_ID']] = [
+                'id' => $offer['XML_ID'],
+                'sku' => $offer['ID'],
+                'image' => $offer['PROPERTIES']['IMG']['VALUE'][0],
+                'description' => $offer['NAME']
+            ];
+
             if (
             (floatval($offer['PROPERTIES']['PRICE_ACTION']['VALUE']) < floatval($offer['CATALOG_PRICE_2'])
                 && $offer['PROPERTIES']['PRICE_ACTION']['VALUE'] != ''
                 && $offer['PROPERTIES']['PRICE_ACTION']['VALUE'] != 0)
             ) {
-                $this->arResult['offers'][$offer['XML_ID']] = [
-                    'id' => $offer['XML_ID'],
-                    'sku' => $offer['ID'],
-                    'image' => $offer['PROPERTIES']['IMG']['VALUE'][0],
-                    'price_old' => floatval($offer['CATALOG_PRICE_2']),
-                    'price_new' => floatval($offer['PROPERTIES']['PRICE_ACTION']['VALUE'])
-                ];
+                $this->arResult['offers'][$offer['XML_ID']]['price_old'] = floatval($offer['CATALOG_PRICE_2']);
+                $this->arResult['offers'][$offer['XML_ID']]['price_new'] = floatval($offer['PROPERTIES']['PRICE_ACTION']['VALUE']);
             } else {
-                $this->arResult['offers'][$offer['XML_ID']] = [
-                    'id' => $offer['XML_ID'],
-                    'sku' => $offer['ID'],
-                    'image' => $offer['PROPERTIES']['IMG']['VALUE'][0],
-                    'price_new' => floatval($offer['CATALOG_PRICE_2'])
-                ];
+                $this->arResult['offers'][$offer['XML_ID']]['price_new'] = floatval($offer['CATALOG_PRICE_2']);
             }
 
-            if(strpos(mb_strtolower($offer['NAME']), 'корм') !== false){
+            if (strpos(mb_strtolower($offer['NAME']), 'корм') !== false) {
                 $this->arResult['offers'][$offer['XML_ID']]['quantity'] = (float)WordHelper::showWeightNumber($offer['CATALOG_WEIGHT'], true);
                 $this->arResult['offers'][$offer['XML_ID']]['quantity_unit'] = 'кг';
             }
@@ -286,7 +283,6 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
             'ID',
             'IBLOCK_ID',
             'PROPERTY_BRAND.NAME',
-            'DETAIL_TEXT',
             'ACTIVE'
         ];
 
@@ -298,31 +294,9 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
         $dbProduct = \CIBlockElement::GetList([], $arFilter, false, false, $arSelect);
         while ($arProduct = $dbProduct->Fetch()) {
             //берем первое предложение из описания
-            $arDescr = explode('.', $arProduct['DETAIL_TEXT']);
-            if (count($arDescr) > 1) {
-                $descr = $arDescr[0] . '.';
-            } else {
-                $descr = $arDescr[0];
-            }
-            $descr = preg_replace(
-                [
-                    '/<table(.*)<\/table>/', //таблица
-                    '/<a(.*)<\/a>/', //ссылки
-                    '/<img(.*)>/' //изображения
-                ],
-                [
-                    '',
-                    '',
-                    ''
-                ],
-                $descr
-            );
-            //удаляем остальные теги
-            $descr = str_replace("\r\n", '', html_entity_decode(\HTMLToTxt($descr)));
-            if ($descr != '' && $descr != null && $arProduct['ACTIVE'] == 'Y') {
+            if ($arProduct['ACTIVE'] == 'Y') {
                 foreach ($products[$arProduct['ID']] as $offer) {
                     $this->arResult['offers'][$offer]['brand'] = $arProduct['PROPERTY_BRAND_NAME'];
-                    $this->arResult['offers'][$offer]['description'] = $descr;
                 }
             } else {
                 foreach ($products[$arProduct['ID']] as $offer) {
