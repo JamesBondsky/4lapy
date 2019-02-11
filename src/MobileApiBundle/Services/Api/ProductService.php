@@ -427,7 +427,7 @@ class ProductService
     {
         /** @var $deliveryResult DeliveryResult */
         $deliveryResult = $this->filterDeliveries($this->getDeliveries($offer));
-        if (!$deliveryResult) {
+        if (!($deliveryResult && ($deliveryResult instanceof DeliveryResult || $deliveryResult instanceof PickupResult))) {
             return '';
         }
         return $deliveryResult->getTextForOffer($offer->getPrice(), $offer->isByRequest(), true);
