@@ -59,7 +59,7 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
                         </div>
                     </div>
                     <div class="form-group">
-                        <input type="email" id="EMAIL_REG_CHECK_GRANDIN" name="email" value="<?=$arUser['EMAIL']?:''?>" placeholder="E-mail" >
+                        <input type="emailLanding" id="EMAIL_REG_CHECK_GRANDIN" name="email" value="<?=$arUser['EMAIL']?:''?>" placeholder="E-mail" >
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
@@ -83,7 +83,7 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
 
                     <div class="read-rules">
                         <input type="checkbox" id="READ_RULES_REG_CHECK_GRANDIN" name="rules" value="Y" checked>
-                        <label for="READ_RULES_REG_CHECK_GRANDIN"><span></span> с <a href="#" target="_blank">правилами акции</a> ознакомлен</label>
+                        <label for="READ_RULES_REG_CHECK_GRANDIN"><span></span> с <a href="/grandin_rules.pdf" target="_blank">правилами</a> акции ознакомлен</label>
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>

@@ -690,11 +690,11 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                 return $result2->isSuccess() <=> $result1->isSuccess();
             }
 
-            if ($storeData1['ORDERABLE_PRICE'] !== $storeData2['ORDERABLE_PRICE']) {
+            if ($storeData1['ORDERABLE_PRICE'] < $storeData2['ORDERABLE_PRICE']) {
                 return $storeData2['ORDERABLE_PRICE'] <=> $storeData1['ORDERABLE_PRICE'];
             }
 
-            if ($storeData1['AVAILABLE_PRICE'] !== $storeData2['AVAILABLE_PRICE']) {
+            if ($storeData1['AVAILABLE_PRICE'] < $storeData2['AVAILABLE_PRICE']) {
                 return $storeData2['AVAILABLE_PRICE'] <=> $storeData1['AVAILABLE_PRICE'];
             }
 

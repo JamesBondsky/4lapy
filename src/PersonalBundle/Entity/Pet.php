@@ -18,6 +18,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 class Pet extends BaseEntity
 {
     const PET_TYPE = 'ForWho';
+    const PET_BREED = 'PetBreed';
 
     /**
      * @var string
@@ -66,6 +67,16 @@ class Pet extends BaseEntity
      * @Serializer\SkipWhenEmpty()
      */
     protected $breed;
+
+    /**
+     * @var string
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("UF_BREED_ID")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $breedId;
 
     /**
      * @var Date|null
@@ -290,6 +301,26 @@ class Pet extends BaseEntity
     public function setBreed(string $breed) : Pet
     {
         $this->breed = $breed;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getBreedId() : int
+    {
+        return $this->breedId ?? 0;
+    }
+
+    /**
+     * @param int $breedId
+     *
+     * @return Pet
+     */
+    public function setBreedId(int $breedId) : Pet
+    {
+        $this->breedId = $breedId;
 
         return $this;
     }

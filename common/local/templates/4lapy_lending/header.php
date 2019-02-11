@@ -77,6 +77,22 @@ $markup = PawsApplication::markup();
 <body class="body-landing">
 <?php $APPLICATION->ShowPanel(); ?>
 
+<!-- Yandex.Metrika counter -->
+<script type="text/javascript" >
+    (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+        m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+    (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+    ym(52251391, "init", {
+        id:52251391,
+        clickmap:true,
+        trackLinks:true,
+        accurateTrackBounce:true
+    });
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/52251391" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
+
 <header class="header-landing" data-header-landing="true">
     <div class="container-landing">
         <div class="header-landing__content">
@@ -86,28 +102,20 @@ $markup = PawsApplication::markup();
             <div class="header-landing-menu" data-mobile-menu-landing="true">
                 <ul class="header-landing-menu__list" data-list-mobile-menu-landing="true">
                     <li  class="header-landing-menu__item">
-                        <a href="#" class="header-landing-menu__link" target="_blank">Правила акции</a>
+                        <a href="/grandin_rules.pdf" class="header-landing-menu__link" target="_blank">Правила акции</a>
                     </li>
 
-                    <?if ($USER->IsAuthorized()) {?>
-                        <li class="header-landing-menu__item">
-                            <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="regulations">Принять участие</a>
-                        </li>
-                    <?} else {?>
-                        <li class="header-landing-menu__item">
-                            <a href="javascript:void(0);"  class="header-landing-menu__link js-open-popup" data-popup-id="authorization">Принять участие</a>
-                        </li>
-                    <?}?>
+                    <li class="header-landing-menu__item">
+                        <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="regulations">Принять участие</a>
+                    </li>
 
                     <li  class="header-landing-menu__item">
                         <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="prizes">Призы</a>
                     </li>
 
-                    <?/**
                     <li  class="header-landing-menu__item">
                         <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="winners">Победители</a>
                     </li>
-                    */?>
 
                     <li  class="header-landing-menu__item">
                         <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="where-buy">Где купить</a>
@@ -126,7 +134,7 @@ $markup = PawsApplication::markup();
     <section class="splash-screen-landing">
         <div class="splash-screen-landing__bg" style="background-image: url('/static/build/images/content/bg-splash-landing.png')"></div>
         <div class="splash-screen-landing__dog" style="background-image: url('/static/build/images/content/landing-splash-screen_dog.png')"></div>
-        <div class="splash-screen-landing__cat" style="background-image: url('/static/build/images/content/landing-splash-screen_cat.png')"></div>
+        <div class="splash-screen-landing__cat" style="background-image: url('/static/build/images/content/landing-splash-screen_cat.png?v=1')"></div>
         <div class="splash-screen-landing__feed-left" style="background-image: url('/static/build/images/content/landing-splash-screen_left.png')"></div>
         <div class="splash-screen-landing__feed-right" style="background-image: url('/static/build/images/content/landing-splash-screen_right.png')"></div>
 
@@ -142,15 +150,9 @@ $markup = PawsApplication::markup();
                 </div>
                 <div class="splash-screen-landing__date">С 1 по 28 февраля 2019 г</div>
 
-                <?if ($USER->IsAuthorized()) {?>
-                    <div class="splash-screen-landing__btn-wrap">
-                        <div class="splash-screen-landing__btn" data-btn-scroll-landing="registr-check">Зарегистрировать чек</div>
-                    </div>
-                <?} else {?>
-                    <div class="splash-screen-landing__btn-wrap">
-                        <div class="splash-screen-landing__btn js-open-popup" data-popup-id="authorization">Принять участие</div>
-                    </div>
-                <?}?>
+                <div class="splash-screen-landing__btn-wrap">
+                    <div class="landing-btn" data-btn-scroll-landing="regulations">Узнать подробности</div>
+                </div>
 
             </div>
         </div>
@@ -160,7 +162,7 @@ $markup = PawsApplication::markup();
         <div class="container-landing">
             <div class="landing-title">Как принять участие в&nbsp;акции</div>
             <ol class="regulations-landing__list">
-                <li>Купите любые корма Grandin на&nbsp;сумму от&nbsp;1800&nbsp;рублей и&nbsp;получите миску Grandin в&nbsp;подарок</li>
+                <li>Купите любые корма Grandin на&nbsp;сумму от&nbsp;1800&nbsp;рублей и&nbsp;получите миску Grandin в&nbsp;подарок*</li>
                 <li>Зарегистрируйте покупку, и&nbsp;вы сможете принять участие в&nbsp;розыгрыше призов</li>
                 <li>Проверяйте результаты розыгрыша каждую&nbsp;пятницу</li>
             </ol>
@@ -185,8 +187,3 @@ $markup = PawsApplication::markup();
     <main class="b-wrapper<?= $template->getIndexMainClass() ?>" role="main">
 
 <?php }
-
-if ($template->hasContent()) {
-    $asset->addCss('/include/static/style.css');
-    $asset->addJs('/include/static/scripts.js');
-}

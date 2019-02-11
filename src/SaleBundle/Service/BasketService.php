@@ -777,7 +777,7 @@ class BasketService implements LoggerAwareInterface
             }
         }
 
-        if ($resultQuantity === 0 && isset($offer) && $offer->isBonusExclude()) {
+        if ($resultQuantity === 0 && isset($offer) && ($offer->isBonusExclude() || $offer->isShare()) ) {
             $basketDiscounts = true;
         } elseif ($resultQuantity === 0) {
             if (!$order) {
