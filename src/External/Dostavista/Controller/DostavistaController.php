@@ -50,13 +50,14 @@ class DostavistaController implements LoggerAwareInterface
         $bitrixStatus = StatusService::STATUS_DOSTAVISTA_MAP[array_flip(StatusService::STATUS_SITE_DOSTAVISTA_MAP)[$dostavistaStatus]];
         if (empty($bitrixStatus)) {
             $mess = 'Conformity of dostavista status and status bitrix not found!';
-            $this->log()->error($mess);
+            $context = [
+                'dostavista_order_id' => $dostavistaOrderId,
+                'dostavista_status' => $dostavistaStatus
+            ];
+            $this->log()->error($mess, $context);
             return JsonErrorResponse::createWithData(
                 'Error: ' . $mess,
-                [
-                    'dostavista_order_id' => $dostavistaOrderId,
-                    'dostavista_status' => $dostavistaStatus
-                ],
+                $context,
                 200,
                 []
             );
@@ -64,12 +65,13 @@ class DostavistaController implements LoggerAwareInterface
         $orderRes = CSaleOrder::getList([], ['PROPERTY_VAL_BY_CODE_ORDER_ID_DOSTAVISTA' => $dostavistaOrderId], false, ['nTopCount' => 1]);
         if (!($order = $orderRes->fetch())) {
             $mess = 'Bitrix Order not Found!';
-            $this->log()->notice($mess);
+            $context = [
+                'dostavista_order_id' => $dostavistaOrderId
+            ];
+            $this->log()->notice($mess, $context);
             return JsonErrorResponse::createWithData(
                 'Error: ' . $mess,
-                [
-                    'dostavista_order_id' => $dostavistaOrderId
-                ],
+                $context,
                 200,
                 []
             );
@@ -84,15 +86,16 @@ class DostavistaController implements LoggerAwareInterface
             );
         } elseif (!CSaleOrder::StatusOrder($order['ID'], $bitrixStatus)) {
             $mess = 'Bitrix set status exception for order [' . $order['ID'] . '], dostavista_order_id [' . $dostavistaOrderId . '], ' . 'dostavista_status [' . $dostavistaStatus . '], bitrix_status [' . $bitrixStatus . ']';
-            $this->log()->error($mess);
+            $context = [
+                'bitrix_order_id' => $order['ID'],
+                'dostavista_order_id' => $dostavistaOrderId,
+                'dostavista_status' => $dostavistaStatus,
+                'bitrix_status' => $bitrixStatus
+            ];
+            $this->log()->error($mess, $context);
             return JsonErrorResponse::createWithData(
                 'Error: ' . $mess,
-                [
-                    'bitrix_order_id' => $order['ID'],
-                    'dostavista_order_id' => $dostavistaOrderId,
-                    'dostavista_status' => $dostavistaStatus,
-                    'bitrix_status' => $bitrixStatus
-                ],
+                $context,
                 200,
                 []
             );
