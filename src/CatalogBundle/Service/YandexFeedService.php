@@ -61,6 +61,14 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
+    const YAROSLAVL_STOCK = 47,
+        VORONEZH_STOCK = 151,
+        TULA_STOCK = 168,
+        IVANOVO_STOCK = 36,
+        VLADIMIR_STOCK = 163,
+        NN_STOCK = 207,
+        OBNINSK_STOCK = 65;
+
     private const MINIMAL_AVAILABLE_IN_RC = 2;
 
     private $deliveryInfo;
@@ -72,6 +80,37 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      * @var Store
      */
     private $rcStock;
+
+    private $arStocks = [
+        self::YAROSLAVL_STOCK => [
+            'url' => 'yaroslavl.market.yandex.ru',
+            'location_code' => '0000263227'
+        ],
+        self::VORONEZH_STOCK => [
+            'url' => 'voronezh.yandex.ru',
+            'location_code' => '0000293598'
+        ],
+        self::TULA_STOCK => [
+            'url' => 'tula.market.yandex.ru',
+            'location_code' => '0000250453'
+        ],
+        self::IVANOVO_STOCK => [
+            'url' => 'ivanovo.market.yandex.ru',
+            'location_code' => '0000121319'
+        ],
+        self::VLADIMIR_STOCK => [
+            'url' => 'vladimir.market.yandex.ru',
+            'location_code' => '0000312126'
+        ],
+        self::NN_STOCK => [
+            'url' => 'nn.market.yandex.ru',
+            'location_code' => '0000600317'
+        ],
+        self::OBNINSK_STOCK => [
+            'url' => 'obninsk.market.yandex.ru',
+            'location_code' => '0000148783'
+        ]
+    ];
 
     /**
      * YandexFeedService constructor.
@@ -127,7 +166,9 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 $feed->getShop()
                     ->setOffset(null);
 
-                $this->processPromos($feed, $configuration, $stockID);
+                if ($stockID == self::NN_STOCK) {
+                    $this->processPromos($feed, $configuration, $stockID);
+                }
 
                 $this->publicFeed($feed, Application::getAbsolutePath($configuration->getExportFile()));
                 $this->clearFeed($this->getStorageKey());
@@ -200,7 +241,8 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         Feed $feed,
         Configuration $configuration,
         string $stockID = null
-    ): YandexFeedService {
+    ): YandexFeedService
+    {
         $limit = 500;
         $offers = $feed->getShop()
             ->getOffers();
@@ -307,29 +349,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         $url = 'market.yandex.ru';
 
         if (!empty($stockID)) {
-            switch ($stockID) {
-                case '47':
-                    $url = 'yaroslavl.market.yandex.ru';
-                    break;
-                case '151':
-                    $url = 'voronezh.yandex.ru';
-                    break;
-                case '168':
-                    $url = 'tula.market.yandex.ru';
-                    break;
-                case '36':
-                    $url = 'ivanovo.market.yandex.ru';
-                    break;
-                case '163':
-                    $url = 'vladimir.market.yandex.ru';
-                    break;
-                case '207':
-                    $url = 'nn.market.yandex.ru';
-                    break;
-                case '65':
-                    $url = 'obninsk.market.yandex.ru';
-                    break;
-            }
+            $url = $this->arStocks[$stockID]['url'];
         }
 
         $currentImage = (new FullHrefDecorator($offer->getImages()
@@ -619,30 +639,9 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 false,
                 ['HIDE_ICONS' => 'Y'])['DELIVERIES'];
         } else {
-            switch ($stockID) {
-                case '47':
-                    $locationCode = '0000263227';
-                    break;
-                case '151':
-                    $locationCode = '0000293598';
-                    break;
-                case '168':
-                    $locationCode = '0000250453';
-                    break;
-                case '36':
-                    $locationCode = '0000121319';
-                    break;
-                case '163':
-                    $locationCode = '0000312126';
-                    break;
-                case '207':
-                    $locationCode = '0000600317';
-                    break;
-                case '65':
-                    $locationCode = '0000148783';
-                    break;
-                default:
-                    $locationCode = '0000073738';
+            $locationCode = '0000073738';
+            if (!empty($stockID)) {
+                $locationCode = $this->arStocks[$stockID]['location_code'];
             }
             $deliveryInfo = $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
                 'empty',
