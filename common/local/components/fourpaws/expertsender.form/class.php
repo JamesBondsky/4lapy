@@ -73,7 +73,9 @@ class FourPawsExpertsenderFormComponent extends CBitrixComponent implements Logg
                 $this->arResult['IS_SUBSCRIBED'] = $curUser->isEsSubscribed();
             }
 
-            $this->arResult['ON_SUBMIT'] = \str_replace('"', '\'', $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val()'));
+            $this->arResult['ON_SUBMIT'] = \str_replace('"', '\'',
+                'if($(this).find("input[type=email]").val().indexOf("register.phone") == -1){' . $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val()') . '}'
+            );
 
             parent::executeComponent();
             $this->includeComponentTemplate();
