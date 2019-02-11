@@ -133,7 +133,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
 
         parent::executeComponent();
 
-//        if ($this->startResultCache()) {
+        if ($this->startResultCache()) {
             /** @var Product $product */
             try {
                 $product = $this->getProduct($this->arParams['CODE']);
@@ -191,16 +191,16 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                 }
             }
 
-//            $this->setResultCacheKeys([
-//                'PRODUCT',
-//                'CURRENT_OFFER',
-//                'SHOW_FAST_ORDER',
-//                'OFFERS',
-//                'BRAND'
-//            ]);
+            $this->setResultCacheKeys([
+                'PRODUCT',
+                'CURRENT_OFFER',
+                'SHOW_FAST_ORDER',
+                'OFFERS',
+                'BRAND'
+            ]);
 
             $this->includeComponentTemplate();
-//        }
+        }
 
 
         $this->setSeo($this->arResult['CURRENT_OFFER']);
