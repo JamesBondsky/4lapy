@@ -876,7 +876,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                     $promo = new Promo();
                     $promo
                         ->setId($share['ID'])
-                        ->setType($requiredQuantity . ' plus ' . $freeQuantity)
+                        ->setType('n plus m')
                         ->setUrl((new FullHrefDecorator($share['DETAIL_PAGE_URL']))->setHost($host)->__toString())
                         ->setStartDate(\DateTime::createFromFormat('d.m.Y H:i:s', $share['DATE_ACTIVE_FROM'])->format('Y-m-d H:i:s'))
                         ->setEndDate(\DateTime::createFromFormat('d.m.Y H:i:s', $share['DATE_ACTIVE_TO'])->format('Y-m-d H:i:s'))
