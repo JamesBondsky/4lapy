@@ -47,6 +47,14 @@ class Offer
      *
      * @var float
      */
+    protected $oldprice;
+
+    /**
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Type("float")
+     *
+     * @var float
+     */
     protected $price;
 
     /**
@@ -261,6 +269,18 @@ class Offer
     public function getPrice(): float
     {
         return $this->price;
+    }
+
+    /**
+     * @param float $price
+     *
+     * @return Offer
+     */
+    public function setOldPrice(float $price): Offer
+    {
+        $this->oldprice = $price;
+
+        return $this;
     }
 
     /**
