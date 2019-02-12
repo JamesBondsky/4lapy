@@ -81,13 +81,13 @@ class OrderService
     public const ORDER_PAGE_LIMIT = 10;
 
     public const STATUS_FINAL = [
-        'G',
-        'J',
+        'G', // Заказ выполнен
+        'J', // Оплачен(Доставлен)
     ];
 
     public const STATUS_CANCEL = [
-        'A',
-        'K',
+        'A', // Отменен
+        'K', // Отменен
     ];
 
     protected const MANZANA_FINAL_STATUS = 'G';
@@ -753,5 +753,23 @@ class OrderService
         }
 
         return $result;
+    }
+
+    /**
+     * @return array
+     */
+    public function getClosedOrderStatuses(): array
+    {
+        return array_merge(self::STATUS_CANCEL, self::STATUS_FINAL);
+    }
+
+    /**
+     * @return string
+     */
+    public function getClosedOrderStatusesForQuery(): string
+    {
+        return \implode(',', \array_map(function ($status) {
+            return sprintf('"%s"', $status);
+        }, \array_merge(self::STATUS_CANCEL, self::STATUS_FINAL)));
     }
 }
