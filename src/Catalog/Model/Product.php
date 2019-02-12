@@ -730,17 +730,20 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      */
     public function __construct(array $fields = [])
     {
-        $arHtmlProps = ['PROPERTY_SPECIFICATIONS_VALUE', 'PROPERTY_COMPOSITION_VALUE', 'PROPERTY_NORMS_OF_USE_VALUE'];
+        $arHtmlProps = [
+            'PROPERTY_SPECIFICATIONS_VALUE',
+            'PROPERTY_COMPOSITION_VALUE',
+            'PROPERTY_NORMS_OF_USE_VALUE',
+            'PROPERTY_LAYOUT_DESCRIPTION_VALUE',
+            'PROPERTY_LAYOUT_COMPOSITION_VALUE',
+            'PROPERTY_LAYOUT_RECOMMENDATIONS_VALUE'
+        ];
+
         foreach ($arHtmlProps as $propKey) {
-            if ($fields['~' . $propKey]) {
-                $descr = htmlspecialchars_decode($fields['~' . $propKey]['TEXT']);
-                $fields[$propKey]['TEXT'] = ($descr != '0' && $descr != 'HTML') ? $descr : '';
-                $fields[$propKey]['TYPE'] = '';
+            if ($fields[$propKey]) {
+                $fields[$propKey] = htmlspecialchars_decode($fields[$propKey]['TEXT']);
             } else {
-                $fields[$propKey] = [
-                    'TYPE' => 'HTML',
-                    'TEXT' => '',
-                ];
+                $fields[$propKey] = '';
             }
         }
 
@@ -1900,9 +1903,9 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         if (!($this->specifications instanceof TextContent)) {
             if (empty($this->PROPERTY_SPECIFICATIONS)) {
-                $this->PROPERTY_SPECIFICATIONS = ['TYPE' => 'text', 'TEXT' => ''];
+                $this->PROPERTY_SPECIFICATIONS = '';
             }
-            $this->specifications = new TextContent($this->PROPERTY_SPECIFICATIONS);
+            $this->specifications = new TextContent(['TYPE' => 'text', 'TEXT' => $this->PROPERTY_SPECIFICATIONS]);
         }
 
         return $this->specifications;
@@ -1917,9 +1920,9 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         if (!($this->composition instanceof TextContent)) {
             if (empty($this->PROPERTY_COMPOSITION)) {
-                $this->PROPERTY_COMPOSITION = ['TYPE' => 'text', 'TEXT' => ''];
+                $this->PROPERTY_COMPOSITION = '';
             }
-            $this->composition = new TextContent($this->PROPERTY_COMPOSITION);
+            $this->composition = new TextContent(['TYPE' => 'text', 'TEXT' => $this->PROPERTY_COMPOSITION]);
         }
 
         return $this->composition;
@@ -1934,9 +1937,9 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         if (!($this->normsOfUse instanceof TextContent)) {
             if (empty($this->PROPERTY_NORMS_OF_USE)) {
-                $this->PROPERTY_NORMS_OF_USE = ['TYPE' => 'text', 'TEXT' => ''];
+                $this->PROPERTY_NORMS_OF_USE = '';
             }
-            $this->normsOfUse = new TextContent($this->PROPERTY_NORMS_OF_USE);
+            $this->normsOfUse = new TextContent(['TYPE' => 'text', 'TEXT' => $this->PROPERTY_NORMS_OF_USE]);
         }
 
         return $this->normsOfUse;
@@ -1949,9 +1952,9 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         if (!($this->layoutDescription instanceof TextContent)) {
             if (empty($this->PROPERTY_LAYOUT_DESCRIPTION)) {
-                $this->PROPERTY_LAYOUT_DESCRIPTION = ['TYPE' => 'text', 'TEXT' => ''];
+                $this->PROPERTY_LAYOUT_DESCRIPTION = '';
             }
-            $this->layoutDescription = new TextContent($this->PROPERTY_LAYOUT_DESCRIPTION);
+            $this->layoutDescription = new TextContent(['TYPE' => 'text', 'TEXT' => $this->PROPERTY_LAYOUT_DESCRIPTION]);
         }
 
         return $this->layoutDescription;
@@ -1964,9 +1967,9 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         if (!($this->layoutComposition instanceof TextContent)) {
             if (empty($this->PROPERTY_LAYOUT_COMPOSITION)) {
-                $this->PROPERTY_LAYOUT_COMPOSITION = ['TYPE' => 'text', 'TEXT' => ''];
+                $this->PROPERTY_LAYOUT_COMPOSITION = '';
             }
-            $this->layoutComposition = new TextContent($this->PROPERTY_LAYOUT_COMPOSITION);
+            $this->layoutComposition = new TextContent(['TYPE' => 'text', 'TEXT' => $this->PROPERTY_LAYOUT_COMPOSITION]);
         }
 
         return $this->layoutComposition;
@@ -1979,9 +1982,9 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         if (!($this->layoutRecommendations instanceof TextContent)) {
             if (empty($this->PROPERTY_LAYOUT_RECOMMENDATIONS)) {
-                $this->PROPERTY_LAYOUT_RECOMMENDATIONS = ['TYPE' => 'text', 'TEXT' => ''];
+                $this->PROPERTY_LAYOUT_RECOMMENDATIONS = '';
             }
-            $this->layoutRecommendations = new TextContent($this->PROPERTY_LAYOUT_RECOMMENDATIONS);
+            $this->layoutRecommendations = new TextContent(['TYPE' => 'text', 'TEXT' => $this->PROPERTY_LAYOUT_RECOMMENDATIONS]);
         }
 
         return $this->layoutRecommendations;
