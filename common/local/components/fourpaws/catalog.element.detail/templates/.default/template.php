@@ -416,7 +416,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB_HEADER);
     <li class="b-tab-title__item js-tab-item active">
         <a class="b-tab-title__link js-tab-link"
            href="javascript:void(0);" title="Описание"
-           data-tab="description"><span class="b-tab-title__text">Описание</span></a>
+           data-tab="description"><h2 class="b-tab-title__text">Описание</h2></a>
     </li>
 <?php
 $this->EndViewTarget();

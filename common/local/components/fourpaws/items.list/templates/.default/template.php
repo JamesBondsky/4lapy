@@ -87,14 +87,14 @@ use FourPaws\Decorators\SvgDecorator; ?>
                                 ?>
                                 <span class="b-news-item__label"><?= $item['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'] ?></span>
                             <?php } ?>
-                            <h4 class="b-news-item__header"><?= $item['NAME'] ?></h4>
+                            <h3 class="b-news-item__header"><?= $item['NAME'] ?></h3>
                             <?php if (!empty($item['PREVIEW_TEXT'])) { ?>
                                 <p class="b-news-item__description"><?= htmlspecialcharsback(
                                         $item['PREVIEW_TEXT']
                                     ) ?></p>
                             <?php } ?>
-                            <?php if (!empty($item['DISPLAY_ACTIVE_FROM'])) { ?>
-                                <span class="b-news-item__date"><?= $item['DISPLAY_ACTIVE_FROM'] ?></span>
+                            <?php if (!empty($item['DISPLAY_ACTIVE_FROM']) && !empty($item['ACTIVE_FROM'])) { ?>
+                                <time datetime="<?= ConvertDateTime($item['ACTIVE_FROM'], 'YYYY-MM-DD', 'ru') ?>" class="b-news-item__date"><?= $item['DISPLAY_ACTIVE_FROM'] ?></time>
                             <?php } ?>
                             <?php if (!empty($item['DETAIL_PAGE_URL'])){ ?>
                         </a>
