@@ -1905,7 +1905,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             if (empty($this->PROPERTY_SPECIFICATIONS)) {
                 $this->PROPERTY_SPECIFICATIONS = '';
             }
-            $this->specifications = new TextContent(['TYPE' => 'text', 'TEXT' => $this->PROPERTY_SPECIFICATIONS]);
+            $this->specifications = new TextContent(['TYPE' => 'html', 'TEXT' => $this->PROPERTY_SPECIFICATIONS]);
         }
 
         return $this->specifications;
@@ -1922,7 +1922,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             if (empty($this->PROPERTY_COMPOSITION)) {
                 $this->PROPERTY_COMPOSITION = '';
             }
-            $this->composition = new TextContent(['TYPE' => 'text', 'TEXT' => $this->PROPERTY_COMPOSITION]);
+            $this->composition = new TextContent(['TYPE' => 'html', 'TEXT' => $this->PROPERTY_COMPOSITION]);
         }
 
         return $this->composition;
@@ -1939,7 +1939,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             if (empty($this->PROPERTY_NORMS_OF_USE)) {
                 $this->PROPERTY_NORMS_OF_USE = '';
             }
-            $this->normsOfUse = new TextContent(['TYPE' => 'text', 'TEXT' => $this->PROPERTY_NORMS_OF_USE]);
+            $this->normsOfUse = new TextContent(['TYPE' => 'html', 'TEXT' => $this->PROPERTY_NORMS_OF_USE]);
         }
 
         return $this->normsOfUse;
@@ -1954,7 +1954,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             if (empty($this->PROPERTY_LAYOUT_DESCRIPTION)) {
                 $this->PROPERTY_LAYOUT_DESCRIPTION = '';
             }
-            $this->layoutDescription = new TextContent(['TYPE' => 'text', 'TEXT' => $this->PROPERTY_LAYOUT_DESCRIPTION]);
+            $this->layoutDescription = new TextContent(['TYPE' => 'html', 'TEXT' => $this->PROPERTY_LAYOUT_DESCRIPTION]);
         }
 
         return $this->layoutDescription;
@@ -1969,7 +1969,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             if (empty($this->PROPERTY_LAYOUT_COMPOSITION)) {
                 $this->PROPERTY_LAYOUT_COMPOSITION = '';
             }
-            $this->layoutComposition = new TextContent(['TYPE' => 'text', 'TEXT' => $this->PROPERTY_LAYOUT_COMPOSITION]);
+            $this->layoutComposition = new TextContent(['TYPE' => 'html', 'TEXT' => $this->PROPERTY_LAYOUT_COMPOSITION]);
         }
 
         return $this->layoutComposition;
@@ -1984,7 +1984,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             if (empty($this->PROPERTY_LAYOUT_RECOMMENDATIONS)) {
                 $this->PROPERTY_LAYOUT_RECOMMENDATIONS = '';
             }
-            $this->layoutRecommendations = new TextContent(['TYPE' => 'text', 'TEXT' => $this->PROPERTY_LAYOUT_RECOMMENDATIONS]);
+            $this->layoutRecommendations = new TextContent(['TYPE' => 'html', 'TEXT' => $this->PROPERTY_LAYOUT_RECOMMENDATIONS]);
         }
 
         return $this->layoutRecommendations;
