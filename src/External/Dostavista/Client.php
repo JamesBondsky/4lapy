@@ -207,16 +207,6 @@ class Client
     {
         //фикс времени начала доставки для доставкисты
         $curDate = (new \DateTime)->modify('+30 minutes');
-        $hours = $curDate->format('H');
-        $minutes = $curDate->format('i');
-
-        if (0 <= $minutes && $minutes <= 30) {
-            $minutes = 0;
-        } elseif (30 < $minutes && $minutes <= 59) {
-            $minutes = 30;
-        }
-        $curDate->setTime($hours, $minutes, 0);
-
         $requireTimeStart = $curDate->format('c');
         $data['points'][0]['required_start_datetime'] = $requireTimeStart;
         $data['points'][1]['required_start_datetime'] = $requireTimeStart;
