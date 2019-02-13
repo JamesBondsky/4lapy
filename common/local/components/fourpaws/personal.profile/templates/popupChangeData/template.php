@@ -13,7 +13,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         </header>
         <form class="b-registration__form js-form-validation js-edit-data-query"
               data-url="/ajax/personal/profile/changeData/"
-              method="post">
+              method="post"
+              onsubmit="<?= $arResult['ON_SUBMIT'] ?>">
             <input class="js-data-id js-no-valid" name="ID" value="<?= $arResult['CUR_USER']['ID'] ?>" type="hidden">
             <div class="b-input-line b-input-line--popup-authorization b-input-line--referal js-last-name">
                 <div class="b-input-line__label-wrapper">
