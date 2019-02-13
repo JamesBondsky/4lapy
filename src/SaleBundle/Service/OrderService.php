@@ -2043,6 +2043,7 @@ class OrderService implements LoggerAwareInterface
         $dostavistaOrder = new DostavistaOrder();
         $dostavistaOrder->bitrixOrderId = $data['bitrix_order_id'];
         $dostavistaOrder->totalWeightKg = $data['total_weight_kg'];
+        $dostavistaOrder->vehicleTypeId = $data['vehicle_type_id'];
         $dostavistaOrder->matter = $data['matter'];
         $dostavistaOrder->insuranceAmount = $data['insurance_amount'];
         $dostavistaOrder->isClientNotificationEnabled = $data['is_client_notification_enabled'];

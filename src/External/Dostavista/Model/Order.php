@@ -38,6 +38,13 @@ class Order
 
     /**
      * @XmlElement(cdata=false)
+     * @Type("int")
+     * @SerializedName("vehicle_type_id")
+     */
+    public $vehicleTypeId;
+
+    /**
+     * @XmlElement(cdata=false)
      * @Type("string")
      * @SerializedName("matter")
      */
