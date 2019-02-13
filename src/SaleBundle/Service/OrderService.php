@@ -1916,8 +1916,45 @@ class OrderService implements LoggerAwareInterface
         }
         /** @var OfferCollection $offers */
         $offers = $this->getOrderProducts($order);
-        /** @var int $weigth Вес всех товаров */
-        $weigth = (int)($basket->getWeight() / 1000);
+        /** @var int $weight Вес всех товаров */
+        $weight = (int)($basket->getWeight() / 1000);
+        if ($weight <= 15) {
+            $vehicleTypeId = 6;
+            if ($weight <= 5) {
+                $dostavistaWeightVal = 0;
+            } elseif ($weight > 5 && $weight <= 10) {
+                $dostavistaWeightVal = 5;
+            } elseif ($weight > 10 && $weight <= 15) {
+                $dostavistaWeightVal = 10;
+            }
+        } elseif ($weight <= 200) {
+            $vehicleTypeId = 7;
+            if ($weight > 15 && $weight <= 50) {
+                $dostavistaWeightVal = 15;
+            } elseif ($weight > 50 && $weight <= 100) {
+                $dostavistaWeightVal = 50;
+            } elseif ($weight > 100 && $weight <= 150) {
+                $dostavistaWeightVal = 100;
+            } elseif ($weight > 150 && $weight <= 200) {
+                $dostavistaWeightVal = 150;
+            }
+        } elseif ($weight <= 500) {
+            $vehicleTypeId = 1;
+            $dostavistaWeightVal = 200;
+        } elseif ($weight <= 700) {
+            $vehicleTypeId = 2;
+            $dostavistaWeightVal = 500;
+        } elseif ($weight <= 1000) {
+            $vehicleTypeId = 3;
+            $dostavistaWeightVal = 700;
+        } elseif ($weight <= 1500) {
+            $vehicleTypeId = 4;
+            $dostavistaWeightVal = 1000;
+        } else {
+            $vehicleTypeId = 5;
+            $dostavistaWeightVal = 1500;
+        }
+
         $arSectionsNames = [];
         /** @var Offer $offer */
         foreach ($offers as $offer) {
@@ -1930,7 +1967,8 @@ class OrderService implements LoggerAwareInterface
 
         $data = [
             'bitrix_order_id' => $order->getId(),
-            'total_weight_kg' => $weigth,
+            'total_weight_kg' => $dostavistaWeightVal,
+            'vehicle_type_id' => $vehicleTypeId,
             'matter' => $matter,
             //что везем
             'insurance_amount' => $insurance,
@@ -2004,7 +2042,7 @@ class OrderService implements LoggerAwareInterface
         $dostavistaService = Application::getInstance()->getContainer()->get('dostavista.service');
         $dostavistaOrder = new DostavistaOrder();
         $dostavistaOrder->bitrixOrderId = $data['bitrix_order_id'];
-        $dostavistaOrder->totalWeigthKg = $data['total_weight_kg'];
+        $dostavistaOrder->totalWeightKg = $data['total_weight_kg'];
         $dostavistaOrder->matter = $data['matter'];
         $dostavistaOrder->insuranceAmount = $data['insurance_amount'];
         $dostavistaOrder->isClientNotificationEnabled = $data['is_client_notification_enabled'];

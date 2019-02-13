@@ -34,7 +34,7 @@ class Order
      * @Type("int")
      * @SerializedName("total_weight_kg")
      */
-    public $totalWeigthKg;
+    public $totalWeightKg;
 
     /**
      * @XmlElement(cdata=false)
