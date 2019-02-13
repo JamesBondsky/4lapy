@@ -201,6 +201,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                 continue;
             }
             $allOfferAvaliable = true;
+            $stockResultCollectionTmp = new StockResultCollection();
             foreach ($offerData as $offerId => $priceForAmountCollection) {
                 $offer = $offers[$offerId];
                 /**
@@ -227,9 +228,12 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                 if (!$allOfferAvaliable) {
                     break;
                 }
+                $stockResultCollectionTmp->add($stockResult);
             }
             if ($allOfferAvaliable) {
-                $stockResultCollection->add($stockResult);
+                foreach($stockResultCollectionTmp as $stockResult){
+                    $stockResultCollection->add($stockResult);
+                }
             }
         }
 

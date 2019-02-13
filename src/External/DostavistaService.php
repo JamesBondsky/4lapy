@@ -60,12 +60,13 @@ class DostavistaService implements LoggerAwareInterface
             try {
                 $result = $this->client->addOrder($data);
                 if ($result['success']) {
-                    $this->logger->info('Order ' . $data['point'][1]['client_order_id'] . ' success create in Dostavista service');
+                    $this->logger->info('Order ' . $data['point'][1]['client_order_id'] . ' success create in Dostavista service', $data);
                 }
             } catch (\Exception $e) {
                 $result = [
                     'success' => false,
-                    'message' => 'Ошибка импорта заказа'
+                    'message' => 'Ошибка импорта заказа',
+                    'data' => $data
                 ];
                 $this->logger->error('Order ' . $data['point'][1]['client_order_id'] . ' import failed in "Dostavista" service', $result);
             }
@@ -73,7 +74,8 @@ class DostavistaService implements LoggerAwareInterface
             $result = [
                 'success' => $res['success'],
                 'message' => $res['message'],
-                'connection' => false
+                'connection' => false,
+                'data' => $data
             ];
             $this->logger->error('Connection failed with "Dostavista" service', $result);
         }

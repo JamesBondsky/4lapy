@@ -1971,7 +1971,7 @@ class OrderService implements LoggerAwareInterface
             'required_start_datetime' => $requireTimeStart,
             'required_finish_datetime' => $pointZeroDate->format('c'),
             'taking_amount' => 0,
-            'buyout_amount' => 0,
+            'buyout_amount' => $takingAmount,
             'note' => 'Телефон магазина: ' . $nearShop->getPhone()
         ];
 
