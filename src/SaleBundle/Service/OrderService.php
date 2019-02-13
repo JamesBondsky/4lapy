@@ -1905,7 +1905,7 @@ class OrderService implements LoggerAwareInterface
      */
     public function sendToDostavista(Order $order, string $name, string $phone, string $comment, string $periodTo, Store $nearShop = null, bool $isPaid = false): void
     {
-        $curDate = (new \DateTime)->modify('+5 minutes');
+        $curDate = new \DateTime;
         $basket = $order->getBasket();
         /** @var int $insurance Цена страхования */
         $insurance = $basket->getPrice();

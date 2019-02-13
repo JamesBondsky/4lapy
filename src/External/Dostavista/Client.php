@@ -206,7 +206,7 @@ class Client
     public function addOrder($data): array
     {
         //фикс времени начала доставки для доставкисты
-        $curDate = (new \DateTime)->modify('+1 minutes');
+        $curDate = (new \DateTime)->modify('+30 minutes');
         $requireTimeStart = $curDate->format('c');
         $data['points'][0]['required_start_datetime'] = $requireTimeStart;
         $data['points'][1]['required_start_datetime'] = $requireTimeStart;
