@@ -4,9 +4,11 @@ namespace FourPaws\External\Dostavista\Controller;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use CSaleOrder;
+use FourPaws\App\Application;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\External\DostavistaService;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\HttpFoundation\Request;
 use FourPaws\SapBundle\Service\Orders\StatusService;
@@ -19,6 +21,16 @@ class DostavistaController implements LoggerAwareInterface
     {
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
     public function deliveryDostavistaOrderChangeAction(Request $request): JsonResponse
     {
         $callbackSecretKey = \COption::GetOptionString('articul.dostavista.delivery', 'callback_secret_key', '');
@@ -100,6 +112,12 @@ class DostavistaController implements LoggerAwareInterface
                 []
             );
         } else {
+            /** @var DostavistaService $dostavistaService */
+            $dostavistaService = Application::getInstance()->getContainer()->get('dostavista.service');
+            $bitrixOrder = \Bitrix\Sale\Order::load($order['ID']);
+            $dostavistaService->out($bitrixOrder);
+            $mess = 'Status success changed for order [' . $order['ID'] . '] for SAP';
+            $this->log()->notice($mess);
             $mess = 'Status success changed for order [' . $order['ID'] . '] from status [' . $order['STATUS_ID'] . '] to status [' . $bitrixStatus . ']';
             $this->log()->notice($mess);
             return JsonSuccessResponse::create(
