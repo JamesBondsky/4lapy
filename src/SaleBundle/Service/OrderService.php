@@ -1908,11 +1908,11 @@ class OrderService implements LoggerAwareInterface
         $curDate = new \DateTime;
         $basket = $order->getBasket();
         /** @var int $insurance Цена страхования */
-        $insurance = $basket->getPrice();
+        $insurance = (int)$basket->getPrice() + (int)$deliveryPrice;
         $deliveryPrice = $order->getDeliveryPrice();
         $takingAmount = 0;
         if (!$isPaid) {
-            $takingAmount += (int)$insurance + $deliveryPrice;
+            $takingAmount += (int)$insurance + (int)$deliveryPrice;
         }
         /** @var OfferCollection $offers */
         $offers = $this->getOrderProducts($order);
