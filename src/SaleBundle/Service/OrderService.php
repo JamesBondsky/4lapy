@@ -1084,7 +1084,8 @@ class OrderService implements LoggerAwareInterface
                     $this->setOrderPropertiesByCode($order,
                         [
                             'USER_COORDS_DOSTAVISTA' => $lng . ',' . $lat,
-                            'STORE_FOR_DOSTAVISTA' => $nearShop->getXmlId()
+                            'STORE_FOR_DOSTAVISTA' => $nearShop->getXmlId(),
+                            'DELIVERY_PLACE_CODE' => $nearShop->getXmlId()
                         ]
                     );
                 }

@@ -1181,7 +1181,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             $deliveryShipmentPoint = $deliveryPlaceCode;
             if (\in_array($this->getDeliveryTypeCode($order), [
                 SapOrder::DELIVERY_TYPE_PICKUP_POSTPONE,
-                SapOrder::DELIVERY_TYPE_COURIER_SHOP
+                SapOrder::DELIVERY_TYPE_COURIER_SHOP,
+                SapOrder::DELIVERY_TYPE_DOSTAVISTA
             ], true)
             ) {
                 $deliveryShipmentPoint = '';
