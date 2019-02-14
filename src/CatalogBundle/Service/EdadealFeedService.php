@@ -9,12 +9,10 @@ use FourPaws\CatalogBundle\Translate\ConfigurationInterface;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\WordHelper;
-use FourPaws\StoreBundle\Service\StoreService;
 use Psr\Log\LoggerAwareInterface;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use FourPaws\App\Application;
-use FourPaws\App\Application as App;
 
 /**
  * Class EdadealFeedService
@@ -31,10 +29,6 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
     private $offers;
     /** @var array $arMeasures */
     private $arMeasures;
-    /** @var StoreService $storeService */
-    private $storeService;
-    /** @var \FourPaws\StoreBundle\Entity\StoreSearchResult */
-    private $stores;
 
     private const TARGET_REGIONS = [
         'Россия'
@@ -78,7 +72,6 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
 
         $this->time = ConvertTimeStamp(time(), 'FULL');
 
-        $this->getStores($configuration);
         $this->getCurrentShares($configuration);
         if (count($this->offers) > 0) {
             $this->getCurrentOffers($configuration);
@@ -87,25 +80,6 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
         $this->prepareResult();
 
         return $this->createResultFile($configuration, $this->arResult);
-    }
-
-    /**
-     * @param Configuration $configuration
-     */
-    private function getStores(Configuration $configuration)
-    {
-        $container = App::getInstance()->getContainer();
-        $this->storeService = $container->get('store.service');
-        $tmpStores = $this->storeService->getAllStores(StoreService::TYPE_SHOP);
-        foreach ($tmpStores->getStores() as $store) {
-            $address = $store->getAddress();
-            $arAddress = explode(', ', $address);
-            $city = $arAddress[count($arAddress) - 1];
-            if ($city == '-' || $store->getAddress() == '-') {
-                continue;
-            }
-            $this->stores[] = $city . ', ' . str_replace(', ' . $city, '', $store->getAddress());
-        }
     }
 
     /**
@@ -182,7 +156,6 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
                     ),
                     'offers' => $products !== null ? $products : [],
                     'target_regions' => static::TARGET_REGIONS,
-                    'target_shops' => $this->stores,
                     'label' => $share['PROPERTIES']['LABEL']['VALUE']
                 ];
 
