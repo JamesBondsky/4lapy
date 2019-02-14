@@ -35,35 +35,38 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
              * @var Order $order
              * Получаем битриксовый заказ
              */
-            $order = $this->orderService->getOrderById($bitrixOrderId);
-            if (!$order) {
+            if($bitrixOrderId === null){
                 $result = static::MSG_REJECT_REQUEUE;
             } else {
-                /** Отправляем заказ в достависту */
-                $response = $this->dostavistaService->addOrder($data);
-                if ($response['connection'] === false) {
-                    $result = static::MSG_REJECT;
+                $order = $this->orderService->getOrderById($bitrixOrderId);
+                if (!$order) {
+                    $result = static::MSG_REJECT_REQUEUE;
                 } else {
-                    $dostavistaOrderId = $response['order_id'];
-                    if (is_array($dostavistaOrderId) || empty($dostavistaOrderId)) {
-                        $dostavistaOrderId = 0;
-                        $result = static::MSG_REJECT_REQUEUE;
+                    /** Отправляем заказ в достависту */
+                    $response = $this->dostavistaService->addOrder($data);
+                    if ($response['connection'] === false) {
+                        $result = static::MSG_REJECT;
+                    } else {
+                        $dostavistaOrderId = $response['order_id'];
+                        if (is_array($dostavistaOrderId) || empty($dostavistaOrderId)) {
+                            $dostavistaOrderId = 0;
+                            $result = static::MSG_REJECT_REQUEUE;
+                        }
+                        /** Обновляем битриксовые свойства достависты */
+                        $deliveryId = $order->getField('DELIVERY_ID');
+                        $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
+                        $address = $this->orderService->compileOrderAddress($order)->setValid(true);
+                        $this->orderService->setOrderPropertiesByCode(
+                            $order,
+                            [
+                                'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE,
+                                'ORDER_ID_DOSTAVISTA' => ($dostavistaOrderId) ? $dostavistaOrderId : 0
+                            ]
+                        );
+                        $this->orderService->updateCommWayPropertyEx($order, $deliveryCode, $address, ($dostavistaOrderId) ? true : false);
+                        $order->save();
                     }
-                    /** Обновляем битриксовые свойства достависты */
-                    $deliveryId = $order->getField('DELIVERY_ID');
-                    $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
-                    $address = $this->orderService->compileOrderAddress($order)->setValid(true);
-                    $this->orderService->setOrderPropertiesByCode(
-                        $order,
-                        [
-                            'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE,
-                            'ORDER_ID_DOSTAVISTA' => ($dostavistaOrderId) ? $dostavistaOrderId : 0
-                        ]
-                    );
-                    $this->orderService->updateCommWayPropertyEx($order, $deliveryCode, $address, ($dostavistaOrderId) ? true : false);
-                    $order->save();
                 }
-
             }
         } catch (\Exception $e) {
             $result = static::MSG_REJECT_REQUEUE;
