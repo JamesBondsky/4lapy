@@ -3,7 +3,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 } ?>
-<div class="b-copyright">
+<div class="b-copyright js-copyright-scroll">
     <div class="b-copyright__copyright">
         &copy; <?= (new DateTime())->format('Y') ?> Зоомагазин «Четыре Лапы»
     </div>
