@@ -35,27 +35,31 @@ class DostavistaOrdersCancelConsumer extends DostavistaConsumerBase
              * @var Order $order
              * Получаем битриксовый заказ
              */
-            $order = $this->orderService->getOrderById($bitrixOrderId);
-            if (!$order) {
+            if ($bitrixOrderId === null) {
                 $result = static::MSG_REJECT_REQUEUE;
             } else {
-                /** Отправляем отмену заказа в достависту */
-                $response = $this->dostavistaService->cancelOrder($dostavistaOrder);
-                if ($response['connection'] === false) {
-                    $result = static::MSG_REJECT;
+                $order = $this->orderService->getOrderById($bitrixOrderId);
+                if (!$order) {
+                    $result = static::MSG_REJECT_REQUEUE;
                 } else {
-                    $dostavistaOrderId = $response['order_id'];
-                    if (is_array($dostavistaOrderId) || empty($dostavistaOrderId)) {
+                    /** Отправляем отмену заказа в достависту */
+                    $response = $this->dostavistaService->cancelOrder($dostavistaOrder);
+                    if ($response['connection'] === false) {
                         $result = static::MSG_REJECT;
                     } else {
-                        /** Обновляем битриксовое свойство */
-                        $this->orderService->setOrderPropertiesByCode(
-                            $order,
-                            [
-                                'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId !== 0 && !is_array($dostavistaOrderId)) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE
-                            ]
-                        );
-                        $order->save();
+                        $dostavistaOrderId = $response['order_id'];
+                        if (is_array($dostavistaOrderId) || empty($dostavistaOrderId)) {
+                            $result = static::MSG_REJECT;
+                        } else {
+                            /** Обновляем битриксовое свойство */
+                            $this->orderService->setOrderPropertiesByCode(
+                                $order,
+                                [
+                                    'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId !== 0 && !is_array($dostavistaOrderId)) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE
+                                ]
+                            );
+                            $order->save();
+                        }
                     }
                 }
             }
