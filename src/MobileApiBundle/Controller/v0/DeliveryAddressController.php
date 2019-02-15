@@ -10,6 +10,7 @@ use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Request\DeliveryAddressCreateRequest;
 use FourPaws\MobileApiBundle\Dto\Request\DeliveryAddressDeleteRequest;
+use FourPaws\MobileApiBundle\Dto\Request\DeliveryAddressGetRequest;
 use FourPaws\MobileApiBundle\Dto\Request\DeliveryAddressUpdateRequest;
 use FourPaws\MobileApiBundle\Dto\Response\DeliveryAddressGetResponse;
 use FourPaws\MobileApiBundle\Dto\Response\FeedbackResponse;
@@ -22,7 +23,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
  * Class UserDeliveryController
  * @package FourPaws\MobileApiBundle\Controller\v0
  */
-class UserDeliveryController extends FOSRestController
+class DeliveryAddressController extends FOSRestController
 {
     /**
      * @var ApiUserDeliveryAddressService
@@ -39,12 +40,10 @@ class UserDeliveryController extends FOSRestController
      * @Rest\Get("/delivery_address/")
      * @Rest\View()
      *
-     * @throws \FourPaws\MobileApiBundle\Exception\SystemException
-     * @throws \LogicException
+     * @param DeliveryAddressGetRequest $deliveryAddressGetRequest
      * @return DeliveryAddressGetResponse
-     *
      */
-    public function listAction(): DeliveryAddressGetResponse
+    public function listAction(DeliveryAddressGetRequest $deliveryAddressGetRequest): DeliveryAddressGetResponse
     {
         /**
          * @var User $user
@@ -52,13 +51,13 @@ class UserDeliveryController extends FOSRestController
         $user = $this->getUser();
 
         return new DeliveryAddressGetResponse(
-            $this->apiUserDeliveryAddressService->getAll($user->getId())
+            $this->apiUserDeliveryAddressService->getList($user->getId(), $deliveryAddressGetRequest->getCityCode())
         );
     }
 
     /**
      * @Rest\Put("/delivery_address/")
-     * @Rest\View()
+     * @Rest\View(serializerGroups={"Default", "create"})
      * @Security("has_role('REGISTERED_USERS')")
      *
      * @param DeliveryAddressCreateRequest $request
@@ -80,7 +79,8 @@ class UserDeliveryController extends FOSRestController
 
     /**
      * @Rest\Post("/delivery_address/")
-     * @Rest\View()
+     * @Rest\View(serializerGroups={"Default", "update"})
+     * @Security("has_role('REGISTERED_USERS')")
      * @param DeliveryAddressUpdateRequest $addressUpdateRequest
      * @throws \LogicException
      * @throws \FourPaws\MobileApiBundle\Exception\SystemException
@@ -98,7 +98,8 @@ class UserDeliveryController extends FOSRestController
 
     /**
      * @Rest\Delete("/delivery_address/")
-     * @Rest\View()
+     * @Rest\View(serializerGroups={"Default", "delete"})
+     * @Security("has_role('REGISTERED_USERS')")
      * @param DeliveryAddressDeleteRequest $addressDeleteRequest
      * @return FeedbackResponse
      */

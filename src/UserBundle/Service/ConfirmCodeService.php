@@ -162,7 +162,7 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      */
     public static function delCurrentCode(string $type = 'sms'): void
     {
-        $codeType = ToUpper($type) . '_ID';
+        $codeType = self::getCookieName($type);
         if (!empty($_COOKIE[$codeType])) {
             setcookie($codeType, '', time() - 5, '/');
             ConfirmCodeTable::delete($_COOKIE[$codeType]);
@@ -227,7 +227,7 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
     {
         $ConfirmCodeQuery = new ConfirmCodeQuery(ConfirmCodeTable::query());
         /** @var ConfirmCode $confirmCode */
-        $confirmCode = $ConfirmCodeQuery->withFilter(['ID' => $_COOKIE[ToUpper($type) . '_ID']])->exec()->first();
+        $confirmCode = $ConfirmCodeQuery->withFilter(['ID' => $_COOKIE[self::getCookieName($type)]])->exec()->first();
 
         if (!($confirmCode instanceof ConfirmCode)) {
             throw new NotFoundConfirmedCodeException('не найден код');
@@ -351,7 +351,7 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
         if (!$time) {
             $time = microtime(true);
         }
-        $cookieCode = ToUpper($type) . '_ID';
+        $cookieCode = self::getCookieName($type);
         if (!empty($_COOKIE[$cookieCode])) {
             static::delCurrentCode($type);
         }
@@ -384,5 +384,10 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
             $return = ToUpper($return);
         }
         return $return;
+    }
+
+    public static function getCookieName(string $type): string
+    {
+        return ToUpper($type) . '_ID';
     }
 }

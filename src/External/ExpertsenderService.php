@@ -105,6 +105,7 @@ class ExpertsenderService implements LoggerAwareInterface
     public const COMPLETE_ORDER_LIST_ID = 7778;
     public const FORGOT_PASSWORD_LIST_ID = 7779;
     public const CHANGE_PASSWORD_LIST_ID = 7780;
+    public const CHANGE_BONUS_CARD = 8026;
 
     /**
      * BirthDay mail ids
@@ -779,6 +780,34 @@ class ExpertsenderService implements LoggerAwareInterface
         }
 
         return true;
+    }
+
+    /**
+     * @param User $user
+     * @return bool
+     * @throws ExpertsenderServiceException
+     */
+    public function sendChangeBonusCard(User $user)
+    {
+        if ($user->hasEmail()) {
+            try {
+                $transactionId = static::CHANGE_BONUS_CARD;
+                $email = $user->getEmail();
+
+                /** @var ConfirmCodeService $confirmService */
+                $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+                $confirmService::setGeneratedCode($email, 'email_change_bonus_card');
+                $snippets = [
+                    new Snippet('code', $confirmService::getGeneratedCode('email_change_bonus_card'))
+                ];
+                unset($confirmService);
+                $this->sendSystemTransactional($transactionId, $email, $snippets);
+                return true;
+            } catch (Exception $e) {
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
+            }
+        }
+        return false;
     }
 
     /**

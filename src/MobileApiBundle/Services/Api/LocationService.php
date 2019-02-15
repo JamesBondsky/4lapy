@@ -16,6 +16,7 @@ use FourPaws\StoreBundle\Repository\StoreRepository;
 use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\LocationBundle\LocationService as AppLocationService;
 use FourPaws\MobileApiBundle\Services\Api\MetroService as ApiMetroService;
+use FourPaws\UserBundle\Enum\UserLocationEnum;
 
 
 class LocationService

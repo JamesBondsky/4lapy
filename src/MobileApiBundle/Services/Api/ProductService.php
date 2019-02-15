@@ -322,13 +322,13 @@ class ProductService
         $shortProduct->setPrice($price);
 
 
-        // ТПЗ, лейблы и бонусы нужны только для каталога
-        if (!$forBasket) {
-            // ТПЗ
-            $shortProduct
-                ->setIsByRequest($offer->isByRequest())
-                ->setIsAvailable($offer->isAvailable());
+        // ТПЗ
+        $shortProduct
+            ->setIsByRequest($offer->isByRequest())
+            ->setIsAvailable($offer->isAvailable());
 
+        // лейблы и бонусы нужны только для каталога
+        if (!$forBasket) {
             // лейблы
             $shortProduct->setTag($this->getTags($offer));
 

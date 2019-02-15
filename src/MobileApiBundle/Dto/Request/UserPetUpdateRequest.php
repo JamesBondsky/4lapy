@@ -2,6 +2,7 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Request;
 
+use FourPaws\MobileApiBundle\Dto\Request\Types\PutRequest;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 

@@ -6,19 +6,22 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
-use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\External\SmsService;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\MobileApiBundle\Dto\Response\CaptchaSendValidationResponse;
 use FourPaws\MobileApiBundle\Dto\Response\CaptchaVerifyResponse;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
-use FourPaws\MobileApiBundle\Services\BitrixCaptchaService;
 use FourPaws\UserBundle\Repository\UserRepository;
+use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\UserService as AppUserService;
+use FourPaws\External\ExpertsenderService;
 
 class CaptchaService
 {
+    const SENDER_USER_REGISTRATION = 'user_registration';
+    const SENDER_EDIT_INFO = 'edit_info';
+    const SENDER_CARD_ACTIVATION = 'card_activation';
+
     /**
-     *
      * @var UserRepository
      */
     private $userRepository;
@@ -29,49 +32,64 @@ class CaptchaService
     private $appUserService;
 
     /**
-     * @var BitrixCaptchaService
+     * @var ExpertSenderService
      */
-    private $bitrixCaptchaService;
-
-    /**
-     * @var SmsService
-     */
-    private $smsService;
-
+    private $expertSenderService;
 
     public function __construct(
         UserRepository $userRepository,
         AppUserService $appUserService,
-        SmsService $smsService
+        ExpertSenderService $expertSenderService
     )
     {
-        $this->smsService = $smsService;
         $this->userRepository = $userRepository;
         $this->appUserService = $appUserService;
+        $this->expertSenderService = $expertSenderService;
     }
 
     /**
      * @param string $phoneOrEmail
      * @param string $sender
      * @return CaptchaSendValidationResponse
-     * @throws ApplicationCreateException
-     * @throws \Bitrix\Main\ArgumentTypeException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\UserBundle\Exception\NotFoundException
+     * @throws \FourPaws\External\Exception\ExpertsenderServiceException
+     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
+     * @throws \FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \LinguaLeo\ExpertSender\ExpertSenderException
      */
     public function sendValidation(string $phoneOrEmail, string $sender): CaptchaSendValidationResponse
     {
         $loginType = $this->guessLoginType($phoneOrEmail);
 
-        if ($loginType) {
-            if ($loginType == 'phone') {
-                $this->sendValidationInSms($phoneOrEmail, $sender);
-            } elseif (in_array($sender, ['edit_info', 'card_activation'])) {
-                $this->sendValidationInEmail($phoneOrEmail, $sender);
-            }
-            return (new CaptchaSendValidationResponse('Код подтверждения успешно отправлен'))
-                ->setCaptchaId($this->bitrixCaptchaService->getId());
+        switch ($loginType) {
+            case 'phone':
+                if (!in_array($sender, [static::SENDER_USER_REGISTRATION, static::SENDER_EDIT_INFO])) {
+                    throw new RuntimeException("Для отправки подтверждения по sms sender может быть либо " . static::SENDER_EDIT_INFO . ", либо " . static::SENDER_USER_REGISTRATION . ". Передан $sender");
+                }
+                $this->sendValidationBySms($phoneOrEmail, $sender);
+                break;
+            case 'email':
+                if (!in_array($sender, [static::SENDER_EDIT_INFO, static::SENDER_CARD_ACTIVATION])) {
+                    throw new RuntimeException("Для отправки подтверждения по почте sender может быть либо " . static::SENDER_EDIT_INFO . ", либо " . static::SENDER_CARD_ACTIVATION . ". Передан $sender");
+                }
+                $this->sendValidationByEmail($phoneOrEmail, $sender);
+                break;
+            default:
+                throw new RuntimeException("Телефон или email не распознан в параметре $phoneOrEmail");
+                break;
         }
+
+        $confirmationCodeType = $this->getConfirmationCodeType($loginType, $sender);
+        $captchaName = ConfirmCodeService::getCookieName($confirmationCodeType);
+        if (!$captchaId = $_COOKIE[$captchaName]) {
+            throw new RuntimeException("Не удалось получить проверочную строку из cookie $captchaName");
+        }
+        return (new CaptchaSendValidationResponse('Код подтверждения успешно отправлен'))
+            ->setCaptchaId($captchaId);
     }
 
     /**
@@ -79,99 +97,69 @@ class CaptchaService
      * @param $captchaId
      * @param $captchaValue
      * @return CaptchaVerifyResponse
+     * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
+     * @throws \FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException
      */
     public function verify($login, $captchaId, $captchaValue): CaptchaVerifyResponse
     {
         $loginType = $this->guessLoginType($login);
-        if ($GLOBALS['APPLICATION']->CaptchaCheckCode($captchaValue, $captchaId)) {
-            $this->bitrixCaptchaService = new BitrixCaptchaService();
-
-            $captchaId = "{$this->bitrixCaptchaService->getCode()}:{$this->bitrixCaptchaService->getId()}";
-
-            if ($loginType == 'phone') {
-                $text = 'Номер телефона подтвержден';
-            } else {
-                $text = 'E-mail подтвержден';
-            }
-            return (new CaptchaVerifyResponse($text))
-                ->setCaptchaId($captchaId);
-        } else {
+        $confirmationCodeType = $this->getConfirmationCodeType($loginType, static::SENDER_EDIT_INFO);
+        $_COOKIE[ConfirmCodeService::getCookieName($confirmationCodeType)] = $captchaId;
+        if (!ConfirmCodeService::checkCode($captchaValue, $confirmationCodeType)) {
             throw new RuntimeException('Некорректный код');
         }
+        $text = $loginType == 'phone' ? 'Номер телефона подтвержден' : 'E-mail подтвержден';
+        return (new CaptchaVerifyResponse($text))
+            ->setCaptchaId($captchaId);
     }
 
     /**
      * @param string $phone
      * @param string $sender
-     * @throws ApplicationCreateException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\UserBundle\Exception\NotFoundException
+     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
+     * @throws \FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException
      */
-    private function sendValidationInSms($phone, $sender)
+    private function sendValidationBySms($phone, $sender)
     {
+        $this->checkSender($sender);
         $user = $this->userRepository->findOneByPhone($phone);
         if (
-            $sender == 'user_registration'
-            || ($sender == 'edit_info' && !$user)
-            || ($sender == 'card_activation' && $user)
+            $sender == static::SENDER_USER_REGISTRATION
+            || ($sender == static::SENDER_EDIT_INFO && !$user)
+            || ($sender == static::SENDER_CARD_ACTIVATION && $user)
         ) {
-            $this->bitrixCaptchaService = new BitrixCaptchaService();
-            $verificationCode = $this->bitrixCaptchaService->getCode();
-            $this->smsService->sendSmsImmediate('Код подтверждения: ' . $verificationCode, $phone);
-            if ($user) {
-                $this->saveUserVerificationCode(current($user)->getId(), $verificationCode);
-            }
+            ConfirmCodeService::sendConfirmSms($phone);
         } else {
-            throw new RuntimeException('Некорреткные условия для страницы с капчей');
+            throw new RuntimeException("Некорреткные условия отправки проверочного кода в SMS, sender=$sender");
         }
     }
 
     /**
      * @param string $email
      * @param string $sender
-     * @throws \Bitrix\Main\ArgumentTypeException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\UserBundle\Exception\NotFoundException
+     * @throws \FourPaws\External\Exception\ExpertsenderServiceException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \LinguaLeo\ExpertSender\ExpertSenderException
      */
-    private function sendValidationInEmail($email, $sender)
+    private function sendValidationByEmail($email, $sender)
     {
-        if (!$user = $this->appUserService->findOneByEmail($email)) {
-            throw new RuntimeException("Пользователь с email $email не найден в базе данных");
+        $this->checkSender($sender);
+        $user = $this->appUserService->getCurrentUser();
+        if ($sender === static::SENDER_CARD_ACTIVATION) {
+            $user->setEmail($email);
+            $this->expertSenderService->sendChangeBonusCard($user);
+        } else if ($sender === static::SENDER_EDIT_INFO) {
+            $oldUser = $user;
+            $curUser = clone $user;
+            $curUser->setEmail($email);
+            $this->expertSenderService->sendChangeEmail($oldUser, $curUser);
+        } else {
+            throw new RuntimeException("Invalid sender: expected card_activation|user_edit, got $sender");
         }
-        $currentUserId = $this->appUserService->getCurrentUserId();
-        $userId = $user->getId();
-
-        if (in_array($sender, ['card_activation', 'edit_info']) && $userId != $currentUserId) {
-            throw new RuntimeException("Пользователь авторизован c ID $currentUserId, а переданный email $email зарегестрирован у пользователя с ID $userId");
-        }
-
-        $this->bitrixCaptchaService = new BitrixCaptchaService();
-        $verificationCode = $this->bitrixCaptchaService->getCode();
-        $sendResult = \Bitrix\Main\Mail\Event::sendImmediate(array(
-            'EVENT_NAME' => 'SEND_VER_CODE_APP',
-            'LID' => \Bitrix\Main\Application::getInstance()->getContext()->getSite(),
-            'DUPLICATE' => 'N',
-            'C_FIELDS' => [
-                'EMAIL_TO' => $email,
-                'VER_CODE' => $verificationCode
-            ],
-        ));
-        $sendResult = ($sendResult === \Bitrix\Main\Mail\Event::SEND_RESULT_SUCCESS);
-        if (!$sendResult) {
-            throw new RuntimeException('Ошибка отправки кода верификации');
-        }
-        $this->saveUserVerificationCode($userId, $verificationCode);
-    }
-
-    /**
-     * @param $userId
-     * @param $verificationCode
-     */
-    private function saveUserVerificationCode($userId, $verificationCode)
-    {
-        (new \CUser)->Update($userId, ['CONFIRM_CODE' => $verificationCode]);
     }
 
     /**
@@ -185,7 +173,7 @@ class CaptchaService
         if ( preg_match("~^([a-z0-9_\-\.])+@([a-z0-9_\-\.])+\.([a-z0-9])+$~i", $str) ) {
             return 'email';
         }
-        elseif ( $this->isPhoneNumber( $str ) ) {
+        elseif ( PhoneHelper::isPhone( $str ) ) {
             return 'phone';
         }
 
@@ -193,19 +181,46 @@ class CaptchaService
     }
 
     /**
-     * @param string $phone
-     * @return bool
+     * По типу сопоставляется значение контрольной строки подтверждения из куки
+     * @param string $loginType
+     * @param $sender
+     * @return string
      */
-    private function isPhoneNumber( $phone )
+    private function getConfirmationCodeType(string $loginType, $sender): string
     {
-        $phone = preg_replace('/[^0-9]/', '', $phone);
-        $phoneLength = strlen( $phone );
-        $firstChar = substr( $phone, 0, 1 );
-        $secondChar = substr( $phone, 1, 1 );
+        if (!in_array($loginType, ['phone', 'email'])) {
+            throw new RuntimeException("Unexpected loginType = $loginType. Expected phone|email");
+        }
+        $this->checkSender($sender);
 
-        return (
-            ($phoneLength == 10 && $firstChar == 9)
-            || ($phoneLength == 11 && in_array($firstChar, [7,8]) && $secondChar == 9)
-        );
+        if ($loginType == 'phone') {
+            return 'sms';
+        } else {
+            switch ($sender) {
+                case static::SENDER_USER_REGISTRATION:
+                    return 'email_register';
+                case static::SENDER_EDIT_INFO:
+                    return 'change_email';
+                case static::SENDER_CARD_ACTIVATION:
+                    return 'email_change_bonus_card';
+            }
+        }
+        // should be unreachable
+        throw new RuntimeException("Could not determine sendType. loginType = $loginType sender = $sender");
+    }
+
+    /**
+     * Проверяет параметр $sender
+     * @param $sender
+     */
+    private function checkSender($sender)
+    {
+        if (!in_array($sender, [
+            static::SENDER_USER_REGISTRATION,
+            static::SENDER_EDIT_INFO,
+            static::SENDER_CARD_ACTIVATION
+        ])) {
+            throw new RuntimeException("Unexpected sender = $sender. Expected " . static::SENDER_USER_REGISTRATION . "|" . static::SENDER_EDIT_INFO . "|" . static::SENDER_CARD_ACTIVATION);
+        }
     }
 }

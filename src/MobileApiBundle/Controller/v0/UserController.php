@@ -47,13 +47,17 @@ class UserController extends FOSRestController
      * @Security("!has_role('REGISTERED_USERS')", message="Вы уже авторизованы")
      *
      * @param LoginRequest $loginRequest
-     * @internal param Request $request
      * @return ApiResponse
      *
+     * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\Db\SqlQueryException
+     * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
      * @throws \FourPaws\External\Exception\ManzanaServiceException
+     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
+     * @throws \FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException
+     * @internal param Request $request
      */
     public function loginAction(LoginRequest $loginRequest): ApiResponse
     {

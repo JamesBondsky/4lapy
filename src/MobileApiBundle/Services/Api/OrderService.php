@@ -8,23 +8,32 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
+use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Entity\StockResult;
+use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
+use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Object\City;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryAddress;
+use FourPaws\MobileApiBundle\Dto\Object\DeliveryTime;
 use FourPaws\MobileApiBundle\Dto\Object\Detailing;
 use FourPaws\MobileApiBundle\Dto\Object\Order;
 use FourPaws\MobileApiBundle\Dto\Object\OrderCalculate;
 use FourPaws\MobileApiBundle\Dto\Object\OrderHistory;
 use FourPaws\MobileApiBundle\Dto\Object\OrderParameter;
 use FourPaws\MobileApiBundle\Dto\Object\OrderStatus;
+use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartOrderRequest;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
 use FourPaws\PersonalBundle\Entity\OrderStatusChange;
+use FourPaws\PersonalBundle\Entity\OrderSubscribe;
+use FourPaws\SaleBundle\Entity\OrderSplitResult;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\OrderService as AppOrderService;
@@ -36,6 +45,7 @@ use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\Order as OrderEntity;
 use FourPaws\SaleBundle\Service\OrderSplitService;
 use FourPaws\DeliveryBundle\Service\DeliveryService as AppDeliveryService;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService as AppOrderSubscribeService;
 
 class OrderService
 {
@@ -83,6 +93,10 @@ class OrderService
      * @var AppDeliveryService
      */
     private $appDeliveryService;
+    /**
+     * @var AppOrderSubscribeService;
+     */
+    private $appOrderSubscribeService;
 
     public function __construct(
         ApiBasketService $apiBasketService,
@@ -93,7 +107,8 @@ class OrderService
         ApiStoreService $apiStoreService,
         LocationService $locationService,
         OrderSplitService $orderSplitService,
-        AppDeliveryService $appDeliveryService
+        AppDeliveryService $appDeliveryService,
+        AppOrderSubscribeService $appOrderSubscribeService
     )
     {
         $this->apiBasketService = $apiBasketService;
@@ -105,6 +120,7 @@ class OrderService
         $this->locationService = $locationService;
         $this->orderSplitService = $orderSplitService;
         $this->appDeliveryService = $appDeliveryService;
+        $this->appOrderSubscribeService = $appOrderSubscribeService;
     }
 
     /**
@@ -116,8 +132,17 @@ class OrderService
     public function getList()
     {
         $orders = $this->getUserOrders();
-        return $orders->map(function (OrderEntity $order) {
-            return $this->toApiFormat($order);
+        // toDo подписка на заказ
+        // $user = $this->userService->getCurrentUser();
+        // $subscriptions = $this->appOrderSubscribeService->getSubscriptionsByUser($user->getId());
+        return $orders->map(function (OrderEntity $order) /*use($subscriptions)*/ {
+            /*
+            $orderId = $order->getId();
+            $subscription = $subscriptions->filter(function(OrderSubscribe $subscription) use($orderId) {
+                return $subscription->getOrderId() === $orderId;
+            })->current();
+            */
+            return $this->toApiFormat($order/*, $subscription*/);
         });
     }
 
@@ -185,6 +210,7 @@ class OrderService
 
     /**
      * @param OrderEntity $order
+     * @param OrderSubscribe $subscription
      * @return Order
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
@@ -194,8 +220,13 @@ class OrderService
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
-    protected function toApiFormat(OrderEntity $order)
+    protected function toApiFormat(OrderEntity $order, OrderSubscribe $subscription = null)
     {
+        if ($subscription) {
+            // toDo подписка на заказ
+            // var_dump($subscription->getDeliveryFrequencyEntity()->getValue());
+            // var_dump($subscription->getDeliveryTimeFormattedRu());
+        }
         $orderItems = $order->getItems();
         $basketProducts = $this->getBasketProducts($orderItems);
 
@@ -336,73 +367,118 @@ class OrderService
     public function getDeliveryVariants()
     {
         $orderStorage = (new OrderStorage());
+        $deliveries = $this->orderStorageService->getDeliveries($orderStorage);
+
+        $result = [
+            'courier' => [
+                'available' => false,
+            ],
+            'pickup' => [
+                'available' => false,
+            ]
+        ];
+
+        $delivery = null;
+        $pickup   = null;
+        foreach ($deliveries as $calculationResult) {
+            if ($this->appDeliveryService->isPickup($calculationResult)) {
+                $pickup = $calculationResult;
+            } elseif ($this->appDeliveryService->isDelivery($calculationResult)) {
+                $delivery = $calculationResult;
+            }
+        }
+
+        if ($delivery) {
+            $result['courier']['available'] = true;
+            $result['courier']['date'] = DeliveryTimeHelper::showTime($delivery);
+        }
+        if ($pickup) {
+            $result['pickup']['available'] = true;
+            $result['pickup']['date'] = DeliveryTimeHelper::showTime(
+                $pickup,
+                [
+                    'SHOW_TIME' => !$this->appDeliveryService->isDpdPickup($pickup),
+                ]
+            );
+        }
+
         $selectedDelivery = $this->orderStorageService->getSelectedDelivery($orderStorage);
         $orderStorage->setDeliveryId($selectedDelivery->getDeliveryId());
-        $splitResult1 = [];
-        $splitResult2 = [];
-        if ($this->orderSplitService->canSplitOrder($selectedDelivery)) {
+        $basketProducts = $this->apiBasketService->getBasketProducts();
+
+        // итоговые суммы
+        $result['cart_calc'] = $this->getOrderCalculate($basketProducts);
+
+        // не разделенный заказ
+        $result['singleOrder'] = $this->getOrderDeliveryInfo($selectedDelivery, $basketProducts);
+
+        // разделенный заказ
+        $result['canSplitOrder'] = $this->orderSplitService->canSplitOrder($selectedDelivery);
+        $result['splitOrder'] = [];
+        if ($result['canSplitOrder']) {
             [$splitResult1, $splitResult2] = $this->orderSplitService->splitOrder($orderStorage);
+            $result['splitOrder'][] = $this->getOrderDeliveryInfo($splitResult1->getDelivery(), $basketProducts);
+            $result['splitOrder'][] = $this->getOrderDeliveryInfo($splitResult2->getDelivery(), $basketProducts);
         }
 
-        $deliveryResult1 = $splitResult1->getDelivery()->getStockResult()->getOrderable();
-        $deliveryResult2 = $splitResult2->getDelivery()->getStockResult()->getOrderable();
-        [$deliveryResult1Items, $deliveryResult1Weight] = $this->getOrderItemData($deliveryResult1);
-        [$deliveryResult2Items, $deliveryResult2Weight] = $this->getOrderItemData($deliveryResult2);
-
-        $deliveryResult1Quantity = $deliveryResult1->getAmount();
-        $deliveryResult1Price = $deliveryResult1->getPrice();
-        $deliveryResult2Quantity = $deliveryResult2->getAmount();
-        $deliveryResult2Price = $deliveryResult2->getPrice();
-
-
-        $order1title = $deliveryResult1Quantity
-            . ' '  . WordHelper::declension($deliveryResult1Quantity, ['товар', 'товара', 'товаров'])
-            . '(' . WordHelper::showWeight($deliveryResult1Weight, true) . ') '
-            . 'на сумму ' .  CurrencyHelper::formatPrice($deliveryResult1Price, false);
-
-        $order2title = $deliveryResult2Quantity
-            . ' '  . WordHelper::declension($deliveryResult2Quantity, ['товар', 'товара', 'товаров'])
-            . '(' . WordHelper::showWeight($deliveryResult2Weight, true) . ')'
-            . ' на сумму ' .  CurrencyHelper::formatPrice($deliveryResult2Price, false);
-
-        // 1 заказ
-        $nextDeliveries1 = $this->appDeliveryService->getNextDeliveries($splitResult1->getDelivery(), 10);
-        var_dump(FormatDate('j F', $nextDeliveries1[0]->getDeliveryDate()->getTimestamp()));
-        var_dump($order1title);
-        var_dump($deliveryResult1Items);
-        var_dump($deliveryResult1Price);
-        $dates1 = [];
-        foreach ($nextDeliveries1 as $i => $nextDelivery) {
-            $date['date'] = FormatDate('l, d.m.Y', $nextDelivery->getDeliveryDate()->getTimestamp());
-            $date['intervals'] = [];
-            foreach ($nextDelivery->getAvailableIntervals() as $interval) {
-                $date['intervals'][] = (string) $interval;
-            }
-            $dates1[] = $date;
-        }
-        var_dump($dates1);
-
-        // 2 заказ
-        $nextDeliveries2 = $this->appDeliveryService->getNextDeliveries($splitResult2->getDelivery(), 10);
-        var_dump(FormatDate('j F', $nextDeliveries2[0]->getDeliveryDate()->getTimestamp()));
-        var_dump($order2title);
-        var_dump($deliveryResult2Items);
-        var_dump($deliveryResult2Price);
-        $dates2 = [];
-        foreach ($nextDeliveries2 as $i => $nextDelivery) {
-            $date['date'] = FormatDate('l, d.m.Y', $nextDelivery->getDeliveryDate()->getTimestamp());
-            $date['intervals'] = [];
-            foreach ($nextDelivery->getAvailableIntervals() as $interval) {
-                $date['intervals'][] = (string) $interval;
-            }
-            $dates2[] = $date;
-        }
-        var_dump($dates2);
-
-        // тотал
-        var_dump($selectedDelivery->getStockResult()->getOrderable()->getPrice());
-        die();
+        return [
+            'cartDelivery' => $result
+        ];
     }
+
+    protected function getOrderDeliveryInfo(CalculationResultInterface $delivery, BasketProductCollection $basketProducts)
+    {
+        $result = [];
+        $deliveryResult = $delivery->getStockResult()->getOrderable();
+        [$deliveryResultItems, $deliveryResultWeight] = $this->getOrderItemData($deliveryResult);
+        foreach (array_keys($deliveryResultItems) as $offerId) {
+            foreach ($basketProducts as $basketProduct) {
+                /** @var $basketProduct Product */
+                if ($offerId === $basketProduct->getShortProduct()->getId()) {
+                    $result['goods'][] = $basketProduct;
+                }
+            }
+        }
+        $deliveryResultQuantity = $deliveryResult->getAmount();
+        $deliveryResultPrice = $deliveryResult->getPrice();
+        $orderTitle = $deliveryResultQuantity
+            . ' '  . WordHelper::declension($deliveryResultQuantity, ['товар', 'товара', 'товаров'])
+            . '(' . WordHelper::showWeight($deliveryResultWeight, true) . ') '
+            . 'на сумму ' .  CurrencyHelper::formatPrice($deliveryResultPrice, false);
+        $nextDeliveries = $this->appDeliveryService->getNextDeliveries($delivery, 10);
+        $result['date'] = (FormatDate('j F', $nextDeliveries[0]->getDeliveryDate()->getTimestamp()));
+        $result['title'] = $orderTitle;
+        $result['price'] = (new Price())->setActual($deliveryResultPrice);
+        $result['deliveryRanges'] = $this->getDeliveryRanges($nextDeliveries);
+        return $result;
+    }
+
+    protected function getDeliveryRanges(array $deliveries)
+    {
+        $dates = [];
+        foreach ($deliveries as $i => $delivery) {
+            /** @var DeliveryResult $delivery */
+            $deliveryDate = $delivery->getDeliveryDate();
+            $intervals = $delivery->getAvailableIntervals();
+            $dayOfTheWeek = FormatDate('l', $delivery->getDeliveryDate()->getTimestamp());
+            if (!empty($intervals) && count($intervals)) {
+                foreach ($intervals as $interval) {
+                    /** @var Interval $interval */
+                    $dates[] = (new DeliveryTime())
+                        ->setTitle($dayOfTheWeek . ' ' . $interval)
+                        ->setDeliveryDate($deliveryDate)
+                    ;
+                }
+            } else {
+                $dates[] = (new DeliveryTime())
+                    ->setTitle($dayOfTheWeek)
+                    ->setDeliveryDate($deliveryDate)
+                ;
+            }
+        }
+        return $dates;
+    }
+
 
     public function getOrderItemData(StockResultCollection $stockResultCollection): array
     {

@@ -22,6 +22,7 @@ use FourPaws\MobileApiBundle\Services\Session\SessionHandler;
 use FourPaws\UserBundle\Entity\User as AppUser;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Repository\UserRepository;
+use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\UserService as UserBundleService;
 use FourPaws\MobileApiBundle\Services\Api\CaptchaService as ApiCaptchaService;
 use FourPaws\External\ManzanaService as AppManzanaService;
@@ -90,31 +91,38 @@ class UserService
     /**
      * @param LoginRequest $loginRequest
      * @return UserLoginResponse
+     * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\Db\SqlQueryException
+     * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
      * @throws \FourPaws\External\Exception\ManzanaServiceException
+     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
+     * @throws \FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException
      */
     public function loginOrRegister(LoginRequest $loginRequest): UserLoginResponse
     {
+
+        $exlcudePhonesFromCaptchaCheck = [
+            '9778016362',
+            '9660949453',
+            '9299821844',
+            '9007531672',
+            '9007523221',
+            '9991693811',
+            '9263987654',
+            '9653770455',
+            '9165919854'
+        ];
+
         try {
-            $isVerified = $GLOBALS['APPLICATION']->CaptchaCheckCode(
-                    $loginRequest->getCaptchaValue(),
-                    $loginRequest->getCaptchaId()
-                )
-                || in_array($loginRequest->getLogin(), [
-                    '9778016362',
-                    '9660949453',
-                    '9299821844',
-                    '9007531672',
-                    '9007523221',
-                    '9991693811',
-                    '9263987654',
-                    '9653770455',
-                    '9165919854'
-                ]);
-            if (!$isVerified) {
-                throw new RuntimeException('Некорректный код');
+
+            $_COOKIE[ConfirmCodeService::getCookieName('phone')] = $loginRequest->getCaptchaId();
+
+            if (!in_array($loginRequest->getLogin(), $exlcudePhonesFromCaptchaCheck)) {
+                if (!ConfirmCodeService::checkCode($loginRequest->getCaptchaValue(), 'phone')) {
+                    throw new RuntimeException('Некорректный код');
+                }
             }
             $userId = $this->userRepository->findIdentifierByRawLogin($loginRequest->getLogin());
             $this->userBundleService->authorize($userId);

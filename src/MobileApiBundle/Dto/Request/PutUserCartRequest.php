@@ -7,6 +7,8 @@
 namespace FourPaws\MobileApiBundle\Dto\Request;
 
 use FourPaws\MobileApiBundle\Dto\Object\ProductQuantity;
+use FourPaws\MobileApiBundle\Dto\Request\Types\PutRequest;
+use FourPaws\MobileApiBundle\Dto\Request\Types\SimpleUnserializeRequest;
 use Symfony\Component\Validator\Constraints as Assert;
 use JMS\Serializer\Annotation as Serializer;
 

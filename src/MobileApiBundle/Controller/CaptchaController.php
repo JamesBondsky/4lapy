@@ -28,10 +28,15 @@ class CaptchaController extends FOSRestController
      *
      * @param CaptchaCreateRequest $captchaCreateRequest
      * @return CaptchaSendValidationResponse
-     * @throws \Bitrix\Main\ArgumentTypeException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\UserBundle\Exception\NotFoundException
+     * @throws \FourPaws\External\Exception\ExpertsenderServiceException
+     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
+     * @throws \FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \LinguaLeo\ExpertSender\ExpertSenderException
      */
     public function sendCaptchaValidationAction(CaptchaCreateRequest $captchaCreateRequest)
     {
@@ -42,11 +47,15 @@ class CaptchaController extends FOSRestController
     }
 
     /**
+     * Вызывается когда пользователь меняет телефон или email
+     *
      * @Rest\Post(path="/verify/")
      * @Rest\View()
      *
      * @param CaptchaVerifyRequest $captchaVerifyRequest
      * @return CaptchaVerifyResponse
+     * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
+     * @throws \FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException
      */
     public function verifyCaptchaAction(CaptchaVerifyRequest $captchaVerifyRequest)
     {
