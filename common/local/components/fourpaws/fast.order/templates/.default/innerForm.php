@@ -57,7 +57,7 @@ if ($request->offsetExists('phone')) {
     $phone = $request->get('phone');
 }
 
-$isDisabled = $isAuth ? 'disabled' : '';
+$isDisabled = $isAuth ? 'readonly' : '';
 
 /** @var array $basketRows */
 $basketRows = $arResult['BASKET_ROWS'];
