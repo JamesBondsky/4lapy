@@ -120,6 +120,10 @@ class DostavistaController implements LoggerAwareInterface
             $this->log()->notice($mess);
             $mess = 'Status success changed for order [' . $order['ID'] . '] from status [' . $order['STATUS_ID'] . '] to status [' . $bitrixStatus . ']';
             $this->log()->notice($mess);
+            //отправляем email, если достависта отменила или отложила заказ
+            if (in_array($dostavistaStatus, ['canceled', 'delayed'])) {
+                $dostavistaService->orderCancelSendMail($order['ID'], $bitrixOrder->getField('ACCOUNT_NUMBER'), ($dostavistaStatus == 'canceled') ? 'Отменен' : 'Отложен', (new \Datetime)->format('d.m.Y H:i:s'));
+            }
             return JsonSuccessResponse::create(
                 'Success: ' . $mess,
                 200,

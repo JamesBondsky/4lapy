@@ -3,6 +3,7 @@
 namespace FourPaws\External;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use FourPaws\App\Application;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\External\Dostavista\Client;
 use FourPaws\External\Dostavista\Model\CancelOrder;
@@ -110,7 +111,7 @@ class DostavistaService implements LoggerAwareInterface, SapOutInterface
             } catch (\Exception $e) {
                 $result = [
                     'success' => false,
-                    'message' => 'Ошибка импорта заказа',
+                    'message' => $res['message'],
                     'data' => $data
                 ];
                 $this->logger->error('Order ' . $data['point'][1]['client_order_id'] . ' import failed in "Dostavista" service', $result);
@@ -263,5 +264,51 @@ class DostavistaService implements LoggerAwareInterface, SapOutInterface
         }
 
         return $this->messageId;
+    }
+
+    /**
+     * @param $orderId
+     * @param $accountNumber
+     * @param $status
+     * @param $dateTime
+     */
+    public function orderCancelSendMail($orderId, $accountNumber, $status, $dateTime): void
+    {
+        \CEvent::SendImmediate(
+            'DOSTAVISTA_ORDERS',
+            's1',
+            [
+                'ORDER_ID' => Application::getInstance()->getSiteDomain() . '/bitrix/admin/sale_order_view.php?ID=' . $orderId . '&filter=Y&set_filter=Y&lang=ru',
+                'ACCOUNT_NUMBER' => $accountNumber,
+                'DATE_TIME' => $dateTime,
+                'STATUS' => $status
+            ],
+            'N',
+            94
+        );
+    }
+
+    /**
+     * @param $orderId
+     * @param $accountNumber
+     * @param $code
+     * @param $data
+     * @param $dateTime
+     */
+    public function dostavistaOrderAddErrorSendEmail($orderId, $accountNumber, $code, $data, $dateTime): void
+    {
+        \CEvent::SendImmediate(
+            'DOSTAVISTA_ORDERS',
+            's1',
+            [
+                'ORDER_ID' => Application::getInstance()->getSiteDomain() . '/bitrix/admin/sale_order_view.php?ID=' . $orderId . '&filter=Y&set_filter=Y&lang=ru',
+                'ACCOUNT_NUMBER' => $accountNumber,
+                'DATE_TIME' => $dateTime,
+                'HTTP_CODE' => $code,
+                'JSON_DATA' => $data
+            ],
+            'N',
+            95
+        );
     }
 }

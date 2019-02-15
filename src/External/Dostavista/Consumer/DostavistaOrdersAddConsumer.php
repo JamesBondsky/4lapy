@@ -3,6 +3,8 @@
 namespace FourPaws\External\Dostavista\Consumer;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
+use FourPaws\App\Application;
+use FourPaws\External\DostavistaService;
 use FourPaws\UserBundle\EventController\Event;
 use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerInterface;
@@ -35,7 +37,7 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
              * @var Order $order
              * Получаем битриксовый заказ
              */
-            if($bitrixOrderId === null){
+            if ($bitrixOrderId === null) {
                 $result = static::MSG_REJECT_REQUEUE;
             } else {
                 $order = $this->orderService->getOrderById($bitrixOrderId);
@@ -70,6 +72,12 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
             }
         } catch (\Exception $e) {
             $result = static::MSG_REJECT_REQUEUE;
+        }
+
+        if ($result !== static::MSG_ACK) {
+            /** @var DostavistaService $dostavistaService */
+            $dostavistaService = Application::getInstance()->getContainer()->get('dostavista.service');
+            $dostavistaService->dostavistaOrderAddErrorSendEmail($order['ID'], $order->getField('ACCOUNT_NUMBER'), $response['message'], $response['data'], (new \Datetime)->format('d.m.Y H:i:s'));
         }
 
         Event::enableEvents();
