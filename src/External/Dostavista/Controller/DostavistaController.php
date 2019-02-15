@@ -112,7 +112,7 @@ class DostavistaController implements LoggerAwareInterface
             /** @var DostavistaService $dostavistaService */
             $dostavistaService = Application::getInstance()->getContainer()->get('dostavista.service');
             $bitrixOrder = \Bitrix\Sale\Order::load($order['ID']);
-            $dostavistaService->out($bitrixOrder);
+//            $dostavistaService->out($bitrixOrder);
             $mess = 'Status success changed for order [' . $order['ID'] . '] for SAP';
             $this->log()->notice($mess);
             $mess = 'Status success changed for order [' . $order['ID'] . '] from status [' . $order['STATUS_ID'] . '] to status [' . $bitrixStatus . ']';
