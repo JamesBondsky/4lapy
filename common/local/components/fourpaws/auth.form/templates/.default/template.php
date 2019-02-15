@@ -18,7 +18,7 @@ use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 $component = $this->getComponent(); ?>
 <div class="b-header-info__item b-header-info__item--person">
     <a class="<?= ($component->getMode()
-        === FourPawsAuthFormComponent::MODE_FORM) ? 'b-link js-open-popup' : 'b-header-info__link js-open-popover' ?>"
+        === FourPawsAuthFormComponent::MODE_FORM) ? 'b-link js-open-popup' : 'b-header-info__link js-open-popover' ?> js-toggle-popover-mobile-header"
        href="javascript:void(0);"
        title="<?= $component->getMode()
        === FourPawsAuthFormComponent::MODE_FORM ? 'Войти' : $arResult['NAME'] ?>"<?= ($component->getMode() === FourPawsAuthFormComponent::MODE_FORM) ? ' data-popup-id="authorization"' : '' ?>>

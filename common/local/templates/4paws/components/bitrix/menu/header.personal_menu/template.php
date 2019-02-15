@@ -16,7 +16,7 @@ $drawMenuLevel1 = function ($menu = [], $title = '') use ($oMenu) {
         return '';
     }
     
-    $outString = '<div class="b-popover b-popover--person js-popover"><div class="b-person"><ul class="b-link-block">';
+    $outString = '<div class="b-popover b-popover--person js-popover js-content-popover-mobile-header"><div class="b-person"><ul class="b-link-block">';
     foreach ($menu as $index => $item) {
         $outString .= '<li class="b-link-block__item">';
         $outString .= '<span class="b-icon">';

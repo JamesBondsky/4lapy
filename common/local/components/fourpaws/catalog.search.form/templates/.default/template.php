@@ -23,8 +23,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use FourPaws\Decorators\SvgDecorator;
 
 ?>
-<div class="b-form-inline b-form-inline--search">
-    <form class="b-form-inline__form b-form-inline__form--search js-popover-search"
+<div class="b-form-inline b-form-inline--search js-item-search-mobile-header">
+    <form class="b-form-inline__form b-form-inline__form--search js-popover-search js-content-popover-mobile-header"
           data-url="<?= $arResult['AUTOCOMPLETE_URL'] ?>"
           action="<?= $arResult['SEARCH_URL'] ?>">
         <div class="b-input">
@@ -46,7 +46,7 @@ use FourPaws\Decorators\SvgDecorator;
         </button>
         <button class="b-button b-button--clear-search js-clear-searchheader"></button>
     </form>
-    <a class="b-form-inline__mobile-search js-hide-open-menu" href="javascript:void(0)" title="">
+    <a class="b-form-inline__mobile-search js-hide-open-menu js-toggle-popover-mobile-header" href="javascript:void(0)" title="">
         <span class="b-icon b-icon--header-search-mobile">
             <?= new SvgDecorator('icon-search-header', 20, 20) ?>
         </span>
