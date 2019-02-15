@@ -85,17 +85,17 @@ if ($template->hasMainWrapper()) { ?>
             <div class="b-tab winners-landing__content">
                 <div class="b-tab-title">
                     <ul class="b-tab-title__list">
-                        <li class="b-tab-title__item js-tab-item active">
+                        <li class="b-tab-title__item js-tab-item">
                             <a class="b-tab-title__link js-tab-link" href="javascript:void(0);" data-tab="winners-landing1">
                                 <span class="b-tab-title__text">8.02</span>
                             </a>
                         </li>
-                        <?/**<li class="b-tab-title__item js-tab-item">
+                        <li class="b-tab-title__item js-tab-item active">
                             <a class="b-tab-title__link js-tab-link" href="javascript:void(0);" data-tab="winners-landing2">
                                 <span class="b-tab-title__text">15.02</span>
                             </a>
                         </li>
-                        <li class="b-tab-title__item js-tab-item">
+                        <?/**<li class="b-tab-title__item js-tab-item">
                             <a class="b-tab-title__link js-tab-link" href="javascript:void(0);" data-tab="winners-landing3">
                                 <span class="b-tab-title__text">22.02</span>
                             </a>
@@ -113,7 +113,7 @@ if ($template->hasMainWrapper()) { ?>
                     </ul>
                 </div>
                 <div class="b-tab-content">
-                    <div class="b-tab-content__container js-tab-content active" data-tab-content="winners-landing1">
+                    <div class="b-tab-content__container js-tab-content" data-tab-content="winners-landing1">
                         <div class="winners-landing__list">
                             <div class="item__wrap">
                                 <div class="item">
@@ -187,81 +187,81 @@ if ($template->hasMainWrapper()) { ?>
                             </div>
                         </div>
                     </div>
-                    <?/**<div class="b-tab-content__container js-tab-content" data-tab-content="winners-landing2">
+                    <div class="b-tab-content__container js-tab-content active" data-tab-content="winners-landing2">
                         <div class="winners-landing__list">
                             <div class="item__wrap">
                                 <div class="item">
-                                    <div class="item__name" title="Седов Максим">Седов Максим</div>
+                                    <div class="item__name" title="Федоткина Татьяна">Федоткина Татьяна</div>
                                     <div class="item__dotes"></div>
-                                    <div class="item__phone">*(***)****356</div>
+                                    <div class="item__phone">*(***)****213</div>
                                 </div>
                             </div>
                             <div class="item__wrap">
                                 <div class="item">
-                                    <div class="item__name" title="Григорий Лялин">Григорий Лялин</div>
+                                    <div class="item__name" title="Новичкова Юлия">Новичкова Юлия</div>
                                     <div class="item__dotes"></div>
-                                    <div class="item__phone">*(***)****356</div>
+                                    <div class="item__phone">*(***)****861</div>
                                 </div>
                             </div>
                             <div class="item__wrap">
                                 <div class="item">
-                                    <div class="item__name" title="Седов Максим">Седов Максим</div>
+                                    <div class="item__name" title="Павлихин Артем">Павлихин Артем</div>
                                     <div class="item__dotes"></div>
-                                    <div class="item__phone">*(***)****356</div>
+                                    <div class="item__phone">*(***)****322</div>
                                 </div>
                             </div>
                             <div class="item__wrap">
                                 <div class="item">
-                                    <div class="item__name" title="Иванова Ольга">Иванова Ольга</div>
+                                    <div class="item__name" title="Григорчук Илья">Григорчук Илья</div>
                                     <div class="item__dotes"></div>
-                                    <div class="item__phone">*(***)****356</div>
+                                    <div class="item__phone">*(***)****463</div>
                                 </div>
                             </div>
                             <div class="item__wrap">
                                 <div class="item">
-                                    <div class="item__name" title="Пронина Ирина">Пронина Ирина</div>
+                                    <div class="item__name" title="Мещеряков Олег">Мещеряков Олег</div>
                                     <div class="item__dotes"></div>
-                                    <div class="item__phone">*(***)****356</div>
+                                    <div class="item__phone">*(***)****741</div>
                                 </div>
                             </div>
                             <div class="item__wrap">
                                 <div class="item">
-                                    <div class="item__name" title="Седов Максим">Седов Максим</div>
+                                    <div class="item__name" title="Сафронова Альбина">Сафронова Альбина</div>
                                     <div class="item__dotes"></div>
-                                    <div class="item__phone">*(***)****356</div>
+                                    <div class="item__phone">*(***)****694</div>
                                 </div>
                             </div>
                             <div class="item__wrap">
                                 <div class="item">
-                                    <div class="item__name" title="Кириллов Олег">Кириллов Олег</div>
+                                    <div class="item__name" title="Ионова Наталья">Ионова Наталья</div>
                                     <div class="item__dotes"></div>
-                                    <div class="item__phone">*(***)****356</div>
+                                    <div class="item__phone">*(***)****419</div>
                                 </div>
                             </div>
                             <div class="item__wrap">
                                 <div class="item">
-                                    <div class="item__name" title="Сандалова Александра">Сандалова Александра</div>
+                                    <div class="item__name" title="Писарева Елена">Писарева Елена</div>
                                     <div class="item__dotes"></div>
-                                    <div class="item__phone">*(***)****356</div>
+                                    <div class="item__phone">*(***)****687</div>
                                 </div>
                             </div>
                             <div class="item__wrap">
                                 <div class="item">
-                                    <div class="item__name" title="Иванова Ольга">Иванова Ольга</div>
+                                    <div class="item__name" title="Александрова Елена">Александрова Елена</div>
                                     <div class="item__dotes"></div>
-                                    <div class="item__phone">*(***)****356</div>
+                                    <div class="item__phone">*(***)****712</div>
                                 </div>
                             </div>
                             <div class="item__wrap">
                                 <div class="item">
-                                    <div class="item__name" title="Кириллов Олег">Кириллов Олег</div>
+                                    <div class="item__name" title="Орехова Анна">Орехова Анна</div>
                                     <div class="item__dotes"></div>
-                                    <div class="item__phone">*(***)****356</div>
+                                    <div class="item__phone">*(***)****377</div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="b-tab-content__container js-tab-content " data-tab-content="winners-landing3">
+                    <?/**<div class="b-tab-content__container js-tab-content " data-tab-content="winners-landing3">
                         <div class="winners-landing__list">
                             <div class="item__wrap">
                                 <div class="item">
