@@ -2,6 +2,8 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Object\Store;
 
+use Bitrix\Main\SystemException;
+use FourPaws\Decorators\FullHrefDecorator;
 use JMS\Serializer\Annotation as Serializer;
 
 class StoreService
@@ -34,7 +36,7 @@ class StoreService
      */
     public function setImage(string $image): StoreService
     {
-        $this->image = $image;
+        $this->image = (string) new FullHrefDecorator($image);
         return $this;
     }
 

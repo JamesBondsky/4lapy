@@ -3,6 +3,8 @@
 namespace FourPaws\MobileApiBundle\Dto\Request;
 
 use FourPaws\MobileApiBundle\Dto\Object\ProductQuantity;
+use FourPaws\MobileApiBundle\Dto\Request\Types\GetRequest;
+use FourPaws\MobileApiBundle\Dto\Request\Types\SimpleUnserializeRequest;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -14,38 +16,11 @@ class StoreListAvailableRequest implements SimpleUnserializeRequest, GetRequest
 {
     /**
      * @Assert\NotBlank()
-     * @Serializer\SerializedName("goods")
-     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\ProductQuantity>")
-     * @var ProductQuantity[]
-     */
-    protected $goods = [];
-
-    /**
-     * @Assert\NotBlank()
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("city_id")
      */
     protected $cityId = '';
-
-    /**
-     * @return ProductQuantity[]
-     */
-    public function getGoods(): array
-    {
-        return $this->goods;
-    }
-
-    /**
-     * @param ProductQuantity[] $goods
-     *
-     * @return StoreListAvailableRequest
-     */
-    public function setGoods(array $goods): StoreListAvailableRequest
-    {
-        $this->goods = $goods;
-        return $this;
-    }
 
     /**
      * @return string

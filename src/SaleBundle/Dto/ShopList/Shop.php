@@ -54,6 +54,22 @@ class Shop
     /**
      * @var string
      *
+     * @Serializer\SerializedName("metroName")
+     * @Serializer\Type("string")
+     */
+    protected $metroName = '';
+
+    /**
+     * @var string
+     *
+     * @Serializer\SerializedName("metroColor")
+     * @Serializer\Type("string")
+     */
+    protected $metroColor = '';
+
+    /**
+     * @var string
+     *
      * @Serializer\SerializedName("metroClass")
      * @Serializer\Type("string")
      */
@@ -279,6 +295,46 @@ class Shop
     public function setSchedule(string $schedule): Shop
     {
         $this->schedule = $schedule;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMetroName(): string
+    {
+        return $this->metroName;
+    }
+
+    /**
+     * @param string $metroName
+     *
+     * @return Shop
+     */
+    public function setMetroName(string $metroName): Shop
+    {
+        $this->metroName = $metroName;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMetroColor(): string
+    {
+        return $this->metroColor;
+    }
+
+    /**
+     * @param string $metroColor
+     *
+     * @return Shop
+     */
+    public function setMetroColor(string $metroColor): Shop
+    {
+        $this->metroColor = $metroColor;
 
         return $this;
     }

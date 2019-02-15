@@ -105,6 +105,8 @@ class ExpertsenderService implements LoggerAwareInterface
     public const COMPLETE_ORDER_LIST_ID = 7778;
     public const FORGOT_PASSWORD_LIST_ID = 7779;
     public const CHANGE_PASSWORD_LIST_ID = 7780;
+    public const NEW_CHECK_REG_LIST_ID = 8906;
+    public const CHANGE_BONUS_CARD = 8026;
 
     /**
      * BirthDay mail ids
@@ -782,6 +784,34 @@ class ExpertsenderService implements LoggerAwareInterface
     }
 
     /**
+     * @param User $user
+     * @return bool
+     * @throws ExpertsenderServiceException
+     */
+    public function sendChangeBonusCard(User $user)
+    {
+        if ($user->hasEmail()) {
+            try {
+                $transactionId = static::CHANGE_BONUS_CARD;
+                $email = $user->getEmail();
+
+                /** @var ConfirmCodeService $confirmService */
+                $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+                $confirmService::setGeneratedCode($email, 'email_change_bonus_card');
+                $snippets = [
+                    new Snippet('code', $confirmService::getGeneratedCode('email_change_bonus_card'))
+                ];
+                unset($confirmService);
+                $this->sendSystemTransactional($transactionId, $email, $snippets);
+                return true;
+            } catch (Exception $e) {
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
+            }
+        }
+        return false;
+    }
+
+    /**
      * @param Basket $basket
      *
      * @return array
@@ -1183,6 +1213,38 @@ class ExpertsenderService implements LoggerAwareInterface
                 && (string)$sop->ErrorMessage->Message === self::BLACK_LIST_ERROR_MESSAGE) {
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param User $user
+     *
+     * @return bool
+     * @throws ExpertSenderException
+     * @throws ExpertsenderServiceApiException
+     * @throws ExpertsenderServiceException
+     */
+    public function sendAfterCheckReg(array $params): bool
+    {
+        $email = $params['userEmail'];
+        $userId = $params['userId'];
+
+        if($email) {
+            $transactionId = self::NEW_CHECK_REG_LIST_ID;
+
+            $this->log()->info(
+                __FUNCTION__,
+                [
+                    'email' => $email,
+                    'transactionId' => $transactionId,
+                    'userId' => $userId,
+                ]
+            );
+
+            $this->sendSystemTransactional($transactionId, $email);
+            return true;
         }
 
         return false;

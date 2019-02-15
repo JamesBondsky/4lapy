@@ -11,11 +11,13 @@ use FourPaws\MobileApiBundle\Dto\Error;
 use FourPaws\MobileApiBundle\Dto\Object\ChangeCardProfile;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
+use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\UserService as AppUserService;
 use FourPaws\PersonalBundle\Entity\UserBonus as AppUserBonus;
 use FourPaws\External\ManzanaService as AppManzanaService;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\MobileApiBundle\Services\Api\UserService as ApiUserService;
+use FourPaws\MobileApiBundle\Services\Api\CaptchaService as ApiCaptchaService;
 
 
 class CardService
@@ -45,12 +47,18 @@ class CardService
      */
     private $apiUserService;
 
+    /**
+     * @var ApiCaptchaService
+     */
+    private $apiCaptchaService;
+
     public function __construct(
         AppManzanaService $appManzanaService,
         AppUserService $appUserService,
         AppUserBonus $appUserBonus,
         UserRepository $userRepository,
-        ApiUserService $apiUserService
+        ApiUserService $apiUserService,
+        ApiCaptchaService $apiCaptchaService
     )
     {
         $this->appManzanaService = $appManzanaService;
@@ -58,29 +66,21 @@ class CardService
         $this->appUserBonus = $appUserBonus;
         $this->userRepository = $userRepository;
         $this->apiUserService = $apiUserService;
+        $this->apiCaptchaService = $apiCaptchaService;
     }
 
     /**
      * @param int $cardNumber
      *
-     * @return Response
+     * @return bool
      */
-    public function isActive($cardNumber): Response
+    public function isActive($cardNumber): bool
     {
         $activated = UserTable::query()
                 ->addFilter('UF_DISCOUNT_CARD', $cardNumber)
                 ->exec()
                 ->getSelectedRowsCount() > 0;
-        $cardResponse = new Response\CardActivatedResponse(
-            $activated,
-            $activated ? 'Карта уже привязана к другому аккаунту. Пожалуйста, используйте другую карту' : ''
-        );
-
-        $apiResponse = new Response($cardResponse);
-        if ($activated) {
-            $apiResponse->addError(new Error(42, 'Данная карта уже привязана'));
-        }
-        return $apiResponse;
+        return $activated;
     }
 
     /**
@@ -128,11 +128,38 @@ class CardService
     }
 
     /**
+     * @param string $email
+     * @return Response\CaptchaSendValidationResponse
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\External\Exception\ExpertsenderServiceException
+     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
+     * @throws \FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException
+     * @throws \FourPaws\UserBundle\Exception\NotFoundException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \LinguaLeo\ExpertSender\ExpertSenderException
+     */
+    public function sendConfirmationToEmail(string $email)
+    {
+        if ($user = $this->appUserService->findOneByEmail($email)) {
+            if ($user->isEmailConfirmed()) {
+                throw new RuntimeException("Пользователь с email $email уже подтвердил свой email");
+            }
+        }
+        return $this->apiCaptchaService->sendValidation($email, 'card_activation');
+    }
+
+    /**
      * Задача: проверить капчу, и если все гут - апдейтить юзера в БД
      * @param ChangeCardProfile $cardProfile
      * @param $captchaId
      * @param $captchaValue
+     * @return
      * @throws \FourPaws\External\Exception\ManzanaServiceException
+     * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
+     * @throws \FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException
      */
     public function changeCardConfirmPin(ChangeCardProfile $cardProfile, $captchaId, $captchaValue)
     {
@@ -140,7 +167,9 @@ class CardService
         $oldCard = $user->getDiscountCardNumber();
         $newCard = $cardProfile->getNewCardNumber();
         // 1. проверяем капчу
-        if (!$GLOBALS['APPLICATION']->CaptchaCheckCode($captchaValue, $captchaId)) {
+        $confirmationCodeType = 'email_change_bonus_card';
+        $_COOKIE[ConfirmCodeService::getCookieName($confirmationCodeType)] = $captchaId;
+        if (!ConfirmCodeService::checkCode($captchaValue, $confirmationCodeType)) {
             throw new RuntimeException('Некорректный код');
         }
         // 2. проверяем, нет ли уже в базе такого номера карты

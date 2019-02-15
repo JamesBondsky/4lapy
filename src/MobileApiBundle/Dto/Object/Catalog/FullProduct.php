@@ -181,8 +181,7 @@ class FullProduct extends ShortProduct
     public function setPictureList(array $pictureList): FullProduct
     {
         $pictureList = array_map(function($picture) {
-            $hrefDecorator = new FullHrefDecorator($picture);
-            return $hrefDecorator->getFullPublicPath();
+            return (string) new FullHrefDecorator($picture);
         }, $pictureList);
         $this->pictureList = $pictureList;
         return $this;
@@ -208,11 +207,11 @@ class FullProduct extends ShortProduct
     }
 
     /**
-     * @return PackingVariant[]
+     * @return FullProduct[]
      */
-    public function getPackingVariants()
+    public function getPackingVariants(): array
     {
-        return $this->packingVariants;
+        return $this->packingVariants ?? [];
     }
 
     /**
@@ -220,7 +219,7 @@ class FullProduct extends ShortProduct
      *
      * @return FullProduct
      */
-    public function setPackingVariants($packingVariants): FullProduct
+    public function setPackingVariants(array $packingVariants): FullProduct
     {
         $this->packingVariants = $packingVariants;
         return $this;

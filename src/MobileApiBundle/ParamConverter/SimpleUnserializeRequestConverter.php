@@ -6,18 +6,15 @@
 
 namespace FourPaws\MobileApiBundle\ParamConverter;
 
-use FourPaws\MobileApiBundle\Dto\Request\CreateRequest;
-use FourPaws\MobileApiBundle\Dto\Request\DeleteRequest;
-use FourPaws\MobileApiBundle\Dto\Request\GetRequest;
-use FourPaws\MobileApiBundle\Dto\Request\PostRequest;
-use FourPaws\MobileApiBundle\Dto\Request\PutRequest;
-use FourPaws\MobileApiBundle\Dto\Request\SimpleUnserializeRequest;
-use FourPaws\MobileApiBundle\Dto\Request\UpdateRequest;
+use FourPaws\MobileApiBundle\Dto\Request\Types\DeleteRequest;
+use FourPaws\MobileApiBundle\Dto\Request\Types\GetRequest;
+use FourPaws\MobileApiBundle\Dto\Request\Types\PostRequest;
+use FourPaws\MobileApiBundle\Dto\Request\Types\PutRequest;
+use FourPaws\MobileApiBundle\Dto\Request\Types\SimpleUnserializeRequest;
 use FourPaws\MobileApiBundle\Exception\SystemException;
 use FourPaws\MobileApiBundle\Exception\ValidationException;
 use FourPaws\MobileApiBundle\Services\ErrorsFormatterService;
 use JMS\Serializer\ArrayTransformerInterface;
-use JMS\Serializer\DeserializationContext;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Sensio\Bundle\FrameworkExtraBundle\Request\ParamConverter\ParamConverterInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -72,11 +69,10 @@ class SimpleUnserializeRequestConverter implements ParamConverterInterface
         }
 
 
-        $groups = $this->getGroups($configuration);
         $params = $this->getParams($request, $configuration);
-        $object = $this->convertToObject($configuration, $params, $groups);
+        $object = $this->convertToObject($configuration, $params);
 
-        $this->processValidation($request, $configuration, $object, $groups);
+        $this->processValidation($request, $configuration, $object);
 
         $request->attributes->set($configuration->getName(), $object);
 
@@ -119,33 +115,16 @@ class SimpleUnserializeRequestConverter implements ParamConverterInterface
     }
 
     /**
-     * @param ParamConverter $configuration
-     * @return array
-     */
-    protected function getGroups(ParamConverter $configuration): array
-    {
-        $groups = ['Default'];
-        if (is_a($configuration->getClass(), CreateRequest::class, true)) {
-            $groups[] = 'create';
-        }
-        if (is_a($configuration->getClass(), UpdateRequest::class, true)) {
-            $groups[] = 'update';
-        }
-        return $groups;
-    }
-
-    /**
      * @param Request        $request
      * @param ParamConverter $configuration
      * @param                $object
-     * @param                $groups
      * @throws ValidationException
      */
-    protected function processValidation(Request $request, ParamConverter $configuration, $object, $groups): void
+    protected function processValidation(Request $request, ParamConverter $configuration, $object): void
     {
         $notThrowException = $configuration->getOptions()['not_throw_exception'] ?? false;
 
-        $validationResult = $this->validator->validate($object, null, $groups);
+        $validationResult = $this->validator->validate($object, null);
         if (!$notThrowException && $validationResult->count() > 0) {
             $validationError = $validationResult[0];
             if ($validationError instanceof ConstraintViolation) {
@@ -178,16 +157,14 @@ class SimpleUnserializeRequestConverter implements ParamConverterInterface
     /**
      * @param ParamConverter $configuration
      * @param                $params
-     * @param                $groups
      * @throws \FourPaws\MobileApiBundle\Exception\SystemException
      * @return mixed
      */
-    protected function convertToObject(ParamConverter $configuration, $params, $groups)
+    protected function convertToObject(ParamConverter $configuration, $params)
     {
         $object = $this->arrayTransformer->fromArray(
             $params,
-            $configuration->getClass(),
-            DeserializationContext::create()->setGroups($groups)
+            $configuration->getClass()
         );
         if (!$object) {
             throw new SystemException('Cant convert request to object');

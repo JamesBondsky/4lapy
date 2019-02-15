@@ -57,11 +57,10 @@ class PetPhoto
     /**
      * @param string $src
      * @return PetPhoto
-     * @throws \Bitrix\Main\SystemException
      */
     public function setSrc(string $src): PetPhoto
     {
-        $this->src = $src ? (new FullHrefDecorator($src))->getFullPublicPath() : '';
+        $this->src = (string) new FullHrefDecorator($src);
         return $this;
     }
 
@@ -76,11 +75,10 @@ class PetPhoto
     /**
      * @param string $preview
      * @return PetPhoto
-     * @throws \Bitrix\Main\SystemException
      */
     public function setPreview(string $preview): PetPhoto
     {
-        $this->preview = $preview ? (new FullHrefDecorator($preview))->getFullPublicPath() : '';
+        $this->preview = (string) new FullHrefDecorator($preview);
         return $this;
     }
 }

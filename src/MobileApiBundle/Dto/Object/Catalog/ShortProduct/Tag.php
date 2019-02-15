@@ -67,11 +67,10 @@ class Tag
      * @param string $img
      *
      * @return Tag
-     * @throws \Bitrix\Main\SystemException
      */
     public function setImg(string $img): Tag
     {
-        $this->img = (new FullHrefDecorator($img))->getFullPublicPath();
+        $this->img = (string) new FullHrefDecorator($img);
         return $this;
     }
 }

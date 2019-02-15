@@ -7,6 +7,7 @@
 namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Bitrix\Main\Type\Date;
+use Bitrix\Main\UI\FileInputUtility;
 use FourPaws\AppBundle\Entity\UserFieldEnumValue;
 use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\CatalogBundle\Service\CategoriesService;
@@ -26,6 +27,11 @@ use FourPaws\UserBundle\Service\UserService as UserBundleService;
 
 class PetService
 {
+    const PHOTO_FILE_SIZE = 1024 * 1024;
+    const PHOTO_WIDTH = 200;
+    const PHOTO_HEIGHT = 200;
+    const PHOTO_QUALITY = 85;
+
     /**
      * @var CategoriesService
      */
@@ -146,7 +152,8 @@ class PetService
             ->setName($addUserPetRequest->getName())
             ->setType($addUserPetRequest->getCategoryId())
             ->setUserId($currentUser->getId())
-            ->setBreed('Whatever')
+            ->setBreed($addUserPetRequest->getBreedOther())
+            ->setBreedId($addUserPetRequest->getBreedId())
            ;
 
         if ($birthday = $addUserPetRequest->getBirthday()) {
@@ -181,7 +188,8 @@ class PetService
         $petEntity
             ->setName($userPetUpdateRequest->getName())
             ->setType($userPetUpdateRequest->getCategoryId())
-            ->setBreed($userPetUpdateRequest->getBreedId())
+            ->setBreed($userPetUpdateRequest->getBreedOther())
+            ->setBreedId($userPetUpdateRequest->getBreedId())
         ;
 
         if ($birthday = $userPetUpdateRequest->getBirthday()) {
@@ -225,18 +233,21 @@ class PetService
      */
     public function addUserPetPhoto(UserPetPhotoAddRequest $userPetPhotoAddRequest)
     {
-        $id = $userPetPhotoAddRequest->getPetId();
-        $photo = $userPetPhotoAddRequest->getPhoto();
-        $pet = $this->appPetService->getCurUserPetById($id);
-        if (!$pet) {
-            throw new NotFoundException("Питомец с ID $id не найден у текущего пользователя");
+        $photo = $_FILES['photo'];
+        if (!is_array($photo) || empty($photo)) {
+            throw new RuntimeException('Не передано фото для загрузки в параметре photo');
         }
-
-        // toDo доделать загрузку фото
-        // $fileData = \CFile::MakeFileArray($photo);
-        // $photoId = \CFile::SaveFile($fileData);
-        // $pet->setPhoto($photoId);
-
+        $petId = $userPetPhotoAddRequest->getPetId();
+        $pet = $this->appPetService->getCurUserPetById($petId);
+        if (!$pet) {
+            throw new NotFoundException("Питомец с ID $petId не найден у текущего пользователя");
+        }
+        $photo = $this->resizeUserPetPhoto($photo);
+        $photoId = \CFile::SaveFile($photo, 'user_pets_photo');
+        // $fileInputUtility = FileInputUtility::instance();
+        // $cid = $fileInputUtility->getUserFieldCid($arUserField);
+        // $fileInputUtility->registerFile($cid, $photoId);
+        $pet->setPhoto($photoId);
         $this->petRepository->setEntity($pet)->update();
         return $this->getUserPetAll();
     }
@@ -265,7 +276,6 @@ class PetService
     /**
      * @param \FourPaws\PersonalBundle\Entity\Pet $pet
      * @return Pet
-     * @throws \Bitrix\Main\SystemException
      */
     public function map($pet)
     {
@@ -275,7 +285,7 @@ class PetService
             ->setId($pet->getId())
             ->setName($pet->getName())
             ->setCategoryId($pet->getType())
-            ->setBreedId($pet->getBreedId())
+            ->setBreedId(intval($pet->getBreedId()))
             ->setBreedOther($pet->getBreed())
             ->setBirthday($birthday)
             ->setBirthdayString($pet->getAgeString())
@@ -294,6 +304,32 @@ class PetService
             );
         }
         return $result;
+    }
+
+    protected function resizeUserPetPhoto(array $photo): array
+    {
+        [$photoWidth, $photoHeight] = getimagesize($photo['tmp_name']);
+        if (
+            $photo['size'] > self::PHOTO_FILE_SIZE
+            || $photoWidth > self::PHOTO_WIDTH
+            || $photoHeight > self::PHOTO_HEIGHT
+        ) {
+            $tempName = tempnam(sys_get_temp_dir(), 'pet');
+
+            \CFile::ResizeImageFile(
+                $photo['tmp_name'],
+                $tempName,
+                array(
+                    'width' => self::PHOTO_WIDTH,
+                    'height' => self::PHOTO_HEIGHT
+                ),
+                BX_RESIZE_IMAGE_PROPORTIONAL,
+                array(),
+                self::PHOTO_QUALITY
+            );
+            $photo['tmp_name'] = $tempName;
+        }
+        return $photo;
     }
 
 }

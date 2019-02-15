@@ -12,6 +12,7 @@ use FourPaws\MobileApiBundle\Dto\Request\CardActivatedRequest;
 use FourPaws\MobileApiBundle\Dto\Request\ChangeCardConfirmPersonalRequest;
 use FourPaws\MobileApiBundle\Dto\Request\ChangeCardConfirmPinRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
+use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use FourPaws\MobileApiBundle\Services\Api\CardService as ApiCardService;
 use FourPaws\MobileApiBundle\Dto\Object\ClientCard;
@@ -20,7 +21,7 @@ use FourPaws\MobileApiBundle\Dto\Request\ChangeCardValidateRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserAddCartRequest;
 use FourPaws\MobileApiBundle\Dto\Response\FeedbackResponse;
 use FourPaws\MobileApiBundle\Services\Api\UserService as ApiUserService;
-use FourPaws\MobileApiBundle\Services\Api\CaptchaService as ApiCaptchaService;
+use FourPaws\MobileApiBundle\Dto\Response\CardActivatedResponse;
 
 
 class CardController extends FOSRestController
@@ -35,20 +36,13 @@ class CardController extends FOSRestController
      */
     private $apiUserService;
 
-    /**
-     * @var ApiCaptchaService
-     */
-    private $apiCaptchaService;
-
     public function __construct(
         ApiCardService $apiCardService,
-        ApiUserService $apiUserService,
-        ApiCaptchaService $apiCaptchaService
+        ApiUserService $apiUserService
     )
     {
         $this->apiCardService = $apiCardService;
         $this->apiUserService = $apiUserService;
-        $this->apiCaptchaService = $apiCaptchaService;
     }
 
     /**
@@ -56,11 +50,18 @@ class CardController extends FOSRestController
      * @Rest\View()
      * @Security("has_role('REGISTERED_USERS')")
      * @param CardActivatedRequest $cardActivatedRequest
-     * @return Response
+     * @return CardActivatedResponse
      */
-    public function isCardActivatedAction(CardActivatedRequest $cardActivatedRequest): Response
+    public function isCardActivatedAction(CardActivatedRequest $cardActivatedRequest): CardActivatedResponse
     {
-        return $this->apiCardService->isActive($cardActivatedRequest->getCardNumber());
+        if ($activated = $this->apiCardService->isActive($cardActivatedRequest->getCardNumber())) {
+            throw new RuntimeException('Данная карта уже привязана', 42);
+        }
+
+        return new CardActivatedResponse(
+            $activated,
+            $activated ? 'Карта уже привязана к другому аккаунту. Пожалуйста, используйте другую карту' : ''
+        );
     }
 
     /**
@@ -71,11 +72,16 @@ class CardController extends FOSRestController
      * @throws \FourPaws\External\Exception\ManzanaServiceException
      * @throws \FourPaws\External\Manzana\Exception\CardNotFoundException
      */
-    public function getCardDataFromManzanaAction(ChangeCardValidateRequest $changeCardValidateRequest)
+    public function postChangeCardConfirmAction(ChangeCardValidateRequest $changeCardValidateRequest)
     {
+
+        $newCardNumber = $changeCardValidateRequest->getNewCardNumber();
+        if ($apiResponse = $this->apiCardService->isActive($newCardNumber)) {
+            throw new RuntimeException('Карта уже используется');
+        }
         return (new Response())
             ->setData([
-                'profile' => $this->apiCardService->getCardDataFromManzana($changeCardValidateRequest->getNewCardNumber())
+                'profile' => $this->apiCardService->getCardDataFromManzana($newCardNumber)
             ]);
     }
 
@@ -84,16 +90,22 @@ class CardController extends FOSRestController
      * @Rest\View()
      * @param ChangeCardConfirmPersonalRequest $cardConfirmPersonalRequest
      * @return Response\CaptchaSendValidationResponse
-     * @throws \Bitrix\Main\ArgumentTypeException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\External\Exception\ExpertsenderServiceException
+     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
+     * @throws \FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException
      * @throws \FourPaws\UserBundle\Exception\NotFoundException
-     *
-     * Задача: отправить на мыло из запроса код проверки
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \LinguaLeo\ExpertSender\ExpertSenderException
      */
     public function postChangeCardConfirmPersonalAction(ChangeCardConfirmPersonalRequest $cardConfirmPersonalRequest)
     {
-        return $this->apiCaptchaService->sendValidation($cardConfirmPersonalRequest->getProfile()->getEmail(), 'card_activation');
+        return $this->apiCardService->sendConfirmationToEmail(
+            $cardConfirmPersonalRequest->getProfile()->getEmail()
+        );
     }
 
     /**
@@ -101,9 +113,9 @@ class CardController extends FOSRestController
      * @Rest\View()
      * @param ChangeCardConfirmPinRequest $changeCardConfirmPinRequest
      * @return FeedbackResponse
-     * @throws \FourPaws\External\Exception\ManzanaServiceException
-     *
-     * Задача: проверить капчу, и если все гут - апдейтить юзера в БД
+     * @throws \FourPaws\External\Exception\ManzanaServiceException Задача: проверить капчу, и если все гут - апдейтить юзера в БД
+     * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
+     * @throws \FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException
      */
     public function postChangeCardConfirmPinAction(ChangeCardConfirmPinRequest $changeCardConfirmPinRequest)
     {

@@ -13,6 +13,8 @@ use FourPaws\MobileApiBundle\Dto\Request\PostUserCartRequest;
 use FourPaws\MobileApiBundle\Dto\Request\PutUserCartRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartCalcRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartOrderRequest;
+use FourPaws\MobileApiBundle\Dto\Response;
+use FourPaws\MobileApiBundle\Dto\Response\DeliveryVariantsResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserCartCalcResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserCartOrderResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserCartResponse;
@@ -119,7 +121,7 @@ class BasketController extends FOSRestController
 
 
     /**
-     * @Rest\Post(path="/user_cart_info")
+     * @Rest\Post(path="/user_cart_info/")
      */
     public function userCartInfoAction()
     {
@@ -262,5 +264,14 @@ class BasketController extends FOSRestController
         $cartOrder = $this->apiOrderService->createOrder($userCartOrderRequest, $deliveryType);
         return (new UserCartOrderResponse())
             ->setCartOrder($cartOrder);
+    }
+
+    /**
+     * @Rest\Get(path="/user_cart_delivery/")
+     * @Rest\View()
+     */
+    public function getUserCartDeliveryAction()
+    {
+        return new Response($this->apiOrderService->getDeliveryVariants());
     }
 }

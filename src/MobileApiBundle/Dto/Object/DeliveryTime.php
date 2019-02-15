@@ -29,20 +29,6 @@ class DeliveryTime
     protected $title = '';
 
     /**
-     * @Serializer\SerializedName("available")
-     * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\DeliveryTimeAvailable")
-     * @var DeliveryTimeAvailable
-     */
-    protected $available;
-
-    /**
-     * @var bool
-     * @Serializer\SerializedName("complete")
-     * @Serializer\Type("bool")
-     */
-    protected $complete;
-
-    /**
      * @return int
      */
     public function getId(): int
@@ -93,42 +79,6 @@ class DeliveryTime
     public function setTitle(string $title): DeliveryTime
     {
         $this->title = $title;
-        return $this;
-    }
-
-    /**
-     * @return DeliveryTimeAvailable
-     */
-    public function getAvailable(): DeliveryTimeAvailable
-    {
-        return $this->available;
-    }
-
-    /**
-     * @param DeliveryTimeAvailable $available
-     * @return DeliveryTime
-     */
-    public function setAvailable(DeliveryTimeAvailable $available): DeliveryTime
-    {
-        $this->available = $available;
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function getComplete(): bool
-    {
-        return $this->complete;
-    }
-
-    /**
-     * @param bool $complete
-     * @return DeliveryTime
-     */
-    public function setComplete(bool $complete): DeliveryTime
-    {
-        $this->complete = $complete;
         return $this;
     }
 }

@@ -8,6 +8,7 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
+use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\Catalog\Collection\FilterCollection;
@@ -148,18 +149,14 @@ class ProductService
      * @param Product $product
      * @return FullProduct
      * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
-     * @throws \ImagickException
      */
     protected function mapProductForList(Product $product): FullProduct
     {
         /** @var Offer $currentOffer */
         $currentOffer = $this->getCurrentOfferForList($product);
-        $fullProduct = $this->convertToFullProduct($product, $currentOffer);
+        $fullProduct = $this->convertToFullProduct($product, $currentOffer, true);
+
         // товары всегда доступны в каталоге (недоступные просто не должны быть в выдаче)
         $fullProduct->setIsAvailable(true);
         return $fullProduct;
@@ -203,11 +200,10 @@ class ProductService
      * @return FullProduct
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
-     * @throws \ImagickException
+     * @throws \Bitrix\Main\SystemException
      */
     public function getOne(int $id): FullProduct
     {
@@ -217,7 +213,7 @@ class ProductService
         }
         $product = $offer->getProduct();
 
-        $fullProduct = $this->convertToFullProduct($product, $offer);
+        $fullProduct = $this->convertToFullProduct($product, $offer, true);
         $fullProduct->setIsAvailable($offer->isAvailable()); // returns ShortProduct
         $fullProduct
             ->setSpecialOffer($this->getSpecialOffer($offer))           // акция
@@ -227,7 +223,7 @@ class ProductService
             ->setPickup($this->getPickupText($offer))                   // товар под заказ
             // ->setCrossSale($this->getCrossSale($offer))              // похожие товары
             ->setBundle($this->getBundle($offer))                       // с этим товаром покупают
-            ->setPictureList($this->getPictureList($product))
+            ->setPictureList($this->getPictureList($product))           // картинки
             ;
 
         if ($product->getNormsOfUse()->getText() || $product->getLayoutRecommendations()->getText()) {
@@ -257,33 +253,33 @@ class ProductService
     /**
      * @param Offer $offer
      * @return array<ShortProduct\Tag()>
-     * @throws \Bitrix\Main\SystemException
-     * @throws \ImagickException
      */
     public function getTags(Offer $offer)
     {
         $tags = [];
-        if ($offer->isHit()) {
-            $tags[] = $this->getTag(MarkHelper::MARK_HIT_IMAGE_SRC);
-        }
-        if ($offer->isNew()) {
-            $tags[] = $this->getTag(MarkHelper::MARK_NEW_IMAGE_SRC);
-        }
-        if ($offer->isSale()) {
-            $tags[] = $this->getTag(MarkHelper::MARK_SALE_IMAGE_SRC);
+        if (
+            ($offer->isHit() && $tag = $this->getTag(MarkHelper::MARK_HIT_IMAGE_SRC))
+            || ($offer->isNew() && $tag = $this->getTag(MarkHelper::MARK_NEW_IMAGE_SRC))
+            || ($offer->isSale() && $tag = $this->getTag(MarkHelper::MARK_SALE_IMAGE_SRC))
+        ) {
+            $tags[] = $tag;
         }
         return $tags;
     }
 
     /**
      * @param string $svg
-     * @return ShortProduct\Tag
-     * @throws \Bitrix\Main\SystemException
-     * @throws \ImagickException
+     * @return ShortProduct\Tag|false
      */
     public function getTag(string $svg)
     {
-        $png = ImageHelper::convertSvgToPng($svg);
+        try {
+            $png = ImageHelper::convertSvgToPng($svg);
+        } catch (\ImagickException $e) {
+            return false;
+        } catch (NotFoundException $e) {
+            return false;
+        }
         return (new ShortProduct\Tag())->setImg($png);
     }
 
@@ -291,12 +287,12 @@ class ProductService
      * @param Product $product
      * @param Offer $offer
      * @param int $quantity
+     * @param bool $forBasket
      * @return ShortProduct
-     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \ImagickException
+     * @throws \Bitrix\Main\ArgumentException
      */
-    public function convertToShortProduct(Product $product, Offer $offer, $quantity = 1): ShortProduct
+    public function convertToShortProduct(Product $product, Offer $offer, $quantity = 1, $forBasket = false): ShortProduct
     {
         $shortProduct = (new ShortProduct())
             ->setId($offer->getId())
@@ -304,15 +300,13 @@ class ProductService
             ->setXmlId($offer->getXmlId())
             ->setBrandName($product->getBrandName())
             ->setWebPage($offer->getCanonicalPageUrl())
-            ->setIsByRequest($offer->isByRequest())
-            ->setIsAvailable($offer->isAvailable());
+            ;
 
         // большая картинка
         if ($images = $offer->getImages()) {
             /** @var Image $picture */
             $picture = $images->first();
             $pictureSrc = \CFile::getPath($picture->getId());
-            $pictureSrc = (new FullHrefDecorator($pictureSrc))->getFullPublicPath();
             $shortProduct->setPicture($pictureSrc);
         }
 
@@ -327,12 +321,21 @@ class ProductService
             ->setOld($offer->getOldPrice());
         $shortProduct->setPrice($price);
 
-        // лейблы
-        $shortProduct->setTag($this->getTags($offer));
 
-        // бонусы
-        $shortProduct->setBonusAll($offer->getBonusCount(3, $quantity));
-        $shortProduct->setBonusUser($offer->getBonusCount($this->userService->getDiscount(), $quantity));
+        // ТПЗ
+        $shortProduct
+            ->setIsByRequest($offer->isByRequest())
+            ->setIsAvailable($offer->isAvailable());
+
+        // лейблы и бонусы нужны только для каталога
+        if (!$forBasket) {
+            // лейблы
+            $shortProduct->setTag($this->getTags($offer));
+
+            // бонусы
+            $shortProduct->setBonusAll($offer->getBonusCount(3, $quantity));
+            $shortProduct->setBonusUser($offer->getBonusCount($this->userService->getDiscount(), $quantity));
+        }
 
         return $shortProduct;
     }
@@ -342,21 +345,19 @@ class ProductService
      * @param Offer $offer
      * @param bool $needPackingVariants
      * @return FullProduct
-     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \ImagickException
+     * @throws \Bitrix\Main\ArgumentException
      */
-    public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = true): FullProduct
+    public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = false): FullProduct
     {
         $shortProduct = $this->convertToShortProduct($product, $offer);
         $detailText = $product->getDetailText()->getText();
         $detailText = ImageHelper::appendDomainToSrc($detailText);
         $fullProduct = (new FullProduct())
-            ->setDetailsHtml($detailText);
-
-        if ($needPackingVariants) {
-            $fullProduct->setPackingVariants($this->getPackingVariants($product));   // фасовки
-        }
+            ->setDetailsHtml($detailText)
+            ->setWeight($offer->getPackageLabel(false, 0))
+            ->setHasSpecialOffer($offer->isShare())
+        ;
 
         // toDo: is there any better way to merge ShortProduct into FullProduct?
         $fullProduct
@@ -371,7 +372,12 @@ class ProductService
             ->setTag($shortProduct->getTag())
             ->setBonusAll($shortProduct->getBonusAll())
             ->setBonusUser($shortProduct->getBonusUser())
-            ->setIsByRequest($shortProduct->getIsByRequest());
+            ->setIsByRequest($shortProduct->getIsByRequest())
+            ->setIsAvailable($shortProduct->getIsAvailable());
+
+        if ($needPackingVariants) {
+            $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct));   // фасовки
+        }
 
         return $fullProduct;
     }
@@ -421,7 +427,7 @@ class ProductService
     {
         /** @var $deliveryResult DeliveryResult */
         $deliveryResult = $this->filterDeliveries($this->getDeliveries($offer));
-        if (!$deliveryResult) {
+        if (!($deliveryResult && ($deliveryResult instanceof DeliveryResult || $deliveryResult instanceof PickupResult))) {
             return '';
         }
         return $deliveryResult->getTextForOffer($offer->getPrice(), $offer->isByRequest(), true);
@@ -450,38 +456,35 @@ class ProductService
     /**
      * Фасовки товара
      * @param Product $product
+     * @param FullProduct $currentFullProduct
      * @return FullProduct[]
-     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \ImagickException
      */
-    public function getPackingVariants(Product $product): array
+    public function getPackingVariants(Product $product, FullProduct $currentFullProduct): array
     {
         $offers = $product->getOffersSorted();
-        if (empty($offers)) {
+        // если в предложениях только текущий продукт
+        $hasOnlyCurrentOffer = (count($offers) === 1 && $offers->current()->getId() === $currentFullProduct->getId());
+        if (empty($offers) ||  $hasOnlyCurrentOffer) {
             return [];
         }
 
         $packingVariants = [];
         /** @var Offer $offer */
         foreach ($offers as $offer) {
-            // toDo рефакторинг
-            // костыль потому что в allStocks вместо объекта StockCollection приходит просто массив с кодами магазинов...
-            // взято из метода FourPaws\Catalog\Model\getAllStocks()
-            $stockService = Application::getInstance()->getContainer()->get(StockService::class);
-            $offer->withAllStocks($stockService->getStocksByOffer($offer));
-            // end костыль
-
-            /*
-            $packingVariants[] = (new FullProduct\PackingVariant())
-                ->setPrice($offer->getPrice())
-                ->setOfferId($offer->getId())
-                ->setWeight($offer->getPackageLabel(false, 0))
-                ->setHasSpecialOffer($offer->isShare())
-                ->setIsAvailable($offer->isAvailable());
-
-            */
-            $packingVariants[] = $this->convertToFullProduct($product, $offer, false);
+            // if ($offer->getId() === $currentFullProduct->getId()) {
+                // toDo если переиспользовать $currentFullProduct - в массиве $packingVariants в итоге попадает null вместо объекта
+            //    $fullProduct = clone $currentFullProduct;
+            // } else {
+                // toDo рефакторинг костыля
+                // костыль потому что в allStocks вместо объекта StockCollection приходит просто массив с кодами магазинов...
+                // взято из метода FourPaws\Catalog\Model\getAllStocks()
+                $stockService = Application::getInstance()->getContainer()->get(StockService::class);
+                $offer->withAllStocks($stockService->getStocksByOffer($offer));
+                // end костыль
+                $fullProduct = $this->convertToFullProduct($product, $offer);
+            // }
+            $packingVariants[] = $fullProduct;
         }
         return $packingVariants;
     }
@@ -490,7 +493,6 @@ class ProductService
      * Акция товара
      * @param Offer $offer
      * @return FullProduct\SpecialOffer|null
-     * @throws \Bitrix\Main\SystemException
      */
     public function getSpecialOffer(Offer $offer)
     {
@@ -577,7 +579,6 @@ class ProductService
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \ImagickException
      */
     public function getBundle(Offer $offer)
     {

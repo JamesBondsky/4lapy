@@ -17,64 +17,15 @@ use JMS\Serializer\Annotation as Serializer;
 class StoreProductAvailableResponse
 {
     /**
-     * Массив доступных в магазине товаров
-     * @Serializer\SerializedName("available_goods")
-     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Basket\Product>")
-     * @var Product[]
-     */
-    protected $availableGoods = [];
-
-    /**
-     * Массив НЕ доступных товаров в магазине
-     * @Serializer\SerializedName("not_available_goods")
-     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Basket\Product>")
-     * @var Product[]
-     */
-    protected $notAvailableGoods = [];
-
-    /**
      * @var Store
      * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\Store\Store")
      * @Serializer\SerializedName("shop")
      */
     protected $shop;
 
-    /**
-     * @return Product[]
-     */
-    public function getAvailableGoods(): array
+    public function __construct(Store $shop)
     {
-        return $this->availableGoods;
-    }
-
-    /**
-     * @param Product[] $availableGoods
-     *
-     * @return StoreProductAvailableResponse
-     */
-    public function setAvailableGoods(array $availableGoods): StoreProductAvailableResponse
-    {
-        $this->availableGoods = $availableGoods;
-        return $this;
-    }
-
-    /**
-     * @return Product[]
-     */
-    public function getNotAvailableGoods(): array
-    {
-        return $this->notAvailableGoods;
-    }
-
-    /**
-     * @param Product[] $notAvailableGoods
-     *
-     * @return StoreProductAvailableResponse
-     */
-    public function setNotAvailableGoods(array $notAvailableGoods): StoreProductAvailableResponse
-    {
-        $this->notAvailableGoods = $notAvailableGoods;
-        return $this;
+        $this->shop = $shop;
     }
 
     /**

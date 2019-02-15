@@ -2,7 +2,6 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Object;
 
-use FourPaws\Decorators\FullHrefDecorator;
 use JMS\Serializer\Annotation as Serializer;
 
 class PetGender

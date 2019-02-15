@@ -2,10 +2,12 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Request;
 
+use FourPaws\MobileApiBundle\Dto\Request\Types\GetRequest;
+use FourPaws\MobileApiBundle\Dto\Request\Types\SimpleUnserializeRequest;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class SpecialOffersRequest
+class SpecialOffersRequest implements SimpleUnserializeRequest, GetRequest
 {
     /**
      * Номер страницы, начиная с 1
