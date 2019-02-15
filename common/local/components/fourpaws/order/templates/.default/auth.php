@@ -120,7 +120,8 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                        placeholder=""
                                        name="name"
                                        value="<?= $storage->getName() ?>"
-                                       data-url="">
+                                       data-url=""
+                                <?= $storage->getName() ? 'disabled="disabled"' : '' ?>>
                                 <div class="b-error">
                                     <span class="js-message"></span>
                                 </div>
