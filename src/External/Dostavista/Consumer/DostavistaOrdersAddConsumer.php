@@ -38,11 +38,11 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
              * Получаем битриксовый заказ
              */
             if ($bitrixOrderId === null) {
-                $result = static::MSG_REJECT_REQUEUE;
+                $result = static::MSG_REJECT;
             } else {
                 $order = $this->orderService->getOrderById($bitrixOrderId);
                 if (!$order) {
-                    $result = static::MSG_REJECT_REQUEUE;
+                    $result = static::MSG_REJECT;
                 } else {
                     /** Отправляем заказ в достависту */
                     $response = $this->dostavistaService->addOrder($data);
@@ -52,7 +52,7 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
                         $dostavistaOrderId = $response['order_id'];
                         if (is_array($dostavistaOrderId) || empty($dostavistaOrderId)) {
                             $dostavistaOrderId = 0;
-                            $result = static::MSG_REJECT_REQUEUE;
+                            $result = static::MSG_REJECT;
                         }
                         /** Обновляем битриксовые свойства достависты */
                         $deliveryId = $order->getField('DELIVERY_ID');
@@ -71,7 +71,7 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
                 }
             }
         } catch (\Exception $e) {
-            $result = static::MSG_REJECT_REQUEUE;
+            $result = static::MSG_REJECT;
         }
 
         if ($result !== static::MSG_ACK) {

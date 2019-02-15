@@ -35,12 +35,12 @@ class DostavistaOrdersCancelConsumer extends DostavistaConsumerBase
              * @var Order $order
              * Получаем битриксовый заказ
              */
-            if ($bitrixOrderId === null) {
-                $result = static::MSG_REJECT_REQUEUE;
+            if ($bitrixOrderId == null || $dostavistaOrder == null) {
+                $result = static::MSG_REJECT;
             } else {
                 $order = $this->orderService->getOrderById($bitrixOrderId);
                 if (!$order) {
-                    $result = static::MSG_REJECT_REQUEUE;
+                    $result = static::MSG_REJECT;
                 } else {
                     /** Отправляем отмену заказа в достависту */
                     $response = $this->dostavistaService->cancelOrder($dostavistaOrder);
