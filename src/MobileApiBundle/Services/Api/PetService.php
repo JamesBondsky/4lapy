@@ -237,18 +237,20 @@ class PetService
         if (!is_array($photo) || empty($photo)) {
             throw new RuntimeException('Не передано фото для загрузки в параметре photo');
         }
+        if ($photo['error'] !== 0) {
+            throw new RuntimeException('Ошибка загрузки фото на сервер');
+        }
         $petId = $userPetPhotoAddRequest->getPetId();
         $pet = $this->appPetService->getCurUserPetById($petId);
         if (!$pet) {
             throw new NotFoundException("Питомец с ID $petId не найден у текущего пользователя");
         }
         $photo = $this->resizeUserPetPhoto($photo);
-        $photoId = \CFile::SaveFile($photo, 'user_pets_photo');
-        // $fileInputUtility = FileInputUtility::instance();
-        // $cid = $fileInputUtility->getUserFieldCid($arUserField);
-        // $fileInputUtility->registerFile($cid, $photoId);
-        $pet->setPhoto($photoId);
-        $this->petRepository->setEntity($pet)->update();
+        $data = $this->petRepository->entityToData($pet);
+        $data['UF_PHOTO'] = 1;
+        $data['UF_PHOTO_TMP'] = $photo;
+
+        $this->appPetService->update($data);
         return $this->getUserPetAll();
     }
 
