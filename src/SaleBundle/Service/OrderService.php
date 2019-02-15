@@ -1698,8 +1698,8 @@ class OrderService implements LoggerAwareInterface
                 case $deliveryFromShop && $stockResult->getDelayed()->isEmpty():
                     $value = OrderPropertyService::COMMUNICATION_SMS;
                     break;
-                case $this->deliveryService->isDostavistaDelivery($delivery) && !is_null($dostavistaSuccess) && (!$address || !$address->isValid() || !$dostavistaSuccess):
-                    $value = OrderPropertyService::COMMUNICATION_DOSTAVISTA_ERROR;
+                case $this->deliveryService->isDostavistaDelivery($delivery):
+                    $value = OrderPropertyService::COMMUNICATION_SMS;
                     break;
             }
         }
@@ -1726,8 +1726,12 @@ class OrderService implements LoggerAwareInterface
 
         if (!$changed) {
             switch (true) {
-                case $deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE && !is_null($dostavistaSuccess) && (!$address || !$address->isValid() || !$dostavistaSuccess):
-                    $value = OrderPropertyService::COMMUNICATION_DOSTAVISTA_ERROR;
+                case $deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE:
+                    if($dostavistaSuccess){
+                        $value = OrderPropertyService::COMMUNICATION_SMS;
+                    } else {
+                        $value = OrderPropertyService::COMMUNICATION_DOSTAVISTA_ERROR;
+                    }
                     break;
             }
         }
