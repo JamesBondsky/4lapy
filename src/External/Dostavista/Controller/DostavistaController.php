@@ -36,7 +36,6 @@ class DostavistaController implements LoggerAwareInterface
         $callbackSecretKey = \COption::GetOptionString('articul.dostavista.delivery', 'callback_secret_key', '');
 
         if (!isset($_SERVER['HTTP_X_DV_SIGNATURE'])) {
-
             return JsonErrorResponse::createWithData(
                 'Error: Signature is not found!',
                 [],
@@ -48,7 +47,6 @@ class DostavistaController implements LoggerAwareInterface
         $signature = hash_hmac('sha256', $stream, $callbackSecretKey);
         if ($signature != $_SERVER['HTTP_X_DV_SIGNATURE']) {
             $mess = 'Signatures is not equals!';
-            $this->log()->error($mess);
             return JsonErrorResponse::createWithData(
                 'Error: ' . $mess,
                 [],
@@ -90,7 +88,6 @@ class DostavistaController implements LoggerAwareInterface
         }
         if ($bitrixStatus == $order['STATUS_ID']) {
             $mess = 'Order statuses equals!';
-            $this->log()->notice($mess);
             return JsonSuccessResponse::create(
                 'Success: ' . $mess,
                 200,
