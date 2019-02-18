@@ -338,7 +338,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
             </ul>
         </div>
         <div class="b-counter-basket js-product-controls">
-            <div class="b-plus-minus b-plus-minus--half-mobile js-buy1click-ps js-plus-minus-cont">
+            <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--counter-basket js-buy1click-ps js-plus-minus-cont">
                 <a class="b-plus-minus__minus js-minus" href="javascript:void(0);"></a>
                 <input class="b-plus-minus__count js-plus-minus-count" value="1" type="text"
                        data-cont-max="<?= $currentOffer->getQuantity() ?>"
