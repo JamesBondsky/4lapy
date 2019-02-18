@@ -82,7 +82,15 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      * @var Store
      */
     private $rcStock;
+    /**
+     * @var Store
+     */
+    private $nnStock;
 
+    /** @var int $arStockDC01 */
+    private $arStockDC01 = 1;
+
+    /** @var array $arStocks */
     private $arStocks = [
         self::YAROSLAVL_STOCK => [
             'url' => 'yaroslavl.market.yandex.ru',
@@ -113,6 +121,9 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             'location_code' => '0000148783'
         ]
     ];
+
+    /** @var array $arSupplierStocks */
+    private $arSupplierStocks = [233, 234, 247, 250, 251, 252, 263, 267, 268, 270, 271, 272, 273, 274, 275, 287, 311, 315, 319]
 
     /**
      * YandexFeedService constructor.
@@ -243,8 +254,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         Feed $feed,
         Configuration $configuration,
         string $stockID = null
-    ): YandexFeedService
-    {
+    ): YandexFeedService {
         $limit = 500;
         $offers = $feed->getShop()
             ->getOffers();
@@ -256,7 +266,13 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         $filter = $this->buildOfferFilter($feed, $configuration);
 
         if (!empty($stockID)) {
-            $filter['>CATALOG_STORE_AMOUNT_' . $stockID] = '2';
+            $filter['>CATALOG_STORE_AMOUNT_' . $stockID] = self::MINIMAL_AVAILABLE_IN_RC;
+            if ($stockID == self::NN_STOCK) {
+                $filter['>CATALOG_STORE_AMOUNT_' . $this->arStockDC01] = self::MINIMAL_AVAILABLE_IN_RC;
+                foreach ($this->arSupplierStocks as $supplierStock) {
+                    $filter['>CATALOG_STORE_AMOUNT_' . $supplierStock] = self::MINIMAL_AVAILABLE_IN_RC;
+                }
+            }
         }
 
         $offerCollection = $this->getOffers($filter, $offset, $limit);
@@ -375,6 +391,14 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
 
         $deliveryInfo = $this->getOfferDeliveryInfo($offer, $stockID);
 
+        $nnTpz = false;
+        if ($stockID == self::NN_STOCK) {
+            if (null === $this->nnStock) {
+                $this->nnStock = $this->storeService->getStoreByXmlId('R207');
+            }
+            $nnTpz = $currentStock$offer->getAllStocks()->filterByStore($this->nnStock)->getTotalAmount() == 0
+        }
+
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         /** @noinspection PassingByReferenceCorrectnessInspection */
         $yandexOffer =
@@ -396,7 +420,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                     ->getDetailText()
                     ->getText()), 0, 2990))
                 ->setManufacturerWarranty(true)
-                ->setAvailable($offer->isAvailable())
+                ->setAvailable(($stockID == self::NN_STOCK && $nnTpz) ? false : $offer->isAvailable())
                 ->setCurrencyId('RUB')
                 ->setOldPrice($offer->getOldPrice())
                 ->setPrice($offer->getPrice())
