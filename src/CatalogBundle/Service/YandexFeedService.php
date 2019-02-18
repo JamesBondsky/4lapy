@@ -69,7 +69,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         NN_STOCK = 207,
         OBNINSK_STOCK = 65;
 
-    private const MINIMAL_AVAILABLE_IN_RC = 2
+    private const MINIMAL_AVAILABLE_IN_RC = 2;
     private const MINIMAL_AVAILABLE_IN_SUPPLIER = 1;
 
     private const PROMO_TYPE = 'n plus m';
