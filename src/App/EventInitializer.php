@@ -18,7 +18,6 @@ use FourPaws\UserProps\Event as UserPropLocationEvent;
 use FourPaws\PersonalBundle\EventController\Event as PersonalEvent;
 use FourPaws\StoreBundle\EventController\Event as StoreEvent;
 use FourPaws\AdminBundle\EventController\Event as AdminEvent;
-use FourPaws\FormBundle\EventController\Event as FormEvent;
 use Generator;
 use ReflectionException;
 use RuntimeException;
@@ -47,8 +46,7 @@ final class EventInitializer
         PersonalEvent::class,
         StoreEvent::class,
         LocationEvent::class,
-        AdminEvent::class,
-        FormEvent::class
+        AdminEvent::class
     ];
 
     /**
