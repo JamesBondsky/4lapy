@@ -123,7 +123,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     ];
 
     /** @var array $arSupplierStocks */
-    private $arSupplierStocks = [233, 234, 247, 250, 251, 252, 263, 267, 268, 270, 271, 272, 273, 274, 275, 287, 311, 315, 319]
+    private $arSupplierStocks = [233, 234, 247, 250, 251, 252, 263, 267, 268, 270, 271, 272, 273, 274, 275, 287, 311, 315, 319];
 
     /**
      * YandexFeedService constructor.
