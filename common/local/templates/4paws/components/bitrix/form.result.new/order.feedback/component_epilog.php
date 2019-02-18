@@ -17,6 +17,9 @@ try { ?>
         $(function () {
             var $form = $('form.b-interview');
             $form.find('input[data-code=clientid]').val('<?=$user->getId()?>');
+            $form.find('input[data-code=name]').val('<?=$user->getFullName()?>');
+            $form.find('input[data-code=email]').val('<?=$user->getEmail()?>');
+            $form.find('input[data-code=phone]').val('<?=$user->getPersonalPhone()?>');
             $form.find('input[data-code=order]').val('<?=$order->getFields()->get('ACCOUNT_NUMBER')?>');
         });
     </script>
