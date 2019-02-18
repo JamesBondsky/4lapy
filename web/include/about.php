@@ -44,7 +44,7 @@
 	</div>
 	<div class="green_ribbon">
 		<div class="ribbon_body">
-			<h2 class="b-title b-title--viewed">Более 200 магазинов по всей России</h2>
+			<h2 class="b-title b-title--viewed">Более 230 магазинов по всей России</h2>
 			<hr class="green_line">
 			<p>
 				 Все магазины имеют яркое оформление витрин, оснащены современным оборудованием. Благодаря удобной навигации по отделам, вы без труда найдете то, что нужно именно вашему питомцу из более чем 20 000 наименований товаров. Профессиональные ветеринарные врачи и консультанты помогут выбрать все необходимые товары для кормления и содержания вашего любимца.
@@ -79,12 +79,12 @@
 		</div>
 		<div class="digit_ribbon">
 			<div class="digit_item">
-				<h3 class="b-title b-title--viewed">200+</h3>
+				<h3 class="b-title b-title--viewed">230+</h3>
 				<h3>магазинов<br>
 				 в&nbsp;России</h3>
 			</div>
 			<div class="digit_item">
-				<h3 class="b-title b-title--viewed">20 000+</h3>
+				<h3 class="b-title b-title--viewed">25 000+</h3>
 				<h3>наименований<br>
 				 товаров</h3>
 			</div>
