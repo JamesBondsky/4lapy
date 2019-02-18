@@ -102,7 +102,9 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
         BitrixApplication::getConnection()->startTransaction();
 
         $isSuccess = true;
-        $senders = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
+        //$senders = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
+        $senders = $this->storeService->getStores(StoreService::TYPE_SUPPLIER);
+
         /** @var Store $sender */
         $start = microtime(true);
         $totalCreated = 0;

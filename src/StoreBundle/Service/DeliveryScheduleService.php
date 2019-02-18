@@ -20,7 +20,7 @@ class DeliveryScheduleService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
-    protected const TYPE_FIELD_CODE = 'UF_TYPE';
+    protected const TYPE_FIELD_CODE = 'UF_TPZ_TYPE';
 
     /**
      * @var DeliveryScheduleRepository

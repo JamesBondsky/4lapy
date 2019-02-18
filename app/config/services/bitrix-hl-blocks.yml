@@ -58,6 +58,10 @@ services:
     arguments: ['DeliverySchedule']
     parent: bx.hlblock.base
 
+  bx.hlblock.deliveryschedule.tpz:
+    arguments: ['DeliveryScheduleTpz']
+    parent: bx.hlblock.base
+
   bx.hlblock.deliveryscheduleresult:
     arguments: ['DeliveryScheduleResult']
     parent: bx.hlblock.base

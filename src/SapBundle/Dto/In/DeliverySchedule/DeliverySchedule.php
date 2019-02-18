@@ -104,6 +104,17 @@ class DeliverySchedule
 
     /**
      * Дни недели.
+     * Данные о днях недели, подходящих для формирования заказа, для типов графика поставки 1, 2.
+     *
+     * @Serializer\XmlList(inline=true, entry="orderdays")
+     * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\DeliverySchedule\WeekDayItem>")
+     *
+     * @var Collection|WeekDayItem[]
+     */
+    protected $orderDays;
+
+    /**
+     * Дни недели.
      * Данные о днях недели для типов графика поставки 1, 2.
      *
      * @Serializer\XmlList(inline=true, entry="weekdays")
@@ -112,6 +123,18 @@ class DeliverySchedule
      * @var Collection|WeekDayItem[]
      */
     protected $weekDays;
+
+    /**
+     * Дни недели.
+     * Данные о номерах недели для типов графика поставки 1, 2.
+     *
+     * @Serializer\SerializedName("weeknums")
+     * @Serializer\XmlElement
+     * @Serializer\Type("FourPaws\SapBundle\Dto\In\DeliverySchedule\WeekNums")
+     *
+     * @var WeekNums
+     */
+    protected $weekNums;
 
     /**
      * Даты поставки.
@@ -271,6 +294,44 @@ class DeliverySchedule
     public function setWeekdays(Collection $weekDays): DeliverySchedule
     {
         $this->weekDays = $weekDays;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|WeekDayItem[]
+     */
+    public function getOrderDays()
+    {
+        return $this->orderDays;
+    }
+
+    /**
+     * @param Collection|WeekDayItem[] $orderDays
+     * @return DeliverySchedule
+     */
+    public function setOrderDays(Collection $orderDays): DeliverySchedule
+    {
+        $this->orderDays = $orderDays;
+
+        return $this;
+    }
+
+    /**
+     * @return WeekNums
+     */
+    public function getWeekNums(): WeekNums
+    {
+        return $this->weekNums;
+    }
+
+    /**
+     * @param WeekNums $weekNums
+     * @return DeliverySchedule
+     */
+    public function setWeekNums(WeekNums $weekNums): DeliverySchedule
+    {
+        $this->weekNums = $weekNums;
 
         return $this;
     }

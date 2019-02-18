@@ -53,7 +53,7 @@ class DeliverySchedule extends Base implements \Serializable
 
     /**
      * @var string
-     * @Serializer\SerializedName("UF_NAME")
+     * @Serializer\SerializedName("UF_TPZ_NAME")
      * @Serializer\Type("string")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
@@ -61,7 +61,7 @@ class DeliverySchedule extends Base implements \Serializable
 
     /**
      * @var string
-     * @Serializer\SerializedName("UF_XML_ID")
+     * @Serializer\SerializedName("UF_TPZ_XML_ID")
      * @Serializer\Type("string")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
@@ -69,7 +69,7 @@ class DeliverySchedule extends Base implements \Serializable
 
     /**
      * @var string
-     * @Serializer\SerializedName("UF_SENDER")
+     * @Serializer\SerializedName("UF_TPZ_SENDER")
      * @Serializer\Type("string")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
@@ -77,7 +77,7 @@ class DeliverySchedule extends Base implements \Serializable
 
     /**
      * @var string
-     * @Serializer\SerializedName("UF_RECEIVER")
+     * @Serializer\SerializedName("UF_TPZ_RECEIVER")
      * @Serializer\Type("string")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
@@ -85,7 +85,7 @@ class DeliverySchedule extends Base implements \Serializable
 
     /**
      * @var DateTime
-     * @Serializer\SerializedName("UF_ACTIVE_FROM")
+     * @Serializer\SerializedName("UF_TPZ_ACTIVE_FROM")
      * @Serializer\Type("DateTime<'d.m.Y H:i:s'>")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
@@ -93,31 +93,47 @@ class DeliverySchedule extends Base implements \Serializable
 
     /**
      * @var DateTime
-     * @Serializer\SerializedName("UF_ACTIVE_TO")
+     * @Serializer\SerializedName("UF_TPZ_ACTIVE_TO")
      * @Serializer\Type("DateTime<'d.m.Y H:i:s'>")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $activeTo;
 
     /**
+     * Номер недели
+     *
      * @var int[]
-     * @Serializer\SerializedName("UF_WEEK_NUMBER")
+     * @Serializer\SerializedName("UF_TPZ_WEEK_NUMBER")
      * @Serializer\Type("array_or_false<int>")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $weekNumbers;
 
     /**
+     * Дни формирования заказа
+     *
      * @var int[]
-     * @Serializer\SerializedName("UF_DAY_OF_WEEK")
+     * @Serializer\SerializedName("UF_TPZ_DAY_OF_WEEK")
      * @Serializer\Type("array_or_false<int>")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $daysOfWeek;
 
     /**
+     * Дни поставки
+     *
+     * @var int[]
+     * @Serializer\SerializedName("UF_TPZ_SUPPLY_DAYS")
+     * @Serializer\Type("array_or_false<int>")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $supplyDays;
+
+    /**
+     * Номер поставки
+     *
      * @var string
-     * @Serializer\SerializedName("UF_DELIVERY_NUMBER")
+     * @Serializer\SerializedName("UF_TPZ_DELIVERY_NBR")
      * @Serializer\Type("string")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
@@ -133,7 +149,7 @@ class DeliverySchedule extends Base implements \Serializable
 
     /**
      * @var string
-     * @Serializer\SerializedName("UF_TYPE")
+     * @Serializer\SerializedName("UF_TPZ_TYPE")
      * @Serializer\Type("string")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
@@ -354,6 +370,26 @@ class DeliverySchedule extends Base implements \Serializable
     public function setDaysOfWeek(array $daysOfWeek): DeliverySchedule
     {
         $this->daysOfWeek = $daysOfWeek;
+
+        return $this;
+    }
+
+    /**
+     * @return int[]
+     */
+    public function getSupplyDays(): array
+    {
+        return $this->supplyDays;
+    }
+
+    /**
+     * @param int[] $supplyDays
+     *
+     * @return DeliverySchedule
+     */
+    public function setSupplyDays(array $supplyDays): DeliverySchedule
+    {
+        $this->supplyDays = $supplyDays;
 
         return $this;
     }
