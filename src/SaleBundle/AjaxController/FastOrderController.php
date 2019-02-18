@@ -188,6 +188,9 @@ class FastOrderController extends Controller
             }
         }
 
+        // Актуализация остатков
+        $this->basketService->getBasket(true);
+
         global $APPLICATION;
         ob_start();
         $APPLICATION->IncludeComponent(

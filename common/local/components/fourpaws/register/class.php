@@ -654,9 +654,11 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         /** @noinspection PhpUnusedLocalVariableInspection */
         $formSubmit = \str_replace('"', '\'',
             \sprintf(
-                '%s%s',
+                '%s%s%s%s',
                 $this->renderDataLayerByType(DataLayer::REGISTER_TYPE_LOGIN),
-                $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val()')
+                'if ($(this).find("input[type=email]").val().indexOf("register.phone") == -1){',
+                $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val()'),
+                '}'
             )
         );
 

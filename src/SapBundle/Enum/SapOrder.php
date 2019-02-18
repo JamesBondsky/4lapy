@@ -58,6 +58,6 @@ final class SapOrder
 
     public const UNIT_PTC_CODE = 'PCE';
 
-    public const TEST_PHONE = '79060767386';
+    public const TEST_PHONE = '79771358673';
     public const TEST_COMMENT = '!!! ТЕСТ';
 }

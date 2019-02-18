@@ -1,5 +1,17 @@
 # 4 лапы
 
+## Отключение почты:
+
+```
+Для того, чтобы отключить отправку почты необходимо изменить адрес в который стучится API.
+Файл: /app/config/parameters.yml
+expertsender:
+    url: 'https://api.esv2.com'
+    key: ivaacmVjzakOzRLeYjKy
+    
+https://api.esv2.com - валидный адрес    
+```
+
 ## Обновление коробки Vagrant:
 
 ```

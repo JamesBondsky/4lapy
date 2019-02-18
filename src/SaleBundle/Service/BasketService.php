@@ -415,6 +415,7 @@ class BasketService implements LoggerAwareInterface
             $offer = OfferQuery::getById((int)$basketItem->getProductId());
             $temporaryItem = null;
             $quantity = (int)$basketItem->getQuantity();
+            $toUpdate = [];
 
             if (!$offer->isAvailable()) {
                 if (!$basketItem->isDelay()) {

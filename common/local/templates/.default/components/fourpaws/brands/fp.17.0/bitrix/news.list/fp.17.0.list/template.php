@@ -17,7 +17,7 @@ foreach ($arResult['GROUPING'] as $arGroup) {
         continue;
     }
     ?><div class="b-popular-brand--anchor"><a name="<?=$arGroup['ANCHOR']?>"></a></div><?php
-    ?><h1 class="b-title b-title--h1"><?=$arGroup['TITLE']?></h1><?php
+    ?><h3 class="b-title b-title--h1 b-title--item-alphabet-brands"><?=$arGroup['TITLE']?></h3><?php
     ?><div class="b-popular-brand b-popular-brand--brands"><?php
         foreach ($arGroup['ITEMS_ARRAY_KEYS'] as $mKey) {
             $arItem = isset($arResult['ITEMS'][$mKey]) ? $arResult['ITEMS'][$mKey] : array();

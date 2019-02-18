@@ -45,7 +45,8 @@ $frame = $this->createFrame(); ?>
                     CIBlock::GetArrayByID($item['IBLOCK_ID'], 'ELEMENT_DELETE'),
                     ['CONFIRM' => GetMessage('CT_BNL_ELEMENT_DELETE_CONFIRM')]
                 ); ?>
-                <a class="b-info-blocks__item" href="<?= $item['DETAIL_PAGE_URL'] ?>"
+                <article class="b-info-blocks__item">
+                <a class="b-info-blocks__item-link" href="<?= $item['DETAIL_PAGE_URL'] ?>"
                    id="<?= $this->GetEditAreaId($item['ID']); ?>">
                     <div class="b-info-blocks__item-img">
                         <img src="<?= $item['PREVIEW_PICTURE']['SRC'] ?>" alt="<?= $item['PREVIEW_PICTURE']['ALT'] ?>">
@@ -61,7 +62,7 @@ $frame = $this->createFrame(); ?>
                         ?>
                         <div class="b-info-blocks__item-snippet"><?= $item['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'] ?></div>
                     <?php } ?>
-                    <div class="b-info-blocks__item-title"><?= $item['NAME'] ?></div>
+                    <h2 class="b-info-blocks__item-title"><?= $item['NAME'] ?></h2>
                     <?php if (!empty($item['PREVIEW_TEXT'])) { ?>
                         <div class="b-info-blocks__item-description">
                             <?= htmlspecialcharsback(
@@ -70,9 +71,10 @@ $frame = $this->createFrame(); ?>
                         </div>
                     <?php } ?>
                     <?php if (!empty($item['DISPLAY_ACTIVE_FROM'])) { ?>
-                        <div class="b-info-blocks__item-date"><?= $item['DISPLAY_ACTIVE_FROM'] ?></div>
+                        <time datetime="<?= $item['DISPLAY_ACTIVE_FROM'] ?>" class="b-info-blocks__item-date"><?= $item['DISPLAY_ACTIVE_FROM'] ?></time>
                     <?php } ?>
                 </a>
+                </article>
             <?php } ?>
         </div>
     </div>
