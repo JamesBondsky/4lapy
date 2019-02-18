@@ -42,13 +42,6 @@ Desktop.ini
 .idea
 .DS_Store
 
-#content
-/web/include/*
-!/web/include/static/
-!/web/include/.gitkeep
-/web/include/static/*
-!/web/include/static/.gitkeep
-
 /common/local/lib/*
 /common/local/logs/*
 /common/static

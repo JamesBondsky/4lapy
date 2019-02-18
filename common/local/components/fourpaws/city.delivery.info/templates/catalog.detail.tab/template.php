@@ -35,7 +35,7 @@ $delivery = $arResult['DELIVERY'];
 <li class="b-tab-title__item js-tab-item" <?= $hasInnerDelivery ? '' : 'style="display:none"' ?>>
     <a class="b-tab-title__link js-tab-link"
        href="javascript:void(0);" title="Доставка и оплата"
-       data-tab="data"><span class="b-tab-title__text">Доставка и оплата</span></a>
+       data-tab="data"><h2 class="b-tab-title__text">Доставка и оплата</h2></a>
 </li>
 <?php $this->EndViewTarget() ?>
 
