@@ -26,8 +26,10 @@ use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\Helpers\TaggedCacheHelper;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 
 /**
  * Class PetService
@@ -309,5 +311,31 @@ class PetService
                 ->setOwnerName($pet['USER_NAME']);
         }
         return $result;
+    }
+
+
+
+    public function getPetBreed(int $typeId): array
+    {
+        //if ($this->startResultCache()){
+            // Для тегированного кеша нет функционала для highload-иб
+            /*TaggedCacheHelper::addManagedCacheTags([
+                'hlb:field:pets_user:' . $this->currentUserProvider->getCurrentUserId()
+            ]);*/
+
+            $arBreeds = [];
+            $res =
+                HLBlockFactory::createTableObject(Pet::PET_BREED)::query()->setFilter(['UF_PET_TYPE' => $typeId])->setSelect(
+                    [
+                        'ID',
+                        'UF_NAME',
+                    ]
+                )->setOrder(['UF_NAME' => 'asc'])->exec();
+            while ($item = $res->fetch()) {
+                $arBreeds[$item['ID']] = $item['UF_NAME'];
+            }
+
+            return $arBreeds;
+        //}
     }
 }

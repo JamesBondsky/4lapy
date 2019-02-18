@@ -25,7 +25,6 @@ use FourPaws\Catalog\Query\BrandQuery;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
-use FourPaws\Catalog\Table\CatalogPriceTable;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Search\Model\HitMetaInfoAwareInterface;
 use FourPaws\Search\Model\HitMetaInfoAwareTrait;
@@ -2715,25 +2714,28 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getDecor(): ArrayCollection
     {
         $result = new ArrayCollection();
-        $res = (new ProductQuery())
-            ->withFilter([
-                'SECTION_CODE' => 'decor',
-                'ACTIVE' => 'Y'
-            ])
-            ->withNav(['nPageSize' => 20])
-            ->exec();
+        foreach (['grunty-ryby', 'elementy-dekora-ryby', 'plastikovye-rasteniya-ryby', 'ukrasheniya-steklyannye-ryby', 'koryagi-i-kamni-ryby'] as $sectionCode) {
+            $res = (new ProductQuery())
+                ->withFilter([
+                    'SECTION_CODE' => $sectionCode,
+                    'ACTIVE' => 'Y'
+                ])
+                ->withNav(['nPageSize' => 4])
+                ->exec();
 
-        if (!$res->isEmpty()) {
-            while ($product = $res->next()) {
-                /**
-                 * @var Offer $offer
-                 */
-                $offer = $product->getOffers()->first();
-                if ($offer->getPrice() > 0) {
-                    $result->add($offer);
+            if (!$res->isEmpty()) {
+                while ($product = $res->next()) {
+                    /**
+                     * @var Offer $offer
+                     */
+                    $offer = $product->getOffers()->first();
+                    if ($offer->getPrice() > 0) {
+                        $result->add($offer);
+                    }
                 }
             }
         }
+
         return $result;
     }
 }
