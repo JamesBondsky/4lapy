@@ -15,7 +15,7 @@ $itemCount = count($arResult['BASKET']);
 if (true !== $arParams['IS_AJAX']) {
     echo '<div class="b-header-info__item b-header-info__item--cart">';
 } ?>
-    <a class="b-header-info__link js-link-header-basket-mini<?= $itemCount ? ' js-open-popover ' : '' ?>"
+    <a class="b-header-info__link js-link-header-basket-mini<?= $itemCount ? ' js-open-popover ' : '' ?> js-toggle-popover-mobile-header"
        href="<?= $arParams['PATH_TO_BASKET'] ?>" title="Корзина">
         <span class="b-icon">
             <?= new SvgDecorator('icon-cart', 16, 16) ?>
@@ -26,7 +26,7 @@ if (true !== $arParams['IS_AJAX']) {
         </span>
     </a>
 <?php if ($itemCount) { ?>
-    <div class="b-popover b-popover--cart js-popover">
+    <div class="b-popover b-popover--cart js-popover js-content-popover-mobile-header">
         <div class="b-cart-popover">
             <span class="b-cart-popover__amount">
                 <?= $itemCount ?>
