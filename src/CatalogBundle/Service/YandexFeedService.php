@@ -267,12 +267,16 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         $filter = $this->buildOfferFilter($feed, $configuration);
 
         if (!empty($stockID)) {
-            $filter['>CATALOG_STORE_AMOUNT_' . $stockID] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
-            if ($stockID == self::NN_STOCK) {
-                $filter['>CATALOG_STORE_AMOUNT_' . $this->arStockDC01] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
+            if ($stockID != self::NN_STOCK) {
+                $filter['>CATALOG_STORE_AMOUNT_' . $stockID] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
+            } else {
+                $arSupplier = ['LOGIC' => 'OR'];
+                $arSupplier[]['>CATALOG_STORE_AMOUNT_' . $stockID] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
+                $arSupplier[]['>CATALOG_STORE_AMOUNT_' . $this->arStockDC01] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
                 foreach ($this->arSupplierStocks as $supplierStock) {
-                    $filter['>CATALOG_STORE_AMOUNT_' . $supplierStock] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
+                    $arSupplier[]['>CATALOG_STORE_AMOUNT_' . $supplierStock] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
                 }
+                $filter = array_merge($filter, [$arSupplier]);
             }
         }
 
@@ -389,7 +393,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         $nnTpz = false;
         if ($stockID == self::NN_STOCK) {
             if (null === $this->nnStock) {
-                $this->nnStock = $this->storeService->getStoreByXmlId('R207');
+                $this->nnStock = $this->storeService->getStoreById(self::NN_STOCK);
             }
             $nnTpz = $offer->getAllStocks()->filterByStore($this->nnStock)->getTotalAmount() == 0;
         }
