@@ -69,7 +69,8 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         NN_STOCK = 207,
         OBNINSK_STOCK = 65;
 
-    private const MINIMAL_AVAILABLE_IN_RC = 2;
+    private const MINIMAL_AVAILABLE_IN_RC = 2
+    private const MINIMAL_AVAILABLE_IN_SUPPLIER = 1;
 
     private const PROMO_TYPE = 'n plus m';
 
@@ -266,11 +267,11 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         $filter = $this->buildOfferFilter($feed, $configuration);
 
         if (!empty($stockID)) {
-            $filter['>CATALOG_STORE_AMOUNT_' . $stockID] = self::MINIMAL_AVAILABLE_IN_RC;
+            $filter['>CATALOG_STORE_AMOUNT_' . $stockID] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
             if ($stockID == self::NN_STOCK) {
-                $filter['>CATALOG_STORE_AMOUNT_' . $this->arStockDC01] = self::MINIMAL_AVAILABLE_IN_RC;
+                $filter['>CATALOG_STORE_AMOUNT_' . $this->arStockDC01] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
                 foreach ($this->arSupplierStocks as $supplierStock) {
-                    $filter['>CATALOG_STORE_AMOUNT_' . $supplierStock] = self::MINIMAL_AVAILABLE_IN_RC;
+                    $filter['>CATALOG_STORE_AMOUNT_' . $supplierStock] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
                 }
             }
         }
@@ -390,7 +391,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             if (null === $this->nnStock) {
                 $this->nnStock = $this->storeService->getStoreByXmlId('R207');
             }
-            $nnTpz = $currentStock$offer->getAllStocks()->filterByStore($this->nnStock)->getTotalAmount() == 0
+            $nnTpz = $offer->getAllStocks()->filterByStore($this->nnStock)->getTotalAmount() == 0;
         }
 
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
