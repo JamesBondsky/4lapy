@@ -102,10 +102,10 @@ class SharesService implements LoggerAwareInterface
     /**
      * @param BonusBuy $promo
      *
-     * @throws RuntimeException
+     * @param bool $success
      * @throws SqlQueryException
      */
-    public function import(BonusBuy $promo): void
+    public function import(BonusBuy $promo, bool &$success): void
     {
         foreach ($promo->getBonusBuyShare() as $share) {
             /** @noinspection BadExceptionsProcessingInspection */
@@ -147,6 +147,7 @@ class SharesService implements LoggerAwareInterface
 
                 $this->connection->commitTransaction();
             } catch (Exception $e) {
+                $success = false;
                 $this->log()->info(
                     \sprintf(
                         'Ошибка %s [%s]',
