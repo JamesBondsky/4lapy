@@ -70,7 +70,6 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         OBNINSK_STOCK = 65;
 
     private const MINIMAL_AVAILABLE_IN_RC = 2;
-    private const MINIMAL_AVAILABLE_IN_SUPPLIER = 1;
 
     private const PROMO_TYPE = 'n plus m';
 
@@ -83,15 +82,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      * @var Store
      */
     private $rcStock;
-    /**
-     * @var Store
-     */
-    private $nnStock;
 
-    /** @var int $arStockDC01 */
-    private $arStockDC01 = 1;
-
-    /** @var array $arStocks */
     private $arStocks = [
         self::YAROSLAVL_STOCK => [
             'url' => 'yaroslavl.market.yandex.ru',
@@ -122,9 +113,6 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             'location_code' => '0000148783'
         ]
     ];
-
-    /** @var array $arSupplierStocks */
-    private $arSupplierStocks = [233, 234, 247, 250, 251, 252, 263, 267, 268, 270, 271, 272, 273, 274, 275, 287, 311, 315, 319];
 
     /**
      * YandexFeedService constructor.
@@ -255,7 +243,8 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         Feed $feed,
         Configuration $configuration,
         string $stockID = null
-    ): YandexFeedService {
+    ): YandexFeedService
+    {
         $limit = 500;
         $offers = $feed->getShop()
             ->getOffers();
@@ -267,17 +256,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         $filter = $this->buildOfferFilter($feed, $configuration);
 
         if (!empty($stockID)) {
-            if ($stockID != self::NN_STOCK) {
-                $filter['>CATALOG_STORE_AMOUNT_' . $stockID] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
-            } else {
-                $arSupplier = ['LOGIC' => 'OR'];
-                $arSupplier[]['>CATALOG_STORE_AMOUNT_' . $stockID] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
-                $arSupplier[]['>CATALOG_STORE_AMOUNT_' . $this->arStockDC01] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
-                foreach ($this->arSupplierStocks as $supplierStock) {
-                    $arSupplier[]['>CATALOG_STORE_AMOUNT_' . $supplierStock] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
-                }
-                $filter = array_merge($filter, [$arSupplier]);
-            }
+            $filter['>CATALOG_STORE_AMOUNT_' . $stockID] = '2';
         }
 
         $offerCollection = $this->getOffers($filter, $offset, $limit);
@@ -375,10 +354,16 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             $url = $this->arStocks[$stockID]['url'];
         }
 
-        $currentImage = (new FullHrefDecorator($offer->getImages()
-            ->first()
-            ->getSrc()))->setHost($host)
+        $images = $offer->getResizeImages(250, 250);
+        if (null !== $currentImageObj = $images->first()) {
+            $currentImageObj = (string)$currentImageObj;
+        } else {
+            $currentImageObj = '';
+        }
+        $currentImage = (new FullHrefDecorator($currentImageObj))
+            ->setHost($host)
             ->__toString();
+
         $detailPath = (new FullHrefDecorator(\sprintf(
             '%s%sutm_source=%s&utm_term=%s&utm_medium=cpc&utm_campaign=main',
             $offer->getDetailPageUrl(),
@@ -389,14 +374,6 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             ->__toString();
 
         $deliveryInfo = $this->getOfferDeliveryInfo($offer, $stockID);
-
-        $nnTpz = false;
-        if ($stockID == self::NN_STOCK) {
-            if (null === $this->nnStock) {
-                $this->nnStock = $this->storeService->getStoreById(self::NN_STOCK);
-            }
-            $nnTpz = $offer->getAllStocks()->filterByStore($this->nnStock)->getTotalAmount() == 0;
-        }
 
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         /** @noinspection PassingByReferenceCorrectnessInspection */
@@ -419,8 +396,9 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                     ->getDetailText()
                     ->getText()), 0, 2990))
                 ->setManufacturerWarranty(true)
-                ->setAvailable(($stockID == self::NN_STOCK && $nnTpz) ? false : $offer->isAvailable())
+                ->setAvailable($offer->isAvailable())
                 ->setCurrencyId('RUB')
+                ->setOldPrice($offer->getOldPrice())
                 ->setPrice($offer->getPrice())
                 ->setPicture($currentImage)
                 ->setUrl($detailPath)
