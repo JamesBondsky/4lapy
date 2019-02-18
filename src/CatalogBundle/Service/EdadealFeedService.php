@@ -9,12 +9,10 @@ use FourPaws\CatalogBundle\Translate\ConfigurationInterface;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\WordHelper;
-use FourPaws\StoreBundle\Service\StoreService;
 use Psr\Log\LoggerAwareInterface;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use FourPaws\App\Application;
-use FourPaws\App\Application as App;
 
 /**
  * Class EdadealFeedService
@@ -31,10 +29,10 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
     private $offers;
     /** @var array $arMeasures */
     private $arMeasures;
-    /** @var StoreService $storeService */
-    private $storeService;
-    /** @var \FourPaws\StoreBundle\Entity\StoreSearchResult */
-    private $stores;
+
+    private const TARGET_REGIONS = [
+        'Россия'
+    ];
 
     use LazyLoggerAwareTrait;
 
@@ -74,7 +72,6 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
 
         $this->time = ConvertTimeStamp(time(), 'FULL');
 
-        $this->getStores($configuration);
         $this->getCurrentShares($configuration);
         if (count($this->offers) > 0) {
             $this->getCurrentOffers($configuration);
@@ -83,25 +80,6 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
         $this->prepareResult();
 
         return $this->createResultFile($configuration, $this->arResult);
-    }
-
-    /**
-     * @param Configuration $configuration
-     */
-    private function getStores(Configuration $configuration)
-    {
-        $container = App::getInstance()->getContainer();
-        $this->storeService = $container->get('store.service');
-        $tmpStores = $this->storeService->getAllStores(StoreService::TYPE_SHOP);
-        foreach ($tmpStores->getStores() as $store) {
-            $address = $store->getAddress();
-            $arAddress = explode(', ', $address);
-            $city = $arAddress[count($arAddress) - 1];
-            if ($city == '-' || $store->getAddress() == '-') {
-                continue;
-            }
-            $this->stores[] = $city . ', ' . str_replace(', ' . $city, '', $store->getAddress());
-        }
     }
 
     /**
@@ -177,7 +155,7 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
                         '/upload/edadeal/edadeal.jpg'
                     ),
                     'offers' => $products !== null ? $products : [],
-                    'target_shops' => $this->stores,
+                    'target_regions' => static::TARGET_REGIONS,
                     'label' => $share['PROPERTIES']['LABEL']['VALUE']
                 ];
 
@@ -231,28 +209,25 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
                 continue;
             }
 
+            $this->arResult['offers'][$offer['XML_ID']] = [
+                'id' => $offer['XML_ID'],
+                'sku' => $offer['ID'],
+                'image' => $offer['PROPERTIES']['IMG']['VALUE'][0],
+                'description' => $offer['NAME']
+            ];
+
             if (
             (floatval($offer['PROPERTIES']['PRICE_ACTION']['VALUE']) < floatval($offer['CATALOG_PRICE_2'])
                 && $offer['PROPERTIES']['PRICE_ACTION']['VALUE'] != ''
                 && $offer['PROPERTIES']['PRICE_ACTION']['VALUE'] != 0)
             ) {
-                $this->arResult['offers'][$offer['XML_ID']] = [
-                    'id' => $offer['XML_ID'],
-                    'sku' => $offer['ID'],
-                    'image' => $offer['PROPERTIES']['IMG']['VALUE'][0],
-                    'price_old' => floatval($offer['CATALOG_PRICE_2']),
-                    'price_new' => floatval($offer['PROPERTIES']['PRICE_ACTION']['VALUE'])
-                ];
+                $this->arResult['offers'][$offer['XML_ID']]['price_old'] = floatval($offer['CATALOG_PRICE_2']);
+                $this->arResult['offers'][$offer['XML_ID']]['price_new'] = floatval($offer['PROPERTIES']['PRICE_ACTION']['VALUE']);
             } else {
-                $this->arResult['offers'][$offer['XML_ID']] = [
-                    'id' => $offer['XML_ID'],
-                    'sku' => $offer['ID'],
-                    'image' => $offer['PROPERTIES']['IMG']['VALUE'][0],
-                    'price_new' => floatval($offer['CATALOG_PRICE_2'])
-                ];
+                $this->arResult['offers'][$offer['XML_ID']]['price_new'] = floatval($offer['CATALOG_PRICE_2']);
             }
 
-            if(strpos(mb_strtolower($offer['NAME']), 'корм') !== false){
+            if (strpos(mb_strtolower($offer['NAME']), 'корм') !== false) {
                 $this->arResult['offers'][$offer['XML_ID']]['quantity'] = (float)WordHelper::showWeightNumber($offer['CATALOG_WEIGHT'], true);
                 $this->arResult['offers'][$offer['XML_ID']]['quantity_unit'] = 'кг';
             }
@@ -286,7 +261,6 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
             'ID',
             'IBLOCK_ID',
             'PROPERTY_BRAND.NAME',
-            'DETAIL_TEXT',
             'ACTIVE'
         ];
 
@@ -298,31 +272,9 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
         $dbProduct = \CIBlockElement::GetList([], $arFilter, false, false, $arSelect);
         while ($arProduct = $dbProduct->Fetch()) {
             //берем первое предложение из описания
-            $arDescr = explode('.', $arProduct['DETAIL_TEXT']);
-            if (count($arDescr) > 1) {
-                $descr = $arDescr[0] . '.';
-            } else {
-                $descr = $arDescr[0];
-            }
-            $descr = preg_replace(
-                [
-                    '/<table(.*)<\/table>/', //таблица
-                    '/<a(.*)<\/a>/', //ссылки
-                    '/<img(.*)>/' //изображения
-                ],
-                [
-                    '',
-                    '',
-                    ''
-                ],
-                $descr
-            );
-            //удаляем остальные теги
-            $descr = str_replace("\r\n", '', html_entity_decode(\HTMLToTxt($descr)));
-            if ($descr != '' && $descr != null && $arProduct['ACTIVE'] == 'Y') {
+            if ($arProduct['ACTIVE'] == 'Y') {
                 foreach ($products[$arProduct['ID']] as $offer) {
                     $this->arResult['offers'][$offer]['brand'] = $arProduct['PROPERTY_BRAND_NAME'];
-                    $this->arResult['offers'][$offer]['description'] = $descr;
                 }
             } else {
                 foreach ($products[$arProduct['ID']] as $offer) {
