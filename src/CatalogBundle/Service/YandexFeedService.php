@@ -354,10 +354,16 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             $url = $this->arStocks[$stockID]['url'];
         }
 
-        $currentImage = (new FullHrefDecorator($offer->getImages()
-            ->first()
-            ->getSrc()))->setHost($host)
+        $images = $offer->getResizeImages(250, 250);
+        if (null !== $currentImageObj = $images->first()) {
+            $currentImageObj = (string)$currentImageObj;
+        } else {
+            $currentImageObj = '';
+        }
+        $currentImage = (new FullHrefDecorator($currentImageObj))
+            ->setHost($host)
             ->__toString();
+
         $detailPath = (new FullHrefDecorator(\sprintf(
             '%s%sutm_source=%s&utm_term=%s&utm_medium=cpc&utm_campaign=main',
             $offer->getDetailPageUrl(),
@@ -392,6 +398,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 ->setManufacturerWarranty(true)
                 ->setAvailable($offer->isAvailable())
                 ->setCurrencyId('RUB')
+                ->setOldPrice($offer->getOldPrice())
                 ->setPrice($offer->getPrice())
                 ->setPicture($currentImage)
                 ->setUrl($detailPath)
