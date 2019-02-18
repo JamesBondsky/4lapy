@@ -281,8 +281,8 @@ $APPLICATION->ShowViewContent('header_dropdown_menu'); ?>
 }
 
 if ($template->hasContent()) {
-    $asset->addCss('/include/static/style.css');
-    $asset->addJs('/include/static/scripts.js');
+    $asset->addCss('/include/static/style_static.css');
+    $asset->addJs('/include/static/scripts_static.js');
 
     $APPLICATION->IncludeComponent('bitrix:main.include',
         '',
