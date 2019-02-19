@@ -81,37 +81,6 @@ class ExpertSenderFeedService extends FeedService implements LoggerAwareInterfac
      */
     private $rcStock;
 
-    private $arStocks = [
-        self::YAROSLAVL_STOCK => [
-            'url' => 'yaroslavl.market.yandex.ru',
-            'location_code' => '0000263227'
-        ],
-        self::VORONEZH_STOCK => [
-            'url' => 'voronezh.yandex.ru',
-            'location_code' => '0000293598'
-        ],
-        self::TULA_STOCK => [
-            'url' => 'tula.market.yandex.ru',
-            'location_code' => '0000250453'
-        ],
-        self::IVANOVO_STOCK => [
-            'url' => 'ivanovo.market.yandex.ru',
-            'location_code' => '0000121319'
-        ],
-        self::VLADIMIR_STOCK => [
-            'url' => 'vladimir.market.yandex.ru',
-            'location_code' => '0000312126'
-        ],
-        self::NN_STOCK => [
-            'url' => 'nn.market.yandex.ru',
-            'location_code' => '0000600317'
-        ],
-        self::OBNINSK_STOCK => [
-            'url' => 'obninsk.market.yandex.ru',
-            'location_code' => '0000148783'
-        ]
-    ];
-
     /**
      * ExpertSenderFeedService constructor.
      *
@@ -346,12 +315,6 @@ class ExpertSenderFeedService extends FeedService implements LoggerAwareInterfac
             return;
         }
 
-        $url = 'market.yandex.ru';
-
-        if (!empty($stockID)) {
-            $url = $this->arStocks[$stockID]['url'];
-        }
-
         $images = $offer->getResizeImages(250, 250);
         if (null !== $currentImageObj = $images->first()) {
             $currentImageObj = (string)$currentImageObj;
@@ -363,11 +326,8 @@ class ExpertSenderFeedService extends FeedService implements LoggerAwareInterfac
             ->__toString();
 
         $detailPath = (new FullHrefDecorator(\sprintf(
-            '%s%sutm_source=%s&utm_term=%s&utm_medium=cpc&utm_campaign=main',
-            $offer->getDetailPageUrl(),
-            (\strpos($offer->getDetailPageUrl(), '?') > 0 ? '&' : '?'),
-            $url,
-            $offer->getXmlId()
+            '%s',
+            $offer->getDetailPageUrl()
         )))->setHost($host)
             ->__toString();
 
