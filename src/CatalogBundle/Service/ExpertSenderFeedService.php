@@ -21,16 +21,16 @@ use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\CatalogBundle\Dto\Yandex\Category as YandexCategory;
-use FourPaws\CatalogBundle\Dto\Yandex\Currency;
-use FourPaws\CatalogBundle\Dto\Yandex\DeliveryOption;
-use FourPaws\CatalogBundle\Dto\Yandex\Param;
-use FourPaws\CatalogBundle\Dto\Yandex\Feed;
-use FourPaws\CatalogBundle\Dto\Yandex\Offer as YandexOffer;
-use FourPaws\CatalogBundle\Dto\Yandex\Promo;
-use FourPaws\CatalogBundle\Dto\Yandex\Purchase;
-use FourPaws\CatalogBundle\Dto\Yandex\Product;
-use FourPaws\CatalogBundle\Dto\Yandex\Shop;
+use FourPaws\CatalogBundle\Dto\ExpertSender\Category as ExpertSenderCategory;
+use FourPaws\CatalogBundle\Dto\ExpertSender\Currency;
+use FourPaws\CatalogBundle\Dto\ExpertSender\DeliveryOption;
+use FourPaws\CatalogBundle\Dto\ExpertSender\Param;
+use FourPaws\CatalogBundle\Dto\ExpertSender\Feed;
+use FourPaws\CatalogBundle\Dto\ExpertSender\Offer as ExpertSenderOffer;
+use FourPaws\CatalogBundle\Dto\ExpertSender\Promo;
+use FourPaws\CatalogBundle\Dto\ExpertSender\Purchase;
+use FourPaws\CatalogBundle\Dto\ExpertSender\Product;
+use FourPaws\CatalogBundle\Dto\ExpertSender\Shop;
 use FourPaws\CatalogBundle\Exception\ArgumentException;
 use FourPaws\CatalogBundle\Exception\OffersIsOver;
 use FourPaws\CatalogBundle\Translate\Configuration;
@@ -53,11 +53,11 @@ use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
- * Class YandexFeedService
+ * Class ExpertSenderFeedService
  *
  * @package FourPaws\CatalogBundle\Service
  */
-class YandexFeedService extends FeedService implements LoggerAwareInterface
+class ExpertSenderFeedService extends FeedService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
@@ -70,67 +70,19 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         OBNINSK_STOCK = 65;
 
     private const MINIMAL_AVAILABLE_IN_RC = 2;
-    private const MINIMAL_AVAILABLE_IN_SUPPLIER = 1;
-
-    private const PROMO_TYPE = 'n plus m';
 
     private $deliveryInfo;
-
     /**
      * @var StoreService
      */
     private $storeService;
-
     /**
      * @var Store
      */
     private $rcStock;
 
     /**
-     * @var Store
-     */
-    private $nnStock;
-
-    /** @var int $arStockDC01 */
-    private $arStockDC01 = 1;
-
-    /** @var array $arStocks */
-    private $arStocks = [
-        self::YAROSLAVL_STOCK => [
-            'url' => 'yaroslavl.market.yandex.ru',
-            'location_code' => '0000263227'
-        ],
-        self::VORONEZH_STOCK => [
-            'url' => 'voronezh.yandex.ru',
-            'location_code' => '0000293598'
-        ],
-        self::TULA_STOCK => [
-            'url' => 'tula.market.yandex.ru',
-            'location_code' => '0000250453'
-        ],
-        self::IVANOVO_STOCK => [
-            'url' => 'ivanovo.market.yandex.ru',
-            'location_code' => '0000121319'
-        ],
-        self::VLADIMIR_STOCK => [
-            'url' => 'vladimir.market.yandex.ru',
-            'location_code' => '0000312126'
-        ],
-        self::NN_STOCK => [
-            'url' => 'nn.market.yandex.ru',
-            'location_code' => '0000600317'
-        ],
-        self::OBNINSK_STOCK => [
-            'url' => 'obninsk.market.yandex.ru',
-            'location_code' => '0000148783'
-        ]
-    ];
-
-    /** @var array $arSupplierStocks */
-    private $arSupplierStocks = [233, 234, 247, 250, 251, 252, 263, 267, 268, 270, 271, 272, 273, 274, 275, 287, 311, 315, 319];
-
-    /**
-     * YandexFeedService constructor.
+     * ExpertSenderFeedService constructor.
      *
      * @param SerializerInterface $serializer
      * @param Filesystem $filesystem
@@ -201,9 +153,9 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      * @param Feed $feed
      * @param Configuration $configuration
      *
-     * @return YandexFeedService
+     * @return ExpertSenderFeedService
      */
-    protected function processFeed(Feed $feed, Configuration $configuration): YandexFeedService
+    protected function processFeed(Feed $feed, Configuration $configuration): ExpertSenderFeedService
     {
         $feed
             ->setDate(new DateTime())
@@ -222,9 +174,9 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      * @param Feed $feed
      * @param Configuration $configuration
      *
-     * @return YandexFeedService
+     * @return ExpertSenderFeedService
      */
-    protected function processCurrencies(Feed $feed, Configuration $configuration): YandexFeedService
+    protected function processCurrencies(Feed $feed, Configuration $configuration): ExpertSenderFeedService
     {
         $currencies = new ArrayCollection();
         $xmlData = $configuration->getXmlData();
@@ -246,7 +198,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      * @param Configuration $configuration
      * @param string $stockID
      *
-     * @return YandexFeedService
+     * @return ExpertSenderFeedService
      *
      * @throws RuntimeException
      * @throws IblockNotFoundException
@@ -258,7 +210,8 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         Feed $feed,
         Configuration $configuration,
         string $stockID = null
-    ): YandexFeedService {
+    ): ExpertSenderFeedService
+    {
         $limit = 500;
         $offers = $feed->getShop()
             ->getOffers();
@@ -270,17 +223,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         $filter = $this->buildOfferFilter($feed, $configuration);
 
         if (!empty($stockID)) {
-            if ($stockID != self::NN_STOCK) {
-                $filter['>CATALOG_STORE_AMOUNT_' . $stockID] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
-            } else {
-                $arSupplier = ['LOGIC' => 'OR'];
-                $arSupplier[]['>CATALOG_STORE_AMOUNT_' . $stockID] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
-                $arSupplier[]['>CATALOG_STORE_AMOUNT_' . $this->arStockDC01] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
-                foreach ($this->arSupplierStocks as $supplierStock) {
-                    $arSupplier[]['>CATALOG_STORE_AMOUNT_' . $supplierStock] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
-                }
-                $filter = array_merge($filter, [$arSupplier]);
-            }
+            $filter['>CATALOG_STORE_AMOUNT_' . $stockID] = '2';
         }
 
         $offerCollection = $this->getOffers($filter, $offset, $limit);
@@ -372,39 +315,28 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             return;
         }
 
-        $url = 'market.yandex.ru';
-
-        if (!empty($stockID)) {
-            $url = $this->arStocks[$stockID]['url'];
+        $images = $offer->getResizeImages(250, 250);
+        if (null !== $currentImageObj = $images->first()) {
+            $currentImageObj = (string)$currentImageObj;
+        } else {
+            $currentImageObj = '';
         }
-
-        $currentImage = (new FullHrefDecorator($offer->getImages()
-            ->first()
-            ->getSrc()))->setHost($host)
+        $currentImage = (new FullHrefDecorator($currentImageObj))
+            ->setHost($host)
             ->__toString();
+
         $detailPath = (new FullHrefDecorator(\sprintf(
-            '%s%sutm_source=%s&utm_term=%s&utm_medium=cpc&utm_campaign=main',
-            $offer->getDetailPageUrl(),
-            (\strpos($offer->getDetailPageUrl(), '?') > 0 ? '&' : '?'),
-            $url,
-            $offer->getXmlId()
+            '%s',
+            $offer->getDetailPageUrl()
         )))->setHost($host)
             ->__toString();
 
         $deliveryInfo = $this->getOfferDeliveryInfo($offer, $stockID);
 
-        $nnTpz = false;
-        if ($stockID == self::NN_STOCK) {
-            if (null === $this->nnStock) {
-                $this->nnStock = $this->storeService->getStoreById(self::NN_STOCK);
-            }
-            $nnTpz = $offer->getAllStocks()->filterByStore($this->nnStock)->getTotalAmount() == 0;
-        }
-
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         /** @noinspection PassingByReferenceCorrectnessInspection */
-        $yandexOffer =
-            (new YandexOffer())
+        $expertSenderOffer =
+            (new ExpertSenderOffer())
                 ->setId($offer->getXmlId())
                 ->setName(\sprintf(
                     '%s %s',
@@ -422,8 +354,9 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                     ->getDetailText()
                     ->getText()), 0, 2990))
                 ->setManufacturerWarranty(true)
-                ->setAvailable(($stockID == self::NN_STOCK && $nnTpz) ? false : $offer->isAvailable())
+                ->setAvailable($offer->isAvailable())
                 ->setCurrencyId('RUB')
+                ->setOldPrice($offer->getOldPrice())
                 ->setPrice($offer->getPrice())
                 ->setPicture($currentImage)
                 ->setUrl($detailPath)
@@ -437,13 +370,13 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             ->getProduct()
             ->getCountry();
         if ($country) {
-            $yandexOffer->setCountryOfOrigin($country->getName());
+            $expertSenderOffer->setCountryOfOrigin($country->getName());
         }
 
         $params = $this->getOfferParam($offer);
-        $yandexOffer->setParam($params);
+        $expertSenderOffer->setParam($params);
 
-        $collection->add($yandexOffer);
+        $collection->add($expertSenderOffer);
     }
 
     /**
@@ -508,7 +441,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             $feed->getShop()
                 ->getCategories()
                 ->toArray(),
-            function ($carry, YandexCategory $item) {
+            function ($carry, ExpertSenderCategory $item) {
                 return \array_merge($carry, [$item->getId()]);
             },
             []
@@ -550,9 +483,9 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      * @param Feed $feed
      * @param Configuration $configuration
      *
-     * @return YandexFeedService
+     * @return ExpertSenderFeedService
      */
-    protected function processCategories(Feed $feed, Configuration $configuration): YandexFeedService
+    protected function processCategories(Feed $feed, Configuration $configuration): ExpertSenderFeedService
     {
         $categories = new ArrayCollection();
 
@@ -609,7 +542,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     {
         $categoryCollection->set(
             $category->getId(),
-            (new YandexCategory())
+            (new ExpertSenderCategory())
                 ->setId($category->getId())
                 ->setParentId($category->getIblockSectionId() ?: null)
                 ->setName($category->getName())
@@ -625,7 +558,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      * @param $stockID
      * @return $this
      */
-    protected function processDeliveryOptions(Feed $feed, Configuration $configuration, $stockID): YandexFeedService
+    protected function processDeliveryOptions(Feed $feed, Configuration $configuration, $stockID): ExpertSenderFeedService
     {
         /**
          * По умолчанию в Мск вполне себе доступна бесплатная доставка и товар есть в магазине
@@ -652,7 +585,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     private function getStorageKey(): string
     {
         return \sprintf(
-            '%s/yandex_tmp_feed.xml',
+            '%s/expert_sender_tmp_feed.xml',
             \sys_get_temp_dir()
         );
     }
@@ -909,7 +842,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                     $promo = new Promo();
                     $promo
                         ->setId($share['ID'])
-                        ->setType(static::PROMO_TYPE)
+                        ->setType($requiredQuantity . ' plus ' . $freeQuantity)
                         ->setUrl((new FullHrefDecorator($share['DETAIL_PAGE_URL']))->setHost($host)->__toString())
                         ->setStartDate(\DateTime::createFromFormat('d.m.Y H:i:s', $share['DATE_ACTIVE_FROM'])->format('Y-m-d H:i:s'))
                         ->setEndDate(\DateTime::createFromFormat('d.m.Y H:i:s', $share['DATE_ACTIVE_TO'])->format('Y-m-d H:i:s'))

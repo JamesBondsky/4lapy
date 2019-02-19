@@ -101,7 +101,7 @@
     "gietos/dadata": "^1.1",
     "igi/sypexgeo": "dev-master",
     "incenteev/composer-parameter-handler": "^2.1",
-    "jms/serializer": "^1.9",
+    "jms/serializer": "1.11.1",
     "jms/serializer-bundle": "~2.1.0",
     "meng-tian/async-soap-guzzle": "^0.2.4",
     "misd/phone-number-bundle": "^1.2",
@@ -142,6 +142,10 @@
     {
       "type": "vcs",
       "url": "git@bitbucket.org:articul/articul.newrelic.git"
+    },
+    {
+      "type": "vcs",
+      "url": "git@bitbucket.org:articul/serializer.git"
     }
   ],
   "scripts": {
