@@ -33,6 +33,10 @@ old_sound_rabbit_mq:
         connection: default
         exchange_options: { name: "manzana_referral_add", type: direct }
 
+      manzana_orders_import:
+        connection: default
+        exchange_options: { name: "manzana_orders_import", type: direct }
+
     consumers:
       callback_set:
         connection:       default
@@ -57,3 +61,9 @@ old_sound_rabbit_mq:
         exchange_options: {name: "manzana_referral_add", type: direct}
         queue_options: {name: "manzana_referral_add"}
         callback: manzana.referral_add_consumer
+
+      manzana_orders_import:
+        connection: default
+        exchange_options: {name: "manzana_orders_import", type: direct}
+        queue_options: {name: "manzana_orders_import"}
+        callback: manzana.orders_import_consumer

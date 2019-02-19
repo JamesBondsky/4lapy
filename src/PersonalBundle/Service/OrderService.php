@@ -67,6 +67,7 @@ use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -215,6 +216,71 @@ class OrderService
                 }
             }
         }
+    }
+
+	/**
+	 * @param User $user
+	 * @throws \Exception
+	 */
+	public function importOrdersFromManzana(User $user): void
+    {
+	    $contactId = $this->manzanaService->getContactByUser($user)->contactId;
+	    $deliveryId = $this->deliveryService->getDeliveryIdByCode(DeliveryService::INNER_PICKUP_CODE);
+
+	    $cheques = $this->manzanaService->getCheques($contactId);
+
+	    $existingManzanaOrders = $this->getSiteManzanaOrders($user->getId());
+
+	    /** @var Cheque $cheque */
+	    foreach ($cheques as $cheque) {
+		    if ($cheque->operationTypeCode === Cheque::OPERATION_TYPE_RETURN) {
+			    continue;
+		    }
+
+		    if (\in_array($cheque->chequeNumber, $existingManzanaOrders, true)) {
+		    	continue;
+		    }
+
+		    if (!$cheque->hasItemsBool()) {
+			    continue;
+		    }
+
+		    /** @var \DateTimeImmutable $date */
+		    $date = $cheque->date;
+		    $bitrixDate = DateTime::createFromTimestamp($date->getTimestamp());
+		    $order = (new Order())
+			    ->setDateInsert($bitrixDate)
+			    ->setDatePayed($bitrixDate)
+			    ->setDateStatus($bitrixDate)
+			    ->setDateUpdate($bitrixDate)
+			    ->setManzana(true)
+			    ->setUserId($user->getId())
+			    ->setPayed(true)
+			    ->setStatusId(static::MANZANA_FINAL_STATUS)
+			    ->setPrice($cheque->sum)
+			    ->setItemsSum($cheque->sum)
+			    ->setManzanaId($cheque->chequeNumber)
+			    ->setPaySystemId(PaySystemActionTable::query()->setFilter(['CODE' => 'cash'])
+				    ->setSelect(['PAY_SYSTEM_ID'])->exec()
+				    ->fetch()['PAY_SYSTEM_ID'])
+			    ->setDeliveryId($deliveryId);
+
+		    try {
+			    $items = $this->getItemsByCheque($cheque);
+		    } /** @noinspection PhpRedundantCatchClauseInspection */ catch (ManzanaChequeItemExceptionInterface $e) {
+		        continue;
+		    }
+		    $order->setItems(new ArrayCollection($items));
+
+		    try {
+			    $this->addManzanaOrder($order);
+		    } /** @noinspection PhpRedundantCatchClauseInspection */ catch (ManzanaOrderExceptionInterface $e) {
+		    }
+	    }
+
+        $user->setManzanaImportDateTime(new DateTime());
+
+        App::getInstance()->getContainer()->get(UserRepository::class)->update($user);
     }
 
     /**
@@ -653,7 +719,7 @@ class OrderService
             throw new OrderCreateException('Order payment failed');
         }
 
-        $result = $bitrixOrder->save();
+        $result = $bitrixOrder->save(); //FIXME обработать ошибку Argument 'FUSER_ID' is null or empty
         /** костыль для обновления дат */
         OrderTable::update($result->getId(),
             [
