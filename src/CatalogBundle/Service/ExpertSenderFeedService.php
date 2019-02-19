@@ -21,16 +21,16 @@ use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\CatalogBundle\Dto\Yandex\Category as YandexCategory;
-use FourPaws\CatalogBundle\Dto\Yandex\Currency;
-use FourPaws\CatalogBundle\Dto\Yandex\DeliveryOption;
-use FourPaws\CatalogBundle\Dto\Yandex\Param;
-use FourPaws\CatalogBundle\Dto\Yandex\Feed;
-use FourPaws\CatalogBundle\Dto\Yandex\Offer as YandexOffer;
-use FourPaws\CatalogBundle\Dto\Yandex\Promo;
-use FourPaws\CatalogBundle\Dto\Yandex\Purchase;
-use FourPaws\CatalogBundle\Dto\Yandex\Product;
-use FourPaws\CatalogBundle\Dto\Yandex\Shop;
+use FourPaws\CatalogBundle\Dto\ExpertSender\Category as ExpertSenderCategory;
+use FourPaws\CatalogBundle\Dto\ExpertSender\Currency;
+use FourPaws\CatalogBundle\Dto\ExpertSender\DeliveryOption;
+use FourPaws\CatalogBundle\Dto\ExpertSender\Param;
+use FourPaws\CatalogBundle\Dto\ExpertSender\Feed;
+use FourPaws\CatalogBundle\Dto\ExpertSender\Offer as ExpertSenderOffer;
+use FourPaws\CatalogBundle\Dto\ExpertSender\Promo;
+use FourPaws\CatalogBundle\Dto\ExpertSender\Purchase;
+use FourPaws\CatalogBundle\Dto\ExpertSender\Product;
+use FourPaws\CatalogBundle\Dto\ExpertSender\Shop;
 use FourPaws\CatalogBundle\Exception\ArgumentException;
 use FourPaws\CatalogBundle\Exception\OffersIsOver;
 use FourPaws\CatalogBundle\Translate\Configuration;
@@ -53,11 +53,11 @@ use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
- * Class YandexFeedService
+ * Class ExpertSenderFeedService
  *
  * @package FourPaws\CatalogBundle\Service
  */
-class YandexFeedService extends FeedService implements LoggerAwareInterface
+class ExpertSenderFeedService extends FeedService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
@@ -70,8 +70,6 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         OBNINSK_STOCK = 65;
 
     private const MINIMAL_AVAILABLE_IN_RC = 2;
-
-    private const PROMO_TYPE = 'n plus m';
 
     private $deliveryInfo;
     /**
@@ -115,7 +113,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     ];
 
     /**
-     * YandexFeedService constructor.
+     * ExpertSenderFeedService constructor.
      *
      * @param SerializerInterface $serializer
      * @param Filesystem $filesystem
@@ -186,9 +184,9 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      * @param Feed $feed
      * @param Configuration $configuration
      *
-     * @return YandexFeedService
+     * @return ExpertSenderFeedService
      */
-    protected function processFeed(Feed $feed, Configuration $configuration): YandexFeedService
+    protected function processFeed(Feed $feed, Configuration $configuration): ExpertSenderFeedService
     {
         $feed
             ->setDate(new DateTime())
@@ -207,9 +205,9 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      * @param Feed $feed
      * @param Configuration $configuration
      *
-     * @return YandexFeedService
+     * @return ExpertSenderFeedService
      */
-    protected function processCurrencies(Feed $feed, Configuration $configuration): YandexFeedService
+    protected function processCurrencies(Feed $feed, Configuration $configuration): ExpertSenderFeedService
     {
         $currencies = new ArrayCollection();
         $xmlData = $configuration->getXmlData();
@@ -231,7 +229,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      * @param Configuration $configuration
      * @param string $stockID
      *
-     * @return YandexFeedService
+     * @return ExpertSenderFeedService
      *
      * @throws RuntimeException
      * @throws IblockNotFoundException
@@ -243,7 +241,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         Feed $feed,
         Configuration $configuration,
         string $stockID = null
-    ): YandexFeedService
+    ): ExpertSenderFeedService
     {
         $limit = 500;
         $offers = $feed->getShop()
@@ -354,10 +352,16 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             $url = $this->arStocks[$stockID]['url'];
         }
 
-        $currentImage = (new FullHrefDecorator($offer->getImages()
-            ->first()
-            ->getSrc()))->setHost($host)
+        $images = $offer->getResizeImages(250, 250);
+        if (null !== $currentImageObj = $images->first()) {
+            $currentImageObj = (string)$currentImageObj;
+        } else {
+            $currentImageObj = '';
+        }
+        $currentImage = (new FullHrefDecorator($currentImageObj))
+            ->setHost($host)
             ->__toString();
+
         $detailPath = (new FullHrefDecorator(\sprintf(
             '%s%sutm_source=%s&utm_term=%s&utm_medium=cpc&utm_campaign=main',
             $offer->getDetailPageUrl(),
@@ -371,8 +375,8 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
 
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         /** @noinspection PassingByReferenceCorrectnessInspection */
-        $yandexOffer =
-            (new YandexOffer())
+        $expertSenderOffer =
+            (new ExpertSenderOffer())
                 ->setId($offer->getXmlId())
                 ->setName(\sprintf(
                     '%s %s',
@@ -392,6 +396,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 ->setManufacturerWarranty(true)
                 ->setAvailable($offer->isAvailable())
                 ->setCurrencyId('RUB')
+                ->setOldPrice($offer->getOldPrice())
                 ->setPrice($offer->getPrice())
                 ->setPicture($currentImage)
                 ->setUrl($detailPath)
@@ -405,13 +410,13 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             ->getProduct()
             ->getCountry();
         if ($country) {
-            $yandexOffer->setCountryOfOrigin($country->getName());
+            $expertSenderOffer->setCountryOfOrigin($country->getName());
         }
 
         $params = $this->getOfferParam($offer);
-        $yandexOffer->setParam($params);
+        $expertSenderOffer->setParam($params);
 
-        $collection->add($yandexOffer);
+        $collection->add($expertSenderOffer);
     }
 
     /**
@@ -476,7 +481,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             $feed->getShop()
                 ->getCategories()
                 ->toArray(),
-            function ($carry, YandexCategory $item) {
+            function ($carry, ExpertSenderCategory $item) {
                 return \array_merge($carry, [$item->getId()]);
             },
             []
@@ -518,9 +523,9 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      * @param Feed $feed
      * @param Configuration $configuration
      *
-     * @return YandexFeedService
+     * @return ExpertSenderFeedService
      */
-    protected function processCategories(Feed $feed, Configuration $configuration): YandexFeedService
+    protected function processCategories(Feed $feed, Configuration $configuration): ExpertSenderFeedService
     {
         $categories = new ArrayCollection();
 
@@ -577,7 +582,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     {
         $categoryCollection->set(
             $category->getId(),
-            (new YandexCategory())
+            (new ExpertSenderCategory())
                 ->setId($category->getId())
                 ->setParentId($category->getIblockSectionId() ?: null)
                 ->setName($category->getName())
@@ -593,7 +598,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      * @param $stockID
      * @return $this
      */
-    protected function processDeliveryOptions(Feed $feed, Configuration $configuration, $stockID): YandexFeedService
+    protected function processDeliveryOptions(Feed $feed, Configuration $configuration, $stockID): ExpertSenderFeedService
     {
         /**
          * По умолчанию в Мск вполне себе доступна бесплатная доставка и товар есть в магазине
@@ -620,7 +625,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     private function getStorageKey(): string
     {
         return \sprintf(
-            '%s/yandex_tmp_feed.xml',
+            '%s/expert_sender_tmp_feed.xml',
             \sys_get_temp_dir()
         );
     }
@@ -877,7 +882,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                     $promo = new Promo();
                     $promo
                         ->setId($share['ID'])
-                        ->setType(static::PROMO_TYPE)
+                        ->setType($requiredQuantity . ' plus ' . $freeQuantity)
                         ->setUrl((new FullHrefDecorator($share['DETAIL_PAGE_URL']))->setHost($host)->__toString())
                         ->setStartDate(\DateTime::createFromFormat('d.m.Y H:i:s', $share['DATE_ACTIVE_FROM'])->format('Y-m-d H:i:s'))
                         ->setEndDate(\DateTime::createFromFormat('d.m.Y H:i:s', $share['DATE_ACTIVE_TO'])->format('Y-m-d H:i:s'))
