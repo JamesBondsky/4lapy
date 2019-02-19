@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "826b49623a399bdcd3de7af6e3daa8d8",
+    "content-hash": "38b7f62bd599581a5b5414fb25fca331",
     "packages": [
         {
             "name": "adv/bitrix-tools",
@@ -1720,17 +1720,11 @@
         },
         {
             "name": "jms/serializer",
-            "version": "1.11.0",
+            "version": "1.11.1",
             "source": {
                 "type": "git",
-                "url": "https://github.com/schmittjoh/serializer.git",
-                "reference": "e7c53477ff55c21d1b1db7d062edc050a24f465f"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/schmittjoh/serializer/zipball/e7c53477ff55c21d1b1db7d062edc050a24f465f",
-                "reference": "e7c53477ff55c21d1b1db7d062edc050a24f465f",
-                "shasum": ""
+                "url": "git@bitbucket.org:articul/serializer.git",
+                "reference": "129ae6750496b390e1f6238c75977257e6c18144"
             },
             "require": {
                 "doctrine/annotations": "^1.0",
@@ -1777,18 +1771,22 @@
                     "JMS\\Serializer": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "autoload-dev": {
+                "psr-4": {
+                    "JMS\\Serializer\\Tests\\": "tests/"
+                }
+            },
             "license": [
                 "Apache-2.0"
             ],
             "authors": [
                 {
-                    "name": "Asmir Mustafic",
-                    "email": "goetas@gmail.com"
-                },
-                {
                     "name": "Johannes M. Schmitt",
                     "email": "schmittjoh@gmail.com"
+                },
+                {
+                    "name": "Asmir Mustafic",
+                    "email": "goetas@gmail.com"
                 }
             ],
             "description": "Library for (de-)serializing data of any complexity; supports XML, JSON, and YAML.",
@@ -1800,7 +1798,7 @@
                 "serialization",
                 "xml"
             ],
-            "time": "2018-02-04T17:48:54+00:00"
+            "time": "2019-02-19T13:45:20+00:00"
         },
         {
             "name": "jms/serializer-bundle",
@@ -3075,6 +3073,11 @@
         {
             "name": "roave/security-advisories",
             "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Roave/SecurityAdvisories.git",
+                "reference": "7f9676e3d324ff0745cda4f4222b194993d37d57"
+            },
             "conflict": {
                 "3f/pygmentize": "<1.2",
                 "adodb/adodb-php": "<5.20.6",
@@ -5978,6 +5981,7 @@
                 "mock",
                 "xunit"
             ],
+            "abandoned": true,
             "time": "2018-01-06T05:45:45+00:00"
         },
         {
