@@ -82,7 +82,7 @@ class DeliveryScheduleRepository extends BaseRepository
             $filter['=UF_TPZ_RECEIVER'] = [];
             /** @var Store $sender */
             foreach ($senders as $sender) {
-                $filter['=UF_SENDER'][] = $sender->getXmlId();
+                $filter['=UF_TPZ_SENDER'][] = $sender->getXmlId();
             }
         }
 
@@ -108,12 +108,8 @@ class DeliveryScheduleRepository extends BaseRepository
             }
         }
 
-        $filter['>UF_TPZ_ORDER_DATE'] = new DateTime();
-
         /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return $this->findBy($filter, [
-            'UF_TPZ_ORDER_DATE' => 'ASC'
-        ], 1);
+        return $this->findBy($filter);
     }
 
     /**

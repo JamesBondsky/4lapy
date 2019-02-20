@@ -22,6 +22,16 @@ class DeliveryScheduleService implements LoggerAwareInterface
 
     protected const TYPE_FIELD_CODE = 'UF_TPZ_TYPE';
 
+    protected $weekdays = [
+        1 => 'monday',
+        2 => 'tuesday',
+        3 => 'wednesday',
+        4 => 'thursday',
+        5 => 'friday',
+        6 => 'saturday',
+        7 => 'sunday',
+    ];
+
     /**
      * @var DeliveryScheduleRepository
      */
@@ -211,5 +221,19 @@ class DeliveryScheduleService implements LoggerAwareInterface
         }
 
         return $result;
+    }
+
+    /**
+     * @param array $orderDays
+     * @return array
+     */
+    public function getWeeknums(array $weekDays)
+    {
+        $days = [];
+        foreach(array_keys($weekDays) as $weekday){
+            $days[] = array_search(strtolower($weekday), $this->weekdays);
+        }
+
+        return $days;
     }
 }

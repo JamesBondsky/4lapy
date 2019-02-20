@@ -103,7 +103,7 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
 
         $isSuccess = true;
         //$senders = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
-        $senders = $this->storeService->getStores(StoreService::TYPE_SUPPLIER);
+        $senders = [$this->storeService->getStoreByXmlId('0000100436')];
 
         /** @var Store $sender */
         $start = microtime(true);
@@ -115,6 +115,7 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
                 $results = $this->scheduleResultService->calculateForSender($sender, $date, $tc);
                 [$created] = $this->scheduleResultService->updateResults($results);
                 $totalCreated += $created;
+                break;
             } catch (\Exception $e) {
                 $this->log()->error(
                     sprintf('Failed to calculate schedule results: %s: %s', \get_class($e), $e->getMessage()),

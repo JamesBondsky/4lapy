@@ -141,7 +141,7 @@ class DeliverySchedule extends Base implements \Serializable
 
     /**
      * @var DateTime[]
-     * @Serializer\SerializedName("UF_DELIVERY_DATE")
+     * @Serializer\SerializedName("UF_TPZ_DELIVERY_DATE")
      * @Serializer\Type("array_or_false<DateTime<'d.m.Y'>>")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
@@ -154,6 +154,14 @@ class DeliverySchedule extends Base implements \Serializable
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $type = '';
+
+    /**
+     * @var string
+     * @Serializer\SerializedName("UF_DATE_UPDATE")
+     * @Serializer\Type("DateTime<'d.m.Y H:i:s'>")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $dateUpdate;
 
     /**
      * @var Store
@@ -379,7 +387,7 @@ class DeliverySchedule extends Base implements \Serializable
      */
     public function getSupplyDays(): array
     {
-        return $this->supplyDays;
+        return $this->supplyDays ?? [];
     }
 
     /**
@@ -597,20 +605,38 @@ class DeliverySchedule extends Base implements \Serializable
          */
         $getByDay = function (DateTime $from): ?DateTime {
             $fromDay = (int)$from->format('N');
+
             /** @var DateTime[] $results */
-            $results = [];
-            /** @var int $day */
-            foreach ($this->getDaysOfWeek() as $day) {
+            $orderDates = [];
+
+            /**
+             * Ищем ближайший день для формирования заказа
+             * и соответствующий день отгрузки
+             *
+             * @var int $day
+             */
+            foreach ($this->getDaysOfWeek() as $key => $day) {
                 $date = clone $from;
                 $diff = $day - $fromDay;
                 $days = ($diff >= 0) ? $diff : $diff + 7;
 
                 $date->modify(sprintf('+%s days', $days));
-                $results[] = $date;
+                $orderDates[$key] = $date;
             }
 
-            if (!empty($results)) {
-                return min($results);
+            if (!empty($orderDates)) {
+                $orderDate = min($orderDates);
+
+                $supplyDays = $this->getSupplyDays();
+                $supplyDayIndex = array_search($orderDate, $orderDates);
+                $supplyDay = (int)$supplyDays[$supplyDayIndex];
+
+                $fromDay = (int)$orderDate->format('N');
+                $diff = $supplyDay - $fromDay;
+                $days = ($diff >= 0) ? $diff : $diff + 7;
+                $orderDate->modify(sprintf('+%s days', $days));
+
+                return $orderDate;
             }
 
             return null;
@@ -665,6 +691,14 @@ class DeliverySchedule extends Base implements \Serializable
         }
 
         return $result;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function setDateUpdate(): void
+    {
+        $this->dateUpdate = new \DateTime();
     }
 
     /** @noinspection PhpMissingParentCallCommonInspection

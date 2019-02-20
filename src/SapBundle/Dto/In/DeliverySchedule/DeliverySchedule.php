@@ -6,6 +6,7 @@
 
 namespace FourPaws\SapBundle\Dto\In\DeliverySchedule;
 
+use Bitrix\Main\DB\Exception;
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 
@@ -107,9 +108,9 @@ class DeliverySchedule
      * Данные о днях недели, подходящих для формирования заказа, для типов графика поставки 1, 2.
      *
      * @Serializer\XmlList(inline=true, entry="orderdays")
-     * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\DeliverySchedule\WeekDayItem>")
+     * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\DeliverySchedule\OrderDayItem>")
      *
-     * @var Collection|WeekDayItem[]
+     * @var Collection|OrderDayItem[]
      */
     protected $orderDays;
 
@@ -299,7 +300,7 @@ class DeliverySchedule
     }
 
     /**
-     * @return Collection|WeekDayItem[]
+     * @return Collection|OrderDayItem[]
      */
     public function getOrderDays()
     {
@@ -307,7 +308,7 @@ class DeliverySchedule
     }
 
     /**
-     * @param Collection|WeekDayItem[] $orderDays
+     * @param Collection|OrderDayItem[] $orderDays
      * @return DeliverySchedule
      */
     public function setOrderDays(Collection $orderDays): DeliverySchedule
@@ -320,7 +321,7 @@ class DeliverySchedule
     /**
      * @return WeekNums
      */
-    public function getWeekNums(): WeekNums
+    public function getWeekNums()
     {
         return $this->weekNums;
     }
