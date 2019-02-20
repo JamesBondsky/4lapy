@@ -46,6 +46,10 @@ $aMenuLinks = [
         '/personal/subscribe/',
     ],
     [
+        'Копилка-собиралка',
+        '/personal/piggy-bank/',
+    ],
+    [
         'Топ 10 товаров',
         '/personal/top/',
     ],
