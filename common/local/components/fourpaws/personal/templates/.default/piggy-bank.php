@@ -87,18 +87,18 @@ $isActiveNextType = true; // возможно ли получить следую
                             </div>
                             <a href="#"class="link">Отправить мне на Email</a>
                         </div>
-                        <?php if(!$isActiveNextType) { ?>
+                        <?php if(!$isActiveNextType && ($typeSale != 'large')) { ?>
                             <div class="b-sale-coupon-kopilka__info">
                                 Осталось 8 марок до&nbsp;скидки 20%
                             </div>
                         <?php } ?>
                     </div>
                 <?php }else { ?>
-                    <div class="b-sale-coupon-kopilka__dafault">
-                        <span>До скидки</span>
-                        <span class="b-sale-coupon-kopilka__dafault-persent">10%</span>
+                    <div class="b-sale-coupon-kopilka__default">
+                        <span class="hide-mobile">До скидки</span>
+                        <span class="b-sale-coupon-kopilka__default-persent">10% <span class="show-mobile">скидка</span></span>
                         <span>осталось</span>
-                        <span class="b-sale-coupon-kopilka__dafault-count">6 марок</span>
+                        <span class="b-sale-coupon-kopilka__default-count">6 марок</span>
                     </div>
                 <?php } ?>
                 <?php if($isActiveNextType && ($typeSale != 'large')) { ?>
