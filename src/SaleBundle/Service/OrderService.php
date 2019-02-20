@@ -97,6 +97,11 @@ class OrderService implements LoggerAwareInterface
     public const PROPERTY_TYPE_ENUM = 'ENUM';
 
     /**
+     * РЦ Склад
+     */
+    public const STORE = 'DC01';
+
+    /**
      * @var AddressService
      */
     protected $addressService;
@@ -548,7 +553,7 @@ class OrderService implements LoggerAwareInterface
             $shipmentDays = [];
             /** @var BasketItem $item */
             foreach ($order->getBasket() as $item) {
-                $shipmentPlaceCode = 'DC01';
+                $shipmentPlaceCode = self::STORE;
                 /** @var DeliveryScheduleResult $deliveryResult */
                 if ($shipmentResults &&
                     ($deliveryResult = $shipmentResults->getByOfferId($item->getProductId()))
@@ -754,7 +759,7 @@ class OrderService implements LoggerAwareInterface
                                 case DeliveryService::ZONE_3:
                                 case DeliveryService::ZONE_5:
                                 case DeliveryService::ZONE_6:
-                                    $value = 'DC01';
+                                    $value = self::STORE;
                                     break;
                                 case DeliveryService::ZONE_2:
                                 case DeliveryService::ZONE_NIZHNY_NOVGOROD:
@@ -775,6 +780,9 @@ class OrderService implements LoggerAwareInterface
                                         $value = $selectedDelivery->getSelectedStore()->getXmlId();
                                     } elseif ($baseShop = $selectedDelivery->getBestShops()->getBaseShops()->first()) {
                                         $value = $baseShop->getXmlId();
+                                    }
+                                    else{
+                                        $value = self::STORE;
                                     }
                                     break;
                             }
