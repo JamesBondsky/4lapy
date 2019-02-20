@@ -166,6 +166,24 @@ class Store
     protected $delayedGoods;
 
     /**
+     * @var bool
+     *
+     * @Serializer\SerializedName("canSplitOrder")
+     * @Serializer\Type("bool")
+     * @Serializer\Groups({"withPickupInfo"})
+     */
+    public $canSplitOrder;
+
+    /**
+     * @var bool
+     *
+     * @Serializer\SerializedName("canPickupPartially")
+     * @Serializer\Type("bool")
+     * @Serializer\Groups({"withPickupInfo"})
+     */
+    public $canPickupPartially;
+
+    /**
      * @param string $code
      * @return Store
      */

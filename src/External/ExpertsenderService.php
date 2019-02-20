@@ -788,7 +788,7 @@ class ExpertsenderService implements LoggerAwareInterface
      * @return bool
      * @throws ExpertsenderServiceException
      */
-    public function sendChangeBonusCard(User $user)
+    public function sendChangeBonusCardFromMobileApp(User $user)
     {
         if ($user->hasEmail()) {
             try {
@@ -809,6 +809,46 @@ class ExpertsenderService implements LoggerAwareInterface
             }
         }
         return false;
+    }
+
+    /**
+     * @param User $oldUser
+     * @param User $curUser
+     * @return bool
+     * @throws ExpertSenderException
+     * @throws ExpertsenderServiceException
+     * @throws GuzzleException
+     */
+    public function sendChangeEmailFromMobileApp(User $oldUser, User $curUser)
+    {
+        return $this->sendChangeEmail($oldUser, $curUser);
+        // toDo когда заведут транзакционный шаблон для смены email и настроят механизм смены email на сайте
+        /*
+        $transactionIdOld = self::CHANGE_EMAIL_LIST_ID;
+
+        $curUserEmail = $curUser->getEmail();
+        $oldUserEmail = $oldUser->getEmail();
+        if ($oldUser->hasEmail()) {
+
+            $this->log()->info(
+                __FUNCTION__,
+                [
+                    'curUserEmail' => $curUserEmail,
+                    'oldUserEmail' => $oldUserEmail,
+                    'transactionIdOld' => $transactionIdOld,
+                    'oldUserId' => $oldUser->getId(),
+                    'curUserId' => $curUser->getId(),
+                ]
+            );
+
+            // отправка почты на старый email
+            try {
+                $this->sendSystemTransactional($transactionIdOld, $oldUserEmail);
+            } catch (ExpertsenderServiceApiException $e) {
+            }
+        }
+        return false;
+        */
     }
 
     /**

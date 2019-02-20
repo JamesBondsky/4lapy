@@ -17,7 +17,7 @@ class OrderParameter
     /**
      * Массив объектов ОбъектКорзины.Товар
      * (в случае, когда ОбъектПараметрЗаказа присылается с сервера, например, при получении корзины)
-     * @Serializer\Groups("response")
+     *
      * @Serializer\SerializedName("goods")
      * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Basket\Product>")
      * @var Product[]
@@ -27,7 +27,7 @@ class OrderParameter
     /**
      * Массив объектов ОбъектКоличествоТовара
      * (в случае, когда ОбъектПараметрЗаказа отправляется на сервер в качестве параметра, например, при оформлении заказа)
-     * @Serializer\Groups("request")
+     *
      * @Serializer\SerializedName("productsQuantity")
      * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\ProductQuantity>")
      * @Serializer\SkipWhenEmpty()

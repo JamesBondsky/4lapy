@@ -7,6 +7,7 @@
 namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
@@ -21,6 +22,7 @@ use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Object\City;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryAddress;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryTime;
+use FourPaws\MobileApiBundle\Dto\Object\DeliveryVariant;
 use FourPaws\MobileApiBundle\Dto\Object\Detailing;
 use FourPaws\MobileApiBundle\Dto\Object\Order;
 use FourPaws\MobileApiBundle\Dto\Object\OrderCalculate;
@@ -28,7 +30,9 @@ use FourPaws\MobileApiBundle\Dto\Object\OrderHistory;
 use FourPaws\MobileApiBundle\Dto\Object\OrderParameter;
 use FourPaws\MobileApiBundle\Dto\Object\OrderStatus;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
+use FourPaws\MobileApiBundle\Dto\Request\UserCartDeliveryRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartOrderRequest;
+use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
 use FourPaws\PersonalBundle\Entity\OrderStatusChange;
@@ -219,6 +223,7 @@ class OrderService
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
      */
     protected function toApiFormat(OrderEntity $order, OrderSubscribe $subscription = null)
     {
@@ -349,8 +354,10 @@ class OrderService
     /**
      * @param $orderItems ArrayCollection
      * @return BasketProductCollection
-     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Main\ArgumentException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public function getBasketProducts($orderItems): BasketProductCollection
     {
@@ -359,25 +366,29 @@ class OrderService
             /**
              * @var $orderItem OrderItem
              */
-            $products[] = $this->apiBasketService->getBasketProduct($orderItem->getId(), $orderItem->getProductId(), $orderItem->getQuantity());
+            $offer = OfferQuery::getById($orderItem->getProductId());
+            $products[] = $this->apiBasketService->getBasketProduct(
+                $orderItem->getId(),
+                $offer,
+                $orderItem->getQuantity()
+            );
         }
         return new BasketProductCollection($products);
     }
 
+    /**
+     * @return array
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Sale\UserMessageException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
     public function getDeliveryVariants()
     {
-        $orderStorage = (new OrderStorage());
-        $deliveries = $this->orderStorageService->getDeliveries($orderStorage);
-
-        $result = [
-            'courier' => [
-                'available' => false,
-            ],
-            'pickup' => [
-                'available' => false,
-            ]
-        ];
-
+        $deliveries = $this->orderStorageService->getDeliveries(new OrderStorage());
         $delivery = null;
         $pickup   = null;
         foreach ($deliveries as $calculationResult) {
@@ -387,46 +398,68 @@ class OrderService
                 $delivery = $calculationResult;
             }
         }
+        $courierDelivery = (new DeliveryVariant());
+        $pickupDelivery = (new DeliveryVariant());
 
         if ($delivery) {
-            $result['courier']['available'] = true;
-            $result['courier']['date'] = DeliveryTimeHelper::showTime($delivery);
+            $courierDelivery
+                ->setAvailable(true)
+                ->setDate(DeliveryTimeHelper::showTime($delivery));
         }
         if ($pickup) {
-            $result['pickup']['available'] = true;
-            $result['pickup']['date'] = DeliveryTimeHelper::showTime(
-                $pickup,
-                [
-                    'SHOW_TIME' => !$this->appDeliveryService->isDpdPickup($pickup),
-                ]
-            );
+            $pickupDelivery
+                ->setAvailable(true)
+                ->setDate(DeliveryTimeHelper::showTime(
+                    $pickup,
+                    [
+                        'SHOW_TIME' => !$this->appDeliveryService->isDpdPickup($pickup),
+                    ]
+                ));
         }
 
-        $selectedDelivery = $this->orderStorageService->getSelectedDelivery($orderStorage);
-        $orderStorage->setDeliveryId($selectedDelivery->getDeliveryId());
+        return [$courierDelivery, $pickupDelivery];
+    }
+
+    public function getDeliveryDetails()
+    {
+        [$courierDelivery, $pickupDelivery] = $this->getDeliveryVariants();
+        $result = [
+            'pickup' => $pickupDelivery,
+            'courier' => $courierDelivery,
+        ];
         $basketProducts = $this->apiBasketService->getBasketProducts();
-
-        // итоговые суммы
-        $result['cart_calc'] = $this->getOrderCalculate($basketProducts);
-
+        $orderStorage = (new OrderStorage());
+        $deliveries = $this->orderStorageService->getDeliveries($orderStorage);
+        $delivery = null;
+        foreach ($deliveries as $calculationResult) {
+            if ($this->appDeliveryService->isDelivery($calculationResult)) {
+                $delivery = $calculationResult;
+            }
+        }
+        $selectedDelivery = $delivery;
         // не разделенный заказ
-        $result['singleOrder'] = $this->getOrderDeliveryInfo($selectedDelivery, $basketProducts);
+        $result['singleOrder'] = $this->getDeliveryCourierDetails($selectedDelivery, $basketProducts);
+        // есть недоступные к курьерке товары (их нет на складе)
+        $result['hasDelayedGoods'] = count($basketProducts) > count($result['singleOrder']['goods']);
 
         // разделенный заказ
         $result['canSplitOrder'] = $this->orderSplitService->canSplitOrder($selectedDelivery);
         $result['splitOrder'] = [];
         if ($result['canSplitOrder']) {
             [$splitResult1, $splitResult2] = $this->orderSplitService->splitOrder($orderStorage);
-            $result['splitOrder'][] = $this->getOrderDeliveryInfo($splitResult1->getDelivery(), $basketProducts);
-            $result['splitOrder'][] = $this->getOrderDeliveryInfo($splitResult2->getDelivery(), $basketProducts);
+            $result['splitOrder'][] = $this->getDeliveryCourierDetails($splitResult1->getDelivery(), $basketProducts);
+            $result['splitOrder'][] = $this->getDeliveryCourierDetails($splitResult2->getDelivery(), $basketProducts);
         }
+        $orderStorage->setDeliveryId($selectedDelivery->getDeliveryId());
 
+        // итоговые суммы
+        $result['cart_calc'] = $this->getOrderCalculate($basketProducts);
         return [
             'cartDelivery' => $result
         ];
     }
 
-    protected function getOrderDeliveryInfo(CalculationResultInterface $delivery, BasketProductCollection $basketProducts)
+    protected function getDeliveryCourierDetails(CalculationResultInterface $delivery, BasketProductCollection $basketProducts)
     {
         $result = [];
         $deliveryResult = $delivery->getStockResult()->getOrderable();
@@ -456,23 +489,26 @@ class OrderService
     protected function getDeliveryRanges(array $deliveries)
     {
         $dates = [];
-        foreach ($deliveries as $i => $delivery) {
+        foreach ($deliveries as $deliveryDateIndex => $delivery) {
             /** @var DeliveryResult $delivery */
             $deliveryDate = $delivery->getDeliveryDate();
             $intervals = $delivery->getAvailableIntervals();
             $dayOfTheWeek = FormatDate('l', $delivery->getDeliveryDate()->getTimestamp());
             if (!empty($intervals) && count($intervals)) {
-                foreach ($intervals as $interval) {
+                foreach ($intervals as $deliveryIntervalIndex => $interval) {
                     /** @var Interval $interval */
                     $dates[] = (new DeliveryTime())
                         ->setTitle($dayOfTheWeek . ' ' . $interval)
                         ->setDeliveryDate($deliveryDate)
+                        ->setDeliveryDateIndex($deliveryDateIndex)
+                        ->setDeliveryIntervalIndex($deliveryIntervalIndex)
                     ;
                 }
             } else {
                 $dates[] = (new DeliveryTime())
                     ->setTitle($dayOfTheWeek)
                     ->setDeliveryDate($deliveryDate)
+                    ->setDeliveryDateIndex($deliveryDateIndex)
                 ;
             }
         }

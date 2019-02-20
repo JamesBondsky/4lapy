@@ -12,9 +12,9 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\MobileApiBundle\Dto\Request\PostUserCartRequest;
 use FourPaws\MobileApiBundle\Dto\Request\PutUserCartRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartCalcRequest;
+use FourPaws\MobileApiBundle\Dto\Request\UserCartDeliveryRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartOrderRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
-use FourPaws\MobileApiBundle\Dto\Response\DeliveryVariantsResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserCartCalcResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserCartOrderResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserCartResponse;
@@ -87,16 +87,17 @@ class BasketController extends FOSRestController
 
     /**
      * @Rest\Get("/user_cart/")
-     * @Rest\View()
+     * @Rest\View(serializerGroups={"Default", "basket"})
      *
      * @param UserCartRequest $userCartRequest
      * @return UserCartResponse
+     * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
      * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\External\Exception\ManzanaPromocodeUnavailableException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
-     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
      */
     public function getUserCartAction(UserCartRequest $userCartRequest)
     {
@@ -130,20 +131,23 @@ class BasketController extends FOSRestController
     /**
      * Добавление товаров в корзину (принимает массив id товаров и количество каждого товара)
      * @Rest\Post(path="/user_cart/")
-     * @Rest\View()
+     * @Rest\View(serializerGroups={"Default", "basket"})
      * @param PostUserCartRequest $postUserCartRequest
      * @return UserCartResponse
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
      * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\NotSupportedException
      * @throws \Bitrix\Main\ObjectNotFoundException
      * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Sale\UserMessageException
+     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
      * @throws \FourPaws\External\Exception\ManzanaPromocodeUnavailableException
      * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
-     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
      */
     public function postUserCartAction(PostUserCartRequest $postUserCartRequest)
     {
@@ -159,16 +163,22 @@ class BasketController extends FOSRestController
     /**
      * обновление количества товаров в корзине, 0 - удаление (принимает id товара из корзины (basketItemId) и количество)
      * @Rest\Put(path="/user_cart/")
-     * @Rest\View()
+     * @Rest\View(serializerGroups={"Default", "basket"})
      * @param PutUserCartRequest $putUserCartRequest
      * @return UserCartResponse
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
      * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Sale\UserMessageException
+     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
      * @throws \FourPaws\External\Exception\ManzanaPromocodeUnavailableException
      * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
-     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
      */
     public function putUserCartAction(PutUserCartRequest $putUserCartRequest)
     {
@@ -269,9 +279,12 @@ class BasketController extends FOSRestController
     /**
      * @Rest\Get(path="/user_cart_delivery/")
      * @Rest\View()
+     * @return Response
      */
     public function getUserCartDeliveryAction()
     {
-        return new Response($this->apiOrderService->getDeliveryVariants());
+        return new Response(
+            $this->apiOrderService->getDeliveryDetails()
+        );
     }
 }

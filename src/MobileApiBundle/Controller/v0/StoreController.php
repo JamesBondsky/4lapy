@@ -74,24 +74,6 @@ class StoreController extends FOSRestController
     }
 
     /**
-     * Используется в корзине для проверки доступности товара в выбранном магазине
-     *
-     * @Rest\Get(path="/shop_goods_available/")
-     * @Rest\View(serializerGroups={"Default", "withPickupInfo"})
-     * @param StoreProductAvailableRequest $storeProductAvailableRequest
-     *
-     * @throws \Exception
-     * @return StoreProductAvailableResponse
-     */
-    public function getStoreProductAvailableAction(StoreProductAvailableRequest $storeProductAvailableRequest): StoreProductAvailableResponse
-    {
-        $storeCode = $storeProductAvailableRequest->getStoreCode();
-        $shop = $this->apiStoreService->getOneWithProductsInBasketAvailability($storeCode);
-
-        return new StoreProductAvailableResponse($shop);
-    }
-
-    /**
      * Используется в корзине для вывода возможных магазинов для самовывоза
      *
      * @Rest\Get(path="/shops_list_availableV2/")
@@ -111,4 +93,23 @@ class StoreController extends FOSRestController
             $this->apiStoreService->getListWithProductsInBasketAvailability()
         );
     }
+
+    /**
+     * Используется в корзине для проверки доступности товара в выбранном магазине
+     *
+     * @Rest\Get(path="/shop_goods_available/")
+     * @Rest\View(serializerGroups={"Default", "withPickupInfo"})
+     * @param StoreProductAvailableRequest $storeProductAvailableRequest
+     *
+     * @throws \Exception
+     * @return StoreProductAvailableResponse
+     */
+    public function getStoreProductAvailableAction(StoreProductAvailableRequest $storeProductAvailableRequest): StoreProductAvailableResponse
+    {
+        $storeCode = $storeProductAvailableRequest->getStoreCode();
+        $shop = $this->apiStoreService->getOneWithProductsInBasketAvailability($storeCode);
+
+        return new StoreProductAvailableResponse($shop);
+    }
+
 }

@@ -7,16 +7,8 @@ use JMS\Serializer\Annotation as Serializer;
 class DeliveryTime
 {
     /**
-     * id интервала в рамках одного дня
-     * @Serializer\Type("int")
-     * @Serializer\SerializedName("id")
-     * @var int
-     */
-    protected $id;
-
-    /**
      * @Serializer\Type("DateTime<'d.m.Y'>")
-     * @Serializer\SerializedName("delivery_date")
+     * @Serializer\SerializedName("deliveryDate")
      * @var \DateTime
      */
     protected $deliveryDate;
@@ -29,22 +21,18 @@ class DeliveryTime
     protected $title = '';
 
     /**
-     * @return int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("deliveryDateIndex")
+     * @var int
      */
-    public function getId(): int
-    {
-        return $this->id;
-    }
+    protected $deliveryDateIndex;
 
     /**
-     * @param int $id
-     * @return DeliveryTime
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("deliveryIntervalIndex")
+     * @var int
      */
-    public function setId(int $id): DeliveryTime
-    {
-        $this->id = $id;
-        return $this;
-    }
+    protected $deliveryIntervalIndex;
 
     /**
      * @return \DateTime
@@ -79,6 +67,42 @@ class DeliveryTime
     public function setTitle(string $title): DeliveryTime
     {
         $this->title = $title;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDeliveryDateIndex(): int
+    {
+        return $this->deliveryDateIndex;
+    }
+
+    /**
+     * @param int $deliveryDateIndex
+     * @return DeliveryTime
+     */
+    public function setDeliveryDateIndex(int $deliveryDateIndex): DeliveryTime
+    {
+        $this->deliveryDateIndex = $deliveryDateIndex;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDeliveryIntervalIndex(): int
+    {
+        return $this->deliveryIntervalIndex;
+    }
+
+    /**
+     * @param int $deliveryIntervalIndex
+     * @return DeliveryTime
+     */
+    public function setDeliveryIntervalIndex(int $deliveryIntervalIndex): DeliveryTime
+    {
+        $this->deliveryIntervalIndex = $deliveryIntervalIndex;
         return $this;
     }
 }

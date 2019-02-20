@@ -108,7 +108,6 @@ class ShortProduct
      * @var int
      * @Serializer\Type("int")
      * @Serializer\SerializedName("bonus_user")
-     * @Serializer\Groups({"specialOffers", "productsList", "product"})
      */
     protected $bonusUser = 0;
 
@@ -118,25 +117,36 @@ class ShortProduct
      * @var int
      * @Serializer\Type("int")
      * @Serializer\SerializedName("bonus_all")
-     * @Serializer\Groups({"specialOffers", "productsList", "product"})
      */
     protected $bonusAll = 0;
 
     /**
+     * Является ли товаром под заказ?
+     *
      * @var bool
      * @Serializer\Type("bool")
      * @Serializer\SerializedName("isByRequest")
-     * @Serializer\Groups({"specialOffers", "productsList", "product"})
      */
     protected $isByRequest = false;
 
     /**
+     * Доступен ли товар к покупке (есть в магазине, либо на складе)
+     *
      * @var bool
      * @Serializer\Type("bool")
      * @Serializer\SerializedName("isAvailable")
-     * @Serializer\Groups({"specialOffers", "productsList", "product"})
      */
     protected $isAvailable = false;
+
+    /**
+     * Только самовывоз (товара нет на складе, есть только в некоторых магазинах)
+     *
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("pickupOnly")
+     * @Serializer\Groups({"basket"})
+     */
+    protected $pickupOnly = false;
 
     /**
      * @return int
@@ -398,6 +408,24 @@ class ShortProduct
     public function setIsAvailable(bool $isAvailable)
     {
         $this->isAvailable = $isAvailable;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getPickupOnly(): bool
+    {
+        return $this->pickupOnly;
+    }
+
+    /**
+     * @param bool $pickupOnly
+     * @return $this
+     */
+    public function setPickupOnly(bool $pickupOnly)
+    {
+        $this->pickupOnly = $pickupOnly;
         return $this;
     }
 }
