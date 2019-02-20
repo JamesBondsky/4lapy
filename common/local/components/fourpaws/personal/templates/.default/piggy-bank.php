@@ -4,8 +4,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 $activeMarks = 8;
-$typeSale = 'small'; //small-10, middle-20, large-30
-$isActiveNextType = false; // возможно ли получить следующую скидку
+$typeSale = 'large'; //small-10, middle-20, large-30
+$isActiveNextType = true; // возможно ли получить следующую скидку
 
 ?>
 
@@ -69,7 +69,9 @@ $isActiveNextType = false; // возможно ли получить следу�
             </div>
         </div>
         <div class="b-coupon-kopilka__sale">
-            <div class="b-sale-coupon-kopilka">
+            <div class="b-sale-coupon-kopilka
+                        <?php if($typeSale) { ?>b-sale-coupon-kopilka--<?= $typeSale ?><?php } ?>
+                        <?php if($isActiveNextType) { ?>b-sale-coupon-kopilka--next-sale<?php } ?>">
                 <?php if($typeSale) { ?>
                     <div class="b-sale-coupon-kopilka__top">
                         <div class="b-sale-coupon-kopilka__title">
@@ -86,9 +88,11 @@ $isActiveNextType = false; // возможно ли получить следу�
                             </div>
                             <a href="#"class="link">Отправить мне на Email</a>
                         </div>
-                        <div class="b-sale-coupon-kopilka__info">
-                            Осталось 8 марок до скидки 20%
-                        </div>
+                        <?php if(!$isActiveNextType) { ?>
+                            <div class="b-sale-coupon-kopilka__info">
+                                Осталось 8 марок до&nbsp;скидки 20%
+                            </div>
+                        <?php } ?>
                     </div>
                 <?php }else { ?>
                     <div class="b-sale-coupon-kopilka__dafault">
