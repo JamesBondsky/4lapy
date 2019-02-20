@@ -139,10 +139,7 @@ class OrderPaySystemChange extends Command implements LoggerAwareInterface
                 try {
                     $this->paymentService->processOnlinePaymentByOrderNumber($saleOrder);
                     $this->log()->info(sprintf('Processed online payment for order: %s', $saleOrder->getId()));
-                } catch (SberbankOrderNotPaidException $e) {
-                    // заказ еще можно оплатить
-                    continue;
-                } catch (SberbankOrderNotFoundException|SberbankOrderPaymentDeclinedException $e) {
+                } catch (SberbankOrderNotFoundException|SberbankOrderPaymentDeclinedException|SberbankOrderNotPaidException $e) {
                     $this->paymentService->processOnlinePaymentError($saleOrder);
                     $this->log()->info(sprintf('Changed payment system for order: %s', $saleOrder->getId()));
                 }

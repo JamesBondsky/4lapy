@@ -1,5 +1,17 @@
 # 4 лапы
 
+## Отключение почты:
+
+```
+Для того, чтобы отключить отправку почты необходимо изменить адрес в который стучится API.
+Файл: /app/config/parameters.yml
+expertsender:
+    url: 'https://api.esv2.com'
+    key: ivaacmVjzakOzRLeYjKy
+    
+https://api.esv2.com - валидный адрес    
+```
+
 ## Обновление коробки Vagrant:
 
 ```
@@ -77,7 +89,7 @@
 ## Фабрика фидов
 
 ```
-- ./bin/symfony_console b:f:f %id% --type %type% # id - ид профиля выгрузки, type - тип фида (yandex-market; google-merchant; retail-rocket)
+- ./bin/symfony_console b:f:f %id% --type %type% # id - ид профиля выгрузки, type - тип фида (yandex-market; google-merchant; retail-rocket; expert-sender)
 ```
 
 ## Сервисы вагранта

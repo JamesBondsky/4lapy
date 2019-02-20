@@ -156,6 +156,12 @@ class CatalogElementDetailComponent extends \CBitrixComponent
 
             $sectionId = (int)current($product->getSectionsIdList());
 
+            $offersXmlIds = [];
+            /** @var Offer $offer */
+            foreach ($product->getOffersSorted() as $offer) {
+                $offersXmlIds[] = $offer->getXmlId();
+            }
+
             $this->arResult = [
                 'PRODUCT'               => $product,
                 'CURRENT_OFFER'         => $currentOffer,
@@ -166,7 +172,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                     $this->ecommerceService->renderScript(
                         $this->ecommerceService->buildDetailFromOffer($currentOffer, 'Карточка товара')
                     ),
-                    $this->retailRocketService->renderDetailView($currentOffer->getXmlId())
+                    $this->retailRocketService->renderDetailView(implode(',', $offersXmlIds))
                 ),
                 'BASKET_LINK_EVENT'     => \sprintf(
                     'onmousedown="%s"',

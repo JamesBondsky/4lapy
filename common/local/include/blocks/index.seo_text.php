@@ -7,7 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 ?>
 <section class="b-adventure">
-    <h2 class="b-title">ПОЧЕМУ НАШИ КЛИЕНТЫ ВЫБИРАЮТ ИНТЕРНЕТ-ЗООМАГАЗИН &laquo;ЧЕТЫРЕ ЛАПЫ&raquo;?</h2>
+    <h1 class="b-title b-title--h1-main">ПОЧЕМУ НАШИ КЛИЕНТЫ ВЫБИРАЮТ ИНТЕРНЕТ-ЗООМАГАЗИН &laquo;ЧЕТЫРЕ ЛАПЫ&raquo;?</h1>
     <p>
         Интернет-магазин зоотоваров &laquo;Четыре Лапы&raquo;&nbsp;&mdash; это зоомагазин с доставкой.
         Мы предлагаем широкий перечень товаров и услуг, которые обеспечат здоровье домашним любимцам,
@@ -19,7 +19,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     <dl class="b-adventure__item">
         <dt class="b-adventure__header-block">
             <span class="b-icon b-icon--adventure"><?=(new SvgDecorator('icon-range', 24, 32))?></span>
-            <h4 class="b-adventure__header">Категории товаров</h4>
+            <h3 class="b-adventure__header">Категории товаров</h3>
         </dt>
         <dd class="b-adventure__description-block">
             <div class="b-adventure__text">
@@ -41,7 +41,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     <dl class="b-adventure__item">
         <dt class="b-adventure__header-block">
             <span class="b-icon b-icon--adventure"><?=(new SvgDecorator('icon-reason', 32, 27))?></span>
-            <h4 class="b-adventure__header">Почему покупатели выбирают нас?</h4>
+            <h3 class="b-adventure__header">Почему покупатели выбирают нас?</h3>
         </dt>
         <dd class="b-adventure__description-block">
             <div class="b-adventure__text">
@@ -66,7 +66,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     <dl class="b-adventure__item">
         <dt class="b-adventure__header-block">
             <span class="b-icon b-icon--adventure"><?=(new SvgDecorator('icon-terms', 26, 32))?></span>
-            <h4 class="b-adventure__header">Доставка товаров для животных</h4>
+            <h3 class="b-adventure__header">Доставка товаров для животных</h3>
         </dt>
         <dd class="b-adventure__description-block">
             <div class="b-adventure__text">

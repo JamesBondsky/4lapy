@@ -18,6 +18,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\ManzanaService;
@@ -62,6 +63,11 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
     private $manzanaService;
 
     /**
+     * @var RetailRocketService
+     */
+    private $retailRocketService;
+
+    /**
      * AutoloadingIssuesInspection constructor.
      *
      * @param null|\CBitrixComponent $component
@@ -77,6 +83,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
             $this->ajaxMess = $container->get('ajax.mess');
             $this->manzanaService = $container->get('manzana.service');
+            $this->retailRocketService = $container->get(RetailRocketService::class);
         } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
             try {
                 $logger = LoggerFactory::create('component');
@@ -159,6 +166,10 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 'EMAIL_CONFIRMED' => $curUser->isEmailConfirmed(),
                 'PHONE_CONFIRMED' => $curUser->isPhoneConfirmed()
             ];
+
+            $this->arResult['ON_SUBMIT'] = \str_replace('"', '\'',
+                'if($(this).find("input[type=email]").val().indexOf("register.phone") == -1){' . $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val()') . '}'
+            );
 
             $this->includeComponentTemplate();
         }

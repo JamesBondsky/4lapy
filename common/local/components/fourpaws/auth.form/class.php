@@ -108,7 +108,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                     \sprintf(
                         '%s%s%s%s',
                         $this->dataLayerService->renderAuth(DataLayer::AUTH_TYPE_LOGIN),
-                        'if (/^(([^<>()\[\]\\.,;:\s@]+(\.[^<>()\[\]\\.,;:\s@]+)*)|(.+))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(String($(this).find("input[name=login]").val()).toLowerCase())){',
+                        'if (/^(([^<>()\[\]\\.,;:\s@]+(\.[^<>()\[\]\\.,;:\s@]+)*)|(.+))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(String($(this).find("input[name=login]").val()).toLowerCase())&&$(this).find("input[name=login]").val().indexOf("register.phone") == -1){',
                         $this->retailRocketService->renderSendEmail('$(this).find("input[name=login]").val()'),
                         '};'
                     ));

@@ -9,6 +9,7 @@ use FourPaws\Helpers\TaggedCacheHelper;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Iblock\ElementTable;
 use Bitrix\Iblock\PropertyTable;
+use Bitrix\Iblock\ElementPropertyTable;
 use Bitrix\Main\Entity\Base;
 
 
@@ -21,9 +22,11 @@ class ComparingListComponent extends \CBitrixComponent
     private $brandsIblockId;
     private $productsIblockId;
     private $offersIblockId;
+    private $shareIblockId;
 
     private $brandIds;
     private $imageIds;
+    private $offerXmlIds;
 
     public const MARK_SALE_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/s-proc.svg" alt="" role="presentation"/>';
     public const MARK_GIFT_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/s-gift.svg" alt="" role="presentation"/>';
@@ -77,13 +80,16 @@ class ComparingListComponent extends \CBitrixComponent
             $this->brandsIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::BRANDS);
             $this->productsIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS);
             $this->offersIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS);
+            $this->shareIblockId = IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES);
 
             TaggedCacheHelper::addManagedCacheTag('iblock_id_' . $this->comparingIblockId);
             TaggedCacheHelper::addManagedCacheTag('iblock_id_' . $this->brandsIblockId);
 
             $this->fetchProducts();
+            $this->fetchShares();
             $this->fetchImages();
             $this->fetchBrands();
+            $this->setShareLabels();
 
             $this->includeComponentTemplate();
         }
@@ -170,6 +176,7 @@ class ComparingListComponent extends \CBitrixComponent
             'IMAGE' => 'PROPERTY_IMAGE.PROPERTY_'.$imageProperty['ID'],
             'PRODUCT_ID' => 'PRODUCT.ID',
             'OFFER_ID' => 'OFFER.ID',
+            'OFFER_XML_ID' => 'OFFER.XML_ID',
             'WEIGHT' => 'CATALOG_PRODUCT.WEIGHT',
         ];
         $propertyFields = ['IBLOCK_ELEMENT_ID' => ['data_type' => 'integer']];
@@ -252,6 +259,10 @@ class ComparingListComponent extends \CBitrixComponent
                 $this->brandIds[] = $brandId;
             }
 
+            if(!in_array($arProduct['OFFER_XML_ID'], $this->offerXmlIds)){
+                $this->offerXmlIds[] = $arProduct['OFFER_XML_ID'];
+            }
+
             $arImage = unserialize($arProduct['IMAGE']);
 
             $imageId = $arImage['VALUE'][0];
@@ -283,6 +294,7 @@ class ComparingListComponent extends \CBitrixComponent
                 'ID' => $arProduct['ID'],
                 'SORT' => $arProduct['SORT'],
                 'CODE' => $arProduct['CODE'],
+                'XML_ID' => $arProduct['OFFER_XML_ID'],
                 'IBLOCK_SECTION_ID' => $arProduct['IBLOCK_SECTION_ID'],
                 'DETAIL_PAGE_URL' => '/comparing/'.$arProduct['IBLOCK_SECTION_ID'].'/',
                 'IMAGE' => $imageId,
@@ -341,6 +353,160 @@ class ComparingListComponent extends \CBitrixComponent
 
         $this->arResult['BRANDS'] = $arBrands;
     }
+
+    private function fetchShares() {
+        if(empty($this->offerXmlIds)){
+            return false;
+        }
+
+        $rsShareProperties = PropertyTable::getList([
+            'filter' => [
+                'IBLOCK_ID' => $this->shareIblockId,
+                'CODE' => [
+                    'LABEL',
+                    'LABEL_IMAGE',
+                    'PRODUCTS'
+                ],
+            ],
+            'select' => [
+                'ID',
+                'NAME',
+                'CODE',
+            ],
+        ]);
+
+        $shareProperties = [];
+        $propretyIds = [];
+        while($arProperty = $rsShareProperties->fetch()){
+            $shareProperties[$arProperty['CODE']] = $arProperty;
+
+            if($arProperty['CODE'] != 'PRODUCTS') {
+                $propertyIds[$arProperty['CODE']] = $arProperty['ID'];
+            }
+        }
+
+        $sharePropertiesEntity = Base::compileEntity(
+            'SHARE_PROPERTIES',
+            [
+                'ID' => ['data_type' => 'integer'],
+                'IBLOCK_PROPERTY_ID' => ['data_type' => 'integer'],
+                'IBLOCK_ELEMENT_ID'  => ['data_type' => 'integer'],
+                'VALUE'  => ['data_type' => 'string'],
+            ],
+            ['table_name' => 'b_iblock_element_property']
+        );
+
+        $rsShares = ElementTable::getList([
+            'order' => [
+                'SORT' => 'ASC',
+                'NAME' => 'ASC',
+            ],
+            'filter' => [
+                'IBLOCK_ID' => $this->shareIblockId,
+                'ACTIVE'       => 'Y',
+                '<=ACTIVE_FROM' => new \Bitrix\Main\Type\DateTime(),
+                '>ACTIVE_TO'   => new \Bitrix\Main\Type\DateTime(),
+                'PROPERTIES.VALUE' => $this->offerXmlIds,
+                'PROPERTIES.IBLOCK_PROPERTY_ID' => $shareProperties['PRODUCTS']['ID'],
+            ],
+            'select' => [
+                'ID',
+                'NAME',
+                'ELEMENT_XML_ID' => 'PROPERTIES.VALUE',
+            ],
+            'runtime' => [
+                'PROPERTIES' => [
+                    'data_type' => $sharePropertiesEntity->getDataClass(),
+                    'reference' => array('=this.ID' => 'ref.IBLOCK_ELEMENT_ID'),
+                    'join_type' => 'inner'
+                ],
+            ],
+        ]);
+
+        $arShares = [];
+        while ($arShare = $rsShares->fetch()) {
+            $arShares[$arShare['ID']] = $arShare;
+        }
+
+        if(empty($arShares)){
+            return false;
+        }
+
+        $rsProps = $sharePropertiesEntity->getDataClass()::getList([
+            'filter' => [
+                'IBLOCK_ELEMENT_ID' => array_keys($arShares),
+                'IBLOCK_PROPERTY_ID' => $propertyIds,
+            ],
+            'select' => [
+                '*',
+            ],
+        ]);
+
+        while($row = $rsProps->fetch()){
+            $code = array_search($row['IBLOCK_PROPERTY_ID'], $propertyIds);
+            $arShares[$row['IBLOCK_ELEMENT_ID']]['PROPERTIES'][$code] = $row['VALUE'];
+
+            if($code == 'LABEL_IMAGE'){
+                $this->imageIds[] = $row['VALUE'];
+            }
+        }
+
+        $this->arResult['SHARES'] = $arShares;
+    }
+
+    /**
+     * Здесь по сути повторяем методы getMarkImage и getMarkTemplate,
+     * потому что на тот момент у нас не было акций
+     */
+    private function setShareLabels() {
+        if(empty($this->arResult['SHARES'])){
+            return false;
+        }
+
+        foreach($this->arResult['PRODUCTS'] as $brandId => $arBrands){
+            foreach($arBrands as $productId => $arProduct){
+                foreach($arProduct['OFFERS'] as $offerId => $arOffer){
+                    $arShare = $this->getShare($arOffer['XML_ID']);
+
+                    if(!empty($arShare) && empty($arProduct['IMAGE_MARK'])){
+                        $imageMark = null;
+                        $imageMarkTemplate = null;
+
+                        if(!empty($arShare['PROPERTIES']['LABEL_IMAGE'])){
+                            $imageMark = '<img class="b-common-item__sticker" src="'.$this->arResult['IMAGES'][$arShare['PROPERTIES']['LABEL_IMAGE']].'" alt="" role="presentation"/>';
+                        }
+                        else if(!empty($arShare['PROPERTIES']['LABEL'])){
+                            $imageMark = $arShare['PROPERTIES']['LABEL'];
+                        }
+                        else{
+                            $imageMark = self::MARK_GIFT_IMAGE;
+                        }
+
+                        if(!empty($arShare['PROPERTIES']['LABEL_IMAGE'])){
+                            $imageMarkTemplate = self::DEFAULT_TRANSPARENT_TEMPLATE;
+                        }
+                        else{
+                            $imageMarkTemplate = self::DEFAULT_TEMPLATE;
+                        }
+
+                        $this->arResult['PRODUCTS'][$brandId][$productId]['IMAGE_MARK'] = $imageMark;
+                        $this->arResult['PRODUCTS'][$brandId][$productId]['MARK_TEMPLATE'] = $imageMarkTemplate;
+                    }
+                }
+            }
+        }
+    }
+
+    private function getShare($offerXmlId)
+    {
+        foreach ($this->arResult['SHARES'] as $arShare) {
+            if($arShare['ELEMENT_XML_ID'] == $offerXmlId){
+                return $arShare;
+            }
+        }
+        return false;
+    }
+
 
     private function fetchImages(){
         if(empty($this->imageIds)) {

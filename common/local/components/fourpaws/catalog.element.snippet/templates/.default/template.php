@@ -62,6 +62,7 @@ if (!$currentOffer->getImagesIds()) {
         $offerWithImages = $offer;
     }
 }
+
 ?>
 <div class="b-common-item <?= $arParams['NOT_CATALOG_ITEM_CLASS']
                               !== 'Y' ? ' b-common-item--catalog-item' : '' ?> js-product-item"
