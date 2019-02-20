@@ -4,7 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 $activeMarks = 8;
-$typeSale = 'large'; //small-10, middle-20, large-30
+$typeSale = 'small'; //small-10, middle-20, large-30
 $isActiveNextType = true; // возможно ли получить следующую скидку
 
 ?>
@@ -13,13 +13,14 @@ $isActiveNextType = true; // возможно ли получить следую
 <div class="b-kopilka">
     <h2 class="b-title b-kopilka__title">Копилка-собиралка. Копи марки, покупай со скидкой до -30%!</h2>
 
-    <div class="b-coupon-kopilka <?php if($typeSale) { ?>b-coupon-kopilka--<?= $typeSale ?><?php } ?>">
+    <div class="b-coupon-kopilka <?php if($typeSale) { ?>b-coupon-kopilka--<?= $typeSale ?><?php } ?> <?php if($isActiveNextType && ($typeSale != 'large')) { ?>b-coupon-kopilka--next-sale<?php } ?>">
         <div class="b-coupon-kopilka__marks">
             <div class="top-marks-mobile">
                 <div class="top-marks-mobile__logo"></div>
                 <div class="top-marks-mobile__title">
                     Мои марки 25/<span class="top-marks-mobile__title-all-count">25</span>
                 </div>
+                <div class="top-marks-mobile__btn" data-toggle-marks-mobile-kopilka="true"></div>
             </div>
             <div class="b-coupon-kopilka__marks-content" data-content-marks-mobile-kopilka="true">
                 <div class="list-coupon-marks__wrap">
@@ -69,14 +70,12 @@ $isActiveNextType = true; // возможно ли получить следую
             </div>
         </div>
         <div class="b-coupon-kopilka__sale">
-            <div class="b-sale-coupon-kopilka
-                        <?php if($typeSale) { ?>b-sale-coupon-kopilka--<?= $typeSale ?><?php } ?>
-                        <?php if($isActiveNextType) { ?>b-sale-coupon-kopilka--next-sale<?php } ?>">
+            <div class="b-sale-coupon-kopilka <?php if($typeSale) { ?>b-sale-coupon-kopilka--<?= $typeSale ?><?php } ?> <?php if($isActiveNextType && ($typeSale != 'large')) { ?>b-sale-coupon-kopilka--next-sale<?php } ?>">
                 <?php if($typeSale) { ?>
                     <div class="b-sale-coupon-kopilka__top">
                         <div class="b-sale-coupon-kopilka__title">
                             <span class="persent">10%</span>
-                            <span>Скидка</span>
+                            <span>Ваша скидка</span>
                         </div>
                         <div class="b-sale-coupon-kopilka__digital-code">
                             <span class="text">ABC123DFE4567</span>
@@ -102,11 +101,11 @@ $isActiveNextType = true; // возможно ли получить следую
                         <span class="b-sale-coupon-kopilka__dafault-count">6 марок</span>
                     </div>
                 <?php } ?>
-                <?php if($isActiveNextType) { ?>
+                <?php if($isActiveNextType && ($typeSale != 'large')) { ?>
                     <div class="b-sale-coupon-kopilka__bottom">
                         <div class="b-sale-coupon-kopilka__title">
-                            <span class="persent">10%</span>
-                            <span>Скидка</span>
+                            <span class="persent">20%</span>
+                            <span>Получить скидку</span>
                         </div>
                         <div class="b-sale-coupon-kopilka__btn-wrap">
                             <div class="b-sale-coupon-kopilka__btn">Обменять 15 марок</div>
