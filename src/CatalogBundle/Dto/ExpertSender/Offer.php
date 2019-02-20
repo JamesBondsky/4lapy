@@ -1,6 +1,6 @@
 <?php
 
-namespace FourPaws\CatalogBundle\Dto\Yandex;
+namespace FourPaws\CatalogBundle\Dto\ExpertSender;
 
 use Doctrine\Common\Annotations\Annotation\Required;
 use Doctrine\Common\Collections\Collection;
@@ -9,7 +9,7 @@ use JMS\Serializer\Annotation as Serializer;
 /**
  * Class Offer
  *
- * @package FourPaws\CatalogBundle\Dto\Yandex
+ * @package FourPaws\CatalogBundle\Dto\ExpertSender
  *
  * @Serializer\XmlRoot("offer")
  */
@@ -47,6 +47,14 @@ class Offer
      *
      * @var float
      */
+    protected $oldprice;
+
+    /**
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Type("float")
+     *
+     * @var float
+     */
     protected $price;
 
     /**
@@ -70,7 +78,7 @@ class Offer
      *
      * @Serializer\SerializedName("delivery-options")
      * @Serializer\XmlList(inline=false, entry="option")
-     * @Serializer\Type("ArrayCollection<FourPaws\CatalogBundle\Dto\Yandex\DeliveryOption>")
+     * @Serializer\Type("ArrayCollection<FourPaws\CatalogBundle\Dto\ExpertSender\DeliveryOption>")
      *
      * @var DeliveryOption[]|Collection
      */
@@ -189,7 +197,7 @@ class Offer
      *
      * @Serializer\SerializedName("param")
      * @Serializer\XmlList(inline=true, entry="param")
-     * @Serializer\Type("ArrayCollection<FourPaws\CatalogBundle\Dto\Yandex\Param>")
+     * @Serializer\Type("ArrayCollection<FourPaws\CatalogBundle\Dto\ExpertSender\Param>")
      *
      * @var Param[]|Collection
      */
@@ -271,6 +279,26 @@ class Offer
     public function setPrice(float $price): Offer
     {
         $this->price = $price;
+
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getOldPrice(): float
+    {
+        return $this->oldprice;
+    }
+
+    /**
+     * @param float $price
+     *
+     * @return Offer
+     */
+    public function setOldPrice(float $price): Offer
+    {
+        $this->oldprice = $price;
 
         return $this;
     }
