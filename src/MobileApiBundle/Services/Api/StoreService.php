@@ -1,7 +1,7 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
+/**
+ * @copyright Copyright (c) NotAgency
  */
 
 namespace FourPaws\MobileApiBundle\Services\Api;
@@ -13,7 +13,6 @@ use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
@@ -21,7 +20,6 @@ use FourPaws\MobileApiBundle\Dto\Object\Store\Store as ApiStore;
 use FourPaws\MobileApiBundle\Dto\Object\Store\StoreService as ApiStoreServiceDto;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListRequest;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
-use FourPaws\SaleBundle\Enum\OrderStorage;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -177,42 +175,6 @@ class StoreService
         });
     }
 
-    /**
-     * @param $storeCode
-     * @return ApiStore
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\NotImplementedException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \Bitrix\Sale\UserMessageException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
-     * @throws \FourPaws\SaleBundle\Exception\OrderStorageSaveException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
-     */
-    public function getOneWithProductsInBasketAvailability($storeCode)
-    {
-        $this->checkBasketEmptiness();
-        $storage = $this->orderStorageService->getStorage();
-        $shopsInfo = $this->saleShopInfoService->getOneShopInfo(
-            $storeCode,
-            $storage,
-            $this->orderStorageService->getPickupDelivery($storage)
-        );
-        $shops = $shopsInfo->getShops();
-        if ($shops->isEmpty()) {
-            throw new RuntimeException("Магазин с кодом $storeCode не найден в текущей локации и для данной комбинации товаров");
-        }
-        return $shops->map(function (SaleBundleShop $shop) use($storage) {
-            $pickupData = $this->getPickupData($shop);
-            return $this->saleBundleShopToApiFormat($shop, $pickupData);
-        })->current();
-    }
-
     protected function getParams(StoreListRequest $storeListRequest)
     {
         return [
@@ -308,12 +270,11 @@ class StoreService
     /**
      * Форматирует магазин для списка в чекауте
      * @param SaleBundleShop $shop
-     * @param array $pickupData
      * @return ApiStore
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    protected function saleBundleShopToApiFormat(SaleBundleShop $shop, array $pickupData = [])
+    protected function saleBundleShopToApiFormat(SaleBundleShop $shop)
     {
         $apiStore = (new ApiStore())
             ->setCode($shop->getXmlId())
@@ -330,12 +291,9 @@ class StoreService
             ->setPickupAllGoodsFullDate($shop->getFullPickupDate())
             ->setPickupFewGoodsShortDate($shop->getPickupDateShortFormat())
             ->setPickupFewGoodsFullDate($shop->getPickupDate())
+            ->setAvailability($shop->getAvailability())
             ->setAvailableGoods($this->convertToBasketProductCollection($shop->getAvailableItems()))
             ->setDelayedGoods($this->convertToBasketProductCollection($shop->getDelayedItems()));
-        if ($pickupData) {
-            $apiStore->canPickupPartially = $pickupData['PARTIAL_PICKUP_AVAILABLE'];
-            $apiStore->canSplitOrder = $pickupData['SPLIT_PICKUP_AVAILABLE'];
-        }
         return $apiStore;
     }
 
@@ -427,71 +385,6 @@ class StoreService
             $service->setImage($image);
 
             $result[] = $service;
-        }
-        return $result;
-    }
-
-    /**
-     * @param SaleBundleShop $shop
-     * @param OrderStorage $orderStorage
-     * @return array
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\NotImplementedException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \Bitrix\Sale\UserMessageException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
-     */
-    protected function getPickupData(SaleBundleShop $shop)
-    {
-        $result = [];
-        $orderStorage = new \FourPaws\SaleBundle\Entity\OrderStorage();
-        $deliveries = $this->orderStorageService->getDeliveries($orderStorage);
-
-        $pickup = null;
-        foreach ($deliveries as $calculationResult) {
-            if ($this->deliveryService->isPickup($calculationResult)) {
-                $pickup = $calculationResult;
-            }
-        }
-
-        if (null !== $pickup) {
-            /** @var PickupResultInterface $pickup */
-            $selectedShopCode = $shop->getXmlId();
-            $shops            = $pickup->getStockResult()->getStores();
-            if ($selectedShopCode && isset($shops[$selectedShopCode])) {
-                $pickup->setSelectedShop($shops[$selectedShopCode]);
-            }
-
-            // $result['SELECTED_SHOP'] = $pickup->getSelectedShop();
-
-            /*if ($pickup->getSelectedShop()->getMetro()) {
-                $result['METRO'] = $this->storeService->getMetroInfo(
-                    ['ID' => $pickup->getSelectedShop()->getMetro()]
-                );
-            }*/
-            $splitStockResult = $this->orderSplitService->splitStockResult($pickup);
-            $available        = $splitStockResult->getAvailable();
-            $delayed          = $splitStockResult->getDelayed();
-
-            $canGetPartial = $this->orderSplitService->canGetPartial($pickup);
-
-            if ($canGetPartial) {
-                $available = $this->orderSplitService->recalculateStockResult($available);
-            }
-
-            // $result['PARTIAL_PICKUP'] = $available->isEmpty() ? null : (clone $pickup)->setStockResult($available);
-
-            $result['PARTIAL_PICKUP_AVAILABLE']  = $canGetPartial;
-            $result['SPLIT_PICKUP_AVAILABLE']    = $this->orderSplitService->canSplitOrder($pickup);
-            // $result['PICKUP_STOCKS_AVAILABLE']   = $available;
-            // $result['PICKUP_STOCKS_DELAYED']     = $delayed;
         }
         return $result;
     }

@@ -166,22 +166,13 @@ class Store
     protected $delayedGoods;
 
     /**
-     * @var bool
+     * @var string
      *
-     * @Serializer\SerializedName("canSplitOrder")
-     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("availability")
+     * @Serializer\Type("string")
      * @Serializer\Groups({"withPickupInfo"})
      */
-    public $canSplitOrder;
-
-    /**
-     * @var bool
-     *
-     * @Serializer\SerializedName("canPickupPartially")
-     * @Serializer\Type("bool")
-     * @Serializer\Groups({"withPickupInfo"})
-     */
-    public $canPickupPartially;
+    protected $availability;
 
     /**
      * @param string $code
@@ -577,4 +568,23 @@ class Store
         return $this;
     }
 
+    /**
+     * @return string
+     */
+    public function getAvailability(): string
+    {
+        return $this->availability;
+    }
+
+    /**
+     * @param string $availability
+     *
+     * @return Store
+     */
+    public function setAvailability(string $availability): Store
+    {
+        $this->availability = $availability;
+
+        return $this;
+    }
 }
