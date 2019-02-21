@@ -600,6 +600,9 @@ class DeliverySchedule extends Base implements \Serializable
         }
 
         /**
+         * Ищем ближайший день для формирования заказа
+         * и соответствующий день отгрузки
+         *
          * @param DateTime $from
          * @return null|DateTime
          */
@@ -609,12 +612,7 @@ class DeliverySchedule extends Base implements \Serializable
             /** @var DateTime[] $results */
             $orderDates = [];
 
-            /**
-             * Ищем ближайший день для формирования заказа
-             * и соответствующий день отгрузки
-             *
-             * @var int $day
-             */
+            /** @var int $day */
             foreach ($this->getDaysOfWeek() as $key => $day) {
                 $date = clone $from;
                 $diff = $day - $fromDay;
@@ -678,7 +676,18 @@ class DeliverySchedule extends Base implements \Serializable
                     $weekDates[] = ($weekDate > $date) ? $weekDate : $date;
                 }
 
-                $result = !empty($weekDates) ? $getByDay(min($weekDates)) : null;
+                /**
+                 * Если график типа 2, то день заказа считается за неделю до недели отгрузки
+                 */
+                if(!empty($weekDates)){
+                    $minDate = min($weekDates);
+                    $minDate->modify('-1 week');
+                    $result = $getByDay($minDate);
+                }
+                else{
+                    $result = null;
+                }
+
                 break;
             case self::TYPE_WEEKLY:
                 $result = $getByDay($from);
