@@ -3,6 +3,7 @@
 namespace FourPaws\PersonalBundle\AjaxController;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -93,14 +94,19 @@ class OrderController extends Controller implements LoggerAwareInterface
             $firstOrderDateUpdate = \DateTime::createFromFormat('d.m.Y H:i:s', $firstOrder->getDateUpdate()->toString());
             $currentMinusMonthDate = (new \DateTime)->modify('-1 month');
             $activeTitleShow = false;
-            if ($firstOrderDateUpdate >= $currentMinusMonthDate) {
+
+            /** @var OrderService $orderService */
+            $orderService = Application::getInstance()->getContainer()->get('order.service');
+            $closedOrderStatuses = $orderService->getClosedOrderStatuses();
+
+            if ($firstOrderDateUpdate >= $currentMinusMonthDate && !in_array($firstOrder->getStatusId(), $closedOrderStatuses, true)) {
                 $html .= '<div class="b-account__title" >Текущие</div ><ul class="b-account__accordion-order-list">';
                 $activeTitleShow = true;
             }
             $historyTitleShow = false;
             foreach ($orders as $order) {
                 $orderDateUpdate = \DateTime::createFromFormat('d.m.Y H:i:s', $order->getDateUpdate()->toString());
-                if ($orderDateUpdate < $currentMinusMonthDate && !$historyTitleShow) {
+                if (($orderDateUpdate < $currentMinusMonthDate || in_array($order->getStatusId(), $closedOrderStatuses, true)) && !$historyTitleShow) {
                     $historyTitleShow = true;
                     if ($activeTitleShow) {
                         $html .= '</ul>';

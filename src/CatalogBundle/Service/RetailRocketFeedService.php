@@ -240,7 +240,7 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
      */
     public function addOffer(Offer $offer, ArrayCollection $collection, string $host): void
     {
-        $currentImage = (new FullHrefDecorator($offer->getImages()
+        $currentImage = (new FullHrefDecorator($offer->getResizeImages(240, 240)
                                                      ->first()
                                                      ->getSrc()))->setHost($host)->__toString();
         $detailPath = (new FullHrefDecorator($offer->getDetailPageUrl()))->setHost($host)->__toString();
@@ -262,14 +262,11 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
                                                            ->getDetailText()
                                                            ->getText()), 0, 2990))
                 ->setAvailable($offer->isAvailable())
+                ->setGroupId($offer->getProduct()->getId())
                 ->setPrice($offer->getPrice())
                 ->setPicture($currentImage)
                 ->setUrl($detailPath)
                 ->setVendor($offer->getProduct()->getBrandName());
-
-        if ($combination = $offer->getFlavourCombination() ?: $offer->getColourCombination()) {
-            $rrOffer->setGroupId($combination);
-        }
 
         $helper = new YmlParameterHelper(
             Parameter::class,

@@ -42,10 +42,10 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_TAB_HEADER_VIEW) ?>
        href="javascript:void(0);"
        title="Отзывы"
        data-tab="reviews">
-        <span class="b-tab-title__text">
+        <h2 class="b-tab-title__text">
             Отзывы
             <span class="b-tab-title__number">(<?= $arResult['COUNT_COMMENTS'] ?>)</span>
-        </span>
+        </h2>
     </a>
 </li>
 <?php $this->EndViewTarget();

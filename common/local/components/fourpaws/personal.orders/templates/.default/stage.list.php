@@ -2,7 +2,9 @@
 
 use Bitrix\Main\UI\PageNavigation;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\App\Application;
 use FourPaws\PersonalBundle\Entity\Order;
+use FourPaws\PersonalBundle\Service\OrderService;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -30,9 +32,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             $firstOrderDateUpdate = \DateTime::createFromFormat('d.m.Y H:i:s', $firstOrder->getDateUpdate()->toString());
             $currentMinusMonthDate = (new \DateTime)->modify('-1 month');
             $activeTitleShow = false;
-            ?>
-            <?
-            if ($firstOrderDateUpdate >= $currentMinusMonthDate){ ?>
+
+            /** @var OrderService $orderService */
+            $orderService = Application::getInstance()->getContainer()->get('order.service');
+            $closedOrderStatuses = $orderService->getClosedOrderStatuses();
+
+            if ($firstOrderDateUpdate >= $currentMinusMonthDate && !in_array($firstOrder->getStatusId(), $closedOrderStatuses, true)){ ?>
             <div class="b-account__title">Текущие</div>
             <ul class="b-account__accordion-order-list">
                 <?
@@ -46,7 +51,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                 as $order) {
                 $orderDateUpdate = \DateTime::createFromFormat('d.m.Y H:i:s', $order->getDateUpdate()->toString());
                 ?>
-                <? if ($orderDateUpdate < $currentMinusMonthDate && !$historyTitleShow){ ?>
+                <? if (($orderDateUpdate < $currentMinusMonthDate || in_array($order->getStatusId(), $closedOrderStatuses, true)) && !$historyTitleShow){ ?>
                 <?
                 $historyTitleShow = true;
                 if ($activeTitleShow) { ?>

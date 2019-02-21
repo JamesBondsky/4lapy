@@ -280,7 +280,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $this->arResult['ECOMMERCE_VIEW_SCRIPT'] = $this->getEcommerceViewScript($basket);
         /** @noinspection PhpUndefinedVariableInspection */
         if ($this->currentStep === OrderStorageEnum::AUTH_STEP) {
-            $this->arResult['ON_SUBMIT'] = \str_replace('"', '\'', $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val()'));
+            $this->arResult['ON_SUBMIT'] = \str_replace('"', '\'',
+                'if($(this).find("input[type=email]").val().indexOf("register.phone") == -1){' . $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val()') . '}'
+            );
         } else {
             $basket = $order->getBasket();
         }

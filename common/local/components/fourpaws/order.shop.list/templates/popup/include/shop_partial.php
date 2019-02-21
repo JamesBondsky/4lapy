@@ -42,69 +42,71 @@ use FourPaws\Decorators\SvgDecorator;
         <a class="b-link b-link--popup-back b-link--baloon js-close-order-baloon" href="javascript:void(0);">
             <?= $arResult['IS_DPD'] ? 'Пункт самовывоза' : 'Магазин' ?>
         </a>
-        <div class="b-order-info-baloon__content js-order-info-baloon-scroll" id="scroll-{{id}}">
-            <ul class="b-delivery-list">
-                <li class="b-delivery-list__item b-delivery-list__item--myself">
-                    <span class="b-delivery-list__link b-delivery-list__link--myself">
-                        <span class="b-delivery-list__col b-delivery-list__col--color b-delivery-list__col{{metroClass}}"></span>
-                        {{adress}}
-                    </span>
-                </li>
-            </ul>
-            <div class="b-input-line b-input-line--myself">
-                <div class="b-input-line__label-wrapper">
-                    <span class="b-input-line__label">
-                        Время работы
-                    </span>
-                </div>
-                <div class="b-input-line__text-line b-input-line__text-line--myself">
-                    {{schedule}}
-                </div>
-            </div>
-            <div class="b-input-line b-input-line--myself">
-                <div class="b-input-line__label-wrapper">
-                    <span class="b-input-line__label">Можно забрать {{pickup}}, кроме</span>
-                    <ol class="b-input-line__text-list">
-                        {{parts_delayed_html}}
-                    </ol>
-                </div>
-            </div>
-            <div class="b-input-line b-input-line--myself">
-                <div class="b-input-line__label-wrapper">
-                    <span class="b-input-line__label">Полный заказ будет доступен</span>
-                </div>
-                <div class="b-input-line__text-line">{{pickup_full}}
-                </div>
-            </div>
-            <div class="b-input-line b-input-line--myself">
-                <div class="b-input-line__label-wrapper">
-                    <span class="b-input-line__label">Оплата в магазине</span>
-                </div>
-                <div class="b-input-line__text-line">
-                    <span class="b-input-line__pay-type">
-                        <span class="b-icon b-icon--icon-cash">
-                            <?= new SvgDecorator('icon-cash', 16, 12) ?>
+        <div class="b-order-info-baloon__content-wrap">
+            <div class="b-order-info-baloon__content js-order-info-baloon-scroll" id="scroll-{{id}}">
+                <ul class="b-delivery-list">
+                    <li class="b-delivery-list__item b-delivery-list__item--myself">
+                        <span class="b-delivery-list__link b-delivery-list__link--myself">
+                            <span class="b-delivery-list__col b-delivery-list__col--color b-delivery-list__col{{metroClass}}"></span>
+                            {{adress}}
                         </span>
-                        <span class="b-input-line_pay-type--name">наличными</span>
-                    </span>
-                    <span class="b-input-line__pay-type">
-                        <span class="b-icon b-icon--icon-bank">
-                            <?= new SvgDecorator('icon-bank-card', 16, 12) ?>
+                    </li>
+                </ul>
+                <div class="b-input-line b-input-line--myself">
+                    <div class="b-input-line__label-wrapper">
+                        <span class="b-input-line__label">
+                            Время работы
                         </span>
-                        <span class="b-input-line_pay-type--name">банковской картой</span>
-                    </span>
+                    </div>
+                    <div class="b-input-line__text-line b-input-line__text-line--myself">
+                        {{schedule}}
+                    </div>
                 </div>
-            </div>
-            <div class="b-input-line b-input-line--pin">
-                <a class="b-link b-link--pin js-shop-link"
-                   href="javascript:void(0);"
-                   title=""
-                   data-shop-id="{{id}}">
-                    <span class="b-icon b-icon--pin">
-                        <?= new SvgDecorator('icon-geo', 16, 16) ?>
-                    </span>
-                    Показать на карте
-                </a>
+                <div class="b-input-line b-input-line--myself">
+                    <div class="b-input-line__label-wrapper">
+                        <span class="b-input-line__label">Можно забрать {{pickup}}, кроме</span>
+                        <ol class="b-input-line__text-list">
+                            {{parts_delayed_html}}
+                        </ol>
+                    </div>
+                </div>
+                <div class="b-input-line b-input-line--myself">
+                    <div class="b-input-line__label-wrapper">
+                        <span class="b-input-line__label">Полный заказ будет доступен</span>
+                    </div>
+                    <div class="b-input-line__text-line">{{pickup_full}}
+                    </div>
+                </div>
+                <div class="b-input-line b-input-line--myself">
+                    <div class="b-input-line__label-wrapper">
+                        <span class="b-input-line__label">Оплата в магазине</span>
+                    </div>
+                    <div class="b-input-line__text-line">
+                        <span class="b-input-line__pay-type">
+                            <span class="b-icon b-icon--icon-cash">
+                                <?= new SvgDecorator('icon-cash', 16, 12) ?>
+                            </span>
+                            <span class="b-input-line_pay-type--name">наличными</span>
+                        </span>
+                        <span class="b-input-line__pay-type">
+                            <span class="b-icon b-icon--icon-bank">
+                                <?= new SvgDecorator('icon-bank-card', 16, 12) ?>
+                            </span>
+                            <span class="b-input-line_pay-type--name">банковской картой</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="b-input-line b-input-line--pin">
+                    <a class="b-link b-link--pin js-shop-link"
+                       href="javascript:void(0);"
+                       title=""
+                       data-shop-id="{{id}}">
+                        <span class="b-icon b-icon--pin">
+                            <?= new SvgDecorator('icon-geo', 16, 16) ?>
+                        </span>
+                        Показать на карте
+                    </a>
+                </div>
             </div>
             <a class="b-button b-button--order-balloon js-shop-myself"
                href="javascript:void(0);"
