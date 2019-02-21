@@ -227,6 +227,7 @@ class DeliveryScheduleService implements LoggerAwareInterface
 
         /** Номера недели */
         $weekNums = $schedule->getWeekNums();
+
         if($weekNums){
             $weekNumbers = [];
             foreach($weekNums->getWeekNums() as $numWeek){
@@ -236,26 +237,31 @@ class DeliveryScheduleService implements LoggerAwareInterface
             $entity->setWeekNumbers($weekNumbers);
         }
 
+        /** Конкретные даты */
+        $manualDays = $schedule->getManualDays();
+
+        if ($manualDays->count()) {
+            /** @var $manualDay ManualDayItem */
+            $manualDay = $manualDays->first();
+
+            $entity->setDeliveryNumber($manualDays->map(function ($manualDay) {
+                /** @var $manualDay ManualDayItem */
+                return $manualDay->getNum();
+            })->toArray());
+
+            $entity->setDeliveryDates($manualDays->map(function ($manualDay) {
+                /** @var $manualDay ManualDayItem */
+                return $manualDay->getDate()->format('d.m.Y H:i:s');
+            })->toArray());
+
+            $entity->setOrderDates($manualDays->map(function ($manualDay) {
+                /** @var $manualDay ManualDayItem */
+                return $manualDay->getOrderDate()->format('d.m.Y H:i:s');
+            })->toArray());
+        }
+
         /** Дата изменения */
         $entity->setDateUpdate();
-
-
-//        $manualDays = $schedule->getManualDays();
-//
-//        if ($manualDays->count()) {
-//            /**
-//             * @var $manualDay ManualDayItem
-//             */
-//            $manualDay = $manualDays->first();
-//
-//            $entity->setDeliveryNumber($manualDay->getNum());
-//            $entity->setDeliveryDates($manualDays->map(function ($manualDay) {
-//                /**
-//                 * @var $manualDay ManualDayItem
-//                 */
-//                return $manualDay->getDate();
-//            })->toArray());
-//        }
 
         return $entity;
     }

@@ -365,7 +365,8 @@ class ScheduleResultService implements LoggerAwareInterface
             $transitionCount = self::MAX_TRANSITION_COUNT;
         }
 
-        $receivers = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
+        //$receivers = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
+        $receivers = [$this->storeService->getStoreByXmlId('DC01')];
 
         $result = [];
         /** @var Store $receiver */
@@ -487,10 +488,12 @@ class ScheduleResultService implements LoggerAwareInterface
                 $nextDeliveries = [];
                 foreach ($from as $hour => $date) {
                     /**
-                     * Дата отгрузки со склада
+                     * Дата отгрузки со склада для магазинов
                      */
-                    $shipmentDate = $this->storeService->getStoreShipmentDate($schedule->getReceiver(), $date);
-                    $shipmentDate->modify(sprintf('+%s days', $modifier));
+                    if(!$sender->isSupplier()){
+                        $shipmentDate = $this->storeService->getStoreShipmentDate($schedule->getReceiver(), $date);
+                        $shipmentDate->modify(sprintf('+%s days', $modifier));
+                    }
 
                     /**
                      * Дата поставки на $receiver

@@ -141,6 +141,14 @@ class DeliverySchedule extends Base implements \Serializable
 
     /**
      * @var DateTime[]
+     * @Serializer\SerializedName("UF_TPZ_ORDER_DATE")
+     * @Serializer\Type("array_or_false<DateTime<'d.m.Y'>>")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $orderDates;
+
+    /**
+     * @var DateTime[]
      * @Serializer\SerializedName("UF_TPZ_DELIVERY_DATE")
      * @Serializer\Type("array_or_false<DateTime<'d.m.Y'>>")
      * @Serializer\Groups(groups={"create","read","update","delete"})
@@ -415,7 +423,7 @@ class DeliverySchedule extends Base implements \Serializable
      *
      * @return DeliverySchedule
      */
-    public function setDeliveryNumber(string $deliveryNumber): DeliverySchedule
+    public function setDeliveryNumber(array $deliveryNumber): DeliverySchedule
     {
         $this->deliveryNumber = $deliveryNumber;
 
@@ -586,6 +594,23 @@ class DeliverySchedule extends Base implements \Serializable
     }
 
     /**
+     * @return DateTime[]
+     */
+    public function getOrderDates(): array
+    {
+        return $this->orderDates;
+    }
+
+    /**
+     * @param DateTime[] $orderDates
+     */
+    public function setOrderDates(array $orderDates): void
+    {
+        $this->orderDates = $orderDates;
+    }
+
+
+    /**
      * @param DateTime $from
      * @return null|DateTime
      */
@@ -668,6 +693,10 @@ class DeliverySchedule extends Base implements \Serializable
 
                 foreach ($weekNumbers as $weekNumber) {
                     $weekDate = clone $date;
+
+                    /** Если график типа 2, то день заказа считается за неделю до недели отгрузки */
+                    $weekDate->modify('-1 week');
+
                     $weekDate->setISODate($date->format('Y'), $weekNumber);
                     if ($weekDate->format('W') < $date->format('W')) {
                         $weekDate->modify('+1 year');
@@ -676,12 +705,9 @@ class DeliverySchedule extends Base implements \Serializable
                     $weekDates[] = ($weekDate > $date) ? $weekDate : $date;
                 }
 
-                /**
-                 * Если график типа 2, то день заказа считается за неделю до недели отгрузки
-                 */
+
                 if(!empty($weekDates)){
                     $minDate = min($weekDates);
-                    $minDate->modify('-1 week');
                     $result = $getByDay($minDate);
                 }
                 else{
