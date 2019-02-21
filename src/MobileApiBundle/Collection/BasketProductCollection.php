@@ -39,9 +39,10 @@ class BasketProductCollection extends ProductQuantityCollection
     }
 
     /**
+     * @param float $deliveryPrice
      * @return Detailing[]
      */
-    public function getPriceDetails(): array
+    public function getPriceDetails(float $deliveryPrice = 0): array
     {
         $price = $this->getTotalPrice()->getOld();
         $discountPrice = $this->getTotalPrice()->getActual();
@@ -64,7 +65,7 @@ class BasketProductCollection extends ProductQuantityCollection
             (new Detailing())
                 ->setId('delivery')
                 ->setTitle('Стоимость доставки')
-                ->setValue(0),
+                ->setValue($deliveryPrice),
         ];
     }
 

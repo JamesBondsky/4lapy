@@ -6,13 +6,19 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Sale\UserMessageException;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Entity\StockResult;
+use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\CurrencyHelper;
@@ -39,6 +45,7 @@ use FourPaws\PersonalBundle\Entity\OrderStatusChange;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\SaleBundle\Entity\OrderSplitResult;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\OrderService as AppOrderService;
 use FourPaws\PersonalBundle\Service\OrderService as PersonalOrderService;
@@ -319,18 +326,29 @@ class OrderService
 
     /**
      * @param BasketProductCollection $basketProducts
-     * @param string $storeCode
+     * @param float $bonusSubtractAmount
      * @return OrderCalculate
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
-    public function getOrderCalculate(BasketProductCollection $basketProducts, $storeCode = '')
+    public function getOrderCalculate(BasketProductCollection $basketProducts, float $bonusSubtractAmount)
     {
+        $deliveryPrice = 0;
+        try {
+            $storage = $this->orderStorageService->getStorage();
+            $deliveryPrice = $this->orderStorageService->getSelectedDelivery($storage)->getPrice();
+        } catch (ArgumentException $e) {
+        } catch (NotSupportedException $e) {
+        } catch (ObjectNotFoundException $e) {
+        } catch (UserMessageException $e) {
+        } catch (ApplicationCreateException $e) {
+        } catch (NotFoundException $e) {
+        } catch (\FourPaws\StoreBundle\Exception\NotFoundException $e) {
+        } catch (OrderStorageSaveException $e) {
+            $deliveryPrice = 0;
+        }
 
         $orderCalculate = (new OrderCalculate())
             ->setTotalPrice($basketProducts->getTotalPrice())
-            ->setPriceDetails($basketProducts->getPriceDetails())
+            ->setPriceDetails($basketProducts->getPriceDetails($deliveryPrice))
             ->setCardDetails([
                 (new Detailing())
                     ->setId('bonus_add')
@@ -339,14 +357,8 @@ class OrderService
                 (new Detailing())
                     ->setId('bonus_sub')
                     ->setTitle('Списано')
-                    ->setValue(0),
+                    ->setValue($bonusSubtractAmount),
             ]);
-
-        if (strlen($storeCode)) {
-            $orderCalculate
-                ->setAvailableGoods($basketProducts->getAvailableInStore($storeCode))
-                ->setNotAvailableGoods($basketProducts->getUnAvailableInStore($storeCode));
-        }
 
         return $orderCalculate;
     }

@@ -206,29 +206,12 @@ class BasketController extends FOSRestController
      * @return UserCartCalcResponse
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public function postUserCartCalcAction(UserCartCalcRequest $userCartCalcRequest)
     {
-        // если самовывоз
-        $storeCode = $userCartCalcRequest->getCartParam()->getPickupPlace();
-
-
-        if (empty($storeCode)) {
-            // если доставка курьером
-            $locationCode = $userCartCalcRequest->getCartParam()->getDeliveryPlace()->getCity()->getId();
-            // определяем базовый склад для зоны
-            $storeCode = $this->appStoreService->getBaseShops($locationCode)->current();
-        }
-
-        if (!$storeCode) {
-            // central main warehouse
-            // toDo DC01 should be a global constant somewhere
-            $storeCode = 'DC01';
-        }
-
+        $bonusSubtractAmount = $userCartCalcRequest->getBonusSubtractAmount();
         $basketProducts = $this->apiBasketService->getBasketProducts();
-        $orderCalculate = $this->apiOrderService->getOrderCalculate($basketProducts, $storeCode);
+        $orderCalculate = $this->apiOrderService->getOrderCalculate($basketProducts, $bonusSubtractAmount);
         return (new UserCartCalcResponse())
             ->setCartCalc($orderCalculate);
     }

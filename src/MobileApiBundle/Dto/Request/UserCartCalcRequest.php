@@ -6,7 +6,6 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Request;
 
-use FourPaws\MobileApiBundle\Dto\Object\OrderParameter;
 use FourPaws\MobileApiBundle\Dto\Request\Types\PostRequest;
 use FourPaws\MobileApiBundle\Dto\Request\Types\SimpleUnserializeRequest;
 use JMS\Serializer\Annotation as Serializer;
@@ -15,30 +14,29 @@ use Symfony\Component\Validator\Constraints as Assert;
 class UserCartCalcRequest implements SimpleUnserializeRequest, PostRequest
 {
     /**
-     * ОбъектПараметрЗаказа
-     * @Assert\Valid()
-     * @Serializer\SerializedName("cart_param")
-     * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\OrderParameter")
-     * @var OrderParameter
+     * @Assert\GreaterThanOrEqual(0)
+     * @Serializer\SerializedName("bonusSub")
+     * @Serializer\Type("float")
+     * @var float
      */
-    protected $cartParam;
+    protected $bonusSubtractAmount;
 
     /**
-     * @return OrderParameter
+     * @return float
      */
-    public function getCartParam(): OrderParameter
+    public function getBonusSubtractAmount(): float
     {
-        return $this->cartParam;
+        return $this->bonusSubtractAmount;
     }
 
     /**
-     * @param OrderParameter $cartParam
+     * @param float $bonusSubtractAmount
      *
      * @return UserCartCalcRequest
      */
-    public function setCartParam(OrderParameter $cartParam): UserCartCalcRequest
+    public function setBonusSubtractAmount(float $bonusSubtractAmount): UserCartCalcRequest
     {
-        $this->cartParam = $cartParam;
+        $this->bonusSubtractAmount = $bonusSubtractAmount;
         return $this;
     }
 }
