@@ -119,7 +119,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                         id="order-delivery-address"
                                         type="radio"
                                         name="deliveryId"
-                                        data-text="<?=($deliveryAllowed) ? 'Доставка курьером' : 'Экспресс доставка'?>"
+                                        data-text="Доставка курьером"
                                         value="<?= $delivery->getDeliveryId() ?>"
                                         data-delivery="<?= $delivery->getPrice() ?>"
                                         data-full="<?= $delivery->getStockResult()->getOrderable()->getPrice() ?>"
@@ -128,8 +128,8 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                        for="order-delivery-address">
                                     <span class="b-choice-recovery__main-text">
                                         <span class="b-choice-recovery__main-text">
-                                            <?=($deliveryAllowed) ? '<span class="b-choice-recovery__first">Доставка</span> <span class="b-choice-recovery__second">курьером</span>' : '<span class="b-choice-recovery__first">Экспресс</span> <span class="b-choice-recovery__second">доставка</span>'?>
-
+                                            <span class="b-choice-recovery__first">Доставка</span>
+                                            <span class="b-choice-recovery__second">курьером</span>
                                         </span>
                                     </span>
                                     <span class="b-choice-recovery__addition-text js-cur-pickup">
