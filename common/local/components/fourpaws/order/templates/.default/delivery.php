@@ -41,6 +41,12 @@ $basket = $arResult['BASKET'];
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
 
+$deliveryAllowed = true;
+if (is_null($delivery) && !is_null($deliveryDostavista)) {
+    $delivery = $deliveryDostavista;
+    $deliveryAllowed = false;
+}
+
 $selectedShopCode = '';
 $isPickup = false;
 if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode()) {
@@ -99,7 +105,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                value="<?= (!empty($arResult['SPLIT_RESULT']) && $storage->isSplit()) ? 'twoDeliveries' : 'oneDelivery' ?>"
                                class="js-no-valid">
                         <input type="hidden" name="deliveryTypeId"
-                               value="<?= $delivery->getDeliveryId() ?>"
+                               value="<?= ($delivery) ? $delivery->getDeliveryId() : $pickup->getDeliveryId(); ?>"
                                class="js-no-valid">
                         <input type="hidden" name="deliveryCoords" value="">
                         <div class="b-choice-recovery b-choice-recovery--order-step">
@@ -107,13 +113,13 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 <?
                                 $selectedDel = ($selectedDelivery->getDeliveryCode() == DeliveryService::DELIVERY_DOSTAVISTA_CODE || $selectedDelivery->getDeliveryCode() == DeliveryService::INNER_DELIVERY_CODE) ? $delivery : $selectedDelivery;
                                 ?>
-                                <input <?= $deliveryService->isDelivery($selectedDel) ? 'checked="checked"' : '' ?>
+                                <input <?= ($deliveryAllowed) ? $deliveryService->isDelivery($selectedDel) : $deliveryService->isDostavistaDelivery($selectedDel) ? 'checked="checked"' : '' ?>
                                         class="b-choice-recovery__input js-recovery-telephone js-delivery"
                                         data-set-delivery-type="<?= $delivery->getDeliveryId() ?>"
                                         id="order-delivery-address"
                                         type="radio"
                                         name="deliveryId"
-                                        data-text="Доставка курьером"
+                                        data-text="<?=($deliveryAllowed) ? 'Доставка курьером' : 'Экспресс доставка'?>"
                                         value="<?= $delivery->getDeliveryId() ?>"
                                         data-delivery="<?= $delivery->getPrice() ?>"
                                         data-full="<?= $delivery->getStockResult()->getOrderable()->getPrice() ?>"
@@ -122,8 +128,8 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                        for="order-delivery-address">
                                     <span class="b-choice-recovery__main-text">
                                         <span class="b-choice-recovery__main-text">
-                                            <span class="b-choice-recovery__first">Доставка</span>
-                                            <span class="b-choice-recovery__second">курьером</span>
+                                            <?=($deliveryAllowed) ? '<span class="b-choice-recovery__first">Доставка</span> <span class="b-choice-recovery__second">курьером</span>' : '<span class="b-choice-recovery__first">Экспресс</span> <span class="b-choice-recovery__second">доставка</span>'?>
+
                                         </span>
                                     </span>
                                     <span class="b-choice-recovery__addition-text js-cur-pickup">
@@ -189,10 +195,10 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                             } ?>
                         </div>
                         <ul class="b-radio-tab js-myself-shop">
-                            <?php if ($delivery) {
+                            <?php if ($delivery || $deliveryDostavista) {
                                 ?>
                                 <li class="b-radio-tab__tab js-telephone-recovery"
-                                    <?= $selectedDelivery->getDeliveryId() !== $delivery->getDeliveryId() ? 'style="display:none"' : '' ?>>
+                                    <?= ($delivery) ? $selectedDelivery->getDeliveryId() !== $delivery->getDeliveryId() ? 'style="display:none"' : '' : $selectedDelivery->getDeliveryId() !== $deliveryDostavista->getDeliveryId() ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/delivery.php' ?>
                                 </li>
                                 <?php
