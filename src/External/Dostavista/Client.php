@@ -49,13 +49,6 @@ class Client
     protected $testMode;
 
     /**
-     * Client id
-     *
-     * @var string
-     */
-    protected $clientId;
-
-    /**
      * Token
      *
      * @var string
@@ -72,13 +65,11 @@ class Client
     /**
      * Client constructor.
      * @param $testMode
-     * @param $clientId
      * @param $token
      */
-    public function __construct($testMode, $clientId, $token)
+    public function __construct($testMode, $token)
     {
         $this->testMode = $testMode;
-        $this->clientId = $clientId;
         $this->token = $token;
         if ($this->testMode) {
             $this->url = self::DEFAULT_API_URL_TEST;

@@ -81,13 +81,11 @@ class DostavistaService implements LoggerAwareInterface, SapOutInterface
         $this->container = $container;
         $testMode = (\COption::GetOptionString('articul.dostavista.delivery', 'dev_mode', '') == BaseEntity::BITRIX_TRUE);
         if ($testMode) {
-            $clientId = \COption::GetOptionString('articul.dostavista.delivery', 'client_id_dev', '');
             $token = \COption::GetOptionString('articul.dostavista.delivery', 'token_dev', '');
         } else {
-            $clientId = \COption::GetOptionString('articul.dostavista.delivery', 'client_id_prod', '');
             $token = \COption::GetOptionString('articul.dostavista.delivery', 'token_prod', '');
         }
-        $this->client = new Client($testMode, $clientId, $token);
+        $this->client = new Client($testMode, $token);
 
         $this->setLogger(LoggerFactory::create('dostavista'));
     }

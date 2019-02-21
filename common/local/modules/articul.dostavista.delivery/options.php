@@ -47,15 +47,6 @@ $tabs = [
                 'title' => GetMessage('DOSTAVISTA_PRODUCTION_MODE_OPTIONS'),
             ],
             [
-                'client_id_prod',
-                GetMessage('DOSTAVISTA_CLIENT_ID_PROD'),
-                '',
-                [
-                    'text',
-                    30
-                ]
-            ],
-            [
                 'token_prod',
                 GetMessage('DOSTAVISTA_TOKEN_PROD'),
                 '',
@@ -67,15 +58,6 @@ $tabs = [
             [
                 'heading' => true,
                 'title' => GetMessage('DOSTAVISTA_DEV_MODE_OPTIONS'),
-            ],
-            [
-                'client_id_dev',
-                GetMessage('DOSTAVISTA_CLIENT_ID_DEV'),
-                '',
-                [
-                    'text',
-                    30
-                ]
             ],
             [
                 'token_dev',
@@ -130,7 +112,8 @@ $tabs = [
                 '',
                 [
                     'textarea',
-                    10
+                    10,
+                    50
                 ]
             ],
             [
@@ -139,7 +122,17 @@ $tabs = [
                 '',
                 [
                     'text',
-                    30
+                    50
+                ]
+            ],
+            [
+                'text_express_detail',
+                'Детальное описание Экспресс-доставки',
+                '',
+                [
+                    'textarea',
+                    10,
+                    50
                 ]
             ],
         ],

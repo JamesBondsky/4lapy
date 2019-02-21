@@ -225,7 +225,12 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
 
     <div class="b-delivery-type-time" data-container-delivery-type-time="true">
         <? if ($deliveryDostavista) { ?>
-            <div class="b-delivery-type-time__info"><?= str_replace(['[time]', '[price]'], [round($deliveryDostavista->getPeriodTo() / 60), ($deliveryDostavista->getPrice() > 0) ? 'за ' . $deliveryDostavista->getPrice() . ' ₽' : 'бесплатно'], $deliveryDostavista->getData()['TEXT_EXPRESS_DELIVERY']); ?></div>
+            <div class="b-delivery-type-time__info">
+                <?= str_replace(['[time]', '[price]'], [round($deliveryDostavista->getPeriodTo() / 60), ($deliveryDostavista->getPrice() > 0) ? 'за ' . $deliveryDostavista->getPrice() . ' ₽' : 'бесплатно'], $deliveryDostavista->getData()['TEXT_EXPRESS_DELIVERY']); ?>
+            </div>
+            <div class="b-delivery-type-time__info_detail">
+                <?= $deliveryDostavista->getData()['TEXT_EXPRESS_DETAIL']; ?>
+            </div>
             <div class="b-choice-recovery b-choice-recovery--order-step b-choice-recovery--delivery-type-time">
                 <input data-set-delivery-type="<?= $deliveryDostavista->getDeliveryId() ?>"
                        class="b-choice-recovery__input"

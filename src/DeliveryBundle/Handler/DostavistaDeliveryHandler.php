@@ -190,6 +190,7 @@ class DostavistaDeliveryHandler extends DeliveryHandlerBase
                 'DELIVERY_START_TIME' => COption::GetOptionString('articul.dostavista.delivery', 'delivery_start_time', '00:00'),
                 'DELIVERY_END_TIME' => COption::GetOptionString('articul.dostavista.delivery', 'delivery_end_time', '23:59'),
                 'TEXT_EXPRESS_DELIVERY' => COption::GetOptionString('articul.dostavista.delivery', 'text_express_delivery', 'Текст с информацией, что пользователю доступна Экспресс-доставка'),
+                'TEXT_EXPRESS_DETAIL' => COption::GetOptionString('articul.dostavista.delivery', 'text_express_detail', 'Детальная информация'),
                 'TEXT_EXPRESS_DELIVERY_TIME' => COption::GetOptionString('articul.dostavista.delivery', 'text_express_delivery_time', 'Текст с временем доставки для кнопки Экспресс-доставки')
             ]
         );
