@@ -403,6 +403,7 @@ class BasketService implements LoggerAwareInterface
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ObjectNotFoundException
      * @return Basket
      */
     public function refreshAvailability(Basket $basket): Basket
@@ -417,21 +418,25 @@ class BasketService implements LoggerAwareInterface
             $quantity = (int)$basketItem->getQuantity();
             $toUpdate = [];
 
-            if (!$offer->isAvailable()) {
-                if (!$basketItem->isDelay()) {
-                    $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_TRUE;
+            if ($offer != null) {
+                if (!$offer->isAvailable()) {
+                    if (!$basketItem->isDelay()) {
+                        $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_TRUE;
+                    }
+                } else {
+                    $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_FALSE;
+                    $maxAmount = $offer->getQuantity();
+                    if (($quantity - $maxAmount) > 0) {
+                        $toUpdate['QUANTITY'] = $maxAmount;
+                    }
+                }
+
+                if (!empty($toUpdate)) {
+                    $updateIds = true;
+                    $basketItem->setFields($toUpdate);
                 }
             } else {
-                $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_FALSE;
-                $maxAmount = $offer->getQuantity();
-                if (($quantity - $maxAmount) > 0) {
-                    $toUpdate['QUANTITY'] = $maxAmount;
-                }
-            }
-
-            if (!empty($toUpdate)) {
-                $updateIds = true;
-                $basketItem->setFields($toUpdate);
+                $basketItem->delete();
             }
         }
 
