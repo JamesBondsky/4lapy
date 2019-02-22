@@ -8,9 +8,11 @@ namespace FourPaws\StoreBundle\Service;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\StoreBundle\Collection\DeliveryScheduleCollection;
+use FourPaws\StoreBundle\Collection\OrderDayCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\DeliverySchedule;
 use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Entity\OrderDay;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Repository\DeliveryScheduleRepository;
 use Psr\Log\LoggerAwareInterface;
@@ -235,5 +237,25 @@ class DeliveryScheduleService implements LoggerAwareInterface
         }
 
         return $days;
+    }
+
+    public function getOrderAndSupplyDays(DeliverySchedule $schedule, \DateTime $from = null): ?OrderDayCollection
+    {
+        $result = new OrderDayCollection;
+
+        $type = $schedule->getTypeCode();
+        $orderDays = $schedule->getOrderDays();
+        $supplyDays = $schedule->getSupplyDays();
+
+        if(!$from){
+            $from = new \DateTime();
+        }
+
+        foreach ($orderDays as $index => $orderDay){
+            $supplyDay = $supplyDays[$index];
+            $result->add(new OrderDay($orderDay, $supplyDay, $type, $from));
+        }
+
+        return !$result->isEmpty() ? $result : null;
     }
 }

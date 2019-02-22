@@ -10,6 +10,7 @@ use DateTime;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\StoreBundle\Collection\DeliveryScheduleCollection;
+use FourPaws\StoreBundle\Collection\OrderDayCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\DeliveryScheduleService;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -117,7 +118,7 @@ class DeliverySchedule extends Base implements \Serializable
      * @Serializer\Type("array_or_false<int>")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
-    protected $daysOfWeek;
+    protected $orderDays;
 
     /**
      * Дни поставки
@@ -373,19 +374,19 @@ class DeliverySchedule extends Base implements \Serializable
     /**
      * @return array
      */
-    public function getDaysOfWeek(): array
+    public function getOrderDays(): array
     {
-        return $this->daysOfWeek ?? [];
+        return $this->orderDays ?? [];
     }
 
     /**
-     * @param array $daysOfWeek
+     * @param array $orderDays
      *
      * @return DeliverySchedule
      */
-    public function setDaysOfWeek(array $daysOfWeek): DeliverySchedule
+    public function setOrderDays(array $orderDays): DeliverySchedule
     {
-        $this->daysOfWeek = $daysOfWeek;
+        $this->orderDays = $orderDays;
 
         return $this;
     }
@@ -609,7 +610,6 @@ class DeliverySchedule extends Base implements \Serializable
         $this->orderDates = $orderDates;
     }
 
-
     /**
      * @param DateTime $from
      * @return null|DateTime
@@ -631,30 +631,46 @@ class DeliverySchedule extends Base implements \Serializable
          * @param DateTime $from
          * @return null|DateTime
          */
-        $getByDay = function (DateTime $from): ?DateTime {
+        $getByDay = function (DateTime $from, bool $realDate = true): ?DateTime {
             $fromDay = (int)$from->format('N');
+            $fromWeek = (int)$from->format('W');
 
-            /** @var DateTime[] $results */
+            $orderDays = $this->scheduleService->getOrderAndSupplyDays($this, $from);
+
+            /** @var OrderDayCollection $orderDates */
             $orderDates = [];
 
-            /** @var int $day */
-            foreach ($this->getDaysOfWeek() as $key => $day) {
+            /** @var OrderDay $day */
+            foreach ($orderDays as $key => $day) {
                 $date = clone $from;
-                $diff = $day - $fromDay;
-                $days = ($diff >= 0) ? $diff : $diff + 7;
 
-                $date->modify(sprintf('+%s days', $days));
+                $weekDiff = $day->getWeekNum() - $fromWeek;
+                $weeks = ($weekDiff >= 0) ? "+".$weekDiff : $weekDiff;
+
+                $daysDiff = $day->getOrderDay() - $fromDay;
+                $days = ($daysDiff >= 0) ? "+".$daysDiff : $daysDiff;
+                if($daysDiff < 0 && $this->getTypeCode() == self::TYPE_WEEKLY){
+                    $days += 7;
+                }
+
+                $date->modify(sprintf('%s weeks +%s days', $weeks, $days));
+
+                if($realDate && $date < $from){
+                    continue;
+                }
+
                 $orderDates[$key] = $date;
             }
 
             if (!empty($orderDates)) {
                 $orderDate = min($orderDates);
+                $orderDayIndex = array_search($orderDate, $orderDates);
 
-                $supplyDays = $this->getSupplyDays();
-                $supplyDayIndex = array_search($orderDate, $orderDates);
-                $supplyDay = (int)$supplyDays[$supplyDayIndex];
+                /** @var OrderDayCollection $orderDays */
+                $supplyDay = $orderDays[$orderDayIndex]->getSupplyDay();
 
                 $fromDay = (int)$orderDate->format('N');
+
                 $diff = $supplyDay - $fromDay;
                 $days = ($diff >= 0) ? $diff : $diff + 7;
                 $orderDate->modify(sprintf('+%s days', $days));
@@ -694,9 +710,6 @@ class DeliverySchedule extends Base implements \Serializable
                 foreach ($weekNumbers as $weekNumber) {
                     $weekDate = clone $date;
 
-                    /** Если график типа 2, то день заказа считается за неделю до недели отгрузки */
-                    $weekDate->modify('-1 week');
-
                     $weekDate->setISODate($date->format('Y'), $weekNumber);
                     if ($weekDate->format('W') < $date->format('W')) {
                         $weekDate->modify('+1 year');
@@ -705,10 +718,24 @@ class DeliverySchedule extends Base implements \Serializable
                     $weekDates[] = ($weekDate > $date) ? $weekDate : $date;
                 }
 
+                uasort($weekDates, function($a, $b) {
+                   return  $a > $b;
+                });
 
                 if(!empty($weekDates)){
-                    $minDate = min($weekDates);
-                    $result = $getByDay($minDate);
+                    $realDate = true;
+                    $weekDate = current($weekDates);
+
+                    if($weekDate != $date){
+                        $realDate = false;
+                    }
+
+                    $result = $getByDay($weekDate, $realDate);
+                    if(!$result){
+                        $realDate = false;
+                        $weekDate = next($weekDates);
+                        $result = $getByDay($weekDate, $realDate);
+                    }
                 }
                 else{
                     $result = null;
@@ -751,7 +778,8 @@ class DeliverySchedule extends Base implements \Serializable
             $this->activeFrom,
             $this->activeTo,
             $this->weekNumbers,
-            $this->daysOfWeek,
+            $this->orderDays,
+            $this->supplyDays,
             $this->deliveryNumber,
             $this->deliveryDates,
             $this->type
@@ -774,7 +802,8 @@ class DeliverySchedule extends Base implements \Serializable
             $this->activeFrom,
             $this->activeTo,
             $this->weekNumbers,
-            $this->daysOfWeek,
+            $this->orderDays,
+            $this->supplyDays,
             $this->deliveryNumber,
             $this->deliveryDates,
             $this->type

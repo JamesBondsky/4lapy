@@ -217,11 +217,11 @@ class DeliveryScheduleService implements LoggerAwareInterface
         //$obWeekDays = $schedule->getWeekDays();
 
         if ($orderDays->count()) {
-            $arSupplyDays = $this->serializer->toArray($orderDays->first());
-            $arSupplyDays = array_filter($arSupplyDays);
-            $arOrderDays = $this->baseService->getWeeknums($arSupplyDays);
+            $arOrderDays = $this->serializer->toArray($orderDays->first());
+            $arOrderDays = array_filter($arOrderDays);
+            $arSupplyDays = $this->baseService->getWeeknums($arOrderDays);
 
-            $entity->setDaysOfWeek($arOrderDays);
+            $entity->setOrderDays($arOrderDays);
             $entity->setSupplyDays($arSupplyDays);
         }
 
