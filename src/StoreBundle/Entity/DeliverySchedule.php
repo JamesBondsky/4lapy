@@ -597,7 +597,7 @@ class DeliverySchedule extends Base implements \Serializable
     /**
      * @return DateTime[]
      */
-    public function getOrderDates(): array
+    public function getOrderDates(): ?array
     {
         return $this->orderDates;
     }
