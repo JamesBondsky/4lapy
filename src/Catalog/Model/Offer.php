@@ -1990,4 +1990,15 @@ class Offer extends IblockElement
     {
         return OfferQuery::getById((int)$primary);
     }
+
+    /**
+     * Возможность "довоза" оффера в магазин (DC001 -> Rxxx)
+     */
+    public function isAvailableForDelay(): bool
+    {
+        $product = $this->getProduct();
+        $flag = !$product->isTransportOnlyRefrigerator();
+        return $flag;
+    }
+
 }
