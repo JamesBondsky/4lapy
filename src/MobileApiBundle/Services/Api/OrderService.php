@@ -38,6 +38,9 @@ use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartOrderRequest;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
+use FourPaws\SaleBundle\Discount\Gift;
+use FourPaws\SaleBundle\Discount\Utils\Manager;
+use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 use FourPaws\PersonalBundle\Entity\OrderStatusChange;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -52,61 +55,49 @@ use FourPaws\PersonalBundle\Entity\Order as OrderEntity;
 use FourPaws\SaleBundle\Service\OrderSplitService;
 use FourPaws\DeliveryBundle\Service\DeliveryService as AppDeliveryService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService as AppOrderSubscribeService;
+use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 use JMS\Serializer\Serializer;
 
 class OrderService
 {
-    /**
-     * @var ApiBasketService;
-     */
+    /** @var ApiBasketService */
     private $apiBasketService;
 
-    /**
-     * @var ApiStoreService
-     */
+    /** @var ApiStoreService */
     private $apiStoreService;
 
-    /**
-     * @var OrderStorageService
-     */
+    /** @var OrderStorageService */
     private $orderStorageService;
 
-    /**
-     * @var AppOrderService
-     */
+    /** @var AppOrderService */
     private $appOrderService;
 
-    /**
-     * @var PersonalOrderService
-     */
+    /** @var PersonalOrderService */
     private $personalOrderService;
 
-    /**
-     * @var OrderSplitService $orderSplitService
-     */
+    /** @var OrderSplitService */
     private $orderSplitService;
 
-    /**
-     * @var UserService
-     */
+    /** @var UserService */
     private $userService;
 
-    /**
-     * @var LocationService
-     */
+    /** @var LocationService */
     private $locationService;
 
-    /**
-     * @var AppDeliveryService
-     */
+    /** @var AppDeliveryService */
     private $appDeliveryService;
-    /**
-     * @var AppOrderSubscribeService;
-     */
+
+    /** @var AppOrderSubscribeService */
     private $appOrderSubscribeService;
 
     /** @var Serializer */
     private $serializer;
+
+    /** @var AppBasketService */
+    private $appBasketService;
+
+    /** @var ApiProductService */
+    private $apiProductService;
 
 
     const DELIVERY_TYPE_COURIER = 'courier';
@@ -114,6 +105,7 @@ class OrderService
 
     public function __construct(
         ApiBasketService $apiBasketService,
+        AppBasketService $appBasketService,
         OrderStorageService $orderStorageService,
         AppOrderService $appOrderService,
         PersonalOrderService $personalOrderService,
@@ -123,10 +115,12 @@ class OrderService
         OrderSplitService $orderSplitService,
         AppDeliveryService $appDeliveryService,
         AppOrderSubscribeService $appOrderSubscribeService,
+        ApiProductService $apiProductService,
         Serializer $serializer
     )
     {
         $this->apiBasketService = $apiBasketService;
+        $this->appBasketService = $appBasketService;
         $this->apiStoreService = $apiStoreService;
         $this->orderStorageService = $orderStorageService;
         $this->appOrderService = $appOrderService;
@@ -136,6 +130,7 @@ class OrderService
         $this->orderSplitService = $orderSplitService;
         $this->appDeliveryService = $appDeliveryService;
         $this->appOrderSubscribeService = $appOrderSubscribeService;
+        $this->apiProductService = $apiProductService;
         $this->serializer = $serializer;
     }
 
@@ -171,7 +166,6 @@ class OrderService
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      * @throws \Exception
      */
     public function getOneByNumber(int $orderNumber)
@@ -234,7 +228,6 @@ class OrderService
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
      * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      */
@@ -284,8 +277,11 @@ class OrderService
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\ObjectException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
@@ -295,6 +291,35 @@ class OrderService
     {
         $orderParameter = (new OrderParameter())
             ->setProducts($basketProducts->getValues());
+
+        $userId = $this->userService->getCurrentUserId();
+
+
+        $basket = $this->appBasketService->getBasket();
+        // привязывать к заказу нужно для расчета скидок
+        if (null === $bxOrder = $basket->getOrder()) {
+            $bxOrder = \Bitrix\Sale\Order::create(SITE_ID, $userId);
+            $bxOrder->setBasket($basket);
+            // но иногда он так просто не запускается
+            if (!Manager::isExtendCalculated()) {
+                $bxOrder->doFinalAction(true);
+            }
+        }
+        if ($possibleGiftGroups = array_values(Gift::getPossibleGiftGroups($bxOrder))) {
+            foreach ($possibleGiftGroups as &$possibleGiftGroup) {
+                $possibleGiftGroup = current($possibleGiftGroup);
+                if (!empty($possibleGiftGroup['list'])) {
+                    $offers = (new OfferQuery())->withFilter(['=ID' => $possibleGiftGroup['list']])->exec();
+                    foreach ($offers as $offer) {
+                        $product = $offer->getProduct();
+                        $possibleGiftGroup['goods'][] = $this->apiProductService->convertToShortProduct($product, $offer);
+                    }
+                }
+                unset($possibleGiftGroup['list']);
+            }
+        }
+
+        $orderParameter->gifts = $possibleGiftGroups;
 
         if ($order) {
             $orderParameter
@@ -387,8 +412,6 @@ class OrderService
      * @return BasketProductCollection
      * @throws \Bitrix\Main\ArgumentException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public function getBasketProducts($orderItems): BasketProductCollection
     {

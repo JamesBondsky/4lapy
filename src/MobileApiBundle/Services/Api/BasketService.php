@@ -15,6 +15,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
+use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 use FourPaws\MobileApiBundle\Repository\ApiUserSessionRepository;
@@ -81,6 +82,7 @@ class BasketService
         $basket = $this->appBasketService->getBasket();
         $products = [];
         foreach ($basket->getOrderableItems() as $basketItem) {
+
             /** @var $basketItem BasketItem */
             $offer = OfferQuery::getById($basketItem->getProductId());
             $product = $this->getBasketProduct($basketItem->getId(), $offer, $basketItem->getQuantity());
@@ -88,6 +90,10 @@ class BasketService
             $shortProduct->setPickupOnly(
                 $this->isPickupOnly($basketItem, $delivery, $offer)
             );
+            if (isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
+                $shortProduct->setIsGift(true);
+                $shortProduct->setPrice((new Price())->setActual(0)->setOld(0));
+            }
             $product->setShortProduct($shortProduct);
             $products[] = $product;
         }

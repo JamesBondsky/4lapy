@@ -25,6 +25,13 @@ class OrderParameter
     protected $products = [];
 
     /**
+     * Подарки
+     *
+     * @Serializer\SerializedName("gifts")
+     */
+    public $gifts = [];
+
+    /**
      * Полное имя покупателя
      * @Serializer\Type("string")
      * @Serializer\SerializedName("name")

@@ -149,6 +149,16 @@ class ShortProduct
     protected $pickupOnly = false;
 
     /**
+     * Является ли товар подарком? (только для корзины)
+     *
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("isGift")
+     * @Serializer\Groups({"basket"})
+     */
+    protected $isGift = false;
+
+    /**
      * @return int
      */
     public function getId(): int
@@ -426,6 +436,24 @@ class ShortProduct
     public function setPickupOnly(bool $pickupOnly)
     {
         $this->pickupOnly = $pickupOnly;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getIsGift()
+    {
+        return $this->isGift;
+    }
+
+    /**
+     * @param bool $isGift
+     * @return $this
+     */
+    public function setIsGift(bool $isGift)
+    {
+        $this->isGift = $isGift;
         return $this;
     }
 }

@@ -8,11 +8,9 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
-use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\MobileApiBundle\Dto\Request\PostUserCartRequest;
 use FourPaws\MobileApiBundle\Dto\Request\PutUserCartRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartCalcRequest;
-use FourPaws\MobileApiBundle\Dto\Request\UserCartDeliveryRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartOrderRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Dto\Response\UserCartCalcResponse;
@@ -92,12 +90,16 @@ class BasketController extends FOSRestController
      * @param UserCartRequest $userCartRequest
      * @return UserCartResponse
      * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
      * @throws \FourPaws\External\Exception\ManzanaPromocodeUnavailableException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      */
     public function getUserCartAction(UserCartRequest $userCartRequest)
     {
@@ -138,16 +140,16 @@ class BasketController extends FOSRestController
      * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
      * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\NotImplementedException
      * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
-     * @throws \Bitrix\Sale\UserMessageException
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
      * @throws \FourPaws\External\Exception\ManzanaPromocodeUnavailableException
+     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public function postUserCartAction(PostUserCartRequest $postUserCartRequest)
     {
@@ -169,16 +171,16 @@ class BasketController extends FOSRestController
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\NotImplementedException
      * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
-     * @throws \Bitrix\Sale\UserMessageException
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
      * @throws \FourPaws\External\Exception\ManzanaPromocodeUnavailableException
+     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public function putUserCartAction(PutUserCartRequest $putUserCartRequest)
     {
