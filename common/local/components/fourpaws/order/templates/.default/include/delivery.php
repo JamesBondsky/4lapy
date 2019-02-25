@@ -247,7 +247,8 @@ if ($deliveryAllowed && $delivery) {
                        name="typeTimeDeliveryId"
                        data-delivery="<?= $deliveryDostavista->getPrice() ?>"
                        data-full="<?= $deliveryDostavista->getStockResult()->getOrderable()->getPrice() ?>"
-                       data-type-time-delivery="express">
+                       data-type-time-delivery="express"
+                       data-check="js-list-orders-cont">
                 <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step" for="order-express-courier-delivery">
                 <span class="b-choice-recovery__main-text">
                     <span class="b-choice-recovery__main-text">Экспресс</span>
@@ -268,7 +269,8 @@ if ($deliveryAllowed && $delivery) {
                            name="typeTimeDeliveryId"
                            data-delivery="<?= $delivery->getPrice() ?>"
                            data-full="<?= $delivery->getStockResult()->getOrderable()->getPrice() ?>"
-                           data-type-time-delivery="default">
+                           data-type-time-delivery="default"
+                           data-check="js-list-orders-static">
                     <label class="b-choice-recovery__label b-choice-recovery__label--right b-choice-recovery__label--order-step" for="order-default-courier-delivery">
                         <span class="b-choice-recovery__main-text">Обычная</span>
                         <span class="b-choice-recovery__addition-text js-cur-pickup">
