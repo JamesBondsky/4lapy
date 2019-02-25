@@ -71,7 +71,7 @@ class DostavistaDeliveryHandler extends DeliveryHandlerBase
      */
     public static function getClassTitle(): string
     {
-        return 'Доставка "Достависта"';
+        return 'Экспресс-доставка';
     }
 
     /**
@@ -79,7 +79,7 @@ class DostavistaDeliveryHandler extends DeliveryHandlerBase
      */
     public static function getClassDescription(): string
     {
-        return 'Обработчик собственной доставки "Достависта"';
+        return 'Обработчик собственной экспресс-доставки "Достависта"';
     }
 
     /**
