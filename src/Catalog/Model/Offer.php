@@ -1992,18 +1992,22 @@ class Offer extends IblockElement
         return OfferQuery::getById((int)$primary);
     }
 
+
     /**
      * Возможность "довоза" оффера в магазин (DC001 -> Rxxx)
+     *
+     * @param Store $store
+     * @return bool
+     * @throws \Exception
      */
     public function isAvailableForDelay(Store $store): bool
     {
-        /*$product = $this->getProduct();
-        $flag = !$product->isTransportOnlyRefrigerator();
-        return $flag;*/
+        /** @var StoreService $storeService */
+        $storeService = Application::getInstance()->getContainer()->get('store.service');
 
         if (
             $this->getProduct()->isTransportOnlyRefrigerator()
-            //|| ($this->getProduct()->isLicenseRequired() && !\in_array('test', $store->getServices()))
+            || ($this->getProduct()->isLicenseRequired() && !$storeService->hasLicense($store) )
         )
         {
             return false;
