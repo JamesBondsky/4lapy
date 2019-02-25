@@ -53,8 +53,4 @@ $aMenuLinks = [
         'Топ 10 товаров',
         '/personal/top/',
     ],
-    [
-        'Копилка-собиралка',
-        '/personal/piggy-bank/',
-    ],
 ];

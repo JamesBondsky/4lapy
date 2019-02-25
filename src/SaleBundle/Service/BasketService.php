@@ -427,7 +427,7 @@ class BasketService implements LoggerAwareInterface
             $quantity = (int)$basketItem->getQuantity();
             $toUpdate = [];
 
-            if (!$offer) continue; //TODO del (temp)
+
             if (!$offer->isAvailable()) {
                 if (!$basketItem->isDelay()) {
                     $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_TRUE;
@@ -663,7 +663,7 @@ class BasketService implements LoggerAwareInterface
                     $result = $cheque->getAvailablePayment();
                 }
             } catch (ExecuteException $e) {
-                $this->log()->error(sprintf('failed to get bonuses for payment: %s . %s', $e->getMessage(), $e->getTraceAsString())); //TODO undo
+                $this->log()->error(sprintf('failed to get bonuses for payment: %s', $e->getMessage()));
             } catch (NotAuthorizedException $e) {
                 // обработка не требуется
             }
