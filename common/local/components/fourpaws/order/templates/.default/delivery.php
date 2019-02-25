@@ -41,12 +41,6 @@ $basket = $arResult['BASKET'];
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
 
-$deliveryAllowed = true;
-if (is_null($delivery) && !is_null($deliveryDostavista)) {
-    $delivery = $deliveryDostavista;
-    $deliveryAllowed = false;
-}
-
 $selectedShopCode = '';
 $isPickup = false;
 if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode()) {
@@ -113,7 +107,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 <?
                                 $selectedDel = ($selectedDelivery->getDeliveryCode() == DeliveryService::DELIVERY_DOSTAVISTA_CODE || $selectedDelivery->getDeliveryCode() == DeliveryService::INNER_DELIVERY_CODE) ? $delivery : $selectedDelivery;
                                 ?>
-                                <input <?= ($deliveryAllowed) ? $deliveryService->isDelivery($selectedDel) : $deliveryService->isDostavistaDelivery($selectedDel) ? 'checked="checked"' : '' ?>
+                                <input <?= $deliveryService->isDelivery($selectedDel) ? 'checked="checked"' : '' ?>
                                         class="b-choice-recovery__input js-recovery-telephone js-delivery"
                                         data-set-delivery-type="<?= $delivery->getDeliveryId() ?>"
                                         id="order-delivery-address"
@@ -195,10 +189,10 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                             } ?>
                         </div>
                         <ul class="b-radio-tab js-myself-shop">
-                            <?php if ($delivery || $deliveryDostavista) {
+                            <?php if ($delivery) {
                                 ?>
                                 <li class="b-radio-tab__tab js-telephone-recovery"
-                                    <?= ($delivery) ? $selectedDelivery->getDeliveryId() !== $delivery->getDeliveryId() ? 'style="display:none"' : '' : $selectedDelivery->getDeliveryId() !== $deliveryDostavista->getDeliveryId() ? 'style="display:none"' : '' ?>>
+                                    <?= $selectedDelivery->getDeliveryId() !== $delivery->getDeliveryId() ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/delivery.php' ?>
                                 </li>
                                 <?php
