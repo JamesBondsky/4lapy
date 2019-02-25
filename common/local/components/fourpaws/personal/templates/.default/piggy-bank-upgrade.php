@@ -16,7 +16,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 $APPLICATION->IncludeComponent(
     'fourpaws:personal.piggybank',
     '',
-    [],
+    ['UPGRADE_COUPON' => 'Y'],
     $component,
     ['HIDE_ICONS' => 'Y']
 );

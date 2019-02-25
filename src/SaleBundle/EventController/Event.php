@@ -17,6 +17,7 @@ use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketItemCollection;
 use Bitrix\Sale\Order;
@@ -30,6 +31,8 @@ use FourPaws\App\MainTemplate;
 use FourPaws\App\Tools\StaticLoggerTrait;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\PersonalBundle\Service\OrderService as PersonalOrderService;
+use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Discount\Action\Action\DetachedRowDiscount;
 use FourPaws\SaleBundle\Discount\Action\Action\DiscountFromProperty;
 use FourPaws\SaleBundle\Discount\Action\Condition\BasketFilter;
@@ -38,6 +41,7 @@ use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Exception\ForgotBasket\FailedToUpdateException;
+use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\ForgotBasketService;
 use FourPaws\SaleBundle\Service\NotificationService;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -139,6 +143,13 @@ class Event extends BaseServiceHandler
             'removeDelayedItems'
         ], $module);
 
+        //TODO limit only by promo offer dates range
+        /** добавление марок в заказ */
+        static::initHandler('OnSaleOrderBeforeSaved', [
+            self::class,
+            'addMarksToOrderBasket'
+        ], $module);
+
         /** генерация номера заказа */
         static::initHandlerCompatible('OnBeforeOrderAccountNumberSet', [
             self::class,
@@ -182,6 +193,13 @@ class Event extends BaseServiceHandler
             'cancelOrder'
         ], $module);
 
+        //TODO limit only by promo offer dates range
+        /** автоматическое получение пользователем купона 1-го уровня в Копилке-собиралке при достаточном количестве марок */
+        static::initHandler('OnSaleStatusOrderChange', [
+            self::class,
+            'addPiggyBankCoupon'
+        ], $module);
+
         /** очистка кеша заказа */
         static::initHandler('OnSaleOrderSaved', [
             self::class,
@@ -223,6 +241,15 @@ class Event extends BaseServiceHandler
             self::class,
             'disableForgotBasketReminder'
         ], $module);
+
+        /**
+         * Добавление марок в корзину
+         */
+        /*$module = 'sale';
+        static::initHandler('OnSaleBasketSaved', [
+            self::class,
+            'addStampsToBasket'
+        ], $module);*/
     }
 
     public static function updateUserAccountBalance(): void
@@ -719,6 +746,141 @@ class Event extends BaseServiceHandler
                     'more_url' => ''
                 ];
             }
+        }
+    }
+
+    /**
+     * @todo Не просто добавлять в корзину марку, а перерасчитывать их количество (удалять/добавлять)
+     * @todo добавлять марки и при первичном добавлении товара в корзину (до того, как меняем количество). Сейчас марки сразу не добавляются
+     * @todo Скрыть марки из вывода в корзине
+     * @todo Обработка Exception
+     * @todo Марки отправляются в SAP, только если перезагрузить страницу корзины перед тем, как начать оформление
+     *
+     * @param BitrixEvent $event
+     */
+//    public static function addStampsToBasket(BitrixEvent $event): void
+//    {
+//        $piggyBankService = ////////////////;
+//        try {
+//            /** @var Basket $basket */
+//            $basket = $event->getParameter('ENTITY');
+//            if ($basket instanceof Basket) {
+//                $stampsQuantity = 1; //TODO calculate
+//
+//                /** @var BasketService $basketService */
+//                $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
+//                $basketItem = $basketService->addOfferToBasket(
+//                    $piggyBankService->getVirtualMarkId(),
+//                    //$piggyBankService->getPhysicalMarkId(),
+//                    $stampsQuantity,
+//                    [],
+//                    true,
+//                    $basket
+//                );
+//            }
+//        } catch (\Exception $e) {
+//            //file_put_contents($_SERVER['DOCUMENT_ROOT'].'/_dev_e123123123.txt', print_r($e->getTrace(), true), FILE_APPEND); //TODO: delete
+//            //TODO Обработка Exception
+//        }
+//    }
+
+    /**
+     * Добавляет марки
+     * @todo Сделать выборку по категориям товаров, участвующих в акции, и больше бонусов за товары ветаптеки по константе MARKS_PER_RATE_VETAPTEKA
+     * @todo 3 раза отрабатывает в момент регистрации заказа. Разобраться, ограничить применение одним разом
+     * @todo вынести в Service
+     *
+     * @param BitrixEvent $event
+     */
+    public function addMarksToOrderBasket(BitrixEvent $event): void
+    {
+        try {
+            /** @var PiggyBankService $piggyBankService */
+            $piggyBankService = Application::getInstance()->getContainer()->get('piggy_bank.service');
+
+            /** @var Order $order */
+            $order = $event->getParameter('ENTITY');
+            if ($order instanceof Order) {
+                /** @var BasketService $basketService */
+                $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
+
+                $basket = $order->getBasket();
+                $items = $basket->getOrderableItems();
+
+                /** @var BasketItem $item */
+                $sum = 0;
+                foreach ($items as $item)
+                {
+                    if (in_array($item->getProductId(), $piggyBankService->getMarksIds(), false))
+                    {
+                        $basketService->deleteOfferFromBasket($item->getId());
+                        continue;
+                    }
+                    $sum += $item->getPrice() * $item->getQuantity();
+                }
+
+                $marksToAdd = floor($sum / $piggyBankService::MARK_RATE);
+
+                $basket->save();
+
+                $basketItem = $basketService->addOfferToBasket(
+                    $piggyBankService->getVirtualMarkId(),
+                    //$piggyBankService->getPhysicalMarkId(),
+                    $marksToAdd,
+                    [],
+                    true,
+                    $basket
+                );
+
+                return;
+            }
+        } catch (\Exception $e) {
+            $logger = LoggerFactory::create('piggyBank');
+            $logger->critical('failed to add PiggyBank marks for order: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * @param BitrixEvent $event
+     */
+    public static function addPiggyBankCoupon(BitrixEvent $event): void
+    {
+        try {
+            /** @var PiggyBankService $piggyBankService */
+            $piggyBankService = Application::getInstance()->getContainer()->get('piggy_bank.service');
+
+            /** @var Order $order */
+            $order = $event->getParameter('ENTITY');
+            if ($order instanceof Order) {
+                $statusId = $order->getField('STATUS_ID');
+
+                /** @var PersonalOrderService $orderService */
+                $orderService = Application::getInstance()->getContainer()->get(PersonalOrderService::class);
+
+                if (!in_array($statusId, $orderService::STATUS_FINAL, true))
+                {
+                    return;
+                }
+
+                $basket = $order->getBasket();
+                $items = $basket->getOrderableItems();
+
+                /** @var BasketItem $item */
+                foreach ($items as $item)
+                {
+                    if (in_array($item->getProductId(), $piggyBankService->getMarksIds(), false))
+                    {
+                        if (!$piggyBankService->isUserHasActiveCoupon() && $piggyBankService->isEnoughMarksForFirstCoupon())
+                        {   //TODO может получиться так, что юзер дважды получит купон, если успеют произойти два параллельных addFirstLevelCouponToUser() - сделать транзакцию
+                            $piggyBankService->addFirstLevelCouponToUser();
+                        }
+                        break;
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            $logger = LoggerFactory::create('piggyBank');
+            $logger->critical('failed to add PiggyBank coupon: ' . $e->getMessage());
         }
     }
 }
