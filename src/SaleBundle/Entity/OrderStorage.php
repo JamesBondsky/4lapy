@@ -356,6 +356,14 @@ class OrderStorage
     protected $fastOrder = false;
 
     /**
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("FROM_APP")
+     * @Serializer\Groups(groups={"read","create"})
+     */
+    protected $fromApp = false;
+
+    /**
      * @return int
      */
     public function getFuserId(): int
@@ -1011,6 +1019,25 @@ class OrderStorage
     public function setFastOrder(bool $fastOrder): OrderStorage
     {
         $this->fastOrder = $fastOrder;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isFromApp(): bool
+    {
+        return $this->fromApp ?? false;
+    }
+
+    /**
+     * @param bool $fromApp
+     *
+     * @return OrderStorage
+     */
+    public function setFromApp(bool $fromApp): OrderStorage
+    {
+        $this->fromApp = $fromApp;
         return $this;
     }
 }

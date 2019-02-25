@@ -26,7 +26,6 @@ use FourPaws\Helpers\WordHelper;
 use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Object\City;
-use FourPaws\MobileApiBundle\Dto\Object\DeliveryAddress;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryTime;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryVariant;
 use FourPaws\MobileApiBundle\Dto\Object\Detailing;
@@ -36,20 +35,16 @@ use FourPaws\MobileApiBundle\Dto\Object\OrderHistory;
 use FourPaws\MobileApiBundle\Dto\Object\OrderParameter;
 use FourPaws\MobileApiBundle\Dto\Object\OrderStatus;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
-use FourPaws\MobileApiBundle\Dto\Request\UserCartDeliveryRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartOrderRequest;
-use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
 use FourPaws\PersonalBundle\Entity\OrderStatusChange;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
-use FourPaws\SaleBundle\Entity\OrderSplitResult;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\OrderService as AppOrderService;
 use FourPaws\PersonalBundle\Service\OrderService as PersonalOrderService;
-use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\UserService;
 use FourPaws\MobileApiBundle\Services\Api\StoreService as ApiStoreService;
 use FourPaws\LocationBundle\LocationService;
@@ -57,6 +52,7 @@ use FourPaws\PersonalBundle\Entity\Order as OrderEntity;
 use FourPaws\SaleBundle\Service\OrderSplitService;
 use FourPaws\DeliveryBundle\Service\DeliveryService as AppDeliveryService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService as AppOrderSubscribeService;
+use JMS\Serializer\Serializer;
 
 class OrderService
 {
@@ -109,6 +105,13 @@ class OrderService
      */
     private $appOrderSubscribeService;
 
+    /** @var Serializer */
+    private $serializer;
+
+
+    const DELIVERY_TYPE_COURIER = 'courier';
+    const DELIVERY_TYPE_PICKUP = 'pickup';
+
     public function __construct(
         ApiBasketService $apiBasketService,
         OrderStorageService $orderStorageService,
@@ -119,7 +122,8 @@ class OrderService
         LocationService $locationService,
         OrderSplitService $orderSplitService,
         AppDeliveryService $appDeliveryService,
-        AppOrderSubscribeService $appOrderSubscribeService
+        AppOrderSubscribeService $appOrderSubscribeService,
+        Serializer $serializer
     )
     {
         $this->apiBasketService = $apiBasketService;
@@ -132,6 +136,7 @@ class OrderService
         $this->orderSplitService = $orderSplitService;
         $this->appDeliveryService = $appDeliveryService;
         $this->appOrderSubscribeService = $appOrderSubscribeService;
+        $this->serializer = $serializer;
     }
 
     /**
@@ -231,6 +236,7 @@ class OrderService
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      */
     protected function toApiFormat(OrderEntity $order, OrderSubscribe $subscription = null)
     {
@@ -273,55 +279,68 @@ class OrderService
 
     /**
      * @param BasketProductCollection $basketProducts
-     * @param bool|OrderEntity $order
+     * @param OrderEntity $order
      * @return OrderParameter
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      */
-    public function getOrderParameter(BasketProductCollection $basketProducts, $order = false)
+    public function getOrderParameter(BasketProductCollection $basketProducts, $order = null)
     {
         $orderParameter = (new OrderParameter())
             ->setProducts($basketProducts->getValues());
 
         if ($order) {
             $orderParameter
-                ->setDeliveryPlace($this->getDeliveryAddress($order))
-                ->setUserPhone($order->getPropValue('PHONE'))
-                ->setExtraPhone($order->getPropValue('PHONE_ALT'))
-                ->setCard($order->getPropValue('DISCOUNT_CARD'));
+                ->setName($order->getPropValue('NAME'))
+                ->setPhone($order->getPropValue('PHONE'))
+                ->setEmail($order->getPropValue('EMAIL'))
+                ->setAltPhone($order->getPropValue('PHONE_ALT'))
+                ->setDiscountCardNumber($order->getPropValue('DISCOUNT_CARD'))
+                ->setStreet($order->getPropValue('STREET'))
+                ->setHouse($order->getPropValue('HOUSE'))
+                ->setBuilding($order->getPropValue('BUILDING'))
+                ->setPorch($order->getPropValue('PORCH'))
+                ->setFloor($order->getPropValue('FLOOR'))
+                ->setApartment($order->getPropValue('APARTMENT'))
+                ->setComment($order->getBitrixOrder()->getField('USER_DESCRIPTION'))
+                // ->setCommunicationWay($order->getPropValue('COM_WAY')) // значение может меняться автоматически, см. FourPaws\SaleBundle\Service\OrderService::updateCommWayProperty
+            ;
+            $deliveryCode = $this->appDeliveryService->getDeliveryCodeById($order->getDeliveryId());
+            switch ($deliveryCode) {
+                case in_array($deliveryCode, DeliveryService::DELIVERY_CODES):
+                    $orderParameter->setDeliveryType(self::DELIVERY_TYPE_COURIER);
+                    $orderParameter->setDeliveryDateText($order->getDateDelivery());
+                    break;
+                case in_array($deliveryCode, DeliveryService::PICKUP_CODES):
+                    $orderParameter->setDeliveryType(self::DELIVERY_TYPE_PICKUP);
+                    break;
+            }
+
+            if ($cityCode = $order->getPropValue('CITY_CODE')) {
+                if (intval($cityCode)) {
+                    $location = $this->locationService->findLocationByCode($cityCode);
+                    $city = (new City())
+                        ->setTitle($location['NAME'])
+                        ->setId($location['CODE'])
+                        ->setLongitude($location['LONGITUDE'])
+                        ->setLatitude($location['LATITUDE'])
+                        ->setPath([$location['PATH'][count($location['PATH']) - 1]['NAME']]);
+                    $orderParameter->setCity($city);
+                } else {
+                    $city = (new City())->setTitle($cityCode);
+                    $orderParameter->setCity($city);
+                }
+            }
         }
 
         return $orderParameter;
-    }
-
-    /**
-     * @param OrderEntity $order
-     * @return DeliveryAddress
-     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     */
-    public function getDeliveryAddress(OrderEntity $order)
-    {
-        $deliveryAddress = (new DeliveryAddress())
-            ->setTitle($order->getPropValue('CITY'))
-            ->setStreetName($order->getPropValue('STREET'))
-            ->setHouse($order->getPropValue('HOUSE'))
-            ->setFlat($order->getPropValue('APARTMENT'));
-        $cityCode = $order->getPropValue('CITY_CODE');
-        if ($cityCode && intval($cityCode)) {
-            $location = $this->locationService->findLocationByCode($cityCode);
-            $city = (new City())
-                ->setTitle($location['NAME'])
-                ->setId($location['CODE'])
-                ->setLongitude($location['LONGITUDE'])
-                ->setLatitude($location['LATITUDE'])
-                ->setPath([$location['PATH'][count($location['PATH']) - 1]['NAME']]);
-            $deliveryAddress->setCity($city);
-        } else {
-            $city = (new City())->setTitle($cityCode);
-            $deliveryAddress->setCity($city);
-        }
-        return $deliveryAddress;
     }
 
     /**
@@ -329,7 +348,7 @@ class OrderService
      * @param float $bonusSubtractAmount
      * @return OrderCalculate
      */
-    public function getOrderCalculate(BasketProductCollection $basketProducts, float $bonusSubtractAmount)
+    public function getOrderCalculate(BasketProductCollection $basketProducts, float $bonusSubtractAmount = 0)
     {
         $deliveryPrice = 0;
         try {
@@ -550,85 +569,52 @@ class OrderService
         ];
     }
 
+
     /**
      * @param UserCartOrderRequest $userCartOrderRequest
-     * @param string $deliveryType
      * @return Order
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws OrderStorageSaveException
+     * @throws UserMessageException
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
      * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
-     * @throws \Bitrix\Sale\UserMessageException
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
      * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
      * @throws \FourPaws\SaleBundle\Exception\DeliveryNotAvailableException
      * @throws \FourPaws\SaleBundle\Exception\OrderCreateException
      * @throws \FourPaws\SaleBundle\Exception\OrderSplitException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
-    public function createOrder(UserCartOrderRequest $userCartOrderRequest, string $deliveryType)
+    public function createOrder(UserCartOrderRequest $userCartOrderRequest)
     {
         $cartParam = $userCartOrderRequest->getCartParam();
-        $orderStorage = (new OrderStorage())
-            ->setCurrentDate(new \DateTime())
-            ->setDiscountCardNumber($cartParam->getCard())
-            ->setName($cartParam->getFullName())
-            ->setEmail($cartParam->getEmail())
-            ->setPhone($cartParam->getUserPhone())
-            ->setAltPhone($cartParam->getExtraPhone())
-            ->setComment($cartParam->getComment());
-
-        try {
-            if ($userId = $this->userService->getCurrentUserId()) {
-                $orderStorage->setUserId($userId);
-            }
-        } catch (NotAuthorizedException $e) {
-            // do nothing
-            // it's okay if user could be not authorized while making order
-        }
-
-        $paymentType = $cartParam->getPaymentType();
-        if ($paymentType === 'cash') {
-            $paymentId = 1;
-        } else if (in_array($paymentType, ['cashless', 'applepay', 'android'])) {
-            $paymentId = 3;
-        } else {
-            $paymentId = null;
-        }
-
-        if ($paymentId) {
-            $orderStorage->setPaymentId($paymentId);
-        }
-
+        $deliveryType = $cartParam->getDeliveryType();
+        $cartParamArray = $this->serializer->toArray($cartParam);
         switch ($deliveryType) {
-            case DeliveryService::INNER_DELIVERY_CODE:
-                $orderStorage
-                    ->setDeliveryId($cartParam->getDeliveryType())
-                    ->setDeliveryInterval($cartParam->getDeliveryRangeId())
-                    ->setCity($cartParam->getCity())
-                    ->setStreet($cartParam->getStreet())
-                    ->setHouse($cartParam->getHouse())
-                    ->setBuilding($cartParam->getBuilding())
-                    ->setApartment($cartParam->getApartment())
-                ;
-                // ->setDeliveryDate($userCartOrderRequest->getCartParam()->getDeliveryRangeDate())
+            //toDo DPD доставка
+            case self::DELIVERY_TYPE_COURIER:
+                $cartParamArray['deliveryId'] = DeliveryService::INNER_DELIVERY_CODE;
+                //toDo доставка DPD должна определяться автоматически, в зависимости от зоны
                 break;
-            case DeliveryService::DPD_PICKUP_CODE:
-                // toDo указать код магазина из которого нужно забрать товар?
-                break;
-            case DeliveryService::INNER_PICKUP_CODE:
-                // toDo указать код магазина из которого нужно забрать товар?
+            case self::DELIVERY_TYPE_PICKUP:
+                $cartParamArray['deliveryId'] = DeliveryService::INNER_PICKUP_CODE;
+                //toDo доставка DPD должна определяться автоматически, в зависимости от зоны
                 break;
         }
-
-        $order = $this->appOrderService->createOrder($orderStorage);
+        $storage = $this->orderStorageService->getStorage();
+        foreach (\FourPaws\SaleBundle\Enum\OrderStorage::STEP_ORDER as $step) {
+            $this->orderStorageService->setStorageValuesFromArray($storage, $cartParamArray, $step);
+        }
+        $storage->setFromApp(true);
+        $order = $this->appOrderService->createOrder($storage);
         return $this->getOneByNumber($order->getField('ACCOUNT_NUMBER'));
     }
 }

@@ -199,6 +199,18 @@ class BasketController extends FOSRestController
     }
 
     /**
+     * @Rest\Get(path="/user_cart_delivery/")
+     * @Rest\View()
+     * @return Response
+     */
+    public function getUserCartDeliveryAction()
+    {
+        return new Response(
+            $this->apiOrderService->getDeliveryDetails()
+        );
+    }
+
+    /**
      * Метод рассчитывает корзину.
      * @Rest\Post(path="/user_cart_calc/")
      * @Rest\View()
@@ -239,35 +251,13 @@ class BasketController extends FOSRestController
      * @throws \FourPaws\SaleBundle\Exception\DeliveryNotAvailableException
      * @throws \FourPaws\SaleBundle\Exception\OrderCreateException
      * @throws \FourPaws\SaleBundle\Exception\OrderSplitException
+     * @throws \FourPaws\SaleBundle\Exception\OrderStorageSaveException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public function postUserCartOrderAction(UserCartOrderRequest $userCartOrderRequest)
     {
-        switch ($userCartOrderRequest->getCartParam()->getDeliveryType()) {
-            case 1:
-                $deliveryType = DeliveryService::INNER_DELIVERY_CODE;
-                break;
-            case 3:
-                $deliveryType = DeliveryService::DPD_PICKUP_CODE;
-                break;
-            case 5:
-                $deliveryType = DeliveryService::INNER_PICKUP_CODE;
-                break;
-        }
-        $cartOrder = $this->apiOrderService->createOrder($userCartOrderRequest, $deliveryType);
+        $cartOrder = $this->apiOrderService->createOrder($userCartOrderRequest);
         return (new UserCartOrderResponse())
             ->setCartOrder($cartOrder);
-    }
-
-    /**
-     * @Rest\Get(path="/user_cart_delivery/")
-     * @Rest\View()
-     * @return Response
-     */
-    public function getUserCartDeliveryAction()
-    {
-        return new Response(
-            $this->apiOrderService->getDeliveryDetails()
-        );
     }
 }

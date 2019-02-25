@@ -792,6 +792,18 @@ class OrderService implements LoggerAwareInterface
         $propName = $propertyValueCollection->getPayerName();
         $propName->setValue(str_replace('#', '', $propName->getValue()));
 
+        if ($storage->isFromApp()) {
+            /** @var PropertyValue $propertyValue */
+            foreach ($propertyValueCollection as $propertyValue) {
+                $code = $propertyValue->getProperty()['CODE'];
+                if ($code === 'FROM_APP') {
+                    $value = 'Y';
+                    $propertyValue->setValue($value);
+                    break;
+                }
+            }
+        }
+
 
         if ($isDiscountEnabled) {
             Manager::enableExtendsDiscount();
