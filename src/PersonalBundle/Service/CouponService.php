@@ -48,6 +48,12 @@ class CouponService implements LoggerAwareInterface
      */
     public function linkCouponToCurrentUser(int $couponId): void
     {
+        global $USER;
+        if (!$USER->IsAdmin())
+        {
+            die();
+        }
+
         $updateResult = $this->couponDataManager::update($couponId, [
             'UF_AVAILABLE' => false,
             'UF_DATE_CHANGED' => DateTime::createFromTimestamp(time()),

@@ -794,6 +794,12 @@ class Event extends BaseServiceHandler
      */
     public function addMarksToOrderBasket(BitrixEvent $event): void
     {
+        global $USER;
+        if (!$USER->IsAdmin())
+        {
+            return;
+        }
+
         try {
             /** @var PiggyBankService $piggyBankService */
             $piggyBankService = Application::getInstance()->getContainer()->get('piggy_bank.service');
@@ -845,6 +851,12 @@ class Event extends BaseServiceHandler
      */
     public static function addPiggyBankCoupon(BitrixEvent $event): void
     {
+        global $USER;
+        if (!$USER->IsAdmin())
+        {
+            return;
+        }
+
         try {
             /** @var PiggyBankService $piggyBankService */
             $piggyBankService = Application::getInstance()->getContainer()->get('piggy_bank.service');

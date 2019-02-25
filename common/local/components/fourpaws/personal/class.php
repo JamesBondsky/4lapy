@@ -28,9 +28,15 @@ class CPersonalCabinetComponent extends CBitrixComponent
             'referral'           => 'referral/',
             'subscribe'          => 'subscribe/',
             'top'                => 'top/',
-            'piggy-bank'         => 'piggy-bank/',
-            'piggy-bank-upgrade' => 'piggy-bank/upgrade/',
         ];
+        global $USER;
+        if ($USER->IsAdmin())
+        {
+            $arDefaultUrlTemplates404 = array_merge($arDefaultUrlTemplates404, [
+                'piggy-bank'         => 'piggy-bank/',
+                'piggy-bank-upgrade' => 'piggy-bank/upgrade/',
+            ]);
+        }
 
         $arComponentVariables = [
             'SECTION_ID',
