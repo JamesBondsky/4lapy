@@ -27,10 +27,10 @@ use FourPaws\UserBundle\Service\UserService as UserBundleService;
 use FourPaws\MobileApiBundle\Services\Api\CaptchaService as ApiCaptchaService;
 use FourPaws\External\ManzanaService as AppManzanaService;
 use FourPaws\MobileApiBundle\Dto\Object\PersonalBonus;
-use FourPaws\PersonalBundle\Entity\CardBonus;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Exception\SessionUnavailableException;
 use FourPaws\MobileApiBundle\Services\Api\CityService as ApiCityService;
+use FourPaws\PersonalBundle\Service\BonusService as AppBonusService;
 
 class UserService
 {
@@ -69,6 +69,9 @@ class UserService
      */
     private $apiCityService;
 
+    /** @var AppBonusService */
+    private $appBonusService;
+
     public function __construct(
         UserBundleService $userBundleService,
         UserRepository $userRepository,
@@ -76,7 +79,8 @@ class UserService
         SessionHandler $sessionHandler,
         AppManzanaService $appManzanaService,
         TokenStorageInterface $tokenStorage,
-        ApiCityService $apiCityService
+        ApiCityService $apiCityService,
+        AppBonusService $appBonusService
     )
     {
         $this->userBundleService = $userBundleService;
@@ -86,6 +90,7 @@ class UserService
         $this->appManzanaService = $appManzanaService;
         $this->tokenStorage = $tokenStorage;
         $this->apiCityService = $apiCityService;
+        $this->appBonusService = $appBonusService;
     }
 
     /**
@@ -95,8 +100,11 @@ class UserService
      * @throws \Bitrix\Main\Db\SqlQueryException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException
      * @throws \FourPaws\External\Exception\ManzanaServiceException
      * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @throws \FourPaws\UserBundle\Exception\EmptyPhoneException
      * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
      * @throws \FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException
      */
@@ -160,7 +168,10 @@ class UserService
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException
      * @throws \FourPaws\External\Exception\ManzanaServiceException
+     * @throws \FourPaws\UserBundle\Exception\EmptyPhoneException
      */
     public function update(User $user): PostUserInfoResponse
     {
@@ -225,7 +236,8 @@ class UserService
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\External\Exception\ManzanaServiceException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\UserBundle\Exception\EmptyPhoneException
      */
     public function getCurrentApiUser(): User
     {
@@ -239,7 +251,7 @@ class UserService
             throw new SessionUnavailableException();
         }
         $user = $this->userRepository->find($session->getUserId());
-        ;
+
         $apiUser = new User();
         $apiUser
             ->setId($user->getId())
@@ -264,24 +276,29 @@ class UserService
     /**
      * @param AppUser $user
      * @return ClientCard|null
-     * @throws \FourPaws\External\Exception\ManzanaServiceException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\UserBundle\Exception\EmptyPhoneException
      */
     protected function getCard(AppUser $user)
     {
         if (!$user->getDiscountCardNumber()) {
             return null;
         }
+        $bonusInfo = null;
         try {
-            $card = $this->appManzanaService->searchCardByNumber($user->getDiscountCardNumber());
-        } catch (CardNotFoundException $exception) {
-            // return null;
-            // получаем баланс из аккаунта битрикса
+            $bonusInfo = $this->appBonusService->getManzanaBonusInfo($user);
+        } catch (\FourPaws\External\Exception\ManzanaServiceContactSearchNullException $exception) {
+            return null;
+        } catch (\FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException $exception) {
+            return null;
+        } catch (\FourPaws\External\Exception\ManzanaServiceException $exception) {
+            return null;
         }
         return (new ClientCard())
             ->setTitle('Карта клиента')
-            ->setBalance($card->plBalance ?: 0)
+            ->setBalance($bonusInfo->getActiveBonus())
             ->setNumber($user->getDiscountCardNumber())
-            ->setSaleAmount(3);
+            ->setSaleAmount($bonusInfo->getGeneratedRealDiscount());
     }
 
     /**
@@ -307,23 +324,32 @@ class UserService
 
     /**
      * @return PersonalBonus
-     * @throws CardNotFoundException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException
      * @throws \FourPaws\External\Exception\ManzanaServiceException
+     * @throws \FourPaws\UserBundle\Exception\EmptyPhoneException
      */
     public function getPersonalBonus()
     {
-        $user = $this->getCurrentApiUser();
-        $card = $this->appManzanaService->searchCardByNumber($user->getCard()->getNumber());
-        $cardBonus = (new CardBonus());
-        $cardBonus->setSumDiscounted($card->plDiscountSumm ?? 0);
+        /**
+         * @var ApiToken $token | null
+         */
+        if (!$token = $this->tokenStorage->getToken()) {
+            throw new TokenNotFoundException();
+        }
+        if (!$session = $token->getApiUserSession()) {
+            throw new SessionUnavailableException();
+        }
+        $user = $this->userRepository->find($session->getUserId());
+        $bonusInfo = $this->appBonusService->getManzanaBonusInfo($user);
 
         return (new PersonalBonus())
-            ->setAmount($card->plDiscountSumm ?? 0)
-            ->setTotalIncome($card->plDebet ?? 0)
-            ->setTotalOutgo($card->plCredit ?? 0)
-            ->setNextStage($cardBonus->getSumToNext());
+            ->setAmount($bonusInfo->getSumDiscounted() ?? 0)
+            ->setTotalIncome($bonusInfo->getDebit() ?? 0)
+            ->setTotalOutgo($bonusInfo->getCredit() ?? 0)
+            ->setNextStage($bonusInfo->getSumToNext());
     }
 }

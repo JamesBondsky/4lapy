@@ -53,8 +53,11 @@ class UserController extends FOSRestController
      * @throws \Bitrix\Main\Db\SqlQueryException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException
      * @throws \FourPaws\External\Exception\ManzanaServiceException
      * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @throws \FourPaws\UserBundle\Exception\EmptyPhoneException
      * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
      * @throws \FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException
      * @internal param Request $request
@@ -91,7 +94,8 @@ class UserController extends FOSRestController
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\External\Exception\ManzanaServiceException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\UserBundle\Exception\EmptyPhoneException
      */
     public function getUserInfoAction()
     {
@@ -112,7 +116,10 @@ class UserController extends FOSRestController
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException
      * @throws \FourPaws\External\Exception\ManzanaServiceException
+     * @throws \FourPaws\UserBundle\Exception\EmptyPhoneException
      */
     public function postUserInfoAction(PostUserInfoRequest $userInfoRequest): ApiResponse
     {
@@ -157,8 +164,10 @@ class UserController extends FOSRestController
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException
      * @throws \FourPaws\External\Exception\ManzanaServiceException
-     * @throws \FourPaws\External\Manzana\Exception\CardNotFoundException
+     * @throws \FourPaws\UserBundle\Exception\EmptyPhoneException
      */
     public function getPersonalBonusAction(): PersonalBonusResponse
     {

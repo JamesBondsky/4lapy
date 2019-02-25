@@ -20,7 +20,7 @@ class StoreListResponse
     /**
      * @var Collection|Store[]
      * @Serializer\Type("ArrayCollection<FourPaws\MobileApiBundle\Dto\Object\Store\Store>")
-     * @Serializer\SerializedName("shops")
+     * @Serializer\SerializedName("shopsForOrder")
      */
     protected $shops;
 
