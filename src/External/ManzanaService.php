@@ -62,6 +62,8 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
 
     public const METHOD_EXECUTE = 'Execute';
 
+    public const CONTRACT_CONTRACT_DESCRIPTIONS = 'contracts_descriptions';
+
     public const CONTRACT_ADVANCED_BALANCE = 'advanced_balance';
 
     public const CONTRACT_CARD_ATTACH = 'card_attach';
@@ -91,6 +93,16 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     protected $sessionId;
 
     protected $cards = [];
+
+	/**
+	 * Возвращает список доступных контрактов
+	 * @return string
+	 * @throws ExecuteException
+	 */
+	public function getContractsDescription(): string
+    {
+	    return $this->execute(self::CONTRACT_CONTRACT_DESCRIPTIONS);
+    }
 
     /**
      * Отправка телефона

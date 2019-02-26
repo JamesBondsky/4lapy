@@ -550,6 +550,7 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
+     * Рассчитывает бонус, который будет начислен, если покупатель совершит заказ без оплаты бонусами
      * @param int|User $userId
      *
      * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
