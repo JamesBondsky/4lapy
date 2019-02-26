@@ -65,32 +65,39 @@ $aMenuLinks = [
         ['icon' => 'icon-profile'],
         "\$GLOBALS['isAuth']",
     ],
-    [
-        'Копи марки',
+];
+
+global $USER;
+if ($USER->IsAdmin())
+{
+    $aMenuLinks[] = [
+        'Копи марки1',
         '/personal/piggy-bank',
         [],
         ['icon' => 'icon-piggy-bank'],
         "\$GLOBALS['isAuth']",
-    ],
-    [
-        'Топ 10 товаров',
-        '/personal/top/',
-        [],
-        ['icon' => 'icon-empty-star'],
-        "\$GLOBALS['isAuth']",
-    ],
-    [
-        'Выход',
-        '?logout=yes',
-        [],
-        ['icon' => 'icon-exit'],
-        "\$GLOBALS['isAuth'] && !\$GLOBALS['isAvatarAuth']",
-    ],
-    [
-        'Вернуться',
-        '/front-office/avatar/logout.php',
-        [],
-        ['icon' => 'icon-exit'],
-        "\$GLOBALS['isAuth'] && \$GLOBALS['isAvatarAuth']",
-    ],
+    ];
+
+}
+
+$aMenuLinks[] = [
+    'Топ 10 товаров',
+    '/personal/top/',
+    [],
+    ['icon' => 'icon-empty-star'],
+    "\$GLOBALS['isAuth']",
+];
+$aMenuLinks[] = [
+    'Выход',
+    '?logout=yes',
+    [],
+    ['icon' => 'icon-exit'],
+    "\$GLOBALS['isAuth'] && !\$GLOBALS['isAvatarAuth']",
+];
+$aMenuLinks[] = [
+    'Вернуться',
+    '/front-office/avatar/logout.php',
+    [],
+    ['icon' => 'icon-exit'],
+    "\$GLOBALS['isAuth'] && \$GLOBALS['isAvatarAuth']",
 ];
