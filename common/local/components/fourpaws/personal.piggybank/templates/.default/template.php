@@ -27,6 +27,12 @@ $activeMarks = $arResult['ACTIVE_MARKS'];
 $typeSale = $arResult['SALE_TYPE'];
 $isActiveNextType = $arResult['IS_ACTIVE_NEXT_TYPE'];
 
+$marksToUpgrade = $arParams['COUPON_LEVELS'][$arResult['MAXIMUM_AVAILABLE_LEVEL']]['MARKS_TO_LEVEL_UP_FROM_BOTTOM'];
+if ($arResult['CURRENT_LEVEL'])
+{
+    $marksToUpgrade -= $arParams['COUPON_LEVELS'][$arResult['CURRENT_LEVEL']]['MARKS_TO_LEVEL_UP_FROM_BOTTOM'];
+}
+
 ?>
 <div class="b-kopilka">
     <h2 class="b-title b-kopilka__title">Копи марки, покупай со скидкой до -<?= $arParams['COUPON_LEVELS'][3]['DISCOUNT'] ?>%!</h2>
@@ -120,11 +126,11 @@ $isActiveNextType = $arResult['IS_ACTIVE_NEXT_TYPE'];
                 <?php if($isActiveNextType && ($typeSale != 'large')) { ?>
                     <div class="b-sale-coupon-kopilka__bottom">
                         <div class="b-sale-coupon-kopilka__title">
-                            <span class="persent"><?= $arParams['COUPON_LEVELS'][$arResult['NEXT_LEVEL']]['DISCOUNT'] ?>%</span>
+                            <span class="persent"><?= $arParams['COUPON_LEVELS'][$arResult['MAXIMUM_AVAILABLE_LEVEL']]['DISCOUNT'] ?>%</span>
                             <span>Получить скидку</span>
                         </div>
                         <div class="b-sale-coupon-kopilka__btn-wrap">
-                            <div class="b-sale-coupon-kopilka__btn" data-btn-exchange-coupon-kopilka="true">Обменять <?= $arParams['COUPON_LEVELS'][$arResult['NEXT_LEVEL']]['MARKS_TO_LEVEL_UP'] ?> марок</div><? //TODO окончание ?>
+                            <div class="b-sale-coupon-kopilka__btn" data-btn-exchange-coupon-kopilka="true">Обменять <?= $marksToUpgrade ?> марок</div><? //TODO окончание ?>
                         </div>
                     </div>
                 <?php } ?>

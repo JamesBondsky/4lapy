@@ -73,7 +73,7 @@ class FourPawsPersonalCabinetPiggybankComponent extends FourPawsComponent
     private $marksAvailable;
 
     /** @var int */
-    //private $activeCouponNominalPrice;
+    private $activeCouponNominalPrice;
 
 	/**
      * AutoloadingIssuesInspection constructor.
@@ -137,30 +137,22 @@ class FourPawsPersonalCabinetPiggybankComponent extends FourPawsComponent
 
         $this->activeCouponLevelNumber = $activeCoupon['LEVEL'] ?: 0;
 
-        if (!$activeCoupon->isEmpty()) //FIXME ?!empty?
-        {
-            $couponText = 'У Вас есть купон ' . $activeCoupon['COUPON_NUMBER'] . ' со скидкой ' . $activeCoupon['DISCOUNT']. '%';
-        }
 
         $this->marksAvailable = $this->piggyBankService->getAvailableMarksQuantity();
 
-        /*$this->activeCouponNominalPrice = 0;
-        if ($this->activeCouponLevelNumber === $this->maxCouponLevelNumber) // Уже максимальный купон
+        $this->activeCouponNominalPrice = 0;
+        if (!$activeCoupon->isEmpty())
         {
-            $markText = 'У Вас в наличии купон с максимальной скидкой. Кроме него доступно ' . $this->marksAvailable . ' марок'; //TODO вывести, сколько марок сверх купона в наличии
-
-        }
-        elseif (!$activeCoupon->isEmpty())
-        { // Есть какой-то купон немаксимального уровня
             for ($i = 1; $i <= $this->activeCouponLevelNumber; ++$i)
             {
                 $this->activeCouponNominalPrice += $this->couponLevels[$i]['MARKS_TO_LEVEL_UP'];
             }
-        }*/
+        }
 
-        $isNextLevelAvailable = $this->isNextLevelAvailable();
+        $isUpgradeAvailable = $this->isNextLevelAvailable();
+        $maximumAvailableLevel = $this->getMaximumAvailableLevel();
 
-        if (!$isNextLevelAvailable)
+        if (!$isUpgradeAvailable)
         {
             $marksNeeded = $this->getMarksNeeded();
         }
@@ -209,8 +201,11 @@ class FourPawsPersonalCabinetPiggybankComponent extends FourPawsComponent
         if (!$activeCoupon->isEmpty())
         {
             $this->arResult['SALE_TYPE'] = $this->couponLevels[$activeCoupon['LEVEL']]['SALE_TYPE'];
+            $this->arResult['CURRENT_LEVEL'] = $this->activeCouponLevelNumber;
         }
-        $this->arResult['IS_ACTIVE_NEXT_TYPE'] = $isNextLevelAvailable;
+        $this->arResult['IS_ACTIVE_NEXT_TYPE'] = $isUpgradeAvailable;
+        $this->arResult['NEXT_SALE_TYPE'] = $this->couponLevels[$maximumAvailableLevel]['SALE_TYPE'];
+        $this->arResult['MAXIMUM_AVAILABLE_LEVEL'] = $maximumAvailableLevel;
         if ($marksNeeded)
         {
             $this->arResult['MARKS_NEEDED'] = $marksNeeded;
@@ -228,11 +223,10 @@ class FourPawsPersonalCabinetPiggybankComponent extends FourPawsComponent
 
     /**
      * @return int|bool
-     * @todo Получение максимально доступного уровня, если такой функционал потребуется
      */
     private function getMaximumAvailableLevel()
     {
-        /*if ($this->activeCouponLevelNumber !== $this->maxCouponLevelNumber)
+        if ($this->activeCouponLevelNumber !== $this->maxCouponLevelNumber)
         {
             for ($i = $this->couponLevelsQuantity; $i > $this->activeCouponLevelNumber; --$i)
             {
@@ -244,11 +238,12 @@ class FourPawsPersonalCabinetPiggybankComponent extends FourPawsComponent
             }
         }
 
-        return $availableLevel ?? false;*/
+        return $availableLevel ?? false;
     }
 
     /**
      * @return bool
+     * @throws Exception
      */
     public function isNextLevelAvailable(): bool
     {
@@ -267,6 +262,7 @@ class FourPawsPersonalCabinetPiggybankComponent extends FourPawsComponent
 
     /**
      * @return int|bool
+     * @throws Exception
      */
     public function getMarksNeeded()
     {
