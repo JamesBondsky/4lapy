@@ -193,13 +193,6 @@ class Event extends BaseServiceHandler
             'cancelOrder'
         ], $module);
 
-        //TODO limit only by promo offer dates range
-        /** автоматическое получение пользователем купона 1-го уровня в Копилке-собиралке при достаточном количестве марок */
-        static::initHandler('OnSaleStatusOrderChange', [
-            self::class,
-            'addPiggyBankCoupon'
-        ], $module);
-
         /** очистка кеша заказа */
         static::initHandler('OnSaleOrderSaved', [
             self::class,
@@ -857,56 +850,6 @@ class Event extends BaseServiceHandler
         } catch (\Exception $e) {
             $logger = LoggerFactory::create('piggyBank');
             $logger->critical('failed to add PiggyBank marks for order: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * @param BitrixEvent $event
-     */
-    public static function addPiggyBankCoupon(BitrixEvent $event): void
-    {
-        global $USER;
-        if (!$USER->IsAdmin())
-        {
-            return;
-        }
-
-        try {
-            /** @var PiggyBankService $piggyBankService */
-            $piggyBankService = Application::getInstance()->getContainer()->get('piggy_bank.service');
-
-            /** @var Order $order */
-            $order = $event->getParameter('ENTITY');
-            if ($order instanceof Order) {
-                $statusId = $order->getField('STATUS_ID');
-
-                /** @var PersonalOrderService $orderService */
-                $orderService = Application::getInstance()->getContainer()->get(PersonalOrderService::class);
-
-                if (!in_array($statusId, $orderService::STATUS_FINAL, true))
-                {
-                    return;
-                }
-
-                $basket = $order->getBasket();
-                $items = $basket->getOrderableItems();
-
-                /** @var BasketItem $item */
-                foreach ($items as $item)
-                {
-                    if (in_array($item->getProductId(), $piggyBankService->getMarksIds(), false))
-                    {
-                        if (!$piggyBankService->isUserHasActiveCoupon() && $piggyBankService->isEnoughMarksForFirstCoupon())
-                        {   //TODO может получиться так, что юзер дважды получит купон, если успеют произойти два параллельных addFirstLevelCouponToUser() - сделать транзакцию
-                            $piggyBankService->addFirstLevelCouponToUser();
-                        }
-                        break;
-                    }
-                }
-            }
-        } catch (\Exception $e) {
-            $logger = LoggerFactory::create('piggyBank');
-            $logger->critical('failed to add PiggyBank coupon: ' . $e->getMessage());
         }
     }
 }

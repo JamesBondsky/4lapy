@@ -119,7 +119,7 @@ if ($arResult['CURRENT_LEVEL'])
                 <?php }else { ?>
                     <div class="b-sale-coupon-kopilka__default">
                         <span class="hide-mobile"><?php if(!$isActiveNextType) { ?>До скидки<?php }else { ?>Для скидки<?php } ?></span>
-                        <span class="b-sale-coupon-kopilka__default-persent"><?= $arParams['COUPON_LEVELS'][$arResult['NEXT_LEVEL']]['DISCOUNT'] ?>% <span class="show-mobile">скидка</span></span>
+                        <span class="b-sale-coupon-kopilka__default-persent"><?= $arParams['COUPON_LEVELS'][$arResult['MAXIMUM_AVAILABLE_LEVEL']]['DISCOUNT'] ?>% <span class="show-mobile">скидка</span></span>
                         <?php if(!$isActiveNextType) { ?>
                             <span>осталось</span>
                             <span class="b-sale-coupon-kopilka__default-count"><?= $arResult['MARKS_NEEDED'] ?> марок</span><? //TODO исправить окончание "марок" ?>
@@ -197,7 +197,6 @@ if ($arResult['CURRENT_LEVEL'])
             ],
             'COUNT' => 4,
             'TITLE' => 'Товары, участвующие в акции',
-            'ALL_LINK' => '/shares/kopimarki-mart2019/'
         ), $this->getComponent());
         
         $APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', '', array(
@@ -213,6 +212,9 @@ if ($arResult['CURRENT_LEVEL'])
             'TITLE' => '',
         ), $this->getComponent());
     ?>
+    <div class="b-button__wrap b-button__wrap--action-kopilka">
+        <a href="/shares/kopimarki-mart2019/" class="b-button b-button--action-kopilka">Показать все</a>
+    </div>
     
 	<? //TODO вынести в компонент ?>
 	<? /* ?>
