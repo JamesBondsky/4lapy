@@ -150,4 +150,17 @@ class OrderDay
     {
         return explode(":", $this->orderTime);
     }
+
+    /**
+     * Модифицирует время для сравнения с временем до заказа
+     *
+     * @return string
+     */
+    public function setOrderTimeForDate(\DateTime $date): \DateTime
+    {
+        if((int)$date->format("His") > str_replace([":", "-", "."], "", $this->getOrderTime())){
+            $date->setTime(...$this->getOrderTimeArray());
+        }
+        return $date;
+    }
 }

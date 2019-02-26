@@ -657,9 +657,8 @@ class DeliverySchedule extends Base implements \Serializable
                 }
 
                 $date->modify(sprintf('%s weeks +%s days', $weeks, $days));
-                $date->setTime(...$day->getOrderTimeArray());
 
-                if($realDate && $from > $date){
+                if($realDate && $from > $day->setOrderTimeForDate($date)){
                     continue;
                 }
 
