@@ -366,7 +366,7 @@ class ScheduleResultService implements LoggerAwareInterface
         }
 
         $receivers = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
-        //$receivers = [$this->storeService->getStoreByXmlId('DC01')];
+        //$receivers = [$this->storeService->getStoreByXmlId('DC01'), $this->storeService->getStoreByXmlId('R003')];
 
         $result = [];
         /** @var Store $receiver */
@@ -460,21 +460,19 @@ class ScheduleResultService implements LoggerAwareInterface
                 if ($transitionCount === 0) {
                     $maxTransitions++;
                 }
+            }
 
-//                /** при доставке со склада поставщика ориентируемся на время формирования заказа из свойства */
-//                $orderTime = explode(":", $sender->getStoreOrderTime());
-//
-//                /** @var \DateTime $date */
-//                foreach ($from as $hour => $date) {
-//                    if($date->format('G') < $orderTime[0]){
-//                        $date->setTime(...$orderTime);
-//
-//                        /** время у стартовых дат нужно тоже изменить, чтобы корректно работал diff */
-//                        /** @var \DateTime $startDate */
-//                        $startDate = $startDates[$hour];
-//                        $startDate->setTime(...$orderTime);
-//                    }
-//                }
+            /** На второй итерации маршрута товар готов к отгрузке уже в 9 утра */
+            if($transitionCount > 0){
+                /** @var \DateTime $date */
+                foreach ($from as $hour => $date) {
+                    $date->setTime(9, 0, 0, 0);
+
+                    /** время у стартовых дат нужно тоже изменить, чтобы корректно работал diff */
+                    /** @var \DateTime $startDate */
+                    $startDate = $startDates[$hour];
+                    $startDate->setTime(9, 0, 0, 0);
+                }
             }
 
             //$modifier = 0;
