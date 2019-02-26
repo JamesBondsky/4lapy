@@ -101,7 +101,7 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
                     $this->hideKitBlock = true;
                 }
             } elseif ($this->productSection !== null && $this->productSection->getCode() == 'komplekty-akvariumy') {
-                $volume = $this->getVolume(false);
+                $volume = $this->getVolume(true);
                 if (!$this->hideKitBlock) {
                     $this->getSectionOffers($volume);
                 }
