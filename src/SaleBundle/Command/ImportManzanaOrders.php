@@ -7,6 +7,7 @@ use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application;
 use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemNotActiveException;
 use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemNotExistsException;
+use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\Console\Command\Command;
@@ -68,6 +69,8 @@ class ImportManzanaOrders extends Command implements LoggerAwareInterface
      */
     protected function execute(InputInterface $input, OutputInterface $output): void
     {
+        global $USER;
+
         $period = $input->getOption(static::OPT_PERIOD) ?? '1 month';
 
         /** @var \FourPaws\UserBundle\Service\UserService $userService */
@@ -82,12 +85,17 @@ class ImportManzanaOrders extends Command implements LoggerAwareInterface
 
         if ($users)
         {
+            /** @var OrderService $orderService */
             $orderService = Application::getInstance()->getContainer()->get('order.service');
 
             foreach ($users as $user)
             {
+                $userId = $user->getId();
                 try
                 {
+                    if ($USER->GetID() !== $userId) {
+                        $USER->Authorize($userId);
+                    }
                     $orderService->importOrdersFromManzana($user);
                 } catch (ChequeItemNotExistsException|ChequeItemNotActiveException $e)
                 {
@@ -97,7 +105,7 @@ class ImportManzanaOrders extends Command implements LoggerAwareInterface
                     $this->log()->error(
                         \sprintf(
                             'Error importing orders for user #%s: %s. %s',
-                            $user->getId(),
+                            $userId,
                             $e->getMessage(),
                             $e->getTraceAsString()
                         )
