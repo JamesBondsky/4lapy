@@ -51,7 +51,7 @@ global $USER;
 if ($USER->IsAdmin())
 {
     $aMenuLinks[] = [
-        'Копилка-собиралка',
+        'Копи марки',
         '/personal/piggy-bank/',
     ];
 
