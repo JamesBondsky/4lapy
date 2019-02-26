@@ -37,7 +37,7 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
     $additionalItem = $arResult['ADDITIONAL_ITEM'];
     $selectionOffers = $arResult['SELECTION_OFFERS'];
     $totalPrice = $offer->getCatalogPrice() +
-        $additionalItem->getCatalogPrice() +
+        (($additionalItem) ? $additionalItem->getCatalogPrice() : 0) +
         $selectionOffers['filters']->first()->getCatalogPrice() +
         $selectionOffers['decor']->first()->getCatalogPrice() +
         $selectionOffers['lamps']->first()->getCatalogPrice();
@@ -76,33 +76,35 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
                             </div>
                         </div>
 
-                        <div class="b-product-card-complect__list-item slide">
-                            <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $additionalItem->getId(); ?>_1" data-offerprice="<?= $additionalItem->getCatalogPrice(); ?>" data-product-info='{"productid": <?= $additionalItem->getProduct()->getId(); ?>, "offerid": <?= $additionalItem->getId(); ?>, "offerprice": <?= $additionalItem->getCatalogPrice(); ?>}' tabindex="0">
-                                <div class="b-common-item__image-wrap">
-                                    <a class="b-common-item__image-link js-item-link" href="<?= $additionalItem->getDetailPageUrl(); ?>" tabindex="0">
-                                        <img class="b-common-item__image" src="<?= $additionalItem->getResizeImages(240, 240)->first(); ?>" alt="<?= $additionalItem->getName(); ?>" title="">
-                                    </a>
-                                </div>
-                                <div class="b-common-item__info-center-block">
-                                    <a class="b-common-item__description-wrap" href="<?= $additionalItem->getDetailPageUrl(); ?>" tabindex="0">
+                        <? if (!empty($additionalItem)) { ?>
+                            <div class="b-product-card-complect__list-item slide">
+                                <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $additionalItem->getId(); ?>_1" data-offerprice="<?= $additionalItem->getCatalogPrice(); ?>" data-product-info='{"productid": <?= $additionalItem->getProduct()->getId(); ?>, "offerid": <?= $additionalItem->getId(); ?>, "offerprice": <?= $additionalItem->getCatalogPrice(); ?>}' tabindex="0">
+                                    <div class="b-common-item__image-wrap">
+                                        <a class="b-common-item__image-link js-item-link" href="<?= $additionalItem->getDetailPageUrl(); ?>" tabindex="0">
+                                            <img class="b-common-item__image" src="<?= $additionalItem->getResizeImages(240, 240)->first(); ?>" alt="<?= $additionalItem->getName(); ?>" title="">
+                                        </a>
+                                    </div>
+                                    <div class="b-common-item__info-center-block">
+                                        <a class="b-common-item__description-wrap" href="<?= $additionalItem->getDetailPageUrl(); ?>" tabindex="0">
                                     <span class="b-clipped-text b-clipped-text--three">
                                         <span>
                                             <span class="span-strong"><?= $additionalItem->getProduct()->getBrandName(); ?></span> <?= $additionalItem->getName(); ?>
                                         </span>
                                     </span>
-                                    </a>
-                                    <div class="b-common-item__info">
-                                        <div class="b-common-item__property">
-                                            <span class="b-common-item__property-value"><?= WordHelper::showLengthNumber($additionalItem->getCatalogProduct()->getLength()); ?>x<?= WordHelper::showLengthNumber($additionalItem->getCatalogProduct()->getWidth()); ?>x<?= WordHelper::showLengthNumber($additionalItem->getCatalogProduct()->getHeight()); ?> см</span>
-                                        </div>
-                                        <div class="b-common-item__price">
-                                            <span class="b-common-item__price-value"><?= $additionalItem->getCatalogPrice(); ?></span>
-                                            <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
+                                        </a>
+                                        <div class="b-common-item__info">
+                                            <div class="b-common-item__property">
+                                                <span class="b-common-item__property-value"><?= WordHelper::showLengthNumber($additionalItem->getCatalogProduct()->getLength()); ?>x<?= WordHelper::showLengthNumber($additionalItem->getCatalogProduct()->getWidth()); ?>x<?= WordHelper::showLengthNumber($additionalItem->getCatalogProduct()->getHeight()); ?> см</span>
+                                            </div>
+                                            <div class="b-common-item__price">
+                                                <span class="b-common-item__price-value"><?= $additionalItem->getCatalogPrice(); ?></span>
+                                                <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        <? } ?>
 
                         <? foreach ($selectionOffers as $groupKey => $offerGroup) { ?>
                             <?
@@ -151,7 +153,7 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
                                         </div>
                                         <? if ($offerGroup->count() > 1) { ?>
                                             <div class="b-common-item__replace">
-                                                <a href="javascript:void(0)" class="b-common-item__replace-link js-product-complect-replace js-this-product-complect<?= ($groupKey == 'filters') ? ' hide-all-link' : ''?>">
+                                                <a href="javascript:void(0)" class="b-common-item__replace-link js-product-complect-replace js-this-product-complect<?= ($groupKey == 'filters') ? ' hide-all-link' : '' ?>">
                                                     <span class="b-common-item__replace-text js-product-complect-replace-text"
                                                           data-link-text="<?= $arMessages[$groupKey]['all']; ?>"
                                                           data-link-href="<?= $currentOffer->getProduct()->getSection()->getSectionPageUrl(); ?>"
