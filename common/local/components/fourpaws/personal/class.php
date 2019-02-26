@@ -34,7 +34,7 @@ class CPersonalCabinetComponent extends CBitrixComponent
         {
             $arDefaultUrlTemplates404 = array_merge($arDefaultUrlTemplates404, [
                 'piggy-bank'         => 'kopi-marki/',
-                'piggy-bank-upgrade' => 'piggy-bank/upgrade/',
+                'piggy-bank-upgrade' => 'kopi-marki/upgrade/',
             ]);
         }
 

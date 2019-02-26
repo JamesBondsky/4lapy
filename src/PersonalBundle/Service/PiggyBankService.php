@@ -85,6 +85,16 @@ class PiggyBankService implements LoggerAwareInterface
     private $userId;
     /** @var int */
     private $activeMarksQuantity;
+    /** @var int */
+    public $activeCouponLevelNumber;
+    /** @var int */
+    public $maxCouponLevelNumber;
+    /** @var int */
+    public $couponLevelsQuantity;
+    /** @var int */
+    public $marksAvailable;
+    /** @var int */
+    public $activeCouponNominalPrice;
 
     /** @var BasketService */
     protected $basketService;
@@ -222,13 +232,19 @@ class PiggyBankService implements LoggerAwareInterface
         }
 
 		try {
-			$currentCoupon = $this->getActiveCoupon();
+            $oldCoupon = $this->getActiveCoupon();
+			if (!$oldCoupon->isEmpty())
+            {
+                $oldCouponId = $oldCoupon['ID'];
+            }
+            $this->activeCouponLevelNumber = $oldCoupon['LEVEL'] ?: 0;
+            $this->getActiveCouponNominalPrice();
 
-			if (!$currentCoupon)
+			/*if ($oldCoupon->isEmpty())
 			{
 				throw new NoActiveUserCouponException('User has no active coupon');
-			}
-			if ($currentCoupon['LEVEL'] >= max(array_keys(self::COUPON_LEVELS)))
+			}*/
+			if (!$oldCoupon->isEmpty() && $oldCoupon['LEVEL'] >= max(array_keys(self::COUPON_LEVELS)))
 			{
                 throw new CouponIsAlreadyMaxedException('User already has max level coupon');
 			}
@@ -236,13 +252,25 @@ class PiggyBankService implements LoggerAwareInterface
 	        /** @var CouponService $couponService */
 	        $couponService = App::getInstance()->getContainer()->get('coupon.service');
 
-	        $freeCouponId = $this->getFreeCouponId($currentCoupon['LEVEL'] + 1);
+            $this->marksAvailable = $this->getAvailableMarksQuantity();
+
+            $maxAvailableLevel = $this->getMaximumAvailableLevel();
+            if (!$maxAvailableLevel)
+            {
+                throw new \Exception('No available coupon level upgrade'); //FIXME new Exception type
+            }
+
+	        $freeCouponId = $this->getFreeCouponId($maxAvailableLevel);
 	        $couponService->linkCouponToCurrentUser($freeCouponId); //TODO unlock coupon in case of exceptions (inside)
 			//TODO транзакция (если не получен новый купон, то не гасить старый)
 
-            $couponService->deactivateCoupon($currentCoupon['ID']); //FIXME what to do if can't be deactivated?
+            if (isset($oldCouponId))
+            {
+                $couponService->deactivateCoupon($oldCouponId); //FIXME what to do if can't be deactivated?
+            }
 
             $currentCoupon = $this->getActiveCoupon(true);
+            $this->activeCouponLevelNumber = $currentCoupon['LEVEL'] ?: 0;
         } catch (\Exception $e) {
             $this->log()->critical(\sprintf(
                 'Not possible to upgrade coupon: %s: %s',
@@ -554,6 +582,44 @@ class PiggyBankService implements LoggerAwareInterface
 
         $this->userId = $this->currentUserProvider->getCurrentUserId();
     	return $this->userId;
+    }
+
+    /**
+     * @return int|bool
+     */
+    public function getMaximumAvailableLevel()
+    {
+        if ($this->activeCouponLevelNumber !== $this->maxCouponLevelNumber)
+        {
+            for ($i = $this->couponLevelsQuantity; $i > $this->activeCouponLevelNumber; --$i)
+            {
+                if ($this->marksAvailable > self::COUPON_LEVELS[$i]['MARKS_TO_LEVEL_UP_FROM_BOTTOM'] - $this->activeCouponNominalPrice)
+                {
+                    $availableLevel = $i;
+                    break;
+                }
+            }
+        }
+
+        return $availableLevel ?? false;
+    }
+
+    /**
+     * @return int
+     */
+    public function getActiveCouponNominalPrice(): int
+    {
+        $this->activeCouponNominalPrice = 0;
+        $activeCoupon = $this->getActiveCoupon();
+        if (!$activeCoupon->isEmpty())
+        {
+            for ($i = 1; $i <= $this->activeCouponLevelNumber; ++$i)
+            {
+                $this->activeCouponNominalPrice += self::COUPON_LEVELS[$i]['MARKS_TO_LEVEL_UP'];
+            }
+        }
+
+        return $this->activeCouponNominalPrice;
     }
 
 	/**
