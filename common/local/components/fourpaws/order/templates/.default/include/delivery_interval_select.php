@@ -24,7 +24,7 @@ if ($tmpDelivery = $nextDeliveries[$storage->getDeliveryDate()]) {
             <span class="b-input-line__label">интервал</span>
         </div>
         <div class="b-select b-select--recall b-select--feedback-page b-select--interval">
-            <select class="b-select__block b-select__block--recall b-select__block--feedback-page b-select__block--interval js-select-recovery <? if ($deliveryDostavista) { ?>js-no-valid<? } ?>"
+            <select class="b-select__block b-select__block--recall b-select__block--feedback-page b-select__block--interval js-select-recovery"
                     name="<?= $selectorName ?>">
                 <option value="" disabled="disabled" selected="selected">
                     выберите
