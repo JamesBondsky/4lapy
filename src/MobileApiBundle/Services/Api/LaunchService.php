@@ -5,6 +5,7 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Bitrix\Main\ObjectException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\ManzanaService as AppManzanaService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\UserService as AppUserService;
@@ -49,16 +50,30 @@ class LaunchService
             // обновление номера карты из манзаны в битриксовый профиль пользователя
             $this->appUserService->refreshUserCard($user);
 
-            // отправка с сайта в манзану данных пользователя + параметров ffMobileApp и ffMobileAppDate
+            // обновление даты последнего входа в приложение
             try {
                 $client = new ManzanaClient();
-                // toDo дождаться ответа от разработчиков манзаны что ffMobileApp и ffMobileAppDate как-то используются и для передачи этих параметров через contract_update clientId - не нужен (достаточно того что выставляется в setClientPersonalDataByCurUser)
+                try {
+                    // если текущий пользак уже зареген в манзане - нужно просто обновить дату входа в приложение
+                    // устанавливаем contactId
+                    $contactId = $this->appManzanaService->getContactIdByUser();
+                    if(!empty($contactId)) {
+                        $client->contactId = $contactId;
+                    }
+                } catch (ManzanaServiceException $e) {
+                    // если текущий пользак не зареген в манзане - регистриурем с данными из битрикс-профиля
+                    /** @see Event::updateManzana */
+                    $this->appUserService->setClientPersonalDataByCurUser($client);
+                }
+                // устанавливаем дату последнего входа в приложение
                 $this->setClientMobileAppDate($client);
-                $this->appUserService->setClientPersonalDataByCurUser($client);
+                // отправляем данные в манзану
                 $this->appManzanaService->updateContactAsync($client);
             } catch (ApplicationCreateException $e) {
                 // do nothing
             } catch (ObjectException $e) {
+                // do nothing
+            } catch (\Exception $e) {
                 // do nothing
             }
         } catch (NotAuthorizedException $e) {
