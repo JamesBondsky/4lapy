@@ -11,6 +11,7 @@ use FourPaws\MobileApiBundle\Dto\Error;
 use FourPaws\MobileApiBundle\Dto\Object\ChangeCardProfile;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
+use FourPaws\PersonalBundle\Exception\CardNotValidException;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\UserService as AppUserService;
 use FourPaws\PersonalBundle\Entity\UserBonus as AppUserBonus;
@@ -156,7 +157,11 @@ class CardService
      * @param ChangeCardProfile $cardProfile
      * @param $captchaId
      * @param $captchaValue
-     * @return
+     * @return void
+     * @throws CardNotValidException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException
+     * @throws \FourPaws\External\Exception\ManzanaServiceContactSearchNullException
      * @throws \FourPaws\External\Exception\ManzanaServiceException
      * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
      * @throws \FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException
@@ -166,18 +171,38 @@ class CardService
         $user = $this->appUserService->getCurrentUser();
         $oldCard = $user->getDiscountCardNumber();
         $newCard = $cardProfile->getNewCardNumber();
+
         // 1. проверяем капчу
         $confirmationCodeType = 'email_change_bonus_card';
         $_COOKIE[ConfirmCodeService::getCookieName($confirmationCodeType)] = $captchaId;
         if (!ConfirmCodeService::checkCode($captchaValue, $confirmationCodeType)) {
-            throw new RuntimeException('Некорректный код');
+             throw new RuntimeException('Некорректный код');
         }
+
         // 2. проверяем, нет ли уже в базе такого номера карты
         if ($this->isActive($cardProfile->getNewCardNumber())) {
             throw new RuntimeException('Карта уже используется');
         }
+
         // 3. заменяем карту в манзане
-        $this->appManzanaService->changeCard($oldCard, $newCard);
+        // 3.1 получаем ID старой карты
+        $newCardValidResult = $this->appManzanaService->validateCardByNumberRaw($newCard);
+        if (!$newCardValidResult->cardId) {
+            throw new CardNotValidException('Замена невозможна. Обратитесь на Горячую Линию.');
+        }
+        $newCardId = $newCardValidResult->cardId;
+
+        // 3.2 получаем ID новой карты
+        $client = $this->appManzanaService->getContactByUser($user);
+        $card = $this->appManzanaService->getCardInfo($oldCard, $client->contactId);
+        if ($card === null) {
+            throw new CardNotValidException('Замена невозможна. Обратитесь на Горячую Линию.');
+        }
+        $oldCardId = $card->cardId;
+
+        // 3.3 производим замену
+        $this->appManzanaService->changeCard($oldCardId, $newCardId);
+
         // 4. заменяем данные в битриксовом профиле пользователя
         $user->setDiscountCardNumber($newCard);
         $this->userRepository->update($user);

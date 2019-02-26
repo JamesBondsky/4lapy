@@ -10,6 +10,7 @@ use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Request\ShopsForProductCardRequest;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListRequest;
+use FourPaws\MobileApiBundle\Dto\Response\StoreListAvailableResponse;
 use FourPaws\MobileApiBundle\Dto\Response\StoreListResponse;
 use FourPaws\MobileApiBundle\Services\Api\StoreService as ApiStoreService;
 use FourPaws\MobileApiBundle\Services\Api\UserService as ApiUserService;
@@ -77,11 +78,11 @@ class StoreController extends FOSRestController
      * @Rest\View(serializerGroups={"Default", "withPickupInfo"})
      *
      * @throws \Exception
-     * @return StoreListResponse
+     * @return StoreListAvailableResponse
      */
-    public function getStoreListAvailableAction(): StoreListResponse
+    public function getStoreListAvailableAction(): StoreListAvailableResponse
     {
-        return new StoreListResponse(
+        return new StoreListAvailableResponse(
             $this->apiStoreService->getListWithProductsInBasketAvailability()
         );
     }

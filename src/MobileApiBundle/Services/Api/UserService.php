@@ -102,7 +102,7 @@ class UserService
     public function loginOrRegister(LoginRequest $loginRequest): UserLoginResponse
     {
 
-        $exlcudePhonesFromCaptchaCheck = [
+        $excludePhonesFromCaptchaCheck = [
             '9778016362',
             '9660949453',
             '9299821844',
@@ -118,7 +118,7 @@ class UserService
 
             $_COOKIE[ConfirmCodeService::getCookieName('phone')] = $loginRequest->getCaptchaId();
 
-            if (!in_array($loginRequest->getLogin(), $exlcudePhonesFromCaptchaCheck)) {
+            if (!in_array($loginRequest->getLogin(), $excludePhonesFromCaptchaCheck)) {
                 if (!ConfirmCodeService::checkCode($loginRequest->getCaptchaValue(), 'phone')) {
                     throw new RuntimeException('Некорректный код');
                 }

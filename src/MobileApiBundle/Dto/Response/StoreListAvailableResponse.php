@@ -15,12 +15,12 @@ use JMS\Serializer\Annotation as Serializer;
  * Class StoreListResponse
  * @package FourPaws\MobileApiBundle\Dto\Response
  */
-class StoreListResponse
+class StoreListAvailableResponse
 {
     /**
      * @var Collection|Store[]
      * @Serializer\Type("ArrayCollection<FourPaws\MobileApiBundle\Dto\Object\Store\Store>")
-     * @Serializer\SerializedName("shops")
+     * @Serializer\SerializedName("shopsForOrder")
      */
     protected $shops;
 
@@ -40,7 +40,7 @@ class StoreListResponse
     /**
      * @param Collection|Store[] $shops
      *
-     * @return StoreListResponse
+     * @return StoreListAvailableResponse
      */
     public function setShops(Collection $shops)
     {
