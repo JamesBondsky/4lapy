@@ -44,23 +44,11 @@ class OrderDay
     protected $weekNum;
 
     /**
-     * @return int
+     * Время до которого нужно оформить заказ
+     *
+     * @var string
      */
-    public function getWeekNum(): int
-    {
-        return $this->weekNum;
-    }
-
-    /**
-     * @param int $weekNum
-     */
-    public function setWeekNum(int $weekNum): OrderDay
-    {
-        $this->weekNum = $weekNum;
-
-        return $this;
-    }
-
+    protected $orderTime;
 
     /**
      * OrderDay constructor.
@@ -68,10 +56,11 @@ class OrderDay
      * @param int $supplyDay
      * @param int $scheduleType
      */
-    public function __construct(int $orderDay, int $supplyDay, int $scheduleType, \DateTime $from)
+    public function __construct(int $orderDay, int $supplyDay, int $scheduleType, \DateTime $from, string $orderTime)
     {
         $this->setOrderDay($orderDay);
         $this->setSupplyDay($supplyDay);
+        $this->setOrderTime($orderTime);
 
         $weekNum = (int)$from->format('W');
 
@@ -80,7 +69,6 @@ class OrderDay
         }
 
         $this->setWeekNum($weekNum);
-
     }
 
     /**
@@ -119,5 +107,47 @@ class OrderDay
         return $this;
     }
 
+    /**
+     * @return int
+     */
+    public function getWeekNum(): int
+    {
+        return $this->weekNum;
+    }
 
+    /**
+     * @param int $weekNum
+     */
+    public function setWeekNum(int $weekNum): OrderDay
+    {
+        $this->weekNum = $weekNum;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getOrderTime(): string
+    {
+        return $this->orderTime;
+    }
+
+    /**
+     * @param string $orderTime
+     */
+    public function setOrderTime(string $orderTime): OrderDay
+    {
+        $this->orderTime = $orderTime;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getOrderTimeArray(): array
+    {
+        return explode(":", $this->orderTime);
+    }
 }

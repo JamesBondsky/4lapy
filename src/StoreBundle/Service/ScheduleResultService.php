@@ -366,7 +366,6 @@ class ScheduleResultService implements LoggerAwareInterface
         }
 
         $receivers = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
-        //$receivers = [$this->storeService->getStoreByXmlId('DC01')];
 
         $result = [];
         /** @var Store $receiver */
@@ -456,26 +455,29 @@ class ScheduleResultService implements LoggerAwareInterface
                 $from[$hour] = clone $date;
             }
 
-            $modifier = 0;
             if ($sender->isSupplier()) {
                 if ($transitionCount === 0) {
                     $maxTransitions++;
                 }
 
-                $orderTime = explode(":", $sender->getStoreOrderTime());
-
-                foreach ($from as $hour => $date) {
-                    /** по ТЗ при доставке со склада поставщика далее расчеты ведутся для времени 9:00 */
-                    $date->setTime(...$orderTime);
-
-                    /** время у стартовых дат нужно тоже изменить, чтобы корректно работал diff */
-                    /** @var \DateTime $startDate */
-                    $startDate = $startDates[$hour];
-                    $startDate->setTime(...$orderTime);
-                }
+//                /** при доставке со склада поставщика ориентируемся на время формирования заказа из свойства */
+//                $orderTime = explode(":", $sender->getStoreOrderTime());
+//
+//                /** @var \DateTime $date */
+//                foreach ($from as $hour => $date) {
+//                    if($date->format('G') < $orderTime[0]){
+//                        $date->setTime(...$orderTime);
+//
+//                        /** время у стартовых дат нужно тоже изменить, чтобы корректно работал diff */
+//                        /** @var \DateTime $startDate */
+//                        $startDate = $startDates[$hour];
+//                        $startDate->setTime(...$orderTime);
+//                    }
+//                }
             }
 
-            $modifier += static::SCHEDULE_DATE_MODIFIER;
+            //$modifier = 0;
+            //$modifier += static::SCHEDULE_DATE_MODIFIER;
 
             if (null === $route) {
                 $route = new StoreCollection();
@@ -489,24 +491,25 @@ class ScheduleResultService implements LoggerAwareInterface
                  */
                 $nextDeliveries = [];
                 foreach ($from as $hour => $date) {
-                    /**
-                     * Дата отгрузки со склада
-                     */
-                    $shipmentDate = $this->storeService->getStoreShipmentDate($schedule->getReceiver(), $date);
-
+                    /** Дата отгрузки со склада (работало раньше, когда не было расписаний у магазина) */
+                    /*$shipmentDate = $this->storeService->getStoreShipmentDate($schedule->getReceiver(), $date);
                     if(!$sender->isSupplier()){
                         $shipmentDate->modify(sprintf('+%s days', $modifier));
-                    }
+                    }*/
 
-                    /**
-                     * Дата поставки на $receiver
-                     */
-                    $nextDelivery = $schedule->getNextDelivery($shipmentDate);
+                    /** Дата поставки на $receiver */
+                    $nextDelivery = $schedule->getNextDelivery($date);
+
+                    /** Если расписания для магазина нет - берём график отгрузок */
+                    if (null === $nextDelivery && $schedule->getReceiver()->isShop()) {
+                        $nextDelivery = $this->storeService->getStoreShipmentDate($schedule->getReceiver(), $date);
+                    }
 
                     if (null === $nextDelivery) {
                         continue;
                     }
 
+                    /** Время на сборку товара после прихода на склад */
                     if ($sender->isSupplier()) {
                         $nextDelivery->modify(sprintf('+%s days', static::DC_PROCESSING_DATE_MODIFIER));
                     }
@@ -517,6 +520,7 @@ class ScheduleResultService implements LoggerAwareInterface
                 if (empty($nextDeliveries)) {
                     continue;
                 }
+
                 /**
                  * Найдена конечная точка
                  */

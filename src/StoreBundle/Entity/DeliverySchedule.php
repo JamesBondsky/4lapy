@@ -637,7 +637,10 @@ class DeliverySchedule extends Base implements \Serializable
 
             $orderDays = $this->scheduleService->getOrderAndSupplyDays($this, $from);
 
-            /** @var OrderDayCollection $orderDates */
+            if(null == $orderDays){
+                return null;
+            }
+
             $orderDates = [];
 
             /** @var OrderDay $day */
@@ -654,8 +657,9 @@ class DeliverySchedule extends Base implements \Serializable
                 }
 
                 $date->modify(sprintf('%s weeks +%s days', $weeks, $days));
+                $date->setTime(...$day->getOrderTimeArray());
 
-                if($realDate && $date < $from){
+                if($realDate && $from > $date){
                     continue;
                 }
 
@@ -709,8 +713,8 @@ class DeliverySchedule extends Base implements \Serializable
 
                 foreach ($weekNumbers as $weekNumber) {
                     $weekDate = clone $date;
-
                     $weekDate->setISODate($date->format('Y'), $weekNumber);
+
                     if ($weekDate->format('W') < $date->format('W')) {
                         $weekDate->modify('+1 year');
                     }

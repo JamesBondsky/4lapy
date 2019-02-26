@@ -24,6 +24,9 @@ class DeliveryScheduleService implements LoggerAwareInterface
 
     protected const TYPE_FIELD_CODE = 'UF_TPZ_TYPE';
 
+    /**
+     * @var array
+     */
     protected $weekdays = [
         1 => 'monday',
         2 => 'tuesday',
@@ -226,6 +229,8 @@ class DeliveryScheduleService implements LoggerAwareInterface
     }
 
     /**
+     * Возвращает порядковые номера дней недели
+     *
      * @param array $orderDays
      * @return array
      */
@@ -239,6 +244,14 @@ class DeliveryScheduleService implements LoggerAwareInterface
         return $days;
     }
 
+    /**
+     * Возвращает дни для формирования заказа и соответствующие дни поставки
+     *
+     * @param DeliverySchedule $schedule
+     * @param \DateTime|null $from
+     * @return OrderDayCollection|null
+     * @throws \Exception
+     */
     public function getOrderAndSupplyDays(DeliverySchedule $schedule, \DateTime $from = null): ?OrderDayCollection
     {
         $result = new OrderDayCollection;
@@ -246,6 +259,7 @@ class DeliveryScheduleService implements LoggerAwareInterface
         $type = $schedule->getTypeCode();
         $orderDays = $schedule->getOrderDays();
         $supplyDays = $schedule->getSupplyDays();
+        $orderTime = $schedule->getSender()->getStoreOrderTime();
 
         if(!$from){
             $from = new \DateTime();
@@ -253,7 +267,7 @@ class DeliveryScheduleService implements LoggerAwareInterface
 
         foreach ($orderDays as $index => $orderDay){
             $supplyDay = $supplyDays[$index];
-            $result->add(new OrderDay($orderDay, $supplyDay, $type, $from));
+            $result->add(new OrderDay($orderDay, $supplyDay, $type, $from, $orderTime));
         }
 
         return !$result->isEmpty() ? $result : null;
