@@ -2,6 +2,8 @@
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
 use FourPaws\App\Response\JsonResponse;
+use Bitrix\Main\Grid\Declension;
+
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -34,6 +36,9 @@ if ($arResult['CURRENT_LEVEL'])
     $marksToUpgrade -= $arParams['COUPON_LEVELS'][$arResult['CURRENT_LEVEL']]['MARKS_TO_LEVEL_UP_FROM_BOTTOM'];
 }
 
+$remainDeclention = new Declension('Осталась', 'Осталось', 'Осталось');
+$markDeclention = new Declension('марка', 'марки', 'марок');
+
 ?>
 <div class="b-kopilka">
     <h2 class="b-title b-kopilka__title">Копи марки, покупай со скидкой до -<?= $arParams['COUPON_LEVELS'][3]['DISCOUNT'] ?>%!</h2>
@@ -54,7 +59,7 @@ if ($arResult['CURRENT_LEVEL'])
                 <div class="top-marks-mobile__title">
                     Мои марки <?= $activeMarks > $arParams['COUPON_LEVELS'][3]['MARKS_TO_LEVEL_UP_FROM_BOTTOM'] ? $arParams['COUPON_LEVELS'][3]['MARKS_TO_LEVEL_UP_FROM_BOTTOM'] : $activeMarks ?>/<span class="top-marks-mobile__title-all-count"><?= $arParams['COUPON_LEVELS'][3]['MARKS_TO_LEVEL_UP_FROM_BOTTOM'] ?></span>
                 </div>
-	            <div class="top-marks-mobile__btn" data-toggle-marks-kopilka="true"></div><? //TODO check (не работала кнопка раскрытия на мобильном) ?>
+	            <div class="top-marks-mobile__btn" data-toggle-marks-kopilka="true"></div>
             </div>
 	        <div class="b-coupon-kopilka__marks-content" data-content-marks-kopilka="true">
                 <div class="list-coupon-marks__wrap">
@@ -79,7 +84,7 @@ if ($arResult['CURRENT_LEVEL'])
                     <? foreach ($arParams['COUPON_LEVELS'] as $level => $levelInfo): ?>
 		                <div class="legend-coupon-marks__item">
 	                        <div class="b-mark-kopilka b-mark-kopilka--sale<?= $activeMarks >= $levelInfo['MARKS_TO_LEVEL_UP_FROM_BOTTOM'] ? ' active ' : '' ?>">
-	                            <span class="b-mark-kopilka__number"><?= $levelInfo['MARKS_TO_LEVEL_UP_FROM_BOTTOM'] ?></span> марок
+	                            <span class="b-mark-kopilka__number"><?= $levelInfo['MARKS_TO_LEVEL_UP_FROM_BOTTOM'] ?></span> <?=$markDeclention->get($levelInfo['MARKS_TO_LEVEL_UP_FROM_BOTTOM'])?>
 	                        </div>
 	                        <div class="legend-coupon-marks__persent">
 	                            <span><?= $levelInfo['DISCOUNT'] ?>%</span> Скидка
@@ -108,11 +113,11 @@ if ($arResult['CURRENT_LEVEL'])
                                 <img src="data:image/png;base64,<?=base64_encode($barcodeGenerator->getBarcode($arResult['ACTIVE_COUPON']['COUPON_NUMBER'], \Picqer\Barcode\BarcodeGenerator::TYPE_CODE_128, 2.803149606299213, 127))?>" alt="" />
                                 <?/* <img src="/static/build/images/content/barcode-kopilka.png" alt="" /> */?>
                             </div>
-                            <a href="javascript:void(0);" class="link js-open-popup" data-popup-id="send-email-coupon-kopilka">Отправить мне на Email</a><? //TODO отправка ?>
+                            <a href="javascript:void(0);" class="link js-open-popup" data-popup-id="send-email-coupon-kopilka">Отправить мне на Email</a>
                         </div>
                         <?php if(!$isActiveNextType && ($typeSale != 'large')) { ?>
                             <div class="b-sale-coupon-kopilka__info">
-                                Осталось <?= $arResult['MARKS_NEEDED'] ?> марок до&nbsp;скидки <?= $arParams['COUPON_LEVELS'][$arResult['NEXT_LEVEL']]['DISCOUNT'] ?>%<? //TODO исправить окончание "марок" ?>
+                                <?=$remainDeclention->get($arResult['MARKS_NEEDED'])?> <?= $arResult['MARKS_NEEDED'] ?> <?=$markDeclention->get($arResult['MARKS_NEEDED'])?> до&nbsp;скидки <?= $arParams['COUPON_LEVELS'][$arResult['NEXT_LEVEL']]['DISCOUNT'] ?>%
                             </div>
                         <?php } ?>
                     </div>
@@ -121,11 +126,11 @@ if ($arResult['CURRENT_LEVEL'])
                         <span class="hide-mobile"><?php if(!$isActiveNextType) { ?>До скидки<?php }else { ?>Для скидки<?php } ?></span>
                         <span class="b-sale-coupon-kopilka__default-persent"><?= $arParams['COUPON_LEVELS'][$arResult['MAXIMUM_AVAILABLE_LEVEL']]['DISCOUNT'] ?>% <span class="show-mobile">скидка</span></span>
                         <?php if(!$isActiveNextType) { ?>
-                            <span>осталось</span>
-                            <span class="b-sale-coupon-kopilka__default-count"><?= $arResult['MARKS_NEEDED'] ?> марок</span><? //TODO исправить окончание "марок" ?>
+                            <span><?=mb_strtolower($remainDeclention->get($arResult['MARKS_NEEDED']))?></span>
+                            <span class="b-sale-coupon-kopilka__default-count"><?= $arResult['MARKS_NEEDED'] ?> <?=$markDeclention->get($arResult['MARKS_NEEDED'])?></span>
                         <?php }else { ?>
                             <div class="b-sale-coupon-kopilka__btn-wrap">
-                                <div class="b-sale-coupon-kopilka__btn" data-btn-exchange-coupon-kopilka="true">Обменять <?= $marksToUpgrade ?> марок</div><? //TODO окончание ?>
+                                <div class="b-sale-coupon-kopilka__btn" data-btn-exchange-coupon-kopilka="true">Обменять <?= $marksToUpgrade ?> <?=$markDeclention->get($marksToUpgrade)?></div>
                             </div>
                         <?php } ?>
                     </div>
@@ -137,7 +142,7 @@ if ($arResult['CURRENT_LEVEL'])
                             <span>Получить скидку</span>
                         </div>
                         <div class="b-sale-coupon-kopilka__btn-wrap">
-                            <div class="b-sale-coupon-kopilka__btn" data-btn-exchange-coupon-kopilka="true">Обменять <?= $marksToUpgrade ?> марок</div><? //TODO окончание ?>
+                            <div class="b-sale-coupon-kopilka__btn" data-btn-exchange-coupon-kopilka="true">Обменять <?= $marksToUpgrade ?> <?=$markDeclention->get($marksToUpgrade)?></div>
                         </div>
                     </div>
                 <?php } ?>

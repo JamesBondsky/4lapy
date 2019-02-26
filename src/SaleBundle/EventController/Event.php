@@ -794,11 +794,16 @@ class Event extends BaseServiceHandler
         }
 
         try {
-            /** @var PiggyBankService $piggyBankService */
-            $piggyBankService = Application::getInstance()->getContainer()->get('piggy_bank.service');
-
             /** @var Order $order */
             $order = $event->getParameter('ENTITY');
+
+            /** подсчитываем марки только при создании нового заказе */
+            if (!$order->isNew()) {
+                return;
+            }
+
+            /** @var PiggyBankService $piggyBankService */
+            $piggyBankService = Application::getInstance()->getContainer()->get('piggy_bank.service');
 
             $manzanaNumberValue = '';
             foreach ($order->getPropertyCollection()->getArray()['properties'] as $prop) {
