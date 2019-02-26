@@ -8,7 +8,7 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\Type\Date;
-use FourPaws\External\Manzana\Exception\CardNotFoundException;
+use FourPaws\Enum\UserGroup as UserGroupEnum;
 use FourPaws\MobileApiBundle\Dto\Object\City;
 use FourPaws\MobileApiBundle\Dto\Object\ClientCard;
 use FourPaws\MobileApiBundle\Dto\Object\User;
@@ -21,6 +21,7 @@ use FourPaws\MobileApiBundle\Security\ApiToken;
 use FourPaws\MobileApiBundle\Services\Session\SessionHandler;
 use FourPaws\UserBundle\Entity\User as AppUser;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
+use FourPaws\UserBundle\Repository\GroupRepository;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\UserService as UserBundleService;
@@ -31,46 +32,36 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
 use Symfony\Component\Security\Core\Exception\SessionUnavailableException;
 use FourPaws\MobileApiBundle\Services\Api\CityService as ApiCityService;
 use FourPaws\PersonalBundle\Service\BonusService as AppBonusService;
+use FourPaws\PersonalBundle\Service\OrderService as PersonalOrderService;
 
 class UserService
 {
-    /**
-     * @var UserBundleService
-     */
+    /** @var UserBundleService */
     private $userBundleService;
 
-    /**
-     * @var UserRepository
-     */
+    /** @var UserRepository */
     private $userRepository;
 
-    /**
-     * @var ApiCaptchaService
-     */
+    /** @var ApiCaptchaService */
     private $apiCaptchaService;
 
-    /**
-     * @var SessionHandler
-     */
+    /** @var SessionHandler */
     private $sessionHandler;
 
-    /**
-     * @var AppManzanaService
-     */
+    /** @var AppManzanaService */
     private $appManzanaService;
 
-    /**
-     * @var TokenStorageInterface
-     */
+    /** @var TokenStorageInterface */
     private $tokenStorage;
 
-    /**
-     * @var ApiCityService
-     */
+    /** @var ApiCityService */
     private $apiCityService;
 
     /** @var AppBonusService */
     private $appBonusService;
+
+    /** @var PersonalOrderService */
+    private $personalOrderService;
 
     public function __construct(
         UserBundleService $userBundleService,
@@ -80,7 +71,8 @@ class UserService
         AppManzanaService $appManzanaService,
         TokenStorageInterface $tokenStorage,
         ApiCityService $apiCityService,
-        AppBonusService $appBonusService
+        AppBonusService $appBonusService,
+        PersonalOrderService $personalOrderService
     )
     {
         $this->userBundleService = $userBundleService;
@@ -91,6 +83,7 @@ class UserService
         $this->tokenStorage = $tokenStorage;
         $this->apiCityService = $apiCityService;
         $this->appBonusService = $appBonusService;
+        $this->personalOrderService = $personalOrderService;
     }
 
     /**
@@ -101,8 +94,6 @@ class UserService
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException
-     * @throws \FourPaws\External\Exception\ManzanaServiceException
      * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
      * @throws \FourPaws\UserBundle\Exception\EmptyPhoneException
      * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
@@ -169,8 +160,6 @@ class UserService
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException
-     * @throws \FourPaws\External\Exception\ManzanaServiceException
      * @throws \FourPaws\UserBundle\Exception\EmptyPhoneException
      */
     public function update(User $user): PostUserInfoResponse
@@ -311,15 +300,34 @@ class UserService
     }
 
     /**
+     *
      * Актуализирует группы пользователя в битрикс
      * Если у пользователя есть заказы с флагом "из мобильного приложения" - помещаем в группу "Делал заказы из МП"
+     * @see UserGroupEnum::HAS_ORDERS_FROM_MOBILE_APP
      * Если нет заказов с флагом "из мобильного приложения" - помещаем в группу "Не делал заказы из МП"
+     * @see UserGroupEnum::NO_ORDERS_FROM_MOBILE_APP
      *
      * Вызывается в методе app_launch
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
      */
     public function actualizeUserGroupsForApp()
     {
-        //toDo...
+        $user = $this->userBundleService->getCurrentUser();
+        $groupIds = \CUser::GetUserGroup($user->getId());
+
+        if ($this->personalOrderService->isUserHasOrdersFromApp($user)) {
+            $newGroupId = GroupRepository::getIdByCode(UserGroupEnum::HAS_ORDERS_FROM_MOBILE_APP);
+            $deleteGroupId = GroupRepository::getIdByCode(UserGroupEnum::NO_ORDERS_FROM_MOBILE_APP);
+            if ($deleteGroupIdKey = array_search($deleteGroupId, $groupIds)) {
+                unset($groupIds[$deleteGroupIdKey]);
+            }
+        } else {
+            $newGroupId = GroupRepository::getIdByCode(UserGroupEnum::NO_ORDERS_FROM_MOBILE_APP);
+        }
+        $groupIds = array_merge([$newGroupId], $groupIds);
+        \CUser::SetUserGroup($user->getId(), $groupIds);
     }
 
     /**

@@ -513,6 +513,21 @@ class OrderService
     }
 
     /**
+     * @param User $user
+     * @return bool
+     * @throws ArgumentException
+     * @throws InvalidArgumentException
+     * @throws SystemException
+     */
+    public function isUserHasOrdersFromApp(User $user): bool
+    {
+        $ordersFromApp = $this->getUserOrders($user, 1, 0)->filter(function(Order $order) {
+            return $order->isFromApp();
+        });
+        return $ordersFromApp->count() > 0;
+    }
+
+    /**
      * @param Order $order
      *
      * @return bool
