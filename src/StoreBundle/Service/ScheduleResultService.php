@@ -366,7 +366,7 @@ class ScheduleResultService implements LoggerAwareInterface
         }
 
         $receivers = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
-        //$receivers = [$this->storeService->getStoreByXmlId('DC01'), $this->storeService->getStoreByXmlId('R003')];
+        //$receivers = [$this->storeService->getStoreByXmlId('R060')];
 
         $result = [];
         /** @var Store $receiver */

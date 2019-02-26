@@ -156,8 +156,9 @@ class OrderDay
      *
      * @return string
      */
-    public function setOrderTimeForDate(\DateTime $date): \DateTime
+    public function setOrderTimeForDate(\DateTime $origDate): \DateTime
     {
+        $date = clone $origDate;
         if((int)$date->format("His") > str_replace([":", "-", "."], "", $this->getOrderTime())){
             $date->setTime(...$this->getOrderTimeArray());
         }
