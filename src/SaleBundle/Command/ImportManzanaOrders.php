@@ -107,6 +107,7 @@ class ImportManzanaOrders extends Command implements LoggerAwareInterface
 
             foreach ($users as $user)
             {
+                //TODO создавать для каждого юзера отдельные задания RabbitMQ
                 $userId = $user->getId();
                 try
                 {

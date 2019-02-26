@@ -806,6 +806,17 @@ class Event extends BaseServiceHandler
 
             /** @var Order $order */
             $order = $event->getParameter('ENTITY');
+
+            $manzanaNumberValue = '';
+            foreach ($order->getPropertyCollection()->getArray()['properties'] as $prop) {
+                if ($prop['CODE'] === 'MANZANA_NUMBER') {
+                    $manzanaNumberValue = $prop['VALUE'][0];
+                    break;
+                }
+            }
+            if (strpos($manzanaNumberValue, 'NEW') !== false) return; // если заказ из Битрикса (добавлено слово NEW в конце)
+
+
             if ($order instanceof Order) {
                 /** @var BasketService $basketService */
                 $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
