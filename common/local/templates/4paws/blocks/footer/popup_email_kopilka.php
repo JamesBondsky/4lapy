@@ -8,6 +8,7 @@
         </header>
         <form class="b-popup-email-kopilka__form js-form-validation js-email-kopilka" data-url="/ajax/piggy-bank/email/send/" method="post">
             <? $token = \FourPaws\Helpers\ProtectorHelper::generateToken(\FourPaws\Helpers\ProtectorHelper::TYPE_PIGGY_BANK_EMAIL_SEND); ?>
+            <input type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
             <div class="b-input-line">
                 <div class="b-input-line__label-wrapper">
                     <label class="b-input-line__label" for="send-email-coupon-kopilka">Email</label>
