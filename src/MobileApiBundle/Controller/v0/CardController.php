@@ -65,6 +65,8 @@ class CardController extends FOSRestController
     }
 
     /**
+     * Проверяет на валидность новый номер карты
+     *
      * @Rest\Post("/change_card_validate/")
      * @Rest\View()
      * @param ChangeCardValidateRequest $changeCardValidateRequest
@@ -86,6 +88,8 @@ class CardController extends FOSRestController
     }
 
     /**
+     * Отправляет подтверждающее письмо о смене карты на email
+     *
      * @Rest\Post("/change_card_confirm_personal/")
      * @Rest\View()
      * @param ChangeCardConfirmPersonalRequest $cardConfirmPersonalRequest
@@ -109,6 +113,8 @@ class CardController extends FOSRestController
     }
 
     /**
+     * Проверяет код подтверждения и меняет карту на новую
+     *
      * @Rest\Post("/change_card_confirm_pin/")
      * @Rest\View()
      * @param ChangeCardConfirmPinRequest $changeCardConfirmPinRequest
@@ -136,7 +142,8 @@ class CardController extends FOSRestController
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\External\Exception\ManzanaServiceException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\UserBundle\Exception\EmptyPhoneException
      */
     public function getUserAddCardAction(UserAddCartRequest $userAddCartRequest)
     {
