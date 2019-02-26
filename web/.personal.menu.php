@@ -71,7 +71,7 @@ global $USER;
 if ($USER->IsAdmin())
 {
     $aMenuLinks[] = [
-        'Копи марки1',
+        'Копи марки',
         '/personal/piggy-bank',
         [],
         ['icon' => 'icon-piggy-bank'],
