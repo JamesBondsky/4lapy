@@ -829,14 +829,17 @@ class Event extends BaseServiceHandler
 
                 $basket->save();
 
-                $basketItem = $basketService->addOfferToBasket(
-                    $piggyBankService->getVirtualMarkId(),
-                    //$piggyBankService->getPhysicalMarkId(),
-                    $marksToAdd,
-                    [],
-                    true,
-                    $basket
-                );
+                if ($marksToAdd > 0)
+                {
+                    $basketItem = $basketService->addOfferToBasket(
+                        $piggyBankService->getVirtualMarkId(),
+                        //$piggyBankService->getPhysicalMarkId(),
+                        $marksToAdd,
+                        [],
+                        true,
+                        $basket
+                    );
+                }
 
                 return;
             }
