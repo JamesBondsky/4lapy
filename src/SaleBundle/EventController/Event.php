@@ -816,20 +816,46 @@ class Event extends BaseServiceHandler
 
                 $basket = $order->getBasket();
                 $items = $basket->getOrderableItems();
-
-                /** @var BasketItem $item */
-                $sum = 0;
-                foreach ($items as $item)
+                if ($items->isEmpty())
                 {
-                    if (in_array($item->getProductId(), $piggyBankService->getMarksIds(), false))
+                    return;
+                }
+                $offersIds = [];
+                foreach ($items as $itemIndex => $item)
+                {
+                    $offersIds[] = $item->getProductId();
+                }
+                if ($offersIds)
+                {
+                    $itemsProps = $piggyBankService->fetchItems($offersIds);
+                }
+
+                $sumVetapteka = 0;
+                $sumNotVetapteka = 0;
+                /** @var BasketItem $item */
+                foreach ($items as $itemIndex => $item)
+                {
+                    $productId = $item->getProductId();
+
+                    if (in_array($productId, $piggyBankService->getMarksIds(), false))
                     {
                         $basketService->deleteOfferFromBasket($item->getId());
                         continue;
                     }
-                    $sum += $item->getPrice() * $item->getQuantity();
+
+                    $price = $item->getPrice() * $item->getQuantity();
+                    if ($itemsProps[$productId]['IS_VETAPTEKA'])
+                    {
+                        $sumVetapteka += $price;
+                    }
+                    else
+                    {
+                        $sumNotVetapteka += $price;
+                    }
                 }
 
-                $marksToAdd = floor($sum / $piggyBankService::MARK_RATE);
+                $marksToAdd = floor($sumVetapteka / $piggyBankService::MARK_RATE) * $piggyBankService::MARKS_PER_RATE_VETAPTEKA;
+                $marksToAdd += floor($sumNotVetapteka / $piggyBankService::MARK_RATE) * $piggyBankService::MARKS_PER_RATE;
 
                 $basket->save();
 

@@ -2,13 +2,19 @@
 
 namespace FourPaws\PersonalBundle\Service;
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Highloadblock\DataManager;
 use Bitrix\Iblock\ElementTable;
+use Bitrix\Iblock\PropertyTable;
+use Bitrix\Main\Entity\Base;
 use Bitrix\Main\SystemException;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockProperty;
+use FourPaws\Enum\IblockType;
 use FourPaws\PersonalBundle\Exception\CouponIsAlreadyMaxedException;
 use FourPaws\PersonalBundle\Exception\CouponNoFreeItemsException;
 use FourPaws\PersonalBundle\Exception\NoActiveUserCouponException;
@@ -95,6 +101,8 @@ class PiggyBankService implements LoggerAwareInterface
     public $marksAvailable;
     /** @var int */
     public $activeCouponNominalPrice;
+    private $propertiesSingleProp;
+    private $propertiesSingleProduct;
 
     /** @var BasketService */
     protected $basketService;
@@ -629,4 +637,92 @@ class PiggyBankService implements LoggerAwareInterface
 	{
 	    return $this->logger;
 	}
+
+    /**
+     * @param array $ids
+     * @return array
+     * @throws \Exception
+     */
+    public function fetchItems(array $ids): array
+    {
+
+	    $catalogIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS);
+	    $offersIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS);
+
+        $cml2LinkProperty = PropertyTable::getList([
+            'filter' => [
+                'IBLOCK_ID' => $offersIblockId,
+                'CODE' => IblockProperty::OFFERS_LINK,
+            ],
+            'select' => ['ID'],
+        ])->fetch();
+
+        $licenseProperty = PropertyTable::getList([
+            'filter' => [
+                'IBLOCK_ID' => $catalogIblockId,
+                'CODE' => IblockProperty::LICENSE,
+            ],
+            'select' => ['ID'],
+        ])->fetch();
+
+        if (!$this->propertiesSingleProp)
+        {
+            $this->propertiesSingleProp = Base::compileEntity(
+                'PROPERTIES_SINGLE_PROP', [
+                    'IBLOCK_ELEMENT_ID' => ['data_type' => 'integer'],
+                    'PROPERTY_'.$cml2LinkProperty['ID'] => ['data_type' => 'integer'],
+                ], ['table_name' => 'b_iblock_element_prop_s'.$offersIblockId]
+            );
+        }
+
+        if (!$this->propertiesSingleProduct)
+        {
+            $this->propertiesSingleProduct = Base::compileEntity(
+                'PROPERTIES_SINGLE_PRODUCT', [
+                    'IBLOCK_ELEMENT_ID' => ['data_type' => 'integer'],
+                    'PROPERTY_'.$licenseProperty['ID'] => ['data_type' => 'integer'],
+                ], ['table_name' => 'b_iblock_element_prop_s'.$catalogIblockId]
+            );
+        }
+
+        $rsItems = ElementTable::getList([
+            'order' => [
+                'SORT' => 'ASC',
+                'NAME' => 'ASC',
+            ],
+            'filter' => [
+                'IBLOCK_ID' => $offersIblockId,
+                'ACTIVE' => 'Y',
+                'ID' => $ids,
+            ],
+            'select' => [
+                'ID',
+                'PROPERTIES_SINGLE_PROP.PROPERTY_'.$cml2LinkProperty['ID'],
+                'PROPERTIES_SINGLE_PRODUCT.PROPERTY_'.$licenseProperty['ID'],
+                //'PROPERTY_LICENSE_VALUE' => 'PROPERTIES_SINGLE.PROPERTY_'.$licenseProperty['ID'],
+            ],
+            'runtime' => [
+                'PROPERTIES_SINGLE_PROP' => [
+                    'data_type' => $this->propertiesSingleProp->getDataClass(),
+                    'reference' => ['=this.ID' => 'ref.IBLOCK_ELEMENT_ID'],
+                    'join_type' => 'inner'
+                ],
+                'PROPERTIES_SINGLE_PRODUCT' => [
+                    'data_type' => $this->propertiesSingleProduct->getDataClass(),
+                    'reference' => ['this.PROPERTIES_SINGLE_PROP.PROPERTY_'.$cml2LinkProperty['ID'] => 'ref.IBLOCK_ELEMENT_ID'],
+                    'join_type' => 'inner'
+                ],
+            ],
+        ]);
+
+        $arItems = [];
+        while ($arItem = $rsItems->fetch()) {
+            $arItems[$arItem['ID']] = [
+                'ID' => $arItem['ID'],
+                'IS_VETAPTEKA' => $arItem['IBLOCK_ELEMENT_PROPERTIES_SINGLE_PRODUCT_PROPERTY_'.$licenseProperty['ID']] == 1 ? true : false,
+            ];
+        }
+
+        return $arItems;
+    }
 }
