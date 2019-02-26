@@ -25,6 +25,7 @@ use Bitrix\Sale\BasketPropertyItem;
 use Bitrix\Sale\Compatible\DiscountCompatibility;
 use Bitrix\Sale\Internals\BasketPropertyTable;
 use Bitrix\Sale\Internals\BasketTable;
+use Bitrix\Sale\Internals\FuserTable;
 use Bitrix\Sale\Internals\OrderTable;
 use Bitrix\Sale\Order;
 use Exception;
@@ -39,6 +40,7 @@ use FourPaws\Enum\UserGroup;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\PersonalBundle\Service\OrderService;
+use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils;
 use FourPaws\SaleBundle\Discount\Utils\AdderInterface;
@@ -1240,10 +1242,12 @@ class BasketService implements LoggerAwareInterface
 	 */
 	public function getMarksQuantityFromUserBaskets(): int
     {
-        $this->setFuserId();
+        $userId = $this->currentUserProvider->getCurrentUserId();
+
 
         try {
-        	$piggyBankService = App::getInstance()->getContainer()->get('piggy_bank.service');
+        	/** @var PiggyBankService $piggyBankService */
+            $piggyBankService = App::getInstance()->getContainer()->get('piggy_bank.service');
 
             $isPayedFilter = [
                 'LOGIC' => 'OR',
@@ -1255,21 +1259,16 @@ class BasketService implements LoggerAwareInterface
 
             $marksArray = BasketTable::query()
                 ->setSelect([
-                    //'*',
                     'QUANTITY',
-                    //'ORDER_ID', //TODO del?
-                    //'NAME',
-                    //'PRODUCT_ID',
                 ])
                 ->setFilter([
-                    'FUSER_ID' => $this->fUserId,
-                    //'DELAY' => 'N',
                     [
                         'LOGIC' => 'OR',
                         ['PRODUCT_ID' => $piggyBankService->getVirtualMarkId()],
                         ['PRODUCT_ID' => $piggyBankService->getPhysicalMarkId()],
                     ],
                     $isPayedFilter,
+                    'ORDER.USER_ID' => $userId,
                     //->where('DATE', '<',
                     //                    DateTime::createFromTimestamp($time - static::SMS_LIFE_TIME))
                     //TODO filter by date (по дате создания заказа) of promo offer dates range
@@ -1283,13 +1282,6 @@ class BasketService implements LoggerAwareInterface
                         ['join_type' => 'INNER']
                     )
                 )
-                /*->registerRuntimeField( //TODO del?
-                    new ExpressionField(
-                        'ORDER_PAYED',
-                        '%s',
-                        'ORDER.PAYED'
-                    )
-                )*/
                 ->exec()
                 ->fetchAll();
 
