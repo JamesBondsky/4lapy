@@ -183,7 +183,7 @@ $isActiveNextType = $arResult['IS_ACTIVE_NEXT_TYPE'];
                 ]
             ],
             'COUNT' => 4,
-            'TITLE' => 'Товары, учавствующие в акции',
+            'TITLE' => 'Товары, участвующие в акции',
             'ALL_LINK' => '/shares/kopimarki-mart2019/'
         ), $this->getComponent());
         
