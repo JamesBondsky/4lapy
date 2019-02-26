@@ -20,15 +20,23 @@ class CPersonalCabinetComponent extends CBitrixComponent
         $this->setFrameMode(true);
 
         $arDefaultUrlTemplates404 = [
-            'personal'  => '',
-            'address'   => 'address/',
-            'bonus'     => 'bonus/',
-            'orders'    => 'orders/',
-            'pets'      => 'pets/',
-            'referral'  => 'referral/',
-            'subscribe' => 'subscribe/',
-            'top'       => 'top/',
+            'personal'           => '',
+            'address'            => 'address/',
+            'bonus'              => 'bonus/',
+            'orders'             => 'orders/',
+            'pets'               => 'pets/',
+            'referral'           => 'referral/',
+            'subscribe'          => 'subscribe/',
+            'top'                => 'top/',
         ];
+        global $USER;
+        if ($USER->IsAdmin())
+        {
+            $arDefaultUrlTemplates404 = array_merge($arDefaultUrlTemplates404, [
+                'piggy-bank'         => 'piggy-bank/',
+                'piggy-bank-upgrade' => 'piggy-bank/upgrade/',
+            ]);
+        }
 
         $arComponentVariables = [
             'SECTION_ID',

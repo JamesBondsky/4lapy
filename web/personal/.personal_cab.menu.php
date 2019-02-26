@@ -45,8 +45,19 @@ $aMenuLinks = [
         'Подписка на доставку',
         '/personal/subscribe/',
     ],
-    [
-        'Топ 10 товаров',
-        '/personal/top/',
-    ],
+];
+
+global $USER;
+if ($USER->IsAdmin())
+{
+    $aMenuLinks[] = [
+        'Копилка-собиралка',
+        '/personal/piggy-bank/',
+    ];
+
+}
+
+$aMenuLinks[] = [
+    'Топ 10 товаров',
+    '/personal/top/',
 ];
