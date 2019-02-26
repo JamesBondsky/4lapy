@@ -27,6 +27,7 @@ class ImportManzanaOrders extends Command implements LoggerAwareInterface
     use LazyLoggerAwareTrait;
 
     protected const OPT_PERIOD = 'period';
+    protected const OPT_USER_ID = 'user';
 
     /**
      * @var int
@@ -57,6 +58,12 @@ class ImportManzanaOrders extends Command implements LoggerAwareInterface
                 'p',
                 InputOption::VALUE_OPTIONAL,
                 'Time period'
+            )
+            ->addOption(
+                static::OPT_USER_ID,
+                'u',
+                InputOption::VALUE_OPTIONAL,
+                'User id'
             );
     }
 
@@ -72,6 +79,7 @@ class ImportManzanaOrders extends Command implements LoggerAwareInterface
         global $USER;
 
         $period = $input->getOption(static::OPT_PERIOD) ?? '1 month';
+        $userId = $input->getOption(static::OPT_USER_ID) ?? null;
 
         /** @var \FourPaws\UserBundle\Service\UserService $userService */
         $userService = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
@@ -79,9 +87,18 @@ class ImportManzanaOrders extends Command implements LoggerAwareInterface
         $periodStartDateTime = new DateTime();
         $periodStartDateTime->add('- ' . $period);
 
-        $users = $userService->getUserRepository()->findBy([
-            '>=LAST_LOGIN' => $periodStartDateTime,
-        ], []);
+        $arFilter = [];
+        if (!$userId)
+        {
+            $arFilter['>=LAST_LOGIN'] = $periodStartDateTime;
+        }
+
+        if ($userId)
+        {
+            $arFilter['ID'] = $userId;
+        }
+
+        $users = $userService->getUserRepository()->findBy($arFilter, []);
 
         if ($users)
         {
