@@ -171,7 +171,36 @@ $isActiveNextType = $arResult['IS_ACTIVE_NEXT_TYPE'];
             <li>Подробности об&nbsp;организаторе акции, месте и&nbsp;сроках ее&nbsp;проведения, товарах, участвующих в&nbsp;акции, можно получить на&nbsp;сайте <a href="https://4lapy.ru/">4lapy.ru</a>, а&nbsp;также по&nbsp;телефону горячей линии: <a href="tel:88007700022" target="_blank"> <nobr>8 (800) 770-00-22</nobr></a>. Предложение действительно во&nbsp;всех городах присутствия зоомагазинов &laquo;Четыре Лапы&raquo;.</li>
         </ol>
     </div>
-
+    
+    <?php
+        $APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', '', array(
+            'OFFER_FILTER' => [
+                '=XML_ID' => [
+                    1002261,
+                    1002262,
+                    1003717,
+                    1010966,
+                ]
+            ],
+            'COUNT' => 4,
+            'TITLE' => 'Товары, учавствующие в акции',
+            'ALL_LINK' => '/shares/kopimarki-mart2019/'
+        ), $this->getComponent());
+        
+        $APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', '', array(
+            'OFFER_FILTER' => [
+                '=XML_ID' => [
+                    1010967,
+                    1011560,
+                    1011561,
+                    1011562
+                ]
+            ],
+            'COUNT' => 4,
+            'TITLE' => '',
+        ), $this->getComponent());
+    ?>
+    
 	<? //TODO вынести в компонент ?>
 	<? /* ?>
     <h2 class="b-title b-title--h2-kopilka">Категории товаров, участвующие в акции</h2>
