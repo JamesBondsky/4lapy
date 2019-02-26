@@ -52,7 +52,7 @@ if ($USER->IsAdmin())
 {
     $aMenuLinks[] = [
         'Копи марки',
-        '/personal/piggy-bank/',
+        '/personal/kopi-marki/',
     ];
 
 }

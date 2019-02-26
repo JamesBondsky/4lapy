@@ -33,7 +33,7 @@ class CPersonalCabinetComponent extends CBitrixComponent
         if ($USER->IsAdmin())
         {
             $arDefaultUrlTemplates404 = array_merge($arDefaultUrlTemplates404, [
-                'piggy-bank'         => 'piggy-bank/',
+                'piggy-bank'         => 'kopi-marki/',
                 'piggy-bank-upgrade' => 'piggy-bank/upgrade/',
             ]);
         }
