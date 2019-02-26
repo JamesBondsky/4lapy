@@ -216,6 +216,9 @@ class OrderService
                 }
             }
         }
+
+        $user->setManzanaImportDateTime(new DateTime());
+        App::getInstance()->getContainer()->get(UserRepository::class)->update($user);
     }
 
 	/**

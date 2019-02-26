@@ -99,7 +99,7 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
                     $this->copyOrder2CustomerBasket($orderId, $request);
                 }
             }
-            //$this->orderService->loadManzanaOrders($user); //TODO del
+            $this->orderService->loadManzanaOrders($user); //TODO del
 
 
             $navResult = new CDBResult();
