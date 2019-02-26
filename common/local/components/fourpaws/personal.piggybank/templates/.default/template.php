@@ -107,7 +107,7 @@ if ($arResult['CURRENT_LEVEL'])
                                 <img src="data:image/png;base64,<?=base64_encode($barcodeGenerator->getBarcode($arResult['ACTIVE_COUPON']['COUPON_NUMBER'], \Picqer\Barcode\BarcodeGenerator::TYPE_CODE_128, 2.803149606299213, 127))?>" alt="" />
                                 <?/* <img src="/static/build/images/content/barcode-kopilka.png" alt="" /> */?>
                             </div>
-                            <a href="#"class="link">Отправить мне на Email</a><? //TODO отправка ?>
+                            <a href="javascript:void(0);" class="link js-open-popup" data-popup-id="send-email-coupon-kopilka">Отправить мне на Email</a><? //TODO отправка ?>
                         </div>
                         <?php if(!$isActiveNextType && ($typeSale != 'large')) { ?>
                             <div class="b-sale-coupon-kopilka__info">
