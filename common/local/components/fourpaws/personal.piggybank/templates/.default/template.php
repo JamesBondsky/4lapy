@@ -26,6 +26,7 @@ if (!$USER->IsAdmin())
 $activeMarks = $arResult['ACTIVE_MARKS'];
 $typeSale = $arResult['SALE_TYPE'];
 $isActiveNextType = $arResult['IS_ACTIVE_NEXT_TYPE'];
+$nextSaleType = $arResult['NEXT_SALE_TYPE'];
 
 $marksToUpgrade = $arParams['COUPON_LEVELS'][$arResult['MAXIMUM_AVAILABLE_LEVEL']]['MARKS_TO_LEVEL_UP_FROM_BOTTOM'];
 if ($arResult['CURRENT_LEVEL'])
@@ -46,7 +47,7 @@ if ($arResult['CURRENT_LEVEL'])
         ob_start();
 	}
 	?>
-    <div data-coupon-kopilka="true" class="b-coupon-kopilka <?php if($typeSale) { ?>b-coupon-kopilka--<?= $typeSale ?><?php } ?> <?php if($isActiveNextType && ($typeSale != 'large')) { ?>b-coupon-kopilka--next-sale<?php } ?>">
+    <div data-coupon-kopilka="true" class="b-coupon-kopilka <?php if($typeSale) { ?>b-coupon-kopilka--<?= $typeSale ?><?php } ?> <?php if($typeSale && $isActiveNextType && ($typeSale != 'large')) { ?>b-coupon-kopilka--next-sale<?php } ?>">
         <div class="b-coupon-kopilka__marks">
             <div class="top-marks-mobile">
                 <div class="top-marks-mobile__logo"></div>
@@ -90,7 +91,7 @@ if ($arResult['CURRENT_LEVEL'])
             </div>
         </div>
         <div class="b-coupon-kopilka__sale">
-            <div class="b-sale-coupon-kopilka <?php if($typeSale) { ?>b-sale-coupon-kopilka--<?= $typeSale ?><?php } ?> <?php if($isActiveNextType && ($typeSale != 'large')) { ?>b-sale-coupon-kopilka--next-sale<?php } ?>">
+            <div class="b-sale-coupon-kopilka <?php if($typeSale) { ?>b-sale-coupon-kopilka--<?= $typeSale ?><?php } ?> <?php if($typeSale && $isActiveNextType && ($typeSale != 'large')) { ?>b-sale-coupon-kopilka--next-sale b-sale-coupon-kopilka--next-sale-<?= $nextSaleType ?> <?php } ?>">
                 <?php if($typeSale) { ?>
                     <div class="b-sale-coupon-kopilka__top">
                         <div class="b-sale-coupon-kopilka__title">
@@ -115,15 +116,21 @@ if ($arResult['CURRENT_LEVEL'])
                             </div>
                         <?php } ?>
                     </div>
-                <?php }elseif(!$isActiveNextType) { ?>
+                <?php }else { ?>
                     <div class="b-sale-coupon-kopilka__default">
-                        <span class="hide-mobile">До скидки</span>
+                        <span class="hide-mobile"><?php if(!$isActiveNextType) { ?>До скидки<?php }else { ?>Для скидки<?php } ?></span>
                         <span class="b-sale-coupon-kopilka__default-persent"><?= $arParams['COUPON_LEVELS'][$arResult['NEXT_LEVEL']]['DISCOUNT'] ?>% <span class="show-mobile">скидка</span></span>
-                        <span>осталось</span>
-                        <span class="b-sale-coupon-kopilka__default-count"><?= $arResult['MARKS_NEEDED'] ?> марок</span><? //TODO исправить окончание "марок" ?>
+                        <?php if(!$isActiveNextType) { ?>
+                            <span>осталось</span>
+                            <span class="b-sale-coupon-kopilka__default-count"><?= $arResult['MARKS_NEEDED'] ?> марок</span><? //TODO исправить окончание "марок" ?>
+                        <?php }else { ?>
+                            <div class="b-sale-coupon-kopilka__btn-wrap">
+                                <div class="b-sale-coupon-kopilka__btn" data-btn-exchange-coupon-kopilka="true">Обменять <?= $marksToUpgrade ?> марок</div><? //TODO окончание ?>
+                            </div>
+                        <?php } ?>
                     </div>
                 <?php } ?>
-                <?php if($isActiveNextType && ($typeSale != 'large')) { ?>
+                <?php if($typeSale && $isActiveNextType && ($typeSale != 'large')) { ?>
                     <div class="b-sale-coupon-kopilka__bottom">
                         <div class="b-sale-coupon-kopilka__title">
                             <span class="persent"><?= $arParams['COUPON_LEVELS'][$arResult['MAXIMUM_AVAILABLE_LEVEL']]['DISCOUNT'] ?>%</span>
