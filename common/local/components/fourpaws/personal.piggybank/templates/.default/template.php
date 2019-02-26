@@ -29,7 +29,7 @@ $isActiveNextType = $arResult['IS_ACTIVE_NEXT_TYPE'];
 
 ?>
 <div class="b-kopilka">
-    <h2 class="b-title b-kopilka__title">Копилка-собиралка. Копи марки, покупай со скидкой до -<?= $arParams['COUPON_LEVELS'][3]['DISCOUNT'] ?>%!</h2>
+    <h2 class="b-title b-kopilka__title">Копи марки, покупай со скидкой до -<?= $arParams['COUPON_LEVELS'][3]['DISCOUNT'] ?>%!</h2>
 
 	<?
 	if ($arParams['UPGRADE_COUPON'] === BitrixUtils::BX_BOOL_TRUE)

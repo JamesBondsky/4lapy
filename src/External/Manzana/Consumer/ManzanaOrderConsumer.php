@@ -31,12 +31,18 @@ class ManzanaOrderConsumer extends ManzanaConsumerBase
      */
     public function execute(AMQPMessage $message): bool
     {
+        global $USER;
+
         $user = $this->serializer->deserialize($message->getBody(), User::class, 'json');
 
         try {
             /** @var OrderService $orderService */
             $orderService = Application::getInstance()->getContainer()->get('order.service');
 
+            $userId = $user->getId();
+            if ($USER->GetID() !== $userId) {
+                $USER->Authorize($userId);
+            }
             $orderService->importOrdersFromManzana($user);
         } catch (\Exception $e) {
             $this->log()->error(\sprintf(
