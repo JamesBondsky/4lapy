@@ -4,13 +4,16 @@ namespace FourPaws\PersonalBundle\Service;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Highloadblock\DataManager;
+use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\SystemException;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\PersonalBundle\Exception\CouponIsAlreadyMaxedException;
 use FourPaws\PersonalBundle\Exception\CouponNoFreeItemsException;
 use FourPaws\PersonalBundle\Exception\NoActiveUserCouponException;
 use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\SapBundle\Repository\OfferRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
@@ -28,9 +31,11 @@ class PiggyBankService implements LoggerAwareInterface
     protected const MARKS = [
         'VIRTUAL' => [
             'ID' => 89617, // (род.товар 89616, внешний код ТП 2000341)
+            'XML_ID' => 2000341,
         ],
         'PHYSICAL' => [
             'ID' => 89728, // (род.товар 89727, внешний код ТП 3006077)
+            'XML_ID' => 3006077,
         ],
     ];
     public const MARK_RATE = 400;
@@ -67,7 +72,11 @@ class PiggyBankService implements LoggerAwareInterface
     /** @var int */
     private $physicalMarkId;
     /** @var int */
+    private $physicalMarkXmlId;
+    /** @var int */
     private $virtualMarkId;
+    /** @var int */
+    private $virtualMarkXmlId;
     /** @var ArrayCollection */
     public $levelsByDiscount;
     /** @var ArrayCollection */
@@ -413,9 +422,10 @@ class PiggyBankService implements LoggerAwareInterface
         return $this->activeCoupon;
     }
 
-    	/**
+    /**
 	 * @param bool $withoutCoupons
 	 * @return int
+     * @throws \Exception
 	 */
     public function getActiveMarksQuantity(bool $withoutCoupons = false): int
     {
@@ -448,14 +458,31 @@ class PiggyBankService implements LoggerAwareInterface
             return $this->marksIds;
         }
 
-        $marksIds = array_map(function($mark) { return $mark['ID']; }, self::MARKS);
+        $marksIds = array_map(function($mark) { return $this->getElementIdByXmlId($mark['XML_ID']); }, self::MARKS);
 
         $this->marksIds = $marksIds;
         return $this->marksIds;
     }
 
     /**
+     * @param int $xmlId
      * @return int
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     */
+    public function getElementIdByXmlId(int $xmlId)
+    {
+        return ElementTable::getList([
+            'select' => ['ID', 'XML_ID'],
+            'filter' => ['XML_ID' => $xmlId],
+            'limit' => 1,
+        ])->fetch()['ID'];
+    }
+
+    /**
+     * @return int
+     * @throws \Exception
      */
     public function getPhysicalMarkId(): int
     {
@@ -464,14 +491,29 @@ class PiggyBankService implements LoggerAwareInterface
             return $this->physicalMarkId;
         }
 
-        $physicalMarkId = self::MARKS['PHYSICAL']['ID'];
-        $this->physicalMarkId = $physicalMarkId;
-
+        $this->physicalMarkId = $this->getElementIdByXmlId($this->getPhysicalMarkXmlId());
         return $this->physicalMarkId;
     }
 
     /**
      * @return int
+     */
+    public function getPhysicalMarkXmlId(): int
+    {
+        if ($this->physicalMarkXmlId)
+        {
+            return $this->physicalMarkXmlId;
+        }
+
+        $physicalMarkXmlId = self::MARKS['PHYSICAL']['XML_ID'];
+        $this->physicalMarkXmlId = $physicalMarkXmlId;
+
+        return $this->physicalMarkXmlId;
+    }
+
+    /**
+     * @return int
+     * @throws \Exception
      */
     public function getVirtualMarkId(): int
     {
@@ -480,10 +522,24 @@ class PiggyBankService implements LoggerAwareInterface
             return $this->virtualMarkId;
         }
 
-        $virtualMarkId = self::MARKS['VIRTUAL']['ID'];
-        $this->virtualMarkId = $virtualMarkId;
-
+        $this->virtualMarkId = $this->getElementIdByXmlId($this->getVirtualMarkXmlId());
         return $this->virtualMarkId;
+    }
+
+    /**
+     * @return int
+     */
+    public function getVirtualMarkXmlId(): int
+    {
+        if ($this->virtualMarkXmlId)
+        {
+            return $this->virtualMarkXmlId;
+        }
+
+        $virtualMarkXmlId = self::MARKS['VIRTUAL']['XML_ID'];
+        $this->virtualMarkXmlId = $virtualMarkXmlId;
+
+        return $this->virtualMarkXmlId;
     }
 
 	/**
