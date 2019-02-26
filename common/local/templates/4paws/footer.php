@@ -122,7 +122,7 @@ if ($template->hasMainWrapper()) {
                     <div class="link-toggle-view <?= $sViewportCookie === 'desktop' ? 'active' : '' ?>" data-change-viewport-mode='desktop' data-type="mobile">
                         Перейти в<br/> мобильную версию
                     </div>
-                    <div class="link-toggle-view <?= $sViewportCookie === 'mobile' ? 'active' : '' ?>" data-change-viewport-mode='mobile' data-type="desktop">
+                    <div class="link-toggle-view <?= $sViewportCookie === 'mobile' ? 'active mobile' : '' ?>" data-change-viewport-mode='mobile' data-type="desktop">
                         Перейти в<br/> полноэкранный режим
                     </div>
                 </div>
