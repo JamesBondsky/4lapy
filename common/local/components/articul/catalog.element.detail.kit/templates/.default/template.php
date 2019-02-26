@@ -48,8 +48,9 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
             <div class="b-product-card-complect__row">
                 <div class="b-product-card-complect__slider" data-product-complect-container="true">
                     <div class="b-product-card-complect__list js-product-complect js-advice-list">
-                        <div class="b-product-card-complect__list-item slide">
+                        <div class="b-product-card-complect__list-item js-list-item-card-complect slide">
                             <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $offer->getId(); ?>_1" data-offerprice="<?= $offer->getCatalogPrice(); ?>" data-product-info='{"productid": <?= $product->getId(); ?>, "offerid": <?= $offer->getId(); ?>, "offerprice": <?= $offer->getCatalogPrice(); ?>}' tabindex="0">
+                                <div class="b-common-item__delete-item-complect js-delete-item-complect"></div>
                                 <div class="b-common-item__image-wrap">
                                     <div class="b-common-item__image-link">
                                         <img class="b-common-item__image" src="<?= $offer->getResizeImages(240, 240)->first() ?>" alt="<?= $offer->getName() ?>" title="">
@@ -77,8 +78,9 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
                         </div>
 
                         <? if (!empty($additionalItem)) { ?>
-                            <div class="b-product-card-complect__list-item slide">
+                            <div class="b-product-card-complect__list-item js-list-item-card-complect slide">
                                 <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $additionalItem->getId(); ?>_1" data-offerprice="<?= $additionalItem->getCatalogPrice(); ?>" data-product-info='{"productid": <?= $additionalItem->getProduct()->getId(); ?>, "offerid": <?= $additionalItem->getId(); ?>, "offerprice": <?= $additionalItem->getCatalogPrice(); ?>}' tabindex="0">
+                                <div class="b-common-item__delete-item-complect js-delete-item-complect"></div>
                                     <div class="b-common-item__image-wrap">
                                         <a class="b-common-item__image-link js-item-link" href="<?= $additionalItem->getDetailPageUrl(); ?>" tabindex="0">
                                             <img class="b-common-item__image" src="<?= $additionalItem->getResizeImages(240, 240)->first(); ?>" alt="<?= $additionalItem->getName(); ?>" title="">
@@ -121,12 +123,13 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
                                     break;
                             }
                             ?>
-                            <div class="b-product-card-complect__list-item slide">
+                            <div class="b-product-card-complect__list-item js-list-item-card-complect slide">
                                 <div class="b-common-item js-product-complect-item js-advice-item"
                                      data-offerid="<?= $currentOffer->getId(); ?>_1"
                                      data-offerprice="<?= $currentOffer->getCatalogPrice(); ?>"
                                      data-product-info='{"productid": <?= $currentOffer->getProduct()->getId(); ?>, "offerid": <?= $currentOffer->getId(); ?>, "offerprice": <?= $currentOffer->getCatalogPrice(); ?>, "groupid": "<?= $groupKey ?>"}'
                                      data-product-group-title="<?= $arMessages[$groupKey]['another']; ?>" tabindex="0">
+                                    <div class="b-common-item__delete-item-complect js-delete-item-complect"></div>
                                     <div class="b-common-item__image-wrap">
                                         <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getDetailPageUrl(); ?>" tabindex="0">
                                             <img class="b-common-item__image" src="<?= $currentOffer->getResizeImages(240, 240)->first(); ?>" alt="<?= $currentOffer->getName(); ?>" title="">
