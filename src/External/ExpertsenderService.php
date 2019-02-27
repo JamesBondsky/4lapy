@@ -33,6 +33,7 @@ use FourPaws\Helpers\PhoneHelper;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\Pet;
 use FourPaws\PersonalBundle\Models\PetCongratulationsNotify;
+use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Dto\Fiscalization\Item;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -846,9 +847,17 @@ class ExpertsenderService implements LoggerAwareInterface
             $basketItems = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
             /** @var Item $basketItem */
             foreach ($basketItems as $basketItem) {
+
+                /** исключаем из письма офферы-доставки */
                 if (mb_strpos($basketItem->getCode(), 'DELIVERY') !== false) {
                     continue;
                 }
+
+                /** исключаем из письма офферы-марки (акция копилка-собиралка) */
+                if (in_array($basketItem->getXmlId(), PiggyBankService::getMarkXmlIds())) {
+                    continue;
+                }
+
                 $currentOffer = null;
                 /** @var Offer $offer */
                 foreach ($offers as $offer) {
