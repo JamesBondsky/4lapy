@@ -46,6 +46,7 @@ use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\StoreBundle\Entity\Store;
 use InvalidArgumentException;
 use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Accessor;
@@ -2021,4 +2022,29 @@ class Offer extends IblockElement
     {
         return OfferQuery::getById((int)$primary);
     }
+
+
+    /**
+     * Возможность "довоза" оффера в магазин (DC001 -> Rxxx)
+     *
+     * @param Store $store
+     * @return bool
+     * @throws \Exception
+     */
+    public function isAvailableForDelay(Store $store): bool
+    {
+        /** @var StoreService $storeService */
+        $storeService = Application::getInstance()->getContainer()->get('store.service');
+
+        if (
+            $this->getProduct()->isTransportOnlyRefrigerator()
+            || ($this->getProduct()->isLicenseRequired() && !$storeService->hasLicense($store) )
+        )
+        {
+            return false;
+        }
+
+        return true;
+    }
+
 }
