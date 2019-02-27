@@ -606,6 +606,27 @@ class OrderService
             throw new OrderAlreadyExistsException(\sprintf('Order %s already exists', $order->getManzanaId()));
         }
 
+        /**
+         * Отмена добавления заказа из Manzana, если на сайте уже есть соответствующий ему старый заказ.
+         * Статус старого заказа при этом не обновляется, т.к. он обновится из SAP
+         */
+        if (substr($order->getManzanaId(), -3) === 'NEW')
+        {
+            $oldOrderNumber = substr($order->getManzanaId(), 0, -3);
+            if ($oldOrderNumber)
+            {
+                $oldOrder = $this->orderRepository->findBy([
+                    'filter' => [
+                        'ACCOUNT_NUMBER' => $oldOrderNumber
+                    ],
+                ]);
+
+                if ($oldOrder->count()) {
+                   return false;
+                }
+            }
+        }
+
         Manager::disableExtendsDiscount();
 
         $bitrixOrder = BitrixOrder::create(SITE_ID, $order->getUserId(), $order->getCurrency());
