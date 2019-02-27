@@ -194,10 +194,10 @@ $markDeclention = new Declension('марка', 'марки', 'марок');
         $APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', '', array(
             'OFFER_FILTER' => [
                 '=XML_ID' => [
-                    1002261,
-                    1002262,
-                    1003717,
-                    1010966,
+                    1022039,
+                    1001747,
+                    1005609,
+                    1006601,
                 ]
             ],
             'COUNT' => 4,
@@ -207,10 +207,10 @@ $markDeclention = new Declension('марка', 'марки', 'марок');
         $APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', '', array(
             'OFFER_FILTER' => [
                 '=XML_ID' => [
-                    1010967,
-                    1011560,
-                    1011561,
-                    1011562
+                    1001696,
+                    1010181,
+                    1009840,
+                    1027914
                 ]
             ],
             'COUNT' => 4,
