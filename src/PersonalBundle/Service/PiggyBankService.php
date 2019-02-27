@@ -9,12 +9,14 @@ use Bitrix\Iblock\ElementTable;
 use Bitrix\Iblock\PropertyTable;
 use Bitrix\Main\Entity\Base;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockProperty;
 use FourPaws\Enum\IblockType;
 use FourPaws\PersonalBundle\Exception\CouponIsAlreadyMaxedException;
+use FourPaws\PersonalBundle\Exception\CouponIsNotAvailableForUse;
 use FourPaws\PersonalBundle\Exception\CouponNoFreeItemsException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -30,6 +32,9 @@ use Psr\Log\LoggerInterface;
 class PiggyBankService implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
+
+    protected static $promoOfferDateStart;
+    protected static $promoOfferDateEnd;
 
     protected const MARKS = [
         'VIRTUAL' => [
@@ -433,6 +438,107 @@ class PiggyBankService implements LoggerAwareInterface
         }
 
         return $this->activeCoupon;
+    }
+
+    /**
+     * @param string $couponNumber
+     * @throws CouponIsNotAvailableForUse
+     * @throws SystemException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     */
+    public function checkPiggyBankCoupon(string $couponNumber): void
+    {
+        global $USER;
+
+        if (!$this->isCouponNumberFormatOk($couponNumber)) {
+            throw new CouponIsNotAvailableForUse('coupon is not available for use');
+        }
+
+        if ($this->isPiggyBankCoupon($couponNumber))
+        {
+            if(($this->isPiggyBankDateExpired() && !$USER->IsAdmin()) || !$this->isCouponAvailableToCurrentUser($couponNumber)) {
+                throw new CouponIsNotAvailableForUse('coupon is not available for use');
+            }
+        }
+    }
+
+    /**
+     * @param string $couponNumber
+     * @return bool
+     * @throws SystemException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     */
+    public function isPiggyBankCoupon(string $couponNumber): bool
+    {
+        if (!$this->isCouponNumberFormatOk($couponNumber)) return false;
+
+        return (bool)$this->couponDataManager::getCount([
+            'UF_COUPON'      => $couponNumber,
+            'UF_PROMO'       => self::PROMO_TITLE_MASK,
+        ]);
+    }
+
+    /**
+     * @param string $couponNumber
+     * @return bool
+     * @throws SystemException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     */
+    public function isCouponAvailableToCurrentUser(string $couponNumber): bool
+    {
+        if (!$this->isCouponNumberFormatOk($couponNumber)) return false;
+
+        return (bool)$this->couponDataManager::getCount([
+            'UF_COUPON'      => $couponNumber,
+            'UF_PROMO'       => self::PROMO_TITLE_MASK,
+            'UF_USER_ID'     => $this->getCurrentUserId(),
+            'UF_AVAILABLE'   => false,
+            'UF_DEACTIVATED' => false,
+            'UF_USED'        => false,
+        ]);
+    }
+
+    /**
+     * @param string $couponNumber
+     * @return bool
+     */
+    public function isCouponNumberFormatOk(string $couponNumber): bool
+    {
+        return strlen($couponNumber) >= 4;
+    }
+
+    /**
+     * @return bool
+     * @throws \Bitrix\Main\ObjectException
+     */
+    public function isPiggyBankDateExpired(): bool
+    {
+        $currentDateTime = new DateTime();
+        $promoOfferDateRange = $this->getPromoOfferDateRange();
+
+        return (
+            $promoOfferDateRange->get('start') > $currentDateTime ||
+            $promoOfferDateRange->get('end') < $currentDateTime
+        );
+    }
+
+    /**
+     * @return ArrayCollection
+     * @throws \Bitrix\Main\ObjectException
+     */
+    public function getPromoOfferDateRange(): ArrayCollection
+    {
+        if (!self::$promoOfferDateStart || !self::$promoOfferDateEnd)
+        {
+            self::$promoOfferDateStart = new DateTime('01.03.2019 00:00:00');
+            self::$promoOfferDateEnd   = new DateTime('31.03.2019 23:59:59');
+        }
+
+        return new ArrayCollection([
+            'start' => self::$promoOfferDateStart,
+            'end'   => self::$promoOfferDateEnd,
+        ]);
     }
 
     /**
