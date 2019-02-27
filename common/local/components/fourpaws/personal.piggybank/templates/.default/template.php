@@ -124,7 +124,7 @@ $markDeclention = new Declension('марка', 'марки', 'марок');
                 <?php }else { ?>
                     <div class="b-sale-coupon-kopilka__default">
                         <span class="hide-mobile"><?php if(!$isActiveNextType) { ?>До скидки<?php }else { ?>Для скидки<?php } ?></span>
-                        <span class="b-sale-coupon-kopilka__default-persent"><?= $arParams['COUPON_LEVELS'][$arResult['MAXIMUM_AVAILABLE_LEVEL']]['DISCOUNT'] ?>% <span class="show-mobile">скидка</span></span>
+                        <span class="b-sale-coupon-kopilka__default-persent"><?= $arParams['COUPON_LEVELS'][$arResult['MAXIMUM_AVAILABLE_LEVEL'] ?: 1]['DISCOUNT'] ?>% <span class="show-mobile">скидка</span></span>
                         <?php if(!$isActiveNextType) { ?>
                             <span><?=mb_strtolower($remainDeclention->get($arResult['MARKS_NEEDED']))?></span>
                             <span class="b-sale-coupon-kopilka__default-count"><?= $arResult['MARKS_NEEDED'] ?> <?=$markDeclention->get($arResult['MARKS_NEEDED'])?></span>
