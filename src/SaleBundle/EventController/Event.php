@@ -2,6 +2,7 @@
 
 namespace FourPaws\SaleBundle\EventController;
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
@@ -17,7 +18,6 @@ use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
-use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketItemCollection;
 use Bitrix\Sale\Order;
@@ -31,7 +31,6 @@ use FourPaws\App\MainTemplate;
 use FourPaws\App\Tools\StaticLoggerTrait;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\TaggedCacheHelper;
-use FourPaws\PersonalBundle\Service\OrderService as PersonalOrderService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Discount\Action\Action\DetachedRowDiscount;
 use FourPaws\SaleBundle\Discount\Action\Action\DiscountFromProperty;
@@ -781,6 +780,7 @@ class Event extends BaseServiceHandler
      * Добавляет марки
      * @todo 3 раза отрабатывает в момент регистрации заказа. Разобраться, ограничить применение одним разом
      * @todo вынести в Service
+     * @todo добавить проверку на дату создания заказа. Если она не попадает в даты акции, то ничего не делать
      *
      * @param BitrixEvent $event
      */
@@ -805,14 +805,25 @@ class Event extends BaseServiceHandler
             $piggyBankService = Application::getInstance()->getContainer()->get('piggy_bank.service');
 
             $manzanaNumberValue = '';
+            $isIsManzanaOrderReady = false;
+            $isManzanaNumberValueReady = false;
             foreach ($order->getPropertyCollection()->getArray()['properties'] as $prop) {
-                if ($prop['CODE'] === 'MANZANA_NUMBER') {
-                    $manzanaNumberValue = $prop['VALUE'][0];
+                if ($isIsManzanaOrderReady && $isManzanaNumberValueReady) {
                     break;
                 }
-            }
-            if (strpos($manzanaNumberValue, 'NEW') !== false) return; // если заказ из Битрикса (добавлено слово NEW в конце)
 
+                if (!$isIsManzanaOrderReady && $prop['CODE'] === 'IS_MANZANA_ORDER') {
+                    $isManzanaOrder = ($prop['VALUE'][0] === BitrixUtils::BX_BOOL_TRUE);
+                    $isIsManzanaOrderReady = true;
+                }
+
+                if (!$isManzanaNumberValueReady && $prop['CODE'] === 'MANZANA_NUMBER') {
+                    $manzanaNumberValue = $prop['VALUE'][0];
+                    $isManzanaNumberValueReady = true;
+                }
+            }
+
+            if ($isManzanaOrder || strpos($manzanaNumberValue, 'NEW') !== false) return; // проверка NEW оставлена для старых заказов, где еще не заполнялось свойство IS_MANZANA_ORDER
 
             if ($order instanceof Order) {
                 /** @var BasketService $basketService */
