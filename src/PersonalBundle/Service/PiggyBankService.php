@@ -11,15 +11,12 @@ use Bitrix\Main\Entity\Base;
 use Bitrix\Main\SystemException;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
-use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockProperty;
 use FourPaws\Enum\IblockType;
 use FourPaws\PersonalBundle\Exception\CouponIsAlreadyMaxedException;
 use FourPaws\PersonalBundle\Exception\CouponNoFreeItemsException;
-use FourPaws\PersonalBundle\Exception\NoActiveUserCouponException;
 use FourPaws\SaleBundle\Service\BasketService;
-use FourPaws\SapBundle\Repository\OfferRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
@@ -86,7 +83,7 @@ class PiggyBankService implements LoggerAwareInterface
     /** @var ArrayCollection */
     public $levelsByDiscount;
     /** @var ArrayCollection */
-    public $activeCoupon; //TODO getters, setters (and use them instead of direct calls). Move to coupon(?) service. Set private
+    public $activeCoupon;
 	/** @var int */
     private $userId;
     /** @var int */
@@ -298,7 +295,7 @@ class PiggyBankService implements LoggerAwareInterface
 	 */
     public function getAvailableMarksQuantity(): int
     {
-		$availableMarksQuantity = $this->getAllMarksQuantity() - $this->getUsedMarksQuantity(); //TODO move function
+		$availableMarksQuantity = $this->getAllMarksQuantity() - $this->getUsedMarksQuantity();
 
 		if ($availableMarksQuantity < 0)
 		{
@@ -315,27 +312,7 @@ class PiggyBankService implements LoggerAwareInterface
      */
     public function getAllMarksQuantity(): int
     {
-
-        /**
-         * @TODO уточнить, подойдет ли использование FUSER_ID
-         * @TODO del comment
-         * - Получить все корзины, привязанные к заказам, в которых есть марки
-         * - Просуммировать количество марок в этих корзинах
-         *
-         * Другой вариант (плохой):
-         * - Получить все заказы пользователя
-         * - Получить все товары в этих заказах
-         * - Получить
-         */
-
-    	//OrderService::getUserOrders()
-    	//OrderService::getOrderItems()
-
-	    //$currentFUserId = $this->orderStorageService->getStorage()->getFuserId();
-
-		$marksQuantity = $this->basketService->getMarksQuantityFromUserBaskets();
-
-        return $marksQuantity;
+        return $this->basketService->getMarksQuantityFromUserBaskets();
     }
 
     /**
@@ -386,14 +363,14 @@ class PiggyBankService implements LoggerAwareInterface
     	return $this->levelsByDiscount[$discountValue];
     }
 
-	/**
-	 * @todo получать купон из БД
-	 * @todo вынести основную логику в CouponService, добавив фильтр по UF_PROMO
-	 *
-	 * @param bool $refresh
-	 * @return ArrayCollection
-	 *
-	 */
+    /**
+     * @todo вынести основную логику в CouponService, добавив фильтр по UF_PROMO
+     *
+     * @param bool $refresh
+     * @return ArrayCollection
+     *
+     * @throws \Exception
+     */
     public function getActiveCoupon(bool $refresh = false): ArrayCollection //TODO возвращать Coupon (сделать Entity)
     {
         global $USER;
@@ -614,6 +591,8 @@ class PiggyBankService implements LoggerAwareInterface
 
     /**
      * @return int
+     *
+     * @throws \Exception
      */
     public function getActiveCouponNominalPrice(): int
     {
