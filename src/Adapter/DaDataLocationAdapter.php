@@ -337,7 +337,7 @@ class DaDataLocationAdapter extends BaseAdapter
      */
     private function getCityName(DadataLocation $entity): string
     {
-        $city = !empty($entity->getSettlement()) && $entity->getSettlementType() !== 'мкр' ? $entity->getSettlement() : '';
+        $city = !empty($entity->getSettlement()) ? $entity->getSettlement() : '';
         if (empty($city)) {
             $city = !empty($entity->getCity()) ? $entity->getCity() : '';
         }
