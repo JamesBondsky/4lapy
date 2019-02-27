@@ -555,6 +555,7 @@ class PaymentService implements LoggerAwareInterface
         $vatGateway = [
             -1 => 0,
             0  => 1,
+            18 => 2,
             20 => 2,
             10 => 3
         ];
