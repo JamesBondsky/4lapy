@@ -127,6 +127,14 @@ class PiggyBankService implements LoggerAwareInterface
         $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
     }
 
+    public static function getMarkXmlIds()
+    {
+        return [
+            self::MARKS['VIRTUAL']['XML_ID'],
+            self::MARKS['PHYSICAL']['XML_ID'],
+        ];
+    }
+
 	/**
 	 * @return bool
 	 * @throws SystemException
