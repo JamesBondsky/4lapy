@@ -649,6 +649,10 @@ class OrderService
                 case 'MANZANA_NUMBER':
                     $propertyValue->setValue($order->getManzanaId());
                     break;
+                case 'IS_NEW_SITE_ORDER':
+                    $propertyValue->setValue(BitrixUtils::BX_BOOL_FALSE);
+                    break;
+                case 'IS_MANZANA_ORDER':
                 case 'USER_REGISTERED':
                 case 'IS_EXPORTED':
                     $propertyValue->setValue(BitrixUtils::BX_BOOL_TRUE);
