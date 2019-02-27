@@ -45,19 +45,12 @@ $aMenuLinks = [
         'Подписка на доставку',
         '/personal/subscribe/',
     ],
-];
-
-global $USER;
-if ($USER->IsAdmin())
-{
-    $aMenuLinks[] = [
+    [
         'Копи марки',
         '/personal/kopi-marki/',
-    ];
-
-}
-
-$aMenuLinks[] = [
+    ],
+    [
     'Топ 10 товаров',
     '/personal/top/',
+    ]
 ];

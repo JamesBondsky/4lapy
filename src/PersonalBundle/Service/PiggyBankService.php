@@ -177,12 +177,6 @@ class PiggyBankService implements LoggerAwareInterface
 	 */
     public function addFirstLevelCouponToUser(): void
     {
-        global $USER;
-        if (!$USER->IsAdmin())
-        {
-            die();
-        }
-
         /** @var CouponService $couponService */
     	$couponService = App::getInstance()->getContainer()->get('coupon.service');
 
@@ -201,12 +195,6 @@ class PiggyBankService implements LoggerAwareInterface
 	 */
 	public function getFreeCouponId(int $level): int
     {
-        global $USER;
-        if (!$USER->IsAdmin())
-        {
-            die();
-        }
-
         //TODO lock coupon until update
         $coupon = $this->couponDataManager::query()
             ->setSelect([
@@ -243,12 +231,6 @@ class PiggyBankService implements LoggerAwareInterface
 	 */
 	public function upgradeCoupon(): void
     {
-        global $USER;
-        if (!$USER->IsAdmin())
-        {
-            die();
-        }
-
 		try {
             $oldCoupon = $this->getActiveCoupon();
 			if (!$oldCoupon->isEmpty())
@@ -386,12 +368,6 @@ class PiggyBankService implements LoggerAwareInterface
      */
     public function getActiveCoupon(bool $refresh = false): ArrayCollection //TODO возвращать Coupon (сделать Entity)
     {
-        global $USER;
-        if (!$USER->IsAdmin())
-        {
-            die();
-        }
-
     	if (!$refresh && $this->activeCoupon)
 	    {
 	    	return $this->activeCoupon;
