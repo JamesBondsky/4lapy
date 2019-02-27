@@ -77,7 +77,7 @@ class OrderController extends Controller implements LoggerAwareInterface
 
         try {
             $user = $this->currentUserProvider->getCurrentUser();
-            $this->orderService->loadManzanaOrders($user, $page); //TODO del
+            //$this->orderService->loadManzanaOrders($user, $page); //TODO del
             $orders = $this->orderService->getUserOrders($user, $page);
 
             $navResult = new \CDBResult();
