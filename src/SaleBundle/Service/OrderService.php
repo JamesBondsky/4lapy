@@ -1964,7 +1964,9 @@ class OrderService implements LoggerAwareInterface
         /** @var Offer $offer */
         foreach ($offers as $offer) {
             $section = $offer->getProduct()->getSection();
-            $arSectionsNames[$section->getId()] = $section->getName();
+            if ($section != null) {
+                $arSectionsNames[$section->getId()] = $section->getName();
+            }
         }
         /** @var string $matter Что везем - названия всех разделов через запятую */
         $matter = implode(', ', $arSectionsNames);
