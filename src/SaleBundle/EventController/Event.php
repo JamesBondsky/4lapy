@@ -624,7 +624,7 @@ class Event extends BaseServiceHandler
             $order = $event->getParameter('ENTITY');
             $propertyCollection = $order->getPropertyCollection();
             $promocode = BxCollection::getOrderPropertyByCode($propertyCollection, 'PROMOCODE');
-            if ($promocodeValue = $promocode->getValue())
+            if ($promocode && $promocodeValue = $promocode->getValue())
             {
                 /** @var CouponService $couponService */
                 $couponService = Application::getInstance()->getContainer()->get('coupon.service');
