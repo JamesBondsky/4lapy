@@ -379,6 +379,17 @@ class Order
     protected $deliveryAddress;
 
     /**
+     * Номер купона
+     *
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\SerializedName("CouponNumber")
+     *
+     * @var string
+     */
+    protected $couponNumber;
+
+    /**
      * @return string
      */
     public function getId(): string
@@ -916,5 +927,21 @@ class Order
         $this->avatarDepartment = $avatarDepartment;
 
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCouponNumber(): string
+    {
+        return $this->couponNumber;
+    }
+
+    /**
+     * @param string $couponNumber
+     */
+    public function setCouponNumber(string $couponNumber): void
+    {
+        $this->couponNumber = $couponNumber;
     }
 }
