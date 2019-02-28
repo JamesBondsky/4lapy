@@ -545,6 +545,10 @@ class Event extends BaseServiceHandler
 
     public function updateBasketRuleGroup(Array &$arFields): bool
     {
+        if(empty($arFields['GROUP_ID'])){
+            return true;
+        }
+
         $groups = (new BitrixCache())
             ->withTime(31536000)// 1 год
             ->withTag('basketRulesAndVIPGroupId')
