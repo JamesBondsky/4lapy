@@ -8,16 +8,15 @@ $isBottomDieBanner = $_COOKIE['bottom_die_banner'] ?? null;
 
 ?>
 
-<?php if (($isViewportCookie !== null) && ($isBottomDieBanner === null)) { ?>
-    <div class="b-bottom-die-banner" data-bottom-die-banner="true">
+<?php if ($isBottomDieBanner === null) { ?>
+    <div class="b-bottom-die-banner js-bottom-die-banner <?php if ($isViewportCookie === null) { ?>mobile-hide<?php } ?>">
         <div class="b-bottom-die-banner__container">
-            <div class="b-bottom-die-banner__img-wrap">
-                <img src="" class="b-bottom-die-banner__img b-bottom-die-banner__img--desktop">
-                <img src="" class="b-bottom-die-banner__img b-bottom-die-banner__img--tablet">
-                <img src="" class="b-bottom-die-banner__img b-bottom-die-banner__img--mobile">
+            <img src="/static/build/images/inhtml/animals-bottom-die-banner.png" class="b-bottom-die-banner__img b-bottom-die-banner__img--animals">
+            <div class="b-bottom-die-banner__content">
+                <div class="b-bottom-die-banner__title"><span>Защити питомца</span> от блох и клещей</div>
+                <a href="/catalog/veterinarnaya-apteka/zashchita-ot-blokh-i-kleshchey/ " class="b-bottom-die-banner__btn">Защитить</a>
+                <div class="b-bottom-die-banner__close js-btn-close-bottom-die-banner"></div>
             </div>
-            <div class="b-bottom-die-banner__title"></div>
-            <div class="b-bottom-die-banner__close" data-btn-close-bottom-die-banner="true"></div>
         </div>
     </div>
 <?php } ?>
