@@ -168,6 +168,16 @@ class User implements UserInterface
      */
     protected $location = '';
 
+
+    /**
+     * @var null|DateTime
+     * @Serializer\Type("bitrix_date_time")
+     * @Serializer\SerializedName("UF_MANZANA_IMPORT_DT")
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $manzanaImportDateTime;
+
     /**
      * @var string
      * @Serializer\Type("string")
@@ -223,11 +233,13 @@ class User implements UserInterface
 
     /**
      * @var Collection|Role[]
+     * @Serializer\Exclude()
      */
     protected $roles;
 
     /**
      * @var Collection|Group[]
+     * @Serializer\Exclude()
      */
     protected $groups;
 
@@ -546,6 +558,26 @@ class User implements UserInterface
     public function setLocation(string $location): User
     {
         $this->location = $location;
+
+        return $this;
+    }
+
+    /**
+     * @return null|DateTime
+     */
+    public function getManzanaImportDateTime(): ?DateTime
+    {
+        return $this->manzanaImportDateTime;
+    }
+
+    /**
+     * @param DateTime $manzanaImportDateTime
+     *
+     * @return User
+     */
+    public function setManzanaImportDateTime(DateTime $manzanaImportDateTime): User
+    {
+        $this->manzanaImportDateTime = $manzanaImportDateTime;
 
         return $this;
     }

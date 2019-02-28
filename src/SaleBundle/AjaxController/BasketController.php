@@ -15,6 +15,7 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Exception;
+use FourPaws\App\Application as App;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -26,6 +27,7 @@ use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Discount\Manzana;
 use FourPaws\SaleBundle\Exception\BaseExceptionInterface;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
@@ -319,6 +321,10 @@ class BasketController extends Controller implements LoggerAwareInterface
 
         try {
             $promoCode = \htmlspecialchars($promoCode);
+
+            /** @var PiggyBankService $piggyBankService */
+            $piggyBankService = App::getInstance()->getContainer()->get('piggy_bank.service');
+            $piggyBankService->checkPiggyBankCoupon($promoCode);
 
             $this->manzana->setPromocode($promoCode);
             $this->manzana->calculate();
