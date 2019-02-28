@@ -64,7 +64,6 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
                     <div class="b-product-card-complect__list js-product-complect js-advice-list">
                         <div class="b-product-card-complect__list-item js-list-item-card-complect slide">
                             <div class="b-common-item js-product-complect-item js-advice-item" data-offerid="<?= $offer->getId(); ?>_1" data-offerprice="<?= $offer->getCatalogPrice(); ?>" data-product-info='{"productid": <?= $product->getId(); ?>, "offerid": <?= $offer->getId(); ?>, "offerprice": <?= $offer->getCatalogPrice(); ?>}' tabindex="0">
-                                <div class="b-common-item__delete-item-complect js-delete-item-complect"></div>
                                 <div class="b-common-item__image-wrap">
                                     <div class="b-common-item__image-link">
                                         <img class="b-common-item__image" src="<?= $offer->getResizeImages(240, 240)->first() ?>" alt="<?= $offer->getName() ?>" title="">
