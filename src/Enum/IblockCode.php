@@ -39,4 +39,6 @@ class IblockCode
     public const COMPARING  = 'comparing';
 
     public const GRANDIN_REQUEST = 'grandin_request';
+
+    public const MOBILE_APP_CONTENT = 'mobile_app_content';
 }
