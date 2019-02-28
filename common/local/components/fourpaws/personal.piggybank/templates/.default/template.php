@@ -175,7 +175,7 @@ $markDeclention = new Declension('марка', 'марки', 'марок');
                     <li><b><?= $arParams['COUPON_LEVELS'][3]['MARKS_TO_LEVEL_UP_FROM_BOTTOM'] ?>&nbsp;марок</b>&nbsp;&mdash; <span class="orange">скидка <?= $arParams['COUPON_LEVELS'][3]['DISCOUNT'] ?>%</span> на&nbsp;товары для путешествий с&nbsp;питомцем.</li>
                 </ul>
             </li>
-            <li>Все товары, которые можно купить со&nbsp;скидкой за&nbsp;накопленные марки Вы&nbsp;можете посмотреть по&nbsp;ссылке.</li>
+            <li>Все товары, которые можно купить со&nbsp;скидкой за&nbsp;накопленные марки Вы&nbsp;можете посмотреть <a href="/shares/kopimarki-mart2019" target="_blank">по&nbsp;ссылке</a>.</li>
             <li>Скидка за&nbsp;накопленные марки не&nbsp;суммируется с&nbsp;другими скидками и&nbsp;акциями.</li>
             <li>После обмена марок на&nbsp;<nobr>промо-код</nobr> и&nbsp;покупки товара со&nbsp;скидкой, Вы&nbsp;можете повторно копить марки.</li>
             <li>Выдача марок осуществляется с&nbsp;1&nbsp;марта по&nbsp;30 апреля 2019&nbsp;г. Период приобретения товара по&nbsp;накопленной скидке возможен с&nbsp;1&nbsp;марта до&nbsp;20&nbsp;мая 2019 года включительно.</li>
