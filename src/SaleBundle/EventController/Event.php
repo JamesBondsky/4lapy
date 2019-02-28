@@ -41,7 +41,6 @@ use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Exception\ForgotBasket\FailedToUpdateException;
-use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\ForgotBasketService;
 use FourPaws\SaleBundle\Service\NotificationService;
@@ -202,7 +201,7 @@ class Event extends BaseServiceHandler
 
         static::initHandler('OnSaleOrderSaved', [
             self::class,
-            'setCouponUsed'
+            'setCouponUsedField'
         ], $module);
 
         /**
@@ -616,12 +615,10 @@ class Event extends BaseServiceHandler
     /**
      * @param BitrixEvent $event
      */
-    public static function setCouponUsed(BitrixEvent $event): void
+    public static function setCouponUsedField(BitrixEvent $event): void
     {
         try {
-            /** @var CouponStorageInterface $couponStorage */
-            $couponStorage = Application::getInstance()->getContainer()->get(CouponStorageInterface::class);
-            $couponStorage->clear();
+            $isNew = $event->getParameter('IS_NEW');
 
             /** @var Order $order */
             $order = $event->getParameter('ENTITY');
@@ -635,7 +632,7 @@ class Event extends BaseServiceHandler
             }
         } catch (\Exception $e) {
             static::getLogger()
-                ->error(
+                ->critical(
                     sprintf(
                         'failed to set coupon Used status: %s: %s',
                         \get_class($e),
