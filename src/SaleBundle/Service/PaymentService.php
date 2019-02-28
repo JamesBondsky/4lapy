@@ -553,6 +553,7 @@ class PaymentService implements LoggerAwareInterface
             0  => 1,
             10 => 2,
             18 => 3,
+            20 => 3
         ];
 
         $position = 0;

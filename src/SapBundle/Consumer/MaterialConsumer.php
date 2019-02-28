@@ -125,6 +125,10 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
             $offer = $this->getOffer($material, $product);
             $this->getCatalogProduct($material, $offer);
             $this->connection->commitTransaction();
+
+            //апдейтим НДС после апдейта/создания товара/оффера, иначе он перетирается на null
+            $this->connection->query('UPDATE b_catalog_product SET `VAT_ID` = ' . $offer->getCatalogVatId() . ' WHERE `ID` = ' . $offer->getId());
+
             /**
              * Костыль! Уровень изоляции кривой.
              */

@@ -314,7 +314,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             /**
              * Товар в наличии не полностью. Часть будет отложена
              */
-            if ($delayedStockResult) {
+            if ($delayedStockResult && $offer->isAvailableForDelay($store)) {
                 $storesDelay = $offer->getAllStocks()->getStores()->excludeStore($store);
                 if ($delayedAmount = $stocks->filterByStores($storesDelay)->getTotalAmount()) {
                     $delayedStockResult->setType(StockResult::TYPE_DELAYED);

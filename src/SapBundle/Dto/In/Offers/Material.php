@@ -222,6 +222,18 @@ class Material
     protected $netWeight = 0;
 
     /**
+     * Ставка НДС
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\SerializedName("VAT")
+     * @Serializer\Type("string")
+     * @Serializer\SkipWhenEmpty()
+     *
+     * @var string
+     */
+    protected $vat = '';
+
+    /**
      * Единицы измерения
      *
      * @Serializer\XmlList(inline=true, entry="UOM")
@@ -639,6 +651,25 @@ class Material
     public function setProperties(Properties $properties): Material
     {
         $this->properties = $properties;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getVat(): string
+    {
+        return $this->vat;
+    }
+
+    /**
+     * @param string $vat
+     * @return Material
+     */
+    public function setVat(string $vat): Material
+    {
+        $this->vat = $vat;
 
         return $this;
     }
