@@ -2,6 +2,7 @@
     die();
 }
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\BitrixOrm\Model\Exceptions\CatalogProductNotFoundException;
@@ -10,6 +11,8 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Components\CatalogElementDetailComponent;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\LocationBundle\LocationService;
 
 class CatalogElementDetailKitComponent extends \CBitrixComponent
@@ -22,6 +25,14 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
      * @var Category $productSection
      */
     private $productSection;
+    /**
+     * @var array $productSections
+     */
+    private $productSections;
+    /**
+     * @var int $aquariumSection
+     */
+    private $aquariumSection;
     /**
      * @var Product $product
      */
@@ -57,11 +68,9 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
      * @return mixed
      *
      * @throws CatalogProductNotFoundException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Bitrix\Main\SystemException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      */
     public function executeComponent()
     {
@@ -76,6 +85,8 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
             $this->selectionOffers = new ArrayCollection();
             $this->additionalItem = null;
             $this->productSection = $this->product->getSection();
+            $this->productSections = $this->product->getSectionsIdList();
+            $this->getAquariumSection();
             if (
                 $this->productSection !== null &&
                 $this->product->getAquariumCombination() != '' &&
@@ -100,7 +111,7 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
                 } else {
                     $this->hideKitBlock = true;
                 }
-            } elseif ($this->productSection !== null && $this->productSection->getCode() == 'komplekty-akvariumy') {
+            } elseif ($this->productSection !== null && ($this->productSection->getCode() == 'komplekty-akvariumy' || in_array($this->aquariumSection, $this->productSections))) {
                 $volume = $this->getVolume(true);
                 if (!$this->hideKitBlock) {
                     $this->getSectionOffers($volume);
@@ -220,6 +231,22 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
             }
         } else {
             $this->hideKitBlock = true;
+        }
+    }
+
+    /**
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     */
+    protected function getAquariumSection(): void
+    {
+        $arFilter = [
+            'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
+            'CODE' => 'komplekty-akvariumy'
+        ];
+        $rsSections = \CIBlockSection::GetList([], $arFilter, false, ['ID', 'IBLOCK_ID']);
+
+        if ($arSection = $rsSections->Fetch()) {
+            $this->aquariumSection = $arSection['ID'];
         }
     }
 }
