@@ -11,12 +11,15 @@ use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
+use FourPaws\App\Application as App;
 use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
 use FourPaws\External\Manzana\Dto\ChequePosition;
 use FourPaws\External\Manzana\Dto\Coupon;
 use FourPaws\External\Manzana\Dto\SoftChequeResponse;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
+use FourPaws\PersonalBundle\Exception\CouponIsNotAvailableForUse;
+use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Helper\PriceHelper;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -114,6 +117,10 @@ class Manzana implements LoggerAwareInterface
 
         try {
             if ($this->promocode) {
+                /** @var PiggyBankService $piggyBankService */
+                $piggyBankService = App::getInstance()->getContainer()->get('piggy_bank.service');
+                $piggyBankService->checkPiggyBankCoupon($this->promocode);
+
                 $response = $this->manzanaPosService->processChequeWithCoupons($request, $this->promocode);
 
                 $this->checkPromocodeByResponse($response, $this->promocode);
@@ -128,7 +135,7 @@ class Manzana implements LoggerAwareInterface
 
             $this->recalculateBasketFromResponse($basket, $response);
             $this->discount = $price - $basket->getPrice();
-        } catch (ExecuteException $e) {
+        } catch (ExecuteException|CouponIsNotAvailableForUse $e) {
             /** @var BasketItem $item */
             foreach ($basket as $item) {
                 $price = PriceHelper::roundPrice($item->getPrice());
@@ -139,12 +146,22 @@ class Manzana implements LoggerAwareInterface
                     'CUSTOM_PRICE' => 'Y'
                 ]);
             }
-            $this->log()->error(
-                \sprintf(
-                    'Manzana recalculate error: %s',
-                    $e->getMessage()
-                )
-            );
+
+            if ($e instanceof ExecuteException) {
+                $this->log()->error(
+                    \sprintf(
+                        'Manzana recalculate error: %s',
+                        $e->getMessage()
+                    )
+                );
+            } else if ($e instanceof CouponIsNotAvailableForUse) {
+                $this->log()->error(
+                    \sprintf(
+                        'Coupon checking error: %s',
+                        $e->getMessage()
+                    )
+                );
+            }
         }
     }
 
