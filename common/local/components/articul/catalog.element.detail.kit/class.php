@@ -77,6 +77,7 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
             $this->additionalItem = null;
             $this->productSection = $this->product->getSection();
             if (
+                $this->offer->isAvailable() &&
                 $this->productSection !== null &&
                 $this->product->getAquariumCombination() != '' &&
                 (
@@ -100,7 +101,11 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
                 } else {
                     $this->hideKitBlock = true;
                 }
-            } elseif ($this->productSection !== null && $this->productSection->getCode() == 'komplekty-akvariumy') {
+            } elseif (
+                $this->offer->isAvailable() &&
+                $this->productSection !== null &&
+                $this->productSection->getCode() == 'komplekty-akvariumy'
+            ) {
                 $volume = $this->getVolume(true);
                 if (!$this->hideKitBlock) {
                     $this->getSectionOffers($volume);
@@ -208,18 +213,7 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
     protected function getSectionOffers($volume)
     {
         $this->getFilters($volume);
-        if ($this->selectionOffers['filters']->count() > 0) {
-            $this->getLamps();
-            if ($this->selectionOffers['lamps']->count() > 0) {
-                $this->getDecor();
-                if ($this->selectionOffers['decor']->count() == 0) {
-                    $this->hideKitBlock = true;
-                }
-            } else {
-                $this->hideKitBlock = true;
-            }
-        } else {
-            $this->hideKitBlock = true;
-        }
+        $this->getLamps();
+        $this->getDecor();
     }
 }
