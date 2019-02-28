@@ -816,19 +816,21 @@ class Event extends BaseServiceHandler
      * Добавляет марки
      * @todo 3 раза отрабатывает в момент регистрации заказа. Разобраться, ограничить применение одним разом
      * @todo вынести в Service
-     * @todo добавить проверку на дату создания заказа. Если она не попадает в даты акции, то ничего не делать
      *
      * @param BitrixEvent $event
      */
     public function addMarksToOrderBasket(BitrixEvent $event): void
     {
-        global $USER;
-        if (!$USER->IsAdmin())
-        {
-            return;
-        }
-
         try {
+            /** @var PiggyBankService $piggyBankService */
+            $piggyBankService = Application::getInstance()->getContainer()->get('piggy_bank.service');
+
+            global $USER;
+            if ($piggyBankService->isPiggyBankDateExpired() && !$USER->IsAdmin())
+            {
+                return;
+            }
+
             /** @var Order $order */
             $order = $event->getParameter('ENTITY');
 
