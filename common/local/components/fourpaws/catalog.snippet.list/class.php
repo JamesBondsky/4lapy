@@ -52,7 +52,6 @@ class CatalogSaleListComponent extends CBitrixComponent
         $params['SECTION_CODE'] = $params['SECTION_CODE'] ?? '';
         $params['COUNT'] = (int)$params['COUNT'] ?: 12;
         $params['ECOMMERCE_LIST_NAME'] = (string)$params['ECOMMERCE_LIST_NAME'] ?: (string)$params['TITLE'];
-
         return parent::onPrepareComponentParams($params);
     }
 

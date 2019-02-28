@@ -72,3 +72,8 @@ grandin.request.add:
   defaults: { _controller: '\FourPaws\AppBundle\AjaxController\GrandinController::addRequestAction' }
   methods: [POST]
 
+piggy-bank.email.send:
+  path: /piggy-bank/email/send/
+  defaults: { _controller: '\FourPaws\AppBundle\AjaxController\PiggyBankController::sendEmailAction' }
+  methods: [POST]
+

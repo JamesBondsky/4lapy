@@ -32,12 +32,14 @@ https://api.esv2.com - валидный адрес
 - ./bin/symfony_console r:c catalog_sync   # обработка очереди изменения элементов каталога для изменения индекса elastic 
 - ./bin/symfony_console r:c callback_set   # обработка очереди отправки сообщений о запросе обратного звонка на АТС
 - ./bin/symfony_console r:c manzana_referral_add   # обработка очереди передачи рефералов в ML
+- ./bin/symfony_console r:c manzana_orders_import # обработка очереди запроса заказов пользователей в ML
 ```
 
 ## Перезапуск консьюмеров манзаны по расписанию
 ```
 - /usr/bin/supervisorctl restart 4lapy_manzana_update
 - /usr/bin/supervisorctl restart 4lapy_stage_manzana_update
+- /usr/bin/supervisorctl restart 4lapy_stage_manzana_import
 ```
 
 ## Запуск импорта из SAP 
@@ -71,6 +73,13 @@ https://api.esv2.com - валидный адрес
 
 ```
 - ./bin/symfony_console f:o:p:c
+```
+
+## Получение из Manzana заказов для пользователей, активных за последнее время
+
+```
+- ./bin/symfony_console f:s:o:m:i # за 1 месяц
+- ./bin/symfony_console f:s:o:m:i --period="2 month" # за произвольный период
 ```
 
 ## Деактивация завершившихся акций
