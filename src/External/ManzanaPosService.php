@@ -90,6 +90,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
              */
             $signCharge = $item->getPropertyCollection()->getPropertyValues()['HAS_BONUS']['VALUE'];
             if (null === $signCharge) {
+                //FIXME не начислять бонусы за марки в корзине
                 try {
                     $signCharge = $basketService->getBonusAwardingQuantity($item, $basket->getOrder());
                 } catch (InvalidArgumentException $e) {

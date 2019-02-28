@@ -62,6 +62,7 @@ class DeliveryService implements LoggerAwareInterface
     use LazyLoggerAwareTrait;
 
     public const INNER_DELIVERY_CODE = '4lapy_delivery';
+    public const DELIVERY_DOSTAVISTA_CODE = 'dostavista';
     public const INNER_PICKUP_CODE = '4lapy_pickup';
     public const DPD_DELIVERY_GROUP_CODE = 'ipolh_dpd';
     public const DPD_DELIVERY_CODE = self::DPD_DELIVERY_GROUP_CODE . ':COURIER';
@@ -113,6 +114,10 @@ class DeliveryService implements LoggerAwareInterface
      */
     public const ZONE_IVANOVO = 'ZONE_IVANOVO';
     public const ZONE_IVANOVO_REGION = 'ZONE_IVANOVO_REGION';
+    /**
+     * Зона Москва
+     */
+    public const ZONE_MOSCOW = 'ZONE_MOSCOW';
 
     public const PICKUP_CODES = [
         DeliveryService::INNER_PICKUP_CODE,
@@ -400,6 +405,27 @@ class DeliveryService implements LoggerAwareInterface
             $calculationResult->setDeliveryCode($service->getCode());
             $calculationResult->setCurrentDate($from ?? new \DateTime());
 
+            //проверка, что достависта работает еще в течение 3ех часов
+            if ($calculationResult->getDeliveryCode() == DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
+                $deliveryDate = clone $calculationResult->getDeliveryDate();
+                $deliveryDateOfMonth = clone $calculationResult->getDeliveryDate(); //клонируем для проверки, что следующие сутки не наступили
+                $deliveryStartTime = clone $calculationResult->getDeliveryDate(); //клонируем для проверки, что курьерская доставка сейчас работает
+                $deliveryEndTime = clone $calculationResult->getDeliveryDate(); //клонируем для проверки, что курьерская доставка еще будет работать с учетом времени доставки
+                $deliveryDateOfMonth->modify(sprintf('+%s minutes', $calculationResult->getPeriodTo())); //прибавляем максимальное время доставки
+                $startTime = $calculationResult->getData()['DELIVERY_START_TIME']; //когда доставка открывается
+                $arStartTime = explode(':', $startTime);
+                $deliveryStartTime->setTime($arStartTime[0], $arStartTime[1]); //получаем сегодня, когда доставка открывается
+                $endTime = $calculationResult->getData()['DELIVERY_END_TIME']; //когда доставка закрывается
+                $arEndTime = explode(':', $endTime);
+                $deliveryEndTime->setTime($arEndTime[0], $arEndTime[1]); //получаем сегодня, когда доставка закроется
+                $oldDayOfMonth = $calculationResult->getDeliveryDate()->format('d'); //получаем номер старого дня в месяце
+                $newDayOfMonth = $deliveryDateOfMonth->format('d'); //получаем номер нового дня в месяце с учетом времени доставки
+                if ($oldDayOfMonth != $newDayOfMonth || $deliveryDateOfMonth > $deliveryEndTime || $deliveryDate < $deliveryStartTime) {
+                    continue;
+                }
+            }
+
+            //тут рассчет времени доставки
             if ($calculationResult->isSuccess()) {
                 $result[] = $calculationResult;
             } else {
@@ -623,6 +649,15 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
+     * @param string|null $deliveryCode
+     * @return bool
+     */
+    public function isDostavistaDeliveryCode($deliveryCode): bool
+    {
+        return $deliveryCode == static::DELIVERY_DOSTAVISTA_CODE;
+    }
+
+    /**
      * @param CalculationResultInterface $calculationResult
      *
      * @return bool
@@ -630,6 +665,16 @@ class DeliveryService implements LoggerAwareInterface
     public function isDelivery(CalculationResultInterface $calculationResult): bool
     {
         return $this->isDeliveryCode($calculationResult->getDeliveryCode());
+    }
+
+    /**
+     * @param CalculationResultInterface $calculationResult
+     *
+     * @return bool
+     */
+    public function isDostavistaDelivery(CalculationResultInterface $calculationResult): bool
+    {
+        return $this->isDostavistaDeliveryCode($calculationResult->getDeliveryCode());
     }
 
     /**

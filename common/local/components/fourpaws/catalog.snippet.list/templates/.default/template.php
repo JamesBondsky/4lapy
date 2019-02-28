@@ -38,6 +38,16 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
              * </svg></span></a>
              */
             ?>
+            <?if(!empty($arParams['ALL_LINK'])):?>
+                <a class="b-link b-link--title b-link--title" href="<?=$arParams['ALL_LINK'];?>"  title="Показать все">
+                    <span class="b-link__text b-link__text--title">Показать все</span>
+                    <span class="b-link__mobile b-link__mobile--title">Все</span><span class="b-icon">
+                        <svg class="b-icon__svg" viewBox="0 0 6 10 " width="6px" height="10px">
+                            <use class="b-icon__use" xlink:href="icons.svg#icon-arrow-right" href="icons.svg#icon-arrow-right"></use>
+                        </svg>
+                    </span>
+                </a>
+            <?endif;?>
         </div>
         <div class="b-common-section__content b-common-section__content--sale b-common-section__content--main-sale js-popular-product">
             <?php 

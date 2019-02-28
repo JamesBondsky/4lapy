@@ -110,7 +110,7 @@ if ($template->hasMainWrapper()) {
                     <?php require_once __DIR__ . '/blocks/footer/application_links.php'; ?>
                 </div>
             <?php } ?>
-            <div class="b-footer__line">
+            <div class="b-footer__line b-footer__line--change-viewport">
                 <div class="b-footer__column">
                     <?php require_once __DIR__ . '/blocks/footer/copyright.php' ?>
                 </div>
@@ -121,10 +121,10 @@ if ($template->hasMainWrapper()) {
                             data-footer-links-change-viewport="true">
 
                     <div class="link-toggle-view <?= $sViewportCookie === 'desktop' ? 'active' : '' ?>" data-change-viewport-mode='desktop' data-type="mobile">
-                        Перейти в мобильную версию
+                        Перейти в<br/> мобильную версию
                     </div>
-                    <div class="link-toggle-view <?= $sViewportCookie === 'mobile' ? 'active' : '' ?>" data-change-viewport-mode='mobile' data-type="desktop">
-                        Перейти в полноэкранный режим
+                    <div class="link-toggle-view <?= $sViewportCookie === 'mobile' ? 'active mobile' : '' ?>" data-change-viewport-mode='mobile' data-type="desktop">
+                        Перейти в<br/> полноэкранный режим
                     </div>
                 </div>
             </div>

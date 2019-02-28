@@ -8,6 +8,7 @@ namespace FourPaws\SapBundle\Service\Orders;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SapBundle\Exception\NotFoundOrderStatusException;
 use Psr\Log\LoggerAwareInterface;
 
@@ -37,6 +38,35 @@ class StatusService implements LoggerAwareInterface
         'V' => 'A',
     ];
 
+    /**
+     * id-dostavista => id-sap
+     *
+     * dostavista status    site status             sap status
+     * 0 - “Создан”         “Новый”                 O - “Получен подрядчиком” (новый статус)
+     * 1 - “Доступен”       “Новый”                 L - “Заказ принят подрядчиком”
+     * 2 - “Активен”        “Исполнен автоматом”    M - “Заказ едет по маршруту”
+     * 3 - “Завершен”       “Оплачен(доставлен)”    N - “Заказ вручен”
+     * 10 - “Отменен”       “Отменен”               6 - “Отменен”
+     * 16 - “Отложен”       Статус не изменяется    K - “Треб. соглас. операт.”
+     */
+    public const STATUS_DOSTAVISTA_MAP = [
+        'O' => OrderStatus::STATUS_NEW_COURIER,
+        'L' => OrderStatus::STATUS_NEW_COURIER,
+        'M' => OrderStatus::STATUS_DELIVERING,
+        'N' => OrderStatus::STATUS_FINISHED,
+        '6' => OrderStatus::STATUS_CANCEL_COURIER,
+        'K' => ''
+    ];
+
+    public const STATUS_SITE_DOSTAVISTA_MAP = [
+        'O' => 'new',
+        'L' => 'available',
+        'M' => 'active',
+        'N' => 'completed',
+        '6' => 'canceled',
+        'K' => 'delayed'
+    ];
+
     private const STATUS_PICKUP_MAP = [
         '1' => 'N',
         '2' => 'C',
@@ -58,6 +88,7 @@ class StatusService implements LoggerAwareInterface
         DeliveryService::DPD_DELIVERY_CODE => self::STATUS_COURIER_MAP,
         DeliveryService::DPD_PICKUP_CODE => self::STATUS_PICKUP_MAP,
         DeliveryService::INNER_PICKUP_CODE => self::STATUS_PICKUP_MAP,
+        DeliveryService::DELIVERY_DOSTAVISTA_CODE => self::STATUS_DOSTAVISTA_MAP,
         /**@todo remove - it`s from old site */
         16 => self::STATUS_PICKUP_MAP,
         17 => self::STATUS_COURIER_MAP,

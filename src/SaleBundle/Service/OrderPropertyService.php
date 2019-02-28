@@ -29,6 +29,8 @@ class OrderPropertyService
 
     public const COMMUNICATION_SUBSCRIBE = '07';
 
+    public const COMMUNICATION_DOSTAVISTA_ERROR = '08';
+
     /**
      * @var OrderPropertyVariantRepository
      */

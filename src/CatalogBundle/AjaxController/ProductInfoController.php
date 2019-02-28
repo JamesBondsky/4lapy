@@ -511,7 +511,6 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
         $price = $offer->getCatalogPrice();
         $oldPrice = $offer->getOldPrice() ? $offer->getCatalogOldPrice() : $price;
         $isByRequest = $offer->isByRequest();
-        //$pickupOnly = $available && $product->isPickupAvailable() && !$product->isDeliveryAvailable();
         $pickupOnly = $available && !$offer->isDeliverable() && $product->isPickupAvailable() && $offer->isPickupAvailable();
 
         $responseItem = [

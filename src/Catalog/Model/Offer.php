@@ -46,6 +46,7 @@ use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\StoreBundle\Entity\Store;
 use InvalidArgumentException;
 use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Accessor;
@@ -333,6 +334,14 @@ class Offer extends IblockElement
     protected $currency = '';
 
     /**
+     * @var string
+     * @Type("string")
+     * @Groups({"elastic"})
+     * @Accessor(getter="getCatalogVatId", setter="withCatalogVatId")
+     */
+    protected $VAT_ID = '2';
+
+    /**
      * @var CatalogProduct
      */
     protected $catalogProduct;
@@ -445,6 +454,10 @@ class Offer extends IblockElement
 
         if (isset($fields['CATALOG_CURRENCY_2'])) {
             $this->currency = (string)$fields['CATALOG_CURRENCY_2'];
+        }
+
+        if (isset($fields['CATALOG_VAT'])) {
+            $this->VAT_ID = (string)$fields['CATALOG_VAT_ID'];
         }
     }
 
@@ -1195,6 +1208,25 @@ class Offer extends IblockElement
     public function getCurrency(): string
     {
         return $this->currency;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCatalogVatId(): string
+    {
+        return $this->VAT_ID;
+    }
+
+    /**
+     * @param string $catalogVat
+     * @return Offer
+     */
+    public function withCatalogVatId(string $catalogVat): Offer
+    {
+        $this->VAT_ID = $catalogVat;
+
+        return $this;
     }
 
     /**
@@ -1990,4 +2022,29 @@ class Offer extends IblockElement
     {
         return OfferQuery::getById((int)$primary);
     }
+
+
+    /**
+     * Возможность "довоза" оффера в магазин (DC001 -> Rxxx)
+     *
+     * @param Store $store
+     * @return bool
+     * @throws \Exception
+     */
+    public function isAvailableForDelay(Store $store): bool
+    {
+        /** @var StoreService $storeService */
+        $storeService = Application::getInstance()->getContainer()->get('store.service');
+
+        if (
+            $this->getProduct()->isTransportOnlyRefrigerator()
+            || ($this->getProduct()->isLicenseRequired() && !$storeService->hasLicense($store) )
+        )
+        {
+            return false;
+        }
+
+        return true;
+    }
+
 }

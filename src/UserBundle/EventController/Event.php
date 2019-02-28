@@ -6,12 +6,15 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\main\Application as BitrixApplication;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\GroupTable;
+use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application as App;
+use FourPaws\App\Application;
 use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\MainTemplate;
 use FourPaws\Enum\UserGroup;
 use FourPaws\External\Manzana\Model\Client;
+use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
@@ -100,6 +103,11 @@ class Event extends BaseServiceHandler
         static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'clearUserCache'], 'main');
         static::initHandlerCompatible('OnAfterUserLogin', [self::class, 'clearUserCache'], 'main');
         static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'clearUserCache'], 'main');
+
+        /** асинхронное получение заказов пользователя при авторизации */
+        static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'getUserOrdersFromManzana'], 'main');
+        static::initHandlerCompatible('OnAfterUserLogin', [self::class, 'getUserOrdersFromManzana'], 'main');
+        static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'getUserOrdersFromManzana'], 'main');
 
         /** действия при авторизации(обновление группы оптовиков, обновление карты) */
         static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'refreshUserOnAuth'], 'main');
@@ -537,6 +545,38 @@ class Event extends BaseServiceHandler
             $USER->SetUserGroupArray(array_intersect([$result[UserGroup::OPT_CODE]], $USER->GetUserGroupArray()));
         } else {
             $USER->SetUserGroupArray([$result[UserGroup::NOT_AUTH_CODE]]);
+        }
+    }
+
+    /**
+     * @param $arFields
+     */
+    public static function getUserOrdersFromManzana($arFields): void
+    {
+        global $DB;
+
+        /** @var \FourPaws\UserBundle\Service\UserService $userService */
+        $userService = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+        if ($userService->isAuthorized())
+        {
+            try
+            {
+                $user = $userService->getUserRepository()->find($userService->getCurrentUserId());
+
+                if ($user)
+                {
+                    $lastManzanaImportDateTime = $user->getManzanaImportDateTime();
+                    if (!$lastManzanaImportDateTime || $DB->CompareDates($lastManzanaImportDateTime, (new DateTime())->add('- 30 minutes')) < 0) //TODO вынести 30 минут в параметры
+                    {
+                        /** @var ManzanaService $manzanaService */
+                        $manzanaService = Application::getInstance()->getContainer()->get('manzana.service');
+                        $manzanaService->importUserOrdersAsync($user);
+                    }
+                }
+            } catch (\Exception $e) {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('failed to get user\'s orders from Manzana: ' . $e->getMessage());
+            }
         }
     }
 }
