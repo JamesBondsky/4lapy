@@ -52,10 +52,10 @@ class ManzanaOrderConsumer extends ManzanaConsumerBase
             ));
         }
 
-        $this->log()->info(\sprintf(
+        /*$this->log()->info(\sprintf(
             'Manzana order consumer success, message: %s',
             $message->getBody()
-        ));
+        ));*/
 
         return true;
     }
