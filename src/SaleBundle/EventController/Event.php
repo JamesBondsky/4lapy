@@ -31,6 +31,7 @@ use FourPaws\App\MainTemplate;
 use FourPaws\App\Tools\StaticLoggerTrait;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\PersonalBundle\Service\CouponService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Discount\Action\Action\DetachedRowDiscount;
 use FourPaws\SaleBundle\Discount\Action\Action\DiscountFromProperty;
@@ -196,6 +197,11 @@ class Event extends BaseServiceHandler
         static::initHandler('OnSaleOrderSaved', [
             self::class,
             'clearOrderCache'
+        ], $module);
+
+        static::initHandler('OnSaleOrderSaved', [
+            self::class,
+            'setCouponUsedField'
         ], $module);
 
         /**
@@ -604,6 +610,36 @@ class Event extends BaseServiceHandler
             'personal:order:' . $order->getField('USER_ID'),
             'order:item:' . $order->getId(),
         ]);
+    }
+
+    /**
+     * @param BitrixEvent $event
+     */
+    public static function setCouponUsedField(BitrixEvent $event): void
+    {
+        try {
+            $isNew = $event->getParameter('IS_NEW');
+
+            /** @var Order $order */
+            $order = $event->getParameter('ENTITY');
+            $propertyCollection = $order->getPropertyCollection();
+            $promocode = BxCollection::getOrderPropertyByCode($propertyCollection, 'PROMOCODE');
+            if ($promocodeValue = $promocode->getValue())
+            {
+                /** @var CouponService $couponService */
+                $couponService = Application::getInstance()->getContainer()->get('coupon.service');
+                $couponService->setUsedStatusByNumber($promocodeValue);
+            }
+        } catch (\Exception $e) {
+            static::getLogger()
+                ->critical(
+                    sprintf(
+                        'failed to set coupon Used status: %s: %s',
+                        \get_class($e),
+                        $e->getMessage()
+                    )
+                );
+        }
     }
 
 

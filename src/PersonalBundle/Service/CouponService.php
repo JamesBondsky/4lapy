@@ -1,14 +1,14 @@
 <?php
-//TODO удалить Service?
 namespace FourPaws\PersonalBundle\Service;
 
-use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Highloadblock\DataManager;
 use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application as App;
+use FourPaws\PersonalBundle\Exception\CouponIsAlreadyUsedException;
 use FourPaws\PersonalBundle\Exception\CouponIsNotDeactivatedException;
 use FourPaws\PersonalBundle\Exception\CouponIsNotSetUsedException;
+use FourPaws\PersonalBundle\Exception\CouponNotFoundException;
 use FourPaws\PersonalBundle\Exception\CouponNotLinkedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Psr\Log\LoggerAwareInterface;
@@ -100,11 +100,73 @@ class CouponService implements LoggerAwareInterface
 	}
 
     /**
-     * @param int $id
+     * @param string $couponNumber
+     * @return int
+     * @throws CouponNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getCouponIdByNumber(string $couponNumber): int
+    {
+        $coupon = $this->couponDataManager::query()
+            ->setSelect(['ID'])
+            ->setFilter([
+                'UF_COUPON' => $couponNumber,
+            ])
+            ->setLimit(1)
+            ->exec()
+            ->fetch();
+
+        if (!$coupon)
+        {
+            throw new CouponNotFoundException(\sprintf(
+                'Coupon with %s number is not found',
+                $couponNumber
+            ));
+        }
+
+        return $coupon['ID'];
+    }
+
+    /**
+     * @param string $couponNumber
+     * @throws CouponIsAlreadyUsedException
      * @throws CouponIsNotSetUsedException
+     * @throws CouponNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function setUsedStatusByNumber(string $couponNumber): void
+    {
+        if (strlen($couponNumber) < 4)
+        {
+            throw new CouponNotFoundException(\sprintf(
+               'too short coupon number: %s',
+                $couponNumber
+            ));
+        }
+        $couponId = $this->getCouponIdByNumber($couponNumber);
+        $this->setUsedStatus($couponId);
+    }
+
+    /**
+     * @param int $id
+     * @throws CouponIsAlreadyUsedException
+     * @throws CouponIsNotSetUsedException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
     public function setUsedStatus(int $id): void
     {
+        if (!$this->isCouponActive($id)) {
+            throw new CouponIsAlreadyUsedException(\sprintf(
+                'Coupon %s is already used or deactivated',
+                $id
+            ));
+        }
+
         $updateResult = $this->couponDataManager::update($id, [
             'UF_USED' => true,
             'UF_DATE_CHANGED' => DateTime::createFromTimestamp(time()),
@@ -125,14 +187,20 @@ class CouponService implements LoggerAwareInterface
                 $id
             ));
         }
+    }
 
-        //TODO если достаточно марок, то сразу активировать новый купон на 10% после выполнения этой функции
-        /**
-         * if (!$piggyBankService->isUserHasActiveCoupon() && $piggyBankService->isEnoughMarksForFirstCoupon())
-                        {   //TODO может получиться так, что юзер дважды получит купон, если успеют произойти два параллельных addFirstLevelCouponToUser() - сделать транзакцию
-                            $piggyBankService->addFirstLevelCouponToUser();
-                        }
-         *
-         */
+    /**
+     * @param $id
+     * @return bool
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function isCouponActive($id): bool
+    {
+        return (bool)$this->couponDataManager::getCount([
+            'ID' => $id,
+            'UF_DEACTIVATED' => false,
+            'UF_USED'        => false,
+        ]);
     }
 }
