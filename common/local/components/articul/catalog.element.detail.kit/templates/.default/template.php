@@ -51,10 +51,10 @@ if (!$arResult['HIDE_KIT_BLOCK']) {
     $lamps = $selectionOffers['lamps'];
 
     $totalPrice = $offer->getCatalogPrice() +
-    (($additionalItem) ? $additionalItem->getCatalogPrice() : 0) +
-    (!$filters->isEmpty()) ? $filters->first()->getCatalogPrice() : 0 +
-    (!$decor->isEmpty()) ? $decor->first()->getCatalogPrice() : 0 +
-    (!$lamps->isEmpty()) ? $lamps->first()->getCatalogPrice() : 0;
+        (($additionalItem) ? $additionalItem->getCatalogPrice() : 0) +
+        ((!$filters->isEmpty()) ? $filters->first()->getCatalogPrice() : 0) +
+        ((!$decor->isEmpty()) ? $decor->first()->getCatalogPrice() : 0) +
+        ((!$lamps->isEmpty()) ? $lamps->first()->getCatalogPrice() : 0);
     ?>
     <div class="b-product-card__complect">
         <div class="b-product-card-complect">
