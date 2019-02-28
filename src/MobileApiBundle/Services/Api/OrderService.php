@@ -48,7 +48,7 @@ use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\OrderService as AppOrderService;
 use FourPaws\PersonalBundle\Service\OrderService as PersonalOrderService;
-use FourPaws\UserBundle\Service\UserService;
+use FourPaws\UserBundle\Service\UserService as AppUserService;
 use FourPaws\MobileApiBundle\Services\Api\StoreService as ApiStoreService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\Order as OrderEntity;
@@ -78,8 +78,8 @@ class OrderService
     /** @var OrderSplitService */
     private $orderSplitService;
 
-    /** @var UserService */
-    private $userService;
+    /** @var AppUserService */
+    private $appUserService;
 
     /** @var LocationService */
     private $locationService;
@@ -109,7 +109,7 @@ class OrderService
         OrderStorageService $orderStorageService,
         AppOrderService $appOrderService,
         PersonalOrderService $personalOrderService,
-        UserService $userService,
+        AppUserService $appUserService,
         ApiStoreService $apiStoreService,
         LocationService $locationService,
         OrderSplitService $orderSplitService,
@@ -125,7 +125,7 @@ class OrderService
         $this->orderStorageService = $orderStorageService;
         $this->appOrderService = $appOrderService;
         $this->personalOrderService = $personalOrderService;
-        $this->userService = $userService;
+        $this->appUserService = $appUserService;
         $this->locationService = $locationService;
         $this->orderSplitService = $orderSplitService;
         $this->appDeliveryService = $appDeliveryService;
@@ -144,7 +144,7 @@ class OrderService
     {
         $orders = $this->getUserOrders();
         // toDo подписка на заказ
-        // $user = $this->userService->getCurrentUser();
+        // $user = $this->appUserService->getCurrentUser();
         // $subscriptions = $this->appOrderSubscribeService->getSubscriptionsByUser($user->getId());
         return $orders->map(function (OrderEntity $order) /*use($subscriptions)*/ {
             /*
@@ -188,7 +188,7 @@ class OrderService
      */
     public function getOneByNumberForCurrentUser(int $orderNumber)
     {
-        $user = $this->userService->getCurrentUser();
+        $user = $this->appUserService->getCurrentUser();
         $order = $this->personalOrderService->getUserOrderByNumber($user, $orderNumber);
         return $this->toApiFormat($order);
     }
@@ -203,7 +203,7 @@ class OrderService
      */
     public function getHistoryForCurrentUser(int $orderNumber)
     {
-        $user = $this->userService->getCurrentUser();
+        $user = $this->appUserService->getCurrentUser();
         $order = $this->personalOrderService->getUserOrderByNumber($user, $orderNumber);
         return $this->personalOrderService->getOrderStatuses($order)->map(function($status) {
             /** @var $status OrderStatusChange */
@@ -266,7 +266,7 @@ class OrderService
      */
     public function getUserOrders()
     {
-        $user = $this->userService->getCurrentUser();
+        $user = $this->appUserService->getCurrentUser();
         return $this->personalOrderService->getUserOrders($user);
     }
 
@@ -292,7 +292,7 @@ class OrderService
         $orderParameter = (new OrderParameter())
             ->setProducts($basketProducts->getValues());
 
-        $userId = $this->userService->getCurrentUserId();
+        $userId = $this->appUserService->getCurrentUserId();
 
 
         $basket = $this->appBasketService->getBasket();
