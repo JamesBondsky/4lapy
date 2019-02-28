@@ -57,7 +57,7 @@
                 }
                 $this->actionSectionId = $section['ID'];
                 $this->arResult = $this->getWinners();
+                $this->includeComponentTemplate();
             }
-            $this->includeComponentTemplate();
         }
     }

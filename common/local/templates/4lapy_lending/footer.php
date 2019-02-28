@@ -79,10 +79,10 @@ if ($template->hasMainWrapper()) { ?>
         <div class="winners-landing__bg-left" style="background-image: url('/static/build/images/content/landing-winners-left.png')"></div>
         <div class="winners-landing__bg-right" style="background-image: url('/static/build/images/content/landing-winners-right.png')"></div>
         <div class="container-landing">
-            <?
-            $APPLICATION->IncludeComponent('articul:action.winners', '', [
-                    "SECTION_CODE" => 'GRANDIN'
-            ]);
+            <?php
+                $APPLICATION->IncludeComponent('articul:action.winners', '', [
+                        "SECTION_CODE" => 'GRANDIN'
+                ]);
                 ?>
         </div>
     </section>
