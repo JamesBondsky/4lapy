@@ -40,6 +40,7 @@ https://api.esv2.com - валидный адрес
 - /usr/bin/supervisorctl restart 4lapy_manzana_update
 - /usr/bin/supervisorctl restart 4lapy_stage_manzana_update
 - /usr/bin/supervisorctl restart 4lapy_stage_manzana_import
+- /usr/bin/supervisorctl restart 4lapy_manzana_orders_import
 ```
 
 ## Запуск импорта из SAP 
