@@ -22,6 +22,29 @@ class UserCartCalcRequest implements SimpleUnserializeRequest, PostRequest
     protected $bonusSubtractAmount;
 
     /**
+     * Тип доставки
+     * @Serializer\SerializedName("deliveryType")
+     * @Serializer\Type("string")
+     * @Assert\Choice({"courier", "pickup"})
+     * @var string
+     */
+    protected $deliveryType = '';
+
+    /**
+     * @Serializer\SerializedName("onlyAvailableGoods")
+     * @Serializer\Type("bool")
+     * @var bool
+     */
+    public $onlyAvailableGoods;
+
+    /**
+     * @Serializer\SerializedName("shopCode")
+     * @Serializer\Type("string")
+     * @var string
+     */
+    public $shopCode;
+
+    /**
      * @return float
      */
     public function getBonusSubtractAmount(): float
@@ -37,6 +60,25 @@ class UserCartCalcRequest implements SimpleUnserializeRequest, PostRequest
     public function setBonusSubtractAmount(float $bonusSubtractAmount): UserCartCalcRequest
     {
         $this->bonusSubtractAmount = $bonusSubtractAmount;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDeliveryType(): string
+    {
+        return $this->deliveryType;
+    }
+
+    /**
+     * @param string $deliveryType
+     *
+     * @return UserCartCalcRequest
+     */
+    public function setDeliveryType(string $deliveryType): UserCartCalcRequest
+    {
+        $this->deliveryType = $deliveryType;
         return $this;
     }
 }

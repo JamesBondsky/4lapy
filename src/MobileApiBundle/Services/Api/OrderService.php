@@ -476,38 +476,39 @@ class OrderService
 
     public function getDeliveryDetails()
     {
+        /** @var DeliveryVariant $courierDelivery */
+        /** @var DeliveryVariant $pickupDelivery */
         [$courierDelivery, $pickupDelivery] = $this->getDeliveryVariants();
         $result = [
             'pickup' => $pickupDelivery,
             'courier' => $courierDelivery,
         ];
-        $basketProducts = $this->apiBasketService->getBasketProducts();
-        $orderStorage = (new OrderStorage());
-        $deliveries = $this->orderStorageService->getDeliveries($orderStorage);
-        $delivery = null;
-        foreach ($deliveries as $calculationResult) {
-            if ($this->appDeliveryService->isDelivery($calculationResult)) {
-                $delivery = $calculationResult;
+        if ($courierDelivery->getAvailable()) {
+            $basketProducts = $this->apiBasketService->getBasketProducts();
+            $orderStorage = (new OrderStorage());
+            $deliveries = $this->orderStorageService->getDeliveries($orderStorage);
+            $delivery = null;
+            foreach ($deliveries as $calculationResult) {
+                if ($this->appDeliveryService->isDelivery($calculationResult)) {
+                    $delivery = $calculationResult;
+                }
             }
-        }
-        $selectedDelivery = $delivery;
-        // не разделенный заказ
-        $result['singleOrder'] = $this->getDeliveryCourierDetails($selectedDelivery, $basketProducts);
-        // есть недоступные к курьерке товары (их нет на складе)
-        $result['hasDelayedGoods'] = count($basketProducts) > count($result['singleOrder']['goods']);
+            $selectedDelivery = $delivery;
+            // не разделенный заказ
+            $result['singleOrder'] = $this->getDeliveryCourierDetails($selectedDelivery, $basketProducts);
+            // есть недоступные к курьерке товары (их нет на складе)
+            $result['hasDelayedGoods'] = count($basketProducts) > count($result['singleOrder']['goods']);
 
-        // разделенный заказ
-        $result['canSplitOrder'] = $this->orderSplitService->canSplitOrder($selectedDelivery);
-        $result['splitOrder'] = [];
-        if ($result['canSplitOrder']) {
-            [$splitResult1, $splitResult2] = $this->orderSplitService->splitOrder($orderStorage);
-            $result['splitOrder'][] = $this->getDeliveryCourierDetails($splitResult1->getDelivery(), $basketProducts);
-            $result['splitOrder'][] = $this->getDeliveryCourierDetails($splitResult2->getDelivery(), $basketProducts);
+            // разделенный заказ
+            $result['canSplitOrder'] = $this->orderSplitService->canSplitOrder($selectedDelivery);
+            $result['splitOrder'] = [];
+            if ($result['canSplitOrder']) {
+                [$splitResult1, $splitResult2] = $this->orderSplitService->splitOrder($orderStorage);
+                $result['splitOrder'][] = $this->getDeliveryCourierDetails($splitResult1->getDelivery(), $basketProducts);
+                $result['splitOrder'][] = $this->getDeliveryCourierDetails($splitResult2->getDelivery(), $basketProducts);
+            }
+            $orderStorage->setDeliveryId($selectedDelivery->getDeliveryId());
         }
-        $orderStorage->setDeliveryId($selectedDelivery->getDeliveryId());
-
-        // итоговые суммы
-        $result['cart_calc'] = $this->getOrderCalculate($basketProducts);
         return [
             'cartDelivery' => $result
         ];

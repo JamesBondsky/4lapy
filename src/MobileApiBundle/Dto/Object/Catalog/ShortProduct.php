@@ -159,6 +159,16 @@ class ShortProduct
     protected $isGift = false;
 
     /**
+     * Количество бесплатных товаров в рамках акций n+1
+     *
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("freeGoodsAmount")
+     * @Serializer\Groups({"basket"})
+     */
+    protected $freeGoodsAmount = 0;
+
+    /**
      * @return int
      */
     public function getId(): int
@@ -454,6 +464,24 @@ class ShortProduct
     public function setIsGift(bool $isGift)
     {
         $this->isGift = $isGift;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getFreeGoodsAmount()
+    {
+        return $this->freeGoodsAmount;
+    }
+
+    /**
+     * @param int $freeGoodsAmount
+     * @return $this
+     */
+    public function setFreeGoodsAmount(int $freeGoodsAmount)
+    {
+        $this->freeGoodsAmount = $freeGoodsAmount;
         return $this;
     }
 }
