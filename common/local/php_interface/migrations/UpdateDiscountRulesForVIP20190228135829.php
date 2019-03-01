@@ -9,7 +9,7 @@ use FourPaws\Enum\UserGroup;
 
 class UpdateDiscountRulesForVIP20190228135829 extends \Adv\Bitrixtools\Migration\SprintMigrationBase {
 
-    protected $description = "Обновляет правила работы с корзиной разделяя их на избранных и неизбранных";
+    protected $description = "[ОБЯЗАТЕЛЬНО НАЛИЧИЕ ГРУППЫ \"Правила работы с корзиной\"] Обновляет правила работы с корзиной разделяя их на избранных и неизбранных";
 
     protected $logFile = '/local/php_interface/migration_sources/updated_discount_rules.txt';
 
