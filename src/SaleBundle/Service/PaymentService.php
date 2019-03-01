@@ -945,7 +945,7 @@ class PaymentService implements LoggerAwareInterface
             }
 
             throw new SberbankPaymentException(
-                $isSuccess ? $response->getActionDescription() : $response->getErrorMessage(),
+                $isSuccess ? ($response->getActionCodeDescription() ? $response->getActionCodeDescription() : $response->getActionDescription()) : $response->getErrorMessage(),
                 $response->getErrorCode()
             );
         }
