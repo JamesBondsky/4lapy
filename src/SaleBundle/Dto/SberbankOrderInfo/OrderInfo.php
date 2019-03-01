@@ -60,6 +60,15 @@ class OrderInfo
     protected $actionDescription;
 
     /**
+     * @var string
+     *
+     * @Serializer\SerializedName("actionCodeDescription")
+     * @Serializer\Type("string")
+     */
+    protected $actionCodeDescription;
+
+
+    /**
      * @var int
      *
      * @Serializer\SerializedName("amount")
@@ -259,9 +268,9 @@ class OrderInfo
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getActionDescription(): string
+    public function getActionDescription(): ?string
     {
         return $this->actionDescription;
     }
@@ -275,6 +284,22 @@ class OrderInfo
         $this->actionDescription = $actionDescription;
 
         return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getActionCodeDescription(): ?string
+    {
+        return $this->actionCodeDescription;
+    }
+
+    /**
+     * @param string $actionCodeDescription
+     */
+    public function setActionCodeDescription(string $actionCodeDescription): void
+    {
+        $this->actionCodeDescription = $actionCodeDescription;
     }
 
     /**
