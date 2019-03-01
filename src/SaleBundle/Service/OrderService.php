@@ -541,6 +541,9 @@ class OrderService implements LoggerAwareInterface
                         ? BitrixUtils::BX_BOOL_TRUE
                         : BitrixUtils::BX_BOOL_FALSE;
                     break;
+                case 'DELIVERY_COST':
+                    $value = $shipmentCollection->getPriceDelivery();
+                    break;
                 default:
                     continue 2;
             }
