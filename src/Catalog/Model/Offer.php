@@ -38,14 +38,18 @@ use FourPaws\BitrixOrm\Query\ShareQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\CatalogBundle\Service\BrandService;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\UserBundle\Service\UserService;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use InvalidArgumentException;
 use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Accessor;
@@ -56,6 +60,7 @@ use JMS\Serializer\SerializerInterface;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+
 
 /**
  * Class Offer
@@ -421,6 +426,12 @@ class Offer extends IblockElement
      * @var ShareCollection
      */
     protected $share;
+
+    /**
+     * Приоритетный процент начисленных бонусов от стоимости товара
+     * @var int
+     */
+    protected $bonusPercent;
 
     /**
      * @var string
@@ -1208,6 +1219,8 @@ class Offer extends IblockElement
     }
 
     /**
+     * Сумма начисляемых бонусов
+     *
      * @param int $percent
      * @param int $quantity
      *
@@ -1216,6 +1229,23 @@ class Offer extends IblockElement
     public function getBonusCount(int $percent, int $quantity = 1): float
     {
         $result = 0;
+
+        if(null === $this->bonusPercent){
+            /** @var UserService $userCurrentUserService*/
+            $userCurrentUserService = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+
+            if($userCurrentUserService->getCurrentUser()->isOpt() && $this->getProduct()->getBrand()->isBonusOpt()){
+                $this->bonusPercent = BrandService::getBonusOptPercent();
+            }
+            else{
+                $this->bonusPercent = 0;
+            }
+        }
+
+        if($this->bonusPercent > 0){
+            $percent = $this->bonusPercent;
+        }
+
         if (!$this->isBonusExclude() && !$this->isShare()) {
             $result = $this->getPrice() * $quantity * $percent / 100;
         }

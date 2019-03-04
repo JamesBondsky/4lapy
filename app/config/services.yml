@@ -104,3 +104,6 @@ services:
   front_office.manzana_integration.service:
     class: FourPaws\FrontOffice\ManzanaIntegrationService
     arguments: ['@jms_serializer', '@manzana.service']
+
+  brand.service:
+    class: FourPaws\CatalogBundle\Service\BrandService

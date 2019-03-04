@@ -21,4 +21,6 @@ class IblockProperty
     public const COMPARING_LINK = 'PRODUCT';
 
     public const SHARE_PRODUCTS = 'PRODUCTS';
+
+    public const BRAND_BONUS_OPT = 'BONUS_OPT';
 }
