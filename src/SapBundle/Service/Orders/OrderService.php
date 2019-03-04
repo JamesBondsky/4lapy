@@ -3,6 +3,7 @@
 namespace FourPaws\SapBundle\Service\Orders;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Catalog\Product\Basket as CatalogBasket;
@@ -503,7 +504,16 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             }
 
             $offer->setQuantity($quantity);
-            $offer->setChargeBonus((bool)$hasBonus);
+            $isPseudoActionPropValue = $this->getBasketPropertyValueByCode($basketItem, 'IS_PSEUDO_ACTION');
+            $isPseudoAction = BitrixUtils::BX_BOOL_TRUE === $isPseudoActionPropValue;
+            if ($isPseudoAction)
+            {
+                $offer->setChargeBonus(true);
+            }
+            else
+            {
+                $offer->setChargeBonus((bool)$hasBonus);
+            }
             $offer->setPosition($position);
             $collection->add($offer);
             $position++;

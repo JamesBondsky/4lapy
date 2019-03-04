@@ -50,6 +50,7 @@ class PiggyBankService implements LoggerAwareInterface
     public const MARKS_PER_RATE = 1;
     public const MARKS_PER_RATE_VETAPTEKA = 2;
     public const PROMO_TITLE_MASK = 'Собиралка 03-04.19%';
+    public const ACTION_CODE = 'kopimarki-mart2019';
 
     public const COUPON_LEVELS = [
         1 => [
