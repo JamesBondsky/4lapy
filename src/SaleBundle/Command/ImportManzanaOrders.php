@@ -9,6 +9,8 @@ use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemNotActiveException
 use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemNotExistsException;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use JMS\Serializer\SerializerInterface;
+use OldSound\RabbitMqBundle\RabbitMq\Producer;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
@@ -28,6 +30,7 @@ class ImportManzanaOrders extends Command implements LoggerAwareInterface
 
     protected const OPT_PERIOD = 'period';
     protected const OPT_USER_ID = 'user';
+    protected const MQ = 'mq';
 
     /**
      * @var int
@@ -64,10 +67,21 @@ class ImportManzanaOrders extends Command implements LoggerAwareInterface
                 'u',
                 InputOption::VALUE_OPTIONAL,
                 'User id'
+            )
+            ->addOption(
+                static::MQ,
+                'm',
+                InputOption::VALUE_OPTIONAL,
+                'Use Message Query'
             );
     }
 
     /** @noinspection PhpMissingParentCallCommonInspection
+     *
+     * Импортирует заказы пользователей из Manzana.
+     * По умолчанию за последний месяц (период можно изменить).
+     * Либо можно импортировать заказы конкретного пользователя.
+     * По умолчанию идут синхронные запросы в Manzana, но можно переключить на работу через очередь сообщений
      *
      * @param InputInterface $input
      * @param OutputInterface $output
@@ -80,9 +94,17 @@ class ImportManzanaOrders extends Command implements LoggerAwareInterface
 
         $period = $input->getOption(static::OPT_PERIOD) ?? '1 month';
         $userId = $input->getOption(static::OPT_USER_ID) ?? null;
+        $useMQ = (bool)($input->getOption(static::MQ) ?? null);
 
         /** @var \FourPaws\UserBundle\Service\UserService $userService */
         $userService = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+        if ($useMQ)
+        {
+            /** @var Producer $producer */
+            $producer = Application::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_orders_import_producer');
+            /** @var SerializerInterface $serializer */
+            $serializer = Application::getInstance()->getContainer()->get(SerializerInterface::class);
+        }
 
         $periodStartDateTime = new DateTime();
         $periodStartDateTime->add('- ' . $period);
@@ -107,31 +129,56 @@ class ImportManzanaOrders extends Command implements LoggerAwareInterface
 
             foreach ($users as $user)
             {
-                //TODO создавать для каждого юзера отдельные задания RabbitMQ
-                $userId = $user->getId();
-                try
+                if ($useMQ)
                 {
-                    if ($USER->GetID() !== $userId) {
-                        $USER->Authorize($userId);
+                    try {
+                        $userId = $user->getId();
+                        $producer->publish($serializer->serialize($user, 'json'));
+                    } catch (\Exception $e) {
+                        $this->log()->error(
+                            \sprintf(
+                                'Error queueing orders query for user #%s: %s. %s',
+                                $userId,
+                                $e->getMessage(),
+                                $e->getTraceAsString()
+                            )
+                        );
                     }
-                    $orderService->importOrdersFromManzana($user);
-                } catch (ChequeItemNotExistsException|ChequeItemNotActiveException $e)
+                }
+                else
                 {
-                    /** Не логируем */
-                } catch (\Exception $e)
-                {
-                    $this->log()->error(
-                        \sprintf(
-                            'Error importing orders for user #%s: %s. %s',
-                            $userId,
-                            $e->getMessage(),
-                            $e->getTraceAsString()
-                        )
-                    );
+                    $userId = $user->getId();
+                    try
+                    {
+                        if ($USER->GetID() !== $userId) {
+                            $USER->Authorize($userId);
+                        }
+                        $orderService->importOrdersFromManzana($user);
+                    } catch (ChequeItemNotExistsException|ChequeItemNotActiveException $e)
+                    {
+                        /** Не логируем */
+                    } catch (\Exception $e)
+                    {
+                        $this->log()->error(
+                            \sprintf(
+                                'Error importing orders for user #%s: %s. %s',
+                                $userId,
+                                $e->getMessage(),
+                                $e->getTraceAsString()
+                            )
+                        );
+                    }
                 }
             }
         }
 
-        $this->log()->info(\sprintf('Updated orders for %s users', count($users)));
+        if ($useMQ)
+        {
+            $this->log()->info(\sprintf('Queued orders for %s users', count($users)));
+        }
+        else
+        {
+            $this->log()->info(\sprintf('Updated orders for %s users', count($users)));
+        }
     }
 }

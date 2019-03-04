@@ -45,6 +45,7 @@ use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use OldSound\RabbitMqBundle\RabbitMq\Producer;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -766,6 +767,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     public function importUserOrdersAsync(User $user)
     {
         /** @noinspection MissingService */
+        /** @var Producer $producer */
         $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_orders_import_producer');
         $producer->publish($this->serializer->serialize($user, 'json'));
     }
