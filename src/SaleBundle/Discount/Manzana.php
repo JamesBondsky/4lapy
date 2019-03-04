@@ -18,7 +18,7 @@ use FourPaws\External\Manzana\Dto\Coupon;
 use FourPaws\External\Manzana\Dto\SoftChequeResponse;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
-use FourPaws\PersonalBundle\Exception\CouponIsNotAvailableForUse;
+use FourPaws\PersonalBundle\Exception\CouponIsNotAvailableForUseException;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Helper\PriceHelper;
 use FourPaws\SaleBundle\Service\BasketService;
@@ -135,7 +135,7 @@ class Manzana implements LoggerAwareInterface
 
             $this->recalculateBasketFromResponse($basket, $response);
             $this->discount = $price - $basket->getPrice();
-        } catch (ExecuteException|CouponIsNotAvailableForUse $e) {
+        } catch (ExecuteException|CouponIsNotAvailableForUseException $e) {
             /** @var BasketItem $item */
             foreach ($basket as $item) {
                 $price = PriceHelper::roundPrice($item->getPrice());
@@ -154,7 +154,7 @@ class Manzana implements LoggerAwareInterface
                         $e->getMessage()
                     )
                 );
-            } else if ($e instanceof CouponIsNotAvailableForUse) {
+            } else if ($e instanceof CouponIsNotAvailableForUseException) {
                 $this->log()->error(
                     \sprintf(
                         'Coupon checking error: %s',

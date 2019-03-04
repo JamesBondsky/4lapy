@@ -16,7 +16,7 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockProperty;
 use FourPaws\Enum\IblockType;
 use FourPaws\PersonalBundle\Exception\CouponIsAlreadyMaxedException;
-use FourPaws\PersonalBundle\Exception\CouponIsNotAvailableForUse;
+use FourPaws\PersonalBundle\Exception\CouponIsNotAvailableForUseException;
 use FourPaws\PersonalBundle\Exception\CouponNoFreeItemsException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -426,7 +426,7 @@ class PiggyBankService implements LoggerAwareInterface
 
     /**
      * @param string $couponNumber
-     * @throws CouponIsNotAvailableForUse
+     * @throws CouponIsNotAvailableForUseException
      * @throws SystemException
      * @throws \Bitrix\Main\ObjectException
      * @throws \Bitrix\Main\ObjectPropertyException
@@ -436,13 +436,13 @@ class PiggyBankService implements LoggerAwareInterface
         global $USER;
 
         if (!$this->isCouponNumberFormatOk($couponNumber)) {
-            throw new CouponIsNotAvailableForUse('coupon is not available for use');
+            throw new CouponIsNotAvailableForUseException('coupon is not available for use');
         }
 
         if ($this->isPiggyBankCoupon($couponNumber))
         {
             if(($this->isPiggyBankDateExpired() && !$USER->IsAdmin()) || !$this->isCouponAvailableToCurrentUser($couponNumber)) {
-                throw new CouponIsNotAvailableForUse('coupon is not available for use');
+                throw new CouponIsNotAvailableForUseException('coupon is not available for use');
             }
         }
     }
