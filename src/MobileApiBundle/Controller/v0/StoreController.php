@@ -8,6 +8,7 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\MobileApiBundle\Dto\Request\ShopsForCheckoutRequest;
 use FourPaws\MobileApiBundle\Dto\Request\ShopsForProductCardRequest;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListRequest;
 use FourPaws\MobileApiBundle\Dto\Response\StoreListAvailableResponse;
@@ -77,13 +78,15 @@ class StoreController extends FOSRestController
      * @Rest\Get(path="/shops_list_availableV2/")
      * @Rest\View(serializerGroups={"Default", "withPickupInfo"})
      *
-     * @throws \Exception
+     * @param ShopsForCheckoutRequest $shopsForCheckoutRequest
      * @return StoreListAvailableResponse
+     * @throws \Exception
      */
-    public function getStoreListAvailableAction(): StoreListAvailableResponse
+    public function getStoreListAvailableAction(ShopsForCheckoutRequest $shopsForCheckoutRequest): StoreListAvailableResponse
     {
+        $metroStations = $shopsForCheckoutRequest->getMetroStations();
         return new StoreListAvailableResponse(
-            $this->apiStoreService->getListWithProductsInBasketAvailability()
+            $this->apiStoreService->getListWithProductsInBasketAvailability($metroStations)
         );
     }
 }

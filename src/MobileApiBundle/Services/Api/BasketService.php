@@ -114,7 +114,7 @@ class BasketService
                 $shortProduct->setPrice((new Price())->setActual(0)->setOld(0));
             }
             /**
-             * Ищем бесплатные товары в рамках акции n+1 в массиве с товарами (sic)
+             * Ищем бесплатные товары в рамках акции n+1 в массиве с товарами (sic!)
              * @see BasketComponent::calcTemplateFields()
              */
             foreach ($orderAbleBasket as $tBasketItem) {
@@ -127,6 +127,7 @@ class BasketService
                     &&
                     !isset($tBasketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])
                 ) {
+                    // не уверен что так правильно делать по логике костыля...
                     $productsAmountFix[$basketItem->getBasketCode()] = [
                         'PRICED' => $tBasketItem->getQuantity(),
                         'FREE' => $basketItem->getQuantity(),
@@ -134,7 +135,7 @@ class BasketService
                 }
             }
 
-            // Если basketCode = n1 | n2 ... nX - значит это бесплатный товар в рамках акции "берешь n товаров, 1 бесплатно"
+            // Если basketCode = n1, n2 ... nX - значит это бесплатный товар в рамках акции "берешь n товаров, 1 бесплатно" (sic!)
             $skipRow = strpos($basketItem->getBasketCode(), "n") === 0;
             if (!$skipRow) {
                 $product->setShortProduct($shortProduct);

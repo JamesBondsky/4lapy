@@ -52,6 +52,14 @@ class Shop
     protected $schedule = '';
 
     /**
+     * @var int
+     *
+     * @Serializer\SerializedName("metroId")
+     * @Serializer\Type("int")
+     */
+    protected $metroId = 0;
+
+    /**
      * @var string
      *
      * @Serializer\SerializedName("metroName")
@@ -295,6 +303,26 @@ class Shop
     public function setSchedule(string $schedule): Shop
     {
         $this->schedule = $schedule;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getMetroId(): int
+    {
+        return $this->metroId;
+    }
+
+    /**
+     * @param int $metroId
+     *
+     * @return Shop
+     */
+    public function setMetroId(int $metroId): Shop
+    {
+        $this->metroId = $metroId;
 
         return $this;
     }

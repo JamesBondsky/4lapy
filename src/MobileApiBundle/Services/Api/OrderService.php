@@ -370,15 +370,27 @@ class OrderService
 
     /**
      * @param BasketProductCollection $basketProducts
+     * @param string $deliveryType
      * @param float $bonusSubtractAmount
      * @return OrderCalculate
      */
-    public function getOrderCalculate(BasketProductCollection $basketProducts, float $bonusSubtractAmount = 0)
+    public function getOrderCalculate(
+        BasketProductCollection $basketProducts,
+        string $deliveryType = 'courier',
+        float $bonusSubtractAmount = 0
+    )
     {
         $deliveryPrice = 0;
         try {
-            $storage = $this->orderStorageService->getStorage();
-            $deliveryPrice = $this->orderStorageService->getSelectedDelivery($storage)->getPrice();
+            if ($deliveryType === 'courier') {
+                $deliveries = $this->orderStorageService->getDeliveries(new OrderStorage());
+                foreach ($deliveries as $calculationResult) {
+                    if ($this->appDeliveryService->isDelivery($calculationResult)) {
+                        $delivery = $calculationResult;
+                        $deliveryPrice = $delivery->getPrice();
+                    }
+                }
+            }
         } catch (ArgumentException $e) {
         } catch (NotSupportedException $e) {
         } catch (ObjectNotFoundException $e) {
@@ -386,7 +398,6 @@ class OrderService
         } catch (ApplicationCreateException $e) {
         } catch (NotFoundException $e) {
         } catch (\FourPaws\StoreBundle\Exception\NotFoundException $e) {
-        } catch (OrderStorageSaveException $e) {
             $deliveryPrice = 0;
         }
 

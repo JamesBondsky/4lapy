@@ -19,7 +19,7 @@ class UserCartCalcRequest implements SimpleUnserializeRequest, PostRequest
      * @Serializer\Type("float")
      * @var float
      */
-    protected $bonusSubtractAmount;
+    protected $bonusSubtractAmount = 0;
 
     /**
      * Тип доставки

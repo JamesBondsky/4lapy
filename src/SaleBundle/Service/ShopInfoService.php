@@ -308,6 +308,7 @@ class ShopInfoService
                             ->setLongitude($store->getLongitude())
                             ->setName($address)
                             ->setAddress($address)
+                            ->setMetroId($metroId)
                             ->setMetroName($metroName)
                             ->setMetroColor($metroColor)
                             ->setMetroCssClass($metroCssClass)

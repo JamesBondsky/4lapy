@@ -150,6 +150,7 @@ class StoreService
     }
 
     /**
+     * @param array $metroStationIds
      * @return Collection
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ArgumentNullException
@@ -165,12 +166,18 @@ class StoreService
      * @throws \FourPaws\SaleBundle\Exception\OrderStorageSaveException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
-    public function getListWithProductsInBasketAvailability(): Collection
+    public function getListWithProductsInBasketAvailability(array $metroStationIds = []): Collection
     {
         $this->checkBasketEmptiness();
         $storage = $this->orderStorageService->getStorage();
-        $shops = $this->saleShopInfoService->getShopInfo($storage, $this->orderStorageService->getPickupDelivery($storage));
-        return $shops->getShops()->map(function (SaleBundleShop $shop) {
+        $shopInfo = $this->saleShopInfoService->getShopInfo($storage, $this->orderStorageService->getPickupDelivery($storage));
+        $shops = $shopInfo->getShops();
+        if (!empty($metroStationIds)) {
+            $shops = $shops->filter(function(SaleBundleShop $shop) use ($metroStationIds) {
+                return in_array($shop->getMetroId(), $metroStationIds);
+            });
+        }
+        return $shops->map(function (SaleBundleShop $shop) {
             return $this->saleBundleShopToApiFormat($shop);
         });
     }
