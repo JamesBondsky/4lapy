@@ -46,6 +46,7 @@ class Event extends BaseServiceHandler
     public const GROUP_ADMIN = 1;
     public const GROUP_TECHNICAL_USERS = 8;
     public const GROUP_FRONT_OFFICE_USERS = 28;
+    public const GROUP_OPERATORS = 29;
 
     protected static $isEventsDisable = false;
 
@@ -606,7 +607,7 @@ class Event extends BaseServiceHandler
         $groupIds = array_combine(array_column($arFields['GROUP_ID'], 'GROUP_ID'), array_column($arFields['GROUP_ID'], 'GROUP_ID'));
 
         // Не трогаем эти группы
-        if ($groupIds[self::GROUP_FRONT_OFFICE_USERS]) {
+        if ($groupIds[self::GROUP_FRONT_OFFICE_USERS] || $groupIds[self::GROUP_OPERATORS]) {
             return true;
         }
 
