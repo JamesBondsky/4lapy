@@ -171,7 +171,7 @@
 		</div>
 	</div>
 	<div class="links_block">
- <a class="b-common-item__add-to-cart" href="http://stage.4lapy.adv.ru/" target="_blank" title="" tabindex="0"> <span class="b-common-item__wrapper-link"> <span class="b-common-item__price js-price-block">В&nbsp;каталог&nbsp;&gt;&nbsp;&nbsp;</span> </span> </a>
+ <a class="b-common-item__add-to-cart" href="/catalog/" target="_blank" title="" tabindex="0"> <span class="b-common-item__wrapper-link"> <span class="b-common-item__price js-price-block">В&nbsp;каталог&nbsp;&gt;&nbsp;&nbsp;</span> </span> </a>
 	</div>
 </div>
  </div>
