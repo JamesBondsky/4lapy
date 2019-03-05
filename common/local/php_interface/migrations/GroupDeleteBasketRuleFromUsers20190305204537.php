@@ -41,16 +41,15 @@ class GroupDeleteBasketRuleFromUsers20190305204537 extends \Adv\Bitrixtools\Migr
         while ($arUser = $rsUser->fetch()) {
             $groups = \CUser::GetUserGroup($arUser['USER_ID']);
 
-            if(count($groups) != 3){
+            if (count($groups) != 3) {
                 continue;
             }
 
             unset($groups[array_search(42, $groups)]);
             \CUser::SetUserGroup($arUser['USER_ID'], $groups);
 
-            print_r($arUser['USER_ID']." обновлён ");
+            print_r($arUser['USER_ID'] . " обновлён ");
 
-            break;
         }
 
         return true;
