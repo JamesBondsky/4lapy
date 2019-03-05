@@ -32,7 +32,7 @@ abstract class ManzanaConsumerBase implements ConsumerInterface, LoggerAwareInte
         
         $this->serializer     = $serializer;
         $this->manzanaService = $manzanaService;
-        $this->setLogger(LoggerFactory::create('ManzanaConsumer'));
+        $this->setLogger(LoggerFactory::create('ManzanaConsumer', 'manzana'));
     }
     
     /**
