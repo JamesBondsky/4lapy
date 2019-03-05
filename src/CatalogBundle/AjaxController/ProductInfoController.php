@@ -486,6 +486,16 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
     }
 
     /**
+     * Возвращает инф-у об оффере
+     *
+     * available - доступно на складе (не важно наличие или доставка)
+     * byRequest - только под заказ
+     * price - цена
+     * oldPrice - цена без скидок
+     * pickup - только самовывоз
+     *
+     * $offer->isPickupAvailable() - Не ставить в начало условия, он генерирует много PHP-кода и может отрабатывать по 0.5с
+     *
      * @param Product $product
      * @param Offer   $offer
      *
@@ -501,7 +511,7 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
         $price = $offer->getCatalogPrice();
         $oldPrice = $offer->getOldPrice() ? $offer->getCatalogOldPrice() : $price;
         $isByRequest = $offer->isByRequest();
-        $pickupOnly = $available && $product->isPickupAvailable() && !$product->isDeliveryAvailable();
+        $pickupOnly = $available && !$offer->isDeliverable() && $product->isPickupAvailable() && $offer->isPickupAvailable();
 
         $responseItem = [
             'available' => $available,

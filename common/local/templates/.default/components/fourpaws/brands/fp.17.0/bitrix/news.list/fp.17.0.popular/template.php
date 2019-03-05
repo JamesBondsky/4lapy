@@ -12,7 +12,7 @@ if (!$arResult['ITEMS']) {
     return;
 }
 
-?><h1 class="b-title b-title--h1 b-title--catalog-brands"><?=\Bitrix\Main\Localization\Loc::getMessage('POPULAR_BRANDS.TITLE')?></h1>
+?><h2 class="b-title b-title--h1 b-title--catalog-brands"><?=\Bitrix\Main\Localization\Loc::getMessage('POPULAR_BRANDS.TITLE')?></h2>
 
 <div class="b-popular-brand b-popular-brand--brands"><?php
     foreach ($arResult['ITEMS'] as $arItem) {

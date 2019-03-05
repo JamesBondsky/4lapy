@@ -82,6 +82,10 @@ services:
     arguments: ['ClothingSizeSelection']
     parent: bx.hlblock.base
 
+  bx.hlblock.coupon:
+    arguments: ['Coupon']
+    parent: bx.hlblock.base
+
   # Свойства продукта
   bx.hlblock.forwho:
     arguments: ['ForWho']

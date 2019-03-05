@@ -729,35 +729,21 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      */
     public function __construct(array $fields = [])
     {
-        if ($fields['~PROPERTY_SPECIFICATIONS_VALUE']) {
-            $fields['PROPERTY_SPECIFICATIONS_VALUE']['TEXT'] = htmlspecialchars_decode($fields['~PROPERTY_SPECIFICATIONS_VALUE']['TEXT']);
-            $fields['PROPERTY_SPECIFICATIONS_VALUE']['TYPE'] = '';
-        } else {
-            $fields['PROPERTY_SPECIFICATIONS_VALUE'] = [
-                'TYPE' => 'HTML',
-                'TEXT' => '',
-            ];
-        }
+        $arHtmlProps = [
+            'PROPERTY_SPECIFICATIONS_VALUE',
+            'PROPERTY_COMPOSITION_VALUE',
+            'PROPERTY_NORMS_OF_USE_VALUE',
+            'PROPERTY_LAYOUT_DESCRIPTION_VALUE',
+            'PROPERTY_LAYOUT_COMPOSITION_VALUE',
+            'PROPERTY_LAYOUT_RECOMMENDATIONS_VALUE'
+        ];
 
-
-        if ($fields['~PROPERTY_COMPOSITION_VALUE']) {
-            $fields['PROPERTY_COMPOSITION_VALUE']['TEXT'] = htmlspecialchars_decode($fields['~PROPERTY_COMPOSITION_VALUE']['TEXT']);
-            $fields['PROPERTY_COMPOSITION_VALUE']['TYPE'] = '';
-        } else {
-            $fields['PROPERTY_COMPOSITION_VALUE'] = [
-                'TYPE' => 'HTML',
-                'TEXT' => '',
-            ];
-        }
-
-        if ($fields['~PROPERTY_NORMS_OF_USE_VALUE']) {
-            $fields['PROPERTY_NORMS_OF_USE_VALUE']['TEXT'] = htmlspecialchars_decode($fields['~PROPERTY_NORMS_OF_USE_VALUE']['TEXT']);
-            $fields['PROPERTY_NORMS_OF_USE_VALUE']['TYPE'] = '';
-        } else {
-            $fields['PROPERTY_NORMS_OF_USE_VALUE'] = [
-                'TYPE' => 'HTML',
-                'TEXT' => '',
-            ];
+        foreach ($arHtmlProps as $propKey) {
+            if ($fields[$propKey]) {
+                $fields[$propKey] = htmlspecialchars_decode($fields[$propKey]['TEXT']);
+            } else {
+                $fields[$propKey] = '';
+            }
         }
 
         parent::__construct($fields);
@@ -1916,9 +1902,9 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         if (!($this->specifications instanceof TextContent)) {
             if (empty($this->PROPERTY_SPECIFICATIONS)) {
-                $this->PROPERTY_SPECIFICATIONS = ['TYPE' => 'text', 'TEXT' => ''];
+                $this->PROPERTY_SPECIFICATIONS = '';
             }
-            $this->specifications = new TextContent($this->PROPERTY_SPECIFICATIONS);
+            $this->specifications = new TextContent(['TYPE' => 'html', 'TEXT' => $this->PROPERTY_SPECIFICATIONS]);
         }
 
         return $this->specifications;
@@ -1933,9 +1919,9 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         if (!($this->composition instanceof TextContent)) {
             if (empty($this->PROPERTY_COMPOSITION)) {
-                $this->PROPERTY_COMPOSITION = ['TYPE' => 'text', 'TEXT' => ''];
+                $this->PROPERTY_COMPOSITION = '';
             }
-            $this->composition = new TextContent($this->PROPERTY_COMPOSITION);
+            $this->composition = new TextContent(['TYPE' => 'html', 'TEXT' => $this->PROPERTY_COMPOSITION]);
         }
 
         return $this->composition;
@@ -1950,9 +1936,9 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         if (!($this->normsOfUse instanceof TextContent)) {
             if (empty($this->PROPERTY_NORMS_OF_USE)) {
-                $this->PROPERTY_NORMS_OF_USE = ['TYPE' => 'text', 'TEXT' => ''];
+                $this->PROPERTY_NORMS_OF_USE = '';
             }
-            $this->normsOfUse = new TextContent($this->PROPERTY_NORMS_OF_USE);
+            $this->normsOfUse = new TextContent(['TYPE' => 'html', 'TEXT' => $this->PROPERTY_NORMS_OF_USE]);
         }
 
         return $this->normsOfUse;
@@ -1965,9 +1951,9 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         if (!($this->layoutDescription instanceof TextContent)) {
             if (empty($this->PROPERTY_LAYOUT_DESCRIPTION)) {
-                $this->PROPERTY_LAYOUT_DESCRIPTION = ['TYPE' => 'text', 'TEXT' => ''];
+                $this->PROPERTY_LAYOUT_DESCRIPTION = '';
             }
-            $this->layoutDescription = new TextContent($this->PROPERTY_LAYOUT_DESCRIPTION);
+            $this->layoutDescription = new TextContent(['TYPE' => 'html', 'TEXT' => $this->PROPERTY_LAYOUT_DESCRIPTION]);
         }
 
         return $this->layoutDescription;
@@ -1980,9 +1966,9 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         if (!($this->layoutComposition instanceof TextContent)) {
             if (empty($this->PROPERTY_LAYOUT_COMPOSITION)) {
-                $this->PROPERTY_LAYOUT_COMPOSITION = ['TYPE' => 'text', 'TEXT' => ''];
+                $this->PROPERTY_LAYOUT_COMPOSITION = '';
             }
-            $this->layoutComposition = new TextContent($this->PROPERTY_LAYOUT_COMPOSITION);
+            $this->layoutComposition = new TextContent(['TYPE' => 'html', 'TEXT' => $this->PROPERTY_LAYOUT_COMPOSITION]);
         }
 
         return $this->layoutComposition;
@@ -1995,9 +1981,9 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         if (!($this->layoutRecommendations instanceof TextContent)) {
             if (empty($this->PROPERTY_LAYOUT_RECOMMENDATIONS)) {
-                $this->PROPERTY_LAYOUT_RECOMMENDATIONS = ['TYPE' => 'text', 'TEXT' => ''];
+                $this->PROPERTY_LAYOUT_RECOMMENDATIONS = '';
             }
-            $this->layoutRecommendations = new TextContent($this->PROPERTY_LAYOUT_RECOMMENDATIONS);
+            $this->layoutRecommendations = new TextContent(['TYPE' => 'html', 'TEXT' => $this->PROPERTY_LAYOUT_RECOMMENDATIONS]);
         }
 
         return $this->layoutRecommendations;
@@ -2546,36 +2532,50 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         return $this->PROPERTY_POWER_MAX;
     }
 
-
     /**
      * @param $aquariumCombination
      * @return Offer|null
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function getPedestal($aquariumCombination)
     {
+        $result = null;
         $res = (new ProductQuery())
             ->withFilterParameter('PROPERTY_AQUARIUM_COMBINATION', $aquariumCombination)
             ->withFilterParameter('SECTION_CODE', 'tumby-podstavki-akvariumy')
             ->withFilterParameter('ACTIVE', 'Y')
             ->exec();
-        if ($res->isEmpty()) {
-            return null;
-        } else {
-            $offer = $res->first()->getOffers()->first();
-            if ($offer->getPrice() > 0) {
-                return $offer;
-            } else {
-                return null;
+        if (!$res->isEmpty()) {
+            /**
+             * @var Product $product
+             */
+            while (($product = $res->next()) && $result === null) {
+                $offers = $product->getOffers();
+                foreach ($offers as $offer) {
+                    /**
+                     * @var Offer $offer
+                     */
+                    if ($offer->isAvailable()) {
+                        $result = $offer;
+                        break;
+                    }
+                }
             }
         }
+
+        return $result;
     }
 
     /**
      * @param $aquariumCombination
      * @return Offer|null
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function getAquarium($aquariumCombination)
     {
+        $result = null;
         $res = (new ProductQuery())
             ->withFilterParameter('PROPERTY_AQUARIUM_COMBINATION', $aquariumCombination)
             ->withFilterParameter('SECTION_CODE',
@@ -2587,21 +2587,32 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             )
             ->withFilterParameter('ACTIVE', 'Y')
             ->exec();
-        if ($res->isEmpty()) {
-            return null;
-        } else {
-            $offer = $res->first()->getOffers()->first();
-            if ($offer->getPrice() > 0) {
-                return $offer;
-            } else {
-                return null;
+        if (!$res->isEmpty()) {
+            /**
+             * @var Product $product
+             */
+            while (($product = $res->next()) && $result === null) {
+                $offers = $product->getOffers();
+                /**
+                 * @var Offer $offer
+                 */
+                foreach ($offers as $offer) {
+                    if ($offer->isAvailable()) {
+                        $result = $offer;
+                        break;
+                    }
+                }
             }
         }
+
+        return $result;
     }
 
     /**
      * @param $volume
      * @return ArrayCollection
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function getInternalFilters($volume): ArrayCollection
     {
@@ -2624,14 +2635,18 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             ->withOrder(['PROPERTY_POWER_MAX' => 'ASC'])
             ->exec();
         if (!$res->isEmpty()) {
+            /**
+             * @var Product $product
+             */
             while ($product = $res->next()) {
                 $offers = $product->getOffers();
                 /**
                  * @var Offer $offer
                  */
                 foreach ($offers as $offer) {
-                    if ($offer->getPrice() > 0) {
+                    if ($offer->isAvailable()) {
                         $result->add($offer);
+                        break;
                     }
                 }
             }
@@ -2642,6 +2657,8 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     /**
      * @param $volume
      * @return ArrayCollection
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function getExternalFilters($volume): ArrayCollection
     {
@@ -2665,14 +2682,18 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             ->exec();
 
         if (!$res->isEmpty()) {
+            /**
+             * @var Product $product
+             */
             while ($product = $res->next()) {
                 $offers = $product->getOffers();
                 /**
                  * @var Offer $offer
                  */
                 foreach ($offers as $offer) {
-                    if ($offer->getPrice() > 0) {
+                    if ($offer->isAvailable()) {
                         $result->add($offer);
+                        break;
                     }
                 }
             }
@@ -2682,26 +2703,38 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
     /**
      * @return ArrayCollection
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function getLamps(): ArrayCollection
     {
         $result = new ArrayCollection();
+
+        $productFilter = [
+            'SECTION_CODE' => 'lampy-i-svetilniki-ryby',
+            'ACTIVE' => 'Y'
+        ];
+
         $res = (new ProductQuery())
-            ->withFilter([
-                'SECTION_CODE' => 'lampy-i-svetilniki-ryby',
-                'ACTIVE' => 'Y'
-            ])
+            ->withFilter($productFilter)
+            ->withOrder(['sort' => 'asc'])
             ->withNav(['nPageSize' => 20])
             ->exec();
 
         if (!$res->isEmpty()) {
+            /**
+             * @var Product $product
+             */
             while ($product = $res->next()) {
+                $offers = $product->getOffers();
                 /**
                  * @var Offer $offer
                  */
-                $offer = $product->getOffers()->first();
-                if ($offer->getPrice() > 0) {
-                    $result->add($offer);
+                foreach ($offers as $offer) {
+                    if ($offer->isAvailable()) {
+                        $result->add($offer);
+                        break;
+                    }
                 }
             }
         }
@@ -2710,6 +2743,8 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
     /**
      * @return ArrayCollection
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function getDecor(): ArrayCollection
     {
@@ -2724,13 +2759,19 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                 ->exec();
 
             if (!$res->isEmpty()) {
+                /**
+                 * @var Product $product
+                 */
                 while ($product = $res->next()) {
+                    $offers = $product->getOffers();
                     /**
                      * @var Offer $offer
                      */
-                    $offer = $product->getOffers()->first();
-                    if ($offer->getPrice() > 0) {
-                        $result->add($offer);
+                    foreach ($offers as $offer) {
+                        if ($offer->isAvailable()) {
+                            $result->add($offer);
+                            break;
+                        }
                     }
                 }
             }

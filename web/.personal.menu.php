@@ -66,6 +66,13 @@ $aMenuLinks = [
         "\$GLOBALS['isAuth']",
     ],
     [
+        'Копи марки',
+        '/personal/kopi-marki/',
+        [],
+        ['icon' => 'icon-piggy-bank'],
+        "\$GLOBALS['isAuth']",
+    ],
+    [
         'Топ 10 товаров',
         '/personal/top/',
         [],
@@ -85,5 +92,5 @@ $aMenuLinks = [
         [],
         ['icon' => 'icon-exit'],
         "\$GLOBALS['isAuth'] && \$GLOBALS['isAvatarAuth']",
-    ],
+    ]
 ];

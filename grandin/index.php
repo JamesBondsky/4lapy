@@ -41,13 +41,13 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
                         </div>
                     </div>
                     <div class="form-group">
-                        <input type="text" id="SURNAME_REG_CHECK_GRANDIN" name="surname" value="<?=$arUser['LAST_NAME']?:''?>" placeholder="Фамилия" >
+                        <input type="text" id="SURNAME_REG_CHECK_GRANDIN" class="js-small-input" name="surname" value="<?=$arUser['LAST_NAME']?:''?>" placeholder="Фамилия" >
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
                     </div>
                     <div class="form-group">
-                        <input type="text" id="NAME_REG_CHECK_GRANDIN" name="name" value="<?=$arUser['NAME']?:''?>" placeholder="Имя" >
+                        <input type="text" id="NAME_REG_CHECK_GRANDIN" class="js-small-input" name="name" value="<?=$arUser['NAME']?:''?>" placeholder="Имя" >
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
@@ -59,7 +59,7 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
                         </div>
                     </div>
                     <div class="form-group">
-                        <input type="email" id="EMAIL_REG_CHECK_GRANDIN" name="email" value="<?=$arUser['EMAIL']?:''?>" placeholder="E-mail" >
+                        <input type="emailLanding" id="EMAIL_REG_CHECK_GRANDIN" name="email" value="<?=$arUser['EMAIL']?:''?>" placeholder="E-mail" >
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>

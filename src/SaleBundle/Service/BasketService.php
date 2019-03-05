@@ -10,6 +10,8 @@ use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\Entity\Query;
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
@@ -23,8 +25,11 @@ use Bitrix\Sale\BasketPropertyItem;
 use Bitrix\Sale\Compatible\DiscountCompatibility;
 use Bitrix\Sale\Internals\BasketPropertyTable;
 use Bitrix\Sale\Internals\BasketTable;
+use Bitrix\Sale\Internals\FuserTable;
+use Bitrix\Sale\Internals\OrderTable;
 use Bitrix\Sale\Order;
 use Exception;
+use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Collection\ShareCollection;
 use FourPaws\BitrixOrm\Model\Share;
@@ -34,6 +39,8 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Enum\UserGroup;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
+use FourPaws\PersonalBundle\Service\OrderService;
+use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils;
 use FourPaws\SaleBundle\Discount\Utils\AdderInterface;
@@ -74,6 +81,8 @@ class BasketService implements LoggerAwareInterface
     private $offerCollection;
     /** @var ManzanaPosService */
     private $manzanaPosService;
+    /** @var OrderService */
+    private $orderService;
     /** @todo КОСТЫЛЬ! УБРАТЬ В КУПОНЫ */
     private $promocodeDiscount = 0.0;
     private $fUserId;
@@ -82,20 +91,23 @@ class BasketService implements LoggerAwareInterface
      */
     private $shareRepository;
 
-    /**
-     * BasketService constructor.
-     *
-     * @param CurrentUserProviderInterface $currentUserProvider
-     * @param ManzanaPosService $manzanaPosService
-     * @param ShareRepository $shareRepository
-     */
+	/**
+	 * BasketService constructor.
+	 *
+	 * @param CurrentUserProviderInterface $currentUserProvider
+	 * @param ManzanaPosService $manzanaPosService
+	 * @param OrderService $orderService
+	 * @param ShareRepository $shareRepository
+	 */
     public function __construct(
         CurrentUserProviderInterface $currentUserProvider,
         ManzanaPosService $manzanaPosService,
+        OrderService $orderService,
         ShareRepository $shareRepository
     ) {
         $this->currentUserProvider = $currentUserProvider;
         $this->manzanaPosService = $manzanaPosService;
+        $this->orderService = $orderService;
         $this->shareRepository = $shareRepository;
     }
 
@@ -403,6 +415,7 @@ class BasketService implements LoggerAwareInterface
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ObjectNotFoundException
      * @return Basket
      */
     public function refreshAvailability(Basket $basket): Basket
@@ -415,22 +428,27 @@ class BasketService implements LoggerAwareInterface
             $offer = OfferQuery::getById((int)$basketItem->getProductId());
             $temporaryItem = null;
             $quantity = (int)$basketItem->getQuantity();
+            $toUpdate = [];
 
-            if (!$offer->isAvailable()) {
-                if (!$basketItem->isDelay()) {
-                    $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_TRUE;
+            if ($offer != null) {
+                if (!$offer->isAvailable()) {
+                    if (!$basketItem->isDelay()) {
+                        $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_TRUE;
+                    }
+                } else {
+                    $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_FALSE;
+                    $maxAmount = $offer->getQuantity();
+                    if (($quantity - $maxAmount) > 0) {
+                        $toUpdate['QUANTITY'] = $maxAmount;
+                    }
+                }
+
+                if (!empty($toUpdate)) {
+                    $updateIds = true;
+                    $basketItem->setFields($toUpdate);
                 }
             } else {
-                $toUpdate['DELAY'] = BitrixUtils::BX_BOOL_FALSE;
-                $maxAmount = $offer->getQuantity();
-                if (($quantity - $maxAmount) > 0) {
-                    $toUpdate['QUANTITY'] = $maxAmount;
-                }
-            }
-
-            if (!empty($toUpdate)) {
-                $updateIds = true;
-                $basketItem->setFields($toUpdate);
+                $basketItem->delete();
             }
         }
 
@@ -549,6 +567,7 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
+     * Рассчитывает бонус, который будет начислен, если покупатель совершит заказ без оплаты бонусами
      * @param int|User $userId
      *
      * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
@@ -777,7 +796,7 @@ class BasketService implements LoggerAwareInterface
             }
         }
 
-        if ($resultQuantity === 0 && isset($offer) && $offer->isBonusExclude()) {
+        if ($resultQuantity === 0 && isset($offer) && ($offer->isBonusExclude() || $offer->isShare()) ) {
             $basketDiscounts = true;
         } elseif ($resultQuantity === 0) {
             if (!$order) {
@@ -1216,5 +1235,68 @@ class BasketService implements LoggerAwareInterface
             }
         }
         return $result;
+    }
+
+	/**
+	 * @return int
+	 */
+	public function getMarksQuantityFromUserBaskets(): int
+    {
+        $userId = $this->currentUserProvider->getCurrentUserId();
+
+
+        try {
+        	/** @var PiggyBankService $piggyBankService */
+            $piggyBankService = App::getInstance()->getContainer()->get('piggy_bank.service');
+
+            $isPayedFilter = [
+                'LOGIC' => 'OR',
+            ];
+            foreach ($this->orderService::STATUS_FINAL as $status)
+            {
+                $isPayedFilter[] = ['ORDER.STATUS_ID' => $status];
+            }
+
+            $marksArray = BasketTable::query()
+                ->setSelect([
+                    'QUANTITY',
+                ])
+                ->setFilter([
+                    [
+                        'LOGIC' => 'OR',
+                        ['PRODUCT_ID' => $piggyBankService->getVirtualMarkId()],
+                        ['PRODUCT_ID' => $piggyBankService->getPhysicalMarkId()],
+                    ],
+                    $isPayedFilter,
+                    'ORDER.USER_ID' => $userId,
+                    //->where('DATE', '<',
+                    //                    DateTime::createFromTimestamp($time - static::SMS_LIFE_TIME))
+                    //TODO filter by date (по дате создания заказа) of promo offer dates range
+                    //TODO somehow filter out manzana duplicates
+                ])
+                ->registerRuntimeField(
+                    new ReferenceField(
+                        'ORDER',
+                        OrderTable::class,
+                        Query\Join::on('this.ORDER_ID', 'ref.ID'),
+                        ['join_type' => 'INNER']
+                    )
+                )
+                ->exec()
+                ->fetchAll();
+
+            $marksQuantity = array_reduce($marksArray, function($carry, $item) {
+                $carry += $item['QUANTITY'];
+                return $carry;
+            }, 0);
+
+        } catch (\Exception $e) {
+		    $logger = LoggerFactory::create('piggyBank');
+		    $logger->error($e->getMessage());
+
+            $marksQuantity = 0;
+        }
+
+        return (int)$marksQuantity;
     }
 }

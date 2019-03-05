@@ -9,7 +9,7 @@
  */
 $this->setFrameMode(true);
 
-?><h1 class="b-title b-title--h1 b-title--catalog"><?=\Bitrix\Main\Localization\Loc::getMessage('BRANDS_AI.TITLE')?></h1>
+?><h2 class="b-title b-title--h1 b-title--catalog b-title--alphabet-brands"><?=\Bitrix\Main\Localization\Loc::getMessage('BRANDS_AI.TITLE')?></h2>
 <div class="b-link-list js-scroll-x">
     <div class="b-link-list__wrapper"><?php
         foreach ($arResult['PRINT'] as $arItem) {

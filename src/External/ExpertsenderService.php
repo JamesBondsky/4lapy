@@ -33,6 +33,7 @@ use FourPaws\Helpers\PhoneHelper;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\Pet;
 use FourPaws\PersonalBundle\Models\PetCongratulationsNotify;
+use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Dto\Fiscalization\Item;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -105,6 +106,8 @@ class ExpertsenderService implements LoggerAwareInterface
     public const COMPLETE_ORDER_LIST_ID = 7778;
     public const FORGOT_PASSWORD_LIST_ID = 7779;
     public const CHANGE_PASSWORD_LIST_ID = 7780;
+    public const NEW_CHECK_REG_LIST_ID = 8906;
+    public const PIGGY_BANK_SEND_EMAIL = 9006;
 
     /**
      * BirthDay mail ids
@@ -844,9 +847,17 @@ class ExpertsenderService implements LoggerAwareInterface
             $basketItems = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
             /** @var Item $basketItem */
             foreach ($basketItems as $basketItem) {
+
+                /** исключаем из письма офферы-доставки */
                 if (mb_strpos($basketItem->getCode(), 'DELIVERY') !== false) {
                     continue;
                 }
+
+                /** исключаем из письма офферы-марки (акция копилка-собиралка) */
+                if (in_array($basketItem->getXmlId(), PiggyBankService::getMarkXmlIds())) {
+                    continue;
+                }
+
                 $currentOffer = null;
                 /** @var Offer $offer */
                 foreach ($offers as $offer) {
@@ -1183,6 +1194,73 @@ class ExpertsenderService implements LoggerAwareInterface
                 && (string)$sop->ErrorMessage->Message === self::BLACK_LIST_ERROR_MESSAGE) {
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param User $user
+     *
+     * @return bool
+     * @throws ExpertSenderException
+     * @throws ExpertsenderServiceApiException
+     * @throws ExpertsenderServiceException
+     */
+    public function sendAfterCheckReg(array $params): bool
+    {
+        $email = $params['userEmail'];
+        $userId = $params['userId'];
+
+        if($email) {
+            $transactionId = self::NEW_CHECK_REG_LIST_ID;
+
+            $this->log()->info(
+                __FUNCTION__,
+                [
+                    'email' => $email,
+                    'transactionId' => $transactionId,
+                    'userId' => $userId,
+                ]
+            );
+
+            $this->sendSystemTransactional($transactionId, $email);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param int $userId
+     * @param string $fullname
+     * @param string $email
+     * @param string $coupon
+     * @param string $base64
+     * @return bool
+     * @throws ExpertSenderException
+     * @throws ExpertsenderServiceApiException
+     * @throws ExpertsenderServiceException
+     */
+    public function sendPiggyBankEmail($userId, $fullname, $email, $coupon, $base64): bool
+    {
+        if ($email) {
+            $transactionId = self::PIGGY_BANK_SEND_EMAIL;
+
+            $this->log()->info(
+                __FUNCTION__,
+                [
+                    'userId' => $userId,
+                    'fullname' => $fullname,
+                    'email' => $email,
+                    'coupon' => $coupon,
+                    'base64' => $base64,
+                    'transactionId' => $transactionId,
+                ]
+            );
+
+            $this->sendSystemTransactional($transactionId, $email);
+            return true;
         }
 
         return false;

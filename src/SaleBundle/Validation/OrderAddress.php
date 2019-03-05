@@ -24,6 +24,11 @@ class OrderAddress extends Constraint
      */
     public $addressMessage = 'Адрес не найден';
 
+    /**
+     * @var string
+     */
+    public $coordsMessage = 'Адрес на карте не найден';
+
     public function getTargets()
     {
         return self::CLASS_CONSTRAINT;

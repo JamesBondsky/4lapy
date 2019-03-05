@@ -77,6 +77,22 @@ $markup = PawsApplication::markup();
 <body class="body-landing">
 <?php $APPLICATION->ShowPanel(); ?>
 
+<!-- Yandex.Metrika counter -->
+<script type="text/javascript" >
+    (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+        m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+    (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+    ym(52251391, "init", {
+        id:52251391,
+        clickmap:true,
+        trackLinks:true,
+        accurateTrackBounce:true
+    });
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/52251391" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
+
 <header class="header-landing" data-header-landing="true">
     <div class="container-landing">
         <div class="header-landing__content">
@@ -97,11 +113,9 @@ $markup = PawsApplication::markup();
                         <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="prizes">Призы</a>
                     </li>
 
-                    <?/**
                     <li  class="header-landing-menu__item">
                         <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="winners">Победители</a>
                     </li>
-                    */?>
 
                     <li  class="header-landing-menu__item">
                         <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="where-buy">Где купить</a>
@@ -173,8 +187,3 @@ $markup = PawsApplication::markup();
     <main class="b-wrapper<?= $template->getIndexMainClass() ?>" role="main">
 
 <?php }
-
-if ($template->hasContent()) {
-    $asset->addCss('/include/static/style.css');
-    $asset->addJs('/include/static/scripts.js');
-}

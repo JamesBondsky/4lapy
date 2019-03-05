@@ -67,6 +67,7 @@ use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -81,13 +82,13 @@ class OrderService
     public const ORDER_PAGE_LIMIT = 10;
 
     public const STATUS_FINAL = [
-        'G',
-        'J',
+        'G', // Заказ выполнен
+        'J', // Оплачен(Доставлен)
     ];
 
     public const STATUS_CANCEL = [
-        'A',
-        'K',
+        'A', // Отменен
+        'K', // Отменен
     ];
 
     protected const MANZANA_FINAL_STATUS = 'G';
@@ -215,6 +216,74 @@ class OrderService
                 }
             }
         }
+
+        $user->setManzanaImportDateTime(new DateTime());
+        App::getInstance()->getContainer()->get(UserRepository::class)->update($user);
+    }
+
+	/**
+	 * @param User $user
+	 * @throws \Exception
+	 */
+	public function importOrdersFromManzana(User $user): void
+    {
+	    $contactId = $this->manzanaService->getContactByUser($user)->contactId;
+	    $deliveryId = $this->deliveryService->getDeliveryIdByCode(DeliveryService::INNER_PICKUP_CODE);
+
+	    $cheques = $this->manzanaService->getCheques($contactId);
+
+	    $existingManzanaOrders = $this->getSiteManzanaOrders($user->getId());
+
+	    /** @var Cheque $cheque */
+	    foreach ($cheques as $cheque) {
+		    if ($cheque->operationTypeCode === Cheque::OPERATION_TYPE_RETURN) {
+			    continue;
+		    }
+
+		    if (\in_array($cheque->chequeNumber, $existingManzanaOrders, true)) {
+		    	continue;
+		    }
+
+		    if (!$cheque->hasItemsBool()) {
+			    continue;
+		    }
+
+		    /** @var \DateTimeImmutable $date */
+		    $date = $cheque->date;
+		    $bitrixDate = DateTime::createFromTimestamp($date->getTimestamp());
+		    $order = (new Order())
+			    ->setDateInsert($bitrixDate)
+			    ->setDatePayed($bitrixDate)
+			    ->setDateStatus($bitrixDate)
+			    ->setDateUpdate($bitrixDate)
+			    ->setManzana(true)
+			    ->setUserId($user->getId())
+			    ->setPayed(true)
+			    ->setStatusId(static::MANZANA_FINAL_STATUS)
+			    ->setPrice($cheque->sum)
+			    ->setItemsSum($cheque->sum)
+			    ->setManzanaId($cheque->chequeNumber)
+			    ->setPaySystemId(PaySystemActionTable::query()->setFilter(['CODE' => 'cash'])
+				    ->setSelect(['PAY_SYSTEM_ID'])->exec()
+				    ->fetch()['PAY_SYSTEM_ID'])
+			    ->setDeliveryId($deliveryId);
+
+		    try {
+			    $items = $this->getItemsByCheque($cheque);
+		    } /** @noinspection PhpRedundantCatchClauseInspection */ catch (ManzanaChequeItemExceptionInterface $e) {
+		        continue;
+		    }
+		    $order->setItems(new ArrayCollection($items));
+
+		    try {
+			    $this->addManzanaOrder($order);
+		    } /** @noinspection PhpRedundantCatchClauseInspection */ catch (ManzanaOrderExceptionInterface $e) {
+		    }
+	    }
+
+        $user->setManzanaImportDateTime(new DateTime());
+
+        App::getInstance()->getContainer()->get(UserRepository::class)->update($user);
     }
 
     /**
@@ -537,6 +606,27 @@ class OrderService
             throw new OrderAlreadyExistsException(\sprintf('Order %s already exists', $order->getManzanaId()));
         }
 
+        /**
+         * Отмена добавления заказа из Manzana, если на сайте уже есть соответствующий ему старый заказ.
+         * Статус старого заказа при этом не обновляется, т.к. он обновится из SAP
+         */
+        if (substr($order->getManzanaId(), -3) === 'NEW')
+        {
+            $oldOrderNumber = substr($order->getManzanaId(), 0, -3);
+            if ($oldOrderNumber)
+            {
+                $oldOrder = $this->orderRepository->findBy([
+                    'filter' => [
+                        'ACCOUNT_NUMBER' => $oldOrderNumber
+                    ],
+                ]);
+
+                if ($oldOrder->count()) {
+                   return false;
+                }
+            }
+        }
+
         Manager::disableExtendsDiscount();
 
         $bitrixOrder = BitrixOrder::create(SITE_ID, $order->getUserId(), $order->getCurrency());
@@ -580,6 +670,10 @@ class OrderService
                 case 'MANZANA_NUMBER':
                     $propertyValue->setValue($order->getManzanaId());
                     break;
+                case 'IS_NEW_SITE_ORDER':
+                    $propertyValue->setValue(BitrixUtils::BX_BOOL_FALSE);
+                    break;
+                case 'IS_MANZANA_ORDER':
                 case 'USER_REGISTERED':
                 case 'IS_EXPORTED':
                     $propertyValue->setValue(BitrixUtils::BX_BOOL_TRUE);
@@ -653,7 +747,7 @@ class OrderService
             throw new OrderCreateException('Order payment failed');
         }
 
-        $result = $bitrixOrder->save();
+        $result = $bitrixOrder->save(); //FIXME обработать ошибку Argument 'FUSER_ID' is null or empty
         /** костыль для обновления дат */
         OrderTable::update($result->getId(),
             [
@@ -753,5 +847,23 @@ class OrderService
         }
 
         return $result;
+    }
+
+    /**
+     * @return array
+     */
+    public function getClosedOrderStatuses(): array
+    {
+        return array_merge(self::STATUS_CANCEL, self::STATUS_FINAL);
+    }
+
+    /**
+     * @return string
+     */
+    public function getClosedOrderStatusesForQuery(): string
+    {
+        return \implode(',', \array_map(function ($status) {
+            return sprintf('"%s"', $status);
+        }, \array_merge(self::STATUS_CANCEL, self::STATUS_FINAL)));
     }
 }
