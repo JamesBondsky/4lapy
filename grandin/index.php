@@ -14,7 +14,7 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
 <section id="registr-check" data-id-section-landing="registr-check" class="registr-check-landing">
     <div class="container-landing">
 
-        <?if ($USER->IsAuthorized()) {?>
+        <?/*if ($USER->IsAuthorized()) {?>
             <? $arUser = \CUser::GetById($USER->GetID())->Fetch(); ?>
 
             <div class="registr-check-landing__form-wrap" data-wrap-form-registr-chek-landing="true">
@@ -105,8 +105,13 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
                 </div>
             </div>
 
-        <?}?>
+        <?}*/?>
 
+        <div class="registr-check-landing__message">
+            <div class="landing-title landing-title_dark">
+                Акция завершена
+            </div>
+        </div>
 
     </div>
 </section>

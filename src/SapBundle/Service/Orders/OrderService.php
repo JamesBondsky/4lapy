@@ -3,6 +3,7 @@
 namespace FourPaws\SapBundle\Service\Orders;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Catalog\Product\Basket as CatalogBasket;
@@ -253,6 +254,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $this->populateOrderDtoPayment($orderDto, $order->getPaymentCollection());
         $this->populateOrderDtoDelivery($orderDto, $order);
         $this->populateOrderDtoProducts($orderDto, $order);
+        $this->populateOrderDtoCouponNumber($orderDto, $order);
 
         $xml = $this->serializer->serialize($orderDto, 'xml');
 
@@ -503,7 +505,16 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             }
 
             $offer->setQuantity($quantity);
-            $offer->setChargeBonus((bool)$hasBonus);
+            $isPseudoActionPropValue = $this->getBasketPropertyValueByCode($basketItem, 'IS_PSEUDO_ACTION');
+            $isPseudoAction = BitrixUtils::BX_BOOL_TRUE === $isPseudoActionPropValue;
+            if ($isPseudoAction)
+            {
+                $offer->setChargeBonus(true);
+            }
+            else
+            {
+                $offer->setChargeBonus((bool)$hasBonus);
+            }
             $offer->setPosition($position);
             $collection->add($offer);
             $position++;
@@ -512,6 +523,20 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $this->addBasketDeliveryItem($order, $collection);
 
         $orderDto->setProducts($collection);
+    }
+
+    /**
+     * @param OrderDtoOut $orderDto
+     * @param Order $order
+     */
+    public function populateOrderDtoCouponNumber(OrderDtoOut $orderDto, Order $order)
+    {
+        $propertyCollection = $order->getPropertyCollection();
+        $promocode = BxCollection::getOrderPropertyByCode($propertyCollection, 'PROMOCODE');
+        if ($promocode && $promocodeValue = $promocode->getValue())
+        {
+            $orderDto->setCouponNumber($promocodeValue);
+        }
     }
 
     /**

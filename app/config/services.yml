@@ -119,3 +119,6 @@ services:
 
   dostavista.service:
     class: FourPaws\External\DostavistaService
+
+  brand.service:
+    class: FourPaws\CatalogBundle\Service\BrandService

@@ -776,14 +776,20 @@ class BasketService implements LoggerAwareInterface
         }
 
         $resultQuantity = 0;
+        /** @var PiggyBankService $piggyBankService */
+        $piggyBankService = App::getInstance()->getContainer()->get('piggy_bank.service');
+        /** @var Offer $offer */
+        $offer = $this->getOfferCollection(true)->getById($basketItem->getProductId());
+        if (in_array((int)$offer->getXmlId(), $piggyBankService::getMarkXmlIds(), true))
+        {
+            return 0;
+        }
+
         /** LP23-81 */
         if ($user && $this->isUserGroupWithPermanentBonusRewarding($user)) {
             $resultQuantity = (int)$basketItem->getQuantity();
             $basketDiscounts = false;
         } else {
-            /** @var Offer $offer */
-            $offer = $this->getOfferCollection()->getById($basketItem->getProductId());
-
             if (!$offer) {
                 $offer = (new OfferQuery())
                     ->withFilter(['=ID' => $basketItem->getProductId()])
