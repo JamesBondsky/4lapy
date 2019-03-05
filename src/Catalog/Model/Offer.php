@@ -50,6 +50,7 @@ use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\StoreBundle\Entity\Store;
 use InvalidArgumentException;
 use JMS\Serializer\Annotation as Serializer;
@@ -1255,6 +1256,8 @@ class Offer extends IblockElement
      * @param int $percent
      * @param int $quantity
      *
+     * @throws NotAuthorizedException
+     *
      * @return float
      */
     public function getBonusCount(int $percent, int $quantity = 1): float
@@ -1262,14 +1265,19 @@ class Offer extends IblockElement
         $result = 0;
 
         if(null === $this->bonusPercent){
-            /** @var UserService $userCurrentUserService*/
-            $userCurrentUserService = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+            try{
+                /** @var UserService $userCurrentUserService*/
+                $userCurrentUserService = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+                $currentUser = $userCurrentUserService->getCurrentUser();
 
-            if($userCurrentUserService->getCurrentUser()->isOpt() && $this->getProduct()->getBrand()->isBonusOpt()){
-                $this->bonusPercent = BrandService::getBonusOptPercent();
-            }
-            else{
-                $this->bonusPercent = 0;
+                if($currentUser->isOpt() && $this->getProduct()->getBrand()->isBonusOpt()){
+                    $this->bonusPercent = BrandService::getBonusOptPercent();
+                }
+                else{
+                    $this->bonusPercent = 0;
+                }
+            } catch(NotAuthorizedException $e){
+                /** просто пропускаем */
             }
         }
 
