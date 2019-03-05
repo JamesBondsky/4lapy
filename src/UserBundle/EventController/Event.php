@@ -46,6 +46,7 @@ class Event extends BaseServiceHandler
     public const GROUP_ADMIN = 1;
     public const GROUP_TECHNICAL_USERS = 8;
     public const GROUP_FRONT_OFFICE_USERS = 28;
+    public const GROUP_OPERATORS = 29;
 
     protected static $isEventsDisable = false;
 
@@ -585,7 +586,7 @@ class Event extends BaseServiceHandler
 
     public function updateBasketRuleGroup(Array &$arFields): bool
     {
-        if(empty($arFields['GROUP_ID'])){
+        if (empty($arFields['GROUP_ID'])) {
             return true;
         }
 
@@ -605,12 +606,17 @@ class Event extends BaseServiceHandler
 
         $groupIds = array_combine(array_column($arFields['GROUP_ID'], 'GROUP_ID'), array_column($arFields['GROUP_ID'], 'GROUP_ID'));
 
-        if($groupIds[$groups[UserGroup::OPT_CODE]] && $groupIds[$groups[UserGroup::BASKET_RULES]]){
-            $arFields['GROUP_ID'] = array_filter($arFields['GROUP_ID'], function($elem) use ($groupIds, $groups){
-               return $elem['GROUP_ID'] != $groupIds[$groups[UserGroup::BASKET_RULES]];
-            });
+        // Не трогаем эти группы
+        if ($groupIds[self::GROUP_FRONT_OFFICE_USERS] || $groupIds[self::GROUP_OPERATORS]) {
+            return true;
         }
-        else if(!$groupIds[$groups[UserGroup::OPT_CODE]] && !$groupIds[$groups[UserGroup::BASKET_RULES]]){
+
+        // Если стоит Избранное + Правила работы с корзиной, то последнюю убираем
+        if ($groupIds[$groups[UserGroup::OPT_CODE]] && $groupIds[$groups[UserGroup::BASKET_RULES]]) {
+            $arFields['GROUP_ID'] = array_filter($arFields['GROUP_ID'], function ($elem) use ($groupIds, $groups) {
+                return $elem['GROUP_ID'] != $groupIds[$groups[UserGroup::BASKET_RULES]];
+            });
+        } else if (!$groupIds[$groups[UserGroup::OPT_CODE]] && !$groupIds[$groups[UserGroup::BASKET_RULES]]) {
             $arFields['GROUP_ID'][] = [
                 'GROUP_ID' => $groups[UserGroup::BASKET_RULES],
                 'DATE_ACTIVE_FROM' => "",
