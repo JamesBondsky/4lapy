@@ -150,7 +150,7 @@ class ImportManzanaOrders extends Command implements LoggerAwareInterface
                     $userId = $user->getId();
                     try
                     {
-                        if ($USER->GetID() !== $userId) {
+                        if ($userId > 0 && $USER->GetID() != $userId) {
                             $USER->Authorize($userId);
                         }
                         $orderService->importOrdersFromManzana($user);
