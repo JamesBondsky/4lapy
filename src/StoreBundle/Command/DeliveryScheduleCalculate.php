@@ -109,7 +109,7 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
 
 
         /** @var Store $sender */
-        foreach ($senders as $sender) {
+        foreach ($senders as $i => $sender) {
             $start = microtime(true);
             $isSuccess = false;
             $totalCreated = 0;
@@ -137,9 +137,11 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
 
                 $this->log()->info(
                     sprintf(
-                        'Task finished for %s, time: %ss. Created: %s, deleted: %s',
+                        'Task finished for %s, time: %ss. %s of %s Created: %s, deleted: %s',
                         $sender->getXmlId(),
                         round(microtime(true) - $start, 2),
+                        $i,
+                        count($senders),
                         $totalCreated,
                         $totalDeleted
                     )
@@ -149,9 +151,11 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
 
                 $this->log()->info(
                     sprintf(
-                        'Task failed for %s, time: %ss.',
+                        'Task failed for %s, time: %ss. %s of %s',
                         $sender->getXmlId(),
-                        round(microtime(true) - $start, 2)
+                        round(microtime(true) - $start, 2),
+                        $i,
+                        count($senders)
                     )
                 );
             }
