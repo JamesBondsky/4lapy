@@ -16,7 +16,7 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockProperty;
 use FourPaws\Enum\IblockType;
 use FourPaws\PersonalBundle\Exception\CouponIsAlreadyMaxedException;
-use FourPaws\PersonalBundle\Exception\CouponIsNotAvailableForUse;
+use FourPaws\PersonalBundle\Exception\CouponIsNotAvailableForUseException;
 use FourPaws\PersonalBundle\Exception\CouponNoFreeItemsException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -50,6 +50,7 @@ class PiggyBankService implements LoggerAwareInterface
     public const MARKS_PER_RATE = 1;
     public const MARKS_PER_RATE_VETAPTEKA = 2;
     public const PROMO_TITLE_MASK = 'Собиралка 03-04.19%';
+    public const ACTION_CODE = 'kopimarki-mart2019';
 
     public const COUPON_LEVELS = [
         1 => [
@@ -426,7 +427,7 @@ class PiggyBankService implements LoggerAwareInterface
 
     /**
      * @param string $couponNumber
-     * @throws CouponIsNotAvailableForUse
+     * @throws CouponIsNotAvailableForUseException
      * @throws SystemException
      * @throws \Bitrix\Main\ObjectException
      * @throws \Bitrix\Main\ObjectPropertyException
@@ -436,13 +437,13 @@ class PiggyBankService implements LoggerAwareInterface
         global $USER;
 
         if (!$this->isCouponNumberFormatOk($couponNumber)) {
-            throw new CouponIsNotAvailableForUse('coupon is not available for use');
+            throw new CouponIsNotAvailableForUseException('coupon is not available for use');
         }
 
         if ($this->isPiggyBankCoupon($couponNumber))
         {
             if(($this->isPiggyBankDateExpired() && !$USER->IsAdmin()) || !$this->isCouponAvailableToCurrentUser($couponNumber)) {
-                throw new CouponIsNotAvailableForUse('coupon is not available for use');
+                throw new CouponIsNotAvailableForUseException('coupon is not available for use');
             }
         }
     }

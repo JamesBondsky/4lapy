@@ -38,7 +38,7 @@ abstract class ManzanaConsumerBase implements ConsumerInterface, LoggerAwareInte
     /**
      * @inheritdoc
      */
-    abstract public function execute(AMQPMessage $message) : bool;
+    abstract public function execute(AMQPMessage $message);
     
     /**
      * @return LoggerInterface
