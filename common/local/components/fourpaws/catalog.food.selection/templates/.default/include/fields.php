@@ -63,9 +63,11 @@ $nextUrl = '/ajax/food_selection/show/step/required/'; ?>
 <?php
 /** не обязательные поля */
 if ($full_fields) { ?>
-    <div class="b-quest b-quest--step-3 js-quest js-quest--step-3 js-block-norequired main-quest-block" data-step="3">
+    <?
+    $nextUrl = '/ajax/food_selection/show/step/not_required/';
+    ?>
+    <div class="b-quest b-quest--step-3 js-quest js-quest--step-3 js-block-norequired main-quest-block" data-step="3" data-url="<?= $nextUrl;?>">
         <?php $required = false;
-        $nextUrl = '/ajax/food_selection/show/step/not_required/';
         $nextStep = 3;
 
         /** Особенности */
