@@ -940,8 +940,10 @@ class Order
 
     /**
      * @param string $couponNumber
+     *
+     * @return Order
      */
-    public function setCouponNumber(string $couponNumber): void
+    public function setCouponNumber(string $couponNumber): Order
     {
         $this->couponNumber = $couponNumber;
 
