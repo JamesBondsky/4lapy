@@ -144,7 +144,7 @@ class Brand extends IblockElement implements HitMetaInfoAwareInterface
     /**
      * @var bool Бонус для заводчиков на товары этого бренда
      * @Type("bool")
-     * @Accessor(getter="getBonusOpt")
+     * @Accessor(getter="isBonusOpt")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_BONUS_OPT = false;
