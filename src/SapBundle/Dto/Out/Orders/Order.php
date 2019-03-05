@@ -944,5 +944,7 @@ class Order
     public function setCouponNumber(string $couponNumber): void
     {
         $this->couponNumber = $couponNumber;
+
+        return $this;
     }
 }
