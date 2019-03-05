@@ -11,7 +11,8 @@ use Bitrix\Sale\Internals\DiscountTable;
 use Bitrix\Sale\Internals\DiscountGroupTable;
 use CGroup;
 
-class AddDiscountGroupAndUpdateDiscountRules20190227112904 extends \Adv\Bitrixtools\Migration\SprintMigrationBase {
+class AddDiscountGroupAndUpdateDiscountRules20190227112904 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
+{
 
     protected $description = "Добавляет новую группу для правил работы с корзиной и помещает туда не \"Избранных\" пользователей";
 
@@ -25,17 +26,17 @@ class AddDiscountGroupAndUpdateDiscountRules20190227112904 extends \Adv\Bitrixto
             $rsGroup = GroupTable::getList([
                 'filter' => ['STRING_ID' => 'VIP'],
             ]);
-            if(!$groupVip = $rsGroup->fetch()){
+            if (!$groupVip = $rsGroup->fetch()) {
                 throw new MigrationFailureException('Группа Избранные не найдена');
             }
 
             $userIdsNot = [];
             $rsUser = UserGroupTable::getList([
-                'filter'  => [
+                'filter' => [
                     'GROUP_ID' => 32,
                     'USER.ACTIVE' => 'Y',
                 ],
-                'select'  => [
+                'select' => [
                     'USER_ID'
                 ],
                 'group' => [
@@ -49,21 +50,22 @@ class AddDiscountGroupAndUpdateDiscountRules20190227112904 extends \Adv\Bitrixto
                     ],
                 ]
             ]);
-            while($arUser = $rsUser->fetch()){
+            while ($arUser = $rsUser->fetch()) {
                 $userIdsNot[] = $arUser['USER_ID'];
             }
 
+
             $userIds = [];
             $rsUser = UserTable::getList([
-                'filter'  => [
+                'filter' => [
                     '!=ID' => $userIdsNot,
                     'ACTIVE' => 'Y',
                 ],
-                'select'  => [
+                'select' => [
                     'ID'
                 ],
             ]);
-            while($arUser = $rsUser->fetch()){
+            while ($arUser = $rsUser->fetch()) {
                 $userIds[] = $arUser['ID'];
             }
 
@@ -81,10 +83,9 @@ class AddDiscountGroupAndUpdateDiscountRules20190227112904 extends \Adv\Bitrixto
             }
 
             $optionStr = \COption::GetOptionString('main', 'new_user_registration_def_group');
-            $optionStr .= ",".$groupId;
+            $optionStr .= "," . $groupId;
             \COption::SetOptionString('main', 'new_user_registration_def_group', $optionStr);
-        }
-        else{
+        } else {
             $groupId = $group['ID'];
         }
 
@@ -107,7 +108,7 @@ class AddDiscountGroupAndUpdateDiscountRules20190227112904 extends \Adv\Bitrixto
             }
 
             $optionStr = \COption::GetOptionString('main', 'new_user_registration_def_group');
-            $optionStr = str_replace(",".$group['ID'], "", $optionStr);
+            $optionStr = str_replace("," . $group['ID'], "", $optionStr);
             \COption::SetOptionString('main', 'new_user_registration_def_group', $optionStr);
         }
 
@@ -115,3 +116,4 @@ class AddDiscountGroupAndUpdateDiscountRules20190227112904 extends \Adv\Bitrixto
     }
 
 }
+
