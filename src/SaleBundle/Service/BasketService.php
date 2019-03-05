@@ -778,7 +778,7 @@ class BasketService implements LoggerAwareInterface
         $resultQuantity = 0;
         /** @var PiggyBankService $piggyBankService */
         $piggyBankService = App::getInstance()->getContainer()->get('piggy_bank.service');
-        /** @var Offer $offer */
+        /** @var Offer|null $offer */
         $offer = $this->getOfferCollection(true)->getById($basketItem->getProductId());
         if (!$offer)
         {
