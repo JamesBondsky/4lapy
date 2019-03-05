@@ -780,6 +780,14 @@ class BasketService implements LoggerAwareInterface
         $piggyBankService = App::getInstance()->getContainer()->get('piggy_bank.service');
         /** @var Offer $offer */
         $offer = $this->getOfferCollection(true)->getById($basketItem->getProductId());
+        if (!$offer)
+        {
+            $this->log()->error(\sprintf(
+                'empty offer for product id: %s',
+                $basketItem->getProductId()
+            ));
+            return 0;
+        }
         if (in_array((int)$offer->getXmlId(), $piggyBankService::getMarkXmlIds(), true))
         {
             return 0;
