@@ -54,7 +54,6 @@ class AddDiscountGroupAndUpdateDiscountRules20190227112904 extends \Adv\Bitrixto
                 $userIdsNot[] = $arUser['USER_ID'];
             }
 
-
             $userIds = [];
             $rsUser = UserTable::getList([
                 'filter' => [
