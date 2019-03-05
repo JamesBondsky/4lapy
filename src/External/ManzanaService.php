@@ -766,8 +766,8 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     public function importUserOrdersAsync(User $user)
     {
         /** @noinspection MissingService */
-        //$producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_orders_import_producer');
-        //$producer->publish($this->serializer->serialize($user, 'json'));
+        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_orders_import_producer');
+        $producer->publish($this->serializer->serialize($user, 'json'));
     }
 
     /**

@@ -144,7 +144,6 @@ class Event extends BaseServiceHandler
             'removeDelayedItems'
         ], $module);
 
-        //TODO limit only by promo offer dates range
         /** добавление марок в заказ */
         static::initHandler('OnSaleOrderBeforeSaved', [
             self::class,
@@ -824,6 +823,10 @@ class Event extends BaseServiceHandler
      */
     public function addMarksToOrderBasket(BitrixEvent $event): void
     {
+        if (self::$isEventsDisable) {
+            return;
+        }
+
         try {
             /** @var PiggyBankService $piggyBankService */
             $piggyBankService = Application::getInstance()->getContainer()->get('piggy_bank.service');
@@ -927,7 +930,6 @@ class Event extends BaseServiceHandler
                     );
                 }
 
-                return;
             }
         } catch (\Exception $e) {
             $logger = LoggerFactory::create('piggyBank');
