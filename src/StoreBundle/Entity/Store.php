@@ -298,6 +298,16 @@ class Store extends Base
     protected $deliveryTime = 1;
 
     /**
+     * Является магазином для экспресс доставки
+     *
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("UF_AVAILABLE_EXPRESS")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $isExpressStore = 1;
+
+    /**
      * @var array
      * @Serializer\Type("array_or_false")
      * @Serializer\SerializedName("UF_SHIPMENT_TILL_11")
@@ -1070,6 +1080,25 @@ class Store extends Base
     public function setScheduleString(string $scheduleString): Store
     {
         $this->scheduleString = $scheduleString;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isExpressStore(): bool
+    {
+        return ($this->isExpressStore === true) ? $this->isExpressStore : false;
+    }
+
+    /**
+     * @param bool $isExpressStore
+     * @return Store
+     */
+    public function setIsExpressStore(bool $isExpressStore): Store
+    {
+        $this->isExpressStore = $isExpressStore;
+
         return $this;
     }
 }

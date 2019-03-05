@@ -9,6 +9,7 @@ namespace FourPaws\Enum;
 class IblockProperty
 {
     public const BRANDS_POPULAR = 'POPULAR';
+    public const LICENSE = 'LICENSE';
 
     public const PRODUCTS_BRAND = 'BRAND';
 

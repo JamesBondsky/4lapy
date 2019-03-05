@@ -203,7 +203,7 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             </div>
         </div>
     </div>
-    <div class="b-common-wrapper b-common-wrapper--visible js-catalog-wrapper">
+    <div class="b-common-wrapper b-common-wrapper--visible b-common-wrapper--brands js-catalog-wrapper">
         <?php
         $productCollection = $productSearchResult->getProductCollection();
 
@@ -251,8 +251,6 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             $i++;
         }
         ?>
-    </div>
-    <div class="b-line b-line--catalog-filter">
     </div>
     <?php $APPLICATION->IncludeComponent(
         'bitrix:system.pagenavigation',

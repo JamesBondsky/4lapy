@@ -593,7 +593,7 @@ class OrderCopy
 
             /** @todo: Обсудить с разработчиками системы оформления заказов изменение подхода установки начальных статусов (в иделае должен быть всегда N) */
             $deliveryCode = $newShipment->getDelivery()->getCode();
-            if ($this->getDeliveryService()->isDeliveryCode($deliveryCode)) {
+            if ($this->getDeliveryService()->isDeliveryCode($deliveryCode) || $this->getDeliveryService()->isDostavistaDeliveryCode($deliveryCode)) {
                 /** @noinspection PhpInternalEntityUsedInspection */
                 $this->newOrder->setFieldNoDemand('STATUS_ID', OrderStatus::STATUS_NEW_COURIER);
             }
