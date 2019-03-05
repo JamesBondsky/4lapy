@@ -381,9 +381,10 @@ class Order
     /**
      * Номер купона
      *
-     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\XmlAttribute()
      * @Serializer\SkipWhenEmpty()
      * @Serializer\SerializedName("CouponNumber")
+     * @Serializer\Type("string")
      *
      * @var string
      */
