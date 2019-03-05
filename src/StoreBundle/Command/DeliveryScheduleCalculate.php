@@ -106,13 +106,14 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
         /** Расчёты не сгенерируются, если для первого отправителя не будет расписаний */
         $senders = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
         //$senders = [$this->storeService->getStoreByXmlId('DC01')];
-        $totalCreated = 0;
-        $totalDeleted = 0;
+
 
         /** @var Store $sender */
         foreach ($senders as $sender) {
             $start = microtime(true);
             $isSuccess = false;
+            $totalCreated = 0;
+            $totalDeleted = 0;
 
             try {
                 $totalDeleted += $this->scheduleResultService->deleteResultsForSender($sender);
