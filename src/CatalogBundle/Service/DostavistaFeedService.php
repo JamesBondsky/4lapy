@@ -517,7 +517,7 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
         $this->printDumpString('processRemoveExtraData');
         foreach ($feed->getShop()->getOffers() as $key => $offer) {
             if ($offer->getResidues()->isEmpty()) {
-                dump('Offer ' . $offer['XML_ID'] . ' without stock result clear');
+                dump('Offer ' . $offer->getId() . ' without stock result clear');
                 $feed->getShop()->getOffers()->remove($key);
             }
         }
