@@ -72,7 +72,7 @@ $resultsByZone = $arResult['RESULTS_BY_ZONE'];
             <div class="b-delivery__info-text"><strong>Далеко везём</strong><span>до 85 км от мкад</span></div>
         <?php } else { ?>
             <div class="b-delivery__info-icon"><img src="/static/build/images/inhtml/delivery-icon-02_region.png"></div>
-            <div class="b-delivery__info-text"><strong>В тот же день</strong><span>при заказе до 14.00</span></div>
+            <div class="b-delivery__info-text"><strong>В тот же день</strong><span>при заказе до 17.00</span></div>
         <? } ?>
     </div>
     <div class="b-delivery__info-item">
