@@ -31,6 +31,7 @@ use FourPaws\StoreBundle\Service\StoreService;
 use JMS\Serializer\SerializerInterface;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\Filesystem\Filesystem;
+use FourPaws\Catalog\Model\Offer as ModelOffer;
 
 /**
  * Class DostavistaFeedService
@@ -59,6 +60,11 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
      * @var array $offers
      */
     private $offers = [];
+
+    /**
+     * @var array $stocks
+     */
+    private $stocks = [];
 
     /**
      * DostavistaFeedService constructor.
@@ -99,6 +105,8 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
             ->processMerchants($feed)
             ->processProducts($configuration)
             ->processOffers($feed, $configuration);
+
+        $this->removeExtraData($feed);
 
         $this->publicFeed($feed, Application::getAbsolutePath($configuration->getExportFile()));
 
@@ -251,6 +259,8 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
                 continue;
             }
 
+            $this->stocks[$store->getId()] = false;
+
             $merchant
                 ->setId($store->getId())
                 ->setAddress('г. Москва, ' . str_replace(', Москва', '', $store->getAddress()))
@@ -271,7 +281,7 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
     {
         $arFilter = [
             'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
-            'IBLOCK_SECTION_ID' => $configuration->getSectionIds(),
+            'SECTION_ID' => $configuration->getSectionIds(),
             'INCLUDE_SUBSECTIONS' => 'Y',
             'ACTIVE' => 'Y'
         ];
@@ -287,6 +297,9 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
         ];
 
         $dbItems = \CIBlockElement::GetList(['XML_ID' => 'ASC'], $arFilter, false, false, $arSelect);
+        $productsCnt = $dbItems->SelectedRowsCount();
+        $i = 1;
+        $this->printDumpString('processProducts');
         while ($arProduct = $dbItems->Fetch()) {
             $descr = preg_replace(
                 [
@@ -303,18 +316,30 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
                 'IBLOCK_SECTION_ID' => $arProduct['IBLOCK_SECTION_ID'],
                 'BRAND' => $arProduct['PROPERTY_BRAND_NAME']
             ];
+            if ($i % 500 == 0) {
+                dump('Products added to xml:' . $i . '/' . $productsCnt);
+            }
+            $i++;
         }
+
+        $this->printDumpString('processProducts done');
 
         return $this;
     }
 
+    /**
+     * @param Feed $feed
+     * @param Configuration $configuration
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     */
     protected function processOffers(Feed $feed, Configuration $configuration)
     {
         $offerCollection = new ArrayCollection();
         $arFilter = [
             'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
             'ACTIVE' => 'Y',
-            'PROPERTY_CML2_LINK' => array_keys($this->products)
+            'PROPERTY_CML2_LINK' => array_keys($this->products),
+            '!PROPERTY_IMG' => false
         ];
 
         $arSelect = [
@@ -326,26 +351,40 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
             'DETAIL_PAGE_URL',
         ];
 
-        $arStockIDs = [];
-
-        foreach ($feed->getShop()->getMerchants() as $merchant) {
-            $arStockIDs[] = $merchant->getId();
-        }
-
         $files = [];
         $dbItems = \CIBlockElement::GetList(['XML_ID' => 'ASC'], $arFilter, false, false, $arSelect);
+        $offerCnt = $dbItems->SelectedRowsCount();
+        $i = 1;
+
+        $stocks = $this->stocks;
+        $this->stocks = [];
+
+        $this->printDumpString('processOffers');
         while ($cibOffer = $dbItems->GetNextElement()) {
             $arOffer = $cibOffer->GetFields();
             $arOffer['PROPERTIES'] = $cibOffer->GetProperties();
 
-            if (
-            (floatval($arOffer['PROPERTIES']['PRICE_ACTION']['VALUE']) < floatval($arOffer['CATALOG_PRICE_2'])
-                && $arOffer['PROPERTIES']['PRICE_ACTION']['VALUE'] != ''
-                && $arOffer['PROPERTIES']['PRICE_ACTION']['VALUE'] != 0)
-            ) {
-                $price = floatval($arOffer['PROPERTIES']['PRICE_ACTION']['VALUE']);
-            } else {
-                $price = floatval($arOffer['CATALOG_PRICE_2']);
+            $price = floatval($arOffer['CATALOG_PRICE_2']);
+            switch ($arOffer['PROPERTIES']['COND_FOR_ACTION']['VALUE']) {
+                case ModelOffer::SIMPLE_SHARE_SALE_CODE:
+                    if (
+                        (floatval($arOffer['PROPERTIES']['PRICE_ACTION']['VALUE']) < $price)
+                        && $arOffer['PROPERTIES']['PRICE_ACTION']['VALUE'] != ''
+                        && $arOffer['PROPERTIES']['PRICE_ACTION']['VALUE'] != 0
+                    ) {
+                        $price = floatval($arOffer['PROPERTIES']['PRICE_ACTION']['VALUE']);
+                    }
+                    break;
+                case ModelOffer::SIMPLE_SHARE_DISCOUNT_CODE:
+                    if (
+                        intval($arOffer['PROPERTIES']['COND_VALUE']['VALUE']) != '' &&
+                        intval($arOffer['PROPERTIES']['COND_VALUE']['VALUE']) > 0
+
+                    ) {
+                        $price = ceil($price - $price / 100 * intval($arOffer['PROPERTIES']['COND_VALUE']['VALUE']));
+                    }
+                    break;
+                default:
             }
 
             $detailPath = (new FullHrefDecorator($arOffer['DETAIL_PAGE_URL']))->setHost($configuration->getServerName())->__toString();
@@ -369,31 +408,50 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
             if (!empty($arOffer['PROPERTIES']['IMG']['VALUE'][0])) {
                 $files[$arOffer['PROPERTIES']['IMG']['VALUE'][0]] = $arOffer['ID'];
             }
+
+            $arFilter = [
+                'PRODUCT_ID' => $arOffer['ID'],
+                'STORE_ID' => array_keys($stocks),
+                '>AMOUNT' => 0
+            ];
+            $arSelect = [
+                'PRODUCT_ID',
+                'STORE_ID',
+                'AMOUNT'
+            ];
+
+            $rsStore = CCatalogStoreProduct::GetList([], $arFilter, false, false, $arSelect);
+            while ($arStore = $rsStore->Fetch()) {
+                if (isset($this->offers[$arStore['PRODUCT_ID']]['RESIDUES'])) {
+                    $this->offers[$arStore['PRODUCT_ID']]['RESIDUES'][] = [
+                        'MERCHANT_ID' => $arStore['STORE_ID'],
+                        'AMOUNT' => $arStore['AMOUNT'],
+                        'PRICE' => $this->offers[$arStore['PRODUCT_ID']]['PRICE']
+                    ];
+                    $this->stocks[$arStore['STORE_ID']] = $arStore['STORE_ID'];
+                }
+            }
+
+            if ($i % 500 == 0) {
+                dump('Offers added to xml:' . $i . '/' . $offerCnt);
+            }
+            $i++;
         }
 
-        $arFilter = [
-            'PRODUCT_ID' => array_keys($this->offers),
-            'STORE_ID' => $arStockIDs,
-            '>AMOUNT' => 0
-        ];
-        $arSelect = [
-            'PRODUCT_ID',
-            'STORE_ID',
-            'AMOUNT'
-        ];
-        $rsStore = CCatalogStoreProduct::GetList([], $arFilter, false, false, $arSelect);
-        while ($arStore = $rsStore->Fetch()) {
-            if (isset($this->offers[$arStore['PRODUCT_ID']]['RESIDUES'])) {
-                $this->offers[$arStore['PRODUCT_ID']]['RESIDUES'][] = [
-                    'MERCHANT_ID' => $arStore['STORE_ID'],
-                    'AMOUNT' => $arStore['AMOUNT'],
-                    'PRICE' => $this->offers[$arStore['PRODUCT_ID']]['PRICE']
-                ];
-            }
-        }
+        $this->printDumpString('processOffers done');
 
         $this->setFilesPaths($configuration, $files);
 
+        $this->printDumpString('processClearEmptyImageOffers');
+        foreach ($this->offers as $key => $offer) {
+            if ($offer['PICTURE'] == '') {
+                dump('Offer ' . $offer['XML_ID'] . ' without image clear');
+                unset($this->offers[$key]);
+            }
+        }
+        $this->printDumpString('processClearEmptyImageOffers done');
+
+        $this->printDumpString('processOffersXmlModelCreate');
         foreach ($this->offers as $arOffer) {
             $offer = new Offer();
             $offer->setId($arOffer['XML_ID'])
@@ -416,7 +474,7 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
             $offer->setResidues($residues);
             $offerCollection->add($offer);
         }
-
+        $this->printDumpString('processOffersXmlModelCreate done');
 
         $feed->getShop()->setOffers($offerCollection);
     }
@@ -425,13 +483,14 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
     /**
      * @param Configuration $configuration
      * @param array $files
-     * @param string $key
      * @return bool
      */
     private function setFilesPaths(Configuration $configuration, array $files): bool
     {
         $uploadDir = \COption::GetOptionString('main', 'upload_dir', 'upload');
         $dbFiles = \CFile::GetList([], ['@ID' => implode(',', array_keys($files))]);
+        $this->printDumpString('processSetFilesPaths');
+
         while ($file = $dbFiles->Fetch()) {
             $path = '/' . $uploadDir . '/' . $file['SUBDIR'] . '/' . $file['FILE_NAME'];
             if (!file_exists($_SERVER['DOCUMENT_ROOT'] . $path)) {
@@ -444,6 +503,47 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
                 $this->offers[$files[$file['ID']]]['PICTURE'] = $path;
             }
         }
+
+        $this->printDumpString('processSetFilesPaths done');
+
         return true;
+    }
+
+    /**
+     * @param Feed $feed
+     */
+    private function removeExtraData(Feed $feed)
+    {
+        $this->printDumpString('processRemoveExtraData');
+        foreach ($feed->getShop()->getOffers() as $key => $offer) {
+            if ($offer->getResidues()->isEmpty()) {
+                dump('Offer ' . $offer['XML_ID'] . ' without stock result clear');
+                $feed->getShop()->getOffers()->remove($key);
+            }
+        }
+
+        foreach ($feed->getShop()->getMerchants() as $key => $merchant) {
+            if (!in_array($merchant->getId(), $this->stocks)) {
+                dump('Store ' . $merchant->getId() . ' without use offers clear');
+                $feed->getShop()->getMerchants()->remove($key);
+            }
+        }
+        $this->printDumpString('processRemoveExtraData done');
+    }
+
+    /**
+     * @param string $title
+     */
+    protected function printDumpString(string $title): void
+    {
+        $part = '#####';
+        $sharps = '';
+        for ($i = 0; $i < strlen($title); $i++) {
+            $sharps .= '#';
+        }
+        dump($part . $sharps . $part);
+        dump($part . $title . $part);
+        dump($part . $sharps . $part);
+        dump('');
     }
 }
