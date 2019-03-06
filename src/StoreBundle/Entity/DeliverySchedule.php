@@ -628,7 +628,8 @@ class DeliverySchedule extends Base implements \Serializable
          * Ищем ближайший день для формирования заказа
          * и соответствующий день отгрузки
          *
-         * @param DateTime $from
+         * @param DateTime $from дата, от которой считаем
+         * @param bool $realDate признак того что дата реальная и надо проверить время для заказа
          * @return null|DateTime
          */
         $getByDay = function (DateTime $from, bool $realDate = true): ?DateTime {
@@ -648,18 +649,19 @@ class DeliverySchedule extends Base implements \Serializable
                 $date = clone $from;
 
                 $weekDiff = $day->getWeekNum() - $fromWeek;
-                $weeks = ($weekDiff >= 0) ? "+".$weekDiff : $weekDiff;
-
                 $daysDiff = $day->getOrderDay() - $fromDay;
+                $weeks = ($weekDiff >= 0) ? "+".$weekDiff : $weekDiff;
                 $days = ($daysDiff >= 0) ? "+".$daysDiff : $daysDiff;
-                if($daysDiff < 0 && $this->getTypeCode() == self::TYPE_WEEKLY){
-                    $days += 7;
-                }
 
-                $date->modify(sprintf('%s weeks +%s days', $weeks, $days));
+                $date->modify(sprintf('%s weeks %s days', $weeks, $days));
 
+                // Не укладываемся по времени для формирования заказа
                 if($realDate && $from > $day->setOrderTimeForDate($date)){
-                    continue;
+                    if($this->getTypeCode() == self::TYPE_WEEKLY){
+                        $date->modify('+1 week');
+                    } else{
+                        continue;
+                    }
                 }
 
                 $orderDates[$key] = $date;

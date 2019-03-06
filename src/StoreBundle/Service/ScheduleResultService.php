@@ -366,7 +366,7 @@ class ScheduleResultService implements LoggerAwareInterface
         }
 
         $receivers = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
-        //$receivers = [$this->storeService->getStoreByXmlId('R060')];
+        //$receivers = [$this->storeService->getStoreByXmlId('R193')];
 
         $result = [];
         /** @var Store $receiver */
@@ -537,6 +537,14 @@ class ScheduleResultService implements LoggerAwareInterface
                      */
                     foreach ($nextDeliveries as $hour => $date) {
                         $days = $date->diff($startDates[$hour])->days;
+
+                        if($days < 0){
+                            $this->log()->error(sprintf(
+                                'delivery date can not be in the past'
+                            ));
+                            continue;
+                        }
+
                         $setter = 'setDays' . $hour;
                         if (!method_exists($res, $setter)) {
                             $this->log()->error(sprintf(
