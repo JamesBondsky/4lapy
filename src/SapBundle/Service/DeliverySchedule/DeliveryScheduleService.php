@@ -15,6 +15,7 @@ use FourPaws\SapBundle\Dto\In\DeliverySchedule\DeliverySchedule;
 use FourPaws\SapBundle\Dto\In\DeliverySchedule\DeliverySchedules;
 use FourPaws\SapBundle\Dto\In\DeliverySchedule\ManualDayItem;
 use FourPaws\SapBundle\Dto\In\DeliverySchedule\WeekDayItem;
+use FourPaws\SapBundle\Dto\In\DeliverySchedule\OrderDayItem;
 use FourPaws\SapBundle\Exception\NotFoundScheduleException;
 use FourPaws\StoreBundle\Entity\DeliverySchedule as DeliveryScheduleEntity;
 use FourPaws\StoreBundle\Exception\BitrixRuntimeException;
@@ -75,7 +76,7 @@ class DeliveryScheduleService implements LoggerAwareInterface
     {
         try {
             $scheduleEntity = $this->repository->findBy(
-                ['=UF_XML_ID' => $schedule->getXmlId()],
+                ['=UF_TPZ_XML_ID' => $schedule->getXmlId()],
                 [],
                 null,
                 null,
@@ -211,42 +212,56 @@ class DeliveryScheduleService implements LoggerAwareInterface
             $entity->setActiveTo($schedule->getDateTo());
         }
 
-        $weekDays = $schedule->getWeekDays();
+        /** Дни заказа и поставки */
+        $orderDays = $schedule->getOrderDays();
+        //$obWeekDays = $schedule->getWeekDays();
 
-        if ($weekDays->count()) {
-            $days = $this->serializer->toArray($weekDays->first());
-            $days = \array_keys(\array_filter(\array_values($days), function ($k, $v) {
-                return $k && $v;
-            }, \ARRAY_FILTER_USE_BOTH));
+        if ($orderDays->count()) {
+            $arOrderDays = $this->serializer->toArray($orderDays->first());
+            $arOrderDays = array_filter($arOrderDays);
+            $arSupplyDays = $this->baseService->getWeeknums($arOrderDays);
 
-            $entity->setDaysOfWeek($days);
+            $entity->setOrderDays($arOrderDays);
+            $entity->setSupplyDays($arSupplyDays);
+        }
 
-            $weekNumbers = $weekDays->map(function ($weekNumber) {
-                /**
-                 * @var $weekNumber WeekDayItem
-                 */
-                return $weekNumber->getNumWeek();
-            })->toArray();
+        /** Номера недели */
+        $weekNums = $schedule->getWeekNums();
+
+        if($weekNums){
+            $weekNumbers = [];
+            foreach($weekNums->getWeekNums() as $numWeek){
+                $weekNumbers[] = $numWeek->getValue();
+            }
 
             $entity->setWeekNumbers($weekNumbers);
         }
 
+        /** Конкретные даты */
         $manualDays = $schedule->getManualDays();
 
         if ($manualDays->count()) {
-            /**
-             * @var $manualDay ManualDayItem
-             */
+            /** @var $manualDay ManualDayItem */
             $manualDay = $manualDays->first();
 
-            $entity->setDeliveryNumber($manualDay->getNum());
+            $entity->setDeliveryNumber($manualDays->map(function ($manualDay) {
+                /** @var $manualDay ManualDayItem */
+                return $manualDay->getNum();
+            })->toArray());
+
             $entity->setDeliveryDates($manualDays->map(function ($manualDay) {
-                /**
-                 * @var $manualDay ManualDayItem
-                 */
-                return $manualDay->getDate();
+                /** @var $manualDay ManualDayItem */
+                return $manualDay->getDate()->format('d.m.Y H:i:s');
+            })->toArray());
+
+            $entity->setOrderDates($manualDays->map(function ($manualDay) {
+                /** @var $manualDay ManualDayItem */
+                return $manualDay->getOrderDate()->format('d.m.Y H:i:s');
             })->toArray());
         }
+
+        /** Дата изменения */
+        $entity->setDateUpdate();
 
         return $entity;
     }

@@ -366,6 +366,7 @@ class ScheduleResultService implements LoggerAwareInterface
         }
 
         $receivers = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
+        //$receivers = [$this->storeService->getStoreByXmlId('R193')];
 
         $result = [];
         /** @var Store $receiver */
@@ -455,14 +456,16 @@ class ScheduleResultService implements LoggerAwareInterface
                 $from[$hour] = clone $date;
             }
 
-            $modifier = 0;
             if ($sender->isSupplier()) {
                 if ($transitionCount === 0) {
                     $maxTransitions++;
                 }
+            }
 
+            /** На второй итерации маршрута товар готов к отгрузке уже в 9 утра */
+            if($transitionCount > 0){
+                /** @var \DateTime $date */
                 foreach ($from as $hour => $date) {
-                    /** по ТЗ при доставке со склада поставщика далее расчеты ведутся для времени 9:00 */
                     $date->setTime(9, 0, 0, 0);
 
                     /** время у стартовых дат нужно тоже изменить, чтобы корректно работал diff */
@@ -472,7 +475,8 @@ class ScheduleResultService implements LoggerAwareInterface
                 }
             }
 
-            $modifier += static::SCHEDULE_DATE_MODIFIER;
+            //$modifier = 0;
+            //$modifier += static::SCHEDULE_DATE_MODIFIER;
 
             if (null === $route) {
                 $route = new StoreCollection();
@@ -486,22 +490,25 @@ class ScheduleResultService implements LoggerAwareInterface
                  */
                 $nextDeliveries = [];
                 foreach ($from as $hour => $date) {
-                    /**
-                     * Дата отгрузки со склада
-                     */
-                    $shipmentDate = $this->storeService->getStoreShipmentDate($schedule->getReceiver(), $date);
+                    /** Дата отгрузки со склада (работало раньше, когда не было расписаний у магазина) */
+                    /*$shipmentDate = $this->storeService->getStoreShipmentDate($schedule->getReceiver(), $date);
+                    if(!$sender->isSupplier()){
+                        $shipmentDate->modify(sprintf('+%s days', $modifier));
+                    }*/
 
-                    $shipmentDate->modify(sprintf('+%s days', $modifier));
+                    /** Дата поставки на $receiver */
+                    $nextDelivery = $schedule->getNextDelivery($date);
 
-                    /**
-                     * Дата поставки на $receiver
-                     */
-                    $nextDelivery = $schedule->getNextDelivery($shipmentDate);
+                    /** Если расписания для магазина нет - берём график отгрузок */
+                    if (null === $nextDelivery && $schedule->getReceiver()->isShop()) {
+                        $nextDelivery = $this->storeService->getStoreShipmentDate($schedule->getReceiver(), $date);
+                    }
 
                     if (null === $nextDelivery) {
                         continue;
                     }
 
+                    /** Время на сборку товара после прихода на склад */
                     if ($sender->isSupplier()) {
                         $nextDelivery->modify(sprintf('+%s days', static::DC_PROCESSING_DATE_MODIFIER));
                     }
@@ -512,6 +519,7 @@ class ScheduleResultService implements LoggerAwareInterface
                 if (empty($nextDeliveries)) {
                     continue;
                 }
+
                 /**
                  * Найдена конечная точка
                  */
@@ -529,6 +537,14 @@ class ScheduleResultService implements LoggerAwareInterface
                      */
                     foreach ($nextDeliveries as $hour => $date) {
                         $days = $date->diff($startDates[$hour])->days;
+
+                        if($days < 0){
+                            $this->log()->error(sprintf(
+                                'delivery date can not be in the past'
+                            ));
+                            continue;
+                        }
+
                         $setter = 'setDays' . $hour;
                         if (!method_exists($res, $setter)) {
                             $this->log()->error(sprintf(

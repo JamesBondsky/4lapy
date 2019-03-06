@@ -41,6 +41,18 @@ class ManualDayItem
     protected $date;
 
     /**
+     * Дата заказа.
+     * Содержит дату поставки, формат: ГГГГММДД.
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\Type("DateTime<'Ymd'>")
+     * @Serializer\SerializedName("orddate")
+     *
+     * @var \DateTime
+     */
+    protected $orderDate;
+
+    /**
      * @return int
      */
     public function getNum(): int
@@ -76,5 +88,21 @@ class ManualDayItem
         $this->date = $date;
 
         return $this;
+    }
+
+    /**
+     * @return \DateTime
+     */
+    public function getOrderDate(): \DateTime
+    {
+        return $this->orderDate;
+    }
+
+    /**
+     * @param \DateTime $orderDate
+     */
+    public function setOrderDate(\DateTime $orderDate): void
+    {
+        $this->orderDate = $orderDate;
     }
 }

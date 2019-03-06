@@ -8,9 +8,11 @@ namespace FourPaws\StoreBundle\Service;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\StoreBundle\Collection\DeliveryScheduleCollection;
+use FourPaws\StoreBundle\Collection\OrderDayCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\DeliverySchedule;
 use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Entity\OrderDay;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Repository\DeliveryScheduleRepository;
 use Psr\Log\LoggerAwareInterface;
@@ -20,7 +22,20 @@ class DeliveryScheduleService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
-    protected const TYPE_FIELD_CODE = 'UF_TYPE';
+    protected const TYPE_FIELD_CODE = 'UF_TPZ_TYPE';
+
+    /**
+     * @var array
+     */
+    protected $weekdays = [
+        1 => 'monday',
+        2 => 'tuesday',
+        3 => 'wednesday',
+        4 => 'thursday',
+        5 => 'friday',
+        6 => 'saturday',
+        7 => 'sunday',
+    ];
 
     /**
      * @var DeliveryScheduleRepository
@@ -211,5 +226,50 @@ class DeliveryScheduleService implements LoggerAwareInterface
         }
 
         return $result;
+    }
+
+    /**
+     * Возвращает порядковые номера дней недели
+     *
+     * @param array $orderDays
+     * @return array
+     */
+    public function getWeeknums(array $weekDays)
+    {
+        $days = [];
+        foreach(array_keys($weekDays) as $weekday){
+            $days[] = array_search(strtolower($weekday), $this->weekdays);
+        }
+
+        return $days;
+    }
+
+    /**
+     * Возвращает дни для формирования заказа и соответствующие дни поставки
+     *
+     * @param DeliverySchedule $schedule
+     * @param \DateTime|null $from
+     * @return OrderDayCollection|null
+     * @throws \Exception
+     */
+    public function getOrderAndSupplyDays(DeliverySchedule $schedule, \DateTime $from = null): ?OrderDayCollection
+    {
+        $result = new OrderDayCollection;
+
+        $type = $schedule->getTypeCode();
+        $orderDays = $schedule->getOrderDays();
+        $supplyDays = $schedule->getSupplyDays();
+        $orderTime = $schedule->getSender()->getStoreOrderTime();
+
+        if(!$from){
+            $from = new \DateTime();
+        }
+
+        foreach ($orderDays as $index => $orderDay){
+            $supplyDay = $supplyDays[$index];
+            $result->add(new OrderDay($orderDay, $supplyDay, $type, $from, $orderTime));
+        }
+
+        return !$result->isEmpty() ? $result : null;
     }
 }

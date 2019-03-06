@@ -230,14 +230,14 @@ class OrderService
 	 * @param User $user
 	 * @throws \Exception
 	 */
-	public function importOrdersFromManzana(User $user): void
+    public function importOrdersFromManzana(User $user): void
     {
-	    $contactId = $this->manzanaService->getContactByUser($user)->contactId;
-	    $deliveryId = $this->deliveryService->getDeliveryIdByCode(DeliveryService::INNER_PICKUP_CODE);
+        $contactId = $this->manzanaService->getContactByUser($user)->contactId;
+        $deliveryId = $this->deliveryService->getDeliveryIdByCode(DeliveryService::INNER_PICKUP_CODE);
 
-	    $cheques = $this->manzanaService->getCheques($contactId);
+        $cheques = $this->manzanaService->getCheques($contactId);
 
-	    $existingManzanaOrders = $this->getSiteManzanaOrders($user->getId());
+        $existingManzanaOrders = $this->getSiteManzanaOrders($user->getId());
 
         $oldOrderNumbers = [];
         /** @var Cheque $cheque */
@@ -247,7 +247,7 @@ class OrderService
             {
                 $oldOrderNumbers[$cheque->chequeNumber] = substr($cheque->chequeNumber, 0, -3);
             }
-	    }
+        }
 
         $oldOrders = OrderTable::getList([
             'select' => [
@@ -271,7 +271,6 @@ class OrderService
         ])->fetchAll();
 
         $oldOrdersIds = [];
-        /** @var Order $order */
         foreach ($oldOrders as $order)
         {
             $oldOrdersIds[$order['ACCOUNT_NUMBER']] = [
@@ -283,25 +282,25 @@ class OrderService
         }
 
         /** @var Cheque $cheque */
-	    foreach ($cheques as $cheque) {
-		    if ($cheque->operationTypeCode === Cheque::OPERATION_TYPE_RETURN) {
-			    continue;
-		    }
+        foreach ($cheques as $cheque) {
+            if ($cheque->operationTypeCode === Cheque::OPERATION_TYPE_RETURN) {
+                continue;
+            }
 
-		    if (\in_array($cheque->chequeNumber, $existingManzanaOrders, true)) {
-		    	continue;
-		    }
+            if (\in_array($cheque->chequeNumber, $existingManzanaOrders, true)) {
+                continue;
+            }
 
-		    if (!$cheque->hasItemsBool()) {
-			    continue;
-		    }
+            if (!$cheque->hasItemsBool()) {
+                continue;
+            }
 
-		    /**
+            /**
              * Отмена добавления заказа из Manzana, если на сайте уже есть соответствующий ему старый заказ.
              * Статус старого заказа при этом не обновляется, т.к. он обновится из SAP.
              * В исходном заказе проставляется ID чека из Manzana
              */
-		    $oldOrder = $oldOrdersIds[$oldOrderNumbers[$cheque->chequeNumber]];
+            $oldOrder = $oldOrdersIds[$oldOrderNumbers[$cheque->chequeNumber]];
             if ($oldOrder['ID'] && !$oldOrder['MANZANA_NUMBER']) {
                 Event::disableEvents();
                 $order = BitrixOrder::load($oldOrder['ID']);
@@ -320,38 +319,38 @@ class OrderService
             }
 
 
-		    /** @var \DateTimeImmutable $date */
-		    $date = $cheque->date;
-		    $bitrixDate = DateTime::createFromTimestamp($date->getTimestamp());
-		    $order = (new Order())
-			    ->setDateInsert($bitrixDate)
-			    ->setDatePayed($bitrixDate)
-			    ->setDateStatus($bitrixDate)
-			    ->setDateUpdate($bitrixDate)
-			    ->setManzana(true)
-			    ->setUserId($user->getId())
-			    ->setPayed(true)
-			    ->setStatusId(static::MANZANA_FINAL_STATUS)
-			    ->setPrice($cheque->sum)
-			    ->setItemsSum($cheque->sum)
-			    ->setManzanaId($cheque->chequeNumber)
-			    ->setPaySystemId(PaySystemActionTable::query()->setFilter(['CODE' => 'cash'])
-				    ->setSelect(['PAY_SYSTEM_ID'])->exec()
-				    ->fetch()['PAY_SYSTEM_ID'])
-			    ->setDeliveryId($deliveryId);
+            /** @var \DateTimeImmutable $date */
+            $date = $cheque->date;
+            $bitrixDate = DateTime::createFromTimestamp($date->getTimestamp());
+            $order = (new Order())
+                ->setDateInsert($bitrixDate)
+                ->setDatePayed($bitrixDate)
+                ->setDateStatus($bitrixDate)
+                ->setDateUpdate($bitrixDate)
+                ->setManzana(true)
+                ->setUserId($user->getId())
+                ->setPayed(true)
+                ->setStatusId(static::MANZANA_FINAL_STATUS)
+                ->setPrice($cheque->sum)
+                ->setItemsSum($cheque->sum)
+                ->setManzanaId($cheque->chequeNumber)
+                ->setPaySystemId(PaySystemActionTable::query()->setFilter(['CODE' => 'cash'])
+                    ->setSelect(['PAY_SYSTEM_ID'])->exec()
+                    ->fetch()['PAY_SYSTEM_ID'])
+                ->setDeliveryId($deliveryId);
 
-		    try {
-			    $items = $this->getItemsByCheque($cheque);
-		    } /** @noinspection PhpRedundantCatchClauseInspection */ catch (ManzanaChequeItemExceptionInterface $e) {
-		        continue;
-		    }
-		    $order->setItems(new ArrayCollection($items));
+            try {
+                $items = $this->getItemsByCheque($cheque);
+            } /** @noinspection PhpRedundantCatchClauseInspection */ catch (ManzanaChequeItemExceptionInterface $e) {
+                continue;
+            }
+            $order->setItems(new ArrayCollection($items));
 
-		    try {
-			    $this->addManzanaOrder($order);
-		    } /** @noinspection PhpRedundantCatchClauseInspection */ catch (ManzanaOrderExceptionInterface $e) {
-		    }
-	    }
+            try {
+                $this->addManzanaOrder($order);
+            } /** @noinspection PhpRedundantCatchClauseInspection */ catch (ManzanaOrderExceptionInterface $e) {
+            }
+        }
 
         $user->setManzanaImportDateTime(new DateTime());
 
