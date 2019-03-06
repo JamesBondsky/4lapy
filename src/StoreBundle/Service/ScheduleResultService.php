@@ -20,6 +20,7 @@ use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Repository\ScheduleResultRepository;
 use Psr\Log\LoggerAwareInterface;
+use Bitrix\Main\Application as BitrixApplication;
 
 class ScheduleResultService implements LoggerAwareInterface
 {
@@ -374,6 +375,8 @@ class ScheduleResultService implements LoggerAwareInterface
             if ($sender->getXmlId() === $receiver->getXmlId()) {
                 continue;
             }
+
+            BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
 
             $results = $this->calculateForSenderAndReceiver($sender, $receiver, $date, $transitionCount);
             if (!$results->isEmpty()) {
