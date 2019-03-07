@@ -99,10 +99,7 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
             throw new \RuntimeException('Transition count must be a positive integer value');
         }
 
-        BitrixApplication::getConnection()->startTransaction();
-
         $start_global = microtime(true);
-
 
         /** Расчёты не сгенерируются, если для первого отправителя не будет расписаний */
         $senders = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
@@ -111,6 +108,8 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
 
         /** @var Store $sender */
         foreach ($senders as $i => $sender) {
+            BitrixApplication::getConnection()->startTransaction();
+
             $start = microtime(true);
             $isSuccess = false;
             $totalCreated = 0;
