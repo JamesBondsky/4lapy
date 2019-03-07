@@ -49,11 +49,11 @@ class OrderNumberTable extends Main\Entity\DataManager
     }
 
     /**
-     * @param array $data
+     * @param array $fields
      * @return AddResult
      * @throws \Exception
      */
-    public static function add(array $data): AddResult
+    public static function add(array $fields): AddResult
 	{
 		/** @var Main\Authentication\Context $authContext */
 		$authContext = null;
@@ -68,7 +68,15 @@ class OrderNumberTable extends Main\Entity\DataManager
 			$tableName = $entity->getDBTableName();
 			$identity = $entity->getAutoIncrement();
 
-			$id = $connection->add($tableName, [], $identity);
+            $dataReplacedColumn = [];
+            $accountNumber = (int)$fields['ACCOUNT_NUMBER'];
+			if ($accountNumber)
+            {
+                $dataReplacedColumn = [
+                    'ACCOUNT_NUMBER' => $accountNumber
+                ];
+            }
+			$id = $connection->add($tableName, $dataReplacedColumn, $identity);
 
 			$primary = null;
 
