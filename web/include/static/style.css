@@ -731,6 +731,7 @@ box-shadow: 0 0 10px #ccc;
 float: left;
 margin: 0 1.5%;
 position: relative;
+z-index: 2;
 }
 .partners_block_head {
 text-align: center;
