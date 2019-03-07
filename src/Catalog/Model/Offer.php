@@ -20,6 +20,7 @@ use Bitrix\Sale\Basket;
 use Bitrix\Sale\Fuser;
 use Bitrix\Sale\Order;
 use DateTimeImmutable;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -36,6 +37,7 @@ use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Query\ShareQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
+use FourPaws\Catalog\Collection\PriceCollection;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
@@ -304,6 +306,11 @@ class Offer extends IblockElement
     protected $price = 0;
 
     /**
+     * @var ArrayCollection
+     */
+    protected $prices;
+
+    /**
      * @var float
      * @Type("float")
      * @Groups({"elastic"})
@@ -440,6 +447,11 @@ class Offer extends IblockElement
     protected $availableStores = [];
 
     /**
+     * @var string
+     */
+    protected $regionDiscounts;
+
+    /**
      * Offer constructor.
      *
      * @param array $fields
@@ -451,6 +463,10 @@ class Offer extends IblockElement
         if (isset($fields['CATALOG_PRICE_2'])) {
             $this->price = (float)$fields['CATALOG_PRICE_2'];
         }
+
+        /*if (isset($fields['PRICES'])) {
+            $this->price = $fields['PRICES'];
+        }*/
 
         if (isset($fields['CATALOG_CURRENCY_2'])) {
             $this->currency = (string)$fields['CATALOG_CURRENCY_2'];
@@ -1338,6 +1354,24 @@ class Offer extends IblockElement
     }
 
     /**
+     * @return ArrayCollection
+     */
+    public function getPrices(): ArrayCollection
+    {
+        return $this->prices;
+    }
+
+    /**
+     * @param ArrayCollection $prices
+     * @return Offer
+     */
+    public function setPrices(ArrayCollection $prices): Offer
+    {
+        $this->prices = $prices;
+        return $this;
+    }
+
+    /**
      *
      *
      * @throws ServiceCircularReferenceException
@@ -1785,6 +1819,24 @@ class Offer extends IblockElement
         }
 
         return $max;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRegionDiscounts(): string
+    {
+        return $this->regionDiscounts;
+    }
+
+    /**
+     * @param string $regionDiscounts
+     */
+    public function setRegionDiscounts(string $regionDiscounts): Offer
+    {
+        $this->regionDiscounts = $regionDiscounts;
+
+        return $this;
     }
 
     /**
