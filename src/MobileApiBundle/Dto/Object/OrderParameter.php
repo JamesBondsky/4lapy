@@ -217,9 +217,9 @@ class OrderParameter
 
     /**
      * Индекс даты доставки второго заказа
-     * @Serializer\Type("string")
+     * @Serializer\Type("int")
      * @Serializer\SerializedName("secondDeliveryDate")
-     * @var string
+     * @var int
      */
     protected $secondDeliveryDate;
 
