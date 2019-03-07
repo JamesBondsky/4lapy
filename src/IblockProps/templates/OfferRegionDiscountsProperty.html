@@ -1,0 +1,81 @@
+<style>
+    .left-col {
+        float: left;
+        width: 320px;
+        margin-right: 15px;
+    }
+
+    .right-col {
+        overflow: hidden;
+        margin-bottom: 7px;
+    }
+
+    .right-col-label {
+        width: 145px;
+        display: block;
+    }
+
+    .remove-region {
+        margin-bottom: 20px;
+    }
+</style>
+<script>
+    $(document).ready(function () {
+        let addBtn = $('#add-new-region'),
+            changedFields = $('.changedField'),
+            changedFieldsSelect = $('.changedFieldSelect'),
+            sendingField = $('#sending_field_OfferRegionDiscountsProperty'),
+            propertyWrapper = $('.property-wrapper'),
+            removeBtn = $('.remove-region');
+        function setSendingField() {
+            let result = {};
+            $.each(propertyWrapper.find('.select-block'), function (key, item) {
+                let itemArr = {};
+                itemArr['id'] = $(item).data('select-block');
+                itemArr['cond_for_action'] = $(item).find('.cond_for_action').val();
+                itemArr['cond_for_action'] = $(item).find('.cond_for_action').val();
+                itemArr['price_action'] = $(item).find('.price_action').val();
+                itemArr['cond_value'] = $(item).find('.cond_value').val();
+                result[$(item).data('select-block')] = itemArr;
+            });
+            sendingField.val(JSON.stringify(result));
+        }
+        changedFields.change(function (e) {
+            e.preventDefault();
+            setSendingField();
+        });
+        changedFieldsSelect.change(function (e) {
+            e.preventDefault();
+            $(this).parents('.select-block').attr('data-select-block', $(this).val());
+            setSendingField();
+        });
+        addBtn.click(function (e) {
+            e.preventDefault();
+            var template = propertyWrapper.find('.select-block').last().clone(),
+                lastID = template.data('number'),
+                nextID = lastID + 1;
+            template = $(template.get(0).outerHTML.replace(lastID, nextID));
+            template.find('option[selected]').attr('selected', false);
+            template.find('.changedField').val('').change(function (e) {
+                e.preventDefault();
+                setSendingField();
+            });
+            template.find('.remove-region').attr('data-remove-region', nextID).click(function (e) {
+                if ($('.select-block').length > 1) {
+                    e.preventDefault();
+                    $('[data-select-block=' + $(this).data('remove-region') + ']').remove();
+                    setSendingField();
+                }
+            });
+            propertyWrapper.append(template);
+        });
+        removeBtn.click(function (e) {
+            if ($('.select-block').length > 1) {
+                e.preventDefault();
+                $('[data-select-block=' + $(this).data('remove-region') + ']').remove();
+                setSendingField();
+            }
+        });
+    });
+</script>
+<input type="hidden" name="#CONTROL_NAME#" id="sending_field_OfferRegionDiscountsProperty" value='#CONTROL_NAME_VALUE#'>
