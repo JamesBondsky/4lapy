@@ -306,8 +306,9 @@ class ProductService
         if ($images = $offer->getImages()) {
             /** @var Image $picture */
             $picture = $images->first();
-            $pictureSrc = \CFile::getPath($picture->getId());
-            $shortProduct->setPicture($pictureSrc);
+            if ($pictureSrc = \CFile::getPath($picture->getId())) {
+                $shortProduct->setPicture($pictureSrc);
+            }
         }
 
         // картинка ресайз (возможно не используется, но это не точно)
