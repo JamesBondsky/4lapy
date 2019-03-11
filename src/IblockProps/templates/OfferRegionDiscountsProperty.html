@@ -30,51 +30,47 @@
         function setSendingField() {
             let result = {};
             $.each(propertyWrapper.find('.select-block'), function (key, item) {
-                let itemArr = {};
-                itemArr['id'] = $(item).data('select-block');
-                itemArr['cond_for_action'] = $(item).find('.cond_for_action').val();
+                let itemArr = {},
+                    regionId = $(item).find('.changedFieldSelect').val();
+                itemArr['id'] = regionId;
                 itemArr['cond_for_action'] = $(item).find('.cond_for_action').val();
                 itemArr['price_action'] = $(item).find('.price_action').val();
                 itemArr['cond_value'] = $(item).find('.cond_value').val();
-                result[$(item).data('select-block')] = itemArr;
+                result[regionId] = itemArr;
             });
             sendingField.val(JSON.stringify(result));
         }
-        changedFields.change(function (e) {
+        function changedFieldsFunction(e) {
             e.preventDefault();
             setSendingField();
-        });
-        changedFieldsSelect.change(function (e) {
+        }
+        function changedFieldsSelectFunc(e) {
             e.preventDefault();
             $(this).parents('.select-block').attr('data-select-block', $(this).val());
             setSendingField();
-        });
-        addBtn.click(function (e) {
-            e.preventDefault();
-            var template = propertyWrapper.find('.select-block').last().clone(),
-                lastID = template.data('number'),
-                nextID = lastID + 1;
-            template = $(template.get(0).outerHTML.replace(lastID, nextID));
-            template.find('option[selected]').attr('selected', false);
-            template.find('.changedField').val('').change(function (e) {
-                e.preventDefault();
-                setSendingField();
-            });
-            template.find('.remove-region').attr('data-remove-region', nextID).click(function (e) {
-                if ($('.select-block').length > 1) {
-                    e.preventDefault();
-                    $('[data-select-block=' + $(this).data('remove-region') + ']').remove();
-                    setSendingField();
-                }
-            });
-            propertyWrapper.append(template);
-        });
-        removeBtn.click(function (e) {
+        }
+        function removeBtnFunc(e) {
             if ($('.select-block').length > 1) {
+                let removeRegionNumber = $(this).data('remove-region');
                 e.preventDefault();
-                $('[data-select-block=' + $(this).data('remove-region') + ']').remove();
+                $('.select-block[data-number=' + removeRegionNumber + ']').remove();
                 setSendingField();
             }
+        }
+        changedFields.change(changedFieldsFunction);
+        changedFieldsSelect.change(changedFieldsSelectFunc);
+        removeBtn.click(removeBtnFunc);
+        addBtn.click(function (e) {
+            e.preventDefault();
+            let template = propertyWrapper.find('.select-block').last(),
+                lastID = template.data('number'),
+                nextID = lastID + 1;
+            template = $(template.get(0).outerHTML.replace('data-number="' + lastID + '"', 'data-number="' + nextID + '"'));
+            template.find('option[selected]').attr('selected', false);
+            template.find('.changedFieldSelect').change(changedFieldsSelectFunc);
+            template.find('.changedField').val('').change(changedFieldsFunction);
+            template.find('.remove-region').attr('data-remove-region', nextID).click(removeBtnFunc);
+            propertyWrapper.append(template);
         });
     });
 </script>

@@ -78,8 +78,9 @@ class OfferRegionDiscountsProperty
             ];
         }
         $template .= "<div class='property-wrapper'>";
+        $i = 0;
         foreach ($values as $key => $arValue) {
-            $template .= "<div class='select-block' data-select-block='" . $arValue['id'] . "' data-number='" . $key . "'><div class='left-col'><select class='changedFieldSelect code' name='region_" . $key . "' size='6'>";
+            $template .= "<div class='select-block' data-select-block='" . $arValue['id'] . "' data-number='" . $i . "'><div class='left-col'><select class='changedFieldSelect code' name='region_" . $key . "' size='6'>";
             foreach ($prices as $price) {
                 $template .= "<option value='" . $price['region_id'] . "' " . (($arValue['id'] == $price['region_id']) ? "selected" : "") . ">" . $price['name'] . "</option>";
             }
@@ -90,8 +91,9 @@ class OfferRegionDiscountsProperty
             $template .= "<input type='text' class='changedField price_action' name='price_action_" . $key . "' value='" . $arValue['price_action'] . "'></div>";
             $template .= "<div class='right-col'><label class='right-col-label' for='cond_value_" . $key . "'>Размер скидки на товар</label>";
             $template .= "<input type='text' class='changedField cond_value' name='cond_value_" . $key . "' value='" . $arValue['cond_value'] . "'></div>";
-            $template .= "<div><input type='button' class='remove-region' data-remove-region='" . $key . "' onclick='javascript:void(0);' value='Удалить'/></div>";
+            $template .= "<div><input type='button' class='remove-region' data-remove-region='" . $i . "' onclick='javascript:void(0);' value='Удалить'/></div>";
             $template .= "</div>";
+            $i++;
         }
         $template .= "</div>";
 
