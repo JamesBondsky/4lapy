@@ -275,7 +275,7 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
                         'CODE' => 'REGION_DISCOUNTS'
                     ]
                 )->Fetch();
-                $arRegionDiscounts = json_decode($arRegionDiscounts['VALUE'], true);
+                $arRegionDiscounts = $arRegionDiscounts['VALUE'];
                 if ($tmpPriceTypeId) {
                     switch ($priceItem->getPriceType()) {
                         case Offer::SIMPLE_SHARE_SALE_CODE:

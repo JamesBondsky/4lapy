@@ -21,8 +21,15 @@ class OfferRegionDiscountsProperty
             'PROPERTY_TYPE' => 'S',
             'USER_TYPE' => 'OfferRegionDiscountsProperty',
             'GetPropertyFieldHtml' => [__CLASS__, 'GetPropertyFieldHtml'],
+            'ConvertFromDB' => [__CLASS__, 'ConvertFromDB'],
             'ConvertToDB' => [__CLASS__, 'ConvertToDB'],
         ];
+    }
+
+    public static function ConvertFromDB($arProperty, $value)
+    {
+        $value['VALUE'] = json_decode($value['VALUE'], true);
+        return $value;
     }
 
     public static function ConvertToDB($arProperty, $value)
@@ -33,7 +40,7 @@ class OfferRegionDiscountsProperty
     public function GetPropertyFieldHtml(array $property, array $value, array $control)
     {
         if ($value['VALUE'] != null && $value['VALUE'] != 'null' && $value['VALUE'] != '') {
-            $values = json_decode($value['VALUE'], true);
+            $values = $value['VALUE'];
             if (!is_array($values)) {
                 $values = [
                     [
