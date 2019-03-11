@@ -79,7 +79,7 @@ class OfferCollection extends IblockElementCollection
             if(!$prices[$price->getProductId()] instanceof ArrayCollection){
                 $prices[$price->getProductId()] = new ArrayCollection();
             }
-            $prices[$price->getProductId()][$price->getCatalogGroupId()] = $price->toArray();
+            $prices[$price->getProductId()][$price->getCatalogGroupId()] = $price;
         }
 
         foreach ($prices as $productId => $arPrices){

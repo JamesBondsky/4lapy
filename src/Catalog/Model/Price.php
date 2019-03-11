@@ -8,51 +8,67 @@
 
 namespace FourPaws\Catalog\Model;
 
+use JMS\Serializer\Annotation\Accessor;
+use JMS\Serializer\Annotation\Groups;
+use JMS\Serializer\Annotation\Type;
 
-use FourPaws\BitrixOrm\Model\BitrixArrayItemBase;
-use JMS\Serializer\Annotation as Serializer;
-
-class Price extends BitrixArrayItemBase
+class Price
 {
     /**
      * @var integer
-     * @Serializer\SkipWhenEmpty()
-     * @Serializer\Type("int")
-     * @Serializer\SerializedName("ID")
+     * @Type("int")
+     * @Groups({"elastic"})
+     * @Accessor(getter="getId")
      */
     protected $ID;
 
     /**
      * @var integer
-     * @Serializer\SkipWhenEmpty()
-     * @Serializer\Type("int")
-     * @Serializer\SerializedName("PRODUCT_ID")
+     * @Type("int")
+     * @Groups({"elastic"})
+     * @Accessor(getter="getProductId")
      */
     protected $PRODUCT_ID;
 
     /**
      * @var integer
-     * @Serializer\SkipWhenEmpty()
-     * @Serializer\Type("int")
-     * @Serializer\SerializedName("CATALOG_GROUP_ID")
+     * @Type("int")
+     * @Groups({"elastic"})
+     * @Accessor(getter="getCatalogGroupId")
      */
     protected $CATALOG_GROUP_ID;
 
     /**
      * @var float
-     * @Serializer\SkipWhenEmpty()
-     * @Serializer\Type("float")
-     * @Serializer\SerializedName("PRICE")
+     * @Type("float")
+     * @Groups({"elastic"})
+     * @Accessor(getter="getPrice")
      */
     protected $PRICE;
 
     /**
      * @var string
-     * @Serializer\SkipWhenEmpty()
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("CURRENCY")
+     * @Type("string")
+     * @Groups({"elastic"})
+     * @Accessor(getter="getCurrency")
      */
     protected $CURRENCY;
+
+    /**
+     * Price constructor.
+     *
+     * @param array $fields
+     */
+    public function __construct(array $fields = [])
+    {
+        foreach ($fields as $field => $value) {
+            if ($value === null) {
+                continue;
+            }
+
+            $this->{$field} = $value;
+        }
+    }
 
     /**
      * @return int
@@ -109,9 +125,9 @@ class Price extends BitrixArrayItemBase
     }
 
     /**
-     * @return int
+     * @return float
      */
-    public function getPrice(): int
+    public function getPrice(): float
     {
         return $this->PRICE;
     }
@@ -127,7 +143,7 @@ class Price extends BitrixArrayItemBase
     }
 
     /**
-     * @return int
+     * @return string
      */
     public function getCurrency(): string
     {
@@ -135,7 +151,7 @@ class Price extends BitrixArrayItemBase
     }
 
     /**
-     * @param int $CURRENCY
+     * @param string $CURRENCY
      * @return Price
      */
     public function setCurrency(string $CURRENCY): Price
@@ -143,7 +159,6 @@ class Price extends BitrixArrayItemBase
         $this->CURRENCY = $CURRENCY;
         return $this;
     }
-
 
 
 }

@@ -469,7 +469,7 @@ class Offer extends IblockElement
      * @Type("array")
      * @Groups({"elastic"})
      */
-    protected $PROPERTY_REGION_DISCOUNTS;
+    protected $PROPERTY_REGION_DISCOUNTS = [];
 
     /**
      * @var array|false
@@ -1833,17 +1833,20 @@ class Offer extends IblockElement
             return;
         }*/
 
+        /** @var Price $arPrice */
         $arPrice = $this->prices->filter(function($item){
-            return $item['CATALOG_GROUP_ID'] == $this->getCatalogGroupId();
+            /** @var Price $item */
+            return $item->getCatalogGroupId() == $this->getCatalogGroupId();
         })->first();
 
         if(!$arPrice){
             $arPrice = $this->prices->filter(function($item){
-                return $item['CATALOG_GROUP_ID'] == self::CATALOG_GROUP_ID_BASE;
+                /** @var Price $item */
+                return $item->getCatalogGroupId() == self::CATALOG_GROUP_ID_BASE;
             })->first();
         }
 
-        $oldPrice = $price = (float)$arPrice['PRICE'];
+        $oldPrice = $price = (float)$arPrice->getPrice();
 
         if ($this->isSimpleSaleAction()) {
             $price = (float)$this->getPriceAction();
@@ -1924,6 +1927,7 @@ class Offer extends IblockElement
 
     /**
      * @param ArrayCollection $prices
+     * @return Offer
      */
     public function withPrices(ArrayCollection $prices): Offer
     {
@@ -2195,7 +2199,7 @@ class Offer extends IblockElement
      */
     public function getRegionDiscounts(): array
     {
-        $this->PROPERTY_REGION_DISCOUNTS = \is_array($this->PROPERTY_REGION_DISCOUNTS) ? $this->PROPERTY_REGION_DISCOUNTS : [];
+        $this->PROPERTY_REGION_DISCOUNTS = \is_array($this->PROPERTY_REGION_DISCOUNTS) ? array_values($this->PROPERTY_REGION_DISCOUNTS) : [];
         return $this->PROPERTY_REGION_DISCOUNTS;
     }
 
