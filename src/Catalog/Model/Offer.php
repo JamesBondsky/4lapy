@@ -466,7 +466,7 @@ class Offer extends IblockElement
      * @Type("array")
      * @Groups({"elastic"})
      */
-    protected $REGION_DISCOUNTS;
+    protected $PROPERTY_REGION_DISCOUNTS;
 
     /**
      * @var int
@@ -1829,8 +1829,8 @@ class Offer extends IblockElement
             return;
         }
 
-        $price = $this->prices->filter(function($element){
-            $element['CATALOG_GROUP_ID'] = $this->catalogGroupId;
+        $price = $this->prices->filter(function($item){
+            $item['CATALOG_GROUP_ID'] = $this->getCatalogGroupId();
         });
 
         $price = $this->price;
@@ -2165,6 +2165,35 @@ class Offer extends IblockElement
         }
 
         return true;
+    }
+
+
+    /**
+     * @return string[]
+     */
+    public function getRegionDiscounts(): array
+    {
+        $this->PROPERTY_REGION_DISCOUNTS = \is_array($this->PROPERTY_REGION_DISCOUNTS) ? $this->PROPERTY_REGION_DISCOUNTS : [];
+
+        return $this->PROPERTY_REGION_DISCOUNTS;
+    }
+
+    /**
+     * @param string[] $barcodes
+     *
+     * @return $this
+     */
+    public function withRegionDiscounts(array $regionDiscounts): self
+    {
+        $regionDiscounts = array_filter(
+            $regionDiscounts,
+            function ($value) {
+                return $value && \is_string($value);
+            }
+        );
+        $this->PROPERTY_REGION_DISCOUNTS = $regionDiscounts;
+
+        return $this;
     }
 
 }
