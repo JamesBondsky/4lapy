@@ -65,13 +65,14 @@ class OfferCollection extends IblockElementCollection
     {
         $this->collection = new ArrayCollection();
         foreach ($this->fetchElement() as $element) {
-            /**
-             * @var BitrixArrayItemBase
-             */
+            /** @var BitrixArrayItemBase */
             $this->collection->set($element->getId(), $element);
             $this->productIds[] = $element->getId();
         }
 
+        /**
+         * Получаем региональные цены для всех предложений из коллекции
+         */
         $prices = [];
         $this->priceCollection = (new PriceQuery())->withFilter(['=PRODUCT_ID' => $this->productIds])->exec();
         foreach($this->priceCollection as $price){
@@ -82,7 +83,7 @@ class OfferCollection extends IblockElementCollection
         }
 
         foreach ($prices as $productId => $arPrices){
-            $this->collection->get($productId)->setPrices($arPrices);
+            $this->collection->get($productId)->withPrices($arPrices);
         }
     }
 

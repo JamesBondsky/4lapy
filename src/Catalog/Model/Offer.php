@@ -316,6 +316,9 @@ class Offer extends IblockElement
 
     /**
      * @var ArrayCollection
+     * @Type("ArrayCollection<FourPaws\Catalog\Model\Price>")
+     * @Accessor(getter="getPrices")
+     * @Groups({"elastic"})
      */
     protected $prices;
 
@@ -467,6 +470,11 @@ class Offer extends IblockElement
      * @Groups({"elastic"})
      */
     protected $PROPERTY_REGION_DISCOUNTS;
+
+    /**
+     * @var array|false
+     */
+    protected $regionDiscount;
 
     /**
      * @var int
@@ -1397,23 +1405,8 @@ class Offer extends IblockElement
         return (int)$this->PROPERTY_CML2_LINK;
     }
 
-    /**
-     * @return ArrayCollection
-     */
-    public function getPrices(): ArrayCollection
-    {
-        return $this->prices;
-    }
 
-    /**
-     * @param ArrayCollection $prices
-     * @return Offer
-     */
-    public function setPrices(ArrayCollection $prices): Offer
-    {
-        $this->prices = $prices;
-        return $this;
-    }
+
 
     /**
      *
@@ -1542,6 +1535,7 @@ class Offer extends IblockElement
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws SystemException
      */
     public function getStocks(): StockCollection
     {
@@ -1587,6 +1581,10 @@ class Offer extends IblockElement
      */
     public function isSimpleDiscountAction(): bool
     {
+        $regionDiscount = $this->getCurrentRegionDiscount();
+        if($regionDiscount){
+            return $regionDiscount['cond_value'] > 0 && $regionDiscount['cond_for_action'] === self::SIMPLE_SHARE_DISCOUNT_CODE;
+        }
         return $this->PROPERTY_COND_VALUE > 0 && $this->PROPERTY_COND_FOR_ACTION === self::SIMPLE_SHARE_DISCOUNT_CODE;
     }
 
@@ -1595,6 +1593,10 @@ class Offer extends IblockElement
      */
     public function isSimpleSaleAction(): bool
     {
+        $regionDiscount = $this->getCurrentRegionDiscount();
+        if($regionDiscount){
+            return $regionDiscount['price_action'] > 0 && $regionDiscount['cond_for_action'] === self::SIMPLE_SHARE_SALE_CODE;
+        }
         return $this->PROPERTY_PRICE_ACTION > 0 && $this->PROPERTY_COND_FOR_ACTION === self::SIMPLE_SHARE_SALE_CODE;
     }
 
@@ -1790,7 +1792,8 @@ class Offer extends IblockElement
                     ->setSelect(['ID'])
                     ->setFilter(['=XML_ID' => $locationService->getCurrentRegionCode()])
                     ->setCacheTtl(31536000)
-                    ->exec();
+                    ->exec()
+                    ->fetch();
 
                 $this->catalogGroupId = $result['ID'];
             } catch (\Exception|SystemException|ArgumentException|ApplicationCreateException $e) {
@@ -1823,25 +1826,29 @@ class Offer extends IblockElement
 
         /**
          * В эластике price индексируется с уже посчитанной скидкой,
-         * поэтому проводить расчеты ни к чемуу
+         * поэтому проводить расчеты ни к чему
+         * upd: цены зависят от региона
          */
-        if ($this->oldPrice) {
+        /*if ($this->oldPrice) {
             return;
+        }*/
+
+        $arPrice = $this->prices->filter(function($item){
+            return $item['CATALOG_GROUP_ID'] == $this->getCatalogGroupId();
+        })->first();
+
+        if(!$arPrice){
+            $arPrice = $this->prices->filter(function($item){
+                return $item['CATALOG_GROUP_ID'] == self::CATALOG_GROUP_ID_BASE;
+            })->first();
         }
 
-        $price = $this->prices->filter(function($item){
-            $item['CATALOG_GROUP_ID'] = $this->getCatalogGroupId();
-        });
-
-        $price = $this->price;
-        $oldPrice = $this->price;
-
-
+        $oldPrice = $price = (float)$arPrice['PRICE'];
 
         if ($this->isSimpleSaleAction()) {
-            $price = (float)$this->PROPERTY_PRICE_ACTION;
+            $price = (float)$this->getPriceAction();
         } elseif ($this->isSimpleDiscountAction()) {
-            $price *= (100 - $this->PROPERTY_COND_VALUE) / 100;
+            $price *= (100 - $this->getCondValue()) / 100;
         }
 
         $this->withPrice($price)
@@ -1905,6 +1912,23 @@ class Offer extends IblockElement
         }
 
         return $max;
+    }
+
+    /**
+     * @return ArrayCollection
+     */
+    public function getPrices(): ArrayCollection
+    {
+        return $this->prices;
+    }
+
+    /**
+     * @param ArrayCollection $prices
+     */
+    public function withPrices(ArrayCollection $prices): Offer
+    {
+        $this->prices = $prices;
+        return $this;
     }
 
     /**
@@ -2143,7 +2167,6 @@ class Offer extends IblockElement
         return OfferQuery::getById((int)$primary);
     }
 
-
     /**
      * Возможность "довоза" оффера в магазин (DC001 -> Rxxx)
      *
@@ -2167,33 +2190,69 @@ class Offer extends IblockElement
         return true;
     }
 
-
     /**
-     * @return string[]
+     * @return array
      */
     public function getRegionDiscounts(): array
     {
         $this->PROPERTY_REGION_DISCOUNTS = \is_array($this->PROPERTY_REGION_DISCOUNTS) ? $this->PROPERTY_REGION_DISCOUNTS : [];
-
         return $this->PROPERTY_REGION_DISCOUNTS;
     }
 
     /**
-     * @param string[] $barcodes
-     *
-     * @return $this
+     * @param array $regionDiscounts
+     * @return Offer
      */
     public function withRegionDiscounts(array $regionDiscounts): self
     {
         $regionDiscounts = array_filter(
             $regionDiscounts,
             function ($value) {
-                return $value && \is_string($value);
+                return $value && \is_array($value);
             }
         );
         $this->PROPERTY_REGION_DISCOUNTS = $regionDiscounts;
-
         return $this;
     }
 
+    /**
+     * @return array|null
+     */
+    public function getCurrentRegionDiscount(): ?array
+    {
+        if(null === $this->regionDiscount){
+            $this->regionDiscount = false;
+            $regionDiscounts = $this->getRegionDiscounts();
+            foreach($regionDiscounts as $discount){
+                if($this->getCatalogGroupId() == $discount['id']){
+                    $this->regionDiscount = $discount;
+                }
+            }
+        }
+        return $this->regionDiscount ?? $this->regionDiscount;
+    }
+
+    /**
+     * @return float|null
+     */
+    public function getPriceAction(): ?float
+    {
+        $regionDiscount = $this->getCurrentRegionDiscount();
+        if($regionDiscount){
+            return $regionDiscount['price_action'];
+        }
+        return $this->PROPERTY_PRICE_ACTION;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getCondValue(): ?int
+    {
+        $regionDiscount = $this->getCurrentRegionDiscount();
+        if($regionDiscount){
+            return $regionDiscount['cond_value'];
+        }
+        return $this->PROPERTY_COND_VALUE;
+    }
 }
