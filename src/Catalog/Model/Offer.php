@@ -45,11 +45,8 @@ use FourPaws\CatalogBundle\Service\BrandService;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
-<<<<<<< HEAD
 use FourPaws\LocationBundle\LocationService;
-=======
 use FourPaws\PersonalBundle\Service\BonusService;
->>>>>>> origin/da_task31638
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
@@ -485,13 +482,13 @@ class Offer extends IblockElement
     {
         parent::__construct($fields);
 
-//        if (isset($fields['CATALOG_PRICE_2'])) {
-//            $this->price = (float)$fields['CATALOG_PRICE_2'];
-//        }
-//
-//        if (isset($fields['CATALOG_CURRENCY_2'])) {
-//            $this->currency = (string)$fields['CATALOG_CURRENCY_2'];
-//        }
+        if (isset($fields['CATALOG_PRICE_2'])) {
+            $this->price = (float)$fields['CATALOG_PRICE_2'];
+        }
+
+        if (isset($fields['CATALOG_CURRENCY_2'])) {
+            $this->currency = (string)$fields['CATALOG_CURRENCY_2'];
+        }
 
         if (isset($fields['CATALOG_VAT'])) {
             $this->VAT_ID = (string)$fields['CATALOG_VAT_ID'];
@@ -1908,24 +1905,6 @@ class Offer extends IblockElement
         }
 
         return $max;
-    }
-
-    /**
-     * @return string
-     */
-    public function getRegionDiscounts(): string
-    {
-        return $this->regionDiscounts;
-    }
-
-    /**
-     * @param string $regionDiscounts
-     */
-    public function setRegionDiscounts(string $regionDiscounts): Offer
-    {
-        $this->regionDiscounts = $regionDiscounts;
-
-        return $this;
     }
 
     /**
