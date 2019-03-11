@@ -80,7 +80,7 @@ https://api.esv2.com - валидный адрес
 
 ```
 - ./bin/symfony_console f:s:o:m:i # за 1 месяц
-- ./bin/symfony_console f:s:o:m:i --period="2 month" # за произвольный период
+- ./bin/symfony_console f:s:o:m:i --period="2 month" --mq=1 # period - за произвольный период; user - ID пользователя, для которого выгрузить (период при этом не учитывается); mq - использовать сервер очередей для импорта
 ```
 
 ## Деактивация завершившихся акций

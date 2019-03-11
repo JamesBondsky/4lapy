@@ -151,9 +151,12 @@ abstract class CustomerRegistration extends SubmitForm
             if ($createResult) {
                 if ($user->getId()) {
                     // привязка пользователя к группе "Зарегистрированные пользователи"
-                    $registeredUserGroupId = $this->getGroupIdByCode('REGISTERED_USERS');
-                    if ($registeredUserGroupId) {
-                        \CUser::AppendUserGroup($user->getId(), [$registeredUserGroupId]);
+                    //$registeredUserGroupId = $this->getGroupIdByCode('REGISTERED_USERS');
+
+                    // группы в которые нужно добавлять юзера при регистрации
+                    $registeredUserGroupId = explode(',', \COption::GetOptionString('main', 'new_user_registration_def_group'));
+                    foreach($registeredUserGroupId as $groupId){
+                        \CUser::AppendUserGroup($user->getId(), $groupId);
                     }
                 }
             } else {

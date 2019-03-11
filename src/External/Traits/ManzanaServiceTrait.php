@@ -59,7 +59,7 @@ trait ManzanaServiceTrait
     public function setServiceLogger(): void
     {
         if (!$this->logger) {
-            $this->setLogger(LoggerFactory::create('manzana'));
+            $this->setLogger(LoggerFactory::create('manzana', 'manzana'));
         }
     }
 }

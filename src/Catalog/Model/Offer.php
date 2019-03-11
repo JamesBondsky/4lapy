@@ -41,15 +41,23 @@ use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Collection\PriceCollection;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\CatalogBundle\Service\BrandService;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
+<<<<<<< HEAD
 use FourPaws\LocationBundle\LocationService;
+=======
+use FourPaws\PersonalBundle\Service\BonusService;
+>>>>>>> origin/da_task31638
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\UserBundle\Service\UserService;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\StoreBundle\Entity\Store;
 use InvalidArgumentException;
 use JMS\Serializer\Annotation as Serializer;
@@ -441,6 +449,12 @@ class Offer extends IblockElement
      * @var ShareCollection
      */
     protected $share;
+
+    /**
+     * Приоритетный процент начисленных бонусов от стоимости товара
+     * @var int
+     */
+    protected $bonusPercent;
 
     /**
      * @var string
@@ -1263,14 +1277,40 @@ class Offer extends IblockElement
     }
 
     /**
+     * Сумма начисляемых бонусов
+     *
      * @param int $percent
      * @param int $quantity
+     *
+     * @throws NotAuthorizedException
      *
      * @return float
      */
     public function getBonusCount(int $percent, int $quantity = 1): float
     {
         $result = 0;
+
+        if(null === $this->bonusPercent){
+            try{
+                /** @var UserService $userCurrentUserService*/
+                $userCurrentUserService = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+                $currentUser = $userCurrentUserService->getCurrentUser();
+
+                if($currentUser->isOpt() && $this->getProduct()->getBrand()->isBonusOpt()){
+                    $this->bonusPercent = BrandService::getBonusOptPercent();
+                }
+                else{
+                    $this->bonusPercent = 0;
+                }
+            } catch(NotAuthorizedException $e){
+                /** просто пропускаем */
+            }
+        }
+
+        if($this->bonusPercent > 0){
+            $percent = $this->bonusPercent;
+        }
+
         if (!$this->isBonusExclude() && !$this->isShare()) {
             $result = $this->getPrice() * $quantity * $percent / 100;
         }
