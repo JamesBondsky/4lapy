@@ -1436,7 +1436,7 @@ class OrderService implements LoggerAwareInterface
                 $address = (string)$this->compileOrderAddress($order);
                 break;
             case ($deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE):
-                $address = (string)$this->compileOrderAddress($order);
+                $address = $this->compileOrderAddress($order)->toStringExt();
                 break;
         }
 
@@ -1924,8 +1924,8 @@ class OrderService implements LoggerAwareInterface
         $curDate = new \DateTime;
         $basket = $order->getBasket();
         /** @var int $insurance Цена страхования */
-        $insurance = ceil((float)$basket->getPrice() + (float)$deliveryPrice);
         $deliveryPrice = $order->getDeliveryPrice();
+        $insurance = ceil((float)$basket->getPrice() + (float)$deliveryPrice);
         $takingAmount = 0;
         if (!$isPaid) {
             $takingAmount += $insurance;
@@ -1934,6 +1934,7 @@ class OrderService implements LoggerAwareInterface
         $offers = $this->getOrderProducts($order);
         /** @var int $weight Вес всех товаров */
         $weight = (int)($basket->getWeight() / 1000);
+        $dostavistaWeightVal = 0;
         if ($weight <= 15) {
             $vehicleTypeId = 6;
             if ($weight <= 5) {
@@ -1998,7 +1999,8 @@ class OrderService implements LoggerAwareInterface
         ];
 
         $nearAddressString = $this->storeService->getStoreAddress($nearShop) . ', ' . $nearShop->getAddress();
-        $nearAddress = $this->locationService->splitAddress($nearAddressString, $nearShop->getLocation());
+        $nearAddress = $this->locationService->splitAddress($nearAddressString, $nearShop->getLocation())->toStringExt();
+        $secondAddress = $this->getOrderDeliveryAddress($order);
 
         $pointZeroDate = clone $curDate;
         $requireTimeStart = $pointZeroDate->format('c');
@@ -2019,7 +2021,7 @@ class OrderService implements LoggerAwareInterface
         $storePhone = explode(',доб.', $storePhone)[0];
 
         $data['points'][0] = [
-            'address' => (string)$nearAddress,
+            'address' => $nearAddress,
             'contact_person' => [
                 'phone' => $storePhone
             ],
@@ -2032,7 +2034,7 @@ class OrderService implements LoggerAwareInterface
         ];
 
         $data['points'][1] = [
-            'address' => $this->getOrderDeliveryAddress($order),
+            'address' => $secondAddress,
             'contact_person' => [
                 'phone' => $phone,
                 'name' => $name

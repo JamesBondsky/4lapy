@@ -6,7 +6,6 @@
 
 namespace FourPaws\SapBundle\Consumer;
 
-use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Catalog;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
@@ -18,12 +17,9 @@ use FourPaws\External\Exception\YandexMarketException;
 use FourPaws\External\YandexMarketService;
 use FourPaws\SapBundle\Dto\In\Prices\Item;
 use FourPaws\SapBundle\Dto\In\Prices\Prices;
-use Psr\Log\LoggerAwareInterface;
 
-class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
+class PriceConsumer extends SapConsumerBase
 {
-    use LazyLoggerAwareTrait;
-
     const BASE_PRICE_REGION_CODE = 'IM01';
 
     /** @var string $defaultCurrencyCode */
