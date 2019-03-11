@@ -9,6 +9,7 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\PriceQuery;
 use FourPaws\Catalog\Collection\PriceCollection;
+use FourPaws\Migrator\Entity\Result;
 
 /**
  * Class OfferCollection
@@ -76,8 +77,8 @@ class OfferCollection extends IblockElementCollection
         $prices = [];
         $this->priceCollection = (new PriceQuery())->withFilter(['=PRODUCT_ID' => $this->productIds])->exec();
         foreach($this->priceCollection as $price){
-            if(!$prices[$price->getProductId()] instanceof ArrayCollection){
-                $prices[$price->getProductId()] = new ArrayCollection();
+            if(!$prices[$price->getProductId()] instanceof PriceCollection){
+                $prices[$price->getProductId()] = new PriceCollection(clone $this->priceCollection->getResult());
             }
             $prices[$price->getProductId()][$price->getCatalogGroupId()] = $price;
         }

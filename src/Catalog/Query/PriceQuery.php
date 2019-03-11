@@ -64,7 +64,7 @@ class PriceQuery extends D7QueryBase
     public function getAllPrices(int $elementId): PriceCollection
     {
         /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return $this->withFilter(['=ELEMENT_ID' => $elementId])
+        return $this->withFilter(['=PRODUCT_ID' => $elementId])
             ->exec();
     }
 

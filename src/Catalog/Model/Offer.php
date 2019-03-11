@@ -315,7 +315,7 @@ class Offer extends IblockElement
     protected $price = 0;
 
     /**
-     * @var ArrayCollection
+     * @var PriceCollection
      * @Type("ArrayCollection<FourPaws\Catalog\Model\Price>")
      * @Accessor(getter="getPrices")
      * @Groups({"elastic"})
@@ -1834,16 +1834,9 @@ class Offer extends IblockElement
         }*/
 
         /** @var Price $arPrice */
-        $arPrice = $this->prices->filter(function($item){
-            /** @var Price $item */
-            return $item->getCatalogGroupId() == $this->getCatalogGroupId();
-        })->first();
-
+        $arPrice = $this->prices->filterByCatalogGroupId($this->getCatalogGroupId())->first();
         if(!$arPrice){
-            $arPrice = $this->prices->filter(function($item){
-                /** @var Price $item */
-                return $item->getCatalogGroupId() == self::CATALOG_GROUP_ID_BASE;
-            })->first();
+            $arPrice = $this->prices->filterByCatalogGroupId(self::CATALOG_GROUP_ID_BASE)->first();
         }
 
         $oldPrice = $price = (float)$arPrice->getPrice();
@@ -1918,18 +1911,18 @@ class Offer extends IblockElement
     }
 
     /**
-     * @return ArrayCollection
+     * @return PriceCollection
      */
-    public function getPrices(): ArrayCollection
+    public function getPrices(): PriceCollection
     {
         return $this->prices;
     }
 
     /**
-     * @param ArrayCollection $prices
+     * @param PriceCollection $prices
      * @return Offer
      */
-    public function withPrices(ArrayCollection $prices): Offer
+    public function withPrices(PriceCollection $prices): Offer
     {
         $this->prices = $prices;
         return $this;
