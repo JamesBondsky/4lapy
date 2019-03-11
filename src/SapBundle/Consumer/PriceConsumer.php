@@ -259,7 +259,7 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
             }
 
             $setPropsList = [];
-            if ($regionCode == '' && $regionCode == null) {
+            if ($regionCode == static::BASE_PRICE_REGION_CODE) {
                 $setPropsList['PRICE_ACTION'] = $priceItem->getActionPrice();
                 $setPropsList['PRICE_ACTION'] = $setPropsList['PRICE_ACTION'] > 0 ? $setPropsList['PRICE_ACTION'] : '';
                 $setPropsList['COND_FOR_ACTION'] = trim($priceItem->getPriceType());
