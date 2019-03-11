@@ -2216,9 +2216,9 @@ class Offer extends IblockElement
     }
 
     /**
-     * @return array|null
+     * @return array|null|boolean
      */
-    public function getCurrentRegionDiscount(): ?array
+    public function getCurrentRegionDiscount()
     {
         if(null === $this->regionDiscount){
             $this->regionDiscount = false;
@@ -2229,7 +2229,7 @@ class Offer extends IblockElement
                 }
             }
         }
-        return $this->regionDiscount ?? $this->regionDiscount;
+        return $this->regionDiscount;
     }
 
     /**
