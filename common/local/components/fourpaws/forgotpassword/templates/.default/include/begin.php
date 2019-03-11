@@ -65,7 +65,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
         <?
         $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
-        echo $recaptchaService->getCaptcha('b-input-line', true);
+        echo $recaptchaService->getCaptcha('b-input-line', true, '', 'captchaForgotPassword');
         ?>
 
         <button class="b-button b-button--social b-button--full-width" data-recovery-form="true">Далее</button>
