@@ -20,7 +20,7 @@ class OrderNumberTable20190307062911 extends \Adv\Bitrixtools\Migration\SprintMi
                     PRIMARY KEY (ACCOUNT_NUMBER)
                 );'
             );
-            Application::getConnection()->query('ALTER TABLE 4lapy_order_number AUTO_INCREMENT = 2700000;');
+            Application::getConnection()->query('ALTER TABLE 4lapy_order_number AUTO_INCREMENT = 2730000;');
 
             return true;
         } catch (SqlQueryException $e) {
