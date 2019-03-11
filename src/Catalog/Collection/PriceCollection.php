@@ -26,17 +26,17 @@ class PriceCollection extends D7CollectionBase
      *
      * @return PriceCollection
      */
-    public static function createIndexedByRegion(Collection $catalogPriceCollection)
-    {
-        $self = new self(new ArrayResult([]));
-
-        /** @var Price $price */
-        foreach ($catalogPriceCollection as $price) {
-            if ($price instanceof Price) {
-                $self->set($price->getRegionId(), $price);
-            }
-        }
-
-        return $self;
-    }
+//    public static function createIndexedByRegion(Collection $catalogPriceCollection)
+//    {
+//        $self = new self(new ArrayResult([]));
+//
+//        /** @var Price $price */
+//        foreach ($catalogPriceCollection as $price) {
+//            if ($price instanceof Price) {
+//                $self->set($price->getRegionId(), $price);
+//            }
+//        }
+//
+//        return $self;
+//    }
 }

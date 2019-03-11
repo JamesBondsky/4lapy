@@ -11,6 +11,7 @@ use Bitrix\Catalog\Product\Basket as BitrixBasket;
 use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\ExpressionField;
+use Bitrix\Main\Entity\Query;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
@@ -43,6 +44,7 @@ use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
@@ -79,6 +81,8 @@ class Offer extends IblockElement
     public const PACKAGE_LABEL_TYPE_VOLUME = 'VOLUME';
 
     public const PACKAGE_LABEL_TYPE_WEIGHT = 'WEIGHT';
+
+    public const CATALOG_GROUP_ID_BASE = 2;
 
     /**
      * @var bool
@@ -447,9 +451,16 @@ class Offer extends IblockElement
     protected $availableStores = [];
 
     /**
-     * @var string
+     * @var string[]
+     * @Type("array")
+     * @Groups({"elastic"})
      */
-    protected $regionDiscounts;
+    protected $REGION_DISCOUNTS;
+
+    /**
+     * @var int
+     */
+    protected $catalogGroupId;
 
     /**
      * Offer constructor.
@@ -460,17 +471,13 @@ class Offer extends IblockElement
     {
         parent::__construct($fields);
 
-        if (isset($fields['CATALOG_PRICE_2'])) {
-            $this->price = (float)$fields['CATALOG_PRICE_2'];
-        }
-
-        /*if (isset($fields['PRICES'])) {
-            $this->price = $fields['PRICES'];
-        }*/
-
-        if (isset($fields['CATALOG_CURRENCY_2'])) {
-            $this->currency = (string)$fields['CATALOG_CURRENCY_2'];
-        }
+//        if (isset($fields['CATALOG_PRICE_2'])) {
+//            $this->price = (float)$fields['CATALOG_PRICE_2'];
+//        }
+//
+//        if (isset($fields['CATALOG_CURRENCY_2'])) {
+//            $this->currency = (string)$fields['CATALOG_CURRENCY_2'];
+//        }
 
         if (isset($fields['CATALOG_VAT'])) {
             $this->VAT_ID = (string)$fields['CATALOG_VAT_ID'];
@@ -1733,7 +1740,43 @@ class Offer extends IblockElement
     }
 
     /**
+     * @return string
+     */
+    public function getCatalogGroupId(): ?string
+    {
+        if(null === $this->catalogGroupId){
+            /** @var LocationService $locationService */
+            $locationService = Application::getInstance()->getContainer()->get('location.service');
+
+            try{
+                $result = (new Query('Bitrix\Catalog\GroupTable'))
+                    ->setSelect(['ID'])
+                    ->setFilter(['=XML_ID' => $locationService->getCurrentRegionCode()])
+                    ->setCacheTtl(31536000)
+                    ->exec();
+
+                $this->catalogGroupId = $result['ID'];
+            } catch (\Exception|SystemException|ArgumentException|ApplicationCreateException $e) {
+                $this->catalogGroupId = self::CATALOG_GROUP_ID_BASE;
+            }
+        }
+
+        return $this->catalogGroupId;
+    }
+
+    /**
+     * @param string $regionCode
+     * @return Offer
+     */
+    public function withCatalogGroup(int $catalogGroupId): Offer
+    {
+        $this->catalogGroupId = $catalogGroupId;
+        return $this;
+    }
+
+    /**
      * @todo не использовать этот метод для расчета скидочных цен
+     * @throws ApplicationCreateException
      */
     protected function checkOptimalPriceTmp(): void
     {
@@ -1749,8 +1792,14 @@ class Offer extends IblockElement
             return;
         }
 
+        $price = $this->prices->filter(function($element){
+            $element['CATALOG_GROUP_ID'] = $this->catalogGroupId;
+        });
+
         $price = $this->price;
         $oldPrice = $this->price;
+
+
 
         if ($this->isSimpleSaleAction()) {
             $price = (float)$this->PROPERTY_PRICE_ACTION;
