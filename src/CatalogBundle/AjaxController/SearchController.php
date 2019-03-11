@@ -210,27 +210,30 @@ class SearchController extends Controller
      */
     public function writeStatisticAction(SearchRequest $searchRequest): JsonResponse
     {
-        $statisticDb = SearchRequestStatisticTable::GetList([
-            'filter' => [
-                'search_string' => $searchRequest->getSearchString()
-            ]
-        ]);
-
-        if ($statisticDb->getSelectedRowsCount() == 0) {
-            SearchRequestStatisticTable::Add([
-                'search_string' => $searchRequest->getSearchString(),
-                'quantity' => 1,
-                'last_date_search' => new DateTime()
-            ]);
-        } else {
-            $statisticRow = $statisticDb->fetch();
-            SearchRequestStatisticTable::Update(
-                $statisticRow['id'],
-                [
-                    'quantity' => $statisticRow['quantity'] + 1,
-                    'last_date_search' => new DateTime()
+        $searchString = mb_strtolower($searchRequest->getSearchString());
+        if ($searchString != '') {
+            $statisticDb = SearchRequestStatisticTable::GetList([
+                'filter' => [
+                    'search_string' => mb_strtolower($searchString)
                 ]
-            );
+            ]);
+
+            if ($statisticDb->getSelectedRowsCount() == 0) {
+                SearchRequestStatisticTable::Add([
+                    'search_string' => mb_strtolower($searchString),
+                    'quantity' => 1,
+                    'last_date_search' => new DateTime()
+                ]);
+            } else {
+                $statisticRow = $statisticDb->fetch();
+                SearchRequestStatisticTable::Update(
+                    $statisticRow['id'],
+                    [
+                        'quantity' => $statisticRow['quantity'] + 1,
+                        'last_date_search' => new DateTime()
+                    ]
+                );
+            }
         }
         return JsonSuccessResponse::createWithData('', []);
     }
