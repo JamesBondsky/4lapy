@@ -316,7 +316,7 @@ class Offer extends IblockElement
 
     /**
      * @var Collection
-     * @Type("ArrayCollection<FourPaws\Catalog\Collection\Price")
+     * @Type("ArrayCollection<FourPaws\Catalog\Model\Price>")
      * @Accessor(getter="getPrices")
      * @Groups({"elastic"})
      */
