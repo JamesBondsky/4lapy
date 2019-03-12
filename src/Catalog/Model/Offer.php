@@ -315,8 +315,8 @@ class Offer extends IblockElement
     protected $price = 0;
 
     /**
-     * @var PriceCollection
-     * @Type("ArrayCollection<FourPaws\Catalog\Model\Price>")
+     * @var Collection
+     * @Type("ArrayCollection<FourPaws\Catalog\Collection\Price")
      * @Accessor(getter="getPrices")
      * @Groups({"elastic"})
      */
@@ -1834,10 +1834,7 @@ class Offer extends IblockElement
         }*/
 
         /** @var Price $arPrice */
-        $arPrice = $this->prices->filterByCatalogGroupId($this->getCatalogGroupId())->first();
-        if(!$arPrice){
-            $arPrice = $this->prices->filterByCatalogGroupId(self::CATALOG_GROUP_ID_BASE)->first();
-        }
+        $arPrice = $this->getPriceByGroupId($this->getCatalogGroupId());
 
         $oldPrice = $price = (float)$arPrice->getPrice();
 
@@ -1911,18 +1908,18 @@ class Offer extends IblockElement
     }
 
     /**
-     * @return PriceCollection
+     * @return ArrayCollection
      */
-    public function getPrices(): PriceCollection
+    public function getPrices(): Collection
     {
         return $this->prices;
     }
 
     /**
-     * @param PriceCollection $prices
+     * @param Collection $prices
      * @return Offer
      */
-    public function withPrices(PriceCollection $prices): Offer
+    public function withPrices(Collection $prices): Offer
     {
         $this->prices = $prices;
         return $this;
@@ -2251,5 +2248,26 @@ class Offer extends IblockElement
             return $regionDiscount['cond_value'];
         }
         return $this->PROPERTY_COND_VALUE;
+    }
+
+    /**
+     * @param int $groupId
+     * @return Price|null
+     */
+    public function getPriceByGroupId(int $groupId): ?Price
+    {
+        $price = $this->prices->filter(function($price) use ($groupId){
+            /** @var Price $price */
+            return $price->getCatalogGroupId() == $groupId;
+        });
+
+        if($price->isEmpty()){
+            $price = $this->prices->filter(function($price){
+                /** @var Price $price */
+                return $price->getCatalogGroupId() == self::CATALOG_GROUP_ID_BASE;
+            });
+        }
+
+        return $price->first();
     }
 }

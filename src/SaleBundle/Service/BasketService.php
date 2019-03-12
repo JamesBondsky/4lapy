@@ -149,7 +149,6 @@ class BasketService implements LoggerAwareInterface
             'QUANTITY' => $quantity,
             'MODULE' => 'catalog',
             'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
-            'PRODUCT_PRICE_ID' => $this->getProdcutPriceId($offerId),
         ];
         if ($rewriteFields) {
             /** @noinspection AdditionOperationOnArraysInspection */
@@ -1316,35 +1315,5 @@ class BasketService implements LoggerAwareInterface
         }
 
         return (int)$marksQuantity;
-    }
-
-    public function getProdcutPriceId(int $offerId, $regionCode = '')
-    {
-        if (!$regionCode) {
-            /** @var LocationService $locationService */
-            $locationService = App::getInstance()->getContainer()->get('location.service');
-            $regionCode = $locationService->getCurrentRegionCode();
-        }
-
-        $result = (new Query('Bitrix\Catalog\GroupTable'))
-            ->setSelect(['ID'])
-            ->setFilter(['=XML_ID' => $regionCode])
-            ->setCacheTtl(31536000)
-            ->exec()
-            ->fetch();
-
-        $catalogGroupId = $result['ID'];
-
-        /** @var PriceCollection $prices */
-        $prices = (new PriceQuery())
-            ->withSelect(['ID'])
-            ->withFilter([
-                '=PRODUCT_ID' => $offerId,
-                '=CATALOG_GROUP_ID' => [$catalogGroupId, Offer::CATALOG_GROUP_ID_BASE]
-            ])->exec();
-
-        $result = $prices->filterByCatalogGroupId($catalogGroupId)->isEmpty() ? $prices->filterByCatalogGroupId(Offer::CATALOG_GROUP_ID_BASE)->first() : $prices->filterByCatalogGroupId($catalogGroupId)->first();
-
-        return $result['ID'];
     }
 }

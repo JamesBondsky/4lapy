@@ -6,6 +6,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\BitrixOrm\Collection\IblockElementCollection;
 use FourPaws\BitrixOrm\Model\BitrixArrayItemBase;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Model\Price;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\PriceQuery;
 use FourPaws\Catalog\Collection\PriceCollection;
@@ -58,8 +59,6 @@ class OfferCollection extends IblockElementCollection
     }
 
     /**
-     * Do the initialization logic
-     *
      * @return void
      */
     protected function doInitialize()
@@ -76,11 +75,12 @@ class OfferCollection extends IblockElementCollection
          */
         $prices = [];
         $this->priceCollection = (new PriceQuery())->withFilter(['=PRODUCT_ID' => $this->productIds])->exec();
+        /** @var Price $price */
         foreach($this->priceCollection as $price){
-            if(!$prices[$price->getProductId()] instanceof PriceCollection){
-                $prices[$price->getProductId()] = new PriceCollection(clone $this->priceCollection->getResult());
+            if(!$prices[$price->getProductId()] instanceof ArrayCollection){
+                $prices[$price->getProductId()] = new ArrayCollection();
             }
-            $prices[$price->getProductId()][$price->getCatalogGroupId()] = $price;
+            $prices[$price->getProductId()]->set($price->getCatalogGroupId(), $price);
         }
 
         foreach ($prices as $productId => $arPrices){
