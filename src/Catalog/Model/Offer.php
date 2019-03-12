@@ -1783,29 +1783,27 @@ class Offer extends IblockElement
      */
     public function getCatalogGroupId(): ?string
     {
-        if(null === $this->catalogGroupId){
-            /** @var LocationService $locationService */
-            $locationService = Application::getInstance()->getContainer()->get('location.service');
+        /** @var LocationService $locationService */
+        $locationService = Application::getInstance()->getContainer()->get('location.service');
 
-            try{
-                $result = (new Query('Bitrix\Catalog\GroupTable'))
-                    ->setSelect(['ID'])
-                    ->setFilter(['=XML_ID' => $locationService->getCurrentRegionCode()])
-                    ->setCacheTtl(31536000)
-                    ->exec()
-                    ->fetch();
+        try {
+            $result = (new Query('Bitrix\Catalog\GroupTable'))
+                ->setSelect(['ID'])
+                ->setFilter(['=XML_ID' => $locationService->getCurrentRegionCode()])
+                ->setCacheTtl(31536000)
+                ->exec()
+                ->fetch();
 
-                $this->catalogGroupId = $result['ID'];
-            } catch (\Exception|SystemException|ArgumentException|ApplicationCreateException $e) {
-                $this->catalogGroupId = self::CATALOG_GROUP_ID_BASE;
-            }
+            $this->catalogGroupId = $result['ID'];
+        } catch (\Exception|SystemException|ArgumentException|ApplicationCreateException $e) {
+            $this->catalogGroupId = self::CATALOG_GROUP_ID_BASE;
         }
 
         return $this->catalogGroupId;
     }
 
     /**
-     * @param string $regionCode
+     * @param int $catalogGroupId
      * @return Offer
      */
     public function withCatalogGroup(int $catalogGroupId): Offer
@@ -1816,14 +1814,9 @@ class Offer extends IblockElement
 
     /**
      * @todo не использовать этот метод для расчета скидочных цен
-     * @throws ApplicationCreateException
      */
     protected function checkOptimalPriceTmp(): void
     {
-        if ($this->isCounted) {
-            return;
-        }
-
         /**
          * В эластике price индексируется с уже посчитанной скидкой,
          * поэтому проводить расчеты ни к чему
@@ -2218,15 +2211,14 @@ class Offer extends IblockElement
      */
     public function getCurrentRegionDiscount()
     {
-        if(null === $this->regionDiscount){
-            $this->regionDiscount = false;
-            $regionDiscounts = $this->getRegionDiscounts();
-            foreach($regionDiscounts as $discount){
-                if($this->getCatalogGroupId() == $discount['id']){
-                    $this->regionDiscount = $discount;
-                }
+        $this->regionDiscount = false;
+        $regionDiscounts = $this->getRegionDiscounts();
+        foreach ($regionDiscounts as $discount) {
+            if ($this->getCatalogGroupId() == $discount['id']) {
+                $this->regionDiscount = $discount;
             }
         }
+
         return $this->regionDiscount;
     }
 
