@@ -15,7 +15,7 @@ use JMS\Serializer\Annotation\Type;
 class Price
 {
     /**
-     * @var integer
+     * @var int
      * @Type("int")
      * @Groups({"elastic"})
      * @Accessor(getter="getId")
@@ -23,7 +23,7 @@ class Price
     protected $ID;
 
     /**
-     * @var integer
+     * @var int
      * @Type("int")
      * @Groups({"elastic"})
      * @Accessor(getter="getProductId")
@@ -31,7 +31,7 @@ class Price
     protected $PRODUCT_ID;
 
     /**
-     * @var integer
+     * @var int
      * @Type("int")
      * @Groups({"elastic"})
      * @Accessor(getter="getCatalogGroupId")

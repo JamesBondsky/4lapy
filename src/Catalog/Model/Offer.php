@@ -1836,7 +1836,11 @@ class Offer extends IblockElement
         /** @var Price $arPrice */
         $arPrice = $this->getPriceByGroupId($this->getCatalogGroupId());
 
-        $oldPrice = $price = (float)$arPrice->getPrice();
+        if($arPrice){
+            $oldPrice = $price = (float)$arPrice->getPrice();
+        } else{
+            $oldPrice = $price = $this->price;
+        }
 
         if ($this->isSimpleSaleAction()) {
             $price = (float)$this->getPriceAction();
@@ -1910,7 +1914,7 @@ class Offer extends IblockElement
     /**
      * @return ArrayCollection
      */
-    public function getPrices(): Collection
+    public function getPrices(): ?Collection
     {
         return $this->prices;
     }
@@ -2256,13 +2260,17 @@ class Offer extends IblockElement
      */
     public function getPriceByGroupId(int $groupId): ?Price
     {
-        $price = $this->prices->filter(function($price) use ($groupId){
+        if(!$this->getPrices()){
+            return null;
+        }
+
+        $price = $this->getPrices()->filter(function($price) use ($groupId){
             /** @var Price $price */
             return $price->getCatalogGroupId() == $groupId;
         });
 
         if($price->isEmpty()){
-            $price = $this->prices->filter(function($price){
+            $price = $this->getPrices()->filter(function($price){
                 /** @var Price $price */
                 return $price->getCatalogGroupId() == self::CATALOG_GROUP_ID_BASE;
             });
