@@ -8,6 +8,7 @@ use FourPaws\App\Application;
 use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemNotActiveException;
 use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemNotExistsException;
 use FourPaws\PersonalBundle\Service\OrderService;
+use FourPaws\UserBundle\EventController\Event;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use JMS\Serializer\SerializerInterface;
 use OldSound\RabbitMqBundle\RabbitMq\Producer;
@@ -90,6 +91,8 @@ class ImportManzanaOrders extends Command implements LoggerAwareInterface
      */
     protected function execute(InputInterface $input, OutputInterface $output): void
     {
+        Event::disableEvents();
+
         global $USER;
 
         $period = $input->getOption(static::OPT_PERIOD) ?? '1 month';
@@ -180,5 +183,7 @@ class ImportManzanaOrders extends Command implements LoggerAwareInterface
         {
             $this->log()->info(\sprintf('Updated orders for %s users', count($users)));
         }
+
+        Event::enableEvents();
     }
 }

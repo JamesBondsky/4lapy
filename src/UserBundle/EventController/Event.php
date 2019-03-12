@@ -557,6 +557,10 @@ class Event extends BaseServiceHandler
      */
     public static function getUserOrdersFromManzana(): void
     {
+        if (self::$isEventsDisable) {
+            return;
+        }
+
         global $DB;
 
         $userImportTimeLimit = '2 hour'; // ограничение по частоте импорта заказов пользователя
