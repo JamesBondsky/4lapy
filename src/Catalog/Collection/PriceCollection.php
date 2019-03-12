@@ -21,6 +21,18 @@ class PriceCollection extends D7CollectionBase
         }
     }
 
+    public function filterByCatalogGroupId($catalogGroupId)
+    {
+        if($this->isEmpty()){
+            return null;
+        }
+
+        return $this->collection->filter(function($item) use ($catalogGroupId){
+            /** @var Price $item */
+            return $item->getCatalogGroupId() == $catalogGroupId;
+        });
+    }
+
     /**
      * @param Collection $catalogPriceCollection
      *
