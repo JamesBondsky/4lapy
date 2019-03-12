@@ -197,7 +197,7 @@ $APPLICATION->IncludeComponent(
                         Бесплатная обработка<br/> от&nbsp;клещей и&nbsp;блох в&nbsp;магазинах!
                     </div>
                     <div class="b-promo-banner-item__link-wrap">
-                        <a class="b-promo-banner-item__link" href="#">Подробнее</a>
+                        <a class="b-promo-banner-item__link" href="/catalog/veterinarnaya-apteka/zashchita-ot-blokh-i-kleshchey/">Подробнее</a>
                     </div>
                 </div>
             </div>
