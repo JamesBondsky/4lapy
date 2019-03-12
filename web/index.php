@@ -178,7 +178,7 @@ $APPLICATION->IncludeComponent(
                         </div>
                     </div>
                     <div class="b-promo-banner-item__descr">
-                        Бесплатная доставка по&nbsp;Москве в&nbsp;день заказа! Доставим в&nbsp;любой <nobr>4-х</nobr> часовой интервал
+                        Бесплатная доставка по&nbsp;Москве в&nbsp;день заказа!<br/> Доставим в&nbsp;любой <nobr>4-х</nobr> часовой интервал
                     </div>
                     <div class="b-promo-banner-item__link-wrap">
                         <a class="b-promo-banner-item__link" href="#">Подробнее</a>
