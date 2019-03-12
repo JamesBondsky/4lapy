@@ -5,6 +5,7 @@ namespace FourPaws\CatalogBundle\AjaxController;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Iblock\InheritedProperty\SectionValues;
 use Bitrix\Main\Type\DateTime;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
@@ -96,11 +97,18 @@ class SearchController extends Controller
                             'SCORE' => $item->getHitMetaInfo()->getScore(),
                         ];
                     } elseif ($item instanceof Product) {
-                        /**
-                         * @var Offer $offer
-                         */
-                        $offer = $item->getOffers()->first();
-
+                        //проверка, по точному совпадению с внешним кодом
+                        /*** @var ArrayCollection $offers */
+                        $offers = $item->getOffers()->filter(function ($offerCur) use ($searchString) {
+                            /** @var Offer $offerCur */
+                            return $offerCur->getXmlId() == $searchString;
+                        });
+                        /** @var Offer $offer */
+                        if (!$offers->isEmpty()) {
+                            $offer = $offers->first();
+                        } else {
+                            $offer = $item->getOffers()->first();
+                        }
                         if ($key == 'products') {
                             /**
                              * @var Image $image
