@@ -10,7 +10,6 @@ namespace FourPaws\CatalogBundle\Service;
 
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use Bitrix\Main\Entity\Query;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -45,14 +44,9 @@ class PriceService implements LoggerAwareInterface
         }
 
         try {
-            $result = (new Query('Bitrix\Catalog\GroupTable'))
-                ->setSelect(['ID'])
-                ->setFilter(['=XML_ID' => $regionCode])
-                ->setCacheTtl(31536000)
-                ->exec()
-                ->fetch();
-
-            $catalogGroupId = $result['ID'];
+            /** @var CatalogGroupService $catalogGroupService */
+            $catalogGroupService = App::getInstance()->getContainer()->get('catalog_group.service');
+            $catalogGroupId = $catalogGroupService->getCatalogGroupIdByRegion($regionCode);
 
             /** @var PriceCollection $prices */
             $prices = (new PriceQuery())

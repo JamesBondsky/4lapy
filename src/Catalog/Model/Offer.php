@@ -42,6 +42,7 @@ use FourPaws\Catalog\Collection\PriceCollection;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\CatalogBundle\Service\BrandService;
+use FourPaws\CatalogBundle\Service\CatalogGroupService;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
@@ -1783,22 +1784,13 @@ class Offer extends IblockElement
      */
     public function getCatalogGroupId(): ?string
     {
-        /** @var LocationService $locationService */
+        $catalogGroupService = Application::getInstance()->getContainer()->get('catalog_group.service');
         $locationService = Application::getInstance()->getContainer()->get('location.service');
-
-        try {
-            $result = (new Query('Bitrix\Catalog\GroupTable'))
-                ->setSelect(['ID'])
-                ->setFilter(['=XML_ID' => $locationService->getCurrentRegionCode()])
-                ->setCacheTtl(31536000)
-                ->exec()
-                ->fetch();
-
-            $this->catalogGroupId = $result['ID'];
-        } catch (\Exception|SystemException|ArgumentException|ApplicationCreateException $e) {
+        if($catalogGroupId = $catalogGroupService->getCatalogGroupIdByRegion($locationService->getCurrentRegionCode())){
+            $this->catalogGroupId = $catalogGroupId;
+        } else {
             $this->catalogGroupId = self::CATALOG_GROUP_ID_BASE;
         }
-
         return $this->catalogGroupId;
     }
 
@@ -2207,19 +2199,41 @@ class Offer extends IblockElement
     }
 
     /**
-     * @return array|null|boolean
+     * @return array|bool|false|null
+     * @throws ApplicationCreateException
      */
     public function getCurrentRegionDiscount()
     {
+        /** @var LocationService $locationService */
+        $locationService = Application::getInstance()->getContainer()->get('location.service');
         $this->regionDiscount = false;
+        if($regionDiscount = $this->getRegionDiscount($locationService->getCurrentRegionCode())){
+            $this->regionDiscount = $regionDiscount;
+        }
+        return $this->regionDiscount;
+    }
+
+    /**
+     * @param string $regionCode
+     * @return array|null
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function getRegionDiscount(string $regionCode): ?array
+    {
+        /** @var CatalogGroupService $catalogGroupService */
+        $catalogGroupService = Application::getInstance()->getContainer()->get('catalog_group.service');
+        $catalogGroupId = $catalogGroupService->getCatalogGroupIdByRegion($regionCode);
         $regionDiscounts = $this->getRegionDiscounts();
         foreach ($regionDiscounts as $discount) {
-            if ($this->getCatalogGroupId() == $discount['id']) {
-                $this->regionDiscount = $discount;
+            if ($catalogGroupId == $discount['id']) {
+                $regionDiscount = $discount;
+                break;
             }
         }
 
-        return $this->regionDiscount;
+        return $regionDiscount ?? $regionDiscount;
     }
 
     /**

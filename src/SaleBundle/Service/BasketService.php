@@ -1316,4 +1316,41 @@ class BasketService implements LoggerAwareInterface
 
         return (int)$marksQuantity;
     }
+
+    /**
+     * @param BasketItem $basketItem
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     */
+    public function updateRegionDiscountForBasketItem(BasketItem $basketItem, string $regionCode = ''): void
+    {
+        $safe = false;
+
+        if(!$regionCode){
+            /** @var LocationService $locationService */
+            $locationService = App::getInstance()->getContainer()->get('location.service');
+            $regionCode = $locationService->getCurrentRegionCode();
+        }
+
+        foreach ($basketItem->getPropertyCollection() as $propertyItem) {
+            if (in_array($propertyItem->getField('CODE'), [Offer::SIMPLE_SHARE_SALE_CODE, Offer::SIMPLE_SHARE_DISCOUNT_CODE])) {
+                $propertyItem->delete();
+                $safe = true;
+            }
+        }
+
+        /** @var BasketItem $basketItem */
+        if($offer = OfferQuery::getById((int)$basketItem->getProductId())){
+            $regionDiscount = $offer->getRegionDiscount($regionCode);
+            if($regionDiscount){
+                $value = $regionDiscount['price_action'] ? $regionDiscount['price_action'] : $regionDiscount['cond_value'];
+                $this->setBasketItemPropertyValue($basketItem, $regionDiscount['cond_for_action'], $value);
+                $safe = true;
+            }
+        }
+
+        if($safe){
+            $basketItem->save();
+        }
+    }
 }

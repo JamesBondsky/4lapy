@@ -125,3 +125,6 @@ services:
 
   price.service:
     class: FourPaws\CatalogBundle\Service\PriceService
+
+  catalog_group.service:
+    class: FourPaws\CatalogBundle\Service\CatalogGroupService

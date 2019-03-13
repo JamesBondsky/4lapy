@@ -352,7 +352,10 @@ class UserService implements
         if ($city && $this->isAuthorized()) {
             $userId = $this->getCurrentUserId();
             if ($userId > 0) {
-                $this->userRepository->updateData($userId, ['UF_LOCATION' => $city['CODE']]);
+                if($this->userRepository->updateData($userId, ['UF_LOCATION' => $city['CODE']])){
+                    foreach(GetModuleEvents("main", "OnCityChange", true) as $arEvent)
+                        ExecuteModuleEventEx($arEvent, [$city]);
+                }
             } else {
                 return false;
             }
