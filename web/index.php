@@ -121,7 +121,7 @@ $APPLICATION->IncludeComponent(
 <section class="b-promo-banner">
     <div class="b-container">
         <div class="b-promo-banner__list js-promo-banner">
-            <div class="b-promo-banner-item">
+            <?/*div class="b-promo-banner-item">
                 <div class="b-promo-banner-item__content">
                     <div class="b-promo-banner-item__left">
                         <div class="b-promo-banner-item__logo"></div>
@@ -136,7 +136,7 @@ $APPLICATION->IncludeComponent(
                         <a class="b-promo-banner-item__link" href="#">Подробнее</a>
                     </div>
                 </div>
-            </div>
+            </div*/?>
             <div class="b-promo-banner-item">
                 <div class="b-promo-banner-item__content">
                     <div class="b-promo-banner-item__left">
@@ -149,7 +149,7 @@ $APPLICATION->IncludeComponent(
                         Удобные мобильные<br/> приложения для Android и&nbsp;IOS
                     </div>
                     <div class="b-promo-banner-item__link-wrap">
-                        <a class="b-promo-banner-item__link" href="#">Подробнее</a>
+                        <a class="b-promo-banner-item__link" href="/shares/mobilnoe_prilozhenie_chetyre_lapy.html">Подробнее</a>
                     </div>
                 </div>
             </div>
@@ -165,7 +165,7 @@ $APPLICATION->IncludeComponent(
                         Бесплатный самовывоз заказа через час из&nbsp;230+ магазинов!
                     </div>
                     <div class="b-promo-banner-item__link-wrap">
-                        <a class="b-promo-banner-item__link" href="#">Подробнее</a>
+                        <a class="b-promo-banner-item__link" href="/shops/">Подробнее</a>
                     </div>
                 </div>
             </div>
@@ -181,7 +181,7 @@ $APPLICATION->IncludeComponent(
                         Бесплатная доставка по&nbsp;Москве в&nbsp;день заказа!<br/> Доставим в&nbsp;любой <nobr>4-х</nobr> часовой интервал
                     </div>
                     <div class="b-promo-banner-item__link-wrap">
-                        <a class="b-promo-banner-item__link" href="#">Подробнее</a>
+                        <a class="b-promo-banner-item__link" href="/payment-and-delivery/">Подробнее</a>
                     </div>
                 </div>
             </div>
