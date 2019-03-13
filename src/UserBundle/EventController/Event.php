@@ -108,9 +108,9 @@ class Event extends BaseServiceHandler
         static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'clearUserCache'], 'main');
 
         /** асинхронное получение заказов пользователя при авторизации */
-        /*static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'getUserOrdersFromManzana'], 'main');
+        static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'getUserOrdersFromManzana'], 'main');
         static::initHandlerCompatible('OnAfterUserLogin', [self::class, 'getUserOrdersFromManzana'], 'main');
-        static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'getUserOrdersFromManzana'], 'main');*/
+        static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'getUserOrdersFromManzana'], 'main');
 
         /** действия при авторизации(обновление группы оптовиков, обновление карты) */
         static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'refreshUserOnAuth'], 'main');
@@ -575,11 +575,17 @@ class Event extends BaseServiceHandler
     }
 
     /**
-     * @param $arFields
+     *
      */
-    public static function getUserOrdersFromManzana($arFields): void
+    public static function getUserOrdersFromManzana(): void
     {
+        if (self::$isEventsDisable) {
+            return;
+        }
+
         global $DB;
+
+        $userImportTimeLimit = '2 hour'; // ограничение по частоте импорта заказов пользователя
 
         /** @var \FourPaws\UserBundle\Service\UserService $userService */
         $userService = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
@@ -592,7 +598,7 @@ class Event extends BaseServiceHandler
                 if ($user)
                 {
                     $lastManzanaImportDateTime = $user->getManzanaImportDateTime();
-                    if (!$lastManzanaImportDateTime || $DB->CompareDates($lastManzanaImportDateTime, (new DateTime())->add('- 30 minutes')) < 0) //TODO вынести 30 минут в параметры
+                    if (!$lastManzanaImportDateTime || $DB->CompareDates($lastManzanaImportDateTime, (new DateTime())->add('- ' . $userImportTimeLimit)) < 0)
                     {
                         /** @var ManzanaService $manzanaService */
                         $manzanaService = Application::getInstance()->getContainer()->get('manzana.service');

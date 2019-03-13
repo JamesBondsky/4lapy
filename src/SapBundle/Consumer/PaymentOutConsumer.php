@@ -6,10 +6,8 @@
 
 namespace FourPaws\SapBundle\Consumer;
 
-use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\SapBundle\Dto\In\ConfirmPayment\Debit;
 use FourPaws\SapBundle\Service\Orders\PaymentService;
-use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LogLevel;
 use RuntimeException;
 
@@ -18,10 +16,8 @@ use RuntimeException;
  *
  * @package FourPaws\SapBundle\Consumer
  */
-class PaymentOutConsumer implements ConsumerInterface, LoggerAwareInterface
+class PaymentOutConsumer extends SapConsumerBase
 {
-    use LazyLoggerAwareTrait;
-    
     /**
      * @var PaymentService
      */

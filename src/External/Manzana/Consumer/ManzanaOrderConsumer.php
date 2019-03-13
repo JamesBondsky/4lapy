@@ -11,6 +11,7 @@ use FourPaws\App\Application;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\EventController\Event;
 use FourPaws\UserBundle\Exception\UserException;
 use PhpAmqpLib\Message\AMQPMessage;
 
@@ -27,6 +28,8 @@ class ManzanaOrderConsumer extends ManzanaConsumerBase
      */
     public function execute(AMQPMessage $message)
     {
+        Event::disableEvents();
+
         try {
             global $USER;
 
@@ -55,6 +58,8 @@ class ManzanaOrderConsumer extends ManzanaConsumerBase
                 $message->getBody()
             ));
         }
+
+        Event::enableEvents();
 
         return static::MSG_ACK;
     }
