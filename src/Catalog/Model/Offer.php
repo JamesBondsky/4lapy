@@ -466,7 +466,7 @@ class Offer extends IblockElement
     protected $availableStores = [];
 
     /**
-     * @var string[]
+     * @var array
      * @Type("array")
      * @Groups({"elastic"})
      */
