@@ -5,6 +5,7 @@ namespace FourPaws\CatalogBundle\AjaxController;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Iblock\InheritedProperty\SectionValues;
 use Bitrix\Main\Type\DateTime;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
@@ -96,11 +97,18 @@ class SearchController extends Controller
                             'SCORE' => $item->getHitMetaInfo()->getScore(),
                         ];
                     } elseif ($item instanceof Product) {
-                        /**
-                         * @var Offer $offer
-                         */
-                        $offer = $item->getOffers()->first();
-
+                        //проверка, по точному совпадению с внешним кодом
+                        /*** @var ArrayCollection $offers */
+                        $offers = $item->getOffers()->filter(function ($offerCur) use ($searchString) {
+                            /** @var Offer $offerCur */
+                            return $offerCur->getXmlId() == $searchString;
+                        });
+                        /** @var Offer $offer */
+                        if (!$offers->isEmpty()) {
+                            $offer = $offers->first();
+                        } else {
+                            $offer = $item->getOffers()->first();
+                        }
                         if ($key == 'products') {
                             /**
                              * @var Image $image
@@ -210,27 +218,30 @@ class SearchController extends Controller
      */
     public function writeStatisticAction(SearchRequest $searchRequest): JsonResponse
     {
-        $statisticDb = SearchRequestStatisticTable::GetList([
-            'filter' => [
-                'search_string' => $searchRequest->getSearchString()
-            ]
-        ]);
-
-        if ($statisticDb->getSelectedRowsCount() == 0) {
-            SearchRequestStatisticTable::Add([
-                'search_string' => $searchRequest->getSearchString(),
-                'quantity' => 1,
-                'last_date_search' => new DateTime()
-            ]);
-        } else {
-            $statisticRow = $statisticDb->fetch();
-            SearchRequestStatisticTable::Update(
-                $statisticRow['id'],
-                [
-                    'quantity' => $statisticRow['quantity'] + 1,
-                    'last_date_search' => new DateTime()
+        $searchString = mb_strtolower($searchRequest->getSearchString());
+        if ($searchString != '') {
+            $statisticDb = SearchRequestStatisticTable::GetList([
+                'filter' => [
+                    'search_string' => mb_strtolower($searchString)
                 ]
-            );
+            ]);
+
+            if ($statisticDb->getSelectedRowsCount() == 0) {
+                SearchRequestStatisticTable::Add([
+                    'search_string' => mb_strtolower($searchString),
+                    'quantity' => 1,
+                    'last_date_search' => new DateTime()
+                ]);
+            } else {
+                $statisticRow = $statisticDb->fetch();
+                SearchRequestStatisticTable::Update(
+                    $statisticRow['id'],
+                    [
+                        'quantity' => $statisticRow['quantity'] + 1,
+                        'last_date_search' => new DateTime()
+                    ]
+                );
+            }
         }
         return JsonSuccessResponse::createWithData('', []);
     }

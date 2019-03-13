@@ -10,17 +10,20 @@
 
 namespace FourPaws\SaleBundle\Discount\Utils\Detach;
 
+use FourPaws\App\Application as App;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\BasketItem;
 use Exception;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\SaleBundle\Discount\Utils\AdderInterface;
 use FourPaws\SaleBundle\Discount\Utils\BaseDiscountPostHandler;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\RuntimeException;
 use FourPaws\SaleBundle\Helper\PriceHelper;
+use FourPaws\SaleBundle\Service\BasketService;
 
 /**
  * Class Adder
@@ -29,7 +32,6 @@ use FourPaws\SaleBundle\Helper\PriceHelper;
 class Adder extends BaseDiscountPostHandler implements AdderInterface
 {
     public static $skippedDiscountsFakeIds = [];
-
 
     /**
      * @throws \Bitrix\Main\ArgumentNullException
@@ -45,13 +47,35 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
     public function processOrder(): void
     {
         /**
-         * 1. количества и свойства
-         * 2. PRICE и DISCOUNT_PRICE
+         * 1. Региональные скидки
+         * 2. количества и свойства
+         * 3. PRICE и DISCOUNT_PRICE
          */
         //todo Вероятно стоит сначала целиком разобрать резалт, а потом действовать
         if (!$discountBase = $this->order->getDiscount()) {
             return;
         }
+
+        /** @var BasketService $basketService */
+        $basketService = App::getInstance()->getContainer()->get(BasketService::class);
+
+        /** @var BasketItem $basketItem */
+        foreach ($this->order->getBasket() as $basketItem){
+            if($percent = $basketService->getBasketItemPropertyValue($basketItem, Offer::SIMPLE_SHARE_DISCOUNT_CODE)) {
+                $price = $basketItem->getBasePrice() * ((100 - $percent)/100);
+            } else {
+                $price = $basketService->getBasketItemPropertyValue($basketItem, Offer::SIMPLE_SHARE_SALE_CODE);
+            }
+
+            if($price > 0 && $price != $basketItem->getPrice()){
+                $basketItem->setFieldsNoDemand([
+                    'DISCOUNT_PRICE' => $basketItem->getBasePrice() - $price,
+                    'PRICE' => $price,
+                    'CUSTOM_PRICE' => 'Y'
+                ]);
+            }
+        }
+
         $applyResult = $discountBase->getApplyResult(true);
         $lowDiscounts = $this->getLowDiscounts($applyResult['RESULT']['BASKET']);
 
