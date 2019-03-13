@@ -28,8 +28,10 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\ImageHelper;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct;
@@ -615,6 +617,21 @@ class ProductService
     }
 
     /**
+     * Возвращает строку "k товаров (n кг) на сумму m ₽"
+     * Используется при чекауте
+     * @param $quantity
+     * @param $weight
+     * @param $price
+     * @return string
+     */
+    public static function getGoodsTitleForCheckout(int $quantity, float $weight, int $price): string
+    {
+        return $quantity
+            . ' '  . WordHelper::declension($quantity, ['товар', 'товара', 'товаров'])
+            . ' (' . WordHelper::showWeight($weight, true) . ') '
+            . 'на сумму ' .  CurrencyHelper::formatPrice($price, false);
+    }
+        /**
      * @param CalculationResultInterface[] $deliveries
      *
      * @return null|DeliveryResultInterface

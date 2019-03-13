@@ -158,6 +158,23 @@ class OrderService
     }
 
     /**
+     * @param int $orderId
+     * @return Order
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Exception
+     */
+    public function getOneById(int $orderId)
+    {
+        $order = $this->personalOrderService->getOrderById($orderId);
+        return $this->toApiFormat($order);
+    }
+
+    /**
      * @param int $orderNumber
      * @return Order
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
@@ -540,10 +557,7 @@ class OrderService
         }
         $deliveryResultQuantity = $deliveryResult->getAmount();
         $deliveryResultPrice = $deliveryResult->getPrice();
-        $orderTitle = $deliveryResultQuantity
-            . ' '  . WordHelper::declension($deliveryResultQuantity, ['товар', 'товара', 'товаров'])
-            . '(' . WordHelper::showWeight($deliveryResultWeight, true) . ') '
-            . 'на сумму ' .  CurrencyHelper::formatPrice($deliveryResultPrice, false);
+        $orderTitle = $this->apiProductService::getGoodsTitleForCheckout($deliveryResultQuantity, $deliveryResultWeight, $deliveryResultPrice);
         $nextDeliveries = $this->appDeliveryService->getNextDeliveries($delivery, 10);
         $result['date'] = (FormatDate('j F', $nextDeliveries[0]->getDeliveryDate()->getTimestamp()));
         $result['title'] = $orderTitle;
@@ -581,7 +595,6 @@ class OrderService
         return $dates;
     }
 
-
     public function getOrderItemData(StockResultCollection $stockResultCollection): array
     {
         $itemData    = [];
@@ -604,10 +617,9 @@ class OrderService
         ];
     }
 
-
     /**
      * @param UserCartOrderRequest $userCartOrderRequest
-     * @return Order
+     * @return Order[]
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws NotFoundException
@@ -627,6 +639,8 @@ class OrderService
      * @throws \FourPaws\SaleBundle\Exception\OrderCreateException
      * @throws \FourPaws\SaleBundle\Exception\OrderSplitException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
+     * @throws \Exception
      */
     public function createOrder(UserCartOrderRequest $userCartOrderRequest)
     {
@@ -650,6 +664,13 @@ class OrderService
         }
         $storage->setFromApp(true);
         $order = $this->appOrderService->createOrder($storage);
-        return $this->getOneByNumber($order->getField('ACCOUNT_NUMBER'));
+        $firstOrder = $this->personalOrderService->getOrderByNumber($order->getField('ACCOUNT_NUMBER'));
+        $response = [
+            $this->toApiFormat($firstOrder)
+        ];
+        if ($relatedOrderId = $firstOrder->getProperty('RELATED_ORDER_ID')) {
+            $response[] = $this->getOneById($relatedOrderId->getValue());
+        }
+        return $response;
     }
 }

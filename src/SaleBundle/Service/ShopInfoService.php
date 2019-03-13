@@ -520,6 +520,7 @@ class ShopInfoService
                 (new ShopOffer())->setId($item->getOffer()->getId())
                                  ->setPrice($item->getPrice())
                                  ->setQuantity($item->getAmount())
+                                 ->setWeight($item->getOffer()->getCatalogProduct()->getWeight())
             );
         }
 

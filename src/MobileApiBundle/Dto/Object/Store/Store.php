@@ -148,6 +148,33 @@ class Store
     protected $pickupFewGoodsFullDate;
 
     /**
+     * @var string
+     *
+     * @Serializer\SerializedName("pickupAllGoodsTitle")
+     * @Serializer\Type("string")
+     * @Serializer\Groups({"withPickupInfo"})
+     */
+    protected $pickupAllGoodsTitle;
+
+    /**
+     * @var string
+     *
+     * @Serializer\SerializedName("pickupAvailableGoodsTitle")
+     * @Serializer\Type("string")
+     * @Serializer\Groups({"withPickupInfo"})
+     */
+    protected $pickupAvailableGoodsTitle;
+
+    /**
+     * @var string
+     *
+     * @Serializer\SerializedName("pickupDelayedGoodsTitle")
+     * @Serializer\Type("string")
+     * @Serializer\Groups({"withPickupInfo"})
+     */
+    protected $pickupDelayedGoodsTitle;
+
+    /**
      * @var ArrayCollection
      *
      * @Serializer\SerializedName("availableGoods")
@@ -528,6 +555,63 @@ class Store
     public function setPickupFewGoodsFullDate(string $pickupFewGoodsFullDate): Store
     {
         $this->pickupFewGoodsFullDate = $pickupFewGoodsFullDate;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPickupAllGoodsTitle(): string
+    {
+        return $this->pickupAllGoodsTitle;
+    }
+
+    /**
+     * @param string $pickupAllGoodsTitle
+     *
+     * @return Store
+     */
+    public function setPickupAllGoodsTitle(string $pickupAllGoodsTitle): Store
+    {
+        $this->pickupAllGoodsTitle = $pickupAllGoodsTitle;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPickupAvailableGoodsTitle(): string
+    {
+        return $this->pickupAvailableGoodsTitle;
+    }
+
+    /**
+     * @param string $pickupAvailableGoodsTitle
+     *
+     * @return Store
+     */
+    public function setPickupAvailableGoodsTitle(string $pickupAvailableGoodsTitle): Store
+    {
+        $this->pickupAvailableGoodsTitle = $pickupAvailableGoodsTitle;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPickupDelayedGoodsTitle(): string
+    {
+        return $this->pickupDelayedGoodsTitle;
+    }
+
+    /**
+     * @param string $pickupDelayedGoodsTitle
+     *
+     * @return Store
+     */
+    public function setPickupDelayedGoodsTitle(string $pickupDelayedGoodsTitle): Store
+    {
+        $this->pickupDelayedGoodsTitle = $pickupDelayedGoodsTitle;
         return $this;
     }
 

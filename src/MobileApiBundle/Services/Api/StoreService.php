@@ -281,8 +281,29 @@ class StoreService
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    protected function saleBundleShopToApiFormat(SaleBundleShop $shop)
+    protected function saleBundleShopToApiFormat(SaleBundleShop $shop): ApiStore
     {
+        $availableGoodsQuantity = 0;
+        $availableGoodsWeight = 0;
+        $availableGoodsPrice = 0;
+        foreach ($shop->getAvailableItems() as $availableItem) {
+            /** @var \FourPaws\SaleBundle\Dto\ShopList\Offer $availableItem */
+            $availableGoodsPrice += $availableItem->getPrice();
+            $availableGoodsQuantity += $availableItem->getQuantity();
+            $availableGoodsWeight += $availableItem->getWeight();
+        }
+        $delayedGoodsQuantity = 0;
+        $delayedGoodsWeight = 0;
+        $delayedGoodsPrice = 0;
+        foreach ($shop->getDelayedItems() as $delayedItem) {
+            /** @var \FourPaws\SaleBundle\Dto\ShopList\Offer $delayedItem */
+            $delayedGoodsPrice += $delayedItem->getPrice();
+            $delayedGoodsQuantity += $delayedItem->getQuantity();
+            $delayedGoodsWeight += $delayedItem->getWeight();
+        }
+        $allGoodsQuantity = $availableGoodsQuantity + $delayedGoodsQuantity;
+        $allGoodsWeight = $availableGoodsWeight + $delayedGoodsWeight;
+        $allGoodsPrice = $availableGoodsPrice + $delayedGoodsPrice;
         $apiStore = (new ApiStore())
             ->setCode($shop->getXmlId())
             ->setTitle($shop->getName())
@@ -298,6 +319,27 @@ class StoreService
             ->setPickupAllGoodsFullDate($shop->getFullPickupDate())
             ->setPickupFewGoodsShortDate($shop->getPickupDateShortFormat())
             ->setPickupFewGoodsFullDate($shop->getPickupDate())
+            ->setPickupAllGoodsTitle(
+                $this->apiProductService::getGoodsTitleForCheckout(
+                    $allGoodsQuantity,
+                    $allGoodsWeight,
+                    $allGoodsPrice
+                )
+            )
+            ->setPickupAvailableGoodsTitle(
+                $this->apiProductService::getGoodsTitleForCheckout(
+                    $availableGoodsQuantity,
+                    $availableGoodsWeight,
+                    $availableGoodsPrice
+                )
+            )
+            ->setPickupDelayedGoodsTitle(
+                $this->apiProductService::getGoodsTitleForCheckout(
+                    $delayedGoodsQuantity,
+                    $delayedGoodsWeight,
+                    $delayedGoodsPrice
+                )
+            )
             ->setAvailability($shop->getAvailability())
             ->setAvailableGoods($this->convertToBasketProductCollection($shop->getAvailableItems()))
             ->setDelayedGoods($this->convertToBasketProductCollection($shop->getDelayedItems()));
