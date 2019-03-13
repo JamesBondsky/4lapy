@@ -80,7 +80,7 @@ class BasketService
             }
         }
 
-        $basket = $this->appBasketService->getBasket();
+        $basket = $this->appBasketService->getBasket(true);
 
         /**
          * Непонятный код для того чтобы корреткно работали подарки (бесплатные товары) в рамках акций "берешь n товаров, 1 бесплатно"
