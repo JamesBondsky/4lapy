@@ -48,7 +48,7 @@ class ManzanaOrderConsumer extends ManzanaConsumerBase
             }
 
             if ($userId > 0 && $USER->GetID() != $userId) {
-                $USER->Authorize($userId);
+                $USER->Authorize($userId, false, false);
             }
             $orderService->importOrdersFromManzana($user);
         } catch (\Exception $e) {
