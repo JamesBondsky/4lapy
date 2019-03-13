@@ -49,53 +49,47 @@ class OrderNumberTable extends Main\Entity\DataManager
     }
 
     /**
-     * @param array $fields
-     * @return AddResult
+     * @param int $orderId
+     * @return int
      * @throws \Exception
      */
-    public static function add(array $fields): AddResult
+    public static function addCustomized(int $orderId): int
 	{
+	    if ($orderId <= 0)
+        {
+            throw new Main\ArgumentNullException('ACCOUNT_NUMBER creating error: wrong ORDER_ID');
+        }
+
 		/** @var Main\Authentication\Context $authContext */
 		$authContext = null;
 
 		$entity = static::getEntity();
-		$result = new AddResult();
 
-		try
-		{
-			$connection = $entity->getConnection();
+        $connection = $entity->getConnection();
 
-			$tableName = $entity->getDBTableName();
-			$identity = $entity->getAutoIncrement();
+        $tableName = $entity->getDBTableName();
+        //$identity = $entity->getAutoIncrement();
 
-            $dataReplacedColumn = [];
-            $accountNumber = (int)$fields['ACCOUNT_NUMBER'];
-			if ($accountNumber)
-            {
-                $dataReplacedColumn = [
-                    'ACCOUNT_NUMBER' => $accountNumber
-                ];
-            }
-			$id = $connection->add($tableName, $dataReplacedColumn, $identity);
+        $connection->queryExecute(\sprintf(
+            'INSERT INTO %s VALUES (null, %s);',
+            $tableName,
+            $orderId
+        ));
 
-			$primary = null;
+        // Использован такой способ получения PRIMARY-ключа вместо lastInsertId, т.к. есть подозрения,
+        // что при втором варианте возникает race condition при большом количестве одновременных запросов
+        $newAccountNumber = $connection->query(\sprintf(
+            'SELECT ACCOUNT_NUMBER 
+              FROM %s
+              WHERE ORDER_ID=%s
+              ORDER BY ACCOUNT_NUMBER DESC 
+              LIMIT 1;',
+            $tableName,
+            $orderId
+        ))->fetch()['ACCOUNT_NUMBER'];
 
-			if (!empty($id))
-			{
-				$primary = array($entity->getAutoIncrement() => $id);
-			}
-			$result->setPrimary($primary);
+        $entity->cleanCache();
 
-			$entity->cleanCache();
-		}
-		catch (\Exception $e)
-		{
-			// check result to avoid warning
-			$result->isSuccess();
-
-			throw $e;
-		}
-
-		return $result;
+		return $newAccountNumber;
 	}
 }
