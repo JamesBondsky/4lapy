@@ -71,7 +71,7 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
             <?
             /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
             $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
-            echo $recaptchaService->getCaptcha('b-input-line', true, 'registerResendSms');
+            echo $recaptchaService->getCaptcha('b-input-line js-no-valid', true, 'registerResendSms', 'captchaRegisterResendSms');
             ?>
         </div>
 

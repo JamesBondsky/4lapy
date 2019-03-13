@@ -292,7 +292,7 @@ $basketRows = $arResult['BASKET_ROWS'];
         <?
         /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
         $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
-        echo $recaptchaService->getCaptcha('', true);
+        echo $recaptchaService->getCaptcha('', true, '', 'captchaBuyOneClick');
         ?>
     </div>
 
