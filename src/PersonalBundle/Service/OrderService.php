@@ -311,13 +311,11 @@ class OrderService
              */
             $oldOrder = $oldOrdersIds[$oldOrderNumbers[$cheque->chequeNumber]];
             if ($oldOrder['ID'] && !$oldOrder['MANZANA_NUMBER']) {
-                Event::disableEvents();
                 try {
                     $this->updateOrderFromManzana($oldOrder['ID'], $cheque, $items);
                 } catch (\Exception $e) {
                     LoggerFactory::create('manzanaOrder')->error(sprintf('failed to update order. Order id: %s. %s', $oldOrder['ID'], $e->getMessage()));
                 }
-                Event::enableEvents();
                 continue;
             }
 
