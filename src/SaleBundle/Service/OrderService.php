@@ -1925,7 +1925,7 @@ class OrderService implements LoggerAwareInterface
         $basket = $order->getBasket();
         /** @var int $insurance Цена страхования */
         $deliveryPrice = $order->getDeliveryPrice();
-        $insurance = ceil((float)$basket->getPrice() + (float)$deliveryPrice);
+        $insurance = ceil((float)$basket->getPrice());
         $takingAmount = 0;
         if (!$isPaid) {
             $takingAmount += $insurance;
@@ -1988,14 +1988,10 @@ class OrderService implements LoggerAwareInterface
             'bitrix_order_id' => $order->getId(),
             'total_weight_kg' => $dostavistaWeightVal,
             'vehicle_type_id' => $vehicleTypeId,
-            'matter' => $matter,
-            //что везем
-            'insurance_amount' => $insurance,
-            //сумма страхования = цене корзины
-            'is_client_notification_enabled' => (\COption::GetOptionString('articul.dostavista.delivery', 'sms_courier_set', '') == BaseEntity::BITRIX_TRUE) ? 1 : 0,
-            //Отправить sms о назначении курьера на заказ 0/1
-            'is_contact_person_notification_enabled' => (\COption::GetOptionString('articul.dostavista.delivery', 'sms_courier_time_phone', '') == BaseEntity::BITRIX_TRUE) ? 1 : 0
-            //Отправить получателям sms с интервалом прибытия и телефоном курьера: 0 - не отправлять, 1 - отправлять.
+            'matter' => $matter, //что везем
+            'insurance_amount' => ceil($insurance + $deliveryPrice), //сумма страхования = цене корзины
+            'is_client_notification_enabled' => (\COption::GetOptionString('articul.dostavista.delivery', 'sms_courier_set', '') == BaseEntity::BITRIX_TRUE) ? 1 : 0, //Отправить sms о назначении курьера на заказ 0/1
+            'is_contact_person_notification_enabled' => (\COption::GetOptionString('articul.dostavista.delivery', 'sms_courier_time_phone', '') == BaseEntity::BITRIX_TRUE) ? 1 : 0 //Отправить получателям sms с интервалом прибытия и телефоном курьера: 0 - не отправлять, 1 - отправлять.
         ];
 
         $nearAddressString = $this->storeService->getStoreAddress($nearShop) . ', ' . $nearShop->getAddress();
@@ -2042,7 +2038,7 @@ class OrderService implements LoggerAwareInterface
             'client_order_id' => $order->getField('ACCOUNT_NUMBER'),
             'required_start_datetime' => $requireTimeStart,
             'required_finish_datetime' => $pointZeroDate->format('c'),
-            'taking_amount' => $takingAmount,
+            'taking_amount' => ceil($takingAmount + $deliveryPrice),
             'buyout_amount' => 0,
             'note' => $comment
         ];
