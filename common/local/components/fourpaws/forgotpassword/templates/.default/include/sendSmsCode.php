@@ -54,7 +54,7 @@ use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
             <?
             /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
             $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
-            echo $recaptchaService->getCaptcha('b-input-line', true, 'recoveryResendSms');
+            echo $recaptchaService->getCaptcha('b-input-line js-no-valid', true, 'recoveryResendSms', 'captchaRecoveryResendSms');
             ?>
         </div>
 
