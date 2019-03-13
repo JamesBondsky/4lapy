@@ -14,7 +14,7 @@ class OrderNumberTableAddOrderIdField20190313090611 extends \Adv\Bitrixtools\Mig
         //$helper = new HelperManager();
         try {
             Application::getConnection()->query('alter table `4lapy_order_number` add ORDER_ID int null;');
-            Application::getConnection()->query('create unique index `4lapy_order_number_ORDER_ID_uindex` on `4lapy_order_number` (ORDER_ID);');
+            Application::getConnection()->query('create index `4lapy_order_number_ORDER_ID_uindex` on `4lapy_order_number` (ORDER_ID);');
 
             return true;
         } catch (SqlQueryException $e) {

@@ -82,6 +82,7 @@ class OrderNumberTable extends Main\Entity\DataManager
             'SELECT ACCOUNT_NUMBER 
               FROM %s
               WHERE ORDER_ID=%s
+              ORDER BY ACCOUNT_NUMBER DESC 
               LIMIT 1;',
             $tableName,
             $orderId
