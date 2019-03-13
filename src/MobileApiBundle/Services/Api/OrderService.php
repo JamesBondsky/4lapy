@@ -16,6 +16,7 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
@@ -474,7 +475,8 @@ class OrderService
         $delivery = null;
         $pickup   = null;
         foreach ($deliveries as $calculationResult) {
-            if ($this->appDeliveryService->isPickup($calculationResult)) {
+            // toDo убрать условие "&& !$calculationResult instanceof DpdPickupResult" после того как в мобильном приложении будет реализован вывод точек DPD на карте в чекауте
+            if ($this->appDeliveryService->isPickup($calculationResult) && !$calculationResult instanceof DpdPickupResult) {
                 $pickup = $calculationResult;
             } elseif ($this->appDeliveryService->isDelivery($calculationResult)) {
                 $delivery = $calculationResult;

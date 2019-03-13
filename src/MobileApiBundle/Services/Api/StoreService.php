@@ -13,6 +13,7 @@ use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
@@ -170,7 +171,12 @@ class StoreService
     {
         $this->checkBasketEmptiness();
         $storage = $this->orderStorageService->getStorage();
-        $shopInfo = $this->saleShopInfoService->getShopInfo($storage, $this->orderStorageService->getPickupDelivery($storage));
+        $pickupResult = $this->orderStorageService->getPickupDelivery($storage);
+        if ($pickupResult instanceof DpdPickupResult) {
+            // toDo убрать это условие после того как в мобильном приложении будет реализован вывод точек DPD на карте в чекауте
+            return new ArrayCollection();
+        }
+        $shopInfo = $this->saleShopInfoService->getShopInfo($storage, $pickupResult);
         $shops = $shopInfo->getShops();
         if (!empty($metroStationIds)) {
             $shops = $shops->filter(function(SaleBundleShop $shop) use ($metroStationIds) {

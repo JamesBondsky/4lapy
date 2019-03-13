@@ -626,6 +626,9 @@ class ProductService
      */
     public static function getGoodsTitleForCheckout(int $quantity, float $weight, int $price): string
     {
+        if ($quantity === 0) {
+            return '';
+        }
         return $quantity
             . ' '  . WordHelper::declension($quantity, ['товар', 'товара', 'товаров'])
             . ' (' . WordHelper::showWeight($weight, true) . ') '
