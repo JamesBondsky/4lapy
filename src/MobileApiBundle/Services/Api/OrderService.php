@@ -49,6 +49,7 @@ use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\OrderService as AppOrderService;
 use FourPaws\PersonalBundle\Service\OrderService as PersonalOrderService;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\UserService as AppUserService;
 use FourPaws\MobileApiBundle\Services\Api\StoreService as ApiStoreService;
 use FourPaws\LocationBundle\LocationService;
@@ -310,8 +311,12 @@ class OrderService
         $orderParameter = (new OrderParameter())
             ->setProducts($basketProducts->getValues());
 
-        $userId = $this->appUserService->getCurrentUserId();
-
+        try {
+            $userId = $this->appUserService->getCurrentUserId();
+        } /** @noinspection BadExceptionsProcessingInspection */
+        catch (NotAuthorizedException $e) {
+            $userId = null;
+        }
 
         $basket = $this->appBasketService->getBasket();
         // привязывать к заказу нужно для расчета скидок

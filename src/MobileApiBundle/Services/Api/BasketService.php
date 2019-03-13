@@ -19,6 +19,7 @@ use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use FourPaws\UserBundle\Service\UserService as AppUserService;
 
@@ -87,7 +88,13 @@ class BasketService
          * @see BasketComponent::executeComponent()
          */
         if (null === $order = $basket->getOrder()) {
-            $userId = $this->appUserService->getCurrentUserId();
+            try {
+                $userId = $this->appUserService->getCurrentUserId();
+            } /** @noinspection BadExceptionsProcessingInspection */
+            catch (NotAuthorizedException $e) {
+                $userId = null;
+            }
+
             $order =  \Bitrix\Sale\Order::create(SITE_ID, $userId);
             $order->setBasket($basket);
             // но иногда он так просто не запускается
