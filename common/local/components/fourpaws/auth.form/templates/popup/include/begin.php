@@ -50,6 +50,7 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
         </header>
         <form class="b-registration__form js-form-validation js-auth-2way"
               data-url="/ajax/user/auth/login-r/"
+              onsubmit="<?= $arResult['ON_SUBMIT'] ?>"
               method="post">
             <?= bitrix_sessid_post() ?>
             <input type="hidden" name="action" value="login" class="js-no-valid">
@@ -89,16 +90,11 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
                     </div>
                 </div>
             </div>
-            <?php
-            if ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3 && $arResult['IS_SHOW_CAPTCHA']) {
-                try {
-                    $recaptchaService = App::getInstance()
-                        ->getContainer()
-                        ->get(ReCaptchaInterface::class);
-                    echo $recaptchaService->getCaptcha('', true);
-                } catch (ApplicationCreateException $e) {
-                }
-            } ?>
+            <?
+            /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
+            $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
+            echo $recaptchaService->getCaptcha('', true, '', 'captchaAuthorize');
+            ?>
             <div>
                 <span class="b-registration__auth-error">
                     <?= (int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3 ? 'Неверный логин или пароль' : '' ?>
