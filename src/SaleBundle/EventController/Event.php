@@ -242,6 +242,15 @@ class Event extends BaseServiceHandler
         ], $module);
 
         /**
+         * При добавлении в корзину
+         */
+        $module = 'sale';
+        static::initHandler('OnBasketAdd', [
+            self::class,
+            'addDiscountProperties'
+        ], $module);
+
+        /**
          * Добавление марок в корзину
          */
         /*$module = 'sale';
@@ -249,6 +258,24 @@ class Event extends BaseServiceHandler
             self::class,
             'addStampsToBasket'
         ], $module);*/
+    }
+
+    /**
+     * Добавляет свойство для региональных скидок
+     * @param $ID
+     * @param $arFields
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     */
+    public function addDiscountProperties($ID, $arFields)
+    {
+        /** @var BasketService $basketService */
+        $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
+
+        /** @var BasketItem $basketItem */
+        if($basketItem = $basketService->getBasket()->getItemById($ID)){
+            $basketService->updateRegionDiscountForBasketItem($basketItem);
+        }
     }
 
     public static function updateUserAccountBalance(): void

@@ -122,3 +122,9 @@ services:
 
   brand.service:
     class: FourPaws\CatalogBundle\Service\BrandService
+
+  price.service:
+    class: FourPaws\CatalogBundle\Service\PriceService
+
+  catalog_group.service:
+    class: FourPaws\CatalogBundle\Service\CatalogGroupService
