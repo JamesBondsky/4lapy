@@ -116,7 +116,96 @@ $APPLICATION->IncludeComponent(
         'HIDE_ICONS' => 'Y',
     ]
 );
+?>
 
+<section class="b-promo-banner">
+    <div class="b-container">
+        <div class="b-promo-banner__list js-promo-banner">
+            <?/*div class="b-promo-banner-item">
+                <div class="b-promo-banner-item__content">
+                    <div class="b-promo-banner-item__left">
+                        <div class="b-promo-banner-item__logo"></div>
+                        <div class="b-promo-banner-item__img">
+                            <img src="/static/build/images/inhtml/promo-banner_express.png" alt=""/>
+                        </div>
+                    </div>
+                    <div class="b-promo-banner-item__descr">
+                        Экспресс доставка по&nbsp;Москве! Привезем заказ через 3 часа!
+                    </div>
+                    <div class="b-promo-banner-item__link-wrap">
+                        <a class="b-promo-banner-item__link" href="#">Подробнее</a>
+                    </div>
+                </div>
+            </div*/?>
+            <div class="b-promo-banner-item">
+                <div class="b-promo-banner-item__content">
+                    <div class="b-promo-banner-item__left">
+                        <div class="b-promo-banner-item__logo"></div>
+                        <div class="b-promo-banner-item__img">
+                            <img src="/static/build/images/inhtml/promo-banner_application.png" alt=""/>
+                        </div>
+                    </div>
+                    <div class="b-promo-banner-item__descr">
+                        Удобные мобильные<br/> приложения для Android и&nbsp;IOS
+                    </div>
+                    <div class="b-promo-banner-item__link-wrap">
+                        <a class="b-promo-banner-item__link" href="/shares/mobilnoe_prilozhenie_chetyre_lapy.html">Подробнее</a>
+                    </div>
+                </div>
+            </div>
+            <div class="b-promo-banner-item">
+                <div class="b-promo-banner-item__content">
+                    <div class="b-promo-banner-item__left">
+                        <div class="b-promo-banner-item__logo"></div>
+                        <div class="b-promo-banner-item__img">
+                            <img src="/static/build/images/inhtml/promo-banner_pickup.png" alt=""/>
+                        </div>
+                    </div>
+                    <div class="b-promo-banner-item__descr">
+                        Бесплатный самовывоз заказа через час из&nbsp;230+ магазинов!
+                    </div>
+                    <div class="b-promo-banner-item__link-wrap">
+                        <a class="b-promo-banner-item__link" href="/shops/">Подробнее</a>
+                    </div>
+                </div>
+            </div>
+            <div class="b-promo-banner-item b-promo-banner-item--big-text">
+                <div class="b-promo-banner-item__content">
+                    <div class="b-promo-banner-item__left">
+                        <div class="b-promo-banner-item__logo"></div>
+                        <div class="b-promo-banner-item__img">
+                            <img src="/static/build/images/inhtml/promo-banner_region.png" alt=""/>
+                        </div>
+                    </div>
+                    <div class="b-promo-banner-item__descr">
+                        Бесплатная доставка по&nbsp;Москве в&nbsp;день заказа!<br/> Доставим в&nbsp;любой <nobr>4-х</nobr> часовой интервал
+                    </div>
+                    <div class="b-promo-banner-item__link-wrap">
+                        <a class="b-promo-banner-item__link" href="/payment-and-delivery/">Подробнее</a>
+                    </div>
+                </div>
+            </div>
+            <div class="b-promo-banner-item b-promo-banner-item--dark">
+                <div class="b-promo-banner-item__content">
+                    <div class="b-promo-banner-item__left">
+                        <div class="b-promo-banner-item__logo"></div>
+                        <div class="b-promo-banner-item__img">
+                            <img src="/static/build/images/inhtml/promo-banner_acarid.png" alt=""/>
+                        </div>
+                    </div>
+                    <div class="b-promo-banner-item__descr">
+                        Бесплатная обработка<br/> от&nbsp;клещей и&nbsp;блох в&nbsp;магазинах!
+                    </div>
+                    <div class="b-promo-banner-item__link-wrap">
+                        <a class="b-promo-banner-item__link" href="/catalog/veterinarnaya-apteka/zashchita-ot-blokh-i-kleshchey/">Подробнее</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<?php
 /**
  * Распродажа
  */

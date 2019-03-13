@@ -90,6 +90,7 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
 <?php $APPLICATION->ShowPanel(); ?>
 
 <header class="b-header <?= $template->getHeaderClass() ?> js-header">
+    <?php require_once __DIR__ . '/blocks/header/promo_top_acarid.php' ?>
     <?php
     $APPLICATION->IncludeComponent('articul:header.mobile.bunner',
         '',

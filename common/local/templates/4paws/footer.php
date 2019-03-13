@@ -64,7 +64,7 @@ if ($template->hasMainWrapper()) {
 <?php require_once __DIR__ . '/blocks/footer/change_viewport.php'; ?>
 <?
 if (mb_strpos($APPLICATION->GetCurDir(), '/cart/') === false && mb_strpos($APPLICATION->GetCurDir(), '/sale/order/') === false) {
-    require_once __DIR__ . '/blocks/footer/bottom_die_banner.php';
+    require_once __DIR__ . '/blocks/footer/promo_bottom_acarid.php';
 }
 ?>
 <footer class="b-footer js-main-footer <?= $template->getFooterClass() ?>">
