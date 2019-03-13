@@ -522,32 +522,19 @@ class Event extends BaseServiceHandler
     }
 
     /**
-     * @param $id
+     * @param $orderId
      * @param $type
      *
      * @return false|int
      */
-    public static function updateOrderAccountNumber($id, $type)
+    public static function updateOrderAccountNumber($orderId, $type)
     {
         $result = false;
-        if (self::$isEventsDisable) {
-            return $result;
-        }
 
         if ($type === 'NUMBER') {
             try {
                 //$defaultNumber = (int)Option::get('sale', 'account_number_data', 0); // "Начальное число" в настройке "Шаблон генерации номера заказа"
-                $newNumber = (int)OrderNumberTable::add([])->getId();
-
-                /*if ($defaultNumber > $newNumber)
-                {
-                    // Если делать LOCK только после OrderNumberTable::add([]), то возможна попытка создания
-                    // номеров с одним и тем же $defaultNumber (упадет с Exception)
-                    //$connection = BitrixApplication::getConnection();
-                    $connection->query('LOCK TABLE ' . OrderNumberTable::getTableName() . ' WRITE');
-                    $newNumber = (int)OrderNumberTable::add(['ACCOUNT_NUMBER' => $defaultNumber])->getId();
-                    $connection->query('UNLOCK TABLES');
-                }*/
+                $newNumber = OrderNumberTable::addCustomized($orderId);
 
                 if ($newNumber > 9000000)
                 {
@@ -566,7 +553,7 @@ class Event extends BaseServiceHandler
                     ->error(
                         sprintf(
                             'failed to set order %s account number: %s: %s',
-                            $id,
+                            $orderId,
                             \get_class($e),
                             $e->getMessage()
                         )

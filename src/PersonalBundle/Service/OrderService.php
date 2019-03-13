@@ -311,11 +311,13 @@ class OrderService
              */
             $oldOrder = $oldOrdersIds[$oldOrderNumbers[$cheque->chequeNumber]];
             if ($oldOrder['ID'] && !$oldOrder['MANZANA_NUMBER']) {
+                Event::disableEvents();
                 try {
                     $this->updateOrderFromManzana($oldOrder['ID'], $cheque, $items);
                 } catch (\Exception $e) {
                     LoggerFactory::create('manzanaOrder')->error(sprintf('failed to update order. Order id: %s. %s', $oldOrder['ID'], $e->getMessage()));
                 }
+                Event::enableEvents();
                 continue;
             }
 
@@ -323,11 +325,12 @@ class OrderService
             /** @var \DateTimeImmutable $date */
             $date = $cheque->date;
             $bitrixDate = DateTime::createFromTimestamp($date->getTimestamp());
+            $currentDate = new DateTime();
             $order = (new Order())
                 ->setDateInsert($bitrixDate)
                 ->setDatePayed($bitrixDate)
                 ->setDateStatus($bitrixDate)
-                ->setDateUpdate($bitrixDate)
+                ->setDateUpdate($currentDate)
                 ->setManzana(true)
                 ->setUserId($user->getId())
                 ->setPayed(true)
@@ -778,7 +781,7 @@ class OrderService
         OrderTable::update($result->getId(),
             [
                 'DATE_INSERT' => $order->getDateInsert(),
-                'DATE_UPDATE' => $order->getDateInsert(),
+                'DATE_UPDATE' => $order->getDateUpdate(),
             ]
         );
         Manager::enableExtendsDiscount();
@@ -815,6 +818,7 @@ class OrderService
                 LoggerFactory::create('manzanaOrder')->error(sprintf('failed to set MANZANA_NUMBER for order %s', $order->getField('ACCOUNT_NUMBER')));
             }
             $order->setFieldNoDemand('STATUS_ID', static::MANZANA_FINAL_STATUS);
+            $order->setFieldNoDemand('DATE_UPDATE', new DateTime());
 
             if ($baseOrderStatus !== BitrixUtils::BX_BOOL_TRUE) {
                 $order->setFieldNoDemand('PAYED', BitrixUtils::BX_BOOL_TRUE);
