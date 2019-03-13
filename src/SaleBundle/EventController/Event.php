@@ -42,6 +42,7 @@ use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Exception\ForgotBasket\FailedToUpdateException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
+use FourPaws\SaleBundle\Repository\OrderNumberTable;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\ForgotBasketService;
 use FourPaws\SaleBundle\Service\NotificationService;
@@ -521,41 +522,38 @@ class Event extends BaseServiceHandler
     }
 
     /**
-     * @param $id
+     * @param $orderId
      * @param $type
      *
-     * @return false|string
+     * @return false|int
      */
-    public static function updateOrderAccountNumber($id, $type)
+    public static function updateOrderAccountNumber($orderId, $type)
     {
         $result = false;
-        if (self::$isEventsDisable) {
-            return $result;
-        }
 
         if ($type === 'NUMBER') {
             try {
-                /**
-                 * @var array $connection
-                 */
-                $connection = BitrixApplication::getConnection();
+                //$defaultNumber = (int)Option::get('sale', 'account_number_data', 0); // "Начальное число" в настройке "Шаблон генерации номера заказа"
+                $newNumber = OrderNumberTable::addCustomized($orderId);
 
-                $connection->query('LOCK TABLE b_sale_order WRITE');
-                /** ограничение сверху в запросе - для того, чтобы не захватывать заказы из манзаны */
-                $maxNumber = $connection
-                                 ->query('SELECT MAX(CAST(ACCOUNT_NUMBER AS UNSIGNED)) AS maxNumber FROM b_sale_order WHERE CAST(ACCOUNT_NUMBER AS UNSIGNED) < 9999999')
-                                 ->fetch()['maxNumber'];
-                $defaultNumber = Option::get('sale', 'account_number_data', 0);
-
-                if ($defaultNumber) {
-                    $result = (int)$defaultNumber > (int)$maxNumber ? $defaultNumber : ($maxNumber + 1);
+                if ($newNumber > 9000000)
+                {
+                    static::getLogger()
+                        ->critical(
+                            \sprintf(
+                                'с номера 9999999 возникнет пересечение номеров с внешними заказами. Текущий номер: %s',
+                                $newNumber
+                            )
+                        );
                 }
+
+                $result = $newNumber;
             } catch (Exception $e) {
                 static::getLogger()
                     ->error(
                         sprintf(
                             'failed to set order %s account number: %s: %s',
-                            $id,
+                            $orderId,
                             \get_class($e),
                             $e->getMessage()
                         )

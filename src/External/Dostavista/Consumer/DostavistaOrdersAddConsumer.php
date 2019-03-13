@@ -77,7 +77,9 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
         if ($result !== static::MSG_ACK) {
             /** @var DostavistaService $dostavistaService */
             $dostavistaService = Application::getInstance()->getContainer()->get('dostavista.service');
-            $dostavistaService->dostavistaOrderAddErrorSendEmail($order['ID'], $order->getField('ACCOUNT_NUMBER'), $response['message'], $response['data'], (new \Datetime)->format('d.m.Y H:i:s'));
+            if ($order) {
+                $dostavistaService->dostavistaOrderAddErrorSendEmail($order['ID'], $order->getField('ACCOUNT_NUMBER'), $response['message'], $response['data'], (new \Datetime)->format('d.m.Y H:i:s'));
+            }
         }
 
         Event::enableEvents();

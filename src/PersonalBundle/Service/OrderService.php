@@ -311,6 +311,7 @@ class OrderService
                     $orderProperty = \FourPaws\Helpers\BxCollection::getOrderPropertyByCode($propertyCollection, 'MANZANA_NUMBER');
                     if ($orderProperty) {
                         $orderProperty->setValue($cheque->chequeNumber);
+                        $order->setFieldNoDemand('DATE_UPDATE', new DateTime());
                         $order->save();
                     }
                 }
@@ -322,11 +323,12 @@ class OrderService
             /** @var \DateTimeImmutable $date */
             $date = $cheque->date;
             $bitrixDate = DateTime::createFromTimestamp($date->getTimestamp());
+            $currentDate = new DateTime();
             $order = (new Order())
                 ->setDateInsert($bitrixDate)
                 ->setDatePayed($bitrixDate)
                 ->setDateStatus($bitrixDate)
-                ->setDateUpdate($bitrixDate)
+                ->setDateUpdate($currentDate)
                 ->setManzana(true)
                 ->setUserId($user->getId())
                 ->setPayed(true)
@@ -797,12 +799,12 @@ class OrderService
             throw new OrderCreateException('Order payment failed');
         }
 
-        $result = $bitrixOrder->save(); //FIXME обработать ошибку Argument 'FUSER_ID' is null or empty
+        $result = $bitrixOrder->save();
         /** костыль для обновления дат */
         OrderTable::update($result->getId(),
             [
                 'DATE_INSERT' => $order->getDateInsert(),
-                'DATE_UPDATE' => $order->getDateInsert(),
+                'DATE_UPDATE' => $order->getDateUpdate(),
             ]
         );
         Manager::enableExtendsDiscount();
