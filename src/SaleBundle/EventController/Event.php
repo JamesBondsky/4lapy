@@ -530,9 +530,6 @@ class Event extends BaseServiceHandler
     public static function updateOrderAccountNumber($id, $type)
     {
         $result = false;
-        if (self::$isEventsDisable) {
-            return $result;
-        }
 
         if ($type === 'NUMBER') {
             try {
