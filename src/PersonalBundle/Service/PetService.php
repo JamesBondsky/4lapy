@@ -9,6 +9,7 @@ namespace FourPaws\PersonalBundle\Service;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Security\SecurityException;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
@@ -48,6 +49,15 @@ class PetService
 
     /** @var ManzanaService $currentUser */
     private $manzanaService;
+
+    public const PETS_TYPE = [
+        'koshki' => 'cat',
+        'sobaki' => 'dog',
+        'ryby' => 'fish',
+        'ptitsy' => 'bird',
+        '9' => 'reptile',
+        'gryzuny' => 'rodent'
+    ];
 
     /**
      * PetService constructor.
@@ -170,6 +180,35 @@ class PetService
     public function getUserPets($user): ArrayCollection
     {
         return $this->petRepository->findByUser($user);
+    }
+
+    /**
+     * @param User|int $userId
+     *
+     * @return array
+     * @throws ObjectPropertyException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getUserPetsTypesCodes($userId): array
+    {
+        $userPets = $this->petRepository->findByUser($userId);
+        $petsTypes = [];
+        if (!$userPets->isEmpty()) {
+            $userPetsTypeIds = [];
+            foreach ($userPets as $pet) {
+                $userPetsTypeIds[] = $pet->getType();
+            }
+            if (count($userPetsTypeIds)) {
+                $petBreeds = $this->getPetTypes(['ID' => $userPetsTypeIds]);
+                foreach ($petBreeds as $petBreed) {
+                    if (in_array($petBreed, array_keys(static::PETS_TYPE))) {
+                        $petsTypes[static::PETS_TYPE[$petBreed]] = true;
+                    }
+                }
+            }
+        }
+        return $petsTypes;
     }
 
     /**
@@ -314,7 +353,13 @@ class PetService
     }
 
 
-
+    /**
+     * @param int $typeId
+     * @return array
+     * @throws ObjectPropertyException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     */
     public function getPetBreed(int $typeId): array
     {
         //if ($this->startResultCache()){
@@ -337,5 +382,28 @@ class PetService
 
             return $arBreeds;
         //}
+    }
+
+    /**
+     * @param array $filter
+     * @return array
+     * @throws ObjectPropertyException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getPetTypes(array $filter): array
+    {
+        $arBreeds = [];
+        $res = HLBlockFactory::createTableObject(Pet::PET_TYPE)::query()->setFilter($filter)->setSelect(
+            [
+                'ID',
+                'UF_CODE'
+            ]
+        )->setOrder(['UF_CODE' => 'asc'])->exec();
+        while ($item = $res->fetch()) {
+            $arBreeds[$item['UF_CODE']] = $item['UF_CODE'];
+        }
+
+        return $arBreeds;
     }
 }

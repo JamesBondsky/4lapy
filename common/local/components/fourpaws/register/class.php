@@ -657,7 +657,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 '%s%s%s%s',
                 $this->renderDataLayerByType(DataLayer::REGISTER_TYPE_LOGIN),
                 'if ($(this).find("input[type=email]").val().indexOf("register.phone") == -1){',
-                $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val()'),
+                $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val(), {name: $(this).find("input[name=NAME]").val()}'),
                 '}'
             )
         );
