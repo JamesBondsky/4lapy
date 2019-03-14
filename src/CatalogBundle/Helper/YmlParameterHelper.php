@@ -7,10 +7,12 @@ use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\CatalogProduct;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
+use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\CatalogBundle\Dto\YmlOfferParameterInterface;
 use FourPaws\CatalogBundle\Exception\YmlParameterCountException;
+use FourPaws\Decorators\FullHrefDecorator;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -68,6 +70,7 @@ class YmlParameterHelper
             $this->addOfferParameters($offer, $parameters);
             $this->addProductParameters($offer->getProduct(), $parameters);
             $this->addCatalogParameters($offer->getCatalogProduct(), $parameters);
+            $this->addActionsParameters($offer->getProduct(), $parameters);
         } catch (YmlParameterCountException $e) {
         }
 
@@ -164,6 +167,55 @@ class YmlParameterHelper
         if ($clothSeasons = $product->getClothesSeasons()) {
             $this->addReferenceParameters($parameters, $clothSeasons, 'Сезон');
         }
+    }
+
+    /**
+     * @param Product $product
+     * @param ArrayCollection $parameters
+     *
+     * @throws ApplicationCreateException
+     */
+    protected function addActionsParameters(Product $product, ArrayCollection $parameters): void
+    {
+        $offers = [];
+        $actions = [];
+        $offersCollection = $product->getOffers();
+        foreach ($offersCollection as $offer)
+        {
+            $offerShare = $offer->getShare()->getValues();
+            /** @var Share $action */
+            foreach ($offerShare as $action)
+            {
+                $actions[] = $action;
+            }
+            /** @noinspection PhpUnhandledExceptionInspection */
+            $offers[] = [
+                'main_param' => $offer->getPackageLabel(),
+                'has_action' => $offer->isShare(),
+            ];
+        }
+
+        $i = 0;
+        foreach ($actions as $action)
+        {
+            ++$i;
+            $this->addParameter($parameters, 'special_offer_' . $i, $action->getName());
+            $this->addParameter($parameters, 'special_offer_' . $i . '_url', new FullHrefDecorator($action->getDetailPageUrl()));
+        }
+        unset($i);
+
+
+        $i = 0;
+        foreach ($offers as $offer)
+        {
+            ++$i;
+            $this->addParameter($parameters, 'pack' . $i, $offer['main_param']);
+            if ($offer['has_action'])
+            {
+                $this->addParameter($parameters, 'pack' . $i . '_special_offer', 'true');
+            }
+        }
+        unset($i);
     }
 
     /**
