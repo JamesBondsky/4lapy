@@ -137,22 +137,6 @@ $APPLICATION->IncludeComponent(
                     </div>
                 </div>
             </div*/?>
-            <div class="b-promo-banner-item b-promo-banner-item--dark">
-                <div class="b-promo-banner-item__content">
-                    <div class="b-promo-banner-item__left">
-                        <div class="b-promo-banner-item__logo"></div>
-                        <div class="b-promo-banner-item__img">
-                            <img src="/static/build/images/inhtml/promo-banner_acarid.png" alt=""/>
-                        </div>
-                    </div>
-                    <div class="b-promo-banner-item__descr">
-                        Бесплатная обработка<br/> от&nbsp;клещей и&nbsp;блох в&nbsp;магазинах!
-                    </div>
-                    <div class="b-promo-banner-item__link-wrap">
-                        <a class="b-promo-banner-item__link" href="/catalog/veterinarnaya-apteka/zashchita-ot-blokh-i-kleshchey/">Подробнее</a>
-                    </div>
-                </div>
-            </div>
             <div class="b-promo-banner-item">
                 <div class="b-promo-banner-item__content">
                     <div class="b-promo-banner-item__left">
@@ -166,6 +150,22 @@ $APPLICATION->IncludeComponent(
                     </div>
                     <div class="b-promo-banner-item__link-wrap">
                         <a class="b-promo-banner-item__link" href="/shares/mobilnoe_prilozhenie_chetyre_lapy.html">Подробнее</a>
+                    </div>
+                </div>
+            </div>
+            <div class="b-promo-banner-item b-promo-banner-item--dark">
+                <div class="b-promo-banner-item__content">
+                    <div class="b-promo-banner-item__left">
+                        <div class="b-promo-banner-item__logo"></div>
+                        <div class="b-promo-banner-item__img">
+                            <img src="/static/build/images/inhtml/promo-banner_acarid.png" alt=""/>
+                        </div>
+                    </div>
+                    <div class="b-promo-banner-item__descr">
+                        Бесплатная обработка<br/> от&nbsp;клещей и&nbsp;блох в&nbsp;магазинах!
+                    </div>
+                    <div class="b-promo-banner-item__link-wrap">
+                        <a class="b-promo-banner-item__link" href="/catalog/veterinarnaya-apteka/zashchita-ot-blokh-i-kleshchey/">Подробнее</a>
                     </div>
                 </div>
             </div>
