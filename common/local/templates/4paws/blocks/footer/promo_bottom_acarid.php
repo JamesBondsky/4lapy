@@ -7,7 +7,7 @@ $isViewportCookie = $_COOKIE['viewport'] ?? null;
 
 ?>
 
-<div class="b-promo-bottom-acarid js-promo-bottom-acarid hide <?php if ($isViewportCookie === null) { ?>mobile-hide<?php } ?>">
+<div class="b-promo-bottom-acarid js-promo-bottom-acarid hide <?/*php if ($isViewportCookie === null) { ?>mobile-hide<?php } */?>">
     <div class="b-promo-bottom-acarid__img"></div>
     <div class="b-promo-bottom-acarid__content">
         <div class="b-promo-bottom-acarid__title"><span>Защити питомца</span><br/> от блох и клещей</div>
