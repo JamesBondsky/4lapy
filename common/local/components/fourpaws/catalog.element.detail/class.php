@@ -194,7 +194,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                     $this->ecommerceService->renderScript(
                         $this->ecommerceService->buildDetailFromOffer($currentOffer, 'Карточка товара')
                     ),
-                    $this->retailRocketService->renderDetailView(implode(',', $offersXmlIds))
+                    $this->retailRocketService->renderDetailView('[' . implode(',', $offersXmlIds) . ']')
                 ),
                 'BASKET_LINK_EVENT'     => \sprintf(
                     'onmousedown="%s"',

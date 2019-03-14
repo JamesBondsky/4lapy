@@ -168,7 +168,9 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             ];
 
             $this->arResult['ON_SUBMIT'] = \str_replace('"', '\'',
-                'if($(this).find("input[type=email]").val().indexOf("register.phone") == -1){' . $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val()') . '}'
+                'if($(this).find("input[type=email]").val().indexOf("register.phone") == -1){' .
+                $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val(), {name: $(this).find("input[name=NAME]").val()}') .
+                '}'
             );
 
             $this->includeComponentTemplate();
