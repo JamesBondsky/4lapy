@@ -863,8 +863,10 @@ class OrderService
 
                     $manzanaBasketItemsCollection = new ArrayCollection($manzanaBasketItems);
 
+                    Manager::disableExtendsDiscount();
                     $basket->clearCollection();
                     $this->addManzanaItemsToBasket($basket, $manzanaBasketItemsCollection);
+                    Manager::enableExtendsDiscount();
 
                     $orderProperty = \FourPaws\Helpers\BxCollection::getOrderPropertyByCode($propertyCollection, 'BONUS_COUNT');
                     if ($orderProperty) {
