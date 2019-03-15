@@ -18,6 +18,9 @@ final class MarkHelper
     public const MARK_HIT_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>';
     public const MARK_NEW_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/new.svg" alt="" role="presentation"/>';
 
+    // todo: поменять картинку
+    public const MARK_REGION_PRICE_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/new.svg" alt="" role="presentation"/>';
+
     public const DEFAULT_TRANSPARENT_TEMPLATE = '<span class="b-common-item__sticker-wrap" style="background-color:transparent;data-background:transparent;">%s</span>';
     public const DEFAULT_TEMPLATE = '<span class="b-common-item__sticker-wrap" style="background-color:#da291c;data-background:#da291c;">%s</span>';
     public const YELLOW_TEMPLATE = '<span class="b-common-item__sticker-wrap" style="background-color:#feda24;data-background:#feda24;">%s</span>';
@@ -135,6 +138,10 @@ final class MarkHelper
 
         if ($offer->isNew()) {
             return self::MARK_NEW_IMAGE;
+        }
+
+        if ($offer->isRegionPrice()){
+            return self::MARK_REGION_PRICE_IMAGE;
         }
 
         return '';
