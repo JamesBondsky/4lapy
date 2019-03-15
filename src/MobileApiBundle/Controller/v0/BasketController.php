@@ -109,7 +109,6 @@ class BasketController extends FOSRestController
         $orderCalculate = $this->apiOrderService->getOrderCalculate($basketProducts);
 
         if ($promoCode = $userCartRequest->getPromoCode()) {
-            // toDo проверить как работают промо-коды
             $this->manzana->setPromocode($promoCode);
             $this->manzana->calculate();
             $this->couponStorage->clear();

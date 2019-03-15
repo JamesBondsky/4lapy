@@ -17,6 +17,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
+use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Dto\Object\Store\Store as ApiStore;
 use FourPaws\MobileApiBundle\Dto\Object\Store\StoreService as ApiStoreServiceDto;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListRequest;
@@ -408,6 +409,10 @@ class StoreService
                 $product = $offer->getProduct();
                 $quantity = $shopListOffer->getQuantity();
                 $shortProduct = $this->apiProductService->convertToShortProduct($product, $offer, $quantity, true);
+                if (isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
+                    $shortProduct->setIsGift(true);
+                    $shortProduct->setPrice((new Price())->setActual(0)->setOld(0));
+                }
                 $basketProductCollection->add(
                     (new Product())
                         ->setBasketItemId($basketItem->getId())

@@ -21,7 +21,6 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\CatalogBundle\Service\CategoriesService;
 use FourPaws\CatalogBundle\Service\FilterHelper;
 use FourPaws\CatalogBundle\Service\SortService;
-use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
@@ -44,6 +43,7 @@ use FourPaws\Search\SearchService;
 use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\UserBundle\Service\UserService;
 use Symfony\Component\HttpFoundation\Request;
+use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 
 
 class ProductService
@@ -51,34 +51,29 @@ class ProductService
     const LIST_IMAGE_WIDTH = 200;
     const LIST_IMAGE_HEIGHT = 250;
 
-    /**
-     * @var UserService
-     */
+    /** @var UserService */
     private $userService;
-    /**
-     * @var LocationService
-     */
+
+    /** @var LocationService */
     private $locationService;
-    /**
-     * @var DeliveryService
-     */
+
+    /** @var DeliveryService */
     private $deliveryService;
-    /**
-     * @var CategoriesService
-     */
+
+    /** @var CategoriesService */
     private $categoriesService;
-    /**
-     * @var FilterHelper
-     */
+
+    /** @var FilterHelper */
     private $filterHelper;
-    /**
-     * @var SearchService
-     */
+
+    /** @var SearchService */
     private $searchService;
-    /**
-     * @var SortService
-     */
+
+    /** @var SortService */
     private $sortService;
+
+    /** @var AppBasketService */
+    private $appBasketService;
 
     public function __construct(
         CategoriesService $categoriesService,
@@ -87,7 +82,8 @@ class ProductService
         DeliveryService $deliveryService,
         FilterHelper $filterHelper,
         SortService $sortService,
-        SearchService $searchService
+        SearchService $searchService,
+        AppBasketService $appBasketService
     )
     {
         $this->categoriesService = $categoriesService;
@@ -97,6 +93,7 @@ class ProductService
         $this->filterHelper = $filterHelper;
         $this->sortService = $sortService;
         $this->searchService = $searchService;
+        $this->appBasketService = $appBasketService;
     }
 
     /**
@@ -332,6 +329,7 @@ class ProductService
 
         // лейблы и бонусы нужны только для каталога
         if (!$forBasket) {
+
             // лейблы
             $shortProduct->setTag($this->getTags($offer));
 

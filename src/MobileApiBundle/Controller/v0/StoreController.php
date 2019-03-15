@@ -76,7 +76,7 @@ class StoreController extends FOSRestController
      * Используется в корзине для вывода возможных магазинов для самовывоза
      *
      * @Rest\Get(path="/shops_list_availableV2/")
-     * @Rest\View(serializerGroups={"Default", "withPickupInfo"})
+     * @Rest\View(serializerGroups={"Default", "withPickupInfo", "basket"})
      *
      * @param ShopsForCheckoutRequest $shopsForCheckoutRequest
      * @return StoreListAvailableResponse

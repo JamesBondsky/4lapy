@@ -8,7 +8,6 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 
 
 use Bitrix\Sale\BasketItem;
-use Bitrix\Sale\BasketPropertyItem;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Components\BasketComponent;
