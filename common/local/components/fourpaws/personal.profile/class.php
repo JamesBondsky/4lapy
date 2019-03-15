@@ -26,6 +26,7 @@ use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\PersonalBundle\Service\PetService;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
@@ -98,13 +99,10 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
 
     /**
      * {@inheritdoc}
-     * @throws BitrixRuntimeException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
-     * @throws LoaderException
+     * @return bool|null
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
      */
     public function executeComponent()
     {
@@ -167,8 +165,20 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 'PHONE_CONFIRMED' => $curUser->isPhoneConfirmed()
             ];
 
+            $name = $curUser->getName();
+            /** @var PetService $petService */
+            $petService = App::getInstance()->getContainer()->get('pet.service');
+            $petsTypes = $petService->getUserPetsTypesCodes($curUser->getId());
+            $stringData = ', {name: "' . $name . '"';
+            foreach ($petsTypes as $key => $value) {
+                $stringData .= ', ' . $key . ': true';
+            }
+            $stringData .= '}';
+
             $this->arResult['ON_SUBMIT'] = \str_replace('"', '\'',
-                'if($(this).find("input[type=email]").val().indexOf("register.phone") == -1){' . $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val()') . '}'
+                'if($(this).find("input[type=email]").val().indexOf("register.phone") == -1){' .
+                $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val()' . $stringData) .
+                '}'
             );
 
             $this->includeComponentTemplate();
