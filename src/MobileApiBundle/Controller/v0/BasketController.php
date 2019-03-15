@@ -124,13 +124,6 @@ class BasketController extends FOSRestController
 
 
     /**
-     * @Rest\Post(path="/user_cart_info/")
-     */
-    public function userCartInfoAction()
-    {
-    }
-
-    /**
      * Добавление товаров в корзину (принимает массив id товаров и количество каждого товара)
      * @Rest\Post(path="/user_cart/")
      * @Rest\View(serializerGroups={"Default", "basket"})
@@ -153,11 +146,26 @@ class BasketController extends FOSRestController
      */
     public function postUserCartAction(PostUserCartRequest $postUserCartRequest)
     {
+        $gifts = [];
         foreach ($postUserCartRequest->getGoods() as $productQuantity) {
-            $this->appBasketService->addOfferToBasket(
-                $productQuantity->getProductId(),
-                $productQuantity->getQuantity()
-            );
+            if ($productQuantity->getDiscountId()) {
+                // gift
+                $gifts[] = [
+                    'offerId' =>  $productQuantity->getProductId(),
+                    'actionId' => $productQuantity->getDiscountId(),
+                    'count' => $productQuantity->getQuantity(),
+                ];
+            } else {
+                // regular product
+                $this->appBasketService->addOfferToBasket(
+                    $productQuantity->getProductId(),
+                    $productQuantity->getQuantity()
+                );
+            }
+        }
+        if (!empty($gifts)) {
+            /** @noinspection PhpUndefinedMethodInspection */
+            $this->appBasketService->getAdder('gift')->selectGifts($gifts);
         }
         return $this->getUserCartAction(new UserCartRequest());
     }
@@ -255,6 +263,7 @@ class BasketController extends FOSRestController
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
      * @throws \FourPaws\SaleBundle\Exception\DeliveryNotAvailableException
      * @throws \FourPaws\SaleBundle\Exception\OrderCreateException

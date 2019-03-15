@@ -21,6 +21,13 @@ class ProductQuantity
     protected $quantity = 0;
 
     /**
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("discountId")
+     * @var int
+     */
+    protected $discountId = 0;
+
+    /**
      * @return int
      */
     public function getProductId(): int
@@ -55,6 +62,25 @@ class ProductQuantity
     public function setQuantity(int $quantity): ProductQuantity
     {
         $this->quantity = $quantity;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDiscountId(): int
+    {
+        return $this->discountId;
+    }
+
+    /**
+     * @param int $discountId
+     *
+     * @return ProductQuantity
+     */
+    public function setDiscountId(int $discountId): ProductQuantity
+    {
+        $this->discountId = $discountId;
         return $this;
     }
 }
