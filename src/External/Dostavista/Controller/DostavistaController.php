@@ -56,11 +56,6 @@ class DostavistaController implements LoggerAwareInterface
             );
         }
         $data = json_decode($stream, true);
-
-        //тестируем на препроде
-        $fs = new Filesystem();
-        $fs->appendToFile($_SERVER['DOCUMENT_ROOT'] . '/logs.txt', "\r\n" . print_r($data, true) . "\r\n");
-
         $dostavistaOrderId = $data['order']['order_id'];
         $dostavistaStatus = $data['order']['status'];
         $bitrixStatus = StatusService::STATUS_DOSTAVISTA_MAP[array_flip(StatusService::STATUS_SITE_DOSTAVISTA_MAP)[$dostavistaStatus]];

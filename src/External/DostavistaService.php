@@ -163,6 +163,37 @@ class DostavistaService implements LoggerAwareInterface, SapOutInterface
     }
 
     /**
+     * @param string $query
+     * @return array
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function listOrder(string $query)
+    {
+        //проверяем коннект
+        $res = $this->client->checkConnection();
+        if ($res['success']) {
+            //пробуем отменить заказ в достависте
+            try {
+                $result = $this->client->listOrder($query);
+            } catch (\Exception $e) {
+                $result = [
+                    'success' => false,
+                    'message' => 'Ошибка получения списка заказа'
+                ];
+                $this->logger->error('Order list get with query ' . $query . ' failed in "Dostavista" service', $result);
+            }
+        } else {
+            $result = [
+                'success' => $res['success'],
+                'message' => $res['message'],
+                'connection' => false
+            ];
+            $this->logger->error('Connection failed with "Dostavista" service', $result);
+        }
+        return $result;
+    }
+
+    /**
      * @param Order $order
      */
     public function dostavistaOrderAdd(Order $order)
