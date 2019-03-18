@@ -179,6 +179,9 @@ class OrderService implements LoggerAwareInterface
     /** @var array $paySystemServiceCache */
     private $paySystemServiceCache = [];
 
+    /** @var string $dostavistManagerPhone */
+    private $dostavistManagerPhone = '8 (495) 221-72-25, доб. 5005';
+
     /**
      * OrderService constructor.
      *
@@ -1099,6 +1102,7 @@ class OrderService implements LoggerAwareInterface
                             'DELIVERY_PLACE_CODE' => $nearShop->getXmlId()
                         ]
                     );
+                    $order->setField('COMMENTS', 'Упаковать заказ'); //Если достависта оставляем комментарий менеджеру
                 }
             } else {
                 /**
@@ -2026,7 +2030,7 @@ class OrderService implements LoggerAwareInterface
             'required_finish_datetime' => $pointZeroDate->format('c'),
             'taking_amount' => 0,
             'buyout_amount' => $takingAmount,
-            'note' => 'Телефон магазина: ' . $nearShop->getPhone()
+            'note' => 'Телефон магазина: ' . $this->dostavistManagerPhone
         ];
 
         $data['points'][1] = [
