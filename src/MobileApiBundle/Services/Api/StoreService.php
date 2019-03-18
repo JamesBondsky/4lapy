@@ -410,7 +410,7 @@ class StoreService
                 $quantity = $shopListOffer->getQuantity();
                 $shortProduct = $this->apiProductService->convertToShortProduct($product, $offer, $quantity, true);
                 if (isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
-                    $shortProduct->setIsGift(true);
+                    $shortProduct->setGiftDiscountId($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT']['VALUE']);
                     $shortProduct->setPrice((new Price())->setActual(0)->setOld(0));
                 }
                 $basketProductCollection->add(

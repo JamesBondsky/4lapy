@@ -149,14 +149,14 @@ class ShortProduct
     protected $pickupOnly = false;
 
     /**
-     * Является ли товар подарком? (только для корзины)
+     * Акция в рамках которой товар является подарком (только для корзины)
      *
-     * @var bool
-     * @Serializer\Type("bool")
-     * @Serializer\SerializedName("isGift")
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("giftDiscountId")
      * @Serializer\Groups({"basket"})
      */
-    protected $isGift = false;
+    protected $giftDiscountId = 0;
 
     /**
      * Количество бесплатных товаров в рамках акций n+1
@@ -452,18 +452,18 @@ class ShortProduct
     /**
      * @return bool
      */
-    public function getIsGift()
+    public function getGiftDiscountId()
     {
-        return $this->isGift;
+        return $this->giftDiscountId;
     }
 
     /**
-     * @param bool $isGift
+     * @param int $giftDiscountId
      * @return $this
      */
-    public function setIsGift(bool $isGift)
+    public function setGiftDiscountId(int $giftDiscountId)
     {
-        $this->isGift = $isGift;
+        $this->giftDiscountId = $giftDiscountId;
         return $this;
     }
 

@@ -116,7 +116,7 @@ class BasketService
                 $this->isPickupOnly($basketItem, $delivery, $offer)
             );
             if (isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
-                $shortProduct->setIsGift(true);
+                $shortProduct->setGiftDiscountId($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT']['VALUE']);
                 $shortProduct->setPrice((new Price())->setActual(0)->setOld(0));
             }
             /**
