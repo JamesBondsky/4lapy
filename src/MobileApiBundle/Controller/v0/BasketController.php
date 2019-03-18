@@ -8,6 +8,7 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
 use FourPaws\MobileApiBundle\Dto\Request\PostUserCartRequest;
 use FourPaws\MobileApiBundle\Dto\Request\PutUserCartRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartCalcRequest;
@@ -98,7 +99,6 @@ class BasketController extends FOSRestController
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
-     * @throws \FourPaws\External\Exception\ManzanaPromocodeUnavailableException
      * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      */
     public function getUserCartAction(UserCartRequest $userCartRequest)
@@ -109,10 +109,14 @@ class BasketController extends FOSRestController
         $orderCalculate = $this->apiOrderService->getOrderCalculate($basketProducts);
 
         if ($promoCode = $userCartRequest->getPromoCode()) {
-            $this->manzana->setPromocode($promoCode);
-            $this->manzana->calculate();
-            $this->couponStorage->clear();
-            $this->couponStorage->save($promoCode);
+            try {
+                $this->manzana->setPromocode($promoCode);
+                $this->manzana->calculate();
+                $this->couponStorage->clear();
+                $this->couponStorage->save($promoCode);
+            } catch (ManzanaPromocodeUnavailableException $e) {
+                $promoCode = '';
+            }
             $orderCalculate->setPromoCodeResult($promoCode);
         }
 
@@ -139,7 +143,6 @@ class BasketController extends FOSRestController
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
-     * @throws \FourPaws\External\Exception\ManzanaPromocodeUnavailableException
      * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
      */
@@ -185,7 +188,6 @@ class BasketController extends FOSRestController
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
-     * @throws \FourPaws\External\Exception\ManzanaPromocodeUnavailableException
      * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
      */
