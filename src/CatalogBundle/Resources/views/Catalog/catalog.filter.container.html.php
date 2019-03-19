@@ -196,7 +196,7 @@ if (!$catalogRequest->isLanding()) { ?>
 </aside>
 <main class="b-catalog__main" role="main" data-url="/ajax/catalog/product-info/">
     <? if ($rootCategory->isShowDelText()) { ?>
-        <div><?= Category::DEL_TEXT ?></div>
+        <div class="b-information-message b-information-message--green"><?= Category::DEL_TEXT ?></div>
     <? } ?>
     <div class="b-catalog-filter js-permutation-desktop-here">
         <div class="b-catalog-filter__filter-part">

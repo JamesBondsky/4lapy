@@ -155,7 +155,7 @@ if (null === $offer) {
             </div>
 
             <? if ($rootCategory->isShowDelText()){ ?>
-                <div><?=Category::DEL_TEXT?></div>
+                <div class="b-information-message b-information-message--green b-information-message--product-detail"><?=Category::DEL_TEXT?></div>
             <? } ?>
 
             <?
