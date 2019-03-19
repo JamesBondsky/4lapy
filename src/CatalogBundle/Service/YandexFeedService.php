@@ -40,6 +40,7 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundExcep
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -60,6 +61,8 @@ use Symfony\Component\Filesystem\Filesystem;
 class YandexFeedService extends FeedService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
+
+    const DEFAULT_LOCATION_CODE = '0000073738';
 
     const YAROSLAVL_STOCK = 47,
         VORONEZH_STOCK = 151,
@@ -182,11 +185,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 $feed = $this->loadFeed($this->getStorageKey());
                 $feed->getShop()
                     ->setOffset(null);
-
-                if ($stockID == self::NN_STOCK) {
-                    $this->processPromos($feed, $configuration, $stockID);
-                }
-
+                $this->processPromos($feed, $configuration, $stockID);
                 $this->publicFeed($feed, Application::getAbsolutePath($configuration->getExportFile()));
                 $this->clearFeed($this->getStorageKey());
 
@@ -270,17 +269,13 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         $filter = $this->buildOfferFilter($feed, $configuration);
 
         if (!empty($stockID)) {
-            if ($stockID != self::NN_STOCK) {
-                $filter['>CATALOG_STORE_AMOUNT_' . $stockID] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
-            } else {
-                $arSupplier = ['LOGIC' => 'OR'];
-                $arSupplier[]['>CATALOG_STORE_AMOUNT_' . $stockID] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
-                $arSupplier[]['>CATALOG_STORE_AMOUNT_' . $this->arStockDC01] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
-                foreach ($this->arSupplierStocks as $supplierStock) {
-                    $arSupplier[]['>CATALOG_STORE_AMOUNT_' . $supplierStock] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
-                }
-                $filter = array_merge($filter, [$arSupplier]);
+            $arSupplier = ['LOGIC' => 'OR'];
+            $arSupplier[]['>CATALOG_STORE_AMOUNT_' . $stockID] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
+            $arSupplier[]['>CATALOG_STORE_AMOUNT_' . $this->arStockDC01] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
+            foreach ($this->arSupplierStocks as $supplierStock) {
+                $arSupplier[]['>CATALOG_STORE_AMOUNT_' . $supplierStock] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
             }
+            $filter = array_merge($filter, [$arSupplier]);
         }
 
         $offerCollection = $this->getOffers($filter, $offset, $limit);
@@ -673,7 +668,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 false,
                 ['HIDE_ICONS' => 'Y'])['DELIVERIES'];
         } else {
-            $locationCode = '0000073738';
+            $locationCode = static::DEFAULT_LOCATION_CODE;
             if (!empty($stockID)) {
                 $locationCode = $this->arStocks[$stockID]['location_code'];
             }
@@ -870,9 +865,13 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 ];
 
                 if (!empty($stockID)) {
-                    $filter['>CATALOG_STORE_AMOUNT_' . $stockID] = '1';
-                } else {
-                    $filter['>CATALOG_STORE_AMOUNT_' . $this->getRcStock()->getId()] = '1';
+                    $arSupplier = ['LOGIC' => 'OR'];
+                    $arSupplier[]['>CATALOG_STORE_AMOUNT_' . $stockID] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
+                    $arSupplier[]['>CATALOG_STORE_AMOUNT_' . $this->arStockDC01] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
+                    foreach ($this->arSupplierStocks as $supplierStock) {
+                        $arSupplier[]['>CATALOG_STORE_AMOUNT_' . $supplierStock] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
+                    }
+                    $filter = array_merge($filter, [$arSupplier]);
                 }
 
                 $offerCollection = (new OfferQuery())
