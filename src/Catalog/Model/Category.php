@@ -34,7 +34,7 @@ class Category extends IblockSection implements FilterInterface
 {
     public const UNSORTED_CATEGORY_CODE = 'unsorted';
 
-    public const DEL_TEXT = 'По законодательству РФ доставка лекарственных препаратов запрещена, заказывайте товары самовывозом';
+    public const DEL_TEXT = 'Доставка курьером ветеринарных препаратов запрещена согласно 61-ФЗ РФ. Оформляйте такие заказы самовывозом из магазина.';
 
     use FilterTrait;
 
