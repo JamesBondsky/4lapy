@@ -3,11 +3,8 @@
 namespace FourPaws\External\Dostavista\Consumer;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
-use FourPaws\App\Application;
-use FourPaws\External\DostavistaService;
 use FourPaws\UserBundle\EventController\Event;
 use PhpAmqpLib\Message\AMQPMessage;
-use Psr\Log\LoggerInterface;
 use Bitrix\Sale\Order;
 
 /**
@@ -48,14 +45,12 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
                     /** Отправляем заказ в достависту */
                     $response = $this->dostavistaService->addOrder($data);
                     if ($response['connection'] === false) {
-                        $this->dostavistaService->dostavistaOrderAddErrorSendEmail($order->getId(), $order->getField('ACCOUNT_NUMBER'), $response['message'], $response['data'], (new \Datetime)->format('d.m.Y H:i:s'));
                         $result = static::MSG_REJECT_REQUEUE;
                     } else {
                         $dostavistaOrderId = $response['order_id'];
                         if ((is_array($dostavistaOrderId) || empty($dostavistaOrderId)) || !$response['success']) {
                             $dostavistaOrderId = 0;
                             $result = static::MSG_REJECT_REQUEUE;
-                            $this->dostavistaService->dostavistaOrderAddErrorSendEmail($order->getId(), $order->getField('ACCOUNT_NUMBER'), $response['message'], $response['data'], (new \Datetime)->format('d.m.Y H:i:s'));
                         }
                         /** Обновляем битриксовые свойства достависты */
                         $deliveryId = $order->getField('DELIVERY_ID');
@@ -77,7 +72,7 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
             $result = static::MSG_REJECT_REQUEUE;
         }
 
-        if ($result !== static::MSG_ACK) {
+        if ($result !== static::MSG_ACK && $result !== static::MSG_REJECT_REQUEUE) {
             if ($order) {
                 $this->dostavistaService->dostavistaOrderAddErrorSendEmail($order->getId(), $order->getField('ACCOUNT_NUMBER'), $response['message'], $response['data'], (new \Datetime)->format('d.m.Y H:i:s'));
             }
@@ -86,13 +81,5 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
         Event::enableEvents();
 
         return $result;
-    }
-
-    /**
-     * @return LoggerInterface
-     */
-    protected function log(): LoggerInterface
-    {
-        return $this->logger;
     }
 }

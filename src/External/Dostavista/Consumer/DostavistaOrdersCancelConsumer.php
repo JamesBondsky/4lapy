@@ -6,7 +6,6 @@ use Adv\Bitrixtools\Tools\BitrixUtils;
 use Bitrix\Sale\Order;
 use FourPaws\UserBundle\EventController\Event;
 use PhpAmqpLib\Message\AMQPMessage;
-use Psr\Log\LoggerInterface;
 
 /**
  * Class DostavistaOrdersCancelConsumer
@@ -70,13 +69,5 @@ class DostavistaOrdersCancelConsumer extends DostavistaConsumerBase
         Event::enableEvents();
 
         return $result;
-    }
-
-    /**
-     * @return LoggerInterface
-     */
-    protected function log(): LoggerInterface
-    {
-        return $this->logger;
     }
 }

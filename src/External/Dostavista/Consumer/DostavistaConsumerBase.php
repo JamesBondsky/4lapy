@@ -9,14 +9,14 @@ use JMS\Serializer\Serializer;
 use OldSound\RabbitMqBundle\RabbitMq\ConsumerInterface;
 use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerAwareTrait;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use FourPaws\External\DostavistaService;
 use FourPaws\SaleBundle\Service\OrderService;
 
 abstract class DostavistaConsumerBase implements ConsumerInterface, LoggerAwareInterface
 {
-    use LoggerAwareTrait;
+    use LazyLoggerAwareTrait;
 
     /**
      * @var Serializer
@@ -46,7 +46,6 @@ abstract class DostavistaConsumerBase implements ConsumerInterface, LoggerAwareI
         $this->dostavistaService = $dostavistaService;
         $this->orderService = $orderService;
         $this->deliveryService = $deliveryService;
-        $this->setLogger(LoggerFactory::create('DostavistaConsumer'));
     }
 
     /**
@@ -59,6 +58,11 @@ abstract class DostavistaConsumerBase implements ConsumerInterface, LoggerAwareI
      */
     protected function log(): LoggerInterface
     {
+        if ($this->logger === null) {
+            $this->withLogType('dostavista');
+            $this->logger = LoggerFactory::create($this->getLogName(), $this->getLogType());
+        }
+
         return $this->logger;
     }
 
