@@ -349,7 +349,7 @@ class DostavistaService implements LoggerAwareInterface, SapOutInterface
     public function log(): LoggerInterface
     {
         if ($this->logger === null) {
-            $this->withLogType('sap');
+            $this->withLogType('dostavista');
             $this->logger = LoggerFactory::create($this->getLogName(), $this->getLogType());
         }
 
