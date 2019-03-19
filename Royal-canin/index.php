@@ -1,6 +1,7 @@
 <?php
 
 use FourPaws\Helpers\ProtectorHelper;
+//use FourPaws\AppBundle\AjaxController\GrandinController;
 
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
@@ -23,15 +24,18 @@ $APPLICATION->SetTitle('');
                 <div class="registr-check-landing__form-info">
                     Все поля обязательны для заполнения
                 </div>
-                <form data-form-registr-check-landing="true" class="form-landing registr-check-landing__form js-form-validation" method="post" action="" name="" enctype="multipart/form-data">
+                <form data-form-registr-check-landing="true" class="form-landing registr-check-landing__form js-form-validation" method="post" action="<?/*/ajax/grandin/request/add/*/?>" name="" enctype="multipart/form-data">
+                    <?/* <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD); ?>
+                    <input class="js-no-valid" type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">*/?>
+                    
                     <div class="form-group">
-                        <input type="dateDatepicker" id="DATE_REG_CHECK_CANIN" name="date" value="" placeholder="Дата чека" data-datepicker-landing="true" >
+                        <input type="dateDatepicker" id="DATE_REG_CHECK_CANIN" name="date" value="" placeholder="Дата чека" data-datepicker-landing="true" data-min-date=04/08/2019" data-max-date=05/19/2019" autocomplete="of">
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
                     </div>
                     <div class="form-group">
-                        <input data-price-check-landing="true" type="minPriceLanding" data-min-price-landing="1800" id="SUM_REG_CHECK_CANIN" name="sum" value="" placeholder="Сумма чека (не менее 1800р)" >
+                        <input data-price-check-landing="true" type="minPriceLanding" data-min-price-landing="1000" id="SUM_REG_CHECK_CANIN" name="sum" value="" placeholder="Сумма чека (не менее 1000р)" >
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
@@ -63,14 +67,14 @@ $APPLICATION->SetTitle('');
 
                     <div class="read-rules">
                         <input type="checkbox" id="READ_RULES_REG_CHECK_CANIN" name="rules" value="Y" cheform-group form-group_select js-wrap-select-form-registr-check-landingcked>
-                        <label for="READ_RULES_REG_CHECK_CANIN"><span></span> с <a href="#" target="_blank">правилами</a> акции ознакомлен</label>
+                        <label for="READ_RULES_REG_CHECK_CANIN"><span></span>Я прочитал(а) и&nbsp;согласен(на) с&nbsp;<a href="#" target="_blank">правилами</a> акции</label>
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
                     </div>
 
                     <div class="registr-check-landing__btn-form">
-                        <button type="submit" class="landing-btn landing-btn_dark" >Отправить</button>
+                        <button type="submit" class="btn-canin" >Отправить</button>
                     </div>
                 </form>
 
