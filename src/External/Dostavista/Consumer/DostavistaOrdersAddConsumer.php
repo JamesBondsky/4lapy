@@ -30,6 +30,7 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
         $result = static::MSG_ACK;
 
         try {
+            $result = static::MSG_REJECT_REQUEUE;
             $data = json_decode($message->getBody(), true);
             $bitrixOrderId = $data['bitrix_order_id'];
             unset($data['bitrix_order_id']);
@@ -47,12 +48,14 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
                     /** Отправляем заказ в достависту */
                     $response = $this->dostavistaService->addOrder($data);
                     if ($response['connection'] === false) {
-                        $result = static::MSG_REJECT;
+                        $this->dostavistaService->dostavistaOrderAddErrorSendEmail($order->getId(), $order->getField('ACCOUNT_NUMBER'), $response['message'], $response['data'], (new \Datetime)->format('d.m.Y H:i:s'));
+                        $result = static::MSG_REJECT_REQUEUE;
                     } else {
                         $dostavistaOrderId = $response['order_id'];
-                        if (is_array($dostavistaOrderId) || empty($dostavistaOrderId)) {
+                        if ((is_array($dostavistaOrderId) || empty($dostavistaOrderId)) || !$response['success']) {
                             $dostavistaOrderId = 0;
-                            $result = static::MSG_REJECT;
+                            $result = static::MSG_REJECT_REQUEUE;
+                            $this->dostavistaService->dostavistaOrderAddErrorSendEmail($order->getId(), $order->getField('ACCOUNT_NUMBER'), $response['message'], $response['data'], (new \Datetime)->format('d.m.Y H:i:s'));
                         }
                         /** Обновляем битриксовые свойства достависты */
                         $deliveryId = $order->getField('DELIVERY_ID');
@@ -71,14 +74,12 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
                 }
             }
         } catch (\Exception $e) {
-            $result = static::MSG_REJECT;
+            $result = static::MSG_REJECT_REQUEUE;
         }
 
         if ($result !== static::MSG_ACK) {
-            /** @var DostavistaService $dostavistaService */
-            $dostavistaService = Application::getInstance()->getContainer()->get('dostavista.service');
             if ($order) {
-                $dostavistaService->dostavistaOrderAddErrorSendEmail($order['ID'], $order->getField('ACCOUNT_NUMBER'), $response['message'], $response['data'], (new \Datetime)->format('d.m.Y H:i:s'));
+                $this->dostavistaService->dostavistaOrderAddErrorSendEmail($order->getId(), $order->getField('ACCOUNT_NUMBER'), $response['message'], $response['data'], (new \Datetime)->format('d.m.Y H:i:s'));
             }
         }
 

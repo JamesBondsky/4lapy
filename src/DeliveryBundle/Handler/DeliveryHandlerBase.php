@@ -25,6 +25,7 @@ use FourPaws\DeliveryBundle\Entity\PriceForAmount;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
@@ -65,6 +66,11 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
     protected $deliveryService;
 
     /**
+     * @var PiggyBankService
+     */
+    protected $piggyBankService;
+
+    /**
      * DeliveryHandlerBase constructor.
      *
      * @param $initParams
@@ -81,6 +87,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
         $this->locationService = $serviceContainer->get('location.service');
         $this->storeService = $serviceContainer->get('store.service');
         $this->deliveryService = $serviceContainer->get('delivery.service');
+        $this->piggyBankService = $serviceContainer->get('piggy_bank.service');
         $this->userService = $serviceContainer->get(UserCitySelectInterface::class);
         parent::__construct($initParams);
     }
@@ -183,13 +190,21 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      * @param StoreCollection $stores
      * @return StockResultCollection
      */
-    public static function getStocksForAllAvailableOffers(
+    public function getStocksForAllAvailableOffers(
         Basket $basket,
         ArrayCollection $offers,
         StoreCollection $stores
     ): StockResultCollection {
         $stockResultCollection = new StockResultCollection();
         $offerData = static::getBasketPrices($basket);
+        /** @var array $marksIds */
+        $marksIds = $this->piggyBankService->getMarksIds();
+
+        foreach ($offerData as $key => $offer) {
+            if (in_array($key, $marksIds)) {
+                unset($offerData[$key]);
+            }
+        }
 
         if (null === $stockResultCollection) {
             $stockResultCollection = new StockResultCollection();
@@ -203,6 +218,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             $allOfferAvaliable = true;
             $stockResultCollectionTmp = new StockResultCollection();
             foreach ($offerData as $offerId => $priceForAmountCollection) {
+                /** @var Offer $offer */
                 $offer = $offers[$offerId];
                 /**
                  * Если такое произошло, значит оффер был подарком и был удален из корзины
@@ -231,7 +247,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                 $stockResultCollectionTmp->add($stockResult);
             }
             if ($allOfferAvaliable) {
-                foreach($stockResultCollectionTmp as $stockResult){
+                foreach ($stockResultCollectionTmp as $stockResult) {
                     $stockResultCollection->add($stockResult);
                 }
             }
