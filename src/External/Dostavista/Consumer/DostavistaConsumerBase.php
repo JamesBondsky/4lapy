@@ -46,6 +46,9 @@ abstract class DostavistaConsumerBase implements ConsumerInterface, LoggerAwareI
         $this->dostavistaService = $dostavistaService;
         $this->orderService = $orderService;
         $this->deliveryService = $deliveryService;
+
+        $this->withLogType('dostavista');
+        $this->setLogger(LoggerFactory::create($this->getLogName(), $this->getLogType()));
     }
 
     /**
@@ -56,14 +59,13 @@ abstract class DostavistaConsumerBase implements ConsumerInterface, LoggerAwareI
     /**
      * @return LoggerInterface
      */
-    protected function log(): LoggerInterface
+    public function log(): LoggerInterface
     {
         if ($this->logger === null) {
-            $this->withLogType('dostavista');
+            $this->withLogType('sap');
             $this->logger = LoggerFactory::create($this->getLogName(), $this->getLogType());
         }
 
         return $this->logger;
     }
-
 }
