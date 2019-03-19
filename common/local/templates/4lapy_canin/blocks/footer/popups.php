@@ -21,8 +21,8 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
     $APPLICATION->IncludeComponent('fourpaws:auth.form', 'popup', ['BACK_URL_HASH' => 'registr-check'], null, ['HIDE_ICONS' => 'Y']);
     $APPLICATION->IncludeComponent('fourpaws:information.popup', '', [], false, ['HIDE_ICONS' => 'Y']);
 
-    /*include __DIR__ . '/response-registr-check-form-landing.php';
-    include __DIR__ . '/response-feedback-form-landing.php';*/
+    include __DIR__ . '/response-registr-check-form-landing.php';
+    include __DIR__ . '/response-feedback-form-landing.php';
 
     include __DIR__ . '/modal_popup.php';
     ?>

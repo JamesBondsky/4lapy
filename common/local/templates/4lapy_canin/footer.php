@@ -21,9 +21,6 @@ if (!isset($template) || !($template instanceof MainTemplate)) {
 
 if ($template->hasMainWrapper()) { ?>
 
-    <?php /** Основной прелоадер из gui */ ?>
-    <?php include __DIR__ . '/blocks/preloader.php'; ?>
-
     </main>
 <?php } ?>
 
@@ -82,7 +79,7 @@ if ($template->hasMainWrapper()) { ?>
         <div class="where-buy-landing__map" id="mapWhereBuylanding" data-map-where-buy-landing="gray-dark"></div>
     </section>
 
-    <section data-id-section-landing="winners" class="winners-canin">
+    <section data-id-section-landing="winners" class="winners-landing winners-landing_canin">
         <?php
             $APPLICATION->IncludeComponent('articul:action.winners', '', [
                     "SECTION_CODE" => 'ROYAL_CANIN'
@@ -141,10 +138,13 @@ if ($template->hasMainWrapper()) { ?>
     </div>
 </footer>
 
-
 <div class="b-shadow js-shadow"></div>
 <div class="b-shadow b-shadow--popover js-open-shadow"></div>
 </div>
+
+<?php /** Основной прелоадер из gui */ ?>
+<?php include __DIR__ . '/blocks/preloader.php'; ?>
+
 <?php require_once __DIR__ . '/blocks/footer/popups.php' ?>
 <script src="<?= $markup->getJsFile() ?>"></script>
 

@@ -10,7 +10,7 @@ $APPLICATION->SetPageProperty('description', '');
 $APPLICATION->SetTitle('');
 ?>
 
-<section id="registr-check" data-id-section-landing="registr-check" class="registr-check-landing registr-check-landing_white">
+<section id="registr-check" data-id-section-landing="registr-check" class="registr-check-landing registr-check-landing_white registr-check-landing_canin">
     <div class="container-landing">
 
         <?if ($USER->IsAuthorized()) {?>
