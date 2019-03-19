@@ -12,7 +12,6 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
-use FourPaws\Catalog\Model\Category;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\App\Templates\ViewsEnum;
 use FourPaws\BitrixOrm\Model\IblockElement;
@@ -57,9 +56,6 @@ if (!($product instanceof Product)) {
     /** прерываем если вернулось непонятно что */
     return;
 }
-
-/** @var Category $rootCategory */
-$rootCategory = $product->getFullPathCollection()->last();
 
 $offer = null;
 CBitrixComponent::includeComponentClass('fourpaws:personal.profile');
@@ -153,11 +149,6 @@ if (null === $offer) {
                     );
                 } ?>
             </div>
-
-            <? if ($rootCategory->isShowDelText()){ ?>
-                <div><?=Category::DEL_TEXT?></div>
-            <? } ?>
-
             <?
             $APPLICATION->IncludeComponent(
                 'articul:catalog.element.detail.kit',

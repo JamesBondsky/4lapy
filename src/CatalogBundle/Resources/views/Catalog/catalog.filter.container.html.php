@@ -64,9 +64,6 @@ $category = $APPLICATION->IncludeComponent(
     ['HIDE_ICONS' => 'Y']
 );
 
-/** @var Category $rootCategory */
-$rootCategory = $category->getFullPathCollection()->last();
-
 if (!$catalogRequest->isLanding()) { ?>
     <div class="b-catalog__wrapper-title b-catalog__wrapper-title--filter">
         <?php $APPLICATION->IncludeComponent(
@@ -195,9 +192,6 @@ if (!$catalogRequest->isLanding()) { ?>
     </div>
 </aside>
 <main class="b-catalog__main" role="main" data-url="/ajax/catalog/product-info/">
-    <? if ($rootCategory->isShowDelText()) { ?>
-        <div><?= Category::DEL_TEXT ?></div>
-    <? } ?>
     <div class="b-catalog-filter js-permutation-desktop-here">
         <div class="b-catalog-filter__filter-part">
             <?php $APPLICATION->IncludeComponent(
