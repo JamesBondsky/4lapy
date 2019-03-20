@@ -44,7 +44,7 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
             <div class="b-title b-title--h1 b-title--registration">Авторизация</div>
         </header>
         <form class="b-registration__form js-form-validation js-auth-2way"
-              data-url="/ajax/user/auth/login/"
+              data-url="/ajax/user/auth/login-s/"
               method="post">
             <?= bitrix_sessid_post() ?>
             <input type="hidden" name="action" value="login" class="js-no-valid">
