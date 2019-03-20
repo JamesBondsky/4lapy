@@ -7,6 +7,7 @@
 namespace FourPaws\MobileApiBundle\Services\Api;
 
 
+use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
@@ -16,6 +17,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
+use FourPaws\MobileApiBundle\Dto\Object\PriceWithQuantity;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -102,11 +104,14 @@ class BasketService
             }
         }
 
-        $products = [];
+        $products = new BasketProductCollection();
         $orderAbleBasket = $basket->getOrderableItems();
-        // В этом массиве будет сохраняться корректное кол-во товара в случае акции "берешь n товаров, 1 бесплатно"
-        $productsAmountFix = [];
+        // В этом массиве будут храниться детализация цены для каждого товара в случае акций "берешь n товаров, 1 бесплатно", "50% скидка на второй товар" и т.д.
+
         foreach ($orderAbleBasket as $basketItem) {
+            if ($this->isSubProduct($basketItem)) {
+                continue;
+            }
 
             /** @var $basketItem BasketItem */
             $offer = OfferQuery::getById($basketItem->getProductId());
@@ -119,48 +124,65 @@ class BasketService
                 $shortProduct->setGiftDiscountId($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT']['VALUE']);
                 $shortProduct->setPrice((new Price())->setActual(0)->setOld(0));
             }
-            /**
-             * Ищем бесплатные товары в рамках акции n+1 в массиве с товарами (sic!)
-             * @see BasketComponent::calcTemplateFields()
-             */
-            foreach ($orderAbleBasket as $tBasketItem) {
-                if (
-                    (int)$basketItem->getProductId() === (int)$tBasketItem->getProductId()
-                    &&
-                    $basketItem->getBasketCode() !== $tBasketItem->getBasketCode()
-                    &&
-                    !$productsAmountFix[$tBasketItem->getBasketCode()]
-                    &&
-                    !isset($tBasketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])
-                ) {
-                    // не уверен что так правильно делать по логике костыля...
-                    $productsAmountFix[$basketItem->getBasketCode()] = [
-                        'PRICED' => $tBasketItem->getQuantity(),
-                        'FREE' => $basketItem->getQuantity(),
-                    ];
+
+            $product->setShortProduct($shortProduct);
+            $products->add($product);
+
+        }
+
+        $products = $this->fillBasketProductsPrices($orderAbleBasket, $products);
+
+        return $products;
+    }
+
+
+    /**
+     * Фильтруем товары в рамках акций n+1, 50% за второй товар и т.д.
+     * Если basketCode = n1, n2 ... nX - значит это акционный товар например в рамках акции "берешь n товаров, 1 бесплатно" (sic!)
+     * по сути является подпродуктом базового продукта
+     * @see BasketComponent::calcTemplateFields()
+     *
+     * @param Basket $orderAbleBasket
+     * @param BasketProductCollection $products
+     * @return BasketProductCollection
+     */
+    private function fillBasketProductsPrices(Basket $orderAbleBasket, BasketProductCollection $products)
+    {
+        $pricesToGoods = [];
+        foreach ($products as $product) {
+            /** @var Product $product */
+            $isGift = $product->getShortProduct()->getGiftDiscountId() > 0;
+            if (!$isGift) {
+                /** @var BasketItem $basketItem */
+                foreach ($orderAbleBasket as $basketItem) {
+                    if (
+                        (int)$product->getShortProduct()->getId() === (int)$basketItem->getProductId()
+                        &&
+                        !isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])
+                    ) {
+                        $pricesToGoods[$product->getBasketItemId()][] = (new PriceWithQuantity())
+                            ->setPrice(
+                                (new Price)
+                                    ->setActual($basketItem->getPrice())
+                                    ->setOld($basketItem->getBasePrice())
+                            )
+                            ->setQuantity($basketItem->getQuantity())
+                        ;
+                    }
                 }
             }
-
-            // Если basketCode = n1, n2 ... nX - значит это бесплатный товар в рамках акции "берешь n товаров, 1 бесплатно" (sic!)
-            $skipRow = strpos($basketItem->getBasketCode(), "n") === 0;
-            if (!$skipRow) {
-                $product->setShortProduct($shortProduct);
-                $products[] = $product;
-            }
         }
 
-        /** @var Product $product */
-        foreach ($products as &$product) {
-            $shortProduct = $product->getShortProduct();
-            if (array_key_exists($product->getBasketItemId(), $productsAmountFix)) {
-                $amounts = $productsAmountFix[$product->getBasketItemId()];
-                $shortProduct->setFreeGoodsAmount($amounts['FREE']);
-                $product->setShortProduct($shortProduct);
-                $product->setQuantity($amounts['FREE'] + $amounts['PRICED']);
+        return $products->map(function ($product) use ($pricesToGoods) {
+            /** @var Product $product */
+            $quantity = $product->getQuantity();
+            if (array_key_exists($product->getBasketItemId(), $pricesToGoods)) {
+                $prices = $pricesToGoods[$product->getBasketItemId()];
+                $product->setQuantity($quantity + count($prices));
+                $product->setPrices($prices);
             }
-        }
-
-        return new BasketProductCollection($products);
+            return $product;
+        });
     }
 
     /**
@@ -215,5 +237,14 @@ class BasketService
             // do nothing
         }
         return false;
+    }
+
+    /**
+     * @param BasketItem $basketItem
+     * @return bool
+     */
+    private function isSubProduct(BasketItem $basketItem): bool
+    {
+        return strpos($basketItem->getBasketCode(), 'n') === 0;
     }
 }

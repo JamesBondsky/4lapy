@@ -104,9 +104,6 @@ class InfoService implements LoggerAwareInterface
             $sHlEntityClass = \Bitrix\Highloadblock\HighloadBlockTable::compileEntity($hlBlock)->getDataClass();
             $res = $sHlEntityClass::getList(
                 [
-                    'filter' => [
-                        '!UF_XML_ID' => 'vse'
-                    ],
                     'select' => [
                         'ID',
                         'UF_NAME',
@@ -270,6 +267,11 @@ class InfoService implements LoggerAwareInterface
      */
     protected function getActions(string $id, array $select = [], $offerTypeCode = ''): Collection
     {
+        // костыль
+        if ($offerTypeCode === 'vse') {
+            $offerTypeCode = '';
+        }
+
         $criteria = [
             'ACTIVE'    => 'Y',
             'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES),

@@ -5,10 +5,10 @@
 
 namespace FourPaws\MobileApiBundle\Collection;
 
-use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Object\Detailing;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
+use FourPaws\MobileApiBundle\Dto\Object\PriceWithQuantity;
 
 class BasketProductCollection extends ProductQuantityCollection
 {
@@ -30,12 +30,17 @@ class BasketProductCollection extends ProductQuantityCollection
         $oldPrice = 0;
         /** @var Product $product */
         foreach ($this->getValues() as $product) {
-            $oldPrice += $product->getQuantity() * $product->getShortProduct()->getPrice()->getOld();
-            $actualPrice += $product->getQuantity() * $product->getShortProduct()->getPrice()->getActual();
+            /** @var $priceWithQuantity PriceWithQuantity */
+            foreach ($product->getPrices() as $priceWithQuantity) {
+                $quantity = $priceWithQuantity->getQuantity();
+                $price = $priceWithQuantity->getPrice();
+                $oldPrice += $quantity * ($price->getOld() ? $price->getOld() : $price->getActual());
+                $actualPrice += $quantity * $price->getActual();
+            }
         }
         return (new Price())
             ->setActual($actualPrice)
-            ->setOld($oldPrice);
+            ->setOld($oldPrice === $actualPrice ? 0 : $oldPrice);
     }
 
     /**
