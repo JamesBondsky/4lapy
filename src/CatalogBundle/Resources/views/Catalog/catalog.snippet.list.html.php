@@ -93,7 +93,6 @@ foreach ($collection as $product) {
          * Анонсы статей
          */
         if($pageNum < 2){
-            // @todo: Здесь нужен класс для моб. разрешения
             if ($i === $lastRowIndexTablet || ($i === $countItems && $i < $lastRowIndexTablet)) {
                 echo '<div class="fleas-protection-block__wrap fleas-protection-block__wrap--catalog-list b-tablet">',$articlesHtml,'<a href="/articles/" class="fleas-protection-block__link">Больше интересного</a></div>';
             }
