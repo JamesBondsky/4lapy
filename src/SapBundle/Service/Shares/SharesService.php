@@ -774,7 +774,8 @@ class SharesService implements LoggerAwareInterface
             ->setActiveFrom($activeFrom)
             ->setActiveTo($activeTo)
             ->setUserGroups($this->getGroupsForBasketRules())
-            ->setActions($actions);
+            ->setActions($actions)
+            ->setLid('s1');
 
         if(!empty($conditions)){
             $basketRule->setConditions($conditions);
