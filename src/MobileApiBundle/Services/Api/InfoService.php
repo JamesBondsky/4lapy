@@ -104,6 +104,9 @@ class InfoService implements LoggerAwareInterface
             $sHlEntityClass = \Bitrix\Highloadblock\HighloadBlockTable::compileEntity($hlBlock)->getDataClass();
             $res = $sHlEntityClass::getList(
                 [
+                    'filter' => [
+                        '!UF_XML_ID' => 'vse'
+                    ],
                     'select' => [
                         'ID',
                         'UF_NAME',
