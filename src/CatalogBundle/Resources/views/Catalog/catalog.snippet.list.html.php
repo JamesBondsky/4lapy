@@ -62,13 +62,13 @@ foreach ($collection as $product) {
         if(!$isFiltered){
             if (!empty($catalogRequest->getCategory()->getUfLandingBanner())) {
                 if ($i === 3 || ($i === $countItems && $i < 3)) { ?>
-                    <div class="b-fleas-protection-banner b-tablet">
+                    <div class="b-fleas-protection-banner b-fleas-protection-banner--catalog b-tablet">
                         <?= htmlspecialcharsback($category->getUfLandingBanner()) ?>
                     </div>
                 <? }
 
                 if ($i === 4 || ($i === $countItems && $i < 4)) { ?>
-                    <div class="b-fleas-protection-banner">
+                    <div class="b-fleas-protection-banner b-fleas-protection-banner--catalog">
                         <?= htmlspecialcharsback($category->getUfLandingBanner()) ?>
                     </div>
                 <? }
@@ -76,13 +76,13 @@ foreach ($collection as $product) {
 
             if (!empty($catalogRequest->getCategory()->getUfLandingBanner2())) {
                 if ($i === 9 || ($i === $countItems && $i < 9)) { ?>
-                    <div class="b-fleas-protection-banner b-tablet">
+                    <div class="b-fleas-protection-banner b-fleas-protection-banner--catalog b-tablet">
                         <?= htmlspecialcharsback($category->getUfLandingBanner2()) ?>
                     </div>
                 <? }
 
                 if ($i === 12 || ($i === $countItems && $i < 12)) { ?>
-                    <div class="b-fleas-protection-banner">
+                    <div class="b-fleas-protection-banner b-fleas-protection-banner--catalog">
                         <?= htmlspecialcharsback($category->getUfLandingBanner2()) ?>
                     </div>
                 <? }
