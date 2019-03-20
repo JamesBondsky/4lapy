@@ -20,20 +20,20 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
     <div class="b-step-form b-step-form--add-number">Шаг <span>1</span> из <span>2</span>
     </div>
     <div class="b-registration__your-number" id="js-resend"
-         data-url="/ajax/user/auth/register/"
+         data-url="/ajax/user/auth/register-s/"
          data-phone="<?= $phone ?>"
          data-action="resendSms">Ваш номер <?= $phone ?>
     </div>
     <a class="b-link-gray b-link-gray--add-number js-else-phone"
        href="javascript:void(0);"
        title="Сменить номер"
-       data-url="/ajax/user/auth/register/"
+       data-url="/ajax/user/auth/register-s/"
        data-action="get"
        data-step="<?= !empty($newAction) ? 'addPhone' : 'step1' ?>"
        data-phone="<?= $phone ?>">Сменить номер</a>
     <form class="b-registration__form js-form-validation js-registration-form"
           id="reg-step3-form"
-          data-url="/ajax/user/auth/register/"
+          data-url="/ajax/user/auth/register-s/"
           method="post">
         <input type="hidden" name="action" value="<?= !empty($newAction) ? $newAction : 'get' ?>">
         <input type="hidden" name="step" value="step2">
@@ -58,7 +58,7 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
             <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_REGISTER_SMS_RESEND); ?>
             <a class="b-link-gray js-resend-sms"
                href="javascript:void(0);"
-               data-url="/ajax/user/auth/register/"
+               data-url="/ajax/user/auth/register-s/"
                data-phone="<?= $phone ?>"
                data-action="resendSms"
                data-token-name="<?=$token['field']?>"

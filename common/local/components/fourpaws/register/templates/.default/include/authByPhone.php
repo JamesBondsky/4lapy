@@ -10,7 +10,7 @@ use FourPaws\Helpers\ProtectorHelper;
     </div>
     <form class="b-registration__form js-form-validation js-registration-form"
           id="reg-step2-form"
-          data-url="/ajax/user/auth/login/"
+          data-url="/ajax/user/auth/login-s/"
           method="post">
         <?= bitrix_sessid_post() ?>
         <input type="hidden" name="action" value="login">
