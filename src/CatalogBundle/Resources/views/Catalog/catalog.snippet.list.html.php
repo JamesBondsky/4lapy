@@ -94,11 +94,11 @@ foreach ($collection as $product) {
          */
         if($pageNum < 2){
             // @todo: Здесь нужен класс для моб. разрешения
-            /*if ($i === $lastRowIndexTablet || ($i === $countItems && $i < $lastRowIndexTablet)) {
-                echo '<div class="b-tablet">',$articlesHtml,'</div>';
-            }*/
+            if ($i === $lastRowIndexTablet || ($i === $countItems && $i < $lastRowIndexTablet)) {
+                echo '<div class="fleas-protection-block__wrap fleas-protection-block__wrap--catalog-list b-tablet">',$articlesHtml,'<a href="/articles/" class="fleas-protection-block__link">Больше интересного</a></div>';
+            }
             if ($i === $lastRowIndex || ($i === $countItems && $i < $lastRowIndex)) {
-                echo $articlesHtml;
+                echo '<div class="fleas-protection-block__wrap fleas-protection-block__wrap--catalog-list">',$articlesHtml,'<a href="/articles/" class="fleas-protection-block__link">Больше интересного</a></div>';
             }
         }
 
