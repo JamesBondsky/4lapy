@@ -309,7 +309,7 @@ class DostavistaService implements LoggerAwareInterface, SapOutInterface
             'DOSTAVISTA_ORDERS',
             's1',
             [
-                'ORDER_ID' => Application::getInstance()->getSiteDomain() . '/bitrix/admin/sale_order_view.php?ID=' . $orderId . '&filter=Y&set_filter=Y&lang=ru',
+                'ORDER_ID' => 'https://4lapy.ru/bitrix/admin/sale_order_view.php?ID=' . $orderId . '&filter=Y&set_filter=Y&lang=ru',
                 'ACCOUNT_NUMBER' => $accountNumber,
                 'DATE_TIME' => $dateTime,
                 'STATUS' => $status
@@ -332,7 +332,7 @@ class DostavistaService implements LoggerAwareInterface, SapOutInterface
             'DOSTAVISTA_ORDERS',
             's1',
             [
-                'ORDER_ID' => Application::getInstance()->getSiteDomain() . '/bitrix/admin/sale_order_view.php?ID=' . $orderId . '&filter=Y&set_filter=Y&lang=ru',
+                'ORDER_ID' => 'https://4lapy.ru/bitrix/admin/sale_order_view.php?ID=' . $orderId . '&filter=Y&set_filter=Y&lang=ru',
                 'ACCOUNT_NUMBER' => $accountNumber,
                 'DATE_TIME' => $dateTime,
                 'HTTP_CODE' => $code,

@@ -27,7 +27,6 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
         $result = static::MSG_ACK;
 
         try {
-            $result = static::MSG_REJECT_REQUEUE;
             $data = json_decode($message->getBody(), true);
             $bitrixOrderId = $data['bitrix_order_id'];
             unset($data['bitrix_order_id']);
@@ -36,43 +35,47 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
              * Получаем битриксовый заказ
              */
             if ($bitrixOrderId === null) {
+                //айди битриксового заказа нет в данных от рэббита
                 $result = static::MSG_REJECT;
             } else {
                 $order = $this->orderService->getOrderById($bitrixOrderId);
                 if (!$order) {
+                    //битриксовый заказ не найден
                     $result = static::MSG_REJECT;
                 } else {
                     /** Отправляем заказ в достависту */
                     $response = $this->dostavistaService->addOrder($data);
                     if ($response['connection'] === false) {
-                        $result = static::MSG_REJECT_REQUEUE;
+                        //Достависта недоступна
+                        $result = static::MSG_REJECT;
                     } else {
                         $dostavistaOrderId = $response['order_id'];
                         if ((is_array($dostavistaOrderId) || empty($dostavistaOrderId)) || !$response['success']) {
+                            //ошибка отправки сообщения в достависту
                             $dostavistaOrderId = 0;
-                            $result = static::MSG_REJECT_REQUEUE;
+                            $result = static::MSG_REJECT;
                         }
-                        /** Обновляем битриксовые свойства достависты */
-                        $deliveryId = $order->getField('DELIVERY_ID');
-                        $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
-                        $address = $this->orderService->compileOrderAddress($order)->setValid(true);
-                        $this->orderService->setOrderPropertiesByCode(
-                            $order,
-                            [
-                                'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE,
-                                'ORDER_ID_DOSTAVISTA' => ($dostavistaOrderId) ? $dostavistaOrderId : 0
-                            ]
-                        );
-                        $this->orderService->updateCommWayPropertyEx($order, $deliveryCode, $address, ($dostavistaOrderId) ? true : false);
-                        $order->save();
                     }
+                    /** Обновляем битриксовые свойства достависты */
+                    $deliveryId = $order->getField('DELIVERY_ID');
+                    $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
+                    $address = $this->orderService->compileOrderAddress($order)->setValid(true);
+                    $this->orderService->setOrderPropertiesByCode(
+                        $order,
+                        [
+                            'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE,
+                            'ORDER_ID_DOSTAVISTA' => ($dostavistaOrderId) ? $dostavistaOrderId : 0
+                        ]
+                    );
+                    $this->orderService->updateCommWayPropertyEx($order, $deliveryCode, $address, ($dostavistaOrderId) ? true : false);
+                    $order->save();
                 }
             }
         } catch (\Exception $e) {
-            $result = static::MSG_REJECT_REQUEUE;
+            $result = static::MSG_REJECT;
         }
 
-        if ($result !== static::MSG_ACK && $result !== static::MSG_REJECT_REQUEUE) {
+        if ($result === static::MSG_REJECT) {
             if ($order) {
                 $this->dostavistaService->dostavistaOrderAddErrorSendEmail($order->getId(), $order->getField('ACCOUNT_NUMBER'), $response['message'], $response['data'], (new \Datetime)->format('d.m.Y H:i:s'));
             }
