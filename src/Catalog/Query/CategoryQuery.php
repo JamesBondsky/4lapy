@@ -41,6 +41,7 @@ class CategoryQuery extends IblockSectionQuery
             'PICTURE',
             'UF_LANDING',
             'UF_LANDING_BANNER',
+            'UF_LANDING_BANNER2',
             'UF_FAQ_SECTION',
             'UF_FORM_TEMPLATE',
             'UF_DEF_FOR_LANDING',
