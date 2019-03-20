@@ -25,7 +25,7 @@ $iblocks = [
     IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::ARTICLES),
 ];
 $itemIds = [];
-$newLimit = $limit = 8;
+$newLimit = $limit = 6;
 /** @todo это фикс поиска по id вместо свойств в компоненте, оставить до переделки компонента на поиск по d7 */
 foreach ($iblocks as $iblock) {
     if ($newLimit > 0) {
