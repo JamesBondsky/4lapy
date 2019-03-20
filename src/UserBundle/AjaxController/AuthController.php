@@ -68,8 +68,12 @@ class AuthController extends Controller
 
         switch ($action) {
             case 'login':
-                $response = $loginClass->ajaxLogin($request->get('login', ''), $request->get('password', ''),
-                    $request->get('backurl', ''));
+                $response = $loginClass->ajaxLogin(
+                    $request->get('login', ''),
+                    $request->get('password', ''),
+                    $request->get('backurl', ''),
+                    $request->get(ProtectorHelper::getField(ProtectorHelper::TYPE_AUTH), false)
+                );
 
                 if ($response instanceof JsonErrorResponse) {
                     //$response->setStatusCode(418, 'I’m a teapot');
