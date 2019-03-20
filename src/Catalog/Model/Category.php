@@ -34,6 +34,8 @@ class Category extends IblockSection implements FilterInterface
 {
     public const UNSORTED_CATEGORY_CODE = 'unsorted';
 
+    public const DEL_TEXT = 'Доставка курьером ветеринарных препаратов запрещена согласно 61-ФЗ РФ. Оформляйте такие заказы самовывозом из магазина.';
+
     use FilterTrait;
 
     /**
@@ -96,6 +98,8 @@ class Category extends IblockSection implements FilterInterface
     protected $UF_RECOMMENDED;
     /** @var bool */
     protected $UF_SKIP_AUTOSORT = false;
+    /** @var bool */
+    protected $UF_SHOW_DEL_TEXT = false;
     /**
      * @var FilterCollection
      */
@@ -735,6 +739,23 @@ class Category extends IblockSection implements FilterInterface
     public function setSkipAutosort(bool $skipAutosort): self
     {
         $this->UF_SKIP_AUTOSORT = $skipAutosort;
+
+        return $this;
+    }
+
+    public function isShowDelText(): bool
+    {
+        return $this->UF_SHOW_DEL_TEXT;
+    }
+
+    /**
+     * @param bool $showDelText
+     *
+     * @return Category
+     */
+    public function setShowDelText(bool $showDelText): self
+    {
+        $this->UF_SHOW_DEL_TEXT = $showDelText;
 
         return $this;
     }
