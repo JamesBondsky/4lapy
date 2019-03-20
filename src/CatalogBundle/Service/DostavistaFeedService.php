@@ -19,6 +19,7 @@ use FourPaws\CatalogBundle\Dto\Dostavista\Feed;
 use FourPaws\CatalogBundle\Dto\Dostavista\Merchant;
 use FourPaws\CatalogBundle\Dto\Dostavista\Offer;
 use FourPaws\CatalogBundle\Dto\Dostavista\Residue;
+use FourPaws\CatalogBundle\Dto\Dostavista\Weight;
 use FourPaws\CatalogBundle\Dto\Dostavista\Shop;
 use FourPaws\CatalogBundle\Dto\Dostavista\Worktime;
 use FourPaws\CatalogBundle\Translate\Configuration;
@@ -32,6 +33,7 @@ use JMS\Serializer\SerializerInterface;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use FourPaws\Catalog\Model\Offer as ModelOffer;
+use FourPaws\Helpers\WordHelper;
 
 /**
  * Class DostavistaFeedService
@@ -349,10 +351,11 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
             'CATALOG_GROUP_2',
             'XML_ID',
             'DETAIL_PAGE_URL',
+            'CATALOG_WEIGHT'
         ];
 
         $files = [];
-        $dbItems = \CIBlockElement::GetList(['XML_ID' => 'ASC'], $arFilter, false, false, $arSelect);
+        $dbItems = \CIBlockElement::GetList(['XML_ID' => 'ASC'], $arFilter, false, ['nTopCount' => 100], $arSelect);
         $offerCnt = $dbItems->SelectedRowsCount();
         $i = 1;
 
@@ -402,7 +405,8 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
                 'NAME' => $brand . ' ' . $arOffer['NAME'],
                 'DESCRIPTION' => $descr,
                 'PICTURE' => '',
-                'RESIDUES' => []
+                'RESIDUES' => [],
+                'WEIGHT' => WordHelper::showWeightNumber($arOffer['CATALOG_WEIGHT'], true)
             ];
 
             if (!empty($arOffer['PROPERTIES']['IMG']['VALUE'][0])) {
@@ -454,14 +458,6 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
         $this->printDumpString('processOffersXmlModelCreate');
         foreach ($this->offers as $arOffer) {
             $offer = new Offer();
-            $offer->setId($arOffer['XML_ID'])
-                ->setUrl($arOffer['URL'])
-                ->setPrice($arOffer['PRICE'])
-                ->setCurrencyId($arOffer['CURRENCY'])
-                ->setCategoryId($arOffer['SECTION_ID'])
-                ->setName($arOffer['NAME'])
-                ->setDescription($arOffer['DESCRIPTION'])
-                ->setPicture($arOffer['PICTURE']);
             $residues = new ArrayCollection();
             foreach ($arOffer['RESIDUES'] as $arResidue) {
                 $residue = new Residue();
@@ -471,7 +467,18 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
                     ->setPrice($arResidue['PRICE']);
                 $residues->add($residue);
             }
-            $offer->setResidues($residues);
+            $weight = new Weight();
+            $weight->setUnitId('kg')->setValue($arOffer['WEIGHT']);
+            $offer->setId($arOffer['XML_ID'])
+                ->setUrl($arOffer['URL'])
+                ->setPrice($arOffer['PRICE'])
+                ->setCurrencyId($arOffer['CURRENCY'])
+                ->setCategoryId($arOffer['SECTION_ID'])
+                ->setName($arOffer['NAME'])
+                ->setDescription($arOffer['DESCRIPTION'])
+                ->setPicture($arOffer['PICTURE'])
+                ->setResidues($residues)
+                ->setWeight($weight);
             $offerCollection->add($offer);
         }
         $this->printDumpString('processOffersXmlModelCreate done');

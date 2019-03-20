@@ -81,6 +81,22 @@ class Offer
     protected $description;
 
     /**
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Type("string")
+     *
+     * @var string
+     */
+    protected $unitId = 'pc';
+
+    /**
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Type("FourPaws\CatalogBundle\Dto\Dostavista\Weight")
+     *
+     * @var Weight
+     */
+    protected $weight = 'pc';
+
+    /**
      * Остатки в магазинах
      *
      * @Required()
@@ -266,6 +282,44 @@ class Offer
     public function setResidues($residues): Offer
     {
         $this->residues = $residues;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getUnitId(): string
+    {
+        return $this->unitId;
+    }
+
+    /**
+     * @param string $unitId
+     * @return Offer
+     */
+    public function setUnitId(string $unitId): Offer
+    {
+        $this->unitId = $unitId;
+
+        return $this;
+    }
+
+    /**
+     * @return Weight
+     */
+    public function getWeight(): Weight
+    {
+        return $this->weight;
+    }
+
+    /**
+     * @param Weight $weight
+     * @return Offer
+     */
+    public function setWeight(Weight $weight): Offer
+    {
+        $this->weight = $weight;
 
         return $this;
     }
