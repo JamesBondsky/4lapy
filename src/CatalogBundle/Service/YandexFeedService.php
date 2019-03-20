@@ -92,7 +92,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     /**
      * @var Store
      */
-    private $nnStock;
+    private $curStock;
 
     /** @var int $arStockDC01 */
     private $arStockDC01 = 1;
@@ -388,12 +388,12 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
 
         $deliveryInfo = $this->getOfferDeliveryInfo($offer, $stockID);
 
-        $nnTpz = false;
-        if ($stockID == self::NN_STOCK) {
-            if (null === $this->nnStock) {
-                $this->nnStock = $this->storeService->getStoreById(self::NN_STOCK);
+        $tpz = false;
+        if (!empty($stockID)) {
+            if (null === $this->curStock) {
+                $this->curStock = $this->storeService->getStoreById($stockID);
             }
-            $nnTpz = $offer->getAllStocks()->filterByStore($this->nnStock)->getTotalAmount() == 0;
+            $tpz = $offer->getAllStocks()->filterByStore($this->curStock)->getTotalAmount() == 0;
         }
 
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
@@ -417,7 +417,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                     ->getDetailText()
                     ->getText()), 0, 2990))
                 ->setManufacturerWarranty(true)
-                ->setAvailable(($stockID == self::NN_STOCK && $nnTpz) ? false : $offer->isAvailable())
+                ->setAvailable((!empty($stockID) && $tpz) ? false : $offer->isAvailable())
                 ->setCurrencyId('RUB')
                 ->setPrice($offer->getPrice())
                 ->setPicture($currentImage)
