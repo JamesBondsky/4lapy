@@ -146,7 +146,7 @@ $APPLICATION->IncludeComponent(
                         </div>
                     </div>
                     <div class="b-promo-banner-item__descr">
-                        Удобные мобильные<br/> приложения для Android и&nbsp;IOS
+                        Удобные мобильные<br/> приложения для&nbsp;Android и&nbsp;IOS
                     </div>
                     <div class="b-promo-banner-item__link-wrap">
                         <a class="b-promo-banner-item__link" href="/shares/mobilnoe_prilozhenie_chetyre_lapy.html">Подробнее</a>
@@ -169,7 +169,7 @@ $APPLICATION->IncludeComponent(
                     </div>
                 </div>
             </div>
-            <div class="b-promo-banner-item">
+            <div class="b-promo-banner-item b-promo-banner-item--big-text">
                 <div class="b-promo-banner-item__content">
                     <div class="b-promo-banner-item__left">
                         <div class="b-promo-banner-item__logo"></div>
@@ -178,7 +178,7 @@ $APPLICATION->IncludeComponent(
                         </div>
                     </div>
                     <div class="b-promo-banner-item__descr">
-                        Бесплатный самовывоз заказа через час из&nbsp;230+ магазинов!
+                        Бесплатный самовывоз заказа через 30 минут из&nbsp;230+ магазинов!
                     </div>
                     <div class="b-promo-banner-item__link-wrap">
                         <a class="b-promo-banner-item__link" href="/shops/">Подробнее</a>
