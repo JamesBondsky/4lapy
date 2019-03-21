@@ -148,6 +148,7 @@ class BasketService
      */
     private function fillBasketProductsPrices(Basket $orderAbleBasket, BasketProductCollection $products)
     {
+        $totalQuantity = 0;
         $pricesToGoods = [];
         foreach ($products as $product) {
             /** @var Product $product */
@@ -168,17 +169,17 @@ class BasketService
                             )
                             ->setQuantity($basketItem->getQuantity())
                         ;
+                        $totalQuantity += $basketItem->getQuantity();
                     }
                 }
             }
         }
 
-        return $products->map(function ($product) use ($pricesToGoods) {
+        return $products->map(function ($product) use ($pricesToGoods, $totalQuantity) {
             /** @var Product $product */
-            $quantity = $product->getQuantity();
             if (array_key_exists($product->getBasketItemId(), $pricesToGoods)) {
                 $prices = $pricesToGoods[$product->getBasketItemId()];
-                $product->setQuantity($quantity + count($prices));
+                $product->setQuantity($totalQuantity);
                 $product->setPrices($prices);
             }
             return $product;
