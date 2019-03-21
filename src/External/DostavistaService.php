@@ -315,7 +315,7 @@ class DostavistaService implements LoggerAwareInterface, SapOutInterface
                 'STATUS' => $status
             ],
             'N',
-            96
+            98
         );
     }
 
