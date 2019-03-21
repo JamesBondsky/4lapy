@@ -33,6 +33,8 @@ class AddContentForMobileAppIBlock20190228094957 extends \Adv\Bitrixtools\Migrat
         // о компании
         $this->addAbout($iblockId);
 
+        // условия регистрации
+        $this->addRegisterTerms($iblockId);
     }
 
     public function down(){
@@ -119,6 +121,41 @@ class AddContentForMobileAppIBlock20190228094957 extends \Adv\Bitrixtools\Migrat
                 'CODE'              => 'about',
                 'XML_ID'            => '1919980',
                 'DETAIL_TEXT'       => htmlspecialcharsback("&lt;h1&gt;О компании&lt;/h1&gt;\r\n&lt;p style=&quot;text-align: justify;&quot;&gt;\r\n\tКомпания &quot;Четыре Лапы&quot; более 20 лет заботится о домашних питомцах. Сегодня мы занимаем одно из лидирующих положений на рынке, создавая лучшее предложение для питомцев и их хозяев, в более чем 150 магазинах сети в 15 регионах России. Наша миссия - заботиться о полноценной жизни питомцев. Наш долг - поддерживать Вас и Ваших домашних любимцев, чтобы их жизнь была здоровой, долгой, радостной и гармоничной.\r\n&lt;/p&gt;\r\n&lt;p style=&quot;text-align: justify;&quot;&gt;\r\n &lt;br&gt;&lt;/p&gt;\r\n&lt;p style=&quot;text-align: justify;&quot;&gt;\r\n\t Мы сотрудничаем с поставщиками, контролируем качество товаров, чтобы наше предложение всегда поддерживалось на неизменно высоком уровне.\r\n&lt;/p&gt;\r\n&lt;p style=&quot;text-align: justify;&quot;&gt;\r\n &lt;br&gt;&lt;/p&gt;\r\n&lt;p style=&quot;text-align: justify;&quot;&gt;\r\n\t В магазинах &quot;Четыре Лапы&quot; работают профессионалы, любящие и знающие свое дело, которые всегда готовы помочь советом.\r\n&lt;/p&gt;\r\n&lt;p style=&quot;text-align: justify;&quot;&gt;\r\n &lt;br&gt;&lt;/p&gt;\r\n&lt;p style=&quot;text-align: justify;&quot;&gt;\r\n\t Приходите и задайте свой вопрос нашему ветеринарному врачу, получите консультацию по кормлению и профилактике здоровья питомца. Наши специалисты в магазине имеют высокую квалификацию, Вы всегда можете рассчитывать на их помощь в подборе того, что нужно Вашему любимцу. С нами каждый человек обретает уверенность, что его домашний питомец будет обеспечен всем необходимым для счастливой и здоровой жизни.\r\n&lt;/p&gt;\r\n&lt;p style=&quot;text-align: justify;&quot;&gt;\r\n &lt;br&gt;&lt;/p&gt;\r\n&lt;p style=&quot;text-align: justify;&quot;&gt;\r\n\t С нами удобно! Вы можете заказать товар удобным для Вас способом: в магазине, по телефону или через Интернет; получить его в магазине или с доставкой на дом. Для наших постоянных покупателей в магазинах действует бонусная программа, позволяющая совершать покупки более выгодно. Каждый месяц мы проводим акции: дарим скидки, бонусы, подарки.\r\n&lt;/p&gt;\r\n&lt;p style=&quot;text-align: justify;&quot;&gt;\r\n &lt;br&gt;&lt;/p&gt;\r\n&lt;p style=&quot;text-align: justify;&quot;&gt;\r\n\t Мы гордимся тем, что делаем. Наша работа помогает сделать этот мир лучше, потому что общение с домашними питомцами приносит радостные эмоции и ощущение полноты жизни.\r\n&lt;/p&gt;\r\n&lt;p style=&quot;text-align: justify;&quot;&gt;\r\n &lt;br&gt;&lt;/p&gt;\r\n&lt;p style=&quot;text-align: justify;&quot;&gt;\r\n\t Выберите свой зоомагазин «Четыре Лапы». Мы всегда рады видеть Вас!\r\n&lt;/p&gt;\r\n&lt;p style=&quot;text-align: justify;&quot;&gt;\r\n&lt;/p&gt;\n"),
+                'PREVIEW_TEXT_TYPE' => 'html',
+                'DETAIL_TEXT_TYPE' => 'html',
+            ]
+        );
+    }
+
+    private function addRegisterTerms($iblockId)
+    {
+        $this->helper->Iblock()->addElementIfNotExists(
+            $iblockId,
+            [
+                'NAME'              => 'Условия регистрации',
+                'CODE'              => 'register_terms',
+                'XML_ID'            => '6438264',
+                'DETAIL_TEXT'       => '<p style="text-align: justify;">
+ <span style="font-size: 24pt;"><br>
+ </span>
+</p>
+<p style="text-align: justify;">
+ <span style="font-size: 24pt;">Регистрируя бонусную карту, я даю свое согласие Организатору бонусной программы «Четыре Лапы» и его уполномоченным представителям на передачу и обработку (в т.ч. сбор, систематизацию, хранение, уточнение, использование) указанных мной персональных данных. </span><span style="font-size: 24pt;"><br>
+ </span>
+</p>
+<p style="text-align: justify;">
+ <span style="font-size: 24pt;">Я согласен с тем, что Организатор бонусной программы «Четыре Лапы» может направлять мне информационную рассылку об акциях и скидках.&nbsp;</span>
+</p>
+<p style="text-align: justify;">
+</p>
+<p style="text-align: justify;">
+ <span style="font-size: 24pt;">Согласие даётся на срок участия в бонусной программе и может быть в любой момент мной отозвано путем направления электронного письма Организатору бонусной программы «Четыре Лапы» на электронный адрес <a href="mailto:welcome@4lapy.ru" style="text-decoration: none;"><span style="color: #f16522;">welcome@4lapy.ru</span></a></span>
+</p>
+<p style="text-align: justify;">
+ <br>
+</p>
+<p>
+</p>',
                 'PREVIEW_TEXT_TYPE' => 'html',
                 'DETAIL_TEXT_TYPE' => 'html',
             ]

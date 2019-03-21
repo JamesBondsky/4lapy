@@ -64,7 +64,6 @@ class InfoService implements LoggerAwareInterface
                 case InfoEnum::ABOUT:
                     $return = $this->getInfoItem($type, $id, $select);
                     break;
-
                 default:
                     throw new \RuntimeException(sprintf('No such method to get %s type', $type));
             }
@@ -166,7 +165,7 @@ class InfoService implements LoggerAwareInterface
             }
 
         } catch (\Exception $exception) {
-            $this->log()->error($exception->getMessage());
+            throw new RuntimeException($exception->getMessage());
         }
     }
 
