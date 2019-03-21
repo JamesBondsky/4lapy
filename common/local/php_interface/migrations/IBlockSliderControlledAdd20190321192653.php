@@ -52,7 +52,7 @@ class IBlockSliderControlledAdd20190321192653 extends \Adv\Bitrixtools\Migration
             'RSS_FILE_LIMIT' => NULL,
             'RSS_FILE_DAYS' => NULL,
             'RSS_YANDEX_ACTIVE' => 'N',
-            'XML_ID' => '',
+            'XML_ID' => IblockCode::SLIDER_CONTROLLED,
             'TMP_ID' => NULL,
             'INDEX_ELEMENT' => 'N',
             'INDEX_SECTION' => 'N',
@@ -72,7 +72,7 @@ class IBlockSliderControlledAdd20190321192653 extends \Adv\Bitrixtools\Migration
             'SECTION_NAME' => 'Раздел',
             'ELEMENTS_NAME' => 'Элементы',
             'ELEMENT_NAME' => 'Элемент',
-            'EXTERNAL_ID' => '',
+            'EXTERNAL_ID' => IblockCode::SLIDER_CONTROLLED,
             'LANG_DIR' => '/',
             'SERVER_NAME' => '4lapy.ru',
         ));
@@ -385,8 +385,7 @@ class IBlockSliderControlledAdd20190321192653 extends \Adv\Bitrixtools\Migration
     {
         $helper = new HelperManager();
 
-        $iblockId = $helper->Iblock()->getIblockId(IblockCode::SLIDER_CONTROLLED);
-        $helper->Iblock()->deleteIblockIfExists($iblockId);
+        $helper->Iblock()->deleteIblockIfExists(IblockCode::SLIDER_CONTROLLED);
     }
 
 }
