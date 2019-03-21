@@ -275,6 +275,7 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
             if ($arProduct['ACTIVE'] == 'Y') {
                 foreach ($products[$arProduct['ID']] as $offer) {
                     $this->arResult['offers'][$offer]['brand'] = $arProduct['PROPERTY_BRAND_NAME'];
+                    $this->arResult['offers'][$offer]['description'] = ($arProduct['PROPERTY_BRAND_NAME'] ? ($arProduct['PROPERTY_BRAND_NAME'] . ' ') : '') . $this->arResult['offers'][$offer]['description'];
                 }
             } else {
                 foreach ($products[$arProduct['ID']] as $offer) {

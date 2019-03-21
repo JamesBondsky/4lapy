@@ -69,11 +69,18 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
 
             if($price > 0 && $price != $basketItem->getPrice()){
                 $basketItem->setFieldsNoDemand([
-                    'DISCOUNT_PRICE' => $basketItem->getBasePrice() - $price,
                     'PRICE' => $price,
+                    'DISCOUNT_PRICE' => $basketItem->getBasePrice() - $price,
                     'CUSTOM_PRICE' => 'Y'
                 ]);
             }
+            /*else if($basketItem->getBasePrice() != $basketItem->getPrice()){
+                $basketItem->setFieldsNoDemand([
+                    'DISCOUNT_PRICE' => null,
+                    'PRICE' => $basketItem->getBasePrice(),
+                    'CUSTOM_PRICE' => 'N'
+                ]);
+            }*/
         }
 
         $applyResult = $discountBase->getApplyResult(true);

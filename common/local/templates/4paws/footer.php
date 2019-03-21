@@ -124,7 +124,7 @@ if (mb_strpos($APPLICATION->GetCurDir(), '/cart/') === false && mb_strpos($APPLI
                 <div class="b-footer__column 
                             b-footer__column--small 
                             b-footer__column--change-viewport 
-                            <?= ($sViewportCookie === 'mobile')||($sViewportCookie === 'desktop') ? 'active' : '' ?>"
+                            <?= ($sViewportCookie === 'mobile') ? 'mobile' : '' ?>"
                             data-footer-links-change-viewport="true">
                     <?php if ($sViewportCookie === null) { ?>
                         <div class="link-toggle-view active mobile" data-change-viewport-mode='mobile' data-type="desktop">

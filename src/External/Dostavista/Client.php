@@ -42,6 +42,16 @@ class Client
     protected const URL_CANCEL_ORDER_TEST = 'https://robotapitest.dostavista.ru/api/business/1.0/cancel-order';
 
     /**
+     * API url list order
+     */
+    protected const URL_LIST_ORDER = 'https://robot.dostavista.ru/api/business/1.0/orders';
+
+    /**
+     * API url list order test
+     */
+    protected const URL_LIST_ORDER_TEST = 'https://robotapitest.dostavista.ru/api/business/1.0/orders';
+
+    /**
      * Test mode flag
      *
      * @var bool
@@ -84,7 +94,7 @@ class Client
      * @return array
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function send(string $method, array $options): array
+    public function send(string $method, array $options = []): array
     {
         $client = new GuzzleHttpClient([
             'defaults' => [
@@ -239,16 +249,45 @@ class Client
     }
 
     /**
+     * @param string $query
+     * @return array
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function listOrder($query): array
+    {
+        if ($this->testMode) {
+            $this->url = self::URL_LIST_ORDER_TEST;
+        } else {
+            $this->url = self::URL_LIST_ORDER;
+        }
+
+        $this->url .= ($query) ? '?' . $query : '';
+
+        $result = $this->send('GET');
+        return $this->parseSendingResult($result);
+    }
+
+    /**
      * @param $res
      * @return array
      */
     protected function parseSendingResult($res): array
     {
         if ($res['is_successful'] == true) {
-            $result = [
-                'success' => true,
-                'order_id' => $res['order']['order_id']
-            ];
+            if (isset($res['order']['order_id'])) {
+                $result = [
+                    'success' => true,
+                    'order_id' => $res['order']['order_id']
+                ];
+            } elseif (isset($res['orders'])) {
+                $result = [
+                    'success' => true,
+                    'orders' => $res['orders'],
+                    'orders_count' => $res['orders_count']
+                ];
+            } else {
+                $result = ['success' => true];
+            }
         } else {
             $result = ['success' => false];
             $result['message'] .= 'Errors = [' . implode(', ', $res['error_code']) . '], ';

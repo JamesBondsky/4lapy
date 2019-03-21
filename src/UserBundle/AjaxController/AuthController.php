@@ -46,7 +46,7 @@ class AuthController extends Controller
     }
 
     /**
-     * @Route("/login/", methods={"GET", "POST"})
+     * @Route("/login-s/", methods={"GET", "POST"})
      * @param Request $request
      *
      * @return JsonResponse
@@ -68,8 +68,12 @@ class AuthController extends Controller
 
         switch ($action) {
             case 'login':
-                $response = $loginClass->ajaxLogin($request->get('login', ''), $request->get('password', ''),
-                    $request->get('backurl', ''));
+                $response = $loginClass->ajaxLogin(
+                    $request->get('login', ''),
+                    $request->get('password', ''),
+                    $request->get('backurl', ''),
+                    $request->get(ProtectorHelper::getField(ProtectorHelper::TYPE_AUTH), false)
+                );
 
                 if ($response instanceof JsonErrorResponse) {
                     //$response->setStatusCode(418, 'I’m a teapot');
@@ -99,7 +103,7 @@ class AuthController extends Controller
     }
 
     /**
-     * @Route("/register/", methods={"GET", "POST"})
+     * @Route("/register-s/", methods={"GET", "POST"})
      * @param Request $request
      *
      * @return JsonResponse

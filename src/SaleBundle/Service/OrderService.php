@@ -54,6 +54,7 @@ use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\LocationBundle\Exception\AddressSplitException;
 use FourPaws\LocationBundle\LocationService;
@@ -178,6 +179,9 @@ class OrderService implements LoggerAwareInterface
 
     /** @var array $paySystemServiceCache */
     private $paySystemServiceCache = [];
+
+    /** @var string $dostavistManagerPhone */
+    private $dostavistManagerPhone = '8 (495) 221-72-25, доб. 5005';
 
     /**
      * OrderService constructor.
@@ -1099,6 +1103,7 @@ class OrderService implements LoggerAwareInterface
                             'DELIVERY_PLACE_CODE' => $nearShop->getXmlId()
                         ]
                     );
+                    $order->setField('COMMENTS', 'Упаковать заказ'); //Если достависта оставляем комментарий менеджеру
                 }
             } else {
                 /**
@@ -1919,7 +1924,7 @@ class OrderService implements LoggerAwareInterface
      * @throws SystemException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function sendToDostavista(Order $order, string $name, string $phone, string $comment, string $periodTo, Store $nearShop = null, bool $isPaid = false): void
+    public function sendToDostavista(Order $order, string $name, string $phone, string $comment, string &$periodTo, Store $nearShop = null, bool $isPaid = false): void
     {
         $curDate = new \DateTime;
         $basket = $order->getBasket();
@@ -1934,64 +1939,76 @@ class OrderService implements LoggerAwareInterface
         $offers = $this->getOrderProducts($order);
         /** @var int $weight Вес всех товаров */
         $weight = (int)($basket->getWeight() / 1000);
-        $dostavistaWeightVal = 0;
-        if ($weight <= 15) {
-            $vehicleTypeId = 6;
-            if ($weight <= 5) {
-                $dostavistaWeightVal = 0;
-            } elseif ($weight > 5 && $weight <= 10) {
-                $dostavistaWeightVal = 5;
-            } elseif ($weight > 10 && $weight <= 15) {
-                $dostavistaWeightVal = 10;
-            }
-        } elseif ($weight <= 200) {
-            $vehicleTypeId = 7;
-            if ($weight > 15 && $weight <= 50) {
-                $dostavistaWeightVal = 15;
-            } elseif ($weight > 50 && $weight <= 100) {
-                $dostavistaWeightVal = 50;
-            } elseif ($weight > 100 && $weight <= 150) {
-                $dostavistaWeightVal = 100;
-            } elseif ($weight > 150 && $weight <= 200) {
-                $dostavistaWeightVal = 150;
-            }
-        } elseif ($weight <= 500) {
-            $vehicleTypeId = 1;
-            $dostavistaWeightVal = 200;
-        } elseif ($weight <= 700) {
-            $vehicleTypeId = 2;
-            $dostavistaWeightVal = 500;
-        } elseif ($weight <= 1000) {
-            $vehicleTypeId = 3;
-            $dostavistaWeightVal = 700;
-        } elseif ($weight <= 1500) {
-            $vehicleTypeId = 4;
-            $dostavistaWeightVal = 1000;
-        } else {
-            $vehicleTypeId = 5;
-            $dostavistaWeightVal = 1500;
+
+        switch (true) {
+            case $weight <= 15:
+                $vehicleTypeId = 6;
+                break;
+            case $weight <= 200:
+                $vehicleTypeId = 7;
+                break;
+            case $weight <= 500:
+                $vehicleTypeId = 1;
+                break;
+            case $weight <= 700:
+                $vehicleTypeId = 2;
+                break;
+            case $weight <= 1000:
+                $vehicleTypeId = 3;
+                break;
+            case $weight <= 1500:
+                $vehicleTypeId = 4;
+                break;
+            default:
+                $vehicleTypeId = 5;
+                break;
         }
 
         $arSectionsNames = [];
+        //проверка высоты товаров в корзине
+        /** @var int $loadersCount требуемое число грузчиков */
+        $loadersCount = 0;
         /** @var Offer $offer */
         foreach ($offers as $offer) {
+            $length = WordHelper::showLengthNumber($offer->getCatalogProduct()->getLength());
+            $width = WordHelper::showLengthNumber($offer->getCatalogProduct()->getWidth());
+            $height = WordHelper::showLengthNumber($offer->getCatalogProduct()->getHeight());
+            if ($length > 170 || $width > 170 || $height > 170) {
+                //портер с грузчиком
+                $vehicleTypeId = 3;
+                $loadersCount = 2;
+                //время доставки 5 часов
+                $periodTo = 300;
+            } elseif ($length > 150 || $weight > 150 || $height > 150) {
+                //Каблук
+                $vehicleTypeId = 2;
+                //время доставки 5 часов
+                $periodTo = 300;
+                //с грузчиком если вес больше 25кг
+                if ($weight >= 25) {
+                    //Каблук с грузчика
+                    $loadersCount = 2;
+                }
+            }
             $section = $offer->getProduct()->getSection();
             if ($section != null) {
                 $arSectionsNames[$section->getId()] = $section->getName();
             }
         }
+
         /** @var string $matter Что везем - названия всех разделов через запятую */
         $matter = implode(', ', $arSectionsNames);
         unset($arSectionsNames);
 
         $data = [
             'bitrix_order_id' => $order->getId(),
-            'total_weight_kg' => $dostavistaWeightVal,
+            'total_weight_kg' => $weight,
             'vehicle_type_id' => $vehicleTypeId,
             'matter' => $matter, //что везем
             'insurance_amount' => ceil($insurance + $deliveryPrice), //сумма страхования = цене корзины
             'is_client_notification_enabled' => (\COption::GetOptionString('articul.dostavista.delivery', 'sms_courier_set', '') == BaseEntity::BITRIX_TRUE) ? 1 : 0, //Отправить sms о назначении курьера на заказ 0/1
-            'is_contact_person_notification_enabled' => (\COption::GetOptionString('articul.dostavista.delivery', 'sms_courier_time_phone', '') == BaseEntity::BITRIX_TRUE) ? 1 : 0 //Отправить получателям sms с интервалом прибытия и телефоном курьера: 0 - не отправлять, 1 - отправлять.
+            'is_contact_person_notification_enabled' => (\COption::GetOptionString('articul.dostavista.delivery', 'sms_courier_time_phone', '') == BaseEntity::BITRIX_TRUE) ? 1 : 0, //Отправить получателям sms с интервалом прибытия и телефоном курьера: 0 - не отправлять, 1 - отправлять.
+            'loaders_count' => $loadersCount
         ];
 
         $nearAddressString = $this->storeService->getStoreAddress($nearShop) . ', ' . $nearShop->getAddress();
@@ -2026,7 +2043,7 @@ class OrderService implements LoggerAwareInterface
             'required_finish_datetime' => $pointZeroDate->format('c'),
             'taking_amount' => 0,
             'buyout_amount' => $takingAmount,
-            'note' => 'Телефон магазина: ' . $nearShop->getPhone()
+            'note' => 'Телефон магазина: ' . $this->dostavistManagerPhone
         ];
 
         $data['points'][1] = [
@@ -2060,6 +2077,7 @@ class OrderService implements LoggerAwareInterface
         $dostavistaOrder->bitrixOrderId = $data['bitrix_order_id'];
         $dostavistaOrder->totalWeightKg = $data['total_weight_kg'];
         $dostavistaOrder->vehicleTypeId = $data['vehicle_type_id'];
+        $dostavistaOrder->loadersCount = $data['loaders_count'];
         $dostavistaOrder->matter = $data['matter'];
         $dostavistaOrder->insuranceAmount = $data['insurance_amount'];
         $dostavistaOrder->isClientNotificationEnabled = $data['is_client_notification_enabled'];

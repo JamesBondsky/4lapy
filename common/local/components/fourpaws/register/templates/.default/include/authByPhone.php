@@ -2,13 +2,15 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
+use FourPaws\Helpers\ProtectorHelper;
+
 /** @var string $phone */ ?>
 <div class="b-registration__content b-registration__content--moiety b-registration__content--step">
     <div class="b-step-form">Шаг <span>1</span> из <span>2</span>
     </div>
     <form class="b-registration__form js-form-validation js-registration-form"
           id="reg-step2-form"
-          data-url="/ajax/user/auth/login/"
+          data-url="/ajax/user/auth/login-s/"
           method="post">
         <?= bitrix_sessid_post() ?>
         <input type="hidden" name="action" value="login">
@@ -47,6 +49,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             </div>
             <a class="b-link-gray" href="/personal/forgot-password/?backurl=/personal/register" title="Забыли пароль?">Забыли пароль?</a></div>
         <button class="b-button b-button--social b-button--full-width">Далее</button>
+
+        <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_AUTH); ?>
+	    <input type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
     </form>
 </div>
 <section class="b-registration__additional-info b-registration__additional-info--step">

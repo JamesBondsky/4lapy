@@ -89,6 +89,7 @@ class Offer extends IblockElement
     public const PACKAGE_LABEL_TYPE_WEIGHT = 'WEIGHT';
 
     public const CATALOG_GROUP_ID_BASE = 2;
+    public const CATALOG_GROUP_ID_MOSCOW = 77;
 
     /**
      * @var bool
@@ -1317,7 +1318,11 @@ class Offer extends IblockElement
             $percent = $this->bonusPercent;
         }
 
-        if (!$this->isBonusExclude() && !$this->isShare()) {
+        if (
+            !$this->isBonusExclude()
+            && !$this->isShare()
+            && !$this->isRegionPrice()
+        ) {
             $result = $this->getPrice() * $quantity * $percent / 100;
         }
 
@@ -1784,8 +1789,11 @@ class Offer extends IblockElement
      */
     public function getCatalogGroupId(): ?string
     {
+        /** @var CatalogGroupService $catalogGroupService */
         $catalogGroupService = Application::getInstance()->getContainer()->get('catalog_group.service');
+        /** @var LocationService $locationService */
         $locationService = Application::getInstance()->getContainer()->get('location.service');
+
         if($catalogGroupId = $catalogGroupService->getCatalogGroupIdByRegion($locationService->getCurrentRegionCode())){
             $this->catalogGroupId = $catalogGroupId;
         } else {
@@ -1819,7 +1827,7 @@ class Offer extends IblockElement
         }*/
 
         /** @var Price $arPrice */
-        $arPrice = $this->getPriceByGroupId($this->getCatalogGroupId());
+        $arPrice = $this->getCurrentRegionPrice();
 
         if($arPrice){
             $oldPrice = $price = (float)$arPrice->getPrice();
@@ -2266,22 +2274,39 @@ class Offer extends IblockElement
      */
     public function getPriceByGroupId(int $groupId): ?Price
     {
-        if(!$this->getPrices()){
+        if (!$this->getPrices()) {
             return null;
         }
 
-        $price = $this->getPrices()->filter(function($price) use ($groupId){
+        $price = $this->getPrices()->filter(function ($price) use ($groupId) {
             /** @var Price $price */
             return $price->getCatalogGroupId() == $groupId;
         });
 
-        if($price->isEmpty()){
-            $price = $this->getPrices()->filter(function($price){
+        if ($price->isEmpty()) {
+            $price = $this->getPrices()->filter(function ($price) {
                 /** @var Price $price */
                 return $price->getCatalogGroupId() == self::CATALOG_GROUP_ID_BASE;
             });
         }
 
         return $price->first();
+    }
+
+    /**
+     * @return Price|null
+     */
+    public function getCurrentRegionPrice(): ?Price
+    {
+        return $this->getPriceByGroupId($this->getCatalogGroupId());
+    }
+
+    /**
+     * @return bool
+     */
+    public function isRegionPrice(): bool
+    {
+        return (null !== $this->getCurrentRegionPrice())
+            && !in_array($this->getCurrentRegionPrice()->getCatalogGroupId(), [self::CATALOG_GROUP_ID_BASE, self::CATALOG_GROUP_ID_MOSCOW]);
     }
 }
