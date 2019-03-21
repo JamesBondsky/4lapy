@@ -22,11 +22,6 @@ if (!\is_array($arResult['ITEMS']) || empty($arResult['ITEMS'])) {
     <div class="b-container">
         <div class="b-promo-banner__list js-promo-banner">
 	        <? foreach ($arResult['ITEMS'] as $key => $item) { ?>
-		        <?
-		        if (!$item['MOD']['SHOW_ITEM']) {
-		        	continue;
-                }
-		        ?>
 		        <div class="b-promo-banner-item<?= $item['MOD']['ADDITIONAL_CLASSES'] ?>">
 	                <div class="b-promo-banner-item__content">
 	                    <div class="b-promo-banner-item__left">

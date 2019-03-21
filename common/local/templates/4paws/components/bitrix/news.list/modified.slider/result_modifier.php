@@ -41,11 +41,5 @@ foreach ($arResult['ITEMS'] as &$item)
         $additionalClasses[] = 'b-promo-banner-item--big-text';
     }
 
-    $showItem = true;
-    if ($item['DISPLAY_PROPERTIES']['LOCATION']['VALUE'] && $arParams['SELECTED_CITY_CODE'] && !in_array($arParams['SELECTED_CITY_CODE'], $item['DISPLAY_PROPERTIES']['LOCATION']['VALUE'], true)) {
-        $showItem = false;
-    }
-
     $item['MOD']['ADDITIONAL_CLASSES'] = ' ' . implode(' ', $additionalClasses);
-    $item['MOD']['SHOW_ITEM'] = $showItem;
 }
