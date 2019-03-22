@@ -258,6 +258,16 @@ class Event extends BaseServiceHandler
             self::class,
             'addStampsToBasket'
         ], $module);*/
+
+        $module = 'sale';
+        static::initHandler('OnOrderNewSendEmail', [
+            self::class,
+            'cancelEventAddition'
+        ], $module);
+        static::initHandler('OnOrderPaySendEmail', [
+            self::class,
+            'cancelEventAddition'
+        ], $module);
     }
 
     /**
@@ -959,6 +969,14 @@ class Event extends BaseServiceHandler
         } catch (\Exception $e) {
             $logger = LoggerFactory::create('piggyBank');
             $logger->critical('failed to add PiggyBank marks for order: ' . $e->getMessage());
+        }
+    }
+
+    public function cancelEventAddition($orderId, string $eventName)
+    {
+        if (in_array($eventName, ['SALE_NEW_ORDER' , 'SALE_ORDER_PAID'])) // проверка избыточна, но на всякий случай сделана, чтобы не заблочили другие события
+        {
+            return false;
         }
     }
 }

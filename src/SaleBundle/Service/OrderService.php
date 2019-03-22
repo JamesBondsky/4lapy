@@ -735,6 +735,15 @@ class OrderService implements LoggerAwareInterface
             try {
                 $operator = $this->userProvider->findOne($this->userAvatarAuthorization->getAvatarHostUserId());
                 if ($operator) {
+                    $this->log()->notice('Operator avatar save info', [
+                        'ORDER_ID' => $order->getId(),
+                        'ORDER_CODE' => $order->getField('ACCOUNT_NUMBER'),
+                        'ID' => $operator->getId(),
+                        'EMAIL' => $operator->getEmail(),
+                        'SHOP_CODE' => $operator->getShopCode(),
+                        'NAME' => $operator->getName(),
+                        'SECOND_NAME' => $operator->getSecondName()
+                    ]);
                     $this->setOrderPropertyByCode(
                         $order,
                         'OPERATOR_EMAIL',
