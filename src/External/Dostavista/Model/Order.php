@@ -45,6 +45,13 @@ class Order
 
     /**
      * @XmlElement(cdata=false)
+     * @Type("int")
+     * @SerializedName("loaders_count")
+     */
+    public $loadersCount;
+
+    /**
+     * @XmlElement(cdata=false)
      * @Type("string")
      * @SerializedName("matter")
      */

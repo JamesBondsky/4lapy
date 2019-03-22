@@ -11,14 +11,14 @@ use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 <div class="b-registration__content b-registration__content--moiety b-registration__content--step"
      style="padding: 0!important; border: none !important; width:100% !important;">
     <div class="b-registration__your-number" id="js-resend"
-         data-url="/ajax/user/auth/login/"
+         data-url="/ajax/user/auth/login-s/"
          data-method="post"
          data-phone="<?= $phone ?>"
          data-action="resendSms">Ваш номер <?= $phone ?>
     </div>
     <form class="b-registration__form js-form-validation js-registration-form js-ajax-sms-form"
           id="reg-step3-form"
-          data-url="/ajax/user/auth/login/"
+          data-url="/ajax/user/auth/login-s/"
           method="post">
         <?= bitrix_sessid_post() ?>
         <input type="hidden" name="action" value="savePhone">
@@ -39,7 +39,7 @@ use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
             </div>
             <a class="b-link-gray js-resend-sms"
                href="javascript:void(0);"
-               data-url="/ajax/user/auth/register/"
+               data-url="/ajax/user/auth/register-s/"
                data-method="post"
                data-phone="<?= $phone ?>"
                data-action="resendSms"

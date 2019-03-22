@@ -1,7 +1,7 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
     "content-hash": "a4475cb408f522f75ba40d9b0f0088f7",
@@ -122,11 +122,11 @@
         },
         {
             "name": "articul/articul.newrelic",
-            "version": "v1.0",
+            "version": "v1.1",
             "source": {
                 "type": "git",
                 "url": "git@bitbucket.org:articul/articul.newrelic.git",
-                "reference": "f14d2d3b9626302a99737f54df8beccba8e45265"
+                "reference": "b39253e5c547fe4685e98010bf3b1cd1b7cc8bf9"
             },
             "require": {
                 "composer/installers": "~1.0",
@@ -158,7 +158,7 @@
                 "skype": "andrey.brajnikov",
                 "source": "https://bitbucket.org/articul/articul.newrelic"
             },
-            "time": "2018-11-15T16:00:47+00:00"
+            "time": "2019-03-22T07:05:24+00:00"
         },
         {
             "name": "ci/restclientbundle",
@@ -6050,6 +6050,7 @@
                 "mock",
                 "xunit"
             ],
+            "abandoned": true,
             "time": "2018-01-06T05:45:45+00:00"
         },
         {

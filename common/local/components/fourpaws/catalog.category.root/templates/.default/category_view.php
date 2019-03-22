@@ -70,7 +70,7 @@ foreach (array_values($childCategories) as $index => $childCategory) {
     </section>
 
     <? if(!$delTextShown && $category->isShowDelText()){
-        echo '<div>', Category::DEL_TEXT, '</div>';
+        echo '<div class="b-information-message b-information-message--green">', Category::DEL_TEXT, '</div>';
         $delTextShown = true;
     } ?>
 

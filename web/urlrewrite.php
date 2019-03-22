@@ -55,5 +55,6 @@ $arUrlRewrite=array (
     'ID' => '',
     'PATH' => '/symfony_router.php',
     'SORT' => 100,
+    'ARTICUL_ROUTER' => true,
   ),
 );

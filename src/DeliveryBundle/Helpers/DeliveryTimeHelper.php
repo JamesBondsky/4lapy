@@ -17,6 +17,12 @@ use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 class DeliveryTimeHelper
 {
     /**
+     * Время на сборку товара в магазине
+     */
+    const PACKING_TIME_TEXT = 'через 30 минут';
+    const PACKING_TIME_TEXT_C = 'Через 30 минут';
+
+    /**
      * @param CalculationResultInterface $calculationResult
      * @param array array $options
      *                  - SHOW_TIME - отображать ли время
@@ -63,7 +69,7 @@ class DeliveryTimeHelper
         $options = array_merge($defaultOptions, $options);
 
         if ($options['SHOW_TIME'] && abs($date->getTimestamp() - $currentDate->getTimestamp()) < 2 * 3600) {
-            $result = 'через час';
+            $result = self::PACKING_TIME_TEXT;
         } else {
             if (!$options['DATE_FORMAT']) {
                 if ($options['SHORT']) {

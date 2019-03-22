@@ -19,13 +19,14 @@ use FourPaws\SapBundle\Source\SourceMessage;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerAwareTrait;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\App\Application as App;
 use JMS\Serializer\Serializer;
 use FourPaws\SapBundle\Dto\Out\Orders\OrderStatus as OrderStatusDtoOut;
 use FourPaws\UserBundle\Repository\UserRepository;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class SmsService
@@ -34,7 +35,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class DostavistaService implements LoggerAwareInterface, SapOutInterface
 {
-    use LoggerAwareTrait, SapOutFile;
+    use LazyLoggerAwareTrait, SapOutFile;
 
     /**
      * @var Serializer $serializer
@@ -87,7 +88,8 @@ class DostavistaService implements LoggerAwareInterface, SapOutInterface
         }
         $this->client = new Client($testMode, $token);
 
-        $this->setLogger(LoggerFactory::create('dostavista'));
+        $this->withLogType('dostavista');
+        $this->setLogger(LoggerFactory::create($this->getLogName(), $this->getLogType()));
     }
 
     /**
@@ -104,7 +106,7 @@ class DostavistaService implements LoggerAwareInterface, SapOutInterface
             try {
                 $result = $this->client->addOrder($data);
                 if ($result['success']) {
-                    $this->logger->info('Order ' . $data['point'][1]['client_order_id'] . ' success create in Dostavista service', $data);
+                    $this->log()->info('Order ' . $data['point'][1]['client_order_id'] . ' success create in Dostavista service', $data);
                 }
             } catch (\Exception $e) {
                 $result = [
@@ -112,7 +114,7 @@ class DostavistaService implements LoggerAwareInterface, SapOutInterface
                     'message' => $res['message'],
                     'data' => $data
                 ];
-                $this->logger->error('Order ' . $data['point'][1]['client_order_id'] . ' import failed in "Dostavista" service', $result);
+                $this->log()->error('Order ' . $data['point'][1]['client_order_id'] . ' import failed in "Dostavista" service', $result);
             }
         } else {
             $result = [
@@ -121,7 +123,7 @@ class DostavistaService implements LoggerAwareInterface, SapOutInterface
                 'connection' => false,
                 'data' => $data
             ];
-            $this->logger->error('Connection failed with "Dostavista" service', $result);
+            $this->log()->error('Connection failed with "Dostavista" service', $result);
         }
         return $result;
     }
@@ -140,16 +142,16 @@ class DostavistaService implements LoggerAwareInterface, SapOutInterface
             try {
                 $result = $this->client->cancelOrder($orderId);
                 if ($result['success']) {
-                    $this->logger->info('Order ' . $orderId . ' success canceled in Dostavista service', $result);
+                    $this->log()->info('Order ' . $orderId . ' success canceled in Dostavista service', $result);
                 } else {
-                    $this->logger->info('Order ' . $orderId . ' error canceled in Dostavista service', $result);
+                    $this->log()->info('Order ' . $orderId . ' error canceled in Dostavista service', $result);
                 }
             } catch (\Exception $e) {
                 $result = [
                     'success' => false,
                     'message' => 'Ошибка импорта заказа'
                 ];
-                $this->logger->error('Order ' . $orderId . ' cancel failed in "Dostavista" service', $result);
+                $this->log()->error('Order ' . $orderId . ' cancel failed in "Dostavista" service', $result);
             }
         } else {
             $result = [
@@ -157,7 +159,38 @@ class DostavistaService implements LoggerAwareInterface, SapOutInterface
                 'message' => $res['message'],
                 'connection' => false
             ];
-            $this->logger->error('Connection failed with "Dostavista" service', $result);
+            $this->log()->error('Connection failed with "Dostavista" service', $result);
+        }
+        return $result;
+    }
+
+    /**
+     * @param string $query
+     * @return array
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function listOrder(string $query)
+    {
+        //проверяем коннект
+        $res = $this->client->checkConnection();
+        if ($res['success']) {
+            //пробуем отменить заказ в достависте
+            try {
+                $result = $this->client->listOrder($query);
+            } catch (\Exception $e) {
+                $result = [
+                    'success' => false,
+                    'message' => 'Ошибка получения списка заказа'
+                ];
+                $this->log()->error('Order list get with query ' . $query . ' failed in "Dostavista" service', $result);
+            }
+        } else {
+            $result = [
+                'success' => $res['success'],
+                'message' => $res['message'],
+                'connection' => false
+            ];
+            $this->log()->error('Connection failed with "Dostavista" service', $result);
         }
         return $result;
     }
@@ -276,13 +309,13 @@ class DostavistaService implements LoggerAwareInterface, SapOutInterface
             'DOSTAVISTA_ORDERS',
             's1',
             [
-                'ORDER_ID' => Application::getInstance()->getSiteDomain() . '/bitrix/admin/sale_order_view.php?ID=' . $orderId . '&filter=Y&set_filter=Y&lang=ru',
+                'ORDER_ID' => 'https://4lapy.ru/bitrix/admin/sale_order_view.php?ID=' . $orderId . '&filter=Y&set_filter=Y&lang=ru',
                 'ACCOUNT_NUMBER' => $accountNumber,
                 'DATE_TIME' => $dateTime,
                 'STATUS' => $status
             ],
             'N',
-            96
+            98
         );
     }
 
@@ -299,7 +332,7 @@ class DostavistaService implements LoggerAwareInterface, SapOutInterface
             'DOSTAVISTA_ORDERS',
             's1',
             [
-                'ORDER_ID' => Application::getInstance()->getSiteDomain() . '/bitrix/admin/sale_order_view.php?ID=' . $orderId . '&filter=Y&set_filter=Y&lang=ru',
+                'ORDER_ID' => 'https://4lapy.ru/bitrix/admin/sale_order_view.php?ID=' . $orderId . '&filter=Y&set_filter=Y&lang=ru',
                 'ACCOUNT_NUMBER' => $accountNumber,
                 'DATE_TIME' => $dateTime,
                 'HTTP_CODE' => $code,
@@ -308,5 +341,18 @@ class DostavistaService implements LoggerAwareInterface, SapOutInterface
             'N',
             97
         );
+    }
+
+    /**
+     * @return LoggerInterface
+     */
+    public function log(): LoggerInterface
+    {
+        if ($this->logger === null) {
+            $this->withLogType('dostavista');
+            $this->logger = LoggerFactory::create($this->getLogName(), $this->getLogType());
+        }
+
+        return $this->logger;
     }
 }

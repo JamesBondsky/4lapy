@@ -34,7 +34,7 @@ class Category extends IblockSection implements FilterInterface
 {
     public const UNSORTED_CATEGORY_CODE = 'unsorted';
 
-    public const DEL_TEXT = 'По законодательству РФ доставка лекарственных препаратов запрещена, заказывайте товары самовывозом';
+    public const DEL_TEXT = 'Доставка курьером ветеринарных препаратов запрещена согласно 61-ФЗ РФ. Оформляйте такие заказы самовывозом из магазина.';
 
     use FilterTrait;
 
@@ -84,6 +84,7 @@ class Category extends IblockSection implements FilterInterface
      * @var string
      */
     protected $UF_LANDING_BANNER;
+    protected $UF_LANDING_BANNER2;
     /** @var string */
     protected $UF_FAQ_SECTION;
     /** @var string */
@@ -560,6 +561,22 @@ class Category extends IblockSection implements FilterInterface
     /**
      * @return mixed
      */
+    public function getUfLandingBanner2()
+    {
+        return $this->UF_LANDING_BANNER2;
+    }
+
+    /**
+     * @param mixed $ufLandingBanner
+     */
+    public function setUfLandingBanner2($ufLandingBanner): void
+    {
+        $this->UF_LANDING_BANNER2 = $ufLandingBanner;
+    }
+
+    /**
+     * @return mixed
+     */
     public function getUfFaqSection()
     {
         return $this->UF_FAQ_SECTION;
@@ -807,6 +824,7 @@ class Category extends IblockSection implements FilterInterface
             'UF_LANDING',
             'UF_DEF_FOR_LANDING',
             'UF_LANDING_BANNER',
+            'UF_LANDING_BANNER2',
             'UF_FAQ_SECTION',
             'UF_FORM_TEMPLATE',
             'UF_SUB_DOMAIN',
