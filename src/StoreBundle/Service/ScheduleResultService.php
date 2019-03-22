@@ -39,6 +39,11 @@ class ScheduleResultService implements LoggerAwareInterface
     public const DC_PROCESSING_DATE_MODIFIER = 1;
 
     /**
+     * Файл для хранения результатов
+     */
+    public const FILENAME = '/local/php_interface/resources/scheduleResults.txt';
+
+    /**
      * @var DeliveryScheduleService
      */
     protected $deliveryScheduleService;
@@ -154,6 +159,16 @@ class ScheduleResultService implements LoggerAwareInterface
     }
 
     /**
+     * @param ScheduleResult $result
+     *
+     * @return bool
+     */
+    public function deleteAllResults(): bool
+    {
+        return $this->repository->clearTable();
+    }
+
+    /**
      * @param int $id
      *
      * @return ScheduleResult
@@ -228,6 +243,14 @@ class ScheduleResultService implements LoggerAwareInterface
         }
 
         return $result ?? new ScheduleResultCollection();
+    }
+
+    /**
+     * @return string
+     */
+    public function getFilename()
+    {
+        return $_SERVER['DOCUMENT_ROOT'].self::FILENAME;
     }
 
     /**
@@ -367,7 +390,7 @@ class ScheduleResultService implements LoggerAwareInterface
         }
 
         $receivers = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
-        //$receivers = [$this->storeService->getStoreByXmlId('R193')];
+        //$receivers = [$this->storeService->getStoreByXmlId('DC01')];
 
         $result = [];
         /** @var Store $receiver */

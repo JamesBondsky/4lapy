@@ -99,7 +99,7 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
             throw new \RuntimeException('Transition count must be a positive integer value');
         }
 
-        $start_global = microtime(true);
+        $startGlobal = microtime(true);
 
         /** Расчёты не сгенерируются, если для первого отправителя не будет расписаний */
         $senders = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
@@ -108,71 +108,23 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
 
         /** @var Store $sender */
         foreach ($senders as $i => $sender) {
-            BitrixApplication::getConnection()->startTransaction();
-
-            $start = microtime(true);
-            $isSuccess = false;
-            $totalCreated = 0;
-            $totalDeleted = 0;
-
             try {
-                $totalDeleted += $this->scheduleResultService->deleteResultsForSender($sender);
                 $results = $this->scheduleResultService->calculateForSender($sender, $date, $tc);
-                [$created] = $this->scheduleResultService->updateResults($results);
-                $totalCreated += $created;
-                $isSuccess = true;
-                //break;
+                if(!file_put_contents($this->scheduleResultService->getFilename(), serialize($results))){
+                    throw new \Exception('Cannot put results to file');
+                }
             } catch (\Exception $e) {
                 $this->log()->error(
                     sprintf('Failed to calculate schedule results: %s: %s', \get_class($e), $e->getMessage()),
                     ['sender' => $sender->getXmlId()]
                 );
-
-                //$isSuccess = false;
-                //break;
-            }
-
-            if ($isSuccess) {
-                BitrixApplication::getConnection()->commitTransaction();
-
-                $this->log()->info(
-                    sprintf(
-                        'Task finished for %s, time: %ss. %s of %s Created: %s, deleted: %s',
-                        $sender->getXmlId(),
-                        round(microtime(true) - $start, 2),
-                        $i,
-                        count($senders),
-                        $totalCreated,
-                        $totalDeleted
-                    )
-                );
-            } else {
-                BitrixApplication::getConnection()->rollbackTransaction();
-
-                $this->log()->info(
-                    sprintf(
-                        'Task failed for %s, time: %ss. %s of %s',
-                        $sender->getXmlId(),
-                        round(microtime(true) - $start, 2),
-                        $i,
-                        count($senders)
-                    )
-                );
             }
         }
-
-        /*if ($isSuccess) {
-            BitrixApplication::getConnection()->commitTransaction();
-        } else {
-            BitrixApplication::getConnection()->rollbackTransaction();
-        }*/
-
-        TaggedCacheHelper::clearManagedCache(['catalog:store:schedule:results']);
 
         $this->log()->info(
             sprintf(
                 'Task finished, time: %smin.',
-                round((microtime(true) - $start_global) / 60, 2)
+                round((microtime(true) - $startGlobal) / 60, 2)
             )
         );
     }
