@@ -22,8 +22,6 @@ use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\Helpers\CurrencyHelper;
-use FourPaws\Helpers\WordHelper;
 use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Object\City;
@@ -358,7 +356,8 @@ class OrderService
                 ->setApartment($order->getPropValue('APARTMENT'))
                 ->setComment($order->getBitrixOrder()->getField('USER_DESCRIPTION'))
                 ->setDeliveryPlaceCode($order->getPropValue('DELIVERY_PLACE_CODE'))
-                // ->setCommunicationWay($order->getPropValue('COM_WAY')) // значение может меняться автоматически, см. FourPaws\SaleBundle\Service\OrderService::updateCommWayProperty
+                /** значение может меняться автоматически, @see \FourPaws\SaleBundle\Service\OrderService::updateCommWayProperty  */
+                // ->setCommunicationWay($order->getPropValue('COM_WAY'))
             ;
 
             $deliveryCode = $this->appDeliveryService->getDeliveryCodeById($order->getDeliveryId());
@@ -399,9 +398,19 @@ class OrderService
                 . ($orderParameter->getApartment() ? ' кв. ' . $orderParameter->getApartment() : '')
             );
 
+            $weight = 0;
+            /** @var \FourPaws\PersonalBundle\Entity\OrderItem $orderItem */
+            try {
+                foreach ($order->getItems() as $orderItem) {
+                    $weight += $orderItem->getWeight() * $orderItem->getQuantity();
+                }
+            } catch (\Exception $e) {
+                // do nothing
+            }
+
             $orderParameter->setGoodsInfo($this->apiProductService::getGoodsTitleForCheckout(
                 $basketProducts->getTotalQuantity(),
-                $basketProducts->getTotalWeight(),
+                $weight,
                 $basketProducts->getTotalPrice()->getActual()
             ));
 
@@ -682,11 +691,11 @@ class OrderService
         switch ($deliveryType) {
             //toDo DPD доставка
             case self::DELIVERY_TYPE_COURIER:
-                $cartParamArray['deliveryId'] = DeliveryService::INNER_DELIVERY_CODE;
+                $cartParamArray['deliveryId'] = $this->appDeliveryService->getDeliveryIdByCode(DeliveryService::INNER_DELIVERY_CODE);
                 //toDo доставка DPD должна определяться автоматически, в зависимости от зоны
                 break;
             case self::DELIVERY_TYPE_PICKUP:
-                $cartParamArray['deliveryId'] = DeliveryService::INNER_PICKUP_CODE;
+                $cartParamArray['deliveryId'] = $this->appDeliveryService->getDeliveryIdByCode(DeliveryService::INNER_PICKUP_CODE);
                 //toDo доставка DPD должна определяться автоматически, в зависимости от зоны
                 break;
         }
@@ -694,6 +703,7 @@ class OrderService
         foreach (\FourPaws\SaleBundle\Enum\OrderStorage::STEP_ORDER as $step) {
             $this->orderStorageService->setStorageValuesFromArray($storage, $cartParamArray, $step);
         }
+
         $storage->setFromApp(true);
         $order = $this->appOrderService->createOrder($storage);
         $firstOrder = $this->personalOrderService->getOrderByNumber($order->getField('ACCOUNT_NUMBER'));
