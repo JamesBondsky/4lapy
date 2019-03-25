@@ -152,25 +152,25 @@ class BasketService
         $pricesToGoods = [];
         foreach ($products as $product) {
             /** @var Product $product */
-            $isGift = $product->getShortProduct()->getGiftDiscountId() > 0;
-            if (!$isGift) {
-                /** @var BasketItem $basketItem */
-                foreach ($orderAbleBasket as $basketItem) {
-                    if (
-                        (int)$product->getShortProduct()->getId() === (int)$basketItem->getProductId()
-                        &&
-                        !isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])
-                    ) {
-                        $pricesToGoods[$product->getBasketItemId()][] = (new PriceWithQuantity())
-                            ->setPrice(
-                                (new Price)
-                                    ->setActual($basketItem->getPrice())
-                                    ->setOld($basketItem->getBasePrice())
-                            )
-                            ->setQuantity($basketItem->getQuantity())
-                        ;
-                        $totalQuantity += $basketItem->getQuantity();
-                    }
+            if ($isGift = $product->getShortProduct()->getGiftDiscountId() > 0) {
+                continue;
+            }
+            /** @var BasketItem $basketItem */
+            foreach ($orderAbleBasket as $basketItem) {
+                if (
+                    (int)$product->getShortProduct()->getId() === (int)$basketItem->getProductId()
+                    &&
+                    !isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])
+                ) {
+                    $pricesToGoods[$product->getBasketItemId()][] = (new PriceWithQuantity())
+                        ->setPrice(
+                            (new Price)
+                                ->setActual($basketItem->getPrice())
+                                ->setOld($basketItem->getBasePrice())
+                        )
+                        ->setQuantity($basketItem->getQuantity())
+                    ;
+                    $totalQuantity += $basketItem->getQuantity();
                 }
             }
         }
