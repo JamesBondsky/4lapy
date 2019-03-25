@@ -103,23 +103,25 @@ class BasketController extends FOSRestController
      */
     public function getUserCartAction(UserCartRequest $userCartRequest)
     {
-
-        $basketProducts = $this->apiBasketService->getBasketProducts();
-        $orderParameter = $this->apiOrderService->getOrderParameter($basketProducts);
-        $orderCalculate = $this->apiOrderService->getOrderCalculate($basketProducts);
-
         if ($promoCode = $userCartRequest->getPromoCode()) {
             try {
+                /** @see \FourPaws\SaleBundle\AjaxController\BasketController::applyPromoCodeAction */
                 $this->manzana->setPromocode($promoCode);
                 $this->manzana->calculate();
+
+
                 $this->couponStorage->clear();
                 $this->couponStorage->save($promoCode);
             } catch (ManzanaPromocodeUnavailableException $e) {
                 $promoCode = '';
             }
+        }
+        $basketProducts = $this->apiBasketService->getBasketProducts();
+        $orderParameter = $this->apiOrderService->getOrderParameter($basketProducts);
+        $orderCalculate = $this->apiOrderService->getOrderCalculate($basketProducts);
+        if ($promoCode) {
             $orderCalculate->setPromoCodeResult($promoCode);
         }
-
         return (new UserCartResponse())
             ->setCartCalc($orderCalculate)
             ->setCartParam($orderParameter);

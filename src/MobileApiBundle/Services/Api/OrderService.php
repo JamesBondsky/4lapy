@@ -36,6 +36,7 @@ use FourPaws\MobileApiBundle\Dto\Object\OrderHistory;
 use FourPaws\MobileApiBundle\Dto\Object\OrderParameter;
 use FourPaws\MobileApiBundle\Dto\Object\OrderStatus;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
+use FourPaws\MobileApiBundle\Dto\Object\PriceWithQuantity;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartOrderRequest;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
@@ -254,8 +255,6 @@ class OrderService
     {
         if ($subscription) {
             // toDo подписка на заказ
-            // var_dump($subscription->getDeliveryFrequencyEntity()->getValue());
-            // var_dump($subscription->getDeliveryTimeFormattedRu());
         }
         $orderItems = $order->getItems();
         $basketProducts = $this->getBasketProducts($orderItems);
@@ -358,13 +357,15 @@ class OrderService
                 ->setFloor($order->getPropValue('FLOOR'))
                 ->setApartment($order->getPropValue('APARTMENT'))
                 ->setComment($order->getBitrixOrder()->getField('USER_DESCRIPTION'))
+                ->setDeliveryPlaceCode($order->getPropValue('DELIVERY_PLACE_CODE'))
                 // ->setCommunicationWay($order->getPropValue('COM_WAY')) // значение может меняться автоматически, см. FourPaws\SaleBundle\Service\OrderService::updateCommWayProperty
             ;
             $deliveryCode = $this->appDeliveryService->getDeliveryCodeById($order->getDeliveryId());
             switch ($deliveryCode) {
                 case in_array($deliveryCode, DeliveryService::DELIVERY_CODES):
                     $orderParameter->setDeliveryType(self::DELIVERY_TYPE_COURIER);
-                    $orderParameter->setDeliveryDateText($order->getDateDelivery());
+                    $date = $order->getDateDelivery() . ' ' .  $order->getPropValue('DELIVERY_INTERVAL');
+                    $orderParameter->setDeliveryDateTimeText($date);
                     break;
                 case in_array($deliveryCode, DeliveryService::PICKUP_CODES):
                     $orderParameter->setDeliveryType(self::DELIVERY_TYPE_PICKUP);
@@ -449,19 +450,25 @@ class OrderService
      */
     public function getBasketProducts($orderItems): BasketProductCollection
     {
-        $products = [];
+        $basketProducts = new BasketProductCollection();
         foreach ($orderItems as $orderItem) {
             /**
              * @var $orderItem OrderItem
              */
             $offer = OfferQuery::getById($orderItem->getProductId());
-            $products[] = $this->apiBasketService->getBasketProduct(
+            $product = $this->apiBasketService->getBasketProduct(
                 $orderItem->getId(),
                 $offer,
                 $orderItem->getQuantity()
             );
+            $product->setPrices([
+                (new PriceWithQuantity())
+                    ->setQuantity($orderItem->getQuantity())
+                    ->setPrice($product->getShortProduct()->getPrice())
+            ]);
+            $basketProducts->add($product);
         }
-        return new BasketProductCollection($products);
+        return $basketProducts;
     }
 
     /**

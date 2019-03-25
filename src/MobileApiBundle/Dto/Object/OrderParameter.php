@@ -169,12 +169,12 @@ class OrderParameter
     protected $deliveryInterval;
 
     /**
-     * Дата доставки в текстовом виде (только для вывода)
-     * @Serializer\SerializedName("deliveryDateText")
+     * Дата и время доставки в текстовом виде (только для вывода)
+     * @Serializer\SerializedName("deliveryDateTimeText")
      * @Serializer\Type("string")
      * @var string
      */
-    protected $deliveryDateText;
+    protected $deliveryDateTimeText;
 
     /**
      * Comment
@@ -343,18 +343,18 @@ class OrderParameter
     /**
      * @return string
      */
-    public function getDeliveryDateText()
+    public function getDeliveryDateTimeText()
     {
-        return $this->deliveryDateText;
+        return $this->deliveryDateTimeText;
     }
 
     /**
-     * @param string $deliveryDateText
+     * @param string $deliveryDateTimeText
      * @return OrderParameter
      */
-    public function setDeliveryDateText(string $deliveryDateText): OrderParameter
+    public function setDeliveryDateTimeText(string $deliveryDateTimeText): OrderParameter
     {
-        $this->deliveryDateText = $deliveryDateText;
+        $this->deliveryDateTimeText = $deliveryDateTimeText;
         return $this;
     }
 
@@ -574,6 +574,24 @@ class OrderParameter
     public function setApartment(string $apartment): OrderParameter
     {
         $this->apartment = $apartment;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDeliveryPlaceCode()
+    {
+        return $this->deliveryPlaceCode;
+    }
+
+    /**
+     * @param string $deliveryPlaceCode
+     * @return OrderParameter
+     */
+    public function setDeliveryPlaceCode(string $deliveryPlaceCode): OrderParameter
+    {
+        $this->deliveryPlaceCode = $deliveryPlaceCode;
         return $this;
     }
 }
