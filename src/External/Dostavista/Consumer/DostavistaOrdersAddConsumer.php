@@ -7,7 +7,7 @@ use FourPaws\External\Dostavista\Exception\DostavistaOrdersAddConsumerException;
 use FourPaws\UserBundle\EventController\Event;
 use PhpAmqpLib\Message\AMQPMessage;
 use Bitrix\Sale\Order;
-use FourPaws\FrontOffice\Traits\DbTransactionTrait;
+use Bitrix\Main\Application;
 
 /**
  * Class DostavistaOrdersAddConsumer
@@ -16,8 +16,6 @@ use FourPaws\FrontOffice\Traits\DbTransactionTrait;
  */
 class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
 {
-    use DbTransactionTrait;
-
     /**
      * @param AMQPMessage $message
      * @return bool
@@ -28,8 +26,7 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
         Event::disableEvents();
 
         $result = static::MSG_REJECT;
-
-        $this->getDbConnection();
+        Application::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
 
         try {
             $data = json_decode($message->getBody(), true);
@@ -62,7 +59,6 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
             $deliveryId = $order->getField('DELIVERY_ID');
             $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
             $address = $this->orderService->compileOrderAddress($order)->setValid(true);
-            $this->startTransaction();
             $this->orderService->setOrderPropertiesByCode(
                 $order,
                 [
@@ -72,7 +68,6 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
             );
             $this->orderService->updateCommWayPropertyEx($order, $deliveryCode, $address, ($dostavistaOrderId) ? true : false);
             $order->save();
-            $this->commitTransaction();
             $result = static::MSG_ACK;
         } catch (\DostavistaOrdersAddConsumerException|\Exception $e) {
             $this->log()->error('Dostavista error, code: ' . $e->getCode() . ' message: ' . $e->getMessage());
