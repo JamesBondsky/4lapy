@@ -360,6 +360,7 @@ class OrderService
                 ->setDeliveryPlaceCode($order->getPropValue('DELIVERY_PLACE_CODE'))
                 // ->setCommunicationWay($order->getPropValue('COM_WAY')) // значение может меняться автоматически, см. FourPaws\SaleBundle\Service\OrderService::updateCommWayProperty
             ;
+
             $deliveryCode = $this->appDeliveryService->getDeliveryCodeById($order->getDeliveryId());
             switch ($deliveryCode) {
                 case in_array($deliveryCode, DeliveryService::DELIVERY_CODES):
@@ -387,6 +388,23 @@ class OrderService
                     $orderParameter->setCity($city);
                 }
             }
+
+            $orderParameter->setAddressText(
+                $orderParameter->getCity()->getTitle()
+                . ', ' . $orderParameter->getStreet()
+                . ' д.' . $orderParameter->getHouse()
+                . ' ' . $orderParameter->getBuilding()
+                . ($orderParameter->getPorch() ? ' подъезд ' . $orderParameter->getBuilding() : '')
+                . ($orderParameter->getFloor() ? ' этаж ' . $orderParameter->getFloor() : '')
+                . ($orderParameter->getApartment() ? ' кв. ' . $orderParameter->getApartment() : '')
+            );
+
+            $orderParameter->setGoodsInfo($this->apiProductService::getGoodsTitleForCheckout(
+                $basketProducts->getTotalQuantity(),
+                $basketProducts->getTotalWeight(),
+                $basketProducts->getTotalPrice()->getActual()
+            ));
+
         }
 
         return $orderParameter;

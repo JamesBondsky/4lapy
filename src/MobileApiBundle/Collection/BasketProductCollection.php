@@ -22,6 +22,35 @@ class BasketProductCollection extends ProductQuantityCollection
     }
 
     /**
+     * @return int
+     */
+    public function getTotalQuantity()
+    {
+        $quantity = 0;
+        /** @var Product $product */
+        foreach ($this->getValues() as $product) {
+            /** @var $priceWithQuantity PriceWithQuantity */
+            foreach ($product->getPrices() as $priceWithQuantity) {
+                $quantity += $priceWithQuantity->getQuantity();
+            }
+        }
+        return $quantity;
+    }
+
+    /**
+     * @return int
+     */
+    public function getTotalWeight()
+    {
+        $weight = 0;
+        /** @var Product $product */
+        foreach ($this->getValues() as $product) {
+            // toDo
+        }
+        return $weight;
+    }
+
+    /**
      * @return Price
      */
     public function getTotalPrice()

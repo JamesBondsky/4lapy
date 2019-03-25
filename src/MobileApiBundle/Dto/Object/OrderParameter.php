@@ -97,6 +97,22 @@ class OrderParameter
     protected $addressId;
 
     /**
+     * Строка с текстом адреса доставки или самовывоза (только для вывода)
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("addressText")
+     * @var string
+     */
+    protected $addressText;
+
+    /**
+     * Строка с текстом вида "6 товаров (10кг) на сумму 1000р" (только для вывода)
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("goodsInfo")
+     * @var string
+     */
+    protected $goodsInfo;
+
+    /**
      * @Assert\Valid()
      * @Serializer\SerializedName("city")
      * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\City")
@@ -592,6 +608,42 @@ class OrderParameter
     public function setDeliveryPlaceCode(string $deliveryPlaceCode): OrderParameter
     {
         $this->deliveryPlaceCode = $deliveryPlaceCode;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAddressText(): string
+    {
+        return $this->addressText;
+    }
+
+    /**
+     * @param string $addressText
+     * @return OrderParameter
+     */
+    public function setAddressText(string $addressText): OrderParameter
+    {
+        $this->addressText = $addressText;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getGoodsInfo(): string
+    {
+        return $this->goodsInfo;
+    }
+
+    /**
+     * @param string $goodsInfo
+     * @return OrderParameter
+     */
+    public function setGoodsInfo(string $goodsInfo): OrderParameter
+    {
+        $this->goodsInfo = $goodsInfo;
         return $this;
     }
 }
