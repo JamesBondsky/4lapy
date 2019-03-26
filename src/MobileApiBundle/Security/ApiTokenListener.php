@@ -50,8 +50,11 @@ class ApiTokenListener implements ListenerInterface
     public function handle(GetResponseEvent $event)
     {
         $request = $event->getRequest();
-        if (!$this->signChecker->handle($request)) {
-            throw new InvalidSignRequestException('Invalid sign provided');
+
+        if ($request->getPathInfo() !== '/api/start/') { // toDo refactor this quick & ugly solution to skip sign check on specific route
+            if (!$this->signChecker->handle($request)) {
+                throw new InvalidSignRequestException('Invalid sign provided');
+            }
         }
 
         $token = $request->get('token', '');
