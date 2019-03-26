@@ -23,11 +23,6 @@ class FourPawsPersonalCabinetOrderItemComponent extends FourPawsComponent
     use LazyLoggerAwareTrait;
 
     /**
-     * @var OrderSubscribeService $orderSubscribeService
-     */
-    private $orderSubscribeService;
-
-    /**
      * @var StoreService
      */
     private $storeService;
@@ -85,22 +80,6 @@ class FourPawsPersonalCabinetOrderItemComponent extends FourPawsComponent
 
         $this->arResult['ORDER'] = $personalOrder;
         $this->arResult['METRO'] = new ArrayCollection($this->storeService->getMetroInfo());
-    }
-
-    /**
-     * @return OrderSubscribeService
-     * @throws LogicException
-     * @throws ServiceCircularReferenceException
-     * @throws ServiceNotFoundException
-     */
-    public function getOrderSubscribeService(): OrderSubscribeService
-    {
-        if (!$this->orderSubscribeService) {
-            $appCont = Application::getInstance()->getContainer();
-            $this->orderSubscribeService = $appCont->get('order_subscribe.service');
-        }
-
-        return $this->orderSubscribeService;
     }
 
     protected function getResultCachePath()

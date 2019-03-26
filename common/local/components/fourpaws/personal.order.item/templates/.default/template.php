@@ -30,73 +30,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 /** @var Order $order */
 $order = $arResult['ORDER'];
-
-/** @var OrderSubscribe $orderSubscribe */
-// ORDER_SUBSCRIBE приходит только если нужно вывести форму редактирования подписки
-$orderSubscribe = $arParams['ORDER_SUBSCRIBE'] ?? null;
-$isOrderSubscribePage = $orderSubscribe ? true : false;
-
-/**
- * Подписка на доставку заказа
- * (элементы управления подпиской и попап c формой)
- *
- * @todo Сделать вызов попапа через ajax
- */
-$subscribeOrderAddControls = '';
-$subscribeOrderEditControls = '';
-
-$genSubscribeControls = false;
-if (!$genSubscribeControls
-    && $component->getOrderSubscribeService()
-        ->canBeSubscribed($order)) {
-    $genSubscribeControls = true;
-}
-if (!$genSubscribeControls && $orderSubscribe) {
-    $genSubscribeControls = true;
-}
-$tmpOrderSubscribe = null;
-if (!$genSubscribeControls && !$orderSubscribe) {
-    // здесь проверяем, нет ли уже оформленной подписки на заказ,
-    // на который по новым условиям уже подписаться нельзя
-    $tmpOrderSubscribe = $component->getOrderSubscribeService()
-        ->getSubscribeByOrderId($order->getId());
-    $genSubscribeControls = $tmpOrderSubscribe ? true : false;
-}
-
-if ($genSubscribeControls) {
-    /** @var \FourPawsPersonalCabinetOrdersSubscribeFormComponent $subscribeFormComponent */
-    $subscribeFormComponent = $APPLICATION->IncludeComponent(
-        'fourpaws:personal.orders.subscribe.form',
-        'popup',
-        [
-            'ORDER_ID'          => $order->getId(),
-            // Y - вставлять html через отложенные функции
-            'OUTPUT_VIA_BUFFER' => 'Y',
-        ],
-        $component,
-        [
-            'HIDE_ICONS' => 'Y',
-        ]
-    );
-
-    if ($subscribeFormComponent->arResult['CONTROLS_HTML']) {
-        if ($orderSubscribe) {
-            // элементы управления подпиской
-            $subscribeOrderEditControls = $subscribeFormComponent->arResult['CONTROLS_HTML']['EDIT'];
-        } else {
-            // элементы добавления подписки
-            $subscribeOrderAddControls = $subscribeFormComponent->arResult['CONTROLS_HTML']['ADD'];
-        }
-    }
-}
-
-$attr = '';
-if ($orderSubscribe) {
-    $attr .= ' data-first-subscribe="' . $orderSubscribe->getDateStart() . '"';
-    $attr .= ' data-interval="' . $orderSubscribe->getDeliveryTime() . '"';
-    $attr .= ' data-frequency="' . $orderSubscribe->getDeliveryFrequency() . '"';
-}
-
 ?>
     <li<?= $attr ?> class="b-accordion-order-item js-permutation-li js-item-content">
         <div class="b-accordion-order-item__visible js-premutation-accordion-content">
@@ -110,18 +43,6 @@ if ($orderSubscribe) {
                         </span>
                     </span>
                     <?php
-                    if ($isOrderSubscribePage) {
-                        ?>
-                        <span class="b-accordion-order-item__number-order">
-                            <?php
-                            echo $orderSubscribe->getDeliveryFrequencyEntity()
-                                ->getValue();
-                            echo ', ';
-                            echo $orderSubscribe->getDateStartWeekdayRu();
-                            ?>
-                        </span>
-                        <?php
-                    } else {
                         $manzanaId = $order->getManzanaId();
                         $accountNumber = $order->getAccountNumber();
                         if ($manzanaId)
@@ -136,7 +57,6 @@ if ($orderSubscribe) {
                         <span class="b-accordion-order-item__number-order">
                             <?= ('№ ' . $orderNumber . ' от ' . $order->getFormattedDateInsert()) ?>
                         </span>
-                    <?php } ?>
                 </a>
                 <?php
 
@@ -162,17 +82,7 @@ if ($orderSubscribe) {
             </div>
             <div class="b-accordion-order-item__adress">
                 <div class="b-accordion-order-item__date b-accordion-order-item__date--new">
-                    <?php if ($isOrderSubscribePage) {
-                        echo '<span>';
-                        echo 'Следующая доставка ';
-                        echo DateHelper::replaceRuMonth(
-                            $orderSubscribe->getNextDeliveryDate()
-                                ->format('d #n# Y'),
-                            DateHelper::GENITIVE,
-                            true
-                        );
-                        echo '</span>';
-                    } else {
+                    <?
                         echo $order->getStatus();
                         echo ' ';
                         echo '<span>';
@@ -187,7 +97,7 @@ if ($orderSubscribe) {
                         echo $order->getFormattedDateStatus();
                         echo ' ';
                         echo '</span>';
-                    } ?>
+                    ?>
                 </div>
                 <?php if (!$order->isFastOrder()) { ?>
                     <div class="b-accordion-order-item__date b-accordion-order-item__date--pickup">
@@ -217,46 +127,42 @@ if ($orderSubscribe) {
                 <div class="b-accordion-order-item__not-pay">
                     <?php
                     $paymentName = '';
-                    if ($isOrderSubscribePage) {
-                        $paymentName = 'Оплата наличными или картой при получении';
-                    } else {
-                        $payment = $order->getPayment();
-                        $paymentCode = $payment->getCode();
-                        switch ($paymentCode) {
-                            case OrderPayment::PAYMENT_CASH_OR_CARD:
-                                $paymentName = 'наличными или картой';
-                                break;
-                            case OrderPayment::PAYMENT_ONLINE:
-                                $paymentName = 'онлайн';
-                                break;
-                            case OrderPayment::PAYMENT_CASH:
-                                $paymentName = 'наличными';
-                                break;
-                        }
-                        if ($paymentCode === 'cash' && !$order->getManzanaId() && !$order->isPayed()) {
-                            /** т.к. неоплаченных заказов будет не очень много у пользователя - оставим расчет здесь */
-                            /** @var OrderService $orderService */
-                            $orderService = SymfoniApplication::getInstance()
-                                ->getContainer()
-                                ->get(OrderService::class);
-                            $bitrixOrder = BitrixOrder::load($order->getId());
-                            if ($bitrixOrder !== null && $bitrixOrder->getId() > 0) {
-                                $commWay = $orderService->getOrderPropertyByCode($bitrixOrder, 'COM_WAY');
-                                if ($commWay->getValue() === OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS) {
-                                    $paymentName = 'Постоплата';
-                                }
+                    $payment = $order->getPayment();
+                    $paymentCode = $payment->getCode();
+                    switch ($paymentCode) {
+                        case OrderPayment::PAYMENT_CASH_OR_CARD:
+                            $paymentName = 'наличными или картой';
+                            break;
+                        case OrderPayment::PAYMENT_ONLINE:
+                            $paymentName = 'онлайн';
+                            break;
+                        case OrderPayment::PAYMENT_CASH:
+                            $paymentName = 'наличными';
+                            break;
+                    }
+                    if ($paymentCode === 'cash' && !$order->getManzanaId() && !$order->isPayed()) {
+                        /** т.к. неоплаченных заказов будет не очень много у пользователя - оставим расчет здесь */
+                        /** @var OrderService $orderService */
+                        $orderService = SymfoniApplication::getInstance()
+                            ->getContainer()
+                            ->get(OrderService::class);
+                        $bitrixOrder = BitrixOrder::load($order->getId());
+                        if ($bitrixOrder !== null && $bitrixOrder->getId() > 0) {
+                            $commWay = $orderService->getOrderPropertyByCode($bitrixOrder, 'COM_WAY');
+                            if ($commWay->getValue() === OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS) {
+                                $paymentName = 'Постоплата';
                             }
                         }
-                        if ($order->isFastOrder()
-                            && \in_array($order->getStatusId(), [
-                                'N',
-                                'Q'
-                            ], true)) {
-                            $paymentName = 'Постоплата';
-                        }
-                        if ($paymentName && $paymentName !== 'Постоплата') {
-                            $paymentName = $order->getPayPrefixText() . ' ' . $paymentName;
-                        }
+                    }
+                    if ($order->isFastOrder()
+                        && \in_array($order->getStatusId(), [
+                            'N',
+                            'Q'
+                        ], true)) {
+                        $paymentName = 'Постоплата';
+                    }
+                    if ($paymentName && $paymentName !== 'Постоплата') {
+                        $paymentName = $order->getPayPrefixText() . ' ' . $paymentName;
                     }
 
                     echo $paymentName; ?>
@@ -264,7 +170,7 @@ if ($orderSubscribe) {
             </div>
             <div class="b-accordion-order-item__button js-button-default">
                 <?php
-                if (!$isOrderSubscribePage && (!$order->getManzanaId())) {
+                if (!$order->getManzanaId()) {
                     $uri = new Uri(Application::getInstance()
                         ->getContext()
                         ->getRequest()
@@ -293,26 +199,16 @@ if ($orderSubscribe) {
                     <?php
                 }
                 */
-
-                // элементы управления подпиской
-                echo $subscribeOrderEditControls;
-
                 ?>
                 <div class="b-accordion-order-item__sum b-accordion-order-item__sum--full">
                     <?php
                     /**
                      * [LP03-908] В подписке на доставку не отображаем бонусы
                      */
-                    echo $isOrderSubscribePage ? $order->getFormattedPriceReal() : $order->getFormattedPrice();
+                    echo $order->getFormattedPrice();
                     ?>
                     <span class="b-ruble b-ruble--account-accordion">&nbsp;₽</span>
                 </div>
-                <?php
-
-                // элементы добавления подписки
-                echo $subscribeOrderAddControls;
-
-                ?>
             </div>
         </div>
         <div class="b-accordion-order-item__hidden js-hidden-order">
@@ -344,7 +240,7 @@ if ($orderSubscribe) {
                                 <div class="b-clipped-text b-clipped-text--account">
                                     <span>
                                         <?php if (!empty($item->getBrand())) { ?>
-                                        <spa class="span-strong"><?= $item->getBrand() ?>  </span>
+                                        <span class="span-strong"><?= $item->getBrand() ?>  </span>
                                     <?php } ?><?= $item->getName() ?>
                                     </span>
                                 </div>
@@ -432,7 +328,7 @@ if ($orderSubscribe) {
                     /**
                      * [LP03-908] В подписке на доставку не отображаем бонусы
                      */
-                    if (!$isOrderSubscribePage && $order->getBonusPay() > 0) {
+                    if ($order->getBonusPay() > 0) {
                         ?>
                         <li class="b-characteristics-tab__item b-characteristics-tab__item--account">
                             <div class="b-characteristics-tab__characteristics-text b-characteristics-tab__characteristics-text--account">
@@ -453,7 +349,7 @@ if ($orderSubscribe) {
                             <div class="b-characteristics-tab__dots"></div>
                         </div>
                         <div class="b-characteristics-tab__characteristics-value b-characteristics-tab__characteristics-value--account b-characteristics-tab__characteristics-value--last">
-                            <?= ($isOrderSubscribePage ? $order->getFormattedPriceReal() : $order->getFormattedPrice()) ?>
+                            <?= ($order->getFormattedPrice()) ?>
                             <span class="b-ruble b-ruble--calculation-account">&nbsp;₽</span>
                         </div>
                     </li>
