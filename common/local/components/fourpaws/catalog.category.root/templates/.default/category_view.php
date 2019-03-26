@@ -68,6 +68,12 @@ foreach (array_values($childCategories) as $index => $childCategory) {
             <?php $counterItem++; } ?>
         </div>
     </section>
+
+    <? if(!$delTextShown && $category->isShowDelText()){
+        echo '<div class="b-information-message b-information-message--green">', Category::DEL_TEXT, '</div>';
+        $delTextShown = true;
+    } ?>
+
     <?php
     if ($index + 1 < count($childCategories)) {
         ?>
