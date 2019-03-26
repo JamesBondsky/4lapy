@@ -49,6 +49,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public const AVAILABILITY_DELIVERY = 'd';
     public const AVAILABILITY_PICKUP = 'p';
     public const AVAILABILITY_BY_REQUEST = 'r';
+    public const AVAILABILITY_PICKUP_FROM_SELECTED_STORES = 's';
 
     /**
      * @var bool
@@ -2198,6 +2199,9 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                             $result[] = static::AVAILABILITY_DELIVERY;
                             break;
                         case $deliveryCode === DeliveryService::INNER_PICKUP_CODE:
+                            $result[] = static::AVAILABILITY_PICKUP;
+                            $result[] = static::AVAILABILITY_PICKUP_FROM_SELECTED_STORES;
+                            break;
                         case $canDeliver && $deliveryCode === DeliveryService::DPD_PICKUP_CODE:
                             $result[] = static::AVAILABILITY_PICKUP;
                             break;

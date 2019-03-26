@@ -56,6 +56,10 @@ class DeliveryAvailabilityFilter extends FilterBase
             ->withName('Под заказ')
             ->withAvailable(true)
             ->withValue($code . '_' . Product::AVAILABILITY_BY_REQUEST));
+        $result->add((new Variant())
+            ->withName('Выбрать конкретный магазин')
+            ->withAvailable(true)
+            ->withValue($code . '_' . Product::AVAILABILITY_PICKUP_FROM_SELECTED_STORES));
         return $result;
     }
 }

@@ -3,6 +3,7 @@
 namespace FourPaws\Search;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Elastica\Exception\InvalidException;
 use Elastica\Query;
@@ -14,6 +15,7 @@ use Elastica\Suggest;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Filter\FilterInterface;
+use FourPaws\Catalog\Model\Filter\StoreAvailabilityFilter;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Model\Sorting;
 use FourPaws\CatalogBundle\Service\SortService;
@@ -252,10 +254,20 @@ class SearchService implements LoggerAwareInterface
     {
         $filterSet = [];
 
+        $request = Application::getInstance()->getContext()->getRequest();
+        $hasFilterByStore = false;
+        if ($storeCode = $request->getQueryList()->get(StoreAvailabilityFilter::$filterCode))
+        {
+            $hasFilterByStore = true;
+        }
         /** @var FilterInterface $filter */
         foreach ($filterCollection as $filter) {
             if ($filter->hasCheckedVariants()) {
                 $filterSet[] = $filter->getFilterRule();
+            } elseif ($hasFilterByStore && $filter->getFilterCode() === StoreAvailabilityFilter::$filterCode && $storeCode) {
+                $storeFilter = $filter->getFilterRule();
+                $storeFilter->addTerm($storeCode);
+                $filterSet[] = $storeFilter;
             }
         }
 
