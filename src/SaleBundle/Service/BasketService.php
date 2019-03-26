@@ -1344,7 +1344,7 @@ class BasketService implements LoggerAwareInterface
             $regionDiscount = $offer->getRegionDiscount($regionCode);
             if($regionDiscount){
                 $value = $regionDiscount['price_action'] ? $regionDiscount['price_action'] : $regionDiscount['cond_value'];
-                $this->setBasketItemPropertyValue($basketItem, $regionDiscount['cond_for_action'], $value);
+                $this->setBasketItemPropertyValue($basketItem, $regionDiscount['cond_for_action'], (string)$value);
                 $safe = true;
             }
         }
