@@ -328,16 +328,23 @@ class DostavistaService implements LoggerAwareInterface, SapOutInterface
      */
     public function dostavistaOrderAddErrorSendEmail($orderId, $accountNumber, $code, $data, $dateTime): void
     {
+        $emailFields = [
+            'DATE_TIME' => $dateTime,
+            'HTTP_CODE' => $code,
+            'JSON_DATA' => $data
+        ];
+
+        if ($orderId != 0) {
+            $emailFields['ORDER_ID'] = 'https://4lapy.ru/bitrix/admin/sale_order_view.php?ID=' . $orderId . '&filter=Y&set_filter=Y&lang=ru';
+        }
+        if ($accountNumber != 0) {
+            $emailFields['ACCOUNT_NUMBER'] = $accountNumber;
+        }
+
         \CEvent::SendImmediate(
             'DOSTAVISTA_ORDERS',
             's1',
-            [
-                'ORDER_ID' => 'https://4lapy.ru/bitrix/admin/sale_order_view.php?ID=' . $orderId . '&filter=Y&set_filter=Y&lang=ru',
-                'ACCOUNT_NUMBER' => $accountNumber,
-                'DATE_TIME' => $dateTime,
-                'HTTP_CODE' => $code,
-                'JSON_DATA' => $data
-            ],
+            $emailFields,
             'N',
             97
         );
