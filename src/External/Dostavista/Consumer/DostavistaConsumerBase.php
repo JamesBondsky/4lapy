@@ -18,6 +18,8 @@ abstract class DostavistaConsumerBase implements ConsumerInterface, LoggerAwareI
 {
     use LazyLoggerAwareTrait;
 
+    const DATE_TIME_FORMAT = 'd.m.Y H:i:s';
+
     /**
      * @var Serializer
      */

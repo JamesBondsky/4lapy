@@ -8,6 +8,8 @@ use FourPaws\UserBundle\EventController\Event;
 use PhpAmqpLib\Message\AMQPMessage;
 use Bitrix\Sale\Order;
 use Bitrix\Main\Application;
+use FourPaws\App\Application as App;
+use Bitrix\Main\Type\DateTime;
 
 /**
  * Class DostavistaOrdersAddConsumer
@@ -19,6 +21,8 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
     /**
      * @param AMQPMessage $message
      * @return bool
+     * @throws \Bitrix\Main\Db\SqlQueryException
+     * @throws \Bitrix\Main\ObjectException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function execute(AMQPMessage $message): bool
@@ -27,11 +31,11 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
 
         $result = static::MSG_REJECT;
         Application::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
-
+        $body = $message->getBody();
+        $data = json_decode($body, true);
         try {
-            $data = json_decode($message->getBody(), true);
             $bitrixOrderId = $data['bitrix_order_id'];
-            unset($data['bitrix_order_id']);
+            unset($data['bitrix_order_id'], $data['order_create_date']);
             /**
              * @var Order $order
              * Получаем битриксовый заказ
@@ -69,13 +73,19 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
             $this->orderService->updateCommWayPropertyEx($order, $deliveryCode, $address, ($dostavistaOrderId) ? true : false);
             $order->save();
             $result = static::MSG_ACK;
-        } catch (\DostavistaOrdersAddConsumerException|\Exception $e) {
+        } catch (DostavistaOrdersAddConsumerException|\Exception $e) {
+            /**
+             * Отправляем сообщение в другую очередь
+             * @noinspection MissingService
+             */
+            $data = json_decode($body, true);
+            $date['last_date_try_to_send'] = (new DateTime())->format(static::DATE_TIME_FORMAT);
+            $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.dostavista_orders_add_dead_producer');
+            $producer->publish($this->serializer->serialize($data, 'json'));
+            /**
+             * Пишем логи
+             */
             $this->log()->error('Dostavista error, code: ' . $e->getCode() . ' message: ' . $e->getMessage());
-            if ($order && is_array($response)) {
-                $this->dostavistaService->dostavistaOrderAddErrorSendEmail($order->getId(), $order->getField('ACCOUNT_NUMBER'), $response['message'], $response['data'], (new \Datetime)->format('d.m.Y H:i:s'));
-            } else {
-                $this->dostavistaService->dostavistaOrderAddErrorSendEmail(0, 0, $e->getMessage(), $e->getCode(), (new \Datetime)->format('d.m.Y H:i:s'));
-            }
         }
 
         Event::enableEvents();

@@ -1725,11 +1725,9 @@ class OrderService implements LoggerAwareInterface
 
     /**
      * @param Order $order
-     * @param CalculationResultInterface $delivery
-     * @param bool $isFastOrder
+     * @param $deliveryCode
      * @param Address|null $address
      * @param bool $dostavistaSuccess
-     * @throws DeliveryNotFoundException
      */
     public function updateCommWayPropertyEx(
         Order $order,
@@ -1740,15 +1738,11 @@ class OrderService implements LoggerAwareInterface
         $commWay = $this->getOrderPropertyByCode($order, 'COM_WAY');
         $value = $commWay->getValue();
 
-        if (!$changed) {
-            switch (true) {
-                case $deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE:
-                    if($dostavistaSuccess){
-                        $value = OrderPropertyService::COMMUNICATION_SMS;
-                    } else {
-                        $value = OrderPropertyService::COMMUNICATION_DOSTAVISTA_ERROR;
-                    }
-                    break;
+        if ($deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
+            if ($dostavistaSuccess) {
+                $value = OrderPropertyService::COMMUNICATION_SMS;
+            } else {
+                $value = OrderPropertyService::COMMUNICATION_DOSTAVISTA_ERROR;
             }
         }
 
@@ -2002,6 +1996,7 @@ class OrderService implements LoggerAwareInterface
 
         $data = [
             'bitrix_order_id' => $order->getId(),
+            'order_create_date' => $order->getDateInsert(),
             'total_weight_kg' => $weight,
             'vehicle_type_id' => $vehicleTypeId,
             'matter' => $matter, //что везем
@@ -2082,6 +2077,7 @@ class OrderService implements LoggerAwareInterface
         $dostavistaOrder->insuranceAmount = $data['insurance_amount'];
         $dostavistaOrder->isClientNotificationEnabled = $data['is_client_notification_enabled'];
         $dostavistaOrder->isContactPersonNotificationEnabled = $data['is_contact_person_notification_enabled'];
+        $dostavistaOrder->orderCreateDate = $data['order_create_date'];
 
         $pointCollection = new ArrayCollection();
         foreach ($data['points'] as $point) {
