@@ -27,7 +27,7 @@ class InfoController extends FOSRestController
     /**
      * Получить статичные разделы
      *
-     * @todo Статичные страницы, Вакансии, Конкурсы, Условия доставки
+     * @todo Вакансии, Конкурсы
      * @Rest\Get("/info/")
      * @Rest\View()
      *

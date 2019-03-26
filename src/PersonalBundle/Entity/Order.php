@@ -1085,6 +1085,16 @@ class Order extends BaseEntity
     }
 
     /**
+     * @return bool
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
+     */
+    public function isFromApp(): bool
+    {
+        return $this->getPropValue('FROM_APP') === 'Y';
+    }
+
+    /**
      * @param string $code
      *
      * @return OrderProp|null

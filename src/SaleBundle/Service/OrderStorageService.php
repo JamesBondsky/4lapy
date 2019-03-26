@@ -151,7 +151,11 @@ class OrderStorageService
     public function setStorageValuesFromRequest(OrderStorage $storage, Request $request, string $step): OrderStorage
     {
         $data = $request->request->all();
+        return $this->setStorageValuesFromArray($storage, $data, $step);
+    }
 
+    public function setStorageValuesFromArray(OrderStorage $storage, array $data, string $step): OrderStorage
+    {
         $mapping = [
             'order-pick-time' => 'split',
             'shopId'          => 'deliveryPlaceCode',

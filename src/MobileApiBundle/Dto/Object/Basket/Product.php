@@ -3,6 +3,7 @@
 namespace FourPaws\MobileApiBundle\Dto\Object\Basket;
 
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct;
+use FourPaws\MobileApiBundle\Dto\Object\PriceWithQuantity;
 use JMS\Serializer\Annotation as Serializer;
 
 class Product
@@ -27,6 +28,14 @@ class Product
      * @var int
      */
     protected $quantity = 0;
+
+    /**
+     * @Serializer\SerializedName("prices")
+     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\PriceWithQuantity>")
+     * @var PriceWithQuantity[]
+     */
+    protected $prices = [];
+
 
     /**
      * @return int
@@ -82,6 +91,24 @@ class Product
     public function setQuantity(int $quantity): Product
     {
         $this->quantity = $quantity;
+        return $this;
+    }
+
+    /**
+     * @return PriceWithQuantity[]
+     */
+    public function getPrices(): array
+    {
+        return $this->prices;
+    }
+
+    /**
+     * @param PriceWithQuantity[] $prices
+     * @return Product
+     */
+    public function setPrices(array $prices): Product
+    {
+        $this->prices = $prices;
         return $this;
     }
 }

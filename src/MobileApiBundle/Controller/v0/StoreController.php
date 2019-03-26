@@ -8,12 +8,11 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\MobileApiBundle\Dto\Request\ShopsForCheckoutRequest;
 use FourPaws\MobileApiBundle\Dto\Request\ShopsForProductCardRequest;
-use FourPaws\MobileApiBundle\Dto\Request\StoreListAvailableRequest;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListRequest;
-use FourPaws\MobileApiBundle\Dto\Request\StoreProductAvailableRequest;
+use FourPaws\MobileApiBundle\Dto\Response\StoreListAvailableResponse;
 use FourPaws\MobileApiBundle\Dto\Response\StoreListResponse;
-use FourPaws\MobileApiBundle\Dto\Response\StoreProductAvailableResponse;
 use FourPaws\MobileApiBundle\Services\Api\StoreService as ApiStoreService;
 use FourPaws\MobileApiBundle\Services\Api\UserService as ApiUserService;
 
@@ -74,41 +73,20 @@ class StoreController extends FOSRestController
     }
 
     /**
-     * Используется в корзине для проверки доступности товара в выбранном магазине
-     *
-     * @Rest\Get(path="/shop_goods_available/")
-     * @Rest\View(serializerGroups={"Default", "withPickupInfo"})
-     * @param StoreProductAvailableRequest $storeProductAvailableRequest
-     *
-     * @throws \Exception
-     * @return StoreProductAvailableResponse
-     */
-    public function getStoreProductAvailableAction(StoreProductAvailableRequest $storeProductAvailableRequest): StoreProductAvailableResponse
-    {
-        $storeCode = $storeProductAvailableRequest->getStoreCode();
-        $shop = $this->apiStoreService->getOneWithProductsInBasketAvailability($storeCode);
-
-        return new StoreProductAvailableResponse($shop);
-    }
-
-    /**
      * Используется в корзине для вывода возможных магазинов для самовывоза
      *
      * @Rest\Get(path="/shops_list_availableV2/")
-     * @Rest\View(serializerGroups={"Default", "withPickupInfo"})
-     * @param StoreListAvailableRequest $storeListAvailableRequest
+     * @Rest\View(serializerGroups={"Default", "withPickupInfo", "basket"})
      *
+     * @param ShopsForCheckoutRequest $shopsForCheckoutRequest
+     * @return StoreListAvailableResponse
      * @throws \Exception
-     * @return StoreListResponse
      */
-    public function getStoreListAvailableAction(StoreListAvailableRequest $storeListAvailableRequest): StoreListResponse
+    public function getStoreListAvailableAction(ShopsForCheckoutRequest $shopsForCheckoutRequest): StoreListAvailableResponse
     {
-        if ($storeListAvailableRequest->getCityId()) {
-            $this->apiUserService->updateLocationId($storeListAvailableRequest->getCityId());
-        }
-
-        return new StoreListResponse(
-            $this->apiStoreService->getListWithProductsInBasketAvailability()
+        $metroStations = $shopsForCheckoutRequest->getMetroStations();
+        return new StoreListAvailableResponse(
+            $this->apiStoreService->getListWithProductsInBasketAvailability($metroStations)
         );
     }
 }

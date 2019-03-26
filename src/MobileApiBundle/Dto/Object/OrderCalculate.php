@@ -37,24 +37,6 @@ class OrderCalculate
     protected $cardDetails = [];
 
     /**
-     * Специальное поле для товаров, которые доступны для текущей конфигурации заказа
-     * (используется только при оформлении заказа. При получении корзины не нужен)
-     * @Serializer\SerializedName("available_goods")
-     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Basket\Product>")
-     * @var Product[]
-     */
-    protected $availableGoods = [];
-
-    /**
-     * Специальное поле для товаров, которые НЕ доступны для текущей конфигурации заказа
-     * (используется только при оформлении заказа. При получении корзины не нужен)
-     * @Serializer\SerializedName("not_available_goods")
-     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Basket\Product>")
-     * @var Product[]
-     */
-    protected $notAvailableGoods = [];
-
-    /**
      * Используемый промокод
      * @Serializer\Type("string")
      * @Serializer\SerializedName("promocode_result")
@@ -116,44 +98,6 @@ class OrderCalculate
     public function setCardDetails(array $cardDetails): OrderCalculate
     {
         $this->cardDetails = $cardDetails;
-        return $this;
-    }
-
-    /**
-     * @return Product[]
-     */
-    public function getAvailableGoods(): array
-    {
-        return $this->availableGoods;
-    }
-
-    /**
-     * @param Product[] $availableGoods
-     *
-     * @return OrderCalculate
-     */
-    public function setAvailableGoods(array $availableGoods): OrderCalculate
-    {
-        $this->availableGoods = $availableGoods;
-        return $this;
-    }
-
-    /**
-     * @return Product[]
-     */
-    public function getNotAvailableGoods(): array
-    {
-        return $this->notAvailableGoods;
-    }
-
-    /**
-     * @param Product[] $notAvailableGoods
-     *
-     * @return OrderCalculate
-     */
-    public function setNotAvailableGoods(array $notAvailableGoods): OrderCalculate
-    {
-        $this->notAvailableGoods = $notAvailableGoods;
         return $this;
     }
 

@@ -8,13 +8,12 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
-use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
 use FourPaws\MobileApiBundle\Dto\Request\PostUserCartRequest;
 use FourPaws\MobileApiBundle\Dto\Request\PutUserCartRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartCalcRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartOrderRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
-use FourPaws\MobileApiBundle\Dto\Response\DeliveryVariantsResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserCartCalcResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserCartOrderResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserCartResponse;
@@ -87,33 +86,42 @@ class BasketController extends FOSRestController
 
     /**
      * @Rest\Get("/user_cart/")
-     * @Rest\View()
+     * @Rest\View(serializerGroups={"Default", "basket"})
      *
      * @param UserCartRequest $userCartRequest
      * @return UserCartResponse
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\External\Exception\ManzanaPromocodeUnavailableException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      */
     public function getUserCartAction(UserCartRequest $userCartRequest)
     {
+        if ($promoCode = $userCartRequest->getPromoCode()) {
+            try {
+                /** @see \FourPaws\SaleBundle\AjaxController\BasketController::applyPromoCodeAction */
+                $this->manzana->setPromocode($promoCode);
+                $this->manzana->calculate();
 
+
+                $this->couponStorage->clear();
+                $this->couponStorage->save($promoCode);
+            } catch (ManzanaPromocodeUnavailableException $e) {
+                $promoCode = '';
+            }
+        }
         $basketProducts = $this->apiBasketService->getBasketProducts();
         $orderParameter = $this->apiOrderService->getOrderParameter($basketProducts);
         $orderCalculate = $this->apiOrderService->getOrderCalculate($basketProducts);
-
-        if ($promoCode = $userCartRequest->getPromoCode()) {
-            // toDo проверить как работают промо-коды
-            $this->manzana->setPromocode($promoCode);
-            $this->manzana->calculate();
-            $this->couponStorage->clear();
-            $this->couponStorage->save($promoCode);
+        if ($promoCode) {
             $orderCalculate->setPromoCodeResult($promoCode);
         }
-
         return (new UserCartResponse())
             ->setCartCalc($orderCalculate)
             ->setCartParam($orderParameter);
@@ -121,37 +129,47 @@ class BasketController extends FOSRestController
 
 
     /**
-     * @Rest\Post(path="/user_cart_info/")
-     */
-    public function userCartInfoAction()
-    {
-    }
-
-    /**
      * Добавление товаров в корзину (принимает массив id товаров и количество каждого товара)
      * @Rest\Post(path="/user_cart/")
-     * @Rest\View()
+     * @Rest\View(serializerGroups={"Default", "basket"})
      * @param PostUserCartRequest $postUserCartRequest
      * @return UserCartResponse
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
      * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\NotImplementedException
      * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\External\Exception\ManzanaPromocodeUnavailableException
-     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
+     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
      */
     public function postUserCartAction(PostUserCartRequest $postUserCartRequest)
     {
+        $gifts = [];
         foreach ($postUserCartRequest->getGoods() as $productQuantity) {
-            $this->appBasketService->addOfferToBasket(
-                $productQuantity->getProductId(),
-                $productQuantity->getQuantity()
-            );
+            if ($productQuantity->getDiscountId()) {
+                // gift
+                $gifts[] = [
+                    'offerId' =>  $productQuantity->getProductId(),
+                    'actionId' => $productQuantity->getDiscountId(),
+                    'count' => $productQuantity->getQuantity(),
+                ];
+            } else {
+                // regular product
+                $this->appBasketService->addOfferToBasket(
+                    $productQuantity->getProductId(),
+                    $productQuantity->getQuantity()
+                );
+            }
+        }
+        if (!empty($gifts)) {
+            /** @noinspection PhpUndefinedMethodInspection */
+            $this->appBasketService->getAdder('gift')->selectGifts($gifts);
         }
         return $this->getUserCartAction(new UserCartRequest());
     }
@@ -159,16 +177,21 @@ class BasketController extends FOSRestController
     /**
      * обновление количества товаров в корзине, 0 - удаление (принимает id товара из корзины (basketItemId) и количество)
      * @Rest\Put(path="/user_cart/")
-     * @Rest\View()
+     * @Rest\View(serializerGroups={"Default", "basket"})
      * @param PutUserCartRequest $putUserCartRequest
      * @return UserCartResponse
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\External\Exception\ManzanaPromocodeUnavailableException
-     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
+     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
      */
     public function putUserCartAction(PutUserCartRequest $putUserCartRequest)
     {
@@ -189,6 +212,18 @@ class BasketController extends FOSRestController
     }
 
     /**
+     * @Rest\Get(path="/user_cart_delivery/")
+     * @Rest\View()
+     * @return Response
+     */
+    public function getUserCartDeliveryAction()
+    {
+        return new Response(
+            $this->apiOrderService->getDeliveryDetails()
+        );
+    }
+
+    /**
      * Метод рассчитывает корзину.
      * @Rest\Post(path="/user_cart_calc/")
      * @Rest\View()
@@ -196,29 +231,18 @@ class BasketController extends FOSRestController
      * @return UserCartCalcResponse
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public function postUserCartCalcAction(UserCartCalcRequest $userCartCalcRequest)
     {
-        // если самовывоз
-        $storeCode = $userCartCalcRequest->getCartParam()->getPickupPlace();
-
-
-        if (empty($storeCode)) {
-            // если доставка курьером
-            $locationCode = $userCartCalcRequest->getCartParam()->getDeliveryPlace()->getCity()->getId();
-            // определяем базовый склад для зоны
-            $storeCode = $this->appStoreService->getBaseShops($locationCode)->current();
-        }
-
-        if (!$storeCode) {
-            // central main warehouse
-            // toDo DC01 should be a global constant somewhere
-            $storeCode = 'DC01';
-        }
-
+        $bonusSubtractAmount = $userCartCalcRequest->getBonusSubtractAmount();
+        $deliveryType = $userCartCalcRequest->getDeliveryType();
         $basketProducts = $this->apiBasketService->getBasketProducts();
-        $orderCalculate = $this->apiOrderService->getOrderCalculate($basketProducts, $storeCode);
+
+        $orderCalculate = $this->apiOrderService->getOrderCalculate(
+            $basketProducts,
+            $deliveryType,
+            $bonusSubtractAmount
+        );
         return (new UserCartCalcResponse())
             ->setCartCalc($orderCalculate);
     }
@@ -242,36 +266,18 @@ class BasketController extends FOSRestController
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
      * @throws \FourPaws\SaleBundle\Exception\DeliveryNotAvailableException
      * @throws \FourPaws\SaleBundle\Exception\OrderCreateException
      * @throws \FourPaws\SaleBundle\Exception\OrderSplitException
+     * @throws \FourPaws\SaleBundle\Exception\OrderStorageSaveException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public function postUserCartOrderAction(UserCartOrderRequest $userCartOrderRequest)
     {
-        switch ($userCartOrderRequest->getCartParam()->getDeliveryType()) {
-            case 1:
-                $deliveryType = DeliveryService::INNER_DELIVERY_CODE;
-                break;
-            case 3:
-                $deliveryType = DeliveryService::DPD_PICKUP_CODE;
-                break;
-            case 5:
-                $deliveryType = DeliveryService::INNER_PICKUP_CODE;
-                break;
-        }
-        $cartOrder = $this->apiOrderService->createOrder($userCartOrderRequest, $deliveryType);
+        $cartOrder = $this->apiOrderService->createOrder($userCartOrderRequest);
         return (new UserCartOrderResponse())
             ->setCartOrder($cartOrder);
-    }
-
-    /**
-     * @Rest\Get(path="/user_cart_delivery/")
-     * @Rest\View()
-     */
-    public function getUserCartDeliveryAction()
-    {
-        return new Response($this->apiOrderService->getDeliveryVariants());
     }
 }

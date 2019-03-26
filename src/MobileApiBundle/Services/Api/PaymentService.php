@@ -82,6 +82,7 @@ class PaymentService
         $url = '';
 
         switch ($payType) {
+            case 'cash':
             case 'cashless':
                 $url = $this->appPaymentService->registerOrder($bitrixOrder, $amount);
                 break;

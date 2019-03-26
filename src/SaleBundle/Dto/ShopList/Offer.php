@@ -31,6 +31,14 @@ class Offer
     protected $price;
 
     /**
+     * @var float
+     *
+     * @Serializer\SerializedName("weight")
+     * @Serializer\Type("float")
+     */
+    protected $weight;
+
+    /**
      * @return int
      */
     public function getId(): int
@@ -86,6 +94,26 @@ class Offer
     public function setPrice(float $price): Offer
     {
         $this->price = $price;
+
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getWeight(): float
+    {
+        return $this->weight;
+    }
+
+    /**
+     * @param float $weight
+     *
+     * @return Offer
+     */
+    public function setWeight(float $weight): Offer
+    {
+        $this->weight = $weight;
 
         return $this;
     }

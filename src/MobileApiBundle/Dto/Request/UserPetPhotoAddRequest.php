@@ -2,12 +2,12 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Request;
 
-use FourPaws\MobileApiBundle\Dto\Request\Types\PostRequest;
+use FourPaws\MobileApiBundle\Dto\Request\Types\GetRequest;
 use FourPaws\MobileApiBundle\Dto\Request\Types\SimpleUnserializeRequest;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class UserPetPhotoAddRequest implements SimpleUnserializeRequest, PostRequest
+class UserPetPhotoAddRequest implements SimpleUnserializeRequest, GetRequest
 {
     /**
      * @Serializer\Type("int")

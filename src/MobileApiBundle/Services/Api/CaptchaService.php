@@ -83,9 +83,11 @@ class CaptchaService
                 break;
         }
 
+        // toDo когда заведут транзакционный шаблон для смены email и настроят механизм смены email на сайте
         $confirmationCodeType = $this->getConfirmationCodeType($loginType, $sender);
         $captchaName = ConfirmCodeService::getCookieName($confirmationCodeType);
-        if (!$captchaId = $_COOKIE[$captchaName]) {
+        $captchaId = $_COOKIE[$captchaName];
+        if (empty($captchaId)) {
             throw new RuntimeException("Не удалось получить проверочную строку из cookie $captchaName");
         }
         return (new CaptchaSendValidationResponse('Код подтверждения успешно отправлен'))
@@ -151,12 +153,12 @@ class CaptchaService
         $user = $this->appUserService->getCurrentUser();
         if ($sender === static::SENDER_CARD_ACTIVATION) {
             $user->setEmail($email);
-            $this->expertSenderService->sendChangeBonusCard($user);
+            $this->expertSenderService->sendChangeBonusCardFromMobileApp($user);
         } else if ($sender === static::SENDER_EDIT_INFO) {
             $oldUser = $user;
             $curUser = clone $user;
             $curUser->setEmail($email);
-            $this->expertSenderService->sendChangeEmail($oldUser, $curUser);
+            $this->expertSenderService->sendChangeEmailFromMobileApp($oldUser, $curUser);
         } else {
             throw new RuntimeException("Invalid sender: expected card_activation|user_edit, got $sender");
         }

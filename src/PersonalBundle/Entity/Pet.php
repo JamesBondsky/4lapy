@@ -63,7 +63,6 @@ class Pet extends BaseEntity
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_BREED")
      * @Serializer\Groups(groups={"create","read","update"})
-     * @Assert\NotBlank(groups={"create"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $breed;

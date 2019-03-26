@@ -10,25 +10,25 @@ class UserCartOrderResponse
     /**
      * ОбъектЗаказ
      * @Serializer\SerializedName("cart_order")
-     * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\Order")
-     * @var Order
+     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Order>")
+     * @var Order[]
      */
     protected $cartOrder;
 
     /**
-     * @return Order
+     * @return Order[]
      */
-    public function getCartOrder(): Order
+    public function getCartOrder(): array
     {
         return $this->cartOrder;
     }
 
     /**
-     * @param Order $cartOrder
+     * @param Order[] $cartOrder
      *
      * @return UserCartOrderResponse
      */
-    public function setCartOrder(Order $cartOrder): UserCartOrderResponse
+    public function setCartOrder(array $cartOrder): UserCartOrderResponse
     {
         $this->cartOrder = $cartOrder;
         return $this;

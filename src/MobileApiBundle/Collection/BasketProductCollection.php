@@ -5,10 +5,10 @@
 
 namespace FourPaws\MobileApiBundle\Collection;
 
-use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Object\Detailing;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
+use FourPaws\MobileApiBundle\Dto\Object\PriceWithQuantity;
 
 class BasketProductCollection extends ProductQuantityCollection
 {
@@ -22,6 +22,35 @@ class BasketProductCollection extends ProductQuantityCollection
     }
 
     /**
+     * @return int
+     */
+    public function getTotalQuantity()
+    {
+        $quantity = 0;
+        /** @var Product $product */
+        foreach ($this->getValues() as $product) {
+            /** @var $priceWithQuantity PriceWithQuantity */
+            foreach ($product->getPrices() as $priceWithQuantity) {
+                $quantity += $priceWithQuantity->getQuantity();
+            }
+        }
+        return $quantity;
+    }
+
+    /**
+     * @return int
+     */
+    public function getTotalWeight()
+    {
+        $weight = 0;
+        /** @var Product $product */
+        foreach ($this->getValues() as $product) {
+            // toDo
+        }
+        return $weight;
+    }
+
+    /**
      * @return Price
      */
     public function getTotalPrice()
@@ -30,18 +59,24 @@ class BasketProductCollection extends ProductQuantityCollection
         $oldPrice = 0;
         /** @var Product $product */
         foreach ($this->getValues() as $product) {
-            $oldPrice += $product->getQuantity() * $product->getShortProduct()->getPrice()->getOld();
-            $actualPrice += $product->getQuantity() * $product->getShortProduct()->getPrice()->getActual();
+            /** @var $priceWithQuantity PriceWithQuantity */
+            foreach ($product->getPrices() as $priceWithQuantity) {
+                $quantity = $priceWithQuantity->getQuantity();
+                $price = $priceWithQuantity->getPrice();
+                $oldPrice += $quantity * ($price->getOld() ? $price->getOld() : $price->getActual());
+                $actualPrice += $quantity * $price->getActual();
+            }
         }
         return (new Price())
             ->setActual($actualPrice)
-            ->setOld($oldPrice);
+            ->setOld($oldPrice === $actualPrice ? 0 : $oldPrice);
     }
 
     /**
+     * @param float $deliveryPrice
      * @return Detailing[]
      */
-    public function getPriceDetails(): array
+    public function getPriceDetails(float $deliveryPrice = 0): array
     {
         $price = $this->getTotalPrice()->getOld();
         $discountPrice = $this->getTotalPrice()->getActual();
@@ -64,7 +99,7 @@ class BasketProductCollection extends ProductQuantityCollection
             (new Detailing())
                 ->setId('delivery')
                 ->setTitle('Стоимость доставки')
-                ->setValue(0),
+                ->setValue($deliveryPrice),
         ];
     }
 

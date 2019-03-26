@@ -48,7 +48,7 @@ trait Pet
      * @Serializer\SerializedName("breed_other")
      * @var string
      */
-    protected $breedOther;
+    protected $breedOther = '';
 
     /**
      * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\PetGender")

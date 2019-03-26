@@ -308,6 +308,7 @@ class ShopInfoService
                             ->setLongitude($store->getLongitude())
                             ->setName($address)
                             ->setAddress($address)
+                            ->setMetroId($metroId)
                             ->setMetroName($metroName)
                             ->setMetroColor($metroColor)
                             ->setMetroCssClass($metroCssClass)
@@ -519,6 +520,7 @@ class ShopInfoService
                 (new ShopOffer())->setId($item->getOffer()->getId())
                                  ->setPrice($item->getPrice())
                                  ->setQuantity($item->getAmount())
+                                 ->setWeight($item->getOffer()->getCatalogProduct()->getWeight())
             );
         }
 

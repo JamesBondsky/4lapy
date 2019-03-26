@@ -1,7 +1,7 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
+/**
+ * @copyright Copyright (c) NotAgency
  */
 
 namespace FourPaws\MobileApiBundle\Services\Api;
@@ -13,8 +13,11 @@ use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
+use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Dto\Object\Store\Store as ApiStore;
 use FourPaws\MobileApiBundle\Dto\Object\Store\StoreService as ApiStoreServiceDto;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListRequest;
@@ -29,6 +32,7 @@ use FourPaws\StoreBundle\Service\ShopInfoService as StoreShopInfoService;
 use FourPaws\SaleBundle\Service\ShopInfoService as SaleShopInfoService;
 use FourPaws\StoreBundle\Service\StoreService as AppStoreService;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
+use FourPaws\SaleBundle\Service\OrderSplitService;
 
 class StoreService
 {
@@ -50,13 +54,21 @@ class StoreService
     /** @var OrderStorageService */
     private $orderStorageService;
 
+    /** @var OrderSplitService */
+    private $orderSplitService;
+
+    /** @var DeliveryService */
+    private $deliveryService;
+
     public function __construct(
         AppStoreService $appStoreService,
         ApiProductService $apiProductService,
         StoreShopInfoService $storeShopInfoService,
         SaleShopInfoService $saleShopInfoService,
         BasketService $basketService,
-        OrderStorageService $orderStorageService
+        OrderStorageService $orderStorageService,
+        OrderSplitService $orderSplitService,
+        DeliveryService $deliveryService
     )
     {
         $this->appStoreService = $appStoreService;
@@ -65,6 +77,8 @@ class StoreService
         $this->saleShopInfoService = $saleShopInfoService;
         $this->basketService = $basketService;
         $this->orderStorageService = $orderStorageService;
+        $this->orderSplitService = $orderSplitService;
+        $this->deliveryService = $deliveryService;
     }
 
     /**
@@ -138,6 +152,7 @@ class StoreService
     }
 
     /**
+     * @param array $metroStationIds
      * @return Collection
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ArgumentNullException
@@ -153,45 +168,25 @@ class StoreService
      * @throws \FourPaws\SaleBundle\Exception\OrderStorageSaveException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
-    public function getListWithProductsInBasketAvailability(): Collection
+    public function getListWithProductsInBasketAvailability(array $metroStationIds = []): Collection
     {
         $this->checkBasketEmptiness();
         $storage = $this->orderStorageService->getStorage();
-        $shops = $this->saleShopInfoService->getShopInfo($storage, $this->orderStorageService->getPickupDelivery($storage));
-        return $shops->getShops()->map(function (SaleBundleShop $shop) {
+        $pickupResult = $this->orderStorageService->getPickupDelivery($storage);
+        if ($pickupResult instanceof DpdPickupResult) {
+            // toDo убрать это условие после того как в мобильном приложении будет реализован вывод точек DPD на карте в чекауте
+            return new ArrayCollection();
+        }
+        $shopInfo = $this->saleShopInfoService->getShopInfo($storage, $pickupResult);
+        $shops = $shopInfo->getShops();
+        if (!empty($metroStationIds)) {
+            $shops = $shops->filter(function(SaleBundleShop $shop) use ($metroStationIds) {
+                return in_array($shop->getMetroId(), $metroStationIds);
+            });
+        }
+        return $shops->map(function (SaleBundleShop $shop) {
             return $this->saleBundleShopToApiFormat($shop);
         });
-    }
-
-    /**
-     * @param $storeCode
-     * @return ApiStore
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\NotImplementedException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \Bitrix\Sale\UserMessageException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
-     * @throws \FourPaws\SaleBundle\Exception\OrderStorageSaveException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
-     */
-    public function getOneWithProductsInBasketAvailability($storeCode)
-    {
-        $this->checkBasketEmptiness();
-        $storage = $this->orderStorageService->getStorage();
-        $shop = $this->saleShopInfoService->getOneShopInfo(
-            $storeCode,
-            $storage,
-            $this->orderStorageService->getPickupDelivery($storage)
-        );
-        return $shop->getShops()->map(function (SaleBundleShop $shop) {
-            return $this->saleBundleShopToApiFormat($shop);
-        })->current();
     }
 
     protected function getParams(StoreListRequest $storeListRequest)
@@ -293,9 +288,30 @@ class StoreService
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    protected function saleBundleShopToApiFormat(SaleBundleShop $shop)
+    protected function saleBundleShopToApiFormat(SaleBundleShop $shop): ApiStore
     {
-        return (new ApiStore())
+        $availableGoodsQuantity = 0;
+        $availableGoodsWeight = 0;
+        $availableGoodsPrice = 0;
+        foreach ($shop->getAvailableItems() as $availableItem) {
+            /** @var \FourPaws\SaleBundle\Dto\ShopList\Offer $availableItem */
+            $availableGoodsPrice += $availableItem->getPrice();
+            $availableGoodsQuantity += $availableItem->getQuantity();
+            $availableGoodsWeight += $availableItem->getWeight();
+        }
+        $delayedGoodsQuantity = 0;
+        $delayedGoodsWeight = 0;
+        $delayedGoodsPrice = 0;
+        foreach ($shop->getDelayedItems() as $delayedItem) {
+            /** @var \FourPaws\SaleBundle\Dto\ShopList\Offer $delayedItem */
+            $delayedGoodsPrice += $delayedItem->getPrice();
+            $delayedGoodsQuantity += $delayedItem->getQuantity();
+            $delayedGoodsWeight += $delayedItem->getWeight();
+        }
+        $allGoodsQuantity = $availableGoodsQuantity + $delayedGoodsQuantity;
+        $allGoodsWeight = $availableGoodsWeight + $delayedGoodsWeight;
+        $allGoodsPrice = $availableGoodsPrice + $delayedGoodsPrice;
+        $apiStore = (new ApiStore())
             ->setCode($shop->getXmlId())
             ->setTitle($shop->getName())
             ->setAddress($shop->getAddress())
@@ -310,9 +326,31 @@ class StoreService
             ->setPickupAllGoodsFullDate($shop->getFullPickupDate())
             ->setPickupFewGoodsShortDate($shop->getPickupDateShortFormat())
             ->setPickupFewGoodsFullDate($shop->getPickupDate())
+            ->setPickupAllGoodsTitle(
+                $this->apiProductService::getGoodsTitleForCheckout(
+                    $allGoodsQuantity,
+                    $allGoodsWeight,
+                    $allGoodsPrice
+                )
+            )
+            ->setPickupAvailableGoodsTitle(
+                $this->apiProductService::getGoodsTitleForCheckout(
+                    $availableGoodsQuantity,
+                    $availableGoodsWeight,
+                    $availableGoodsPrice
+                )
+            )
+            ->setPickupDelayedGoodsTitle(
+                $this->apiProductService::getGoodsTitleForCheckout(
+                    $delayedGoodsQuantity,
+                    $delayedGoodsWeight,
+                    $delayedGoodsPrice
+                )
+            )
+            ->setAvailability($shop->getAvailability())
             ->setAvailableGoods($this->convertToBasketProductCollection($shop->getAvailableItems()))
-            ->setDelayedGoods($this->convertToBasketProductCollection($shop->getDelayedItems()))
-        ;
+            ->setDelayedGoods($this->convertToBasketProductCollection($shop->getDelayedItems()));
+        return $apiStore;
     }
 
     /**
@@ -371,6 +409,10 @@ class StoreService
                 $product = $offer->getProduct();
                 $quantity = $shopListOffer->getQuantity();
                 $shortProduct = $this->apiProductService->convertToShortProduct($product, $offer, $quantity, true);
+                if (isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
+                    $shortProduct->setGiftDiscountId($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT']['VALUE']);
+                    $shortProduct->setPrice((new Price())->setActual(0)->setOld(0));
+                }
                 $basketProductCollection->add(
                     (new Product())
                         ->setBasketItemId($basketItem->getId())

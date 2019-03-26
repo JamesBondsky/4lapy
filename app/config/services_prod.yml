@@ -8,3 +8,5 @@ services:
     class: FourPaws\App\ExceptionListener
     tags:
       - { name: kernel.event_listener, event: kernel.exception, method: onError }
+  FourPaws\MobileApiBundle\Security\SignCheckerInterface:
+    class: FourPaws\MobileApiBundle\Security\SignChecker
