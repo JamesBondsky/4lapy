@@ -67,8 +67,8 @@ class OrderSubscribe extends BaseEntity
     protected $deliveryPlace;
 
     /**
-     * @var int
-     * @Serializer\Type("integer")
+     * @var string
+     * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_LOCATION")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Assert\NotBlank(groups={"create","read"})
@@ -81,17 +81,15 @@ class OrderSubscribe extends BaseEntity
      * @Serializer\Type("bool")
      * @Serializer\SerializedName("UF_ACTIVITY")
      * @Serializer\Groups(groups={"create","read","update"})
-     * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $active;
+    protected $active = true;
 
     /**
      * @var bool
      * @Serializer\Type("bool")
      * @Serializer\SerializedName("UF_SKIP_DEL")
      * @Serializer\Groups(groups={"create","read","update"})
-     * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $skipNextDelivery;
@@ -101,7 +99,6 @@ class OrderSubscribe extends BaseEntity
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("UF_LAST_ORDER")
      * @Serializer\Groups(groups={"create","read","update"})
-     * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $lastOrderId;
@@ -110,9 +107,8 @@ class OrderSubscribe extends BaseEntity
      * @var DateTime
      * @Serializer\Type("bitrix_date_time_ex")
      * @Serializer\SerializedName("UF_NEXT_DEL")
-     * @Serializer\Groups(groups={"create","read"})
+     * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
-     * @Assert\NotBlank(groups={"create","read"})
      */
     protected $nextDate;
 
@@ -122,7 +118,6 @@ class OrderSubscribe extends BaseEntity
      * @Serializer\SerializedName("UF_DATE_CREATE")
      * @Serializer\Groups(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
-     * @Assert\NotBlank(groups={"create","read"})
      */
     protected $dateCreate;
 
@@ -130,16 +125,15 @@ class OrderSubscribe extends BaseEntity
      * @var DateTime
      * @Serializer\Type("bitrix_date_time_ex")
      * @Serializer\SerializedName("UF_DATE_UPDATE")
-     * @Serializer\Groups(groups={"create","read"})
+     * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
-     * @Assert\NotBlank(groups={"create","read"})
      */
     protected $dateUpdate;
 
     /**
      * @return int
      */
-    public function getUserId(): int
+    public function getUserId(): ?int
     {
         return $this->userId;
     }
@@ -227,18 +221,18 @@ class OrderSubscribe extends BaseEntity
     }
 
     /**
-     * @return int
+     * @return string
      */
-    public function getLocationId(): int
+    public function getLocationId(): string
     {
         return $this->locationId;
     }
 
     /**
-     * @param int $locationId
+     * @param string $locationId
      * @return OrderSubscribe
      */
-    public function setLocationId(int $locationId): OrderSubscribe
+    public function setLocationId(string $locationId): OrderSubscribe
     {
         $this->locationId = $locationId;
         return $this;
@@ -283,7 +277,7 @@ class OrderSubscribe extends BaseEntity
     /**
      * @return int
      */
-    public function getLastOrderId(): int
+    public function getLastOrderId(): ?int
     {
         return $this->lastOrderId;
     }
@@ -301,7 +295,7 @@ class OrderSubscribe extends BaseEntity
     /**
      * @return DateTime
      */
-    public function getNextDate(): DateTime
+    public function getNextDate(): ?DateTime
     {
         return $this->nextDate;
     }
@@ -337,7 +331,7 @@ class OrderSubscribe extends BaseEntity
     /**
      * @return DateTime
      */
-    public function getDateUpdate(): DateTime
+    public function getDateUpdate(): ?DateTime
     {
         return $this->dateUpdate;
     }

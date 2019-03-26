@@ -11,6 +11,7 @@ namespace FourPaws\PersonalBundle\Entity;
 
 use FourPaws\AppBundle\Entity\BaseEntity;
 use JMS\Serializer\Annotation as Serializer;
+use Symfony\Component\Validator\Constraints as Assert;
 
 class OrderSubscribeItem extends BaseEntity
 {
