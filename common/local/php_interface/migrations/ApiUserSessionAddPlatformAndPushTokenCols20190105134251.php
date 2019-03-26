@@ -8,12 +8,13 @@ use Bitrix\Main\Application;
 
 class ApiUserSessionAddPlatformAndPushTokenCols20190105134251 extends \Adv\Bitrixtools\Migration\SprintMigrationBase {
 
-    protected $description = "Добавляем столбцы PLATFORM и PUSH_TOKEN в табличку api_user_session для АПИ мобильного приложения";
+    protected $description = "Добавляем столбцы USER PLATFORM и PUSH_TOKEN в табличку api_user_session для АПИ мобильного приложения";
 
     public function up(){
         $tableName = ApiUserSessionTable::getTableName();
         $query = <<<SQL
 ALTER TABLE `$tableName`
+ADD COLUMN USER_ID INT(11),
 ADD COLUMN PLATFORM VARCHAR(10),
 ADD COLUMN PUSH_TOKEN VARCHAR(255);
 SQL;
@@ -32,6 +33,7 @@ SQL;
         $tableName = ApiUserSessionTable::getTableName();
         $query = <<<SQL
 ALTER TABLE `$tableName`
+DROP COLUMN USER_ID,
 DROP COLUMN PLATFORM,
 DROP COLUMN PUSH_TOKEN;
 SQL;
