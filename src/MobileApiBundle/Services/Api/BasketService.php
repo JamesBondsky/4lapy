@@ -148,8 +148,8 @@ class BasketService
      */
     private function fillBasketProductsPrices(Basket $orderAbleBasket, BasketProductCollection $products)
     {
-        $totalQuantity = 0;
-        $pricesToGoods = [];
+        /** @var PriceWithQuantity[][] $pricesWithQuantityAll */
+        $pricesWithQuantityAll = [];
         foreach ($products as $product) {
             /** @var Product $product */
             if ($isGift = $product->getShortProduct()->getGiftDiscountId() > 0) {
@@ -162,7 +162,7 @@ class BasketService
                     &&
                     !isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])
                 ) {
-                    $pricesToGoods[$product->getBasketItemId()][] = (new PriceWithQuantity())
+                    $pricesWithQuantityAll[$product->getBasketItemId()][] = (new PriceWithQuantity())
                         ->setPrice(
                             (new Price)
                                 ->setActual($basketItem->getPrice())
@@ -170,17 +170,20 @@ class BasketService
                         )
                         ->setQuantity($basketItem->getQuantity())
                     ;
-                    $totalQuantity += $basketItem->getQuantity();
                 }
             }
         }
 
-        return $products->map(function ($product) use ($pricesToGoods, $totalQuantity) {
+        return $products->map(function ($product) use ($pricesWithQuantityAll) {
             /** @var Product $product */
-            if (array_key_exists($product->getBasketItemId(), $pricesToGoods)) {
-                $prices = $pricesToGoods[$product->getBasketItemId()];
+            if (array_key_exists($product->getBasketItemId(), $pricesWithQuantityAll)) {
+                $pricesWithQuantity = $pricesWithQuantityAll[$product->getBasketItemId()];
+                $totalQuantity = 0;
+                foreach ($pricesWithQuantity as $priceWithQuantity) {
+                    $totalQuantity += $priceWithQuantity->getQuantity();
+                }
                 $product->setQuantity($totalQuantity);
-                $product->setPrices($prices);
+                $product->setPrices($pricesWithQuantity);
             }
             return $product;
         });
