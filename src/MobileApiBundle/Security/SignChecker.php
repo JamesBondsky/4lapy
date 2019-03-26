@@ -20,11 +20,10 @@ class SignChecker implements SignCheckerInterface
     {
         switch ($request->getMethod()) {
             case Request::METHOD_GET:
-            case Request::METHOD_DELETE:
-                $paramBag = $request->request;
+                $paramBag = $request->query;
                 break;
             default:
-                $paramBag = $request->query;
+                $paramBag = $request->request;
         }
 
         $sign = $paramBag->get(static::SIGN_FIELD, '');
