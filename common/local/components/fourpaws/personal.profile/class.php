@@ -18,6 +18,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\ManzanaService;
@@ -25,6 +26,7 @@ use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\PersonalBundle\Service\PetService;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
@@ -62,6 +64,11 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
     private $manzanaService;
 
     /**
+     * @var RetailRocketService
+     */
+    private $retailRocketService;
+
+    /**
      * AutoloadingIssuesInspection constructor.
      *
      * @param null|\CBitrixComponent $component
@@ -77,6 +84,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
             $this->ajaxMess = $container->get('ajax.mess');
             $this->manzanaService = $container->get('manzana.service');
+            $this->retailRocketService = $container->get(RetailRocketService::class);
         } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
             try {
                 $logger = LoggerFactory::create('component');
@@ -91,13 +99,10 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
 
     /**
      * {@inheritdoc}
-     * @throws BitrixRuntimeException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
-     * @throws LoaderException
+     * @return bool|null
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
      */
     public function executeComponent()
     {
@@ -159,6 +164,22 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 'EMAIL_CONFIRMED' => $curUser->isEmailConfirmed(),
                 'PHONE_CONFIRMED' => $curUser->isPhoneConfirmed()
             ];
+
+            $name = $curUser->getName();
+            /** @var PetService $petService */
+            $petService = App::getInstance()->getContainer()->get('pet.service');
+            $petsTypes = $petService->getUserPetsTypesCodes($curUser->getId());
+            $stringData = ', {name: "' . $name . '"';
+            foreach ($petsTypes as $key => $value) {
+                $stringData .= ', ' . $key . ': true';
+            }
+            $stringData .= '}';
+
+            $this->arResult['ON_SUBMIT'] = \str_replace('"', '\'',
+                'if($(this).find("input[type=email]").val().indexOf("register.phone") == -1){' .
+                $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val()' . $stringData) .
+                '}'
+            );
 
             $this->includeComponentTemplate();
         }

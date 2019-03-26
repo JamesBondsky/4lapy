@@ -25,6 +25,7 @@ use FourPaws\DeliveryBundle\Entity\PriceForAmount;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
@@ -65,6 +66,11 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
     protected $deliveryService;
 
     /**
+     * @var PiggyBankService
+     */
+    protected $piggyBankService;
+
+    /**
      * DeliveryHandlerBase constructor.
      *
      * @param $initParams
@@ -81,6 +87,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
         $this->locationService = $serviceContainer->get('location.service');
         $this->storeService = $serviceContainer->get('store.service');
         $this->deliveryService = $serviceContainer->get('delivery.service');
+        $this->piggyBankService = $serviceContainer->get('piggy_bank.service');
         $this->userService = $serviceContainer->get(UserCitySelectInterface::class);
         parent::__construct($initParams);
     }
@@ -175,6 +182,81 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
     }
 
     /**
+     * Метод для Достависты
+     * Проверяет наличие остатков каждого оффера в каждом магазине Москвы
+     * Если все товары есть в наличие, то доставка будет активна
+     * @param Basket $basket
+     * @param ArrayCollection $offers
+     * @param StoreCollection $stores
+     * @return StockResultCollection
+     */
+    public function getStocksForAllAvailableOffers(
+        Basket $basket,
+        ArrayCollection $offers,
+        StoreCollection $stores
+    ): StockResultCollection {
+        $stockResultCollection = new StockResultCollection();
+        $offerData = static::getBasketPrices($basket);
+        /** @var array $marksIds */
+        $marksIds = $this->piggyBankService->getMarksIds();
+
+        foreach ($offerData as $key => $offer) {
+            if (in_array($key, $marksIds)) {
+                unset($offerData[$key]);
+            }
+        }
+
+        if (null === $stockResultCollection) {
+            $stockResultCollection = new StockResultCollection();
+        }
+
+        /** @var Store $store */
+        foreach ($stores->getIterator() as $store) {
+            if (!$store->isExpressStore()) {
+                continue;
+            }
+            $allOfferAvaliable = true;
+            $stockResultCollectionTmp = new StockResultCollection();
+            foreach ($offerData as $offerId => $priceForAmountCollection) {
+                /** @var Offer $offer */
+                $offer = $offers[$offerId];
+                /**
+                 * Если такое произошло, значит оффер был подарком и был удален из корзины
+                 */
+                if (null === $offer) {
+                    continue;
+                }
+
+                $stockResult = new StockResult();
+                $stockResult->setPriceForAmount($priceForAmountCollection)
+                    ->setOffer($offer)
+                    ->setStore($store);
+
+                $amount = $stockResult->getAmount();
+                $stocks = $offer->getAllStocks();
+                if ($availableAmount = $stocks->filterByStore($store)->getTotalAmount()) {
+                    if ($availableAmount < $amount) {
+                        $allOfferAvaliable = false;
+                    }
+                } else {
+                    $allOfferAvaliable = false;
+                }
+                if (!$allOfferAvaliable) {
+                    break;
+                }
+                $stockResultCollectionTmp->add($stockResult);
+            }
+            if ($allOfferAvaliable) {
+                foreach ($stockResultCollectionTmp as $stockResult) {
+                    $stockResultCollection->add($stockResult);
+                }
+            }
+        }
+
+        return $stockResultCollection;
+    }
+
+    /**
      * @param Basket          $basket
      *
      * @return PriceForAmountCollection[]
@@ -248,7 +330,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             /**
              * Товар в наличии не полностью. Часть будет отложена
              */
-            if ($delayedStockResult) {
+            if ($delayedStockResult && $offer->isAvailableForDelay($store)) {
                 $storesDelay = $offer->getAllStocks()->getStores()->excludeStore($store);
                 if ($delayedAmount = $stocks->filterByStores($storesDelay)->getTotalAmount()) {
                     $delayedStockResult->setType(StockResult::TYPE_DELAYED);
@@ -343,6 +425,16 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                                 ->getStores()
                                 ->getBaseShops();
                         }
+                        break;
+                }
+                break;
+            case DeliveryService::DELIVERY_DOSTAVISTA_CODE:
+                switch ($deliveryZone) {
+                    case DeliveryService::ZONE_MOSCOW:
+                        /**
+                         * условие доставки в эту зону - наличие всех офферов в одном магазине
+                         */
+                        $result = $storeService->getStoresByLocation($locationCode, StoreService::TYPE_SHOP)->getStores();
                         break;
                 }
                 break;

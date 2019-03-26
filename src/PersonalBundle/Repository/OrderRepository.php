@@ -25,6 +25,7 @@ use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Internals\ShipmentTable;
 use Bitrix\Sale\Internals\StatusTable;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\App\Application;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\AppBundle\Repository\BaseRepository;
@@ -88,9 +89,9 @@ class OrderRepository extends BaseRepository
      */
     public function getUserOrders(int $userId, int $limit = 0, int $offset = 0, array $additionalFilter = []): ArrayCollection
     {
-        $closedOrderStatuses = \implode(',', \array_map(function ($status) {
-            return sprintf('"%s"', $status);
-        }, \array_merge(OrderService::STATUS_CANCEL, OrderService::STATUS_FINAL)));
+        /** @var OrderService $orderService */
+        $orderService = Application::getInstance()->getContainer()->get('order.service');
+        $closedOrderStatuses = $orderService->getClosedOrderStatusesForQuery();
 
 
         $filter = $additionalFilter;
@@ -98,17 +99,17 @@ class OrderRepository extends BaseRepository
 
         $query = $this->getDataManager()::query()
                       ->setSelect([
-                          'IS_ACTIVE',
+                          'IS_CURRENT',
                           '*',
                       ])
                       ->setFilter($filter)
                       ->setOrder([
+                          'IS_CURRENT'   => 'DESC',
                           'DATE_INSERT' => 'DESC',
-                          'IS_ACTIVE'   => 'DESC',
                       ])
                       ->registerRuntimeField(new ExpressionField(
-                          'IS_ACTIVE',
-                          'CASE WHEN %s NOT IN (' . $closedOrderStatuses . ') AND %s != "Y" THEN 1 ELSE 0 END',
+                          'IS_CURRENT',
+                          'CASE WHEN %s NOT IN (' . $closedOrderStatuses . ') AND %s != "Y" AND DATE_INSERT > DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 ELSE 0 END',
                           [
                               'STATUS_ID',
                               'CANCELED',

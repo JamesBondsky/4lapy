@@ -170,6 +170,14 @@ class OrderStorageService
             }
         }
 
+        $deliveryId = (int)($data['deliveryTypeId']) ? ($data['deliveryTypeId']) : $data['deliveryId'];
+
+        if (isset($data['deliveryCoords'])) {
+            $coords = explode(',', $data['deliveryCoords']);
+            $data['lng'] = $coords[0];
+            $data['lat'] = $coords[1];
+        }
+
         /**
          * Чтобы нельзя было, например, обойти проверку капчи,
          * отправив в POST данные со всех форм разом
@@ -201,18 +209,20 @@ class OrderStorageService
                 break;
             case OrderStorageEnum::DELIVERY_STEP:
                 try {
-                    $deliveryCode = $this->deliveryService->getDeliveryCodeById(
-                        (int)$data['deliveryId']
-                    );
-                    if (\in_array($deliveryCode, DeliveryService::DELIVERY_CODES, true)) {
+                    $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
+                    if (\in_array($deliveryCode, array_merge(DeliveryService::DELIVERY_CODES, [DeliveryService::DELIVERY_DOSTAVISTA_CODE]), true)) {
                         switch ($data['delyveryType']) {
                             case 'twoDeliveries':
                                 $data['deliveryInterval'] = $data['deliveryInterval1'];
                                 $data['secondDeliveryInterval'] = $data['deliveryInterval2'];
                                 $data['deliveryDate'] = $data['deliveryDate1'];
                                 $data['secondDeliveryDate'] = $data['deliveryDate2'];
-                                $data['comment'] = $data['comment1'];
-                                $data['secondComment'] = $data['comment2'];
+                                if($deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE){
+                                    $data['comment'] = $data['comment_dostavista'];
+                                } else {
+                                    $data['comment'] = $data['comment1'];
+                                    $data['secondComment'] = $data['comment2'];
+                                }
                                 $data['split'] = 1;
                                 break;
                             default:
@@ -220,7 +230,7 @@ class OrderStorageService
                         }
                     } elseif ((int)$data['split'] === 1) {
                         $tmpStorage = clone $storage;
-                        $tmpStorage->setDeliveryId($data['deliveryId']);
+                        $tmpStorage->setDeliveryId($deliveryId);
                         $pickup = clone $this->getSelectedDelivery($tmpStorage);
                         if ($pickup instanceof PickupResultInterface) {
                             $availableStores = $pickup->getBestShops();
@@ -265,6 +275,8 @@ class OrderStorageService
                     'secondDeliveryDate',
                     'secondDeliveryInterval',
                     'secondComment',
+                    'lng',
+                    'lat'
                 ];
                 break;
             case OrderStorageEnum::PAYMENT_STEP:
@@ -295,7 +307,20 @@ class OrderStorageService
 
             $setter = 'set' . ucfirst($name);
             if (method_exists($storage, $setter)) {
-                $storage->$setter($value);
+                switch ($name) {
+                    case 'deliveryId':
+                        $storage->$setter($data['deliveryTypeId']);
+                        break;
+                    case 'comment':
+                        if($step == OrderStorageEnum::DELIVERY_STEP && $deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE){
+                            $storage->$setter($data['comment_dostavista']);
+                        } elseif(isset($data['comment'])) {
+                            $storage->$setter($data['comment']);
+                        }
+                        break;
+                    default:
+                        $storage->$setter($value);
+                }
             }
         }
 
@@ -443,16 +468,35 @@ class OrderStorageService
         }
 
         /**
-         * Если есть оплата "наличными или картой", удаляем оплату "наличными"
+         * Если есть оплата "наличными или картой", удаляем оплату "наличными" - если не достависта,
+         * Если достависта - "удаляем наличными или картой", оставляем "наличными"
          */
-        if ($filter
-            && !empty(\array_filter($payments, function ($item) {
-                return $item['CODE'] === OrderPayment::PAYMENT_CASH_OR_CARD;
-            }))) {
-            foreach ($payments as $id => $payment) {
-                if ($payment['CODE'] === OrderPayment::PAYMENT_CASH) {
-                    unset($payments[$id]);
-                    break;
+        $deliveryCode = false;
+        if ($storage->getDeliveryId()) {
+            $deliveryCode = $this->deliveryService->getDeliveryCodeById($storage->getDeliveryId());
+        }
+        if ($deliveryCode === false || !$this->deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
+            if ($filter
+                && !empty(\array_filter($payments, function ($item) {
+                    return $item['CODE'] === OrderPayment::PAYMENT_CASH_OR_CARD;
+                }))) {
+                foreach ($payments as $id => $payment) {
+                    if ($payment['CODE'] === OrderPayment::PAYMENT_CASH) {
+                        unset($payments[$id]);
+                        break;
+                    }
+                }
+            }
+        } else {
+            if ($filter
+                && !empty(\array_filter($payments, function ($item) {
+                    return $item['CODE'] === OrderPayment::PAYMENT_CASH;
+                }))) {
+                foreach ($payments as $id => $payment) {
+                    if ($payment['CODE'] === OrderPayment::PAYMENT_CASH_OR_CARD) {
+                        unset($payments[$id]);
+                        break;
+                    }
                 }
             }
         }

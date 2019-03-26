@@ -12,6 +12,7 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
+use FourPaws\Catalog\Model\Category;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\App\Templates\ViewsEnum;
 use FourPaws\BitrixOrm\Model\IblockElement;
@@ -56,6 +57,9 @@ if (!($product instanceof Product)) {
     /** прерываем если вернулось непонятно что */
     return;
 }
+
+/** @var Category $rootCategory */
+$rootCategory = $product->getFullPathCollection()->last();
 
 $offer = null;
 CBitrixComponent::includeComponentClass('fourpaws:personal.profile');
@@ -149,6 +153,11 @@ if (null === $offer) {
                     );
                 } ?>
             </div>
+
+            <? if ($rootCategory->isShowDelText()){ ?>
+                <div class="b-information-message b-information-message--green b-information-message--product-detail"><?=Category::DEL_TEXT?></div>
+            <? } ?>
+
             <?
             $APPLICATION->IncludeComponent(
                 'articul:catalog.element.detail.kit',
@@ -172,8 +181,8 @@ if (null === $offer) {
                                 <li class="b-tab-title__item js-tab-item">
                                     <a class="b-tab-title__link js-tab-link"
                                        href="javascript:void(0);" title="Состав"
-                                       data-tab="composition"><span
-                                                class="b-tab-title__text">Состав</span></a>
+                                       data-tab="composition"><h2
+                                                class="b-tab-title__text">Состав</h2></a>
                                 </li>
                             <?php }
 
@@ -181,8 +190,8 @@ if (null === $offer) {
                                 <li class="b-tab-title__item js-tab-item">
                                     <a class="b-tab-title__link js-tab-link"
                                        href="javascript:void(0);" title="Рекомендации по питанию"
-                                       data-tab="recommendations"><span
-                                                class="b-tab-title__text">Рекомендации по питанию</span></a>
+                                       data-tab="recommendations"><h2
+                                                class="b-tab-title__text">Рекомендации по питанию</h2></a>
                                 </li>
                             <?php }
 
@@ -194,9 +203,9 @@ if (null === $offer) {
                                 <a class="b-tab-title__link js-tab-link"
                                    href="javascript:void(0);" title="Наличие в магазинах"
                                    data-tab="availability">
-                                    <span class="b-tab-title__text">Наличие в магазинах
+                                    <h2 class="b-tab-title__text">Наличие в магазинах
                                         <span class="b-tab-title__number">(0)</span>
-                                    </span>
+                                    </h2>
                                 </a>
                             </li>
                             <?php if ($offer->isShare()) { ?>
@@ -204,7 +213,7 @@ if (null === $offer) {
                                     <a class="b-tab-title__link js-tab-link"
                                        href="javascript:void(0);" title="Акция"
                                        data-tab="shares">
-                                        <span class="b-tab-title__text">Акция</span>
+                                        <h2 class="b-tab-title__text">Акция</h2>
                                     </a>
                                 </li>
                             <?php } ?>

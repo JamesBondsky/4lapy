@@ -14,7 +14,7 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
 <section id="registr-check" data-id-section-landing="registr-check" class="registr-check-landing">
     <div class="container-landing">
 
-        <?if ($USER->IsAuthorized()) {?>
+        <?/*if ($USER->IsAuthorized()) {?>
             <? $arUser = \CUser::GetById($USER->GetID())->Fetch(); ?>
 
             <div class="registr-check-landing__form-wrap" data-wrap-form-registr-chek-landing="true">
@@ -41,13 +41,13 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
                         </div>
                     </div>
                     <div class="form-group">
-                        <input type="text" id="SURNAME_REG_CHECK_GRANDIN" name="surname" value="<?=$arUser['LAST_NAME']?:''?>" placeholder="Фамилия" >
+                        <input type="text" id="SURNAME_REG_CHECK_GRANDIN" class="js-small-input" name="surname" value="<?=$arUser['LAST_NAME']?:''?>" placeholder="Фамилия" >
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
                     </div>
                     <div class="form-group">
-                        <input type="text" id="NAME_REG_CHECK_GRANDIN" name="name" value="<?=$arUser['NAME']?:''?>" placeholder="Имя" >
+                        <input type="text" id="NAME_REG_CHECK_GRANDIN" class="js-small-input" name="name" value="<?=$arUser['NAME']?:''?>" placeholder="Имя" >
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
@@ -105,8 +105,13 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
                 </div>
             </div>
 
-        <?}?>
+        <?}*/?>
 
+        <div class="registr-check-landing__message">
+            <div class="landing-title landing-title_dark">
+                Акция завершена
+            </div>
+        </div>
 
     </div>
 </section>

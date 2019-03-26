@@ -11,6 +11,7 @@ use Bitrix\Catalog\Product\Basket as BitrixBasket;
 use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\ExpressionField;
+use Bitrix\Main\Entity\Query;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
@@ -20,6 +21,7 @@ use Bitrix\Sale\Basket;
 use Bitrix\Sale\Fuser;
 use Bitrix\Sale\Order;
 use DateTimeImmutable;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -37,16 +39,25 @@ use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Query\ShareQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
+use FourPaws\Catalog\Collection\PriceCollection;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\CatalogBundle\Service\BrandService;
+use FourPaws\CatalogBundle\Service\CatalogGroupService;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\LocationBundle\LocationService;
+use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\UserBundle\Service\UserService;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\StoreBundle\Entity\Store;
 use InvalidArgumentException;
 use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Accessor;
@@ -65,6 +76,9 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class Offer extends IblockElement
 {
+    /**
+     *
+     */
     public const SIMPLE_SHARE_SALE_CODE = 'VKA0';
 
     public const SIMPLE_SHARE_DISCOUNT_CODE = 'ZRBT';
@@ -74,6 +88,9 @@ class Offer extends IblockElement
     public const PACKAGE_LABEL_TYPE_VOLUME = 'VOLUME';
 
     public const PACKAGE_LABEL_TYPE_WEIGHT = 'WEIGHT';
+
+    public const CATALOG_GROUP_ID_BASE = 2;
+    public const CATALOG_GROUP_ID_MOSCOW = 77;
 
     /**
      * @var bool
@@ -301,6 +318,14 @@ class Offer extends IblockElement
     protected $price = 0;
 
     /**
+     * @var Collection
+     * @Type("ArrayCollection<FourPaws\Catalog\Model\Price>")
+     * @Accessor(getter="getPrices")
+     * @Groups({"elastic"})
+     */
+    protected $prices;
+
+    /**
      * @var float
      * @Type("float")
      * @Groups({"elastic"})
@@ -314,11 +339,29 @@ class Offer extends IblockElement
     protected $isByRequest;
 
     /**
+     * @var bool
+     */
+    protected $isDeliverable;
+
+    /**
+     * @var bool
+     */
+    protected $isPickupAvailable;
+
+    /**
      * @Type("string")
      * @Groups({"elastic"})
      * @var string
      */
     protected $currency = '';
+
+    /**
+     * @var string
+     * @Type("string")
+     * @Groups({"elastic"})
+     * @Accessor(getter="getCatalogVatId", setter="withCatalogVatId")
+     */
+    protected $VAT_ID = '2';
 
     /**
      * @var CatalogProduct
@@ -411,12 +454,35 @@ class Offer extends IblockElement
     protected $share;
 
     /**
+     * Приоритетный процент начисленных бонусов от стоимости товара
+     * @var int
+     */
+    protected $bonusPercent;
+
+    /**
      * @var string
      * @Type("array<string>")
      * @Groups({"elastic"})
      * @Accessor(getter="getAvailableStores")
      */
     protected $availableStores = [];
+
+    /**
+     * @var array
+     * @Type("array")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_REGION_DISCOUNTS = [];
+
+    /**
+     * @var array|false
+     */
+    protected $regionDiscount;
+
+    /**
+     * @var int
+     */
+    protected $catalogGroupId;
 
     /**
      * Offer constructor.
@@ -433,6 +499,10 @@ class Offer extends IblockElement
 
         if (isset($fields['CATALOG_CURRENCY_2'])) {
             $this->currency = (string)$fields['CATALOG_CURRENCY_2'];
+        }
+
+        if (isset($fields['CATALOG_VAT'])) {
+            $this->VAT_ID = (string)$fields['CATALOG_VAT_ID'];
         }
     }
 
@@ -1186,6 +1256,25 @@ class Offer extends IblockElement
     }
 
     /**
+     * @return string
+     */
+    public function getCatalogVatId(): string
+    {
+        return $this->VAT_ID;
+    }
+
+    /**
+     * @param string $catalogVat
+     * @return Offer
+     */
+    public function withCatalogVatId(string $catalogVat): Offer
+    {
+        $this->VAT_ID = $catalogVat;
+
+        return $this;
+    }
+
+    /**
      * @return float
      */
     public function getDiscount(): float
@@ -1196,15 +1285,45 @@ class Offer extends IblockElement
     }
 
     /**
+     * Сумма начисляемых бонусов
+     *
      * @param int $percent
      * @param int $quantity
+     *
+     * @throws NotAuthorizedException
      *
      * @return float
      */
     public function getBonusCount(int $percent, int $quantity = 1): float
     {
         $result = 0;
-        if (!$this->isBonusExclude() && !$this->isShare()) {
+
+        if(null === $this->bonusPercent){
+            try{
+                /** @var UserService $userCurrentUserService*/
+                $userCurrentUserService = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+                $currentUser = $userCurrentUserService->getCurrentUser();
+
+                if($currentUser->isOpt() && $this->getProduct()->getBrand()->isBonusOpt()){
+                    $this->bonusPercent = BrandService::getBonusOptPercent();
+                }
+                else{
+                    $this->bonusPercent = 0;
+                }
+            } catch(NotAuthorizedException $e){
+                /** просто пропускаем */
+            }
+        }
+
+        if($this->bonusPercent > 0){
+            $percent = $this->bonusPercent;
+        }
+
+        if (
+            !$this->isBonusExclude()
+            && !$this->isShare()
+            && !$this->isRegionPrice()
+        ) {
             $result = $this->getPrice() * $quantity * $percent / 100;
         }
 
@@ -1293,6 +1412,9 @@ class Offer extends IblockElement
         return (int)$this->PROPERTY_CML2_LINK;
     }
 
+
+
+
     /**
      *
      *
@@ -1313,6 +1435,7 @@ class Offer extends IblockElement
 
     /**
      * Максимальное доступное для доставки количество товара в текущем местоположении
+     * @todo сейчас метод всегда возвращает либо 0 либо 1, а не действительное количество
      * @todo заменить getQuantity() на этот метод после оптимизации расчета доставок
      *
      * @return int
@@ -1334,6 +1457,55 @@ class Offer extends IblockElement
         }
 
         return $this->deliverableQuantity;
+    }
+
+
+    /**
+     * Доступность оффера для доставки в текущем регионе
+     *
+     * @return int
+     *
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     */
+    public function isDeliverable(): bool
+    {
+        if (null === $this->isDeliverable) {
+            $this->isDeliverable = ($this->getAvailableAmount('', DeliveryService::DELIVERY_CODES) > 0);
+        }
+
+        return $this->isDeliverable;
+    }
+
+    /**
+     * Доступность оффера для самовывоза в текущем регионе
+     *
+     * @return int
+     *
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     */
+    public function isPickupAvailable(): bool
+    {
+        if (null === $this->isPickupAvailable) {
+            $this->isPickupAvailable = ($this->getAvailableAmount('', DeliveryService::PICKUP_CODES) > 0);
+        }
+
+        return $this->isPickupAvailable;
     }
 
     /**
@@ -1370,6 +1542,7 @@ class Offer extends IblockElement
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws SystemException
      */
     public function getStocks(): StockCollection
     {
@@ -1415,6 +1588,10 @@ class Offer extends IblockElement
      */
     public function isSimpleDiscountAction(): bool
     {
+        $regionDiscount = $this->getCurrentRegionDiscount();
+        if($regionDiscount){
+            return $regionDiscount['cond_value'] > 0 && $regionDiscount['cond_for_action'] === self::SIMPLE_SHARE_DISCOUNT_CODE;
+        }
         return $this->PROPERTY_COND_VALUE > 0 && $this->PROPERTY_COND_FOR_ACTION === self::SIMPLE_SHARE_DISCOUNT_CODE;
     }
 
@@ -1423,7 +1600,22 @@ class Offer extends IblockElement
      */
     public function isSimpleSaleAction(): bool
     {
+        $regionDiscount = $this->getCurrentRegionDiscount();
+        if($regionDiscount){
+            return $regionDiscount['price_action'] > 0 && $regionDiscount['cond_for_action'] === self::SIMPLE_SHARE_SALE_CODE;
+        }
         return $this->PROPERTY_PRICE_ACTION > 0 && $this->PROPERTY_COND_FOR_ACTION === self::SIMPLE_SHARE_SALE_CODE;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasAction(): bool
+    {
+        /**
+         * @todo
+         */
+        return false;
     }
 
     /**
@@ -1598,29 +1790,60 @@ class Offer extends IblockElement
     }
 
     /**
+     * @return string
+     */
+    public function getCatalogGroupId(): ?string
+    {
+        /** @var CatalogGroupService $catalogGroupService */
+        $catalogGroupService = Application::getInstance()->getContainer()->get('catalog_group.service');
+        /** @var LocationService $locationService */
+        $locationService = Application::getInstance()->getContainer()->get('location.service');
+
+        if($catalogGroupId = $catalogGroupService->getCatalogGroupIdByRegion($locationService->getCurrentRegionCode())){
+            $this->catalogGroupId = $catalogGroupId;
+        } else {
+            $this->catalogGroupId = self::CATALOG_GROUP_ID_BASE;
+        }
+        return $this->catalogGroupId;
+    }
+
+    /**
+     * @param int $catalogGroupId
+     * @return Offer
+     */
+    public function withCatalogGroup(int $catalogGroupId): Offer
+    {
+        $this->catalogGroupId = $catalogGroupId;
+        return $this;
+    }
+
+    /**
      * @todo не использовать этот метод для расчета скидочных цен
      */
     protected function checkOptimalPriceTmp(): void
     {
-        if ($this->isCounted) {
-            return;
-        }
-
         /**
          * В эластике price индексируется с уже посчитанной скидкой,
-         * поэтому проводить расчеты ни к чемуу
+         * поэтому проводить расчеты ни к чему
+         * upd: цены зависят от региона
          */
-        if ($this->oldPrice) {
+        /*if ($this->oldPrice) {
             return;
+        }*/
+
+        /** @var Price $arPrice */
+        $arPrice = $this->getCurrentRegionPrice();
+
+        if($arPrice){
+            $oldPrice = $price = (float)$arPrice->getPrice();
+        } else{
+            $oldPrice = $price = $this->price;
         }
 
-        $price = $this->price;
-        $oldPrice = $this->price;
-
         if ($this->isSimpleSaleAction()) {
-            $price = (float)$this->PROPERTY_PRICE_ACTION;
+            $price = (float)$this->getPriceAction();
         } elseif ($this->isSimpleDiscountAction()) {
-            $price *= (100 - $this->PROPERTY_COND_VALUE) / 100;
+            $price *= (100 - $this->getCondValue()) / 100;
         }
 
         $this->withPrice($price)
@@ -1645,6 +1868,63 @@ class Offer extends IblockElement
         }
 
         return $name;
+    }
+
+    /**
+     * Возвращает доступное количество товара на складах
+     *
+     * @todo сделать рассчёт действительного количества, а не для 1 штуки
+     *
+     * @param bool $locationId : id местоположения
+     * @param int  $deliveryCodes : символьные коды служб доставки
+     *
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     * @return int
+     */
+    protected function getAvailableAmount(string $locationId = '', $deliveryCodes = []): int
+    {
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+        $deliveries = $deliveryService->getByLocation($locationId, $deliveryCodes);
+        $max = 0;
+        foreach ($deliveries as $delivery) {
+
+            // Из-за того, что здесь не передаётся количество оффера, максимальное количество не будет >1
+            $delivery->setStockResult($deliveryService->getStockResultForOffer($this, $delivery));
+
+            if ($delivery->isSuccess()) {
+                $availableAmount = $delivery->getStockResult()->getOrderable()->getAmount();
+                $max = $max > $availableAmount ? $max : $availableAmount;
+            }
+        }
+
+        return $max;
+    }
+
+    /**
+     * @return ArrayCollection
+     */
+    public function getPrices(): ?Collection
+    {
+        return $this->prices;
+    }
+
+    /**
+     * @param Collection $prices
+     * @return Offer
+     */
+    public function withPrices(Collection $prices): Offer
+    {
+        $this->prices = $prices;
+        return $this;
     }
 
     /**
@@ -1710,35 +1990,6 @@ class Offer extends IblockElement
         }
 
         $this->isCounted = true;
-    }
-
-    /**
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws LoaderException
-     * @throws NotFoundException
-     * @throws NotSupportedException
-     * @throws ObjectNotFoundException
-     * @throws StoreNotFoundException
-     * @return int
-     */
-    protected function getAvailableAmount(): int
-    {
-        /** @var DeliveryService $deliveryService */
-        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
-        $deliveries = $deliveryService->getByLocation();
-        $max = 0;
-        foreach ($deliveries as $delivery) {
-            $delivery->setStockResult($deliveryService->getStockResultForOffer($this, $delivery));
-            if ($delivery->isSuccess()) {
-                $availableAmount = $delivery->getStockResult()->getOrderable()->getAmount();
-                $max = $max > $availableAmount ? $max : $availableAmount;
-            }
-        }
-
-        return $max;
     }
 
     /**
@@ -1913,6 +2164,92 @@ class Offer extends IblockElement
     }
 
     /**
+     * Возможность "довоза" оффера в магазин (DC001 -> Rxxx)
+     *
+     * @param Store $store
+     * @return bool
+     * @throws \Exception
+     */
+    public function isAvailableForDelay(Store $store): bool
+    {
+        /** @var StoreService $storeService */
+        $storeService = Application::getInstance()->getContainer()->get('store.service');
+
+        if (
+            $this->getProduct()->isTransportOnlyRefrigerator()
+            || ($this->getProduct()->isLicenseRequired() && !$storeService->hasLicense($store) )
+        )
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @return array
+     */
+    public function getRegionDiscounts(): array
+    {
+        $this->PROPERTY_REGION_DISCOUNTS = \is_array($this->PROPERTY_REGION_DISCOUNTS) ? array_values($this->PROPERTY_REGION_DISCOUNTS) : [];
+        return $this->PROPERTY_REGION_DISCOUNTS;
+    }
+
+    /**
+     * @param array $regionDiscounts
+     * @return Offer
+     */
+    public function withRegionDiscounts(array $regionDiscounts): self
+    {
+        $regionDiscounts = array_filter(
+            $regionDiscounts,
+            function ($value) {
+                return $value && \is_array($value);
+            }
+        );
+        $this->PROPERTY_REGION_DISCOUNTS = $regionDiscounts;
+        return $this;
+    }
+
+    /**
+     * @return array|bool|false|null
+     * @throws ApplicationCreateException
+     */
+    public function getCurrentRegionDiscount()
+    {
+        /** @var LocationService $locationService */
+        $locationService = Application::getInstance()->getContainer()->get('location.service');
+        $this->regionDiscount = false;
+        if($regionDiscount = $this->getRegionDiscount($locationService->getCurrentRegionCode())){
+            $this->regionDiscount = $regionDiscount;
+        }
+        return $this->regionDiscount;
+    }
+
+    /**
+     * @param string $regionCode
+     * @return array|null
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function getRegionDiscount(string $regionCode): ?array
+    {
+        /** @var CatalogGroupService $catalogGroupService */
+        $catalogGroupService = Application::getInstance()->getContainer()->get('catalog_group.service');
+        $catalogGroupId = $catalogGroupService->getCatalogGroupIdByRegion($regionCode);
+        $regionDiscounts = $this->getRegionDiscounts();
+        foreach ($regionDiscounts as $discount) {
+            if ($catalogGroupId == $discount['id']) {
+                $regionDiscount = $discount;
+                break;
+            }
+        }
+
+        return $regionDiscount ?? $regionDiscount;
+    }
+
+    /**
      * Возвращает текст о наличии для карточки товара на сайте и в приложении
      * @return string
      * @throws ApplicationCreateException
@@ -1933,5 +2270,71 @@ class Offer extends IblockElement
     public function getPickupInfo()
     {
 
+    }
+
+    /**
+     * @return float|null
+     */
+    public function getPriceAction(): ?float
+    {
+        $regionDiscount = $this->getCurrentRegionDiscount();
+        if($regionDiscount){
+            return $regionDiscount['price_action'];
+        }
+        return $this->PROPERTY_PRICE_ACTION;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getCondValue(): ?int
+    {
+        $regionDiscount = $this->getCurrentRegionDiscount();
+        if($regionDiscount){
+            return $regionDiscount['cond_value'];
+        }
+        return $this->PROPERTY_COND_VALUE;
+    }
+
+    /**
+     * @param int $groupId
+     * @return Price|null
+     */
+    public function getPriceByGroupId(int $groupId): ?Price
+    {
+        if (!$this->getPrices()) {
+            return null;
+        }
+
+        $price = $this->getPrices()->filter(function ($price) use ($groupId) {
+            /** @var Price $price */
+            return $price->getCatalogGroupId() == $groupId;
+        });
+
+        if ($price->isEmpty()) {
+            $price = $this->getPrices()->filter(function ($price) {
+                /** @var Price $price */
+                return $price->getCatalogGroupId() == self::CATALOG_GROUP_ID_BASE;
+            });
+        }
+
+        return $price->first();
+    }
+
+    /**
+     * @return Price|null
+     */
+    public function getCurrentRegionPrice(): ?Price
+    {
+        return $this->getPriceByGroupId($this->getCatalogGroupId());
+    }
+
+    /**
+     * @return bool
+     */
+    public function isRegionPrice(): bool
+    {
+        return (null !== $this->getCurrentRegionPrice())
+            && !in_array($this->getCurrentRegionPrice()->getCatalogGroupId(), [self::CATALOG_GROUP_ID_BASE, self::CATALOG_GROUP_ID_MOSCOW]);
     }
 }

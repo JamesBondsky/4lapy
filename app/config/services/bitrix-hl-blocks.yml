@@ -58,6 +58,10 @@ services:
     arguments: ['DeliverySchedule']
     parent: bx.hlblock.base
 
+  bx.hlblock.deliveryschedule.tpz:
+    arguments: ['DeliveryScheduleTpz']
+    parent: bx.hlblock.base
+
   bx.hlblock.deliveryscheduleresult:
     arguments: ['DeliveryScheduleResult']
     parent: bx.hlblock.base
@@ -76,6 +80,10 @@ services:
 
   bx.hlblock.clothingsizeselection:
     arguments: ['ClothingSizeSelection']
+    parent: bx.hlblock.base
+
+  bx.hlblock.coupon:
+    arguments: ['Coupon']
     parent: bx.hlblock.base
 
   # Свойства продукта

@@ -49,6 +49,7 @@ use SplObjectStorage;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 
 
 /**
@@ -188,6 +189,9 @@ class FastOrderController extends Controller
             }
         }
 
+        // Актуализация остатков
+        $this->basketService->getBasket(true);
+
         global $APPLICATION;
         ob_start();
         $APPLICATION->IncludeComponent(
@@ -258,7 +262,7 @@ class FastOrderController extends Controller
                                                ->fetch()['ID'])
             ->setDeliveryId(DeliveryTable::query()
                                          ->setSelect(['ID'])
-                                         ->setFilter(['CODE' => '4lapy_pickup'])
+                                         ->setFilter(['CODE' => DeliveryService::INNER_DELIVERY_CODE])
                                          ->setCacheTtl(360000)
                                          ->exec()
                                          ->fetch()['ID'])

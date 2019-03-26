@@ -57,7 +57,7 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
     <?php
     $asset = Asset::getInstance();
     $asset->addCss($markup->getCssFile());
-    $asset->addJs('//api-maps.yandex.ru/2.1/?apikey=ad666cd3-80be-4111-af2d-209dddf2c55e&lang=ru_RU');
+    $asset->addJs('//api-maps.yandex.ru/2.1/?apikey=ad666cd3-80be-4111-af2d-209dddf2c55e&lang=ru_RU&load=package.full');
     //$asset->addJs('/api-maps.yandex.ru.js');
     $asset->addJs('https://www.google.com/recaptcha/api.js?hl=ru');
 
@@ -90,6 +90,7 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
 <?php $APPLICATION->ShowPanel(); ?>
 
 <header class="b-header <?= $template->getHeaderClass() ?> js-header">
+    <?php require_once __DIR__ . '/blocks/header/promo_top_acarid.php' ?>
     <?php
     $APPLICATION->IncludeComponent('articul:header.mobile.bunner',
         '',

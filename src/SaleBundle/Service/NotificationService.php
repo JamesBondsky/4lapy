@@ -245,6 +245,9 @@ class NotificationService implements LoggerAwareInterface
             case $parameters['deliveryCode'] === DeliveryService::DPD_PICKUP_CODE:
                 $smsTemplate = 'FourPawsSaleBundle:Sms:order.new.delivery.dpd.html.php';
                 break;
+            case $parameters['deliveryCode'] === DeliveryService::DELIVERY_DOSTAVISTA_CODE:
+                $smsTemplate = 'FourPawsSaleBundle:Sms:order.new.delivery.dostavista.html.php';
+                break;
         }
 
         if ($smsTemplate) {

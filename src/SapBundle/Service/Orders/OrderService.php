@@ -1,12 +1,9 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
-
 namespace FourPaws\SapBundle\Service\Orders;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Catalog\Product\Basket as CatalogBasket;
@@ -31,12 +28,14 @@ use Bitrix\Sale\Shipment;
 use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
+use FourPaws\App\Application;
 use FourPaws\App\Env;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\External\Dostavista\Model\CancelOrder;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\PhoneHelper;
@@ -70,6 +69,8 @@ use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
+
+
 
 /**
  * Class OrderService
@@ -253,6 +254,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $this->populateOrderDtoPayment($orderDto, $order->getPaymentCollection());
         $this->populateOrderDtoDelivery($orderDto, $order);
         $this->populateOrderDtoProducts($orderDto, $order);
+        $this->populateOrderDtoCouponNumber($orderDto, $order);
 
         $xml = $this->serializer->serialize($orderDto, 'xml');
 
@@ -503,7 +505,16 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             }
 
             $offer->setQuantity($quantity);
-            $offer->setChargeBonus((bool)$hasBonus);
+            $isPseudoActionPropValue = $this->getBasketPropertyValueByCode($basketItem, 'IS_PSEUDO_ACTION');
+            $isPseudoAction = BitrixUtils::BX_BOOL_TRUE === $isPseudoActionPropValue;
+            if ($isPseudoAction)
+            {
+                $offer->setChargeBonus(true);
+            }
+            else
+            {
+                $offer->setChargeBonus((bool)$hasBonus);
+            }
             $offer->setPosition($position);
             $collection->add($offer);
             $position++;
@@ -512,6 +523,20 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $this->addBasketDeliveryItem($order, $collection);
 
         $orderDto->setProducts($collection);
+    }
+
+    /**
+     * @param OrderDtoOut $orderDto
+     * @param Order $order
+     */
+    public function populateOrderDtoCouponNumber(OrderDtoOut $orderDto, Order $order)
+    {
+        $propertyCollection = $order->getPropertyCollection();
+        $promocode = BxCollection::getOrderPropertyByCode($propertyCollection, 'PROMOCODE');
+        if ($promocode && ($promocodeValue = $promocode->getValue()) && strpos($promocodeValue, 's') === 0)
+        {
+            $orderDto->setCouponNumber($promocodeValue);
+        }
     }
 
     /**
@@ -613,6 +638,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 break;
             case DeliveryService::DPD_PICKUP_CODE:
                 return SapOrder::DELIVERY_TYPE_CONTRACTOR . '_' . SapOrder::DELIVERY_TYPE_CONTRACTOR_PICKUP;
+                break;
+            case DeliveryService::DELIVERY_DOSTAVISTA_CODE:
+                return SapOrder::DELIVERY_TYPE_DOSTAVISTA;
                 break;
             default:
                 switch ($deliveryZone) {
@@ -825,6 +853,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                                      ->getDeliveryPointCode())
                     ? DeliveryService::DPD_PICKUP_CODE
                     : DeliveryService::DPD_DELIVERY_CODE;
+                break;
+            case SapOrder::DELIVERY_TYPE_DOSTAVISTA:
+                $deliveryCode = DeliveryService::DELIVERY_DOSTAVISTA_CODE;
+                break;
         }
 
 
@@ -1046,14 +1078,12 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     }
 
     /**
-     * @param Order      $order
+     * @param Order $order
      * @param OrderDtoIn $orderDto
      *
-     * @throws NotFoundOrderShipmentException
-     * @throws NotFoundOrderStatusException
-     * @throws ArgumentException
      * @return string
-     *
+     * @throws ArgumentException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     private function setStatusFromDto(Order $order, OrderDtoIn $orderDto): string
     {
@@ -1077,6 +1107,34 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 'STATUS_ID',
                 $this->statusService->getStatusBySapStatus($deliveryCode, $orderDto->getStatus())
             );
+            $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+            if ($deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
+                /** @var OrderService $locationService */
+                $dostavistaService = Application::getInstance()->getContainer()->get('dostavista.service');
+                $dostavistaStatus = StatusService::STATUS_SITE_DOSTAVISTA_MAP[$orderDto->getStatus()];
+                if ($dostavistaStatus == StatusService::STATUS_SITE_DOSTAVISTA_MAP[6]) {
+                    foreach ($order->getPropertyCollection() as $item) {
+                        if ($item->getProperty()['CODE'] == 'ORDER_ID_DOSTAVISTA') {
+                            $dostavistaOrder = $item->getValue();
+                            break;
+                        }
+                    }
+                    if ($dostavistaOrder) {
+                        $cancelOrder = new CancelOrder();
+                        $cancelOrder->bitrixOrderId = $order->getId();
+                        $cancelOrder->dostavistaOrderId = $dostavistaOrder;
+                        $dostavistaService->dostavistaOrderCancel($cancelOrder);
+                    } else {
+                        $this->log()
+                            ->error(
+                                \sprintf(
+                                    'Номер заказа для достависты заказа %s не найден.',
+                                    $order->getId()
+                                )
+                            );
+                    }
+                }
+            }
         }
 
         return $status;
@@ -1148,7 +1206,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             $deliveryShipmentPoint = $deliveryPlaceCode;
             if (\in_array($this->getDeliveryTypeCode($order), [
                 SapOrder::DELIVERY_TYPE_PICKUP_POSTPONE,
-                SapOrder::DELIVERY_TYPE_COURIER_SHOP
+                SapOrder::DELIVERY_TYPE_COURIER_SHOP,
+                SapOrder::DELIVERY_TYPE_DOSTAVISTA
             ], true)
             ) {
                 $deliveryShipmentPoint = '';

@@ -371,4 +371,33 @@ class Address
 
         return implode(', ', $result);
     }
+
+    /**
+     * @return string
+     */
+    public function toStringExt(): string
+    {
+        $map = [
+            ['value' => $this->region, 'prefix' => ''],
+            ['value' => $this->area, 'prefix' => ''],
+            ['value' => $this->city, 'prefix' => ''],
+            ['value' => $this->street, 'prefix' => $this->streetPrefix ?: ''],
+            ['value' => $this->house, 'prefix' => 'д'],
+            ['value' => preg_replace('/[^0-9a-zA-Z_\s-]/', '', $this->housing), 'prefix' => 'стр'],
+            ['value' => $this->entrance, 'prefix' => 'подъезд'],
+            ['value' => $this->floor, 'prefix' => 'этаж'],
+            ['value' => $this->flat, 'prefix' => 'кв.'],
+            ['value' => $this->intercomCode, 'prefix' => 'код домофона']
+        ];
+
+        $result = \array_filter(\array_map(function ($item) {
+            $result = '';
+            if ($item['value']) {
+                $result = $item['prefix'] ? $item['prefix'] . ' ' . $item['value'] : $item['value'];
+            }
+            return $result;
+        }, $map));
+
+        return implode(', ', $result);
+    }
 }

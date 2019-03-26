@@ -298,6 +298,16 @@ class Store extends Base
     protected $deliveryTime = 1;
 
     /**
+     * Является магазином для экспресс доставки
+     *
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("UF_AVAILABLE_EXPRESS")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $isExpressStore = 1;
+
+    /**
      * @var array
      * @Serializer\Type("array_or_false")
      * @Serializer\SerializedName("UF_SHIPMENT_TILL_11")
@@ -325,6 +335,16 @@ class Store extends Base
      * @var string
      */
     protected $scheduleString;
+
+    /**
+     * Время до которого можно оформить заказ
+     *
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_STORE_ORDER_TIME")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $storeOrderTime = '00:00:00';
 
     /**
      * @return int
@@ -1070,6 +1090,45 @@ class Store extends Base
     public function setScheduleString(string $scheduleString): Store
     {
         $this->scheduleString = $scheduleString;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isExpressStore(): bool
+    {
+        return ($this->isExpressStore === true) ? $this->isExpressStore : false;
+    }
+
+    /**
+     * @param bool $isExpressStore
+     * @return Store
+     */
+    public function setIsExpressStore(bool $isExpressStore): Store
+    {
+        $this->isExpressStore = $isExpressStore;
+
+        return $this;
+    }
+
+
+    /**
+     * @return string
+     */
+    public function getStoreOrderTime(): string
+    {
+        return $this->storeOrderTime;
+    }
+
+    /**
+     * @param string $storeOrderTime
+     * @return Store
+     */
+    public function setStoreOrderTime(string $storeOrderTime): Store
+    {
+        $this->storeOrderTime = $storeOrderTime;
+
         return $this;
     }
 }

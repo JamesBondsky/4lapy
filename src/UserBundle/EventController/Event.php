@@ -6,7 +6,9 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\main\Application as BitrixApplication;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\GroupTable;
+use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application as App;
+use FourPaws\App\Application;
 use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\MainTemplate;
@@ -16,6 +18,8 @@ use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\LocationBundle\LocationService;
+use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -45,6 +49,7 @@ class Event extends BaseServiceHandler
     public const GROUP_ADMIN = 1;
     public const GROUP_TECHNICAL_USERS = 8;
     public const GROUP_FRONT_OFFICE_USERS = 28;
+    public const GROUP_OPERATORS = 29;
 
     protected static $isEventsDisable = false;
 
@@ -103,6 +108,11 @@ class Event extends BaseServiceHandler
         static::initHandlerCompatible('OnAfterUserLogin', [self::class, 'clearUserCache'], 'main');
         static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'clearUserCache'], 'main');
 
+        /** асинхронное получение заказов пользователя при авторизации */
+        static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'getUserOrdersFromManzana'], 'main');
+        static::initHandlerCompatible('OnAfterUserLogin', [self::class, 'getUserOrdersFromManzana'], 'main');
+        static::initHandlerCompatible('OnAfterUserLoginByHash', [self::class, 'getUserOrdersFromManzana'], 'main');
+
         /** действия при авторизации(обновление группы оптовиков, обновление карты) */
         static::initHandlerCompatible('OnAfterUserAuthorize', [self::class, 'refreshUserOnAuth'], 'main');
         static::initHandlerCompatible('OnAfterUserLogin', [self::class, 'refreshUserOnAuth'], 'main');
@@ -119,6 +129,29 @@ class Event extends BaseServiceHandler
         static::initHandlerCompatible('OnFindSocialservicesUser', [self::class, 'findSocialServicesUser'],
             'socialservices');
 
+        /** проставление группы правила работы с корзиной */
+        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'updateBasketRuleGroup'], 'main');
+
+        /** при смене города */
+        static::initHandlerCompatible('OnCityChange', [self::class, 'updateBasketDiscountProperties'], 'main');
+
+    }
+
+    /**
+     * @param array $city
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     */
+    public static function updateBasketDiscountProperties(array $city)
+    {
+        /** @var LocationService $locationService */
+        $locationService = Application::getInstance()->getContainer()->get('location.service');
+        $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
+
+        $regionCode = $locationService->getRegionCode($city['CODE']);
+        foreach ($basketService->getBasket() as $basketItem) {
+            $basketService->updateRegionDiscountForBasketItem($basketItem, $regionCode);
+        }
     }
 
     /**
@@ -546,5 +579,86 @@ class Event extends BaseServiceHandler
         } else {
             $USER->SetUserGroupArray([$result[UserGroup::NOT_AUTH_CODE]]);
         }
+    }
+
+    /**
+     *
+     */
+    public static function getUserOrdersFromManzana(): void
+    {
+        if (self::$isEventsDisable) {
+            return;
+        }
+
+        global $DB;
+
+        $userImportTimeLimit = '2 hour'; // ограничение по частоте импорта заказов пользователя
+
+        /** @var \FourPaws\UserBundle\Service\UserService $userService */
+        $userService = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+        if ($userService->isAuthorized())
+        {
+            try
+            {
+                $user = $userService->getUserRepository()->find($userService->getCurrentUserId());
+
+                if ($user)
+                {
+                    $lastManzanaImportDateTime = $user->getManzanaImportDateTime();
+                    if (!$lastManzanaImportDateTime || $DB->CompareDates($lastManzanaImportDateTime, (new DateTime())->add('- ' . $userImportTimeLimit)) < 0)
+                    {
+                        /** @var ManzanaService $manzanaService */
+                        $manzanaService = Application::getInstance()->getContainer()->get('manzana.service');
+                        $manzanaService->importUserOrdersAsync($user);
+                    }
+                }
+            } catch (\Exception $e) {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('failed to get user\'s orders from Manzana: ' . $e->getMessage());
+            }
+        }
+    }
+
+    public function updateBasketRuleGroup(Array &$arFields): bool
+    {
+        if (empty($arFields['GROUP_ID'])) {
+            return true;
+        }
+
+        $groups = (new BitrixCache())
+            ->withTime(31536000)// 1 год
+            ->withTag('basketRulesAndVIPGroupId')
+            ->resultOf(
+                function () {
+                    $result = GroupTable::getList([
+                        'filter' => ['=STRING_ID' => [UserGroup::BASKET_RULES, UserGroup::OPT_CODE]],
+                        'select' => ['ID', 'CODE' => 'STRING_ID'],
+                    ]);
+                    $groups = $result->fetchAll();
+                    return array_flip(array_combine(array_column($groups, 'ID'), array_column($groups, 'CODE')));
+                }
+            );
+
+        $groupIds = array_combine(array_column($arFields['GROUP_ID'], 'GROUP_ID'), array_column($arFields['GROUP_ID'], 'GROUP_ID'));
+
+        // Не трогаем эти группы
+        if ($groupIds[self::GROUP_FRONT_OFFICE_USERS] || $groupIds[self::GROUP_OPERATORS]) {
+            return true;
+        }
+
+        // Если стоит Избранное + Правила работы с корзиной, то последнюю убираем
+        if ($groupIds[$groups[UserGroup::OPT_CODE]] && $groupIds[$groups[UserGroup::BASKET_RULES]]) {
+            $arFields['GROUP_ID'] = array_filter($arFields['GROUP_ID'], function ($elem) use ($groupIds, $groups) {
+                return $elem['GROUP_ID'] != $groupIds[$groups[UserGroup::BASKET_RULES]];
+            });
+        } else if (!$groupIds[$groups[UserGroup::OPT_CODE]] && !$groupIds[$groups[UserGroup::BASKET_RULES]]) {
+            $arFields['GROUP_ID'][] = [
+                'GROUP_ID' => $groups[UserGroup::BASKET_RULES],
+                'DATE_ACTIVE_FROM' => "",
+                'DATE_ACTIVE_TO' => "",
+            ];
+        }
+
+        return true;
     }
 }

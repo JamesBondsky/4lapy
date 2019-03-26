@@ -63,6 +63,8 @@ class LocationService
 
     public const TYPE_VILLAGE = 'VILLAGE';
 
+    public const TYPE_DISTRICT = 'DISTRICT';
+
     public const TYPE_SUBREGION = 'SUBREGION';
 
     public const TYPE_REGION = 'REGION';
@@ -566,11 +568,18 @@ class LocationService
     public function findLocationByExtService(string $code, $value): array
     {
         $res = [];
-        $value = substr($value, 0 ,11);
+        $valueExt = substr($value, 0, 11);
         $locations = ExternalTable::query()
             ->setOrder(['LOCATION.DEPTH_LEVEL'])
-            ->where('SERVICE_ID', $this->getExternalServiceIdByCode($code))
-            ->where('XML_ID', $value)
+            ->where(Query::filter()
+                ->logic('and')
+                ->where('SERVICE_ID', $this->getExternalServiceIdByCode($code))
+                ->where(Query::filter()
+                    ->logic('or')
+                    ->where('XML_ID', $value)
+                    ->where('XML_ID', $valueExt)
+                )
+            )
             ->setSelect(['LOCATION_ID'])
             ->exec()
             ->fetchAll();
@@ -691,6 +700,7 @@ class LocationService
             'TYPE.CODE'                 => [
                 static::TYPE_CITY,
                 static::TYPE_VILLAGE,
+                static::TYPE_DISTRICT,
             ],
         ];
         if ($parentName !== null && !empty($parentName)) {
@@ -736,7 +746,7 @@ class LocationService
             if (!isset($this->locationsByCode[$code])) {
                 $this->locationsByCode[$code] = reset($this->findLocationNew([
                     '=CODE'     => $code,
-                    'TYPE.CODE' => [static::TYPE_CITY, static::TYPE_VILLAGE],
+                    'TYPE.CODE' => [static::TYPE_CITY, static::TYPE_VILLAGE, static::TYPE_DISTRICT],
                 ]));
             }
             if (!empty($this->locationsByCode[$code]) && !\is_bool($this->locationsByCode[$code])) {

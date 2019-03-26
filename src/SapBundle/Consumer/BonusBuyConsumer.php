@@ -6,10 +6,8 @@
 
 namespace FourPaws\SapBundle\Consumer;
 
-use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\SapBundle\Dto\In\Shares\BonusBuy;
 use FourPaws\SapBundle\Service\Shares\SharesService;
-use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 
 /**
@@ -17,9 +15,8 @@ use RuntimeException;
  *
  * @package FourPaws\SapBundle\Consumer
  */
-class BonusBuyConsumer implements ConsumerInterface, LoggerAwareInterface
+class BonusBuyConsumer extends SapConsumerBase
 {
-    use LazyLoggerAwareTrait;
     /**
      * @var SharesService
      */
@@ -52,7 +49,7 @@ class BonusBuyConsumer implements ConsumerInterface, LoggerAwareInterface
             try {
                 $success = true;
 
-                $this->sharesService->import($data);
+                $this->sharesService->import($data, $success);
             } catch (\Exception $e) {
                 $success = false;
 

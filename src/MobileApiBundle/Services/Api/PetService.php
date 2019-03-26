@@ -82,7 +82,9 @@ class PetService
     {
         $result = [];
 
-        $types = $this->appPetService->getPetTypes();
+        $types = $this->appPetService->getPetTypes([
+            'UF_USE_BY_PET' => 1
+        ]);
         $genders = [];
         foreach ($this->appPetService->getGenders() as $gender) {
             /** @var UserFieldEnumValue $gender */

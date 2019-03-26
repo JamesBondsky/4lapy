@@ -156,6 +156,7 @@ class Order
      * 06 – Курьерская доставка из магазина;
      * 07 – Доставка внешним подрядчиком (курьер или самовывоз из пункта выдачи заказов);
      * 08 – РЦ – магазин – домой.
+     * 09 – Достависта
      *
      * @Serializer\XmlAttribute()
      * @Serializer\SerializedName("DeliveryType")
@@ -376,6 +377,18 @@ class Order
      * @var null|DeliveryAddress
      */
     protected $deliveryAddress;
+
+    /**
+     * Номер купона
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\SerializedName("CouponNumber")
+     * @Serializer\Type("string")
+     *
+     * @var string
+     */
+    protected $couponNumber;
 
     /**
      * @return string
@@ -913,6 +926,26 @@ class Order
     public function setAvatarDepartment(string $avatarDepartment): Order
     {
         $this->avatarDepartment = $avatarDepartment;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCouponNumber(): string
+    {
+        return $this->couponNumber;
+    }
+
+    /**
+     * @param string $couponNumber
+     *
+     * @return Order
+     */
+    public function setCouponNumber(string $couponNumber): Order
+    {
+        $this->couponNumber = $couponNumber;
 
         return $this;
     }

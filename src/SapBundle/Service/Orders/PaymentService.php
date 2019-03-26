@@ -367,6 +367,7 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
             SapOrder::DELIVERY_ZONE_4_ARTICLE,
             SapOrder::DELIVERY_ZONE_5_ARTICLE,
             SapOrder::DELIVERY_ZONE_6_ARTICLE,
+            SapOrder::DELIVERY_ZONE_MOSCOW_ARTICLE,
         ];
 
         return \in_array((string)$item->getOfferXmlId(), $deliveryArticles, true);

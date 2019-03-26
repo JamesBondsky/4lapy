@@ -18,6 +18,7 @@ use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Exception\SberbankOrderNotFoundException;
 use FourPaws\SaleBundle\Exception\SberbankOrderNotPaidException;
 use FourPaws\SaleBundle\Exception\SberbankOrderPaymentDeclinedException;
+use FourPaws\SaleBundle\Exception\SberbankPaymentException;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\PaymentService;
 use Psr\Log\LoggerAwareInterface;
@@ -38,6 +39,11 @@ class OrderPaySystemChange extends Command implements LoggerAwareInterface
     protected const OPT_MAX_TIME = 'max';
 
     protected const OPT_TIME = 'time';
+
+    /**
+     * @var array $logData
+     */
+    protected $logData;
 
     /**
      * @var OrderService
@@ -106,6 +112,11 @@ class OrderPaySystemChange extends Command implements LoggerAwareInterface
             '!ORDER_PAYMENT.PAID' => 'Y',
         ];
 
+        $this->logData = [
+            'CHECK_FROM' => $date->format('d.m.Y H:i:s'),
+            'CHECK_TO' => $maxDate->format('d.m.Y H:i:s')
+        ];
+
         $orders = OrderTable::query()->setSelect(['ID', 'ACCOUNT_NUMBER'])
             ->setFilter($filter)
             ->registerRuntimeField(
@@ -135,16 +146,15 @@ class OrderPaySystemChange extends Command implements LoggerAwareInterface
                 continue;
             }
 
+            $this->logData['ORDER_CREATE'] = $saleOrder->getDateInsert()->format('d.m.Y H:i:s');
+
             try {
                 try {
                     $this->paymentService->processOnlinePaymentByOrderNumber($saleOrder);
-                    $this->log()->info(sprintf('Processed online payment for order: %s', $saleOrder->getId()));
-                } catch (SberbankOrderNotPaidException $e) {
-                    // заказ еще можно оплатить
-                    continue;
-                } catch (SberbankOrderNotFoundException|SberbankOrderPaymentDeclinedException $e) {
+                    $this->log()->info(sprintf('Processed online payment for order: %s', $saleOrder->getId()), $this->logData);
+                } catch (SberbankOrderNotFoundException|SberbankOrderPaymentDeclinedException|SberbankPaymentException|SberbankOrderNotPaidException $e) {
                     $this->paymentService->processOnlinePaymentError($saleOrder);
-                    $this->log()->info(sprintf('Changed payment system for order: %s', $saleOrder->getId()));
+                    $this->log()->info(sprintf('Changed payment system for order: %s', $saleOrder->getId()), $this->logData);
                 }
             } catch (\Exception $e) {
                 $this->log()->error(

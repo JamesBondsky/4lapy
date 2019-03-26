@@ -17,9 +17,11 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\DeliveryScheduleResult;
 use FourPaws\DeliveryBundle\Entity\StockResult;
+use FourPaws\DeliveryBundle\Exception\DostavistaDeliveryException;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Collection\DeliveryScheduleResultCollection;
 use FourPaws\DeliveryBundle\Service\DeliveryScheduleResultService;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\StoreBundle\Collection\ScheduleResultCollection;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -132,7 +134,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             $this->doCalculateDeliveryDate();
             $this->doCalculatePeriod();
         }
-
         return $this->deliveryDate;
     }
 
@@ -326,6 +327,16 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      */
     protected function doCalculateDeliveryDate(): void
     {
+        /*$start = microtime(true);
+        $setTime = function() use (&$start){
+            $start = microtime(true);
+        };
+        $getTime = function() use ($start, $setTime){
+            $setTime();
+            return ($start - microtime(true).' сек');
+        };*/
+
+            
         $date = clone $this->getCurrentDate();
         $this->deliveryDate = $date;
 

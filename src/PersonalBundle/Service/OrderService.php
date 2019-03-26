@@ -12,6 +12,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\ArgumentTypeException;
+use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectException;
@@ -22,6 +23,7 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\Services\Table as SaleDeliveryServiceTable;
+use Bitrix\Sale\Internals\OrderPropsValueTable;
 use Bitrix\Sale\Internals\OrderTable;
 use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order as BitrixOrder;
@@ -65,6 +67,7 @@ use FourPaws\PersonalBundle\Exception\ManzanaOrder\OrderAlreadyExistsException;
 use FourPaws\PersonalBundle\Exception\ManzanaOrder\OrderCreateException;
 use FourPaws\PersonalBundle\Repository\OrderRepository;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
+use FourPaws\SaleBundle\EventController\Event;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Repository\OrderStatusRepository;
 use FourPaws\StoreBundle\Entity\Store;
@@ -72,6 +75,7 @@ use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -86,13 +90,13 @@ class OrderService
     public const ORDER_PAGE_LIMIT = 10;
 
     public const STATUS_FINAL = [
-        'G',
-        'J',
+        'G', // Заказ выполнен
+        'J', // Оплачен(Доставлен)
     ];
 
     public const STATUS_CANCEL = [
-        'A',
-        'K',
+        'A', // Отменен
+        'K', // Отменен
     ];
 
     protected const MANZANA_FINAL_STATUS = 'G';
@@ -170,6 +174,8 @@ class OrderService
      * @throws ServiceNotFoundException
      * @throws SystemException
      * @throws \Exception
+     *
+     * @deprecated use \FourPaws\PersonalBundle\Service\OrderService::importOrdersFromManzana() instead
      */
     public function loadManzanaOrders(User $user, int $page = 1, int $limit = 20): void
     {
@@ -228,6 +234,137 @@ class OrderService
                 }
             }
         }
+
+        $user->setManzanaImportDateTime(new DateTime());
+        App::getInstance()->getContainer()->get(UserRepository::class)->update($user);
+    }
+
+	/**
+	 * @param User $user
+	 * @throws \Exception
+	 */
+    public function importOrdersFromManzana(User $user): void
+    {
+        $contactId = $this->manzanaService->getContactByUser($user)->contactId;
+        $deliveryId = $this->deliveryService->getDeliveryIdByCode(DeliveryService::INNER_PICKUP_CODE);
+
+        $cheques = $this->manzanaService->getCheques($contactId);
+
+        $existingManzanaOrders = $this->getSiteManzanaOrders($user->getId());
+
+        $oldOrderNumbers = [];
+        /** @var Cheque $cheque */
+        foreach ($cheques as $cheque)
+        {
+            if (substr($cheque->chequeNumber, -3) === 'NEW')
+            {
+                $oldOrderNumbers[$cheque->chequeNumber] = substr($cheque->chequeNumber, 0, -3);
+            }
+        }
+
+        $oldOrders = OrderTable::getList([
+            'select' => [
+                'ID',
+                'ACCOUNT_NUMBER',
+                'MANZANA_NUMBER' => 'PROPERTY.VALUE',
+            ],
+            'filter' => [
+                'ACCOUNT_NUMBER' => $oldOrderNumbers,
+            ],
+            'runtime' => [
+                'PROPERTY' => [
+                    'data_type' => OrderPropsValueTable::class,
+                    'reference' => [
+                        '=this.ID' => 'ref.ORDER_ID',
+                        '=ref.CODE' => new SqlExpression('?', 'MANZANA_NUMBER'),
+                    ],
+                    'join_type' => 'left',
+                ],
+            ],
+        ])->fetchAll();
+
+        $oldOrdersIds = [];
+        foreach ($oldOrders as $order)
+        {
+            $oldOrdersIds[$order['ACCOUNT_NUMBER']] = [
+                'ID' => $order['ID'],
+                'MANZANA_NUMBER' => $order['MANZANA_NUMBER'],
+                'ACCOUNT_NUMBER' => $order['ACCOUNT_NUMBER'],
+
+            ];
+        }
+
+        /** @var Cheque $cheque */
+        foreach ($cheques as $cheque) {
+            if ($cheque->operationTypeCode === Cheque::OPERATION_TYPE_RETURN) {
+                continue;
+            }
+
+            /**
+             * Прекращение обработки, если заказ уже был импортирован из Manzana (и старый вариант, когда
+             * создавался дубликат заказа, и новый вариант, когда номер чека указывается в исходном заказе)
+             */
+            if (\in_array($cheque->chequeNumber, $existingManzanaOrders, true)) {
+                continue;
+            }
+
+            if (!$cheque->hasItemsBool()) {
+                continue;
+            }
+
+            try {
+                $items = $this->getItemsByCheque($cheque);
+            } /** @noinspection PhpRedundantCatchClauseInspection */ catch (ManzanaChequeItemExceptionInterface $e) {
+                continue;
+            }
+
+            /**
+             * Если исходный заказ есть на сайте, то обновление этого заказа данными из Manzana. В исходном заказе
+             * проставляется ID чека из Manzana и при необходимости обновляется статус и состав товаров
+             */
+            $oldOrder = $oldOrdersIds[$oldOrderNumbers[$cheque->chequeNumber]];
+            if ($oldOrder['ID'] && !$oldOrder['MANZANA_NUMBER']) {
+                try {
+                    $this->updateOrderFromManzana($oldOrder['ID'], $cheque, $items);
+                } catch (\Exception $e) {
+                    LoggerFactory::create('manzanaOrder')->error(sprintf('failed to update order. Order id: %s. %s', $oldOrder['ID'], $e->getMessage()));
+                }
+                continue;
+            }
+
+
+            /** @var \DateTimeImmutable $date */
+            $date = $cheque->date;
+            $bitrixDate = DateTime::createFromTimestamp($date->getTimestamp());
+            $currentDate = new DateTime();
+            $order = (new Order())
+                ->setDateInsert($bitrixDate)
+                ->setDatePayed($bitrixDate)
+                ->setDateStatus($bitrixDate)
+                ->setDateUpdate($currentDate)
+                ->setManzana(true)
+                ->setUserId($user->getId())
+                ->setPayed(true)
+                ->setStatusId(static::MANZANA_FINAL_STATUS)
+                ->setPrice($cheque->sum)
+                ->setItemsSum($cheque->sum)
+                ->setManzanaId($cheque->chequeNumber)
+                ->setPaySystemId(PaySystemActionTable::query()->setFilter(['CODE' => 'cash'])
+                    ->setSelect(['PAY_SYSTEM_ID'])->exec()
+                    ->fetch()['PAY_SYSTEM_ID'])
+                ->setDeliveryId($deliveryId);
+
+            $order->setItems(new ArrayCollection($items));
+
+            try {
+                $this->addManzanaOrder($order);
+            } /** @noinspection PhpRedundantCatchClauseInspection */ catch (ManzanaOrderExceptionInterface $e) {
+            }
+        }
+
+        $user->setManzanaImportDateTime(new DateTime());
+
+        App::getInstance()->getContainer()->get(UserRepository::class)->update($user);
     }
 
     /**
@@ -617,32 +754,12 @@ class OrderService
         $bitrixOrder->setFieldNoDemand('DATE_PAYED', $order->getDateInsert());
         $bitrixOrder->setFieldNoDemand('DATE_STATUS', $order->getDateInsert());
 
+        $items = $order->getItems();
         /** @var Basket $orderBasket */
-        $orderBasket = Basket::create(SITE_ID);
-        /** @var OrderItem $item */
-        $allBonuses = 0;
-        $offerIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS);
-
-        /** @var OrderItem $item */
-        foreach ($order->getItems() as $item) {
-            $productId = $item->getProductId();
-            $basketItem = $orderBasket->createItem('catalog', $productId);
-            $basketItem->setFields([
-                'PRICE'                  => $item->getPrice(),
-                'BASE_PRICE'             => $item->getBasePrice(),
-                'CUSTOM_PRICE'           => BitrixUtils::BX_BOOL_TRUE,
-                'QUANTITY'               => $item->getQuantity(),
-                'CURRENCY'               => CurrencyManager::getBaseCurrency(),
-                'NAME'                   => $item->getName(),
-                'WEIGHT'                 => $item->getWeight(),
-                'DETAIL_PAGE_URL'        => $item->getDetailPageUrl(),
-                'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
-                'CATALOG_XML_ID'         => $offerIblockId,
-                'PRODUCT_XML_ID'         => $item->getArticle(),
-            ]);
-            $allBonuses += $item->getBonus();
-        }
+        $orderBasket = $this->createBasketFromManzana($items);
         $bitrixOrder->setBasket($orderBasket);
+
+        $allBonuses = $this->getItemsBonuses($items);
 
         $userCityService = App::getInstance()->getContainer()->get(UserCitySelectInterface::class);
         $selectedCity = $userCityService->getSelectedCity();
@@ -652,6 +769,10 @@ class OrderService
                 case 'MANZANA_NUMBER':
                     $propertyValue->setValue($order->getManzanaId());
                     break;
+                case 'IS_NEW_SITE_ORDER':
+                    $propertyValue->setValue(BitrixUtils::BX_BOOL_FALSE);
+                    break;
+                case 'IS_MANZANA_ORDER':
                 case 'USER_REGISTERED':
                 case 'IS_EXPORTED':
                     $propertyValue->setValue(BitrixUtils::BX_BOOL_TRUE);
@@ -730,12 +851,171 @@ class OrderService
         OrderTable::update($result->getId(),
             [
                 'DATE_INSERT' => $order->getDateInsert(),
-                'DATE_UPDATE' => $order->getDateInsert(),
+                'DATE_UPDATE' => $order->getDateUpdate(),
             ]
         );
         Manager::enableExtendsDiscount();
 
         return $result->isSuccess();
+    }
+
+    /**
+     * @param int $orderId
+     * @param Cheque $cheque
+     * @param array|OrderItem[] $manzanaBasketItems
+     *
+     * @throws \Exception
+     */
+    protected function updateOrderFromManzana(int $orderId, Cheque $cheque, $manzanaBasketItems): void
+    {
+        if ($orderId <= 0)
+        {
+            throw new BitrixOrderNotFoundException(\sprintf('Order %s not found', $orderId));
+        }
+        Event::disableEvents();
+        $order = BitrixOrder::load($orderId);
+        if ($order)
+        {
+            $baseOrderStatus = $order->getField('PAYED');
+
+            $propertyCollection = $order->getPropertyCollection();
+            $orderProperty = \FourPaws\Helpers\BxCollection::getOrderPropertyByCode($propertyCollection, 'MANZANA_NUMBER');
+            if ($orderProperty) {
+                $orderProperty->setValue($cheque->chequeNumber);
+            }
+            else
+            {
+                LoggerFactory::create('manzanaOrder')->error(sprintf('failed to set MANZANA_NUMBER for order %s', $order->getField('ACCOUNT_NUMBER')));
+            }
+            $order->setFieldNoDemand('STATUS_ID', static::MANZANA_FINAL_STATUS);
+            $order->setFieldNoDemand('DATE_UPDATE', new DateTime());
+
+            if ($baseOrderStatus !== BitrixUtils::BX_BOOL_TRUE) {
+                $order->setFieldNoDemand('PAYED', BitrixUtils::BX_BOOL_TRUE);
+
+                $basket = $order->getBasket();
+                $basketItems = $basket->getBasketItems();
+                $basketItemsMainParams = [];
+                /** @var BasketItem $item */
+                foreach ($basketItems as $item)
+                {
+                    $itemExternalId = end(explode('#', $item->getField('PRODUCT_XML_ID')));
+
+                    $basketItemsMainParams[$itemExternalId]['quantity'] += $item->getQuantity();
+                    $basketItemsMainParams[$itemExternalId]['price'] = (int)$item->getPrice();
+                }
+
+                $isChangeNeeded = false;
+                // Проверяется не полное соответствие чека исходному заказу, а достаточное условие для необходимости обновить заказ
+                if (
+                    $cheque->sumDiscounted != $basket->getPrice() ||
+                    count($manzanaBasketItems) !== count($basketItems)
+                ) {
+                    $isChangeNeeded = true;
+                } else {
+                    /** @var OrderItem $item */
+                    foreach ($manzanaBasketItems as $item)
+                    {
+                        $article = $item->getArticle();
+                        if (
+                            !array_key_exists($article, $basketItemsMainParams) ||
+                            $basketItemsMainParams[$article]['quantity'] != $item->getQuantity() ||
+                            $basketItemsMainParams[$article]['price'] != $item->getPrice()
+                        )
+                        {
+                            $isChangeNeeded = true;
+                            break;
+                        }
+                    }
+                }
+
+                if ($isChangeNeeded)
+                {
+                    LoggerFactory::create('manzanaOrder')->info(sprintf('site order\'s basket is changed from Manzana, order id: %s', $orderId));
+
+                    $manzanaBasketItemsCollection = new ArrayCollection($manzanaBasketItems);
+
+                    Manager::disableExtendsDiscount();
+                    $basket->clearCollection();
+                    $this->addManzanaItemsToBasket($basket, $manzanaBasketItemsCollection);
+                    Manager::enableExtendsDiscount();
+
+                    $orderProperty = \FourPaws\Helpers\BxCollection::getOrderPropertyByCode($propertyCollection, 'BONUS_COUNT');
+                    if ($orderProperty) {
+                        $orderProperty->setValue($this->getItemsBonuses($manzanaBasketItemsCollection));
+                    }
+                    else
+                    {
+                        LoggerFactory::create('manzanaOrder')->error(sprintf('failed to set BONUS_COUNT for order %s', $order->getField('ACCOUNT_NUMBER')));
+                    }
+                }
+            }
+            $order->save();
+        }
+        Event::enableEvents();
+    }
+
+    /**
+     * @param ArrayCollection $items
+     *
+     * @return Basket
+     *
+     * @throws IblockNotFoundException
+     */
+    protected function createBasketFromManzana(ArrayCollection $items): Basket
+    {
+        /** @var Basket $orderBasket */
+        $orderBasket = Basket::create(SITE_ID);
+        $this->addManzanaItemsToBasket($orderBasket, $items);
+        return $orderBasket;
+    }
+
+    /**
+     * @param Basket $basket
+     * @param ArrayCollection $items
+     *
+     * @return void
+     *
+     * @throws IblockNotFoundException
+     */
+    protected function addManzanaItemsToBasket(Basket $basket, ArrayCollection $items): void
+    {
+        $offerIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS);
+
+        /** @var OrderItem $item */
+        foreach ($items as $item) {
+            $productId = $item->getProductId();
+            $basketItem = $basket->createItem('catalog', $productId);
+            $basketItem->setFields([
+                'PRICE'                  => $item->getPrice(),
+                'BASE_PRICE'             => $item->getBasePrice(),
+                'CUSTOM_PRICE'           => BitrixUtils::BX_BOOL_TRUE,
+                'QUANTITY'               => $item->getQuantity(),
+                'CURRENCY'               => CurrencyManager::getBaseCurrency(),
+                'NAME'                   => $item->getName(),
+                'WEIGHT'                 => $item->getWeight(),
+                'DETAIL_PAGE_URL'        => $item->getDetailPageUrl(),
+                'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
+                'CATALOG_XML_ID'         => $offerIblockId,
+                'PRODUCT_XML_ID'         => $item->getArticle(),
+            ]);
+        }
+    }
+
+    /**
+     * @param ArrayCollection $items
+     *
+     * @return float|int
+     */
+    protected function getItemsBonuses(ArrayCollection $items)
+    {
+        $allBonuses = 0;
+        /** @var OrderItem $item */
+        foreach ($items as $item) {
+            $allBonuses += $item->getBonus();
+        }
+
+        return $allBonuses;
     }
 
     /**
@@ -825,6 +1105,24 @@ class OrderService
         }
 
         return $result;
+    }
+
+    /**
+     * @return array
+     */
+    public function getClosedOrderStatuses(): array
+    {
+        return array_merge(self::STATUS_CANCEL, self::STATUS_FINAL);
+    }
+
+    /**
+     * @return string
+     */
+    public function getClosedOrderStatusesForQuery(): string
+    {
+        return \implode(',', \array_map(function ($status) {
+            return sprintf('"%s"', $status);
+        }, \array_merge(self::STATUS_CANCEL, self::STATUS_FINAL)));
     }
 
     /**

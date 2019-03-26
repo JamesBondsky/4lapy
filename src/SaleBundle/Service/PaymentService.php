@@ -1,9 +1,5 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
-
 namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
@@ -23,6 +19,7 @@ use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
+use Bitrix\Sale\PropertyValue;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -31,6 +28,7 @@ use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\Helpers\BusinessValueHelper;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\LocationBundle\Exception\AddressSplitException;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Dto\Fiscalization\CartItems;
 use FourPaws\SaleBundle\Dto\Fiscalization\CustomerDetails;
@@ -64,8 +62,7 @@ use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\StoreBundle\Entity\Store;
 use JMS\Serializer\ArrayTransformerInterface;
 use Psr\Log\LoggerAwareInterface;
-use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Bitrix\Sale\Delivery\Services\Table as ServicesTable;
 
 /**
  * Class PaymentService
@@ -561,6 +558,7 @@ class PaymentService implements LoggerAwareInterface
             0  => 1,
             10 => 2,
             18 => 3,
+            20 => 3
         ];
 
         $position = 0;
@@ -945,16 +943,18 @@ class PaymentService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
-     * @throws ApplicationCreateException
+     * @throws AddressSplitException
      * @throws ArgumentException
      * @throws ArgumentNullException
-     * @throws NotFoundException
+     * @throws ArgumentOutOfRangeException
      * @throws NotImplementedException
+     * @throws ObjectException
+     * @throws ObjectNotFoundException
      * @throws ObjectPropertyException
      * @throws SystemException
-     * @throws \RuntimeException
-     * @throws ServiceCircularReferenceException
-     * @throws ServiceNotFoundException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function processOnlinePaymentError(Order $order): void
     {
@@ -1007,6 +1007,16 @@ class PaymentService implements LoggerAwareInterface
             }
         }
 
+        /** Отправка данных в достависту если доставка Достависта */
+        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+        $deliveryId = $order->getField('DELIVERY_ID');
+        $deliveryCode = $deliveryService->getDeliveryCodeById($deliveryId);
+        $deliveryData = ServicesTable::getById($deliveryId)->fetch();
+        //проверяем способ доставки, если достависта, то отправляем заказ в достависту
+        if ($deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
+            $this->sendOnlinePaymentDostavistaOrder($order, $deliveryCode, $deliveryData, false);
+        }
+
         if ($discountEnabled) {
             Manager::enableExtendsDiscount();
         }
@@ -1016,19 +1026,22 @@ class PaymentService implements LoggerAwareInterface
      * @param Order $order
      * @param OrderInfo $response
      *
+     * @throws AddressSplitException
      * @throws ArgumentException
      * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
      * @throws NotImplementedException
      * @throws ObjectException
      * @throws ObjectNotFoundException
-     * @throws PaymentException
+     * @throws ObjectPropertyException
      * @throws SberBankOrderNumberNotFoundException
      * @throws SberbankOrderNotPaidException
      * @throws SberbankOrderPaymentDeclinedException
      * @throws SberbankPaymentException
      * @throws SystemException
-     * @throws \Exception
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     protected function processOnlinePayment(Order $order, OrderInfo $response): void
     {
@@ -1060,6 +1073,16 @@ class PaymentService implements LoggerAwareInterface
             $onlinePayment->setField('PS_STATUS_MESSAGE', $response->getPaymentAmountInfo()->getPaymentState());
             $onlinePayment->save();
             $order->save();
+
+            /** Отправка данных в достависту если доставка Достависта */
+            $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+            $deliveryId = $order->getField('DELIVERY_ID');
+            $deliveryCode = $deliveryService->getDeliveryCodeById($deliveryId);
+            $deliveryData = ServicesTable::getById($deliveryId)->fetch();
+            //проверяем способ доставки, если достависта, то отправляем заказ в достависту
+            if ($deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
+                $this->sendOnlinePaymentDostavistaOrder($order, $deliveryCode, $deliveryData, true);
+            }
         } else {
             if ($response->getOrderStatus() === Sberbank::ORDER_STATUS_DECLINED) {
                 throw new SberbankOrderPaymentDeclinedException('Order not paid');
@@ -1070,7 +1093,7 @@ class PaymentService implements LoggerAwareInterface
             }
 
             throw new SberbankPaymentException(
-                $isSuccess ? $response->getActionDescription() : $response->getErrorMessage(),
+                $isSuccess ? ($response->getActionCodeDescription() ? $response->getActionCodeDescription() : $response->getActionDescription()) : $response->getErrorMessage(),
                 $response->getErrorCode()
             );
         }
@@ -1146,6 +1169,56 @@ class PaymentService implements LoggerAwareInterface
             throw new SberbankOrderNotFoundException($orderInfo->getErrorMessage(), $orderInfo->getErrorCode());
         }
         $this->processOnlinePayment($order, $orderInfo);
+    }
+
+    /**
+     * @param Order $order
+     * @param string $deliveryCode
+     * @param array $deliveryData
+     * @param bool $isPaid
+     * @throws AddressSplitException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
+     * @throws ObjectException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    protected function sendOnlinePaymentDostavistaOrder(Order $order, string $deliveryCode, array $deliveryData, bool $isPaid = false)
+    {
+        $storeService = Application::getInstance()->getContainer()->get('store.service');
+        $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+        $orderPropertyCollection = $order->getPropertyCollection();
+        $comments = $order->getField('USER_DESCRIPTION');
+        if (is_null($comments)) {
+            $comments = '';
+        }
+        /** @var PropertyValue $item */
+        foreach ($orderPropertyCollection as $item) {
+            switch ($item->getProperty()['CODE']) {
+                case 'STORE_FOR_DOSTAVISTA':
+                    $storeXmlId = $item->getValue();
+                    break;
+                case 'NAME':
+                    $name = $item->getValue();
+                    break;
+                case 'PHONE':
+                    $phone = $item->getValue();
+                    break;
+            }
+        }
+        /** @var Store $selectedStore */
+        $nearShop = $storeService->getStoreByXmlId($storeXmlId);
+        $periodTo = $deliveryData['CONFIG']['MAIN']['PERIOD']['TO'];
+        $address = $orderService->compileOrderAddress($order)->setValid(true);
+        if (isset($order) && $name && $phone && $periodTo && $nearShop) {
+            $orderService->sendToDostavista($order, $name, $phone, $comments, $periodTo, $nearShop, $isPaid);
+        }
     }
 
     /**

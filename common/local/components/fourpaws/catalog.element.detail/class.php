@@ -156,6 +156,34 @@ class CatalogElementDetailComponent extends \CBitrixComponent
 
             $sectionId = (int)current($product->getSectionsIdList());
 
+            $offersXmlIds = [];
+
+            foreach (['flavour', 'color'] as $combination) {
+                if (count($offersXmlIds) < 2) {
+                    $propVal = ($combination == 'flavour') ? $currentOffer->getFlavourCombination() : $currentOffer->getColourCombination();
+                    if ($propVal != '' && $propVal != null) {
+                        $unionOffers = $this->getOffersByUnion($combination, $propVal);
+                        if (!$unionOffers->isEmpty()) {
+                            /** @var Offer $unionOffer */
+                            foreach ($unionOffers as $unionOffer) {
+                                $offerXmlID = $unionOffer->getXmlId();
+                                if (!in_array($offerXmlID, $offersXmlIds)) {
+                                    $offersXmlIds[] = $offerXmlID;
+                                }
+                            }
+                            ksort($offersXmlIds);
+                        }
+                    }
+                }
+            }
+
+            if (count($offersXmlIds) < 2) {
+                /** @var Offer $offer */
+                foreach ($product->getOffersSorted() as $offer) {
+                    $offersXmlIds[] = $offer->getXmlId();
+                }
+            }
+
             $this->arResult = [
                 'PRODUCT'               => $product,
                 'CURRENT_OFFER'         => $currentOffer,
@@ -166,7 +194,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                     $this->ecommerceService->renderScript(
                         $this->ecommerceService->buildDetailFromOffer($currentOffer, 'Карточка товара')
                     ),
-                    $this->retailRocketService->renderDetailView($currentOffer->getXmlId())
+                    $this->retailRocketService->renderDetailView('[' . implode(',', $offersXmlIds) . ']')
                 ),
                 'BASKET_LINK_EVENT'     => \sprintf(
                     'onmousedown="%s"',

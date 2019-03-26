@@ -4,6 +4,7 @@ use Bitrix\Main\Application;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\CatalogBundle\Service\CatalogLandingService;
+use FourPaws\Helpers\ProtectorHelper;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
@@ -43,8 +44,7 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
             <div class="b-title b-title--h1 b-title--registration">Авторизация</div>
         </header>
         <form class="b-registration__form js-form-validation js-auth-2way"
-              data-url="/ajax/user/auth/login/"
-              onsubmit="<?= $arResult['ON_SUBMIT'] ?>"
+              data-url="/ajax/user/auth/login-s/"
               method="post">
             <?= bitrix_sessid_post() ?>
             <input type="hidden" name="action" value="login" class="js-no-valid">
@@ -118,6 +118,9 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
                    title="Зарегистрироваться"><span
                             class="b-link__text b-link__text--authorization">Зарегистрироваться</span></a>
             </div>
+
+            <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_AUTH); ?>
+	        <input type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
         </form>
     </div>
     <?php

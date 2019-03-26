@@ -202,6 +202,12 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                 }
                 ?>
             </div>
+            <a class="b-item-shopping__delete js-cart-delete-item" href="javascript:void(0);" title=""
+               data-url="<?= $basketDeleteUrl ?>" data-basketId="<?= $basketItemId; ?>">
+                <span class="b-icon b-icon--delete b-icon--shopping">
+                    <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
+                </span>
+            </a>
             <?php if (in_array($offer->getId(), $arResult['ONLY_PICKUP'], true)) { ?>
                 <div class="b-item-shopping__sale-info b-item-shopping__sale-info--width b-item-shopping__sale-info--not-available">
                     Только самовывоз
@@ -212,12 +218,14 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                 Нет в наличии
             </div>
         <?php } ?>
-        <a class="b-item-shopping__delete js-cart-delete-item" href="javascript:void(0);" title=""
-           data-url="<?= $basketDeleteUrl ?>" data-basketId="<?= $basketItemId; ?>">
-            <span class="b-icon b-icon--delete b-icon--shopping">
-                <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
-            </span>
-        </a>
+        <?php if (!(!$basketItem->isDelay() && $offer->getQuantity() > 0)) { ?>
+            <a class="b-item-shopping__delete js-cart-delete-item" href="javascript:void(0);" title=""
+               data-url="<?= $basketDeleteUrl ?>" data-basketId="<?= $basketItemId; ?>">
+                <span class="b-icon b-icon--delete b-icon--shopping">
+                    <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
+                </span>
+            </a>
+        <?php } ?>
         <?php
         $basketCodes = [];
         if ($isDiscounted || $basketItem->getQuantity() > 1 || $arResult['PRODUCT_QUANTITIES'][$basketItem->getProductId()] > 1) {

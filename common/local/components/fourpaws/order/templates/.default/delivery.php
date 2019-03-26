@@ -23,6 +23,8 @@ use FourPaws\StoreBundle\Entity\Store;
 
 /** @var CalculationResultInterface $delivery */
 $delivery = $arResult['DELIVERY'];
+/** @var CalculationResultInterface $deliveryDostavista */
+$deliveryDostavista = $arResult['DELIVERY_DOSTAVISTA'];
 /** @var PickupResultInterface $pickup */
 $pickup = $arResult['PICKUP'];
 /** @var CalculationResultInterface $selectedDelivery */
@@ -96,10 +98,28 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                         <input type="hidden" name="delyveryType"
                                value="<?= (!empty($arResult['SPLIT_RESULT']) && $storage->isSplit()) ? 'twoDeliveries' : 'oneDelivery' ?>"
                                class="js-no-valid">
+                        <input type="hidden" name="deliveryTypeId"
+                               value="<?
+                                   if($selectedDelivery){
+                                       echo $selectedDelivery->getDeliveryId();
+                                   }
+                                   else if($delivery){
+                                       echo $delivery->getDeliveryId();
+                                   }
+                                   else if($pickup){
+                                       echo $pickup->getDeliveryId();
+                                   }
+                               ?>"
+                               class="js-no-valid">
+                        <input type="hidden" name="deliveryCoords" value="">
                         <div class="b-choice-recovery b-choice-recovery--order-step">
                             <?php if ($delivery) { ?>
-                                <input <?= $deliveryService->isDelivery($selectedDelivery) ? 'checked="checked"' : '' ?>
+                                <?
+                                $selectedDel = ($selectedDelivery->getDeliveryCode() == DeliveryService::DELIVERY_DOSTAVISTA_CODE || $selectedDelivery->getDeliveryCode() == DeliveryService::INNER_DELIVERY_CODE) ? $delivery : $selectedDelivery;
+                                ?>
+                                <input <?= $deliveryService->isDelivery($selectedDel) ? 'checked="checked"' : '' ?>
                                         class="b-choice-recovery__input js-recovery-telephone js-delivery"
+                                        data-set-delivery-type="<?= $delivery->getDeliveryId() ?>"
                                         id="order-delivery-address"
                                         type="radio"
                                         name="deliveryId"
@@ -125,9 +145,9 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                         <?= /** @noinspection PhpUnhandledExceptionInspection */
                                         DeliveryTimeHelper::showTime($delivery, ['SHORT' => true]) ?>,
                                         <span class="js-delivery--price"><?= $delivery->getPrice() ?></span>₽
+                                    </span>
                                 </label>
                             <?php }
-
                             if ($pickup) {
                                 $available = $arResult['PICKUP_STOCKS_AVAILABLE'];
                                 if ($arResult['PARTIAL_PICKUP_AVAILABLE'] && $storage->isSplit()) {
@@ -137,6 +157,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 } ?>
                                 <input <?= $deliveryService->isPickup($selectedDelivery) ? 'checked="checked"' : '' ?>
                                         class="b-choice-recovery__input js-recovery-email js-myself-shop js-delivery"
+                                        data-set-delivery-type="<?= $pickup->getDeliveryId()?>"
                                         id="order-delivery-pick-up"
                                         type="radio"
                                         name="deliveryId"

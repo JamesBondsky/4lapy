@@ -1,10 +1,10 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "488d4d9957c17ecfe6b27b3b6a3098e3",
+    "content-hash": "a4475cb408f522f75ba40d9b0f0088f7",
     "packages": [
         {
             "name": "adv/bitrix-tools",
@@ -122,11 +122,11 @@
         },
         {
             "name": "articul/articul.newrelic",
-            "version": "v1.0",
+            "version": "v1.1",
             "source": {
                 "type": "git",
                 "url": "git@bitbucket.org:articul/articul.newrelic.git",
-                "reference": "f14d2d3b9626302a99737f54df8beccba8e45265"
+                "reference": "b39253e5c547fe4685e98010bf3b1cd1b7cc8bf9"
             },
             "require": {
                 "composer/installers": "~1.0",
@@ -158,7 +158,7 @@
                 "skype": "andrey.brajnikov",
                 "source": "https://bitbucket.org/articul/articul.newrelic"
             },
-            "time": "2018-11-15T16:00:47+00:00"
+            "time": "2019-03-22T07:05:24+00:00"
         },
         {
             "name": "ci/restclientbundle",
@@ -851,44 +851,6 @@
                 "parser"
             ],
             "time": "2014-09-09T13:34:57+00:00"
-        },
-        {
-            "name": "duccio/apns-php",
-            "version": "v2.0.0-alpha",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/immobiliare/ApnsPHP.git",
-                "reference": "a2d6a51d34ecd189fe738cf7bd944a6df6e25862"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/immobiliare/ApnsPHP/zipball/a2d6a51d34ecd189fe738cf7bd944a6df6e25862",
-                "reference": "a2d6a51d34ecd189fe738cf7bd944a6df6e25862",
-                "shasum": ""
-            },
-            "require": {
-                "lib-openssl": "*",
-                "php": ">=5.3.0"
-            },
-            "type": "library",
-            "autoload": {
-                "files": [
-                    "ApnsPHP/Autoload.php"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "BSD-3-Clause"
-            ],
-            "description": "Apple Push Notification & Feedback Provider",
-            "homepage": "https://github.com/immobiliare/ApnsPHP",
-            "keywords": [
-                "apns",
-                "apple",
-                "notification",
-                "push"
-            ],
-            "time": "2016-06-01T11:05:19+00:00"
         },
         {
             "name": "elasticsearch/elasticsearch",
@@ -1758,17 +1720,11 @@
         },
         {
             "name": "jms/serializer",
-            "version": "1.11.0",
+            "version": "1.11.1",
             "source": {
                 "type": "git",
-                "url": "https://github.com/schmittjoh/serializer.git",
-                "reference": "e7c53477ff55c21d1b1db7d062edc050a24f465f"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/schmittjoh/serializer/zipball/e7c53477ff55c21d1b1db7d062edc050a24f465f",
-                "reference": "e7c53477ff55c21d1b1db7d062edc050a24f465f",
-                "shasum": ""
+                "url": "git@bitbucket.org:articul/serializer.git",
+                "reference": "129ae6750496b390e1f6238c75977257e6c18144"
             },
             "require": {
                 "doctrine/annotations": "^1.0",
@@ -1815,18 +1771,22 @@
                     "JMS\\Serializer": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "autoload-dev": {
+                "psr-4": {
+                    "JMS\\Serializer\\Tests\\": "tests/"
+                }
+            },
             "license": [
                 "Apache-2.0"
             ],
             "authors": [
                 {
-                    "name": "Asmir Mustafic",
-                    "email": "goetas@gmail.com"
-                },
-                {
                     "name": "Johannes M. Schmitt",
                     "email": "schmittjoh@gmail.com"
+                },
+                {
+                    "name": "Asmir Mustafic",
+                    "email": "goetas@gmail.com"
                 }
             ],
             "description": "Library for (de-)serializing data of any complexity; supports XML, JSON, and YAML.",
@@ -1838,7 +1798,7 @@
                 "serialization",
                 "xml"
             ],
-            "time": "2018-02-04T17:48:54+00:00"
+            "time": "2019-02-19T13:45:20+00:00"
         },
         {
             "name": "jms/serializer-bundle",
@@ -2539,64 +2499,6 @@
             "time": "2018-04-04T21:24:14+00:00"
         },
         {
-            "name": "paragraph1/php-fcm",
-            "version": "0.7",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/Paragraph1/php-fcm.git",
-                "reference": "17d32dc982ab2d1cfba64a62afd3e5b5c9a41639"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/Paragraph1/php-fcm/zipball/17d32dc982ab2d1cfba64a62afd3e5b5c9a41639",
-                "reference": "17d32dc982ab2d1cfba64a62afd3e5b5c9a41639",
-                "shasum": ""
-            },
-            "require": {
-                "guzzlehttp/guzzle": "^6.2",
-                "php": ">=5.5"
-            },
-            "require-dev": {
-                "mockery/mockery": "0.9.5",
-                "phpunit/phpunit": "4.8.*",
-                "satooshi/php-coveralls": "dev-master"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "paragraph1\\phpFCM\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Patrick Albertini",
-                    "email": "pa@paragraph1.de"
-                },
-                {
-                    "name": "Kai Bielenberg",
-                    "email": "kb@paragraph1.de"
-                }
-            ],
-            "description": "PHP application server for google firebase cloud messaging (FCM)",
-            "homepage": "https://github.com/Paragraph1/phpFCM",
-            "keywords": [
-                "FCM",
-                "Firebase Cloud Messaging",
-                "android",
-                "firebase",
-                "gcm",
-                "google",
-                "ios",
-                "notifications",
-                "php"
-            ],
-            "time": "2016-08-18T11:47:56+00:00"
-        },
-        {
             "name": "php-amqplib/php-amqplib",
             "version": "v2.7.2",
             "source": {
@@ -2832,6 +2734,75 @@
                 "type"
             ],
             "time": "2015-07-25T16:39:46+00:00"
+        },
+        {
+            "name": "picqer/php-barcode-generator",
+            "version": "v0.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/picqer/php-barcode-generator.git",
+                "reference": "2e4d5b1f7f04fdb348d0721ada65963dac6f0c0c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/picqer/php-barcode-generator/zipball/2e4d5b1f7f04fdb348d0721ada65963dac6f0c0c",
+                "reference": "2e4d5b1f7f04fdb348d0721ada65963dac6f0c0c",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.4.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^5.3"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Picqer\\Barcode\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "LGPLv3"
+            ],
+            "authors": [
+                {
+                    "name": "Nicola Asuni",
+                    "email": "info@tecnick.com",
+                    "homepage": "http://nicolaasuni.tecnick.com"
+                },
+                {
+                    "name": "Casper Bakker",
+                    "email": "info@picqer.com"
+                }
+            ],
+            "description": "An easy to use, non-bloated, barcode generator in PHP. Creates SVG, PNG, JPG and HTML images from the most used 1D barcode standards.",
+            "homepage": "http://github.com/picqer/php-barcode-generator",
+            "keywords": [
+                "CODABAR",
+                "Code11",
+                "Code93",
+                "EAN13",
+                "KIX",
+                "KIXCODE",
+                "MSI",
+                "POSTNET",
+                "Pharma",
+                "Standard 2 of 5",
+                "barcode",
+                "barcode generator",
+                "code128",
+                "code39",
+                "ean",
+                "html",
+                "jpeg",
+                "jpg",
+                "php",
+                "png",
+                "svg",
+                "upc"
+            ],
+            "time": "2019-01-12T09:29:34+00:00"
         },
         {
             "name": "psr/cache",
@@ -3174,7 +3145,7 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Roave/SecurityAdvisories.git",
-                "reference": "5f3e0c82ada2d16fdd637b24e095888f4abac43f"
+                "reference": "7f9676e3d324ff0745cda4f4222b194993d37d57"
             },
             "conflict": {
                 "3f/pygmentize": "<1.2",
@@ -6079,6 +6050,7 @@
                 "mock",
                 "xunit"
             ],
+            "abandoned": true,
             "time": "2018-01-06T05:45:45+00:00"
         },
         {
@@ -6886,7 +6858,6 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "duccio/apns-php": 15,
         "igi/sypexgeo": 20,
         "nelmio/api-doc-bundle": 10,
         "roave/security-advisories": 20,

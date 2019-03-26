@@ -6,10 +6,8 @@
 
 namespace FourPaws\SapBundle\Consumer;
 
-use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\SapBundle\Dto\In\DeliverySchedule\DeliverySchedules;
 use FourPaws\SapBundle\Service\DeliverySchedule\DeliveryScheduleService;
-use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 
 /**
@@ -17,10 +15,8 @@ use RuntimeException;
  *
  * @package FourPaws\SapBundle\Consumer
  */
-class DeliveryScheduleConsumer implements ConsumerInterface, LoggerAwareInterface
+class DeliveryScheduleConsumer extends SapConsumerBase
 {
-    use LazyLoggerAwareTrait;
-
     /**
      * @var DeliveryScheduleService
      */

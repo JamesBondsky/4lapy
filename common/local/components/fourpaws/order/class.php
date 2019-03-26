@@ -280,7 +280,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $this->arResult['ECOMMERCE_VIEW_SCRIPT'] = $this->getEcommerceViewScript($basket);
         /** @noinspection PhpUndefinedVariableInspection */
         if ($this->currentStep === OrderStorageEnum::AUTH_STEP) {
-            $this->arResult['ON_SUBMIT'] = \str_replace('"', '\'', $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val()'));
+            $this->arResult['ON_SUBMIT'] = \str_replace('"', '\'',
+                'if($(this).find("input[type=email]").val().indexOf("register.phone") == -1){' . $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val()') . '}'
+            );
         } else {
             $basket = $order->getBasket();
         }
@@ -344,11 +346,14 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
             $delivery = null;
             $pickup   = null;
+            $deliveryDostavista = null;
             foreach ($deliveries as $calculationResult) {
                 if ($this->deliveryService->isPickup($calculationResult)) {
                     $pickup = $calculationResult;
                 } elseif ($this->deliveryService->isDelivery($calculationResult)) {
                     $delivery = $calculationResult;
+                } elseif($this->deliveryService->isDostavistaDelivery($calculationResult)){
+                    $deliveryDostavista = $calculationResult;
                 }
             }
 
@@ -360,10 +365,13 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 // проверяется на этапе валидации $storage
             }
 
-            $this->arResult['PICKUP']            = $pickup;
-            $this->arResult['DELIVERY']          = $delivery;
-            $this->arResult['ADDRESSES']         = $addresses;
-            $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
+            $this->arResult['PICKUP']               = $pickup;
+            $this->arResult['DELIVERY']             = $delivery;
+            if (isset($deliveryDostavista)) {
+                $this->arResult['DELIVERY_DOSTAVISTA'] = $deliveryDostavista;
+            }
+            $this->arResult['ADDRESSES']            = $addresses;
+            $this->arResult['SELECTED_DELIVERY']    = $selectedDelivery;
         } elseif ($this->currentStep === OrderStorageEnum::PAYMENT_STEP) {
             $this->getPickupData($deliveries, $storage);
 

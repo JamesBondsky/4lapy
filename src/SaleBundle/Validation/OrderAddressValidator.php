@@ -70,7 +70,7 @@ class OrderAddressValidator extends ConstraintValidator
         /**
          * Если выбранный способ доставки - не курьерская доставка, то не проверяем.
          */
-        if (!$deliveryService->isDelivery($delivery)) {
+        if (!$deliveryService->isDelivery($delivery) && !$deliveryService->isDostavistaDelivery($delivery)) {
             return;
         }
 
@@ -105,6 +105,12 @@ class OrderAddressValidator extends ConstraintValidator
 
             if (!$entity->getStreet()) {
                 $this->context->addViolation($constraint->streetMessage);
+            }
+
+            if ($deliveryService->isDostavistaDelivery($delivery)) {
+                if (!$entity->getLng() || !$entity->getLat()) {
+                    $this->context->addViolation($constraint->coordsMessage);
+                }
             }
         }
     }

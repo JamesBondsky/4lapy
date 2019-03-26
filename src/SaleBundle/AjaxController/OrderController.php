@@ -305,10 +305,11 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @param \Symfony\Component\HttpFoundation\Request $request
      *
      * @return JsonResponse
+     * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ObjectPropertyException
      * @throws OrderStorageSaveException
      * @throws SystemException
-     * @throws ObjectPropertyException
      */
     public function validateDeliveryAction(Request $request): JsonResponse
     {
@@ -344,20 +345,22 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @param Request $request
      *
      * @return JsonResponse
+     * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws OrderStorageSaveException
-     * @throws SystemException
      * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
+     * @throws BitrixProxyException
      * @throws LoaderException
+     * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws ObjectPropertyException
-     * @throws UserMessageException
-     * @throws ApplicationCreateException
-     * @throws NotFoundException
-     * @throws BitrixProxyException
+     * @throws OrderStorageSaveException
      * @throws StoreNotFoundException
+     * @throws SystemException
+     * @throws UserMessageException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function validatePaymentAction(Request $request): JsonResponse
     {

@@ -364,6 +364,27 @@ class OrderStorage
     protected $fromApp = false;
 
     /**
+     * Долгота
+     *
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("PROPERTY_LNG")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $lng = '';
+
+
+    /**
+     * Широта
+     *
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("PROPERTY_LAT")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $lat = '';
+
+    /**
      * @return int
      */
     public function getFuserId(): int
@@ -1019,6 +1040,44 @@ class OrderStorage
     public function setFastOrder(bool $fastOrder): OrderStorage
     {
         $this->fastOrder = $fastOrder;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLng(): string
+    {
+        return $this->lng;
+    }
+
+    /**
+     * @param string $lng
+     * @return OrderStorage
+     */
+    public function setLng(string $lng): OrderStorage
+    {
+        $this->lng = $lng;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLat(): string
+    {
+        return $this->lat;
+    }
+
+    /**
+     * @param string $lat
+     * @return OrderStorage
+     */
+    public function setLat(string $lat): OrderStorage
+    {
+        $this->lat = $lat;
+
         return $this;
     }
 

@@ -40,4 +40,6 @@ class UserGroup
     public const NOT_AUTH_CODE = 'NOT_AUTH';
     public const HAS_ORDERS_FROM_MOBILE_APP = 'exist_orders_in_mp';
     public const NO_ORDERS_FROM_MOBILE_APP = 'no_orders_in_mp';
+
+    public const BASKET_RULES = 'BASKET_RULES';
 }
