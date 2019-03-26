@@ -137,7 +137,7 @@ class BasketController extends Controller implements LoggerAwareInterface
             $temporaryItem->setFieldNoDemand('QUANTITY', $quantity);
             $data['command'] = $this->ecommerceService->renderScript(
                 $this->salePreset->createAddFromBasketItem($temporaryItem),
-                false
+                true
             );
 
             $response = JsonSuccessResponse::createWithData(
