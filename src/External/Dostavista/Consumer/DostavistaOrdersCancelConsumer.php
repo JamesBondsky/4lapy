@@ -7,6 +7,7 @@ use Bitrix\Sale\Order;
 use FourPaws\UserBundle\EventController\Event;
 use PhpAmqpLib\Message\AMQPMessage;
 use FourPaws\External\Dostavista\Exception\DostavistaOrdersAddConsumerException;
+use FourPaws\App\Application;
 
 /**
  * Class DostavistaOrdersCancelConsumer
