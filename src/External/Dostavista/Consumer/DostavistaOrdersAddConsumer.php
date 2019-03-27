@@ -74,7 +74,11 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
             /**
              * Пишем логи
              */
-            $this->log()->error('Dostavista error, code: ' . $e->getCode() . ' message: ' . $e->getMessage());
+            if ($e->getCode() == 40 && is_array($response) && isset($response['message'])) {
+                $this->log()->error('Dostavista error, code: ' . $e->getCode() . ' message: ' . $response['message']);
+            } else {
+                $this->log()->error('Dostavista error, code: ' . $e->getCode() . ' message: ' . $e->getMessage());
+            }
         }
 
         Event::enableEvents();
