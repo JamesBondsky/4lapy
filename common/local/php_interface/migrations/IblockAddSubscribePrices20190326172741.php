@@ -5,6 +5,7 @@ namespace Sprint\Migration;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use Sprint\Migration\Helpers\IblockHelper;
 
 class IblockAddSubscribePrices20190326172741 extends \Adv\Bitrixtools\Migration\SprintMigrationBase {
@@ -90,7 +91,7 @@ class IblockAddSubscribePrices20190326172741 extends \Adv\Bitrixtools\Migration\
             [
                 'NAME'               => 'Привязка к бренду',
                 'ACTIVE'             => 'Y',
-                'SORT'               => '500',
+                'SORT'               => '100',
                 'CODE'               => 'BRAND',
                 'DEFAULT_VALUE'      => '',
                 'PROPERTY_TYPE'      => 'E',
@@ -102,17 +103,15 @@ class IblockAddSubscribePrices20190326172741 extends \Adv\Bitrixtools\Migration\
                 'FILE_TYPE'          => '',
                 'MULTIPLE_CNT'       => '5',
                 'TMP_ID'             => null,
-                'LINK_IBLOCK_ID'     => '0',
+                'LINK_IBLOCK_ID'     => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::BRANDS),
                 'WITH_DESCRIPTION'   => 'N',
                 'SEARCHABLE'         => 'N',
                 'FILTRABLE'          => 'N',
-                'IS_REQUIRED'        => 'N',
-                'VERSION'            => '1',
-                'USER_TYPE'          => 'EAutocomplete',
-                'USER_TYPE_SETTINGS' => [
-                    'IBLOCK_TYPE' => 'catalog',
-                    'IBLOCK_ID'   => IblockUtils::getIblockId('catalog', IblockCode::BRANDS),
-                ],
+                'IS_REQUIRED'        => 'Y',
+                'VERSION'            => '2',
+                'USER_TYPE'          => null,
+                'USER_TYPE_SETTINGS' => null,
+                'HINT'               => '',
             ]
         );
 
@@ -144,13 +143,14 @@ class IblockAddSubscribePrices20190326172741 extends \Adv\Bitrixtools\Migration\
         );
 
         \CIBlock::SetPermission($iblockId, ["2" => "R"]);
+
+        return true;
     }
 
     public function down(){
         $helper = new HelperManager();
-
-        //your code ...
-
+        $helper->Iblock()->deleteIblockIfExists(IblockCode::SUBSCRIBE_PRICES);
+        return true;
     }
 
 }
