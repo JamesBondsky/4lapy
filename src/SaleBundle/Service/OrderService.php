@@ -1942,7 +1942,7 @@ class OrderService implements LoggerAwareInterface
         $insurance = ceil((float)$basket->getPrice());
         $takingAmount = 0;
         if (!$isPaid) {
-            $takingAmount += $insurance;
+            $takingAmount = ceil($insurance + $deliveryPrice);
         }
         /** @var OfferCollection $offers */
         $offers = $this->getOrderProducts($order);
@@ -2052,7 +2052,7 @@ class OrderService implements LoggerAwareInterface
             'required_start_datetime' => $requireTimeStart,
             'required_finish_datetime' => $pointZeroDate->format('c'),
             'taking_amount' => 0,
-            'buyout_amount' => ceil($takingAmount + $deliveryPrice),
+            'buyout_amount' => $takingAmount,
             'note' => 'Телефон магазина: ' . $this->dostavistManagerPhone
         ];
 
@@ -2065,7 +2065,7 @@ class OrderService implements LoggerAwareInterface
             'client_order_id' => $order->getField('ACCOUNT_NUMBER'),
             'required_start_datetime' => $requireTimeStart,
             'required_finish_datetime' => $pointZeroDate->format('c'),
-            'taking_amount' => ceil($takingAmount + $deliveryPrice),
+            'taking_amount' => $takingAmount,
             'buyout_amount' => 0,
             'note' => $comment
         ];
