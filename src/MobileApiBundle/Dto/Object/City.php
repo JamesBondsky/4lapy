@@ -47,12 +47,14 @@ class City
 
     /**
      * @Serializer\SerializedName("lat")
+     * @Serializer\Type("float")
      * @var float
      */
     protected $latitude = 0.0;
 
     /**
      * @Serializer\SerializedName("lon")
+     * @Serializer\Type("float")
      * @var float
      */
     protected $longitude = 0.0;
