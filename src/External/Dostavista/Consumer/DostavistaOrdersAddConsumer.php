@@ -35,7 +35,7 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
         $data = json_decode($body, true);
         try {
             $bitrixOrderId = $data['bitrix_order_id'];
-            unset($data['bitrix_order_id'], $data['order_create_date']);
+            unset($data['bitrix_order_id'], $data['order_create_date'], $data['last_date_try_to_send']);
             /**
              * @var Order $order
              * Получаем битриксовый заказ
