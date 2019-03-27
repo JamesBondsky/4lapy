@@ -691,11 +691,11 @@ class OrderService
         switch ($deliveryType) {
             //toDo DPD доставка
             case self::DELIVERY_TYPE_COURIER:
-                $cartParamArray['deliveryId'] = $this->appDeliveryService->getDeliveryIdByCode(DeliveryService::INNER_DELIVERY_CODE);
+                $cartParamArray['deliveryTypeId'] = $this->appDeliveryService->getDeliveryIdByCode(DeliveryService::INNER_DELIVERY_CODE);
                 //toDo доставка DPD должна определяться автоматически, в зависимости от зоны
                 break;
             case self::DELIVERY_TYPE_PICKUP:
-                $cartParamArray['deliveryId'] = $this->appDeliveryService->getDeliveryIdByCode(DeliveryService::INNER_PICKUP_CODE);
+                $cartParamArray['deliveryTypeId'] = $this->appDeliveryService->getDeliveryIdByCode(DeliveryService::INNER_PICKUP_CODE);
                 //toDo доставка DPD должна определяться автоматически, в зависимости от зоны
                 break;
         }
