@@ -2199,14 +2199,12 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                             $result[] = static::AVAILABILITY_DELIVERY;
                             break;
                         case $deliveryCode === DeliveryService::INNER_PICKUP_CODE:
-                            $result[] = static::AVAILABILITY_PICKUP;
-                            $result[] = static::AVAILABILITY_PICKUP_FROM_SELECTED_STORES;
-                            break;
                         case $canDeliver && $deliveryCode === DeliveryService::DPD_PICKUP_CODE:
                             $result[] = static::AVAILABILITY_PICKUP;
                             break;
                     }
                 }
+                $result[] = static::AVAILABILITY_PICKUP_FROM_SELECTED_STORES;
 
                 $this->fullDeliveryAvailability[$zone] = $result;
             }
