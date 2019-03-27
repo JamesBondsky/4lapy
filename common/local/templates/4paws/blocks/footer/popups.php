@@ -42,7 +42,7 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
         $APPLICATION->IncludeComponent('fourpaws:order.shop.list', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
     }
     if ($template->isCatalog()) {
-        $APPLICATION->IncludeComponent('fourpaws:order.shop.list', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
+        $APPLICATION->IncludeComponent('fourpaws:catalog.shop.list', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
     }
     if ($template->hasFastOrder()) {
         $APPLICATION->IncludeComponent('fourpaws:fast.order', '', [], null, ['HIDE_ICONS' => 'Y']);
