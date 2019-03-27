@@ -412,7 +412,6 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                     case DeliveryService::ZONE_YAROSLAVL_REGION:
                     case DeliveryService::ZONE_TULA:
                     case DeliveryService::ZONE_TULA_REGION:
-                    case DeliveryService::ZONE_KALUGA:
                     case DeliveryService::ZONE_KALUGA_REGION:
                     case DeliveryService::ZONE_IVANOVO:
                     case DeliveryService::ZONE_IVANOVO_REGION:
