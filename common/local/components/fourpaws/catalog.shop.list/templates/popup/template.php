@@ -13,14 +13,14 @@ use FourPaws\DeliveryBundle\Collection\StockResultCollection;
  */
 
 ?>
-<section class="b-popup-wrapper__wrapper-modal b-popup-wrapper__wrapper-modal--order js-popup-section"
-         data-popup="popup-order-stores">
-    <section class="b-popup-pick-city b-popup-pick-city--order-stores js-popup-section" data-popup="popup-order-stores">
-        <a class="b-popup-pick-city__close b-popup-pick-city__close--order js-close-popup"
+<section class="b-popup-wrapper__wrapper-modal b-popup-wrapper__wrapper-modal--catalog-stores js-popup-section"
+         data-popup="popup-catalog-stores">
+    <section class="b-popup-pick-city b-popup-pick-city--catalog-stores js-popup-section" data-popup="popup-catalog-stores">
+        <a class="b-popup-pick-city__close b-popup-pick-city__close--catalog-stores js-close-popup"
            href="javascript:void(0);"
            title="Закрыть"></a>
-        <div class="b-availability b-availability--order">
-            <div class="b-availability__content b-availability__content--order js-availability-content">
+        <div class="b-availability b-availability--catalog-stores">
+            <div class="b-availability__content b-availability__content--catalog-stores js-availability-content">
                 <div class="b-availability__info-block">
                     <a class="b-link b-link--popup-back b-link--popup-choose-shop js-close-popup"
                        href="javascript:void(0);">Выберите пункт самовывоза</a>
@@ -30,7 +30,7 @@ use FourPaws\DeliveryBundle\Collection\StockResultCollection;
                         <?php } else { ?>
                             Наши магазины
                         <?php } ?>
-                        <span class="b-availability__header-amount js-orders-shop-count">(всего 0)</span>
+                        <span class="b-availability__header-amount js-catalog-shop-count">(всего 0)</span>
                     </h4>
                     <h4 class="b-availability__header b-availability__header--tablet active">
                         Выберите <?= $arResult['IS_DPD'] ? 'пункт самовывоза' : 'магазин' ?>
@@ -38,7 +38,7 @@ use FourPaws\DeliveryBundle\Collection\StockResultCollection;
                     <h4 class="b-availability__header b-availability__header--tablet b-availability__header--popuped">
                         <?= $arResult['IS_DPD'] ? 'Пункт самовывоза' : 'Магазин' ?>
                     </h4>
-                    <ul class="b-availability-tab-list b-availability-tab-list--order js-availability-list">
+                    <ul class="b-availability-tab-list b-availability-tab-list--catalog-stores js-availability-list">
                         <li class="b-availability-tab-list__item active">
                             <a class="b-availability-tab-list__link js-product-list"
                                href="javascript:void(0)"
@@ -52,39 +52,7 @@ use FourPaws\DeliveryBundle\Collection\StockResultCollection;
                                title="На карте">На карте</a>
                         </li>
                     </ul>
-                    <?php if (!$arResult['IS_DPD']) { ?>
-                        <div class="b-stores-sort b-stores-sort--order b-stores-sort--balloon">
-                            <div class="b-stores-sort__checkbox-block b-stores-sort__checkbox-block--balloon">
-                                <?php /*
-                                <div class="b-checkbox b-checkbox--stores b-checkbox--order">
-                                    <input class="b-checkbox__input"
-                                           type="checkbox"
-                                           name="stores-sort-time"
-                                           id="stores-sort-1"/>
-                                    <label class="b-checkbox__name b-checkbox__name--stores b-checkbox__name--order"
-                                           for="stores-sort-1">
-                                    <span class="b-checkbox__text">работают
-                                        <span class="b-checkbox__text-desktop">круглосуточно</span>
-                                        <span class="b-checkbox__text-mobile">24 часа</span>
-                                    </span>
-                                    </label>
-                                </div>
-                                */ ?>
-                                <div class="b-checkbox b-checkbox--stores b-checkbox--order">
-                                    <input class="b-checkbox__input"
-                                           type="checkbox"
-                                           name="stores-sort-avlbl"
-                                           id="stores-sort-2"
-                                           value="в наличии сегодня"/>
-                                    <label class="b-checkbox__name b-checkbox__name--stores b-checkbox__name--order"
-                                           for="stores-sort-2">
-                                        <span class="b-checkbox__text">в наличии сегодня</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    <?php } ?>
-                    <div class="b-form-inline b-form-inline--order-search">
+                    <div class="b-form-inline b-form-inline--catalog-stores-search">
                         <form class="b-form-inline__form">
                             <div class="b-input b-input--stores-search b-input--order-search">
                                 <input class="b-input__input-field b-input__input-field--stores-search b-input__input-field--order-search"
