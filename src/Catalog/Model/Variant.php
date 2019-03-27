@@ -37,6 +37,10 @@ class Variant
      */
     private $additionalLinkClass = '';
     /**
+     * @var string Атрибут name скрытого поля
+     */
+    private $hiddenFieldName = '';
+    /**
      * @var int ID файла картинки
      */
     private $image = 0;
@@ -169,6 +173,26 @@ class Variant
     public function withAdditionalLinkClass(string $className): self
     {
         $this->additionalLinkClass = $className;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getHiddenFieldName(): string
+    {
+        return $this->hiddenFieldName;
+    }
+
+    /**
+     * @param string $fieldName
+     *
+     * @return $this
+     */
+    public function withHiddenFieldName(string $fieldName): self
+    {
+        $this->hiddenFieldName = $fieldName;
 
         return $this;
     }

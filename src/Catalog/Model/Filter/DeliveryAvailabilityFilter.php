@@ -8,6 +8,7 @@ use FourPaws\Catalog\Collection\VariantCollection;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Model\Variant;
+use Symfony\Component\HttpFoundation\Request;
 
 class DeliveryAvailabilityFilter extends FilterBase
 {
@@ -60,7 +61,8 @@ class DeliveryAvailabilityFilter extends FilterBase
             ->withName('Выбрать конкретный магазин')
             ->withAvailable(true)
             ->withAdditionalLinkClass('b-filter-link-list__link--shop js-open-catalog-shop-popup')
-            ->withValue($code . '_' . Product::AVAILABILITY_PICKUP_FROM_SELECTED_STORES));
+            ->withHiddenFieldName(StoreAvailabilityFilter::$filterCode)
+            ->withValue(Product::AVAILABILITY_PICKUP_FROM_SELECTED_STORES));
         return $result;
     }
 }

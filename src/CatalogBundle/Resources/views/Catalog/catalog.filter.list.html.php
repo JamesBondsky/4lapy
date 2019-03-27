@@ -8,6 +8,7 @@
  * @var CMain            $APPLICATION
  */
 
+use Bitrix\Main\Application;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Filter\PriceFilter;
@@ -124,6 +125,12 @@ foreach ($filters as $filter) {
                                        id="<?= $filter->getFilterCode() ?>-<?= $id ?>"
                                     <?= $variant->isChecked() ? 'checked' : '' ?>
                                 />
+	                            <?
+	                            if ($hiddenFieldName = $variant->getHiddenFieldName()) {
+	                            	$currentValue = Application::getInstance()->getContext()->getRequest()->getQueryList()->get($hiddenFieldName);
+	                            	?><input class="js-filter-control" type="hidden" name="<?= $hiddenFieldName ?>" value="<?= $currentValue ?>" <?= $currentValue ? 'checked' : '' ?>><?
+	                            }
+	                            ?>
                                 <a class="b-filter-link-list__link b-filter-link-list__link--checkbox<?= ($additionalLinkClass = $variant->getAdditionalLinkClass()) ? ' ' . $additionalLinkClass : ''; ?>"
                                    href="javascript:void(0);"
                                    title="<?= $variant->getName() ?>"
@@ -133,17 +140,6 @@ foreach ($filters as $filter) {
                     <?php } ?>
                 </ul>
             <?php } ?>
-
-            <div class="b-filter-link-list b-filter-link-list--shop js-filter-input">
-                <input class="js-input-shop-filter js-no-valid"
-                       type="hidden"
-                       name="AvailableStores"
-                       value=""
-                       id="" >
-                <a href="javascript:void(0);" class="b-filter-link-list__link b-filter-link-list__link--shop js-open-popup" data-popup-id="popup-order-stores">
-                    Выбрать конкретный магазин
-                </a>
-            </div>
 
             <a class="b-link b-link--filter-more js-open-filter-all"
                href="javascript:void(0);" title="Показать все">
