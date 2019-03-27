@@ -33,6 +33,14 @@ class Variant
      */
     private $available = true;
     /**
+     * @var string Дополнительный класс у ссылки
+     */
+    private $additionalLinkClass = '';
+    /**
+     * @var string Атрибут name скрытого поля
+     */
+    private $hiddenFieldName = '';
+    /**
      * @var int ID файла картинки
      */
     private $image = 0;
@@ -145,6 +153,46 @@ class Variant
     public function withAvailable(bool $available)
     {
         $this->available = $available;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAdditionalLinkClass(): string
+    {
+        return $this->additionalLinkClass;
+    }
+
+    /**
+     * @param string $className
+     *
+     * @return $this
+     */
+    public function withAdditionalLinkClass(string $className): self
+    {
+        $this->additionalLinkClass = $className;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getHiddenFieldName(): string
+    {
+        return $this->hiddenFieldName;
+    }
+
+    /**
+     * @param string $fieldName
+     *
+     * @return $this
+     */
+    public function withHiddenFieldName(string $fieldName): self
+    {
+        $this->hiddenFieldName = $fieldName;
 
         return $this;
     }
