@@ -26,7 +26,7 @@ class ImportLatLonToLocationsTalbe20181218195815 extends \Adv\Bitrixtools\Migrat
         // no down
     }
 
-    private function loadLocations(int $count = 10000)
+    private function loadLocations()
     {
         static $fp;
         if (null === $fp) {
@@ -43,12 +43,8 @@ class ImportLatLonToLocationsTalbe20181218195815 extends \Adv\Bitrixtools\Migrat
             }
         }
 
-        $i = 0;
         $locations = [];
         while ($row = fgetcsv($fp, 0, ';')) {
-            if (++$i > $count) {
-                break;
-            }
             [$code, $lat, $lon] = $row;
             $locations[$row[0]] = [
                 'CODE' => $code,
