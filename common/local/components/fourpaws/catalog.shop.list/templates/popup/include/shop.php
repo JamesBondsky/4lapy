@@ -22,7 +22,6 @@ use FourPaws\Decorators\SvgDecorator;
         <span class="b-delivery-list__col b-delivery-list__col--time">
             {{schedule}}
         </span>
-        <span class="b-delivery-list__col b-delivery-list__col--self-picked">{{pickup}}</span>
     </a>
     <div class="b-order-info-baloon">
         <a class="b-link b-link--popup-back b-link--order b-link--desktop js-close-order-baloon"
@@ -56,13 +55,6 @@ use FourPaws\Decorators\SvgDecorator;
                 </div>
                 <div class="b-input-line b-input-line--myself">
                     <div class="b-input-line__label-wrapper">
-                        <span class="b-input-line__label">Полный заказ будет доступен</span>
-                    </div>
-                    <div class="b-input-line__text-line">{{pickup_full}}
-                    </div>
-                </div>
-                <div class="b-input-line b-input-line--myself">
-                    <div class="b-input-line__label-wrapper">
                         <span class="b-input-line__label">Оплата в магазине</span>
                     </div>
                     <div class="b-input-line__text-line">
@@ -92,10 +84,9 @@ use FourPaws\Decorators\SvgDecorator;
                     </a>
                 </div>
             </div>
-            <a class="b-button b-button--order-balloon js-shop-myself"
+            <a class="b-button b-button--order-balloon js-btn-shop-filter"
                href="javascript:void(0);"
                title=""
-               data-url="/ajax/sale/order/store-info/"
                data-shopId="{{id}}">
                 Выбрать этот <?= $arResult['IS_DPD'] ? 'пункт самовывоза' : 'магазин' ?>
             </a>

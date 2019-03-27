@@ -141,17 +141,6 @@ foreach ($filters as $filter) {
                 </ul>
             <?php } ?>
 
-            <div class="b-filter-link-list b-filter-link-list--shop js-filter-input">
-                <input class="js-input-shop-filter js-no-valid"
-                       type="hidden"
-                       name="AvailableStores"
-                       value=""
-                       id="" >
-                <a href="javascript:void(0);" class="b-filter-link-list__link b-filter-link-list__link--shop js-open-popup" data-popup-id="popup-order-stores">
-                    Выбрать конкретный магазин
-                </a>
-            </div>
-
             <a class="b-link b-link--filter-more js-open-filter-all"
                href="javascript:void(0);" title="Показать все">
                 Показать все
