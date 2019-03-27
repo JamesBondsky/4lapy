@@ -1749,9 +1749,15 @@ class OrderService implements LoggerAwareInterface
 
         if ($deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
             if ($dostavistaSuccess) {
-                $value = OrderPropertyService::COMMUNICATION_SMS;
+                if ($value != OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS) {
+                    $value = OrderPropertyService::COMMUNICATION_SMS;
+                }
             } else {
-                $value = OrderPropertyService::COMMUNICATION_DOSTAVISTA_ERROR;
+                if ($value == OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS) {
+                    $value = OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS_DOSTAVISTA_ERROR;
+                } else {
+                    $value = OrderPropertyService::COMMUNICATION_DOSTAVISTA_ERROR;
+                }
             }
         }
 
@@ -2005,7 +2011,7 @@ class OrderService implements LoggerAwareInterface
 
         $data = [
             'bitrix_order_id' => $order->getId(),
-            'order_create_date' => $order->getDateInsert(),
+            'order_create_date' => $curDate,
             'total_weight_kg' => $weight,
             'vehicle_type_id' => $vehicleTypeId,
             'matter' => $matter, //что везем

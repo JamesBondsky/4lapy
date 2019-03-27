@@ -24,6 +24,7 @@ use FourPaws\SapBundle\Exception\LogicException;
 use FourPaws\SapBundle\Exception\UnexpectedValueException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use FourPaws\SaleBundle\Service\OrderPropertyService;
 
 /**
  * Class Event
@@ -94,6 +95,7 @@ class Event extends BaseServiceHandler
         if (
             self::isOrderExported($order)
             || self::isManzanaOrder($order)
+            || self::isDostavistaOrder($order)
             || $orderService->isOnlinePayment($order)
             || $orderService->isSubscribe($order)
         ) {
@@ -181,5 +183,37 @@ class Event extends BaseServiceHandler
         $manzanaNumberValue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'MANZANA_NUMBER');
 
         return null !== $manzanaNumberValue && (bool)$manzanaNumberValue->getValue();
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return bool
+     * @throws ObjectNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     */
+    private static function isDostavistaOrder(Order $order): bool
+    {
+        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+        $isDostavistaDelivery = $deliveryService->isDostavistaDeliveryCode($deliveryService->getDeliveryCodeById($order->getDeliverySystemId()));
+        $propertyCollection = $order->getPropertyCollection();
+        $orderIdDostavista = BxCollection::getOrderPropertyByCod($propertyCollection, 'ORDER_ID_DOSTAVISTA')->getValue();
+        $commWay = BxCollection::getOrderPropertyByCod($propertyCollection, 'COM_WAY')->getValue();
+        switch (true) {
+            case !$isDostavistaDelivery:
+            case $isDostavistaDelivery && $orderIdDostavista != '' && $orderIdDostavista != 0:
+            case $isDostavistaDelivery &&
+                (
+                    $commWay == OrderPropertyService::COMMUNICATION_DOSTAVISTA_ERROR ||
+                    $commWay == OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS_DOSTAVISTA_ERROR
+                ):
+                return false;
+                break;
+            default:
+                return true;
+        }
     }
 }

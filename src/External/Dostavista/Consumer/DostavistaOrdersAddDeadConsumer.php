@@ -40,6 +40,8 @@ class DostavistaOrdersAddDeadConsumer extends DostavistaConsumerBase
                     throw new DostavistaOrdersAddConsumerException('Dostavista: bitrix order id empty in message data!', 10);
                 }
                 $order = $this->orderService->getOrderById($bitrixOrderId);
+                /** Обновляем битриксовые свойства достависты */
+                $this->updateCommWayProperty($order, false);
                 if ($order) {
                     $this->dostavistaService->dostavistaOrderAddErrorSendEmail($order->getId(), $order->getField('ACCOUNT_NUMBER'), '', '', (new \Datetime)->format(static::DATE_TIME_FORMAT));
                 } else {

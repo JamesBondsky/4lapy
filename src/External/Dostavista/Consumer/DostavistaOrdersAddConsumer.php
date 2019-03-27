@@ -60,18 +60,7 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
                 throw new DostavistaOrdersAddConsumerException('Dostavista: dostavista service add order failed!', 40);
             }
             /** Обновляем битриксовые свойства достависты */
-            $deliveryId = $order->getField('DELIVERY_ID');
-            $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
-            $address = $this->orderService->compileOrderAddress($order)->setValid(true);
-            $this->orderService->setOrderPropertiesByCode(
-                $order,
-                [
-                    'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE,
-                    'ORDER_ID_DOSTAVISTA' => ($dostavistaOrderId) ? $dostavistaOrderId : 0
-                ]
-            );
-            $this->orderService->updateCommWayPropertyEx($order, $deliveryCode, $address, ($dostavistaOrderId) ? true : false);
-            $order->save();
+            $this->updateCommWayProperty($order, $dostavistaOrderId);
             $result = static::MSG_ACK;
         } catch (DostavistaOrdersAddConsumerException|\Exception $e) {
             /**

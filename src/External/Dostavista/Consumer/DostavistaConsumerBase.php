@@ -2,6 +2,8 @@
 
 namespace FourPaws\External\Dostavista\Consumer;
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
+use Bitrix\Sale\Order;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -69,5 +71,37 @@ abstract class DostavistaConsumerBase implements ConsumerInterface, LoggerAwareI
         }
 
         return $this->logger;
+    }
+
+    /**
+     * @param Order $order
+     * @param bool $dostavistaOrderId
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     *
+     * @return void
+     */
+    public function updateCommWayProperty(Order $order, $dostavistaOrderId = false): void
+    {
+        /** Обновляем битриксовые свойства достависты */
+        $deliveryId = $order->getField('DELIVERY_ID');
+        $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
+        $address = $this->orderService->compileOrderAddress($order)->setValid(true);
+        $this->orderService->setOrderPropertiesByCode(
+            $order,
+            [
+                'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE,
+                'ORDER_ID_DOSTAVISTA' => ($dostavistaOrderId) ? $dostavistaOrderId : 0
+            ]
+        );
+        $this->orderService->updateCommWayPropertyEx($order, $deliveryCode, $address, ($dostavistaOrderId) ? true : false);
+        $order->save();
     }
 }
