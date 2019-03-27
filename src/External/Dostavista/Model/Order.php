@@ -10,7 +10,6 @@ use JMS\Serializer\Annotation\XmlElement;
 use JMS\Serializer\Annotation\XmlNamespace;
 use JMS\Serializer\Annotation\XmlRoot;
 use Doctrine\Common\Collections\Collection;
-use Bitrix\Main\Type\DateTime;
 
 /**
  * Class Order
@@ -89,19 +88,19 @@ class Order
 
     /**
      * @XmlElement(cdata=false)
-     * @Type("DateTime")
+     * @Type("string")
      * @SerializedName("order_create_date")
      *
-     * @var DateTime
+     * @var string
      */
     public $orderCreateDate;
 
     /**
      * @XmlElement(cdata=false)
-     * @Type("DateTime")
+     * @Type("string")
      * @SerializedName("last_date_try_to_send")
      *
-     * @var DateTime
+     * @var string
      */
-    public $lastDateTryToSend
+    public $lastDateTryToSend;
 }

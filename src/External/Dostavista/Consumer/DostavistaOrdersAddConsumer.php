@@ -68,7 +68,7 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
              * @noinspection MissingService
              */
             $data = json_decode($body, true);
-            $date['last_date_try_to_send'] = (new DateTime())->format(static::DATE_TIME_FORMAT);
+            $data['last_date_try_to_send'] = (new DateTime())->format(static::DATE_TIME_FORMAT);
             $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.dostavista_orders_add_dead_producer');
             $producer->publish($this->serializer->serialize($data, 'json'));
             /**

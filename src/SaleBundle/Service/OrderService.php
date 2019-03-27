@@ -2011,7 +2011,7 @@ class OrderService implements LoggerAwareInterface
 
         $data = [
             'bitrix_order_id' => $order->getId(),
-            'order_create_date' => $curDate,
+            'order_create_date' => $curDate->format('d.m.Y H:i:s'),
             'total_weight_kg' => $weight,
             'vehicle_type_id' => $vehicleTypeId,
             'matter' => $matter, //что везем
