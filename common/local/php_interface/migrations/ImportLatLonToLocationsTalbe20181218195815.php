@@ -46,7 +46,7 @@ class ImportLatLonToLocationsTalbe20181218195815 extends \Adv\Bitrixtools\Migrat
         $locations = [];
         while ($row = fgetcsv($fp, 0, ';')) {
             [$code, $lat, $lon] = $row;
-            $locations[$row[0]] = [
+            $locations[$code] = [
                 'CODE' => $code,
                 'LATITUDE' => $lat,
                 'LONGITUDE' => $lon,
