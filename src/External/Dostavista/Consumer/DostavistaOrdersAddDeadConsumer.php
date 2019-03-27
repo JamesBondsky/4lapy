@@ -6,6 +6,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 use Bitrix\Main\Application;
 use Bitrix\Main\Type\DateTime;
 use FourPaws\External\Dostavista\Exception\DostavistaOrdersAddConsumerException;
+use FourPaws\App\Application as App;
 
 /**
  * Class DostavistaOrdersAddDeadConsumer
@@ -53,7 +54,7 @@ class DostavistaOrdersAddDeadConsumer extends DostavistaConsumerBase
                 //пушим обратно на обработку
                 /** @noinspection MissingService */
                 $this->log()->error('Dostavista: return order ' . $data['bitrix_order_id'] . ' to main queue');
-                $producer = Application::getInstance()->getContainer()->get('old_sound_rabbit_mq.dostavista_orders_add_producer');
+                $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.dostavista_orders_add_producer');
                 $producer->publish($body);
                 $res = static::MSG_ACK;
             }
