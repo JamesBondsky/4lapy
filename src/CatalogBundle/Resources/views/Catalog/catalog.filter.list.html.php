@@ -8,6 +8,7 @@
  * @var CMain            $APPLICATION
  */
 
+use Bitrix\Main\Application;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Filter\PriceFilter;
@@ -124,6 +125,12 @@ foreach ($filters as $filter) {
                                        id="<?= $filter->getFilterCode() ?>-<?= $id ?>"
                                     <?= $variant->isChecked() ? 'checked' : '' ?>
                                 />
+	                            <?
+	                            if ($hiddenFieldName = $variant->getHiddenFieldName()) {
+	                            	$currentValue = Application::getInstance()->getContext()->getRequest()->getQueryList()->get($hiddenFieldName);
+	                            	?><input class="js-filter-control" type="hidden" name="<?= $hiddenFieldName ?>" value="<?= $currentValue ?>" <?= $currentValue ? 'checked' : '' ?>><?
+	                            }
+	                            ?>
                                 <a class="b-filter-link-list__link b-filter-link-list__link--checkbox<?= ($additionalLinkClass = $variant->getAdditionalLinkClass()) ? ' ' . $additionalLinkClass : ''; ?>"
                                    href="javascript:void(0);"
                                    title="<?= $variant->getName() ?>"
