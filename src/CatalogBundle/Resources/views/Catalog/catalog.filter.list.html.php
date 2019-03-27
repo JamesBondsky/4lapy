@@ -124,7 +124,7 @@ foreach ($filters as $filter) {
                                        id="<?= $filter->getFilterCode() ?>-<?= $id ?>"
                                     <?= $variant->isChecked() ? 'checked' : '' ?>
                                 />
-                                <a class="b-filter-link-list__link b-filter-link-list__link--checkbox"
+                                <a class="b-filter-link-list__link b-filter-link-list__link--checkbox<?= ($additionalLinkClass = $variant->getAdditionalLinkClass()) ? ' ' . $additionalLinkClass : ''; ?>"
                                    href="javascript:void(0);"
                                    title="<?= $variant->getName() ?>"
                                 ><?= $variant->getName() ?></a>

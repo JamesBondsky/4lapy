@@ -59,6 +59,7 @@ class DeliveryAvailabilityFilter extends FilterBase
         $result->add((new Variant())
             ->withName('Выбрать конкретный магазин')
             ->withAvailable(true)
+            ->withAdditionalLinkClass('b-filter-link-list__link--shop')
             ->withValue($code . '_' . Product::AVAILABILITY_PICKUP_FROM_SELECTED_STORES));
         return $result;
     }

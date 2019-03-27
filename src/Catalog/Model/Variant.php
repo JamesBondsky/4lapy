@@ -33,6 +33,10 @@ class Variant
      */
     private $available = true;
     /**
+     * @var string Дополнительный класс у ссылки
+     */
+    private $additionalLinkClass = '';
+    /**
      * @var int ID файла картинки
      */
     private $image = 0;
@@ -145,6 +149,26 @@ class Variant
     public function withAvailable(bool $available)
     {
         $this->available = $available;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAdditionalLinkClass(): string
+    {
+        return $this->additionalLinkClass;
+    }
+
+    /**
+     * @param string $className
+     *
+     * @return $this
+     */
+    public function withAdditionalLinkClass(string $className): self
+    {
+        $this->additionalLinkClass = $className;
 
         return $this;
     }
