@@ -395,7 +395,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                     case DeliveryService::ZONE_1:
                     case DeliveryService::ZONE_5:
                     case DeliveryService::ZONE_6:
-                    case DeliveryService::ZONE_KALUGA:
+                    case DeliveryService::ZONE_IVANOVO:
                         /**
                          * условие доставки в эти зоны - наличие на складе
                          */
@@ -413,7 +413,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                     case DeliveryService::ZONE_TULA:
                     case DeliveryService::ZONE_TULA_REGION:
                     case DeliveryService::ZONE_KALUGA_REGION:
-                    case DeliveryService::ZONE_IVANOVO:
+                    case DeliveryService::ZONE_KALUGA:
                     case DeliveryService::ZONE_IVANOVO_REGION:
                         /**
                          * условие доставки в эту зону - наличие в базовом магазине
