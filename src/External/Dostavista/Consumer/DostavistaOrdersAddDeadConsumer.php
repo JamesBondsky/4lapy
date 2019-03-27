@@ -21,6 +21,7 @@ class DostavistaOrdersAddDeadConsumer extends DostavistaConsumerBase
     public function execute(AMQPMessage $message): bool
     {
         $res = static::MSG_REJECT;
+        Application::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
         $body = $message->getBody();
         $data = json_decode($message->getBody(), true);
         $lastDateTryToSend = new DateTime($data['last_date_try_to_send'], static::DATE_TIME_FORMAT);
