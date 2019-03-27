@@ -265,6 +265,15 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                         <span class="b-product-information__bonus js-bonus-<?= $currentOffer->getId() ?>"></span>
                     </div>
                 </li>
+
+                <li class="b-product-information__item js-subscribe-price-block" style="display: none">
+                    <div class="b-product-information__title-info b-product-information__title-info--price">Цена по подписке</div>
+                    <div class="b-product-information__value b-product-information__value--price">
+                        <span class="b-product-information__price js-subscribe-price"><?=$currentOffer->getSubscribePrice()?></span>
+                        <span class="b-ruble b-ruble--product-information">&nbsp;₽</span>
+                    </div>
+                </li>
+
                 <?php if (!empty($currentOffer->getFlavourCombination())) {
                     $unionOffers = $component->getOffersByUnion('flavour', $currentOffer->getFlavourCombination());
                     if (!$unionOffers->isEmpty()) {

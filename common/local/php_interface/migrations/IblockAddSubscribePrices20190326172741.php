@@ -6,7 +6,6 @@ namespace Sprint\Migration;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
-use Sprint\Migration\Helpers\IblockHelper;
 
 class IblockAddSubscribePrices20190326172741 extends \Adv\Bitrixtools\Migration\SprintMigrationBase {
 
@@ -44,7 +43,7 @@ class IblockAddSubscribePrices20190326172741 extends \Adv\Bitrixtools\Migration\
                 'RIGHTS_MODE'        => 'S',
                 'SECTION_PROPERTY'   => null,
                 'PROPERTY_INDEX'     => null,
-                'VERSION'            => '2',
+                'VERSION'            => 1,
                 'LAST_CONV_ELEMENT'  => '0',
                 'SOCNET_GROUP_ID'    => null,
                 'EDIT_FILE_BEFORE'   => '',
@@ -81,7 +80,7 @@ class IblockAddSubscribePrices20190326172741 extends \Adv\Bitrixtools\Migration\
                 'SEARCHABLE'         => 'N',
                 'FILTRABLE'          => 'N',
                 'IS_REQUIRED'        => 'Y',
-                'VERSION'            => '1',
+                'VERSION'            => 1,
                 'HINT'               => '',
             ]
         );
@@ -108,7 +107,7 @@ class IblockAddSubscribePrices20190326172741 extends \Adv\Bitrixtools\Migration\
                 'SEARCHABLE'         => 'N',
                 'FILTRABLE'          => 'N',
                 'IS_REQUIRED'        => 'Y',
-                'VERSION'            => '2',
+                'VERSION'            => 1,
                 'USER_TYPE'          => null,
                 'USER_TYPE_SETTINGS' => null,
                 'HINT'               => '',

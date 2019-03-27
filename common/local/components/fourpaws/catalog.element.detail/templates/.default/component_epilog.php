@@ -44,6 +44,10 @@ if (!empty($bonus)) { ?>
             $('.js-plus-minus-count')
                 .data('cont-max', '<?=$currentOffer->getQuantity()?>')
                 .data('one-price', '<?=$currentOffer->getPrice()?>');
+            <? if($currentOffer->getPrice() != $currentOffer->getSubscribePrice()){ ?>
+                $('.js-subscribe-price').html('<?= $currentOffer->getSubscribePrice() ?>');
+                $('.js-subscribe-price-block').show();
+            <? } ?>
         });
     </script>
 <?php
