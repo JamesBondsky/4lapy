@@ -118,6 +118,16 @@ foreach ($filters as $filter) {
                                     )
                                     : ''
                                 ?>>
+                                <?
+                                if ($hiddenFieldName = $variant->getHiddenFieldName()) {
+                                    $currentValue = Application::getInstance()->getContext()->getRequest()->getQueryList()->get($hiddenFieldName);
+                                    ?>
+                                        <div class="b-filter-link-list__hidden-input-wrap js-filter-input">
+                                            <input class="" type="hidden" name="<?= $hiddenFieldName ?>" value="<?= $currentValue ?>" <?= $currentValue ? 'checked' : '' ?>>
+                                        </div>
+                                    <?
+                                }
+                                ?>
                                 <input class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
                                        type="checkbox"
                                        name="<?= $filter->getFilterCode() ?>"
@@ -125,12 +135,6 @@ foreach ($filters as $filter) {
                                        id="<?= $filter->getFilterCode() ?>-<?= $id ?>"
                                     <?= $variant->isChecked() ? 'checked' : '' ?>
                                 />
-	                            <?
-	                            if ($hiddenFieldName = $variant->getHiddenFieldName()) {
-	                            	$currentValue = Application::getInstance()->getContext()->getRequest()->getQueryList()->get($hiddenFieldName);
-	                            	?><input class="js-filter-control" type="hidden" name="<?= $hiddenFieldName ?>" value="<?= $currentValue ?>" <?= $currentValue ? 'checked' : '' ?>><?
-	                            }
-	                            ?>
                                 <a class="b-filter-link-list__link b-filter-link-list__link--checkbox<?= ($additionalLinkClass = $variant->getAdditionalLinkClass()) ? ' ' . $additionalLinkClass : ''; ?>"
                                    href="javascript:void(0);"
                                    title="<?= $variant->getName() ?>"
