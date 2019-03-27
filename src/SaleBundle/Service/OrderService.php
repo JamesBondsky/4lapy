@@ -2052,7 +2052,7 @@ class OrderService implements LoggerAwareInterface
             'required_start_datetime' => $requireTimeStart,
             'required_finish_datetime' => $pointZeroDate->format('c'),
             'taking_amount' => 0,
-            'buyout_amount' => $takingAmount,
+            'buyout_amount' => ceil($takingAmount + $deliveryPrice),
             'note' => 'Телефон магазина: ' . $this->dostavistManagerPhone
         ];
 
