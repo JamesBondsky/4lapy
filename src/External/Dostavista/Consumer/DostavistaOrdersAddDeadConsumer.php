@@ -3,7 +3,7 @@
 namespace FourPaws\External\Dostavista\Consumer;
 
 use PhpAmqpLib\Message\AMQPMessage;
-use FourPaws\App\Application;
+use Bitrix\Main\Application;
 use Bitrix\Main\Type\DateTime;
 use FourPaws\External\Dostavista\Exception\DostavistaOrdersAddConsumerException;
 
