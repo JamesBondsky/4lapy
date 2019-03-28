@@ -22,8 +22,8 @@ use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\MobileApiBundle\Services\Api\OrderService as ApiOrderService;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 use FourPaws\SaleBundle\Discount\Manzana;
-use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
+use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\StoreBundle\Service\StoreService as AppStoreService;
 use FourPaws\DeliveryBundle\Service\DeliveryService as AppDeliveryService;
 
@@ -33,55 +33,44 @@ use FourPaws\DeliveryBundle\Service\DeliveryService as AppDeliveryService;
  */
 class BasketController extends FOSRestController
 {
-    /**
-     * @var AppBasketService
-     */
+    /** @var AppBasketService*/
     private $appBasketService;
-    /**
-     * @var ApiBasketService
-     */
-    private $apiBasketService;
-    /**
-     * @var Manzana
-     */
-    private $manzana;
-    /**
-     * @var CouponStorageInterface
-     */
-    private $couponStorage;
 
-    /**
-     * @var ApiOrderService
-     */
+    /** @var ApiBasketService*/
+    private $apiBasketService;
+
+    /**@var Manzana */
+    private $manzana;
+
+    /** @var ApiOrderService */
     private $apiOrderService;
 
-    /**
-     * @var AppStoreService
-     */
+    /** @var AppStoreService */
     private $appStoreService;
 
-    /**
-     * @var AppDeliveryService
-     */
+    /** @var AppDeliveryService */
     private $appDeliveryService;
+
+    /** @var OrderStorageService */
+    private $orderStorageService;
 
     public function __construct(
         Manzana $manzana,
-        CouponStorageInterface $couponStorage,
         AppBasketService $appBasketService,
         ApiBasketService $apiBasketService,
         ApiOrderService $apiOrderService,
         AppStoreService $appStoreService,
-        AppDeliveryService $appDeliveryService
+        AppDeliveryService $appDeliveryService,
+        OrderStorageService $orderStorageService
     )
     {
         $this->manzana = $manzana;
-        $this->couponStorage = $couponStorage;
         $this->appBasketService = $appBasketService;
         $this->apiBasketService = $apiBasketService;
         $this->apiOrderService = $apiOrderService;
         $this->appStoreService = $appStoreService;
         $this->appDeliveryService = $appDeliveryService;
+        $this->orderStorageService = $orderStorageService;
     }
 
     /**
@@ -90,20 +79,7 @@ class BasketController extends FOSRestController
      *
      * @param UserCartRequest $userCartRequest
      * @return UserCartResponse
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\NotImplementedException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\ObjectException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
-     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
-     * @throws \FourPaws\SaleBundle\Exception\OrderStorageSaveException
+     * @throws \Exception
      */
     public function getUserCartAction(UserCartRequest $userCartRequest)
     {
@@ -113,9 +89,9 @@ class BasketController extends FOSRestController
                 $this->manzana->setPromocode($promoCode);
                 $this->manzana->calculate();
 
-
-                $this->couponStorage->clear();
-                $this->couponStorage->save($promoCode);
+                $storage = $this->orderStorageService->getStorage();
+                $storage->setPromoCode($promoCode);
+                $this->orderStorageService->updateStorage($storage);
             } catch (ManzanaPromocodeUnavailableException $e) {
                 $promoCode = '';
             }
@@ -138,19 +114,7 @@ class BasketController extends FOSRestController
      * @Rest\View(serializerGroups={"Default", "basket"})
      * @param PostUserCartRequest $postUserCartRequest
      * @return UserCartResponse
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\NotImplementedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
-     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
-     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
+     * @throws \Exception
      */
     public function postUserCartAction(PostUserCartRequest $postUserCartRequest)
     {
@@ -184,18 +148,7 @@ class BasketController extends FOSRestController
      * @Rest\View(serializerGroups={"Default", "basket"})
      * @param PutUserCartRequest $putUserCartRequest
      * @return UserCartResponse
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\NotImplementedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
-     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
-     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
+     * @throws \Exception
      */
     public function putUserCartAction(PutUserCartRequest $putUserCartRequest)
     {
@@ -233,12 +186,7 @@ class BasketController extends FOSRestController
      * @Rest\View()
      * @param UserCartCalcRequest $userCartCalcRequest
      * @return UserCartCalcResponse
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\SaleBundle\Exception\OrderStorageSaveException
+     * @throws \Exception
      */
     public function postUserCartCalcAction(UserCartCalcRequest $userCartCalcRequest)
     {
@@ -261,26 +209,8 @@ class BasketController extends FOSRestController
      * @Rest\View()
      * @param UserCartOrderRequest $userCartOrderRequest
      * @return UserCartOrderResponse
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \Bitrix\Sale\UserMessageException
-     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
-     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
-     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
-     * @throws \FourPaws\SaleBundle\Exception\DeliveryNotAvailableException
-     * @throws \FourPaws\SaleBundle\Exception\OrderCreateException
-     * @throws \FourPaws\SaleBundle\Exception\OrderSplitException
-     * @throws \FourPaws\SaleBundle\Exception\OrderStorageSaveException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws \Exception
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function postUserCartOrderAction(UserCartOrderRequest $userCartOrderRequest)
     {

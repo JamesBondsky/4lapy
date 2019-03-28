@@ -40,6 +40,7 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
+use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 use FourPaws\PersonalBundle\Entity\OrderStatusChange;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
@@ -100,6 +101,9 @@ class OrderService
     /** @var ApiProductService */
     private $apiProductService;
 
+    /** @var CouponStorageInterface */
+    private $couponStorage;
+
 
     const DELIVERY_TYPE_COURIER = 'courier';
     const DELIVERY_TYPE_PICKUP = 'pickup';
@@ -117,7 +121,8 @@ class OrderService
         AppDeliveryService $appDeliveryService,
         AppOrderSubscribeService $appOrderSubscribeService,
         ApiProductService $apiProductService,
-        Serializer $serializer
+        Serializer $serializer,
+        CouponStorageInterface $couponStorage
     )
     {
         $this->apiBasketService = $apiBasketService;
@@ -133,6 +138,7 @@ class OrderService
         $this->appOrderSubscribeService = $appOrderSubscribeService;
         $this->apiProductService = $apiProductService;
         $this->serializer = $serializer;
+        $this->couponStorage = $couponStorage;
     }
 
     /**
@@ -705,6 +711,7 @@ class OrderService
                 break;
         }
         $storage = $this->orderStorageService->getStorage();
+        $this->couponStorage->save($storage->getPromoCode()); // because we can't use sessions we get promo code from the database, save it into session for current hit and creating order
         foreach (\FourPaws\SaleBundle\Enum\OrderStorage::STEP_ORDER as $step) {
             $this->orderStorageService->setStorageValuesFromArray($storage, $cartParamArray, $step);
         }

@@ -373,7 +373,6 @@ class OrderStorage
      */
     protected $lng = '';
 
-
     /**
      * Широта
      *
@@ -383,6 +382,16 @@ class OrderStorage
      * @Serializer\Groups(groups={"read","update","delete"})
      */
     protected $lat = '';
+
+    /**
+     * Промокод. Используется в МП вместое CouponStorage т.к. в МП нет сессий
+     *
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("PROMO_CODE")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     * @var string
+     */
+    protected $promoCode = '';
 
     /**
      * @return int
@@ -1097,6 +1106,24 @@ class OrderStorage
     public function setFromApp(bool $fromApp): OrderStorage
     {
         $this->fromApp = $fromApp;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPromoCode(): string
+    {
+        return $this->promoCode;
+    }
+
+    /**
+     * @param string $promoCode
+     * @return OrderStorage
+     */
+    public function setPromoCode(string $promoCode): OrderStorage
+    {
+        $this->promoCode = $promoCode;
         return $this;
     }
 }
