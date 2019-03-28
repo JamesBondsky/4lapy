@@ -169,18 +169,6 @@ class ShopInfoService
     }
 
     /**
-     * @return ShopList
-     *
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws SystemException
-     */
-    public function getAllShopsList(): ShopList
-    {
-        return $this->getShopListByRequest(new Request());
-    }
-
-    /**
      * @param StoreCollection $stores
      * @param string          $locationCode
      * @param string[]        $selectedServices
@@ -345,6 +333,19 @@ class ShopInfoService
     protected function getStoresByRequest(Request $request): StoreSearchResult
     {
         $locationCode = $request->get('code', '');
+
+        return $this->getStoresByLocationCode($locationCode);
+    }
+
+    /**
+     * @param $locationCode
+     * @return StoreSearchResult
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws SystemException
+     */
+    public function getStoresByLocationCode($locationCode): StoreSearchResult
+    {
         if (!empty($locationCode)) {
             $codeList = json_decode($locationCode, true);
             if (\is_array($codeList)) {
