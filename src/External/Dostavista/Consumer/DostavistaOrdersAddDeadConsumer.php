@@ -33,13 +33,19 @@ class DostavistaOrdersAddDeadConsumer extends DostavistaConsumerBase
                 /** @var DateTime $orderCreateDate */
                 $orderCreateDate = new DateTime($data['order_create_date'], static::DATE_TIME_FORMAT);
                 if (!$orderCreateDate instanceof DateTime) {
-                    throw new DostavistaOrdersAddConsumerException('Dostavista: bitrix order date create not found!', 120);
+                    throw new DostavistaOrdersAddConsumerException(
+                        self::ERRORS['order_date_create_not_found']['message'],
+                        self::ERRORS['order_date_create_not_found']['code']
+                    );
                 }
                 if ($orderCreateDate->add('+20 minutes') < new DateTime()) {
                     //время отправки вышло
                     $bitrixOrderId = $data['bitrix_order_id'];
                     if ($bitrixOrderId === null) {
-                        throw new DostavistaOrdersAddConsumerException('Dostavista: bitrix order id empty in message data!', 10);
+                        throw new DostavistaOrdersAddConsumerException(
+                            self::ERRORS['order_id_empty']['message'],
+                            self::ERRORS['order_id_empty']['code']
+                        );
                     }
                     $order = $this->orderService->getOrderById($bitrixOrderId);
                     /** Обновляем битриксовые свойства достависты */
@@ -49,7 +55,10 @@ class DostavistaOrdersAddDeadConsumer extends DostavistaConsumerBase
                     } else {
                         $this->dostavistaService->dostavistaOrderAddErrorSendEmail(0, 0, '', '', (new \Datetime)->format(static::DATE_TIME_FORMAT));
                     }
-                    throw new DostavistaOrdersAddConsumerException('Dostavista error, time to send the order to the delivery man has expired', 130);
+                    throw new DostavistaOrdersAddConsumerException(
+                        self::ERRORS['time_to_send_has_expired']['message'],
+                        self::ERRORS['time_to_send_has_expired']['code']
+                    );
                 }
                 //пушим обратно на обработку
                 /** @noinspection MissingService */

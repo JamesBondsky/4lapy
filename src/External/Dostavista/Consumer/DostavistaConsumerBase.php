@@ -22,6 +22,33 @@ abstract class DostavistaConsumerBase implements ConsumerInterface, LoggerAwareI
 
     const DATE_TIME_FORMAT = 'd.m.Y H:i:s';
 
+    const ERRORS = [
+        'order_id_empty' => [
+            'code' => 100400,
+            'message' => 'Dostavista: bitrix order id empty in message data!'
+        ],
+        'order_not_found' => [
+            'code' => 100404,
+            'message' => 'Dostavista: bitrix order not found!'
+        ],
+        'service_add_order_failed' => [
+            'code' => 100500,
+            'message' => 'Dostavista: dostavista service add order failed!'
+        ],
+        'service_connection_failed' => [
+            'code' => 100521,
+            'message' => 'Dostavista: connection with service dostavista error!'
+        ],
+        'order_date_create_not_found' => [
+            'code' => 100415,
+            'message' => 'Dostavista: bitrix order date create not found!'
+        ],
+        'time_to_send_has_expired' => [
+            'code' => 100524,
+            'message' => 'Dostavista error, time to send the order to the express delivery has expired!'
+        ],
+    ]
+
     /**
      * @var Serializer
      */

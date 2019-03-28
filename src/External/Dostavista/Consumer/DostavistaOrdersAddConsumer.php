@@ -29,7 +29,7 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
     {
         Event::disableEvents();
 
-        $result = static::MSG_REJECT;
+        $result = self::MSG_REJECT;
         Application::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
         $body = $message->getBody();
         $data = json_decode($body, true);
@@ -41,34 +41,46 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
              * Получаем битриксовый заказ
              */
             if ($bitrixOrderId === null) {
-                throw new DostavistaOrdersAddConsumerException('Dostavista: bitrix order id empty in message data!', 10);
+                throw new DostavistaOrdersAddConsumerException(
+                    self::ERRORS['order_id_empty']['message'],
+                    self::ERRORS['order_id_empty']['code']
+                );
             }
 
             $order = $this->orderService->getOrderById($bitrixOrderId);
             if (!$order) {
-                throw new DostavistaOrdersAddConsumerException('Dostavista: bitrix order not found!', 20);
+                throw new DostavistaOrdersAddConsumerException(
+                    self::ERRORS['order_not_found']['message'],
+                    self::ERRORS['order_not_found']['code']
+                );
             }
 
             /** Отправляем заказ в достависту */
             $response = $this->dostavistaService->addOrder($data);
 
             if ($response['connection'] === false) {
-                throw new DostavistaOrdersAddConsumerException('Dostavista: connection with service dostavista error!', 30);
+                throw new DostavistaOrdersAddConsumerException(
+                    self::ERRORS['service_connection_failed']['message'],
+                    self::ERRORS['service_connection_failed']['code']
+                );
             }
             $dostavistaOrderId = $response['order_id'];
             if ((is_array($dostavistaOrderId) || empty($dostavistaOrderId)) || !$response['success']) {
-                throw new DostavistaOrdersAddConsumerException('Dostavista: dostavista service add order failed!', 40);
+                throw new DostavistaOrdersAddConsumerException(
+                    self::ERRORS['service_add_order_failed']['message'],
+                    self::ERRORS['service_add_order_failed']['code']
+                );
             }
             /** Обновляем битриксовые свойства достависты */
             $this->updateCommWayProperty($order, $dostavistaOrderId);
-            $result = static::MSG_ACK;
+            $result = self::MSG_ACK;
         } catch (DostavistaOrdersAddConsumerException|\Exception $e) {
             /**
              * Отправляем сообщение в другую очередь
              * @noinspection MissingService
              */
             $data = json_decode($body, true);
-            $data['last_date_try_to_send'] = (new DateTime())->format(static::DATE_TIME_FORMAT);
+            $data['last_date_try_to_send'] = (new DateTime())->format(self::DATE_TIME_FORMAT);
             $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.dostavista_orders_add_dead_producer');
             $producer->publish($this->serializer->serialize($data, 'json'));
             /**
