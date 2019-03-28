@@ -376,6 +376,17 @@ class OrderStorage
      */
     protected $lat = '';
 
+
+    /**
+     * Заказ по подписке
+     *
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("PROPERTY_SUBSCRIBE")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $subscribe = false;
+
     /**
      * @return int
      */
@@ -1070,6 +1081,23 @@ class OrderStorage
     {
         $this->lat = $lat;
 
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSubscribe(): bool
+    {
+        return $this->subscribe;
+    }
+
+    /**
+     * @param bool $subscribe
+     */
+    public function setSubscribe(bool $subscribe): OrderStorage
+    {
+        $this->subscribe = $subscribe;
         return $this;
     }
 }

@@ -164,6 +164,7 @@ class BasketComponent extends CBitrixComponent
         $this->arResult['POSSIBLE_GIFT_GROUPS'] = Gift::getPossibleGiftGroups($order);
         $this->arResult['POSSIBLE_GIFTS'] = Gift::getPossibleGifts($order);
         $this->calcTemplateFields();
+        $this->calcSubscribeFields();
         $this->checkSelectedGifts();
         $this->arResult['SHOW_FAST_ORDER'] = $this->deliveryService->getCurrentDeliveryZone() !== $this->deliveryService::ZONE_4;
         $this->arResult['ECOMMERCE_VIEW_BASKET'] = $this->ecommerceService->renderScript(
@@ -468,6 +469,30 @@ class BasketComponent extends CBitrixComponent
         $this->arResult['TOTAL_DISCOUNT'] = PriceMaths::roundPrecision($basePrice - $price);
         $this->arResult['TOTAL_PRICE'] = $price;
         $this->arResult['TOTAL_BASE_PRICE'] = $basePrice;
+    }
+
+    private function calcSubscribeFields()
+    {
+        $subscribePrice = 0;
+        /** @var Basket $basket */
+        $basket = $this->arResult['BASKET'];
+        /** @var BasketItem $basketItem */
+        $orderableBasket = $basket->getOrderableItems();
+
+        foreach ($orderableBasket as $basketItem) {
+            $itemQuantity = (int)$basketItem->getQuantity();
+            if (!isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
+                // Слияние строчек с одинаковыми sku
+                $offer = $this->getOffer((int)$basketItem->getProductId());
+                if (!$offer) {
+                    continue;
+                }
+                $subscribePrice += $offer->getSubscribePrice() * $itemQuantity;
+            }
+        }
+
+        $this->arResult['SUBSCRIBE_PRICE'] = $subscribePrice;
+        $this->arResult['SUBSCRIBE_ALLOWED'] = true;
     }
 
     /**

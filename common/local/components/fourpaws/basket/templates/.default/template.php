@@ -239,6 +239,25 @@ if ($arParams['IS_AJAX']) {
                     } ?>
                 </section>
             <?php } ?>
+
+            <? if($arResult['SUBSCRIBE_ALLOWED']){ ?>
+                <div class="b-information-order__order b-information-order__order--total">
+                    <div class="b-information-order__order-price">Итого без учета доставки</div>
+                    <div class="b-price b-price--information-order b-price--total-price">
+                        <span class="b-price__current">
+                            <?= WordHelper::numberFormat($arResult['SUBSCRIBE_PRICE']); ?>
+                        </span><span class="b-ruble">₽</span>
+                    </div>
+                </div>
+
+                <form action="/sale/order/" method="post">
+                    <button class="b-button b-button--start-order <?= $sViewportCookie === null ? 'b-button--bottom-indent' : '' ?>"
+                       title="Подписка на доставку" <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
+                        Подписаться на доставку
+                    </button>
+                    <input type="hidden" name="subscribe" value="1">
+                </form>
+            <? } ?>
         </main>
 
         <aside class="b-shopping-cart__aside">
