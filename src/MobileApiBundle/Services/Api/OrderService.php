@@ -555,7 +555,7 @@ class OrderService
             'courier' => $courierDelivery,
         ];
         if ($courierDelivery->getAvailable()) {
-            $basketProducts = $this->apiBasketService->getBasketProducts();
+            $basketProducts = $this->apiBasketService->getBasketProducts(true);
             $orderStorage = $this->orderStorageService->getStorage();
             $deliveries = $this->orderStorageService->getDeliveries($orderStorage);
             $delivery = null;
@@ -674,25 +674,28 @@ class OrderService
      * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
      * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\NotImplementedException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
+     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
      * @throws \FourPaws\SaleBundle\Exception\DeliveryNotAvailableException
      * @throws \FourPaws\SaleBundle\Exception\OrderCreateException
      * @throws \FourPaws\SaleBundle\Exception\OrderSplitException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
-     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
-     * @throws \Exception
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function createOrder(UserCartOrderRequest $userCartOrderRequest)
     {
         $cartParam = $userCartOrderRequest->getCartParam();
         $deliveryType = $cartParam->getDeliveryType();
         $cartParamArray = $this->serializer->toArray($cartParam);
+
         switch ($deliveryType) {
             //toDo DPD доставка
             case self::DELIVERY_TYPE_COURIER:
+                $cartParamArray['delyveryType'] = $cartParamArray['split'] ? 'twoDeliveries' : ''; // have no clue why this param used
                 $cartParamArray['deliveryTypeId'] = $this->appDeliveryService->getDeliveryIdByCode(DeliveryService::INNER_DELIVERY_CODE);
                 //toDo доставка DPD должна определяться автоматически, в зависимости от зоны
                 break;

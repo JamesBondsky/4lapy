@@ -120,7 +120,7 @@ class BasketController extends FOSRestController
                 $promoCode = '';
             }
         }
-        $basketProducts = $this->apiBasketService->getBasketProducts();
+        $basketProducts = $this->apiBasketService->getBasketProducts(false);
         $orderParameter = $this->apiOrderService->getOrderParameter($basketProducts);
         $orderCalculate = $this->apiOrderService->getOrderCalculate($basketProducts);
         if ($promoCode) {
@@ -244,7 +244,7 @@ class BasketController extends FOSRestController
     {
         $bonusSubtractAmount = $userCartCalcRequest->getBonusSubtractAmount();
         $deliveryType = $userCartCalcRequest->getDeliveryType();
-        $basketProducts = $this->apiBasketService->getBasketProducts();
+        $basketProducts = $this->apiBasketService->getBasketProducts(false);
 
         $orderCalculate = $this->apiOrderService->getOrderCalculate(
             $basketProducts,

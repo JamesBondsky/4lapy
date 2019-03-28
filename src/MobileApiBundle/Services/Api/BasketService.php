@@ -7,7 +7,6 @@
 namespace FourPaws\MobileApiBundle\Services\Api;
 
 
-use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
@@ -64,6 +63,7 @@ class BasketService
 
 
     /**
+     * @param bool $onlyOrderable флаг запрашивать ли товары доступные для покупки или все товары (в том числе и недоступные для покупки)
      * @return BasketProductCollection
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ArgumentNullException
@@ -71,7 +71,7 @@ class BasketService
      * @throws \Bitrix\Main\ObjectNotFoundException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    public function getBasketProducts(): BasketProductCollection
+    public function getBasketProducts(bool $onlyOrderable = false): BasketProductCollection
     {
         $deliveries = $this->deliveryService->getByLocation();
         $delivery = null;
@@ -105,10 +105,10 @@ class BasketService
         }
 
         $products = new BasketProductCollection();
-        $orderAbleBasket = $basket->getOrderableItems();
+        $basketItems = $onlyOrderable ? $basket->getOrderableItems()->getBasketItems() : $basket->getBasketItems();
         // В этом массиве будут храниться детализация цены для каждого товара в случае акций "берешь n товаров, 1 бесплатно", "50% скидка на второй товар" и т.д.
 
-        foreach ($orderAbleBasket as $basketItem) {
+        foreach ($basketItems as $basketItem) {
             if ($this->isSubProduct($basketItem)) {
                 continue;
             }
@@ -130,7 +130,7 @@ class BasketService
 
         }
 
-        $products = $this->fillBasketProductsPrices($orderAbleBasket, $products);
+        $products = $this->fillBasketProductsPrices($basketItems, $products);
 
         return $products;
     }
@@ -142,11 +142,11 @@ class BasketService
      * по сути является подпродуктом базового продукта
      * @see BasketComponent::calcTemplateFields()
      *
-     * @param Basket $orderAbleBasket
+     * @param array $basketItems
      * @param BasketProductCollection $products
      * @return BasketProductCollection
      */
-    private function fillBasketProductsPrices(Basket $orderAbleBasket, BasketProductCollection $products)
+    private function fillBasketProductsPrices(array $basketItems, BasketProductCollection $products)
     {
         /** @var PriceWithQuantity[][] $pricesWithQuantityAll */
         $pricesWithQuantityAll = [];
@@ -156,7 +156,7 @@ class BasketService
                 continue;
             }
             /** @var BasketItem $basketItem */
-            foreach ($orderAbleBasket as $basketItem) {
+            foreach ($basketItems as $basketItem) {
                 if (
                     (int)$product->getShortProduct()->getId() === (int)$basketItem->getProductId()
                     &&
