@@ -41,7 +41,7 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
     if ($template->hasOrderDeliveryPage()) {
         $APPLICATION->IncludeComponent('fourpaws:order.shop.list', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
     }
-    if ($template->isCatalog()) {
+    if ($template->isCatalog() && !$template->isCatalogDetail()) {
         $APPLICATION->IncludeComponent('fourpaws:catalog.shop.list', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
     }
     if ($template->hasFastOrder()) {
