@@ -72,11 +72,7 @@ class CategoryService
         $category->setTitle($categoryItem->getCanonicalName());
 
         if ($categoryItem->getPictureId()) {
-            $picture =
-                ResizeImageDecorator::createFromPrimary($categoryItem->getPictureId())
-                    ->setResizeWidth(200)
-                    ->setResizeHeight(200);
-            $category->setPicture(new FullHrefDecorator($picture->getSrc()));
+            $category->setPicture($this->getPicturePath($categoryItem->getPictureId()));
         }
 
         if ($categoryItem->getChild()->count()) {
@@ -85,6 +81,24 @@ class CategoryService
         }
 
         return $category;
+    }
+
+    /**
+     * @param int $id
+     * @return string
+     */
+    private function getPicturePath(int $id)
+    {
+        try {
+            /** @var \FourPaws\BitrixOrm\Model\File $imageDecorator */
+            $imageDecorator = ResizeImageDecorator::createFromPrimary($id)
+                ->setResizeWidth(200)
+                ->setResizeHeight(200);
+            $picture = new FullHrefDecorator($imageDecorator->getSrc());
+        } catch (FileNotFoundException $e) {
+            $picture = '';
+        }
+        return $picture;
     }
 
     /**
@@ -97,7 +111,13 @@ class CategoryService
      */
     private function createTree(Category $categoryItem): array
     {
-        $children = [];
+        $children = [
+            (new CatalogCategory())
+                ->setTitle('Все')
+                ->setId($categoryItem->getId())
+                ->setHasChild(false)
+                ->setPicture($this->getPicturePath($categoryItem->getPictureId()))
+        ];
         foreach ($categoryItem->getChild() as $child) {
             $children[] = $this->toApiFormat($child);
         }
