@@ -27,9 +27,17 @@ abstract class DostavistaConsumerBase implements ConsumerInterface, LoggerAwareI
             'code' => 100400,
             'message' => 'Dostavista: bitrix order id empty in message data!'
         ],
+        'dostavista_order_id_empty' => [
+            'code' => 100401,
+            'message' => 'Dostavista: dostavista order id empty in message data!'
+        ],
         'order_not_found' => [
             'code' => 100404,
             'message' => 'Dostavista: bitrix order not found!'
+        ],
+        'dostavista_order_not_found' => [
+            'code' => 100405,
+            'message' => 'Dostavista: dostavista order not found!'
         ],
         'service_add_order_failed' => [
             'code' => 100500,
@@ -47,7 +55,7 @@ abstract class DostavistaConsumerBase implements ConsumerInterface, LoggerAwareI
             'code' => 100524,
             'message' => 'Dostavista error, time to send the order to the express delivery has expired!'
         ],
-    ]
+    ];
 
     /**
      * @var Serializer
