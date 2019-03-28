@@ -655,7 +655,7 @@ class DeliverySchedule extends Base implements \Serializable
 
                 $date->modify(sprintf('%s weeks %s days', $weeks, $days));
 
-                // Не укладываемся по времени для формирования заказа
+                /** Не укладываемся по времени для формирования заказа */
                 if($realDate && $from > $day->setOrderTimeForDate($date)){
                     if($this->getTypeCode() == self::TYPE_WEEKLY){
                         $date->modify('+1 week');
@@ -677,7 +677,7 @@ class DeliverySchedule extends Base implements \Serializable
                 $fromDay = (int)$orderDate->format('N');
 
                 $diff = $supplyDay - $fromDay;
-                $days = ($diff >= 0) ? $diff : $diff + 7;
+                $days = ($diff > 0) ? $diff : $diff + 7;
                 $orderDate->modify(sprintf('+%s days', $days));
 
                 return $orderDate;
