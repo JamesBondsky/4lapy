@@ -38,19 +38,6 @@ class BasketProductCollection extends ProductQuantityCollection
     }
 
     /**
-     * @return int
-     */
-    public function getTotalWeight()
-    {
-        $weight = 0;
-        /** @var Product $product */
-        foreach ($this->getValues() as $product) {
-            // toDo
-        }
-        return $weight;
-    }
-
-    /**
      * @return Price
      */
     public function getTotalPrice()
@@ -73,34 +60,15 @@ class BasketProductCollection extends ProductQuantityCollection
     }
 
     /**
-     * @param float $deliveryPrice
-     * @return Detailing[]
+     * @return float
      */
-    public function getPriceDetails(float $deliveryPrice = 0): array
+    public function getDiscount(): float
     {
         $price = $this->getTotalPrice()->getOld();
         $discountPrice = $this->getTotalPrice()->getActual();
         $discount = $price - $discountPrice;
         $discount = max($discount, 0);
-
-        return [
-            (new Detailing())
-                ->setId('cart_price_old')
-                ->setTitle('Стоимость товаров без скидки')
-                ->setValue($price),
-            (new Detailing())
-                ->setId('cart_price')
-                ->setTitle('Стоимость товаров со скидкой')
-                ->setValue($discountPrice),
-            (new Detailing())
-                ->setId('discount')
-                ->setTitle('Скидка')
-                ->setValue($discount),
-            (new Detailing())
-                ->setId('delivery')
-                ->setTitle('Стоимость доставки')
-                ->setValue($deliveryPrice),
-        ];
+        return $discount;
     }
 
     /**

@@ -207,7 +207,6 @@ class OrderService
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      * @throws \Exception
      */
     public function getOneByNumberForCurrentUser(int $orderNumber)
@@ -246,13 +245,19 @@ class OrderService
      * @param OrderEntity $order
      * @param OrderSubscribe $subscription
      * @return Order
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws OrderStorageSaveException
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\ObjectException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
      * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      */
     protected function toApiFormat(OrderEntity $order, OrderSubscribe $subscription = null)
@@ -277,7 +282,7 @@ class OrderService
             ->setCompleted($order->isClosed())
             ->setPaid($order->isPayed())
             ->setCartParam($this->getOrderParameter($basketProducts, $order))
-            ->setCartCalc($this->getOrderCalculate($basketProducts));
+            ->setCartCalc($this->getOrderCalculate($basketProducts, false, 0, $order));
     }
 
     /**
@@ -427,20 +432,22 @@ class OrderService
 
     /**
      * @param BasketProductCollection $basketProducts
-     * @param string $deliveryType
+     * @param bool $isCourierDelivery
      * @param float $bonusSubtractAmount
+     * @param OrderEntity|null $order
      * @return OrderCalculate
      * @throws OrderStorageSaveException
      */
     public function getOrderCalculate(
         BasketProductCollection $basketProducts,
-        string $deliveryType = 'courier',
-        float $bonusSubtractAmount = 0
+        $isCourierDelivery = false,
+        float $bonusSubtractAmount = 0,
+        OrderEntity $order = null
     )
     {
         $deliveryPrice = 0;
         try {
-            if ($deliveryType === 'courier') {
+            if ($isCourierDelivery) {
                 $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
                 foreach ($deliveries as $calculationResult) {
                     if ($this->appDeliveryService->isDelivery($calculationResult)) {
@@ -461,7 +468,6 @@ class OrderService
 
         $orderCalculate = (new OrderCalculate())
             ->setTotalPrice($basketProducts->getTotalPrice())
-            ->setPriceDetails($basketProducts->getPriceDetails($deliveryPrice))
             ->setCardDetails([
                 (new Detailing())
                     ->setId('bonus_add')
@@ -472,6 +478,54 @@ class OrderService
                     ->setTitle('Списано')
                     ->setValue($bonusSubtractAmount),
             ]);
+
+        $cardDetails = [];
+
+        $basketPriceWithoutDiscount = $basketProducts->getTotalPrice()->getOld();
+        $basketPriceWithDiscount = $basketProducts->getTotalPrice()->getActual();
+
+        if ($order) {
+            // if there is an order
+
+            $basketPrice = max($basketPriceWithoutDiscount, $basketPriceWithDiscount);
+            $priceWithDiscount = $order->getPrice();
+            $priceWithoutDiscount = $priceWithDiscount !== $basketPrice ? $basketPrice : 0;
+            $discount = max($priceWithoutDiscount - $priceWithDiscount, 0);
+
+            $cardDetails[] = (new Detailing())
+                ->setId('cart_price_old')
+                ->setTitle('Стоимость товаров без скидки')
+                ->setValue($priceWithoutDiscount);
+            $cardDetails[] = (new Detailing())
+                ->setId('cart_price')
+                ->setTitle('Стоимость товаров со скидкой')
+                ->setValue($priceWithDiscount);
+            $cardDetails[] = (new Detailing())
+                ->setId('discount')
+                ->setTitle('Скидка')
+                ->setValue($discount);
+        } else {
+            // if method called from the basket and there is no order yet
+            $cardDetails[] = (new Detailing())
+                ->setId('cart_price_old')
+                ->setTitle('Стоимость товаров без скидки')
+                ->setValue($basketPriceWithoutDiscount);
+            $cardDetails[] = (new Detailing())
+                ->setId('cart_price')
+                ->setTitle('Стоимость товаров со скидкой')
+                ->setValue($basketPriceWithDiscount);
+            $cardDetails[] = (new Detailing())
+                ->setId('discount')
+                ->setTitle('Скидка')
+                ->setValue($basketProducts->getDiscount());
+        }
+
+        $cardDetails[] = (new Detailing())
+            ->setId('delivery')
+            ->setTitle('Стоимость доставки')
+            ->setValue($deliveryPrice);
+
+        $orderCalculate->setCardDetails($cardDetails);
 
         return $orderCalculate;
     }

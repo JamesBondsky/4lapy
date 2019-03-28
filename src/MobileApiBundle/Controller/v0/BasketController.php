@@ -191,12 +191,11 @@ class BasketController extends FOSRestController
     public function postUserCartCalcAction(UserCartCalcRequest $userCartCalcRequest)
     {
         $bonusSubtractAmount = $userCartCalcRequest->getBonusSubtractAmount();
-        $deliveryType = $userCartCalcRequest->getDeliveryType();
         $basketProducts = $this->apiBasketService->getBasketProducts(false);
 
         $orderCalculate = $this->apiOrderService->getOrderCalculate(
             $basketProducts,
-            $deliveryType,
+            $userCartCalcRequest->getDeliveryType() === 'courier',
             $bonusSubtractAmount
         );
         return (new UserCartCalcResponse())
