@@ -237,16 +237,29 @@ class StoreListController extends Controller implements LoggerAwareInterface
     /**
      * @Route("/all/", methods={"GET"})
      *
+     * @param Request $request
      * @return JsonResponse
      */
-    public function getAllAction(): JsonResponse
+    public function getAllAction(Request $request): JsonResponse
     {
         try {
-            $result = JsonSuccessResponse::createWithData(
-                '',
-                $this->shopInfoService->shopListToArray(
-                    $this->shopInfoService->getAllShopsList()
+            $locationCode = $this->shopInfoService->getLocationByRequest($request);
+
+            try {
+                $stores = $this->shopInfoService->getStoresByLocationCode($locationCode)->getStores();
+            } catch (NoStoresAvailableException $e) {
+                $stores = new StoreCollection();
+            }
+
+            $result = $this->shopInfoService->shopListToArray(
+                $this->shopInfoService->getShopList(
+                    $stores,
+                    $locationCode
                 )
+            );
+
+            $result = JsonSuccessResponse::createWithData(
+                '', $result
             );
         } catch (Exception $e) {
             $this->log()->error($e->getMessage());
