@@ -54,8 +54,8 @@ use FourPaws\DeliveryBundle\Collection\StockResultCollection;
                     </ul>
                     <div class="b-form-inline b-form-inline--catalog-stores-search">
                         <form class="b-form-inline__form">
-                            <div class="b-input b-input--stores-search b-input--order-search">
-                                <input class="b-input__input-field b-input__input-field--stores-search b-input__input-field--order-search"
+                            <div class="b-input b-input--stores-search b-input--catalog-stores-search">
+                                <input class="b-input__input-field b-input__input-field--stores-search b-input__input-field--catalog-stores-search"
                                        type="text"
                                        id="stores-search"
                                        placeholder="Поиск по адресу, метро и названию ТЦ"
@@ -67,14 +67,14 @@ use FourPaws\DeliveryBundle\Collection\StockResultCollection;
                             </div>
                         </form>
                     </div>
-                    <div class="b-tab-delivery b-tab-delivery--order js-content-list js-map-list-scroll js-fix-scroll">
-                        <ul class="b-delivery-list b-delivery-list--order js-delivery-list">
+                    <div class="b-tab-delivery b-tab-delivery--catalog-stores js-content-list js-map-list-scroll js-fix-scroll">
+                        <ul class="b-delivery-list b-delivery-list--catalog-stores js-delivery-list">
                             <?php include 'include/shop.php' ?>
                         </ul>
                     </div>
                 </div>
                 <div class="b-availability__show-block">
-                    <div class="b-tab-delivery-map b-tab-delivery-map--order js-content-map">
+                    <div class="b-tab-delivery-map b-tab-delivery-map--catalog-stores js-content-map">
                         <div class="b-tab-delivery-map__map" id="map" data-url="<?= $arResult['STORE_LIST_URL'] ?>">
                         </div>
                         <a class="b-link b-link--close-baloon js-product-list" href="javascript:void(0);" title="">

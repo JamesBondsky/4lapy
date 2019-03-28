@@ -23,8 +23,8 @@ use FourPaws\Decorators\SvgDecorator;
             {{schedule}}
         </span>
     </a>
-    <div class="b-order-info-baloon">
-        <a class="b-link b-link--popup-back b-link--order b-link--desktop js-close-order-baloon"
+    <div class="b-catalog-stores-info-baloon">
+        <a class="b-link b-link--popup-back b-link--catalog-stores b-link--desktop js-close-catalog-stores-baloon"
            href="javascript:void(0);"
            title="">
             <span class="b-icon b-icon--back-long b-icon--balloon">
@@ -32,11 +32,11 @@ use FourPaws\Decorators\SvgDecorator;
             </span>
             Вернуться к списку
         </a>
-        <a class="b-link b-link--popup-back b-link--baloon js-close-order-baloon" href="javascript:void(0);">
+        <a class="b-link b-link--popup-back b-link--baloon js-close-catalog-stores-baloon" href="javascript:void(0);">
             <?= $arResult['IS_DPD'] ? 'Пункт самовывоза' : 'Магазин' ?>
         </a>
-        <div class="b-order-info-baloon__content-wrap">
-            <div class="b-order-info-baloon__content js-order-info-baloon-scroll" id="scroll-{{id}}">
+        <div class="b-catalog-stores-info-baloon__content-wrap">
+            <div class="b-catalog-stores-info-baloon__content" id="scroll-{{id}}">
                 <ul class="b-delivery-list">
                     <li class="b-delivery-list__item b-delivery-list__item--myself">
                         <span class="b-delivery-list__link b-delivery-list__link--myself">
@@ -84,7 +84,7 @@ use FourPaws\Decorators\SvgDecorator;
                     </a>
                 </div>
             </div>
-            <a class="b-button b-button--order-balloon js-btn-shop-filter"
+            <a class="b-button b-button--catalog-stores-balloon js-btn-shop-filter"
                href="javascript:void(0);"
                title=""
                data-shopId="{{id}}">
