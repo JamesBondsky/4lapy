@@ -452,7 +452,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      */
     protected function isOfferExcluded(Offer $offer): bool
     {
-        $badWordsTemplate = '~новинка|подарка|хит|скидка|бесплатно|спеццена|специальная цена|новинка|заказ|аналог|акция|распродажа|новый|подарок|new|sale~iu';
+        $badWordsTemplate = '~ новинка | подарка | хит | скидка | бесплатно | спеццена | специальная цена | новинка | заказ | аналог | акция | распродажа | новый | подарок | new | sale ~iu';
 
         if (!$offer->getXmlId()) {
             return true;
