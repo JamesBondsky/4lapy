@@ -424,6 +424,7 @@ class OrderService
      * @param string $deliveryType
      * @param float $bonusSubtractAmount
      * @return OrderCalculate
+     * @throws OrderStorageSaveException
      */
     public function getOrderCalculate(
         BasketProductCollection $basketProducts,
@@ -434,7 +435,7 @@ class OrderService
         $deliveryPrice = 0;
         try {
             if ($deliveryType === 'courier') {
-                $deliveries = $this->orderStorageService->getDeliveries(new OrderStorage());
+                $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
                 foreach ($deliveries as $calculationResult) {
                     if ($this->appDeliveryService->isDelivery($calculationResult)) {
                         $delivery = $calculationResult;
@@ -507,10 +508,11 @@ class OrderService
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws OrderStorageSaveException
      */
     public function getDeliveryVariants()
     {
-        $deliveries = $this->orderStorageService->getDeliveries(new OrderStorage());
+        $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
         $delivery = null;
         $pickup   = null;
         foreach ($deliveries as $calculationResult) {
@@ -554,7 +556,7 @@ class OrderService
         ];
         if ($courierDelivery->getAvailable()) {
             $basketProducts = $this->apiBasketService->getBasketProducts();
-            $orderStorage = (new OrderStorage());
+            $orderStorage = $this->orderStorageService->getStorage();
             $deliveries = $this->orderStorageService->getDeliveries($orderStorage);
             $delivery = null;
             foreach ($deliveries as $calculationResult) {
