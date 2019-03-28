@@ -222,9 +222,9 @@ class PetService
             }
             if (count($userPetsTypeIds)) {
                 $petBreeds = $this->getPetTypes(['ID' => $userPetsTypeIds]);
-                foreach ($petBreeds as $petBreed) {
-                    if (in_array($petBreed, array_keys(static::PETS_TYPE))) {
-                        $petsTypes[static::PETS_TYPE[$petBreed]] = true;
+                foreach ($petBreeds as $petBreedCode => $petBreed) {
+                    if (in_array($petBreedCode, array_keys(static::PETS_TYPE))) {
+                        $petsTypes[static::PETS_TYPE[$petBreedCode]] = true;
                     }
                 }
             }
@@ -444,11 +444,12 @@ class PetService
         $res = HLBlockFactory::createTableObject(Pet::PET_TYPE)::query()->setFilter($filter)->setSelect(
             [
                 'ID',
+                'UF_NAME',
                 'UF_CODE'
             ]
         )->setOrder(['UF_CODE' => 'asc'])->exec();
         while ($item = $res->fetch()) {
-            $arBreeds[$item['UF_CODE']] = $item['UF_CODE'];
+            $arBreeds[$item['UF_CODE']] = $item;
         }
 
         return $arBreeds;
