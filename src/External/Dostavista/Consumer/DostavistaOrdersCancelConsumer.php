@@ -7,6 +7,7 @@ use Bitrix\Sale\Order;
 use FourPaws\UserBundle\EventController\Event;
 use PhpAmqpLib\Message\AMQPMessage;
 use FourPaws\External\Dostavista\Exception\DostavistaOrdersAddConsumerException;
+use FourPaws\App\Application;
 
 /**
  * Class DostavistaOrdersCancelConsumer
@@ -36,23 +37,38 @@ class DostavistaOrdersCancelConsumer extends DostavistaConsumerBase
              * Получаем битриксовый заказ
              */
             if ($bitrixOrderId === null) {
-                throw new DostavistaOrdersAddConsumerException('Dostavista: bitrix order id empty in message data!', 10);
+                throw new DostavistaOrdersAddConsumerException(
+                    self::ERRORS['order_id_empty']['message'],
+                    self::ERRORS['order_id_empty']['code']
+                );
             }
             if ($dostavistaOrder === null) {
-                throw new DostavistaOrdersAddConsumerException('Dostavista: dostavista order id empty in message data!', 15);
+                throw new DostavistaOrdersAddConsumerException(
+                    self::ERRORS['dostavista_order_id_empty']['message'],
+                    self::ERRORS['dostavista_order_id_empty']['code']
+                );
             }
             $order = $this->orderService->getOrderById($bitrixOrderId);
             if (!$order) {
-                throw new DostavistaOrdersAddConsumerException('Dostavista: bitrix order not found!', 20);
+                throw new DostavistaOrdersAddConsumerException(
+                    self::ERRORS['order_not_found']['message'],
+                    self::ERRORS['order_not_found']['code']
+                );
             }
             /** Отправляем отмену заказа в достависту */
             $response = $this->dostavistaService->cancelOrder($dostavistaOrder);
             if ($response['connection'] === false) {
-                throw new DostavistaOrdersAddConsumerException('Dostavista: connection with service dostavista error!', 30);
+                throw new DostavistaOrdersAddConsumerException(
+                    self::ERRORS['service_connection_failed']['message'],
+                    self::ERRORS['service_connection_failed']['code']
+                );
             }
             $dostavistaOrderId = $response['order_id'];
             if (is_array($dostavistaOrderId) || empty($dostavistaOrderId)) {
-                throw new DostavistaOrdersAddConsumerException('Dostavista: dostavista order not found!', 30);
+                throw new DostavistaOrdersAddConsumerException(
+                    self::ERRORS['dostavista_order_not_found']['message'],
+                    self::ERRORS['dostavista_order_not_found']['code']
+                );
             }
             /** Обновляем битриксовое свойство */
             $this->orderService->setOrderPropertiesByCode(

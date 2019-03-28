@@ -8,6 +8,8 @@ use FourPaws\UserBundle\EventController\Event;
 use PhpAmqpLib\Message\AMQPMessage;
 use Bitrix\Sale\Order;
 use Bitrix\Main\Application;
+use FourPaws\App\Application as App;
+use Bitrix\Main\Type\DateTime;
 
 /**
  * Class DostavistaOrdersAddConsumer
@@ -19,62 +21,75 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
     /**
      * @param AMQPMessage $message
      * @return bool
+     * @throws \Bitrix\Main\Db\SqlQueryException
+     * @throws \Bitrix\Main\ObjectException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function execute(AMQPMessage $message): bool
     {
         Event::disableEvents();
 
-        $result = static::MSG_REJECT;
+        $result = self::MSG_REJECT;
         Application::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
-
+        $body = $message->getBody();
+        $data = json_decode($body, true);
         try {
-            $data = json_decode($message->getBody(), true);
             $bitrixOrderId = $data['bitrix_order_id'];
-            unset($data['bitrix_order_id']);
+            unset($data['bitrix_order_id'], $data['order_create_date'], $data['last_date_try_to_send']);
             /**
              * @var Order $order
              * Получаем битриксовый заказ
              */
             if ($bitrixOrderId === null) {
-                throw new DostavistaOrdersAddConsumerException('Dostavista: bitrix order id empty in message data!', 10);
+                throw new DostavistaOrdersAddConsumerException(
+                    self::ERRORS['order_id_empty']['message'],
+                    self::ERRORS['order_id_empty']['code']
+                );
             }
 
             $order = $this->orderService->getOrderById($bitrixOrderId);
             if (!$order) {
-                throw new DostavistaOrdersAddConsumerException('Dostavista: bitrix order not found!', 20);
+                throw new DostavistaOrdersAddConsumerException(
+                    self::ERRORS['order_not_found']['message'],
+                    self::ERRORS['order_not_found']['code']
+                );
             }
 
             /** Отправляем заказ в достависту */
             $response = $this->dostavistaService->addOrder($data);
 
             if ($response['connection'] === false) {
-                throw new DostavistaOrdersAddConsumerException('Dostavista: connection with service dostavista error!', 30);
+                throw new DostavistaOrdersAddConsumerException(
+                    self::ERRORS['service_connection_failed']['message'],
+                    self::ERRORS['service_connection_failed']['code']
+                );
             }
             $dostavistaOrderId = $response['order_id'];
             if ((is_array($dostavistaOrderId) || empty($dostavistaOrderId)) || !$response['success']) {
-                throw new DostavistaOrdersAddConsumerException('Dostavista: dostavista service add order failed!', 40);
+                throw new DostavistaOrdersAddConsumerException(
+                    self::ERRORS['service_add_order_failed']['message'],
+                    self::ERRORS['service_add_order_failed']['code']
+                );
             }
             /** Обновляем битриксовые свойства достависты */
-            $deliveryId = $order->getField('DELIVERY_ID');
-            $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
-            $address = $this->orderService->compileOrderAddress($order)->setValid(true);
-            $this->orderService->setOrderPropertiesByCode(
-                $order,
-                [
-                    'IS_EXPORTED_TO_DOSTAVISTA' => ($dostavistaOrderId) ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE,
-                    'ORDER_ID_DOSTAVISTA' => ($dostavistaOrderId) ? $dostavistaOrderId : 0
-                ]
-            );
-            $this->orderService->updateCommWayPropertyEx($order, $deliveryCode, $address, ($dostavistaOrderId) ? true : false);
-            $order->save();
-            $result = static::MSG_ACK;
-        } catch (\DostavistaOrdersAddConsumerException|\Exception $e) {
-            $this->log()->error('Dostavista error, code: ' . $e->getCode() . ' message: ' . $e->getMessage());
-            if ($order && is_array($response)) {
-                $this->dostavistaService->dostavistaOrderAddErrorSendEmail($order->getId(), $order->getField('ACCOUNT_NUMBER'), $response['message'], $response['data'], (new \Datetime)->format('d.m.Y H:i:s'));
+            $this->updateCommWayProperty($order, $dostavistaOrderId);
+            $result = self::MSG_ACK;
+        } catch (DostavistaOrdersAddConsumerException|\Exception $e) {
+            /**
+             * Отправляем сообщение в другую очередь
+             * @noinspection MissingService
+             */
+            $data = json_decode($body, true);
+            $data['last_date_try_to_send'] = (new DateTime())->format(self::DATE_TIME_FORMAT);
+            $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.dostavista_orders_add_dead_producer');
+            $producer->publish($this->serializer->serialize($data, 'json'));
+            /**
+             * Пишем логи
+             */
+            if ($e->getCode() == 40 && is_array($response) && isset($response['message'])) {
+                $this->log()->error('Dostavista error, code: ' . $e->getCode() . ' message: ' . $response['message']);
             } else {
-                $this->dostavistaService->dostavistaOrderAddErrorSendEmail(0, 0, $e->getMessage(), $e->getCode(), (new \Datetime)->format('d.m.Y H:i:s'));
+                $this->log()->error('Dostavista error, code: ' . $e->getCode() . ' message: ' . $e->getMessage());
             }
         }
 
