@@ -233,27 +233,4 @@ class StoreListController extends Controller implements LoggerAwareInterface
 
         return $result;
     }
-
-    /**
-     * @Route("/all/", methods={"GET"})
-     *
-     * @return JsonResponse
-     */
-    public function getAllAction(): JsonResponse
-    {
-        try {
-            $result = JsonSuccessResponse::createWithData(
-                '',
-                $this->shopInfoService->shopListToArray(
-                    $this->shopInfoService->getAllShopsList()
-                )
-            );
-        } catch (Exception $e) {
-            $this->log()->error($e->getMessage());
-
-            $result = $this->ajaxMess->getSystemError();
-        }
-
-        return $result;
-    }
 }
