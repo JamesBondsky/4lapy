@@ -66,6 +66,12 @@ class SessionHandler implements SessionHandlerInterface
 
         if ($token && $token instanceof ApiToken && $session = $token->getApiUserSession()) {
             $session->setUserId($this->userService->getCurrentUserId());
+            /**
+             * после авторизации нужно обновить ID корзины в табличке с токенами
+             * т.к. битрикс может удалить только что созданную корзину методом /start и подвязать уже созданную старую
+             * @see \CAllSaleUser::OnUserLogin
+             */
+            $session->setFUserId($_SESSION['SALE_USER_ID']);
             $token->setApiUserSession($session);
             $this->sessionRepository->update($session);
 
