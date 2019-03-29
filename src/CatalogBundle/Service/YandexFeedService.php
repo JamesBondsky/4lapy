@@ -161,6 +161,8 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      */
     public function process(ConfigurationInterface $configuration, int $step, string $stockID = null): bool
     {
+        $this->tmpFileName = 'yandex_tmp_feed' . ((!empty($stockID)) ? ('_' . $stockID) : '') . '.xml';
+
         /**
          * @var Configuration $configuration
          */
@@ -639,17 +641,6 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     public function loadFeed(string $key): Feed
     {
         return parent::loadFeed($key);
-    }
-
-    /**
-     * @return string
-     */
-    private function getStorageKey(): string
-    {
-        return \sprintf(
-            '%s/yandex_tmp_feed.xml',
-            \sys_get_temp_dir()
-        );
     }
 
     /**
