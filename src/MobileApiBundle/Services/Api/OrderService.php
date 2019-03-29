@@ -572,7 +572,7 @@ class OrderService
             // toDo убрать условие "&& !$calculationResult instanceof DpdPickupResult" после того как в мобильном приложении будет реализован вывод точек DPD на карте в чекауте
             if ($this->appDeliveryService->isInnerPickup($calculationResult) && !$calculationResult instanceof DpdPickupResult) {
                 $pickup = $calculationResult;
-            } elseif ($this->appDeliveryService->isInnerDeliveryCode($calculationResult)) {
+            } elseif ($this->appDeliveryService->isInnerDelivery($calculationResult)) {
                 $delivery = $calculationResult;
             }
         }
