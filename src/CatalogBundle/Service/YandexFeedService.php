@@ -161,12 +161,14 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      */
     public function process(ConfigurationInterface $configuration, int $step, string $stockID = null): bool
     {
+        $this->tmpFileName = 'yandex_tmp_feed' . ((!empty($stockID)) ? ('_' . $stockID) : '') . '.xml';
+
         /**
          * @var Configuration $configuration
          */
 
         if ($step === 0) {
-            $this->clearFeed($this->getStorageKey($stockID));
+            $this->clearFeed($this->getStorageKey());
 
             $feed = new Feed();
             $this
@@ -175,19 +177,19 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 ->processDeliveryOptions($feed, $configuration, $stockID)
                 ->processCategories($feed, $configuration);
 
-            $this->saveFeed($this->getStorageKey($stockID), $feed);
+            $this->saveFeed($this->getStorageKey(), $feed);
         } else {
-            $feed = $this->loadFeed($this->getStorageKey($stockID));
+            $feed = $this->loadFeed($this->getStorageKey());
 
             try {
                 $this->processOffers($feed, $configuration, $stockID);
             } catch (OffersIsOver $isOver) {
-                $feed = $this->loadFeed($this->getStorageKey($stockID));
+                $feed = $this->loadFeed($this->getStorageKey());
                 $feed->getShop()
                     ->setOffset(null);
                 $this->processPromos($feed, $configuration, $stockID);
                 $this->publicFeed($feed, Application::getAbsolutePath($configuration->getExportFile()));
-                $this->clearFeed($this->getStorageKey($stockID));
+                $this->clearFeed($this->getStorageKey());
 
                 return false;
             }
@@ -307,7 +309,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         $feed->getShop()
             ->setOffers($offers)
             ->setOffset($offset);
-        $this->saveFeed($this->getStorageKey($stockID), $feed);
+        $this->saveFeed($this->getStorageKey(), $feed);
 
         $cdbResult = $offerCollection->getCdbResult();
         if ($this->getPageNumber($offset, $limit) === (int)$cdbResult->NavPageCount) {
@@ -639,19 +641,6 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     public function loadFeed(string $key): Feed
     {
         return parent::loadFeed($key);
-    }
-
-    /**
-     * @param string $stockID
-     * @return string
-     */
-    private function getStorageKey($stockID = null): string
-    {
-        return \sprintf(
-            '%s/feeds/%s/yandex_tmp_feed' . ((!empty($stockID)) ? ('_' . $stockID) : '') . '.xml',
-            \sys_get_temp_dir(),
-            Application::getInstance()->getEnvironment()
-        );
     }
 
     /**
