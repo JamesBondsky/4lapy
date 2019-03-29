@@ -166,7 +166,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
          */
 
         if ($step === 0) {
-            $this->clearFeed($this->getStorageKey());
+            $this->clearFeed($this->getStorageKey($stockID));
 
             $feed = new Feed();
             $this
@@ -175,19 +175,19 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 ->processDeliveryOptions($feed, $configuration, $stockID)
                 ->processCategories($feed, $configuration);
 
-            $this->saveFeed($this->getStorageKey(), $feed);
+            $this->saveFeed($this->getStorageKey($stockID), $feed);
         } else {
-            $feed = $this->loadFeed($this->getStorageKey());
+            $feed = $this->loadFeed($this->getStorageKey($stockID));
 
             try {
                 $this->processOffers($feed, $configuration, $stockID);
             } catch (OffersIsOver $isOver) {
-                $feed = $this->loadFeed($this->getStorageKey());
+                $feed = $this->loadFeed($this->getStorageKey($stockID));
                 $feed->getShop()
                     ->setOffset(null);
                 $this->processPromos($feed, $configuration, $stockID);
                 $this->publicFeed($feed, Application::getAbsolutePath($configuration->getExportFile()));
-                $this->clearFeed($this->getStorageKey());
+                $this->clearFeed($this->getStorageKey($stockID));
 
                 return false;
             }
@@ -307,7 +307,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         $feed->getShop()
             ->setOffers($offers)
             ->setOffset($offset);
-        $this->saveFeed($this->getStorageKey(), $feed);
+        $this->saveFeed($this->getStorageKey($stockID), $feed);
 
         $cdbResult = $offerCollection->getCdbResult();
         if ($this->getPageNumber($offset, $limit) === (int)$cdbResult->NavPageCount) {
@@ -642,12 +642,13 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     }
 
     /**
+     * @param string $stockID
      * @return string
      */
-    private function getStorageKey(): string
+    private function getStorageKey($stockID = null): string
     {
         return \sprintf(
-            '%s/yandex_tmp_feed.xml',
+            '%s/yandex_tmp_feed' . ((!empty($stockID)) ? ('_' . $stockID) : '') . '.xml',
             \sys_get_temp_dir()
         );
     }
