@@ -16,7 +16,7 @@ use FourPaws\Helpers\WordHelper;
 
 <li class="b-product-information__item">
     <div class="b-product-information__title-info">Самовывоз</div>
-    <div class="b-product-information__value b-product-information__value--link js-open-tab-link" data-tab="availability">
+    <div class="b-product-information__value b-product-information__value--link disabled js-open-tab-link" data-tab="availability">
         <?php if ($pickup['CODE'] === DeliveryService::INNER_PICKUP_CODE) { ?>
             <?php
             $totalCount = $pickup['SHOP_COUNT']['TOTAL'];
