@@ -99,8 +99,8 @@ $markDeclention = new Declension('марка', 'марки', 'марок');
                             <span>Ваша скидка</span>
                         </div>
                         <div class="b-sale-coupon-kopilka__digital-code">
-	                        <span class="text" data-number-coupon-kopilka="true"><?= $arResult['ACTIVE_COUPON']['COUPON_NUMBER'] ?></span>
-	                        <a href="#" class="link" data-link-copy-number-coupon-kopilka="true">Скопировать</a>
+	                        <span class="text" data-number-coupon="true"><?= $arResult['ACTIVE_COUPON']['COUPON_NUMBER'] ?></span>
+	                        <a href="#" class="link" data-link-copy-number-coupon="true">Скопировать</a>
                         </div>
                         <div class="b-sale-coupon-kopilka__barcode">
                             <div class="b-sale-coupon-kopilka__barcode-img">
