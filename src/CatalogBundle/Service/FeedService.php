@@ -8,6 +8,7 @@ use FourPaws\CatalogBundle\Translate\ConfigurationInterface;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
+use FourPaws\App\Application;
 
 /**
  * Class FeedService
@@ -31,7 +32,10 @@ abstract class FeedService
      * @var Filesystem
      */
     private $filesystem;
-
+    /**
+     * @var string
+     */
+    public $tmpFileName;
     /**
      * FeedService constructor.
      *
@@ -119,5 +123,17 @@ abstract class FeedService
     public function publicFeedJson(array $data, string $file): void
     {
         $this->filesystem->dumpFile($file, json_encode($data, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
+    }
+
+    /**
+     * @return string
+     */
+    public function getStorageKey(): string
+    {
+        return \sprintf(
+            '%s/%s/' . $this->tmpFileName,
+            \sys_get_temp_dir(),
+            Application::getInstance()->getEnvironment()
+        );
     }
 }

@@ -24,6 +24,7 @@ use FourPaws\SapBundle\Exception\LogicException;
 use FourPaws\SapBundle\Exception\UnexpectedValueException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use FourPaws\SaleBundle\Service\OrderPropertyService;
 
 /**
  * Class Event
@@ -62,11 +63,12 @@ class Event extends BaseServiceHandler
 
     /**
      * @param BitrixEvent $event
-     *
-     * @throws ObjectNotFoundException
      * @throws ApplicationCreateException
-     * @throws LogicException
-     * @throws UnexpectedValueException
+     * @throws ObjectNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
      */
     public static function consumeOrderAfterSaveOrder(BitrixEvent $event): void
     {
@@ -88,13 +90,17 @@ class Event extends BaseServiceHandler
             OrderService::class
         );
 
+        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+        $isDostavistaDelivery = $deliveryService->isDostavistaDeliveryCode($deliveryService->getDeliveryCodeById($order->getField('DELIVERY_ID')));
+
         /**
          * Если заказ уже выгружен в SAP, оплата онлайн, или заказ создан по подписке, пропускаем
          */
         if (
             self::isOrderExported($order)
             || self::isManzanaOrder($order)
-            || $orderService->isOnlinePayment($order)
+            || self::isDostavistaOrder($order)
+            || $orderService->isOnlinePayment($order) && !$isDostavistaDelivery
             || $orderService->isSubscribe($order)
         ) {
             return;
@@ -136,7 +142,7 @@ class Event extends BaseServiceHandler
             $order = Order::load($payment->getOrderId());
 
             /** @noinspection NullPointerExceptionInspection */
-            if (!self::isOrderExported($order) && !self::isManzanaOrder($order)) {
+            if (!self::isOrderExported($order) && !self::isManzanaOrder($order) && !self::isDostavistaOrder($order)) {
                 self::getConsumerRegistry()->consume($order);
             }
         }
@@ -181,5 +187,37 @@ class Event extends BaseServiceHandler
         $manzanaNumberValue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'MANZANA_NUMBER');
 
         return null !== $manzanaNumberValue && (bool)$manzanaNumberValue->getValue();
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return bool
+     * @throws ObjectNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     */
+    private static function isDostavistaOrder(Order $order): bool
+    {
+        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+        $isDostavistaDelivery = $deliveryService->isDostavistaDeliveryCode($deliveryService->getDeliveryCodeById($order->getField('DELIVERY_ID')));
+        $propertyCollection = $order->getPropertyCollection();
+        $orderIdDostavista = BxCollection::getOrderPropertyByCode($propertyCollection, 'ORDER_ID_DOSTAVISTA')->getValue();
+        $commWay = BxCollection::getOrderPropertyByCode($propertyCollection, 'COM_WAY')->getValue();
+        switch (true) {
+            case !$isDostavistaDelivery:
+            case $isDostavistaDelivery && $orderIdDostavista != '' && $orderIdDostavista != 0:
+            case $isDostavistaDelivery &&
+                (
+                    $commWay == OrderPropertyService::COMMUNICATION_DOSTAVISTA_ERROR ||
+                    $commWay == OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS_DOSTAVISTA_ERROR
+                ):
+                return false;
+                break;
+            default:
+                return true;
+        }
     }
 }

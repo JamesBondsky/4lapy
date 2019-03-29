@@ -85,4 +85,22 @@ class Order
      * @var Point[]|Collection
      */
     public $points;
+
+    /**
+     * @XmlElement(cdata=false)
+     * @Type("string")
+     * @SerializedName("order_create_date")
+     *
+     * @var string
+     */
+    public $orderCreateDate;
+
+    /**
+     * @XmlElement(cdata=false)
+     * @Type("string")
+     * @SerializedName("last_date_try_to_send")
+     *
+     * @var string
+     */
+    public $lastDateTryToSend;
 }

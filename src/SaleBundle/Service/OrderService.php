@@ -1734,11 +1734,9 @@ class OrderService implements LoggerAwareInterface
 
     /**
      * @param Order $order
-     * @param CalculationResultInterface $delivery
-     * @param bool $isFastOrder
+     * @param $deliveryCode
      * @param Address|null $address
      * @param bool $dostavistaSuccess
-     * @throws DeliveryNotFoundException
      */
     public function updateCommWayPropertyEx(
         Order $order,
@@ -1749,15 +1747,17 @@ class OrderService implements LoggerAwareInterface
         $commWay = $this->getOrderPropertyByCode($order, 'COM_WAY');
         $value = $commWay->getValue();
 
-        if (!$changed) {
-            switch (true) {
-                case $deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE:
-                    if($dostavistaSuccess){
-                        $value = OrderPropertyService::COMMUNICATION_SMS;
-                    } else {
-                        $value = OrderPropertyService::COMMUNICATION_DOSTAVISTA_ERROR;
-                    }
-                    break;
+        if ($deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
+            if ($dostavistaSuccess) {
+                if ($value != OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS) {
+                    $value = OrderPropertyService::COMMUNICATION_SMS;
+                }
+            } else {
+                if ($value == OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS) {
+                    $value = OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS_DOSTAVISTA_ERROR;
+                } else {
+                    $value = OrderPropertyService::COMMUNICATION_DOSTAVISTA_ERROR;
+                }
             }
         }
 
@@ -1942,7 +1942,7 @@ class OrderService implements LoggerAwareInterface
         $insurance = ceil((float)$basket->getPrice());
         $takingAmount = 0;
         if (!$isPaid) {
-            $takingAmount += $insurance;
+            $takingAmount = ceil($insurance + $deliveryPrice);
         }
         /** @var OfferCollection $offers */
         $offers = $this->getOrderProducts($order);
@@ -2011,6 +2011,7 @@ class OrderService implements LoggerAwareInterface
 
         $data = [
             'bitrix_order_id' => $order->getId(),
+            'order_create_date' => $curDate->format('d.m.Y H:i:s'),
             'total_weight_kg' => $weight,
             'vehicle_type_id' => $vehicleTypeId,
             'matter' => $matter, //что везем
@@ -2064,7 +2065,7 @@ class OrderService implements LoggerAwareInterface
             'client_order_id' => $order->getField('ACCOUNT_NUMBER'),
             'required_start_datetime' => $requireTimeStart,
             'required_finish_datetime' => $pointZeroDate->format('c'),
-            'taking_amount' => ceil($takingAmount + $deliveryPrice),
+            'taking_amount' => $takingAmount,
             'buyout_amount' => 0,
             'note' => $comment
         ];
@@ -2091,6 +2092,7 @@ class OrderService implements LoggerAwareInterface
         $dostavistaOrder->insuranceAmount = $data['insurance_amount'];
         $dostavistaOrder->isClientNotificationEnabled = $data['is_client_notification_enabled'];
         $dostavistaOrder->isContactPersonNotificationEnabled = $data['is_contact_person_notification_enabled'];
+        $dostavistaOrder->orderCreateDate = $data['order_create_date'];
 
         $pointCollection = new ArrayCollection();
         foreach ($data['points'] as $point) {

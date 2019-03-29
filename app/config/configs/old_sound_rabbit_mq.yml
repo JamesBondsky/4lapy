@@ -1,10 +1,10 @@
 old_sound_rabbit_mq:
     connections:
         default:
-            host:     "%env(AMQP_HOST)%"
-            port:     "%env(AMQP_PORT)%"
-            user:     "%env(AMQP_USER)%"
-            password: "%env(AMQP_PASSWORD)%"
+            host:     '%env(AMQP_HOST)%'
+            port:     '%env(AMQP_PORT)%'
+            user:     '%env(AMQP_USER)%'
+            password: '%env(AMQP_PASSWORD)%'
             vhost:    '%env(AMQP_VHOST)%'
             lazy:     true
             connection_timeout: 3
@@ -17,73 +17,91 @@ old_sound_rabbit_mq:
             use_socket: false
 
     producers:
-      callback_set:
-        connection:       default
-        exchange_options: { name: "callback_set", type: direct }
+        callback_set:
+            connection:       default
+            exchange_options: { name: 'callback_set', type: direct }
 
-      catalog_sync:
-        connection: default
-        exchange_options: { name: "catalog_sync", type: direct }
+        catalog_sync:
+            connection: default
+            exchange_options: { name: 'catalog_sync', type: direct }
 
-      manzana_update:
-        connection: default
-        exchange_options: { name: "manzana_update", type: direct }
+        manzana_update:
+            connection: default
+            exchange_options: { name: 'manzana_update', type: direct }
 
-      manzana_referral_add:
-        connection: default
-        exchange_options: { name: "manzana_referral_add", type: direct }
+        manzana_referral_add:
+            connection: default
+            exchange_options: { name: 'manzana_referral_add', type: direct }
 
-      dostavista_orders_add:
-          connection: default
-          exchange_options: { name: "dostavista_orders_add", type: direct }
+        dostavista_orders_add:
+            connection: default
+            exchange_options: { name: 'dostavista_orders_add', type: direct }
 
-      dostavista_orders_cancel:
-          connection: default
-          exchange_options: { name: "dostavista_orders_cancel", type: direct }
+        dostavista_orders_add_dead:
+            connection: default
+            exchange_options: {name: 'dostavista_orders_add_dead', type: direct }
 
-      manzana_orders_import:
-        connection: default
-        exchange_options: { name: "manzana_orders_import", type: direct }
+        dostavista_orders_cancel:
+            connection: default
+            exchange_options: { name: 'dostavista_orders_cancel', type: direct }
+
+        manzana_orders_import:
+            connection: default
+            exchange_options: { name: 'manzana_orders_import', type: direct }
+
+        main_queue:
+            connection: default
+            exchange_options: { name: 'main_queue', type: direct }
+
+        main_queue_dead:
+            connection: default
+            exchange_options: { name: 'main_queue_dead', type: direct }
 
     consumers:
-      callback_set:
-        connection:       default
-        exchange_options: { name: "callback_set", type: direct}
-        queue_options:    { name: "callback_set" }
-        callback:         callback_set.consumer
+        callback_set:
+            connection:       default
+            exchange_options: { name: 'callback_set', type: direct}
+            queue_options:    { name: 'callback_set' }
+            callback:         callback_set.consumer
 
-      catalog_sync:
-        connection: default
-        exchange_options: {name: "catalog_sync", type: direct}
-        queue_options: {name: "catalog_sync"}
-        callback: search.sync_consumer
+        catalog_sync:
+            connection: default
+            exchange_options: {name: 'catalog_sync', type: direct}
+            queue_options: {name: 'catalog_sync'}
+            callback: search.sync_consumer
 
-      manzana_update:
-        connection: default
-        exchange_options: {name: "manzana_update", type: direct}
-        queue_options: {name: "manzana_update"}
-        callback: manzana.contact_consumer
+        manzana_update:
+            connection: default
+            exchange_options: {name: 'manzana_update', type: direct}
+            queue_options: {name: 'manzana_update'}
+            callback: manzana.contact_consumer
 
-      manzana_referral_add:
-        connection: default
-        exchange_options: {name: "manzana_referral_add", type: direct}
-        queue_options: {name: "manzana_referral_add"}
-        callback: manzana.referral_add_consumer
+        manzana_referral_add:
+            connection: default
+            exchange_options: {name: 'manzana_referral_add', type: direct}
+            queue_options: {name: 'manzana_referral_add'}
+            callback: manzana.referral_add_consumer
 
-      dostavista_orders_add:
-          connection: default
-          exchange_options: {name: "dostavista_orders_add", type: direct}
-          queue_options: {name: "dostavista_orders_add"}
-          callback: dostavista.orders_add_consumer
+        dostavista_orders_add:
+            connection: default
+            exchange_options: {name: 'dostavista_orders_add', type: direct}
+            queue_options: {name: 'dostavista_orders_add'}
+            callback: dostavista.orders_add_consumer
 
-      dostavista_orders_cancel:
-          connection: default
-          exchange_options: {name: "dostavista_orders_cancel", type: direct}
-          queue_options: {name: "dostavista_orders_cancel"}
-          callback: dostavista.orders_cancel_consumer
+        dostavista_orders_add_dead:
+            connection: default
+            exchange_options: {name: 'dostavista_orders_add_dead', type: direct }
+            queue_options: {name: 'dostavista_orders_add_dead'}
+            callback: dostavista.orders_add_dead_consumer
 
-      manzana_orders_import:
-        connection: default
-        exchange_options: {name: "manzana_orders_import", type: direct}
-        queue_options: {name: "manzana_orders_import"}
-        callback: manzana.orders_import_consumer
+        dostavista_orders_cancel:
+            connection: default
+            exchange_options: {name: 'dostavista_orders_cancel', type: direct}
+            queue_options: {name: 'dostavista_orders_cancel'}
+            callback: dostavista.orders_cancel_consumer
+
+        manzana_orders_import:
+            connection: default
+            exchange_options: {name: 'manzana_orders_import', type: direct}
+            queue_options: {name: 'manzana_orders_import'}
+            callback: manzana.orders_import_consumer
