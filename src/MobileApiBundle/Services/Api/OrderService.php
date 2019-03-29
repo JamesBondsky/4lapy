@@ -479,7 +479,7 @@ class OrderService
                     ->setValue($bonusSubtractAmount),
             ]);
 
-        $cardDetails = [];
+        $priceDetails = [];
 
         $basketPriceWithoutDiscount = $basketProducts->getTotalPrice()->getOld();
         $basketPriceWithDiscount = $basketProducts->getTotalPrice()->getActual();
@@ -492,40 +492,40 @@ class OrderService
             $priceWithoutDiscount = $priceWithDiscount !== $basketPrice ? $basketPrice : 0;
             $discount = max($priceWithoutDiscount - $priceWithDiscount, 0);
 
-            $cardDetails[] = (new Detailing())
+            $priceDetails[] = (new Detailing())
                 ->setId('cart_price_old')
                 ->setTitle('Стоимость товаров без скидки')
                 ->setValue($priceWithoutDiscount);
-            $cardDetails[] = (new Detailing())
+            $priceDetails[] = (new Detailing())
                 ->setId('cart_price')
                 ->setTitle('Стоимость товаров со скидкой')
                 ->setValue($priceWithDiscount);
-            $cardDetails[] = (new Detailing())
+            $priceDetails[] = (new Detailing())
                 ->setId('discount')
                 ->setTitle('Скидка')
                 ->setValue($discount);
         } else {
             // if method called from the basket and there is no order yet
-            $cardDetails[] = (new Detailing())
+            $priceDetails[] = (new Detailing())
                 ->setId('cart_price_old')
                 ->setTitle('Стоимость товаров без скидки')
                 ->setValue($basketPriceWithoutDiscount);
-            $cardDetails[] = (new Detailing())
+            $priceDetails[] = (new Detailing())
                 ->setId('cart_price')
                 ->setTitle('Стоимость товаров со скидкой')
                 ->setValue($basketPriceWithDiscount);
-            $cardDetails[] = (new Detailing())
+            $priceDetails[] = (new Detailing())
                 ->setId('discount')
                 ->setTitle('Скидка')
                 ->setValue($basketProducts->getDiscount());
         }
 
-        $cardDetails[] = (new Detailing())
+        $priceDetails[] = (new Detailing())
             ->setId('delivery')
             ->setTitle('Стоимость доставки')
             ->setValue($deliveryPrice);
 
-        $orderCalculate->setCardDetails($cardDetails);
+        $orderCalculate->setPriceDetails($priceDetails);
 
         return $orderCalculate;
     }
