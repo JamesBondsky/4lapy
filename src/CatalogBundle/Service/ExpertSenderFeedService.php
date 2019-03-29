@@ -110,6 +110,8 @@ class ExpertSenderFeedService extends FeedService implements LoggerAwareInterfac
      */
     public function process(ConfigurationInterface $configuration, int $step, string $stockID = null): bool
     {
+        $this->tpmFileName = 'expert_sender_tmp_feed.xml';
+
         /**
          * @var Configuration $configuration
          */
@@ -577,17 +579,6 @@ class ExpertSenderFeedService extends FeedService implements LoggerAwareInterfac
     public function loadFeed(string $key): Feed
     {
         return parent::loadFeed($key);
-    }
-
-    /**
-     * @return string
-     */
-    private function getStorageKey(): string
-    {
-        return \sprintf(
-            '%s/expert_sender_tmp_feed.xml',
-            \sys_get_temp_dir()
-        );
     }
 
     /**
