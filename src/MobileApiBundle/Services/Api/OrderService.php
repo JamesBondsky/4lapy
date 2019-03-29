@@ -561,14 +561,7 @@ class OrderService
 
     /**
      * @return array
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Bitrix\Sale\UserMessageException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
-     * @throws OrderStorageSaveException
+     * @throws \Exception
      */
     public function getDeliveryVariants()
     {
@@ -577,9 +570,9 @@ class OrderService
         $pickup   = null;
         foreach ($deliveries as $calculationResult) {
             // toDo убрать условие "&& !$calculationResult instanceof DpdPickupResult" после того как в мобильном приложении будет реализован вывод точек DPD на карте в чекауте
-            if ($this->appDeliveryService->isPickup($calculationResult) && !$calculationResult instanceof DpdPickupResult) {
+            if ($this->appDeliveryService->isInnerPickup($calculationResult) && !$calculationResult instanceof DpdPickupResult) {
                 $pickup = $calculationResult;
-            } elseif ($this->appDeliveryService->isDelivery($calculationResult)) {
+            } elseif ($this->appDeliveryService->isInnerDeliveryCode($calculationResult)) {
                 $delivery = $calculationResult;
             }
         }
@@ -605,6 +598,10 @@ class OrderService
         return [$courierDelivery, $pickupDelivery];
     }
 
+    /**
+     * @return array
+     * @throws \Exception
+     */
     public function getDeliveryDetails()
     {
         /** @var DeliveryVariant $courierDelivery */

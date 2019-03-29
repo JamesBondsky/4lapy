@@ -107,7 +107,6 @@ class BasketController extends FOSRestController
             ->setCartParam($orderParameter);
     }
 
-
     /**
      * Добавление товаров в корзину (принимает массив id товаров и количество каждого товара)
      * @Rest\Post(path="/user_cart/")
@@ -172,6 +171,7 @@ class BasketController extends FOSRestController
      * @Rest\Get(path="/user_cart_delivery/")
      * @Rest\View()
      * @return Response
+     * @throws \Exception
      */
     public function getUserCartDeliveryAction()
     {
