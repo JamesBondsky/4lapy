@@ -648,8 +648,9 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     private function getStorageKey($stockID = null): string
     {
         return \sprintf(
-            '%s/yandex_tmp_feed' . ((!empty($stockID)) ? ('_' . $stockID) : '') . '.xml',
-            \sys_get_temp_dir()
+            '%s/feeds/%s/yandex_tmp_feed' . ((!empty($stockID)) ? ('_' . $stockID) : '') . '.xml',
+            \sys_get_temp_dir(),
+            Application::getInstance()->getEnvironment()
         );
     }
 
