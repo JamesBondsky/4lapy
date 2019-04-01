@@ -63,7 +63,7 @@ use FourPaws\StoreBundle\Entity\Store;
 use JMS\Serializer\ArrayTransformerInterface;
 use Psr\Log\LoggerAwareInterface;
 use Bitrix\Sale\Delivery\Services\Table as ServicesTable;
-
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 /**
  * Class PaymentService
  *
@@ -83,6 +83,11 @@ class PaymentService implements LoggerAwareInterface
      */
     protected $basketService;
 
+    /**
+     * @var DeliveryService
+     */
+    protected $deliveryService;
+
     protected const SBERBANK_PAYMENT_URL_FORMAT = '%s://%s/payment/merchants/%s/payment_ru.html?mdOrder=%s';
 
     /**
@@ -95,10 +100,11 @@ class PaymentService implements LoggerAwareInterface
      * @param BasketService             $basketService
      * @param ArrayTransformerInterface $arrayTransformer
      */
-    public function __construct(BasketService $basketService, ArrayTransformerInterface $arrayTransformer)
+    public function __construct(BasketService $basketService, ArrayTransformerInterface $arrayTransformer, DeliveryService $deliveryService)
     {
         $this->arrayTransformer = $arrayTransformer;
         $this->basketService = $basketService;
+        $this->deliveryService = $deliveryService;
     }
 
     /**
@@ -971,7 +977,9 @@ class PaymentService implements LoggerAwareInterface
         $paySystemId = $payment['ID'];
         $sapConsumer = Application::getInstance()->getContainer()->get(ConsumerRegistry::class);
         $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
-        $updateOrder = function (Order $order) use ($paySystemId, $sapConsumer, $orderService) {
+        $deliveryId = $order->getField('DELIVERY_ID');
+        $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
+        $updateOrder = function (Order $order) use ($paySystemId, $sapConsumer, $orderService, $deliveryCode) {
             try {
                 $payment = $this->getOrderPayment($order);
                 if ($payment->isPaid() ||
@@ -992,7 +1000,9 @@ class PaymentService implements LoggerAwareInterface
                 if (!$result->isSuccess()) {
                     throw new OrderUpdateException(\implode(', ', $result->getErrorMessages()));
                 }
-                $sapConsumer->consume($order);
+                if (!$this->deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
+                    $sapConsumer->consume($order);
+                }
             } catch (\Exception $e) {
                 $this->log()->error(sprintf('failed to process payment error: %s', $e->getMessage()), [
                     'order' => $order->getId(),
@@ -1008,12 +1018,9 @@ class PaymentService implements LoggerAwareInterface
         }
 
         /** Отправка данных в достависту если доставка Достависта */
-        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
-        $deliveryId = $order->getField('DELIVERY_ID');
-        $deliveryCode = $deliveryService->getDeliveryCodeById($deliveryId);
         $deliveryData = ServicesTable::getById($deliveryId)->fetch();
         //проверяем способ доставки, если достависта, то отправляем заказ в достависту
-        if ($deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
+        if ($this->deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
             $this->sendOnlinePaymentDostavistaOrder($order, $deliveryCode, $deliveryData, false);
         }
 
@@ -1075,12 +1082,11 @@ class PaymentService implements LoggerAwareInterface
             $order->save();
 
             /** Отправка данных в достависту если доставка Достависта */
-            $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
             $deliveryId = $order->getField('DELIVERY_ID');
-            $deliveryCode = $deliveryService->getDeliveryCodeById($deliveryId);
+            $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
             $deliveryData = ServicesTable::getById($deliveryId)->fetch();
             //проверяем способ доставки, если достависта, то отправляем заказ в достависту
-            if ($deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
+            if ($this->deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
                 $this->sendOnlinePaymentDostavistaOrder($order, $deliveryCode, $deliveryData, true);
             }
         } else {
