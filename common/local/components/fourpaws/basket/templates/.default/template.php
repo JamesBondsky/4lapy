@@ -362,11 +362,13 @@ if ($arParams['IS_AJAX']) {
                             </span><span class="b-ruble">₽</span>
                         </div>
                     </div>
-                    <a class="b-button b-button--start-order <?= $sViewportCookie === null ? 'b-button--bottom-indent' : '' ?>"
-                       href="<?= (int)$arResult['TOTAL_PRICE'] === 0 ? 'javascript:void(0)' : '/sale/order/' ?>"
-                       title="Начать оформление" <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
-                        Начать оформление
-                    </a>
+                    <form action="/sale/order/" method="post">
+                        <button class="b-button b-button--start-order <?= $sViewportCookie === null ? 'b-button--bottom-indent' : '' ?>"
+                           title="Начать оформление" <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
+                            Начать оформление
+                        </button>
+                        <input type="hidden" name="default" value="1">
+                    </form>
                     <?php if ($arResult['SHOW_FAST_ORDER']) { ?>
                         <div class="b-information-order__one-click">
                             <a class="b-link b-link--one-click <?= (int)$arResult['TOTAL_PRICE'] === 0 ? '' : ' js-open-popup js-open-popup--one-click' ?>"

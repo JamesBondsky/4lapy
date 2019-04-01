@@ -106,7 +106,7 @@ class IblockAddSubscribePrices20190326172741 extends \Adv\Bitrixtools\Migration\
                 'WITH_DESCRIPTION'   => 'N',
                 'SEARCHABLE'         => 'N',
                 'FILTRABLE'          => 'N',
-                'IS_REQUIRED'        => 'Y',
+                'IS_REQUIRED'        => 'N',
                 'VERSION'            => 1,
                 'USER_TYPE'          => null,
                 'USER_TYPE_SETTINGS' => null,

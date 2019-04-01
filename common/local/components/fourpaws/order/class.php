@@ -252,6 +252,17 @@ class FourPawsOrderComponent extends \CBitrixComponent
             throw new OrderCreateException('Failed to initialize storage');
         }
 
+        if ($this->currentStep === OrderStorageEnum::AUTH_STEP) {
+            if (!$storage->isSubscribe() && $_POST['subscribe']) {
+                $storage->setSubscribe(true);
+                $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+            }
+            elseif ($storage->isSubscribe() && $_POST['default']) {
+                $storage->setSubscribe(false);
+                $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+            }
+        }
+
         $date = new \DateTime();
         if (($this->currentStep === OrderStorageEnum::DELIVERY_STEP) &&
             (abs(

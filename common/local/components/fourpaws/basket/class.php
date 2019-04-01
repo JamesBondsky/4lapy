@@ -33,6 +33,7 @@ use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponSessionStorage;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -41,6 +42,7 @@ use FourPaws\UserBundle\Service\UserService;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 
 /** @noinspection AutoloadingIssuesInspection */
 /** @noinspection EfferentObjectCouplingInspection */
@@ -76,6 +78,10 @@ class BasketComponent extends CBitrixComponent
      */
     private $ecommerceService;
     /**
+     * @var OrderStorageService
+     */
+    private $orderStorageService;
+    /**
      * @var SalePreset
      */
     private $ecommerceSalePreset;
@@ -102,6 +108,7 @@ class BasketComponent extends CBitrixComponent
         $this->deliveryService = $container->get(DeliveryService::class);
         $this->ecommerceService = $container->get(GoogleEcommerceService::class);
         $this->ecommerceSalePreset = $container->get(SalePreset::class);
+        $this->orderStorageService = $container->get(OrderStorageService::class);
     }
 
     /** @noinspection PhpMissingParentCallCommonInspection
@@ -145,6 +152,12 @@ class BasketComponent extends CBitrixComponent
 
         // привязывать к заказу нужно для расчета скидок
         if (null === $order = $basket->getOrder()) {
+            // в корзине надо всегда сбрасывать состояние подписки для пересчёта цен
+            $storage = $this->orderStorageService->getStorage();
+            if($storage->isSubscribe()){
+                $storage->setSubscribe(false);
+                $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+            }
             $order = Order::create(SITE_ID, $userId);
             $order->setBasket($basket);
             // но иногда он так просто не запускается
@@ -471,6 +484,9 @@ class BasketComponent extends CBitrixComponent
         $this->arResult['TOTAL_BASE_PRICE'] = $basePrice;
     }
 
+    /**
+     * @throws ApplicationCreateException
+     */
     private function calcSubscribeFields()
     {
         $subscribePrice = 0;
@@ -482,12 +498,12 @@ class BasketComponent extends CBitrixComponent
         foreach ($orderableBasket as $basketItem) {
             $itemQuantity = (int)$basketItem->getQuantity();
             if (!isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
-                // Слияние строчек с одинаковыми sku
                 $offer = $this->getOffer((int)$basketItem->getProductId());
                 if (!$offer) {
                     continue;
                 }
-                $subscribePrice += $offer->getSubscribePrice() * $itemQuantity;
+                $percent = $offer->getSubscribeDiscount();
+                $subscribePrice += $basketItem->getPrice() * ((100 - $percent)/100) * $itemQuantity;
             }
         }
 
