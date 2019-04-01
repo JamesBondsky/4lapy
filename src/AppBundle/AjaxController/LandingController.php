@@ -33,6 +33,8 @@ class LandingController extends Controller
         'otherDog' => 'Собака средней или крупной породы',
     ];
 
+    static $landingSites = ['s2', 's3'];
+
     static $grandinLanding = 'grandin';
     static $royalCaninLanding = 'royal_canin';
 
