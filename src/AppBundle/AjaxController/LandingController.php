@@ -33,8 +33,8 @@ class LandingController extends Controller
         'otherDog' => 'Собака средней или крупной породы',
     ];
 
-    static $grandinLangind = 'grandin';
-    static $royalCaninLangind = 'royal_canin';
+    static $grandinLanding = 'grandin';
+    static $royalCaninLanding = 'royal_canin';
 
     /** @var AjaxMess */
     private $ajaxMess;
@@ -67,7 +67,7 @@ class LandingController extends Controller
 
             $arFields = [$request->get('date'), $request->get('sum'), $request->get('surname'), $request->get('name'), $request->get('phone'), $request->get('email'), $request->get('rules')];
 
-            if ($request->get('langindType') == self::$grandinLangind) {
+            if ($request->get('landingType') == self::$grandinLanding) {
                 $arFields[] = $request->get('petType');
             }
 
@@ -79,7 +79,7 @@ class LandingController extends Controller
                 throw new JsonResponseException($this->ajaxMess->getWrongParamsError());
             }
 
-            if ($request->get('langindType') == self::$grandinLangind && !in_array($request->get('petType'), array_keys(self::$petTypes))) {
+            if ($request->get('landingType') == self::$grandinLanding && !in_array($request->get('petType'), array_keys(self::$petTypes))) {
                 throw new JsonResponseException($this->ajaxMess->getWrongDataError());
             }
 
@@ -91,11 +91,11 @@ class LandingController extends Controller
             $userId = $USER->GetID();
 
             $requestIblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::GRANDIN_REQUEST);
-            if (in_array($request->get('langindType'), array_keys([self::$royalCaninLangind, self::$grandinLangind]))) {
+            if (in_array($request->get('landingType'), array_keys([self::$royalCaninLanding, self::$grandinLanding]))) {
                 $filter = [
                     'IBLOCK_ID' => $requestIblockId,
                     'CHECK_PERMISSIONS' => 'N',
-                    '=CODE' => $request->get('langindType') . '_requests',
+                    '=CODE' => $request->get('landingType') . '_requests',
                 ];
                 $sections = \CIBlockSection::GetList([], $filter, false, ['ID', 'IBLOCK_ID', 'NAME', 'CODE'])->Fetch();
                 if (!empty($sections['ID'])) {
