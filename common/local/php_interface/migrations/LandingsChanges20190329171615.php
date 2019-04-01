@@ -46,7 +46,7 @@ class LandingsChanges20190329171615 extends \Adv\Bitrixtools\Migration\SprintMig
                 $iblockSectionIds[$requestSection['CODE']] = $helper->Iblock()->addSectionIfNotExists($requestIblockId, $requestSection);
             }
 
-            $requestElements = $helper->Iblock()->getElements($requestIblockId);
+            $requestElements = $helper->Iblock()->getElements($requestIblockId, ['SECTION_CODE' => false]);
             foreach ($requestElements as $element) {
                 $helper->Iblock()->updateElement(
                     $element['ID'],
@@ -55,6 +55,8 @@ class LandingsChanges20190329171615 extends \Adv\Bitrixtools\Migration\SprintMig
                     ]
                 );
             }
+            $winnersIblockId = $helper->Iblock()->getIblockId('grandin_request', 'action_winners');
+            $helper->Iblock()->addSectionIfNotExists($winnersIblockId, ['NAME' => 'Royal-Canin', 'CODE' => 'ROYAL_CANIN']);
         } catch (\Exception $e) {
             $res = false;
             dump($e->getCode(), $e->getMessage());
