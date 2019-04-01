@@ -56,9 +56,10 @@ class OrderSubscribeItem extends BaseEntity
     /**
      * @param int $subscribeId
      */
-    public function setSubscribeId(int $subscribeId): void
+    public function setSubscribeId(int $subscribeId): OrderSubscribeItem
     {
         $this->subscribeId = $subscribeId;
+        return $this;
     }
 
     /**
@@ -72,9 +73,10 @@ class OrderSubscribeItem extends BaseEntity
     /**
      * @param int $offerId
      */
-    public function setOfferId(int $offerId): void
+    public function setOfferId(int $offerId): OrderSubscribeItem
     {
         $this->offerId = $offerId;
+        return $this;
     }
 
     /**
@@ -88,8 +90,9 @@ class OrderSubscribeItem extends BaseEntity
     /**
      * @param int $quantity
      */
-    public function setQuantity(int $quantity): void
+    public function setQuantity(int $quantity): OrderSubscribeItem
     {
         $this->quantity = $quantity;
+        return $this;
     }
 }

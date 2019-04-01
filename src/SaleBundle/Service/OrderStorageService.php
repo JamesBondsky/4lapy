@@ -10,6 +10,7 @@ use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
@@ -22,6 +23,11 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Exception\TerminalNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\DeliveryBundle\Service\IntervalService;
+use FourPaws\PersonalBundle\Entity\OrderSubscribe;
+use FourPaws\PersonalBundle\Entity\OrderSubscribeItem;
+use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
@@ -249,6 +255,50 @@ class OrderStorageService
                             $data['split'] = 0;
                         }
                     }
+
+                    /**
+                     * Создание подписки на доставку
+                     */
+                    if($storage->isSubscribe() && !$storage->getSubscribeId()){
+                        /** @var IntervalService $intervalService */
+                        $intervalService = Application::getInstance()->getContainer()->get(IntervalService::class);
+                        /** @var OrderSubscribeService $orderSubscribeService */
+                        $orderSubscribeService = Application::getInstance()->getContainer()->get('order_subscribe.service');
+
+                        $subscribe = (new OrderSubscribe())
+                            ->setDeliveryDay($data['subscribeDay'])
+                            ->setDeliveryId($deliveryId)
+                            ->setFrequency($data['subscribeFrequency'])
+                            ->setDeliveryTime($intervalService->getIntervalByCode($data['deliveryInterval']))
+                            ->setActive(false);
+
+                        if($this->deliveryService->isDelivery($this->getSelectedDelivery($storage))){
+                            $subscribe->setDeliveryPlace($data['addressId']);
+                        }
+                        elseif($this->deliveryService->isPickup($this->getSelectedDelivery($storage))){
+                            $subscribe->setDeliveryPlace($data['shopId']);
+                        }
+
+
+                        if(!$orderSubscribeService->add($subscribe)){
+                            throw new OrderSubscribeException(sprintf('Failed to create order subscribe: %s', print_r($data,true)));
+                        }
+
+                        $items = $this->basketService->getBasket()->getOrderableItems();
+                        /** @var BasketItem $basketItem */
+                        foreach($items as $basketItem){
+                            $subscribeItem = (new OrderSubscribeItem())
+                                ->setOfferId($basketItem->getProductId())
+                                ->setQuantity($basketItem->getQuantity());
+
+                            if(!$orderSubscribeService->addSubscribeItem($subscribe, $subscribeItem)){
+                                throw new OrderSubscribeException(sprintf('Failed to create order subscribe item: %s', print_r($data,true)));
+                            }
+                        }
+
+                        $storage->setSubscribeId($subscribe->getId());
+                    }
+
                 } catch (DeliveryNotFoundException $e) {
                 }
 

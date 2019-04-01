@@ -41,6 +41,10 @@ $basket = $arResult['BASKET'];
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
 
+$subscribeIntervals = $component->getOrderSubscribeService()->getFrequencies();
+
+$daysOfWeek = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
+
 $selectedShopCode = '';
 $isPickup = false;
 if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode()) {
@@ -216,6 +220,42 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 <?php
                             } ?>
                         </ul>
+
+                        <div class="b-subscribe">
+                            <div class="b-input-line b-input-line--desired-date">
+                                <div class="b-input-line__label-wrapper">
+                                    <span class="b-input-line__label">Как часто доставлять</span>
+                                </div>
+                                <div class="b-select b-select--recall b-select--feedback-page">
+                                    <select class="b-select__block b-select__block--recall b-select__block--feedback-page js-select-recovery js-change-date js-pickup-date ok" name="subscribeFrequency" data-select="0">
+                                        <option value="" disabled="disabled" selected="selected">выберите</option>
+                                        <?php
+                                        foreach ($subscribeIntervals as $i => $interval) { ?>
+                                            <option value="<?= $interval['ID'] ?>">
+                                                <?= (string)$interval['VALUE'] ?>
+                                            </option>
+                                        <?php } ?>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="b-input-line b-input-line--desired-date">
+                                <div class="b-input-line__label-wrapper">
+                                    <span class="b-input-line__label">Выберите день</span>
+                                </div>
+                                <div class="b-select b-select--recall b-select--feedback-page">
+                                    <select class="b-select__block b-select__block--recall b-select__block--feedback-page js-select-recovery js-change-date js-pickup-date ok" name="subscribeDay" data-select="0">
+                                        <option value="" disabled="disabled" selected="selected">выберите</option>
+                                        <?php
+                                        foreach ($daysOfWeek as $i => $day) { ?>
+                                            <option value="<?= ($i+1) ?>">
+                                                <?= $day ?>
+                                            </option>
+                                        <?php } ?>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
                     </form>
                 </article>
             </div>

@@ -131,6 +131,15 @@ class OrderSubscribe extends BaseEntity
     protected $dateUpdate;
 
     /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("UF_DEL_DAY")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $deliveryDay;
+
+    /**
      * @return int
      */
     public function getUserId(): ?int
@@ -151,7 +160,7 @@ class OrderSubscribe extends BaseEntity
     /**
      * @return int
      */
-    public function getDeliveryId(): int
+    public function getDeliveryId(): ?int
     {
         return $this->deliveryId;
     }
@@ -169,7 +178,7 @@ class OrderSubscribe extends BaseEntity
     /**
      * @return int
      */
-    public function getFrequency(): int
+    public function getFrequency(): ?int
     {
         return $this->frequency;
     }
@@ -187,7 +196,7 @@ class OrderSubscribe extends BaseEntity
     /**
      * @return string
      */
-    public function getDeliveryTime(): string
+    public function getDeliveryTime(): ?string
     {
         return $this->deliveryTime;
     }
@@ -205,7 +214,7 @@ class OrderSubscribe extends BaseEntity
     /**
      * @return string
      */
-    public function getDeliveryPlace(): string
+    public function getDeliveryPlace(): ?string
     {
         return $this->deliveryPlace;
     }
@@ -223,7 +232,7 @@ class OrderSubscribe extends BaseEntity
     /**
      * @return string
      */
-    public function getLocationId(): string
+    public function getLocationId(): ?string
     {
         return $this->locationId;
     }
@@ -346,7 +355,23 @@ class OrderSubscribe extends BaseEntity
         return $this;
     }
 
+    /**
+     * @return int
+     */
+    public function getDeliveryDay(): ?int
+    {
+        return $this->deliveryDay;
+    }
 
+    /**
+     * @param int $deliveryDay
+     * @return OrderSubscribe
+     */
+    public function setDeliveryDay(int $deliveryDay): OrderSubscribe
+    {
+        $this->deliveryDay = $deliveryDay;
+        return $this;
+    }
 
 
 }

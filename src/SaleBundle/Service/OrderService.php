@@ -58,7 +58,9 @@ use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\LocationBundle\Exception\AddressSplitException;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\PersonalBundle\Service\AddressService;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
@@ -138,6 +140,11 @@ class OrderService implements LoggerAwareInterface
     protected $orderStorageService;
 
     /**
+     * @var OrderSubscribeService
+     */
+    protected $orderSubscribeService;
+
+    /**
      * @var OrderSplitService
      */
     protected $orderSplitService;
@@ -195,6 +202,7 @@ class OrderService implements LoggerAwareInterface
      * @param LocationService                   $locationService
      * @param StoreService                      $storeService
      * @param OrderStorageService               $orderStorageService
+     * @param OrderSubscribeService             $orderSubscribeService
      * @param OrderSplitService                 $orderSplitService
      * @param UserAvatarAuthorizationInterface  $userAvatarAuthorization
      * @param UserRegistrationProviderInterface $userRegistrationProvider
@@ -212,6 +220,7 @@ class OrderService implements LoggerAwareInterface
         LocationService $locationService,
         StoreService $storeService,
         OrderStorageService $orderStorageService,
+        orderSubscribeService $orderSubscribeService,
         OrderSplitService $orderSplitService,
         UserAvatarAuthorizationInterface $userAvatarAuthorization,
         UserRegistrationProviderInterface $userRegistrationProvider,
@@ -227,6 +236,7 @@ class OrderService implements LoggerAwareInterface
         $this->deliveryService = $deliveryService;
         $this->storeService = $storeService;
         $this->orderStorageService = $orderStorageService;
+        $this->orderSubscribeService = $orderSubscribeService;
         $this->orderSplitService = $orderSplitService;
         $this->userAvatarAuthorization = $userAvatarAuthorization;
         $this->userRegistrationProvider = $userRegistrationProvider;
@@ -1182,6 +1192,25 @@ class OrderService implements LoggerAwareInterface
                     }
                 }
             }
+
+            /**
+             * Активация подписки на доставку
+             */
+            if($storage->isSubscribe()){
+                if(null === $storage->getSubscribeId()){
+                    throw new OrderSubscribeException('Susbcribe not found');
+                }
+                $subscribe = $this->orderSubscribeService->getById($storage->getSubscribeId());
+                $subscribe->setActive(true);
+                $this->orderSubscribeService->update($subscribe);
+
+                $this->setOrderPropertyByCode(
+                    $order,
+                    'IS_SUBSCRIBE',
+                    BitrixUtils::BX_BOOL_TRUE
+                );
+            }
+
         } catch (\Exception $e) {
             /** ошибка при создании заказа - удаляем ошибочный заказ, если он был создан */
             if ($order->getId() > 0) {

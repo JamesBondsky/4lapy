@@ -9,7 +9,7 @@ class OrderPropSubscribe20190328162732 extends \Adv\Bitrixtools\Migration\Sprint
 
     protected $description = "Свойство \"Заказ по подписке\"";
 
-    const PROP_CODE = 'SUBSCRIBE';
+    const PROP_CODE = 'IS_SUBSCRIBE';
 
     public function up()
     {

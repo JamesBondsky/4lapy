@@ -8,6 +8,7 @@ namespace FourPaws\SaleBundle\Entity;
 
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\SaleBundle\Validation as SaleValidation;
 use JMS\Serializer\Annotation as Serializer;
 use Misd\PhoneNumberBundle\Validator\Constraints\PhoneNumber;
@@ -376,7 +377,6 @@ class OrderStorage
      */
     protected $lat = '';
 
-
     /**
      * Заказ по подписке
      *
@@ -386,6 +386,15 @@ class OrderStorage
      * @Serializer\Groups(groups={"read","update","delete"})
      */
     protected $subscribe = false;
+
+    /**
+     * Заказ по подписке
+     *
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $subscribeId;
 
     /**
      * @return int
@@ -1089,6 +1098,14 @@ class OrderStorage
      */
     public function isSubscribe(): bool
     {
+        return null !== $this->subscribe;
+    }
+
+    /**
+     * @param bool $subscribe
+     */
+    public function getSubscribe(): bool
+    {
         return $this->subscribe;
     }
 
@@ -1098,6 +1115,24 @@ class OrderStorage
     public function setSubscribe(bool $subscribe): OrderStorage
     {
         $this->subscribe = $subscribe;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getSubscribeId(): int
+    {
+        return $this->subscribeId;
+    }
+
+    /**
+     * @param int $subscribeId
+     * @return OrderStorage
+     */
+    public function setSubscribeId(int $subscribeId): OrderStorage
+    {
+        $this->subscribeId = $subscribeId;
         return $this;
     }
 }

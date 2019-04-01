@@ -9,23 +9,30 @@
 namespace FourPaws\PersonalBundle\Service;
 
 
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Security\SecurityException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserFieldTable;
+use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\Helpers\HighloadHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeItem;
+use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\PersonalBundle\Repository\OrderSubscribeItemRepository;
 use FourPaws\PersonalBundle\Repository\OrderSubscribeRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use http\Exception\InvalidArgumentException;
 use mysql_xdevapi\Exception;
+use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
-class OrderSubscribeService
+class OrderSubscribeService implements LoggerAwareInterface
 {
+    use LazyLoggerAwareTrait;
+
+
     /** @var OrderSubscribeRepository $orderSubscribeRepository */
     private $orderSubscribeRepository;
 
@@ -72,71 +79,114 @@ class OrderSubscribeService
      * @throws \Exception
      * @return bool
      */
-    public function add(array $data): bool
+//    public function add(array $data): bool
+//    {
+//        if (empty($data['ITEMS'])) {
+//            throw new InvalidArgumentException('Для подписки на доставку необходимо передать список товаров');
+//        }
+//        if (empty($data['UF_USER_ID'])) {
+//            $data['UF_USER_ID'] = $this->currentUser->getCurrentUserId();
+//        }
+//        if (empty($data['UF_LOCATION'])) {
+//            $data['UF_LOCATION'] = $this->locationService->getCurrentLocation();
+//        }
+//
+//        $items = $data['ITEMS'];
+//        unset($data['ITEMS']);
+//
+//        /** @var OrderSubscribe $orderSubscribe */
+//        $orderSubscribe = $this->orderSubscribeRepository->dataToEntity($data, OrderSubscribe::class);
+//        $this->countNextDate($orderSubscribe);
+//        $this->orderSubscribeRepository->setEntity($orderSubscribe);
+//        if (!$this->orderSubscribeRepository->create()) {
+//            return false;
+//        }
+//
+//        foreach ($items as $item) {
+//            /** @var OrderSubscribeItem $orderSubscribeItem */
+//            $orderSubscribeItem = $this->orderSubscribeItemRepository->dataToEntity($item, OrderSubscribeItem::class);
+//            $this->addSubscribeItem($orderSubscribe, $orderSubscribeItem);
+//        }
+//
+//        return true;
+//    }
+
+
+    /**
+     * @param OrderSubscribe $subscribe
+     * @return bool
+     * @throws \Bitrix\Main\ObjectException
+     */
+    public function add(OrderSubscribe $subscribe): bool
     {
-        if (empty($data['ITEMS'])) {
-            throw new InvalidArgumentException('Для подписки на доставку необходимо передать список товаров');
-        }
-        if (empty($data['UF_USER_ID'])) {
-            $data['UF_USER_ID'] = $this->currentUser->getCurrentUserId();
-        }
-        if (empty($data['UF_LOCATION'])) {
-            $data['UF_LOCATION'] = $this->locationService->getCurrentLocation();
-        }
+        try {
+            if (empty($subscribe->getUserId())) {
+                $subscribe->setUserId($this->currentUser->getCurrentUserId());
+            }
+            if (empty($subscribe->getLocationId())) {
+                $subscribe->setLocationId($this->locationService->getCurrentLocation());
+            }
 
-        $items = $data['ITEMS'];
-        unset($data['ITEMS']);
-
-        /** @var OrderSubscribe $orderSubscribe */
-        $orderSubscribe = $this->orderSubscribeRepository->dataToEntity($data, OrderSubscribe::class);
-        $this->countNextDate($orderSubscribe);
-        $this->orderSubscribeRepository->setEntity($orderSubscribe);
-        if (!$this->orderSubscribeRepository->create()) {
+            $this->countNextDate($subscribe);
+            $this->orderSubscribeRepository->setEntity($subscribe);
+            if (!$this->orderSubscribeRepository->create()) {
+                return false;
+            }
+        } catch (\Exception $e) {
+            $this->log()->error(sprintf('failed to create order subscribe: %s', $e->getMessage()), [
+                'userId' => $this->currentUser->getCurrentUser()->getId(),
+            ]);
             return false;
-        }
-
-        foreach ($items as $item) {
-            /** @var OrderSubscribeItem $orderSubscribeItem */
-            $orderSubscribeItem = $this->orderSubscribeItemRepository->dataToEntity($item, OrderSubscribeItem::class);
-            $this->addSubscribeItem($orderSubscribe, $orderSubscribeItem);
         }
 
         return true;
     }
 
-    /**
-     * @param array $data
-     *
-     * @throws \Exception
-     * @return bool
-     */
-    public function update(array $data): bool
+//    public function update(array $data): bool
+//    {
+//        if(!empty($data['ITEMS'])){
+//            foreach ($data['ITEMS'] as $item) {
+//                /** @var OrderSubscribeItem $orderSubscribeItem */
+//                $orderSubscribeItem = $this->orderSubscribeItemRepository->dataToEntity($item, OrderSubscribeItem::class);
+//                $this->updateSubscribeItem($orderSubscribeItem);
+//            }
+//            unset($data['ITEMS']);
+//        }
+//
+//        /** @var OrderSubscribe $entity */
+//        $entity = $this->orderSubscribeRepository->dataToEntity($data, OrderSubscribe::class);
+//
+//        /** @var OrderSubscribe $updateEntity */
+//        $updateEntity = $this->orderSubscribeRepository->findById($entity->getId());
+//        if ($updateEntity->getUserId() !== $this->currentUser->getCurrentUserId()) {
+//            throw new SecurityException('не хватает прав доступа для совершения данной операции');
+//        }
+//
+//        if ($entity->getUserId() === 0) {
+//            $entity->setUserId($updateEntity->getUserId());
+//        }
+//
+//        $entity->setDateUpdate(new DateTime());
+//
+//        return $this->orderSubscribeRepository->setEntity($entity)->update();
+//    }
+
+
+    public function update(OrderSubscribe $subscribe): bool
     {
-        if(!empty($data['ITEMS'])){
-            foreach ($data['ITEMS'] as $item) {
-                /** @var OrderSubscribeItem $orderSubscribeItem */
-                $orderSubscribeItem = $this->orderSubscribeItemRepository->dataToEntity($item, OrderSubscribeItem::class);
-                $this->updateSubscribeItem($orderSubscribeItem);
-            }
-            unset($data['ITEMS']);
-        }
-
-        /** @var OrderSubscribe $entity */
-        $entity = $this->orderSubscribeRepository->dataToEntity($data, OrderSubscribe::class);
-
         /** @var OrderSubscribe $updateEntity */
-        $updateEntity = $this->orderSubscribeRepository->findById($entity->getId());
+        $updateEntity = $this->orderSubscribeRepository->findById($subscribe->getId());
         if ($updateEntity->getUserId() !== $this->currentUser->getCurrentUserId()) {
             throw new SecurityException('не хватает прав доступа для совершения данной операции');
         }
 
-        if ($entity->getUserId() === 0) {
-            $entity->setUserId($updateEntity->getUserId());
+        if ($subscribe->getUserId() === 0) {
+            $subscribe->setUserId($updateEntity->getUserId());
         }
 
-        $entity->setDateUpdate(new DateTime());
+        $subscribe->setDateUpdate(new DateTime());
 
-        return $this->orderSubscribeRepository->setEntity($entity)->update();
+        return $this->orderSubscribeRepository->setEntity($subscribe)->update();
     }
 
     /**
@@ -171,8 +221,7 @@ class OrderSubscribeService
     public function addSubscribeItem(OrderSubscribe $orderSubscribe, OrderSubscribeItem $orderSubscribeItem): bool
     {
         if (!$orderSubscribe->getId()) {
-            // TODO: Продумать механизм исключений
-            throw new Exception('Добавлять товары можно только на существующую подписку');
+            throw new OrderSubscribeException('Добавлять товары можно только на существующую подписку');
         }
 
         $orderSubscribeItem->setSubscribeId($orderSubscribe->getId());
@@ -220,22 +269,22 @@ class OrderSubscribeService
         }
 
         switch ($orderSubscribe->getFrequency()){
-            case $freqs['WEEK_1']:
+            case $freqs['WEEK_1']['ID']:
                 $nextDate->add("+1 week");
                 break;
-            case $freqs['WEEK_2']:
+            case $freqs['WEEK_2']['ID']:
                 $nextDate->add("+2 week");
                 break;
-            case $freqs['WEEK_3']:
+            case $freqs['WEEK_3']['ID']:
                 $nextDate->add("+3 week");
                 break;
-            case $freqs['MONTH_1']:
+            case $freqs['MONTH_1']['ID']:
                 $nextDate->add("+1 month");
                 break;
-            case $freqs['MONTH_2']:
+            case $freqs['MONTH_2']['ID']:
                 $nextDate->add("+2 month");
                 break;
-            case $freqs['MONTH_3']:
+            case $freqs['MONTH_3']['ID']:
                 $nextDate->add("+3 month");
                 break;
             default:
@@ -263,10 +312,23 @@ class OrderSubscribeService
             $userFieldEnum = new \CUserFieldEnum();
             $res = $userFieldEnum->GetList([], ['USER_FIELD_ID' => $userFieldId]);
             while ($item = $res->Fetch()) {
-                $this->frequencies[$item['XML_ID']] = $item['ID'];
+                $this->frequencies[$item['XML_ID']] = $item;
             }
         }
 
         return $this->frequencies;
+    }
+
+    /**
+     * @param $id
+     * @return BaseEntity|OrderSubscribe|null
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\AppBundle\Exception\NotFoundException
+     */
+    public function getById($id)
+    {
+        return $this->orderSubscribeRepository->findById($id);
     }
 }

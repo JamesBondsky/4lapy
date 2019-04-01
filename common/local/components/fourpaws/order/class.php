@@ -36,8 +36,10 @@ use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\ManzanaService;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\PersonalBundle\Service\BonusService;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
@@ -145,6 +147,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
      */
     private $retailRocketService;
 
+    /** @var OrderSubscribeService $orderSubscribeService */
+    private $orderSubscribeService;
+
     /**
      * FourPawsOrderComponent constructor.
      *
@@ -158,22 +163,23 @@ class FourPawsOrderComponent extends \CBitrixComponent
     {
         $container = Application::getInstance()->getContainer();
         /** @noinspection PhpUndefinedMethodInspection */
-        $this->orderService        = $container->get(OrderService::class);
-        $this->orderSplitService   = $container->get(OrderSplitService::class);
-        $this->orderStorageService = $container->get(OrderStorageService::class);
-        $this->shopListService     = $container->get(ShopInfoService::class);
-        $this->deliveryService     = $container->get('delivery.service');
-        $this->storeService        = $container->get('store.service');
-        $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
-        $this->userCityProvider    = $container->get(UserCitySelectInterface::class);
-        $this->basketService       = $container->get(BasketService::class);
-        $this->userAccountService  = $container->get(UserAccountService::class);
-        $this->locationService     = $container->get('location.service');
-        $this->manzanaService      = $container->get('manzana.service');
-        $this->ecommerceService    = $container->get(GoogleEcommerceService::class);
-        $this->salePreset          = $container->get(SalePreset::class);
-        $this->retailRocketService = $container->get(RetailRocketService::class);
-        $this->logger              = LoggerFactory::create('component_order');
+        $this->orderService          = $container->get(OrderService::class);
+        $this->orderSplitService     = $container->get(OrderSplitService::class);
+        $this->orderStorageService   = $container->get(OrderStorageService::class);
+        $this->orderSubscribeService = $container->get('order_subscribe.service');
+        $this->shopListService       = $container->get(ShopInfoService::class);
+        $this->deliveryService       = $container->get('delivery.service');
+        $this->storeService          = $container->get('store.service');
+        $this->currentUserProvider   = $container->get(CurrentUserProviderInterface::class);
+        $this->userCityProvider      = $container->get(UserCitySelectInterface::class);
+        $this->basketService         = $container->get(BasketService::class);
+        $this->userAccountService    = $container->get(UserAccountService::class);
+        $this->locationService       = $container->get('location.service');
+        $this->manzanaService        = $container->get('manzana.service');
+        $this->ecommerceService      = $container->get(GoogleEcommerceService::class);
+        $this->salePreset            = $container->get(SalePreset::class);
+        $this->retailRocketService   = $container->get(RetailRocketService::class);
+        $this->logger                = LoggerFactory::create('component_order');
 
         parent::__construct($component);
     }
@@ -629,5 +635,13 @@ class FourPawsOrderComponent extends \CBitrixComponent
         return $isPreset
             ? $this->ecommerceService->renderPreset($ecommerce, 'preset', true)
             : $this->ecommerceService->renderScript($ecommerce, true);
+    }
+
+    /**
+     * @return OrderSubscribeService|object
+     */
+    public function getOrderSubscribeService()
+    {
+        return $this->orderSubscribeService;
     }
 }
