@@ -1,4 +1,10 @@
-<? if (!empty($arResult)) { ?>
+<?php
+
+/**
+ * @var array $arResult
+ */
+
+if (!empty($arResult)) { ?>
     <div class="landing-title landing-title_white">
         Победители
     </div>
