@@ -1,7 +1,7 @@
 <?php
 
 use FourPaws\Helpers\ProtectorHelper;
-//use FourPaws\AppBundle\AjaxController\GrandinController;
+use FourPaws\AppBundle\AjaxController\LandingController;
 
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
@@ -24,10 +24,10 @@ $APPLICATION->SetTitle('');
                 <div class="registr-check-landing__form-info">
                     Все поля обязательны для заполнения
                 </div>
-                <form data-form-registr-check-landing="true" class="form-landing registr-check-landing__form js-form-validation" method="post" action="<?/*/ajax/grandin/request/add/*/?>" name="" enctype="multipart/form-data">
-                    <?/* <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD); ?>
-                    <input class="js-no-valid" type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">*/?>
-                    
+                <form data-form-registr-check-landing="true" class="form-landing registr-check-landing__form js-form-validation" method="post" action="/ajax/landing/request/add/" name="" enctype="multipart/form-data">
+                    <?$token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD); ?>
+                    <input class="js-no-valid" type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
+                    <input class="js-no-valid" type="hidden" name="langindType" value="<?= LandingController::$royalCaninLangind ?>">
                     <div class="form-group">
                         <input type="dateDatepicker" id="DATE_REG_CHECK_CANIN" name="date" value="" placeholder="Дата чека" data-datepicker-landing="true" data-min-date=04/08/2019" data-max-date=05/19/2019" autocomplete="of">
                         <div class="b-error">
