@@ -408,7 +408,7 @@ class StoreService
                 $offer = OfferQuery::getById($shopListOffer->getId());
                 $product = $offer->getProduct();
                 $quantity = $shopListOffer->getQuantity();
-                $shortProduct = $this->apiProductService->convertToShortProduct($product, $offer, $quantity, true);
+                $shortProduct = $this->apiProductService->convertToShortProduct($product, $offer, $quantity);
                 if (isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
                     $shortProduct->setGiftDiscountId($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT']['VALUE']);
                     $shortProduct->setPrice((new Price())->setActual(0)->setOld(0));

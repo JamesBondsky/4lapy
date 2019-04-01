@@ -286,12 +286,11 @@ class ProductService
      * @param Product $product
      * @param Offer $offer
      * @param int $quantity
-     * @param bool $forBasket
      * @return ShortProduct
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \Bitrix\Main\ArgumentException
      */
-    public function convertToShortProduct(Product $product, Offer $offer, $quantity = 1, $forBasket = false): ShortProduct
+    public function convertToShortProduct(Product $product, Offer $offer, $quantity = 1): ShortProduct
     {
         $shortProduct = (new ShortProduct())
             ->setId($offer->getId())
@@ -327,16 +326,12 @@ class ProductService
             ->setIsByRequest($offer->isByRequest())
             ->setIsAvailable($offer->isAvailable());
 
-        // лейблы и бонусы нужны только для каталога
-        if (!$forBasket) {
+        // лейблы
+        $shortProduct->setTag($this->getTags($offer));
 
-            // лейблы
-            $shortProduct->setTag($this->getTags($offer));
-
-            // бонусы
-            $shortProduct->setBonusAll($offer->getBonusCount(3, $quantity));
-            $shortProduct->setBonusUser($offer->getBonusCount($this->userService->getDiscount(), $quantity));
-        }
+        // бонусы
+        $shortProduct->setBonusAll($offer->getBonusCount(3, $quantity));
+        $shortProduct->setBonusUser($offer->getBonusCount($this->userService->getDiscount(), $quantity));
 
         return $shortProduct;
     }

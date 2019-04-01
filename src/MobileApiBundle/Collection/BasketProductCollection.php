@@ -60,6 +60,20 @@ class BasketProductCollection extends ProductQuantityCollection
     }
 
     /**
+     * @return int
+     */
+    public function getTotalBonuses(): int
+    {
+        $totalBonuses = 0;
+        /** @var Product $product */
+        foreach ($this->getValues() as $product) {
+            /** @var $priceWithQuantity PriceWithQuantity */
+            $totalBonuses += $product->getShortProduct()->getBonusUser() * $product->getQuantity();
+        }
+        return $totalBonuses;
+    }
+
+    /**
      * @return float
      */
     public function getDiscount(): float

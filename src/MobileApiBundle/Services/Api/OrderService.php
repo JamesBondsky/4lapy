@@ -472,7 +472,7 @@ class OrderService
                 (new Detailing())
                     ->setId('bonus_add')
                     ->setTitle('Начислено')
-                    ->setValue(0),
+                    ->setValue($basketProducts->getTotalBonuses()),
                 (new Detailing())
                     ->setId('bonus_sub')
                     ->setTitle('Списано')

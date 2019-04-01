@@ -8,6 +8,7 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 
 
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\Internals\EntityCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Components\BasketComponent;
@@ -142,11 +143,11 @@ class BasketService
      * по сути является подпродуктом базового продукта
      * @see BasketComponent::calcTemplateFields()
      *
-     * @param array $basketItems
+     * @param array|EntityCollection $basketItems
      * @param BasketProductCollection $products
      * @return BasketProductCollection
      */
-    private function fillBasketProductsPrices(array $basketItems, BasketProductCollection $products)
+    private function fillBasketProductsPrices($basketItems, $products)
     {
         /** @var PriceWithQuantity[][] $pricesWithQuantityAll */
         $pricesWithQuantityAll = [];
@@ -200,7 +201,7 @@ class BasketService
     public function getBasketProduct(int $basketItemId, Offer $offer, int $quantity)
     {
         $product = $offer->getProduct();
-        $shortProduct = $this->apiProductService->convertToShortProduct($product, $offer, $quantity, true);
+        $shortProduct = $this->apiProductService->convertToShortProduct($product, $offer, $quantity);
 
         return (new Product())
             ->setBasketItemId($basketItemId)
