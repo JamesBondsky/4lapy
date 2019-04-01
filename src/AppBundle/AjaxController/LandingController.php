@@ -112,7 +112,7 @@ class LandingController extends Controller
                 'IBLOCK_SECTION_ID' => ($sectionId) ? $sectionId : false,
                 'PROPERTY_VALUES' => [
                     'USER' => $userId,
-                    'DATE' => ConvertDateTime($request->get('date'), 'YYYY-MM-DD'),
+                    'DATE' => $request->get('date'),
                     'SUM' => $request->get('sum'),
                     'SURNAME' => $request->get('surname'),
                     'NAME' => $request->get('name'),
