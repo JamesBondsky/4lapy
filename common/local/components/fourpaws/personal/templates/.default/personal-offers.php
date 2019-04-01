@@ -23,14 +23,17 @@
                 </div>
                 <div class="b-personal-offers-item__data-wrap">
                     <div class="b-personal-offers-item__data">
-                        <div class="b-personal-offers-item__digital-code">
+                        <div class="b-personal-offers-item__digital-code" data-container-number-coupon="true">
                             <span class="text" data-number-coupon="true">ABC123DFE4567</span>
                             <a href="javascript:void(0);" class="link" data-link-copy-number-coupon="true">Скопировать</a>
                         </div>
                         <div class="b-personal-offers-item__barcode-img">
                             <img src="/static/build/images/content/barcode-kopilka.png" alt="" />
                         </div>
-                        <a href="javascript:void(0);" class="b-personal-offers-item__barcode-btn js-open-popup" data-popup-id="">Отправить мне на Email</a>
+                        <a href="javascript:void(0);"
+                           class="b-personal-offers-item__barcode-btn js-open-popup"
+                           data-popup-id="send-email-personal-offers"
+                           data-id-coupon-personal-offers="ABC123DFE4567">Отправить мне на Email</a>
                     </div>
                 </div>
             </div>
@@ -45,14 +48,17 @@
                 </div>
                 <div class="b-personal-offers-item__data-wrap">
                     <div class="b-personal-offers-item__data">
-                        <div class="b-personal-offers-item__digital-code">
+                        <div class="b-personal-offers-item__digital-code" data-container-number-coupon="true">
                             <span class="text" data-number-coupon="true">DEF123DFE4567</span>
                             <a href="javascript:void(0);" class="link" data-link-copy-number-coupon="true">Скопировать</a>
                         </div>
                         <div class="b-personal-offers-item__barcode-img">
                             <img src="/static/build/images/content/barcode-kopilka.png" alt="" />
                         </div>
-                        <a href="javascript:void(0);" class="b-personal-offers-item__barcode-btn js-open-popup" data-popup-id="">Отправить мне на Email</a>
+                        <a href="javascript:void(0);"
+                           class="b-personal-offers-item__barcode-btn js-open-popup"
+                           data-popup-id="send-email-personal-offers"
+                           data-id-coupon-personal-offers="DEF123DFE4567">Отправить мне на Email</a>
                     </div>
                 </div>
             </div>
@@ -74,14 +80,17 @@
                 </div>
                 <div class="b-personal-offers-item__data-wrap">
                     <div class="b-personal-offers-item__data">
-                        <div class="b-personal-offers-item__digital-code">
+                        <div class="b-personal-offers-item__digital-code" data-container-number-coupon="true">
                             <span class="text" data-number-coupon="true">GJQ123DFE4567</span>
                             <a href="javascript:void(0);" class="link" data-link-copy-number-coupon="true">Скопировать</a>
                         </div>
                         <div class="b-personal-offers-item__barcode-img">
                             <img src="/static/build/images/content/barcode-kopilka.png" alt="" />
                         </div>
-                        <a href="javascript:void(0);" class="b-personal-offers-item__barcode-btn">Отправить мне на Email</a>
+                        <a href="javascript:void(0);"
+                           class="b-personal-offers-item__barcode-btn js-open-popup"
+                           data-popup-id="send-email-personal-offers"
+                           data-id-coupon-personal-offers="GJQ123DFE4567">Отправить мне на Email</a>
                     </div>
                 </div>
             </div>

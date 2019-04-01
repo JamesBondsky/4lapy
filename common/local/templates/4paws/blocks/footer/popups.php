@@ -47,6 +47,8 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
 
     include __DIR__ . '/popup_email_kopilka.php';
 
+    include __DIR__ . '/personal_offers_form.php';
+
     include __DIR__ . '/gifts_popup.php';
     include __DIR__ . '/modal_popup.php';
     //include __DIR__ . '/change_view_popup.php'; // Временно скрываем баннер перехода в мобильную версию
