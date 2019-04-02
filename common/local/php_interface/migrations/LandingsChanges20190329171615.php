@@ -55,7 +55,7 @@ class LandingsChanges20190329171615 extends \Adv\Bitrixtools\Migration\SprintMig
                     ]
                 );
             }
-            $winnersIblockId = $helper->Iblock()->getIblockId('grandin_request', 'action_winners');
+            $winnersIblockId = $helper->Iblock()->getIblockId('action_winners', 'grandin');
             $helper->Iblock()->addSectionIfNotExists($winnersIblockId, ['NAME' => 'Royal-Canin', 'CODE' => 'ROYAL_CANIN']);
         } catch (\Exception $e) {
             $res = false;
