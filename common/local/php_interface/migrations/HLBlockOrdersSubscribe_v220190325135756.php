@@ -280,6 +280,50 @@ class HLBlockOrdersSubscribe_v220190325135756 extends \Adv\Bitrixtools\Migration
         );
 
         // ---
+        $fieldName = 'UF_DEL_DAY';
+        $ruName = 'День доставки';
+        $sort += 100;
+        $userTypeEntityHelper->addUserTypeEntityIfNotExists(
+            $entityId,
+            $fieldName,
+            [
+                'FIELD_NAME' => $fieldName,
+                'USER_TYPE_ID' => 'week_day',
+                'XML_ID' => '',
+                'SORT' => $sort,
+                'MULTIPLE' => 'N',
+                'MANDATORY' => 'Y',
+                'SHOW_FILTER' => 'Y',
+                'SHOW_IN_LIST' => 'Y',
+                'EDIT_IN_LIST' => 'Y',
+                'IS_SEARCHABLE' => 'N',
+                'SETTINGS' => [
+                    'SIZE' => 20,
+                    'ROWS' => 1,
+                    'REGEXP' => '',
+                    'MIN_LENGTH' => 0,
+                    'MAX_LENGTH' => 0,
+                    'DEFAULT_VALUE' => '',
+                ],
+                'EDIT_FORM_LABEL' => [
+                    'ru' => $ruName,
+                ],
+                'LIST_COLUMN_LABEL' => [
+                    'ru' => $ruName,
+                ],
+                'LIST_FILTER_LABEL' => [
+                    'ru' => $ruName,
+                ],
+                'ERROR_MESSAGE' => [
+                    'ru' => '',
+                ],
+                'HELP_MESSAGE' => [
+                    'ru' => '',
+                ],
+            ]
+        );
+
+        // ---
         $fieldName = 'UF_LOCATION';
         $ruName = 'Местоположение';
         $sort += 100;
