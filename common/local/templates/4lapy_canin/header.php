@@ -33,7 +33,9 @@ $markup = PawsApplication::markup();
     <meta name="format-detection" content="telephone=no">
     <meta name="yandex-verification" content="6266e34669b85ed6">
 
-    <meta property="og:title" content="Главный приз: Путешествие на родину породы"/>
+    <meta property="og:title" content="Главный приз: путешествие на родину породы"/>
+    <meta property="og:description" content="Купите рационы породной линейки ROYAL CANIN® на сумму от 1000 рублей и получите 150 баллов на карту."/>
+    <meta property="og:image" content="<?='https://'.$_SERVER['SERVER_NAME'].'/static/build/images/content/landing-canin-share.png'?>"/>
 
     <?php /** @todo Mobe onto right place  */ ?>
     <script src="/static/build/js/jquery/jquery.min.js"></script>

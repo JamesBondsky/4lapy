@@ -7,8 +7,8 @@ use FourPaws\AppBundle\AjaxController\LandingController;
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
 $APPLICATION->SetPageProperty('title', '');
-$APPLICATION->SetPageProperty('description', '');
-$APPLICATION->SetTitle('');
+$APPLICATION->SetPageProperty('description', 'Купите рационы породной линейки ROYAL CANIN® на сумму от 1000 рублей и получите 150 баллов на карту.');
+$APPLICATION->SetTitle('Главный приз: путешествие на родину породы');
 ?>
 
 <section id="registr-check" data-id-section-landing="registr-check" class="registr-check-landing registr-check-landing_white registr-check-landing_canin">
