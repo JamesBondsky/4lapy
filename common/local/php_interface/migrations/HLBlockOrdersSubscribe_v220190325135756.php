@@ -381,7 +381,7 @@ class HLBlockOrdersSubscribe_v220190325135756 extends \Adv\Bitrixtools\Migration
                 'EDIT_IN_LIST' => 'Y',
                 'IS_SEARCHABLE' => 'N',
                 'SETTINGS' => [
-                    'DEFAULT_VALUE' => 1,
+                    'DEFAULT_VALUE' => 0,
                     'DISPLAY' => 'CHECKBOX',
                     'LABEL' => [
                         0 => '',
@@ -643,6 +643,51 @@ class HLBlockOrdersSubscribe_v220190325135756 extends \Adv\Bitrixtools\Migration
                         'TYPE' => '',
                         'VALUE' => '',
                     ],
+                ],
+                'EDIT_FORM_LABEL' => [
+                    'ru' => $ruName,
+                ],
+                'LIST_COLUMN_LABEL' => [
+                    'ru' => $ruName,
+                ],
+                'LIST_FILTER_LABEL' => [
+                    'ru' => $ruName,
+                ],
+                'ERROR_MESSAGE' => [
+                    'ru' => '',
+                ],
+                'HELP_MESSAGE' => [
+                    'ru' => '',
+                ],
+            ]
+        );
+
+        // ---
+        $fieldName = 'UF_BONUS';
+        $ruName = 'Списывать бонусы';
+        $sort += 100;
+        $userTypeEntityHelper->addUserTypeEntityIfNotExists(
+            $entityId,
+            $fieldName,
+            [
+                'FIELD_NAME' => $fieldName,
+                'USER_TYPE_ID' => 'boolean',
+                'XML_ID' => '',
+                'SORT' => $sort,
+                'MULTIPLE' => 'N',
+                'MANDATORY' => 'N',
+                'SHOW_FILTER' => 'Y',
+                'SHOW_IN_LIST' => 'Y',
+                'EDIT_IN_LIST' => 'Y',
+                'IS_SEARCHABLE' => 'N',
+                'SETTINGS' => [
+                    'DEFAULT_VALUE' => 0,
+                    'DISPLAY' => 'CHECKBOX',
+                    'LABEL' => [
+                        0 => '',
+                        1 => '',
+                    ],
+                    'LABEL_CHECKBOX' => '',
                 ],
                 'EDIT_FORM_LABEL' => [
                     'ru' => $ruName,

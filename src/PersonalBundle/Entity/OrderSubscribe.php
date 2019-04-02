@@ -140,6 +140,15 @@ class OrderSubscribe extends BaseEntity
     protected $deliveryDay;
 
     /**
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("UF_BONUS")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $payWithbonus;
+
+    /**
      * @return int
      */
     public function getUserId(): ?int
@@ -371,6 +380,24 @@ class OrderSubscribe extends BaseEntity
     {
         $this->deliveryDay = $deliveryDay;
         return $this;
+    }
+
+    /**
+     * @param bool $payWithbonus
+     * @return OrderSubscribe
+     */
+    public function setPayWithbonus(bool $payWithbonus): OrderSubscribe
+    {
+        $this->payWithbonus = $payWithbonus;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPayWithbonus(): bool
+    {
+        return $this->payWithbonus;
     }
 
 

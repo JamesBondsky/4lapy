@@ -88,6 +88,11 @@ class OrderStorageService
     protected $storeService;
 
     /**
+     * @var OrderSubscribeService
+     */
+    protected $orderSubscribeService;
+
+    /**
      * OrderStorageService constructor.
      *
      * @param BasketService                $basketService
@@ -101,7 +106,8 @@ class OrderStorageService
         CurrentUserProviderInterface $currentUserProvider,
         DatabaseStorageRepository $storageRepository,
         DeliveryService $deliveryService,
-        StoreService $storeService
+        StoreService $storeService,
+        OrderSubscribeService $orderSubscribeService
     )
     {
         $this->basketService = $basketService;
@@ -109,6 +115,7 @@ class OrderStorageService
         $this->storageRepository = $storageRepository;
         $this->deliveryService = $deliveryService;
         $this->storeService = $storeService;
+        $this->orderSubscribeService = $orderSubscribeService;
     }
 
     /**
@@ -262,8 +269,6 @@ class OrderStorageService
                     if($storage->isSubscribe() && !$storage->getSubscribeId()){
                         /** @var IntervalService $intervalService */
                         $intervalService = Application::getInstance()->getContainer()->get(IntervalService::class);
-                        /** @var OrderSubscribeService $orderSubscribeService */
-                        $orderSubscribeService = Application::getInstance()->getContainer()->get('order_subscribe.service');
 
                         $subscribe = (new OrderSubscribe())
                             ->setDeliveryDay($data['subscribeDay'])
@@ -280,7 +285,7 @@ class OrderStorageService
                         }
 
 
-                        if(!$orderSubscribeService->add($subscribe)){
+                        if(!$this->orderSubscribeService->add($subscribe)){
                             throw new OrderSubscribeException(sprintf('Failed to create order subscribe: %s', print_r($data,true)));
                         }
 
@@ -291,7 +296,7 @@ class OrderStorageService
                                 ->setOfferId($basketItem->getProductId())
                                 ->setQuantity($basketItem->getQuantity());
 
-                            if(!$orderSubscribeService->addSubscribeItem($subscribe, $subscribeItem)){
+                            if(!$this->orderSubscribeService->addSubscribeItem($subscribe, $subscribeItem)){
                                 throw new OrderSubscribeException(sprintf('Failed to create order subscribe item: %s', print_r($data,true)));
                             }
                         }
@@ -326,6 +331,19 @@ class OrderStorageService
                 ];
                 break;
             case OrderStorageEnum::PAYMENT_STEP:
+                /**
+                 * Начисление баллов по подписке
+                 */
+                if($storage->isSubscribe() && $data['subscribeBonus']){
+                    $subscribe = $this->orderSubscribeService->getById($storage->getSubscribeId());
+                    if(!$subscribe){
+                        throw new OrderSubscribeException(sprintf("Failed to get subscribe: %s", $storage->getSubscribeId()));
+                    }
+                    $subscribe->setPayWithbonus(true);
+                    $this->orderSubscribeService->update($subscribe);
+                }
+
+
                 $availableValues = [
                     'paymentId',
                     'bonus',
@@ -472,6 +490,15 @@ class OrderStorageService
             }
 
             $payments = PaySystemManager::getListWithRestrictions($payment);
+        }
+
+        /**
+         * Для заказа по подписке доступна только оплата при получении
+         */
+        if($storage->isSubscribe()){
+            $payments = array_filter($payments, function($item){
+                return in_array($item['CODE'], [OrderPayment::PAYMENT_CASH, OrderPayment::PAYMENT_CASH_OR_CARD]);
+            });
         }
 
         /**

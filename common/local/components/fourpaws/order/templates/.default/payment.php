@@ -138,6 +138,12 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 $i++;
                             } ?>
                         </div>
+                        <? if($storage->isSubscribe()) { ?>
+                            <div class="b-order__text-block--additional">
+                                <input type="checkbox" name="subscribeBonus" value="1" checked>
+                                Списывать все доступные баллы на заказы по подписке
+                            </div>
+                        <? } ?>
                     </form>
                     <?php if ($user && $user->getDiscountCardNumber()) {
                         if ($arResult['MAX_BONUS_SUM']) {
