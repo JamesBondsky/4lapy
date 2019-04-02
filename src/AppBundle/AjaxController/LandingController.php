@@ -20,11 +20,11 @@ use Symfony\Component\HttpFoundation\Request;
 
 
 /**
- * Class CommentsController
+ * Class LandingController
  *
  * @package FourPaws\AppBundle\AjaxController
  */
-class GrandinController extends Controller
+class LandingController extends Controller
 {
 
     static $petTypes = [
@@ -32,6 +32,11 @@ class GrandinController extends Controller
         'smallDog' => 'Собака мелкой породы',
         'otherDog' => 'Собака средней или крупной породы',
     ];
+
+    static $landingSites = ['s2', 's3'];
+
+    static $grandinLanding = 'grandin';
+    static $royalCaninLanding = 'royal_canin';
 
     /** @var AjaxMess */
     private $ajaxMess;
@@ -62,7 +67,12 @@ class GrandinController extends Controller
                 throw new JsonResponseException($this->ajaxMess->getNotAuthorizedException());
             }
 
-            $arFields = [$request->get('date'), $request->get('sum'), $request->get('surname'), $request->get('name'), $request->get('phone'), $request->get('email'), $request->get('rules'), $request->get('petType')];
+            $arFields = [$request->get('date'), $request->get('sum'), $request->get('surname'), $request->get('name'), $request->get('phone'), $request->get('email'), $request->get('rules')];
+
+            if ($request->get('landingType') == self::$grandinLanding) {
+                $arFields[] = $request->get('petType');
+            }
+
             if (count(array_filter($arFields)) < count($arFields)) {
                 throw new JsonResponseException($this->ajaxMess->getEmptyDataError());
             }
@@ -71,7 +81,7 @@ class GrandinController extends Controller
                 throw new JsonResponseException($this->ajaxMess->getWrongParamsError());
             }
 
-            if (!in_array($request->get('petType'), array_keys(self::$petTypes))) {
+            if ($request->get('landingType') == self::$grandinLanding && !in_array($request->get('petType'), array_keys(self::$petTypes))) {
                 throw new JsonResponseException($this->ajaxMess->getWrongDataError());
             }
 
@@ -82,10 +92,24 @@ class GrandinController extends Controller
             $email = $request->get('email');
             $userId = $USER->GetID();
 
+            $requestIblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::GRANDIN_REQUEST);
+            if (in_array($request->get('landingType'), array_keys([self::$royalCaninLanding, self::$grandinLanding]))) {
+                $filter = [
+                    'IBLOCK_ID' => $requestIblockId,
+                    'CHECK_PERMISSIONS' => 'N',
+                    '=CODE' => $request->get('landingType') . '_requests',
+                ];
+                $sections = \CIBlockSection::GetList([], $filter, false, ['ID', 'IBLOCK_ID', 'NAME', 'CODE'])->Fetch();
+                if (!empty($sections['ID'])) {
+                    $sectionId = $sections['ID'];
+                }
+            }
+
             $iblockElement = new \CIBlockElement();
             $resultAdd = $iblockElement->Add([
-                'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::GRANDIN_REQUEST),
+                'IBLOCK_ID' => $requestIblockId,
                 'NAME' => 'Заявка ' . implode(' ', [$USER->GetID(), $request->get('surname'), $request->get('name')]),
+                'IBLOCK_SECTION_ID' => ($sectionId) ? $sectionId : false,
                 'PROPERTY_VALUES' => [
                     'USER' => $userId,
                     'DATE' => $request->get('date'),
@@ -95,7 +119,7 @@ class GrandinController extends Controller
                     'PHONE' => $request->get('phone'),
                     'EMAIL' => $email,
                     'RULES' => $request->get('rules') == 'Y',
-                    'PET_TYPE' => self::$petTypes[$request->get('petType')],
+                    'PET_TYPE' => self::$petTypes[$request->get('petType')]
                 ],
             ]);
 
