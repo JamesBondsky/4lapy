@@ -133,7 +133,11 @@ $markup = PawsApplication::markup();
                 <div class="splash-screen-canin__date">С 8 апреля по 19 мая 2019 года</div>
 
                 <div class="splash-screen-canin__btn-wrap">
-                    <div class="btn-canin" data-btn-scroll-landing="registr-check">Загрузите чек</div>
+                    <?if ($USER->IsAuthorized()) {?>
+                        <div class="btn-canin" data-btn-scroll-landing="registr-check">Загрузите чек</div>
+                    <?} else {?>
+                        <div class="btn-canin" data-btn-scroll-landing="regulations">Узнать подробности</div>
+                    <?}?>
                 </div>
 
             </div>
