@@ -12,7 +12,7 @@ use Exception;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderService;
 
-class OrderPropComWayDostavista20192703113741 extends SprintMigrationBase
+class OrderPropComWayDostavista20190327113741 extends SprintMigrationBase
 {
     protected $description = 'Изменение свойства "Способ коммуникации" с учетом экспресс-доставки';
 
