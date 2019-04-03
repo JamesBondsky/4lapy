@@ -86,7 +86,7 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
             /**
              * Пишем логи
              */
-            if ($e->getCode() == 40 && is_array($response) && isset($response['message'])) {
+            if ($e->getCode() == 100500 && is_array($response) && isset($response['message'])) {
                 $this->log()->error('Dostavista error, code: ' . $e->getCode() . ' message: ' . $response['message']);
             } else {
                 $this->log()->error('Dostavista error, code: ' . $e->getCode() . ' message: ' . $e->getMessage());

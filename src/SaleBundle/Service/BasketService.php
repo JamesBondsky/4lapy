@@ -1217,6 +1217,24 @@ class BasketService implements LoggerAwareInterface
         return $result;
     }
 
+
+    /**
+     * @param Basket|null $basket
+     *
+     * @return OfferCollection
+     */
+    public function getBasketOffers(?Basket $basket = null): OfferCollection
+    {
+        $ids = array_keys($this->getBasketProducts($basket));
+
+        if (empty($ids)) {
+            return new OfferCollection(new \CIBlockResult());
+        }
+
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
+        return (new OfferQuery())->withFilterParameter('=ID', $ids)->exec();
+    }
+
     /**
      *
      * @param array $applyResult - только для того чтобы не генерировать много запросов

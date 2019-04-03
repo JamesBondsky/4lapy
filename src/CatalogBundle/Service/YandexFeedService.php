@@ -161,6 +161,8 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      */
     public function process(ConfigurationInterface $configuration, int $step, string $stockID = null): bool
     {
+        $this->tmpFileName = 'yandex_tmp_feed' . ((!empty($stockID)) ? ('_' . $stockID) : '') . '.xml';
+
         /**
          * @var Configuration $configuration
          */
@@ -452,7 +454,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      */
     protected function isOfferExcluded(Offer $offer): bool
     {
-        $badWordsTemplate = '~новинка|подарка|хит|скидка|бесплатно|спеццена|специальная цена|новинка|заказ|аналог|акция|распродажа|новый|подарок|new|sale~iu';
+        $badWordsTemplate = '~ новинка | подарка | хит | скидка | бесплатно | спеццена | специальная цена | новинка | заказ | аналог | акция | распродажа | новый | подарок | new | sale ~iu';
 
         if (!$offer->getXmlId()) {
             return true;
@@ -509,27 +511,26 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             []
         );
 
+        $dbItems = \CIBlockElement::GetList(
+            [],
+            [
+                'IBLOCK_ID' => IblockUtils::getIblockId(
+                    IblockType::CATALOG,
+                    IblockCode::PRODUCTS
+                ),
+                'SECTION_ID' => $sectionIds,
+                'ACTIVE' => 'Y'
+            ],
+            false,
+            false,
+            [
+                'ID',
+                'IBLOCK_ID'
+            ]
+        );
         $idList = [];
-
-        try {
-            $idList = \array_reduce(ElementTable::query()
-                //->setCacheTtl(3600)
-                ->setSelect(['ID'])
-                ->setFilter([
-                    'IBLOCK_ID' => IblockUtils::getIblockId(
-                        IblockType::CATALOG,
-                        IblockCode::PRODUCTS
-                    ),
-                    'IBLOCK_SECTION_ID' => $sectionIds,
-                    'ACTIVE' => 'Y'
-                ])
-                ->exec()
-                ->fetchAll() ?: [], function ($carry, $on) {
-                $carry[] = $on['ID'];
-
-                return $carry;
-            }, []);
-        } catch (Exception $e) {
+        while ($arItem = $dbItems->Fetch()) {
+            $idList[] = $arItem['ID'];
         }
 
         $idList = $idList ?: [-1];
@@ -551,14 +552,22 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     {
         $categories = new ArrayCollection();
 
+        if (in_array(0, $configuration->getSectionIds())) {
+            $filter = [
+                'GLOBAL_ACTIVE' => 'Y'
+            ];
+        } else {
+            $filter = [
+                'ID' => $configuration->getSectionIds(),
+                'GLOBAL_ACTIVE' => 'Y'
+            ];
+        }
+
         /**
          * @var CategoryCollection $parentCategories
          */
         $parentCategories = (new CategoryQuery())
-            ->withFilter([
-                'ID' => $configuration->getSectionIds(),
-                'GLOBAL_ACTIVE' => 'Y'
-            ])
+            ->withFilter($filter)
             ->withOrder(['LEFT_MARGIN' => 'ASC'])
             ->exec();
 
@@ -639,17 +648,6 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     public function loadFeed(string $key): Feed
     {
         return parent::loadFeed($key);
-    }
-
-    /**
-     * @return string
-     */
-    private function getStorageKey(): string
-    {
-        return \sprintf(
-            '%s/yandex_tmp_feed.xml',
-            \sys_get_temp_dir()
-        );
     }
 
     /**
