@@ -511,27 +511,26 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             []
         );
 
+        $dbItems = \CIBlockElement::GetList(
+            [],
+            [
+                'IBLOCK_ID' => IblockUtils::getIblockId(
+                    IblockType::CATALOG,
+                    IblockCode::PRODUCTS
+                ),
+                'SECTION_ID' => $sectionIds,
+                'ACTIVE' => 'Y'
+            ],
+            false,
+            false,
+            [
+                'ID',
+                'IBLOCK_ID'
+            ]
+        );
         $idList = [];
-
-        try {
-            $idList = \array_reduce(ElementTable::query()
-                //->setCacheTtl(3600)
-                ->setSelect(['ID'])
-                ->setFilter([
-                    'IBLOCK_ID' => IblockUtils::getIblockId(
-                        IblockType::CATALOG,
-                        IblockCode::PRODUCTS
-                    ),
-                    'IBLOCK_SECTION_ID' => $sectionIds,
-                    'ACTIVE' => 'Y'
-                ])
-                ->exec()
-                ->fetchAll() ?: [], function ($carry, $on) {
-                $carry[] = $on['ID'];
-
-                return $carry;
-            }, []);
-        } catch (Exception $e) {
+        while ($arItem = $dbItems->Fetch()) {
+            $idList[] = $arItem['ID'];
         }
 
         $idList = $idList ?: [-1];
@@ -553,14 +552,22 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     {
         $categories = new ArrayCollection();
 
+        if (in_array(0, $configuration->getSectionIds())) {
+            $filter = [
+                'GLOBAL_ACTIVE' => 'Y'
+            ];
+        } else {
+            $filter = [
+                'ID' => $configuration->getSectionIds(),
+                'GLOBAL_ACTIVE' => 'Y'
+            ];
+        }
+
         /**
          * @var CategoryCollection $parentCategories
          */
         $parentCategories = (new CategoryQuery())
-            ->withFilter([
-                'ID' => $configuration->getSectionIds(),
-                'GLOBAL_ACTIVE' => 'Y'
-            ])
+            ->withFilter($filter)
             ->withOrder(['LEFT_MARGIN' => 'ASC'])
             ->exec();
 
