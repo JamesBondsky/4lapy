@@ -31,7 +31,7 @@ $bonus = $arResult['BONUS'];
         </div>
         <div class="b-account-bonus-card__colored-block-bottom">
             <div class="b-account-bonus-card__title b-account-bonus-card__title--temporary">Из них, временные</div>
-            <div class="b-account-bonus-card__number b-account-bonus-card__number--temporary"><?= $bonus->getActiveBonus() ?>
+            <div class="b-account-bonus-card__number b-account-bonus-card__number--temporary"><?= $bonus->getTemporaryBonus() ?>
             </div>
         </div>
         <?php if (!$bonus->getCard()->isReal()) { ?>

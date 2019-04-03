@@ -195,7 +195,13 @@ class BonusService
                 }
             }
             if (!$cardBonus->isEmpty()) {
+                $cardBonusNumber = $cardBonus->getCardNumber();
+                $temporaryBonus = $contact->getCards()->filter(function(\FourPaws\External\Manzana\Model\Card $card) use($cardBonusNumber) {
+                    return $card->cardNumber == $cardBonusNumber;
+                })->first()->balanceExtraNoLimit;
+
                 $bonus->setActiveBonus((float)$contact->plActiveBalance);
+                $bonus->setTemporaryBonus((float)$temporaryBonus);
                 $bonus->setAllBonus((float)$contact->plBalance);
                 $bonus->setCredit((float)$contact->plCredit);
                 $bonus->setDebit((float)$contact->plDebet);
