@@ -8,6 +8,7 @@ namespace FourPaws\StoreBundle\AjaxController;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Exception;
+use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -19,6 +20,7 @@ use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Dto\ShopList\Service;
 use FourPaws\StoreBundle\Exception\NoStoresAvailableException;
 use FourPaws\StoreBundle\Service\ShopInfoService;
+use FourPaws\StoreBundle\Service\StoreService;
 use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
@@ -246,7 +248,9 @@ class StoreListController extends Controller implements LoggerAwareInterface
             $locationCode = $this->shopInfoService->getLocationByRequest($request);
 
             try {
-                $stores = $this->shopInfoService->getStoresByLocationCode($locationCode)->getStores();
+                /** @var StoreService $storeService */
+                $storeService = Application::getInstance()->getContainer()->get('store.service');
+                $stores = $storeService->getAllStores(StoreService::TYPE_SHOP)->getStores();
             } catch (NoStoresAvailableException $e) {
                 $stores = new StoreCollection();
             }
@@ -254,7 +258,10 @@ class StoreListController extends Controller implements LoggerAwareInterface
             $result = $this->shopInfoService->shopListToArray(
                 $this->shopInfoService->getShopList(
                     $stores,
-                    $locationCode
+                    $locationCode,
+                    [],
+                    null,
+                    true
                 )
             );
 

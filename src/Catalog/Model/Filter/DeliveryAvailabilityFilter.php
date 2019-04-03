@@ -58,7 +58,7 @@ class DeliveryAvailabilityFilter extends FilterBase
             ->withAvailable(true)
             ->withValue($code . '_' . Product::AVAILABILITY_BY_REQUEST));
         $result->add((new Variant())
-            ->withName('Выбрать конкретный магазин')
+            ->withName('Наличие в выбранном магазине')
             ->withAvailable(true)
             ->withAdditionalLinkClass('b-filter-link-list__link--shop js-open-catalog-shop-popup')
             ->withHiddenFieldName(StoreAvailabilityFilter::$filterCode)
