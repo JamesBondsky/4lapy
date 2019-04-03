@@ -146,6 +146,16 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                         <?php }
                     } ?>
                 </div>
+                <div class="b-order__action">
+                    <a href="https://royal-canin.4lapy.ru/" class="b-order__action-banner" target="_blank">
+                        <img src="/upload/royal-canin/royal-canin-action.jpg" alt="ROYAL-CANIN" />
+                    </a>
+                    <div class="b-order__text-block">
+                        <p><b><?= $arResult['ORDER_PROPERTIES']['NAME'] ?></b>, после оплаты заказа на&nbsp;вашу карту будет начислено 150&nbsp;бонусных баллов, которыми Вы&nbsp;сможете оплатить до&nbsp;90% стоимости следующей покупки кормов Royal&nbsp;Canin.</p>
+                        <p>Также Вы&nbsp;сможете зарегистрировать чек и&nbsp;принять участие в&nbsp;розыгрыше ценных подарков и&nbsp;главного приза&nbsp;&mdash; путешествие на&nbsp;родину породы вашего питомца!</p>
+                        <p>Подробнее о&nbsp;розыгрыше <a href="https://royal-canin.4lapy.ru/" class="b-link b-link--inherit b-link--orange" target="_blank">royal-canin.4lapy.ru</a></p>
+                    </div>
+                </div>
             </div>
             <?php if ($arResult['ORDER_DELIVERY']['IS_PICKUP'] &&
                 $arResult['ORDER_DELIVERY']['SELECTED_SHOP'] instanceof Store
