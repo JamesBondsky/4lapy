@@ -8,7 +8,6 @@ namespace FourPaws\StoreBundle\AjaxController;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Exception;
-use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -20,7 +19,6 @@ use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Dto\ShopList\Service;
 use FourPaws\StoreBundle\Exception\NoStoresAvailableException;
 use FourPaws\StoreBundle\Service\ShopInfoService;
-use FourPaws\StoreBundle\Service\StoreService;
 use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
@@ -231,47 +229,6 @@ class StoreListController extends Controller implements LoggerAwareInterface
             }
         } else {
             $result = $this->ajaxMess->getNotIdError(' торгового предложения');
-        }
-
-        return $result;
-    }
-
-    /**
-     * @Route("/all/", methods={"GET"})
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function getAllAction(Request $request): JsonResponse
-    {
-        try {
-            $locationCode = $this->shopInfoService->getLocationByRequest($request);
-
-            try {
-                /** @var StoreService $storeService */
-                $storeService = Application::getInstance()->getContainer()->get('store.service');
-                $stores = $storeService->getAllStores(StoreService::TYPE_SHOP)->getStores();
-            } catch (NoStoresAvailableException $e) {
-                $stores = new StoreCollection();
-            }
-
-            $result = $this->shopInfoService->shopListToArray(
-                $this->shopInfoService->getShopList(
-                    $stores,
-                    $locationCode,
-                    [],
-                    null,
-                    true
-                )
-            );
-
-            $result = JsonSuccessResponse::createWithData(
-                '', $result
-            );
-        } catch (Exception $e) {
-            $this->log()->error($e->getMessage());
-
-            $result = $this->ajaxMess->getSystemError();
         }
 
         return $result;
