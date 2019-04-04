@@ -53,12 +53,12 @@ class DeliveryAvailabilityFilter extends FilterBase
             ->withName('Самовывоз')
             ->withAvailable(true)
             ->withValue($code . '_' . Product::AVAILABILITY_PICKUP));
-        /*$result->add((new Variant())
+        $result->add((new Variant())
             ->withName('Наличие в выбранном магазине')
             ->withAvailable(true)
             ->withAdditionalLinkClass('b-filter-link-list__link--shop js-open-catalog-shop-popup')
             ->withHiddenFieldName(StoreAvailabilityFilter::$filterCode)
-            ->withValue(Product::AVAILABILITY_PICKUP_FROM_SELECTED_STORES));*/
+            ->withValue(Product::AVAILABILITY_PICKUP_FROM_SELECTED_STORES));
         $result->add((new Variant())
             ->withName('Под заказ')
             ->withAvailable(true)
