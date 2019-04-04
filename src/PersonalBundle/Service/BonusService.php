@@ -7,7 +7,9 @@
 namespace FourPaws\PersonalBundle\Service;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -31,6 +33,7 @@ use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\EmptyPhoneException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -53,6 +56,9 @@ class BonusService
      * @var CurrentUserProviderInterface
      */
     public $currentUserProvider;
+
+    /** @var UserBonus */
+    protected $bonus;
 
     /** @var LoggerInterface */
     private $logger;
@@ -83,8 +89,9 @@ class BonusService
      * @throws ConstraintDefinitionException
      * @throws ApplicationCreateException
      * @throws NotAuthorizedException
+     * @throws ObjectException
      */
-    public function getUserBonusInfo(User $user = null): UserBonus
+    public function updateUserBonusInfo(User $user = null): UserBonus
     {
         if ($user === null) {
             $user = $this->currentUserProvider->getCurrentUser();
@@ -94,6 +101,10 @@ class BonusService
         $bonus->setEmpty(true);
         try {
             $bonus = static::getManzanaBonusInfo($user, $this->manzanaService);
+
+            $user->setTemporaryBonus($bonus->getTemporaryBonus());
+            $user->setBonusUpdateDate(new DateTime());
+            App::getInstance()->getContainer()->get(UserRepository::class)->update($user);
         } catch (ManzanaServiceContactSearchMoreOneException $e) {
             $this->logger->info(
                 'Найдено больше одного пользователя в манзане по телефону ' . $user->getPersonalPhone()
@@ -108,6 +119,28 @@ class BonusService
         }
 
         return $bonus;
+    }
+
+    /**
+     * @param User|null $user
+     *
+     * @return bool
+     * @throws ObjectException
+     */
+    public function isUserBonusInfoUpdated(User $user = null): bool
+    {
+        global $DB;
+
+        if ($user === null) {
+            $user = $this->currentUserProvider->getCurrentUser();
+        }
+
+        $bonus = new UserBonus();
+        $bonus->setEmpty(true);
+
+        $bonusUpdateTimeLimit = '1 hour'; // ограничение по частоте обновления информации о бонусах
+        $lastBonusUpdateDate = $user->getBonusUpdateDate();
+        return $lastBonusUpdateDate && $DB->CompareDates($lastBonusUpdateDate, (new DateTime())->add('- ' . $bonusUpdateTimeLimit)) > 0;
     }
 
     /**
