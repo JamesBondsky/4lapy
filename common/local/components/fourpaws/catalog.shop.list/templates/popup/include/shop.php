@@ -53,7 +53,7 @@ use FourPaws\Decorators\SvgDecorator;
                         {{schedule}}
                     </div>
                 </div>
-	            <?/*?>
+                <?/*?>
                 <div class="b-input-line b-input-line--myself">
                     <div class="b-input-line__label-wrapper">
                         <span class="b-input-line__label">Оплата в магазине</span>
@@ -73,7 +73,7 @@ use FourPaws\Decorators\SvgDecorator;
                         </span>
                     </div>
                 </div>
-				<?*/?>
+                <?*/?>
                 <div class="b-input-line b-input-line--pin">
                     <a class="b-link b-link--pin js-shop-link"
                        href="javascript:void(0);"
