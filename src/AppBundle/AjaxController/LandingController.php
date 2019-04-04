@@ -147,7 +147,7 @@ class LandingController extends Controller
             }
 
             $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD);
-            return JsonSuccessResponse::createWithData('Благодарим за регистрацию. Следите за розыгрышем призов.', [
+            return JsonSuccessResponse::createWithData('Спасибо за регистрацию', [
                 'field' => $token['field'],
                 'value' => $token['token'],
             ]);
