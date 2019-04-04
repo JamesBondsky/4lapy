@@ -173,6 +173,7 @@ class ShopInfoService
      * @param string          $locationCode
      * @param string[]        $selectedServices
      * @param Offer|null      $offer
+     * @param bool            $centerByLocation
      *
      * @return ShopList
      * @throws ApplicationCreateException
@@ -188,7 +189,7 @@ class ShopInfoService
      * @throws ServiceCircularReferenceException
      * @throws ServiceNotFoundException
      */
-    public function getShopList(StoreCollection $stores, string $locationCode, array $selectedServices = [], Offer $offer = null): ShopList
+    public function getShopList(StoreCollection $stores, string $locationCode, array $selectedServices = [], Offer $offer = null, bool $centerByLocation = false): ShopList
     {
         [
             $servicesList,
@@ -268,7 +269,7 @@ class ShopInfoService
             }
         }
 
-        if ($offer) {
+        if ($centerByLocation || $offer) {
             $mapCenter = $this->storeService->getMapCenter(
                 $availableStores,
                 $locationCode,
@@ -333,6 +334,19 @@ class ShopInfoService
     protected function getStoresByRequest(Request $request): StoreSearchResult
     {
         $locationCode = $request->get('code', '');
+
+        return $this->getStoresByLocationCode($locationCode);
+    }
+
+    /**
+     * @param $locationCode
+     * @return StoreSearchResult
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws SystemException
+     */
+    public function getStoresByLocationCode($locationCode): StoreSearchResult
+    {
         if (!empty($locationCode)) {
             $codeList = json_decode($locationCode, true);
             if (\is_array($codeList)) {
