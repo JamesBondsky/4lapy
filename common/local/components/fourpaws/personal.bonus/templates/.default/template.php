@@ -12,21 +12,26 @@ $bonus = $arResult['BONUS'];
 <div class="b-account-bonus">
     <div class="b-account-bonus-card">
         <div class="b-account-bonus-card__colored-block">
+            <div class="b-account-bonus-card__column b-account-bonus-card__column--number">
+                <div class="b-account-bonus-card__title">Номер карты</div>
+                <div class="b-account-bonus-card__number"><?= $bonus->getCard()->getFormatedCardNumber() ?></div>
+            </div>
             <div class="b-account-bonus-card__line">
-                <div class="b-account-bonus-card__column">
-                    <div class="b-account-bonus-card__title">Баланс</div>
+                <div class="b-account-bonus-card__column b-account-bonus-card__column--all-bonus">
+                    <div class="b-account-bonus-card__title">Всего бонусов</div>
                     <div class="b-account-bonus-card__number"><?= $bonus->getActiveBonus() ?>
                     </div>
                 </div>
-                <div class="b-account-bonus-card__column b-account-bonus-card__column--bonus">
+                <div class="b-account-bonus-card__column">
                     <div class="b-account-bonus-card__title">Бонус</div>
                     <div class="b-account-bonus-card__number"><?= $bonus->getRealDiscount() ?>%
                     </div>
                 </div>
             </div>
-            <div class="b-account-bonus-card__column b-account-bonus-card__column--number">
-                <div class="b-account-bonus-card__title">Номер карты</div>
-                <div class="b-account-bonus-card__number"><?= $bonus->getCard()->getFormatedCardNumber() ?></div>
+        </div>
+        <div class="b-account-bonus-card__colored-block-bottom">
+            <div class="b-account-bonus-card__title b-account-bonus-card__title--temporary">Из них, временные</div>
+            <div class="b-account-bonus-card__number b-account-bonus-card__number--temporary"><?= $bonus->getTemporaryBonus() ?>
             </div>
         </div>
         <?php if (!$bonus->getCard()->isReal()) { ?>
