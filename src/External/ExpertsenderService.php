@@ -116,7 +116,7 @@ class ExpertsenderService implements LoggerAwareInterface
     public const CHANGE_PASSWORD_LIST_ID = 7780;
     public const PIGGY_BANK_SEND_EMAIL = 9006;
     public const GRANDIN_NEW_CHECK_REG_LIST_ID = 8906;
-    public const ROYAL_CANIN_NEW_CHECK_REG_LIST_ID = 9197; /** TODO нужен айдишник письма */
+    public const ROYAL_CANIN_NEW_CHECK_REG_LIST_ID = 9195;
     /**
      * BirthDay mail ids
      */
