@@ -60,6 +60,7 @@ use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Response;
+use FourPaws\AppBundle\AjaxController\LandingController;
 
 /**
  * Class ExpertsenderService
@@ -99,16 +100,23 @@ class ExpertsenderService implements LoggerAwareInterface
     public const CHANGE_EMAIL_TO_NEW_EMAIL_LIST = 7768;
     public const SUBSCRIBE_EMAIL_UNDER_3_WEEK_LIST_ID = 7769;
     public const SUBSCRIBE_EMAIL_UNDER_3_DAYS_LIST_ID = 7773;
+
     public const NEW_ORDER_PAY_LIST_ID = 7774;
     public const NEW_ORDER_NOT_PAY_LIST_ID = 7775;
     public const NEW_ORDER_NOT_REG_PAY_LIST_ID = 7776;
     public const NEW_ORDER_NOT_REG_NOT_PAY_LIST_ID = 7777;
+
+    public const NEW_ORDER_PAY_LIST_ID_ROYAL_CANIN = 9178;
+    public const NEW_ORDER_NOT_PAY_LIST_ID_ROYAL_CANIN = 9179;
+    public const NEW_ORDER_NOT_REG_PAY_LIST_ID_ROYAL_CANIN = 9180;
+    public const NEW_ORDER_NOT_REG_NOT_PAY_LIST_ID_ROYAL_CANIN = 9181;
+
     public const COMPLETE_ORDER_LIST_ID = 7778;
     public const FORGOT_PASSWORD_LIST_ID = 7779;
     public const CHANGE_PASSWORD_LIST_ID = 7780;
-    public const NEW_CHECK_REG_LIST_ID = 8906;
     public const PIGGY_BANK_SEND_EMAIL = 9006;
-
+    public const GRANDIN_NEW_CHECK_REG_LIST_ID = 8906;
+    public const ROYAL_CANIN_NEW_CHECK_REG_LIST_ID = 9195;
     /**
      * BirthDay mail ids
      */
@@ -606,14 +614,23 @@ class ExpertsenderService implements LoggerAwareInterface
         ];
 
         $isOnlinePayment = $orderService->isOnlinePayment($order);
+        $royalCaninAction = $orderService->checkRoyalCaninAction($order);
         if ($properties['USER_REGISTERED'] === BitrixUtils::BX_BOOL_TRUE) {
             // зарегистрированный пользователь
             if ($isOnlinePayment) {
                 // онлайн-оплата
-                $transactionId = self::NEW_ORDER_PAY_LIST_ID;
+                if (!$royalCaninAction) {
+                    $transactionId = self::NEW_ORDER_PAY_LIST_ID;
+                } else {
+                    $transactionId = self::NEW_ORDER_PAY_LIST_ID_ROYAL_CANIN;
+                }
             } else {
                 // оплата при получении
-                $transactionId = self::NEW_ORDER_NOT_PAY_LIST_ID;
+                if (!$royalCaninAction) {
+                    $transactionId = self::NEW_ORDER_NOT_PAY_LIST_ID;
+                } else {
+                    $transactionId = self::NEW_ORDER_NOT_PAY_LIST_ID_ROYAL_CANIN;
+                }
             }
         } else {
             // незарегистрированный пользователь
@@ -622,10 +639,18 @@ class ExpertsenderService implements LoggerAwareInterface
             $snippets[] = new Snippet('password', $_SESSION['NEW_USER']['PASSWORD']);
             if ($isOnlinePayment) {
                 // онлайн-оплата
-                $transactionId = self::NEW_ORDER_NOT_REG_PAY_LIST_ID;
+                if (!$royalCaninAction) {
+                    $transactionId = self::NEW_ORDER_NOT_REG_PAY_LIST_ID;
+                } else {
+                    $transactionId = self::NEW_ORDER_NOT_REG_PAY_LIST_ID_ROYAL_CANIN;
+                }
             } else {
                 // оплата при получении
-                $transactionId = self::NEW_ORDER_NOT_REG_NOT_PAY_LIST_ID;
+                if (!$royalCaninAction) {
+                    $transactionId = self::NEW_ORDER_NOT_REG_NOT_PAY_LIST_ID;
+                } else {
+                    $transactionId = self::NEW_ORDER_NOT_REG_NOT_PAY_LIST_ID_ROYAL_CANIN;
+                }
             }
         }
 
@@ -1211,9 +1236,17 @@ class ExpertsenderService implements LoggerAwareInterface
     {
         $email = $params['userEmail'];
         $userId = $params['userId'];
+        $landingType = $params['landingType'];
 
-        if($email) {
-            $transactionId = self::NEW_CHECK_REG_LIST_ID;
+        if ($email) {
+            switch ($landingType) {
+                case LandingController::$grandinLanding:
+                    $transactionId = self::GRANDIN_NEW_CHECK_REG_LIST_ID;
+                case LandingController::$royalCaninLanding:
+                    $transactionId = self::ROYAL_CANIN_NEW_CHECK_REG_LIST_ID;
+                default:
+                    $transactionId = self::GRANDIN_NEW_CHECK_REG_LIST_ID;
+            }
 
             $this->log()->info(
                 __FUNCTION__,
