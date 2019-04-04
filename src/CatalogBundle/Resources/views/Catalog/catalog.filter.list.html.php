@@ -8,6 +8,7 @@
  * @var CMain            $APPLICATION
  */
 
+use Bitrix\Main\Application;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Filter\PriceFilter;
@@ -117,6 +118,16 @@ foreach ($filters as $filter) {
                                     )
                                     : ''
                                 ?>>
+                                <?
+                                if ($hiddenFieldName = $variant->getHiddenFieldName()) {
+                                    $currentValue = Application::getInstance()->getContext()->getRequest()->getQueryList()->get($hiddenFieldName);
+                                    ?>
+                                        <div class="b-filter-link-list__hidden-input-wrap js-filter-input">
+                                            <input class="" type="hidden" name="<?= $hiddenFieldName ?>" value="<?= $currentValue ?>" <?= $currentValue ? 'checked' : '' ?>>
+                                        </div>
+                                    <?
+                                }
+                                ?>
                                 <input class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
                                        type="checkbox"
                                        name="<?= $filter->getFilterCode() ?>"
@@ -124,7 +135,7 @@ foreach ($filters as $filter) {
                                        id="<?= $filter->getFilterCode() ?>-<?= $id ?>"
                                     <?= $variant->isChecked() ? 'checked' : '' ?>
                                 />
-                                <a class="b-filter-link-list__link b-filter-link-list__link--checkbox"
+                                <a class="b-filter-link-list__link b-filter-link-list__link--checkbox<?= ($additionalLinkClass = $variant->getAdditionalLinkClass()) ? ' ' . $additionalLinkClass : ''; ?>"
                                    href="javascript:void(0);"
                                    title="<?= $variant->getName() ?>"
                                 ><?= $variant->getName() ?></a>
@@ -133,6 +144,7 @@ foreach ($filters as $filter) {
                     <?php } ?>
                 </ul>
             <?php } ?>
+
             <a class="b-link b-link--filter-more js-open-filter-all"
                href="javascript:void(0);" title="Показать все">
                 Показать все
