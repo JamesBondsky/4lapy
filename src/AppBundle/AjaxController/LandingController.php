@@ -68,8 +68,9 @@ class LandingController extends Controller
             }
 
             $arFields = [$request->get('date'), $request->get('sum'), $request->get('surname'), $request->get('name'), $request->get('phone'), $request->get('email'), $request->get('rules')];
+            $landingType = $request->get('landingType');
 
-            if ($request->get('landingType') == self::$grandinLanding) {
+            if ($landingType == self::$grandinLanding) {
                 $arFields[] = $request->get('petType');
             }
 
@@ -81,7 +82,7 @@ class LandingController extends Controller
                 throw new JsonResponseException($this->ajaxMess->getWrongParamsError());
             }
 
-            if ($request->get('landingType') == self::$grandinLanding && !in_array($request->get('petType'), array_keys(self::$petTypes))) {
+            if ($landingType == self::$grandinLanding && !in_array($request->get('petType'), array_keys(self::$petTypes))) {
                 throw new JsonResponseException($this->ajaxMess->getWrongDataError());
             }
 
@@ -93,11 +94,11 @@ class LandingController extends Controller
             $userId = $USER->GetID();
 
             $requestIblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::GRANDIN_REQUEST);
-            if (in_array($request->get('landingType'), array_keys([self::$royalCaninLanding, self::$grandinLanding]))) {
+            if (in_array($landingType, array_keys([self::$royalCaninLanding, self::$grandinLanding]))) {
                 $filter = [
                     'IBLOCK_ID' => $requestIblockId,
                     'CHECK_PERMISSIONS' => 'N',
-                    '=CODE' => $request->get('landingType') . '_requests',
+                    '=CODE' => $landingType . '_requests',
                 ];
                 $sections = \CIBlockSection::GetList([], $filter, false, ['ID', 'IBLOCK_ID', 'NAME', 'CODE'])->Fetch();
                 if (!empty($sections['ID'])) {
@@ -132,6 +133,7 @@ class LandingController extends Controller
                 $sender->sendAfterCheckReg([
                     'userEmail' => $email,
                     'userId' => $userId,
+                    'landingType' => $landingType
                 ]);
             }
             catch (\Exception $exception)
