@@ -4,7 +4,7 @@
         <div class="popup-landing__content">
             <div class="popup-landing__ok"></div>
             <div class="popup-feedback-landing">
-                Спасибо,ваша заявка отправлена!
+                Благодарим за ваше обращение. Ожидайте ответа на электронную почту!
             </div>
         </div>
     </div>
