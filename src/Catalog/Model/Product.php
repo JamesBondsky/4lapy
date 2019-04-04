@@ -49,7 +49,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public const AVAILABILITY_DELIVERY = 'd';
     public const AVAILABILITY_PICKUP = 'p';
     public const AVAILABILITY_BY_REQUEST = 'r';
-    public const AVAILABILITY_PICKUP_FROM_SELECTED_STORES = 'stores';
 
     /**
      * @var bool
@@ -2205,9 +2204,8 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                     }
                 }
 
-                $this->fullDeliveryAvailability['zones'][$zone] = $result;
+                $this->fullDeliveryAvailability[$zone] = $result;
             }
-            $this->fullDeliveryAvailability['general'][] = static::AVAILABILITY_PICKUP_FROM_SELECTED_STORES;
         }
 
         return $this->fullDeliveryAvailability;
@@ -2220,12 +2218,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function getFullDeliveryAvailabilityForFilter(): array
     {
         $result = [];
-        $fullDeliveryAvailability = $this->getFullDeliveryAvailability();
         /**
          * @var string $zone
          * @var array $deliveries
          */
-        foreach ($fullDeliveryAvailability['zones'] as $zone => $deliveries) {
+        foreach ($this->getFullDeliveryAvailability() as $zone => $deliveries) {
             if (!empty($deliveries) && $this->isByRequest()) {
                 $deliveries[] = static::AVAILABILITY_BY_REQUEST;
             }
@@ -2233,9 +2230,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             foreach ($deliveries as $delivery) {
                 $result[] = $zone . '_' . $delivery;
             }
-        }
-        foreach ($fullDeliveryAvailability['general'] as $delivery) {
-            $result[] = $delivery;
         }
 
         return $result;
@@ -2250,7 +2244,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         /** @var DeliveryService $deliveryService */
         $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
 
-        return $this->getFullDeliveryAvailability()['zones'][$deliveryService->getCurrentDeliveryZone()] ?? [];
+        return $this->getFullDeliveryAvailability()[$deliveryService->getCurrentDeliveryZone()] ?? [];
     }
 
     /**
