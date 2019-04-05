@@ -19,7 +19,7 @@ $offer = $arParams['OFFER'];
 <li class="b-product-information__item">
     <div class="b-product-information__title-info">Доставка
     </div>
-    <div class="b-product-information__value">
+    <div class="b-product-information__value b-product-information__value--link js-open-tab-link" data-tab="data">
         <?= DeliveryTimeHelper::showByDate($delivery['DELIVERY_DATE'], 0, ['DATE_FORMAT' => 'XX']) ?>
         <?php if ($offer->isByRequest()) { ?>
             ближайшая

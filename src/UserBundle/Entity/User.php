@@ -342,6 +342,24 @@ class User implements UserInterface
      */
     protected $discount = 3;
 
+    /**
+     * @var null|DateTime
+     * @Serializer\Type("bitrix_date_time")
+     * @Serializer\SerializedName("UF_DATE_BONUS_UPDATE")
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $bonusUpdateDate;
+
+    /**
+     * @var float
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("UF_TEMPORARY_BONUS")
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $temporaryBonus = 0;
+
     /** @var bool
      * @Serializer\Type("boolean")
      * @Serializer\SerializedName("UF_ES_SUBSCRIBED")
@@ -1358,5 +1376,43 @@ class User implements UserInterface
     public function setEsSubscribed(bool $esSubscribed): void
     {
         $this->esSubscribed = $esSubscribed;
+    }
+
+    /**
+     * @return DateTime|null
+     */
+    public function getBonusUpdateDate(): ?DateTime
+    {
+        return $this->bonusUpdateDate;
+    }
+
+    /**
+     * @param DateTime $bonusUpdateDate
+     * @return User
+     */
+    public function setBonusUpdateDate(DateTime $bonusUpdateDate): User
+    {
+        $this->bonusUpdateDate = $bonusUpdateDate;
+
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getTemporaryBonus(): float
+    {
+        return $this->temporaryBonus ?? 0;
+    }
+
+    /**
+     * @param float $temporaryBonus
+     * @return User
+     */
+    public function setTemporaryBonus(float $temporaryBonus): User
+    {
+        $this->temporaryBonus = $temporaryBonus;
+
+        return $this;
     }
 }
