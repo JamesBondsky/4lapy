@@ -67,7 +67,7 @@ $APPLICATION->SetTitle('Главный приз: путешествие на р�
 
                     <div class="read-rules">
                         <input type="checkbox" id="READ_RULES_REG_CHECK_CANIN" name="rules" value="Y" cheform-group form-group_select js-wrap-select-form-registr-check-landingcked>
-                        <label for="READ_RULES_REG_CHECK_CANIN"><span></span>Я прочитал(а) и&nbsp;согласен(на) с&nbsp;<a href="#" target="_blank">правилами</a> акции</label>
+                        <label for="READ_RULES_REG_CHECK_CANIN"><span></span>Я прочитал(а) и&nbsp;согласен(на) с&nbsp;<a href="/upload/Правила_4Lapy_breed_2019.pdf" target="_blank">правилами</a> акции</label>
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
