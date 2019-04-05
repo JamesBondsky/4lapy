@@ -150,7 +150,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 $temporaryBonusText = '';
 	                            if ($arResult['MAX_TEMPORARY_BONUS_SUM'])
 	                            {
-	                            	$temporaryBonusText = ', из них ' . $arResult['MAX_TEMPORARY_BONUS_SUM'] . ' ' . (new Declension('временный', 'временных', 'временных'))->get($arResult['MAX_TEMPORARY_BONUS_SUM']);
+	                            	$temporaryBonusText = ', из них до ' . $arResult['MAX_TEMPORARY_BONUS_SUM'] . ' ' . (new Declension('временный', 'временных', 'временных'))->get($arResult['MAX_TEMPORARY_BONUS_SUM']);
 	                            }
 	                            ?>
                                 (до <?= $arResult['MAX_BONUS_SUM'] ?><?= $temporaryBonusText ?>)
