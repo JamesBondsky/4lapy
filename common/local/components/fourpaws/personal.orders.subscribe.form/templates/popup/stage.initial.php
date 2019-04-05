@@ -102,6 +102,32 @@ if ($arParams['SHOW_SUBSCRIBE_EDIT_ACTION'] === 'Y') {
 }
 
 /**
+ * Кнопка удалить, выводимая на странице списка подписанных заказов
+ */
+ob_start();
+if ($arResult['isActualSubscription']) {
+    ?>
+    <div class="b-accordion-order-item__subscribe-link">
+        <a class="b-accordion-order-item__del-subscribe js-delete"
+           href="javascript:void(0);"
+           title="Удалить подписку"
+           data-id="<?=$order->getId()?>"
+           data-url="/ajax/personal/orderSubscribe/delete/?orderId=<?=$order->getId()?>">
+            <span class="b-icon b-icon--account-block">
+                <?= new SvgDecorator('icon-trash', 23, 20) ?>
+            </span>
+            <span>Удалить</span>
+        </a>
+    </div>
+    <?php
+}
+$arResult['CONTROLS_HTML']['DELETE'] = ob_get_clean();
+
+if ($arParams['SHOW_SUBSCRIBE_DELETE_ACTION'] === 'Y') {
+    echo $arResult['CONTROLS_HTML']['DELETE'];
+}
+
+/**
  * Попап с формой подписки
  */
 $viewTemplate = $this;

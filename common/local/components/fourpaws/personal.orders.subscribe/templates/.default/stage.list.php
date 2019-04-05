@@ -31,7 +31,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             }
             $APPLICATION->IncludeComponent(
                 'fourpaws:personal.order.item',
-                '',
+                'subscribe',
                 [
                     'ORDER' => $order,
                     'ORDER_SUBSCRIBE' => $orderSubscribe,
