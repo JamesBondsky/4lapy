@@ -31,6 +31,7 @@ use Bitrix\Sale\Order;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\PriceForAmountCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
@@ -45,12 +46,16 @@ use FourPaws\DeliveryBundle\Exception\TerminalNotFoundException;
 use FourPaws\DeliveryBundle\Exception\UnknownDeliveryException;
 use FourPaws\DeliveryBundle\Factory\CalculationResultFactory;
 use FourPaws\DeliveryBundle\Handler\DeliveryHandlerBase;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Discount\Utils\Manager as DiscountManager;
+use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use Psr\Log\LoggerAwareInterface;
 use WebArch\BitrixCache\BitrixCache;
+use FourPaws\App\Application;
 
 /**
  * Class DeliveryService
@@ -411,6 +416,33 @@ class DeliveryService implements LoggerAwareInterface
                 $deliveryDateOfMonth = clone $calculationResult->getDeliveryDate(); //клонируем для проверки, что следующие сутки не наступили
                 $deliveryStartTime = clone $calculationResult->getDeliveryDate(); //клонируем для проверки, что курьерская доставка сейчас работает
                 $deliveryEndTime = clone $calculationResult->getDeliveryDate(); //клонируем для проверки, что курьерская доставка еще будет работать с учетом времени доставки
+                //проверяем размеры товаров
+                /** @var OrderService $orderService */
+                $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+                $parentOrder = $shipment->getParentOrder();
+                if ($parentOrder->getBasket()->isEmpty())
+                {
+                    /** @var BasketService $basketService */
+                    $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
+                    $offers = $basketService->getBasketOffers();
+                }
+                else
+                {
+                    /** @var OfferCollection $offers */
+                    $offers = $orderService->getOrderProducts($parentOrder);
+                }
+
+                if (!$offers->isEmpty()) {
+                    foreach ($offers as $offer) {
+                        $length = WordHelper::showLengthNumber($offer->getCatalogProduct()->getLength());
+                        $width = WordHelper::showLengthNumber($offer->getCatalogProduct()->getWidth());
+                        $height = WordHelper::showLengthNumber($offer->getCatalogProduct()->getHeight());
+                        if ($length > 150 || $width > 150 || $height > 150) {
+                            $calculationResult->setPeriodTo(300);
+                            break;
+                        }
+                    }
+                }
                 $deliveryDateOfMonth->modify(sprintf('+%s minutes', $calculationResult->getPeriodTo())); //прибавляем максимальное время доставки
                 $startTime = $calculationResult->getData()['DELIVERY_START_TIME']; //когда доставка открывается
                 $arStartTime = explode(':', $startTime);

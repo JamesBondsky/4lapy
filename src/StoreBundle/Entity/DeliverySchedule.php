@@ -10,6 +10,7 @@ use DateTime;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\StoreBundle\Collection\DeliveryScheduleCollection;
+use FourPaws\StoreBundle\Collection\OrderDayCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\DeliveryScheduleService;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -53,7 +54,7 @@ class DeliverySchedule extends Base implements \Serializable
 
     /**
      * @var string
-     * @Serializer\SerializedName("UF_NAME")
+     * @Serializer\SerializedName("UF_TPZ_NAME")
      * @Serializer\Type("string")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
@@ -61,7 +62,7 @@ class DeliverySchedule extends Base implements \Serializable
 
     /**
      * @var string
-     * @Serializer\SerializedName("UF_XML_ID")
+     * @Serializer\SerializedName("UF_TPZ_XML_ID")
      * @Serializer\Type("string")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
@@ -69,7 +70,7 @@ class DeliverySchedule extends Base implements \Serializable
 
     /**
      * @var string
-     * @Serializer\SerializedName("UF_SENDER")
+     * @Serializer\SerializedName("UF_TPZ_SENDER")
      * @Serializer\Type("string")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
@@ -77,7 +78,7 @@ class DeliverySchedule extends Base implements \Serializable
 
     /**
      * @var string
-     * @Serializer\SerializedName("UF_RECEIVER")
+     * @Serializer\SerializedName("UF_TPZ_RECEIVER")
      * @Serializer\Type("string")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
@@ -85,7 +86,7 @@ class DeliverySchedule extends Base implements \Serializable
 
     /**
      * @var DateTime
-     * @Serializer\SerializedName("UF_ACTIVE_FROM")
+     * @Serializer\SerializedName("UF_TPZ_ACTIVE_FROM")
      * @Serializer\Type("DateTime<'d.m.Y H:i:s'>")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
@@ -93,31 +94,47 @@ class DeliverySchedule extends Base implements \Serializable
 
     /**
      * @var DateTime
-     * @Serializer\SerializedName("UF_ACTIVE_TO")
+     * @Serializer\SerializedName("UF_TPZ_ACTIVE_TO")
      * @Serializer\Type("DateTime<'d.m.Y H:i:s'>")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $activeTo;
 
     /**
+     * Номер недели
+     *
      * @var int[]
-     * @Serializer\SerializedName("UF_WEEK_NUMBER")
+     * @Serializer\SerializedName("UF_TPZ_WEEK_NUMBER")
      * @Serializer\Type("array_or_false<int>")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $weekNumbers;
 
     /**
+     * Дни формирования заказа
+     *
      * @var int[]
-     * @Serializer\SerializedName("UF_DAY_OF_WEEK")
+     * @Serializer\SerializedName("UF_TPZ_DAY_OF_WEEK")
      * @Serializer\Type("array_or_false<int>")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
-    protected $daysOfWeek;
+    protected $orderDays;
 
     /**
+     * Дни поставки
+     *
+     * @var int[]
+     * @Serializer\SerializedName("UF_TPZ_SUPPLY_DAYS")
+     * @Serializer\Type("array_or_false<int>")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $supplyDays;
+
+    /**
+     * Номер поставки
+     *
      * @var string
-     * @Serializer\SerializedName("UF_DELIVERY_NUMBER")
+     * @Serializer\SerializedName("UF_TPZ_DELIVERY_NBR")
      * @Serializer\Type("string")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
@@ -125,7 +142,15 @@ class DeliverySchedule extends Base implements \Serializable
 
     /**
      * @var DateTime[]
-     * @Serializer\SerializedName("UF_DELIVERY_DATE")
+     * @Serializer\SerializedName("UF_TPZ_ORDER_DATE")
+     * @Serializer\Type("array_or_false<DateTime<'d.m.Y'>>")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $orderDates;
+
+    /**
+     * @var DateTime[]
+     * @Serializer\SerializedName("UF_TPZ_DELIVERY_DATE")
      * @Serializer\Type("array_or_false<DateTime<'d.m.Y'>>")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
@@ -133,11 +158,19 @@ class DeliverySchedule extends Base implements \Serializable
 
     /**
      * @var string
-     * @Serializer\SerializedName("UF_TYPE")
+     * @Serializer\SerializedName("UF_TPZ_TYPE")
      * @Serializer\Type("string")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $type = '';
+
+    /**
+     * @var string
+     * @Serializer\SerializedName("UF_DATE_UPDATE")
+     * @Serializer\Type("DateTime<'d.m.Y H:i:s'>")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $dateUpdate;
 
     /**
      * @var Store
@@ -341,19 +374,39 @@ class DeliverySchedule extends Base implements \Serializable
     /**
      * @return array
      */
-    public function getDaysOfWeek(): array
+    public function getOrderDays(): array
     {
-        return $this->daysOfWeek ?? [];
+        return $this->orderDays ?? [];
     }
 
     /**
-     * @param array $daysOfWeek
+     * @param array $orderDays
      *
      * @return DeliverySchedule
      */
-    public function setDaysOfWeek(array $daysOfWeek): DeliverySchedule
+    public function setOrderDays(array $orderDays): DeliverySchedule
     {
-        $this->daysOfWeek = $daysOfWeek;
+        $this->orderDays = $orderDays;
+
+        return $this;
+    }
+
+    /**
+     * @return int[]
+     */
+    public function getSupplyDays(): array
+    {
+        return $this->supplyDays ?? [];
+    }
+
+    /**
+     * @param int[] $supplyDays
+     *
+     * @return DeliverySchedule
+     */
+    public function setSupplyDays(array $supplyDays): DeliverySchedule
+    {
+        $this->supplyDays = $supplyDays;
 
         return $this;
     }
@@ -371,7 +424,7 @@ class DeliverySchedule extends Base implements \Serializable
      *
      * @return DeliverySchedule
      */
-    public function setDeliveryNumber(string $deliveryNumber): DeliverySchedule
+    public function setDeliveryNumber(array $deliveryNumber): DeliverySchedule
     {
         $this->deliveryNumber = $deliveryNumber;
 
@@ -542,6 +595,22 @@ class DeliverySchedule extends Base implements \Serializable
     }
 
     /**
+     * @return DateTime[]
+     */
+    public function getOrderDates(): ?array
+    {
+        return $this->orderDates;
+    }
+
+    /**
+     * @param DateTime[] $orderDates
+     */
+    public function setOrderDates(array $orderDates): void
+    {
+        $this->orderDates = $orderDates;
+    }
+
+    /**
      * @param DateTime $from
      * @return null|DateTime
      */
@@ -556,25 +625,62 @@ class DeliverySchedule extends Base implements \Serializable
         }
 
         /**
-         * @param DateTime $from
+         * Ищем ближайший день для формирования заказа
+         * и соответствующий день отгрузки
+         *
+         * @param DateTime $from дата, от которой считаем
+         * @param bool $realDate признак того что дата реальная и надо проверить время для заказа
          * @return null|DateTime
          */
-        $getByDay = function (DateTime $from): ?DateTime {
+        $getByDay = function (DateTime $from, bool $realDate = true): ?DateTime {
             $fromDay = (int)$from->format('N');
-            /** @var DateTime[] $results */
-            $results = [];
-            /** @var int $day */
-            foreach ($this->getDaysOfWeek() as $day) {
-                $date = clone $from;
-                $diff = $day - $fromDay;
-                $days = ($diff >= 0) ? $diff : $diff + 7;
+            $fromWeek = (int)$from->format('W');
 
-                $date->modify(sprintf('+%s days', $days));
-                $results[] = $date;
+            $orderDays = $this->scheduleService->getOrderAndSupplyDays($this, $from);
+
+            if(null == $orderDays){
+                return null;
             }
 
-            if (!empty($results)) {
-                return min($results);
+            $orderDates = [];
+
+            /** @var OrderDay $day */
+            foreach ($orderDays as $key => $day) {
+                $date = clone $from;
+
+                $weekDiff = $day->getWeekNum() - $fromWeek;
+                $daysDiff = $day->getOrderDay() - $fromDay;
+                $weeks = ($weekDiff >= 0) ? "+".$weekDiff : $weekDiff;
+                $days = ($daysDiff >= 0) ? "+".$daysDiff : $daysDiff;
+
+                $date->modify(sprintf('%s weeks %s days', $weeks, $days));
+
+                /** Не укладываемся по времени для формирования заказа */
+                if($realDate && $from > $day->setOrderTimeForDate($date)){
+                    if($this->getTypeCode() == self::TYPE_WEEKLY){
+                        $date->modify('+1 week');
+                    } else{
+                        continue;
+                    }
+                }
+
+                $orderDates[$key] = $date;
+            }
+
+            if (!empty($orderDates)) {
+                $orderDate = min($orderDates);
+                $orderDayIndex = array_search($orderDate, $orderDates);
+
+                /** @var OrderDayCollection $orderDays */
+                $supplyDay = $orderDays[$orderDayIndex]->getSupplyDay();
+
+                $fromDay = (int)$orderDate->format('N');
+
+                $diff = $supplyDay - $fromDay;
+                $days = ($diff > 0) ? $diff : $diff + 7;
+                $orderDate->modify(sprintf('+%s days', $days));
+
+                return $orderDate;
             }
 
             return null;
@@ -609,6 +715,7 @@ class DeliverySchedule extends Base implements \Serializable
                 foreach ($weekNumbers as $weekNumber) {
                     $weekDate = clone $date;
                     $weekDate->setISODate($date->format('Y'), $weekNumber);
+
                     if ($weekDate->format('W') < $date->format('W')) {
                         $weekDate->modify('+1 year');
                     }
@@ -616,7 +723,29 @@ class DeliverySchedule extends Base implements \Serializable
                     $weekDates[] = ($weekDate > $date) ? $weekDate : $date;
                 }
 
-                $result = !empty($weekDates) ? $getByDay(min($weekDates)) : null;
+                uasort($weekDates, function($a, $b) {
+                   return  $a > $b;
+                });
+
+                if(!empty($weekDates)){
+                    $realDate = true;
+                    $weekDate = current($weekDates);
+
+                    if($weekDate != $date){
+                        $realDate = false;
+                    }
+
+                    $result = $getByDay($weekDate, $realDate);
+                    if(!$result){
+                        $realDate = false;
+                        $weekDate = next($weekDates);
+                        $result = $getByDay($weekDate, $realDate);
+                    }
+                }
+                else{
+                    $result = null;
+                }
+
                 break;
             case self::TYPE_WEEKLY:
                 $result = $getByDay($from);
@@ -629,6 +758,14 @@ class DeliverySchedule extends Base implements \Serializable
         }
 
         return $result;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function setDateUpdate(): void
+    {
+        $this->dateUpdate = new \DateTime();
     }
 
     /** @noinspection PhpMissingParentCallCommonInspection
@@ -646,7 +783,8 @@ class DeliverySchedule extends Base implements \Serializable
             $this->activeFrom,
             $this->activeTo,
             $this->weekNumbers,
-            $this->daysOfWeek,
+            $this->orderDays,
+            $this->supplyDays,
             $this->deliveryNumber,
             $this->deliveryDates,
             $this->type
@@ -669,7 +807,8 @@ class DeliverySchedule extends Base implements \Serializable
             $this->activeFrom,
             $this->activeTo,
             $this->weekNumbers,
-            $this->daysOfWeek,
+            $this->orderDays,
+            $this->supplyDays,
             $this->deliveryNumber,
             $this->deliveryDates,
             $this->type

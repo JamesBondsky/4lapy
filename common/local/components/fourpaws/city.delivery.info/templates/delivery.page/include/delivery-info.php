@@ -48,7 +48,7 @@ $isInnerDelivery = $delivery['CODE'] === DeliveryService::INNER_DELIVERY_CODE;
                 if ($intervalResult->getDays() === 0) {
                     $result .= 'в день оформления заказа';
                 } elseif ($intervalResult->getDays() === 1) {
-                    $result .= 'на следующий день';
+                    $result .= 'на следующий день доставки';
                 } else {
                     $result .= \sprintf(
                         'через %s %s',

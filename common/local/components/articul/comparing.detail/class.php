@@ -29,7 +29,7 @@ class ComparingDetailComponent extends \CBitrixComponent
 
     public $propertyNames = [
         'FRESH_MEAT' => '% свежего мяса<br>в корме',
-        'PROTEIN' => '% белков животного<br>происхождения',
+        'PROTEIN' => 'Заявленное процентное содержание<br>мясосодержащих ингредиентов',
         'MINERALS' => 'Наличие минералов <br>в хелатной форме',
     ];
 

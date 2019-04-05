@@ -358,6 +358,11 @@ class UserService implements
             }
         }
 
+        if($city){
+            foreach(GetModuleEvents("main", "OnCityChange", true) as $arEvent)
+                ExecuteModuleEventEx($arEvent, [$city]);
+        }
+
         return $city ?: false;
     }
 

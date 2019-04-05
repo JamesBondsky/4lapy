@@ -49,7 +49,7 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
 
     include __DIR__ . '/gifts_popup.php';
     include __DIR__ . '/modal_popup.php';
-    include __DIR__ . '/change_view_popup.php';
+    //include __DIR__ . '/change_view_popup.php'; // Временно скрываем баннер перехода в мобильную версию
 
     // собираем данные с ЛК с кучей и кучей условий, поэтому выносим отдельно..
     include __DIR__ . '/collect_data_popup.php';

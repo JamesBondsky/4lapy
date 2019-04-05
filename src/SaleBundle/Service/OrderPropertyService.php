@@ -31,6 +31,8 @@ class OrderPropertyService
 
     public const COMMUNICATION_DOSTAVISTA_ERROR = '08';
 
+    public const COMMUNICATION_PAYMENT_ANALYSIS_DOSTAVISTA_ERROR = '09';
+
     /**
      * @var OrderPropertyVariantRepository
      */

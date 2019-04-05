@@ -10,25 +10,21 @@ margin-top: -50px;
 }
 .subscribe_wrap {
     margin: 0 auto;
-    z-index: 351;
     max-width: 990px;
     position: relative;
 }
 .partners_wrap {
     margin: 0 auto;
-    z-index: 351;
     max-width: 955px;
     position: relative;
 }
 .delivery_wrap {
     margin: 0 auto;
-    z-index: 351;
     max-width: 960px;
     position: relative;
 }
 .bonus_wrap {
     margin: 0 auto;
-    z-index: 351;
     max-width: 960px;
     position: relative;
 }
@@ -113,7 +109,7 @@ position: relative;
 width: 100%;
 }
 .gallery_body {
-z-index: 360;
+    z-index: 1;
 }
 .about_head, .about_asvantages_head {
 width: 100%;
@@ -311,7 +307,6 @@ margin: 0 0 20px 0;
 .best_employer_block {
 position: relative;
 height: 333px;
-z-index: 399;
 background: #fff;
 width: 666px;
 left: 50%;
@@ -333,7 +328,6 @@ font-size: 18px;
 .pickup_advantages_block {
 position: relative;
 height: auto;
-z-index: 399;
 background: #fff;
 width: 666px;
 left: 50%;
@@ -386,7 +380,6 @@ margin-top: 18px;
 .bonus_advantages_block {
 position: relative;
 height: auto;
-z-index: 399;
 background: #fff;
 width: 666px;
 left: 50%;
@@ -431,7 +424,6 @@ width: 100%;
 position: relative;
 min-height: 100px;
 padding: 50px 0;
-z-index: 360;
 }
 .job_advantages_body .green_ribbon {
 padding: 50px 0 10px 0;
@@ -520,9 +512,9 @@ width: 477px;
 height: 306px;
 top: -30px;
 left: -30px;
-z-index: 998;
 border: 2px solid #fff;
 box-shadow: 0 0 30px #ddd;
+z-index: 1;
 }
 .about_magnifying_glass {
 width: 114px;
@@ -539,7 +531,7 @@ transition: opacity .3s;
 }
 .gallery_item:hover .about_magnifying_glass {
 opacity: 1;
-z-index: 999;
+z-index: 2;
 }
 .gallery_item:nth-child(3) {
 margin-right: 0;
@@ -619,7 +611,6 @@ width: 100%;
 background: url('/include/static/images/hand_bg.jpg') center center no-repeat;
 height: 683px;
 position: relative;
-z-index: 350;
 margin-bottom: -166px;
 margin-top: -130px;
 }
@@ -628,14 +619,12 @@ width: 100%;
 background: url('/include/static/images/hand_new_bg.jpg') center center no-repeat;
 height: 345px;
 position: relative;
-z-index: 350;
 margin: 40px 0;
 }
 .phone_ribbon {
 width: 100%;
 height: 200px;
 position: relative;
-z-index: 350;
 }
 .hand_ribbon_body {
 width: 500px;
@@ -675,7 +664,6 @@ margin-bottom: 50px;
 width: 100%;
 height: 402px;
 position: relative;
-z-index: 350;
 border-top: 3px solid #eaeff3;
 border-bottom: 3px solid #eaeff3;
 overflow: hidden;
@@ -684,7 +672,6 @@ overflow: hidden;
 width: 50%;
 height: 250px;
 position: relative;
-z-index: 350;
 overflow: hidden;
 margin: 0 auto;
 padding-bottom: 40px;
@@ -744,7 +731,7 @@ box-shadow: 0 0 10px #ccc;
 float: left;
 margin: 0 1.5%;
 position: relative;
-z-index: 354;
+z-index: 2;
 }
 .partners_block_head {
 text-align: center;
@@ -891,7 +878,6 @@ margin-bottom: 30px;
 }
 .job_advantages_body {
 position: relative;
-z-index: 351;
 background: #eef1f5;
 }
 .job_advantages_body .about_middle_block {
@@ -932,7 +918,6 @@ margin-top: 20px;
     position: relative;
     min-height: 100px;
     padding: 50px 0;
-    z-index: 360;
 }
 .gray_ribbon {
     background: #eef1f5;
@@ -940,7 +925,6 @@ margin-top: 20px;
     position: relative;
     min-height: 100px;
     padding: 50px 0;
-    z-index: 360;
     text-align: center;
 }
 .partners_logo_wrap {
@@ -960,7 +944,6 @@ margin-top: 20px;
 }
 .partners_small_logo_wrap {
     position: relative;
-    z-index: 352;
     max-width: 990px;
     margin: 0 auto;
     margin-bottom: 80px;
@@ -990,7 +973,6 @@ margin-top: 20px;
     font-size: 12px;
     line-height: 14px;
     font-weight: 400;
-    z-index: 350;
     text-transform: none;
 }
 .hide_block_wrap {
@@ -1008,10 +990,10 @@ margin-top: 20px;
     color: #fff;
     font-weight: bold;
     cursor: pointer;
-    z-index: 352;
 }
 .bonus_wrap .hide_block_wrap:hover .hide_block {
     opacity: 1;
+    z-index: 2;
 }
 .bonus_scale {
     border: 0;
@@ -1329,7 +1311,6 @@ position: relative;
     width: 100%;
     position: relative;
     min-height: 100px;
-    z-index: 360;
     text-align: center;
 }
 .variants {
@@ -1513,7 +1494,6 @@ margin-bottom: 30px;
 }
 .partners_wrap {
     margin: 0 auto;
-    z-index: 351;
     max-width: 100%;
     position: relative;
 }
@@ -1529,7 +1509,6 @@ margin-bottom: 30px;
 }
 .delivery_wrap {
     margin: 0 auto;
-    z-index: 351;
     max-width: 100%;
     position: relative;
 }
@@ -1545,7 +1524,6 @@ margin-bottom: 30px;
 }
 .bonus_wrap {
     margin: 0 auto;
-    z-index: 351;
     max-width: 100%;
     position: relative;
 }
@@ -1660,7 +1638,6 @@ margin-bottom: 30px;
 .pickup_advantages_block {
     position: relative;
     height: auto;
-    z-index: 399;
     background: #fff;
     width: 666px;
     left: 50%;
@@ -1708,7 +1685,6 @@ margin-bottom: 30px;
 .bonus_advantages_block {
     position: relative;
     height: auto;
-    z-index: 399;
     background: #fff;
     width: 666px;
     left: 50%;
@@ -2014,7 +1990,6 @@ figure.slider figure {
 @media (max-width: 420px) {
 .partners_wrap {
     margin: 0 auto;
-    z-index: 351;
     max-width: 100%;
     position: relative;
 }
@@ -2038,7 +2013,6 @@ margin: 0 auto;
 
 .delivery_wrap {
     margin: 0 auto;
-    z-index: 351;
     max-width: 100%;
     position: relative;
 }
@@ -2056,7 +2030,6 @@ margin: 0 auto;
 }
 .bonus_wrap {
     margin: 0 auto;
-    z-index: 351;
     max-width: 100%;
     position: relative;
 }
@@ -2407,7 +2380,6 @@ margin: 0 auto;
 
 .vakancy_ribbon .green_ribbon {
     padding: 50px 0 0 0;
-    z-index: 360;
 }
 
 .vakancy_photo {
@@ -2462,7 +2434,6 @@ figure.slider2 figure {
     background: #ff8903;
     height: 345px;
     position: relative;
-    z-index: 350;
     margin: 0;
 }
 

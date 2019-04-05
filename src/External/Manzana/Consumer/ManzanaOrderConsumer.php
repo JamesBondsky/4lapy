@@ -8,11 +8,11 @@ namespace FourPaws\External\Manzana\Consumer;
 
 use Exception;
 use FourPaws\App\Application;
-use FourPaws\External\Manzana\Exception\WrongContactMessageException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\UserBundle\Entity\User;
-use FourPaws\UserBundle\Exception\TooManyUserFoundException;
-use FourPaws\UserBundle\Exception\UsernameNotFoundException;
+use FourPaws\UserBundle\EventController\Event;
+use FourPaws\UserBundle\Exception\UserException;
 use PhpAmqpLib\Message\AMQPMessage;
 
 /**
@@ -25,23 +25,30 @@ class ManzanaOrderConsumer extends ManzanaConsumerBase
     /**
      * @inheritdoc
      *
-     * @throws Exception
-     * @throws UsernameNotFoundException
-     * @throws TooManyUserFoundException
      */
-    public function execute(AMQPMessage $message): bool
+    public function execute(AMQPMessage $message)
     {
-        global $USER;
-
-        $user = $this->serializer->deserialize($message->getBody(), User::class, 'json');
+        Event::disableEvents();
 
         try {
+            global $USER;
+
+            $user = $this->serializer->deserialize($message->getBody(), User::class, 'json');
+
             /** @var OrderService $orderService */
             $orderService = Application::getInstance()->getContainer()->get('order.service');
 
             $userId = $user->getId();
-            if ($USER->GetID() !== $userId) {
-                $USER->Authorize($userId);
+            if ($userId <= 0)
+            {
+                throw new UserException(\sprintf(
+                    'Can\'t import user\'s orders: wrong user id: %s',
+                    $userId
+                ));
+            }
+
+            if ($userId > 0 && $USER->GetID() != $userId) {
+                $USER->Authorize($userId, false, false);
             }
             $orderService->importOrdersFromManzana($user);
         } catch (\Exception $e) {
@@ -52,11 +59,8 @@ class ManzanaOrderConsumer extends ManzanaConsumerBase
             ));
         }
 
-        /*$this->log()->info(\sprintf(
-            'Manzana order consumer success, message: %s',
-            $message->getBody()
-        ));*/
+        Event::enableEvents();
 
-        return true;
+        return static::MSG_ACK;
     }
 }

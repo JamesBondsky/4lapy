@@ -311,6 +311,16 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      */
     protected function doCalculateDeliveryDate(): void
     {
+        /*$start = microtime(true);
+        $setTime = function() use (&$start){
+            $start = microtime(true);
+        };
+        $getTime = function() use ($start, $setTime){
+            $setTime();
+            return ($start - microtime(true).' сек');
+        };*/
+
+            
         $date = clone $this->getCurrentDate();
         $this->deliveryDate = $date;
 

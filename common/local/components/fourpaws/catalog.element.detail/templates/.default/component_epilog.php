@@ -39,6 +39,8 @@ if (!empty($bonus)) { ?>
 <?php } ?>
     <script>
         $(function () {
+            $('.js-current-offer-price-old').html('<?= $currentOffer->getCatalogOldPrice() ?>');
+            $('.js-current-offer-price').html('<?= $currentOffer->getCatalogPrice() ?>');
             $('.js-plus-minus-count')
                 .data('cont-max', '<?=$currentOffer->getQuantity()?>')
                 .data('one-price', '<?=$currentOffer->getPrice()?>');

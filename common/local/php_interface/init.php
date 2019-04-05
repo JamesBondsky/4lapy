@@ -4,6 +4,7 @@ use Bitrix\Main\EventManager;
 use Bitrix\Main\Page\Asset;
 use FourPaws\App\EventInitializer;
 use FourPaws\IblockProps\ProductCategoriesProperty;
+use FourPaws\IblockProps\OfferRegionDiscountsProperty;
 use WebArch\BitrixIblockPropertyType\YesNoType;
 use FourPaws\IblockProps\BlocksShowSwitcher;
 use WebArch\BitrixNeverInclude\BitrixNeverInclude;
@@ -59,6 +60,7 @@ ini_set('session.cookie_domain', $cookieDomain);
 (new YesNoType())->init();
 (new BlocksShowSwitcher())->init();
 (new ProductCategoriesProperty())->init();
+(new OfferRegionDiscountsProperty())->init();
 /**
  * @todo впилить
  *

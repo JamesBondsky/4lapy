@@ -99,7 +99,17 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                value="<?= (!empty($arResult['SPLIT_RESULT']) && $storage->isSplit()) ? 'twoDeliveries' : 'oneDelivery' ?>"
                                class="js-no-valid">
                         <input type="hidden" name="deliveryTypeId"
-                               value="<?= ($delivery) ? $delivery->getDeliveryId() : $pickup->getDeliveryId(); ?>"
+                               value="<?
+                                   if($selectedDelivery){
+                                       echo $selectedDelivery->getDeliveryId();
+                                   }
+                                   else if($delivery){
+                                       echo $delivery->getDeliveryId();
+                                   }
+                                   else if($pickup){
+                                       echo $pickup->getDeliveryId();
+                                   }
+                               ?>"
                                class="js-no-valid">
                         <input type="hidden" name="deliveryCoords" value="">
                         <div class="b-choice-recovery b-choice-recovery--order-step">

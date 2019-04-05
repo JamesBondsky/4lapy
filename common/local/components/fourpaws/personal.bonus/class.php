@@ -73,7 +73,7 @@ class FourPawsPersonalCabinetBonusComponent extends FourPawsComponent
                 $this->setTemplatePage('notPhone');
                 return;
             }
-            $bonus = $this->bonusService->getUserBonusInfo($user);
+            $bonus = $this->bonusService->updateUserBonusInfo($user);
             $this->currentUserProvider->refreshUserBonusPercent($user, $bonus);
 
             $this->arResult['BONUS'] = $bonus;

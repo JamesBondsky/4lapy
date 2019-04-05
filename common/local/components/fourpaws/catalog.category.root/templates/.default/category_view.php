@@ -30,24 +30,31 @@ foreach (array_values($childCategories) as $index => $childCategory) {
             </h2>
         </div>
         <div class="b-common-section__content b-common-section__content--catalog js-catalog-main">
-            <?php foreach ($childCategory->getChild() as $childChildCategory) {
-        $src = MediaEnum::NO_IMAGE_WEB_PATH;
-        if ($childChildCategory->getPictureId()) {
-            try {
-                $picture =
-                            ResizeImageDecorator::createFromPrimary($childChildCategory->getPictureId())
-                                                ->setResizeWidth(180)
-                                                ->setResizeHeight(180);
-                $src     = $picture->getSrc();
-            } catch (FileNotFoundException $e) {
-            }
-        } ?>
+            <?php   $counterItem = 0;
+                foreach ($childCategory->getChild() as $childChildCategory) {
+                $src = MediaEnum::NO_IMAGE_WEB_PATH;
+                if ($childChildCategory->getPictureId()) {
+                    try {
+                        $picture =
+                                    ResizeImageDecorator::createFromPrimary($childChildCategory->getPictureId())
+                                                        ->setResizeWidth(180)
+                                                        ->setResizeHeight(180);
+                        $src     = $picture->getSrc();
+                    } catch (FileNotFoundException $e) {
+                    }
+                } ?>
                 <div class="b-common-item b-common-item--catalog js-product-item" id="<?= $childChildCategory->getCode() ?>">
                     <a class="b-common-item__link" href="<?= $childChildCategory->getSectionPageUrl() ?>"
                        title="<?= $childChildCategory->getName() ?>">
                         <span class="b-common-item__image-wrap b-common-item__image-wrap--catalog">
-                                    <img class="b-common-item__image b-common-item__image--catalog js-weight-img"
-                                         src="<?= $src ?>"
+                                    <img <? if($counterItem < 5) { ?>
+                                            src="<?= $src; ?>"
+                                            class="b-common-item__image b-common-item__image--catalog js-weight-img"
+                                        <? } else { ?>
+                                            src="/static/build/images/inhtml/no_image_list.jpg"
+                                            data-img-product-catalog-main="<?= $src; ?>"
+                                            class="b-common-item__image b-common-item__image--catalog js-weight-img not_loaded_src"
+                                        <? } ?>
                                          alt="<?= $childChildCategory->getName() ?>"
                                          title="<?= $childChildCategory->getName() ?>" />
                         </span>
@@ -58,10 +65,15 @@ foreach (array_values($childCategories) as $index => $childCategory) {
                         </span>
                     </a>
                 </div>
-            <?php
-    } ?>
+            <?php $counterItem++; } ?>
         </div>
     </section>
+
+    <? if(!$delTextShown && $category->isShowDelText()){
+        echo '<div class="b-information-message b-information-message--green">', Category::DEL_TEXT, '</div>';
+        $delTextShown = true;
+    } ?>
+
     <?php
     if ($index + 1 < count($childCategories)) {
         ?>
