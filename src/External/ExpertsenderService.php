@@ -1242,8 +1242,10 @@ class ExpertsenderService implements LoggerAwareInterface
             switch ($landingType) {
                 case LandingController::$grandinLanding:
                     $transactionId = self::GRANDIN_NEW_CHECK_REG_LIST_ID;
+                    break;
                 case LandingController::$royalCaninLanding:
                     $transactionId = self::ROYAL_CANIN_NEW_CHECK_REG_LIST_ID;
+                    break;
                 default:
                     $transactionId = self::GRANDIN_NEW_CHECK_REG_LIST_ID;
             }
