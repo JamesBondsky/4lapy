@@ -273,6 +273,7 @@ class InfoService implements LoggerAwareInterface
 
         $criteria = [
             'ACTIVE'    => 'Y',
+            'ACTIVE_DATE' => 'Y',
             'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES),
         ];
         if ($offerTypeCode) {
