@@ -86,7 +86,7 @@ class LandingController extends Controller
                 throw new JsonResponseException($this->ajaxMess->getWrongDataError());
             }
 
-            if ($request->get('sum') < 1800) {
+            if ($landingType == self::$grandinLanding && $request->get('sum') < 1800 || $landingType == self::$royalCaninLanding && $request->get('sum') < 1000) {
                 throw new JsonResponseException($this->ajaxMess->getWrongDataError());
             }
 
