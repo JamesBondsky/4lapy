@@ -275,6 +275,12 @@ class FourPawsOrderComponent extends \CBitrixComponent
             return;
         }
 
+        $user = null;
+        try {
+            $user = $this->currentUserProvider->getCurrentUser();
+        } catch (NotAuthorizedException $e) {
+        }
+
         /** @var Basket $basket */
         $basket                                  = $this->basketService->getBasket()->getOrderableItems();
         $this->arResult['ECOMMERCE_VIEW_SCRIPT'] = $this->getEcommerceViewScript($basket);
@@ -284,9 +290,12 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 'if($(this).find("input[type=email]").val().indexOf("register.phone") == -1){' . $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val()') . '}'
             );
 
-            /** @var BonusService $bonusService */
-            $bonusService = Application::getInstance()->getContainer()->get('bonus.service');
-            $bonusService->updateUserBonusInfo(); //TODO need async here
+            if ($user)
+            {
+                /** @var BonusService $bonusService */
+                $bonusService = Application::getInstance()->getContainer()->get('bonus.service');
+                $bonusService->updateUserBonusInfo($user); //TODO need async here
+            }
         } else {
             $basket = $order->getBasket();
         }
@@ -329,12 +338,6 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $selectedCity = $this->userCityProvider->getSelectedCity();
 
         $payments = null;
-
-        $user = null;
-        try {
-            $user = $this->currentUserProvider->getCurrentUser();
-        } catch (NotAuthorizedException $e) {
-        }
 
         $deliveries       = $this->orderStorageService->getDeliveries($storage);
         $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
