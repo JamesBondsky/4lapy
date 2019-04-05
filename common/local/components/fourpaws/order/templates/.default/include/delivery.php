@@ -390,7 +390,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
             <div class="b-input-line__label-wrapper"><span
                         class="b-input-line__label">Желаемая дата доставки первого заказа</span>
             </div>
-            <div class="b-select b-select--recall b-select--feedback-page js-select-recovery js-pickup-date">
+            <div class="b-select b-select--recall b-select--feedback-page js-select-recovery js-pickup-date" data-select-delivery-date="first">
                 <?php
                 $selectorStorage = $storage1;
                 $selectorName = 'deliveryDate1';
@@ -422,7 +422,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
             <div class="b-input-line__label-wrapper"><span
                         class="b-input-line__label">Желаемая дата доставки второго заказа</span>
             </div>
-            <div class="b-select b-select--recall b-select--feedback-page js-select-recovery js-pickup-date">
+            <div class="b-select b-select--recall b-select--feedback-page js-select-recovery js-pickup-date" data-select-delivery-date="second">
                 <?php
                 $selectorDelivery = $delivery2;
                 $selectorStorage = $storage2;
@@ -449,7 +449,11 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                 </div>
             </div>
         </div>
-        <div class="change-delivery-type"><span class="js-change-delivery-type" data-type="oneDelivery">Объединить заказы</span>
+
+        <div class="info-change-delivery-type js-info-change-delivery-type">
+            В&nbsp;указанное вами время доставки 1 заказа, мы&nbsp;можем доставить вам полный заказ
+        </div>
+        <div class="change-delivery-type change-delivery-type--combine"><span class="js-change-delivery-type" data-type="oneDelivery">Объединить заказы</span>
         </div>
     </div>
 <?php } ?>

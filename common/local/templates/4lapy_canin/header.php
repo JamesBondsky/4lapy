@@ -91,7 +91,7 @@ $markup = PawsApplication::markup();
             <div class="header-landing-menu" data-mobile-menu-landing="true">
                 <ul class="header-landing-menu__list" data-list-mobile-menu-landing="true">
                     <li  class="header-landing-menu__item">
-                        <a href="#" class="header-landing-menu__link" target="_blank">Правила акции</a>
+                        <a href="/upload/Правила_4Lapy_breed_2019.pdf" class="header-landing-menu__link" target="_blank">Правила акции</a>
                     </li>
 
                     <li class="header-landing-menu__item">
