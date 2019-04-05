@@ -168,6 +168,16 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 <?= $active ? 'style="display:none"' : '' ?>>
                                 Подтвердить
                             </button>
+
+                            <div class="b-checkbox b-checkbox--withdraw-bonuses-order">
+                                <input class="b-checkbox__input" type="checkbox" name="agree" id="withdraw_bonuses" value="" required="required"/>
+                                <span class="b-error">
+                                    <span class="js-message"></span>
+                                </span>
+                                <label class="b-checkbox__name" for="withdraw_bonuses">
+                                    Списывать все доступные баллы на&nbsp;заказы по&nbsp;подписке
+                                </label>
+                             </div>
                         <?php } ?>
                     <?php } else { ?>
                         <div class="b-new-bonus-card_block">

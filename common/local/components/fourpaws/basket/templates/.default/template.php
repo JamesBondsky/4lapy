@@ -249,7 +249,7 @@ if ($arParams['IS_AJAX']) {
                 </section>
             <?php } ?>
 
-            <section class="b-subscribe-delivery-cart">
+            <section class="b-subscribe-delivery-cart desktop">
                 <div class="b-subscribe-delivery-cart__anchor" data-subscribe-delivery-cart="true"></div>
                 <div class="b-subscribe-delivery-cart__content">
                     <div class="b-subscribe-delivery-cart__info-list">
@@ -324,7 +324,7 @@ if ($arParams['IS_AJAX']) {
                             </li>
                         </ul>
 
-                        <a href="/sale/order/" class="b-button b-button--subscribe-delivery" title="Подписаться на доставку">
+                        <a href="/sale/order/" class="b-button b-button--subscribe-delivery-cart" title="Подписаться на доставку">
                             Подписаться на доставку
                         </a>
                     </div>
@@ -452,6 +452,88 @@ if ($arParams['IS_AJAX']) {
                 </div>
             </div>
         </aside>
+
+        <section class="b-subscribe-delivery-cart mobile">
+                <div class="b-subscribe-delivery-cart__anchor" data-subscribe-delivery-cart="true"></div>
+                <div class="b-subscribe-delivery-cart__content">
+                    <div class="b-subscribe-delivery-cart__info-list">
+                        <div class="item">
+                            <div class="item__icon">
+                                <?= new SvgDecorator('icon-retime', 24, 24) ?>
+                            </div>
+                            <div class="item__text">
+                                Регулярная доставка необходимых товаров в&nbsp;удобное для вас время.
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item__icon">
+                                <?= new SvgDecorator('icon-price', 24, 24) ?>
+                            </div>
+                            <div class="item__text">
+                                Получайте специальную цену на&nbsp;некоторые товары.
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item__icon">
+                                <?= new SvgDecorator('icon-calendar', 24, 24) ?>
+                            </div>
+                            <div class="item__text">
+                                Выберите нужную вам частоту доставки&nbsp;&mdash; от&nbsp;недели до&nbsp;трех месяцев.
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item__icon">
+                                <?= new SvgDecorator('icon-cancel', 24, 24) ?>
+                            </div>
+                            <div class="item__text">
+                                Вы&nbsp;можете отказаться от&nbsp;подписки в&nbsp;любое время.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="b-subscribe-delivery-cart__bottom">
+                        <ul class="b-price-subscribe-delivery-cart">
+                            <li class="b-price-subscribe-delivery-cart__item">
+                                <div class="b-price-subscribe-delivery-cart__text">
+                                    <div class="b-price-subscribe-delivery-cart__clipped-text">
+                                        3 товара (1,2 кг)
+                                    </div>
+                                </div>
+                                <div class="b-price-subscribe-delivery-cart__value">
+                                    <div class="b-price b-price--subscribe-cart">
+                                        <span class="b-old-price b-old-price--crossed-out b-old-price--inline">
+                                            <span class="b-old-price__old">507,00</span>
+                                            <span class="b-ruble">₽</span>
+                                        </span>
+                                        <span class="b-price__current b-price__current--light">420,00</span>
+                                        <span class="b-ruble">₽</span>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="b-price-subscribe-delivery-cart__item">
+                                <div class="b-price-subscribe-delivery-cart__text">
+                                    <div class="b-price-subscribe-delivery-cart__clipped-text">
+                                        Итого без учета доставки
+                                    </div>
+                                </div>
+                                <div class="b-price-subscribe-delivery-cart__value">
+                                    <div class="b-price b-price--subscribe-cart b-price--result-subscribe-cart">
+                                        <span class="b-old-price b-old-price--crossed-out b-old-price--inline">
+                                            <span class="b-old-price__old">507,00</span>
+                                            <span class="b-ruble">₽</span>
+                                        </span>
+                                        <span class="b-price__current">420,00</span>
+                                        <span class="b-ruble">₽</span>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+
+                        <a href="/sale/order/" class="b-button b-button--subscribe-delivery-cart" title="Подписаться на доставку">
+                            Подписаться на доставку
+                        </a>
+                    </div>
+                </div>
+            </section>
         <script id="gtag-cart">
             let offers = [];
             $('a.b-common-item__description-wrap.b-common-item__description-wrap--shopping span.b-common-item__variant.b-common-item__variant--shopping-cart.b-common-item__variant--shopping span').each(function() {
