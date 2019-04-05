@@ -175,7 +175,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 ->processFeed($feed, $configuration)
                 ->processCurrencies($feed, $configuration)
                 ->processDeliveryOptions($feed, $configuration, $stockID)
-                ->processCategories($feed, $configuration);
+                ->processCategories($feed, $configuration, false);
 
             $this->saveFeed($this->getStorageKey(), $feed);
         } else {
@@ -187,6 +187,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 $feed = $this->loadFeed($this->getStorageKey());
                 $feed->getShop()
                     ->setOffset(null);
+                $this->processCategories($feed, $configuration, true);
                 $this->processPromos($feed, $configuration, $stockID);
                 $this->publicFeed($feed, Application::getAbsolutePath($configuration->getExportFile()));
                 $this->clearFeed($this->getStorageKey());
@@ -332,7 +333,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         return (new OfferQuery())->withFilter($filter)
             ->withNav([
                 'nPageSize' => $limit,
-                'iNumPage' => $this->getPageNumber($offset, $limit),
+                'iNumPage' => (int)\ceil(($offset + 1) / $limit),
             ])
             ->exec();
     }
@@ -345,7 +346,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      */
     protected function getPageNumber(int $offset, int $limit): int
     {
-        return (int)\ceil(($offset + 1) / $limit);
+        return (int)\ceil($offset / $limit);
     }
 
     /**
@@ -511,27 +512,26 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             []
         );
 
+        $dbItems = \CIBlockElement::GetList(
+            [],
+            [
+                'IBLOCK_ID' => IblockUtils::getIblockId(
+                    IblockType::CATALOG,
+                    IblockCode::PRODUCTS
+                ),
+                'SECTION_ID' => $sectionIds,
+                'ACTIVE' => 'Y'
+            ],
+            false,
+            false,
+            [
+                'ID',
+                'IBLOCK_ID'
+            ]
+        );
         $idList = [];
-
-        try {
-            $idList = \array_reduce(ElementTable::query()
-                //->setCacheTtl(3600)
-                ->setSelect(['ID'])
-                ->setFilter([
-                    'IBLOCK_ID' => IblockUtils::getIblockId(
-                        IblockType::CATALOG,
-                        IblockCode::PRODUCTS
-                    ),
-                    'IBLOCK_SECTION_ID' => $sectionIds,
-                    'ACTIVE' => 'Y'
-                ])
-                ->exec()
-                ->fetchAll() ?: [], function ($carry, $on) {
-                $carry[] = $on['ID'];
-
-                return $carry;
-            }, []);
-        } catch (Exception $e) {
+        while ($arItem = $dbItems->Fetch()) {
+            $idList[] = $arItem['ID'];
         }
 
         $idList = $idList ?: [-1];
@@ -546,21 +546,30 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     /**
      * @param Feed $feed
      * @param Configuration $configuration
-     *
+     * @param bool $withParents
      * @return YandexFeedService
      */
-    protected function processCategories(Feed $feed, Configuration $configuration): YandexFeedService
+    protected function processCategories(Feed $feed, Configuration $configuration, $withParents = false): YandexFeedService
     {
         $categories = new ArrayCollection();
+        $categoriesTmp = new ArrayCollection();
+
+        if (in_array(0, $configuration->getSectionIds())) {
+            $filter = [
+                'GLOBAL_ACTIVE' => 'Y'
+            ];
+        } else {
+            $filter = [
+                'ID' => $configuration->getSectionIds(),
+                'GLOBAL_ACTIVE' => 'Y'
+            ];
+        }
 
         /**
          * @var CategoryCollection $parentCategories
          */
         $parentCategories = (new CategoryQuery())
-            ->withFilter([
-                'ID' => $configuration->getSectionIds(),
-                'GLOBAL_ACTIVE' => 'Y'
-            ])
+            ->withFilter($filter)
             ->withOrder(['LEFT_MARGIN' => 'ASC'])
             ->exec();
 
@@ -573,6 +582,10 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             }
 
             $this->addCategory($parentCategory, $categories);
+            $categoriesTmp->set(
+                $parentCategory->getId(),
+                $parentCategory
+            );
 
             if ($parentCategory->getRightMargin() - $parentCategory->getLeftMargin() < 3) {
                 continue;
@@ -587,8 +600,40 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 ->withOrder(['LEFT_MARGIN' => 'ASC'])
                 ->exec();
 
+            /** @var Category $category */
             foreach ($childCategories as $category) {
                 $this->addCategory($category, $categories);
+                $categoriesTmp->set(
+                    $category->getId(),
+                    $category
+                );
+            }
+        }
+
+        if ($withParents) {
+            $emptyParentCategoriesIds = [];
+            foreach ($categoriesTmp as $category) {
+                $parentCategoryId = $category->getIblockSectionId();
+                if ($parentCategoryId !== null && $parentCategoryId !== 0 && !in_array($parentCategoryId, array_keys($categoriesTmp->toArray()))) {
+                    $emptyParentCategoriesIds[$parentCategoryId] = $parentCategoryId;
+                }
+            }
+            if (count($emptyParentCategoriesIds) > 0) {
+                $emptyParentCategories = (new CategoryQuery())
+                    ->withFilter([
+                        'ID' => $emptyParentCategoriesIds
+                    ])
+                    ->withOrder(['LEFT_MARGIN' => 'ASC'])
+                    ->exec();
+                foreach ($emptyParentCategories as $category) {
+                    $this->addCategory($category, $categories);
+                }
+
+                $iterator = $categories->getIterator();
+                $iterator->uasort(function ($a, $b) {
+                    return ($a->getId() < $b->getId()) ? -1 : 1;
+                });
+                $categories = new ArrayCollection(iterator_to_array($iterator));
             }
         }
 

@@ -70,7 +70,7 @@ if ($template->hasMainWrapper()) { ?>
     </section>
 
     <section data-id-section-landing="where-buy" class="where-buy-landing">
-        <div class="where-buy-landing__map" id="mapWhereBuylanding" data-map-where-buy-landing="true"></div>
+        <div class="where-buy-landing__map" id="mapWhereBuylanding" data-map-where-buy-landing="dark"></div>
     </section>
 
 

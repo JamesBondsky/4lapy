@@ -38,12 +38,29 @@
                 ];
                 $arSectionsMap[$arSection['ID']] = count($arSections) - 1;
             }
-            
-            $elements = CIBlockElement::GetList(['SORT' => 'ASC'], ['IBLOCK_ID' => $this->iblockId, 'IBLOCK_SECTION_ID' => array_keys($arSectionsMap)], false, false, ['NAME', 'IBLOCK_SECTION_ID', 'PROPERTY_PHONE']);
-            
-            while ($element = $elements->Fetch()) {
-                $arSections[$arSectionsMap[$element['IBLOCK_SECTION_ID']]]['WINNERS'][] = $element;
+
+            if (!empty($arSectionsMap)) {
+                $elements = CIBlockElement::GetList(
+                    [
+                        'SORT' => 'ASC'
+                    ],
+                    [
+                        'IBLOCK_ID' => $this->iblockId,
+                        'IBLOCK_SECTION_ID' => array_keys($arSectionsMap)
+                    ],
+                    false,
+                    false,
+                    [
+                        'NAME',
+                        'IBLOCK_SECTION_ID',
+                        'PROPERTY_PHONE'
+                    ]
+                );
+                while ($element = $elements->Fetch()) {
+                    $arSections[$arSectionsMap[$element['IBLOCK_SECTION_ID']]]['WINNERS'][] = $element;
+                }
             }
+
             return $arSections;
         }
         

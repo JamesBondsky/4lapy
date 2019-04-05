@@ -98,6 +98,17 @@ class OrderService implements LoggerAwareInterface
 
     public const PROPERTY_TYPE_ENUM = 'ENUM';
 
+    const ROYAL_CANIN_OFFERS = [
+        1019946, 1019948, 1019947, 1019949, 1021686, 1021685, 1019821, 1002780, 1016776, 1019823, 1002783, 1002778,
+        1002785, 1002776, 1002786, 1002779, 1002553, 1016215, 1001782, 1016773, 1016774, 1016775, 1016216, 1002782,
+        1003903, 1002551, 1002550, 1021687, 1019835, 1006587, 1020331, 1006588, 1009598, 1002781, 1002777, 1003367,
+        1002784, 1002562, 3005033, 1016213, 1016214, 1016212, 1002944, 1021688, 1006361, 1019834, 1019837, 1018224,
+        1018225, 1001814, 1001915, 1001783, 1021691, 1001804, 1003082, 1001911, 1001904, 1013452, 1021689, 1001914,
+        1001803, 1007282, 1006586, 1006626, 1019629, 1018336, 1001913, 1001802, 1001815, 1021690, 1003129, 1004064,
+        1016244, 1001806, 1001812, 1003580, 1001907, 1001906, 1001908, 1001808, 1016245, 1001807, 1016248, 1003159,
+        1003085, 1015821, 1001805, 1001910, 1001903, 1001902, 1001912, 1001905
+    ];
+
     /**
      * РЦ Склад
      */
@@ -2133,5 +2144,27 @@ class OrderService implements LoggerAwareInterface
         $dostavistaOrder->points = $pointCollection;
 
         $dostavistaService->dostavistaOrderAdd($dostavistaOrder);
+    }
+
+    /**
+     * @param Order $order
+     * @return bool
+     */
+    public function checkRoyalCaninAction(Order $order): bool
+    {
+        $res = false;
+        $orderPrice = $order->getPrice();
+        $basketItemsXmlId = [];
+        foreach ($order->getBasket() as $basketItem) {
+            $basketItemsXmlId[] = $this->basketService->getBasketItemXmlId($basketItem);
+        }
+        $basketRoyalCaninItems = array_uintersect(static::ROYAL_CANIN_OFFERS, $basketItemsXmlId, 'strcasecmp');
+        $curTime = new \DateTime();
+        $dateTimeStart = \DateTime::createFromFormat('d.m.Y H:i:s', '08.04.2019 00:00:00');
+        $dateTimeFinish = \DateTime::createFromFormat('d.m.Y H:i:s', '03.06.2019 23:59:59');
+        if ($curTime >= $dateTimeStart && $curTime <= $dateTimeFinish && $orderPrice > 1000 && count($basketRoyalCaninItems) > 0) {
+            $res = true;
+        }
+        return $res;
     }
 }
