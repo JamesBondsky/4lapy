@@ -1193,22 +1193,20 @@ class OrderService implements LoggerAwareInterface
                 }
             }
 
-            /**
-             * Активация подписки на доставку
-             */
+            // Активация подписки на доставку
             if($storage->isSubscribe()){
                 if(null === $storage->getSubscribeId()){
                     throw new OrderSubscribeException('Susbcribe not found');
                 }
                 $subscribe = $this->orderSubscribeService->getById($storage->getSubscribeId());
-                $subscribe->setActive(true);
-                $this->orderSubscribeService->update($subscribe);
+                $subscribe->setActive(true)->setOrderId($order->getId());
 
-                $this->setOrderPropertyByCode(
-                    $order,
-                    'IS_SUBSCRIBE',
-                    BitrixUtils::BX_BOOL_TRUE
-                );
+                // Привяжем созданный адрес
+                if($subscribe->getDeliveryPlace() == 0 && $storage->getAddressId() > 0){
+                    $subscribe->setDeliveryPlace($storage->getAddressId());
+                }
+
+                $this->orderSubscribeService->update($subscribe);
             }
 
         } catch (\Exception $e) {
@@ -1857,7 +1855,7 @@ class OrderService implements LoggerAwareInterface
      *
      * @return Order
      */
-    protected function setOrderAddress(Order $order, Address $address): Order
+    public function setOrderAddress(Order $order, Address $address): Order
     {
         $properties = [
             'REGION'        => $address->getRegion(),

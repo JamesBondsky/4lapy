@@ -807,6 +807,25 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
+     * @param string $id
+     *
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @return array
+     */
+    public function getDeliveryById($id): array
+    {
+        $delivery = DeliveryServiceTable::getList(['filter' => ['ID' => $id]])->fetch();
+        if (!$delivery) {
+            throw new NotFoundException('Delivery service not found');
+        }
+
+        return $delivery;
+    }
+
+    /**
      * @param int $id
      *
      * @throws ArgumentException

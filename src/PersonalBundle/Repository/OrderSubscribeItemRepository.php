@@ -43,6 +43,13 @@ class OrderSubscribeItemRepository extends BaseHlRepository
         $this->curUserService = $currentUserProvider;
     }
 
+    /**
+     * @param $subscribeId
+     * @return ArrayCollection
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
     public function findBySubscribe($subscribeId): ArrayCollection
     {
         return $this->findBy(

@@ -26,6 +26,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
@@ -444,21 +445,28 @@ class OrderController extends Controller implements LoggerAwareInterface
     protected function fillStorage(OrderStorage $storage, Request $request, string $step): array
     {
         $errors = [];
-        $this->orderStorageService->setStorageValuesFromRequest(
-            $storage,
-            $request,
-            $step
-        );
 
-        try {
-            $this->orderStorageService->updateStorage($storage, $step);
-        } catch (OrderStorageValidationException $e) {
-            /** @var ConstraintViolation $error */
-            foreach ($e->getErrors() as $i => $error) {
-                $key = $error->getPropertyPath() ?: $error->getCode() ?: $i;
-                $errors[$key] = $error->getMessage();
+        try{
+            $this->orderStorageService->setStorageValuesFromRequest(
+                $storage,
+                $request,
+                $step
+            );
+        } catch (\Exception $e){
+            $errors[] = $e->getMessage();
+        }
+
+        if(empty($errors)){
+            try {
+                $this->orderStorageService->updateStorage($storage, $step);
+            } catch (OrderStorageValidationException $e) {
+                /** @var ConstraintViolation $error */
+                foreach ($e->getErrors() as $i => $error) {
+                    $key = $error->getPropertyPath() ?: $error->getCode() ?: $i;
+                    $errors[$key] = $error->getMessage();
+                }
+                $step = $e->getRealStep();
             }
-            $step = $e->getRealStep();
         }
 
         return [

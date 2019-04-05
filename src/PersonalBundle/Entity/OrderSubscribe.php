@@ -10,9 +10,15 @@ namespace FourPaws\PersonalBundle\Entity;
 
 
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Sale\Basket;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\BaseEntity;
+use FourPaws\PersonalBundle\Exception\NotFoundException;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService;
+use FourPaws\UserBundle\Entity\User;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
+use FourPaws\App\Application;
 
 class OrderSubscribe extends BaseEntity
 {
@@ -51,7 +57,6 @@ class OrderSubscribe extends BaseEntity
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_DELIVERY_TIME")
      * @Serializer\Groups(groups={"create","read","update"})
-     * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $deliveryTime;
@@ -79,7 +84,7 @@ class OrderSubscribe extends BaseEntity
     /**
      * @var bool
      * @Serializer\Type("bool")
-     * @Serializer\SerializedName("UF_ACTIVITY")
+     * @Serializer\SerializedName("UF_ACTIVE")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
@@ -97,11 +102,11 @@ class OrderSubscribe extends BaseEntity
     /**
      * @var int
      * @Serializer\Type("integer")
-     * @Serializer\SerializedName("UF_LAST_ORDER")
+     * @Serializer\SerializedName("UF_ORDER")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $lastOrderId;
+    protected $orderId;
 
     /**
      * @var DateTime
@@ -131,6 +136,14 @@ class OrderSubscribe extends BaseEntity
     protected $dateUpdate;
 
     /**
+     * @var DateTime
+     * @Serializer\Type("bitrix_date_time_ex")
+     * @Serializer\SerializedName("UF_LAST_CHECK")
+     * @Serializer\Groups(groups={"create","read","update"})
+     */
+    protected $lastCheck;
+
+    /**
      * @var int
      * @Serializer\Type("int")
      * @Serializer\SerializedName("UF_DEL_DAY")
@@ -147,6 +160,25 @@ class OrderSubscribe extends BaseEntity
      * @Serializer\SkipWhenEmpty()
      */
     protected $payWithbonus;
+
+    /**
+     * @return array
+     */
+    public function getAllFields() : array
+    {
+        $fields = [
+            'ID' => $this->getId(),
+            'UF_ORDER_ID' => $this->getOrderId(),
+            'UF_DATE_CREATE' => $this->getDateCreate(),
+            'UF_DATE_UPDATE' => $this->getDateUpdate(),
+            'UF_FREQUENCY' => $this->getFrequency(),
+            'UF_DELIVERY_TIME' => $this->getDeliveryTime(),
+            'UF_ACTIVE' => $this->isActive(),
+            'UF_LAST_CHECK' => $this->getLastCheck(),
+        ];
+
+        return $fields;
+    }
 
     /**
      * @return int
@@ -295,18 +327,18 @@ class OrderSubscribe extends BaseEntity
     /**
      * @return int
      */
-    public function getLastOrderId(): ?int
+    public function getOrderId(): ?int
     {
-        return $this->lastOrderId;
+        return $this->orderId;
     }
 
     /**
-     * @param int $lastOrderId
+     * @param int $orderId
      * @return OrderSubscribe
      */
-    public function setLastOrderId(int $lastOrderId): OrderSubscribe
+    public function setOrderId(int $orderId): OrderSubscribe
     {
-        $this->lastOrderId = $lastOrderId;
+        $this->orderId = $orderId;
         return $this;
     }
 
@@ -400,5 +432,99 @@ class OrderSubscribe extends BaseEntity
         return $this->payWithbonus;
     }
 
+    /**
+     * @return null|DateTime
+     */
+    public function getLastCheck()
+    {
+        return $this->lastCheck ?? null;
+    }
+
+    /**
+     * @param null|DateTime|string $lastCheckDate
+     *
+     * @return self
+     */
+    public function setLastCheck($lastCheckDate) : self
+    {
+        $this->lastCheck = $this->processDateTimeValue($lastCheckDate);
+
+        return $this;
+    }
+
+    /**
+     * @param $value
+     * @return DateTime|null|string
+     */
+    protected function processDateTimeValue($value)
+    {
+        if (!($value instanceof DateTime)) {
+            if ($value === '' || $value === false) {
+                $value = '';
+            } elseif (is_string($value) && $value !== '') {
+                $value = new DateTime($value, 'd.m.Y H:i:s');
+            } else {
+                $value = null;
+            }
+        }
+
+        return $value;
+    }
+
+    /**
+     * @return OrderSubscribeService
+     * @throws ApplicationCreateException
+     */
+    protected function getOrderSubscribeService() : OrderSubscribeService
+    {
+        $appCont = Application::getInstance()->getContainer();
+        /** @var OrderSubscribeService $orderSubscribeService */
+        $orderSubscribeService = $appCont->get('order_subscribe.service');
+
+        return $orderSubscribeService;
+    }
+
+    /**
+     * @return Order
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
+     * @throws \Exception
+     */
+    public function getOrder()
+    {
+        if (!isset($this->order)) {
+            $this->order = $this->getOrderSubscribeService()->getOrderById(
+                $this->getOrderId()
+            );
+        }
+        if (!$this->order) {
+            throw new NotFoundException('Карточка заказа не найдена');
+        }
+
+        return $this->order;
+    }
+
+    /**
+     * @return User
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
+     * @throws \Exception
+     */
+    public function getUser() : User
+    {
+        if (!isset($this->user)) {
+            $this->user = null;
+            $subscribeService = $this->getOrderSubscribeService();
+            $userRepository = $subscribeService->getCurrentUserService()->getUserRepository();
+            $this->user = $userRepository->find(
+                $this->getUserId()
+            );
+        }
+        if (!$this->user) {
+            throw new NotFoundException('Пользователь не найден');
+        }
+
+        return $this->user;
+    }
 
 }

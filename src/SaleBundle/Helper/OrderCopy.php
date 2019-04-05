@@ -1,6 +1,7 @@
 <?php
 namespace FourPaws\SaleBundle\Helper;
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -10,6 +11,8 @@ use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\Delivery\CalculationResult;
+use Bitrix\Sale\Internals\OrderPropsTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PropertyValue;
@@ -17,13 +20,25 @@ use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentItem;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\LocationBundle\Entity\Address;
+use FourPaws\LocationBundle\Exception\AddressSplitException;
+use FourPaws\LocationBundle\LocationService;
+use FourPaws\PersonalBundle\Entity\OrderSubscribe;
+use FourPaws\PersonalBundle\Service\AddressService;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCopyBasketException;
 use FourPaws\SaleBundle\Exception\OrderCopyShipmentsException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\StoreBundle\Service\StoreService;
 
 /**
  * Class OrderCopy
@@ -44,20 +59,32 @@ class OrderCopy
             'BASE_PRICE', 'VAT_INCLUDED',
             //'DELAY', 'CUSTOM_PRICE', 'SUBSCRIBE',
         ],
+
         /** Исключаемые поля корзины (по умолчанию) */
         'basketItemExcludeFields' => [],
+
         /** Копируемые свойства корзины (по умолчанию) */
         'basketItemCopyProps' => [],
+
         /** Исключаемые свойства корзины (по умолчанию) */
         'basketItemExcludeProps' => [
             //'CATALOG.XML_ID', 'PRODUCT.XML_ID',
         ],
+
         /** Копируемые свойства заказа (по умолчанию) */
         'orderCopyProps' => [],
+
         /** Исключаемые свойства заказа (по умолчанию) */
         'orderExcludeProps' => [
             'IS_EXPORTED',
         ],
+
+        /** Рассчитываемые группы свойств заказа */
+        'orderCalculatedPropGroups' => [
+            2, // адрес доставки
+            3, // параметры доставки
+        ],
+
         /** Копируемые поля заказа (по умолчанию) */
         'orderCopyFields' => [
             'USER_DESCRIPTION'
@@ -83,16 +110,48 @@ class OrderCopy
     /** @var bool */
     private static $extDiscountsDisabledFlag = false;
 
+    /** @var OrderSubscribe $orderSubscribe */
+    private $orderSubscribe;
+    /** @var CalculationResultInterface $delivery */
+    private $delivery;
+
+    /** @var OrderSubscribeService $orderSubscribeService */
+    private $orderSubscribeService;
+    /** @var AddressService $addressService */
+    private $addressService;
+    /** @var OrderService $orderService */
+    private $orderService;
+    /** @var LocationService $locationService */
+    private $locationService;
+    /** @var StoreService $storeService */
+    private $storeService;
+
     /**
      * OrderCopy constructor.
      *
      * @param int $copyOrderId
+     * @param OrderSubscribe $orderSubscribe
      * @throws ArgumentNullException
      * @throws NotImplementedException
      * @throws OrderCreateException
      */
-    public function __construct(int $copyOrderId)
+    public function __construct(int $copyOrderId, OrderSubscribe $orderSubscribe)
     {
+        $dbres = OrderPropsTable::getList([
+            'select' => [
+                'ID',
+                'CODE',
+            ],
+            'filter' => [
+                'PROPS_GROUP_ID' => $this->getCalculatedOrderPropGroups()
+            ]
+        ]);
+        $excludedProps = [];
+        while($property = $dbres->fetch()){
+            $excludedProps[$property['ID']] = $property['CODE'];
+        }
+        $this->appendOrderExcludeProps($excludedProps);
+
         $this->oldOrder = Order::load($copyOrderId);
         if (!$this->oldOrder) {
             throw new NotFoundException('Копируемый заказ не найден', 100);
@@ -111,6 +170,8 @@ class OrderCopy
         $this->newOrder->setPersonTypeId(
             $this->oldOrder->getPersonTypeId()
         );
+
+        $this->orderSubscribe = $orderSubscribe;
     }
 
     /**
@@ -131,9 +192,10 @@ class OrderCopy
     public function doBasicCopy()
     {
         $this->copyFields();
-        $this->copyBasket();
+        $this->setBasket($this->getOrderSubscribeService()->getBasketBySubscribeId($this->getOrderSubscribe()->getId()));
+        $this->countShipments();
         $this->copyProps();
-        $this->copyShipments();
+        $this->countProps();
         $this->copyPayments();
         $this->copyTax();
     }
@@ -154,11 +216,11 @@ class OrderCopy
      * @throws OrderCreateException
      * @throws \Exception
      */
-    public function doFullCopy()
-    {
-        $this->doBasicCopy();
-        $this->doFinalAction();
-    }
+//    public function doFullCopy()
+//    {
+//        $this->doBasicCopy();
+//        $this->doFinalAction();
+//    }
 
     protected function extendedDiscountsDisable()
     {
@@ -381,89 +443,114 @@ class OrderCopy
      * @throws OrderCopyBasketException
      * @throws \Exception
      */
-    public function copyBasket()
+//    public function copyBasket()
+//    {
+//        $this->extendedDiscountsBlockManagerStart();
+//
+//        $oldBasket = $this->oldOrder->getBasket();
+//        /** @var Basket $newBasket */
+//        $newBasket = Basket::create($oldBasket->getSiteId());
+//
+//        $fUserId = (int)$oldBasket->getFUserId(true);
+//        if (!$fUserId) {
+//            $fUserId = $newBasket->getFUserId(false);
+//        }
+//        $newBasket->setFUserId($fUserId);
+//
+//        $oldBasketItems = $oldBasket->getBasketItems();
+//        foreach ($oldBasketItems as $oldBasketItem) {
+//            $isSuccess = true;
+//            /** @var BasketItem $oldBasketItem */
+//            $propValues = $oldBasketItem->getPropertyCollection()->getPropertyValues();
+//            if ($propValues && !empty($propValues['IS_GIFT']['VALUE'])) {
+//                // пропускаем подарки
+//                continue;
+//            }
+//
+//            /*
+//            $tmpFields = [
+//                'PRODUCT_ID' => $oldBasketItem->getProductId(),
+//                'QUANTITY' => $oldBasketItem->getQuantity(),
+//                'MODULE' => $oldBasketItem->getField('MODULE'),
+//                'PRODUCT_PROVIDER_CLASS' => $oldBasketItem->getField('PRODUCT_PROVIDER_CLASS'),
+//            ];
+//            $result = \Bitrix\Catalog\Product\Basket::addProductToBasket(
+//                $newBasket,
+//                $tmpFields,
+//                $newBasket->getContext()
+//            );
+//            $newBasketItem = $result->getData()['BASKET_ITEM'];
+//            */
+//
+//            $newBasketItem = $newBasket->createItem(
+//                $oldBasketItem->getField('MODULE'),
+//                $oldBasketItem->getField('PRODUCT_ID')
+//            );
+//            $oldBasketItemValues = $this->filterCopyBasketItemFields($oldBasketItem->getFieldValues());
+//            //$newBasketItem->setField('NAME', $oldBasketItemValues['NAME']);
+//            $tmpResult = $newBasketItem->setFields($oldBasketItemValues);
+//            if (!$tmpResult->isSuccess()) {
+//                $isSuccess = false;
+//            }
+//
+//            if ($isSuccess) {
+//                // копирование свойств позиции корзины
+//                $newBasketPropertyCollection = $newBasketItem->getPropertyCollection();
+//                $oldItemPropertyList = [];
+//                if ($oldPropertyCollection = $oldBasketItem->getPropertyCollection()) {
+//                    $oldItemPropertyList = $this->filterCopyBasketItemProps($oldPropertyCollection->getPropertyValues());
+//                }
+//                foreach ($oldItemPropertyList as $oldItemPropertyFields) {
+//                    unset($oldItemPropertyFields['ID'], $oldItemPropertyFields['BASKET_ID']);
+//                    $newBasketPropertyItem = $newBasketPropertyCollection->createItem([]);
+//                    $tmpResult = $newBasketPropertyItem->setFields($oldItemPropertyFields);
+//                    if (!$tmpResult->isSuccess()) {
+//                        $isSuccess = false;
+//                        break;
+//                    }
+//                }
+//            }
+//
+//            if ($isSuccess) {
+//                $this->setOldBasket2NewMap($oldBasketItem->getId(), $newBasketItem->getInternalIndex());
+//            } else {
+//                $newBasketItem->delete();
+//            }
+//        }
+//
+//        // привязка корзины к новому заказу
+//        $tmpResult = $this->newOrder->setBasket($newBasket);
+//        if (!$tmpResult->isSuccess()) {
+//            throw new OrderCopyBasketException(implode("\n", $tmpResult->getErrorMessages()), 500);
+//        }
+//
+//        $this->setBasketCopied();
+//
+//        $this->extendedDiscountsBlockManagerEnd();
+//    }
+
+    /**
+     * @param Basket $basket
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws OrderCopyBasketException
+     */
+    public function setBasket(Basket $basket)
     {
+        // тут выключаются скидки, но надо ли их выключать?
         $this->extendedDiscountsBlockManagerStart();
 
-        $oldBasket = $this->oldOrder->getBasket();
-        /** @var Basket $newBasket */
-        $newBasket = Basket::create($oldBasket->getSiteId());
+        $basket->save();
 
-        $fUserId = (int)$oldBasket->getFUserId(true);
-        if (!$fUserId) {
-            $fUserId = $newBasket->getFUserId(false);
-        }
-        $newBasket->setFUserId($fUserId);
-
-        $oldBasketItems = $oldBasket->getBasketItems();
-        foreach ($oldBasketItems as $oldBasketItem) {
-            $isSuccess = true;
-            /** @var BasketItem $oldBasketItem */
-            $propValues = $oldBasketItem->getPropertyCollection()->getPropertyValues();
-            if ($propValues && !empty($propValues['IS_GIFT']['VALUE'])) {
-                // пропускаем подарки
-                continue;
-            }
-
-            /*
-            $tmpFields = [
-                'PRODUCT_ID' => $oldBasketItem->getProductId(),
-                'QUANTITY' => $oldBasketItem->getQuantity(),
-                'MODULE' => $oldBasketItem->getField('MODULE'),
-                'PRODUCT_PROVIDER_CLASS' => $oldBasketItem->getField('PRODUCT_PROVIDER_CLASS'),
-            ];
-            $result = \Bitrix\Catalog\Product\Basket::addProductToBasket(
-                $newBasket,
-                $tmpFields,
-                $newBasket->getContext()
-            );
-            $newBasketItem = $result->getData()['BASKET_ITEM'];
-            */
-
-            $newBasketItem = $newBasket->createItem(
-                $oldBasketItem->getField('MODULE'),
-                $oldBasketItem->getField('PRODUCT_ID')
-            );
-            $oldBasketItemValues = $this->filterCopyBasketItemFields($oldBasketItem->getFieldValues());
-            //$newBasketItem->setField('NAME', $oldBasketItemValues['NAME']);
-            $tmpResult = $newBasketItem->setFields($oldBasketItemValues);
-            if (!$tmpResult->isSuccess()) {
-                $isSuccess = false;
-            }
-
-            if ($isSuccess) {
-                // копирование свойств позиции корзины
-                $newBasketPropertyCollection = $newBasketItem->getPropertyCollection();
-                $oldItemPropertyList = [];
-                if ($oldPropertyCollection = $oldBasketItem->getPropertyCollection()) {
-                    $oldItemPropertyList = $this->filterCopyBasketItemProps($oldPropertyCollection->getPropertyValues());
-                }
-                foreach ($oldItemPropertyList as $oldItemPropertyFields) {
-                    unset($oldItemPropertyFields['ID'], $oldItemPropertyFields['BASKET_ID']);
-                    $newBasketPropertyItem = $newBasketPropertyCollection->createItem([]);
-                    $tmpResult = $newBasketPropertyItem->setFields($oldItemPropertyFields);
-                    if (!$tmpResult->isSuccess()) {
-                        $isSuccess = false;
-                        break;
-                    }
-                }
-            }
-
-            if ($isSuccess) {
-                $this->setOldBasket2NewMap($oldBasketItem->getId(), $newBasketItem->getInternalIndex());
-            } else {
-                $newBasketItem->delete();
-            }
-        }
-
-        // привязка корзины к новому заказу
-        $tmpResult = $this->newOrder->setBasket($newBasket);
-        if (!$tmpResult->isSuccess()) {
-            throw new OrderCopyBasketException(implode("\n", $tmpResult->getErrorMessages()), 500);
+        $result = $this->newOrder->setBasket($basket);
+        if (!$result->isSuccess()) {
+            throw new OrderCopyBasketException(implode("\n", $result->getErrorMessages()), 500);
         }
 
         $this->setBasketCopied();
-
         $this->extendedDiscountsBlockManagerEnd();
     }
 
@@ -821,6 +908,24 @@ class OrderCopy
     }
 
     /**
+     * @param OrderSubscribe $orderSubscribe
+     * @return OrderCopy
+     */
+    public function setOrderSubscribe(OrderSubscribe $orderSubscribe): OrderCopy
+    {
+        $this->orderSubscribe = $orderSubscribe;
+        return $this;
+    }
+
+    /**
+     * @return OrderSubscribe
+     */
+    public function getOrderSubscribe(): OrderSubscribe
+    {
+        return $this->orderSubscribe;
+    }
+
+    /**
      * @return array
      */
     public function getBasketItemCopyFieldsFlipped(): array
@@ -1079,6 +1184,24 @@ class OrderCopy
     }
 
     /**
+     * @return mixed
+     */
+    public function getCalculatedOrderPropGroups()
+    {
+        return $this->filterFields['orderCalculatedPropGroups'];
+    }
+
+    public function getOrderSubscribeService()
+    {
+        if(null === $this->orderSubscribeService){
+            $this->orderSubscribeService = Application::getInstance()->getContainer()->get('order_subscribe.service');
+        }
+
+        return $this->orderSubscribeService;
+    }
+
+
+    /**
      * @param array $fieldValues
      * @param array $copyFields
      * @param array $excludeFields
@@ -1144,6 +1267,18 @@ class OrderCopy
     }
 
     /**
+     * @return CalculationResultInterface
+     * @throws \FourPaws\PersonalBundle\Exception\NotFoundException
+     */
+    public function getDelivery()
+    {
+        if(null === $this->delivery){
+            $this->delivery = $this->getOrderSubscribeService()->getDeliveryCalculationResult($this->getOrderSubscribe());
+        }
+        return $this->delivery;
+    }
+
+    /**
      * @return DeliveryService
      * @throws ApplicationCreateException
      */
@@ -1154,5 +1289,216 @@ class OrderCopy
         }
 
         return $this->deliveryService;
+    }
+
+    /**
+     * @return AddressService
+     * @throws ApplicationCreateException
+     */
+    protected function getAddressService(): AddressService
+    {
+        if (!isset($this->addressService)) {
+            $this->addressService = Application::getInstance()->getContainer()->get('address.service');
+        }
+
+        return $this->addressService;
+    }
+
+    /**
+     * @return OrderService
+     * @throws ApplicationCreateException
+     */
+    protected function getOrderService(): OrderService
+    {
+        if (!isset($this->orderService)) {
+            $this->orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+        }
+
+        return $this->orderService;
+    }
+
+    /**
+     * @return LocationService
+     * @throws ApplicationCreateException
+     */
+    protected function getLocationService(): LocationService
+    {
+        if (!isset($this->locationService)) {
+            $this->locationService = Application::getInstance()->getContainer()->get('location.service');
+        }
+
+        return $this->locationService;
+    }
+
+    /**
+     * @return StoreService
+     * @throws ApplicationCreateException
+     */
+    protected function getStoreService(): StoreService
+    {
+        if (!isset($this->storeService)) {
+            $this->storeService = Application::getInstance()->getContainer()->get('store.service');
+        }
+
+        return $this->storeService;
+    }
+
+
+    public function countShipments()
+    {
+        $this->extendedDiscountsBlockManagerStart();
+
+        $subscribe = $this->getOrderSubscribe();
+        $order = $this->getNewOrder();
+        $delivery = $this->getDelivery();
+
+        $order->setField('DELIVERY_LOCATION', $subscribe->getLocationId());
+
+        $shipmentCollection = $order->getShipmentCollection();
+        $shipment = $shipmentCollection->createItem();
+        $shipmentItemCollection = $shipment->getShipmentItemCollection();
+        try {
+            $shipment->setFields(
+                [
+                    'DELIVERY_ID'           => $delivery->getDeliveryId(),
+                    'DELIVERY_NAME'         => $delivery->getDeliveryName(),
+                    'CURRENCY'              => $order->getCurrency(),
+                ]
+            );
+
+            /** @var BasketItem $item */
+            foreach ($order->getBasket() as $item) {
+                if ($item->isDelay() || !$item->canBuy()) {
+                    continue;
+                }
+                $shipmentItem = $shipmentItemCollection->createItem($item);
+                $shipmentItem->setQuantity($item->getQuantity());
+            }
+
+            $shipment->setFields(
+                [
+                    'PRICE_DELIVERY'        => $delivery->getPrice(),
+                    'CUSTOM_PRICE_DELIVERY' => 'Y',
+                ]
+            );
+
+            /** @todo: Обсудить с разработчиками системы оформления заказов изменение подхода установки начальных статусов (в иделае должен быть всегда N) */
+            $deliveryCode = $shipment->getDelivery()->getCode();
+            if ($this->getDeliveryService()->isDeliveryCode($deliveryCode) || $this->getDeliveryService()->isDostavistaDeliveryCode($deliveryCode)) {
+                /** @noinspection PhpInternalEntityUsedInspection */
+                $order->setFieldNoDemand('STATUS_ID', OrderStatus::STATUS_NEW_COURIER);
+            }
+
+        } catch (\Exception $e) {
+            $this->log()->error(sprintf('failed to set shipment fields: %s', $e->getMessage()), [
+                'deliveryId' => $delivery->getDeliveryId(),
+                'trace' => $e->getTrace(),
+            ]);
+            throw new OrderCreateException('Failed to create order shipment');
+        }
+
+        $tmpResult = $shipmentCollection->calculateDelivery();
+        if (!$tmpResult->isSuccess()) {
+            throw new OrderCopyShipmentsException(implode("\n", $tmpResult->getErrorMessages()), 700);
+        }
+
+        $this->setShipmentsCopied();
+
+        $this->extendedDiscountsBlockManagerEnd();
+    }
+
+
+    /**
+     * @throws AddressSplitException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\AppBundle\Exception\NotFoundException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\PersonalBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
+    protected function countProps()
+    {
+        $order = $this->getNewOrder();
+        $subscribe = $this->getOrderSubscribe();
+        $orderService = $this->getOrderService();
+        $orderSubscribeService = $this->getOrderSubscribeService();
+        $deliveryService = $this->getDeliveryService();
+        $addressService = $this->getAddressService();
+        $locationService = $this->getLocationService();
+        $storeService = $this->getStoreService();
+
+        /** @var CalculationResultInterface $delivery */
+        $delivery = $this->getDelivery();
+
+        // адрес доставки
+        if($deliveryService->isDelivery($delivery)){
+            $personalAddress = $addressService->getById($subscribe->getDeliveryPlace());
+            $address = $locationService->splitAddress($personalAddress->__toString());
+        } else {
+            /** @var PickupResultInterface $delivery */
+            $shop = $delivery->getSelectedShop();
+
+            if ($shop->getXmlId() === 'R034') {
+                /** @todo костыль. У этого магазина адрес не распознается дадатой */
+                $address = (new Address())
+                    ->setValid(true)
+                    ->setCity($locationService->getCurrentCity())
+                    ->setLocation($locationService->getCurrentLocation())
+                    ->setHouse(1)
+                    ->setStreetPrefix('пос')
+                    ->setStreet('Красный бор');
+            } else {
+                $addressString = $storeService->getStoreAddress($shop) . ', ' . $shop->getAddress();
+                $address = $this->locationService->splitAddress($addressString, $shop->getLocation());
+            }
+        }
+        $orderService->setOrderAddress($order, $address);
+
+        // параметры доставки
+        /** @var PropertyValue $propertyValue */
+        foreach ($order->getPropertyCollection() as $propertyValue) {
+            $code = $propertyValue->getProperty()['CODE'];
+            switch ($code) {
+                case 'DELIVERY_PLACE_CODE':
+                    if ($this->deliveryService->isInnerPickup($delivery)) {
+                        /** @var PickupResult $selectedDelivery */
+                        $value = $delivery->getSelectedShop()->getXmlId();
+                    } else {
+                        $value = $delivery->getSelectedStore()->getXmlId();
+                    }
+                    break;
+                case 'DPD_TERMINAL_CODE':
+                    if (!$this->deliveryService->isDpdPickup($delivery)) {
+                        continue 2;
+                    }
+                    /** @var DpdPickupResult $selectedDelivery */
+                    $value = $delivery->getSelectedShop()->getXmlId();
+                    break;
+                case 'DELIVERY_DATE':
+                    $value = $delivery->getDeliveryDate()->format('d.m.Y');
+                    break;
+                case 'DELIVERY_INTERVAL':
+                    $value = $subscribe->getDeliveryTime();
+                    break;
+                case 'REGION_COURIER_FROM_DC':
+                    $value = ($this->deliveryService->isDelivery($delivery) && !$delivery->getStockResult()->getDelayed()->isEmpty())
+                        ? BitrixUtils::BX_BOOL_TRUE
+                        : BitrixUtils::BX_BOOL_FALSE;
+                    break;
+                case 'DELIVERY_COST':
+                    $value = $order->getShipmentCollection()->getPriceDelivery();
+                    break;
+                default:
+                    continue 2;
+            }
+
+            $propertyValue->setValue($value);
+        }
     }
 }

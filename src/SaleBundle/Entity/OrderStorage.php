@@ -1098,14 +1098,6 @@ class OrderStorage
      */
     public function isSubscribe(): bool
     {
-        return null !== $this->subscribe;
-    }
-
-    /**
-     * @param bool $subscribe
-     */
-    public function getSubscribe(): bool
-    {
         return $this->subscribe;
     }
 

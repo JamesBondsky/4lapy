@@ -313,6 +313,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
      * Установка скидки по подписке на доставку
      *
      * @throws ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\ArgumentNullException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\SaleBundle\Exception\OrderStorageSaveException
      */
@@ -343,7 +344,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                 ]);
                 $this->basketService->setBasketItemPropertyValue($basketItem, "SUBSCRIBE_PRICE", true);
             }
-            if(!$storage->isSubscribe() && $this->basketService->getBasketItemPropertyValue($basketItem, "SUBSCRIBE_PRICE")){
+            else if(!$storage->isSubscribe() && $this->basketService->getBasketItemPropertyValue($basketItem, "SUBSCRIBE_PRICE")){
                 $price = ($basketItem->getPrice()*100)/$percent;
                 $basketItem->setFieldsNoDemand([
                     'PRICE' => $price,
