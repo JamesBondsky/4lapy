@@ -47,6 +47,7 @@ class FeedFactory extends Command implements LoggerAwareInterface
     public const FEED_TYPE_RETAIL_ROCKET   = 'retail-rocket';
     public const FEED_TYPE_EDADEAL         = 'edadeal';
     public const FEED_TYPE_EXPERT_SENDER   = 'expert-sender';
+    public const FEED_TYPE_DOSTAVISTA      = 'dostavista';
 
     public const EXIT_CODE_CONTINUE = 126;
     public const EXIT_CODE_END      = 127;
@@ -88,17 +89,10 @@ class FeedFactory extends Command implements LoggerAwareInterface
 
     /** @noinspection PhpMissingParentCallCommonInspection
      *
-     * @param InputInterface  $input
+     * @param InputInterface $input
      * @param OutputInterface $output
      *
-     * @throws ProcessInvalidArgumentException
-     * @throws SymfonyLogicException
-     * @throws ProcessRuntimeException
-     * @throws ArgumentException
-     * @throws RuntimeException
-     * @throws InvalidArgumentException
-     * @throws SystemException
-     * @throws ApplicationCreateException
+     * @throws \Exception
      */
     public function execute(InputInterface $input, OutputInterface $output): void
     {
@@ -185,6 +179,9 @@ class FeedFactory extends Command implements LoggerAwareInterface
                 break;
             case self::FEED_TYPE_EXPERT_SENDER:
                 $command = 'bitrix:feed:create:expertsender';
+                break;
+            case self::FEED_TYPE_DOSTAVISTA:
+                $command = 'bitrix:feed:create:dostavista';
                 break;
             default:
                 throw new ArgumentException(\sprintf(

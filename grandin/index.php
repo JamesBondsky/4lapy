@@ -1,7 +1,7 @@
 <?php
 
 use FourPaws\Helpers\ProtectorHelper;
-use FourPaws\AppBundle\AjaxController\GrandinController;
+use FourPaws\AppBundle\AjaxController\LandingController;
 
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
@@ -24,10 +24,10 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
                 <div class="registr-check-landing__form-info">
                     Все поля обязательны для заполнения
                 </div>
-                <form data-form-registr-check-landing="true" class="form-landing registr-check-landing__form js-form-validation" method="post" action="/ajax/grandin/request/add/" name="" enctype="multipart/form-data">
+                <form data-form-registr-check-landing="true" class="form-landing registr-check-landing__form js-form-validation" method="post" action="/ajax/landing/request/add/" name="" enctype="multipart/form-data">
                     <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD); ?>
                     <input class="js-no-valid" type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
-
+                    <input class="js-no-valid" type="hidden" name="landingType" value="<?= LandingController::$grandinLanding ?>">
                     <div class="form-group">
                         <input type="dateDatepicker" id="DATE_REG_CHECK_GRANDIN" name="date" value="" placeholder="Дата чека" data-datepicker-landing="true" >
                         <div class="b-error">

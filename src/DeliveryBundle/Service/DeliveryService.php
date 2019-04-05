@@ -49,6 +49,7 @@ use FourPaws\DeliveryBundle\Handler\DeliveryHandlerBase;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Discount\Utils\Manager as DiscountManager;
+use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
@@ -418,8 +419,19 @@ class DeliveryService implements LoggerAwareInterface
                 //проверяем размеры товаров
                 /** @var OrderService $orderService */
                 $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
-                /** @var OfferCollection $offers */
-                $offers = $orderService->getOrderProducts($shipment->getParentOrder());
+                $parentOrder = $shipment->getParentOrder();
+                if ($parentOrder->getBasket()->isEmpty())
+                {
+                    /** @var BasketService $basketService */
+                    $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
+                    $offers = $basketService->getBasketOffers();
+                }
+                else
+                {
+                    /** @var OfferCollection $offers */
+                    $offers = $orderService->getOrderProducts($parentOrder);
+                }
+
                 if (!$offers->isEmpty()) {
                     foreach ($offers as $offer) {
                         $length = WordHelper::showLengthNumber($offer->getCatalogProduct()->getLength());

@@ -292,6 +292,12 @@ class FourPawsOrderComponent extends \CBitrixComponent
             return;
         }
 
+        $user = null;
+        try {
+            $user = $this->currentUserProvider->getCurrentUser();
+        } catch (NotAuthorizedException $e) {
+        }
+
         /** @var Basket $basket */
         $basket                                  = $this->basketService->getBasket()->getOrderableItems();
         $this->arResult['ECOMMERCE_VIEW_SCRIPT'] = $this->getEcommerceViewScript($basket);
@@ -300,6 +306,13 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['ON_SUBMIT'] = \str_replace('"', '\'',
                 'if($(this).find("input[type=email]").val().indexOf("register.phone") == -1){' . $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val()') . '}'
             );
+
+            if ($user)
+            {
+                /** @var BonusService $bonusService */
+                $bonusService = Application::getInstance()->getContainer()->get('bonus.service');
+                $bonusService->updateUserBonusInfo($user); //TODO need async here
+            }
         } else {
             $basket = $order->getBasket();
         }
@@ -342,12 +355,6 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $selectedCity = $this->userCityProvider->getSelectedCity();
 
         $payments = null;
-
-        $user = null;
-        try {
-            $user = $this->currentUserProvider->getCurrentUser();
-        } catch (NotAuthorizedException $e) {
-        }
 
         $deliveries       = $this->orderStorageService->getDeliveries($storage);
         $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
@@ -433,7 +440,25 @@ class FourPawsOrderComponent extends \CBitrixComponent
             }
 
             if ($user) {
-                $this->arResult['MAX_BONUS_SUM'] = $this->basketService->getMaxBonusesForPayment($basket);
+                $this->arResult['MAX_BONUS_SUM'] = $this->basketService->getMaxBonusesForPayment($basket); // Получение из Manzana максимального количества бонусов для списания
+
+                /** @var BonusService $bonusService */
+                $bonusService = Application::getInstance()->getContainer()->get('bonus.service');
+                if ((!isset($bonus) || $bonus->isEmpty()) && !$bonusService->isUserBonusInfoUpdated()) {
+                    $bonus = $bonusService->updateUserBonusInfo();
+                }
+                if (isset($bonus))
+                {
+                    $maxTemporaryBonuses = $bonus->getTemporaryBonus();
+                } else {
+                    $maxTemporaryBonuses = $user->getTemporaryBonus();
+                }
+
+                $maxTemporaryBonuses = min($maxTemporaryBonuses, $this->arResult['MAX_BONUS_SUM']);
+                if (isset($maxTemporaryBonuses) && $maxTemporaryBonuses > 0)
+                {
+                    $this->arResult['MAX_TEMPORARY_BONUS_SUM'] = floor($maxTemporaryBonuses);
+                }
             }
 
             $payments = $this->orderStorageService->getAvailablePayments($storage, true, true, $basket->getPrice());
