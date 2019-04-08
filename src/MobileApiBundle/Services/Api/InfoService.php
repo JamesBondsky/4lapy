@@ -93,6 +93,7 @@ class InfoService implements LoggerAwareInterface
             $filterTypes = [];
             $filter = [
                 'ACTIVE'    => 'Y',
+                'ACTIVE_DATE' => 'Y',
                 'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES),
                 '!PROPERTY_TYPE' => false,
             ];
