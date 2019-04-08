@@ -180,7 +180,10 @@ if ($orderSubscribe) {
                 } ?>
             </div>
             <div class="b-accordion-order-item__button">
-                <a class="b-link b-link--repeat-order b-link--change-subscribe-delivery" href="javascript:void(0);" title="Редактировать подписку">
+                <a class="b-link b-link--repeat-order b-link--change-subscribe-delivery js-open-popup js-open-subscribe-delivery-popup"
+                   href="javascript:void(0);"
+                   title="Редактировать подписку"
+                   data-popup-id="change-subscribe-delivery">
                     <span class="b-link__text b-link__text--change-subscribe-delivery">Редактировать подписку</span>
                 </a>
                 <a class="b-link b-link--repeat-order b-link--change-subscribe-delivery" href="javascript:void(0);" title="Остановить подписку">
