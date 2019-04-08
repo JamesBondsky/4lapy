@@ -431,7 +431,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                         if (mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false) {
                             $result = $storeService->getBaseShops($locationCode);
                             if ($result->isEmpty()) {
-                                $result = $storeService->getStoreByXmlId(OrderService::STORE);
+                                $result = $storeService->getStores(StoreService::TYPE_ALL, ['XML_ID' => OrderService::STORE]);
                             }
                         }
                 }
