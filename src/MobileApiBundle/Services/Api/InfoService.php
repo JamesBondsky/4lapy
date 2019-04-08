@@ -290,7 +290,7 @@ class InfoService implements LoggerAwareInterface
         }
 
         $order = [
-            'DATE_ACTIVE_FROM' => 'DESC',
+            'DATE_ACTIVE_FROM' => 'DESC,NULLS',
             'SORT' => 'ASC',
         ];
 
