@@ -120,9 +120,14 @@ class DeliveryService implements LoggerAwareInterface
     public const ZONE_IVANOVO = 'ZONE_IVANOVO';
     public const ZONE_IVANOVO_REGION = 'ZONE_IVANOVO_REGION';
     /**
-     * Зона Москва
+     * Зона Москва для Достависты
      */
     public const ZONE_MOSCOW = 'ZONE_MOSCOW';
+
+    /**
+     * Новые зоны с префиксом, работают как зона 2
+     */
+    public const ADD_DELIVERY_ZONE_CODE_PATTERN = 'ADD_DELIVERY_ZONE_';
 
     public const PICKUP_CODES = [
         DeliveryService::INNER_PICKUP_CODE,

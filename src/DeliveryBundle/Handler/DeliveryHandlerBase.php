@@ -32,6 +32,7 @@ use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
+use FourPaws\SaleBundle\Service\OrderService;
 
 abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterface
 {
@@ -426,6 +427,13 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                                 ->getBaseShops();
                         }
                         break;
+                    default:
+                        if (mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false) {
+                            $result = $storeService->getBaseShops($locationCode);
+                            if ($result->isEmpty()) {
+                                $result = $storeService->getStoreByXmlId(OrderService::STORE);
+                            }
+                        }
                 }
                 break;
             case DeliveryService::DELIVERY_DOSTAVISTA_CODE:

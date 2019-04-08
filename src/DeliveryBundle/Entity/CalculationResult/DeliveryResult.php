@@ -66,7 +66,12 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
                  * для всех зон, кроме 2, при поставке со склада поставщика
                  * должны быть доступны интервалы для 9:00 с даты доступности товара на РЦ
                  */
-                if ((!in_array($this->getDeliveryZone(), DeliveryService::getZonesTwo())) && (bool)$this->getShipmentResults()) {
+                if ((bool)$this->getShipmentResults() &&
+                    !(
+                        in_array($this->getDeliveryZone(), DeliveryService::getZonesTwo()) ||
+                        mb_strpos($this->getDeliveryZone(), DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false
+                    )
+                ) {
                     $defaultDate = clone $this->deliveryDate;
                 } else {
                     $defaultDate = clone $this->currentDate;

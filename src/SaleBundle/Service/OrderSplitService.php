@@ -302,7 +302,7 @@ class OrderSplitService implements LoggerAwareInterface
 
         $orderable = $delivery->getStockResult()->getOrderable();
         if (!$this->deliveryService->isDpdPickup($delivery) &&
-            \in_array($delivery->getDeliveryZone(), [
+            (\in_array($delivery->getDeliveryZone(), [
                 DeliveryService::ZONE_1,
                 DeliveryService::ZONE_2,
                 DeliveryService::ZONE_NIZHNY_NOVGOROD,
@@ -321,7 +321,7 @@ class OrderSplitService implements LoggerAwareInterface
                 DeliveryService::ZONE_IVANOVO_REGION,
                 DeliveryService::ZONE_5,
                 DeliveryService::ZONE_6,
-            ], true) &&
+            ], true) || mb_strpos($delivery->getDeliveryZone(), DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false) &&
             !$orderable->getByRequest(true)->isEmpty()
         ) {
             $available = $orderable->getRegular();
