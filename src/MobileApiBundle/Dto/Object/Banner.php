@@ -207,8 +207,11 @@ class Banner
             // ссылка на новость
             $type = 'news';
         } else if (strpos($link, '/articles/') !== false) {
+            // ссылка на статью
+            $type = 'articles';
+        } else if (strpos($link, '/shares/') !== false) {
             // ссылка на акцию
-            $type = 'action';
+            $type = 'shares';
         }
         $this->type = $type;
         return $type;

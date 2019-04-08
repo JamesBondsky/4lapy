@@ -25,7 +25,6 @@ class BannerService
      */
     public function getList($sectionCode): BannerListResponse
     {
-
         $res = (new BannerQuery())
             ->withFilterParameter('ACTIVE', 'Y')
             ->withType($sectionCode)
