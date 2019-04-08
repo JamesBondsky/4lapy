@@ -16,11 +16,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Exception\IOException;
 
 /**
- * Class CreateDostavistaActionFeed
- *
- * @todo
- *
- * @package FourPaws\CatalogBundle\Console
+ * Class PushMessagesQueue
+ * @package FourPaws\MobileApiBundle\Console
  */
 class PushMessagesQueue extends Command implements LoggerAwareInterface
 {
