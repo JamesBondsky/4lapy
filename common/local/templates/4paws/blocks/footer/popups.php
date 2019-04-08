@@ -45,6 +45,9 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
         $APPLICATION->IncludeComponent('fourpaws:fast.order', '', [], null, ['HIDE_ICONS' => 'Y']);
     }
 
+    include __DIR__ . '/change-subscribe-delivery.php';
+    include __DIR__ . '/catalog-subscribe-delivery.php';
+
     include __DIR__ . '/popup_email_kopilka.php';
 
     include __DIR__ . '/gifts_popup.php';
