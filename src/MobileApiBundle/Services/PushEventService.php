@@ -193,8 +193,13 @@ class PushEventService
         }
     }
 
+    /**
+     * @throws \ApnsPHP_Exception
+     * @throws \ApnsPHP_Push_Server_Exception
+     */
     public function execPushEventsForIos()
     {
+        $this->applePushNotificationService->startServer();
         $pushEvents = $this->apiPushEventRepository->findForIos();
         foreach ($pushEvents as $pushEvent) {
             try {

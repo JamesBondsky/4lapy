@@ -8,24 +8,22 @@ namespace FourPaws\External;
 
 class ApplePushNotificationService
 {
-    const CERT_PATH = '../../app/config/apple-push-notification-cert-old.pem';
+    const CERT_PATH = '../current/app/config/apple-push-notification-cert-old.pem';
     const PROCESSES_AMOUNT = 5; // количество потоков для отправки push'ей
 
     /** @var \ApnsPHP_Push_Server $server */
     private $server;
 
     /**
-     * ApplePushNotificationService constructor.
      * @throws \ApnsPHP_Exception
      * @throws \ApnsPHP_Push_Server_Exception
      */
-    public function __construct()
+    public function startServer()
     {
         $this->server = new ApplePushNotificationServer(
             \ApnsPHP_Abstract::ENVIRONMENT_PRODUCTION,
-            static::CERT_PATH
+            realpath(static::CERT_PATH)
         );
-
         $this->server->setLogger(new ApplePushNotificationLogger());
         // $this->server->setLogger(new \ApnsPHP_Log_Embedded());
         $this->server->setProviderCertificatePassphrase('lapy');
