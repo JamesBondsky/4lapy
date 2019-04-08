@@ -17,7 +17,7 @@ class MobileApiCreatePushEventTable20181217015731 extends \Adv\Bitrixtools\Migra
          * Compile from d7 DataManager will return only not null table fields structure
          */
         $tableStructure = <<<SQL
-CREATE TABLE `$tableName`(
+CREATE TABLE IF NOT EXISTS TABLE `$tableName`(
   `ID`                       INT          NOT NULL AUTO_INCREMENT,
   `PLATFORM`                 CHAR(1)      NOT NULL,
   `PUSH_TOKEN`               VARCHAR(255) NOT NULL DEFAULT 0,
