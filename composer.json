@@ -110,7 +110,7 @@
     "nicolab/php-ftp-client": "^1.4",
     "ocramius/proxy-manager": "^2.0",
     "opis/closure": "^3.1",
-    "paragraph1/php-fcm": "0.7",
+    "paragraph1/php-fcm": "^0.7.0",
     "php-amqplib/rabbitmq-bundle": "~1.13.0",
     "picqer/php-barcode-generator": "^0.3.0",
     "roave/security-advisories": "dev-master",

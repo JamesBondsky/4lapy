@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2c8e5add77ac69d662741177b4d4af2f",
+    "content-hash": "fe4e3faee9048e0b393f213a9171caf8",
     "packages": [
         {
             "name": "adv/bitrix-tools",
@@ -6206,6 +6206,7 @@
                 "mock",
                 "xunit"
             ],
+            "abandoned": true,
             "time": "2018-01-06T05:45:45+00:00"
         },
         {
