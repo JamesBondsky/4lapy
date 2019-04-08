@@ -142,9 +142,9 @@ if ($order) {
         $possibleDeliveryDateMax = clone $possibleDeliveryDateMin;
         $possibleDeliveryDateMax->add((new \DateInterval('P3M')));
         // выбранная дата при подписке, либо дата по умолчанию
-        $curDeliveryDateValue = $orderSubscribe ? $orderSubscribe->getDateStart() : $possibleDeliveryDateMin->format('d.m.Y');
+        $curDeliveryDateValue = $orderSubscribe ? $orderSubscribe->getDateCreate() : $possibleDeliveryDateMin->format('d.m.Y');
     } else {
-        $curDeliveryDateValue = $orderSubscribe ? $orderSubscribe->getDateStart() : '';
+        $curDeliveryDateValue = $orderSubscribe ? $orderSubscribe->getDateCreate() : '';
     }
 
     // LP03-465
@@ -218,7 +218,7 @@ if ($order) {
                 }
 
                 if ($arResult['FREQUENCY_VARIANTS']) {
-                    $curValue = $orderSubscribe ? $orderSubscribe->getDeliveryFrequency() : '';
+                    $curValue = $orderSubscribe ? $orderSubscribe->getFrequency() : '';
                     ?>
                     <label class="b-registration__label b-registration__label--subscribe-delivery">
                         Как часто

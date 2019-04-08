@@ -9,10 +9,14 @@
 namespace FourPaws\PersonalBundle\Entity;
 
 
+use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Basket;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\BaseEntity;
+use FourPaws\AppBundle\Entity\UserFieldEnumValue;
+use FourPaws\AppBundle\Service\UserFieldEnumService;
+use FourPaws\Helpers\DateHelper;
 use FourPaws\PersonalBundle\Exception\NotFoundException;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\UserBundle\Entity\User;
@@ -160,6 +164,9 @@ class OrderSubscribe extends BaseEntity
      * @Serializer\SkipWhenEmpty()
      */
     protected $payWithbonus;
+
+    /** @var UserFieldEnumService $userFieldEnumService */
+    private $userFieldEnumService;
 
     /**
      * @return array
@@ -525,6 +532,136 @@ class OrderSubscribe extends BaseEntity
         }
 
         return $this->user;
+    }
+
+    /**
+     * @return UserFieldEnumValue
+     * @throws ApplicationCreateException
+     * @throws \Exception
+     */
+    public function getDeliveryFrequencyEntity()
+    {
+        if (!isset($this->deliveryFrequencyEntity)) {
+            $this->deliveryFrequencyEntity = $this->getUserFieldEnumService()->getEnumValueEntity(
+                $this->getFrequency()
+            );
+        }
+
+        return $this->deliveryFrequencyEntity;
+    }
+
+    /**
+     * @return UserFieldEnumService
+     * @throws ApplicationCreateException
+     */
+    protected function getUserFieldEnumService() : UserFieldEnumService
+    {
+        if (!$this->userFieldEnumService) {
+            $appCont = Application::getInstance()->getContainer();
+            $this->userFieldEnumService = $appCont->get('userfield_enum.service');
+        }
+
+        return $this->userFieldEnumService;
+    }
+
+    /**
+     * @param $value
+     * @return Date|null|string
+     */
+    protected function processDateValue($value)
+    {
+        if (!($value instanceof Date)) {
+            if (is_scalar($value) && $value !== '') {
+                $value = new Date($value, 'd.m.Y');
+            } elseif ($value === '' || $value === false) {
+                $value = '';
+            } else {
+                $value = null;
+            }
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param string $format
+     * @return string
+     */
+    public function getDateStartFormatted(string $format = 'd.m.Y') : string
+    {
+        $date =  $this->getDateCreate();
+
+        return $date ? $date->format($format) : '';
+    }
+
+    /**
+     * @return int
+     */
+    public function getDateStartWeekday() : int
+    {
+        $dateStart = $this->getDateCreate();
+
+        return $dateStart ? (int)$dateStart->format('N') : 0;
+    }
+
+    /**
+     * @param bool $lower
+     * @param string $case
+     * @return string
+     */
+    public function getDateStartWeekdayRu(bool $lower = true, string $case = '') : string
+    {
+        $case = $case === '' ? DateHelper::NOMINATIVE : $case;
+        $weekDay = $this->getDateStartWeekday();
+        $result = $weekDay ? DateHelper::replaceRuDayOfWeek('#'.$weekDay.'#', $case) : '';
+
+        return $lower ? ToLower($result) : $result;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDeliveryTimeNormalized() : string
+    {
+        $result = $this->getDeliveryTime();
+        // &mdash;, &ndash;
+        $result = str_replace(
+            ['—', '–'],
+            '-',
+            $result
+        );
+
+        return $result;
+    }
+
+    /**
+     * Преобразовывает значение вида "09:00-16:00" к виду: "с 9 до 16"
+     *
+     * @param bool $noBreak
+     * @return string
+     */
+    public function getDeliveryTimeFormattedRu(bool $noBreak = false) : string
+    {
+        $result = $this->getDeliveryTimeNormalized();
+        $pieces = explode('-', $result);
+        if (count($pieces) === 2) {
+            $from = trim($pieces[0]);
+            $to = trim($pieces[1]);
+            $timePieces = explode(':', $from);
+            if (count($timePieces) === 2 && $timePieces[1] === '00') {
+                $from = (int)$timePieces[0];
+            }
+            $timePieces = explode(':', $to);
+            if (count($timePieces) === 2 && $timePieces[1] === '00') {
+                $to = (int)$timePieces[0];
+            }
+            $result = 'с '.$from.' до '.$to;
+            if ($noBreak) {
+                $result = str_replace(' ', '&nbsp;', $result);
+            }
+        }
+
+        return $result;
     }
 
 }

@@ -602,7 +602,7 @@ class OrderSubscribeService implements LoggerAwareInterface
                     'ORDER_SUBSCRIBE',
                     $this->orderSubscribeRepository->getHlBlockEntityClass(),
                     [
-                        '=this.ID' => 'ref.UF_ORDER_ID'
+                        '=this.ID' => 'ref.UF_ORDER'
                     ]
                 ),
             ]

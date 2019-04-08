@@ -532,7 +532,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                 try {
                     $subscribeService = $this->getOrderSubscribeService();
                     $calculationResult = $subscribeService->getDeliveryCalculationResult(
-                        $bitrixOrder
+                        $this->getOrderSubscribe()
                     );
                     $data = $calculationResult ? $calculationResult->getData() : [];
                     $intervals = $data['INTERVALS'] ?? null;
@@ -690,8 +690,9 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         $bitrixOrder = $order->getBitrixOrder();
         $cityCode = $order->getProperty('CITY_CODE');
         if($cityCode !== null && $cityCode) {
+            /** @var \FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult $deliveryCalcResult */
             $deliveryCalcResult = $this->getOrderSubscribeService()->getDeliveryCalculationResult(
-                $bitrixOrder
+                $this->getOrderSubscribe()
             );
             if ($deliveryCalcResult !== null) {
                 $deliveryDate = $this->getOrderSubscribeService()->getOrderDeliveryDate(

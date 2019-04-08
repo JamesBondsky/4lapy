@@ -208,7 +208,7 @@ class OrderSubscribeRepository extends BaseHlRepository
                 'ID' => 'ASC'
             ];
         }
-        $params['filter']['=UF_ORDER_ID'] = $orderId;
+        $params['filter']['=UF_ORDER'] = $orderId;
 
         return $this->findByParams($params);
     }
@@ -226,7 +226,7 @@ class OrderSubscribeRepository extends BaseHlRepository
             'ORDER',
             OrderTable::class,
             [
-                '=this.UF_ORDER_ID' => 'ref.ID'
+                '=this.UF_ORDER' => 'ref.ID'
             ]
         );
 

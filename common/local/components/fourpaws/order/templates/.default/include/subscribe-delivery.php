@@ -13,11 +13,14 @@ use FourPaws\Decorators\SvgDecorator;
                 <span class="b-input-line__label">Как часто доставлять</span>
             </div>
             <div class="b-select b-select--recall b-select--feedback-page">
-                <select class="b-select__block b-select__block--recall b-select__block--feedback-page" name="" data-select="0">
+                <select class="b-select__block b-select__block--recall b-select__block--feedback-page" name="subscribeFrequency" data-select="0">
                     <option value="" disabled="disabled">выберите</option>
-                    <option value="0">Каждую неделю</option>
-                    <option value="1" selected="selected">Раз в две недели</option>
-                    <option value="2">Раз в месяц</option>
+                    <?php
+                    foreach ($subscribeIntervals as $i => $interval) { ?>
+                        <option value="<?= $interval['ID'] ?>">
+                            <?= (string)$interval['VALUE'] ?>
+                        </option>
+                    <?php } ?>
                 </select>
             </div>
         </div>
@@ -26,15 +29,14 @@ use FourPaws\Decorators\SvgDecorator;
                 <span class="b-input-line__label">День доставки</span>
             </div>
             <div class="b-select b-select--recall b-select--feedback-page">
-                <select class="b-select__block b-select__block--recall b-select__block--feedback-page" name="" data-select="0">
+                <select class="b-select__block b-select__block--recall b-select__block--feedback-page" name="subscribeDay" data-select="0">
                     <option value="" disabled="disabled" selected="selected">выберите</option>
-                    <option value="0" selected="selected">Понедельник</option>
-                    <option value="1">Вторник</option>
-                    <option value="2">Среда</option>
-                    <option value="3">Четверг</option>
-                    <option value="4">Пятница</option>
-                    <option value="5">Суббота</option>
-                    <option value="6">Воскресенье</option>
+                    <?php
+                    foreach ($daysOfWeek as $i => $day) { ?>
+                        <option value="<?= ($i+1) ?>">
+                            <?= $day ?>
+                        </option>
+                    <?php } ?>
                 </select>
             </div>
         </div>
