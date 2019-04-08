@@ -84,6 +84,7 @@ class ApiTokenProvider implements AuthenticationProviderInterface
         if ($session->getUserId()) {
             return $this->cUser->Authorize($session->getUserId());
         }
+        return false;
     }
 
     /**
