@@ -8,7 +8,7 @@ namespace FourPaws\External;
 
 class ApplePushNotificationService
 {
-    const CERT_PATH = '/var/www/release/app/config/apple-push-notification-cert-old.pem';
+    const CERT_PATH = '../../app/config/apple-push-notification-cert-old.pem';
     const PROCESSES_AMOUNT = 5; // количество потоков для отправки push'ей
 
     /** @var \ApnsPHP_Push_Server $server */
