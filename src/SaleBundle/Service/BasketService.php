@@ -1342,7 +1342,7 @@ class BasketService implements LoggerAwareInterface
             ->registerRuntimeField(
                 new ReferenceField(
                     'CATALOG_PRICE', PriceTable::class,
-                    Join::on('this.PRODUCT_ID', 'ref.PRODUCT_ID')->where('ref.CATALOG_GROUP_ID', 2),
+                    Query\Join::on('this.PRODUCT_ID', 'ref.PRODUCT_ID')->where('ref.CATALOG_GROUP_ID', 2),
                     ['join_type' => 'INNER']
                 )
             )
