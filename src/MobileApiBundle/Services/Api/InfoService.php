@@ -15,9 +15,11 @@ use Doctrine\Common\Collections\Collection;
 use FourPaws\BitrixOrm\Collection\ImageCollection;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Query\IblockElementQuery;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\HighloadHelper;
+use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct;
 use FourPaws\MobileApiBundle\Dto\Object\Info;
 use FourPaws\MobileApiBundle\Enum\InfoEnum;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
@@ -27,19 +29,22 @@ class InfoService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
-    /**
-     * @var ImageProcessor
-     */
+    /** @var ImageProcessor */
     private $imageProcessor;
 
-    /**
-     * @var string
-     */
+    /** @var string */
     private $bitrixPhpDateTimeFormat;
 
-    public function __construct(ImageProcessor $imageProcessor)
+    /** @var ProductService */
+    private $productService;
+
+    /** @var ShortProduct[]  */
+    private static $cache = [];
+
+    public function __construct(ImageProcessor $imageProcessor, ProductService $productService)
     {
         $this->imageProcessor = $imageProcessor;
+        $this->productService = $productService;
         $this->bitrixPhpDateTimeFormat = Date::convertFormatToPhp(\FORMAT_DATETIME) ?: '';
     }
 
@@ -372,8 +377,38 @@ class InfoService implements LoggerAwareInterface
                     $apiView->setDateTo($dateTime ?: null);
                 }
 
+                if ($item['IBLOCK_CODE'] === IblockCode::SHARES) {
+                    $apiView->setGoods($this->getGoods($item['ID']));
+                }
+
                 return $apiView;
             });
         return $infoItems;
+    }
+
+    /**
+     * @param int $specialOfferId
+     * @return ArrayCollection
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    private function getGoods(int $specialOfferId)
+    {
+        $products = new ArrayCollection();
+        $iblockId = IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES);
+        $rs = CIBlockElement::GetProperty($iblockId, $specialOfferId, [], ['CODE' => 'PRODUCTS', 'EMPTY' => 'N']);
+        while ($property = $rs->fetch()) {
+            $offerId = $property['VALUE'];
+
+            if (!array_key_exists($property['VALUE'], self::$cache)) {
+                $offer = (new OfferQuery())->withFilter(['=XML_ID' => $offerId])->exec()->current();
+                $product = $offer->getProduct();
+                self::$cache[$offerId] = $this->productService->convertToShortProduct($product, $offer);
+            }
+
+            $products->add(self::$cache[$offerId]);
+        }
+        return $products;
     }
 }
