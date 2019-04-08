@@ -265,6 +265,47 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                         <span class="b-product-information__bonus js-bonus-<?= $currentOffer->getId() ?>"></span>
                     </div>
                 </li>
+                <li class="b-product-information__item b-product-information__item--subscribe">
+                    <div class="b-product-information__title-info b-product-information__title-info--subscribe">По подписке</div>
+                    <div class="b-product-information__value b-product-information__value--subscribe">
+                        <span class="b-product-information__price"></span>
+                        <span class="b-ruble b-ruble--product-information">3&nbsp;999 ₽</span>
+                        <span class="b-product-information__icon-subscribe">
+                            <span class="b-icon b-icon--info-contour">
+                                <?= new SvgDecorator('icon-info-contour', 15, 15) ?>
+                            </span>
+                            <span class="b-icon b-icon--info-fill">
+                                <?= new SvgDecorator('icon-info-fill', 15, 15) ?>
+                            </span>
+                        </span>
+                        <div class="info-subscribe-product">
+                            <div class="info-subscribe-product__item">
+                                <div class="info-subscribe-product__icon">
+                                    <?= new SvgDecorator('icon-retime', 24, 24) ?>
+                                </div>
+                                <div class="info-subscribe-product__text">Регулярная доставка необходимых товаров в&nbsp;удобное для вас время.</div>
+                            </div>
+                            <div class="info-subscribe-product__item">
+                                <div class="info-subscribe-product__icon">
+                                    <?= new SvgDecorator('icon-price', 24, 24) ?>
+                                </div>
+                                <div class="info-subscribe-product__text">Получайте специальную цену на&nbsp;некоторые товары.</div>
+                            </div>
+                            <div class="info-subscribe-product__item">
+                                <div class="info-subscribe-product__icon">
+                                    <?= new SvgDecorator('icon-calendar', 24, 24) ?>
+                                </div>
+                                <div class="info-subscribe-product__text">Выберите нужную вам частоту доставки&nbsp;&mdash; от&nbsp;недели до&nbsp;трех месяцев.</div>
+                            </div>
+                            <div class="info-subscribe-product__item">
+                                <div class="info-subscribe-product__icon">
+                                    <?= new SvgDecorator('icon-cancel', 24, 24) ?>
+                                </div>
+                                <div class="info-subscribe-product__text">Вы&nbsp;можете отказаться от&nbsp;подписки в&nbsp;любое время.</div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
 
                 <li class="b-product-information__item js-subscribe-price-block" style="display: none">
                     <div class="b-product-information__title-info b-product-information__title-info--price">Цена по подписке</div>

@@ -92,6 +92,20 @@ $metro = $arResult['METRO'][$selectedShop->getMetro()];
             <?php } ?>
         </div>
     </div>
+    <div class="b-input-line b-input-line--desired-date" data-url="<?= $arResult['URL']['DELIVERY_INTERVALS'] ?>">
+        <div class="b-input-line__label-wrapper">
+            <span class="b-input-line__label">Желаемая дата доставки</span>
+        </div>
+        <div class="b-select b-select--recall b-select--feedback-page">
+            <?php
+            $selectorDelivery = $delivery;
+            $selectorStorage = $storage;
+            $selectorName = 'deliveryDate';
+            include 'delivery_date_select.php'
+            ?>
+        </div>
+    </div>
+    <?php include 'subscribe-delivery.php' ?>
     <div class="b-input-line b-input-line--partially">
         <div class="b-input-line__label-wrapper b-input-line__label-wrapper--order-full">
             <span class="b-input-line__label js-parts-info">
