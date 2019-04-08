@@ -290,6 +290,7 @@ class InfoService implements LoggerAwareInterface
         }
 
         $order = [
+            'SORT' => 'ASC',
             'ID' => 'DESC',
         ];
 
