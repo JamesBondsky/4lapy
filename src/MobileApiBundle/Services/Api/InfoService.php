@@ -105,7 +105,11 @@ class InfoService implements LoggerAwareInterface
                 $filterTypes[$row['PROPERTY_TYPE_VALUE']] = $row['PROPERTY_TYPE_VALUE'];
             }
 
-            $result = [];
+            $result = [[
+                'id' => 1,
+                'name' => 'Все',
+                'code' => 'vse'
+            ]];
             $sHlEntityClass = \Bitrix\Highloadblock\HighloadBlockTable::compileEntity($hlBlock)->getDataClass();
             $res = $sHlEntityClass::getList(
                 [
