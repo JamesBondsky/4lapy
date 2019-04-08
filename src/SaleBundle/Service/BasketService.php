@@ -1333,7 +1333,7 @@ class BasketService implements LoggerAwareInterface
             ->registerRuntimeField(
                 new ReferenceField(
                     'ELEMENT', ElementTable::class,
-                    Join::on('this.PRODUCT_ID', 'ref.ID')
+                    Query\Join::on('this.PRODUCT_ID', 'ref.ID')
                         ->where('ref.ACTIVE', BitrixUtils::BX_BOOL_TRUE)
                         ->where('ref.IBLOCK_ID', $offersIblockId),
                     ['join_type' => 'INNER']
