@@ -27,6 +27,7 @@ use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
@@ -41,6 +42,7 @@ use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\ShopInfoService;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
+use Protobuf\Exception;
 use Psr\Log\LoggerAwareInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -65,6 +67,11 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @var OrderStorageService
      */
     private $orderStorageService;
+
+    /**
+     * @var OrderSubscribeService
+     */
+    private $orderSubscribeService;
 
     /**
      * @var UserAuthorizationInterface
@@ -92,6 +99,7 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @param OrderService               $orderService
      * @param DeliveryService            $deliveryService
      * @param OrderStorageService        $orderStorageService
+     * @param OrderSubscribeService      $orderSubscribeService
      * @param UserAuthorizationInterface $userAuthProvider
      * @param ShopInfoService            $shopInfoService
      * @param ReCaptchaService           $recaptcha
@@ -100,6 +108,7 @@ class OrderController extends Controller implements LoggerAwareInterface
         OrderService $orderService,
         DeliveryService $deliveryService,
         OrderStorageService $orderStorageService,
+        OrderSubscribeService $orderSubscribeService,
         UserAuthorizationInterface $userAuthProvider,
         ShopInfoService $shopInfoService,
         ReCaptchaService $recaptcha
@@ -108,6 +117,7 @@ class OrderController extends Controller implements LoggerAwareInterface
         $this->orderService = $orderService;
         $this->deliveryService = $deliveryService;
         $this->orderStorageService = $orderStorageService;
+        $this->orderSubscribeService = $orderSubscribeService;
         $this->userAuthProvider = $userAuthProvider;
         $this->shopInfoService = $shopInfoService;
         $this->recaptcha = $recaptcha;
@@ -459,6 +469,24 @@ class OrderController extends Controller implements LoggerAwareInterface
         if(empty($errors)){
             try {
                 $this->orderStorageService->updateStorage($storage, $step);
+
+                if($storage->isSubscribe()){
+                    if($step == OrderStorageEnum::DELIVERY_STEP){ // создание подписки на доставку
+                        $result = $this->orderSubscribeService->createSubscriptionByRequest($storage, $request);
+                        if(!$result->isSuccess()){
+                            $this->log()->error(implode(";\r\n", $result->getErrorMessages()));
+                            throw new OrderSubscribeException("Произошла ошибка оформления подписки на доставку, пожалуйста, обратитесь к администратору");
+                        }
+                        $storage->setSubscribeId($result->getData()['subscribeId']);
+                        $this->orderStorageService->updateStorage($storage, $step);
+                    } else if($step == OrderStorageEnum::PAYMENT_STEP){ // установка свойства "Списывать все баллы по подписке"
+                        if($storage->isSubscribe() && $request->get('subscribeBonus')){
+                            $subscribe = $this->orderSubscribeService->getById($storage->getSubscribeId());
+                            $subscribe->setPayWithbonus(true);
+                            $this->orderSubscribeService->update($subscribe);
+                        }
+                    }
+                }
             } catch (OrderStorageValidationException $e) {
                 /** @var ConstraintViolation $error */
                 foreach ($e->getErrors() as $i => $error) {
@@ -466,6 +494,9 @@ class OrderController extends Controller implements LoggerAwareInterface
                     $errors[$key] = $error->getMessage();
                 }
                 $step = $e->getRealStep();
+            } catch (\Exception $e) {
+                $errors[$e->getCode()] = "Произошла ошибка, пожалуйста, обратитесь к администратору";
+                $this->log()->error(sprintf('Error in order creating: %s: %s', \get_class($e), $e->getMessage()));
             }
         }
 

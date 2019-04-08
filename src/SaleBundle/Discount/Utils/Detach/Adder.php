@@ -334,6 +334,9 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
             }
 
             $percent = $offer->getSubscribeDiscount();
+            if($percent <= 0){
+                continue;
+            }
 
             if($storage->isSubscribe() && !$this->basketService->getBasketItemPropertyValue($basketItem, "SUBSCRIBE_PRICE")){
                 $price = $basketItem->getPrice() * ((100 - $percent)/100);

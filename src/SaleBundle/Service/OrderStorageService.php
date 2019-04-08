@@ -271,15 +271,6 @@ class OrderStorageService
                 } catch (DeliveryNotFoundException $e) {
                 }
 
-                // создание подписки на доставку
-                if($storage->isSubscribe()){
-                    $result = $this->createSubscription($storage, $data);
-                    if(!$result->isSuccess()){
-                        $this->log()->error(implode(";\r\n", $result->getErrorMessages()));
-                        throw new OrderSubscribeException("Произошла ошибка оформления подписки на доставку, пожалуйста, обратитесь к администратору");
-                    }
-                }
-
                 $availableValues = [
                     'deliveryId',
                     'addressId',
@@ -304,18 +295,6 @@ class OrderStorageService
                 ];
                 break;
             case OrderStorageEnum::PAYMENT_STEP:
-
-                // установка свойства "Списывать все баллы по подписке"
-                if($storage->isSubscribe() && $data['subscribeBonus']){
-                    $subscribe = $this->orderSubscribeService->getById($storage->getSubscribeId());
-                    if(!$subscribe){
-                        $this->log()->error(sprintf("Failed to get subscribe: %s", $storage->getSubscribeId()));
-                        throw new OrderSubscribeException("Произошла ошибка оформления подписки на доставку, пожалуйста, обратитесь к администратору");
-                    }
-                    $subscribe->setPayWithbonus(true);
-                    $this->orderSubscribeService->update($subscribe);
-                }
-
                 $availableValues = [
                     'paymentId',
                     'bonus',
@@ -689,78 +668,5 @@ class OrderStorageService
     public function storageToArray(OrderStorage $storage): array
     {
         return $this->storageRepository->toArray($storage);
-    }
-
-    /**
-     * @param OrderStorage $storage
-     * @param $data
-     * @return Result
-     */
-    private function createSubscription(OrderStorage $storage, $data): Result
-    {
-        $result = new Result();
-
-        try {
-            /** @var IntervalService $intervalService */
-            $intervalService = Application::getInstance()->getContainer()->get(IntervalService::class);
-
-            $deliveryId = (int)($data['deliveryTypeId']) ? ($data['deliveryTypeId']) : $data['deliveryId'];
-
-            if(!$storage->getSubscribeId()) {
-                $subscribe = (new OrderSubscribe());
-            }
-            else{
-                $subscribe = $this->orderSubscribeService->getById($storage->getSubscribeId());
-            }
-
-            $interval = $data['deliveryInterval'] ? $intervalService->getIntervalByCode($data['deliveryInterval']) : '';
-
-            $subscribe->setDeliveryDay($data['subscribeDay'])
-                ->setDeliveryId($deliveryId)
-                ->setFrequency($data['subscribeFrequency'])
-                ->setDeliveryTime($interval)
-                ->setActive(false);
-
-            if($this->deliveryService->isDelivery($this->getSelectedDelivery($storage))){
-                $subscribe->setDeliveryPlace($data['addressId']);
-            }
-            elseif($this->deliveryService->isPickup($this->getSelectedDelivery($storage))){
-                $subscribe->setDeliveryPlace($data['deliveryPlaceCode']);
-            }
-
-            if(!$subscribe->getDeliveryPlace()){
-                throw new OrderSubscribeException("Не указано место доставки");
-            }
-
-            if($subscribe->getId() > 0){
-                $this->orderSubscribeService->countNextDate($subscribe);
-                $this->orderSubscribeService->update($subscribe);
-            }
-            else{
-                $result = $this->orderSubscribeService->add($subscribe);
-
-                if(!$result->isSuccess()){
-                    throw new OrderSubscribeException(sprintf('Failed to create order subscribe: %s', print_r($result->getErrorMessages(),true)));
-                }
-
-                $items = $this->basketService->getBasket()->getOrderableItems();
-                /** @var BasketItem $basketItem */
-                foreach($items as $basketItem){
-                    $subscribeItem = (new OrderSubscribeItem())
-                        ->setOfferId($basketItem->getProductId())
-                        ->setQuantity($basketItem->getQuantity());
-
-                    if(!$this->orderSubscribeService->addSubscribeItem($subscribe, $subscribeItem)){
-                        throw new OrderSubscribeException(sprintf('Failed to create order subscribe item: %s', print_r($data,true)));
-                    }
-                }
-
-                $storage->setSubscribeId($subscribe->getId());
-            }
-        } catch (\Exception $e) {
-            $result->addError(new Error($e->getMessage(), 'createSubscription'));
-        }
-
-        return $result;
     }
 }

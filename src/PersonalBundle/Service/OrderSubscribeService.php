@@ -38,6 +38,7 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\TaggedCacheHelper;
@@ -57,8 +58,11 @@ use FourPaws\PersonalBundle\Exception\NotFoundException;
 use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\PersonalBundle\Repository\OrderSubscribeItemRepository;
 use FourPaws\PersonalBundle\Repository\OrderSubscribeRepository;
+use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\NotificationService;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
+use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
@@ -67,6 +71,7 @@ use mysql_xdevapi\Exception;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Intl\Exception\NotImplementedException;
 
 class OrderSubscribeService implements LoggerAwareInterface
@@ -77,6 +82,12 @@ class OrderSubscribeService implements LoggerAwareInterface
 
     // при запуске из консоли SITE_ID определяется как 's2'
     const SITE_ID = 's1';
+
+    /**
+     * Интервалы доставки
+     * @var array $frequencies
+     */
+    private $frequencies;
 
     /** @var OrderSubscribeRepository $orderSubscribeRepository */
     private $orderSubscribeRepository;
@@ -90,12 +101,6 @@ class OrderSubscribeService implements LoggerAwareInterface
     /** @var LocationService $locationService */
     private $locationService;
 
-    /**
-     * Интервалы доставки
-     * @var array $frequencies
-     */
-    private $frequencies;
-
     /** @var OrderService $personalOrderService */
     private $personalOrderService;
 
@@ -104,6 +109,9 @@ class OrderSubscribeService implements LoggerAwareInterface
 
     /** @var \FourPaws\SaleBundle\Service\OrderService $saleOrderService */
     private $saleOrderService;
+
+    /** @var BasketService $basketService */
+    private $basketService;
 
     /** @var UserFieldEnumService $userFieldEnumService */
     private $userFieldEnumService;
@@ -149,13 +157,15 @@ class OrderSubscribeService implements LoggerAwareInterface
         OrderSubscribeRepository $orderSubscribeRepository,
         OrderSubscribeItemRepository $orderSubscribeItemRepository,
         CurrentUserProviderInterface $currentUserProvider,
-        LocationService $locationService
+        LocationService $locationService,
+        BasketService $basketService
     )
     {
         $this->orderSubscribeRepository = $orderSubscribeRepository;
         $this->orderSubscribeItemRepository = $orderSubscribeItemRepository;
         $this->currentUser = $currentUserProvider;
         $this->locationService = $locationService;
+        $this->basketService = $basketService;
     }
 
 
@@ -1212,6 +1222,21 @@ class OrderSubscribeService implements LoggerAwareInterface
                 }
             }
 
+            // установка следующей даты доставки
+            if ($result->isSuccess()) {
+                try {
+                    $this->countNextDate($orderSubscribe);
+                    $this->update($orderSubscribe);
+                } catch (\Exception $exception) {
+                    $result->addError(
+                        new Error(
+                            $exception->getMessage(),
+                            'newOrderIntegrationException'
+                        )
+                    );
+                }
+            }
+
             // !!! Конец транзакции !!!
             if ($result->isSuccess()) {
                 $connection->commitTransaction();
@@ -1265,16 +1290,16 @@ class OrderSubscribeService implements LoggerAwareInterface
         if ($result->isSuccess()) {
             try {
                 // сохраняем текущую дату и время проверки
-//                $orderSubscribe->setLastCheck((new DateTime()));
-//                $updateResult = $this->update($orderSubscribe);
-//                if (!$updateResult->isSuccess()) {
-//                    $result->addError(
-//                        new Error(
-//                            'Ошибка обновления даты проверки подписки',
-//                            'orderSubscribeUpdateError'
-//                        )
-//                    );
-//                }
+                $orderSubscribe->setLastCheck((new DateTime()));
+                $updateResult = $this->update($orderSubscribe);
+                if (!$updateResult->isSuccess()) {
+                    $result->addError(
+                        new Error(
+                            'Ошибка обновления даты проверки подписки',
+                            'orderSubscribeUpdateError'
+                        )
+                    );
+                }
 
                 // устанавливаем текущего пользователя и местоположение
                 // для расчёта цен и даты доставки
@@ -1510,6 +1535,80 @@ class OrderSubscribeService implements LoggerAwareInterface
             NotificationService::class
         );
         $notificationService->sendOrderSubscribeOrderNewMessage($order);
+    }
+
+    /**
+     * @param OrderStorage $storage
+     * @param $data
+     * @return Result
+     */
+    public function createSubscriptionByRequest(OrderStorage $storage, Request $request): Result
+    {
+        $result = new Result();
+        $data = $request->request->all();
+
+        try {
+            /** @var IntervalService $intervalService */
+            $intervalService = Application::getInstance()->getContainer()->get(IntervalService::class);
+            $orderStorageService = Application::getInstance()->getContainer()->get(OrderStorageService::class);
+
+            $deliveryId = $storage->getDeliveryId();
+
+            if(!$storage->getSubscribeId()) {
+                $subscribe = (new OrderSubscribe());
+            }
+            else{
+                $subscribe = $this->getById($storage->getSubscribeId());
+            }
+
+            $interval = $storage->getDeliveryInterval() ? $intervalService->getIntervalByCode($storage->getDeliveryInterval()) : '';
+
+            $subscribe->setDeliveryDay($data['subscribeDay'])
+                ->setDeliveryId($deliveryId)
+                ->setFrequency($data['subscribeFrequency'])
+                ->setDeliveryTime($interval)
+                ->setActive(false);
+
+            if($this->getDeliveryService()->isDelivery($orderStorageService->getSelectedDelivery($storage))){
+                $subscribe->setDeliveryPlace($data['addressId']);
+            }
+            elseif($this->getDeliveryService()->isPickup($orderStorageService->getSelectedDelivery($storage))){
+                if(!$data['deliveryPlaceCode']){
+                    throw new OrderSubscribeException("Не выбран магазин для самовывоза");
+                }
+                $subscribe->setDeliveryPlace($data['deliveryPlaceCode']);
+            }
+
+            if($subscribe->getId() > 0){
+                $this->countNextDate($subscribe);
+                $this->update($subscribe);
+            }
+            else{
+                $result = $this->add($subscribe);
+
+                if(!$result->isSuccess()){
+                    throw new OrderSubscribeException(sprintf('Failed to create order subscribe: %s', print_r($result->getErrorMessages(),true)));
+                }
+
+                $items = $this->basketService->getBasket()->getOrderableItems();
+                /** @var BasketItem $basketItem */
+                foreach($items as $basketItem){
+                    $subscribeItem = (new OrderSubscribeItem())
+                        ->setOfferId($basketItem->getProductId())
+                        ->setQuantity($basketItem->getQuantity());
+
+                    if(!$this->addSubscribeItem($subscribe, $subscribeItem)){
+                        throw new OrderSubscribeException(sprintf('Failed to create order subscribe item: %s', print_r($data,true)));
+                    }
+                }
+            }
+
+            $result->setData(['subscribeId' => $subscribe->getId()]);
+        } catch (\Exception $e) {
+            $result->addError(new Error($e->getMessage(), 'createSubscription'));
+        }
+
+        return $result;
     }
 
     /**
