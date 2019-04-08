@@ -92,6 +92,8 @@ if ($orderSubscribe) {
     $attr .= ' data-frequency="' . $orderSubscribe->getDeliveryFrequency() . '"';
 }
 
+$activeSubscribe = true;
+
 ?>
     <li<?= $attr ?> class="b-accordion-order-item b-accordion-order-item--subscribe js-permutation-li js-item-content">
         <div class="b-accordion-order-item__visible js-premutation-accordion-content">
@@ -135,15 +137,14 @@ if ($orderSubscribe) {
                 <?php } ?>
             </div>
             <div class="b-accordion-order-item__adress">
-                <div class="b-accordion-order-item__number-order">
+                <div class="b-accordion-order-item__number-order <?php if(!$activeSubscribe) { ?>b-accordion-order-item__number-order--disabled<?php } ?>">
+                    <span>Доставка</span>
                     <?php
                     echo $orderSubscribe->getDeliveryFrequencyEntity()
                         ->getValue();
-                    echo ', ';
-                    echo $orderSubscribe->getDateStartWeekdayRu();
                     ?>
                 </div>
-                <div class="b-accordion-order-item__date b-accordion-order-item__date--new">
+                <div class="b-accordion-order-item__date b-accordion-order-item__date--new <?php if(!$activeSubscribe) { ?>b-accordion-order-item__date--disabled<?php } ?>">
                     <?php
                         echo 'Следующая доставка ';
                         echo DateHelper::replaceRuMonth(
@@ -156,10 +157,7 @@ if ($orderSubscribe) {
                      ?>
                 </div>
                 <div class="b-adress-info b-adress-info--order">
-                        <span class="b-adress-info__label b-adress-info__label--sokol"></span>
-                        м. Кунцевская,
-                        <p class="b-adress-info__mode-operation">Какой-то адрес</p>
-
+                    г. Москва, ул. Бориса Галушкина, 11
                 </div>
                 <?php
                 $store = $order->getStore();
@@ -184,16 +182,23 @@ if ($orderSubscribe) {
                    href="javascript:void(0);"
                    title="Редактировать подписку"
                    data-popup-id="change-subscribe-delivery">
-                    <span class="b-link__text b-link__text--change-subscribe-delivery">Редактировать подписку</span>
+                    <span class="b-link__text b-link__text--change-subscribe-delivery">Редактировать <span>подписку</span></span>
                 </a>
-                <a class="b-link b-link--repeat-order b-link--change-subscribe-delivery" href="javascript:void(0);" title="Остановить подписку">
-                    <span class="b-link__text b-link__text--change-subscribe-delivery">Остановить подписку</span>
-                </a>
-                <?php /*
-                <a class="b-link b-link--repeat-order b-link--repeat-order" href="" title="Возобновить подписку">
-                    <span class="b-link__text b-link__text--repeat-order">Возобновить подписку</span>
-                </a>
-                */?>
+                <?php if($activeSubscribe) { ?>
+                    <a class="b-link b-link--repeat-order b-link--change-subscribe-delivery js-open-popup"
+                       href="javascript:void(0);"
+                       title="Остановить подписку"
+                       data-popup-id="stop-subscribe-delivery">
+                        <span class="b-link__text b-link__text--change-subscribe-delivery">Остановить <span>подписку</span></span>
+                    </a>
+                <?php } else { ?>
+                    <a class="b-link b-link--repeat-order b-link--repeat-order"
+                       href="javascript:void(0);"
+                       title="Возобновить подписку"
+                       data-popup-id="renew-subscribe-delivery">
+                        <span class="b-link__text b-link__text--repeat-order">Возобновить <span>подписку</span></span>
+                    </a>
+                <?php } ?>
             </div>
             <div class="b-accordion-order-item__operation">
                 <div class="b-accordion-order-item__sum">
