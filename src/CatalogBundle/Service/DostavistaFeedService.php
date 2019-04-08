@@ -103,7 +103,7 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
         $this
             ->processFeed($feed, $configuration)
             ->processCurrencies($feed, $configuration)
-            ->processCategories($feed, $configuration)
+            ->processCategories($feed, $configuration, true)
             ->processMerchants($feed)
             ->processProducts($configuration)
             ->processOffers($feed, $configuration);
@@ -163,21 +163,30 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
     /**
      * @param Feed $feed
      * @param Configuration $configuration
-     *
+     * @param bool $withParents
      * @return DostavistaFeedService
      */
-    protected function processCategories(Feed $feed, Configuration $configuration): DostavistaFeedService
+    protected function processCategories(Feed $feed, Configuration $configuration, $withParents = false): DostavistaFeedService
     {
         $categories = new ArrayCollection();
+        $categoriesTmp = new ArrayCollection();
+
+        if (in_array(0, $configuration->getSectionIds())) {
+            $filter = [
+                'GLOBAL_ACTIVE' => 'Y'
+            ];
+        } else {
+            $filter = [
+                'ID' => $configuration->getSectionIds(),
+                'GLOBAL_ACTIVE' => 'Y'
+            ];
+        }
 
         /**
          * @var CategoryCollection $parentCategories
          */
         $parentCategories = (new CategoryQuery())
-            ->withFilter([
-                'ID' => $configuration->getSectionIds(),
-                'GLOBAL_ACTIVE' => 'Y'
-            ])
+            ->withFilter($filter)
             ->withOrder(['LEFT_MARGIN' => 'ASC'])
             ->exec();
 
@@ -190,6 +199,10 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
             }
 
             $this->addCategory($parentCategory, $categories);
+            $categoriesTmp->set(
+                $parentCategory->getId(),
+                $parentCategory
+            );
 
             if ($parentCategory->getRightMargin() - $parentCategory->getLeftMargin() < 3) {
                 continue;
@@ -204,8 +217,40 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
                 ->withOrder(['LEFT_MARGIN' => 'ASC'])
                 ->exec();
 
+            /** @var Category $category */
             foreach ($childCategories as $category) {
                 $this->addCategory($category, $categories);
+                $categoriesTmp->set(
+                    $category->getId(),
+                    $category
+                );
+            }
+        }
+
+        if ($withParents) {
+            $emptyParentCategoriesIds = [];
+            foreach ($categoriesTmp as $category) {
+                $parentCategoryId = $category->getIblockSectionId();
+                if ($parentCategoryId !== null && $parentCategoryId !== 0 && !in_array($parentCategoryId, array_keys($categoriesTmp->toArray()))) {
+                    $emptyParentCategoriesIds[$parentCategoryId] = $parentCategoryId;
+                }
+            }
+            if (count($emptyParentCategoriesIds) > 0) {
+                $emptyParentCategories = (new CategoryQuery())
+                    ->withFilter([
+                        'ID' => $emptyParentCategoriesIds
+                    ])
+                    ->withOrder(['LEFT_MARGIN' => 'ASC'])
+                    ->exec();
+                foreach ($emptyParentCategories as $category) {
+                    $this->addCategory($category, $categories);
+                }
+
+                $iterator = $categories->getIterator();
+                $iterator->uasort(function ($a, $b) {
+                    return ($a->getId() < $b->getId()) ? -1 : 1;
+                });
+                $categories = new ArrayCollection(iterator_to_array($iterator));
             }
         }
 
@@ -355,7 +400,7 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
         ];
 
         $files = [];
-        $dbItems = \CIBlockElement::GetList(['XML_ID' => 'ASC'], $arFilter, false, ['nTopCount' => 100], $arSelect);
+        $dbItems = \CIBlockElement::GetList(['XML_ID' => 'ASC'], $arFilter, false, false, $arSelect);
         $offerCnt = $dbItems->SelectedRowsCount();
         $i = 1;
 
@@ -522,19 +567,24 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
     private function removeExtraData(Feed $feed)
     {
         $this->printDumpString('processRemoveExtraData');
+        $withoutStockResult = [];
         foreach ($feed->getShop()->getOffers() as $key => $offer) {
             if ($offer->getResidues()->isEmpty()) {
-                dump('Offer ' . $offer->getId() . ' without stock result clear');
+                $withoutStockResultdump[] = $offer->getId();
                 $feed->getShop()->getOffers()->remove($key);
             }
         }
+        $this->log()->notice('Offers clear without stock result', $withoutStockResult);
 
+        $stockWithoutOffer = [];
         foreach ($feed->getShop()->getMerchants() as $key => $merchant) {
             if (!in_array($merchant->getId(), $this->stocks)) {
-                dump('Store ' . $merchant->getId() . ' without use offers clear');
+                $stockWithoutOffer[] = $merchant->getId();
                 $feed->getShop()->getMerchants()->remove($key);
             }
         }
+        $this->log()->notice('Store clear without use offers', $stockWithoutOffer);
+
         $this->printDumpString('processRemoveExtraData done');
     }
 

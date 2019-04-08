@@ -520,6 +520,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                     IblockCode::PRODUCTS
                 ),
                 'SECTION_ID' => $sectionIds,
+                'INCLUDE_SUBSECTIONS' => 'Y',
                 'ACTIVE' => 'Y'
             ],
             false,
