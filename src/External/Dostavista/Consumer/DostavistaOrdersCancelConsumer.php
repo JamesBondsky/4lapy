@@ -19,6 +19,7 @@ class DostavistaOrdersCancelConsumer extends DostavistaConsumerBase
     /**
      * @param AMQPMessage $message
      * @return bool
+     * @throws \Bitrix\Main\Db\SqlQueryException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function execute(AMQPMessage $message): bool
