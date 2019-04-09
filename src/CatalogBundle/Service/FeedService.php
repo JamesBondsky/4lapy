@@ -14,6 +14,9 @@ use FourPaws\CatalogBundle\Translate\Configuration;
 use FourPaws\Catalog\Query\OfferQuery;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Catalog\Query\CategoryQuery;
+use FourPaws\Catalog\Collection\OfferCollection;
+use FourPaws\Catalog\Collection\CategoryCollection;
+use FourPaws\Catalog\Model\Category;
 
 /**
  * Class FeedService
@@ -66,6 +69,12 @@ abstract class FeedService
      * @return boolean
      */
     abstract public function process(ConfigurationInterface $configuration, int $step, string $stockID = null): bool;
+
+    /**
+     * @param Category $category
+     * @param ArrayCollection $categoryCollection
+     */
+    abstract protected function addCategory(Category $category, ArrayCollection $categoryCollection): void;
 
     /**
      * @todo set with client
@@ -173,7 +182,7 @@ abstract class FeedService
     }
 
     /**
-     * @param Feed $feed
+     * @param AbstractFeed $feed
      * @param Configuration $configuration
      * @param bool $withParents
      * @return YandexFeedService
@@ -247,28 +256,42 @@ abstract class FeedService
                     $emptyParentCategoriesIds[$parentCategoryId] = $parentCategoryId;
                 }
             }
-            if (count($emptyParentCategoriesIds) > 0) {
-                $emptyParentCategories = (new CategoryQuery())
-                    ->withFilter([
-                        'ID' => $emptyParentCategoriesIds
-                    ])
-                    ->withOrder(['LEFT_MARGIN' => 'ASC'])
-                    ->exec();
-                foreach ($emptyParentCategories as $category) {
-                    $this->addCategory($category, $categories);
-                }
-
-                $iterator = $categories->getIterator();
-                $iterator->uasort(function ($a, $b) {
-                    return ($a->getId() < $b->getId()) ? -1 : 1;
-                });
-                $categories = new ArrayCollection(iterator_to_array($iterator));
+            while (count($emptyParentCategoriesIds) > 0) {
+                $emptyParentCategoriesIds = $this->addParentsCategory($emptyParentCategoriesIds, $categories, $categoriesTmp);
             }
+            $iterator = $categories->getIterator();
+            $iterator->uasort(function ($a, $b) {
+                return ($a->getId() < $b->getId()) ? -1 : 1;
+            });
+            $categories = new ArrayCollection(iterator_to_array($iterator));
         }
 
-        $feed->getShop()
-            ->setCategories($categories);
+        $feed->getShop()->setCategories($categories);
 
         return $this;
+    }
+
+    protected function addParentsCategory(array $emptyParentCategoriesIds, ArrayCollection $categories, ArrayCollection &$categoriesTmp): array
+    {
+        $result = [];
+        $emptyParentCategories = (new CategoryQuery())
+            ->withFilter([
+                'ID' => $emptyParentCategoriesIds
+            ])
+            ->withOrder(['LEFT_MARGIN' => 'ASC'])
+            ->exec();
+        /** @var Category $category */
+        foreach ($emptyParentCategories as $category) {
+            $this->addCategory($category, $categories);
+            $categoriesTmp->set(
+                $category->getId(),
+                $category
+            );
+            $parentCategoryId = $category->getIblockSectionId();
+            if ($parentCategoryId !== null && $parentCategoryId !== 0 && !in_array($parentCategoryId, array_keys($categoriesTmp->toArray()))) {
+                $result[$parentCategoryId] = $parentCategoryId;
+            }
+        }
+        return $result;
     }
 }

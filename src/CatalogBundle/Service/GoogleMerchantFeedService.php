@@ -390,6 +390,7 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
 
     /**
      * @return Store
+     * @throws NotFoundException
      */
     private function getRcStock(): Store
     {
@@ -398,5 +399,14 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
         }
 
         return $this->rcStock;
+    }
+
+    /**
+     * @param Category $category
+     * @param ArrayCollection $categoryCollection
+     */
+    protected function addCategory(Category $category, ArrayCollection $categoryCollection): void
+    {
+        // TODO: Implement addCategory() method.
     }
 }

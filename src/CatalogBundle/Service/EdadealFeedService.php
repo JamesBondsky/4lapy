@@ -4,6 +4,8 @@ namespace FourPaws\CatalogBundle\Service;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\Catalog\Model\Category;
 use FourPaws\CatalogBundle\Translate\Configuration;
 use FourPaws\CatalogBundle\Translate\ConfigurationInterface;
 use FourPaws\Enum\IblockCode;
@@ -398,4 +400,12 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
         return true;
     }
 
+    /**
+     * @param Category $category
+     * @param ArrayCollection $categoryCollection
+     */
+    protected function addCategory(Category $category, ArrayCollection $categoryCollection): void
+    {
+        // TODO: Implement addCategory() method.
+    }
 }
