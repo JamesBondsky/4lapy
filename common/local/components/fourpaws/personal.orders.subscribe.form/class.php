@@ -346,9 +346,9 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         if ($this->getAction() === 'initialLoad') {
             $this->arResult['ORDER'] = $this->getOrder();
             if ($this->arResult['ORDER']) {
-                $this->arResult['TIME_VARIANTS'] = $this->getTimeVariants();
                 $this->arResult['FREQUENCY_VARIANTS'] = $this->getFrequencyVariants();
-                $this->arResult['ORDER_SUBSCRIBE'] = $this->getOrderSubscribe();
+                // $this->arResult['TIME_VARIANTS'] = $this->getTimeVariants();
+                // $this->arResult['ORDER_SUBSCRIBE'] = $this->getOrderSubscribe();
             }
         }
 
@@ -689,17 +689,17 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         $deliveryDate = null;
         $bitrixOrder = $order->getBitrixOrder();
         $cityCode = $order->getProperty('CITY_CODE');
-        if($cityCode !== null && $cityCode) {
-            /** @var \FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult $deliveryCalcResult */
-            $deliveryCalcResult = $this->getOrderSubscribeService()->getDeliveryCalculationResult(
-                $this->getOrderSubscribe()
-            );
-            if ($deliveryCalcResult !== null) {
-                $deliveryDate = $this->getOrderSubscribeService()->getOrderDeliveryDate(
-                    $deliveryCalcResult
-                );
-            }
-        }
+//        if($cityCode !== null && $cityCode) {
+//            /** @var \FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult $deliveryCalcResult */
+//            $deliveryCalcResult = $this->getOrderSubscribeService()->getDeliveryCalculationResult(
+//                $this->getOrderSubscribe()
+//            );
+//            if ($deliveryCalcResult !== null) {
+//                $deliveryDate = $this->getOrderSubscribeService()->getOrderDeliveryDate(
+//                    $deliveryCalcResult
+//                );
+//            }
+//        }
 
         return $deliveryDate;
     }
