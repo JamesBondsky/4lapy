@@ -62,4 +62,10 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
     // собираем данные с ЛК с кучей и кучей условий, поэтому выносим отдельно..
     include __DIR__ . '/collect_data_popup.php';
     ?>
+
+    <div class="b-popup-preloader b-popup-preloader--fixed js-popup-preloader">
+        <div class="b-popup-preloader__spinner">
+            <img class="b-popup-preloader__image" src="/static/build/images/inhtml/spinner.svg" alt="spinner" title="">
+        </div>
+    </div>
 </div>

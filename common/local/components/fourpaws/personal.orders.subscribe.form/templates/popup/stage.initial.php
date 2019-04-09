@@ -49,7 +49,9 @@ if ($arResult['isActualSubscription']) {
     <?php
 } elseif ($arResult['canBeSubscribed']) {
     ?>
-    <a href="javascript:void(0)" class="b-accordion-order-item__subscribe js-open-popup" data-popup-id="<?=$attrPopupId?>">
+    <a href="javascript:void(0)" class="b-accordion-order-item__subscribe js-open-popup js-open-subscribe-delivery-popup"
+       data-order-id="<?= $arParams['ORDER_ID'] ?>"
+       data-popup-id="change-subscribe-delivery">
         Подписаться на&nbsp;доставку
     </a>
     <?php
@@ -177,7 +179,7 @@ if ($order) {
     //$paymentName = $order->getPayment()->getName();
     $paymentName = 'наличными или картой при получении';
 
-    ?>
+    ?><?/*
     <section class="b-popup-pick-city b-popup-pick-city--subscribe-delivery js-popup-section"
              data-popup="<?= $attrPopupId ?>">
         <a class="b-popup-pick-city__close b-popup-pick-city__close--subscribe-delivery js-close-popup"
@@ -314,7 +316,7 @@ if ($order) {
             </form>
         </div>
     </section>
-    <?php
+    */?><?php
 }
 if ($arParams['OUTPUT_VIA_BUFFER'] === 'Y') {
     $viewTemplate->EndViewTarget();
