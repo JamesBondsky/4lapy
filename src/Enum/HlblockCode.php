@@ -9,5 +9,6 @@ namespace FourPaws\Enum;
  */
 class HlblockCode
 {
+   public const PERSONAL_COUPON = 'PersonalCoupon';
    public const PERSONAL_COUPON_USERS = 'PersonalCouponUsers';
 }
