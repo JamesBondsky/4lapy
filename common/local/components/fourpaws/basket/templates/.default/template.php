@@ -249,6 +249,7 @@ if ($arParams['IS_AJAX']) {
                 </section>
             <?php } ?>
 
+            <? if($arResult['SUBSCRIBE_ALLOWED']){ ?>
             <section class="b-subscribe-delivery-cart desktop">
                 <div class="b-subscribe-delivery-cart__anchor" data-subscribe-delivery-cart="true"></div>
                 <div class="b-subscribe-delivery-cart__content">
@@ -296,11 +297,13 @@ if ($arParams['IS_AJAX']) {
                                 </div>
                                 <div class="b-price-subscribe-delivery-cart__value">
                                     <div class="b-price b-price--subscribe-cart">
-                                        <span class="b-old-price b-old-price--crossed-out b-old-price--inline">
-                                            <span class="b-old-price__old">507,00</span>
-                                            <span class="b-ruble">₽</span>
-                                        </span>
-                                        <span class="b-price__current b-price__current--light">420,00</span>
+                                        <? if($arResult['TOTAL_PRICE'] != $arResult['SUBSCRIBE_PRICE']) { ?>
+                                            <span class="b-old-price b-old-price--crossed-out b-old-price--inline">
+                                                <span class="b-old-price__old"><?= WordHelper::numberFormat($arResult['TOTAL_PRICE']); ?></span>
+                                                <span class="b-ruble">₽</span>
+                                            </span>
+                                        <? } ?>
+                                        <span class="b-price__current b-price__current--light"><?= WordHelper::numberFormat($arResult['SUBSCRIBE_PRICE']); ?></span>
                                         <span class="b-ruble">₽</span>
                                     </div>
                                 </div>
@@ -313,41 +316,29 @@ if ($arParams['IS_AJAX']) {
                                 </div>
                                 <div class="b-price-subscribe-delivery-cart__value">
                                     <div class="b-price b-price--subscribe-cart b-price--result-subscribe-cart">
-                                        <span class="b-old-price b-old-price--crossed-out b-old-price--inline">
-                                            <span class="b-old-price__old">507,00</span>
-                                            <span class="b-ruble">₽</span>
-                                        </span>
-                                        <span class="b-price__current">420,00</span>
+                                        <? if($arResult['TOTAL_PRICE'] != $arResult['SUBSCRIBE_PRICE']) { ?>
+                                            <span class="b-old-price b-old-price--crossed-out b-old-price--inline">
+                                                <span class="b-old-price__old"><?= WordHelper::numberFormat($arResult['TOTAL_PRICE']); ?></span>
+                                                <span class="b-ruble">₽</span>
+                                            </span>
+                                        <? } ?>
+                                        <span class="b-price__current"><?= WordHelper::numberFormat($arResult['SUBSCRIBE_PRICE']); ?></span>
                                         <span class="b-ruble">₽</span>
                                     </div>
                                 </div>
                             </li>
                         </ul>
 
-                        <a href="/sale/order/" class="b-button b-button--subscribe-delivery-cart" title="Подписаться на доставку">
-                            Подписаться на доставку
-                        </a>
+                        <form action="/sale/order/" method="post">
+                            <button class="b-button b-button--subscribe-delivery-cart"
+                               title="Подписка на доставку" <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
+                                Подписаться на доставку
+                            </button>
+                            <input type="hidden" name="subscribe" value="1">
+                        </form>
                     </div>
                 </div>
             </section>
-
-            <? if($arResult['SUBSCRIBE_ALLOWED']){ ?>
-                <div class="b-information-order__order b-information-order__order--total">
-                    <div class="b-information-order__order-price">Итого без учета доставки</div>
-                    <div class="b-price b-price--information-order b-price--total-price">
-                        <span class="b-price__current">
-                            <?= WordHelper::numberFormat($arResult['SUBSCRIBE_PRICE']); ?>
-                        </span><span class="b-ruble">₽</span>
-                    </div>
-                </div>
-
-                <form action="/sale/order/" method="post">
-                    <button class="b-button b-button--start-order <?= $sViewportCookie === null ? 'b-button--bottom-indent' : '' ?>"
-                       title="Подписка на доставку" <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
-                        Подписаться на доставку
-                    </button>
-                    <input type="hidden" name="subscribe" value="1">
-                </form>
             <? } ?>
         </main>
 
@@ -521,11 +512,13 @@ if ($arParams['IS_AJAX']) {
                                 </div>
                                 <div class="b-price-subscribe-delivery-cart__value">
                                     <div class="b-price b-price--subscribe-cart">
-                                        <span class="b-old-price b-old-price--crossed-out b-old-price--inline">
-                                            <span class="b-old-price__old">507,00</span>
-                                            <span class="b-ruble">₽</span>
-                                        </span>
-                                        <span class="b-price__current b-price__current--light">420,00</span>
+                                        <? if($arResult['TOTAL_PRICE'] != $arResult['SUBSCRIBE_PRICE']) { ?>
+                                            <span class="b-old-price b-old-price--crossed-out b-old-price--inline">
+                                                <span class="b-old-price__old"><?= WordHelper::numberFormat($arResult['TOTAL_BASE_PRICE']); ?></span>
+                                                <span class="b-ruble">₽</span>
+                                            </span>
+                                        <? } ?>
+                                        <span class="b-price__current b-price__current--light"><?= WordHelper::numberFormat($arResult['SUBSCRIBE_PRICE']); ?></span>
                                         <span class="b-ruble">₽</span>
                                     </div>
                                 </div>
@@ -538,20 +531,26 @@ if ($arParams['IS_AJAX']) {
                                 </div>
                                 <div class="b-price-subscribe-delivery-cart__value">
                                     <div class="b-price b-price--subscribe-cart b-price--result-subscribe-cart">
-                                        <span class="b-old-price b-old-price--crossed-out b-old-price--inline">
-                                            <span class="b-old-price__old">507,00</span>
-                                            <span class="b-ruble">₽</span>
-                                        </span>
-                                        <span class="b-price__current">420,00</span>
+                                        <? if($arResult['TOTAL_PRICE'] != $arResult['SUBSCRIBE_PRICE']) { ?>
+                                            <span class="b-old-price b-old-price--crossed-out b-old-price--inline">
+                                                <span class="b-old-price__old"><?= WordHelper::numberFormat($arResult['TOTAL_BASE_PRICE']); ?></span>
+                                                <span class="b-ruble">₽</span>
+                                            </span>
+                                        <? } ?>
+                                        <span class="b-price__current"><?= WordHelper::numberFormat($arResult['SUBSCRIBE_PRICE']); ?></span>
                                         <span class="b-ruble">₽</span>
                                     </div>
                                 </div>
                             </li>
                         </ul>
 
-                        <a href="/sale/order/" class="b-button b-button--subscribe-delivery-cart" title="Подписаться на доставку">
-                            Подписаться на доставку
-                        </a>
+                        <form action="/sale/order/" method="post">
+                            <button class="b-button b-button--subscribe-delivery-cart"
+                               title="Подписка на доставку" <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
+                                Подписаться на доставку
+                            </button>
+                            <input type="hidden" name="subscribe" value="1">
+                        </form>
                     </div>
                 </div>
             </section>
