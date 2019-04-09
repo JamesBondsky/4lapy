@@ -74,6 +74,84 @@ class FourPawsPersonalCabinetOrdersSubscribeComponent extends CBitrixComponent
         return $this;
     }
 
+    protected function doAction(): void
+    {
+        $action = $this->getAction();
+        if (is_callable(array($this, $action.'Action'))) {
+            call_user_func(array($this, $action.'Action'));
+        }
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws Exception
+     */
+    protected function initialLoadAction(): void
+    {
+        $this->loadData();
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws Exception
+     */
+    protected function loadData(): void
+    {
+        $orderSubscribeService = $this->getOrderSubscribeService();
+        $filterActive = true;
+        /** $this->arResult['ORDERS'] ArrayCollection */
+        $this->arResult['ORDERS'] = $orderSubscribeService->getUserSubscribedOrders(
+            $this->arParams['USER_ID'],
+            $filterActive
+        );
+
+        // в коллекции значения с неправильными ключами,
+        // костыляем, чтобы в шаблоне не гонять filter
+        $subscriptions = new ArrayCollection();
+        if ($this->arResult['ORDERS'] && count($this->arResult['ORDERS'])) {
+            $tmpCollection = $orderSubscribeService->getSubscriptionsByUser(
+                $this->arParams['USER_ID'],
+                $filterActive
+            );
+
+            foreach ($tmpCollection as $collectionItem) {
+                /** @var OrderSubscribe $collectionItem */
+                $subscriptions->offsetSet($collectionItem->getOrderId(), $collectionItem);
+            }
+        }
+        $this->arResult['SUBSCRIPTIONS'] = $subscriptions;
+        $this->arResult['METRO'] = new ArrayCollection($this->getStoreService()->getMetroInfo());
+
+        $this->includeComponentTemplate();
+    }
+
+    /**
+     * @param string $action
+     * @return void
+     */
+    protected function setAction($action): void
+    {
+        $this->action = $action;
+    }
+
+    /**
+     * @return string
+     */
+    protected function getAction(): string
+    {
+        return $this->action;
+    }
+
+    /**
+     * @return string
+     */
+    protected function prepareAction(): string
+    {
+        $action = 'initialLoad';
+
+        return $action;
+    }
+
     /**
      * @return UserService
      * @throws ApplicationCreateException
@@ -128,81 +206,4 @@ class FourPawsPersonalCabinetOrdersSubscribeComponent extends CBitrixComponent
         return $this->orderSubscribeService;
     }
 
-    /**
-     * @param string $action
-     * @return void
-     */
-    protected function setAction($action): void
-    {
-        $this->action = $action;
-    }
-
-    /**
-     * @return string
-     */
-    protected function getAction(): string
-    {
-        return $this->action;
-    }
-
-    /**
-     * @return string
-     */
-    protected function prepareAction(): string
-    {
-        $action = 'initialLoad';
-
-        return $action;
-    }
-
-    protected function doAction(): void
-    {
-        $action = $this->getAction();
-        if (is_callable(array($this, $action.'Action'))) {
-            call_user_func(array($this, $action.'Action'));
-        }
-    }
-
-    /**
-     * @throws ApplicationCreateException
-     * @throws Exception
-     */
-    protected function initialLoadAction(): void
-    {
-        $this->loadData();
-    }
-
-    /**
-     * @throws ApplicationCreateException
-     * @throws Exception
-     */
-    protected function loadData(): void
-    {
-        $orderSubscribeService = $this->getOrderSubscribeService();
-        $filterActive = true;
-        /** $this->arResult['ORDERS'] ArrayCollection */
-        $this->arResult['ORDERS'] = $orderSubscribeService->getUserSubscribedOrders(
-            $this->arParams['USER_ID'],
-            $filterActive
-        );
-
-        // в коллекции значения с неправильными ключами,
-        // костыляем, чтобы в шаблоне не гонять filter
-        $subscriptions = new ArrayCollection();
-        if ($this->arResult['ORDERS'] && count($this->arResult['ORDERS'])) {
-            $tmpCollection = $orderSubscribeService->getSubscriptionsByUser(
-                $this->arParams['USER_ID'],
-                $filterActive
-            );
-
-            foreach ($tmpCollection as $collectionItem) {
-                /** @var OrderSubscribe $collectionItem */
-                $subscriptions->offsetSet($collectionItem->getOrderId(), $collectionItem);
-            }
-        }
-        $this->arResult['SUBSCRIPTIONS'] = $subscriptions;
-        $this->arResult['METRO'] = new ArrayCollection($this->getStoreService()->getMetroInfo());
-
-        $this->includeComponentTemplate();
-    }
 }

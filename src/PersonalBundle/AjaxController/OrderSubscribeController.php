@@ -195,4 +195,36 @@ class OrderSubscribeController extends Controller
 
         return $return;
     }
+
+    /**
+     * @Route("/getData/", methods={"POST"})
+     * @param Request $request
+     * @return JsonResponse
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getDataAction(Request $request) : JsonResponse
+    {
+        $return = null;
+        $step = $request->get('step') ?? 1;
+        $subscribeId = $request->get('subscribeId');
+        $orderId = $request->get('orderId');
+
+        /** @var \FourPawsPersonalCabinetOrdersSubscribeFormComponent $component */
+        $component = $GLOBALS['APPLICATION']->IncludeComponent(
+            'fourpaws:personal.orders.subscribe.form',
+            '',
+            [
+                'INCLUDE_TEMPLATE' => 'Y',
+                'STEP' => $step,
+                'SUBSCRIBE_ID' => $subscribeId,
+                'ORDER_ID' => $orderId,
+            ],
+            null,
+            [
+                'HIDE_ICONS' => 'Y',
+            ]
+        );
+
+        return $return;
+    }
 }

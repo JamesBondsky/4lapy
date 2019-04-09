@@ -2,6 +2,7 @@
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Error;
+use Bitrix\Main\Result;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\UserFieldEnumValue;
@@ -344,12 +345,52 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     protected function loadData()
     {
         if ($this->getAction() === 'initialLoad') {
-            $this->arResult['ORDER'] = $this->getOrder();
-            if ($this->arResult['ORDER']) {
-                $this->arResult['FREQUENCY_VARIANTS'] = $this->getFrequencyVariants();
-                // $this->arResult['TIME_VARIANTS'] = $this->getTimeVariants();
-                // $this->arResult['ORDER_SUBSCRIBE'] = $this->getOrderSubscribe();
+            $result = new Result();
+
+            if($this->arParams['STEP'] == 1){
+                // редактирование подписки
+                if($this->arParams['SUBSCRIBE_ID'] > 0){
+                    try {
+                        $basket = $this->getOrderSubscribeService()->getBasketBySubscribeId($this->arParams['SUBSCRIBE_ID']);
+                        $this->arResult['TITLE'] = "Редактирование подписки";
+                    } catch (\Exception $e) {
+                        $result->addError(new Error(
+                            sprintf("Failed to get basket for form: %s", $e->getMessage()),
+                            'getBasketBySubscribeId',
+                            ['id' => $this->arParams['SUBSCRIBE_ID']]
+                        ));
+                    }
+                }
+
+                // создание подписки
+                if($this->arParams['ORDER_ID'] > 0){
+                    try {
+                        $basket = $this->getOrder()->getBitrixOrder()->getBasket();
+                        $this->arResult['TITLE'] = "Создание подписки";
+                    } catch (\Exception $e) {
+                        $result->addError(new Error(
+                            sprintf("Failed to get basket for form: %s", $e->getMessage()),
+                            'getBasket',
+                            ['id' => $this->arParams['ORDER_ID']]
+                        ));
+                    }
+                }
+
+                if(!$result->isSuccess()){
+                    $this->arResult['ERROR'] = $result->getErrorMessages();
+                    $this->arResult['CURRENT_STAGE'] = 'error';
+                } else {
+                    $this->arResult['BASKET'] = $basket;
+                    $this->arResult['CURRENT_STAGE'] = 'step1';
+                }
             }
+
+//            $this->arResult['ORDER'] = $this->getOrder();
+//            if ($this->arResult['ORDER']) {
+//                $this->arResult['FREQUENCY_VARIANTS'] = $this->getFrequencyVariants();
+//                $this->arResult['TIME_VARIANTS'] = $this->getTimeVariants();
+//                $this->arResult['ORDER_SUBSCRIBE'] = $this->getOrderSubscribe();
+//            }
         }
 
         if ($this->arParams['INCLUDE_TEMPLATE'] !== 'N') {

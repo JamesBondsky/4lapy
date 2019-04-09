@@ -162,16 +162,16 @@ if ($order) {
     }
 
     // даты, на которые можно оформить первую доставку
-    $possibleDeliveryDateMin = $component->getOrderPossibleDeliveryDate($order);
-    $possibleDeliveryDateMax = null;
-    if ($possibleDeliveryDateMin !== null) {
-        $possibleDeliveryDateMax = clone $possibleDeliveryDateMin;
-        $possibleDeliveryDateMax->add((new \DateInterval('P3M')));
-        // выбранная дата при подписке, либо дата по умолчанию
-        $curDeliveryDateValue = $orderSubscribe ? $orderSubscribe->getDateCreate() : $possibleDeliveryDateMin->format('d.m.Y');
-    } else {
-        $curDeliveryDateValue = $orderSubscribe ? $orderSubscribe->getDateCreate() : '';
-    }
+//    $possibleDeliveryDateMin = $component->getOrderPossibleDeliveryDate($order);
+//    $possibleDeliveryDateMax = null;
+//    if ($possibleDeliveryDateMin !== null) {
+//        $possibleDeliveryDateMax = clone $possibleDeliveryDateMin;
+//        $possibleDeliveryDateMax->add((new \DateInterval('P3M')));
+//        // выбранная дата при подписке, либо дата по умолчанию
+//        $curDeliveryDateValue = $orderSubscribe ? $orderSubscribe->getDateCreate() : $possibleDeliveryDateMin->format('d.m.Y');
+//    } else {
+//        $curDeliveryDateValue = $orderSubscribe ? $orderSubscribe->getDateCreate() : '';
+//    }
 
     // LP03-465
     //$paymentName = $order->getPayment()->getName();
