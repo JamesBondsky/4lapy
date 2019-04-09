@@ -124,7 +124,7 @@ class ExpertSenderFeedService extends FeedService implements LoggerAwareInterfac
                 ->processFeed($feed, $configuration)
                 ->processCurrencies($feed, $configuration)
                 ->processDeliveryOptions($feed, $configuration, $stockID)
-                ->processCategories($feed, $configuration);
+                ->processCategories($feed, $configuration, false);
 
             $this->saveFeed($this->getStorageKey(), $feed);
         } else {
@@ -137,9 +137,8 @@ class ExpertSenderFeedService extends FeedService implements LoggerAwareInterfac
                 $feed->getShop()
                     ->setOffset(null);
 
-                if ($stockID == self::NN_STOCK) {
-                    $this->processPromos($feed, $configuration, $stockID);
-                }
+                $this->processPromos($feed, $configuration, $stockID);
+                $this->processCategories($feed, $configuration, true);
 
                 $this->publicFeed($feed, Application::getAbsolutePath($configuration->getExportFile()));
                 $this->clearFeed($this->getStorageKey());
@@ -212,8 +211,7 @@ class ExpertSenderFeedService extends FeedService implements LoggerAwareInterfac
         Feed $feed,
         Configuration $configuration,
         string $stockID = null
-    ): ExpertSenderFeedService
-    {
+    ): ExpertSenderFeedService {
         $limit = 500;
         $offers = $feed->getShop()
             ->getOffers();
@@ -265,35 +263,6 @@ class ExpertSenderFeedService extends FeedService implements LoggerAwareInterfac
         }
 
         return $this;
-    }
-
-    /**
-     * @param array $filter
-     * @param int $offset
-     * @param int $limit
-     *
-     * @return OfferCollection
-     */
-    protected function getOffers(array $filter, int $offset = 0, $limit = 500): OfferCollection
-    {
-        /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return (new OfferQuery())->withFilter($filter)
-            ->withNav([
-                'nPageSize' => $limit,
-                'iNumPage' => $this->getPageNumber($offset, $limit),
-            ])
-            ->exec();
-    }
-
-    /**
-     * @param int $offset
-     * @param int $limit
-     *
-     * @return int
-     */
-    protected function getPageNumber(int $offset, int $limit): int
-    {
-        return (int)\ceil(($offset + 1) / $limit);
     }
 
     /**
@@ -479,61 +448,6 @@ class ExpertSenderFeedService extends FeedService implements LoggerAwareInterfac
             '<XML_ID' => 2000000,
             'ACTIVE' => 'Y'
         ];
-    }
-
-    /**
-     * @param Feed $feed
-     * @param Configuration $configuration
-     *
-     * @return ExpertSenderFeedService
-     */
-    protected function processCategories(Feed $feed, Configuration $configuration): ExpertSenderFeedService
-    {
-        $categories = new ArrayCollection();
-
-        /**
-         * @var CategoryCollection $parentCategories
-         */
-        $parentCategories = (new CategoryQuery())
-            ->withFilter([
-                'ID' => $configuration->getSectionIds(),
-                'GLOBAL_ACTIVE' => 'Y'
-            ])
-            ->withOrder(['LEFT_MARGIN' => 'ASC'])
-            ->exec();
-
-        /**
-         * @var Category $parentCategory
-         */
-        foreach ($parentCategories as $parentCategory) {
-            if ($categories->get($parentCategory->getId())) {
-                continue;
-            }
-
-            $this->addCategory($parentCategory, $categories);
-
-            if ($parentCategory->getRightMargin() - $parentCategory->getLeftMargin() < 3) {
-                continue;
-            }
-
-            $childCategories = (new CategoryQuery())
-                ->withFilter([
-                    '>LEFT_MARGIN' => $parentCategory->getLeftMargin(),
-                    '<RIGHT_MARGIN' => $parentCategory->getRightMargin(),
-                    'GLOBAL_ACTIVE' => 'Y'
-                ])
-                ->withOrder(['LEFT_MARGIN' => 'ASC'])
-                ->exec();
-
-            foreach ($childCategories as $category) {
-                $this->addCategory($category, $categories);
-            }
-        }
-
-        $feed->getShop()
-            ->setCategories($categories);
-
-        return $this;
     }
 
     /**

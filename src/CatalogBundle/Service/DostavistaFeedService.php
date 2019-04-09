@@ -100,11 +100,11 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
          */
 
         $feed = new Feed();
-        $this
-            ->processFeed($feed, $configuration)
+        $this->processFeed($feed, $configuration)
             ->processCurrencies($feed, $configuration)
-            ->processCategories($feed, $configuration, true)
-            ->processMerchants($feed)
+            ->processCategories($feed, $configuration, true);
+
+        $this->processMerchants($feed)
             ->processProducts($configuration)
             ->processOffers($feed, $configuration);
 
@@ -156,105 +156,6 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
 
         $feed->getShop()
             ->setCurrencies($currencies);
-
-        return $this;
-    }
-
-    /**
-     * @param Feed $feed
-     * @param Configuration $configuration
-     * @param bool $withParents
-     * @return DostavistaFeedService
-     */
-    protected function processCategories(Feed $feed, Configuration $configuration, $withParents = false): DostavistaFeedService
-    {
-        $categories = new ArrayCollection();
-        $categoriesTmp = new ArrayCollection();
-
-        if (in_array(0, $configuration->getSectionIds())) {
-            $filter = [
-                'GLOBAL_ACTIVE' => 'Y'
-            ];
-        } else {
-            $filter = [
-                'ID' => $configuration->getSectionIds(),
-                'GLOBAL_ACTIVE' => 'Y'
-            ];
-        }
-
-        /**
-         * @var CategoryCollection $parentCategories
-         */
-        $parentCategories = (new CategoryQuery())
-            ->withFilter($filter)
-            ->withOrder(['LEFT_MARGIN' => 'ASC'])
-            ->exec();
-
-        /**
-         * @var Category $parentCategory
-         */
-        foreach ($parentCategories as $parentCategory) {
-            if ($categories->get($parentCategory->getId())) {
-                continue;
-            }
-
-            $this->addCategory($parentCategory, $categories);
-            $categoriesTmp->set(
-                $parentCategory->getId(),
-                $parentCategory
-            );
-
-            if ($parentCategory->getRightMargin() - $parentCategory->getLeftMargin() < 3) {
-                continue;
-            }
-
-            $childCategories = (new CategoryQuery())
-                ->withFilter([
-                    '>LEFT_MARGIN' => $parentCategory->getLeftMargin(),
-                    '<RIGHT_MARGIN' => $parentCategory->getRightMargin(),
-                    'GLOBAL_ACTIVE' => 'Y'
-                ])
-                ->withOrder(['LEFT_MARGIN' => 'ASC'])
-                ->exec();
-
-            /** @var Category $category */
-            foreach ($childCategories as $category) {
-                $this->addCategory($category, $categories);
-                $categoriesTmp->set(
-                    $category->getId(),
-                    $category
-                );
-            }
-        }
-
-        if ($withParents) {
-            $emptyParentCategoriesIds = [];
-            foreach ($categoriesTmp as $category) {
-                $parentCategoryId = $category->getIblockSectionId();
-                if ($parentCategoryId !== null && $parentCategoryId !== 0 && !in_array($parentCategoryId, array_keys($categoriesTmp->toArray()))) {
-                    $emptyParentCategoriesIds[$parentCategoryId] = $parentCategoryId;
-                }
-            }
-            if (count($emptyParentCategoriesIds) > 0) {
-                $emptyParentCategories = (new CategoryQuery())
-                    ->withFilter([
-                        'ID' => $emptyParentCategoriesIds
-                    ])
-                    ->withOrder(['LEFT_MARGIN' => 'ASC'])
-                    ->exec();
-                foreach ($emptyParentCategories as $category) {
-                    $this->addCategory($category, $categories);
-                }
-
-                $iterator = $categories->getIterator();
-                $iterator->uasort(function ($a, $b) {
-                    return ($a->getId() < $b->getId()) ? -1 : 1;
-                });
-                $categories = new ArrayCollection(iterator_to_array($iterator));
-            }
-        }
-
-        $feed->getShop()->setCategories($categories);
 
         return $this;
     }
