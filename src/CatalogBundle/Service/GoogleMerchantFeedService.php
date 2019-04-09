@@ -272,30 +272,27 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
     {
         $sectionIds = \array_values($this->getCategoryIds($configuration));
 
+        $dbItems = \CIBlockElement::GetList(
+            [],
+            [
+                'IBLOCK_ID' => IblockUtils::getIblockId(
+                    IblockType::CATALOG,
+                    IblockCode::PRODUCTS
+                ),
+                'SECTION_ID' => $sectionIds,
+                'INCLUDE_SUBSECTIONS' => 'Y',
+                'ACTIVE' => 'Y'
+            ],
+            false,
+            false,
+            [
+                'ID',
+                'IBLOCK_ID'
+            ]
+        );
         $idList = [];
-
-        try {
-            $idList = \array_reduce(
-                ElementTable::query()
-                    ->setSelect(['ID'])
-                    ->setFilter([
-                        'IBLOCK_ID' => IblockUtils::getIblockId(
-                            IblockType::CATALOG,
-                            IblockCode::PRODUCTS
-                        ),
-                        'IBLOCK_SECTION_ID' => $sectionIds,
-                        'INCLUDE_SUBSECTIONS' => 'Y',
-                        'ACTIVE' => 'Y'
-                    ])
-                    ->exec()
-                    ->fetchAll()
-                    ?: [],
-                function ($carry, $on) {
-                    $carry[] = $on['ID'];
-
-                    return $carry;
-                }, []);
-        } catch (Exception $e) {
+        while ($arItem = $dbItems->Fetch()) {
+            $idList[] = $arItem['ID'];
         }
 
         $idList = $idList ?: [-1];
