@@ -214,7 +214,11 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
          * MOBI – заказ создан в мобильном приложении;
          */
         $orderSource = $this->getPropertyValueByCode($order, 'FROM_APP') === 'Y'
-            ? OrderDtoOut::ORDER_SOURCE_MOBILE_APP
+            ? (
+            $this->getPropertyValueByCode($order, 'FROM_APP_DEVICE') == 'ANDROID'
+                ? OrderDtoOut::ORDER_SOURCE_MOBILE_APP_ANDROID
+                : OrderDtoOut::ORDER_SOURCE_MOBILE_APP_IOS
+            )
             : OrderDtoOut::ORDER_SOURCE_SITE;
 
         $description = \trim(\implode("\n",

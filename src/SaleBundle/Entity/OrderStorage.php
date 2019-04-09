@@ -364,6 +364,14 @@ class OrderStorage
     protected $fromApp = false;
 
     /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("FROM_APP_DEVICE")
+     * @Serializer\Groups(groups={"read","create"})
+     */
+    protected $fromAppDevice = '';
+
+    /**
      * Долгота
      *
      * @var string
@@ -1106,6 +1114,25 @@ class OrderStorage
     public function setFromApp(bool $fromApp): OrderStorage
     {
         $this->fromApp = $fromApp;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFromAppDevice(): string
+    {
+        return $this->fromAppDevice;
+    }
+
+    /**
+     * @param string $fromAppDevice
+     *
+     * @return OrderStorage
+     */
+    public function setFromAppDevice(string $fromAppDevice): OrderStorage
+    {
+        $this->fromAppDevice = $fromAppDevice;
         return $this;
     }
 

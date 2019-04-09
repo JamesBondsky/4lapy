@@ -767,7 +767,8 @@ class OrderService
             $this->orderStorageService->setStorageValuesFromArray($storage, $cartParamArray, $step);
         }
 
-        $storage->setFromApp(true);
+        $storage->setFromApp(true)
+            ->setFromAppDevice('ANDROID'); //TODO вставить тип устройства ANDROID/IOS
         $order = $this->appOrderService->createOrder($storage);
         $firstOrder = $this->personalOrderService->getOrderByNumber($order->getField('ACCOUNT_NUMBER'));
         $response = [
