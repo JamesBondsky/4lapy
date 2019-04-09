@@ -430,6 +430,7 @@ class ExpertSenderFeedService extends FeedService implements LoggerAwareInterfac
                         IblockCode::PRODUCTS
                     ),
                     'IBLOCK_SECTION_ID' => $sectionIds,
+                    'INCLUDE_SUBSECTIONS' => 'Y',
                     'ACTIVE' => 'Y'
                 ])
                 ->exec()

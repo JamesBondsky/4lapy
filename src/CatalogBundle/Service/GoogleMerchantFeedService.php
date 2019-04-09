@@ -284,6 +284,7 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
                             IblockCode::PRODUCTS
                         ),
                         'IBLOCK_SECTION_ID' => $sectionIds,
+                        'INCLUDE_SUBSECTIONS' => 'Y',
                         'ACTIVE' => 'Y'
                     ])
                     ->exec()
