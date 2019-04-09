@@ -115,6 +115,7 @@ class ExpertsenderService implements LoggerAwareInterface
     public const FORGOT_PASSWORD_LIST_ID = 7779;
     public const CHANGE_PASSWORD_LIST_ID = 7780;
     public const PIGGY_BANK_SEND_EMAIL = 9006;
+    public const PERSONAL_OFFER_COUPON_SEND_EMAIL = 9006;
     public const GRANDIN_NEW_CHECK_REG_LIST_ID = 8906;
     public const ROYAL_CANIN_NEW_CHECK_REG_LIST_ID = 9195;
     /**
@@ -1281,6 +1282,41 @@ class ExpertsenderService implements LoggerAwareInterface
     {
         if ($email) {
             $transactionId = self::PIGGY_BANK_SEND_EMAIL;
+
+            $this->log()->info(
+                __FUNCTION__,
+                [
+                    'userId' => $userId,
+                    'fullname' => $fullname,
+                    'email' => $email,
+                    'coupon' => $coupon,
+                    'base64' => $base64,
+                    'transactionId' => $transactionId,
+                ]
+            );
+
+            $this->sendSystemTransactional($transactionId, $email);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param int $userId
+     * @param string $fullname
+     * @param string $email
+     * @param string $coupon
+     * @param string $base64
+     * @return bool
+     * @throws ExpertSenderException
+     * @throws ExpertsenderServiceApiException
+     * @throws ExpertsenderServiceException
+     */
+    public function sendPersonalOfferCouponEmail($userId, $fullname, $email, $coupon, $base64): bool
+    {
+        if ($email) {
+            $transactionId = self::PERSONAL_OFFER_COUPON_SEND_EMAIL;
 
             $this->log()->info(
                 __FUNCTION__,

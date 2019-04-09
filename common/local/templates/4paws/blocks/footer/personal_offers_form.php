@@ -6,8 +6,10 @@
         <header class="b-popup-email-coupon__header">
             <div class="b-title b-title--h1 b-title--email-coupon-popup">На эту почту мы отправим вам купон на&nbsp;скидку</div>
         </header>
-        <form class="b-popup-email-coupon__form js-form-validation js-email-coupon-personal-offers" data-url="" method="post">
-            <input type="hidden" name="ID_COUPON_PERSONAL_OFFERS" value="" data-input-coupon-personal-offers="true">
+        <form class="b-popup-email-coupon__form js-form-validation js-email-coupon-personal-offers" data-url="/ajax/personal-offers/email/send/" method="post">
+            <? $token = \FourPaws\Helpers\ProtectorHelper::generateToken(\FourPaws\Helpers\ProtectorHelper::TYPE_PERSONAL_OFFERS_EMAIL_SEND); ?>
+	        <input type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
+	        <input type="hidden" name="ID_COUPON_PERSONAL_OFFERS" value="" data-input-coupon-personal-offers="true">
             <div class="b-input-line">
                 <div class="b-input-line__label-wrapper">
                     <label class="b-input-line__label" for="send-email-coupon-personal-offers">Email</label>

@@ -3,6 +3,7 @@
 namespace FourPaws\PersonalBundle\EventController;
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Event as BitrixEvent;
@@ -10,12 +11,19 @@ use Bitrix\Main\EventManager;
 use Bitrix\Main\Mail\Event as EventMail;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\Date;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\UserTable;
 use FourPaws\App\Application;
 use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Referral;
+use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -107,6 +115,13 @@ class Event extends BaseServiceHandler
         static::initHandler($prefix . 'OnAfterAdd', [self::class, ToLower($prefix) . 'ClearCacheAdd']);
         static::initHandler($prefix . 'OnAfterUpdate', [self::class, ToLower($prefix) . 'ClearCacheUpdate']);
         static::initHandler($prefix . 'OnBeforeDelete', [self::class, ToLower($prefix) . 'ClearCacheDelete']);
+
+        /** персональные предложения */
+        static::initHandler('OnBeforeIBlockElementAdd', [self::class, 'checkDateTo'], 'iblock');
+        static::initHandler('OnBeforeIBlockElementUpdate', [self::class, 'checkDateTo'], 'iblock');
+        static::initHandler('OnBeforeIBlockElementUpdate', [self::class, 'checkIfNewCoupons'], 'iblock');
+        static::initHandler('OnAfterIBlockElementAdd', [self::class, 'importPersonalOffersCoupons'], 'iblock');
+        static::initHandler('OnAfterIBlockElementUpdate', [self::class, 'importPersonalOffersCoupons'], 'iblock');
     }
 
     /**
@@ -487,5 +502,138 @@ class Event extends BaseServiceHandler
     {
         return HLBlockFactory::createTableObject($entityName)::query()->addFilter('=ID',
             $id)->addSelect('*')->exec()->fetch();
+    }
+
+    /**
+     * @param $arFields
+     *
+     * @return bool|null
+     *
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ObjectException
+     */
+    public static function checkDateTo($arFields): ?bool
+    {
+        if ($arFields['IBLOCK_ID'] == IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::PERSONAL_OFFERS))
+        {
+            if ($arFields['ACTIVE_TO'] !== (new Date($arFields['ACTIVE_TO']))->toString())
+            {
+                global $APPLICATION;
+                $APPLICATION->ThrowException('В дате окончания активности не должны быть указаны часы и минуты');
+                return false;
+            }
+        }
+    }
+
+    /**
+     * @param $arFields
+     *
+     * @return bool|null
+     *
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Adv\Bitrixtools\Exception\IblockPropertyNotFoundException
+     * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
+     */
+    public static function checkIfNewCoupons($arFields): ?bool
+    {
+        if ($arFields['IBLOCK_ID'] == IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::PERSONAL_OFFERS))
+        {
+            $fileFieldId = IblockUtils::getPropertyId($arFields['IBLOCK_ID'], 'FILE');
+
+            if ($fileFieldId > 0 && ($fileProperty = $arFields['PROPERTY_VALUES'][$fileFieldId]) && ($file = array_values($fileProperty)[0]['VALUE']))
+            {
+                $fileHandler = fopen($file['tmp_name'], 'rb'); // tmp_name есть только при добавлении/замене файла, в остальных случаях вместо хэндлера вернется false
+                if ($fileHandler)
+                {
+                    $container = Application::getInstance()->getContainer();
+                    /** @var PersonalOffersService $personalOffersService */
+                    $personalOffersService = $container->get('personal_offers.service');
+
+                    if ($personalOffersService->isOfferCouponsImported($arFields['ID']))
+                    {
+                        global $APPLICATION;
+                        $APPLICATION->ThrowException('Купоны для этого персонального предложения уже импортированы');
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * @param $arFields
+     *
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Adv\Bitrixtools\Exception\IblockPropertyNotFoundException
+     * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
+     * @throws \Bitrix\Main\ObjectException
+     */
+    public static function importPersonalOffersCoupons($arFields): void
+    {
+        if ($arFields['RESULT'] && $arFields['IBLOCK_ID'] == IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::PERSONAL_OFFERS))
+        {
+            $fileFieldId = IblockUtils::getPropertyId($arFields['IBLOCK_ID'], 'FILE');
+
+            if ($fileFieldId > 0 && ($fileProperty = $arFields['PROPERTY_VALUES'][$fileFieldId]) && ($file = array_values($fileProperty)[0]['VALUE']))
+            {
+                $fileHandler = fopen($file['tmp_name'], 'rb'); // tmp_name есть только при добавлении/замене файла, в остальных случаях вместо хэндлера вернется false
+                if ($fileHandler)
+                {
+                    // Получение промокодов и номеров телефонов из файла
+                    $phonesArray = [];
+                    $coupons     = [];
+                    while (!feof($fileHandler)) {
+                        $couponInfo = array_map(
+                            'trim',
+                            explode(',', fgets($fileHandler))
+                        );
+                        if (PhoneHelper::isPhone($couponInfo[0]))
+                        {
+                            $couponInfo[0] = PhoneHelper::formatPhone($couponInfo[0], PhoneHelper::FORMAT_SHORT);
+                            if ($couponInfo[0])
+                            {
+                                $phonesArray[] = $couponInfo[0];
+                                $coupons[$couponInfo[1]][$couponInfo[0]] = '';
+                            }
+                        }
+                        unset($couponInfo);
+                    }
+                    fclose($fileHandler);
+                    $phonesArray = array_unique(array_filter($phonesArray));
+
+                    // Получение пользователей, которым надо выдать купоны
+                    $users = UserTable::query()
+                        ->setSelect([
+                            'ID',
+                            'PERSONAL_PHONE',
+                        ])
+                        ->setFilter([
+                            '=PERSONAL_PHONE' => $phonesArray,
+                        ])
+                        ->exec()
+                        ->fetchAll();
+                    $userIds = [];
+                    foreach ($users as $user)
+                    {
+                        $userIds[$user['PERSONAL_PHONE']] = $user['ID'];
+                    }
+                    foreach ($coupons as $promoCode => $couponUsers)
+                    {
+                        foreach ($couponUsers as $phone => $userId)
+                        {
+                            $coupons[$promoCode][$phone] = $userIds[$phone];
+                        }
+                    }
+
+                    //TODO номера из $phonesArray, которых нет среди зарегистрированных пользователей ($users) - сохранить и потом перепроверять
+                    // при регистрации/изменении пользователей/привязке телефонов, не появился ли такой юзер. Если появился - привязать ему купон
+
+                    $container = Application::getInstance()->getContainer();
+                    /** @var PersonalOffersService $personalOffersService */
+                    $personalOffersService = $container->get('personal_offers.service');
+                    $personalOffersService->importOffers($arFields['ID'], $coupons);
+                }
+            }
+        }
     }
 }
