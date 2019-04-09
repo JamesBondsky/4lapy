@@ -46,6 +46,11 @@ abstract class FeedService
     public $tmpFileName;
 
     /**
+     * @var array
+     */
+    public $categoriesInProducts;
+
+    /**
      * FeedService constructor.
      *
      * @param SerializerInterface $serializer
@@ -249,7 +254,7 @@ abstract class FeedService
         }
 
         if ($withParents) {
-            $emptyParentCategoriesIds = [];
+            $emptyParentCategoriesIds = array_diff($this->categoriesInProducts, array_keys($categoriesTmp->toArray()));
             foreach ($categoriesTmp as $category) {
                 $parentCategoryId = $category->getIblockSectionId();
                 if ($parentCategoryId !== null && $parentCategoryId !== 0 && !in_array($parentCategoryId, array_keys($categoriesTmp->toArray()))) {

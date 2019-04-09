@@ -304,6 +304,9 @@ class ExpertSenderFeedService extends FeedService implements LoggerAwareInterfac
 
         $deliveryInfo = $this->getOfferDeliveryInfo($offer, $stockID);
 
+        $sectionId = $offer->getProduct()->getIblockSectionId();
+        $this->categoriesInProducts[$sectionId] = $sectionId;
+
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         /** @noinspection PassingByReferenceCorrectnessInspection */
         $expertSenderOffer =
@@ -315,8 +318,7 @@ class ExpertSenderFeedService extends FeedService implements LoggerAwareInterfac
                         ->getBrandName(),
                     $offer->getName()
                 ))
-                ->setCategoryId($offer->getProduct()
-                    ->getIblockSectionId())
+                ->setCategoryId($sectionId)
                 ->setDelivery(!$offer->getProduct()
                     ->isDeliveryForbidden())
                 ->setPickup(true)

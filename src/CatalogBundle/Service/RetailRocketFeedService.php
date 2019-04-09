@@ -218,6 +218,9 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
             ->getSrc()))->setHost($host)->__toString();
         $detailPath = (new FullHrefDecorator($offer->getDetailPageUrl()))->setHost($host)->__toString();
 
+        $sectionId = $offer->getProduct()->getIblockSectionId();
+        $this->categoriesInProducts[$sectionId] = $sectionId;
+
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         /** @noinspection PassingByReferenceCorrectnessInspection */
         $rrOffer =
@@ -229,8 +232,7 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
                         ->getBrandName(),
                     $offer->getName()
                 ))
-                ->setCategoryId($offer->getProduct()
-                    ->getIblockSectionId())
+                ->setCategoryId($sectionId)
                 ->setDescription(\substr(\strip_tags($offer->getProduct()
                     ->getDetailText()
                     ->getText()), 0, 2990))

@@ -369,6 +369,8 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             }
             $tpz = $offer->getAllStocks()->filterByStore($this->curStock)->getTotalAmount() == 0;
         }
+        $sectionId = $offer->getProduct()->getIblockSectionId();
+        $this->categoriesInProducts[$sectionId] = $sectionId;
 
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         /** @noinspection PassingByReferenceCorrectnessInspection */
@@ -381,8 +383,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                         ->getBrandName(),
                     $offer->getName()
                 ))
-                ->setCategoryId($offer->getProduct()
-                    ->getIblockSectionId())
+                ->setCategoryId($sectionId)
                 ->setDelivery(!$offer->getProduct()
                     ->isDeliveryForbidden())
                 ->setPickup(true)

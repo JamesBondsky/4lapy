@@ -102,11 +102,12 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
         $feed = new Feed();
         $this->processFeed($feed, $configuration)
             ->processCurrencies($feed, $configuration)
-            ->processCategories($feed, $configuration, true);
+            ->processCategories($feed, $configuration, false);
 
         $this->processMerchants($feed)
             ->processProducts($configuration)
-            ->processOffers($feed, $configuration);
+            ->processOffers($feed, $configuration)
+            ->processCategories($feed, $configuration, true);
 
         $this->removeExtraData($feed);
 
@@ -259,6 +260,7 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
                 $arProduct['DETAIL_TEXT']
             );
             $descr = str_replace("\r\n", '', html_entity_decode(\HTMLToTxt($descr))); //удаляем остальные теги
+            $this->categoriesInProducts[$arProduct['IBLOCK_SECTION_ID']] = $arProduct['IBLOCK_SECTION_ID'];
             $this->products[$arProduct['ID']] = [
                 'DESCRIPTION' => $descr,
                 'IBLOCK_SECTION_ID' => $arProduct['IBLOCK_SECTION_ID'],
@@ -430,6 +432,8 @@ class DostavistaFeedService extends FeedService implements LoggerAwareInterface
         $this->printDumpString('processOffersXmlModelCreate done');
 
         $feed->getShop()->setOffers($offerCollection);
+
+        return $this;
     }
 
 
