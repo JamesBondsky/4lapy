@@ -464,16 +464,35 @@ class OrderStorageService
         }
 
         /**
-         * Если есть оплата "наличными или картой", удаляем оплату "наличными"
+         * Если есть оплата "наличными или картой", удаляем оплату "наличными" - если не достависта,
+         * Если достависта - "удаляем наличными или картой", оставляем "наличными"
          */
-        if ($filter
-            && !empty(\array_filter($payments, function ($item) {
-                return $item['CODE'] === OrderPayment::PAYMENT_CASH_OR_CARD;
-            }))) {
-            foreach ($payments as $id => $payment) {
-                if ($payment['CODE'] === OrderPayment::PAYMENT_CASH) {
-                    unset($payments[$id]);
-                    break;
+        $deliveryCode = false;
+        if ($storage->getDeliveryId()) {
+            $deliveryCode = $this->deliveryService->getDeliveryCodeById($storage->getDeliveryId());
+        }
+        if ($deliveryCode === false || !$this->deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
+            if ($filter
+                && !empty(\array_filter($payments, function ($item) {
+                    return $item['CODE'] === OrderPayment::PAYMENT_CASH_OR_CARD;
+                }))) {
+                foreach ($payments as $id => $payment) {
+                    if ($payment['CODE'] === OrderPayment::PAYMENT_CASH) {
+                        unset($payments[$id]);
+                        break;
+                    }
+                }
+            }
+        } else {
+            if ($filter
+                && !empty(\array_filter($payments, function ($item) {
+                    return $item['CODE'] === OrderPayment::PAYMENT_CASH;
+                }))) {
+                foreach ($payments as $id => $payment) {
+                    if ($payment['CODE'] === OrderPayment::PAYMENT_CASH_OR_CARD) {
+                        unset($payments[$id]);
+                        break;
+                    }
                 }
             }
         }

@@ -61,10 +61,11 @@ if ($template->hasMainWrapper()) {
     <?php include __DIR__ . '/blocks/preloader.php'; ?>
     </main>
 <?php } ?>
-<?php require_once __DIR__ . '/blocks/footer/change_viewport.php'; ?>
+<?/* Временно скрываем баннер перехода в мобильную версию */?>
+<?/*php require_once __DIR__ . '/blocks/footer/change_viewport.php'; */?>
 <?
 if (mb_strpos($APPLICATION->GetCurDir(), '/cart/') === false && mb_strpos($APPLICATION->GetCurDir(), '/sale/order/') === false) {
-    require_once __DIR__ . '/blocks/footer/bottom_die_banner.php';
+    require_once __DIR__ . '/blocks/footer/promo_bottom_acarid.php';
 }
 ?>
 <footer class="b-footer js-main-footer <?= $template->getFooterClass() ?>">
@@ -123,15 +124,20 @@ if (mb_strpos($APPLICATION->GetCurDir(), '/cart/') === false && mb_strpos($APPLI
                 <div class="b-footer__column 
                             b-footer__column--small 
                             b-footer__column--change-viewport 
-                            <?= ($sViewportCookie === 'mobile')||($sViewportCookie === 'desktop') ? 'active' : '' ?>"
+                            <?= ($sViewportCookie === 'mobile') ? 'mobile' : '' ?>"
                             data-footer-links-change-viewport="true">
-
-                    <div class="link-toggle-view <?= $sViewportCookie === 'desktop' ? 'active' : '' ?>" data-change-viewport-mode='desktop' data-type="mobile">
-                        Перейти в<br/> мобильную версию
-                    </div>
-                    <div class="link-toggle-view <?= $sViewportCookie === 'mobile' ? 'active mobile' : '' ?>" data-change-viewport-mode='mobile' data-type="desktop">
-                        Перейти в<br/> полноэкранный режим
-                    </div>
+                    <?php if ($sViewportCookie === null) { ?>
+                        <div class="link-toggle-view active mobile" data-change-viewport-mode='mobile' data-type="desktop">
+                            Перейти в<br/> полноэкранный режим
+                        </div>
+                    <?php }else{ ?>
+                        <div class="link-toggle-view <?= $sViewportCookie === 'desktop' ? 'active' : '' ?>" data-change-viewport-mode='desktop' data-type="mobile">
+                            Перейти в<br/> мобильную версию
+                        </div>
+                        <div class="link-toggle-view <?= $sViewportCookie === 'mobile' ? 'active mobile' : '' ?>" data-change-viewport-mode='mobile' data-type="desktop">
+                            Перейти в<br/> полноэкранный режим
+                        </div>
+                    <?php } ?>
                 </div>
             </div>
         </div>

@@ -80,6 +80,7 @@ class OfferQuery extends IblockElementQuery
             'PRICE_ACTION',
             'COND_FOR_ACTION',
             'BONUS_EXCLUDE',
+            'REGION_DISCOUNTS'
         ];
     }
 

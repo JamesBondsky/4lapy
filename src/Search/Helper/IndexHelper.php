@@ -308,17 +308,28 @@ class IndexHelper implements LoggerAwareInterface
                                 'PROPERTY_IS_NEW'           => ['type' => 'boolean'],
                                 'PROPERTY_IS_SALE'          => ['type' => 'boolean'],
                                 'PROPERTY_IS_POPULAR'       => ['type' => 'boolean'],
-                                'price'                     => ['type' => 'scaled_float', 'scaling_factor' => 100,],
+                                'price'                     => ['type' => 'scaled_float', 'scaling_factor' => 100],
                                 'currency'                  => ['type' => 'keyword'],
                                 'availableStores'           => ['type' => 'keyword'],
-//                                'prices'                   => [
-//                                    'type'       => 'nested',
-//                                    'properties' => [
-//                                        'REGION_ID' => ['type' => 'keyword'],
-//                                        'PRICE'     => ['type' => 'scaled_float', 'scaling_factor' => 100,],
-//                                        'CURRENCY'  => ['type' => 'keyword'],
-//                                    ],
-//                                ],
+                                'prices'                    => [
+                                    'type'       => 'nested',
+                                    'properties' => [
+                                        'ID'               => ['type' => 'keyword'],
+                                        'PRODUCT_ID'       => ['type' => 'keyword'],
+                                        'CATALOG_GROUP_ID' => ['type' => 'keyword'],
+                                        'PRICE'            => ['type' => 'keyword'],
+                                        'CURRENCY'         => ['type' => 'keyword'],
+                                    ],
+                                ],
+                                'PROPERTY_REGION_DISCOUNTS' => [
+                                    'type'       => 'nested',
+                                    'properties' => [
+                                        'id'               => ['type' => 'integer'],
+                                        'cond_for_action'  => ['type' => 'keyword'],
+                                        'price_action'     => ['type' => 'scaled_float', 'scaling_factor' => 100],
+                                        'cond_value'       => ['type' => 'scaled_float', 'scaling_factor' => 100],
+                                    ],
+                                ]
                             ],
                         ],
                         'active'                           => ['type' => 'boolean'],

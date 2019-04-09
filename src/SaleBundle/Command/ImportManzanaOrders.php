@@ -154,7 +154,7 @@ class ImportManzanaOrders extends Command implements LoggerAwareInterface
                     try
                     {
                         if ($userId > 0 && $USER->GetID() != $userId) {
-                            $USER->Authorize($userId);
+                            $USER->Authorize($userId, false, false);
                         }
                         $orderService->importOrdersFromManzana($user);
                     } catch (ChequeItemNotExistsException|ChequeItemNotActiveException $e)

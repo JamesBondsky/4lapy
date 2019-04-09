@@ -104,6 +104,9 @@ $APPLICATION->IncludeComponent('bitrix:news.list',
     false,
     ['HIDE_ICONS' => 'Y']);
 
+/**
+ * @todo: А зачем тут ещё один слайдер?
+ */
 if ($category->isLanding() || $catalogRequest->isLanding()) {
     echo $view->render('FourPawsCatalogBundle:Catalog:landing.slider.html.php', \compact('category'));
 }

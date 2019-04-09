@@ -54,6 +54,7 @@ use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\LocationBundle\Exception\AddressSplitException;
 use FourPaws\LocationBundle\LocationService;
@@ -95,6 +96,17 @@ class OrderService implements LoggerAwareInterface
     use LazyLoggerAwareTrait;
 
     public const PROPERTY_TYPE_ENUM = 'ENUM';
+
+    const ROYAL_CANIN_OFFERS = [
+        1019946, 1019948, 1019947, 1019949, 1021686, 1021685, 1019821, 1002780, 1016776, 1019823, 1002783, 1002778,
+        1002785, 1002776, 1002786, 1002779, 1002553, 1016215, 1001782, 1016773, 1016774, 1016775, 1016216, 1002782,
+        1003903, 1002551, 1002550, 1021687, 1019835, 1006587, 1020331, 1006588, 1009598, 1002781, 1002777, 1003367,
+        1002784, 1002562, 3005033, 1016213, 1016214, 1016212, 1002944, 1021688, 1006361, 1019834, 1019837, 1018224,
+        1018225, 1001814, 1001915, 1001783, 1021691, 1001804, 1003082, 1001911, 1001904, 1013452, 1021689, 1001914,
+        1001803, 1007282, 1006586, 1006626, 1019629, 1018336, 1001913, 1001802, 1001815, 1021690, 1003129, 1004064,
+        1016244, 1001806, 1001812, 1003580, 1001907, 1001906, 1001908, 1001808, 1016245, 1001807, 1016248, 1003159,
+        1003085, 1015821, 1001805, 1001910, 1001903, 1001902, 1001912, 1001905
+    ];
 
     /**
      * РЦ Склад
@@ -178,6 +190,9 @@ class OrderService implements LoggerAwareInterface
 
     /** @var array $paySystemServiceCache */
     private $paySystemServiceCache = [];
+
+    /** @var string $dostavistManagerPhone */
+    private $dostavistManagerPhone = '8 (495) 221-72-25, доб. 5005';
 
     /**
      * OrderService constructor.
@@ -731,6 +746,15 @@ class OrderService implements LoggerAwareInterface
             try {
                 $operator = $this->userProvider->findOne($this->userAvatarAuthorization->getAvatarHostUserId());
                 if ($operator) {
+                    $this->log()->notice('Operator avatar save info', [
+                        'ORDER_ID' => $order->getId(),
+                        'ORDER_CODE' => $order->getField('ACCOUNT_NUMBER'),
+                        'ID' => $operator->getId(),
+                        'EMAIL' => $operator->getEmail(),
+                        'SHOP_CODE' => $operator->getShopCode(),
+                        'NAME' => $operator->getName(),
+                        'SECOND_NAME' => $operator->getSecondName()
+                    ]);
                     $this->setOrderPropertyByCode(
                         $order,
                         'OPERATOR_EMAIL',
@@ -1099,6 +1123,7 @@ class OrderService implements LoggerAwareInterface
                             'DELIVERY_PLACE_CODE' => $nearShop->getXmlId()
                         ]
                     );
+                    $order->setField('COMMENTS', 'Упаковать заказ'); //Если достависта оставляем комментарий менеджеру
                 }
             } else {
                 /**
@@ -1720,11 +1745,9 @@ class OrderService implements LoggerAwareInterface
 
     /**
      * @param Order $order
-     * @param CalculationResultInterface $delivery
-     * @param bool $isFastOrder
+     * @param $deliveryCode
      * @param Address|null $address
      * @param bool $dostavistaSuccess
-     * @throws DeliveryNotFoundException
      */
     public function updateCommWayPropertyEx(
         Order $order,
@@ -1735,15 +1758,17 @@ class OrderService implements LoggerAwareInterface
         $commWay = $this->getOrderPropertyByCode($order, 'COM_WAY');
         $value = $commWay->getValue();
 
-        if (!$changed) {
-            switch (true) {
-                case $deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE:
-                    if($dostavistaSuccess){
-                        $value = OrderPropertyService::COMMUNICATION_SMS;
-                    } else {
-                        $value = OrderPropertyService::COMMUNICATION_DOSTAVISTA_ERROR;
-                    }
-                    break;
+        if ($deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
+            if ($dostavistaSuccess) {
+                if ($value != OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS) {
+                    $value = OrderPropertyService::COMMUNICATION_SMS;
+                }
+            } else {
+                if ($value == OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS) {
+                    $value = OrderPropertyService::COMMUNICATION_PAYMENT_ANALYSIS_DOSTAVISTA_ERROR;
+                } else {
+                    $value = OrderPropertyService::COMMUNICATION_DOSTAVISTA_ERROR;
+                }
             }
         }
 
@@ -1919,7 +1944,7 @@ class OrderService implements LoggerAwareInterface
      * @throws SystemException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function sendToDostavista(Order $order, string $name, string $phone, string $comment, string $periodTo, Store $nearShop = null, bool $isPaid = false): void
+    public function sendToDostavista(Order $order, string $name, string $phone, string $comment, string &$periodTo, Store $nearShop = null, bool $isPaid = false): void
     {
         $curDate = new \DateTime;
         $basket = $order->getBasket();
@@ -1928,70 +1953,83 @@ class OrderService implements LoggerAwareInterface
         $insurance = ceil((float)$basket->getPrice());
         $takingAmount = 0;
         if (!$isPaid) {
-            $takingAmount += $insurance;
+            $takingAmount = ceil($insurance + $deliveryPrice);
         }
         /** @var OfferCollection $offers */
         $offers = $this->getOrderProducts($order);
         /** @var int $weight Вес всех товаров */
         $weight = (int)($basket->getWeight() / 1000);
-        $dostavistaWeightVal = 0;
-        if ($weight <= 15) {
-            $vehicleTypeId = 6;
-            if ($weight <= 5) {
-                $dostavistaWeightVal = 0;
-            } elseif ($weight > 5 && $weight <= 10) {
-                $dostavistaWeightVal = 5;
-            } elseif ($weight > 10 && $weight <= 15) {
-                $dostavistaWeightVal = 10;
-            }
-        } elseif ($weight <= 200) {
-            $vehicleTypeId = 7;
-            if ($weight > 15 && $weight <= 50) {
-                $dostavistaWeightVal = 15;
-            } elseif ($weight > 50 && $weight <= 100) {
-                $dostavistaWeightVal = 50;
-            } elseif ($weight > 100 && $weight <= 150) {
-                $dostavistaWeightVal = 100;
-            } elseif ($weight > 150 && $weight <= 200) {
-                $dostavistaWeightVal = 150;
-            }
-        } elseif ($weight <= 500) {
-            $vehicleTypeId = 1;
-            $dostavistaWeightVal = 200;
-        } elseif ($weight <= 700) {
-            $vehicleTypeId = 2;
-            $dostavistaWeightVal = 500;
-        } elseif ($weight <= 1000) {
-            $vehicleTypeId = 3;
-            $dostavistaWeightVal = 700;
-        } elseif ($weight <= 1500) {
-            $vehicleTypeId = 4;
-            $dostavistaWeightVal = 1000;
-        } else {
-            $vehicleTypeId = 5;
-            $dostavistaWeightVal = 1500;
+
+        switch (true) {
+            case $weight <= 15:
+                $vehicleTypeId = 6;
+                break;
+            case $weight <= 200:
+                $vehicleTypeId = 7;
+                break;
+            case $weight <= 500:
+                $vehicleTypeId = 1;
+                break;
+            case $weight <= 700:
+                $vehicleTypeId = 2;
+                break;
+            case $weight <= 1000:
+                $vehicleTypeId = 3;
+                break;
+            case $weight <= 1500:
+                $vehicleTypeId = 4;
+                break;
+            default:
+                $vehicleTypeId = 5;
+                break;
         }
 
         $arSectionsNames = [];
+        //проверка высоты товаров в корзине
+        /** @var int $loadersCount требуемое число грузчиков */
+        $loadersCount = 0;
         /** @var Offer $offer */
         foreach ($offers as $offer) {
+            $length = WordHelper::showLengthNumber($offer->getCatalogProduct()->getLength());
+            $width = WordHelper::showLengthNumber($offer->getCatalogProduct()->getWidth());
+            $height = WordHelper::showLengthNumber($offer->getCatalogProduct()->getHeight());
+            if ($length > 170 || $width > 170 || $height > 170) {
+                //портер с грузчиком
+                $vehicleTypeId = 3;
+                $loadersCount = 2;
+                //время доставки 5 часов
+                $periodTo = 300;
+            } elseif ($length > 150 || $weight > 150 || $height > 150) {
+                //Каблук
+                $vehicleTypeId = 2;
+                //время доставки 5 часов
+                $periodTo = 300;
+                //с грузчиком если вес больше 25кг
+                if ($weight >= 25) {
+                    //Каблук с грузчика
+                    $loadersCount = 2;
+                }
+            }
             $section = $offer->getProduct()->getSection();
             if ($section != null) {
                 $arSectionsNames[$section->getId()] = $section->getName();
             }
         }
+
         /** @var string $matter Что везем - названия всех разделов через запятую */
         $matter = implode(', ', $arSectionsNames);
         unset($arSectionsNames);
 
         $data = [
             'bitrix_order_id' => $order->getId(),
-            'total_weight_kg' => $dostavistaWeightVal,
+            'order_create_date' => $curDate->format('d.m.Y H:i:s'),
+            'total_weight_kg' => $weight,
             'vehicle_type_id' => $vehicleTypeId,
             'matter' => $matter, //что везем
             'insurance_amount' => ceil($insurance + $deliveryPrice), //сумма страхования = цене корзины
             'is_client_notification_enabled' => (\COption::GetOptionString('articul.dostavista.delivery', 'sms_courier_set', '') == BaseEntity::BITRIX_TRUE) ? 1 : 0, //Отправить sms о назначении курьера на заказ 0/1
-            'is_contact_person_notification_enabled' => (\COption::GetOptionString('articul.dostavista.delivery', 'sms_courier_time_phone', '') == BaseEntity::BITRIX_TRUE) ? 1 : 0 //Отправить получателям sms с интервалом прибытия и телефоном курьера: 0 - не отправлять, 1 - отправлять.
+            'is_contact_person_notification_enabled' => (\COption::GetOptionString('articul.dostavista.delivery', 'sms_courier_time_phone', '') == BaseEntity::BITRIX_TRUE) ? 1 : 0, //Отправить получателям sms с интервалом прибытия и телефоном курьера: 0 - не отправлять, 1 - отправлять.
+            'loaders_count' => $loadersCount
         ];
 
         $nearAddressString = $this->storeService->getStoreAddress($nearShop) . ', ' . $nearShop->getAddress();
@@ -2026,7 +2064,7 @@ class OrderService implements LoggerAwareInterface
             'required_finish_datetime' => $pointZeroDate->format('c'),
             'taking_amount' => 0,
             'buyout_amount' => $takingAmount,
-            'note' => 'Телефон магазина: ' . $nearShop->getPhone()
+            'note' => 'Телефон магазина: ' . $this->dostavistManagerPhone
         ];
 
         $data['points'][1] = [
@@ -2038,7 +2076,7 @@ class OrderService implements LoggerAwareInterface
             'client_order_id' => $order->getField('ACCOUNT_NUMBER'),
             'required_start_datetime' => $requireTimeStart,
             'required_finish_datetime' => $pointZeroDate->format('c'),
-            'taking_amount' => ceil($takingAmount + $deliveryPrice),
+            'taking_amount' => $takingAmount,
             'buyout_amount' => 0,
             'note' => $comment
         ];
@@ -2060,10 +2098,12 @@ class OrderService implements LoggerAwareInterface
         $dostavistaOrder->bitrixOrderId = $data['bitrix_order_id'];
         $dostavistaOrder->totalWeightKg = $data['total_weight_kg'];
         $dostavistaOrder->vehicleTypeId = $data['vehicle_type_id'];
+        $dostavistaOrder->loadersCount = $data['loaders_count'];
         $dostavistaOrder->matter = $data['matter'];
         $dostavistaOrder->insuranceAmount = $data['insurance_amount'];
         $dostavistaOrder->isClientNotificationEnabled = $data['is_client_notification_enabled'];
         $dostavistaOrder->isContactPersonNotificationEnabled = $data['is_contact_person_notification_enabled'];
+        $dostavistaOrder->orderCreateDate = $data['order_create_date'];
 
         $pointCollection = new ArrayCollection();
         foreach ($data['points'] as $point) {
@@ -2091,5 +2131,27 @@ class OrderService implements LoggerAwareInterface
         $dostavistaOrder->points = $pointCollection;
 
         $dostavistaService->dostavistaOrderAdd($dostavistaOrder);
+    }
+
+    /**
+     * @param Order $order
+     * @return bool
+     */
+    public function checkRoyalCaninAction(Order $order): bool
+    {
+        $res = false;
+        $orderPrice = $order->getPrice();
+        $basketItemsXmlId = [];
+        foreach ($order->getBasket() as $basketItem) {
+            $basketItemsXmlId[] = $this->basketService->getBasketItemXmlId($basketItem);
+        }
+        $basketRoyalCaninItems = array_uintersect(static::ROYAL_CANIN_OFFERS, $basketItemsXmlId, 'strcasecmp');
+        $curTime = new \DateTime();
+        $dateTimeStart = \DateTime::createFromFormat('d.m.Y H:i:s', '08.04.2019 00:00:00');
+        $dateTimeFinish = \DateTime::createFromFormat('d.m.Y H:i:s', '03.06.2019 23:59:59');
+        if ($curTime >= $dateTimeStart && $curTime <= $dateTimeFinish && $orderPrice > 1000 && count($basketRoyalCaninItems) > 0) {
+            $res = true;
+        }
+        return $res;
     }
 }

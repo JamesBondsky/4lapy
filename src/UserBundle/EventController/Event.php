@@ -18,6 +18,8 @@ use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\LocationBundle\LocationService;
+use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -129,6 +131,26 @@ class Event extends BaseServiceHandler
         /** проставление группы правила работы с корзиной */
         static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'updateBasketRuleGroup'], 'main');
 
+        /** при смене города */
+        static::initHandlerCompatible('OnCityChange', [self::class, 'updateBasketDiscountProperties'], 'main');
+
+    }
+
+    /**
+     * @param array $city
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     */
+    public static function updateBasketDiscountProperties(array $city)
+    {
+        /** @var LocationService $locationService */
+        $locationService = Application::getInstance()->getContainer()->get('location.service');
+        $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
+
+        $regionCode = $locationService->getRegionCode($city['CODE']);
+        foreach ($basketService->getBasket() as $basketItem) {
+            $basketService->updateRegionDiscountForBasketItem($basketItem, $regionCode);
+        }
     }
 
     /**

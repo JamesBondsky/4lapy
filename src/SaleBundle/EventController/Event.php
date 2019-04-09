@@ -242,6 +242,15 @@ class Event extends BaseServiceHandler
         ], $module);
 
         /**
+         * При добавлении в корзину
+         */
+        $module = 'sale';
+        static::initHandler('OnBasketAdd', [
+            self::class,
+            'addDiscountProperties'
+        ], $module);
+
+        /**
          * Добавление марок в корзину
          */
         /*$module = 'sale';
@@ -249,6 +258,34 @@ class Event extends BaseServiceHandler
             self::class,
             'addStampsToBasket'
         ], $module);*/
+
+        $module = 'sale';
+        static::initHandler('OnOrderNewSendEmail', [
+            self::class,
+            'cancelEventAddition'
+        ], $module);
+        static::initHandler('OnOrderPaySendEmail', [
+            self::class,
+            'cancelEventAddition'
+        ], $module);
+    }
+
+    /**
+     * Добавляет свойство для региональных скидок
+     * @param $ID
+     * @param $arFields
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     */
+    public function addDiscountProperties($ID, $arFields)
+    {
+        /** @var BasketService $basketService */
+        $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
+
+        /** @var BasketItem $basketItem */
+        if($basketItem = $basketService->getBasket()->getItemById($ID)){
+            $basketService->updateRegionDiscountForBasketItem($basketItem);
+        }
     }
 
     public static function updateUserAccountBalance(): void
@@ -260,6 +297,9 @@ class Event extends BaseServiceHandler
             /** выполняем только при пользовательской авторизации(это аякс), либо из письма и обратных ссылок(это personal)
              *  так же чекаем что это не страница заказа
              */
+            //FIXME эта проверка работает неправильно из-за расчета делавшего это программиста на наличие "index.php" в url`е авторизации.
+            //Сейчас index.php в url нет и метод на авторизации не работает.
+            //Нужно переделать апдейт баланса асинхронно, после чего отрефакторить то, что тут происходит
             if (!$template->hasUserAuth()) {
                 return;
             }
@@ -522,32 +562,19 @@ class Event extends BaseServiceHandler
     }
 
     /**
-     * @param $id
+     * @param $orderId
      * @param $type
      *
      * @return false|int
      */
-    public static function updateOrderAccountNumber($id, $type)
+    public static function updateOrderAccountNumber($orderId, $type)
     {
         $result = false;
-        if (self::$isEventsDisable) {
-            return $result;
-        }
 
         if ($type === 'NUMBER') {
             try {
                 //$defaultNumber = (int)Option::get('sale', 'account_number_data', 0); // "Начальное число" в настройке "Шаблон генерации номера заказа"
-                $newNumber = (int)OrderNumberTable::add([])->getId();
-
-                /*if ($defaultNumber > $newNumber)
-                {
-                    // Если делать LOCK только после OrderNumberTable::add([]), то возможна попытка создания
-                    // номеров с одним и тем же $defaultNumber (упадет с Exception)
-                    //$connection = BitrixApplication::getConnection();
-                    $connection->query('LOCK TABLE ' . OrderNumberTable::getTableName() . ' WRITE');
-                    $newNumber = (int)OrderNumberTable::add(['ACCOUNT_NUMBER' => $defaultNumber])->getId();
-                    $connection->query('UNLOCK TABLES');
-                }*/
+                $newNumber = OrderNumberTable::addCustomized($orderId);
 
                 if ($newNumber > 9000000)
                 {
@@ -566,7 +593,7 @@ class Event extends BaseServiceHandler
                     ->error(
                         sprintf(
                             'failed to set order %s account number: %s: %s',
-                            $id,
+                            $orderId,
                             \get_class($e),
                             $e->getMessage()
                         )
@@ -945,6 +972,14 @@ class Event extends BaseServiceHandler
         } catch (\Exception $e) {
             $logger = LoggerFactory::create('piggyBank');
             $logger->critical('failed to add PiggyBank marks for order: ' . $e->getMessage());
+        }
+    }
+
+    public function cancelEventAddition($orderId, string $eventName)
+    {
+        if (in_array($eventName, ['SALE_NEW_ORDER' , 'SALE_ORDER_PAID'])) // проверка избыточна, но на всякий случай сделана, чтобы не заблочили другие события
+        {
+            return false;
         }
     }
 }

@@ -21,7 +21,7 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
     <form class="b-registration__form b-registration__form--margin js-form-validation js-registration-form"
           id="reg-step5-form"
           onsubmit="<?= $formSubmit ?>"
-          data-url="/ajax/user/auth/register/"
+          data-url="/ajax/user/auth/register-s/"
           method="post">
         <input type="hidden" name="action" value="register">
         <input type="hidden" name="PERSONAL_PHONE" value="<?= $phone ?>">
@@ -170,7 +170,7 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
         <button class="b-button b-button--social b-button--full-width">Зарегистрироваться</button>
     </form>
     <a class="b-registration__back js-reg3-back" href="javascript:void(0);" title="Назад"
-       data-url="/ajax/user/auth/register/"
+       data-url="/ajax/user/auth/register-s/"
        data-action="get"
        data-step="step1"
        data-phone="<?= $phone ?>">

@@ -14,6 +14,8 @@ class IblockCode
 
     public const BANNERS   = 'banners';
 
+    public const SLIDER_CONTROLLED   = 'slider-controlled';
+
     public const CITIES    = 'cities';
 
     public const MAIN_MENU = 'main_menu';

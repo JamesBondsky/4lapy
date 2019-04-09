@@ -533,7 +533,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     {
         $propertyCollection = $order->getPropertyCollection();
         $promocode = BxCollection::getOrderPropertyByCode($propertyCollection, 'PROMOCODE');
-        if ($promocode && $promocodeValue = $promocode->getValue())
+        if ($promocode && ($promocodeValue = $promocode->getValue()) && strpos($promocodeValue, 's') === 0)
         {
             $orderDto->setCouponNumber($promocodeValue);
         }

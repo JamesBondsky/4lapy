@@ -145,13 +145,13 @@ class CatalogElementSnippet extends CBitrixComponent
             $product->getOffers(true, $this->arParams['OFFER_FILTER']);
             $offers = $product->getOffersSorted();
             /** @var Offer $offer */
-            $foundOfferWithImages = false;
-            $currentOffer = $offers->last();
+            $currentOffer = $offers->first();
             foreach ($offers as $offer) {
                 $offer->setProduct($product);
 
-                if (!$foundOfferWithImages || $offer->getImagesIds()) {
+                if ($offer->getImagesIds()) {
                     $currentOffer = $offer;
+                    break;
                 }
             }
         }

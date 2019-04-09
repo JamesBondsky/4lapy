@@ -13,6 +13,7 @@ use Psr\Log\LoggerAwareInterface;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use FourPaws\App\Application;
+use FourPaws\Catalog\Model\Offer as ModelOffer;
 
 /**
  * Class EdadealFeedService
@@ -216,15 +217,30 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
                 'description' => $offer['NAME']
             ];
 
-            if (
-            (floatval($offer['PROPERTIES']['PRICE_ACTION']['VALUE']) < floatval($offer['CATALOG_PRICE_2'])
-                && $offer['PROPERTIES']['PRICE_ACTION']['VALUE'] != ''
-                && $offer['PROPERTIES']['PRICE_ACTION']['VALUE'] != 0)
-            ) {
-                $this->arResult['offers'][$offer['XML_ID']]['price_old'] = floatval($offer['CATALOG_PRICE_2']);
-                $this->arResult['offers'][$offer['XML_ID']]['price_new'] = floatval($offer['PROPERTIES']['PRICE_ACTION']['VALUE']);
-            } else {
-                $this->arResult['offers'][$offer['XML_ID']]['price_new'] = floatval($offer['CATALOG_PRICE_2']);
+            $price = floatval($offer['CATALOG_PRICE_2']);
+            $this->arResult['offers'][$offer['XML_ID']]['price_new'] = $price;
+            switch ($offer['PROPERTIES']['COND_FOR_ACTION']['VALUE']) {
+                case ModelOffer::SIMPLE_SHARE_SALE_CODE:
+                    if (
+                        (floatval($offer['PROPERTIES']['PRICE_ACTION']['VALUE']) < $price)
+                        && $offer['PROPERTIES']['PRICE_ACTION']['VALUE'] != ''
+                        && $offer['PROPERTIES']['PRICE_ACTION']['VALUE'] != 0
+                    ) {
+                        $this->arResult['offers'][$offer['XML_ID']]['price_old'] = $price;
+                        $this->arResult['offers'][$offer['XML_ID']]['price_new'] = floatval($offer['PROPERTIES']['PRICE_ACTION']['VALUE']);
+                    }
+                    break;
+                case ModelOffer::SIMPLE_SHARE_DISCOUNT_CODE:
+                    if (
+                        intval($offer['PROPERTIES']['COND_VALUE']['VALUE']) != '' &&
+                        intval($offer['PROPERTIES']['COND_VALUE']['VALUE']) > 0
+
+                    ) {
+                        $this->arResult['offers'][$offer['XML_ID']]['price_old'] = $price;
+                        $this->arResult['offers'][$offer['XML_ID']]['price_new'] = ceil($price - $price / 100 * intval($offer['PROPERTIES']['COND_VALUE']['VALUE']));
+                    }
+                    break;
+                default:
             }
 
             if (strpos(mb_strtolower($offer['NAME']), 'корм') !== false) {
@@ -275,6 +291,7 @@ class EdadealFeedService extends FeedService implements LoggerAwareInterface
             if ($arProduct['ACTIVE'] == 'Y') {
                 foreach ($products[$arProduct['ID']] as $offer) {
                     $this->arResult['offers'][$offer]['brand'] = $arProduct['PROPERTY_BRAND_NAME'];
+                    $this->arResult['offers'][$offer]['description'] = ($arProduct['PROPERTY_BRAND_NAME'] ? ($arProduct['PROPERTY_BRAND_NAME'] . ' ') : '') . $this->arResult['offers'][$offer]['description'];
                 }
             } else {
                 foreach ($products[$arProduct['ID']] as $offer) {
