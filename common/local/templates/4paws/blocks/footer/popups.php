@@ -47,6 +47,11 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
 
     include __DIR__ . '/change-subscribe-delivery.php';
     include __DIR__ . '/catalog-subscribe-delivery.php';
+    include __DIR__ . '/stop-subscribe-delivery.php';
+    include __DIR__ . '/message-stop-subscribe-delivery.php';
+    include __DIR__ . '/renew-subscribe-delivery.php';
+    include __DIR__ . '/message-renew-subscribe-delivery.php';
+    include __DIR__ . '/message-change-subscribe-delivery.php';
 
     include __DIR__ . '/popup_email_kopilka.php';
 

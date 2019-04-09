@@ -126,7 +126,7 @@
                         </div>
                     </div>
                     <div class="b-popup-subscribe-delivery__btns">
-                        <a href="javascript:void(0);" class="b-button b-button--back-subscribe-delivery" title="Далее">
+                        <a href="javascript:void(0);" class="b-button b-button--back-subscribe-delivery" title="Назад">
                             Назад
                         </a>
                         <a href="javascript:void(0);" class="b-button b-button--next-subscribe-delivery" title="Далее">
@@ -141,7 +141,7 @@
         </div>
 
 
-        <div class="b-popup-subscribe-delivery__footer">
+        <div class="b-popup-subscribe-delivery__footer b-popup-subscribe-delivery__footer--fixed-btn">
             <div class="b-container">
                 <?php include __DIR__ . '/copyright.php' ?>
             </div>
