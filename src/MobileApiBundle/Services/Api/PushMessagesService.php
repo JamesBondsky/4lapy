@@ -70,7 +70,7 @@ class PushMessagesService
         }
         $pushToken = $session->getPushToken();
         if (!$pushToken) {
-            throw new NotFoundException('Push token is not set');
+            throw new NotFoundException('Push token is not set. Please run /app_launch method or set the token in database manually.');
         }
         $pushEvents = $this->apiPushEventRepository->findBy([
             '=PUSH_TOKEN' => $pushToken,
