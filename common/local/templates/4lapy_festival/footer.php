@@ -72,7 +72,7 @@ $markup = PawsApplication::markup();
 <script src="vendor/masonry/imagesloaded.pkgd.min.js" type="text/javascript"></script>
 
 <!-- PAGE LEVEL SCRIPTS -->
-<!--<script src="js/shapes.js" type="text/javascript"></script>-->
+<?/*!--<script src="js/shapes.js" type="text/javascript"></script>--*/?>
 <script src="js/jquery.scrollme.min.js" type="text/javascript"></script>
 <script src="js/layout.min.js" type="text/javascript"></script>
 <script src="js/components/wow.min.js" type="text/javascript"></script>

@@ -929,6 +929,7 @@
 img
 {
     font-style: italic;
+    max-width: inherit;
 }
 img[height],img[width]
 {

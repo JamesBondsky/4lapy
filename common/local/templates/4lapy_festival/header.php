@@ -27,7 +27,6 @@ $markup = PawsApplication::markup();
         ->getSiteDomain() ?>">
 
     <meta charset="utf-8"/>
-    <title>Фестиваль «Четыре лапы»</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta content="width=device-width, initial-scale=1" name="viewport"/>
     <meta content="" name="description"/>
@@ -65,6 +64,9 @@ $markup = PawsApplication::markup();
     <!-- THEME STYLES -->
     <link href="css/layout.min.css" rel="stylesheet" type="text/css"/>
 
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="favicon.ico"/>
+
     <?/** уходи */?>
     <script>
         $(function() {
@@ -83,7 +85,12 @@ $markup = PawsApplication::markup();
         });
     </script>
 
-
+    <script data-skip-moving="true">
+        window.configDefence = {
+            cName: 'testcookie',
+            cValue: 'e0a5fe5fe86ada300005a1978e97b378493ad3f'
+        }
+    </script>
 </head>
 <body id="body" data-spy="scroll" data-target=".header">
 <?php $APPLICATION->ShowPanel(); ?>
@@ -120,7 +127,7 @@ $markup = PawsApplication::markup();
                             <li class="js_nav-item nav-item"><a class="nav-item-child nav-item-hover" href="#gala">ARTIK&ASTI</a></li>
                             <li class="js_nav-item nav-item"><a class="nav-item-child nav-item-hover" href="#konkurs">Конкурс</a></li>
                             <li class="js_nav-item nav-item"><a class="nav-item-child nav-item-hover" href="#interview">Я ПОЙДУ!</a></li>
-                            <li class="js_nav-item nav-item join-item"><a class="nav-item-child nav-item-hover" href="#"><span>РЕГИСТРАЦИЯ</span></a></li>
+                            <li class="js_nav-item nav-item join-item"><a class="nav-item-child nav-item-hover js-open-popup" href="#" data-popup-id="authorization"><span>РЕГИСТРАЦИЯ</span></a></li>
                         </ul>
                     </div>
                 </div>
@@ -188,6 +195,8 @@ $markup = PawsApplication::markup();
     <!--========== PAGE LAYOUT ==========-->
     <!-- Products -->
     <div id="about">
+
+
 
         <div class="container content-lg">
             <div class="[ c-shapes c-shapes--dynamic ]" data-shapes-dynamic="" data-shapes-set="home" id="scene-home">
