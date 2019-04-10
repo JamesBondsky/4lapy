@@ -5,6 +5,7 @@ namespace FourPaws\CatalogBundle\Dto\Yandex;
 use DateTime;
 use Doctrine\Common\Annotations\Annotation\Required;
 use JMS\Serializer\Annotation as Serializer;
+use FourPaws\CatalogBundle\Dto\Feed\Feed as AbstractFeed;
 
 /**
  * Class Feed
@@ -13,7 +14,7 @@ use JMS\Serializer\Annotation as Serializer;
  *
  * @Serializer\XmlRoot("yml_catalog")
  */
-class Feed
+class Feed extends AbstractFeed
 {
     /**
      * @Required()
