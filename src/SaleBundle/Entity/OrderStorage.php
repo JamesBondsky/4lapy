@@ -364,10 +364,13 @@ class OrderStorage
     protected $fromApp = false;
 
     /**
+     * Тип устройства
+     *
      * @var string
      * @Serializer\Type("string")
-     * @Serializer\SerializedName("FROM_APP_DEVICE")
-     * @Serializer\Groups(groups={"read","create"})
+     * @Serializer\SerializedName("PROPERTY_FROM_APP_DEVICE")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     * @SaleValidation\OrderPropertyVariant(propertyCode ="FROM_APP_DEVICE")
      */
     protected $fromAppDevice = '';
 
@@ -1122,7 +1125,7 @@ class OrderStorage
      */
     public function getFromAppDevice(): string
     {
-        return $this->fromAppDevice;
+        return $this->fromAppDevice ?? '';
     }
 
     /**

@@ -53,7 +53,8 @@ class OrderPropForMobile20190409152715 extends SprintMigrationBase
                 'PROPS_GROUP_ID' => 4,
                 'UTIL' => 'Y',
                 'IS_FILTERED' => 'Y',
-                'ENTITY_REGISTRY_TYPE' => 'ORDER'
+                'ENTITY_REGISTRY_TYPE' => 'ORDER',
+                'SORT' => 435
             ]
         );
         if (!$addResult->isSuccess()) {

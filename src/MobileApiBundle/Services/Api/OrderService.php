@@ -776,13 +776,13 @@ class OrderService
         /**
          * @var ApiToken $token | null
          */
-        $platform = '';
-        if ($token = $this->tokenStorage->getToken() && $session = $token->getApiUserSession()) {
+        $platform = false;
+        $token = $this->tokenStorage->getToken();
+        if ($token && $token instanceof ApiToken && $session = $token->getApiUserSession()) {
             $platform = $session->getPlatform();
         }
 
-        $storage->setFromApp(true)
-            ->setFromAppDevice($platform);
+        $storage->setFromApp(true)->setFromAppDevice($platform);
         $order = $this->appOrderService->createOrder($storage);
         $firstOrder = $this->personalOrderService->getOrderByNumber($order->getField('ACCOUNT_NUMBER'));
         $response = [
