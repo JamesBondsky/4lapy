@@ -181,7 +181,8 @@ $activeSubscribe = true;
                 <a class="b-link b-link--repeat-order b-link--change-subscribe-delivery js-open-popup js-open-subscribe-delivery-popup"
                    href="javascript:void(0);"
                    title="Редактировать подписку"
-                   data-popup-id="change-subscribe-delivery">
+                   data-popup-id="change-subscribe-delivery"
+                   data-subscribe-id="<?=$orderSubscribe->getId()?>">
                     <span class="b-link__text b-link__text--change-subscribe-delivery">Редактировать <span>подписку</span></span>
                 </a>
                 <?php if($activeSubscribe) { ?>

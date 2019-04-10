@@ -368,8 +368,8 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
             // получение формы
             if($this->arParams['STEP'] == 1){
-                // редактирование подписки
-                if($this->arParams['SUBSCRIBE_ID'] > 0){
+
+                if($this->arParams['SUBSCRIBE_ID'] > 0){ // редактирование подписки
                     try {
                         $basket = $this->getOrderSubscribeService()->getBasketBySubscribeId($this->arParams['SUBSCRIBE_ID']);
                         $this->arResult['TITLE'] = "Редактирование подписки";
@@ -380,10 +380,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                             ['id' => $this->arParams['SUBSCRIBE_ID']]
                         ));
                     }
-                }
-
-                // создание подписки
-                if($this->arParams['ORDER_ID'] > 0){
+                } else if($this->arParams['ORDER_ID'] > 0){ // создание подписки
                     try {
                         $basket = $this->getOrder()->getBitrixOrder()->getBasket();
                         /** @var PiggyBankService $piggyBankService */
@@ -405,10 +402,14 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     }
                 }
 
-                $offerIds = [];
-                /** @var BasketItem $basketItem */
-                foreach($basket as $basketItem){
-                    $offerIds[] = $basketItem->getProductId();
+                if(!$basket->isEmpty()) {
+                    $offerIds = [];
+                    /** @var BasketItem $basketItem */
+                    foreach ($basket as $basketItem) {
+                        $offerIds[] = $basketItem->getProductId();
+                    }
+                } else {
+                    $result->addError(new Error("Товары не найдены"));
                 }
 
                 if(empty($offerIds)){

@@ -2,6 +2,7 @@
 
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\PersonalBundle\Entity\Order;
+use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -23,17 +24,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <?php
         /** @var ArrayCollection $subscriptions */
         $subscriptions = $arResult['SUBSCRIPTIONS'];
-        foreach ($arResult['ORDERS'] as $order) {
-            /** @var Order $order */
-            $orderSubscribe = $subscriptions->get($order->getId());
-            if (!$orderSubscribe) {
-                continue;
-            }
+
+        /** @var OrderSubscribe $orderSubscribe */
+        foreach ($subscriptions as $orderSubscribe) {
             $APPLICATION->IncludeComponent(
                 'fourpaws:personal.order.item',
                 'subscribe',
                 [
-                    'ORDER' => $order,
+                    'ORDER' => $orderSubscribe->getOrder(),
                     'ORDER_SUBSCRIBE' => $orderSubscribe,
                     'METRO' => $arResult['METRO']
                 ],
