@@ -85,7 +85,13 @@ class PersonalOffersService
                     new ReferenceField(
                         'USER_COUPONS', $this->personalCouponUsersManager::getEntity()->getDataClass(),
                         Query\Join::on('this.ID', 'ref.UF_COUPON')
-                            ->where('ref.UF_USER_ID', '=', $userId),
+                            ->where('ref.UF_USER_ID', '=', $userId)
+                            ->where(Query::filter()
+                                ->logic('or')
+                                ->where([
+                                    ['ref.UF_USED', null],
+                                    ['ref.UF_USED', false],
+                                ])),
                         ['join_type' => 'INNER']
                     )
                 )
