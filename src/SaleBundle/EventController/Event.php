@@ -31,7 +31,9 @@ use FourPaws\App\MainTemplate;
 use FourPaws\App\Tools\StaticLoggerTrait;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\PersonalBundle\Exception\CouponNotFoundException;
 use FourPaws\PersonalBundle\Service\CouponService;
+use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Discount\Action\Action\DetachedRowDiscount;
 use FourPaws\SaleBundle\Discount\Action\Action\DiscountFromProperty;
@@ -666,9 +668,21 @@ class Event extends BaseServiceHandler
             $promocode = BxCollection::getOrderPropertyByCode($propertyCollection, 'PROMOCODE');
             if ($promocode && $promocodeValue = $promocode->getValue())
             {
-                /** @var CouponService $couponService */
-                $couponService = Application::getInstance()->getContainer()->get('coupon.service');
-                $couponService->setUsedStatusByNumber($promocodeValue);
+                $isPromoCodeProcessed = false;
+                try {
+                    /** @var CouponService $couponService */
+                    $couponService = Application::getInstance()->getContainer()->get('coupon.service');
+                    $couponService->setUsedStatusByNumber($promocodeValue);
+                    $isPromoCodeProcessed = true;
+                } catch (CouponNotFoundException $e) {
+                }
+
+                if (!$isPromoCodeProcessed)
+                {
+                    /** @var PersonalOffersService $personalOffersService */
+                    $personalOffersService = Application::getInstance()->getContainer()->get('personal_offers.service');
+                    $personalOffersService->setUsedStatusByPromoCode($promocodeValue);
+                }
             }
         } catch (\Exception $e) {
             static::getLogger()

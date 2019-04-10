@@ -507,12 +507,12 @@ class Event extends BaseServiceHandler
     /**
      * @param $arFields
      *
-     * @return bool|null
+     * @return bool|void
      *
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ObjectException
      */
-    public static function checkDateTo($arFields): ?bool
+    public static function checkDateTo($arFields)
     {
         if ($arFields['IBLOCK_ID'] == IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::PERSONAL_OFFERS))
         {
@@ -528,13 +528,13 @@ class Event extends BaseServiceHandler
     /**
      * @param $arFields
      *
-     * @return bool|null
+     * @return bool|void
      *
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Adv\Bitrixtools\Exception\IblockPropertyNotFoundException
      * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
      */
-    public static function checkIfNewCoupons($arFields): ?bool
+    public static function checkIfNewCoupons($arFields)
     {
         if ($arFields['IBLOCK_ID'] == IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::PERSONAL_OFFERS))
         {

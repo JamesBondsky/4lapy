@@ -16,6 +16,7 @@ use FourPaws\App\Application as App;
 use FourPaws\Enum\HlblockCode;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\PersonalBundle\Exception\CouponIsNotAvailableForUseException;
 use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
 use Psr\Log\LoggerAwareTrait;
 
@@ -30,6 +31,8 @@ class PersonalOffersService
 
     /** @var DataManager */
     protected $personalCouponManager;
+    /** @var DataManager */
+    protected $personalCouponUsersManager;
 
     /**
      * PersonalOffersService constructor.
@@ -40,6 +43,7 @@ class PersonalOffersService
 
         $container = App::getInstance()->getContainer();
         $this->personalCouponManager = $container->get('bx.hlblock.personalcoupon');
+        $this->personalCouponUsersManager = $container->get('bx.hlblock.personalcouponusers');
     }
 
     /**
@@ -67,16 +71,6 @@ class PersonalOffersService
 
         if (!$activeOffersCollection->isEmpty())
         {
-            $personalCouponUsersHlblockCode = HlblockCode::PERSONAL_COUPON_USERS;
-
-            $personalCouponUsersTable = HighloadBlockTable::getList(['filter' => ['=NAME' => $personalCouponUsersHlblockCode]])->fetch();
-            if (!$personalCouponUsersTable) {
-                throw new HLBlockNotFoundException(sprintf('Highloadblock with name %s is not found.',
-                    $personalCouponUsersHlblockCode
-                ));
-            }
-            $personalCouponUsersTableClass = HighloadBlockTable::compileEntity($personalCouponUsersTable)->getDataClass();
-
             $coupons = $this->personalCouponManager::query()
                 ->setSelect([
                     'ID',
@@ -89,7 +83,7 @@ class PersonalOffersService
                 ])
                 ->registerRuntimeField(
                     new ReferenceField(
-                        'USER_COUPONS', $personalCouponUsersTableClass,
+                        'USER_COUPONS', $this->personalCouponUsersManager::getEntity()->getDataClass(),
                         Query\Join::on('this.ID', 'ref.UF_COUPON')
                             ->where('ref.UF_USER_ID', '=', $userId),
                         ['join_type' => 'INNER']
@@ -98,7 +92,10 @@ class PersonalOffersService
                 ->exec()
                 ->fetchAll();
 
-            $activeOffers = $activeOffersCollection->getValues();
+            $userOffers = array_unique(array_map(function($coupon) { return $coupon['UF_OFFER']; }, $coupons));
+            $offersCollection = $activeOffersCollection->filter(static function($offer) use ($userOffers) { return in_array($offer['ID'], $userOffers, true); });
+
+            $activeOffers = $offersCollection->getValues();
             $offersOrder = [];
             foreach ($activeOffers as $key => $offer)
             {
@@ -112,7 +109,7 @@ class PersonalOffersService
 
             $result = [
                 'coupons' => $couponsCollection,
-                'offers' => $activeOffersCollection,
+                'offers' => $offersCollection,
             ];
         }
 
@@ -170,11 +167,7 @@ class PersonalOffersService
             throw new InvalidArgumentException('can\'t check personal offer\'s coupons. offerId: ' . $offerId);
         }
 
-        $container = App::getInstance()->getContainer();
-        /** @var DataManager $personalCouponManager */
-        $personalCouponManager = $container->get('bx.hlblock.personalcoupon');
-
-        return (bool)$personalCouponManager::query()
+        return (bool)$this->personalCouponManager::query()
             ->setFilter([
                 '=UF_OFFER' => $offerId,
             ])
@@ -196,17 +189,11 @@ class PersonalOffersService
             throw new InvalidArgumentException('can\'t import personal offer\'s coupons. offerId: ' . $offerId);
         }
 
-        $container = App::getInstance()->getContainer();
-        /** @var DataManager $personalCouponManager */
-        $personalCouponManager = $container->get('bx.hlblock.personalcoupon');
-        /** @var DataManager $personalCouponUsersManager */
-        $personalCouponUsersManager = $container->get('bx.hlblock.personalcouponusers');
-
         $promoCodes = array_keys($coupons);
         $promoCodes = array_filter(array_map('trim', $promoCodes));
         foreach ($promoCodes as $promoCode)
         {
-            $couponId = $personalCouponManager::add([
+            $couponId = $this->personalCouponManager::add([
                 'UF_PROMO_CODE' => $promoCode,
                 'UF_OFFER' => $offerId,
                 'UF_DATE_CREATED' => new DateTime(),
@@ -216,7 +203,7 @@ class PersonalOffersService
             $userIds = $coupons[$promoCode];
             foreach ($userIds as $userId)
             {
-                $personalCouponUsersManager::add([
+                $this->personalCouponUsersManager::add([
                     'UF_USER_ID' => $userId,
                     'UF_COUPON' => $couponId,
                     'UF_DATE_CREATED' => new DateTime(),
@@ -224,6 +211,93 @@ class PersonalOffersService
                 ]);
             }
             unset($couponId);
+        }
+    }
+
+    /**
+     * @param string $promoCode
+     *
+     * @throws InvalidArgumentException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function setUsedStatusByPromoCode(string $promoCode): void
+    {
+        global $USER;
+        if (!$USER->IsAuthorized() || !($userId = $USER->GetID()))
+        {
+            return;
+        }
+
+        if ($promoCode === '')
+        {
+            throw new InvalidArgumentException('can\'t set Used status to promocode. Got empty promocode');
+        }
+
+        $promoCodeUserLinkId = $this->personalCouponUsersManager::query()
+            ->setSelect(['ID'])
+            ->setFilter([
+                'UF_USED' => false,
+                '=UF_USER_ID' => $userId,
+            ])
+            ->registerRuntimeField(
+                new ReferenceField(
+                    'USER_COUPONS', $this->personalCouponManager::getEntity()->getDataClass(),
+                    Query\Join::on('this.UF_COUPON', 'ref.ID')
+                        ->where('ref.UF_PROMO_CODE', '=', $promoCode),
+                    ['join_type' => 'INNER']
+                )
+            )
+            ->exec()
+            ->fetch()['ID'];
+
+        if ($promoCodeUserLinkId > 0)
+        {
+            $currentDateTime = new DateTime();
+            $this->personalCouponUsersManager::update($promoCodeUserLinkId, [
+                'UF_USED' => true,
+                'UF_DATE_CHANGED' => $currentDateTime,
+                'UF_DATE_USED' => $currentDateTime,
+            ]);
+        }
+    }
+
+    /**
+     * @param string $promoCode
+     *
+     * @throws CouponIsNotAvailableForUseException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function checkCoupon(string $promoCode)
+    {
+        global $USER;
+
+        if (!$USER->IsAuthorized() || !($userId = $USER->GetID()))
+        {
+            return;
+        }
+
+        $isPromoCodeUsed = (bool)$this->personalCouponUsersManager::query()
+            ->setSelect(['ID'])
+            ->setFilter([
+                'UF_USED' => true,
+                '=UF_USER_ID' => $userId,
+            ])
+            ->registerRuntimeField(
+                new ReferenceField(
+                    'USER_COUPONS', $this->personalCouponManager::getEntity()->getDataClass(),
+                    Query\Join::on('this.UF_COUPON', 'ref.ID')
+                        ->where('ref.UF_PROMO_CODE', '=', $promoCode),
+                    ['join_type' => 'INNER']
+                )
+            )
+            ->exec()
+            ->getSelectedRowsCount();
+
+        if ($isPromoCodeUsed) {
+            throw new CouponIsNotAvailableForUseException('coupon is not available for use. Promo code: ' . $promoCode . '. User id: ' . $userId);
         }
     }
 }

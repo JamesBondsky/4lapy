@@ -190,6 +190,90 @@ class HLBlockPersonalCouponUsers20190409160630 extends SprintMigrationBase
                     'ru' => '',
                 ),
         ));
+        $helper->UserTypeEntity()->addUserTypeEntityIfNotExists($entityId, 'UF_USED', array(
+            'FIELD_NAME' => 'UF_USED',
+            'USER_TYPE_ID' => 'boolean',
+            'XML_ID' => '',
+            'SORT' => '100',
+            'MULTIPLE' => 'N',
+            'MANDATORY' => 'N',
+            'SHOW_FILTER' => 'I',
+            'SHOW_IN_LIST' => 'Y',
+            'EDIT_IN_LIST' => 'Y',
+            'IS_SEARCHABLE' => 'N',
+            'SETTINGS' =>
+                array(
+                    'DEFAULT_VALUE' => 0,
+                    'DISPLAY' => 'CHECKBOX',
+                    'LABEL' =>
+                        array(
+                            0 => '',
+                            1 => '',
+                        ),
+                    'LABEL_CHECKBOX' => '',
+                ),
+            'EDIT_FORM_LABEL' =>
+                array(
+                    'ru' => 'Использован',
+                ),
+            'LIST_COLUMN_LABEL' =>
+                array(
+                    'ru' => 'Использован',
+                ),
+            'LIST_FILTER_LABEL' =>
+                array(
+                    'ru' => 'Использован',
+                ),
+            'ERROR_MESSAGE' =>
+                array(
+                    'ru' => '',
+                ),
+            'HELP_MESSAGE' =>
+                array(
+                    'ru' => '',
+                ),
+        ));
+        $helper->UserTypeEntity()->addUserTypeEntityIfNotExists($entityId, 'UF_DATE_USED', array(
+            'FIELD_NAME' => 'UF_DATE_USED',
+            'USER_TYPE_ID' => 'datetime',
+            'XML_ID' => '',
+            'SORT' => '100',
+            'MULTIPLE' => 'N',
+            'MANDATORY' => 'N',
+            'SHOW_FILTER' => 'I',
+            'SHOW_IN_LIST' => 'Y',
+            'EDIT_IN_LIST' => 'Y',
+            'IS_SEARCHABLE' => 'N',
+            'SETTINGS' =>
+                array(
+                    'DEFAULT_VALUE' =>
+                        array(
+                            'TYPE' => 'NONE',
+                            'VALUE' => '',
+                        ),
+                    'USE_SECOND' => 'Y',
+                ),
+            'EDIT_FORM_LABEL' =>
+                array(
+                    'ru' => 'Когда погашен',
+                ),
+            'LIST_COLUMN_LABEL' =>
+                array(
+                    'ru' => 'Когда погашен',
+                ),
+            'LIST_FILTER_LABEL' =>
+                array(
+                    'ru' => 'Когда погашен',
+                ),
+            'ERROR_MESSAGE' =>
+                array(
+                    'ru' => '',
+                ),
+            'HELP_MESSAGE' =>
+                array(
+                    'ru' => '',
+                ),
+        ));
     }
 
     public function down()
