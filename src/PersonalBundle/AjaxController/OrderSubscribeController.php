@@ -197,7 +197,7 @@ class OrderSubscribeController extends Controller
     }
 
     /**
-     * @Route("/getData/", methods={"POST"})
+     * @Route("/getData/createFromOrder/", methods={"POST"})
      * @param Request $request
      * @return JsonResponse
      * @throws \Bitrix\Main\SystemException
@@ -209,10 +209,11 @@ class OrderSubscribeController extends Controller
         $subscribeId = $request->get('subscribeId');
         $orderId = $request->get('orderId');
 
+        ob_start();
         /** @var \FourPawsPersonalCabinetOrdersSubscribeFormComponent $component */
         $component = $GLOBALS['APPLICATION']->IncludeComponent(
             'fourpaws:personal.orders.subscribe.form',
-            '',
+            'popup',
             [
                 'INCLUDE_TEMPLATE' => 'Y',
                 'STEP' => $step,
@@ -222,6 +223,20 @@ class OrderSubscribeController extends Controller
             null,
             [
                 'HIDE_ICONS' => 'Y',
+            ]
+        );
+        $content = ob_get_contents();
+        ob_end_clean();
+
+        $return = JsonErrorResponse::createWithData(
+            '',
+            [
+                'content' => $content
+            ],
+            200,
+            [
+                'reload' => false,
+                'redirect' => ''
             ]
         );
 

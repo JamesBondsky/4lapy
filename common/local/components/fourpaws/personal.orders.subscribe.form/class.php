@@ -3,15 +3,21 @@
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
+use Bitrix\Sale\BasketItem;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\UserFieldEnumValue;
+use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\PersonalBundle\Entity\Order;
+use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
@@ -26,18 +32,25 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
     /** @var string $action */
     private $action = '';
+
     /** @var UserService $userCurrentUserService */
     private $userCurrentUserService;
+
     /** @var OrderSubscribeService $orderSubscribeService */
     private $orderSubscribeService = null;
+
     /** @var array $data */
     protected $data = [];
+
     /** @var array */
     protected $fieldCaptions = [
         'dateStart' => 'Дата первой доставки',
         'deliveryFrequency' => 'Как часто',
         'deliveryInterval' => 'Интервал',
     ];
+
+    /** @var array $offers */
+    private $offers = [];
 
     /**
      * FourPawsPersonalCabinetOrdersSubscribeFormComponent constructor.
@@ -347,6 +360,13 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         if ($this->getAction() === 'initialLoad') {
             $result = new Result();
 
+            // получение контролов
+            if(null === $this->arParams['STEP']){
+                $this->arResult['ORDER'] = $this->getOrder();
+                $this->arResult['CURRENT_STAGE'] = 'initial';
+            }
+
+            // получение формы
             if($this->arParams['STEP'] == 1){
                 // редактирование подписки
                 if($this->arParams['SUBSCRIBE_ID'] > 0){
@@ -366,6 +386,15 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                 if($this->arParams['ORDER_ID'] > 0){
                     try {
                         $basket = $this->getOrder()->getBitrixOrder()->getBasket();
+                        /** @var PiggyBankService $piggyBankService */
+                        $piggyBankService = Application::getInstance()->getContainer()->get('piggy_bank.service');
+
+                        /** @var BasketItem $basketItem */
+                        foreach ($basket as $basketItem){
+                            if (in_array($basketItem->getProductId(), $piggyBankService->getMarksIds(), false)){
+                                $basket->deleteItem($basketItem->getInternalIndex());
+                            }
+                        }
                         $this->arResult['TITLE'] = "Создание подписки";
                     } catch (\Exception $e) {
                         $result->addError(new Error(
@@ -373,6 +402,22 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                             'getBasket',
                             ['id' => $this->arParams['ORDER_ID']]
                         ));
+                    }
+                }
+
+                $offerIds = [];
+                /** @var BasketItem $basketItem */
+                foreach($basket as $basketItem){
+                    $offerIds[] = $basketItem->getProductId();
+                }
+
+                if(empty($offerIds)){
+                    $result->addError(new Error("Offers is empty"));
+                }
+
+                if($result->isSuccess()){
+                    if(!$this->setOffers($offerIds)){
+                        $result->addError(new Error('Failed to set offers'));
                     }
                 }
 
@@ -743,5 +788,77 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 //        }
 
         return $deliveryDate;
+    }
+
+    /**
+     * @param int $offerId
+     *
+     * @return ResizeImageDecorator|null
+     */
+    public function getImage(int $offerId): ?ResizeImageDecorator
+    {
+        if ($offerId <= 0) {
+            return null;
+        }
+
+        if (!isset($this->images[$offerId])) {
+            $offer = $this->getOffer($offerId);
+            $image = null;
+            if ($offer !== null) {
+                $images = $offer->getResizeImages(110, 110);
+                $this->images[$offerId] = $images->first();
+            }
+        }
+        return $this->images[$offerId];
+    }
+
+    /**
+     * @param int $offerId
+     *
+     * @return Offer|null
+     */
+    public function getOffer(int $offerId): ?Offer
+    {
+        if ($offerId <= 0) {
+            return null;
+        }
+        if (!isset($this->offers)) {
+            $this->offers[$offerId] = OfferQuery::getById($offerId);
+        }
+        return $this->offers[$offerId];
+    }
+
+    /**
+     * @param array $offerIds
+     * @return bool
+     */
+    public function setOffers(array $offerIds): bool
+    {
+        if (count($offerIds) <= 0) {
+            return false;
+        }
+
+        $offers = (new OfferQuery())
+            ->withFilter(['ID' => $offerIds])
+            ->exec();
+
+        if($offers->isEmpty()){
+            return false;
+        }
+
+        /** @var Offer $offer */
+        foreach($offers as $offer){
+            $this->offers[$offer->getId()] = $offer;
+        }
+
+        return true;
+    }
+
+    /**
+     * @return array
+     */
+    public function getOffers()
+    {
+        return $this->offers;
     }
 }

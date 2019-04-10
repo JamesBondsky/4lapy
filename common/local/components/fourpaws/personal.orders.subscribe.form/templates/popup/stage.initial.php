@@ -145,25 +145,25 @@ if ($arParams['OUTPUT_VIA_BUFFER'] === 'Y') {
 }
 
 if ($order) {
-    $errorBlock = '<div class="b-error"><span class="js-message"></span></div>';
-    // по субботам, раз в неделю, с 10 до 20.
-    $subscribeParamsText = '&mdash;';
-    // суббота 20.07.2017 с 10 до 20.
-    $subscribeStartDateText = '&mdash;';
-    if ($orderSubscribe) {
-        $formattedTime = $orderSubscribe->getDeliveryTimeFormattedRu(true);
-        $subscribeParamsText = '';
-        $subscribeParamsText .= 'по '.$orderSubscribe->getDateStartWeekdayRu(true, DateHelper::DATIVE_PLURAL);
-        $subscribeParamsText .= ', '.ToLower($orderSubscribe->getDeliveryFrequencyEntity()->getValue());
-        $subscribeParamsText .= $formattedTime === '' ? '.' : ', '.$formattedTime.'.';
-
-        $subscribeStartDateText = '';
-        $subscribeStartDateText .= $orderSubscribe->getDateStartWeekdayRu(true);
-        $subscribeStartDateText .= ', '.$orderSubscribe->getDateStartFormatted();
-        $subscribeStartDateText .= $formattedTime === '' ? '.' : ', '.$formattedTime.'.';
-    }
-
-    // даты, на которые можно оформить первую доставку
+//    $errorBlock = '<div class="b-error"><span class="js-message"></span></div>';
+//    // по субботам, раз в неделю, с 10 до 20.
+//    $subscribeParamsText = '&mdash;';
+//    // суббота 20.07.2017 с 10 до 20.
+//    $subscribeStartDateText = '&mdash;';
+//    if ($orderSubscribe) {
+//        $formattedTime = $orderSubscribe->getDeliveryTimeFormattedRu(true);
+//        $subscribeParamsText = '';
+//        $subscribeParamsText .= 'по '.$orderSubscribe->getDateStartWeekdayRu(true, DateHelper::DATIVE_PLURAL);
+//        $subscribeParamsText .= ', '.ToLower($orderSubscribe->getDeliveryFrequencyEntity()->getValue());
+//        $subscribeParamsText .= $formattedTime === '' ? '.' : ', '.$formattedTime.'.';
+//
+//        $subscribeStartDateText = '';
+//        $subscribeStartDateText .= $orderSubscribe->getDateStartWeekdayRu(true);
+//        $subscribeStartDateText .= ', '.$orderSubscribe->getDateStartFormatted();
+//        $subscribeStartDateText .= $formattedTime === '' ? '.' : ', '.$formattedTime.'.';
+//    }
+//
+//    // даты, на которые можно оформить первую доставку
 //    $possibleDeliveryDateMin = $component->getOrderPossibleDeliveryDate($order);
 //    $possibleDeliveryDateMax = null;
 //    if ($possibleDeliveryDateMin !== null) {
