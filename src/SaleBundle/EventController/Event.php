@@ -870,7 +870,7 @@ class Event extends BaseServiceHandler
             $piggyBankService = Application::getInstance()->getContainer()->get('piggy_bank.service');
 
             global $USER;
-            if ($piggyBankService->isPiggyBankDateExpired() && !$USER->IsAdmin())
+            if ($piggyBankService->isPiggyBankDateExpired())// && !$USER->IsAdmin())
             {
                 return;
             }
