@@ -32,10 +32,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 <div class="b-popup-subscribe-delivery__inner">
     <div class="b-tab-list">
         <ul class="b-tab-list__list js-scroll-tabs-subscribe-delivery">
-            <li class="b-tab-list__item js-step-subscribe-delivery">
+            <li class="b-tab-list__item js-step-subscribe-delivery active">
                 <span class="b-tab-list__step">Шаг </span>1. Товары в подписке
             </li>
-            <li class="b-tab-list__item js-step-subscribe-delivery active">
+            <li class="b-tab-list__item js-step-subscribe-delivery">
                 <span class="b-tab-list__step">Шаг </span>2. Доставка и оплата
             </li>
         </ul>
@@ -233,7 +233,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             <? } ?>
 
             <div class="b-product-subscribe-delivery__add" data-open-catalog-in-popup="true">
-                <div class="add-product-subscribe js-open-catalog-subscribe"
+                <div class="add-product-subscribe"
+                     data-subscribe-delivery-popup="open-catalog"
                      data-popup-id="catalog-subscribe-delivery">
                     <div class="add-product-subscribe__plus"></div>
                     <div class="add-product-subscribe__info">

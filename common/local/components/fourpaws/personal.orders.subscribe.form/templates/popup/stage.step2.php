@@ -57,10 +57,10 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
 <div class="b-popup-subscribe-delivery__inner">
     <div class="b-tab-list">
         <ul class="b-tab-list__list js-scroll-tabs-subscribe-delivery">
-            <li class="b-tab-list__item js-step-subscribe-delivery">
+            <li class="b-tab-list__item js-step-subscribe-delivery active">
                 <span class="b-tab-list__step">Шаг </span>1. Товары в подписке
             </li>
-            <li class="b-tab-list__item js-step-subscribe-delivery active">
+            <li class="b-tab-list__item js-step-subscribe-delivery">
                 <span class="b-tab-list__step">Шаг </span>2. Доставка и оплата
             </li>
         </ul>
