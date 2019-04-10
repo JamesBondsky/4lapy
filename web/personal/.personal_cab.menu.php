@@ -50,6 +50,10 @@ $aMenuLinks = [
         '/personal/kopi-marki/',
     ],
     [
+        'Персональные предложения',
+        '/personal/personal-offers/',
+    ],
+    [
     'Топ 10 товаров',
     '/personal/top/',
     ]

@@ -438,15 +438,11 @@ class PiggyBankService implements LoggerAwareInterface
     {
         global $USER;
 
-        if (!$this->isCouponNumberFormatOk($couponNumber)) {
-            throw new CouponIsNotAvailableForUseException('coupon is not available for use');
-        }
-
-        if ($this->isPiggyBankCoupon($couponNumber))
+        if ($this->isCouponNumberFormatOk($couponNumber) && $this->isPiggyBankCoupon($couponNumber))
         {
             //if(($this->isPiggyBankCouponsApplyingDateExpired() && !$USER->IsAdmin()) || !$this->isCouponAvailableToCurrentUser($couponNumber)) {
             if($this->isPiggyBankCouponsApplyingDateExpired() || !$this->isCouponAvailableToCurrentUser($couponNumber)) {
-                throw new CouponIsNotAvailableForUseException('coupon is not available for use');
+                throw new CouponIsNotAvailableForUseException('coupon is not available for use. Promo code: ' . $couponNumber);
             }
         }
     }

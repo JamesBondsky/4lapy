@@ -73,6 +73,13 @@ $aMenuLinks = [
         "\$GLOBALS['isAuth']",
     ],
     [
+        'Персональные предложения',
+        '/personal/personal-offers/',
+        [],
+        ['icon' => 'icon-personal-offers'],
+        "\$GLOBALS['isAuth']",
+    ],
+    [
         'Топ 10 товаров',
         '/personal/top/',
         [],

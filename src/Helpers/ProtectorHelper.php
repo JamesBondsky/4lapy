@@ -10,6 +10,7 @@ class ProtectorHelper
     const TYPE_FAST_ORDER_CREATE = 'fastOrderCreate';
     const TYPE_GRANDIN_REQUEST_ADD = 'grandinRequestAdd';
     const TYPE_PIGGY_BANK_EMAIL_SEND = 'piggyBankEmailSend';
+    const TYPE_PERSONAL_OFFERS_EMAIL_SEND = 'personalOffersEmailSend';
     const TYPE_AUTH = 'auth';
 
     static $types = [
@@ -18,6 +19,7 @@ class ProtectorHelper
         self::TYPE_FAST_ORDER_CREATE,
         self::TYPE_GRANDIN_REQUEST_ADD,
         self::TYPE_PIGGY_BANK_EMAIL_SEND,
+        self::TYPE_PERSONAL_OFFERS_EMAIL_SEND,
         self::TYPE_AUTH,
     ];
 
