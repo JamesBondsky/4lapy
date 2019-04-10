@@ -21,6 +21,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 <?
 if (!$coupons->isEmpty()) {
 	?>
+	<h2 class="b-title b-personal-offers__title">Персональные предложения</h2>
 	<div class="b-personal-offers__list">
 		<?
 		/** @var array $coupon */
