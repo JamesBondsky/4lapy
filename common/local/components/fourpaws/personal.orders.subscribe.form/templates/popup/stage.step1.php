@@ -43,7 +43,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     <div class="b-product-subscribe-delivery">
         <div class="b-product-subscribe-delivery__list">
 
-            <? foreach ($arResult['BASKET'] as $basketItem) {
+            <? foreach ($arResult['BASKET'] as $id => $basketItem) {
+                $itemId = $id+1;
                 $offer = $component->getOffer((int)$basketItem->getProductId());
                 $useOffer = $offer instanceof Offer && $offer->getId() > 0;
                 $image = $component->getImage((int)$offer->getId());
@@ -118,7 +119,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                                            0) ?>"
                                        data-one-price="<?= $basketItem->getPrice() ?>"
                                        data-cont-max="<?= $maxQuantity ?>"
-                                       data-basketid="<?= $basketItemId; ?>"
+                                       data-basketid="<?= $itemId; ?>"
                                        type="text"/>
                                 <a class="b-plus-minus__plus js-plus" data-url="<?= $basketUpdateUrl ?>"
                                    href="javascript:void(0);"></a>
@@ -158,7 +159,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                             </div>
                             <a class="b-item-shopping__delete js-cart-delete-item" href="javascript:void(0);"
                                title=""
-                               data-basketId="<?= $basketItemId; ?>">
+                               data-basketId="<?= $itemId; ?>">
                                 <span class="b-icon b-icon--delete b-icon--shopping">
                                     <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
                                 </span>
@@ -172,7 +173,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                         <?php if (!($offer->getQuantity() > 0)) { ?>
                             <a class="b-item-shopping__delete js-cart-delete-item" href="javascript:void(0);"
                                title=""
-                               data-url="<?= $basketDeleteUrl ?>" data-basketId="<?= $basketItemId; ?>">
+                               data-url="<?= $basketDeleteUrl ?>" data-basketId="<?= $itemId; ?>">
                                 <span class="b-icon b-icon--delete b-icon--shopping">
                                     <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
                                 </span>

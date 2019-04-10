@@ -28,6 +28,10 @@ switch ($arResult['CURRENT_STAGE']) {
         // страница с описанием
         include __DIR__.'/stage.step1.php';
         break;
+    case 'step2':
+        // страница с описанием
+        include __DIR__.'/stage.step2.php';
+        break;
     case 'error':
         // страница с описанием
         include __DIR__.'/error.php';
