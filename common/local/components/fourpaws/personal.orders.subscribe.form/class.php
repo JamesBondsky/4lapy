@@ -911,7 +911,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         /** @var BasketItem $basketItem */
         foreach($basket as $id => $basketItem){
             $items[] = [
-                'id' => $id,
+                'id' => ($id+1),
                 'quantity' => $basketItem->getQuantity(),
                 'productId' => $basketItem->getProductId(),
             ];
