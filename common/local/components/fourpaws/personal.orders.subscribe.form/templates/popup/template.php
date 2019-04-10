@@ -14,11 +14,16 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var string $componentPath
  */
 
+// контролы
+if($arResult['CURRENT_STAGE'] == 'initial'){
+    include __DIR__.'/stage.initial.php';
+    return;
+}
+
+// форма
+include __DIR__. '/header.php';
+
 switch ($arResult['CURRENT_STAGE']) {
-    case 'initial':
-        // страница с контролами
-        include __DIR__.'/stage.initial.php';
-        break;
     case 'step1':
         // страница с описанием
         include __DIR__.'/stage.step1.php';
@@ -28,3 +33,5 @@ switch ($arResult['CURRENT_STAGE']) {
         include __DIR__.'/error.php';
         break;
 }
+
+include __DIR__. '/footer.php';
