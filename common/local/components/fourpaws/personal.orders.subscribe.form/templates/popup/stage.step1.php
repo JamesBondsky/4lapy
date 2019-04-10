@@ -41,7 +41,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         </ul>
     </div>
     <div class="b-product-subscribe-delivery">
-        <div class="b-product-subscribe-delivery__list">
+        <div class="b-product-subscribe-delivery__list js-list-product-subscribe-delivery">
 
             <? foreach ($arResult['BASKET'] as $id => $basketItem) {
                 $itemId = $id+1;
