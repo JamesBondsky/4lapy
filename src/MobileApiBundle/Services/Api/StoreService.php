@@ -203,8 +203,8 @@ class StoreService
         if (!empty($storeListRequest->getMetroStation())) {
             $result['UF_METRO'] = $storeListRequest->getMetroStation();
         }
-        if (!empty($storeListRequest->getCityId())) {
-            $result['UF_LOCATION'] = $storeListRequest->getCityId();
+        if (!empty($_COOKIE['selected_city_code'])) {
+            $result['UF_LOCATION'] = $_COOKIE['selected_city_code'];
         }
 
         return $result;
