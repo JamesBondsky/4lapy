@@ -76,7 +76,7 @@ $aMenuLinks = [
         'Персональные предложения',
         '/personal/personal-offers/',
         [],
-        ['icon' => 'icon-piggy-bank'],
+        ['icon' => 'icon-personal-offers'],
         "\$GLOBALS['isAuth']",
     ],
     [
