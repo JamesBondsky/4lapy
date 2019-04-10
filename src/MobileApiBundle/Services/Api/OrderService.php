@@ -58,6 +58,8 @@ use FourPaws\SaleBundle\Service\OrderSplitService;
 use FourPaws\DeliveryBundle\Service\DeliveryService as AppDeliveryService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService as AppOrderSubscribeService;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use FourPaws\MobileApiBundle\Security\ApiToken;
 use JMS\Serializer\Serializer;
 
 class OrderService
@@ -104,6 +106,8 @@ class OrderService
     /** @var CouponStorageInterface */
     private $couponStorage;
 
+    /** @var TokenStorageInterface */
+    private $tokenStorage;
 
     const DELIVERY_TYPE_COURIER = 'courier';
     const DELIVERY_TYPE_PICKUP = 'pickup';
@@ -122,7 +126,8 @@ class OrderService
         AppOrderSubscribeService $appOrderSubscribeService,
         ApiProductService $apiProductService,
         Serializer $serializer,
-        CouponStorageInterface $couponStorage
+        CouponStorageInterface $couponStorage,
+        TokenStorageInterface $tokenStorage
     )
     {
         $this->apiBasketService = $apiBasketService;
@@ -139,6 +144,7 @@ class OrderService
         $this->apiProductService = $apiProductService;
         $this->serializer = $serializer;
         $this->couponStorage = $couponStorage;
+        $this->tokenStorage = $tokenStorage;
     }
 
     /**
@@ -767,8 +773,16 @@ class OrderService
             $this->orderStorageService->setStorageValuesFromArray($storage, $cartParamArray, $step);
         }
 
+        /**
+         * @var ApiToken $token | null
+         */
+        $platform = '';
+        if ($token = $this->tokenStorage->getToken() && $session = $token->getApiUserSession()) {
+            $platform = $session->getPlatform();
+        }
+
         $storage->setFromApp(true)
-            ->setFromAppDevice('ANDROID'); //TODO вставить тип устройства ANDROID/IOS
+            ->setFromAppDevice($platform);
         $order = $this->appOrderService->createOrder($storage);
         $firstOrder = $this->personalOrderService->getOrderByNumber($order->getField('ACCOUNT_NUMBER'));
         $response = [

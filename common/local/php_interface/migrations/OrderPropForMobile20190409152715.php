@@ -17,8 +17,8 @@ class OrderPropForMobile20190409152715 extends SprintMigrationBase
     protected const PROP_NAME = 'Тип устройства';
 
     protected $values = [
-        'ANDROID' => 'Android',
-        'IOS' => 'iOS'
+        'android' => 'Android',
+        'ios' => 'iOS'
     ];
 
     /**

@@ -215,7 +215,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
          */
         $orderSource = $this->getPropertyValueByCode($order, 'FROM_APP') === 'Y'
             ? (
-            $this->getPropertyValueByCode($order, 'FROM_APP_DEVICE') == 'ANDROID'
+            $this->getPropertyValueByCode($order, 'FROM_APP_DEVICE') == 'android'
                 ? OrderDtoOut::ORDER_SOURCE_MOBILE_APP_ANDROID
                 : OrderDtoOut::ORDER_SOURCE_MOBILE_APP_IOS
             )
