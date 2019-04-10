@@ -591,7 +591,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $deliveryZone = $this->getDeliveryZone($order);
 
         if (
-            in_array($deliveryZone, DeliveryService::getZonesTwo())
+            (in_array($deliveryZone, DeliveryService::getZonesTwo()) || mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false)
             && $this->getPropertyValueByCode($order, 'REGION_COURIER_FROM_DC') === 'Y'
         ) {
             return SapOrder::DELIVERY_TYPE_ROUTE;
@@ -608,6 +608,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     case DeliveryService::ZONE_1:
                     case DeliveryService::ZONE_5:
                     case DeliveryService::ZONE_6:
+                    case DeliveryService::ZONE_IVANOVO:
                         return SapOrder::DELIVERY_TYPE_COURIER_RC;
                     case DeliveryService::ZONE_2:
                     case DeliveryService::ZONE_NIZHNY_NOVGOROD:
@@ -622,9 +623,12 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     case DeliveryService::ZONE_TULA_REGION:
                     case DeliveryService::ZONE_KALUGA:
                     case DeliveryService::ZONE_KALUGA_REGION:
-                    case DeliveryService::ZONE_IVANOVO:
                     case DeliveryService::ZONE_IVANOVO_REGION:
                         return SapOrder::DELIVERY_TYPE_COURIER_SHOP;
+                    default:
+                        if (mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false) {
+                            return SapOrder::DELIVERY_TYPE_COURIER_SHOP;
+                        }
                 }
 
                 break;
@@ -647,6 +651,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     case DeliveryService::ZONE_1:
                     case DeliveryService::ZONE_5:
                     case DeliveryService::ZONE_6:
+                    case DeliveryService::ZONE_IVANOVO:
                         return SapOrder::DELIVERY_TYPE_COURIER_RC;
                     case DeliveryService::ZONE_2:
                     case DeliveryService::ZONE_NIZHNY_NOVGOROD:
@@ -661,11 +666,14 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     case DeliveryService::ZONE_TULA_REGION:
                     case DeliveryService::ZONE_KALUGA:
                     case DeliveryService::ZONE_KALUGA_REGION:
-                    case DeliveryService::ZONE_IVANOVO:
                     case DeliveryService::ZONE_IVANOVO_REGION:
                         return SapOrder::DELIVERY_TYPE_COURIER_SHOP;
                     case DeliveryService::ZONE_3:
                         return SapOrder::DELIVERY_TYPE_PICKUP;
+                    default:
+                        if (mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false) {
+                            return SapOrder::DELIVERY_TYPE_COURIER_SHOP;
+                        }
                 }
                 break;
         }
@@ -1168,6 +1176,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
             switch ($deliveryZone) {
                 case DeliveryService::ZONE_1:
+                case DeliveryService::ZONE_IVANOVO:
                     $xmlId = SapOrder::DELIVERY_ZONE_1_ARTICLE;
                     break;
                 case DeliveryService::ZONE_5:
@@ -1189,7 +1198,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 case DeliveryService::ZONE_TULA_REGION:
                 case DeliveryService::ZONE_KALUGA:
                 case DeliveryService::ZONE_KALUGA_REGION:
-                case DeliveryService::ZONE_IVANOVO:
                 case DeliveryService::ZONE_IVANOVO_REGION:
                     $xmlId = SapOrder::DELIVERY_ZONE_2_ARTICLE;
                     break;
@@ -1197,9 +1205,14 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     $xmlId = SapOrder::DELIVERY_ZONE_3_ARTICLE;
                     break;
                 case DeliveryService::ZONE_4:
-                default:
                     $xmlId = SapOrder::DELIVERY_ZONE_4_ARTICLE;
                     break;
+                default:
+                    if (mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false) {
+                        $xmlId = SapOrder::DELIVERY_ZONE_2_ARTICLE;
+                    } else {
+                        $xmlId = SapOrder::DELIVERY_ZONE_4_ARTICLE;
+                    }
             }
 
             $deliveryPlaceCode = $this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE');

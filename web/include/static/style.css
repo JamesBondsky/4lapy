@@ -1252,7 +1252,7 @@ figure.slider figure figcaption {
     margin-top: 10px;
 }
 .column_p_wrap {
-    height: 145px;
+    height: 155px;
     position: relative;
     width: 245px;
     overflow: hidden;
@@ -1556,7 +1556,7 @@ margin-bottom: 30px;
     margin: 0 auto;
 }
 .column_p_wrap {
-    height: 145px;
+    height: 155px;
     position: relative;
     width: 190px;
     overflow: hidden;
@@ -1949,7 +1949,7 @@ min-height: 450px;
 }
 .column_p_wrap {
     width: 390px;
-    height: 75px;
+    height: auto;
 }
 
 figure.slider figure { 
