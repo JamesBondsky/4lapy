@@ -20,8 +20,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <div class="b-popup-subscribe-delivery__top">
             <div class="b-popup-subscribe-delivery__header">
                 <div class="b-container">
-                    <a class="b-popup-subscribe-delivery__close js-close-popup"
+                    <a class="b-popup-subscribe-delivery__close"
                        href="javascript:void(0);"
+                       data-close-subscribe-delivery-popup="true"
                        title="Закрыть"></a>
                     <h1 class="b-popup-subscribe-delivery__title">Редактирование подписки</h1>
                 </div>
@@ -87,7 +88,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                             </div>
 
                             <div class="b-product-subscribe-delivery__add" data-open-catalog-in-popup="true">
-                                <div class="add-product-subscribe js-open-catalog-subscribe" data-popup-id="catalog-subscribe-delivery">
+                                <div class="add-product-subscribe"
+                                     data-popup-id="catalog-subscribe-delivery"
+                                     data-subscribe-delivery-popup="open-catalog">
                                     <div class="add-product-subscribe__plus"></div>
                                     <div class="add-product-subscribe__info">
                                         <div class="add-product-subscribe__title">

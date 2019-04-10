@@ -233,7 +233,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             <? } ?>
 
             <div class="b-product-subscribe-delivery__add" data-open-catalog-in-popup="true">
-                <div class="add-product-subscribe js-open-catalog-subscribe"
+                <div class="add-product-subscribe"
+                     data-subscribe-delivery-popup="open-catalog"
                      data-popup-id="catalog-subscribe-delivery">
                     <div class="add-product-subscribe__plus"></div>
                     <div class="add-product-subscribe__info">
