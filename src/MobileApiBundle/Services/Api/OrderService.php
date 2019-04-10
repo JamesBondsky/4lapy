@@ -365,7 +365,7 @@ class OrderService
                 ->setPorch($order->getPropValue('PORCH'))
                 ->setFloor($order->getPropValue('FLOOR'))
                 ->setApartment($order->getPropValue('APARTMENT'))
-                ->setComment($order->getBitrixOrder()->getField('USER_DESCRIPTION'))
+                ->setComment($order->getBitrixOrder()->getField('USER_DESCRIPTION') ?: '')
                 ->setDeliveryPlaceCode($order->getPropValue('DELIVERY_PLACE_CODE'))
                 /** значение может меняться автоматически, @see \FourPaws\SaleBundle\Service\OrderService::updateCommWayProperty  */
                 // ->setCommunicationWay($order->getPropValue('COM_WAY'))
