@@ -24,7 +24,7 @@
                         </ul>
                     </div>
                     <div class="b-product-subscribe-delivery">
-                        <div class="b-product-subscribe-delivery__list">
+                        <div class="b-product-subscribe-delivery__list js-list-product-subscribe-delivery">
                             <div class="b-item-shopping js-remove-shopping">
                                 <div class="b-common-item b-common-item--shopping-cart b-common-item--shopping">
                                     <span class="b-common-item__image-wrap b-common-item__image-wrap--shopping-cart">
