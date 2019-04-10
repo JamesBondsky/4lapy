@@ -49,8 +49,8 @@ if ($arResult['isActualSubscription']) {
     <?php
 } elseif ($arResult['canBeSubscribed']) {
     ?>
-    <a href="javascript:void(0)" class="b-accordion-order-item__subscribe js-open-subscribe-delivery-popup"
-       data-type-subscribe="add"
+    <a href="javascript:void(0)" class="b-accordion-order-item__subscribe"
+       data-subscribe-delivery-popup="add"
        data-order-id="<?= $arParams['ORDER_ID'] ?>"
        data-popup-id="change-subscribe-delivery">
         Подписаться на&nbsp;доставку

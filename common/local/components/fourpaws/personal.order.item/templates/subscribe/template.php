@@ -178,11 +178,11 @@ $activeSubscribe = true;
                 } ?>
             </div>
             <div class="b-accordion-order-item__button">
-                <a class="b-link b-link--repeat-order b-link--change-subscribe-delivery js-open-subscribe-delivery-popup"
+                <a class="b-link b-link--repeat-order b-link--change-subscribe-delivery"
                    href="javascript:void(0);"
                    title="Редактировать подписку"
                    data-popup-id="change-subscribe-delivery"
-                   data-type-subscribe="edit"
+                   data-subscribe-delivery-popup="edit"
                    data-subscribe-id="<?=$orderSubscribe->getId()?>">
                     <span class="b-link__text b-link__text--change-subscribe-delivery">Редактировать <span>подписку</span></span>
                 </a>
