@@ -3,6 +3,7 @@
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
+use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
@@ -51,6 +52,12 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
     /** @var array $offers */
     private $offers = [];
+
+    /** @var array $offers */
+    private $images = [];
+
+    /** @var Basket $basket */
+    private $basket;
 
     /**
      * FourPawsPersonalCabinetOrdersSubscribeFormComponent constructor.
@@ -137,6 +144,25 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     public function getUserRepository()
     {
         return $this->getUserService()->getUserRepository();
+    }
+
+    /**
+     * @param Basket $basket
+     * @return Basket
+     */
+    public function setBasket(Basket $basket): Basket
+    {
+
+        $this->basket = $basket;
+        return $basket;
+    }
+
+    /**
+     * @return Basket
+     */
+    public function getBasket(): Basket
+    {
+        return $this->basket;
     }
 
     /**
@@ -368,7 +394,6 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
             // получение формы
             if($this->arParams['STEP'] == 1){
-
                 if($this->arParams['SUBSCRIBE_ID'] > 0){ // редактирование подписки
                     try {
                         $basket = $this->getOrderSubscribeService()->getBasketBySubscribeId($this->arParams['SUBSCRIBE_ID']);
@@ -402,18 +427,18 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     }
                 }
 
-                if(!$basket->isEmpty()) {
+                if(null !== $basket) {
                     $offerIds = [];
                     /** @var BasketItem $basketItem */
                     foreach ($basket as $basketItem) {
                         $offerIds[] = $basketItem->getProductId();
                     }
+
+                    if(empty($offerIds)){
+                        $result->addError(new Error("Offers is empty"));
+                    }
                 } else {
                     $result->addError(new Error("Товары не найдены"));
-                }
-
-                if(empty($offerIds)){
-                    $result->addError(new Error("Offers is empty"));
                 }
 
                 if($result->isSuccess()){
@@ -423,13 +448,24 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                 }
 
                 if(!$result->isSuccess()){
-                    $this->arResult['ERROR'] = $result->getErrorMessages();
                     $this->arResult['CURRENT_STAGE'] = 'error';
+                    $this->arResult['ERROR'] = $result->getErrorMessages();
                 } else {
-                    $this->arResult['BASKET'] = $basket;
                     $this->arResult['CURRENT_STAGE'] = 'step1';
+                    $this->arResult['BASKET'] = $this->setBasket($basket);
+                    $this->arResult['ITEMS'] = $this->getItemsFormatted();
+                }
+            } else if ($this->arParams['STEP'] == 2) {
+
+
+                if(!$result->isSuccess()){
+                    $this->arResult['CURRENT_STAGE'] = 'error';
+                    $this->arResult['ERROR'] = $result->getErrorMessages();
+                } else {
+                    $this->arResult['CURRENT_STAGE'] = 'step2';
                 }
             }
+
 
 //            $this->arResult['ORDER'] = $this->getOrder();
 //            if ($this->arResult['ORDER']) {
@@ -862,4 +898,26 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     {
         return $this->offers;
     }
+
+    /**
+     * @return array
+     * @throws \Bitrix\Main\ArgumentNullException
+     */
+    public function getItemsFormatted()
+    {
+        $items = [];
+        $basket = $this->getBasket();
+
+        /** @var BasketItem $basketItem */
+        foreach($basket as $id => $basketItem){
+            $items[] = [
+                'id' => $id,
+                'quantity' => $basketItem->getQuantity(),
+                'productId' => $basketItem->getProductId(),
+            ];
+        }
+        return $items;
+    }
+
+
 }

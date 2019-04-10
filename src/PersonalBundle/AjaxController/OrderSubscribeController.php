@@ -208,6 +208,7 @@ class OrderSubscribeController extends Controller
         $step = $request->get('step') ?? 1;
         $subscribeId = $request->get('subscribeId');
         $orderId = $request->get('orderId');
+        $items = $request->get('items');
 
         ob_start();
         /** @var \FourPawsPersonalCabinetOrdersSubscribeFormComponent $component */
@@ -219,6 +220,7 @@ class OrderSubscribeController extends Controller
                 'STEP' => $step,
                 'SUBSCRIBE_ID' => $subscribeId,
                 'ORDER_ID' => $orderId,
+                'ITEMS' => $items,
             ],
             null,
             [
@@ -228,10 +230,13 @@ class OrderSubscribeController extends Controller
         $content = ob_get_contents();
         ob_end_clean();
 
+        $items = $component->arResult['ITEMS'];
+
         $return = JsonErrorResponse::createWithData(
             '',
             [
-                'content' => $content
+                'content' => $content,
+                'items' => $items
             ],
             200,
             [

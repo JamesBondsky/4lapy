@@ -14,6 +14,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var string $componentPath
  */
 
+include __DIR__. '/header.php';
+
 switch ($arResult['CURRENT_STAGE']) {
     case 'initial':
         // страница с контролами
@@ -28,3 +30,5 @@ switch ($arResult['CURRENT_STAGE']) {
         include __DIR__.'/error.php';
         break;
 }
+
+include __DIR__. '/footer.php';
