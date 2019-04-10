@@ -306,4 +306,64 @@ class PersonalOffersService
             throw new CouponIsNotAvailableForUseException('coupon is not available for use. Promo code: ' . $promoCode . '. User id: ' . $userId);
         }
     }
+
+    /**
+     * @param string $promoCode
+     *
+     * @return ArrayCollection
+     * @throws InvalidArgumentException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\LoaderException
+     */
+    public function getOfferFieldsByPromoCode(string $promoCode): ArrayCollection
+    {
+        if ($promoCode === '')
+        {
+            throw new InvalidArgumentException('can\'t get offer by promo code. Got empty promo code');
+        }
+        if (!Loader::includeModule('iblock')) {
+            throw new SystemException('Module iblock is not installed');
+        }
+
+        $offerId = $this->personalCouponManager::query()
+            ->setSelect([
+                'ID',
+                'UF_OFFER',
+            ])
+            ->setFilter([
+                '=UF_PROMO_CODE' => $promoCode,
+            ])
+            ->exec()
+            ->fetch()['UF_OFFER'];
+        $offer = [];
+        if ($offerId)
+        {
+            $rsOffers = \CIBlockElement::GetList(
+                [
+                    'DATE_ACTIVE_TO' => 'asc,nulls'
+                ],
+                [
+                    '=IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::PERSONAL_OFFERS),
+                    '=ID' => $offerId,
+                ],
+                false,
+                ['nTopCount' => 1],
+                [
+                    'ID',
+                    'PREVIEW_TEXT',
+                    'DATE_ACTIVE_TO',
+                    'PROPERTY_DISCOUNT',
+                ]
+            );
+            if ($res = $rsOffers->GetNext())
+            {
+                if (is_array($res))
+                {
+                    $offer = $res;
+                }
+            }
+        }
+
+        return new ArrayCollection($offer);
+    }
 }

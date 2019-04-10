@@ -10,6 +10,7 @@ use FourPaws\AppBundle\Exception\JsonResponseException;
 use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\External\ExpertsenderService;
 use FourPaws\Helpers\ProtectorHelper;
+use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use Picqer\Barcode\BarcodeGenerator;
 use Picqer\Barcode\BarcodeGeneratorPNG;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -83,12 +84,22 @@ class PersonalOffersController extends Controller
                     ]);
                 }
 
+                /** @var PersonalOffersService $personalOffersService */
+                $personalOffersService = App::getInstance()->getContainer()->get('personal_offers.service');
+                $offerFields = $personalOffersService->getOfferFieldsByPromoCode('skidka025');
+                $couponDescription = $offerFields->get('PREVIEW_TEXT');
+                $couponDateActiveTo = $offerFields->get('DATE_ACTIVE_TO');
+                $discountValue = $offerFields->get('PROPERTY_DISCOUNT_VALUE');
+
                 $sender->sendPersonalOfferCouponEmail(
                     $USER->GetID(),
-                    $USER->GetFullName(),
+                    $USER->GetFirstName(),
                     $request->get('email'),
                     $coupon,
-                    'data:image/png;base64,' . base64_encode($barcodeGenerator->getBarcode($coupon, BarcodeGenerator::TYPE_CODE_128, 2.132310384278889, 127))
+                    'data:image/png;base64,' . base64_encode($barcodeGenerator->getBarcode($coupon, BarcodeGenerator::TYPE_CODE_128, 2.132310384278889, 127)),
+                    $couponDescription,
+                    $couponDateActiveTo,
+                    $discountValue
                 );
             }
             catch (\Exception $exception)
