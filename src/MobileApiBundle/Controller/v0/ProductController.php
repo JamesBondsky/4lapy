@@ -68,7 +68,7 @@ class ProductController extends FOSRestController
 
         $collection = (new OfferQuery())
             ->withFilterParameter('ACTIVE', 'Y')
-            ->withFilterParameter('!PROPERTY_IS_SALE_VALUE', false)
+            ->withFilterParameter('!PROPERTY_IS_POPULAR_VALUE', false)
             ->withNav([
                 'iNumPage' => $specialOffersRequest->getPage(),
                 'nPageSize' => $specialOffersRequest->getCount()
