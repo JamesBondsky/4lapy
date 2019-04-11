@@ -84,6 +84,15 @@ class ScheduleResult
     protected $days24 = -1;
 
     /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_DATE_ACTIVE")
+     * @Serializer\Groups(groups={"create", "read","update","delete"})
+     * @Assert\NotBlank(groups={"create", "read","update","delete"})
+     */
+    protected $dateActive;
+
+    /**
      * @return int
      */
     public function getId(): int
@@ -273,5 +282,23 @@ class ScheduleResult
         }
 
         return $result;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getDateActive(): ?string
+    {
+        return $this->dateActive;
+    }
+
+    /**
+     * @param string $dateActive
+     * @return ScheduleResult
+     */
+    public function setDateActive(string $dateActive): ScheduleResult
+    {
+        $this->dateActive = $dateActive;
+        return $this;
     }
 }

@@ -163,6 +163,22 @@ class ScheduleResultService implements LoggerAwareInterface
         return $this->repository->find($id);
     }
 
+
+    public function findAllResults(): ScheduleResultCollection
+    {
+        $result = null;
+        try {
+            $result = $this->repository->findAll();
+        } catch (\Exception $e) {
+            $this->log()->error(
+                sprintf('failed to get schedule results: %s: %s', \get_class($e), $e->getMessage()),
+                []
+            );
+        }
+
+        return $result ?? new ScheduleResultCollection();
+    }
+
     /**
      * @param Store $sender
      *

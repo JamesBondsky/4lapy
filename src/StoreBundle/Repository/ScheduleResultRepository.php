@@ -39,6 +39,15 @@ class ScheduleResultRepository extends D7Repository
     }
 
     /**
+     * @return ScheduleResultCollection
+     */
+    public function findAll(): ScheduleResultCollection
+    {
+        $result = new ScheduleResultCollection(parent::findBy()->toArray());
+        return $result ?? new ScheduleResultCollection();
+    }
+
+    /**
      * @param string $senderXmlId
      *
      * @return ScheduleResultCollection
