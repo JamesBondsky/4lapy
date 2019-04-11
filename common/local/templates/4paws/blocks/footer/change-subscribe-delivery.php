@@ -127,13 +127,16 @@
                         </div>
                     </div>
                     <div class="b-popup-subscribe-delivery__btns">
-                        <a href="javascript:void(0);" class="b-button b-button--back-subscribe-delivery" title="Назад">
-                            Назад
-                        </a>
-                        <a href="javascript:void(0);" class="b-button b-button--next-subscribe-delivery" title="Далее">
+                        <a href="javascript:void(0);"
+                           class="b-button b-button--next-subscribe-delivery"
+                           data-step2-change-subscribe-delivery="true"
+                           title="Далее">
                             Далее
                         </a>
-                        <a href="javascript:void(0);" class="b-button b-button--cancel-subscribe-delivery js-close-popup" title="Отменить">
+                        <a href="javascript:void(0);"
+                           class="b-button b-button--cancel-subscribe-delivery"
+                           data-close-subscribe-delivery-popup="true"
+                           title="Отменить">
                             Отменить
                         </a>
                     </div>

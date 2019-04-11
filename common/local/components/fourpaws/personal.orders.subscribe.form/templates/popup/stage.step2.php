@@ -228,9 +228,11 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
             Назад
         </a>
         <a href="javascript:void(0);" class="b-button b-button--next-subscribe-delivery" title="Далее">
-            Далее
+            Сохранить изменения
         </a>
-        <a href="javascript:void(0);" class="b-button b-button--cancel-subscribe-delivery js-close-popup"
+        <a href="javascript:void(0);"
+           class="b-button b-button--cancel-subscribe-delivery"
+           data-close-subscribe-delivery-popup="true"
            title="Отменить">
             Отменить
         </a>
