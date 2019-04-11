@@ -1,6 +1,10 @@
 <?php
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Catalog\Product\CatalogProvider;
+use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 use Bitrix\Sale\Basket;
@@ -13,7 +17,12 @@ use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
+use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
@@ -31,6 +40,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 {
     use LazyLoggerAwareTrait;
 
+
     /** @var string $action */
     private $action = '';
 
@@ -38,7 +48,10 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     private $userCurrentUserService;
 
     /** @var OrderSubscribeService $orderSubscribeService */
-    private $orderSubscribeService = null;
+    private $orderSubscribeService;
+
+    /** @var DeliveryService $deliveryService */
+    private $deliveryService;
 
     /** @var array $data */
     protected $data = [];
@@ -58,6 +71,10 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
     /** @var Basket $basket */
     private $basket;
+
+    /** @var array $deliveries */
+    private $deliveries;
+
 
     /**
      * FourPawsPersonalCabinetOrdersSubscribeFormComponent constructor.
@@ -135,6 +152,20 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         }
 
         return $this->userCurrentUserService;
+    }
+
+    /**
+     * @return DeliveryService
+     * @throws ApplicationCreateException
+     */
+    public function getDeliveryService()
+    {
+        if (!$this->deliveryService) {
+            $appCont = Application::getInstance()->getContainer();
+            $this->deliveryService = $appCont->get('delivery.service');
+        }
+
+        return $this->deliveryService;
     }
 
     /**
@@ -456,6 +487,70 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     $this->arResult['ITEMS'] = $this->getItemsFormatted();
                 }
             } else if ($this->arParams['STEP'] == 2) {
+                $this->arParams['ITEMS'] = [
+                  [
+                      'id' => 1,
+                      'productId' => 70833,
+                      'quantity' => 1,
+                  ],
+                  [
+                      'id' => 2,
+                      'productId' => 35129,
+                      'quantity' => 2,
+                  ],
+                  [
+                      'id' => 3,
+                      'productId' => 84355,
+                      'quantity' => 2,
+                  ],
+                ];
+
+                try {
+                    $basket = $this->createBasketFromItems($this->arParams['ITEMS']);
+                } catch (\Exception $e) {
+                    $result->addError(new Error(
+                        sprintf("Failed to get basket for form: %s", $e->getMessage())
+                    ));
+                }
+
+                if($result->isSuccess()){
+                    $deliveries       = $this->getDeliveries($basket);
+                    $selectedDelivery = $this->getSelectedDelivery();
+
+                    $this->getPickupData($deliveries, $storage);
+
+                    $addresses = null;
+                    if ($storage->getUserId()) {
+                        /** @var AddressService $addressService */
+                        $addressService = Application::getInstance()->getContainer()->get('address.service');
+                        $addresses      = $addressService->getAddressesByUser($storage->getUserId(), $selectedCity['CODE']);
+                    }
+
+                    $delivery = null;
+                    $pickup   = null;
+                    foreach ($deliveries as $calculationResult) {
+                        if ($this->deliveryService->isPickup($calculationResult)) {
+                            $pickup = $calculationResult;
+                        } elseif ($this->deliveryService->isDelivery($calculationResult)) {
+                            $delivery = $calculationResult;
+                        } elseif($this->deliveryService->isDostavistaDelivery($calculationResult)){
+                            $deliveryDostavista = $calculationResult;
+                        }
+                    }
+
+                    try {
+                        if (null !== $delivery) {
+                            $this->splitOrder($delivery, $storage);
+                        }
+                    } catch (OrderSplitException $e) {
+                        // проверяется на этапе валидации $storage
+                    }
+
+                    $this->arResult['PICKUP']               = $pickup;
+                    $this->arResult['DELIVERY']             = $delivery;
+                    $this->arResult['ADDRESSES']            = $addresses;
+                    $this->arResult['SELECTED_DELIVERY']    = $selectedDelivery;
+                }
 
 
                 if(!$result->isSuccess()){
@@ -909,9 +1004,10 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         $basket = $this->getBasket();
 
         /** @var BasketItem $basketItem */
-        foreach($basket as $id => $basketItem){
-            $items[] = [
-                'id' => ($id+1),
+        foreach($basket as $i => $basketItem){
+            $id = $i+1;
+            $items[$id] = [
+                'id' => $id,
                 'quantity' => $basketItem->getQuantity(),
                 'productId' => $basketItem->getProductId(),
             ];
@@ -919,5 +1015,108 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         return $items;
     }
 
+    /**
+     * @param array $items
+     * @return \Bitrix\Sale\BasketBase
+     * @throws ApplicationCreateException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws Exception
+     */
+    public function createBasketFromItems(array $items)
+    {
+        $basket = Basket::create(SITE_ID);
+        $tItems = [];
+        foreach($items as $item){
+            $tItems[$item['productId']] = [
+                'OFFER_ID' => $item['productId'],
+                'QUANTITY' => $item['quantity']
+            ];
+        }
+
+        $offerIds = array_column($tItems, 'OFFER_ID');
+        if(empty($offerIds)){
+            throw new Exception("Empty offerIds");
+        }
+
+        $offers = (new OfferQuery())
+            ->withFilter(["ID" => $offerIds])
+            ->exec();
+
+        /** @var Offer $offer */
+        foreach($offers as $offer){
+            $tItems[$offer->getId()]['PRICE'] = $offer->getSubscribePrice();
+            $tItems[$offer->getId()]['BASE_PRICE'] = $offer->getPrice();
+            $tItems[$offer->getId()]['NAME'] = $offer->getName();
+            $tItems[$offer->getId()]['WEIGHT'] = $offer->getCatalogProduct()->getWeight();
+            $tItems[$offer->getId()]['DETAIL_PAGE_URL'] = $offer->getDetailPageUrl();
+            $tItems[$offer->getId()]['PRODUCT_XML_ID'] = $offer->getXmlId();
+        }
+
+        foreach($tItems as $item){
+            $basketItem = BasketItem::create($basket, 'sale', $item['OFFER_ID']);
+            $basketItem->setFields([
+                'PRICE'                  => $item['PRICE'],
+                'BASE_PRICE'             => $item['BASE_PRICE'],
+                'CUSTOM_PRICE'           => BitrixUtils::BX_BOOL_TRUE,
+                'QUANTITY'               => $item['QUANTITY'],
+                'CURRENCY'               => CurrencyManager::getBaseCurrency(),
+                'NAME'                   => $item['NAME'],
+                'WEIGHT'                 => $item['WEIGHT'],
+                'DETAIL_PAGE_URL'        => $item['DETAIL_PAGE_URL'],
+                'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
+                'CATALOG_XML_ID'         => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
+                'PRODUCT_XML_ID'         => $item['PRODUCT_XML_ID'],
+                'CAN_BUY'                => "Y",
+            ]);
+
+            /** @noinspection PhpInternalEntityUsedInspection */
+            $basket->addItem($basketItem);
+        }
+
+        return $basket;
+    }
+
+    public function getDeliveries($basket = null)
+    {
+        if (null === $this->deliveries && $basket) {
+            $order = \Bitrix\Sale\Order::create(SITE_ID, $this->getUserService()->getCurrentFUserId() ?: null);
+            $order->setBasket($basket);
+            // todo: добавить коды служб
+            $codes = [];
+
+            $this->deliveries = $this->getDeliveryService()->getByBasket(
+                $basket,
+                $this->getUserService()->getSelectedCity()['CODE'],
+                $codes
+            );
+        }
+
+        return $this->deliveries;
+    }
+
+    public function getSelectedDelivery()
+    {
+        $deliveries = $this->getDeliveries();
+        $selectedDelivery = current($deliveries);
+
+        if (!$selectedDelivery) {
+            throw new NotFoundException('No deliveries available');
+        }
+
+        if ($selectedDelivery instanceof PickupResultInterface && $storage->getDeliveryPlaceCode()) {
+            $selectedDelivery->setSelectedShop($this->getSelectedShop($storage, $selectedDelivery));
+            if (!$selectedDelivery->isSuccess()) {
+                $selectedDelivery->setSelectedShop($selectedDelivery->getBestShops()
+                    ->first());
+            }
+        }
+
+        return $selectedDelivery;
+    }
 
 }

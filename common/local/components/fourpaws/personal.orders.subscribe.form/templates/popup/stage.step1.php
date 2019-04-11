@@ -204,26 +204,26 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                             </span>
                                 <?php
                                 // информацию о скидки мы не можем получить
-                                //                                        if ($basketItem->getBasePrice() !== $basketItem->getPrice()) {
-                                //                                            $informationText = 'Товар со скидкой';
-                                //                                            $descriptions = $component->getPromoLink($basketItem, true);
-                                //                                            if (\count($descriptions) === 1) {
-                                //                                                $informationText = 'Скидка: <br>';
-                                //                                            } elseif (\count($descriptions) > 1) {
-                                //                                                $informationText = 'Скидки: <br>';
-                                //                                            }
-                                //                                            foreach ($descriptions as $description) {
-                                //                                                $informationText .= $description['name'] . '<br>';
-                                //                                            }
-                                //                                            ?>
-                                <!--                                            <a class="b-information-link js-popover-information-open js-popover-information-open"-->
-                                <!--                                               href="javascript:void(0);" title="">-->
-                                <!--                                                <span class="b-information-link__icon">i</span>-->
-                                <!--                                                <div class="b-popover-information js-popover-information">-->
-                                <!--                                                    --><?//= $informationText; ?>
-                                <!--                                                </div>-->
-                                <!--                                            </a>-->
-                                <!--                                        --><?php //} ?>
+//                                if ($basketItem->getBasePrice() !== $basketItem->getPrice()) {
+//                                    $informationText = 'Товар со скидкой';
+//                                    $descriptions = $component->getPromoLink($basketItem, true);
+//                                    if (\count($descriptions) === 1) {
+//                                        $informationText = 'Скидка: <br>';
+//                                    } elseif (\count($descriptions) > 1) {
+//                                        $informationText = 'Скидки: <br>';
+//                                    }
+//                                    foreach ($descriptions as $description) {
+//                                        $informationText .= $description['name'] . '<br>';
+//                                    }
+//                                    ?>
+<!--                                            <a class="b-information-link js-popover-information-open js-popover-information-open"-->
+<!--                                               href="javascript:void(0);" title="">-->
+<!--                                                <span class="b-information-link__icon">i</span>-->
+<!--                                                <div class="b-popover-information js-popover-information">-->
+<!--                                                    --><?//= $informationText; ?>
+<!--                                                </div>-->
+<!--                                            </a>-->
+<!--                                        --><?php //} ?>
                             </div>
                             <?php
                         }
