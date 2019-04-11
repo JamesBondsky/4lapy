@@ -55,13 +55,13 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
 }
 ?>
 
-<div class="b-popup-subscribe-delivery__inner">
+<div class="b-popup-subscribe-delivery__inner js-step2-inner-subscribe-delivery">
     <div class="b-tab-list">
         <ul class="b-tab-list__list js-scroll-tabs-subscribe-delivery">
-            <li class="b-tab-list__item js-step-subscribe-delivery">
+            <li class="b-tab-list__item active-link" data-step-subscribe-delivery="1" data-show-step1-subscribe-delivery="true">
                 <span class="b-tab-list__step">Шаг </span>1. Товары в подписке
             </li>
-            <li class="b-tab-list__item js-step-subscribe-delivery active">
+            <li class="b-tab-list__item active" data-step-subscribe-delivery="2">
                 <span class="b-tab-list__step">Шаг </span>2. Доставка и оплата
             </li>
         </ul>
@@ -226,7 +226,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
         </script>
     </div>
     <div class="b-popup-subscribe-delivery__btns">
-        <a href="javascript:void(0);" class="b-button b-button--back-subscribe-delivery" title="Назад">
+        <a href="javascript:void(0);" class="b-button b-button--back-subscribe-delivery" data-show-step1-subscribe-delivery="true" title="Назад">
             Назад
         </a>
         <a href="javascript:void(0);" class="b-button b-button--next-subscribe-delivery" title="Далее">
