@@ -14,20 +14,19 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var string $componentPath
  */
 
-// контролы
-if($arResult['CURRENT_STAGE'] == 'initial'){
-    include __DIR__.'/stage.initial.php';
-    return;
-}
-
 switch ($arResult['CURRENT_STAGE']) {
+    case 'initial': // контролы
+        include __DIR__.'/stage.initial.php';
+        break;
     case 'step1':
         include __DIR__. '/header.php';
         include __DIR__. '/stage.step1.php';
         include __DIR__. '/footer.php';
         break;
     case 'step2':
-        include __DIR__.'/stage.step2.php';
+        include __DIR__. '/header.php';
+        include __DIR__. '/stage.step2.php';
+        include __DIR__. '/footer.php';
         break;
     case 'error':
         include __DIR__. '/header.php';

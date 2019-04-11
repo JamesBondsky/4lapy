@@ -205,7 +205,7 @@ class OrderSubscribeController extends Controller
     public function getDataAction(Request $request) : JsonResponse
     {
         $return = null;
-        $step = $request->get('step') ?: 1;
+        $step = $request->get('step') ?: 2;
         $subscribeId = $request->get('subscribeId');
         $orderId = $request->get('orderId');
         $items = $request->get('items');

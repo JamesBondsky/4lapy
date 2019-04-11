@@ -586,7 +586,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                 ];
 
                 if($this->arParams['SUBSCRIBE_ID'] > 0){
-                    $this->arResult['SUBSCRIBE'] = $this->setSubscribe($this->arParams['SUBSCRIBE_ID']);
+                    $this->arResult['SUBSCRIBE'] = $this->setSubscribe($this->getOrderSubscribeService()->getById($this->arParams['SUBSCRIBE_ID']));
                 }
 
                 try {
@@ -1336,7 +1336,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         $payments = [];
         /** @var Payment $payment */
         foreach ($paymentCollection as $payment) {
-            if ($payment->isInner() || in_array($payment->getField('CODE'), $this->getOrderSubscribeService()->getPaymentCodes())) {
+            if ($payment->isInner()) {
                 continue;
             }
 
@@ -1351,6 +1351,14 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     unset($payments[$id]);
                     break;
                 }
+            }
+        }
+
+        // для подписки толкьо оплата при получении
+        foreach ($payments as $id => $payment) {
+            if (!in_array($payment['CODE'], $this->getOrderSubscribeService()->getPaymentCodes())) {
+                unset($payments[$id]);
+                break;
             }
         }
 
