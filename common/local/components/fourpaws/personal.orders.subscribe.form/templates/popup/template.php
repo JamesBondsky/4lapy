@@ -20,22 +20,20 @@ if($arResult['CURRENT_STAGE'] == 'initial'){
     return;
 }
 
-// форма
-include __DIR__. '/header.php';
-
 switch ($arResult['CURRENT_STAGE']) {
     case 'step1':
-        // страница с описанием
-        include __DIR__.'/stage.step1.php';
+        include __DIR__. '/header.php';
+        include __DIR__. '/stage.step1.php';
+        include __DIR__. '/footer.php';
         break;
     case 'step2':
-        // страница с описанием
         include __DIR__.'/stage.step2.php';
         break;
     case 'error':
-        // страница с описанием
-        include __DIR__.'/error.php';
+        include __DIR__. '/header.php';
+        include __DIR__. '/error.php';
+        include __DIR__. '/footer.php';
         break;
 }
 
-include __DIR__. '/footer.php';
+
