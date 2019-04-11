@@ -35,32 +35,32 @@ class DeliveryInterval extends StringInput
     {
         global $APPLICATION;
         foreach ($input['ZONES'] as $code => $zone) {
-            if (!\in_array(
-                $code,
-                [
-                    DeliveryService::ZONE_1,
-                    DeliveryService::ZONE_2,
-                    DeliveryService::ZONE_3,
-                    DeliveryService::ZONE_4,
-                    DeliveryService::ZONE_5,
-                    DeliveryService::ZONE_6,
-                    DeliveryService::ZONE_NIZHNY_NOVGOROD,
-                    DeliveryService::ZONE_NIZHNY_NOVGOROD_REGION,
-                    DeliveryService::ZONE_VLADIMIR,
-                    DeliveryService::ZONE_VLADIMIR_REGION,
-                    DeliveryService::ZONE_VORONEZH,
-                    DeliveryService::ZONE_VORONEZH_REGION,
-                    DeliveryService::ZONE_YAROSLAVL,
-                    DeliveryService::ZONE_YAROSLAVL_REGION,
-                    DeliveryService::ZONE_TULA,
-                    DeliveryService::ZONE_TULA_REGION,
-                    DeliveryService::ZONE_KALUGA,
-                    DeliveryService::ZONE_KALUGA_REGION,
-                    DeliveryService::ZONE_IVANOVO,
-                    DeliveryService::ZONE_IVANOVO_REGION,
-                ],
-                true
-            )) {
+            if (!(\in_array(
+                    $code,
+                    [
+                        DeliveryService::ZONE_1,
+                        DeliveryService::ZONE_2,
+                        DeliveryService::ZONE_3,
+                        DeliveryService::ZONE_4,
+                        DeliveryService::ZONE_5,
+                        DeliveryService::ZONE_6,
+                        DeliveryService::ZONE_NIZHNY_NOVGOROD,
+                        DeliveryService::ZONE_NIZHNY_NOVGOROD_REGION,
+                        DeliveryService::ZONE_VLADIMIR,
+                        DeliveryService::ZONE_VLADIMIR_REGION,
+                        DeliveryService::ZONE_VORONEZH,
+                        DeliveryService::ZONE_VORONEZH_REGION,
+                        DeliveryService::ZONE_YAROSLAVL,
+                        DeliveryService::ZONE_YAROSLAVL_REGION,
+                        DeliveryService::ZONE_TULA,
+                        DeliveryService::ZONE_TULA_REGION,
+                        DeliveryService::ZONE_KALUGA,
+                        DeliveryService::ZONE_KALUGA_REGION,
+                        DeliveryService::ZONE_IVANOVO,
+                        DeliveryService::ZONE_IVANOVO_REGION,
+                    ],
+                    true
+                ) || mb_strpos($code, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false)) {
                 unset($input['ZONES'][$code]);
             }
         }

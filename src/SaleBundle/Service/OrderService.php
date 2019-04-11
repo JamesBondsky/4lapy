@@ -827,6 +827,7 @@ class OrderService implements LoggerAwareInterface
                                 case DeliveryService::ZONE_3:
                                 case DeliveryService::ZONE_5:
                                 case DeliveryService::ZONE_6:
+                                case DeliveryService::ZONE_IVANOVO:
                                     $value = self::STORE;
                                     break;
                                 case DeliveryService::ZONE_2:
@@ -842,7 +843,6 @@ class OrderService implements LoggerAwareInterface
                                 case DeliveryService::ZONE_TULA_REGION:
                                 case DeliveryService::ZONE_KALUGA:
                                 case DeliveryService::ZONE_KALUGA_REGION:
-                                case DeliveryService::ZONE_IVANOVO:
                                 case DeliveryService::ZONE_IVANOVO_REGION:
                                     if ($this->deliveryService->isDelivery($selectedDelivery)) {
                                         $value = $selectedDelivery->getSelectedStore()->getXmlId();
@@ -860,6 +860,16 @@ class OrderService implements LoggerAwareInterface
                                         $value = $baseShop->getXmlId();
                                     }
                                     break;
+                                default:
+                                    if (mb_strpos($selectedDelivery->getDeliveryZone(), DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false) {
+                                        if ($this->deliveryService->isDelivery($selectedDelivery)) {
+                                            $value = $selectedDelivery->getSelectedStore()->getXmlId();
+                                        } elseif ($baseShop = $selectedDelivery->getBestShops()->getBaseShops()->first()) {
+                                            $value = $baseShop->getXmlId();
+                                        } else {
+                                            $value = self::STORE;
+                                        }
+                                    }
                             }
                     }
                 }
