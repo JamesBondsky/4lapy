@@ -7,12 +7,16 @@
 namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Bitrix\Main\Application;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct;
 use FourPaws\MobileApiBundle\Dto\Request\GoodsBySpecialOfferRequest;
 use FourPaws\MobileApiBundle\Dto\Request\GoodsListByRequestRequest;
@@ -34,6 +38,9 @@ use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 
 class ProductController extends FOSRestController
 {
+    private $cacheTime = 3600;
+    private $cachePath = '/api/banners';
+
     /**
      * @var ApiProductService
      */
@@ -59,42 +66,76 @@ class ProductController extends FOSRestController
      *
      * @param SpecialOffersRequest $specialOffersRequest
      * @return ApiResponse
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public function getSpecialOffersAction(SpecialOffersRequest $specialOffersRequest): ApiResponse
     {
-        $goods = [];
+        $cache = Application::getInstance()->getCache();
+        $cacheId = md5(serialize([
+            $specialOffersRequest->getCount(),
+            $specialOffersRequest->getPage(),
+        ]));
+        if ($cache->startDataCache($this->cacheTime, $cacheId, $this->cachePath)) {
+            $tagCache = $cache->isStarted() ? new TaggedCacheHelper($this->cachePath) : null;
 
-        $collection = (new OfferQuery())
-            ->withFilterParameter('ACTIVE', 'Y')
-            ->withFilterParameter('!PROPERTY_IS_POPULAR_VALUE', false)
-            ->withFilterParameter('>CATALOG_PRICE_2', 0)
-            ->withNav([
-                'iNumPage' => $specialOffersRequest->getPage(),
-                'nPageSize' => $specialOffersRequest->getCount()
-            ])
-            ->withOrder(['SORT' => 'ASC', 'NAME' => 'ASC'])
-            ->withSelect(['ID'])
-            ->exec();
+            $goods = [];
 
-        /** @var Offer $offer */
-        foreach ($collection->getValues() as $offer) {
-            $product = $offer->getProduct();
-            $shortProduct = $this->apiProductService->convertToShortProduct($product, $offer);
-            // товары всегда доступны в каталоге (недоступные просто не должны быть в выдаче)
-            $shortProduct->setIsAvailable(true);
-            $goods[] = $shortProduct;
+            $collection = (new ProductQuery())
+                ->withFilter([
+                    'ID' => \CIBlockElement::SubQuery('PROPERTY_CML2_LINK',
+                        [
+                            '=PROPERTY_IS_POPULAR' => '1',
+                            '>CATALOG_PRICE_2' => 0,
+                            'IBLOCK_ID' => IblockUtils::getIblockId(
+                                IblockType::CATALOG,
+                                IblockCode::OFFERS
+                            ),
+                        ]
+                    )
+                ])
+                ->withNav([
+                    'iNumPage' => $specialOffersRequest->getPage(),
+                    'nPageSize' => $specialOffersRequest->getCount()
+                ])
+                ->withOrder(['SORT' => 'ASC'])
+                ->withSelect(['ID'])
+                ->exec();
+
+            /** @var Product $product */
+            foreach ($collection as $product) {
+                $product->getOffers(true);
+                /** @var Offer $offer */
+                $offer = $product->getOffersSorted()->first();
+                $shortProduct = $this->apiProductService->convertToShortProduct($product, $offer);
+                // товары всегда доступны в каталоге (недоступные просто не должны быть в выдаче)
+                $shortProduct->setIsAvailable(true);
+                $goods[] = $shortProduct;
+            }
+
+            $cdbResult = $collection->getCdbResult();
+
+            $response = new SpecialOffersResponse();
+            $response
+                ->setGoods($goods)
+                ->setTotalItem(intval($cdbResult->NavRecordCount))
+                ->setTotalPages(intval($cdbResult->NavPageCount));
+
+            $apiResponse = (new ApiResponse())->setData($response);
+
+            if ($tagCache) {
+                TaggedCacheHelper::addManagedCacheTags([$this->cachePath]);
+                $tagCache->end();
+            }
+
+            $cache->endDataCache($apiResponse);
+        } else {
+            $apiResponse = $cache->getVars();
         }
-        $cdbResult = $collection->getCdbResult();
 
-        $response = new SpecialOffersResponse();
-        $response
-            ->setGoods($goods)
-            ->setTotalItem(intval($cdbResult->NavRecordCount))
-            ->setTotalPages(intval($cdbResult->NavPageCount));
-
-        return (new ApiResponse())->setData($response);
+        return $apiResponse;
     }
 
     /**
