@@ -66,7 +66,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
             </li>
         </ul>
     </div>
-    <div class="b-product-subscribe-delivery">
+    <div class="b-product-subscribe-delivery b-order">
 
         <div class="b-order__block b-order__block--step-two">
             <div class="b-order__content js-order-content-block">
