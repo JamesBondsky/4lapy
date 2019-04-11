@@ -3,8 +3,9 @@
         <div class="b-popup-subscribe-delivery__top">
             <div class="b-popup-subscribe-delivery__header">
                 <div class="b-container">
-                    <a class="b-popup-subscribe-delivery__close js-close-popup"
+                    <a class="b-popup-subscribe-delivery__close"
                        href="javascript:void(0);"
+                       data-close-subscribe-delivery-popup="true"
                        title="Закрыть"></a>
                     <h1 class="b-popup-subscribe-delivery__title">Редактирование подписки</h1>
                 </div>
@@ -23,7 +24,7 @@
                         </ul>
                     </div>
                     <div class="b-product-subscribe-delivery">
-                        <div class="b-product-subscribe-delivery__list">
+                        <div class="b-product-subscribe-delivery__list js-list-product-subscribe-delivery">
                             <div class="b-item-shopping js-remove-shopping">
                                 <div class="b-common-item b-common-item--shopping-cart b-common-item--shopping">
                                     <span class="b-common-item__image-wrap b-common-item__image-wrap--shopping-cart">
@@ -126,13 +127,16 @@
                         </div>
                     </div>
                     <div class="b-popup-subscribe-delivery__btns">
-                        <a href="javascript:void(0);" class="b-button b-button--back-subscribe-delivery" title="Назад">
-                            Назад
-                        </a>
-                        <a href="javascript:void(0);" class="b-button b-button--next-subscribe-delivery" title="Далее">
+                        <a href="javascript:void(0);"
+                           class="b-button b-button--next-subscribe-delivery"
+                           data-step2-change-subscribe-delivery="true"
+                           title="Далее">
                             Далее
                         </a>
-                        <a href="javascript:void(0);" class="b-button b-button--cancel-subscribe-delivery js-close-popup" title="Отменить">
+                        <a href="javascript:void(0);"
+                           class="b-button b-button--cancel-subscribe-delivery"
+                           data-close-subscribe-delivery-popup="true"
+                           title="Отменить">
                             Отменить
                         </a>
                     </div>

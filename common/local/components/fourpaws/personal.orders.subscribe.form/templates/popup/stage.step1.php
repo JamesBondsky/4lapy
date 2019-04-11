@@ -41,7 +41,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         </ul>
     </div>
     <div class="b-product-subscribe-delivery">
-        <div class="b-product-subscribe-delivery__list">
+        <div class="b-product-subscribe-delivery__list js-list-product-subscribe-delivery">
 
             <? foreach ($arResult['BASKET'] as $id => $basketItem) {
                 $itemId = $id+1;
@@ -233,7 +233,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             <? } ?>
 
             <div class="b-product-subscribe-delivery__add" data-open-catalog-in-popup="true">
-                <div class="add-product-subscribe js-open-catalog-subscribe"
+                <div class="add-product-subscribe"
+                     data-subscribe-delivery-popup="open-catalog"
                      data-popup-id="catalog-subscribe-delivery">
                     <div class="add-product-subscribe__plus"></div>
                     <div class="add-product-subscribe__info">
@@ -250,13 +251,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         </div>
     </div>
     <div class="b-popup-subscribe-delivery__btns">
-        <a href="javascript:void(0);" class="b-button b-button--back-subscribe-delivery" title="Назад">
-            Назад
-        </a>
-        <a href="javascript:void(0);" class="b-button b-button--next-subscribe-delivery" title="Далее">
+        <a href="javascript:void(0);"
+           class="b-button b-button--next-subscribe-delivery"
+           data-step2-change-subscribe-delivery="true"
+           title="Далее">
             Далее
         </a>
-        <a href="javascript:void(0);" class="b-button b-button--cancel-subscribe-delivery js-close-popup"
+        <a href="javascript:void(0);"
+           class="b-button b-button--cancel-subscribe-delivery"
+           data-close-subscribe-delivery-popup="true"
            title="Отменить">
             Отменить
         </a>
