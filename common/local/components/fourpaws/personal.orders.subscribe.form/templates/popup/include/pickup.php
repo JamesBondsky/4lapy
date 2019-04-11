@@ -13,6 +13,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
+use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -27,8 +28,8 @@ use FourPaws\StoreBundle\Entity\Store;
 
 /** @var DeliveryService $deliveryService */
 $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
-/** @var OrderStorage $storage */
-$storage = $arResult['STORAGE'];
+/** @var OrderSubscribe $subscribe */
+$subscribe = $arResult['SUBSCRIBE'];
 
 /** @var Store $selectedShop */
 $selectedShop = $arResult['SELECTED_SHOP'];
@@ -38,12 +39,6 @@ $available = $arResult['PICKUP_STOCKS_AVAILABLE'];
 /** @var StockResultCollection $delayed */
 $delayed = $arResult['PICKUP_STOCKS_DELAYED'];
 
-$metro = $arResult['METRO'][$selectedShop->getMetro()];
-
-$canGetPartial = $arResult['PARTIAL_PICKUP_AVAILABLE'];
-$canSplit = $arResult['SPLIT_PICKUP_AVAILABLE'];
-$partialGet = $storage->isSplit() && ($canGetPartial || $canSplit);
-$partialPickup = $arResult['PARTIAL_PICKUP'] ?? $pickup;
 $metro = $arResult['METRO'][$selectedShop->getMetro()];
 ?>
 
@@ -92,101 +87,20 @@ $metro = $arResult['METRO'][$selectedShop->getMetro()];
             <?php } ?>
         </div>
     </div>
-    <div class="b-input-line b-input-line--desired-date" data-url="<?= $arResult['URL']['DELIVERY_INTERVALS'] ?>">
-        <div class="b-input-line__label-wrapper">
-            <span class="b-input-line__label">Желаемая дата доставки</span>
-        </div>
-        <div class="b-select b-select--recall b-select--feedback-page">
-            <?php
-            $selectorDelivery = $delivery;
-            $selectorStorage = $storage;
-            $selectorName = 'deliveryDate';
-            include 'delivery_date_select.php'
-            ?>
-        </div>
-    </div>
-    <div class="b-input-line b-input-line--partially">
-        <div class="b-input-line__label-wrapper b-input-line__label-wrapper--order-full">
-            <span class="b-input-line__label js-parts-info">
-                <?php if ($canGetPartial || $canSplit) { ?>
-                    Заказ в наличии частично
-                <?php } elseif ($delayed->isEmpty()) { ?>
-                    Заказ доступен в полном составе
-                <?php } else { ?>
-                    Требуется ждать поставки со склада
-                <?php } ?>
-            </span>
-        </div>
-        <div class="b-radio b-radio--tablet-big" <?= ($canGetPartial || $canSplit) ? '' : 'style="display:none"' ?>>
-            <input class="b-radio__input ok"
-                   type="radio"
-                   name="order-pick-time"
-                   id="order-pick-time-now"
-                <?= $partialGet ? 'checked="checked"' : '' ?>
-                   value="1"
-                   data-radio="5">
-            <label class="b-radio__label b-radio__label--tablet-big" for="order-pick-time-now">
-            </label>
-            <div class="b-order-list b-order-list--myself js-parts-price js-price-block">
-                <ul class="b-order-list__list">
-                    <li class="b-order-list__item b-order-list__item--myself js-parts-price js-price-block">
-                        <div class="b-order-list__order-text b-order-list__order-text--myself js-parts-price js-price-block">
-                            <div class="b-order-list__clipped-text">
-                                <div class="b-order-list__text-backed js-my-pickup js-pickup-time">
-                                    Забрать <?= DeliveryTimeHelper::showTime($partialPickup,
-                                        ['SHOW_TIME' => $pickup instanceof PickupResult]) ?></div>
-                            </div>
-                        </div>
-                        <div class="b-order-list__order-value b-order-list__order-value--myself js-parts-price js-price-block">
-                            <?= CurrencyHelper::formatPrice($canGetPartial ? $available->getPrice() : $pickup->getStockResult()->getPrice()) ?>
-                        </div>
-                    </li>
-                </ul>
+    <? if(!$subscribe) { ?>
+        <div class="b-input-line b-input-line--desired-date" data-url="<?= $arResult['URL']['DELIVERY_INTERVALS'] ?>">
+            <div class="b-input-line__label-wrapper">
+                <span class="b-input-line__label">Желаемая дата первой доставки</span>
             </div>
-            <div class="b-radio__addition-text js-excluded-parts" <?= (!$canGetPartial) ? 'style="display:none"' : '' ?>>
-                <p>За исключением:</p>
-                <ol class="js-delay-items">
-                    <?php /** @var StockResult $item */ ?>
-                    <?php foreach ($delayed as $item) { ?>
-                        <li>
-                            <?= $item->getOffer()->getName() ?> <?= ($item->getAmount() > 1) ? ('(' . $item->getAmount() . ' шт)') : '' ?>
-                        </li>
-                    <?php } ?>
-                </ol>
+            <div class="b-select b-select--recall b-select--feedback-page">
+                <?php
+                $selectorDelivery = $delivery;
+                $selectorName = 'deliveryDate';
+                include 'delivery_date_select.php'
+                ?>
             </div>
         </div>
-        <div class="b-radio b-radio--tablet-big">
-            <input class="b-radio__input ok"
-                   type="radio"
-                   name="order-pick-time"
-                   id="order-pick-time-then"
-                <?= !$partialGet ? 'checked="checked"' : '' ?>
-                   value="0"
-                   data-radio="6">
-            <label class="b-radio__label b-radio__label--tablet-big" for="order-pick-time-then">
-            </label>
-            <div class="b-order-list b-order-list--myself js-full-price js-price-block">
-                <ul class="b-order-list__list">
-                    <li class="b-order-list__item b-order-list__item--myself js-full-price js-price-block">
-                        <div class="b-order-list__order-text b-order-list__order-text--myself js-full-price js-price-block">
-                            <div class="b-order-list__clipped-text">
-                                <div class="b-order-list__text-backed">Забрать полный заказ
-                                </div>
-                            </div>
-                        </div>
-                        <div class="b-order-list__order-value b-order-list__order-value--myself js-full-price js-price-block">
-                            <?= CurrencyHelper::formatPrice($pickup->getStockResult()->getPrice()) ?>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-            <div class="b-radio__addition-text">
-                <p class="js-pickup_full js-pickup-time">
-                    <?= DeliveryTimeHelper::showTime($pickup) ?>
-                </p>
-            </div>
-        </div>
-    </div>
+    <? } ?>
     <a class="b-link b-link--another-point js-open-popup"
        href="javascript:void(0);"
        data-popup-id="popup-order-stores"

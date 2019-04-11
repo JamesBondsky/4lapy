@@ -8,6 +8,7 @@ use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\StoreBundle\Entity\Store;
 
@@ -15,7 +16,7 @@ use FourPaws\StoreBundle\Entity\Store;
  * @var array $arParams
  * @var array $arResult
  * @var CMain $APPLICATION
- * @var FourPawsOrderComponent $component
+ * @var FourPawsPersonalCabinetOrdersSubscribeFormComponent $component
  */
 
 /** @var CalculationResultInterface $delivery */
@@ -35,8 +36,8 @@ $selectedShop = $arResult['SELECTED_SHOP'];
 /** @var Basket $basket */
 $basket = $arResult['BASKET'];
 
-/** @var OrderStorage $storage */
-$storage = $arResult['STORAGE'];
+/** @var OrderSubscribe $subscribe */
+$subscribe = $arResult['SUBSCRIBE'];
 
 $subscribeIntervals = $component->getOrderSubscribeService()->getFrequencies();
 
@@ -87,7 +88,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                value="<?= /** @noinspection PhpUnhandledExceptionInspection */
                                $pickup ? $pickup->getSelectedShop()->getXmlId() : '' ?>">
                         <input type="hidden" name="delyveryType"
-                               value="<?= (!empty($arResult['SPLIT_RESULT']) && $storage->isSplit()) ? 'twoDeliveries' : 'oneDelivery' ?>"
+                               value="<?= (!empty($arResult['SPLIT_RESULT'])) ? 'twoDeliveries' : 'oneDelivery' ?>"
                                class="js-no-valid">
                         <input type="hidden" name="deliveryTypeId"
                                value="<?
@@ -141,7 +142,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                             <?php }
                             if ($pickup) {
                                 $available = $arResult['PICKUP_STOCKS_AVAILABLE'];
-                                if ($arResult['PARTIAL_PICKUP_AVAILABLE'] && $storage->isSplit()) {
+                                if ($arResult['PARTIAL_PICKUP_AVAILABLE']) {
                                     $price = $available->getPrice();
                                 } else {
                                     $price = $pickup->getStockResult()->getPrice();
@@ -214,13 +215,14 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
         </div>
 
         <?php
-        $currentShopInfo = $pickup ? $component->getShopListService()->toArray(
+        /*$currentShopInfo = $pickup ? $component->getShopListService()->toArray(
             $component->getShopListService()->getOneShopInfo($pickup->getSelectedShop()->getXmlId(), $storage, $pickup)
-        ) : [];
+        ) : [];*/
         ?>
         <script>
-            window.fullBasket = <?= CUtil::PhpToJSObject(array_values($component->getBasketItemData($basket))) ?>;
-            window.currentShop = <?= CUtil::PhpToJSObject($currentShopInfo) ?>;
+            window.fullBasket = <?= CUtil::PhpToJSObject(array_values($component->getBasketItemData($component->getBasket()))) ?>;
+            // window.currentShop = <?= CUtil::PhpToJSObject($currentShopInfo) ?>;
+            window.currentShop = <?= CUtil::PhpToJSObject([]) ?>;
         </script>
     </div>
     <div class="b-popup-subscribe-delivery__btns">

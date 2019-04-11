@@ -59,6 +59,7 @@ use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\PersonalBundle\Repository\OrderSubscribeItemRepository;
 use FourPaws\PersonalBundle\Repository\OrderSubscribeRepository;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\NotificationService;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
@@ -341,6 +342,7 @@ class OrderSubscribeService implements LoggerAwareInterface
         $nextDate->add(sprintf("+%s week", $weeksAdd));
 
         $orderSubscribe->setNextDate($nextDate);
+        return $nextDate;
     }
 
     /**
@@ -841,6 +843,11 @@ class OrderSubscribeService implements LoggerAwareInterface
         }
     }
 
+    public function getPaymentCodes()
+    {
+        return [OrderPayment::PAYMENT_CASH, OrderPayment::PAYMENT_CASH_OR_CARD];
+    }
+
     /**
      * @param int $originOrderId
      * @param bool $checkActiveSubscribe
@@ -1130,7 +1137,7 @@ class OrderSubscribeService implements LoggerAwareInterface
 
         // В заказах по подписке только оплата наличными может быть
         if ($result->isSuccess()) {
-            $cashPaySystemService = $this->getOrderService()->getCashPaySystemService();
+            $cashPaySystemService = $this->getPayments();
             if ($cashPaySystemService) {
                 try {
                     $params->getOrderCopyHelper()->setPayment($cashPaySystemService);

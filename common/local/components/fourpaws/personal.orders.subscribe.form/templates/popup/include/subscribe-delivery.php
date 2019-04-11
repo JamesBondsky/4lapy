@@ -5,6 +5,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use FourPaws\Decorators\SvgDecorator;
 
+$nextDelivery = null;
+if($subscribe){
+    $nextDelivery = $component->getOrderSubscribeService()->countNextDate($subscribe);
+}
+
 ?>
 <div class="subscribe-delivery-order">
     <div class="subscribe-delivery-order__fields">
@@ -17,7 +22,7 @@ use FourPaws\Decorators\SvgDecorator;
                     <option value="" disabled="disabled">выберите</option>
                     <?php
                     foreach ($subscribeIntervals as $i => $interval) { ?>
-                        <option value="<?= $interval['ID'] ?>">
+                        <option value="<?= $interval['ID'] ?>" <?=($subscribe && $subscribe->getFrequency() == $interval['ID']) ? 'selected' : ''?> >
                             <?= (string)$interval['VALUE'] ?>
                         </option>
                     <?php } ?>
@@ -33,16 +38,16 @@ use FourPaws\Decorators\SvgDecorator;
                     <option value="" disabled="disabled" selected="selected">выберите</option>
                     <?php
                     foreach ($daysOfWeek as $i => $day) { ?>
-                        <option value="<?= ($i+1) ?>">
+                        <option value="<?= ($i+1) ?>" <?=($subscribe && $subscribe->getDeliveryDay() == ($i+1)) ? 'selected' : ''?>>
                             <?= $day ?>
                         </option>
                     <?php } ?>
                 </select>
             </div>
         </div>
-        <div class="subscribe-delivery-order__date-second-delivery">
-            Дата второй доставки:<br/>
-            <span class="bold js-date-second-delivery">понедельник, 8 апреля</span>
+        <div class="subscribe-delivery-order__date-second-delivery" <?= ($nextDelivery) ? '' : 'style="display:none"'?> >
+            Дата следующей доставки:<br/>
+            <span class="bold js-date-second-delivery"><?= ($nextDelivery) ? FormatDate('l, d.m.Y', $nextDelivery->getTimestamp()) : '' ?></span>
         </div>
     </div>
     <div class="subscribe-delivery-order__info">

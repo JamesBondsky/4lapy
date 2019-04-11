@@ -18,7 +18,7 @@ use FourPaws\SaleBundle\Enum\OrderStorage;
         name="<?= $selectorName ?>">
     <option value="" disabled="disabled" selected="selected">выберите</option>
     <?php foreach ($nextDeliveries as $i => $nextDelivery) { ?>
-        <option value="<?= $i ?>" <?= ($selectorStorage->getDeliveryDate() === $i) ? 'selected="selected"' : '' ?> data-date-option="<?= FormatDate('l, Y-m-d', $nextDelivery->getDeliveryDate()->getTimestamp()) ?>">
+        <option value="<?= $i ?>" data-date-option="<?= FormatDate('l, Y-m-d', $nextDelivery->getDeliveryDate()->getTimestamp()) ?>">
             <?= FormatDate('l, d.m.Y', $nextDelivery->getDeliveryDate()->getTimestamp()) ?>
         </option>
     <?php } ?>
