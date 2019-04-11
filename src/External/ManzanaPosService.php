@@ -124,7 +124,12 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                         $piggyBankService = App::getInstance()->getContainer()->get('piggy_bank.service');
 
                         $pseudoAction = $offer->getShare()->filter(function(Share $action) use ($piggyBankService) {
-                            return $action->getCode() === $piggyBankService::ACTION_CODE;
+                            return in_array($action->getCode(), [
+                                $piggyBankService::ACTION_CODE,
+                                'royal-canin-vyigray-poezdku',
+                                'novaya-kollektsiya-lezhakov-2019',
+                                'pro-plan-vyigray-iphone-garantirovannye-prizy'
+                            ]);
                         });
                         if (!$pseudoAction->isEmpty())
                         {
