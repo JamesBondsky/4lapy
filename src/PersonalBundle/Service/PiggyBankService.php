@@ -701,7 +701,7 @@ class PiggyBankService implements LoggerAwareInterface
         {
             for ($i = $this->couponLevelsQuantity; $i > $this->activeCouponLevelNumber; --$i)
             {
-                if ($this->marksAvailable > self::COUPON_LEVELS[$i]['MARKS_TO_LEVEL_UP_FROM_BOTTOM'] - $this->activeCouponNominalPrice)
+                if ($this->marksAvailable >= self::COUPON_LEVELS[$i]['MARKS_TO_LEVEL_UP_FROM_BOTTOM'] - $this->activeCouponNominalPrice)
                 {
                     $availableLevel = $i;
                     break;
