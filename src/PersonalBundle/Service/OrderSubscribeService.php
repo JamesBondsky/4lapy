@@ -298,6 +298,20 @@ class OrderSubscribeService implements LoggerAwareInterface
         return $this->orderSubscribeItemRepository->delete($id);
     }
 
+    /**
+     * @param int $orderSubscribeId
+     * @return bool
+     * @throws \Exception
+     */
+    public function deleteAllItems($orderSubscribeId): bool
+    {
+        $items = $this->orderSubscribeItemRepository->findBySubscribe($orderSubscribeId);
+        foreach($items as $item){
+            $this->orderSubscribeItemRepository->delete($item->getId());
+        }
+        return true;
+    }
+
 
     /**
      * @param OrderSubscribe $orderSubscribe

@@ -24,9 +24,9 @@ switch ($arResult['CURRENT_STAGE']) {
         include __DIR__. '/footer.php';
         break;
     case 'step2':
-        include __DIR__. '/header.php';
+        //include __DIR__. '/header.php';
         include __DIR__. '/stage.step2.php';
-        include __DIR__. '/footer.php';
+        //include __DIR__. '/footer.php';
         break;
     case 'error':
         include __DIR__. '/header.php';
