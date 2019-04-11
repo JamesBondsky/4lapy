@@ -45,6 +45,14 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
         $APPLICATION->IncludeComponent('fourpaws:fast.order', '', [], null, ['HIDE_ICONS' => 'Y']);
     }
 
+    if ($template->hasPiggyBank()) {
+        include __DIR__ . '/popup_email_kopilka.php';
+    }
+
+    if ($template->hasPersonalOffers()) {
+        include __DIR__ . '/personal_offers_form.php';
+    }
+
     include __DIR__ . '/change-subscribe-delivery.php';
     include __DIR__ . '/catalog-subscribe-delivery.php';
     include __DIR__ . '/stop-subscribe-delivery.php';
@@ -52,8 +60,6 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
     include __DIR__ . '/renew-subscribe-delivery.php';
     include __DIR__ . '/message-renew-subscribe-delivery.php';
     include __DIR__ . '/message-change-subscribe-delivery.php';
-
-    include __DIR__ . '/popup_email_kopilka.php';
 
     include __DIR__ . '/gifts_popup.php';
     include __DIR__ . '/modal_popup.php';

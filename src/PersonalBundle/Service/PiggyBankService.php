@@ -35,14 +35,16 @@ class PiggyBankService implements LoggerAwareInterface
 
     protected static $promoOfferDateStart;
     protected static $promoOfferDateEnd;
+    protected static $couponsApplyingDateStart;
+    protected static $couponsApplyingDateEnd;
 
     protected const MARKS = [
         'VIRTUAL' => [
-            'ID' => 89617, // (род.товар 89616, внешний код ТП 2000341)
+            'ID' => 89617, // не использовать
             'XML_ID' => 2000341,
         ],
         'PHYSICAL' => [
-            'ID' => 89728, // (род.товар 89727, внешний код ТП 3006077)
+            'ID' => 89728, // не использовать
             'XML_ID' => 3006077,
         ],
     ];
@@ -436,14 +438,11 @@ class PiggyBankService implements LoggerAwareInterface
     {
         global $USER;
 
-        if (!$this->isCouponNumberFormatOk($couponNumber)) {
-            throw new CouponIsNotAvailableForUseException('coupon is not available for use');
-        }
-
-        if ($this->isPiggyBankCoupon($couponNumber))
+        if ($this->isCouponNumberFormatOk($couponNumber) && $this->isPiggyBankCoupon($couponNumber))
         {
-            if(($this->isPiggyBankDateExpired() && !$USER->IsAdmin()) || !$this->isCouponAvailableToCurrentUser($couponNumber)) {
-                throw new CouponIsNotAvailableForUseException('coupon is not available for use');
+            //if(($this->isPiggyBankCouponsApplyingDateExpired() && !$USER->IsAdmin()) || !$this->isCouponAvailableToCurrentUser($couponNumber)) {
+            if($this->isPiggyBankCouponsApplyingDateExpired() || !$this->isCouponAvailableToCurrentUser($couponNumber)) {
+                throw new CouponIsNotAvailableForUseException('coupon is not available for use. Promo code: ' . $couponNumber);
             }
         }
     }
@@ -509,6 +508,21 @@ class PiggyBankService implements LoggerAwareInterface
     }
 
     /**
+     * @return bool
+     * @throws \Bitrix\Main\ObjectException
+     */
+    public function isPiggyBankCouponsApplyingDateExpired(): bool
+    {
+        $currentDateTime = new DateTime();
+        $couponsApplyingDateRange = $this->getCouponsApplyingDateRange();
+
+        return (
+            $couponsApplyingDateRange->get('start') > $currentDateTime ||
+            $couponsApplyingDateRange->get('end') < $currentDateTime
+        );
+    }
+
+    /**
      * @return ArrayCollection
      * @throws \Bitrix\Main\ObjectException
      */
@@ -517,12 +531,30 @@ class PiggyBankService implements LoggerAwareInterface
         if (!self::$promoOfferDateStart || !self::$promoOfferDateEnd)
         {
             self::$promoOfferDateStart = new DateTime('01.03.2019 00:00:00');
-            self::$promoOfferDateEnd   = new DateTime('31.03.2019 23:59:59');
+            self::$promoOfferDateEnd   = new DateTime('30.04.2019 23:59:59');
         }
 
         return new ArrayCollection([
             'start' => self::$promoOfferDateStart,
             'end'   => self::$promoOfferDateEnd,
+        ]);
+    }
+
+    /**
+     * @return ArrayCollection
+     * @throws \Bitrix\Main\ObjectException
+     */
+    public function getCouponsApplyingDateRange(): ArrayCollection
+    {
+        if (!self::$couponsApplyingDateStart || !self::$couponsApplyingDateEnd)
+        {
+            self::$couponsApplyingDateStart = new DateTime('01.03.2019 00:00:00');
+            self::$couponsApplyingDateEnd   = new DateTime('20.05.2019 23:59:59');
+        }
+
+        return new ArrayCollection([
+            'start' => self::$couponsApplyingDateStart,
+            'end'   => self::$couponsApplyingDateEnd,
         ]);
     }
 
