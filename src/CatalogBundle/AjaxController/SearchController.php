@@ -87,14 +87,16 @@ class SearchController extends Controller
 
             $converted = $result->getCollection()->toArray();
 
+            $brands = [];
             /** @var Product|Brand $product */
             foreach ($converted as $key => $arItems) {
                 foreach ($arItems as $item) {
                     if ($item instanceof Brand) {
-                        $res['brands'][] = [
+                        $brands[] = [
                             'DETAIL_PAGE_URL' => $item->getDetailPageUrl(),
                             'NAME' => $item->getName(),
                             'SCORE' => $item->getHitMetaInfo()->getScore(),
+                            'EXACT' => in_array(SearchService::BRAND_EXACT_MATCH_QUERY_NAME, $item->getHitMetaInfo()->getMatchedQueries(), true),
                         ];
                     } elseif ($item instanceof Product) {
                         //проверка, по точному совпадению с внешним кодом
@@ -180,6 +182,11 @@ class SearchController extends Controller
                     }
                 }
             }
+
+            $exactBrands = array_filter($brands, static function($brand) {
+                return $brand['EXACT'];
+            });
+            $res['brands'] = $exactBrands ?: $brands;
         }
 
         usort($res['suggests'], function ($a, $b) {

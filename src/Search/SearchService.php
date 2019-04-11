@@ -37,6 +37,8 @@ class SearchService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
+    public const BRAND_EXACT_MATCH_QUERY_NAME = 'name-fuzzy-word-brand-0';
+
     /**
      * @var IndexHelper
      */
@@ -283,7 +285,7 @@ class SearchService implements LoggerAwareInterface
                 ->setFuzziness(0)
                 ->setAnalyzer('default')
                 ->setParam('boost', 100.0)
-                ->setParam('_name', 'name-fuzzy-word')
+                ->setParam('_name', self::BRAND_EXACT_MATCH_QUERY_NAME)
                 ->setOperator('and')
         );
 
@@ -296,7 +298,7 @@ class SearchService implements LoggerAwareInterface
                 ->setFuzziness(1)
                 ->setAnalyzer('default')
                 ->setParam('boost', 45.0)
-                ->setParam('_name', 'name-fuzzy-word')
+                ->setParam('_name', 'name-fuzzy-word-brand-1')
                 ->setOperator('and')
         );
 
@@ -309,7 +311,7 @@ class SearchService implements LoggerAwareInterface
                 ->setFuzziness(0)
                 ->setAnalyzer('full-text-brand-hard-search')
                 ->setParam('boost', 10.0)
-                ->setParam('_name', 'name-fuzzy-word')
+                ->setParam('_name', 'name-fuzzy-word-brand-stemmer')
                 ->setOperator('or')
         );
 
