@@ -281,7 +281,6 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
      */
     public function setBasket(Basket $basket): BasketBase
     {
-
         $this->basket = $basket;
         return $basket;
     }
@@ -359,6 +358,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     {
         $this->loadData();
     }
+
     protected function renewalAction()
     {
         $this->loadData();
@@ -540,13 +540,6 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             } else if ($this->arParams['STEP'] == 2) {
                 $this->initStep2();
             }
-
-//            $this->arResult['ORDER'] = $this->getOrder();
-//            if ($this->arResult['ORDER']) {
-//                $this->arResult['FREQUENCY_VARIANTS'] = $this->getFrequencyVariants();
-//                $this->arResult['TIME_VARIANTS'] = $this->getTimeVariants();
-//                $this->arResult['ORDER_SUBSCRIBE'] = $this->getOrderSubscribe();
-//            }
         } else if ($this->getAction() === 'renewal') {
             $this->initRenewal();
         }
@@ -581,7 +574,6 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
         return $result;
     }
-
 
     /**
      * @return Result
@@ -755,7 +747,11 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         return $result;
     }
 
-
+    protected function initPostFields()
+    {
+        $this->arResult['~FIELD_VALUES'] = $this->request->getPostList()->toArray();
+        $this->arResult['FIELD_VALUES'] = $this->walkRequestValues($this->arResult['~FIELD_VALUES']);
+    }
 
     /**
      * @throws ApplicationCreateException
@@ -819,12 +815,6 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                 $this->setFieldError($fieldName, 'Значение задано некорректно', 'not_valid');
             }
         }
-    }
-
-    protected function initPostFields()
-    {
-        $this->arResult['~FIELD_VALUES'] = $this->request->getPostList()->toArray();
-        $this->arResult['FIELD_VALUES'] = $this->walkRequestValues($this->arResult['~FIELD_VALUES']);
     }
 
     /**
