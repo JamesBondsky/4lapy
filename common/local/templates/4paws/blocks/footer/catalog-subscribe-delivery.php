@@ -11,9 +11,7 @@
                 </div>
             </div>
 
-            <div class="b-catalog">
-                <div class="b-container b-container--catalog-main js-catalog-subscribe-delivery"></div>
-            </div>
+            <div class="js-catalog-subscribe-delivery"></div>
         </div>
 
         <div class="b-popup-subscribe-delivery__footer">
