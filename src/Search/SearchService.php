@@ -3,6 +3,7 @@
 namespace FourPaws\Search;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Highloadblock\DataManager;
 use Bitrix\Main\ArgumentException;
 use Elastica\Exception\InvalidException;
 use Elastica\Query;
@@ -11,6 +12,7 @@ use Elastica\Query\BoolQuery;
 use Elastica\QueryBuilder;
 use Elastica\Search;
 use Elastica\Suggest;
+use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Filter\FilterInterface;
@@ -51,6 +53,10 @@ class SearchService implements LoggerAwareInterface
      * @var SortService
      */
     private $sortService;
+    /**
+     * @var string
+     */
+    private $searchUrl;
 
     /**
      * SearchService constructor.
@@ -969,5 +975,57 @@ class SearchService implements LoggerAwareInterface
                     )
             )
             ->setScoreMode('sum');
+    }
+
+    /**
+     * @param string $query
+     *
+     * @return array
+     */
+    public function getHLSearchSuggestions(string $query): array
+    {
+        if (!$query)
+        {
+            return [];
+        }
+
+        $container = App::getInstance()->getContainer();
+        /** @var DataManager $searchSuggestionsManager */
+        $searchSuggestionsManager = $container->get('bx.hlblock.searchsuggestions');
+
+        $searchSuggestions = $searchSuggestionsManager::query()
+            ->setSelect([
+                'UF_SUGGESTION',
+            ])
+            ->setFilter([
+                'UF_SUGGESTION' => $query . '%',
+            ])
+            ->setLimit(5)
+            ->setOrder([
+                'UF_RATE' => 'DESC',
+            ])
+            ->exec()
+            ->fetchAll();
+
+        return $searchSuggestions;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSearchUrl(): string
+    {
+        if ($this->searchUrl) {
+            return $this->searchUrl;
+        }
+
+        /** @var \Symfony\Bundle\FrameworkBundle\Routing\Router */
+        $router = App::getInstance()->getContainer()->get('router');
+        /** @var Symfony\Component\Routing\RouteCollection $routes */
+        $routes = $router->getRouteCollection();
+        $route = $routes->get('fourpaws_catalog_catalog_search');
+        $this->searchUrl = $route->getPath();
+
+        return $this->searchUrl;
     }
 }

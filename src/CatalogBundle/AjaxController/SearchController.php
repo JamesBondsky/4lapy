@@ -206,6 +206,20 @@ class SearchController extends Controller
             $res['products'] = [];
         }
 
+        if (isset($searchString) && $searchString != '')
+        {
+            $popularSuggestions = $searchService->getHLSearchSuggestions($searchString);
+            $popularSuggestions = array_map(function($suggestion) use($searchService) {
+                $suggestionText = $suggestion['UF_SUGGESTION'];
+                return [
+                    'DETAIL_PAGE_URL' => $searchService->getSearchUrl() . '?query=' . $suggestionText,
+                    'NAME' => $suggestionText,
+                ];
+            }, $popularSuggestions);
+
+            $res['popular_suggests'] = $popularSuggestions;
+        }
+
         return JsonSuccessResponse::createWithData('', $res)->setEncodingOptions(JSON_UNESCAPED_UNICODE);
     }
 
