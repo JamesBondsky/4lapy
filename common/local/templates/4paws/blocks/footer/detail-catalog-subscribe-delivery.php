@@ -1,4 +1,4 @@
-<section class="b-popup-subscribe-delivery js-popup-section js-popup-subscribe-delivery" data-popup="catalog-subscribe-delivery">
+<section class="b-popup-subscribe-delivery js-popup-section js-popup-subscribe-delivery" data-popup="detail-catalog-subscribe-delivery">
     <div class="b-popup-subscribe-delivery__content">
         <div class="b-popup-subscribe-delivery__top">
             <div class="b-popup-subscribe-delivery__header">
@@ -12,9 +12,12 @@
             </div>
 
             <div class="b-catalog">
-                <div class="b-container b-container--catalog-main js-catalog-subscribe-delivery"></div>
+                <div class="b-container b-container--catalog-main js-catalog-subscribe-delivery">
+
+                </div>
             </div>
         </div>
+
 
         <div class="b-popup-subscribe-delivery__footer">
             <div class="b-container">
