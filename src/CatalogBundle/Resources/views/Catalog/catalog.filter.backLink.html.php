@@ -40,7 +40,7 @@ if (!empty($parents)) { ?>
             <?php /** @var Category $parent */ ?>
             <?php foreach ($parents as $parent) { ?>
                 <li class="b-back__item">
-                    <a class="b-link b-link--back" href="<?= $catalogRequest instanceof ChildCategoryRequest ? $catalogRequest->getCategoryPathByCategory($parent) : $parent->getSectionPageUrl() ?>"
+                    <a class="b-link b-link--back js-back-catalog-filter" href="<?= $catalogRequest instanceof ChildCategoryRequest ? $catalogRequest->getCategoryPathByCategory($parent) : $parent->getSectionPageUrl() ?>"
                        title="<?= $parent->getCanonicalName() ?>">
                         <?= $parent->getCanonicalName() ?>
                     </a>
