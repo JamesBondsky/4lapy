@@ -139,12 +139,6 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 $i++;
                             } ?>
                         </div>
-                        <? if($storage->isSubscribe()) { ?>
-                            <div class="b-order__text-block--additional">
-                                <input type="checkbox" name="subscribeBonus" value="1" checked>
-                                Списывать все доступные баллы на заказы по подписке
-                            </div>
-                        <? } ?>
                     </form>
                     <?php if ($user && $user->getDiscountCardNumber()) {
                         if ($arResult['MAX_BONUS_SUM']) {
@@ -183,15 +177,17 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 Подтвердить
                             </button>
 
-                            <div class="b-checkbox b-checkbox--withdraw-bonuses-order">
-                                <input class="b-checkbox__input" type="checkbox" name="agree" id="withdraw_bonuses" value="" required="required"/>
-                                <span class="b-error">
+                            <? if($storage->isSubscribe()) { ?>
+                                <div class="b-checkbox b-checkbox--withdraw-bonuses-order">
+                                    <input class="b-checkbox__input" type="checkbox" name="subscribeBonus" id="withdraw_bonuses" value="1" required="required" checked/>
+                                    <span class="b-error">
                                     <span class="js-message"></span>
                                 </span>
-                                <label class="b-checkbox__name" for="withdraw_bonuses">
-                                    Списывать все доступные баллы на&nbsp;заказы по&nbsp;подписке
-                                </label>
-                             </div>
+                                    <label class="b-checkbox__name" for="withdraw_bonuses">
+                                        Списывать все доступные баллы на&nbsp;заказы по&nbsp;подписке
+                                    </label>
+                                </div>
+                            <? } ?>
                         <?php } ?>
                     <?php } else { ?>
                         <div class="b-new-bonus-card_block">

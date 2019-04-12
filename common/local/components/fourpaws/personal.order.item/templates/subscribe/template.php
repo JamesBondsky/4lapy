@@ -92,7 +92,7 @@ if ($orderSubscribe) {
     $attr .= ' data-frequency="' . $orderSubscribe->getFrequency() . '"';
 }
 
-$activeSubscribe = true;
+$activeSubscribe = $orderSubscribe->isActive();
 
 ?>
     <li<?= $attr ?> class="b-accordion-order-item b-accordion-order-item--subscribe js-permutation-li js-item-content">
