@@ -41,6 +41,7 @@ class OrderSubscribeController extends Controller
                 '',
                 [
                     'INCLUDE_TEMPLATE' => 'N',
+                    'ORDER_ID' => $request->get('orderId')
                 ],
                 null,
                 [
@@ -205,7 +206,7 @@ class OrderSubscribeController extends Controller
     public function getDataAction(Request $request) : JsonResponse
     {
         $return = null;
-        $step = $request->get('step') ?: 2;
+        $step = $request->get('step') ?: 1;
         $subscribeId = $request->get('subscribeId');
         $orderId = $request->get('orderId');
         $items = $request->get('items');
