@@ -341,6 +341,9 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             case 'renewal':
                 $action = 'renewal';
                 break;
+            case 'getBasketItem':
+                $action = 'getBasketItem';
+                break;
         }
 
         return $action;
@@ -362,6 +365,28 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     protected function renewalAction()
     {
         $this->loadData();
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectException
+     */
+    protected function getBasketItemAction()
+    {
+        $items = [
+          'productId' => $this->request->get('productId'),
+          'quantity' => $this->request->get('quantity')
+        ];
+
+        $basket = $this->createBasketFromItems($items);
+        $this->setBasket($basket);
+
+        $this->includeComponentTemplate();
     }
 
     /**

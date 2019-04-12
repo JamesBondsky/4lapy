@@ -2,6 +2,8 @@
 
 namespace FourPaws\App;
 
+use Bitrix\Main\Application as BitrixApplication;
+
 /**
  * Class MainTemplate
  *
@@ -466,5 +468,14 @@ class MainTemplate extends TemplateAbstract
     public function isSearchPage(): bool
     {
         return $this->isDir('/catalog/search');
+    }
+
+    /**
+     * @return bool
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function isCatalogPopup(): bool
+    {
+        return BitrixApplication::getInstance()->getContext()->getRequest()->isAjaxRequest();
     }
 }

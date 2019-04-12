@@ -31,6 +31,11 @@ switch ($arResult['CURRENT_STAGE']) {
     case 'renewal': // возобновление
         include __DIR__. '/include/subscribe-delivery.php';
         break;
+    case 'getBasketItem': // возобновление
+        foreach($component->getBasket() as $basketItem){
+            include __DIR__. '/include/subscribe-delivery.php';
+        }
+        break;
     case 'error':
         include __DIR__. '/header.php';
         include __DIR__. '/error.php';

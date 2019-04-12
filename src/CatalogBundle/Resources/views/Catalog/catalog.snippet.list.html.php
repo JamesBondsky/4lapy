@@ -1,5 +1,6 @@
 <?php
 
+use FourPaws\App\MainTemplate;
 use FourPaws\Catalog\Collection\ProductCollection;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
@@ -38,6 +39,7 @@ if ($catalogRequest->getCategory()->isLanding()) {
     $isFiltered = $category->getFilters()->hasCheckedFilter();
 }
 
+$isPopup = MainTemplate::getInstance()->isCatalogPopup();
 
 foreach ($collection as $product) {
     $i++;
@@ -49,6 +51,7 @@ foreach ($collection as $product) {
             'PRODUCT'               => $product,
             'CURRENT_CATEGORY'      => clone $category,
             'GOOGLE_ECOMMERCE_TYPE' => 'Каталог по питомцу',
+            'IS_POPUP'              => $isPopup
         ],
         null,
         ['HIDE_ICONS' => 'Y']
