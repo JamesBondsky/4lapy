@@ -30,6 +30,7 @@ use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
+use FourPaws\PersonalBundle\Entity\OrderSubscribeItem;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\PersonalBundle\Entity\Order;
@@ -41,6 +42,7 @@ use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
+use Bitrix\Main\Application as BitrixApplication;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -279,7 +281,6 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
      */
     public function setBasket(Basket $basket): BasketBase
     {
-
         $this->basket = $basket;
         return $basket;
     }
@@ -337,6 +338,12 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             case 'deliveryOrderUnsubscribe':
                 $action = 'unsubscribe';
                 break;
+            case 'renewal':
+                $action = 'renewal';
+                break;
+            case 'getBasketItem':
+                $action = 'getBasketItem';
+                break;
         }
 
         return $action;
@@ -353,6 +360,33 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     protected function initialLoadAction()
     {
         $this->loadData();
+    }
+
+    protected function renewalAction()
+    {
+        $this->loadData();
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectException
+     */
+    protected function getBasketItemAction()
+    {
+        $items = [
+          'productId' => $this->request->get('productId'),
+          'quantity' => $this->request->get('quantity')
+        ];
+
+        $basket = $this->createBasketFromItems($items);
+        $this->setBasket($basket);
+
+        $this->includeComponentTemplate();
     }
 
     /**
@@ -384,10 +418,15 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                 }
 
                 $orderSubscribe
+                    ->setDeliveryDay($this->arResult['FIELD_VALUES']['subscribeDay'])
+                    ->setDeliveryDay($this->arResult['FIELD_VALUES']['subscribeDay'])
                     ->setActive(true)
                     ->setOrderId($order->getId())
+                    ->setDeliveryId($this->arResult['FIELD_VALUES']['deliveryId'])
                     ->setFrequency($this->arResult['FIELD_VALUES']['deliveryFrequency'])
                     ->setLastCheck(null);
+
+                BitrixApplication::getConnection()->startTransaction();
 
                 if ($orderSubscribe->getId() > 0) { // подписка уже есть, обновляем
                     $this->arResult['SUBSCRIBE_ACTION']['SUBSCRIPTION_ID'] = $orderSubscribe->getId();
@@ -405,7 +444,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                                 );
                             }
 
-                            $this->getOrderSubscribeService()->deleteAllItems($orderSubscribe->getId());
+                            $orderSubscribeService->deleteAllItems($orderSubscribe->getId());
                             $this->flushOrderSubscribe();
                             $this->clearTaggedCache();
                         } else {
@@ -415,7 +454,6 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                         $this->setExecError('subscribeAction', $exception->getMessage(), 'subscriptionUpdateException');
                     }
                 } else { // создание новой подписки
-                    // создание новой подписки
                     $this->arResult['SUBSCRIBE_ACTION']['TYPE'] = 'CREATE';
                     $addResult = $orderSubscribeService->add($orderSubscribe);
                     if ($addResult->isSuccess()) {
@@ -432,7 +470,26 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     }
                 }
 
-                // @todo: добавление товаров в подписку
+                $items = $this->request->get('items');
+                if(empty($items)){
+                    $this->setExecError('subscribeAction', 'Нет ни одного товара дял подписки', 'subscriptionAdd');
+                }
+                /** @var BasketItem $basketItem */
+                foreach($items as $item){
+                    $subscribeItem = (new OrderSubscribeItem())
+                        ->setOfferId($item['productId'])
+                        ->setQuantity($item['quantity']);
+
+                    if(!$orderSubscribeService->addSubscribeItem($orderSubscribe, $subscribeItem)){
+                        $this->setExecError('subscribeAction', sprintf("Не удалось добавить товар %s", $subscribeItem->getOfferId()), 'subscriptionAdd');
+                    }
+                }
+
+                if (empty($this->arResult['ERROR']['FIELD'])) {
+                    BitrixApplication::getConnection()->commitTransaction();
+                } else{
+                    BitrixApplication::getConnection()->rollbackTransaction();
+                }
             }
         }
 
@@ -500,164 +557,225 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     protected function loadData()
     {
         if ($this->getAction() === 'initialLoad') {
-            $result = new Result();
-
-            // получение контролов
-            if(null === $this->arParams['STEP']){
+            if(null === $this->arParams['STEP']){ // получение контролов
                 $this->arResult['ORDER'] = $this->getOrder();
                 $this->arResult['CURRENT_STAGE'] = 'initial';
-            }
-
-            // получение формы
-            if($this->arParams['STEP'] == 1){
-                if($this->arParams['SUBSCRIBE_ID'] > 0){ // редактирование подписки
-                    try {
-                        $basket = $this->getOrderSubscribeService()->getBasketBySubscribeId($this->arParams['SUBSCRIBE_ID']);
-                        $this->arResult['TITLE'] = "Редактирование подписки";
-                    } catch (\Exception $e) {
-                        $result->addError(new Error(
-                            sprintf("Failed to get basket for form: %s", $e->getMessage()),
-                            'getBasketBySubscribeId',
-                            ['id' => $this->arParams['SUBSCRIBE_ID']]
-                        ));
-                    }
-                } else if($this->arParams['ORDER_ID'] > 0){ // создание подписки
-                    try {
-                        $basket = $this->getOrder()->getBitrixOrder()->getBasket();
-                        /** @var PiggyBankService $piggyBankService */
-                        $piggyBankService = Application::getInstance()->getContainer()->get('piggy_bank.service');
-
-                        /** @var BasketItem $basketItem */
-                        foreach ($basket as $basketItem){
-                            if (in_array($basketItem->getProductId(), $piggyBankService->getMarksIds(), false)){
-                                $basket->deleteItem($basketItem->getInternalIndex());
-                            }
-                        }
-                        $this->arResult['TITLE'] = "Создание подписки";
-                    } catch (\Exception $e) {
-                        $result->addError(new Error(
-                            sprintf("Failed to get basket for form: %s", $e->getMessage()),
-                            'getBasket',
-                            ['id' => $this->arParams['ORDER_ID']]
-                        ));
-                    }
-                }
-
-                if(null !== $basket) {
-                    $offerIds = [];
-                    /** @var BasketItem $basketItem */
-                    foreach ($basket as $basketItem) {
-                        $offerIds[] = $basketItem->getProductId();
-                    }
-
-                    if(empty($offerIds)){
-                        $result->addError(new Error("Offers is empty"));
-                    }
-                } else {
-                    $result->addError(new Error("Товары не найдены"));
-                }
-
-                if($result->isSuccess()){
-                    if(!$this->setOffers($offerIds)){
-                        $result->addError(new Error('Failed to set offers'));
-                    }
-                }
-
-                if(!$result->isSuccess()){
-                    $this->arResult['CURRENT_STAGE'] = 'error';
-                    $this->arResult['ERROR'] = $result->getErrorMessages();
-                } else {
-                    $this->arResult['CURRENT_STAGE'] = 'step1';
-                    $this->arResult['BASKET'] = $this->setBasket($basket);
-                    $this->arResult['ITEMS'] = $this->getItemsFormatted();
-                }
+            } else if($this->arParams['STEP'] == 1){  // получение формы
+                $this->initStep1();
             } else if ($this->arParams['STEP'] == 2) {
-                $this->arParams['ITEMS'] = [
-                  [
-                      'id' => 1,
-                      'productId' => 70833,
-                      'quantity' => 1,
-                  ],
-                  [
-                      'id' => 2,
-                      'productId' => 35129,
-                      'quantity' => 2,
-                  ],
-                  [
-                      'id' => 3,
-                      'productId' => 84355,
-                      'quantity' => 2,
-                  ],
-                ];
-
-                if($this->arParams['SUBSCRIBE_ID'] > 0){
-                    $this->arResult['SUBSCRIBE'] = $this->setSubscribe($this->getOrderSubscribeService()->getById($this->arParams['SUBSCRIBE_ID']));
-                    //$this->arParams['ORDER_ID'] = $this->getOrderSubscribe()->getOrderId();
-                }
-
-                try {
-                    $basket = $this->createBasketFromItems($this->arParams['ITEMS']);
-                    $this->setBasket($basket);
-                } catch (\Exception $e) {
-                    $result->addError(new Error(
-                        sprintf("Failed to get basket for form: %s", $e->getMessage())
-                    ));
-                }
-
-                if($result->isSuccess()){
-                    $selectedCity     = $this->getUserService()->getSelectedCity();
-                    $deliveries       = $this->getDeliveries($basket);
-                    $selectedDelivery = $this->getSelectedDelivery();
-
-                    $this->getPickupData($deliveries);
-
-                    $addresses = null;
-                    if ($this->getUserService()->getCurrentUserId()) {
-                        /** @var AddressService $addressService */
-                        $addressService = Application::getInstance()->getContainer()->get('address.service');
-                        $addresses      = $addressService->getAddressesByUser($this->getUserService()->getCurrentUserId(), $selectedCity['CODE']);
-                    }
-
-                    $delivery = null;
-                    $pickup   = null;
-                    foreach ($deliveries as $calculationResult) {
-                        if ($this->deliveryService->isPickup($calculationResult)) {
-                            $pickup = $calculationResult;
-                        } elseif ($this->deliveryService->isDelivery($calculationResult)) {
-                            $delivery = $calculationResult;
-                        }
-                    }
-
-                    $this->arResult['PICKUP']               = $pickup;
-                    $this->arResult['DELIVERY']             = $delivery;
-                    $this->arResult['ADDRESSES']            = $addresses;
-                    $this->arResult['SELECTED_DELIVERY']    = $selectedDelivery;
-                    $this->arResult['PICKUP_AVAILABLE_PAYMENTS'] = $this->getAvailablePayments();
-
-                    $this->arResult['SELECTED_CITY'] = $selectedCity;
-                    $this->arResult['DADATA_CONSTRAINTS'] = $this->getLocationService()->getDadataJsonFromLocationArray($selectedCity);
-                    $this->arResult['METRO'] = $this->getStoreService()->getMetroInfo();
-                }
-
-                if(!$result->isSuccess()){
-                    $this->arResult['CURRENT_STAGE'] = 'error';
-                    $this->arResult['ERROR'] = $result->getErrorMessages();
-                } else {
-                    $this->arResult['CURRENT_STAGE'] = 'step2';
-                }
+                $this->initStep2();
             }
-
-//            $this->arResult['ORDER'] = $this->getOrder();
-//            if ($this->arResult['ORDER']) {
-//                $this->arResult['FREQUENCY_VARIANTS'] = $this->getFrequencyVariants();
-//                $this->arResult['TIME_VARIANTS'] = $this->getTimeVariants();
-//                $this->arResult['ORDER_SUBSCRIBE'] = $this->getOrderSubscribe();
-//            }
+        } else if ($this->getAction() === 'renewal') {
+            $this->initRenewal();
         }
 
         if ($this->arParams['INCLUDE_TEMPLATE'] !== 'N') {
             $this->includeComponentTemplate();
         }
+    }
+
+    /**
+     * @return Result
+     */
+    private function initRenewal()
+    {
+        $result = new Result();
+        $subscribeId = $this->request->get('subscribeId');
+
+        if(!($subscribeId > 0)){
+            $result->addError(new Error("Необходимо передать id подписки"));
+        }
+
+        try {
+            $orderSubscribeService = $this->getOrderSubscribeService();
+            $orderSubscribe = $orderSubscribeService->getById($subscribeId);
+            $this->setSubscribe($orderSubscribe);
+        } catch (\Exception $e) {
+            $result->addError(new Error(
+                sprintf("Error while trying to get ordersubscribe: %s", $e->getMessage()),
+                'initRenewal'
+            ));
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return Result
+     * @throws \Bitrix\Main\ArgumentNullException
+     */
+    private function initStep1(): Result
+    {
+        $result = new Result();
+
+        if($this->arParams['SUBSCRIBE_ID'] > 0){ // редактирование подписки
+            try {
+                $basket = $this->getOrderSubscribeService()->getBasketBySubscribeId($this->arParams['SUBSCRIBE_ID']);
+                $this->arResult['TITLE'] = "Редактирование подписки";
+            } catch (\Exception $e) {
+                $result->addError(new Error(
+                    sprintf("Failed to get basket for form: %s", $e->getMessage()),
+                    'getBasketBySubscribeId',
+                    ['id' => $this->arParams['SUBSCRIBE_ID']]
+                ));
+            }
+        } else if($this->arParams['ORDER_ID'] > 0){ // создание подписки
+            try {
+                $basket = $this->getOrder()->getBitrixOrder()->getBasket();
+                /** @var PiggyBankService $piggyBankService */
+                $piggyBankService = Application::getInstance()->getContainer()->get('piggy_bank.service');
+
+                /** @var BasketItem $basketItem */
+                foreach ($basket as $basketItem){
+                    if (in_array($basketItem->getProductId(), $piggyBankService->getMarksIds(), false)){
+                        $basket->deleteItem($basketItem->getInternalIndex());
+                    }
+                }
+                $this->arResult['TITLE'] = "Создание подписки";
+            } catch (\Exception $e) {
+                $result->addError(new Error(
+                    sprintf("Failed to get basket for form: %s", $e->getMessage()),
+                    'getBasket',
+                    ['id' => $this->arParams['ORDER_ID']]
+                ));
+            }
+        }
+
+        if(null !== $basket) {
+            $offerIds = [];
+            /** @var BasketItem $basketItem */
+            foreach ($basket as $basketItem) {
+                $offerIds[] = $basketItem->getProductId();
+            }
+
+            if(empty($offerIds)){
+                $result->addError(new Error("Offers is empty"));
+            }
+        } else {
+            $result->addError(new Error("Товары не найдены"));
+        }
+
+        if($result->isSuccess()){
+            if(!$this->setOffers($offerIds)){
+                $result->addError(new Error('Failed to set offers'));
+            }
+        }
+
+        if(!$result->isSuccess()){
+            $this->arResult['CURRENT_STAGE'] = 'error';
+            $this->arResult['ERROR'] = $result->getErrorMessages();
+        } else {
+            $this->arResult['CURRENT_STAGE'] = 'step1';
+            $this->arResult['BASKET'] = $this->setBasket($basket);
+            $this->arResult['ITEMS'] = $this->getItemsFormatted();
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return Result
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Sale\UserMessageException
+     * @throws \FourPaws\AppBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
+    private function initStep2(): Result
+    {
+        $result = new Result();
+
+        // TODO: сделать обработку входящих товаров
+        $this->arParams['ITEMS'] = [
+            [
+                'id' => 1,
+                'productId' => 70833,
+                'quantity' => 1,
+            ],
+            [
+                'id' => 2,
+                'productId' => 35129,
+                'quantity' => 2,
+            ],
+            [
+                'id' => 3,
+                'productId' => 84355,
+                'quantity' => 2,
+            ],
+        ];
+
+        if($this->arParams['SUBSCRIBE_ID'] > 0){
+            $this->arResult['SUBSCRIBE'] = $this->setSubscribe($this->getOrderSubscribeService()->getById($this->arParams['SUBSCRIBE_ID']));
+            //$this->arParams['ORDER_ID'] = $this->getOrderSubscribe()->getOrderId();
+        }
+
+        try {
+            $basket = $this->createBasketFromItems($this->arParams['ITEMS']);
+            $this->setBasket($basket);
+        } catch (\Exception $e) {
+            $result->addError(new Error(
+                sprintf("Failed to get basket for form: %s", $e->getMessage())
+            ));
+        }
+
+        if($result->isSuccess()){
+            $selectedCity     = $this->getUserService()->getSelectedCity();
+            $deliveries       = $this->getDeliveries($basket);
+            $selectedDelivery = $this->getSelectedDelivery();
+
+            $this->getPickupData($deliveries);
+
+            $addresses = null;
+            if ($this->getUserService()->getCurrentUserId()) {
+                /** @var AddressService $addressService */
+                $addressService = Application::getInstance()->getContainer()->get('address.service');
+                $addresses      = $addressService->getAddressesByUser($this->getUserService()->getCurrentUserId(), $selectedCity['CODE']);
+            }
+
+            $delivery = null;
+            $pickup   = null;
+            foreach ($deliveries as $calculationResult) {
+                if ($this->deliveryService->isPickup($calculationResult)) {
+                    $pickup = $calculationResult;
+                } elseif ($this->deliveryService->isDelivery($calculationResult)) {
+                    $delivery = $calculationResult;
+                }
+            }
+
+            $this->arResult['PICKUP']               = $pickup;
+            $this->arResult['DELIVERY']             = $delivery;
+            $this->arResult['ADDRESSES']            = $addresses;
+            $this->arResult['SELECTED_DELIVERY']    = $selectedDelivery;
+            $this->arResult['PICKUP_AVAILABLE_PAYMENTS'] = $this->getAvailablePayments();
+
+            $this->arResult['SELECTED_CITY'] = $selectedCity;
+            $this->arResult['DADATA_CONSTRAINTS'] = $this->getLocationService()->getDadataJsonFromLocationArray($selectedCity);
+            $this->arResult['METRO'] = $this->getStoreService()->getMetroInfo();
+        }
+
+        if(!$result->isSuccess()){
+            $this->arResult['CURRENT_STAGE'] = 'error';
+            $this->arResult['ERROR'] = $result->getErrorMessages();
+        } else {
+            $this->arResult['CURRENT_STAGE'] = 'step2';
+        }
+
+        return $result;
+    }
+
+    protected function initPostFields()
+    {
+        $this->arResult['~FIELD_VALUES'] = $this->request->getPostList()->toArray();
+        $this->arResult['FIELD_VALUES'] = $this->walkRequestValues($this->arResult['~FIELD_VALUES']);
     }
 
     /**
@@ -722,12 +840,6 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                 $this->setFieldError($fieldName, 'Значение задано некорректно', 'not_valid');
             }
         }
-    }
-
-    protected function initPostFields()
-    {
-        $this->arResult['~FIELD_VALUES'] = $this->request->getPostList()->toArray();
-        $this->arResult['FIELD_VALUES'] = $this->walkRequestValues($this->arResult['~FIELD_VALUES']);
     }
 
     /**
@@ -1340,6 +1452,18 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         return $this->paymentCollection;
     }
 
+    /**
+     * @param bool $withInner
+     * @param bool $filter
+     * @param float $basketPrice
+     * @return array
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\SystemException
+     */
     public function getAvailablePayments($withInner = false, $filter = true, float $basketPrice = 0): array
     {
         $paymentCollection = $this->getPayments();

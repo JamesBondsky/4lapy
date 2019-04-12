@@ -12,6 +12,7 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
+use FourPaws\App\MainTemplate;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\App\Templates\ViewsEnum;
@@ -47,6 +48,7 @@ $product = $APPLICATION->IncludeComponent(
         'OFFER_ID' => $offerId,
         'SET_TITLE' => 'Y',
         'SHOW_FAST_ORDER' => $productDetailRequest->getZone() !== DeliveryService::ZONE_4,
+        'IS_POPUP' => MainTemplate::getInstance()->isCatalogPopup(),
     ],
     false,
     ['HIDE_ICONS' => 'Y']
@@ -82,7 +84,8 @@ if (null === $offer) {
     /** нет оффера что-то пошло не так */
     $logger->error('Нет оффера');
     return;
-} ?>
+}
+?>
     <div class="b-product-card"
          data-productid="<?= $product->getId() ?>"
          data-offerId="<?= $offer->getId() ?>"

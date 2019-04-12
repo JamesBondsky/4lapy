@@ -398,15 +398,29 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                 </a>
                 <?php
             } ?>
-            <a class="b-counter-basket__basket-link js-basket-add js-this-product"
-               href="javascript:void(0)"
-               <?= $arResult['BASKET_LINK_EVENT'] ?>
-               title=""
-               data-offerId="<?= $currentOffer->getId(); ?>"
-               data-url="/ajax/sale/basket/add/">
-                <span class="b-counter-basket__basket-text">Добавить в корзину</span>
-                <span class="b-icon b-icon--advice"><?= new SvgDecorator('icon-cart', 20, 20) ?></span>
-            </a>
+
+            <? if($arParams['IS_POPUP']) { ?>
+                <a class="b-counter-basket__basket-link js-basket-add js-this-product"
+                   href="javascript:void(0)"
+                   title=""
+                   data-offerId="<?= $currentOffer->getId(); ?>"
+                   data-url="/ajax/sale/basket/add/">
+                    <span class="b-counter-basket__basket-text">Добавить в подписку</span>
+                    <span class="b-icon b-icon--advice"><?= new SvgDecorator('icon-cart', 20, 20) ?></span>
+                </a>
+            <? } else { ?>
+                <a class="b-counter-basket__basket-link js-basket-add js-this-product"
+                   href="javascript:void(0)"
+                   <?= $arResult['BASKET_LINK_EVENT'] ?>
+                   title=""
+                   data-offerId="<?= $currentOffer->getId(); ?>"
+                   data-url="/ajax/sale/basket/add/">
+                    <span class="b-counter-basket__basket-text">Добавить в корзину</span>
+                    <span class="b-icon b-icon--advice"><?= new SvgDecorator('icon-cart', 20, 20) ?></span>
+                </a>
+            <? } ?>
+
+
             <?php if ($arResult['SHOW_FAST_ORDER']) { ?>
                 <a class="b-link b-link--one-click js-open-popup js-open-popup--one-click" href="javascript:void(0)"
                    title="Купить в 1 клик" data-popup-id="buy-one-click" data-url="/ajax/sale/fast_order/load/"

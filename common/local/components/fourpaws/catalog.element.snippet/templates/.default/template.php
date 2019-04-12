@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Main\Web\Uri;
+use FourPaws\App\MainTemplate;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
@@ -50,7 +51,6 @@ $product = $arResult['PRODUCT'];
 $product->setOffers($product->getOffers(true, $arParams['OFFER_FILTER'] ?? []));
 $offers = $product->getOffersSorted();
 /** @var Offer $currentOffer */
-
 $currentOffer = $arResult['CURRENT_OFFER'];
 $offerWithImages = $currentOffer;
 if (!$currentOffer->getImagesIds()) {
@@ -212,7 +212,19 @@ if (!$currentOffer->getImagesIds()) {
             <?php } ?>
         </div>
         <?php $offerId = $currentOffer->getId();
-        if ($offerId > 0) { ?>
+        if($arParams['IS_POPUP']) { ?>
+            <a class="b-common-item__add-to-cart js-basket-add"
+               href="javascript:void(0);"
+               title=""
+                <span class="b-common-item__wrapper-link">
+                    <span class="b-common-item__price js-price-block"><?= $currentOffer->getCatalogPrice() ?></span>
+                    <span class="b-common-item__currency">
+                        <span class="b-ruble">₽</span>
+                    </span>
+                    <span class="b-common-item__price js-price-block">В подписку</span>
+                </span>
+            </a>
+        <? } else if ($offerId > 0) { ?>
             <a class="b-common-item__add-to-cart js-basket-add"
                href="javascript:void(0);"
                onmousedown="<?= $getOnMouseDown($currentOffer) ?>"

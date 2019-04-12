@@ -98,7 +98,7 @@ class FourPawsPersonalCabinetOrdersSubscribeComponent extends CBitrixComponent
     protected function loadData(): void
     {
         $orderSubscribeService = $this->getOrderSubscribeService();
-        $filterActive = true;
+        $filterActive = false;
         /** $this->arResult['ORDERS'] ArrayCollection */
         $this->arResult['ORDERS'] = $orderSubscribeService->getUserSubscribedOrders(
             $this->arParams['USER_ID'],

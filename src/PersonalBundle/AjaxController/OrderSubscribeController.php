@@ -119,7 +119,7 @@ class OrderSubscribeController extends Controller
     }
 
     /**
-     * @Route("/delete/", methods={"GET"})
+     * @Route("/delete/", methods={"POST"})
      * @param Request $request
      * @return JsonResponse
      * @throws \Bitrix\Main\SystemException
