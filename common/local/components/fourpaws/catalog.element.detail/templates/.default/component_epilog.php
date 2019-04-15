@@ -11,9 +11,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 /**
- * @var array                         $arResult
- * @var Offer                         $currentOffer
- * @var Product                       $product
+ * @var array $arResult
+ * @var Offer $currentOffer
+ * @var Product $product
  * @var CatalogElementDetailComponent $this
  */
 $currentOffer = $arResult['CURRENT_OFFER'];
@@ -26,10 +26,28 @@ $basketService = $this->getBasketService();
  * TODO 1 запрос к user_table. Нужно бы убрать.
  */
 $bonus = $currentOffer->getBonusFormattedText($userService->getDiscount());
+?>
 
-if (!empty($bonus)) { ?>
     <script>
-        $(function () {
+        // класс для комплексного выполнения всех обработчиков
+        var productDetailHandlers = {
+            handlers: [],
+            add: function (handler) {
+                this.handlers[this.handlers.length] = handler;
+            },
+            execute: function () {
+                this.handlers.forEach(function (handler) {
+                    if (typeof handler === 'function') {
+                        handler();
+                    }
+                });
+            }
+        };
+    </script>
+
+<? if (!empty($bonus)) { ?>
+    <script>
+        productDetailHandlers.add(function () {
             var $jsBonus = $('.js-bonus-<?=$currentOffer->getId()?>');
             if ($jsBonus.length > 0) {
                 $jsBonus.html('<?=$bonus?>');
@@ -37,19 +55,21 @@ if (!empty($bonus)) { ?>
         });
     </script>
 <?php } ?>
+
     <script>
-        $(function () {
+        productDetailHandlers.add(function () {
             $('.js-current-offer-price-old').html('<?= $currentOffer->getCatalogOldPrice() ?>');
             $('.js-current-offer-price').html('<?= $currentOffer->getCatalogPrice() ?>');
             $('.js-plus-minus-count')
                 .data('cont-max', '<?=$currentOffer->getQuantity()?>')
                 .data('one-price', '<?=$currentOffer->getPrice()?>');
             <? if($currentOffer->getPrice() != $currentOffer->getSubscribePrice()){ ?>
-                $('.js-subscribe-price').html('<?= $currentOffer->getSubscribePrice() ?>');
-                $('.js-subscribe-price-block').show();
+            $('.js-subscribe-price').html('<?= $currentOffer->getSubscribePrice() ?>');
+            $('.js-subscribe-price-block').show();
             <? } ?>
         });
     </script>
+
 <?php
 /** установка количества товаров в корзине для офферов */
 $basket = $basketService->getBasket();
@@ -57,7 +77,7 @@ $basket = $basketService->getBasket();
 /** @var BasketItem $basketItem */
 foreach ($basket->getBasketItems() as $basketItem) { ?>
     <script>
-        $(function () {
+        productDetailHandlers.add(function () {
             var $offerInCart = $('.js-offer-in-cart-<?=$basketItem->getProductId()?>');
 
             if ($offerInCart.length > 0) {
@@ -72,7 +92,7 @@ foreach ($basket->getBasketItems() as $basketItem) { ?>
 foreach ($product->getOffers() as $offer) {
     /** установка цен, скидочных цен, акции, нет в наличии */ ?>
     <script>
-        $(function () {
+        productDetailHandlers.add(function () {
             var $offerLink = $('.js-offer-link-<?=$offer->getId()?>');
             if ($offerLink.length > 0) {
                 $offerLink.find('.b-weight-container__price').html('<?= WordHelper::numberFormat($offer->getCatalogPrice(),
@@ -91,10 +111,21 @@ foreach ($product->getOffers() as $offer) {
 
 if ($currentOffer->isAvailable()) { ?>
     <script>
-        $('.js-product-controls').addClass('active');
+        productDetailHandlers.add(function(){
+            $('.js-product-controls').addClass('active')
+        });
     </script>
-<?php }
+<?php } ?>
 
+<? if(!$this->arParams['IS_POPUP']) { // в попапе запускаем вручную ?>
+    <script>
+        $(function() {
+           productDetailHandlers.execute();
+        });
+    </script>
+<? } ?>
+
+<?php
 /**
  * Offer microdata
  *
@@ -114,10 +145,10 @@ foreach ($product->getOffers() as $offer) {
     $packageLabel = $offer->getPackageLabel(false, 0);
     ?>
     <span itemscope itemtype="http://schema.org/Offer" style="display: none;">
-        <meta itemprop="itemOffered" content="<?=$packageLabel?>" >
-        <meta itemprop="price" content="<?=$offer->getCatalogPrice()?>" >
-        <meta itemprop="priceCurrency" content="<?=$offer->getCurrency()?>" >
-        <meta itemprop="availability" content="http://schema.org/<?=$availabilityValue?>">
+        <meta itemprop="itemOffered" content="<?= $packageLabel ?>">
+        <meta itemprop="price" content="<?= $offer->getCatalogPrice() ?>">
+        <meta itemprop="priceCurrency" content="<?= $offer->getCurrency() ?>">
+        <meta itemprop="availability" content="http://schema.org/<?= $availabilityValue ?>">
     </span>
     <?php
 }
