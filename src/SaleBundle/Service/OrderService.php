@@ -1874,7 +1874,7 @@ class OrderService implements LoggerAwareInterface
      */
     protected function resetBasket(array $toDelete = [])
     {
-        $basket = $this->basketService->getBasket();
+        $basket = $this->basketService->getBasket(true);
         $allowedProperties = ['PRODUCT.XML_ID', 'CATALOG.XML_ID'];
         try {
             /** @var BasketItem $basketItem */
