@@ -26,7 +26,12 @@ $basketService = $this->getBasketService();
  * TODO 1 запрос к user_table. Нужно бы убрать.
  */
 $bonus = $currentOffer->getBonusFormattedText($userService->getDiscount());
+
 ?>
+
+<? if($arParams['IS_POPUP']) { ?>
+    <div data-epilog-detail-catalog="true">
+<? } ?>
 
     <script>
         // класс для комплексного выполнения всех обработчиков
@@ -43,20 +48,16 @@ $bonus = $currentOffer->getBonusFormattedText($userService->getDiscount());
                 });
             }
         };
-    </script>
 
 <? if (!empty($bonus)) { ?>
-    <script>
         productDetailHandlers.add(function () {
             var $jsBonus = $('.js-bonus-<?=$currentOffer->getId()?>');
             if ($jsBonus.length > 0) {
                 $jsBonus.html('<?=$bonus?>');
             }
         });
-    </script>
 <?php } ?>
 
-    <script>
         productDetailHandlers.add(function () {
             $('.js-current-offer-price-old').html('<?= $currentOffer->getCatalogOldPrice() ?>');
             $('.js-current-offer-price').html('<?= $currentOffer->getCatalogPrice() ?>');
@@ -68,15 +69,12 @@ $bonus = $currentOffer->getBonusFormattedText($userService->getDiscount());
             $('.js-subscribe-price-block').show();
             <? } ?>
         });
-    </script>
-
 <?php
 /** установка количества товаров в корзине для офферов */
 $basket = $basketService->getBasket();
 
 /** @var BasketItem $basketItem */
 foreach ($basket->getBasketItems() as $basketItem) { ?>
-    <script>
         productDetailHandlers.add(function () {
             var $offerInCart = $('.js-offer-in-cart-<?=$basketItem->getProductId()?>');
 
@@ -85,13 +83,11 @@ foreach ($basket->getBasketItems() as $basketItem) { ?>
                 $offerInCart.css('display', 'inline-block');
             }
         });
-    </script>
 <?php }
 
 
 foreach ($product->getOffers() as $offer) {
     /** установка цен, скидочных цен, акции, нет в наличии */ ?>
-    <script>
         productDetailHandlers.add(function () {
             var $offerLink = $('.js-offer-link-<?=$offer->getId()?>');
             if ($offerLink.length > 0) {
@@ -106,24 +102,25 @@ foreach ($product->getOffers() as $offer) {
                 <?php }?>
             }
         });
-    </script>
 <?php }
 
 if ($currentOffer->isAvailable()) { ?>
-    <script>
         productDetailHandlers.add(function(){
             $('.js-product-controls').addClass('active')
         });
-    </script>
 <?php } ?>
 
 <? if(!$this->arParams['IS_POPUP']) { // в попапе запускаем вручную ?>
-    <script>
         $(function() {
            productDetailHandlers.execute();
         });
-    </script>
 <? } ?>
+    </script>
+
+<? if($this->arParams['IS_POPUP']) { ?>
+    </div> <!--js-epilog-handlers-->
+<? } ?>
+
 
 <?php
 /**
