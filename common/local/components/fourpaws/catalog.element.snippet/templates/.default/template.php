@@ -221,7 +221,7 @@ if (!$currentOffer->getImagesIds()) {
                     <span class="b-common-item__currency">
                         <span class="b-ruble">₽</span>
                     </span>
-                    <span class="b-common-item__price js-price-block">В подписку</span>
+                    <span class="b-common-item__price">В подписку</span>
                 </span>
             </a>
         <? } else if ($offerId > 0) { ?>
