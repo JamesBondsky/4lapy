@@ -15,27 +15,30 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  */
 
 switch ($arResult['CURRENT_STAGE']) {
-    case 'initial': // контролы
+    // контролы
+    case 'initial':
         include __DIR__.'/stage.initial.php';
         break;
+    // создание и редактирование
     case 'step1':
         include __DIR__. '/header.php';
         include __DIR__. '/stage.step1.php';
         include __DIR__. '/footer.php';
         break;
     case 'step2':
-        //include __DIR__. '/header.php';
         include __DIR__. '/stage.step2.php';
-        //include __DIR__. '/footer.php';
         break;
-    case 'renewal': // возобновление
+    // возобновление подписки
+    case 'renewal':
         include __DIR__. '/include/subscribe-delivery.php';
         break;
-    case 'getBasketItem': // возобновление
+    // шаблон товара
+    case 'item':
         foreach($component->getBasket() as $basketItem){
-            include __DIR__. '/include/subscribe-delivery.php';
+            include __DIR__. '/include/basketItem.php';
         }
         break;
+    // ошибка
     case 'error':
         include __DIR__. '/header.php';
         include __DIR__. '/error.php';
