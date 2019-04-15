@@ -445,7 +445,8 @@ class OrderService
      * @param float $bonusSubtractAmount
      * @param OrderEntity|null $order
      * @return OrderCalculate
-     * @throws OrderStorageSaveException
+     * @throws ApplicationCreateException
+     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
      */
     public function getOrderCalculate(
         BasketProductCollection $basketProducts,
@@ -454,113 +455,102 @@ class OrderService
         OrderEntity $order = null
     )
     {
-        $orderCalculate = (new OrderCalculate());
-        $totalPrice = $basketProducts->getTotalPrice();
-        $totalPriceWithDiscount = $totalPrice->getActual();
-        $totalPriceWithoutDiscount = $totalPrice->getOld();
-        $basketPriceWithDiscount = $totalPrice->getActual();
-        $basketPriceWithoutDiscount = $totalPrice->getOld();
+        $basketPrice = $basketProducts->getTotalPrice();
+        $basketPriceWithDiscount = $basketPrice->getActual();
+        $basketPriceWithoutDiscount = $basketPrice->getOld();
         $deliveryPrice = 0;
+        $bonusAddAmount = 0;
 
-        try {
-            if ($isCourierDelivery) {
-                $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
-                foreach ($deliveries as $calculationResult) {
-                    if ($this->appDeliveryService->isDelivery($calculationResult)) {
-                        $delivery = $calculationResult;
-                        $deliveryPrice = $delivery->getPrice();
-                    }
-                }
-            }
-        } catch (ArgumentException $e) {
-        } catch (NotSupportedException $e) {
-        } catch (ObjectNotFoundException $e) {
-        } catch (UserMessageException $e) {
-        } catch (ApplicationCreateException $e) {
-        } catch (NotFoundException $e) {
-        } catch (\FourPaws\StoreBundle\Exception\NotFoundException $e) {
-            $deliveryPrice = 0;
-        }
-
-        $priceDetails = [];
         if ($order) {
             // if there is an order
+            $deliveryPrice = $order->getDelivery()->getPriceDelivery();
+            $priceWithoutDiscount = $basketPriceWithDiscount;
+            try {
+                $priceWithDiscount = $order->getItemsSum();
+                $bonusSubtractAmount = $order->getBonusPay();
+                $discount = max($priceWithoutDiscount - $priceWithDiscount, 0);
+            } catch (\Exception $e) {
+                // do nothing
+            }
 
-            $basketPrice = max($basketPriceWithoutDiscount, $basketPriceWithDiscount);
-            $priceWithDiscount = $order->getPrice();
-            $priceWithoutDiscount = $priceWithDiscount !== $basketPrice ? $basketPrice : 0;
-            $discount = max($priceWithoutDiscount - $priceWithDiscount, 0);
-
-            $priceDetails[] = (new Detailing())
-                ->setId('cart_price_old')
-                ->setTitle('Стоимость товаров без скидки')
-                ->setValue($priceWithoutDiscount);
-            $priceDetails[] = (new Detailing())
-                ->setId('cart_price')
-                ->setTitle('Стоимость товаров со скидкой')
-                ->setValue($priceWithDiscount);
-            $priceDetails[] = (new Detailing())
-                ->setId('discount')
-                ->setTitle('Скидка')
-                ->setValue($discount);
+            $totalPriceWithDiscount = $order->getPrice() - $bonusSubtractAmount;
+            $totalPriceWithoutDiscount = $basketPriceWithDiscount + $deliveryPrice;
         } else {
+            $priceWithDiscount = $basketPriceWithDiscount;
+            $priceWithoutDiscount = $basketPriceWithoutDiscount;
+            $discount = $basketProducts->getDiscount();
+            try {
+                if ($isCourierDelivery) {
+                    $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
+                    foreach ($deliveries as $calculationResult) {
+                        if ($this->appDeliveryService->isDelivery($calculationResult)) {
+                            $delivery = $calculationResult;
+                            $deliveryPrice = $delivery->getPrice();
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // do nothing
+            }
             // if method called from the basket and there is no order yet
-            $priceDetails[] = (new Detailing())
-                ->setId('cart_price_old')
-                ->setTitle('Стоимость товаров без скидки')
-                ->setValue($basketPriceWithoutDiscount);
-            $priceDetails[] = (new Detailing())
-                ->setId('cart_price')
-                ->setTitle('Стоимость товаров со скидкой')
-                ->setValue($basketPriceWithDiscount);
-            $priceDetails[] = (new Detailing())
-                ->setId('discount')
-                ->setTitle('Скидка')
-                ->setValue($basketProducts->getDiscount());
+
+            $totalPriceWithDiscount = $priceWithDiscount + $deliveryPrice;
+            $totalPriceWithoutDiscount = $priceWithoutDiscount + $deliveryPrice;
+            $bonusAddAmount = $basketProducts->getTotalBonuses();
+
+            if ($bonusSubtractAmount > 0) {
+                try {
+                    $user = $this->appUserService->getCurrentUser();
+                    $bonusInfo = $this->appBonusService->getManzanaBonusInfo($user);
+                    if ($bonusSubtractAmount > $bonusInfo->getActiveBonus()) {
+                        throw new BonusSubtractionException('Указано некорректное количество бонусов для списания');
+                    }
+                    $storage = $this->orderStorageService->getStorage();
+                    $storage->setBonus($bonusSubtractAmount);
+                    $this->orderStorageService->updateStorage($storage);
+                    $totalPriceWithDiscount -= $bonusSubtractAmount;
+                } catch (BonusSubtractionException $e) {
+                    throw new BonusSubtractionException($e->getMessage());
+                } catch (\Exception $e) {
+                    // do nothing
+                }
+            }
         }
 
-        $priceDetails[] = (new Detailing())
-            ->setId('delivery')
-            ->setTitle('Стоимость доставки')
-            ->setValue($deliveryPrice);
-        $totalPriceWithDiscount += $deliveryPrice;
-        $totalPriceWithoutDiscount += $deliveryPrice;
-
-        try {
-            $user = $this->appUserService->getCurrentUser();
-            $bonusInfo = $this->appBonusService->getManzanaBonusInfo($user);
-            if ($bonusSubtractAmount > $bonusInfo->getActiveBonus()) {
-                throw new BonusSubtractionException('Указано некорректное количество бонусов для списания');
-            }
-            $orderCalculate->setCardDetails([
+        return (new OrderCalculate())
+            ->setPriceDetails([
+                (new Detailing())
+                    ->setId('cart_price_old')
+                    ->setTitle('Стоимость товаров без скидки')
+                    ->setValue($priceWithoutDiscount),
+                (new Detailing())
+                    ->setId('cart_price')
+                    ->setTitle('Стоимость товаров со скидкой')
+                    ->setValue($priceWithDiscount),
+                (new Detailing())
+                    ->setId('discount')
+                    ->setTitle('Скидка')
+                    ->setValue($discount),
+                (new Detailing())
+                    ->setId('delivery')
+                    ->setTitle('Стоимость доставки')
+                    ->setValue($deliveryPrice)
+            ])
+            ->setCardDetails([
                 (new Detailing())
                     ->setId('bonus_add')
                     ->setTitle('Начислено')
-                    ->setValue($basketProducts->getTotalBonuses()),
+                    ->setValue($bonusAddAmount),
                 (new Detailing())
                     ->setId('bonus_sub')
                     ->setTitle('Списано')
                     ->setValue($bonusSubtractAmount),
-            ]);
-            $storage = $this->orderStorageService->getStorage();
-            $storage->setBonus($bonusSubtractAmount);
-            $this->orderStorageService->updateStorage($storage);
-            $totalPriceWithDiscount -= $bonusSubtractAmount;
-        } catch (BonusSubtractionException $e) {
-            throw new BonusSubtractionException($e->getMessage());
-        } catch (\Exception $e) {
-            // do nothing
-        }
-
-
-        $orderCalculate->setPriceDetails($priceDetails);
-
-        $totalPrice->setActual($totalPriceWithDiscount);
-        $totalPrice->setOld($totalPriceWithoutDiscount);
-        $orderCalculate->setTotalPrice($totalPrice);
-
-
-        return $orderCalculate;
+            ])
+            ->setTotalPrice(
+                (new Price())
+                    ->setActual($totalPriceWithDiscount)
+                    ->setOld($totalPriceWithoutDiscount)
+            );
     }
 
     /**
