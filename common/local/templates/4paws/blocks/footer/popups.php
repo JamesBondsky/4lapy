@@ -55,8 +55,6 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
 
     include __DIR__ . '/change-subscribe-delivery.php';
     include __DIR__ . '/catalog-subscribe-delivery.php';
-    include __DIR__ . '/filter-catalog-subscribe-delivery.php';
-    include __DIR__ . '/detail-catalog-subscribe-delivery.php';
 
     include __DIR__ . '/stop-subscribe-delivery.php';
     include __DIR__ . '/message-stop-subscribe-delivery.php';
