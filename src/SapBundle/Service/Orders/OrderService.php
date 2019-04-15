@@ -24,6 +24,7 @@ use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
 use Bitrix\Sale\PropertyValueCollection;
+use Bitrix\Sale\PropertyValueCollectionBase;
 use Bitrix\Sale\Shipment;
 use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -126,6 +127,11 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     private $basketService;
 
     /**
+     * @var PropertyValueCollectionBase
+     */
+    private $propertyCollection;
+
+    /**
      * OrderService constructor.
      *
      * @param DeliveryService     $deliveryService
@@ -191,6 +197,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     {
         $orderDto = new OrderDtoOut();
 
+        $this->propertyCollection = $order->getPropertyCollection();
+
         try {
             $orderUser = $this->userRepository->find($order->getUserId());
         } catch (ConstraintDefinitionException | InvalidIdentifierException $e) {
@@ -255,6 +263,11 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $this->populateOrderDtoDelivery($orderDto, $order);
         $this->populateOrderDtoProducts($orderDto, $order);
         $this->populateOrderDtoCouponNumber($orderDto, $order);
+
+        $deliveryTypeCode = $this->getDeliveryCode($order);
+        if ($deliveryTypeCode == DeliveryService::INNER_DELIVERY_CODE || $deliveryTypeCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
+            $this->populateOrderDtoUserCoords($orderDto, $order);
+        }
 
         $xml = $this->serializer->serialize($orderDto, 'xml');
 
@@ -528,14 +541,31 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     /**
      * @param OrderDtoOut $orderDto
      * @param Order $order
+     * @throws ArgumentException
+     * @throws NotImplementedException
      */
     public function populateOrderDtoCouponNumber(OrderDtoOut $orderDto, Order $order)
     {
-        $propertyCollection = $order->getPropertyCollection();
-        $promocode = BxCollection::getOrderPropertyByCode($propertyCollection, 'PROMOCODE');
+        $promocode = BxCollection::getOrderPropertyByCode($this->propertyCollection, 'PROMOCODE');
         if ($promocode && ($promocodeValue = $promocode->getValue()) && strpos($promocodeValue, 's') === 0)
         {
             $orderDto->setCouponNumber($promocodeValue);
+        }
+    }
+
+    /**
+     * @param OrderDtoOut $orderDto
+     * @param Order $order
+     * @throws ArgumentException
+     * @throws NotImplementedException
+     */
+    public function populateOrderDtoUserCoords(OrderDtoOut $orderDto, Order $order)
+    {
+        $coords = BxCollection::getOrderPropertyByCode($this->propertyCollection, 'USER_COORDS');
+        if ($coords && ($coordsValue = $coords->getValue()) && $coordsValue != null && $coordsValue != '') {
+            $arCoords = explode(',', $coordsValue);
+            $orderDto->setLongitude($arCoords[0]);
+            $orderDto->setLatitude($arCoords[1]);
         }
     }
 
@@ -716,7 +746,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      */
     public function getPropertyValueByCode(Order $order, string $code): string
     {
-        $propertyValue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), $code);
+        $propertyValue = BxCollection::getOrderPropertyByCode($this->propertyCollection, $code);
 
         return $propertyValue ? ($propertyValue->getValue() ?? '') : '';
     }
@@ -729,32 +759,31 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      */
     private function setPropertiesFromDto(Order $order, OrderDtoIn $orderDto): void
     {
-        $propertyCollection = $order->getPropertyCollection();
         $deliveryAddress = $orderDto->getDeliveryAddress();
 
         if ($orderDto->getClientFio()) {
             $this->setPropertyValue($propertyCollection, 'NAME', $orderDto->getClientFio());
         }
         $this->setPropertyValue(
-            $propertyCollection,
+            $this->propertyCollection,
             'PHONE',
             PhoneHelper::formatPhone($orderDto->getClientPhone(), PhoneHelper::FORMAT_SHORT)
         );
         $this->setPropertyValue(
-            $propertyCollection,
+            $this->propertyCollection,
             'PHONE_ALT',
             PhoneHelper::formatPhone($orderDto->getClientOrderPhone(), PhoneHelper::FORMAT_SHORT)
         );
-        $this->setPropertyValue($propertyCollection, 'DELIVERY_DATE', $orderDto->getDeliveryDate()
+        $this->setPropertyValue($this->propertyCollection, 'DELIVERY_DATE', $orderDto->getDeliveryDate()
             ->format('d.m.Y'));
 
         if ($deliveryAddress) {
-            $this->setPropertyValue($propertyCollection, 'CITY', $deliveryAddress->getCityName());
-            $this->setPropertyValue($propertyCollection, 'STREET', $deliveryAddress->getStreetName());
-            $this->setPropertyValue($propertyCollection, 'HOUSE', $deliveryAddress->getHouse());
-            $this->setPropertyValue($propertyCollection, 'BUILDING', $deliveryAddress->getHousing());
-            $this->setPropertyValue($propertyCollection, 'FLOOR', $deliveryAddress->getFloor());
-            $this->setPropertyValue($propertyCollection, 'APARTMENT', $deliveryAddress->getRoomNumber());
+            $this->setPropertyValue($this->propertyCollection, 'CITY', $deliveryAddress->getCityName());
+            $this->setPropertyValue($this->propertyCollection, 'STREET', $deliveryAddress->getStreetName());
+            $this->setPropertyValue($this->propertyCollection, 'HOUSE', $deliveryAddress->getHouse());
+            $this->setPropertyValue($this->propertyCollection, 'BUILDING', $deliveryAddress->getHousing());
+            $this->setPropertyValue($this->propertyCollection, 'FLOOR', $deliveryAddress->getFloor());
+            $this->setPropertyValue($this->propertyCollection, 'APARTMENT', $deliveryAddress->getRoomNumber());
         }
     }
 
@@ -1121,12 +1150,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 $dostavistaService = Application::getInstance()->getContainer()->get('dostavista.service');
                 $dostavistaStatus = StatusService::STATUS_SITE_DOSTAVISTA_MAP[$orderDto->getStatus()];
                 if ($dostavistaStatus == StatusService::STATUS_SITE_DOSTAVISTA_MAP[6]) {
-                    foreach ($order->getPropertyCollection() as $item) {
-                        if ($item->getProperty()['CODE'] == 'ORDER_ID_DOSTAVISTA') {
-                            $dostavistaOrder = $item->getValue();
-                            break;
-                        }
-                    }
+                    $dostavistaOrder = BxCollection::getOrderPropertyByCode($this->propertyCollection, 'ORDER_ID_DOSTAVISTA')->getValue();
                     if ($dostavistaOrder) {
                         $cancelOrder = new CancelOrder();
                         $cancelOrder->bitrixOrderId = $order->getId();
@@ -1156,8 +1180,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      */
     private function getBasketPropertyValueByCode(BasketItem $item, string $code): string
     {
-        return $item->getPropertyCollection()
-                   ->getPropertyValues()[$code]['VALUE'] ?? '';
+        return $item->getPropertyCollection()->getPropertyValues()[$code]['VALUE'] ?? '';
     }
 
     /**

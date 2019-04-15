@@ -571,7 +571,9 @@ class OrderService implements LoggerAwareInterface
         $lng = $storage->getLng();
         $lat = $storage->getLat();
         $userCoords = [$lng, $lat];
-        $this->setOrderPropertiesByCode($order, ['USER_COORDS' => $lng . ',' . $lat]);
+        if ($this->deliveryService->isDostavistaDelivery($selectedDelivery) || $this->deliveryService->isDelivery($selectedDelivery)) {
+            $this->setOrderPropertiesByCode($order, ['USER_COORDS' => $lng . ',' . $lat]);
+        }
 
         /**
          * Заполнение складов довоза товара для элементов корзины (кроме доставок 04 и 06)
@@ -1122,7 +1124,9 @@ class OrderService implements LoggerAwareInterface
                 $lng = $storage->getLng();
                 $lat = $storage->getLat();
                 $userCoords = [$lng, $lat];
-                $this->setOrderPropertiesByCode($order,['USER_COORDS' => $lng . ',' . $lat]);
+                if ($this->deliveryService->isDostavistaDelivery($selectedDelivery) || $this->deliveryService->isDelivery($selectedDelivery)) {
+                    $this->setOrderPropertiesByCode($order, ['USER_COORDS' => $lng . ',' . $lat]);
+                }
 
                 //получаем ближайший магазин по координатам адреса пользователя и коодинатам магазинов, где все в наличие
                 if ($this->deliveryService->isDostavistaDelivery($selectedDelivery)) {
