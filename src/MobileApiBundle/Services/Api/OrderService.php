@@ -36,8 +36,10 @@ use FourPaws\MobileApiBundle\Dto\Object\OrderStatus;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Dto\Object\PriceWithQuantity;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartOrderRequest;
+use FourPaws\MobileApiBundle\Exception\BonusSubtractionException;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
+use FourPaws\PersonalBundle\Service\BonusService as AppBonusService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
@@ -58,6 +60,7 @@ use FourPaws\SaleBundle\Service\OrderSplitService;
 use FourPaws\DeliveryBundle\Service\DeliveryService as AppDeliveryService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService as AppOrderSubscribeService;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
+use http\Exception\RuntimeException;
 use JMS\Serializer\Serializer;
 
 class OrderService
@@ -122,7 +125,8 @@ class OrderService
         AppOrderSubscribeService $appOrderSubscribeService,
         ApiProductService $apiProductService,
         Serializer $serializer,
-        CouponStorageInterface $couponStorage
+        CouponStorageInterface $couponStorage,
+        AppBonusService $appBonusService
     )
     {
         $this->apiBasketService = $apiBasketService;
@@ -139,6 +143,7 @@ class OrderService
         $this->apiProductService = $apiProductService;
         $this->serializer = $serializer;
         $this->couponStorage = $couponStorage;
+        $this->appBonusService = $appBonusService;
     }
 
     /**
@@ -445,7 +450,12 @@ class OrderService
         OrderEntity $order = null
     )
     {
+        $orderCalculate = (new OrderCalculate());
+        $totalPrice = $basketProducts->getTotalPrice();
+        $basketPriceWithoutDiscount = $totalPrice->getOld();
+        $basketPriceWithDiscount = $totalPrice->getActual();
         $deliveryPrice = 0;
+
         try {
             if ($isCourierDelivery) {
                 $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
@@ -466,24 +476,7 @@ class OrderService
             $deliveryPrice = 0;
         }
 
-        $orderCalculate = (new OrderCalculate())
-            ->setTotalPrice($basketProducts->getTotalPrice())
-            ->setCardDetails([
-                (new Detailing())
-                    ->setId('bonus_add')
-                    ->setTitle('Начислено')
-                    ->setValue($basketProducts->getTotalBonuses()),
-                (new Detailing())
-                    ->setId('bonus_sub')
-                    ->setTitle('Списано')
-                    ->setValue($bonusSubtractAmount),
-            ]);
-
         $priceDetails = [];
-
-        $basketPriceWithoutDiscount = $basketProducts->getTotalPrice()->getOld();
-        $basketPriceWithDiscount = $basketProducts->getTotalPrice()->getActual();
-
         if ($order) {
             // if there is an order
 
@@ -525,7 +518,37 @@ class OrderService
             ->setTitle('Стоимость доставки')
             ->setValue($deliveryPrice);
 
+        try {
+            $user = $this->appUserService->getCurrentUser();
+            $bonusInfo = $this->appBonusService->getManzanaBonusInfo($user);
+            if ($bonusSubtractAmount > $bonusInfo->getActiveBonus()) {
+                throw new BonusSubtractionException('Указано некорректное количество бонусов для списания');
+            }
+            $orderCalculate->setCardDetails([
+                (new Detailing())
+                    ->setId('bonus_add')
+                    ->setTitle('Начислено')
+                    ->setValue($basketProducts->getTotalBonuses()),
+                (new Detailing())
+                    ->setId('bonus_sub')
+                    ->setTitle('Списано')
+                    ->setValue($bonusSubtractAmount),
+            ]);
+            $storage = $this->orderStorageService->getStorage();
+            $storage->setBonus($bonusSubtractAmount);
+            $this->orderStorageService->updateStorage($storage);
+            $totalPrice->setActual($totalPrice->getActual() - $bonusSubtractAmount);
+        } catch (BonusSubtractionException $e) {
+            throw new BonusSubtractionException($e->getMessage());
+        } catch (\Exception $e) {
+            // do nothing
+        }
+
+
         $orderCalculate->setPriceDetails($priceDetails);
+
+        $orderCalculate->setTotalPrice($totalPrice);
+
 
         return $orderCalculate;
     }
