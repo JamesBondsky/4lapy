@@ -198,7 +198,7 @@ class OrderSubscribeController extends Controller
     }
 
     /**
-     * @Route("/getData/createFromOrder/", methods={"POST"})
+     * @Route("/get/", methods={"POST"})
      * @param Request $request
      * @return JsonResponse
      * @throws \Bitrix\Main\SystemException

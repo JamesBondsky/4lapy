@@ -1156,7 +1156,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         if ($offerId <= 0) {
             return null;
         }
-        if (!isset($this->offers)) {
+        if (!isset($this->offers[$offerId])) {
             $this->offers[$offerId] = OfferQuery::getById($offerId);
         }
         return $this->offers[$offerId];
