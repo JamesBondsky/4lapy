@@ -11,7 +11,7 @@
                 </div>
             </div>
 
-            <div class="js-catalog-subscribe-delivery"></div>
+            <div class="b-popup-subscribe-delivery__catalog js-catalog-subscribe-delivery"></div>
         </div>
 
         <div class="b-popup-subscribe-delivery__footer">
@@ -19,5 +19,6 @@
                 <?php include __DIR__ . '/copyright.php' ?>
             </div>
         </div>
+        <div class="b-shadow js-shadow"></div>
     </div>
 </section>
