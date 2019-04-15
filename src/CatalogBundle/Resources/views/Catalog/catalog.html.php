@@ -114,9 +114,9 @@ if ($category->isLanding() || $catalogRequest->isLanding()) {
 if ($catalogRequest->isLanding()) {
     echo $view->render('FourPawsCatalogBundle:Catalog:landing.header.html.php', \compact('catalogRequest'));
 
-    echo '<div class="b-catalog js-preloader-fix"><div class="b-container b-container--catalog-filter js-container-catalog-filter">';
+    echo '<div class="b-catalog js-preloader-fix" data-pagetype="catalogFilter"><div class="b-container b-container--catalog-filter js-container-catalog-filter">';
 } else { ?>
-    <div class="b-catalog js-preloader-fix">
+    <div class="b-catalog js-preloader-fix" data-pagetype="catalogFilter">
     <div class="b-container b-container--catalog-filter js-container-catalog-filter">
 <?php }
 
