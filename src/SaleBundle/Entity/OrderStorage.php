@@ -1144,7 +1144,7 @@ class OrderStorage
      */
     public function getPromoCode(): string
     {
-        return $this->promoCode;
+        return $this->promoCode ?: '';
     }
 
     /**

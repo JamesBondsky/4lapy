@@ -456,8 +456,10 @@ class OrderService
     {
         $orderCalculate = (new OrderCalculate());
         $totalPrice = $basketProducts->getTotalPrice();
-        $basketPriceWithoutDiscount = $totalPrice->getOld();
+        $totalPriceWithDiscount = $totalPrice->getActual();
+        $totalPriceWithoutDiscount = $totalPrice->getOld();
         $basketPriceWithDiscount = $totalPrice->getActual();
+        $basketPriceWithoutDiscount = $totalPrice->getOld();
         $deliveryPrice = 0;
 
         try {
@@ -521,6 +523,8 @@ class OrderService
             ->setId('delivery')
             ->setTitle('Стоимость доставки')
             ->setValue($deliveryPrice);
+        $totalPriceWithDiscount += $deliveryPrice;
+        $totalPriceWithoutDiscount += $deliveryPrice;
 
         try {
             $user = $this->appUserService->getCurrentUser();
@@ -541,7 +545,7 @@ class OrderService
             $storage = $this->orderStorageService->getStorage();
             $storage->setBonus($bonusSubtractAmount);
             $this->orderStorageService->updateStorage($storage);
-            $totalPrice->setActual($totalPrice->getActual() - $bonusSubtractAmount);
+            $totalPriceWithDiscount -= $bonusSubtractAmount;
         } catch (BonusSubtractionException $e) {
             throw new BonusSubtractionException($e->getMessage());
         } catch (\Exception $e) {
@@ -551,6 +555,8 @@ class OrderService
 
         $orderCalculate->setPriceDetails($priceDetails);
 
+        $totalPrice->setActual($totalPriceWithDiscount);
+        $totalPrice->setOld($totalPriceWithoutDiscount);
         $orderCalculate->setTotalPrice($totalPrice);
 
 
