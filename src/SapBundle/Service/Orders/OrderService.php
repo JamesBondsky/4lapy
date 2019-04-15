@@ -213,9 +213,17 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
          * DFUE – заказ создан на Сайте;
          * MOBI – заказ создан в мобильном приложении;
          */
-        $orderSource = $this->getPropertyValueByCode($order, 'FROM_APP') === 'Y'
-            ? OrderDtoOut::ORDER_SOURCE_MOBILE_APP
-            : OrderDtoOut::ORDER_SOURCE_SITE;
+        $orderSource = OrderDtoOut::ORDER_SOURCE_SITE;
+        if ($this->getPropertyValueByCode($order, 'FROM_APP') === 'Y') {
+            switch ($this->getPropertyValueByCode($order, 'FROM_APP_DEVICE')) {
+                case 'android':
+                    $orderSource = OrderDtoOut::ORDER_SOURCE_MOBILE_APP_ANDROID;
+                    break;
+                case 'ios':
+                    $orderSource = OrderDtoOut::ORDER_SOURCE_MOBILE_APP_IOS;
+                    break;
+            }
+        }
 
         $description = \trim(\implode("\n",
             [

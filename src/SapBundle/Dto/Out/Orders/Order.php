@@ -17,8 +17,9 @@ class Order
 {
     public const DEFAULT_CONTRACTOR_CODE = '0000802070';
 
-    public const ORDER_SOURCE_MOBILE_APP = 'MOBI';
-    public const ORDER_SOURCE_SITE       = 'DFUE';
+    public const ORDER_SOURCE_MOBILE_APP_ANDROID = 'MOBI';
+    public const ORDER_SOURCE_MOBILE_APP_IOS     = 'MOB2';
+    public const ORDER_SOURCE_SITE               = 'DFUE';
 
     /**
      * Содержит номер заказа в Системе.

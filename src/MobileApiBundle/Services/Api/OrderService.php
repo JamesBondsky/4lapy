@@ -46,7 +46,6 @@ use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 use FourPaws\PersonalBundle\Entity\OrderStatusChange;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
-use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\OrderService as AppOrderService;
@@ -60,7 +59,8 @@ use FourPaws\SaleBundle\Service\OrderSplitService;
 use FourPaws\DeliveryBundle\Service\DeliveryService as AppDeliveryService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService as AppOrderSubscribeService;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
-use http\Exception\RuntimeException;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use FourPaws\MobileApiBundle\Security\ApiToken;
 use JMS\Serializer\Serializer;
 
 class OrderService
@@ -107,6 +107,8 @@ class OrderService
     /** @var CouponStorageInterface */
     private $couponStorage;
 
+    /** @var TokenStorageInterface */
+    private $tokenStorage;
 
     const DELIVERY_TYPE_COURIER = 'courier';
     const DELIVERY_TYPE_PICKUP = 'pickup';
@@ -126,6 +128,7 @@ class OrderService
         ApiProductService $apiProductService,
         Serializer $serializer,
         CouponStorageInterface $couponStorage,
+        TokenStorageInterface $tokenStorage,
         AppBonusService $appBonusService
     )
     {
@@ -144,6 +147,7 @@ class OrderService
         $this->serializer = $serializer;
         $this->couponStorage = $couponStorage;
         $this->appBonusService = $appBonusService;
+        $this->tokenStorage = $tokenStorage;
     }
 
     /**
@@ -791,7 +795,16 @@ class OrderService
             $this->orderStorageService->setStorageValuesFromArray($storage, $cartParamArray, $step);
         }
 
-        $storage->setFromApp(true);
+        /**
+         * @var ApiToken $token | null
+         */
+        $platform = false;
+        $token = $this->tokenStorage->getToken();
+        if ($token && $token instanceof ApiToken && $session = $token->getApiUserSession()) {
+            $platform = $session->getPlatform();
+        }
+
+        $storage->setFromApp(true)->setFromAppDevice($platform);
         $order = $this->appOrderService->createOrder($storage);
         $firstOrder = $this->personalOrderService->getOrderByNumber($order->getField('ACCOUNT_NUMBER'));
         $response = [
