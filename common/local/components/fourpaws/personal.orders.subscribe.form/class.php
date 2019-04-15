@@ -143,7 +143,6 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         }
 
         $params['INCLUDE_TEMPLATE'] = $params['INCLUDE_TEMPLATE'] ?? 'Y';
-
         $params = parent::onPrepareComponentParams($params);
 
         return $params;
@@ -377,13 +376,16 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                 ]
             ];
 
+            // всегда сбрасываем кеш для отрабатывания шаблона
+            $this->abortResultCache();
+
             $basket = $this->createBasketFromItems($items);
             $this->setBasket($basket);
 
-            $arResult['CURRENT_STAGE'] = 'item';
+            $this->arResult['CURRENT_STAGE'] = 'item';
         } catch (\Exception $e) {
-            $arResult['CURRENT_STAGE'] = 'error';
-            $arResult['ERROR'] = $e->getMessage();
+            $this->arResult['CURRENT_STAGE'] = 'error';
+            $this->arResult['ERROR'] = $e->getMessage();
         }
 
         $this->includeComponentTemplate();
@@ -1512,5 +1514,14 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
         return $payments;
     }
+
+    /**
+     * @return \Bitrix\Main\HttpRequest
+     */
+    public function getRequest()
+    {
+        return $this->request;
+    }
+
 
 }
