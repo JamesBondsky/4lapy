@@ -13,7 +13,7 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
 
-
+// id приходит из цикла или в запросе, если это 1 элемент
 $itemId = $itemId ?: $component->request->get('itemId');
 $offer = $component->getOffer((int)$basketItem->getProductId());
 $useOffer = $offer instanceof Offer && $offer->getId() > 0;
@@ -42,9 +42,9 @@ $image = $component->getImage((int)$offer->getId());
                 if ($basketItem->getWeight() > 0) {
                     ?>
                     <span class="b-common-item__variant b-common-item__variant--shopping-cart b-common-item__variant--shopping">
-                                            <span class="b-common-item__name-value">Вес: </span>
-                                            <span><?= WordHelper::showWeight($basketItem->getWeight(), true) ?></span>
-                                        </span>
+                        <span class="b-common-item__name-value">Вес: </span>
+                        <span><?= WordHelper::showWeight($basketItem->getWeight(), true) ?></span>
+                    </span>
                     <?php
                 }
 
@@ -52,16 +52,16 @@ $image = $component->getImage((int)$offer->getId());
                     $color = $offer->getColor();
                     if ($color !== null) { ?>
                         <span class="b-common-item__variant b-common-item__variant--shopping-cart b-common-item__variant--shopping">
-                                                <span class="b-common-item__name-value">Цвет: </span>
-                                                <span><?= $color->getName() ?></span>
-                                            </span>
+                            <span class="b-common-item__name-value">Цвет: </span>
+                            <span><?= $color->getName() ?></span>
+                        </span>
                     <?php }
                     $article = $offer->getXmlId();
                     if (!empty($article)) { ?>
                         <span class="b-common-item__variant b-common-item__variant--shopping-cart b-common-item__variant--shopping">
-                                                <span class="b-common-item__name-value">Артикул: </span>
-                                                <span class="b-common-item__name-value b-common-item__name-value--shopping-mobile">, Арт. </span><span><?= $article ?></span>
-                                            </span>
+                            <span class="b-common-item__name-value">Артикул: </span>
+                            <span class="b-common-item__name-value b-common-item__name-value--shopping-mobile">, Арт. </span><span><?= $article ?></span>
+                        </span>
                     <?php }
                 } ?>
             </a>
@@ -110,9 +110,9 @@ $image = $component->getImage((int)$offer->getId());
                 </select>
             </div>
             <div class="b-price">
-                                <span class="b-price__current">
-                                    <?= WordHelper::numberFormat($basketItem->getPrice() * $basketItem->getQuantity()) ?>
-                                </span>
+                <span class="b-price__current">
+                    <?= WordHelper::numberFormat($basketItem->getPrice() * $basketItem->getQuantity()) ?>
+                </span>
                 <span class="b-ruble">₽</span>
                 <?php
                 //сюда же влетает округление до копеек при пересчете НДС, поэтому 0,01
@@ -145,9 +145,9 @@ $image = $component->getImage((int)$offer->getId());
             <a class="b-item-shopping__delete js-cart-delete-item" href="javascript:void(0);"
                title=""
                data-url="<?= $basketDeleteUrl ?>" data-basketId="<?= $itemId; ?>">
-                                <span class="b-icon b-icon--delete b-icon--shopping">
-                                    <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
-                                </span>
+            <span class="b-icon b-icon--delete b-icon--shopping">
+                <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
+            </span>
             </a>
         <?php } ?>
 
@@ -159,42 +159,42 @@ $image = $component->getImage((int)$offer->getId());
                 if ((float)$basketItem->getBasePrice() - (float)$basketItem->getPrice() >= 0.01) {
                     ?>
                     <span class="b-old-price b-old-price--inline b-old-price--crossed-out">
-                                    <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getBasePrice()) ?> </span>
-                                    <span class="b-ruble b-ruble--old-weight-price">₽</span>
-                                </span>
+                        <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getBasePrice()) ?> </span>
+                        <span class="b-ruble b-ruble--old-weight-price">₽</span>
+                    </span>
                     <?php
                 }
                 ?>
                 <span class="b-old-price b-old-price--inline">
-                                <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getPrice()) ?> </span>
-                                <span class="b-ruble b-ruble--old-weight-price">₽</span>
-                            </span>
+                    <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getPrice()) ?> </span>
+                    <span class="b-ruble b-ruble--old-weight-price">₽</span>
+                </span>
                 <span class="b-old-price b-old-price--inline b-old-price--on">
-                                <span class="b-old-price__old"><?= $basketItem->getQuantity() ?> </span>
-                                <span class="b-ruble b-ruble--old-weight-price">шт</span>
-                            </span>
+                    <span class="b-old-price__old"><?= $basketItem->getQuantity() ?> </span>
+                    <span class="b-ruble b-ruble--old-weight-price">шт</span>
+                </span>
                 <?php
-                // информацию о скидки мы не можем получить
-                //                                if ($basketItem->getBasePrice() !== $basketItem->getPrice()) {
-                //                                    $informationText = 'Товар со скидкой';
-                //                                    $descriptions = $component->getPromoLink($basketItem, true);
-                //                                    if (\count($descriptions) === 1) {
-                //                                        $informationText = 'Скидка: <br>';
-                //                                    } elseif (\count($descriptions) > 1) {
-                //                                        $informationText = 'Скидки: <br>';
-                //                                    }
-                //                                    foreach ($descriptions as $description) {
-                //                                        $informationText .= $description['name'] . '<br>';
-                //                                    }
-                //                                    ?>
-                <!--                                            <a class="b-information-link js-popover-information-open js-popover-information-open"-->
-                <!--                                               href="javascript:void(0);" title="">-->
-                <!--                                                <span class="b-information-link__icon">i</span>-->
-                <!--                                                <div class="b-popover-information js-popover-information">-->
-                <!--                                                    --><?//= $informationText; ?>
-                <!--                                                </div>-->
-                <!--                                            </a>-->
-                <!--                                        --><?php //} ?>
+//                // информацию о скидки мы не можем получить
+//                if ($basketItem->getBasePrice() !== $basketItem->getPrice()) {
+//                    $informationText = 'Товар со скидкой';
+//                    $descriptions = $component->getPromoLink($basketItem, true);
+//                    if (\count($descriptions) === 1) {
+//                        $informationText = 'Скидка: <br>';
+//                    } elseif (\count($descriptions) > 1) {
+//                        $informationText = 'Скидки: <br>';
+//                    }
+//                    foreach ($descriptions as $description) {
+//                        $informationText .= $description['name'] . '<br>';
+//                    }
+//                    ?>
+<!--                    <a class="b-information-link js-popover-information-open js-popover-information-open"-->
+<!--                       href="javascript:void(0);" title="">-->
+<!--                        <span class="b-information-link__icon">i</span>-->
+<!--                        <div class="b-popover-information js-popover-information">-->
+<!--                            --><?//= $informationText; ?>
+<!--                        </div>-->
+<!--                    </a>-->
+                <?php //} ?>
             </div>
             <?php
         }
