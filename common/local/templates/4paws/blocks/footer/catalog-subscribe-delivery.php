@@ -19,5 +19,6 @@
                 <?php include __DIR__ . '/copyright.php' ?>
             </div>
         </div>
+        <div class="b-shadow js-shadow"></div>
     </div>
 </section>
