@@ -17,7 +17,7 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
     <a class="b-button b-button--social b-button--full-width js-reg-by-phone"
        href="javascript:void(0)"
        title="Регистрация по телефону"
-       data-url="/ajax/user/auth/register-s/"
+       data-url="/ajax/user/auth/register-r/"
        data-method="post"
        data-action="get"
        data-backurl="<?=$backUrl?>"

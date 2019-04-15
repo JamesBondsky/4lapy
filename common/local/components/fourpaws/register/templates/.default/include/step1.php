@@ -22,7 +22,7 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
     </div>
     <form class="b-registration__form js-form-validation js-registration-form"
           id="reg-step1-form"
-          data-url="/ajax/user/auth/register-s/"
+          data-url="/ajax/user/auth/register-r/"
           method="post">
         <input type="hidden" name="action" value="get">
         <input type="hidden" name="step" value="sendSmsCode">
