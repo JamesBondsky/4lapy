@@ -142,11 +142,13 @@ class RootCategoryConverter extends AbstractCatalogRequestConverter
                 return true;
             }
 
+            $url = $this->processAjaxUrl($request->getPathInfo());
+
             $fSet = $this->filterSetDataManager::query()
                                                ->setCacheTtl(36000)
                                                ->setFilter(
                                                    [
-                                                       '=UF_URL'   => $request->getPathInfo(),
+                                                       '=UF_URL'   => $url,
                                                        'UF_ACTIVE' => true
                                                    ]
                                                )
@@ -193,5 +195,21 @@ class RootCategoryConverter extends AbstractCatalogRequestConverter
         }
 
         return $result;
+    }
+
+
+    /**
+     * Необходимо при запросе каталога в popup для подписки на доставку
+     * @param $value
+     * @return mixed
+     */
+    private function processAjaxUrl($value)
+    {
+        $subject = '/ajax/catalog/popup/';
+        $replace = '/catalog/';
+        if(strpos($value, $subject) !== -1){
+            $value = str_replace($subject, $replace, $value);
+        }
+        return $value;
     }
 }
