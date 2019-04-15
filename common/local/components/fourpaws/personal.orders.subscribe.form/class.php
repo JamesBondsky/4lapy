@@ -419,13 +419,15 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     $orderSubscribe = (new OrderSubscribe());
                 }
 
+                // TODO: интервалы
                 $orderSubscribe
-                    ->setDeliveryDay($this->arResult['FIELD_VALUES']['subscribeDay'])
-                    ->setDeliveryDay($this->arResult['FIELD_VALUES']['subscribeDay'])
-                    ->setActive(true)
                     ->setOrderId($order->getId())
+                    ->setDeliveryDay($this->arResult['FIELD_VALUES']['subscribeDay'])
+                    ->setPayWithbonus($this->arResult['FIELD_VALUES']['subscribeBonus'])
                     ->setDeliveryId($this->arResult['FIELD_VALUES']['deliveryId'])
                     ->setFrequency($this->arResult['FIELD_VALUES']['deliveryFrequency'])
+                    ->setDeliveryPlace($this->arResult['FIELD_VALUES']['addressId'] ?: $this->arResult['FIELD_VALUES']['shopId'])
+                    //->setDeliveryTime($this->arResult['FIELD_VALUES']['deliveryId'])
                     ->setLastCheck(null);
 
                 BitrixApplication::getConnection()->startTransaction();
@@ -456,6 +458,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                         $this->setExecError('subscribeAction', $exception->getMessage(), 'subscriptionUpdateException');
                     }
                 } else { // создание новой подписки
+                    $orderSubscribe->setActive(true);
                     $this->arResult['SUBSCRIBE_ACTION']['TYPE'] = 'CREATE';
                     $addResult = $orderSubscribeService->add($orderSubscribe);
                     if ($addResult->isSuccess()) {
