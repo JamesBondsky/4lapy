@@ -564,8 +564,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $coords = BxCollection::getOrderPropertyByCode($this->propertyCollection, 'USER_COORDS');
         if ($coords && ($coordsValue = $coords->getValue()) && $coordsValue != null && $coordsValue != '') {
             $arCoords = explode(',', $coordsValue);
-            $orderDto->setLongitude($arCoords[0]);
-            $orderDto->setLatitude($arCoords[1]);
+            $orderDto->setLatitude($arCoords[0]);
+            $orderDto->setLongitude($arCoords[1]);
         }
     }
 
