@@ -211,3 +211,30 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
         </div>
     </div>
 </div>
+<div class="b-delivery-type-time" data-container-delivery-type-time="true">
+    <ul class="b-radio-tab">
+        <li class="b-radio-tab__tab b-radio-tab__tab--default-dostavista" data-content-type-time-delivery="default">
+            <div class="delivery-block__type visible" data-delivery="<?= $delivery->getPrice() ?>" data-full="<?= $orderPrice ?>" data-type="oneDelivery">
+                <div class="b-input-line b-input-line--desired-date" data-url="<?= $arResult['URL']['DELIVERY_INTERVALS'] ?>">
+                    <div class="b-input-line__label-wrapper">
+                        <span class="b-input-line__label">Желаемая дата доставки</span>
+                    </div>
+                    <div class="b-select b-select--recall b-select--feedback-page">
+                        <?php
+                        $selectorDelivery = $delivery;
+                        $selectorStorage = $storage;
+                        $selectorName = 'deliveryDate';
+                        include 'delivery_date_select.php'
+                        ?>
+                    </div>
+                </div>
+                <?php if (!$delivery->getIntervals()->isEmpty()) {
+                    $selectorDelivery = $delivery;
+                    $selectorStorage = $storage;
+                    $selectorName = 'deliveryInterval';
+                    include 'delivery_interval_select.php';
+                } ?>
+            </div>
+        </li>
+    </ul>
+</div>

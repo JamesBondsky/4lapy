@@ -16,7 +16,7 @@ use FourPaws\SaleBundle\Enum\OrderStorage;
  */
 
 /** @var DeliveryResultInterface $tmpDelivery */
-if ($tmpDelivery = $nextDeliveries[$storage->getDeliveryDate()]) {
+if ($tmpDelivery = $nextDeliveries[0]) {
     $availableIntervals = $tmpDelivery->getAvailableIntervals();
     ?>
     <div class="b-input-line b-input-line--interval">
@@ -32,7 +32,7 @@ if ($tmpDelivery = $nextDeliveries[$storage->getDeliveryDate()]) {
                 <?php
                 /** @var Interval $interval */
                 foreach ($availableIntervals as $i => $interval) { ?>
-                    <option value="<?= ($i + 1) ?>" <?= (($selectorStorage->getDeliveryInterval() === $i + 1) ? 'selected = "selected"' : '') ?>>
+                    <option value="<?= ($i + 1) ?>">
                         <?= (string)$interval ?>
                     </option>
                 <?php } ?>

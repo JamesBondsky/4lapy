@@ -38,6 +38,7 @@ global $APPLICATION;
 
 $logger = LoggerFactory::create('productDetail');
 $offerId = $productDetailRequest->getOfferId();
+$isPopup = MainTemplate::getInstance()->isCatalogPopup();
 
 /** @var Product $product */
 $product = $APPLICATION->IncludeComponent(
@@ -47,8 +48,8 @@ $product = $APPLICATION->IncludeComponent(
         'CODE' => $productDetailRequest->getProductSlug(),
         'OFFER_ID' => $offerId,
         'SET_TITLE' => 'Y',
-        'SHOW_FAST_ORDER' => $productDetailRequest->getZone() !== DeliveryService::ZONE_4,
-        'IS_POPUP' => MainTemplate::getInstance()->isCatalogPopup(),
+        'SHOW_FAST_ORDER' => $productDetailRequest->getZone() !== DeliveryService::ZONE_4 && !$isPopup,
+        'IS_POPUP' => $isPopup,
     ],
     false,
     ['HIDE_ICONS' => 'Y']
