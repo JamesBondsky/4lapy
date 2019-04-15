@@ -18,6 +18,7 @@ use FourPaws\Catalog\Model\BundleItem;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\CatalogBundle\Controller\CatalogController;
 use FourPaws\CatalogBundle\Service\CategoriesService;
 use FourPaws\CatalogBundle\Service\FilterHelper;
 use FourPaws\CatalogBundle\Service\SortService;
@@ -38,6 +39,7 @@ use FourPaws\CatalogBundle\Helper\MarkHelper;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Exception\CategoryNotFoundException;
 use FourPaws\MobileApiBundle\Exception\NotFoundProductException;
+use FourPaws\Search\Helper\IndexHelper;
 use FourPaws\Search\Model\Navigation;
 use FourPaws\Search\SearchService;
 use FourPaws\StoreBundle\Service\StockService;
@@ -125,6 +127,13 @@ class ProductService
             $category = $this->categoriesService->getById($categoryId);
             $this->filterHelper->initCategoryFilters($category, $request);
             $filters = $category->getFilters();
+        }
+
+
+        if ($searchQuery) {
+            /** @see CatalogController::searchAction */
+            $searchQuery = mb_strtolower($searchQuery);
+            $searchQuery = IndexHelper::getAlias($searchQuery);
         }
 
         $sort = $this->sortService->getSorts($sort, strlen($searchQuery) > 0)->getSelected();
