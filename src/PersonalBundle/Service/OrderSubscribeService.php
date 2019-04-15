@@ -384,6 +384,29 @@ class OrderSubscribeService implements LoggerAwareInterface
         return $this->frequencies;
     }
 
+
+    /**
+     * @param $frequency
+     * @return string|null
+     * @throws \Exception
+     */
+    public function getFrequencyType($frequency)
+    {
+        $arSlice = explode("_", $frequency['XML_ID']);
+        return count($arSlice) > 1 ? (string)$arSlice[0] : null;
+    }
+
+    /**
+     * @param $frequency
+     * @return int|null
+     * @throws \Exception
+     */
+    public function getFrequencyValue($frequency)
+    {
+        $arSlice = explode("_", $frequency['XML_ID']);
+        return count($arSlice) > 1 ? (int)$arSlice[1] : null;
+    }
+
     /**
      * @param $id
      * @return BaseEntity|OrderSubscribe|null

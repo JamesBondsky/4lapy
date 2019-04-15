@@ -16,9 +16,9 @@ use FourPaws\Decorators\SvgDecorator;
                 <select class="b-select__block b-select__block--recall b-select__block--feedback-page" name="subscribeFrequency" data-select="0">
                     <option value="" disabled="disabled">выберите</option>
                     <?php
-                    foreach ($subscribeIntervals as $i => $interval) { ?>
-                        <option value="<?= $interval['ID'] ?>">
-                            <?= (string)$interval['VALUE'] ?>
+                    foreach ($subscribeIntervals as $i => $frequency) { ?>
+                        <option value="<?= $frequency['ID'] ?>" data-freq-type="<?=$component->getOrderSubscribeService()->getFrequencyType($frequency)?>" data-freq-value="<?=$component->getOrderSubscribeService()->getFrequencyValue($frequency)?>">
+                            <?= (string)$frequency['VALUE'] ?>
                         </option>
                     <?php } ?>
                 </select>

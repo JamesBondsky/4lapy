@@ -22,9 +22,9 @@ if($subscribe){
                 <select class="b-select__block b-select__block--recall b-select__block--feedback-page" name="subscribeFrequency" data-select="0">
                     <option value="" disabled="disabled">выберите</option>
                     <?php
-                    foreach ($subscribeIntervals as $i => $interval) { ?>
-                        <option value="<?= $interval['ID'] ?>" <?=($subscribe && $subscribe->getFrequency() == $interval['ID']) ? 'selected' : ''?> >
-                            <?= (string)$interval['VALUE'] ?>
+                    foreach ($subscribeIntervals as $i => $frequency) { ?>
+                        <option value="<?= $frequency['ID'] ?>" <?=($subscribe && $subscribe->getFrequency() == $frequency['ID']) ? 'selected' : ''?>  data-freq-type="<?=$component->getOrderSubscribeService()->getFrequencyType($frequency)?>" data-freq-value="<?=$component->getOrderSubscribeService()->getFrequencyValue($frequency)?>">
+                            <?= (string)$frequency['VALUE'] ?>
                         </option>
                     <?php } ?>
                 </select>

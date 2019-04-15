@@ -217,7 +217,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
             <div class="delivery-block__type visible" data-delivery="<?= $delivery->getPrice() ?>" data-full="<?= $orderPrice ?>" data-type="oneDelivery">
                 <div class="b-input-line b-input-line--desired-date" data-url="<?= $arResult['URL']['DELIVERY_INTERVALS'] ?>">
                     <div class="b-input-line__label-wrapper">
-                        <span class="b-input-line__label">Желаемая дата доставки</span>
+                        <span class="b-input-line__label">Желаемая дата первой доставки</span>
                     </div>
                     <div class="b-select b-select--recall b-select--feedback-page">
                         <?php
