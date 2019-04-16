@@ -216,6 +216,7 @@ if (!$currentOffer->getImagesIds()) {
             <a class="b-common-item__add-to-cart js-basket-add"
                href="javascript:void(0);"
                title=""
+               data-offerid="<?= $offerId ?>">
                 <span class="b-common-item__wrapper-link">
                     <span class="b-common-item__price js-price-block"><?= $currentOffer->getCatalogPrice() ?></span>
                     <span class="b-common-item__currency">
@@ -223,6 +224,7 @@ if (!$currentOffer->getImagesIds()) {
                     </span>
                     <span class="b-common-item__price">В подписку</span>
                 </span>
+                <span class="b-common-item__incart">+1</span>
             </a>
         <? } else if ($offerId > 0) { ?>
             <a class="b-common-item__add-to-cart js-basket-add"
