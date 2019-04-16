@@ -14,7 +14,7 @@ use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
 
 // id приходит из цикла или в запросе, если это 1 элемент
-$itemId = $itemId ?: $component->getRequest()->get('itemId');
+$itemId = (int)$basketItem->getProductId();
 $offer = $component->getOffer((int)$basketItem->getProductId());
 $useOffer = $offer instanceof Offer && $offer->getId() > 0;
 $image = $component->getImage((int)$offer->getId());
