@@ -27,7 +27,7 @@ $selectedAddressId = 0;
 $showNewAddressForm = false;
 $showNewAddressFormHeader = false;
 
-if ($addresses && $addresses->isEmpty()) {
+if ($addresses && !$addresses->isEmpty()) {
     $selectedAddressId = $addresses->first()->getId();
     $showNewAddressFormHeader = true;
 } else {
