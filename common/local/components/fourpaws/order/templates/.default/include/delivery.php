@@ -311,8 +311,8 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                         <textarea class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form"
                                   id="comment-express-delivery"
                                   name="comment_dostavista"
-                                  placeholder="Укажите здесь дополнительную информацию к заказу.
-Например, если для доставки заказа курьеру необходимо въехать на территорию с пропускным режимом. В таком случае курьер свяжется с Вами заранее для заказа пропуска на территорию."><?= $storage->getComment() ?></textarea>
+                                  placeholder="Укажите здесь ваши комментарии.
+Например, если для доставки необходим въезд на закрытую территорию. Курьер свяжется с Вами для оформления пропуска. При отсутствии пропуска – доставка будет осуществляться до КПП/шлагбаума. Доставка силами курьера осуществляется на расстояние не более 200м от КПП/шлагбаума."><?= $storage->getComment() ?></textarea>
                             <div class="b-error">
                                 <span class="js-message"></span>
                             </div>
@@ -351,8 +351,8 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                     <textarea class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form b-input__input-field--focus-placeholder"
                               id="order-comment"
                               name="comment"
-                              placeholder="Укажите здесь дополнительную информацию к заказу.
-Например, если для доставки заказа курьеру необходимо въехать на территорию с пропускным режимом. В таком случае курьер свяжется с Вами заранее для заказа пропуска на территорию."><?= $storage->getComment() ?></textarea>
+                              placeholder="Укажите здесь ваши комментарии.
+Например, если для доставки необходим въезд на закрытую территорию. Курьер свяжется с Вами для оформления пропуска. При отсутствии пропуска – доставка будет осуществляться до КПП/шлагбаума. Доставка силами курьера осуществляется на расстояние не более 200м от КПП/шлагбаума."><?= $storage->getComment() ?></textarea>
                             <div class="b-error">
                                 <span class="js-message"></span>
                             </div>

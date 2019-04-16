@@ -81,7 +81,7 @@ $resultsByZone = $arResult['RESULTS_BY_ZONE'];
     </div>
     <div class="b-delivery__info-item">
         <div class="b-delivery__info-icon"><img src="/static/build/images/inhtml/delivery-icon-04.png"></div>
-        <div class="b-delivery__info-text"><strong>Самовывоз</strong><span>230+ магазинов</span></div>
+        <div class="b-delivery__info-text"><strong>Самовывоз</strong><span>250+ магазинов</span></div>
     </div>
 </div>
 
