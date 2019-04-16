@@ -577,7 +577,11 @@ class PaymentService implements LoggerAwareInterface
             $arProduct = \CCatalogProduct::GetByID($basketItem->getProductId());
 
 
-            if ($arProduct === false || in_array($arProduct['ID'], PiggyBankService::getMarkProductIds())) {
+            if ($arProduct === false) {
+                continue;
+            }
+
+            if (is_array($arProduct) && in_array($arProduct['ID'], PiggyBankService::getMarkProductIds())) {
                 continue;
             }
             
