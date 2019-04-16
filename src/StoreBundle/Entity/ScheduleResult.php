@@ -9,6 +9,8 @@ class ScheduleResult
 {
     public const RESULT_ERROR = -1;
 
+    public const DATE_ACTIVE_FORMAT = 'd.m.Y';
+
     /**
      * @var int
      * @Serializer\Type("integer")

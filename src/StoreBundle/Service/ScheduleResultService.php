@@ -9,6 +9,7 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use DateTime;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrmBundle\Exception\NotFoundRepository;
 use FourPaws\BitrixOrmBundle\Orm\BitrixOrm;
@@ -76,11 +77,11 @@ class ScheduleResultService implements LoggerAwareInterface
     /**
      * @param ScheduleResultCollection $results
      *
+     * @param DateTime $dateDelete
      * @return int[]
      * @throws NotFoundException
-     * @throws \RuntimeException
      */
-    public function updateResults(ScheduleResultCollection $results): array
+    public function updateResults(ScheduleResultCollection $results, DateTime $dateDelete): array
     {
         $deleted = 0;
         $created = 0;
@@ -88,7 +89,7 @@ class ScheduleResultService implements LoggerAwareInterface
         /** @var Store $sender */
         foreach ($senders as $sender) {
             /** @var ScheduleResult $item */
-            foreach ($this->findResultsBySender($sender) as $item) {
+            foreach ($this->findResultsBySender($sender)->filterByDateActive($dateDelete) as $item) {
                 $this->deleteResult($item);
                 $deleted++;
             }
@@ -109,13 +110,13 @@ class ScheduleResultService implements LoggerAwareInterface
     /**
      * @param Store $sender
      *
+     * @param DateTime $dateDelete
      * @return int
-     * @throws \RuntimeException
      */
-    public function deleteResultsForSender(Store $sender): int
+    public function deleteResultsForSender(Store $sender, DateTime $dateDelete): int
     {
         $deleted = 0;
-        foreach ($this->findResultsBySender($sender) as $item) {
+        foreach ($this->findResultsBySenderDateActive($sender, $dateDelete) as $item) {
             $this->deleteResult($item);
             $deleted++;
         }
@@ -190,6 +191,27 @@ class ScheduleResultService implements LoggerAwareInterface
         $result = null;
         try {
             $result = $this->repository->findBySender($sender->getXmlId());
+        } catch (\Exception $e) {
+            $this->log()->error(
+                sprintf('failed to get schedule results: %s: %s', \get_class($e), $e->getMessage()),
+                ['sender' => $sender->getXmlId()]
+            );
+        }
+
+        return $result ?? new ScheduleResultCollection();
+    }
+
+    /**
+     * @param Store $sender
+     *
+     * @param DateTime $dateActive
+     * @return ScheduleResultCollection
+     */
+    public function findResultsBySenderDateActive(Store $sender, DateTime $dateActive): ScheduleResultCollection
+    {
+        $result = null;
+        try {
+            $result = $this->repository->findBySender($sender->getXmlId())->filterByDateActive($dateActive);
         } catch (\Exception $e) {
             $this->log()->error(
                 sprintf('failed to get schedule results: %s: %s', \get_class($e), $e->getMessage()),
@@ -434,26 +456,26 @@ class ScheduleResultService implements LoggerAwareInterface
             24 => (clone $from)->setTime(23, 0, 0, 0),
         ];
 
-        return $this->doCalculateScheduleDate($sender, $receiver, $dates, $maxTransitions);
+        return $this->doCalculateScheduleDate($sender, $receiver, $dates, $from, $maxTransitions);
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
-     * @param Store                $sender
-     * @param Store                $receiver
-     * @param \DateTime[]          $dates
-     * @param int                  $maxTransitions
+     * @param Store $sender
+     * @param Store $receiver
+     * @param \DateTime[] $dates
+     * @param int $maxTransitions
      * @param StoreCollection|null $route
-     *
+     * @param DateTime $dateActive
+     * @return ScheduleResultCollection
+     * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws NotFoundException
-     * @throws ApplicationCreateException
-     * @return ScheduleResultCollection
-     * @throws \RuntimeException
      */
     protected function doCalculateScheduleDate(
         Store $sender,
         Store $receiver,
         array $dates,
+        DateTime $dateActive,
         int $maxTransitions = self::MAX_TRANSITION_COUNT,
         ?StoreCollection $route = null
     ): ScheduleResultCollection
@@ -548,8 +570,8 @@ class ScheduleResultService implements LoggerAwareInterface
                     $res = (new ScheduleResult())
                         ->setSenderCode($route->first()->getXmlId())
                         ->setReceiverCode($schedule->getReceiverCode())
-                        ->setRouteCodes($route->getKeys());
-
+                        ->setRouteCodes($route->getKeys())
+                        ->setDateActive($dateActive->format(ScheduleResult::DATE_ACTIVE_FORMAT));
                     /**
                      * @var int       $hour
                      * @var \DateTime $date
@@ -586,6 +608,7 @@ class ScheduleResultService implements LoggerAwareInterface
                     $schedule->getReceiver(),
                     $receiver,
                     $nextDeliveries,
+                    $dateActive,
                     $maxTransitions,
                     $route
                 );
