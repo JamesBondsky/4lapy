@@ -42,10 +42,12 @@ class PiggyBankService implements LoggerAwareInterface
         'VIRTUAL' => [
             'ID' => 89617, // не использовать
             'XML_ID' => 2000341,
+            'MARK_PRODUCT_ID' => 94010
         ],
         'PHYSICAL' => [
             'ID' => 89728, // не использовать
             'XML_ID' => 3006077,
+            'MARK_PRODUCT_ID' => 89727
         ],
     ];
     public const MARK_RATE = 400;
@@ -130,11 +132,26 @@ class PiggyBankService implements LoggerAwareInterface
         $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
     }
 
-    public static function getMarkXmlIds()
+    /**
+     * @return array
+     */
+    public static function getMarkXmlIds(): array
     {
         return [
             self::MARKS['VIRTUAL']['XML_ID'],
             self::MARKS['PHYSICAL']['XML_ID'],
+        ];
+    }
+
+
+    /**
+     * @return array
+     */
+    public static function getMarkProductIds(): array
+    {
+        return [
+            self::MARKS['VIRTUAL']['MARK_PRODUCT_ID'],
+            self::MARKS['PHYSICAL']['MARK_PRODUCT_ID']
         ];
     }
 
