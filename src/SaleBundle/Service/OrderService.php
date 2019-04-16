@@ -51,6 +51,7 @@ use FourPaws\External\Manzana\Model\Card;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
@@ -1193,13 +1194,19 @@ class OrderService implements LoggerAwareInterface
                 /** @var Payment $payment */
                 foreach ($order->getPaymentCollection() as $payment) {
                     if (
-                        ($payment->getPaySystem()->getField('CODE') === OrderPayment::PAYMENT_INNER || $payment->getPaySystem()->getField('CODE') === OrderPayment::PAYMENT_INNER) && $payment->isPaid() ||
-                        $payment->getPaySystem()->getField('CODE') !== OrderPayment::PAYMENT_ONLINE && $payment->getPaySystem()->getField('CODE') !== OrderPayment::PAYMENT_INNER
+                        $payment->getPaySystem()->getField('CODE') === OrderPayment::PAYMENT_CASH_OR_CARD ||
+                        $payment->getPaySystem()->getField('CODE') === OrderPayment::PAYMENT_CASH ||
+                        $payment->getPaySystem()->getField('CODE') === OrderPayment::PAYMENT_ONLINE && $payment->isPaid()
                     ) {
                         if ($nearShop == null) {
                             $nearShop = $selectedDelivery->getStockResult()->first();
                         }
-                        $this->sendToDostavista($order, $storage->getName(), $storage->getPhone(), $storage->getComment(), $selectedDelivery->getPeriodTo(), $nearShop, false);
+
+                        $isExportedToQueue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'IS_EXPORTED_TO_DOSTAVISTA_QUEUE')->getValue();
+                        if ($isExportedToQueue != BitrixUtils::BX_BOOL_TRUE) {
+                            $this->sendToDostavistaQueue($order, $storage->getName(), $storage->getPhone(), $storage->getComment(), $selectedDelivery->getPeriodTo(), $nearShop, false);
+                        }
+                        break;
                     }
                 }
             }
@@ -1954,7 +1961,7 @@ class OrderService implements LoggerAwareInterface
      * @throws SystemException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function sendToDostavista(Order $order, string $name, string $phone, string $comment, string &$periodTo, Store $nearShop = null, bool $isPaid = false): void
+    public function sendToDostavistaQueue(Order $order, string $name, string $phone, string $comment, string &$periodTo, Store $nearShop = null, bool $isPaid = false): void
     {
         $curDate = new \DateTime;
         $basket = $order->getBasket();
@@ -2091,16 +2098,26 @@ class OrderService implements LoggerAwareInterface
             'note' => $comment
         ];
 
-        $this->addDostavistaOrderToQueue($data);
+        $res = $this->addDostavistaOrderToQueue($data);
+        if ($res) {
+            $this->log()->notice('Success send new order dostavista message to RabbitMQ', $data);
+            $this->setOrderPropertiesByCode(
+                $order,
+                [
+                    'IS_EXPORTED_TO_DOSTAVISTA_QUEUE' => BitrixUtils::BX_BOOL_TRUE
+                ]
+            );
+            $order->save();
+        }
     }
 
     /**
      * Структура данных + запись в очередь
      *
      * @param array $data
-     * @return void
+     * @return bool
      */
-    public function addDostavistaOrderToQueue(array $data): void
+    public function addDostavistaOrderToQueue(array $data): bool
     {
         /** @var DostavistaService $dostavistaService */
         $dostavistaService = Application::getInstance()->getContainer()->get('dostavista.service');
@@ -2140,7 +2157,7 @@ class OrderService implements LoggerAwareInterface
 
         $dostavistaOrder->points = $pointCollection;
 
-        $dostavistaService->dostavistaOrderAdd($dostavistaOrder);
+        return $dostavistaService->dostavistaOrderAdd($dostavistaOrder);
     }
 
     /**

@@ -24,6 +24,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\Helpers\BusinessValueHelper;
+use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\LocationBundle\Exception\AddressSplitException;
@@ -1010,7 +1011,10 @@ class PaymentService implements LoggerAwareInterface
         $periodTo = $deliveryData['CONFIG']['MAIN']['PERIOD']['TO'];
         $address = $orderService->compileOrderAddress($order)->setValid(true);
         if (isset($order) && $name && $phone && $periodTo && $nearShop) {
-            $orderService->sendToDostavista($order, $name, $phone, $comments, $periodTo, $nearShop, $isPaid);
+            $isExportedToQueue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'IS_EXPORTED_TO_DOSTAVISTA_QUEUE')->getValue();
+            if ($isExportedToQueue != BitrixUtils::BX_BOOL_TRUE) {
+                $orderService->sendToDostavistaQueue($order, $name, $phone, $comments, $periodTo, $nearShop, $isPaid);
+            }
         }
     }
 
