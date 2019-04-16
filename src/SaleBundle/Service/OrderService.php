@@ -1970,7 +1970,7 @@ class OrderService implements LoggerAwareInterface
         $insurance = ceil((float)$basket->getPrice());
         $takingAmount = 0;
         if (!$isPaid) {
-            $takingAmount = ceil($insurance + $deliveryPrice);
+            $takingAmount = ceil($insurance + $deliveryPrice - $order->getSumPaid());
         }
         /** @var OfferCollection $offers */
         $offers = $this->getOrderProducts($order);
