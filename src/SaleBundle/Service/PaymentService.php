@@ -24,9 +24,11 @@ use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\Helpers\BusinessValueHelper;
+use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\LocationBundle\Exception\AddressSplitException;
+use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Dto\Fiscalization\CartItems;
 use FourPaws\SaleBundle\Dto\Fiscalization\CustomerDetails;
@@ -574,6 +576,12 @@ class PaymentService implements LoggerAwareInterface
             }
 
             $arProduct = \CCatalogProduct::GetByID($basketItem->getProductId());
+
+
+            if ($arProduct === false || in_array($arProduct['ID'], PiggyBankService::getMarkProductIds())) {
+                continue;
+            }
+            
             $taxType = $arProduct['VAT_ID'] > 0 ? (int)$vatList[$arProduct['VAT_ID']] : -1;
 
             $quantity = (new ItemQuantity())
@@ -1003,7 +1011,10 @@ class PaymentService implements LoggerAwareInterface
         $periodTo = $deliveryData['CONFIG']['MAIN']['PERIOD']['TO'];
         $address = $orderService->compileOrderAddress($order)->setValid(true);
         if (isset($order) && $name && $phone && $periodTo && $nearShop) {
-            $orderService->sendToDostavista($order, $name, $phone, $comments, $periodTo, $nearShop, $isPaid);
+            $isExportedToQueue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'IS_EXPORTED_TO_DOSTAVISTA_QUEUE')->getValue();
+            if ($isExportedToQueue != BitrixUtils::BX_BOOL_TRUE) {
+                $orderService->sendToDostavistaQueue($order, $name, $phone, $comments, $periodTo, $nearShop, $isPaid);
+            }
         }
     }
 
