@@ -406,7 +406,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                    data-offerId="<?= $currentOffer->getId(); ?>"
                    data-url="/ajax/sale/basket/add/">
                     <span class="b-counter-basket__basket-text">Добавить в подписку</span>
-                    <span class="b-icon b-icon--advice"><?= new SvgDecorator('icon-cart', 20, 20) ?></span>
+                    <span class="b-icon b-icon--advice"><?= new SvgDecorator('icon-add-to-discribe', 20, 20) ?></span>
                 </a>
             <? } else { ?>
                 <a class="b-counter-basket__basket-link js-basket-add js-this-product"
