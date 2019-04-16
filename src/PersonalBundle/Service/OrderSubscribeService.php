@@ -244,6 +244,7 @@ class OrderSubscribeService implements LoggerAwareInterface
     {
         /** @var OrderSubscribe $deleteEntity */
         $deleteEntity = $this->orderSubscribeRepository->findById($id);
+
         if ($deleteEntity->getUserId() !== $this->currentUser->getCurrentUserId()) {
             throw new SecurityException('не хватает прав доступа для совершения данной операции');
         }
@@ -651,6 +652,22 @@ class OrderSubscribeService implements LoggerAwareInterface
         }
 
         return $this->getPersonalOrderService()->getUserOrdersOld($params);
+    }
+
+    /**
+     * @return OrderSubscribeRepository
+     */
+    public function getOrderSubscribeRepository(): OrderSubscribeRepository
+    {
+        return $this->orderSubscribeRepository;
+    }
+
+    /**
+     * @return OrderSubscribeItemRepository
+     */
+    public function getOrderSubscribeItemRepository(): OrderSubscribeItemRepository
+    {
+        return $this->orderSubscribeItemRepository;
     }
 
     /**

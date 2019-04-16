@@ -1098,7 +1098,7 @@ class OrderStorage
      */
     public function isSubscribe(): bool
     {
-        return $this->subscribe;
+        return $this->subscribe || $this->subscribeId > 0;
     }
 
     /**
@@ -1119,10 +1119,10 @@ class OrderStorage
     }
 
     /**
-     * @param int $subscribeId
+     * @param $subscribeId
      * @return OrderStorage
      */
-    public function setSubscribeId(int $subscribeId): OrderStorage
+    public function setSubscribeId($subscribeId): OrderStorage
     {
         $this->subscribeId = $subscribeId;
         return $this;

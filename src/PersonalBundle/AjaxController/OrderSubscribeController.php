@@ -203,7 +203,7 @@ class OrderSubscribeController extends Controller
      * @return JsonResponse
      * @throws \Bitrix\Main\SystemException
      */
-    public function getDataAction(Request $request) : JsonResponse
+    public function getAction(Request $request) : JsonResponse
     {
         $return = null;
         $step = $request->get('step') ?: 1;

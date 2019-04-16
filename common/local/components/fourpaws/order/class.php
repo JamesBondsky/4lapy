@@ -263,7 +263,11 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 $storage->setSubscribe(true);
                 $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
             }
-            elseif ($storage->isSubscribe() && $_POST['default']) {
+            elseif ($storage->isSubscribe() && !$_POST['subscribe']) {
+                if($storage->getSubscribeId() > 0){
+                    $this->getOrderSubscribeService()->delete($storage->getSubscribeId());
+                    $storage->setSubscribeId(null);
+                }
                 $storage->setSubscribe(false);
                 $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
             }

@@ -107,6 +107,7 @@ class OrderSubscribe extends BaseEntity
      * @var int
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("UF_ORDER")
+     * ("UF_ORDER_ID")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
@@ -134,6 +135,7 @@ class OrderSubscribe extends BaseEntity
      * @var DateTime
      * @Serializer\Type("bitrix_date_time_ex")
      * @Serializer\SerializedName("UF_DATE_UPDATE")
+     * ("UF_DATE_EDIT")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */

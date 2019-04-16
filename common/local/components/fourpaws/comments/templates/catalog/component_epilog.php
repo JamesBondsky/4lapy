@@ -10,7 +10,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 $request = Application::getInstance()->getContext()->getRequest();
 ?>
-    <script type="text/javascript" data-epilog-handlers="true">
+<script type="text/javascript" data-epilog-handlers="true">
+    if (epilogHandlers === undefined) {
+        // класс для комплексного выполнения всех обработчиков
         var epilogHandlers = {
             handlers: [],
             add: function (handler) {
@@ -23,10 +25,11 @@ $request = Application::getInstance()->getContext()->getRequest();
                     }
                 });
                 this.handlers = [];
-            }
+            },
         };
+    }
 
-<? if ($request->get('new-review') === 'y') { ?>
+    <? if ($request->get('new-review') === 'y') { ?>
     epilogHandlers.add(function () {
         if ($('ul.b-tab-title__list a[data-tab=reviews]').length > 0) {
             <?php /** без задержки не работает */?>
@@ -38,16 +41,16 @@ $request = Application::getInstance()->getContext()->getRequest();
             }, 50);
         }
     });
-<?php }
-$uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arParams['OBJECT_ID'];
-/** @var CCommentsComponent $component */
-$arResult['AUTH'] = $component->userAuthService->isAuthorized();
-?>
+    <?php }
+    $uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arParams['OBJECT_ID'];
+    /** @var CCommentsComponent $component */
+    $arResult['AUTH'] = $component->userAuthService->isAuthorized();
+    ?>
 
-<? if (!$arResult['AUTH']) {
+    <? if (!$arResult['AUTH']) {
     $recaptchaService = SymfoniApplication::getInstance()->getContainer()->get(ReCaptchaInterface::class); ?>
 
-    epilogHandlers.add(function(){
+    epilogHandlers.add(function () {
         if ($('.js-comments-auth-block-<?=$uniqueCommentString?>').length > 0) {
             $('.js-comments-auth-block-<?=$uniqueCommentString?>').css('display', 'block');
         }
@@ -59,16 +62,15 @@ $arResult['AUTH'] = $component->userAuthService->isAuthorized();
         }
     });
 
-<?php } else { ?>
-    epilogHandlers.add(function() {
+    <?php } else { ?>
+    epilogHandlers.add(function () {
         if ($('.js-comments-auth-form-<?=$uniqueCommentString?>').length > 0) {
             $('.js-comments-auth-form-<?=$uniqueCommentString?>').remove();
         }
     });
-<?php } ?>
+    <?php } ?>
 
-    $(function(){
+    $(function () {
         epilogHandlers.execute();
     })
-
-    </script>
+</script>

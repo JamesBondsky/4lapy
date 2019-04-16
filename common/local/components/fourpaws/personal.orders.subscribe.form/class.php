@@ -602,6 +602,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             ));
         }
 
+        $this->arResult['CURRENT_STAGE'] = $result->isSuccess() ? 'renewal' : 'error';
         return $result;
     }
 

@@ -116,7 +116,7 @@ class HLBlockOrdersSubscribe_v220190325135756 extends \Adv\Bitrixtools\Migration
         );
 
         // ---
-        $fieldName = 'UF_FREQUENCY';
+        /*$fieldName = 'UF_FREQUENCY';
         $ruName = 'Периодичность';
         $sort += 100;
 
@@ -189,7 +189,7 @@ class HLBlockOrdersSubscribe_v220190325135756 extends \Adv\Bitrixtools\Migration
                     'SORT' => 600,
                 ],
             ]
-        );
+        );*/
 
         // ---
         $fieldName = 'UF_DELIVERY_TIME';
@@ -363,7 +363,7 @@ class HLBlockOrdersSubscribe_v220190325135756 extends \Adv\Bitrixtools\Migration
         );
 
         // ---
-        $fieldName = 'UF_ACTIVE';
+        /*$fieldName = 'UF_ACTIVE';
         $ruName = 'Активность';
         $sort += 100;
         $userTypeEntityHelper->addUserTypeEntityIfNotExists(
@@ -405,10 +405,10 @@ class HLBlockOrdersSubscribe_v220190325135756 extends \Adv\Bitrixtools\Migration
                     'ru' => '',
                 ],
             ]
-        );
+        );*/
 
         // ---
-        $fieldName = 'UF_SKIP_DEL';
+        /*$fieldName = 'UF_SKIP_DEL';
         $ruName = 'Пропустить следующую доставку';
         $sort += 100;
         $userTypeEntityHelper->addUserTypeEntityIfNotExists(
@@ -450,10 +450,10 @@ class HLBlockOrdersSubscribe_v220190325135756 extends \Adv\Bitrixtools\Migration
                     'ru' => '',
                 ],
             ]
-        );
+        );*/
 
         // ---
-        $fieldName = 'UF_ORDER';
+        /*$fieldName = 'UF_ORDER';
         $ruName = 'ID заказа';
         $sort += 100;
         $userTypeEntityHelper->addUserTypeEntityIfNotExists(
@@ -492,7 +492,7 @@ class HLBlockOrdersSubscribe_v220190325135756 extends \Adv\Bitrixtools\Migration
                     'ru' => '',
                 ],
             ]
-        );
+        );*/
 
         // ---
         $fieldName = 'UF_NEXT_DEL';
@@ -537,7 +537,7 @@ class HLBlockOrdersSubscribe_v220190325135756 extends \Adv\Bitrixtools\Migration
         );
 
         // ---
-        $fieldName = 'UF_DATE_CREATE';
+        /*$fieldName = 'UF_DATE_CREATE';
         $ruName = 'Дата создания';
         $sort += 100;
         $userTypeEntityHelper->addUserTypeEntityIfNotExists(
@@ -576,10 +576,10 @@ class HLBlockOrdersSubscribe_v220190325135756 extends \Adv\Bitrixtools\Migration
                     'ru' => '',
                 ],
             ]
-        );
+        );*/
 
         // ---
-        $fieldName = 'UF_DATE_UPDATE';
+        /*$fieldName = 'UF_DATE_UPDATE';
         $ruName = 'Дата изменения';
         $sort += 100;
         $userTypeEntityHelper->addUserTypeEntityIfNotExists(
@@ -618,7 +618,7 @@ class HLBlockOrdersSubscribe_v220190325135756 extends \Adv\Bitrixtools\Migration
                     'ru' => '',
                 ],
             ]
-        );
+        );*/
 
         // ---
         $fieldName = 'UF_DATE_UPDATE';
@@ -748,6 +748,9 @@ class HLBlockOrdersSubscribe_v220190325135756 extends \Adv\Bitrixtools\Migration
                 ],
             ]
         );
+
+        $fieldName = 'UF_DATE_START';
+        $userTypeEntityHelper->deleteUserTypeEntityIfExists($entityId, $fieldName);
 
         return true;
     }

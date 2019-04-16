@@ -28,31 +28,35 @@ $basketService = $this->getBasketService();
 $bonus = $currentOffer->getBonusFormattedText($userService->getDiscount());
 
 ?>
-    <script <?=($arParams['IS_POPUP']) ? 'data-epilog-handlers="true"' : '' ?>>
-        // класс для комплексного выполнения всех обработчиков
-        var epilogHandlers = {
-            handlers: [],
-            add: function (handler) {
-                this.handlers[this.handlers.length] = handler;
-            },
-            execute: function () {
-                this.handlers.forEach(function (handler) {
-                    if (typeof handler === 'function') {
-                        handler();
-                    }
-                });
-                this.handlers = [];
-            }
-        };
+    <script<?= ($arParams['IS_POPUP']) ? ' data-epilog-handlers="true"' : '' ?>>
 
-<? if (!empty($bonus)) { ?>
+        if(epilogHandlers === undefined){
+            // класс для комплексного выполнения всех обработчиков
+            var epilogHandlers = {
+                handlers: [],
+                add: function (handler) {
+                    this.handlers[this.handlers.length] = handler;
+                },
+                execute: function () {
+                    this.handlers.forEach(function (handler) {
+                        if (typeof handler === 'function') {
+                            handler();
+                        }
+                    });
+                    this.handlers = [];
+                },
+            };
+        }
+
+
+        <? if (!empty($bonus)) { ?>
         epilogHandlers.add(function () {
             var $jsBonus = $('.js-bonus-<?=$currentOffer->getId()?>');
             if ($jsBonus.length > 0) {
                 $jsBonus.html('<?=$bonus?>');
             }
         });
-<?php } ?>
+        <?php } ?>
 
         epilogHandlers.add(function () {
             $('.js-current-offer-price-old').html('<?= $currentOffer->getCatalogOldPrice() ?>');
@@ -65,12 +69,12 @@ $bonus = $currentOffer->getBonusFormattedText($userService->getDiscount());
             $('.js-subscribe-price-block').show();
             <? } ?>
         });
-<?php
-/** установка количества товаров в корзине для офферов */
-$basket = $basketService->getBasket();
+        <?php
+        /** установка количества товаров в корзине для офферов */
+        $basket = $basketService->getBasket();
 
-/** @var BasketItem $basketItem */
-foreach ($basket->getBasketItems() as $basketItem) { ?>
+        /** @var BasketItem $basketItem */
+        foreach ($basket->getBasketItems() as $basketItem) { ?>
         epilogHandlers.add(function () {
             var $offerInCart = $('.js-offer-in-cart-<?=$basketItem->getProductId()?>');
 
@@ -79,11 +83,10 @@ foreach ($basket->getBasketItems() as $basketItem) { ?>
                 $offerInCart.css('display', 'inline-block');
             }
         });
-<?php }
+        <?php }
 
-
-foreach ($product->getOffers() as $offer) {
-    /** установка цен, скидочных цен, акции, нет в наличии */ ?>
+        foreach ($product->getOffers() as $offer) {
+        /** установка цен, скидочных цен, акции, нет в наличии */ ?>
         epilogHandlers.add(function () {
             var $offerLink = $('.js-offer-link-<?=$offer->getId()?>');
             if ($offerLink.length > 0) {
@@ -98,21 +101,20 @@ foreach ($product->getOffers() as $offer) {
                 <?php }?>
             }
         });
-<?php }
+        <?php }
 
-if ($currentOffer->isAvailable()) { ?>
-        epilogHandlers.add(function(){
+        if ($currentOffer->isAvailable()) { ?>
+        epilogHandlers.add(function () {
             $('.js-product-controls').addClass('active')
         });
-<?php } ?>
+        <?php } ?>
 
-<? if(!$this->arParams['IS_POPUP']) { // в попапе запускаем вручную ?>
-        $(function() {
-            epilogHandlers.execute();
+        <? if(!$arParams['IS_POPUP']) { ?>
+        $(function(){
+            //epilogHandlers.execute();
         });
-<? } ?>
+        <? } ?>
     </script>
-
 
 <?php
 /**
