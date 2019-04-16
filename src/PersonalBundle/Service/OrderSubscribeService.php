@@ -236,14 +236,20 @@ class OrderSubscribeService implements LoggerAwareInterface
 
     /**
      * @param int $id
-     *
-     * @throws \Exception
      * @return bool
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SecurityException
+     * @throws SystemException
      */
     public function delete(int $id): bool
     {
-        /** @var OrderSubscribe $deleteEntity */
-        $deleteEntity = $this->orderSubscribeRepository->findById($id);
+        try {
+            /** @var OrderSubscribe $deleteEntity */
+            $deleteEntity = $this->orderSubscribeRepository->findById($id);
+        } catch (\FourPaws\AppBundle\Exception\NotFoundException $e) {
+            return true;
+        }
 
         if ($deleteEntity->getUserId() !== $this->currentUser->getCurrentUserId()) {
             throw new SecurityException('не хватает прав доступа для совершения данной операции');

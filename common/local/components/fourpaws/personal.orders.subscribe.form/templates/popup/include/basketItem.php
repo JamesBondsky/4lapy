@@ -86,8 +86,7 @@ $image = $component->getImage((int)$offer->getId());
                 /** @todo data-one-price */
                 ?>
                 <input title="" class="b-plus-minus__count js-plus-minus-count"
-                       value="<?= WordHelper::numberFormat($basketItem->getQuantity(),
-                           0) ?>"
+                       value="<?= $basketItem->getQuantity() ?>"
                        data-one-price="<?= $basketItem->getPrice() ?>"
                        data-cont-max="<?= $maxQuantity ?>"
                        data-basketid="<?= $itemId; ?>"

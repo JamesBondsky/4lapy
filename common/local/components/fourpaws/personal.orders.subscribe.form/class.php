@@ -369,12 +369,18 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     protected function getItemAction()
     {
         try {
+            $offerId = (int)$this->request->get('productId');
             $items = [
                 0 => [
-                    'productId' => $this->request->get('productId'),
+                    'productId' => $offerId,
                     'quantity' => $this->request->get('quantity')
                 ]
             ];
+
+            $offer = $this->getOffer($offerId);
+            if(!$offer){
+                throw new \FourPaws\PersonalBundle\Exception\NotFoundException(sprintf("Товар не найден: %s", $offerId));
+            }
 
             // всегда сбрасываем кеш для отрабатывания шаблона
             $this->abortResultCache();
@@ -383,9 +389,9 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             $this->setBasket($basket);
 
             $this->arResult['CURRENT_STAGE'] = 'item';
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->arResult['CURRENT_STAGE'] = 'error';
-            $this->arResult['ERROR'] = $e->getMessage();
+            $this->arResult['ERROR'][]= $e->getMessage();
         }
 
         $this->includeComponentTemplate();
@@ -1259,6 +1265,10 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             $tItems[$offer->getId()]['WEIGHT'] = $offer->getCatalogProduct()->getWeight();
             $tItems[$offer->getId()]['DETAIL_PAGE_URL'] = $offer->getDetailPageUrl();
             $tItems[$offer->getId()]['PRODUCT_XML_ID'] = $offer->getXmlId();
+
+            if($tItems[$offer->getId()]['QUANTITY'] > $offer->getQuantity()){
+                $tItems[$offer->getId()]['QUANTITY'] = $offer->getQuantity();
+            }
         }
 
         foreach($tItems as $item){

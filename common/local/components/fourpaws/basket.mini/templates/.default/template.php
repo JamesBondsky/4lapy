@@ -47,9 +47,9 @@ if (true !== $arParams['IS_AJAX']) {
                title="Редактировать">
                 Редактировать товары в корзине
             </a>
-            <a class="b-button b-button--popover-cart" href="<?= $arParams['PATH_TO_ORDER'] ?>" title="Оформить заказ">
-                Оформить заказ
-            </a>
+            <form action="<?= $arParams['PATH_TO_ORDER'] ?>" method="POST">
+                <button class="b-button b-button--popover-cart" name="default" value="1">Оформить заказ</button>
+            </form>
             <?php
             if ($itemCount) {
                 foreach ($arResult['BASKET'] as $item) { ?>

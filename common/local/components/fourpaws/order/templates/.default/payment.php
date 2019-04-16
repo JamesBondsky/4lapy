@@ -176,18 +176,6 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 <?= $active ? 'style="display:none"' : '' ?>>
                                 Подтвердить
                             </button>
-
-                            <? if($storage->isSubscribe()) { ?>
-                                <div class="b-checkbox b-checkbox--withdraw-bonuses-order">
-                                    <input class="b-checkbox__input" type="checkbox" name="subscribeBonus" id="withdraw_bonuses" value="1" required="required" checked/>
-                                    <span class="b-error">
-                                    <span class="js-message"></span>
-                                </span>
-                                    <label class="b-checkbox__name" for="withdraw_bonuses">
-                                        Списывать все доступные баллы на&nbsp;заказы по&nbsp;подписке
-                                    </label>
-                                </div>
-                            <? } ?>
                         <?php } ?>
                     <?php } else { ?>
                         <div class="b-new-bonus-card_block">
@@ -224,6 +212,18 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                             </div>
                         </div>
                     <?php } ?>
+
+                    <? if($storage->isSubscribe()) { ?>
+                        <div class="b-checkbox b-checkbox--withdraw-bonuses-order">
+                            <input class="b-checkbox__input" type="checkbox" name="subscribeBonus" id="withdraw_bonuses" value="1" required="required" checked/>
+                            <span class="b-error">
+                                    <span class="js-message"></span>
+                                </span>
+                            <label class="b-checkbox__name" for="withdraw_bonuses">
+                                Списывать все доступные баллы на&nbsp;заказы по&nbsp;подписке
+                            </label>
+                        </div>
+                    <? } ?>
                 </article>
             </div>
             <hr class="b-hr b-hr--order-step-3">
