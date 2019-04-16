@@ -27,6 +27,7 @@ use FourPaws\Helpers\BusinessValueHelper;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\LocationBundle\Exception\AddressSplitException;
+use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Dto\Fiscalization\CartItems;
 use FourPaws\SaleBundle\Dto\Fiscalization\CustomerDetails;
@@ -574,6 +575,12 @@ class PaymentService implements LoggerAwareInterface
             }
 
             $arProduct = \CCatalogProduct::GetByID($basketItem->getProductId());
+
+
+            if ($arProduct === false || in_array($arProduct['ID'], PiggyBankService::getMarkProductIds())) {
+                continue;
+            }
+            
             $taxType = $arProduct['VAT_ID'] > 0 ? (int)$vatList[$arProduct['VAT_ID']] : -1;
 
             $quantity = (new ItemQuantity())
