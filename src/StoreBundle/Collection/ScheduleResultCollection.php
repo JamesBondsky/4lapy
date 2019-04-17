@@ -46,4 +46,16 @@ class ScheduleResultCollection extends BaseCollection
             return DateTime::createFromFormat(ScheduleResult::DATE_ACTIVE_FORMAT, $item->getDateActive()) <= $dateTime;
         });
     }
+
+    /**
+     * @param DateTime $dateTime
+     * @return ScheduleResultCollection
+     */
+    public function filterByDateActiveEqual(DateTime $dateTime): ScheduleResultCollection
+    {
+        $dateTime->setTime(23, 59, 59);
+        return $this->filter(function (ScheduleResult $item) use ($dateTime) {
+            return DateTime::createFromFormat(ScheduleResult::DATE_ACTIVE_FORMAT, $item->getDateActive())->setTime(23, 59, 59) == $dateTime;
+        });
+    }
 }
