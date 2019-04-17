@@ -1196,28 +1196,28 @@ class OrderSubscribeService implements LoggerAwareInterface
         }
 
         // В заказах по подписке только оплата наличными может быть
-        if ($result->isSuccess()) {
-            $cashPaySystemService = $this->getPayments();
-            if ($cashPaySystemService) {
-                try {
-                    $params->getOrderCopyHelper()->setPayment($cashPaySystemService);
-                } catch (\Exception $exception) {
-                    $result->addError(
-                        new Error(
-                            $exception->getMessage(),
-                            'orderSetPaymentException'
-                        )
-                    );
-                }
-            } else {
-                $result->addError(
-                    new Error(
-                        'Не удалось получить платежную систему "Оплата наличными"',
-                        'orderCashPaymentNotFound'
-                    )
-                );
-            }
-        }
+//        if ($result->isSuccess()) {
+//            $cashPaySystemService = $this->getPayments();
+//            if ($cashPaySystemService) {
+//                try {
+//                    $params->getOrderCopyHelper()->setPayment($cashPaySystemService);
+//                } catch (\Exception $exception) {
+//                    $result->addError(
+//                        new Error(
+//                            $exception->getMessage(),
+//                            'orderSetPaymentException'
+//                        )
+//                    );
+//                }
+//            } else {
+//                $result->addError(
+//                    new Error(
+//                        'Не удалось получить платежную систему "Оплата наличными"',
+//                        'orderCashPaymentNotFound'
+//                    )
+//                );
+//            }
+//        }
 
         // Финальные операции
         if ($result->isSuccess()) {

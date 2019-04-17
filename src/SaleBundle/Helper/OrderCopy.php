@@ -15,6 +15,7 @@ use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Internals\OrderPropsTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
+use Bitrix\Sale\PaySystem\Service;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentItem;
@@ -32,13 +33,16 @@ use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
+use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCopyBasketException;
 use FourPaws\SaleBundle\Exception\OrderCopyShipmentsException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
+use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\StoreBundle\Service\StoreService;
+use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
 
 /**
  * Class OrderCopy
@@ -125,6 +129,8 @@ class OrderCopy
     private $locationService;
     /** @var StoreService $storeService */
     private $storeService;
+    /** @var BasketService $basketService */
+    private $basketService;
 
     /**
      * OrderCopy constructor.
@@ -159,7 +165,7 @@ class OrderCopy
 
         $this->newOrder = Order::create(
             $this->oldOrder->getSiteId(),
-            $this->oldOrder->getUserId(),
+            $orderSubscribe->getUserId(),
             $this->oldOrder->getCurrency()
         );
         if (!$this->newOrder) {
@@ -192,11 +198,11 @@ class OrderCopy
     public function doBasicCopy()
     {
         $this->copyFields();
-        $this->setBasket($this->getOrderSubscribeService()->getBasketBySubscribeId($this->getOrderSubscribe()->getId()));
-        $this->countShipments();
+        $this->appendBasket();
+        $this->appendShipments();
         $this->copyProps();
-        $this->countProps();
-        $this->copyPayments();
+        $this->appendProps();
+        $this->appendPayments();
         $this->copyTax();
     }
 
@@ -530,19 +536,22 @@ class OrderCopy
 //    }
 
     /**
-     * @param Basket $basket
+     * Привязка корзины
+     *
      * @throws ArgumentException
      * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws OrderCopyBasketException
+     * @throws \FourPaws\PersonalBundle\Exception\OrderSubscribeException
      */
-    public function setBasket(Basket $basket)
+    public function appendBasket()
     {
         // тут выключаются скидки, но надо ли их выключать?
         $this->extendedDiscountsBlockManagerStart();
 
+        $basket = $this->getOrderSubscribeService()->getBasketBySubscribeId($this->getOrderSubscribe()->getId());
         $basket->save();
 
         $result = $this->newOrder->setBasket($basket);
@@ -778,6 +787,61 @@ class OrderCopy
         $newPayment = $newPaymentCollect->createItem($paySystemService);
         $newPayment->setField('SUM', $this->newOrder->getPrice());
 
+        $this->setPaymentsCopied();
+
+        $this->extendedDiscountsBlockManagerEnd();
+    }
+
+    /**
+     * Привязка платежных систем
+     *
+     * @throws OrderCreateException
+     */
+    public function appendPayments()
+    {
+        $this->clearPayments();
+        $this->extendedDiscountsBlockManagerStart();
+
+        $sum = $this->newOrder->getBasket()->getOrderableItems()->getPrice() + $this->newOrder->getDeliveryPrice();
+
+        $paymentCollection = $this->newOrder->getPaymentCollection();
+        $payWithBonus = $this->getOrderSubscribe()->isPayWithbonus();
+        if($payWithBonus){
+            try {
+                $maxBonus = $this->getBasketService()->getMaxBonusesForPayment($this->newOrder->getBasket());
+                if($maxBonus > 0){
+                    if (!$innerPayment = $paymentCollection->getInnerPayment()) {
+                        $innerPayment = $paymentCollection->createInnerPayment();
+                    }
+                    $innerPayment->setField('SUM', $maxBonus);
+                    $innerPayment->setPaid('Y');
+                    $sum -= $maxBonus;
+                }
+            } catch (\Exception $e) {
+                $this->log()->error(sprintf('bonus payment failed: %s', $e->getMessage()));
+                throw new OrderCreateException('Bonus payment failed');
+            }
+        }
+
+        try {
+            $extPayment = $paymentCollection->createItem();
+            $extPayment->setField('SUM', $sum);
+            $payments = PaySystemManager::getListWithRestrictions($extPayment);
+            $payments = array_filter($payments, function($item){
+                return in_array($item['CODE'], [OrderPayment::PAYMENT_CASH, OrderPayment::PAYMENT_CASH_OR_CARD]);
+            });
+            /** @var Payment $payment */
+            $payment = current($payments);
+            $extPayment->setField('PAY_SYSTEM_ID', $payment['ID']);
+            /** @var Service $paySystem */
+            $paySystem = $extPayment->getPaySystem();
+            $extPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
+        } catch (\Exception $e) {
+            $this->log()->error(sprintf('order payment failed: %s', $e->getMessage()));
+            throw new OrderCreateException('Order payment failed');
+        }
+
+        $this->setPaymentsCopied();
         $this->extendedDiscountsBlockManagerEnd();
     }
 
@@ -923,6 +987,17 @@ class OrderCopy
     public function getOrderSubscribe(): OrderSubscribe
     {
         return $this->orderSubscribe;
+    }
+
+    /**
+     * @return BasketService
+     */
+    public function getBasketService(): BasketService
+    {
+        if(null === $this->basketService){
+            $this->basketService = Application::getInstance()->getContainer()->get(BasketService::class);
+        }
+        return $this->basketService;
     }
 
     /**
@@ -1344,7 +1419,17 @@ class OrderCopy
     }
 
 
-    public function countShipments()
+    /**
+     * Привязка отгрузки
+     *
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ObjectNotFoundException
+     * @throws OrderCopyShipmentsException
+     * @throws OrderCreateException
+     * @throws \FourPaws\PersonalBundle\Exception\NotFoundException
+     */
+    public function appendShipments()
     {
         $this->extendedDiscountsBlockManagerStart();
 
@@ -1422,7 +1507,7 @@ class OrderCopy
      * @throws \FourPaws\PersonalBundle\Exception\NotFoundException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
-    protected function countProps()
+    protected function appendProps()
     {
         $order = $this->getNewOrder();
         $subscribe = $this->getOrderSubscribe();

@@ -392,9 +392,17 @@ class MainTemplate extends TemplateAbstract
     /**
      * @return bool
      */
+    public function isOrderSubscribePage(): bool
+    {
+        return $this->isDir('/personal/subscribe');
+    }
+
+    /**
+     * @return bool
+     */
     public function hasOrderDeliveryPage(): bool
     {
-        return $this->isOrderDeliveryPage();
+        return $this->isOrderDeliveryPage() || $this->isOrderSubscribePage();
     }
 
     /**
@@ -468,14 +476,5 @@ class MainTemplate extends TemplateAbstract
     public function isSearchPage(): bool
     {
         return $this->isDir('/catalog/search');
-    }
-
-    /**
-     * @return bool
-     * @throws \Bitrix\Main\SystemException
-     */
-    public function isCatalogPopup(): bool
-    {
-        return BitrixApplication::getInstance()->getContext()->getRequest()->isAjaxRequest();
     }
 }

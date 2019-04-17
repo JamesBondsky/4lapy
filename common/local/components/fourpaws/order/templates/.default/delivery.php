@@ -220,7 +220,11 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 <?php
                             } ?>
                         </ul>
-                        <?php include 'include/subscribe-delivery.php' ?>
+                        <?php
+                        if($storage->isSubscribe()){
+                            include 'include/subscribe-delivery.php';
+                        }
+                        ?>
                     </form>
                 </article>
             </div>

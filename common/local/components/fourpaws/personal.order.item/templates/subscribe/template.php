@@ -81,7 +81,6 @@ if ($genSubscribeControls) {
     if ($subscribeFormComponent->arResult['CONTROLS_HTML']) {
         // элементы управления подпиской
         $subscribeOrderDeleteControls = $subscribeFormComponent->arResult['CONTROLS_HTML']['DELETE'];
-
     }
 }
 

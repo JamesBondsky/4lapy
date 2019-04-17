@@ -10,6 +10,9 @@ namespace FourPaws\PersonalBundle\Entity;
 
 
 use FourPaws\AppBundle\Entity\BaseEntity;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\PersonalBundle\Exception\NotFoundException;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -44,6 +47,12 @@ class OrderSubscribeItem extends BaseEntity
      * @Serializer\SkipWhenEmpty()
      */
     protected $quantity;
+
+    /**
+     * @var Offer $offer
+     */
+    protected $offer;
+
 
     /**
      * @return int
@@ -95,4 +104,22 @@ class OrderSubscribeItem extends BaseEntity
         $this->quantity = $quantity;
         return $this;
     }
+
+    /**
+     * @return Offer
+     * @throws NotFoundException
+     */
+    public function getOffer(): Offer
+    {
+        if(null === $this->offer){
+            $offer = (new OfferQuery())->getById($this->getOfferId());
+            if(!$offer){
+                throw new NotFoundException(sprintf("Offer not found %s", $this->getOfferId()));
+            }
+            $this->offer = $offer;
+        }
+        return $this->offer;
+    }
+
+
 }
