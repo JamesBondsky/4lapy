@@ -7,13 +7,16 @@ namespace FourPaws\StoreBundle\Command;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Application as BitrixApplication;
+use DateTime;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\StoreBundle\Entity\ScheduleResult;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\ScheduleResultService;
 use FourPaws\StoreBundle\Service\StoreService;
 use Psr\Log\LoggerAwareInterface;
+use RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -86,17 +89,21 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
         $tc = $input->getOption(static::OPT_TRANSITION_COUNT);
 
         if ($d) {
-            if (!$date = \DateTime::createFromFormat(static::DATE_FORMAT, $d)) {
-                throw new \RuntimeException(sprintf('Date must be in %s format', static::DATE_FORMAT));
+            if (!$date = DateTime::createFromFormat(static::DATE_FORMAT, $d)) {
+                throw new RuntimeException(sprintf('Date must be in %s format', static::DATE_FORMAT));
+            } else {
+                $dateActive = (clone $date)->modify('+1 day');
+                $dateDelete = (clone $date)->modify('-1 day');
             }
         } else {
-            $date = new \DateTime();
-            $date->modify('+1 day');
+            $date = new DateTime();
+            $dateActive = (clone $date)->modify('+1 day');
+            $dateDelete = (clone $date)->modify('-1 day');
         }
 
         /** @noinspection TypeUnsafeComparisonInspection */
         if ($tc && (((int)$tc != $tc) || $tc < 0)) {
-            throw new \RuntimeException('Transition count must be a positive integer value');
+            throw new RuntimeException('Transition count must be a positive integer value');
         }
 
         $start_global = microtime(true);
@@ -116,9 +123,9 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
             $totalDeleted = 0;
 
             try {
-                $totalDeleted += $this->scheduleResultService->deleteResultsForSender($sender);
-                $results = $this->scheduleResultService->calculateForSender($sender, $date, $tc);
-                [$created] = $this->scheduleResultService->updateResults($results);
+                $totalDeleted += $this->scheduleResultService->deleteResultsForSender($sender, $dateDelete);
+                $results = $this->scheduleResultService->calculateForSender($sender, $dateActive, $tc);
+                [$created] = $this->scheduleResultService->updateResults($results, $dateDelete);
                 $totalCreated += $created;
                 $isSuccess = true;
                 //break;
