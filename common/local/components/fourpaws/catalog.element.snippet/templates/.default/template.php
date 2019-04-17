@@ -222,7 +222,7 @@ if (!$currentOffer->getImagesIds()) {
                     <span class="b-common-item__currency">
                         <span class="b-ruble">₽</span>
                     </span>
-                    <span class="b-common-item__price">В подписку</span>
+                    <span class="b-common-item__subscribe">В подписку</span>
                 </span>
                 <span class="b-common-item__incart">+1</span>
             </a>
