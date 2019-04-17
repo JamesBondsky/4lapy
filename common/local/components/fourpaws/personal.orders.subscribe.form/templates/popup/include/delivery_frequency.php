@@ -1,7 +1,4 @@
-<?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
-    die();
-}
+<?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use FourPaws\Decorators\SvgDecorator;
 
@@ -11,6 +8,7 @@ if($subscribe){
     $nextDelivery = $component->getOrderSubscribeService()->countNextDate($subscribe);
 }
 
+$subscribeIntervals = $component->getOrderSubscribeService()->getFrequencies();
 ?>
 <div class="subscribe-delivery-order">
     <div class="subscribe-delivery-order__fields">

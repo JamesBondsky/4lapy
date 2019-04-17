@@ -95,6 +95,9 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     /** @var OrderSubscribe $subscribe */
     private $subscribe;
 
+    /** @var array $items */
+    private $items;
+
     /** @var \Bitrix\Sale\PaySystem\Service $payment */
     private $payment;
 
@@ -208,6 +211,22 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             $this->basketService = $appCont->get(BasketService::class);
         }
         return $this->basketService;
+    }
+
+    /**
+     * @return array
+     */
+    public function getItems(): array
+    {
+        return $this->items;
+    }
+
+    /**
+     * @param array $items
+     */
+    public function setItems(array $items): void
+    {
+        $this->items = $items;
     }
 
     /**
@@ -332,13 +351,14 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
         switch ($this->request->get('action')) {
             case 'deliveryOrderSubscribe':
+            case 'renewalSubmit':
                 $action = 'subscribe';
                 break;
             case 'deliveryOrderUnsubscribe':
                 $action = 'unsubscribe';
                 break;
             case 'renewal':
-                $action = 'renewal';
+                $action = 'getRenewal';
                 break;
             case 'item':
                 $action = 'getItem';
@@ -356,16 +376,39 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         }
     }
 
+    /**
+     * Форма редактирования + контролы
+     *
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
+     */
     protected function initialLoadAction()
     {
         $this->loadData();
     }
 
-    protected function renewalAction()
+    /**
+     * Форма возобновления подписки
+     *
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
+     */
+    protected function getRenewalAction()
     {
         $this->loadData();
     }
 
+    /**
+     * Возвращает HTML товара
+     */
     protected function getItemAction()
     {
         try {
@@ -482,19 +525,22 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                 }
 
                 $items = $this->request->get('items');
-                if(empty($items)){
-                    $this->setExecError('subscribeAction', 'Нет ни одного товара дял подписки', 'subscriptionAdd');
-                }
-                /** @var BasketItem $basketItem */
-                foreach($items as $item){
-                    $subscribeItem = (new OrderSubscribeItem())
-                        ->setOfferId($item['productId'])
-                        ->setQuantity($item['quantity']);
+                if(!empty($items)){
+                    /** @var BasketItem $basketItem */
+                    foreach($items as $item){
+                        $subscribeItem = (new OrderSubscribeItem())
+                            ->setOfferId($item['productId'])
+                            ->setQuantity($item['quantity']);
 
-                    if(!$orderSubscribeService->addSubscribeItem($orderSubscribe, $subscribeItem)){
-                        $this->setExecError('subscribeAction', sprintf("Не удалось добавить товар %s", $subscribeItem->getOfferId()), 'subscriptionAdd');
+                        if(!$orderSubscribeService->addSubscribeItem($orderSubscribe, $subscribeItem)){
+                            $this->setExecError('subscribeAction', sprintf("Не удалось добавить товар %s", $subscribeItem->getOfferId()), 'subscriptionAdd');
+                        }
                     }
                 }
+                else{
+                    // $this->setExecError('subscribeAction', 'Нет ни одного товара для подписки', 'subscriptionAdd');
+                }
+
 
                 if (empty($this->arResult['ERROR']['FIELD'])) {
                     BitrixApplication::getConnection()->commitTransaction();
@@ -568,16 +614,20 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     protected function loadData()
     {
         if ($this->getAction() === 'initialLoad') {
-            if(null === $this->arParams['STEP']){ // получение контролов
+            // в первом случае получаем контролы для списка заказов
+            // иначе форму редактирования подписки
+            if(null === $this->arParams['STEP']){
                 $this->arResult['ORDER'] = $this->getOrder();
                 $this->arResult['CURRENT_STAGE'] = 'initial';
-            } else if($this->arParams['STEP'] == 1){  // получение формы
+            } else if($this->arParams['STEP'] == 1){
                 $this->initStep1();
             } else if ($this->arParams['STEP'] == 2) {
                 $this->initStep2();
             }
-        } else if ($this->getAction() === 'renewal') {
-            $this->initRenewal();
+        } else if ($this->getAction() === 'getRenewal') {
+            // расчёты такие же как и на втором шаге, но выводим только часть формы
+            $result = $this->initStep2();
+            $this->arResult['CURRENT_STAGE'] = $result->isSuccess() ? 'renewal' : 'error';
         }
 
         if ($this->arParams['INCLUDE_TEMPLATE'] !== 'N') {
@@ -706,32 +756,34 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     {
         $result = new Result();
 
-        // TODO: сделать обработку входящих товаров
-        $this->arParams['ITEMS'] = [
-            [
-                'id' => 1,
-                'productId' => 70833,
-                'quantity' => 1,
-            ],
-            [
-                'id' => 2,
-                'productId' => 35129,
-                'quantity' => 2,
-            ],
-            [
-                'id' => 3,
-                'productId' => 84355,
-                'quantity' => 2,
-            ],
-        ];
-
         if($this->arParams['SUBSCRIBE_ID'] > 0){
             $this->arResult['SUBSCRIBE'] = $this->setSubscribe($this->getOrderSubscribeService()->getById($this->arParams['SUBSCRIBE_ID']));
             //$this->arParams['ORDER_ID'] = $this->getOrderSubscribe()->getOrderId();
         }
 
+        // товары
+        $items = null;
+        if(is_array($this->request->get('items'))){
+            $items = $this->request->get('items');
+        }
+        else if($this->getOrderSubscribe()->getId() > 0) {
+            $subscribeItems = $this->getOrderSubscribeService()->getItemsBySubscribeId($this->getOrderSubscribe()->getId());
+            /** @var OrderSubscribeItem $item */
+            foreach($subscribeItems as $item){
+                $items[] = [
+                    'productId' => $item->getOfferId(),
+                    'quantity' => $item->getQuantity(),
+                ];
+            }
+        }
+
+        if(!$items){
+            throw new \Bitrix\Main\ArgumentException("Items can't be null");
+        }
+        $this->setItems($items);
+
         try {
-            $basket = $this->createBasketFromItems($this->arParams['ITEMS']);
+            $basket = $this->createBasketFromItems($this->getItems());
             $this->setBasket($basket);
         } catch (\Exception $e) {
             $result->addError(new Error(
@@ -772,6 +824,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             $this->arResult['SELECTED_CITY'] = $selectedCity;
             $this->arResult['DADATA_CONSTRAINTS'] = $this->getLocationService()->getDadataJsonFromLocationArray($selectedCity);
             $this->arResult['METRO'] = $this->getStoreService()->getMetroInfo();
+
         }
 
         if(!$result->isSuccess()){

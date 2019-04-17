@@ -41,7 +41,8 @@ class OrderSubscribeController extends Controller
                 '',
                 [
                     'INCLUDE_TEMPLATE' => 'N',
-                    'ORDER_ID' => $request->get('orderId')
+                    'ORDER_ID' => $request->get('orderId'),
+                    'SUBSCRIBE_ID' => $request->get('subscribeId'),
                 ],
                 null,
                 [
@@ -209,7 +210,6 @@ class OrderSubscribeController extends Controller
         $step = $request->get('step') ?: 1;
         $subscribeId = $request->get('subscribeId');
         $orderId = $request->get('orderId');
-        $items = $request->get('items');
 
         ob_start();
         /** @var \FourPawsPersonalCabinetOrdersSubscribeFormComponent $component */
@@ -221,7 +221,6 @@ class OrderSubscribeController extends Controller
                 'STEP' => $step,
                 'SUBSCRIBE_ID' => $subscribeId,
                 'ORDER_ID' => $orderId,
-                'ITEMS' => $items,
             ],
             null,
             [

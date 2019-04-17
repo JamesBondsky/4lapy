@@ -195,7 +195,11 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 ?>
                                 <li class="b-radio-tab__tab js-telephone-recovery"
                                     <?= $selectedDelivery->getDeliveryId() !== $delivery->getDeliveryId() ? 'style="display:none"' : '' ?>>
-                                    <?php include 'include/delivery.php' ?>
+                                    <?php
+                                        include 'include/delivery.php';
+                                        $currentDelivery = $delivery;
+                                        include 'include/delivery_first_date.php';
+                                    ?>
                                 </li>
                                 <?php
                             } ?>
@@ -203,12 +207,16 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 ?>
                                 <li class="b-radio-tab__tab js-email-recovery"
                                     <?= $selectedDelivery->getDeliveryId() !== $pickup->getDeliveryId() ? 'style="display:none"' : '' ?>>
-                                    <?php include 'include/pickup.php' ?>
+                                    <?php
+                                        include 'include/pickup.php';
+                                        $currentDelivery = $pickup;
+                                        include 'include/delivery_first_date.php';
+                                    ?>
                                 </li>
                                 <?php
                             } ?>
                         </ul>
-                        <?php include 'include/subscribe-delivery.php' ?>
+                        <?php include 'include/delivery_frequency.php' ?>
                     </form>
                 </article>
             </div>

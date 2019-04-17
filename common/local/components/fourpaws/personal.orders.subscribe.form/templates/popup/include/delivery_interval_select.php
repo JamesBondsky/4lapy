@@ -1,19 +1,7 @@
-<?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
-    die();
-}
+<?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
-use FourPaws\SaleBundle\Enum\OrderStorage;
-
-/**
- * @var OrderStorage                 $selectorStorage
- * @var string                       $selectorName
- * @var CalculationResultInterface[] $nextDeliveries
- * @var FourPawsOrderComponent       $component
- */
 
 /** @var DeliveryResultInterface $tmpDelivery */
 if ($tmpDelivery = $nextDeliveries[0]) {

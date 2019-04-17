@@ -19,26 +19,8 @@ use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\StoreBundle\Entity\Store;
 
-/**
- * @var array $arResult
- * @var array $arParams
- * @var CalculationResultInterface $pickup
- * @var
- */
-
-/** @var DeliveryService $deliveryService */
-$deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
-/** @var OrderSubscribe $subscribe */
-$subscribe = $arResult['SUBSCRIBE'];
-
 /** @var Store $selectedShop */
 $selectedShop = $arResult['SELECTED_SHOP'];
-
-/** @var StockResultCollection $available */
-$available = $arResult['PICKUP_STOCKS_AVAILABLE'];
-/** @var StockResultCollection $delayed */
-$delayed = $arResult['PICKUP_STOCKS_DELAYED'];
-
 $metro = $arResult['METRO'][$selectedShop->getMetro()];
 ?>
 
@@ -86,20 +68,6 @@ $metro = $arResult['METRO'][$selectedShop->getMetro()];
         <?php } ?>
     </div>
 </div>
-<? if(!$subscribe) { ?>
-    <div class="b-input-line b-input-line--desired-date" data-url="<?= $arResult['URL']['DELIVERY_INTERVALS'] ?>">
-        <div class="b-input-line__label-wrapper">
-            <span class="b-input-line__label">Желаемая дата первой доставки</span>
-        </div>
-        <div class="b-select b-select--recall b-select--feedback-page">
-            <?php
-            $selectorDelivery = $delivery;
-            $selectorName = 'deliveryDate';
-            include 'delivery_date_select.php'
-            ?>
-        </div>
-    </div>
-<? } ?>
 <a class="b-link b-link--another-point js-open-popup"
    href="javascript:void(0);"
    data-popup-id="popup-order-stores"
