@@ -32,7 +32,7 @@ class OrderPaySystemChange extends Command implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
-    protected const TIME_TO_PAY = 60; // 25 minutes
+    protected const TIME_TO_PAY = 1500; // 25 minutes
 
     protected const MAX_TIME = 86400; // 1 day
 
