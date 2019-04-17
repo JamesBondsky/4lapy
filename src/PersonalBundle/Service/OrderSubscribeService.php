@@ -1357,16 +1357,16 @@ class OrderSubscribeService implements LoggerAwareInterface
         if ($result->isSuccess()) {
             try {
                 // сохраняем текущую дату и время проверки
-                $orderSubscribe->setLastCheck((new DateTime()));
-                $updateResult = $this->update($orderSubscribe);
-                if (!$updateResult->isSuccess()) {
-                    $result->addError(
-                        new Error(
-                            'Ошибка обновления даты проверки подписки',
-                            'orderSubscribeUpdateError'
-                        )
-                    );
-                }
+//                $orderSubscribe->setLastCheck((new DateTime()));
+//                $updateResult = $this->update($orderSubscribe);
+//                if (!$updateResult->isSuccess()) {
+//                    $result->addError(
+//                        new Error(
+//                            'Ошибка обновления даты проверки подписки',
+//                            'orderSubscribeUpdateError'
+//                        )
+//                    );
+//                }
 
                 // устанавливаем текущего пользователя и местоположение
                 // для расчёта цен и даты доставки

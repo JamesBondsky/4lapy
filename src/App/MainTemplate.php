@@ -477,4 +477,14 @@ class MainTemplate extends TemplateAbstract
     {
         return $this->isDir('/catalog/search');
     }
+
+    /**
+     * @return bool
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function isCatalogPopup(): bool
+    {
+        return BitrixApplication::getInstance()->getContext()->getRequest()->isAjaxRequest();
+    }
+
 }

@@ -18,12 +18,15 @@ if($deliveryService->isDelivery($currentDelivery)){
     $nextDeliveries = $deliveryService->getNextDeliveries($currentDelivery, 10);
     $isDelivery = true;
 } else {
+    $daysAdd = 0;
     while(count($nextDeliveries)<11){
+        $daysAdd++;
         $curDate = new \DateTime(sprintf('+%s days', $daysAdd));
         $tmpPickup = clone $currentDelivery;
         $tmpPickup->setCurrentDate($curDate);
         $nextDeliveries[] = $tmpPickup;
     }
+    $isDelivery = false;
 }
 ?>
 <div class="b-delivery-type-time" data-container-delivery-type-time="true">

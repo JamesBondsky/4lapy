@@ -766,7 +766,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         if(is_array($this->request->get('items'))){
             $items = $this->request->get('items');
         }
-        else if($this->getOrderSubscribe()->getId() > 0) {
+        else if($this->getOrderSubscribe() && $this->getOrderSubscribe()->getId() > 0) {
             $subscribeItems = $this->getOrderSubscribeService()->getItemsBySubscribeId($this->getOrderSubscribe()->getId());
             /** @var OrderSubscribeItem $item */
             foreach($subscribeItems as $item){
@@ -777,12 +777,11 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             }
         }
 
-        if(!$items){
-            throw new \Bitrix\Main\ArgumentException("Items can't be null");
-        }
-        $this->setItems($items);
-
         try {
+            if(!$items){
+                throw new \Bitrix\Main\ArgumentException("Items can't be null");
+            }
+            $this->setItems($items);
             $basket = $this->createBasketFromItems($this->getItems());
             $this->setBasket($basket);
         } catch (\Exception $e) {

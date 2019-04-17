@@ -42,9 +42,9 @@ switch ($arResult['CURRENT_STAGE']) {
         break;
     // ошибка
     case 'error':
-        include __DIR__. '/header.php';
+        if($arParams['STEP'] != 2) include __DIR__. '/header.php';
         include __DIR__. '/error.php';
-        include __DIR__. '/footer.php';
+        if($arParams['STEP'] != 2) include __DIR__. '/footer.php';
         break;
 }
 
