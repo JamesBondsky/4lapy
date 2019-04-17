@@ -2,7 +2,7 @@
 
 namespace FourPaws\External\Dostavista\Consumer;
 
-use Adv\Bitrixtools\Tools\BitrixUtils;
+use Exception;
 use FourPaws\External\Dostavista\Exception\DostavistaOrdersAddConsumerException;
 use FourPaws\UserBundle\EventController\Event;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -35,6 +35,7 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
         $data = json_decode($body, true);
         try {
             $bitrixOrderId = $data['bitrix_order_id'];
+            $this->log()->notice('Dostavista: bitrix order ' . $bitrixOrderId . ' start with delivery tag ' . $message->get('delivery_tag'));
             unset($data['bitrix_order_id'], $data['order_create_date'], $data['last_date_try_to_send']);
             /**
              * @var Order $order
@@ -74,7 +75,7 @@ class DostavistaOrdersAddConsumer extends DostavistaConsumerBase
             /** Обновляем битриксовые свойства достависты */
             $this->updateCommWayProperty($order, $dostavistaOrderId);
             $result = self::MSG_ACK;
-        } catch (DostavistaOrdersAddConsumerException|\Exception $e) {
+        } catch (DostavistaOrdersAddConsumerException|Exception $e) {
             /**
              * Отправляем сообщение в другую очередь
              * @noinspection MissingService
