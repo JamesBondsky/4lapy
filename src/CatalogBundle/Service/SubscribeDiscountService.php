@@ -15,6 +15,7 @@ use Bitrix\Iblock\PropertyTable;
 use Bitrix\Main\Entity\Base;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\Helpers\TaggedCacheHelper;
 
 class SubscribeDiscountService
 {

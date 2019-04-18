@@ -484,7 +484,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function isCatalogPopup(): bool
     {
-        return BitrixApplication::getInstance()->getContext()->getRequest()->isAjaxRequest();
+        return $this->isPartitionDir('/ajax/catalog');
     }
 
 }
