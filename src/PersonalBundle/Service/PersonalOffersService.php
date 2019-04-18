@@ -65,7 +65,8 @@ class PersonalOffersService
             throw new InvalidArgumentException('can\'t get user\'s coupons. userId: ' . $userId);
         }
 
-        $result = [];
+        $coupons = [];
+        $offersCollection = new ArrayCollection();
 
         $activeOffersCollection = $this->getActiveOffers();
 
@@ -110,14 +111,13 @@ class PersonalOffersService
             uasort($coupons, static function($a, $b) use($offersOrder) {
                 return $offersOrder[$a['UF_OFFER']] <=> $offersOrder[$b['UF_OFFER']];
             });
-
-            $couponsCollection = new ArrayCollection($coupons);
-
-            $result = [
-                'coupons' => $couponsCollection,
-                'offers' => $offersCollection,
-            ];
         }
+
+        $couponsCollection = new ArrayCollection($coupons);
+        $result = [
+            'coupons' => $couponsCollection,
+            'offers' => $offersCollection,
+        ];
 
         return $result;
     }

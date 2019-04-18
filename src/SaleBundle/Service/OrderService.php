@@ -566,14 +566,20 @@ class OrderService implements LoggerAwareInterface
 
             $propertyValue->setValue($value);
         }
+        /**
+         * Заполнение координаты пользователя
+         */
+        $lng = $storage->getLng();
+        $lat = $storage->getLat();
+        $userCoords = [$lng, $lat];
+        if ($this->deliveryService->isDostavistaDelivery($selectedDelivery) || $this->deliveryService->isDelivery($selectedDelivery)) {
+            $this->setOrderPropertiesByCode($order, ['USER_COORDS' => $lng . ',' . $lat]);
+        }
 
         /**
          * Заполнение складов довоза товара для элементов корзины (кроме доставок 04 и 06)
          */
         if ($this->deliveryService->isDostavistaDelivery($selectedDelivery)) {
-            $lng = $storage->getLng();
-            $lat = $storage->getLat();
-            $userCoords = [$lng, $lat];
             /**
              * @var DostavistaDeliveryResult $selectedDelivery
              */
@@ -589,7 +595,6 @@ class OrderService implements LoggerAwareInterface
             );
             $this->setOrderPropertiesByCode($order,
                 [
-                    'USER_COORDS_DOSTAVISTA' => $lng . ',' . $lat,
                     'STORE_FOR_DOSTAVISTA' => $nearShop->getXmlId()
                 ]
             );
@@ -1116,20 +1121,23 @@ class OrderService implements LoggerAwareInterface
                         'address' => $address,
                     ]);
                 }
+                //заполняем свойство "Координаты пользователя"
+                $lng = $storage->getLng();
+                $lat = $storage->getLat();
+                $userCoords = [$lng, $lat];
+                if ($this->deliveryService->isDostavistaDelivery($selectedDelivery) || $this->deliveryService->isDelivery($selectedDelivery)) {
+                    $this->setOrderPropertiesByCode($order, ['USER_COORDS' => $lng . ',' . $lat]);
+                }
 
                 //получаем ближайший магазин по координатам адреса пользователя и коодинатам магазинов, где все в наличие
                 if ($this->deliveryService->isDostavistaDelivery($selectedDelivery)) {
-                    $lng = $storage->getLng();
-                    $lat = $storage->getLat();
                     /**
                      * @var DostavistaDeliveryResult $selectedDelivery
                      */
-                    $userCoords = [$lng, $lat];
                     //ищем ближайший магазин для достависты
                     $nearShop = $selectedDelivery->getNearShop($userCoords);
                     $this->setOrderPropertiesByCode($order,
                         [
-                            'USER_COORDS_DOSTAVISTA' => $lng . ',' . $lat,
                             'STORE_FOR_DOSTAVISTA' => $nearShop->getXmlId(),
                             'DELIVERY_PLACE_CODE' => $nearShop->getXmlId()
                         ]
@@ -1881,7 +1889,7 @@ class OrderService implements LoggerAwareInterface
      */
     protected function resetBasket(array $toDelete = [])
     {
-        $basket = $this->basketService->getBasket();
+        $basket = $this->basketService->getBasket(true);
         $allowedProperties = ['PRODUCT.XML_ID', 'CATALOG.XML_ID'];
         try {
             /** @var BasketItem $basketItem */
