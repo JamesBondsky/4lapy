@@ -1727,4 +1727,23 @@ class OrderSubscribeService implements LoggerAwareInterface
         );
         $notificationService->sendOrderSubscribeUpcomingDeliveryMessage($copyParams);
     }
+
+
+    /**
+     * @param OrderSubscribe $orderSubscribe
+     * @return bool
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     */
+    public function isDelivery(OrderSubscribe $orderSubscribe)
+    {
+        $deliveryId = $orderSubscribe->getDeliveryId();
+        $deliveryService = $this->getDeliveryService();
+        $deliveryCode = $deliveryService->getDeliveryCodeById($deliveryId);
+        return $deliveryService->isDeliveryCode($deliveryCode);
+    }
+
 }

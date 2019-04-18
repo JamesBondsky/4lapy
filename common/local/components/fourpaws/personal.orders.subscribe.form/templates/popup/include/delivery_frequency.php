@@ -9,6 +9,7 @@ if($subscribe){
 }
 
 $subscribeIntervals = $component->getOrderSubscribeService()->getFrequencies();
+$daysOfWeek = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
 ?>
 <div class="subscribe-delivery-order">
     <div class="subscribe-delivery-order__fields">

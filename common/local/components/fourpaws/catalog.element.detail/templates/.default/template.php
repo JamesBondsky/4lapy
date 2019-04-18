@@ -434,7 +434,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                 foreach ($currentOffer->getShare() as $share) {
                     $activeFrom = $share->getDateActiveFrom();
                     $activeTo = $share->getDateActiveTo(); ?>
-                    <a href="<?= $share->getDetailPageUrl() ?>" title="<?= $share->getName() ?>">
+                    <a href="<?= $share->getDetailPageUrl() ?>" title="<?= $share->getName() ?>" <?= $arParams['IS_POPUP'] ? 'target="_blank"' : ''?>>
                         <p class="b-counter-basket__text b-counter-basket__text--red">
                             <?= $share->getName() ?>
                         </p>

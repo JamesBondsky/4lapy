@@ -50,6 +50,7 @@ use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
+use FourPaws\SaleBundle\Helper\PriceHelper;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StockService;
@@ -2356,7 +2357,7 @@ class Offer extends IblockElement
     public function getSubscribePrice()
     {
         $discountValue = $this->getSubscribeDiscount();
-        return $discountValue > 0 ? $this->getPrice()*((100-$discountValue)/100) : $this->getPrice();
+        return $discountValue > 0 ? PriceHelper::roundPrice($this->getPrice()*((100-$discountValue)/100)) : $this->getPrice();
     }
 
 }

@@ -13,21 +13,23 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 */
 $deliveryService = $component->getDeliveryService();
 
-if($deliveryService->isDelivery($currentDelivery)){
-    /** @var DeliveryResultInterface $currentDelivery */
-    $nextDeliveries = $deliveryService->getNextDeliveries($currentDelivery, 10);
-    $isDelivery = true;
-} else {
-    $daysAdd = 0;
-    while(count($nextDeliveries)<11){
-        $daysAdd++;
-        $curDate = new \DateTime(sprintf('+%s days', $daysAdd));
-        $tmpPickup = clone $currentDelivery;
-        $tmpPickup->setCurrentDate($curDate);
-        $nextDeliveries[] = $tmpPickup;
-    }
-    $isDelivery = false;
-}
+$nextDeliveries = $deliveryService->getNextDeliveries($currentDelivery, 10);
+
+//if($deliveryService->isDelivery($currentDelivery)){
+//    /** @var DeliveryResultInterface $currentDelivery */
+//    $nextDeliveries = $deliveryService->getNextDeliveries($currentDelivery, 10);
+//    $isDelivery = true;
+//} else {
+//    $daysAdd = 0;
+//    while(count($nextDeliveries)<11){
+//        $curDate = new \DateTime(sprintf('+%s days', $daysAdd));
+//        $tmpPickup = clone $currentDelivery;
+//        $tmpPickup->setCurrentDate($curDate);
+//        $nextDeliveries[] = $tmpPickup;
+//        $daysAdd++;
+//    }
+//    $isDelivery = false;
+//}
 ?>
 <div class="b-delivery-type-time" data-container-delivery-type-time="true">
     <ul class="b-radio-tab">
@@ -44,7 +46,7 @@ if($deliveryService->isDelivery($currentDelivery)){
                         ?>
                     </div>
                 </div>
-                <?php if ($isDelivery && !$currentDelivery->getIntervals()->isEmpty()) {
+                <?php if ($deliveryService->isDelivery($currentDelivery) && !$currentDelivery->getIntervals()->isEmpty()) {
                     $selectorName = 'deliveryInterval';
                     include 'delivery_interval_select.php';
                 } ?>
