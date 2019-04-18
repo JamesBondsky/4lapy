@@ -206,6 +206,9 @@ class StoreService
         if (!empty($_COOKIE['selected_city_code'])) {
             $result['UF_LOCATION'] = $_COOKIE['selected_city_code'];
         }
+        if (!empty($storeListRequest->getCityId())) {
+            $result['UF_LOCATION'] = $storeListRequest->getCityId();
+        }
 
         return $result;
     }
