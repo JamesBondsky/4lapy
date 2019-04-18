@@ -30,23 +30,11 @@ class SubscribeDiscountService
             $res = ElementTable::getList([
                 'select' => [
                     'ID',
-                    //'REGION' => 'PROPERTIES.REGION_CODE',
-                    //'PERCENT' => 'PROPERTIES.PERCENT',
                 ],
                 'filter' => [
                     'ACTIVE' => 'Y',
                     'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::SUBSCRIBE_PRICES),
                 ],
-                'cache' => [
-                    'ttl' => 3600 * 24 * 365
-                ],
-                /*'runtime' => [
-                    'PROPERTIES' => [
-                        'data_type' => '\Bitrix\Iblock\ElementPropertyTable',
-                        'reference' => ['=this.ID' => 'ref.IBLOCK_ELEMENT_ID'],
-                        'join_type' => 'left',
-                    ]
-                ]*/
             ]);
 
             $discountIds = [];

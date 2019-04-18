@@ -61,14 +61,19 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) { ?>
 
 if ($arParams['IS_AJAX']) {
     $userDiscount = $component->getCurrentUserService()->getDiscount();
-} ?>
+}
+
+// разница цены по подписке
+$subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
+
+?>
     <div class="b-container js-cart-wrapper">
         <h1 class="b-title b-title--h1 b-title--shopping-cart">Корзина</h1>
         <main class="b-shopping-cart__main" role="main">
             <div class="b-panel-subscribe-cart">
                 <div class="b-panel-subscribe-cart__content">
                     <div class="b-panel-subscribe-cart__info">
-                        Подпишитесь на&nbsp;доставку и&nbsp;получите скидку 87 ₽ на&nbsp;вашу корзину&nbsp;&mdash;
+                        Подпишитесь на&nbsp;доставку и&nbsp;получите скидку <?= ($subscribePriceDiff > 0) ? WordHelper::numberFormat($subscribePriceDiff, 0).' ₽' : ''?> на&nbsp;вашу корзину&nbsp;&mdash;
                         <a href="javascript:void(0);" class="b-link" data-show-subscribe-delivery-cart="true">узнать подробнее</a>
                     </div>
                 </div>

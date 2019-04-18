@@ -4,7 +4,6 @@
  */
 
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 
 /**
@@ -14,22 +13,6 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 $deliveryService = $component->getDeliveryService();
 
 $nextDeliveries = $deliveryService->getNextDeliveries($currentDelivery, 10);
-
-//if($deliveryService->isDelivery($currentDelivery)){
-//    /** @var DeliveryResultInterface $currentDelivery */
-//    $nextDeliveries = $deliveryService->getNextDeliveries($currentDelivery, 10);
-//    $isDelivery = true;
-//} else {
-//    $daysAdd = 0;
-//    while(count($nextDeliveries)<11){
-//        $curDate = new \DateTime(sprintf('+%s days', $daysAdd));
-//        $tmpPickup = clone $currentDelivery;
-//        $tmpPickup->setCurrentDate($curDate);
-//        $nextDeliveries[] = $tmpPickup;
-//        $daysAdd++;
-//    }
-//    $isDelivery = false;
-//}
 ?>
 <div class="b-delivery-type-time" data-container-delivery-type-time="true">
     <ul class="b-radio-tab">

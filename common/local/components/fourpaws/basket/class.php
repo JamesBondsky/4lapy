@@ -502,8 +502,7 @@ class BasketComponent extends CBitrixComponent
                 if (!$offer) {
                     continue;
                 }
-                $percent = $offer->getSubscribeDiscount();
-                $subscribePrice += $basketItem->getPrice() * ((100 - $percent)/100) * $itemQuantity;
+                $subscribePrice += $offer->getSubscribePrice() * $itemQuantity;
             }
         }
 

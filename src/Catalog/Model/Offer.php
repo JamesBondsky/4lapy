@@ -2357,7 +2357,7 @@ class Offer extends IblockElement
     public function getSubscribePrice()
     {
         $discountValue = $this->getSubscribeDiscount();
-        return $discountValue > 0 ? PriceHelper::roundPrice($this->getPrice()*((100-$discountValue)/100)) : $this->getPrice();
+        return $discountValue > 0 ? \round($this->getPrice()*((100-$discountValue)/100)) : $this->getPrice();
     }
 
 }

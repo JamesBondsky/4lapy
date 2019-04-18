@@ -215,7 +215,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
 
                     <? if($storage->isSubscribe()) { ?>
                         <div class="b-checkbox b-checkbox--withdraw-bonuses-order">
-                            <input class="b-checkbox__input" type="checkbox" name="subscribeBonus" id="withdraw_bonuses" value="1" required="required" checked/>
+                            <input class="b-checkbox__input js-no-valid" type="checkbox" name="subscribeBonus" id="withdraw_bonuses" value="1" required="required" checked/>
                             <span class="b-error">
                                     <span class="js-message"></span>
                                 </span>

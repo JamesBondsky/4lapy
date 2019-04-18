@@ -20,7 +20,7 @@ if ($tmpDelivery = $nextDeliveries[0]) {
                 <?php
                 /** @var Interval $interval */
                 foreach ($availableIntervals as $i => $interval) { ?>
-                    <option value="<?= ($i + 1) ?>">
+                    <option value="<?= $interval ?>">
                         <?= (string)$interval ?>
                     </option>
                 <?php } ?>

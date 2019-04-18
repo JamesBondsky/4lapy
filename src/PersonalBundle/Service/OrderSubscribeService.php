@@ -391,6 +391,19 @@ class OrderSubscribeService implements LoggerAwareInterface
         return $this->frequencies;
     }
 
+    /**
+     * @param int $id
+     *
+     * @throws \Exception
+     * @return bool
+     */
+    public function isWeekFrequency($id): bool
+    {
+        $frequency = $this->getFrequencies()[$id];
+
+        return strpos($frequency['XML_ID'], 'WEEK') != -1;
+    }
+
 
     /**
      * @param $frequency

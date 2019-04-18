@@ -7,6 +7,7 @@ use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
@@ -345,6 +346,14 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     /**
      * @return string
      */
+    protected function getActionReal()
+    {
+        return $this->request->get('action');
+    }
+
+    /**
+     * @return string
+     */
     protected function prepareAction()
     {
         $action = 'initialLoad';
@@ -462,32 +471,55 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         if (empty($this->arResult['ERROR']['FIELD'])) {
             $order = $this->getOrder();
             if ($order) {
+                /** @var OrderSubscribeService $orderSubscribeService */
                 $orderSubscribeService = $this->getOrderSubscribeService();
                 $orderSubscribe = $this->getOrderSubscribe();
                 if (!$orderSubscribe) {
                     $orderSubscribe = (new OrderSubscribe());
                 }
 
-                // TODO: интервалы
-                $orderSubscribe
-                    ->setOrderId($order->getId())
-                    ->setDeliveryDay($this->arResult['FIELD_VALUES']['subscribeDay'])
-                    ->setPayWithbonus($this->arResult['FIELD_VALUES']['subscribeBonus'])
-                    ->setDeliveryId($this->arResult['FIELD_VALUES']['deliveryId'])
-                    ->setFrequency($this->arResult['FIELD_VALUES']['deliveryFrequency'])
-                    ->setDeliveryPlace($this->arResult['FIELD_VALUES']['addressId'] ?: $this->arResult['FIELD_VALUES']['shopId'])
-                    //->setDeliveryTime($this->arResult['FIELD_VALUES']['deliveryId'])
+                $orderSubscribe->setOrderId($order->getId())
                     ->setLastCheck(null);
+
+                $deliveryDate = new DateTime($this->arResult['FIELD_VALUES']['deliveryDate']);
+                $orderSubscribe->setNextDate($deliveryDate);
+
+                $frequency = $this->arResult['FIELD_VALUES']['subscribeFrequency'];
+                $orderSubscribe->setFrequency($frequency);
+
+                $deliveryDay = $this->arResult['FIELD_VALUES']['subscribeDay'];
+                if($orderSubscribeService->isWeekFrequency($frequency)){
+                    $deliveryDay = $deliveryDate->format('N');
+                }
+                $orderSubscribe->setDeliveryDay($deliveryDay);
+
+                if(!empty($this->arResult['FIELD_VALUES']['deliveryInterval'])){
+                    $orderSubscribe->setDeliveryTime($this->arResult['FIELD_VALUES']['deliveryInterval']);
+                }
+
+                $deliveryId = $this->arResult['FIELD_VALUES']['deliveryId'];
+                if($deliveryId){
+                    $orderSubscribe->setDeliveryId($deliveryId)
+                        ->setDeliveryPlace($this->arResult['FIELD_VALUES']['addressId'] ?: $this->arResult['FIELD_VALUES']['shopId']);
+                }
+
+                if($this->arResult['FIELD_VALUES']['subscribeBonus']){
+                    $orderSubscribe->setPayWithbonus(true);
+                }
+
+                if($this->getActionReal() == 'renewalSubmit'){
+                    $orderSubscribe->setActive(true);
+                }
 
                 BitrixApplication::getConnection()->startTransaction();
 
                 if ($orderSubscribe->getId() > 0) { // подписка уже есть, обновляем
                     $this->arResult['SUBSCRIBE_ACTION']['SUBSCRIPTION_ID'] = $orderSubscribe->getId();
                     $this->arResult['SUBSCRIBE_ACTION']['TYPE'] = 'UPDATE';
-                    $this->arResult['SUBSCRIBE_ACTION']['RESUMED'] = $orderSubscribe->isActive() ? 'N' : 'Y';
                     try {
                         $updateResult = $orderSubscribeService->update($orderSubscribe);
                         if ($updateResult->isSuccess()) {
+                            $this->arResult['SUBSCRIBE_ACTION']['RESUMED'] = $orderSubscribe->isActive() ? 'Y' : 'N';
                             $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
 
                             // отправка уведомления о созданной подписке (в данном случае - возобновленной)
@@ -497,7 +529,10 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                                 );
                             }
 
-                            $orderSubscribeService->deleteAllItems($orderSubscribe->getId());
+                            if($this->getActionReal() != 'renewalSubmit') {
+                                $orderSubscribeService->deleteAllItems($orderSubscribe->getId());
+                            }
+
                             $this->flushOrderSubscribe();
                             $this->clearTaggedCache();
                         } else {
@@ -536,9 +571,6 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                             $this->setExecError('subscribeAction', sprintf("Не удалось добавить товар %s", $subscribeItem->getOfferId()), 'subscriptionAdd');
                         }
                     }
-                }
-                else{
-                    // $this->setExecError('subscribeAction', 'Нет ни одного товара для подписки', 'subscriptionAdd');
                 }
 
 
@@ -684,11 +716,12 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         } else if($this->arParams['ORDER_ID'] > 0){ // создание подписки
             try {
                 $basket = $this->getOrder()->getBitrixOrder()->getBasket();
+
                 /** @var PiggyBankService $piggyBankService */
                 $piggyBankService = Application::getInstance()->getContainer()->get('piggy_bank.service');
 
                 /** @var BasketItem $basketItem */
-                foreach ($basket as $basketItem){
+                foreach ($basket as $basketItem){ // исключить виртуальные марки
                     if (in_array($basketItem->getProductId(), $piggyBankService->getMarksIds(), false)){
                         $basket->deleteItem($basketItem->getInternalIndex());
                     }
@@ -758,7 +791,6 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
         if($this->arParams['SUBSCRIBE_ID'] > 0){
             $this->arResult['SUBSCRIBE'] = $this->setSubscribe($this->getOrderSubscribeService()->getById($this->arParams['SUBSCRIBE_ID']));
-            //$this->arParams['ORDER_ID'] = $this->getOrderSubscribe()->getOrderId();
         }
 
         // товары
@@ -823,7 +855,6 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             $this->arResult['SELECTED_CITY'] = $selectedCity;
             $this->arResult['DADATA_CONSTRAINTS'] = $this->getLocationService()->getDadataJsonFromLocationArray($selectedCity);
             $this->arResult['METRO'] = $this->getStoreService()->getMetroInfo();
-
         }
 
         if(!$result->isSuccess()){
@@ -853,7 +884,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
      */
     protected function processSubscribeFormFields()
     {
-        $fieldName = 'dateStart';
+        $fieldName = 'deliveryDate';
         $value = $this->arResult['FIELD_VALUES'][$fieldName] ?? '';
         if ($value === '') {
             $this->setFieldError($fieldName, 'Значение не задано', 'empty');
@@ -867,7 +898,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             }
         }
 
-        $fieldName = 'deliveryFrequency';
+        $fieldName = 'subscribeFrequency';
         $value = $this->arResult['FIELD_VALUES'][$fieldName] ?? '';
         $value = (int)$value;
         if ($value == 0) {
@@ -887,7 +918,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             }
         }
 
-        $fieldName = 'deliveryInterval';
+        /*$fieldName = 'deliveryInterval';
         $value = $this->arResult['FIELD_VALUES'][$fieldName] ?? '';
         $timeIntervals = $this->getTimeVariants();
         if ($value === '' && $timeIntervals) {
@@ -903,7 +934,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             if (!$success) {
                 $this->setFieldError($fieldName, 'Значение задано некорректно', 'not_valid');
             }
-        }
+        }*/
     }
 
     /**
@@ -915,14 +946,20 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     {
         if (!isset($this->data['ORDER'])) {
             $this->data['ORDER'] = null;
-            if ($this->arParams['ORDER_ID'] <= 0) {
+            $orderId = $this->arParams['ORDER_ID'];
+
+            if(!$orderId && $this->getOrderSubscribe()){
+                $orderId = $this->getOrderSubscribe()->getOrderId();
+            }
+
+            if ($orderId <= 0) {
                 $this->setExecError('getOrder', 'Некорректный идентификатор заказа', 'incorrectOrderId');
             } elseif ($this->arParams['USER_ID'] <= 0) {
                 $this->setExecError('getOrder', 'Некорректный идентификатор пользователя', 'incorrectUserId');
             } else {
                 $orderSubscribeService = $this->getOrderSubscribeService();
                 /** @var Order $order */
-                $order = $orderSubscribeService->getOrderById($this->arParams['ORDER_ID']);
+                $order = $orderSubscribeService->getOrderById($orderId);
                 if ($order) {
                     if ($order->getUserId() === $this->arParams['USER_ID']) {
                         $this->data['ORDER'] = $order;
@@ -953,7 +990,8 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             $this->data['ORDER_SUBSCRIBE'] = null;
             if($this->arParams['SUBSCRIBE_ID'] > 0){
                 $this->data['ORDER_SUBSCRIBE'] = $this->getOrderSubscribeService()->getById($this->arParams['SUBSCRIBE_ID']);
-            } else if($order = $this->getOrder()) {
+            } else if($this->arParams['ORDER_ID'] > 0) {
+                $order = $this->getOrder();
                 if ($order) {
                     $orderSubscribeService = $this->getOrderSubscribeService();
                     $collection = $orderSubscribeService->getSubscriptionsByOrder(
