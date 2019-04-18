@@ -128,5 +128,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                 <?php include __DIR__ . '/copyright.php' ?>
             </div>
         </div>
+        <div class="b-popup-subscribe-delivery__bg js-bg-popup-subscribe-delivery"></div>
     </div>
 </section>

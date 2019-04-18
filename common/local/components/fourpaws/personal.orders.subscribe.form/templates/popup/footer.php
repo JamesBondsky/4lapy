@@ -6,4 +6,5 @@
             <?php $APPLICATION->IncludeFile($APPLICATION->GetTemplatePath('blocks/footer/copyright.php')) ?>
         </div>
     </div>
+    <div class="b-popup-subscribe-delivery__bg js-bg-popup-subscribe-delivery"></div>
 </div> <!-- b-popup-subscribe-delivery__content -->
