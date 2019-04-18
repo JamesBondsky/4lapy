@@ -326,6 +326,7 @@ class InfoService implements LoggerAwareInterface
         array $select = [],
         int $limit = 50
     ) {
+        $withId = intval($criteria['ID']) > 0;
         $items = [];
         $dbResult = \CIBlockElement::GetList($orderBy, $criteria, false, ['nTopCount' => $limit], $select);
         while ($dbItem = $dbResult->GetNext()) {
@@ -342,7 +343,7 @@ class InfoService implements LoggerAwareInterface
         $imageCollection = ImageCollection::createFromIds($imagesIds);
 
         $infoItems = (new ArrayCollection($items))
-            ->map(function ($item) use ($imageCollection) {
+            ->map(function ($item) use ($imageCollection, $withId) {
                 $apiView = new Info();
                 if ($item['ID'] ?? null) {
                     $apiView->setId((string)$item['ID']);
@@ -384,7 +385,7 @@ class InfoService implements LoggerAwareInterface
                     $apiView->setDateTo($dateTime ?: null);
                 }
 
-                if ($item['IBLOCK_CODE'] === IblockCode::SHARES) {
+                if ($item['IBLOCK_CODE'] === IblockCode::SHARES && $withId) {
                     $apiView->setGoods($this->getGoods($item['ID']));
                 }
 

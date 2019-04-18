@@ -48,6 +48,7 @@ class InfoController extends FOSRestController
             $infoRequest->getFields(),
             $infoRequest->getType(),
             $infoRequest->getOfferTypeCode(),
+            $infoRequest->getInfoId()
         ]));
         if ($cache->startDataCache($this->cacheTime, $cacheId, $this->cachePath)) {
             $tagCache = $cache->isStarted() ? new TaggedCacheHelper($this->cachePath) : null;
