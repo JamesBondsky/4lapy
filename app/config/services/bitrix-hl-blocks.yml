@@ -253,3 +253,7 @@ services:
   bx.hlblock.orderfeedback:
     arguments: ['OrderInterviews']
     parent: bx.hlblock.base
+
+  bx.hlblock.searchsuggestions:
+    arguments: ['SearchSuggestions']
+    parent: bx.hlblock.base
