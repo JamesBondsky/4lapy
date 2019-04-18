@@ -498,7 +498,6 @@ class DeliveryService implements LoggerAwareInterface
      */
     public function getAllZones($withLocations = true): array
     {
-        //return $this->locationService->getLocationGroups($withLocations);
         if($this->allZones[intval($withLocations)] === null) {
             $this->allZones[intval($withLocations)] = $this->locationService->getLocationGroups($withLocations);
         }

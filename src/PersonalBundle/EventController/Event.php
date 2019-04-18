@@ -516,7 +516,7 @@ class Event extends BaseServiceHandler
     {
         if ($arFields['IBLOCK_ID'] == IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::PERSONAL_OFFERS))
         {
-            if ($arFields['ACTIVE_TO'] !== (new Date($arFields['ACTIVE_TO']))->toString())
+            if ($arFields['ACTIVE_TO'] && $arFields['ACTIVE_TO'] !== (new Date($arFields['ACTIVE_TO']))->toString())
             {
                 global $APPLICATION;
                 $APPLICATION->ThrowException('В дате окончания активности не должны быть указаны часы и минуты');
