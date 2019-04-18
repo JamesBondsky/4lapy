@@ -149,6 +149,8 @@ class DeliveryService implements LoggerAwareInterface
 
     /** @var string */
     protected $currentDeliveryZone;
+    
+    protected $allZones;
 
     /**
      * DeliveryService public constructor.
@@ -492,7 +494,11 @@ class DeliveryService implements LoggerAwareInterface
      */
     public function getAllZones($withLocations = true): array
     {
-        return $this->locationService->getLocationGroups($withLocations);
+        //return $this->locationService->getLocationGroups($withLocations);
+        if($this->allZones[intval($withLocations)] === null) {
+            $this->allZones[intval($withLocations)] = $this->locationService->getLocationGroups($withLocations);
+        }
+        return $this->allZones;
     }
 
     /**
