@@ -98,28 +98,7 @@ class FourPawsPersonalCabinetOrdersSubscribeComponent extends CBitrixComponent
     protected function loadData(): void
     {
         $orderSubscribeService = $this->getOrderSubscribeService();
-        $filterActive = false;
-        /** $this->arResult['ORDERS'] ArrayCollection */
-        $this->arResult['ORDERS'] = $orderSubscribeService->getUserSubscribedOrders(
-            $this->arParams['USER_ID'],
-            $filterActive
-        );
-
-        // в коллекции значения с неправильными ключами,
-        // костыляем, чтобы в шаблоне не гонять filter
-        $subscriptions = new ArrayCollection();
-        if ($this->arResult['ORDERS'] && count($this->arResult['ORDERS'])) {
-            $tmpCollection = $orderSubscribeService->getSubscriptionsByUser(
-                $this->arParams['USER_ID'],
-                $filterActive
-            );
-
-            foreach ($tmpCollection as $collectionItem) {
-                /** @var OrderSubscribe $collectionItem */
-                $subscriptions->offsetSet($collectionItem->getOrderId(), $collectionItem);
-            }
-        }
-        $this->arResult['SUBSCRIPTIONS'] = $subscriptions;
+        $this->arResult['SUBSCRIPTIONS'] = $orderSubscribeService->getSubscriptionsByUser($this->arParams['USER_ID'], false);
         $this->arResult['METRO'] = new ArrayCollection($this->getStoreService()->getMetroInfo());
 
         $this->includeComponentTemplate();

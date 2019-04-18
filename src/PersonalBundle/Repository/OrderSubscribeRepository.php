@@ -236,7 +236,7 @@ class OrderSubscribeRepository extends BaseHlRepository
                 'ID' => 'DESC',
             ];
         }
-        $params['filter']['=ORDER.USER_ID'] = $userId;
+        $params['filter']['=UF_USER_ID'] = $userId;
 
         return $this->findByParams($params);
     }

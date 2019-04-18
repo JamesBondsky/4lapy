@@ -258,6 +258,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             throw new OrderCreateException('Failed to initialize storage');
         }
 
+        // режим подписки на доставку
         if ($this->currentStep === OrderStorageEnum::AUTH_STEP) {
             if (!$storage->isSubscribe() && $_POST['subscribe']) {
                 $storage->setSubscribe(true);
@@ -386,7 +387,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             }
 
             try {
-                if (null !== $delivery) {
+                if (null !== $delivery && !$storage->isSubscribe()) {
                     $this->splitOrder($delivery, $storage);
                 }
             } catch (OrderSplitException $e) {
@@ -508,27 +509,31 @@ class FourPawsOrderComponent extends \CBitrixComponent
                     ['ID' => $pickup->getSelectedShop()->getMetro()]
                 );
             }
-            $storage->setSplit(true);
             $storage->setDeliveryId($pickup->getDeliveryId());
             $storage->setDeliveryPlaceCode($pickup->getSelectedShop()->getXmlId());
-            $splitStockResult = $this->orderSplitService->splitStockResult($pickup);
-            $available        = $splitStockResult->getAvailable();
-            $delayed          = $splitStockResult->getDelayed();
 
-            $canGetPartial = $this->orderSplitService->canGetPartial($pickup);
+            if(!$storage->isSubscribe()){
+                $storage->setSplit(true);
+                $splitStockResult = $this->orderSplitService->splitStockResult($pickup);
+                $available        = $splitStockResult->getAvailable();
+                $delayed          = $splitStockResult->getDelayed();
 
-            if ($canGetPartial) {
-                $available = $this->orderSplitService->recalculateStockResult($available);
+                $canGetPartial = $this->orderSplitService->canGetPartial($pickup);
+
+                if ($canGetPartial) {
+                    $available = $this->orderSplitService->recalculateStockResult($available);
+                }
+
+                $this->arResult['PARTIAL_PICKUP'] = $available->isEmpty()
+                    ? null
+                    : (clone $pickup)->setStockResult($available);
+
+                $this->arResult['PARTIAL_PICKUP_AVAILABLE']  = $canGetPartial;
+                $this->arResult['SPLIT_PICKUP_AVAILABLE']    = $this->orderSplitService->canSplitOrder($pickup);
+                $this->arResult['PICKUP_STOCKS_AVAILABLE']   = $available;
+                $this->arResult['PICKUP_STOCKS_DELAYED']     = $delayed;
             }
 
-            $this->arResult['PARTIAL_PICKUP'] = $available->isEmpty()
-                ? null
-                : (clone $pickup)->setStockResult($available);
-
-            $this->arResult['PARTIAL_PICKUP_AVAILABLE']  = $canGetPartial;
-            $this->arResult['SPLIT_PICKUP_AVAILABLE']    = $this->orderSplitService->canSplitOrder($pickup);
-            $this->arResult['PICKUP_STOCKS_AVAILABLE']   = $available;
-            $this->arResult['PICKUP_STOCKS_DELAYED']     = $delayed;
             $this->arResult['PICKUP_AVAILABLE_PAYMENTS'] = $this->orderStorageService->getAvailablePayments($storage, false, true, $pickup->getStockResult()
                                                                                                                                           ->getPrice());
         }

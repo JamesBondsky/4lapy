@@ -3,20 +3,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-use FourPaws\App\Application;
 use FourPaws\Decorators\SvgDecorator;
-use FourPaws\DeliveryBundle\Collection\StockResultCollection;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
-use FourPaws\Helpers\CurrencyHelper;
-use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
-use FourPaws\DeliveryBundle\Entity\StockResult;
-use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
-use FourPaws\PersonalBundle\Entity\OrderSubscribe;
-use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
-use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\StoreBundle\Entity\Store;
 
 /** @var Store $selectedShop */

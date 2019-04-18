@@ -16,9 +16,14 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\AppBundle\Entity\UserFieldEnumValue;
 use FourPaws\AppBundle\Service\UserFieldEnumService;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\PersonalBundle\Exception\NotFoundException;
+use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
+use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -665,5 +670,128 @@ class OrderSubscribe extends BaseEntity
 
         return $result;
     }
+
+    /**
+     * @return \Doctrine\Common\Collections\ArrayCollection
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getItems()
+    {
+        return $this->getOrderSubscribeService()->getItemsBySubscribeId($this->getId());
+    }
+
+    /**
+     * Возвращает полный адрес места доставки
+     *
+     * @return \FourPaws\LocationBundle\Entity\Address|string|null
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\AppBundle\Exception\NotFoundException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
+    public function getDeliveryPlaceAddress()
+    {
+        $result = null;
+
+        /** @var OrderSubscribeService $orderSubscribeService */
+        $orderSubscribeService = $this->getOrderSubscribeService();
+        /** @var AddressService $addressService */
+        $addressService = Application::getInstance()->getContainer()->get('address.service');
+        /** @var StoreService $storeService */
+        $storeService = Application::getInstance()->getContainer()->get('store.service');
+
+        if($orderSubscribeService->isDelivery($this)){
+            $address = $addressService->getById($this->getDeliveryPlace());
+            $result = $address->getFullAddress();
+        } else {
+            $store = $storeService->getStoreByXmlId($this->getDeliveryPlace());
+            $result = $store->getAddress();
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return bool
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     */
+    public function isDelivery()
+    {
+        return $this->getOrderSubscribeService()->isDelivery($this);
+    }
+
+    /**
+     * Возвращает цену товаров в подписке
+     *
+     * @return float|int
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getPrice()
+    {
+        $sum = 0;
+        $orderSubscribeItems = $this->getItems();
+        $items = [];
+
+        /** @var OrderSubscribeItem $orderSubscribeItem */
+        foreach($orderSubscribeItems as $orderSubscribeItem){
+            $items[$orderSubscribeItem->getOfferId()] = [
+                'ID' => $orderSubscribeItem->getOfferId(),
+                'QUANTITY' => $orderSubscribeItem->getQuantity(),
+            ];
+        }
+
+        $offerCollection = (new OfferQuery())->withFilter(['ID' => array_column($items, 'ID')])->exec();
+        /** @var Offer $offer */
+        foreach($offerCollection as $offer){
+            $sum += $offer->getSubscribePrice() * $items[$offer->getId()]['QUANTITY'];
+        }
+
+        return $sum;
+    }
+
+    /**
+     * Возвращает цену доставки
+     *
+     * @return float|int
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Sale\UserMessageException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\PersonalBundle\Exception\OrderSubscribeException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
+    public function getDeliveryPrice()
+    {
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+
+        $delivery = $deliveryService->getDeliveryById($this->getDeliveryId());
+        $deliveryCode = $deliveryService->getDeliveryCodeById($delivery['ID']);
+        $basket = $this->getOrderSubscribeService()->getBasketBySubscribeId($this->getId());
+
+        $calcResults = $deliveryService->getByBasket($basket, $this->getLocationId(), [$deliveryCode]);
+        $calcResult = current($calcResults);
+        $price = $calcResult->getPrice();
+
+        return $price;
+    }
+
 
 }

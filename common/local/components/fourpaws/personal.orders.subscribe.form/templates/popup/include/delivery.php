@@ -14,10 +14,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
-use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\SaleBundle\Entity\OrderStorage;
-use FourPaws\LocationBundle\LocationService;
 
 /** @var ArrayCollection $addresses */
 $addresses = $arResult['ADDRESSES'];
