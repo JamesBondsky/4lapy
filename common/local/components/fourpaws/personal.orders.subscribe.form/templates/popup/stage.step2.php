@@ -237,7 +237,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
         <a href="javascript:void(0);" class="b-button b-button--back-subscribe-delivery" data-show-step1-subscribe-delivery="true" title="Назад">
             Назад
         </a>
-        <a href="javascript:void(0);" class="b-button b-button--next-subscribe-delivery" title="Далее">
+        <a href="javascript:void(0);" class="b-button b-button--next-subscribe-delivery js-valid-dynamic-out-sub" data-submit-add-subscribe-delivery="true" title="Далее">
             Сохранить изменения
         </a>
         <a href="javascript:void(0);"

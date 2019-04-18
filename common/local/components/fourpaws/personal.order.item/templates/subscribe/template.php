@@ -115,23 +115,22 @@ $activeSubscribe = $orderSubscribe->isActive();
                    data-subscribe-id="<?=$orderSubscribe->getId()?>">
                     <span class="b-link__text b-link__text--change-subscribe-delivery">Редактировать <span>подписку</span></span>
                 </a>
-                <?php if($activeSubscribe) { ?>
-                    <a class="b-link b-link--repeat-order b-link--change-subscribe-delivery js-open-popup"
-                       href="javascript:void(0);"
-                       title="Остановить подписку"
-                       data-subscribe-id="<?=$orderSubscribe->getId()?>"
-                       data-popup-id="stop-subscribe-delivery">
-                        <span class="b-link__text b-link__text--change-subscribe-delivery">Остановить <span>подписку</span></span>
-                    </a>
-                <?php } else { ?>
-                    <a class="b-link b-link--repeat-order b-link--repeat-order"
-                       href="javascript:void(0);"
-                       title="Возобновить подписку"
-                       data-subscribe-id="<?=$orderSubscribe->getId()?>"
-                       data-popup-id="renew-subscribe-delivery">
-                        <span class="b-link__text b-link__text--repeat-order">Возобновить <span>подписку</span></span>
-                    </a>
-                <?php } ?>
+                <a class="b-link b-link--repeat-order b-link--change-subscribe-delivery js-open-popup"
+                   href="javascript:void(0);"
+                   title="Остановить подписку"
+                   data-subscribe-id="<?=$orderSubscribe->getId()?>"
+                   data-popup-id="stop-subscribe-delivery"
+                   <?php if(!$activeSubscribe) { ?>style="display: none;"<?php } ?>>
+                    <span class="b-link__text b-link__text--change-subscribe-delivery">Остановить <span>подписку</span></span>
+                </a>
+                <a class="b-link b-link--repeat-order b-link--repeat-order"
+                   href="javascript:void(0);"
+                   title="Возобновить подписку"
+                   data-subscribe-id="<?=$orderSubscribe->getId()?>"
+                   data-popup-id="renew-subscribe-delivery"
+                   <?php if($activeSubscribe) { ?>style="display: none;"<?php } ?>>
+                    <span class="b-link__text b-link__text--repeat-order">Возобновить <span>подписку</span></span>
+                </a>
             </div>
             <div class="b-accordion-order-item__operation">
                 <div class="b-accordion-order-item__sum">
