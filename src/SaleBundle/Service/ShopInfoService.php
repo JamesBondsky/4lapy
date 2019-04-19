@@ -314,6 +314,7 @@ class ShopInfoService
                             ->setDelayedItems($this->getShopItems($delayed))
                             ->setPrice(WordHelper::numberFormat($price))
                             ->setFullPrice(WordHelper::numberFormat($fullResult->getStockResult()->getPrice()))
+                            ->setIsSubscribe($isSubscribe)
                             ->setPickupDate(
                                 DeliveryTimeHelper::showTime(
                                     $available->isEmpty() ? $fullResult : $partialResult,
