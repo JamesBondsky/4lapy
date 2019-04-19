@@ -564,6 +564,9 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                 }
 
                 $items = $this->request->get('items');
+                if(empty($items) && $this->getActionReal() != 'renewalSubmit'){
+                    $this->setExecError('subscribeAction', "Не переданы товары для подписки", 'subscriptionAdd');
+                }
                 if(!empty($items)){
                     /** @var BasketItem $basketItem */
                     foreach($items as $item){
@@ -952,7 +955,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             $this->data['ORDER'] = null;
             $orderId = $this->arParams['ORDER_ID'];
 
-            if(!$orderId && $this->getOrderSubscribe()){
+            if($this->getOrderSubscribe()){
                 $orderId = $this->getOrderSubscribe()->getOrderId();
             }
 
