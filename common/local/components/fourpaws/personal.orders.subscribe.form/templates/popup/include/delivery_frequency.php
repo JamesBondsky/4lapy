@@ -14,8 +14,6 @@ $deliveryDayDisplay = !$subscribe || $orderSubscribeService->isWeekFrequency($su
 $subscribeIntervals = $component->getOrderSubscribeService()->getFrequencies();
 $daysOfWeek = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
 
-
-
 ?>
 <div class="subscribe-delivery-order" data-subscribe-delivery-order="true">
     <div class="subscribe-delivery-order__fields">
@@ -40,7 +38,7 @@ $daysOfWeek = ["Понедельник", "Вторник", "Среда", "Чет
                 <span class="b-input-line__label">День доставки</span>
             </div>
             <div class="b-select b-select--recall b-select--feedback-page">
-                <select class="b-select__block b-select__block--recall b-select__block--feedback-page" name="subscribeDay" data-select="0" data-select-delivery-order="subscribeDay">
+                <select class="b-select__block b-select__block--recall b-select__block--feedback-page <?=$deliveryDayDisplay ? 'js-no-valid' : ''?>" name="subscribeDay" data-select="0" data-select-delivery-order="subscribeDay">
                     <option value="" disabled="disabled" selected="selected">выберите</option>
                     <?php
                     foreach ($daysOfWeek as $i => $day) { ?>

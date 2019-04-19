@@ -469,11 +469,15 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         $this->processSubscribeFormFields();
 
         if (empty($this->arResult['ERROR']['FIELD'])) {
+            /** @var OrderSubscribeService $orderSubscribeService */
+            $orderSubscribeService = $this->getOrderSubscribeService();
+            $orderSubscribe = $this->getOrderSubscribe();
             $order = $this->getOrder();
-            if ($order) {
-                /** @var OrderSubscribeService $orderSubscribeService */
-                $orderSubscribeService = $this->getOrderSubscribeService();
-                $orderSubscribe = $this->getOrderSubscribe();
+            if(!$order && !$orderSubscribe){
+                $this->setExecError('subscribeAction', "Необходимо наличие заказа или подписки для действия", 'subscriptionUpdate');
+            }
+
+            if (empty($this->arResult['ERROR']['EXEC'])) {
                 if (!$orderSubscribe) {
                     $orderSubscribe = (new OrderSubscribe());
                 }
