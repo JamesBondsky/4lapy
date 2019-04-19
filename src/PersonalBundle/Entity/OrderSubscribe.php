@@ -159,7 +159,7 @@ class OrderSubscribe extends BaseEntity
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $payWithbonus;
+    protected $payWithbonus = false;
 
     /** @var UserFieldEnumService $userFieldEnumService */
     private $userFieldEnumService;
@@ -414,7 +414,7 @@ class OrderSubscribe extends BaseEntity
      */
     public function isPayWithbonus(): bool
     {
-        return $this->payWithbonus;
+        return $this->payWithbonus ?: false;
     }
 
     /**
