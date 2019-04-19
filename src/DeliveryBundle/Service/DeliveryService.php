@@ -981,11 +981,14 @@ class DeliveryService implements LoggerAwareInterface
                 $dateOffset++;
             } while (\count($result) < $count);
         } else {
+            //$result[] = clone $delivery; // иначе первая дата доставки будет на день позже
             while(\count($result) < $count){
                 $curDate = new \DateTime(sprintf('+%s days', $dateOffset));
                 /** @var PickupResultInterface $currentDelivery */
                 $tmpPickup = clone $delivery;
-                $tmpPickup->setCurrentDate($curDate);
+                //if($curDate->format('d.m.Y') !== date('d.m.Y')){
+                    $tmpPickup->setCurrentDate($curDate);
+                //}
                 $result[] = $tmpPickup;
                 $dateOffset++;
             }

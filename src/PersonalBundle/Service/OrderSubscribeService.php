@@ -628,6 +628,7 @@ class OrderSubscribeService implements LoggerAwareInterface
         if ($filterActive) {
             $params['filter']['=UF_ACTIVE'] = 1;
         }
+        $params['filter']['!UF_ORDER'] = false;
 
         return $this->orderSubscribeRepository->findByUser($userId, $params);
     }
@@ -1643,8 +1644,22 @@ class OrderSubscribeService implements LoggerAwareInterface
 
             $interval = $storage->getDeliveryInterval() ? $intervalService->getIntervalByCode($storage->getDeliveryInterval()) : '';
 
-            $subscribe->setDeliveryDay($data['subscribeDay'])
-                ->setDeliveryId($deliveryId)
+            $deliveryDate = new DateTime($data['deliveryDate']);
+            if(!$deliveryDate){
+                throw new OrderSubscribeException("Некорректная дата первой доставки");
+            }
+            $subscribe->setNextDate($deliveryDate);
+
+            if($this->isWeekFrequency($data['subscribeFrequency'])) {
+                $deliveryDay = $deliveryDate->format('N');
+                $subscribe->setDeliveryDay($deliveryDay);
+            } else if(!empty($data['subscribeDay'])) {
+                $subscribe->setDeliveryDay($data['subscribeDay']);
+            } else {
+                throw new OrderSubscribeException("Не указан день доставки");
+            }
+
+            $subscribe->setDeliveryId($deliveryId)
                 ->setFrequency($data['subscribeFrequency'])
                 ->setDeliveryTime($interval)
                 ->setActive(false);
@@ -1653,14 +1668,14 @@ class OrderSubscribeService implements LoggerAwareInterface
                 $subscribe->setDeliveryPlace($data['addressId']);
             }
             elseif($this->getDeliveryService()->isPickup($orderStorageService->getSelectedDelivery($storage))){
-                if(!$data['deliveryPlaceCode']){
+                if(!$data['deliveryPlaceCode'] && !$data['shopId']){
                     throw new OrderSubscribeException("Не выбран магазин для самовывоза");
                 }
-                $subscribe->setDeliveryPlace($data['deliveryPlaceCode']);
+                $subscribe->setDeliveryPlace($data['deliveryPlaceCode'] ?: $data['shopId']);
             }
 
             if($subscribe->getId() > 0){
-                $this->countNextDate($subscribe);
+                //$this->countNextDate($subscribe);
                 $this->update($subscribe);
             }
             else{

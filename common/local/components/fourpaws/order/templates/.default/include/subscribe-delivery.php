@@ -4,7 +4,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\PersonalBundle\Entity\OrderSubscribe;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 
+/** @var OrderSubscribeService $orderSubscribeService */
+$orderSubscribeService = $component->getOrderSubscribeService();
+
+/** @var OrderSubscribe $orderSubscribe */
+$orderSubscribe = $arResult['ORDER_SUBSCRIBE'];
+if($orderSubscribe){
+    $selectedFrequency = $orderSubscribe->getFrequency();
+    $selectedDay = $orderSubscribe->getDeliveryDay();
+}
 ?>
 <div class="subscribe-delivery-order" data-subscribe-delivery-order="true">
     <div class="subscribe-delivery-order__fields">
@@ -17,7 +28,10 @@ use FourPaws\Decorators\SvgDecorator;
                     <option value="" disabled="disabled">выберите</option>
                     <?php
                     foreach ($subscribeIntervals as $i => $frequency) { ?>
-                        <option value="<?= $frequency['ID'] ?>" data-freq-type="<?=$component->getOrderSubscribeService()->getFrequencyType($frequency)?>" data-freq-value="<?=$component->getOrderSubscribeService()->getFrequencyValue($frequency)?>">
+                        <option value="<?= $frequency['ID'] ?>"
+                                <?=($selectedFrequency == $frequency) ? 'selected' : ''?>
+                                data-freq-type="<?=$orderSubscribeService->getFrequencyType($frequency)?>"
+                                data-freq-value="<?=$orderSubscribeService->getFrequencyValue($frequency)?>">
                             <?= (string)$frequency['VALUE'] ?>
                         </option>
                     <?php } ?>
@@ -33,7 +47,7 @@ use FourPaws\Decorators\SvgDecorator;
                     <option value="" disabled="disabled" selected="selected">выберите</option>
                     <?php
                     foreach ($daysOfWeek as $i => $day) { ?>
-                        <option value="<?= ($i+1) ?>">
+                        <option value="<?= ($i+1) ?>" <?=($selectedDay == ($i+1)) ? 'selected' : ''?>>
                             <?= $day ?>
                         </option>
                     <?php } ?>

@@ -394,6 +394,10 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 // проверяется на этапе валидации $storage
             }
 
+            if($storage->getSubscribeId() > 0){ // для выбора дня первой доставки
+                $this->arResult['ORDER_SUBSCRIBE'] = $this->getOrderSubscribeService()->getById($storage->getSubscribeId());
+            }
+
             $this->arResult['PICKUP']               = $pickup;
             $this->arResult['DELIVERY']             = $delivery;
             if (isset($deliveryDostavista)) {
@@ -512,6 +516,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $storage->setDeliveryId($pickup->getDeliveryId());
             $storage->setDeliveryPlaceCode($pickup->getSelectedShop()->getXmlId());
 
+            $this->arResult['PICKUP_AVAILABLE_PAYMENTS'] = $this->orderStorageService->getAvailablePayments($storage, false, true, $pickup->getStockResult()
+                ->getPrice());
+
             if(!$storage->isSubscribe()){
                 $storage->setSplit(true);
                 $splitStockResult = $this->orderSplitService->splitStockResult($pickup);
@@ -533,9 +540,6 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 $this->arResult['PICKUP_STOCKS_AVAILABLE']   = $available;
                 $this->arResult['PICKUP_STOCKS_DELAYED']     = $delayed;
             }
-
-            $this->arResult['PICKUP_AVAILABLE_PAYMENTS'] = $this->orderStorageService->getAvailablePayments($storage, false, true, $pickup->getStockResult()
-                                                                                                                                          ->getPrice());
         }
     }
 
