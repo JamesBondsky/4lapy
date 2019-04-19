@@ -54,7 +54,7 @@ if($orderSubscribe){
                 </select>
             </div>
         </div>
-        <div class="subscribe-delivery-order__date-second-delivery" data-wrap-date-second-delivery-subscribe="true">
+        <div class="subscribe-delivery-order__date-second-delivery" data-wrap-date-second-delivery-subscribe="true" style="display:none">
             Дата следующей доставки:<br/>
             <span class="bold js-date-second-delivery">понедельник, 8 апреля</span>
         </div>

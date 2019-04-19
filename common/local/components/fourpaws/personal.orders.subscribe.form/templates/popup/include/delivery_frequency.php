@@ -45,9 +45,9 @@ $daysOfWeek = ["Понедельник", "Вторник", "Среда", "Чет
                 </select>
             </div>
         </div>
-        <div class="subscribe-delivery-order__date-second-delivery" <?= ($nextDelivery) ? '' : 'style="display:none"'?> data-wrap-date-second-delivery-subscribe="true">
+        <div class="subscribe-delivery-order__date-second-delivery" data-wrap-date-second-delivery-subscribe="true" style="display: none;">
             Дата следующей доставки:<br/>
-            <span class="bold js-date-second-delivery"><?= ($nextDelivery) ? FormatDate('l, d.m.Y', $nextDelivery->getTimestamp()) : '' ?></span>
+            <span class="bold js-date-second-delivery"></span>
         </div>
     </div>
     <div class="subscribe-delivery-order__info js-info-subscribe-delivery-order">
