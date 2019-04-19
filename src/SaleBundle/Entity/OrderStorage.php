@@ -1113,7 +1113,7 @@ class OrderStorage
     /**
      * @return int
      */
-    public function getSubscribeId(): int
+    public function getSubscribeId()
     {
         return $this->subscribeId;
     }
