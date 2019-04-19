@@ -213,8 +213,7 @@ class ShopInfoService
             /** @var Store $store */
             foreach ($storeCollection as $store) {
                 try {
-                    $disableSplit = $orderStorage->isSubscribe();
-                    $item = $this->getShopData($pickupResult, $store, $metroList, $paymentInfo, $recalculateBasket, $disableSplit);
+                    $item = $this->getShopData($pickupResult, $store, $metroList, $paymentInfo, $recalculateBasket, $orderStorage->isSubscribe());
                     $locationType = (($store->getLocation() === $locationCode) || ($store->getSubRegion() && $store->getSubRegion() === $subregionCode))
                         ? StoreLocationType::SUBREGIONAL
                         : StoreLocationType::REGIONAL;
@@ -268,7 +267,7 @@ class ShopInfoService
         array $metroList,
         array $paymentInfo,
         bool $recalculateBasket = false,
-        bool $disableSplit = false
+        bool $isSubscribe = false
     ): Shop
     {
         $fullResult = (clone $pickup)->setSelectedShop($store);
@@ -279,7 +278,7 @@ class ShopInfoService
         $splitStockResult = $this->orderSplitService->splitStockResult($fullResult);
         $available = $splitStockResult->getAvailable();
         $delayed = $splitStockResult->getDelayed();
-        if($disableSplit) {
+        if($isSubscribe) {
             $canGetPartial = false;
             $canSplit = false;
         } else{
@@ -308,7 +307,7 @@ class ShopInfoService
                             ->setAddress($address)
                             ->setMetroCssClass($store->getMetro() ? '--' . $metroList[$store->getMetro()]['BRANCH']['UF_CLASS'] : '')
                             ->setAvailability(
-                                $this->getShopAvailabilityType($splitStockResult, $canSplit, $canGetPartial)
+                                $this->getShopAvailabilityType($splitStockResult, $canSplit, $canGetPartial, $isSubscribe)
                             )
                             ->setPayments($this->getShopPayments($store, $price, $paymentInfo))
                             ->setAvailableItems($this->getShopItems($available))
@@ -461,7 +460,8 @@ class ShopInfoService
     protected function getShopAvailabilityType(
         SplitStockResult $splitStockResult,
         bool $canSplit,
-        bool $canGetPartial
+        bool $canGetPartial,
+        bool $isSubscribe
     ): string
     {
         $result = OrderAvailability::AVAILABLE;
@@ -469,7 +469,7 @@ class ShopInfoService
             $result = OrderAvailability::PARTIAL;
         } elseif ($canSplit) {
             $result = OrderAvailability::SPLIT;
-        } elseif (!$splitStockResult->getDelayed()->isEmpty()) {
+        } elseif (!$splitStockResult->getDelayed()->isEmpty() && !$isSubscribe) {
             $result = OrderAvailability::DELAYED;
         }
 

@@ -24,11 +24,11 @@ if($orderSubscribe && $orderSubscribe->getId() > 0){
     $selectedInterval = $orderSubscribe->getDeliveryTime();
 }
 ?>
-<div class="b-delivery-type-time" data-container-delivery-type-time="true" <?=($hideFirstDateSelect) ? 'style="display: none"' : ''?>>
+<div class="b-delivery-type-time" data-container-delivery-type-time="true">
     <ul class="b-radio-tab">
         <li class="b-radio-tab__tab b-radio-tab__tab--default-dostavista" data-content-type-time-delivery="default">
             <div class="delivery-block__type visible">
-                <div class="b-input-line b-input-line--desired-date">
+                <div class="b-input-line b-input-line--desired-date" <?=($hideFirstDateSelect) ? 'style="display: none"' : ''?>>
                     <div class="b-input-line__label-wrapper">
                         <span class="b-input-line__label">Желаемая дата первой доставки</span>
                     </div>
