@@ -628,7 +628,7 @@ class OrderSubscribeService implements LoggerAwareInterface
         if ($filterActive) {
             $params['filter']['=UF_ACTIVE'] = 1;
         }
-        $params['filter']['!UF_ORDER'] = false;
+        $params['filter']['!UF_ORDER_ID'] = false;
 
         return $this->orderSubscribeRepository->findByUser($userId, $params);
     }
@@ -662,7 +662,7 @@ class OrderSubscribeService implements LoggerAwareInterface
                     'ORDER_SUBSCRIBE',
                     $this->orderSubscribeRepository->getHlBlockEntityClass(),
                     [
-                        '=this.ID' => 'ref.UF_ORDER'
+                        '=this.ID' => 'ref.UF_ORDER_ID'
                     ]
                 ),
             ]

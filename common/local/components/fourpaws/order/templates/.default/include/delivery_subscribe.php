@@ -15,8 +15,8 @@ $orderSubscribe = $arResult['ORDER_SUBSCRIBE'];
 if($orderSubscribe){
     $selectedFrequency = $orderSubscribe->getFrequency();
     $selectedDeliveryDay = $orderSubscribe->getDeliveryDay();
-    $deliveryDayDisplay = $orderSubscribeService->isWeekFrequency($selectedFrequency) ? 'style="display: none"' : '';
 }
+$deliveryDayDisplay = !$orderSubscribe || $orderSubscribeService->isWeekFrequency($selectedFrequency) ? 'style="display: none"' : '';
 ?>
 <div class="subscribe-delivery-order" data-subscribe-delivery-order="true">
     <div class="subscribe-delivery-order__fields">

@@ -13,8 +13,18 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 $deliveryService = $component->getDeliveryService();
 
 $nextDeliveries = $deliveryService->getNextDeliveries($currentDelivery, 10);
+
+$hideFirstDateSelect = false;
+$selectedFirstDate = null;
+$selectedInterval = null;
+$orderSubscribe = $component->getOrderSubscribe();
+if($orderSubscribe && $orderSubscribe->getId() > 0){
+    $hideFirstDateSelect = true;
+    $selectedFirstDate = $orderSubscribe->getNextDate()->format('d.m.Y');
+    $selectedInterval = $orderSubscribe->getDeliveryTime();
+}
 ?>
-<div class="b-delivery-type-time" data-container-delivery-type-time="true">
+<div class="b-delivery-type-time" data-container-delivery-type-time="true" <?=($hideFirstDateSelect) ? 'style="display: none"' : ''?>>
     <ul class="b-radio-tab">
         <li class="b-radio-tab__tab b-radio-tab__tab--default-dostavista" data-content-type-time-delivery="default">
             <div class="delivery-block__type visible">

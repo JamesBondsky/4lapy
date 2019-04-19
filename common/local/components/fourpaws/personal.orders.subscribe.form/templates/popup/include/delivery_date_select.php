@@ -2,9 +2,8 @@
 
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 
-/**
- * @var CalculationResultInterface $currentDelivery
- */
+
+
 ?>
 
 <select class="b-select__block b-select__block--recall b-select__block--feedback-page js-select-recovery js-change-date js-pickup-date <?=$deliveryService->isPickup($currentDelivery) ? 'js-no-valid' : ''?>"
@@ -14,7 +13,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
     <?php
     /** @var CalculationResultInterface $nextDelivery */
     foreach ($nextDeliveries as $i => $nextDelivery) { ?>
-        <option value="<?= $nextDelivery->getDeliveryDate()->format('d.m.Y') ?>" data-date-option="<?= FormatDate('l, Y-m-d', $nextDelivery->getDeliveryDate()->getTimestamp()) ?>">
+        <option value="<?= $nextDelivery->getDeliveryDate()->format('d.m.Y') ?>" data-date-option="<?= FormatDate('l, Y-m-d', $nextDelivery->getDeliveryDate()->getTimestamp()) ?>" <?=($selectedFirstDate == $nextDelivery->getDeliveryDate()->format('d.m.Y') ? 'selected' : '')?>>
             <?= FormatDate('l, d.m.Y', $nextDelivery->getDeliveryDate()->getTimestamp()) ?>
         </option>
     <?php } ?>

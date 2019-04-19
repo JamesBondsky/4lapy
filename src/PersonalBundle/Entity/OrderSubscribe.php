@@ -100,19 +100,9 @@ class OrderSubscribe extends BaseEntity
     protected $active = true;
 
     /**
-     * @var bool
-     * @Serializer\Type("bool")
-     * @Serializer\SerializedName("UF_SKIP_DEL")
-     * @Serializer\Groups(groups={"create","read","update"})
-     * @Serializer\SkipWhenEmpty()
-     */
-    protected $skipNextDelivery;
-
-    /**
      * @var int
      * @Serializer\Type("integer")
-     * @Serializer\SerializedName("UF_ORDER")
-     * ("UF_ORDER_ID")
+     * @Serializer\SerializedName("UF_ORDER_ID")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
@@ -139,8 +129,7 @@ class OrderSubscribe extends BaseEntity
     /**
      * @var DateTime
      * @Serializer\Type("bitrix_date_time_ex")
-     * @Serializer\SerializedName("UF_DATE_UPDATE")
-     * ("UF_DATE_EDIT")
+     * @Serializer\SerializedName("UF_DATE_EDIT")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
@@ -317,24 +306,6 @@ class OrderSubscribe extends BaseEntity
     public function setActive(bool $active): OrderSubscribe
     {
         $this->active = $active;
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isSkipNextDelivery(): bool
-    {
-        return $this->skipNextDelivery;
-    }
-
-    /**
-     * @param bool $skipNextDelivery
-     * @return OrderSubscribe
-     */
-    public function setSkipNextDelivery(bool $skipNextDelivery): OrderSubscribe
-    {
-        $this->skipNextDelivery = $skipNextDelivery;
         return $this;
     }
 

@@ -101,6 +101,7 @@ $metro = $arResult['METRO'][$selectedShop->getMetro()];
             <div class="b-select b-select--recall b-select--feedback-page">
                 <?php
                 $nextDeliveries = $deliveryService->getNextDeliveries($pickup, 10);
+                $currentDelivery = $pickup;
                 $selectorName = 'deliveryDate';
                 include 'delivery_date_select.php'
                 ?>

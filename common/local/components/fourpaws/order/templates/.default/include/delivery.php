@@ -328,7 +328,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                         </div>
                         <div class="b-select b-select--recall b-select--feedback-page">
                             <?php
-                            $selectorDelivery = $delivery;
+                            $currentDelivery = $delivery;
                             $selectorStorage = $storage;
                             $selectorName = 'deliveryDate';
                             include 'delivery_date_select.php'

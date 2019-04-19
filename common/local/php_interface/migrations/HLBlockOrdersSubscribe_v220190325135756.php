@@ -621,46 +621,46 @@ class HLBlockOrdersSubscribe_v220190325135756 extends \Adv\Bitrixtools\Migration
         );*/
 
         // ---
-        $fieldName = 'UF_DATE_UPDATE';
-        $ruName = 'Дата последней проверки';
-        $sort += 100;
-        $userTypeEntityHelper->addUserTypeEntityIfNotExists(
-            $entityId,
-            $fieldName,
-            [
-                'FIELD_NAME' => $fieldName,
-                'USER_TYPE_ID' => 'datetime',
-                'XML_ID' => '',
-                'SORT' => $sort,
-                'MULTIPLE' => 'N',
-                'MANDATORY' => 'Y',
-                'SHOW_FILTER' => 'Y',
-                'SHOW_IN_LIST' => 'Y',
-                'EDIT_IN_LIST' => 'Y',
-                'IS_SEARCHABLE' => 'N',
-                'SETTINGS' => [
-                    'DEFAULT_VALUE' => [
-                        'TYPE' => '',
-                        'VALUE' => '',
-                    ],
-                ],
-                'EDIT_FORM_LABEL' => [
-                    'ru' => $ruName,
-                ],
-                'LIST_COLUMN_LABEL' => [
-                    'ru' => $ruName,
-                ],
-                'LIST_FILTER_LABEL' => [
-                    'ru' => $ruName,
-                ],
-                'ERROR_MESSAGE' => [
-                    'ru' => '',
-                ],
-                'HELP_MESSAGE' => [
-                    'ru' => '',
-                ],
-            ]
-        );
+//        $fieldName = 'UF_DATE_UPDATE';
+//        $ruName = 'Дата последней проверки';
+//        $sort += 100;
+//        $userTypeEntityHelper->addUserTypeEntityIfNotExists(
+//            $entityId,
+//            $fieldName,
+//            [
+//                'FIELD_NAME' => $fieldName,
+//                'USER_TYPE_ID' => 'datetime',
+//                'XML_ID' => '',
+//                'SORT' => $sort,
+//                'MULTIPLE' => 'N',
+//                'MANDATORY' => 'Y',
+//                'SHOW_FILTER' => 'Y',
+//                'SHOW_IN_LIST' => 'Y',
+//                'EDIT_IN_LIST' => 'Y',
+//                'IS_SEARCHABLE' => 'N',
+//                'SETTINGS' => [
+//                    'DEFAULT_VALUE' => [
+//                        'TYPE' => '',
+//                        'VALUE' => '',
+//                    ],
+//                ],
+//                'EDIT_FORM_LABEL' => [
+//                    'ru' => $ruName,
+//                ],
+//                'LIST_COLUMN_LABEL' => [
+//                    'ru' => $ruName,
+//                ],
+//                'LIST_FILTER_LABEL' => [
+//                    'ru' => $ruName,
+//                ],
+//                'ERROR_MESSAGE' => [
+//                    'ru' => '',
+//                ],
+//                'HELP_MESSAGE' => [
+//                    'ru' => '',
+//                ],
+//            ]
+//        );
 
         // ---
         $fieldName = 'UF_BONUS';
@@ -708,46 +708,46 @@ class HLBlockOrdersSubscribe_v220190325135756 extends \Adv\Bitrixtools\Migration
         );
 
         // ---
-        $fieldName = 'UF_LAST_CHECK';
-        $ruName = 'Дата последней проверки';
-        $sort += 100;
-        $userTypeEntityHelper->addUserTypeEntityIfNotExists(
-            $entityId,
-            $fieldName,
-            [
-                'FIELD_NAME' => $fieldName,
-                'USER_TYPE_ID' => 'datetime',
-                'XML_ID' => '',
-                'SORT' => $sort,
-                'MULTIPLE' => 'N',
-                'MANDATORY' => 'N',
-                'SHOW_FILTER' => 'Y',
-                'SHOW_IN_LIST' => 'Y',
-                'EDIT_IN_LIST' => 'Y',
-                'IS_SEARCHABLE' => 'N',
-                'SETTINGS' => [
-                    'DEFAULT_VALUE' => [
-                        'TYPE' => '',
-                        'VALUE' => '',
-                    ],
-                ],
-                'EDIT_FORM_LABEL' => [
-                    'ru' => $ruName,
-                ],
-                'LIST_COLUMN_LABEL' => [
-                    'ru' => $ruName,
-                ],
-                'LIST_FILTER_LABEL' => [
-                    'ru' => $ruName,
-                ],
-                'ERROR_MESSAGE' => [
-                    'ru' => '',
-                ],
-                'HELP_MESSAGE' => [
-                    'ru' => '',
-                ],
-            ]
-        );
+//        $fieldName = 'UF_LAST_CHECK';
+//        $ruName = 'Дата последней проверки';
+//        $sort += 100;
+//        $userTypeEntityHelper->addUserTypeEntityIfNotExists(
+//            $entityId,
+//            $fieldName,
+//            [
+//                'FIELD_NAME' => $fieldName,
+//                'USER_TYPE_ID' => 'datetime',
+//                'XML_ID' => '',
+//                'SORT' => $sort,
+//                'MULTIPLE' => 'N',
+//                'MANDATORY' => 'N',
+//                'SHOW_FILTER' => 'Y',
+//                'SHOW_IN_LIST' => 'Y',
+//                'EDIT_IN_LIST' => 'Y',
+//                'IS_SEARCHABLE' => 'N',
+//                'SETTINGS' => [
+//                    'DEFAULT_VALUE' => [
+//                        'TYPE' => '',
+//                        'VALUE' => '',
+//                    ],
+//                ],
+//                'EDIT_FORM_LABEL' => [
+//                    'ru' => $ruName,
+//                ],
+//                'LIST_COLUMN_LABEL' => [
+//                    'ru' => $ruName,
+//                ],
+//                'LIST_FILTER_LABEL' => [
+//                    'ru' => $ruName,
+//                ],
+//                'ERROR_MESSAGE' => [
+//                    'ru' => '',
+//                ],
+//                'HELP_MESSAGE' => [
+//                    'ru' => '',
+//                ],
+//            ]
+//        );
 
         $fieldName = 'UF_DATE_START';
         $userTypeEntityHelper->deleteUserTypeEntityIfExists($entityId, $fieldName);
