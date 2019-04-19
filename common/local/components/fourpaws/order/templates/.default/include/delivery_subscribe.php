@@ -39,7 +39,7 @@ $deliveryDayDisplay = !$orderSubscribe || $orderSubscribeService->isWeekFrequenc
                 </select>
             </div>
         </div>
-        <div class="b-input-line b-input-line--date-delivery-subscribe" data-select-wrap-delivery-order="subscribeDay" <?=$deliveryDayDisplay?> >
+        <div class="b-input-line b-input-line--date-delivery-subscribe <?=$deliveryDayDisplay ? 'js-no-valid' : ''?>" data-select-wrap-delivery-order="subscribeDay" <?=$deliveryDayDisplay?> >
             <div class="b-input-line__label-wrapper">
                 <span class="b-input-line__label">День доставки</span>
             </div>
