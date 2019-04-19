@@ -213,7 +213,8 @@ class ShopInfoService
             /** @var Store $store */
             foreach ($storeCollection as $store) {
                 try {
-                    $item = $this->getShopData($pickupResult, $store, $metroList, $paymentInfo, $recalculateBasket);
+                    $disableSplit = $orderStorage->isSubscribe();
+                    $item = $this->getShopData($pickupResult, $store, $metroList, $paymentInfo, $recalculateBasket, $disableSplit);
                     $locationType = (($store->getLocation() === $locationCode) || ($store->getSubRegion() && $store->getSubRegion() === $subregionCode))
                         ? StoreLocationType::SUBREGIONAL
                         : StoreLocationType::REGIONAL;
@@ -266,7 +267,8 @@ class ShopInfoService
         Store $store,
         array $metroList,
         array $paymentInfo,
-        bool $recalculateBasket = false
+        bool $recalculateBasket = false,
+        bool $disableSplit = false
     ): Shop
     {
         $fullResult = (clone $pickup)->setSelectedShop($store);
@@ -277,8 +279,13 @@ class ShopInfoService
         $splitStockResult = $this->orderSplitService->splitStockResult($fullResult);
         $available = $splitStockResult->getAvailable();
         $delayed = $splitStockResult->getDelayed();
-        $canGetPartial = $this->orderSplitService->canGetPartial($fullResult);
-        $canSplit = $this->orderSplitService->canSplitOrder($fullResult);
+        if($disableSplit) {
+            $canGetPartial = false;
+            $canSplit = false;
+        } else{
+            $canGetPartial = $this->orderSplitService->canGetPartial($fullResult);
+            $canSplit = $this->orderSplitService->canSplitOrder($fullResult);
+        }
         $partialResult = ($canSplit || $canGetPartial) ? (clone $fullResult)->setStockResult($available) : $fullResult;
         /**
          * пересчет скидок корзины для частичного получения заказа
