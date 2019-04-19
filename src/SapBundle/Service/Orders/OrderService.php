@@ -313,7 +313,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     {
         /** @var Order $order */
         $order = Order::loadByAccountNumber($orderDto->getId());
-        $this->getPropertyCollection($order);
 
         if (null === $order) {
             throw new NotFoundOrderException(
