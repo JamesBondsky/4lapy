@@ -14,7 +14,8 @@ $orderSubscribeService = $component->getOrderSubscribeService();
 $orderSubscribe = $arResult['ORDER_SUBSCRIBE'];
 if($orderSubscribe){
     $selectedFrequency = $orderSubscribe->getFrequency();
-    $selectedDay = $orderSubscribe->getDeliveryDay();
+    $selectedDeliveryDay = $orderSubscribe->getDeliveryDay();
+    $deliveryDayDisplay = $orderSubscribeService->isWeekFrequency($selectedFrequency) ? 'style="display: none"' : '';
 }
 ?>
 <div class="subscribe-delivery-order" data-subscribe-delivery-order="true">
@@ -38,7 +39,7 @@ if($orderSubscribe){
                 </select>
             </div>
         </div>
-        <div class="b-input-line b-input-line--date-delivery-subscribe" data-select-wrap-delivery-order="subscribeDay">
+        <div class="b-input-line b-input-line--date-delivery-subscribe" data-select-wrap-delivery-order="subscribeDay" <?=$deliveryDayDisplay?> >
             <div class="b-input-line__label-wrapper">
                 <span class="b-input-line__label">День доставки</span>
             </div>
@@ -47,7 +48,7 @@ if($orderSubscribe){
                     <option value="" disabled="disabled" selected="selected">выберите</option>
                     <?php
                     foreach ($daysOfWeek as $i => $day) { ?>
-                        <option value="<?= ($i+1) ?>" <?=($selectedDay == ($i+1)) ? 'selected' : ''?>>
+                        <option value="<?= ($i+1) ?>" <?=($selectedDeliveryDay == ($i+1)) ? 'selected' : ''?>>
                             <?= $day ?>
                         </option>
                     <?php } ?>
@@ -59,7 +60,7 @@ if($orderSubscribe){
             <span class="bold js-date-second-delivery">понедельник, 8 апреля</span>
         </div>
     </div>
-    <div class="subscribe-delivery-order__info js-info-subscribe-delivery-order">
+    <div class="subscribe-delivery-order__info js-info-subscribe-delivery-order" <?=$deliveryDayDisplay?>>
         <span class="subscribe-delivery-order__icon">
             <?= new SvgDecorator('icon-info-contour', 18, 18) ?>
         </span>

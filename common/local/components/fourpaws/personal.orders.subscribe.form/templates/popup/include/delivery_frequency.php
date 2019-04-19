@@ -4,12 +4,18 @@ use FourPaws\Decorators\SvgDecorator;
 
 $nextDelivery = null;
 $subscribe = $component->getOrderSubscribe();
+$orderSubscribeService = $component->getOrderSubscribeService();
 if($subscribe){
-    $nextDelivery = $component->getOrderSubscribeService()->countNextDate($subscribe);
+    $nextDelivery = $orderSubscribeService->countNextDate($subscribe);
 }
+
+$deliveryDayDisplay = !$subscribe || $orderSubscribeService->isWeekFrequency($subscribe->getFrequency()) ? 'style="display: none"' : '';
 
 $subscribeIntervals = $component->getOrderSubscribeService()->getFrequencies();
 $daysOfWeek = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
+
+
+
 ?>
 <div class="subscribe-delivery-order" data-subscribe-delivery-order="true">
     <div class="subscribe-delivery-order__fields">
@@ -29,7 +35,7 @@ $daysOfWeek = ["Понедельник", "Вторник", "Среда", "Чет
                 </select>
             </div>
         </div>
-        <div class="b-input-line b-input-line--date-delivery-subscribe" data-select-wrap-delivery-order="subscribeDay">
+        <div class="b-input-line b-input-line--date-delivery-subscribe" data-select-wrap-delivery-order="subscribeDay" <?=$deliveryDayDisplay?>>
             <div class="b-input-line__label-wrapper">
                 <span class="b-input-line__label">День доставки</span>
             </div>
@@ -50,7 +56,7 @@ $daysOfWeek = ["Понедельник", "Вторник", "Среда", "Чет
             <span class="bold js-date-second-delivery"></span>
         </div>
     </div>
-    <div class="subscribe-delivery-order__info js-info-subscribe-delivery-order">
+    <div class="subscribe-delivery-order__info js-info-subscribe-delivery-order" <?=$deliveryDayDisplay?>>
         <span class="subscribe-delivery-order__icon">
             <?= new SvgDecorator('icon-info-contour', 18, 18) ?>
         </span>

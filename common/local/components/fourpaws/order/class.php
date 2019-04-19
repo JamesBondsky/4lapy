@@ -207,11 +207,16 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
             $this->currentStep = $componentPage;
 
-            if ($this->arParams['SET_TITLE'] === 'Y') {
-                $APPLICATION->SetTitle('Оформление заказа');
-            }
-
             $this->prepareResult();
+
+
+            if ($this->arParams['SET_TITLE'] === 'Y') {
+                if($this->orderStorageService->getStorage()->isSubscribe()){
+                    $APPLICATION->SetTitle('Оформление подписки на доставку');
+                } else {
+                    $APPLICATION->SetTitle('Оформление заказа');
+                }
+            }
 
             $this->includeComponentTemplate($componentPage);
         } catch (Exception $e) {
