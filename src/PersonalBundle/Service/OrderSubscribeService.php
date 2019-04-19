@@ -1631,6 +1631,7 @@ class OrderSubscribeService implements LoggerAwareInterface
         try {
             /** @var IntervalService $intervalService */
             $intervalService = Application::getInstance()->getContainer()->get(IntervalService::class);
+            /** @var OrderStorageService $orderStorageService */
             $orderStorageService = Application::getInstance()->getContainer()->get(OrderStorageService::class);
 
             $deliveryId = $storage->getDeliveryId();
@@ -1644,7 +1645,8 @@ class OrderSubscribeService implements LoggerAwareInterface
 
             $interval = $storage->getDeliveryInterval() ? $intervalService->getIntervalByCode($storage->getDeliveryInterval()) : '';
 
-            $deliveryDate = new DateTime($data['deliveryDate']);
+            $selectedDelivery = $this->getDeliveryService()->getNextDeliveries($orderStorageService->getSelectedDelivery($storage), 10)[$storage->getDeliveryDate()];
+            $deliveryDate = new DateTime($selectedDelivery->getDeliveryDate()->format('d.m.Y H:i:s'));
             if(!$deliveryDate){
                 throw new OrderSubscribeException("Некорректная дата первой доставки");
             }

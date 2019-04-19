@@ -7,7 +7,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
  */
 ?>
 
-<select class="b-select__block b-select__block--recall b-select__block--feedback-page js-select-recovery js-change-date js-pickup-date <?=$deliveryService->isPickup($currentDelivery)?>js-no-valid"
+<select class="b-select__block b-select__block--recall b-select__block--feedback-page js-select-recovery js-change-date js-pickup-date <?=$deliveryService->isPickup($currentDelivery) ? 'js-no-valid' : ''?>"
         name="<?= $selectorName ?>">
     <option value="" disabled="disabled" selected="selected">выберите</option>
     <?php
