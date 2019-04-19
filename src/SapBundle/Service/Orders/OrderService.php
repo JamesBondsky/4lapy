@@ -297,7 +297,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      */
     public function transformDtoToOrder(OrderDtoIn $orderDto): Order
     {
+        /** @var Order $order */
         $order = Order::loadByAccountNumber($orderDto->getId());
+        $this->propertyCollection = $order->getPropertyCollection();
 
         if (null === $order) {
             throw new NotFoundOrderException(
@@ -762,7 +764,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $deliveryAddress = $orderDto->getDeliveryAddress();
 
         if ($orderDto->getClientFio()) {
-            $this->setPropertyValue($propertyCollection, 'NAME', $orderDto->getClientFio());
+            $this->setPropertyValue($this->propertyCollection, 'NAME', $orderDto->getClientFio());
         }
         $this->setPropertyValue(
             $this->propertyCollection,
