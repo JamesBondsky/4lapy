@@ -7,13 +7,6 @@ use JMS\Serializer\Annotation as Serializer;
 class DeliveryTime
 {
     /**
-     * @Serializer\Type("DateTime<'d.m.Y'>")
-     * @Serializer\SerializedName("deliveryDate")
-     * @var \DateTime
-     */
-    protected $deliveryDate;
-
-    /**
      * @Serializer\Type("string")
      * @Serializer\SerializedName("title")
      * @var string
@@ -33,24 +26,6 @@ class DeliveryTime
      * @var int
      */
     protected $deliveryIntervalIndex;
-
-    /**
-     * @return \DateTime
-     */
-    public function getDeliveryDate(): \DateTime
-    {
-        return $this->deliveryDate;
-    }
-
-    /**
-     * @param \DateTime $deliveryDate
-     * @return DeliveryTime
-     */
-    public function setDeliveryDate(\DateTime $deliveryDate): DeliveryTime
-    {
-        $this->deliveryDate = $deliveryDate;
-        return $this;
-    }
 
     /**
      * @return string

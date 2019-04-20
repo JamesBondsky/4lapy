@@ -696,20 +696,19 @@ class OrderService
             /** @var DeliveryResult $delivery */
             $deliveryDate = $delivery->getDeliveryDate();
             $intervals = $delivery->getAvailableIntervals();
-            $dayOfTheWeek = FormatDate('l', $delivery->getDeliveryDate()->getTimestamp());
+            $day = FormatDate('d.m.Y l', $delivery->getDeliveryDate()->getTimestamp());
             if (!empty($intervals) && count($intervals)) {
                 foreach ($intervals as $deliveryIntervalIndex => $interval) {
                     /** @var Interval $interval */
                     $dates[] = (new DeliveryTime())
-                        ->setTitle($dayOfTheWeek . ' ' . $interval)
-                        ->setDeliveryDate($deliveryDate)
+                        ->setTitle($day . ' ' . $interval)
                         ->setDeliveryDateIndex($deliveryDateIndex)
                         ->setDeliveryIntervalIndex($deliveryIntervalIndex)
                     ;
                 }
             } else {
                 $dates[] = (new DeliveryTime())
-                    ->setTitle($dayOfTheWeek)
+                    ->setTitle($day)
                     ->setDeliveryDate($deliveryDate)
                     ->setDeliveryDateIndex($deliveryDateIndex)
                 ;
