@@ -243,7 +243,7 @@ class StoreService
             ->setAddress($metroAddressText . $store->getAddress())
             ->setCode($store->getXmlId())
             ->setTitle($this->formatStoreTitle($store->getXmlId(), $store->getTitle()))
-            ->setDetails($store->getDescription())
+            ->setDetails(strip_tags($store->getDescription()))
             ->setLatitude($store->getLatitude())
             ->setLongitude($store->getLongitude())
             ->setMetroColor($metroColor)
