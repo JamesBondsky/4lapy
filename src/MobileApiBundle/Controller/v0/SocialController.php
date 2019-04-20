@@ -43,6 +43,12 @@ class SocialController extends FOSRestController
                     'ios'     => 'odnoklassniki://ok.ru/group/51483118272694',
                     'android' => '',
                 ],
+            'youtube' =>
+                [
+                    'web'     => 'https://www.youtube.com/channel/UCduvxcmOQFwTewukh9DUpvQ',
+                    'ios'     => 'youtube://www.youtube.com/channel/UCduvxcmOQFwTewukh9DUpvQ',
+                    'android' => '',
+                ],
         ]);
         return $this->view($response);
     }
