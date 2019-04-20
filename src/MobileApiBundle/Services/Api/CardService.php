@@ -10,6 +10,7 @@ use Bitrix\Main\UserTable;
 use FourPaws\MobileApiBundle\Dto\Error;
 use FourPaws\MobileApiBundle\Dto\Object\ChangeCardProfile;
 use FourPaws\MobileApiBundle\Dto\Response;
+use FourPaws\MobileApiBundle\Exception\EmailAlreadyUsed;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\PersonalBundle\Exception\CardNotValidException;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
@@ -146,7 +147,7 @@ class CardService
     {
         if ($user = $this->appUserService->findOneByEmail($email)) {
             if ($user->isEmailConfirmed()) {
-                throw new RuntimeException("Пользователь с email $email уже подтвердил свой email");
+                throw new EmailAlreadyUsed();
             }
         }
         return $this->apiCaptchaService->sendValidation($email, 'card_activation');

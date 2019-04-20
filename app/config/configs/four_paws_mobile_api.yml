@@ -15,7 +15,7 @@ four_paws_mobile_api:
       status_code: 200
     FourPaws\UserBundle\Exception\InvalidCredentialException:
       code: 6
-      message: 'Пароль указан неверно'
+      message: 'Код подтверждения указан не верно'
       status_code: 200
     Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException:
       code: 9
@@ -28,6 +28,10 @@ four_paws_mobile_api:
     FourPaws\MobileApiBundle\Exception\NoneMetroInCityException:
       code: 44
       message: 'Данные о станциях метро для этого города отсутствуют'
+      status_code: 200
+    FourPaws\MobileApiBundle\Exception\EmailAlreadyUsed:
+      code: 55
+      message: 'Данный почтовый ящик уже используется. Выберите другой.'
       status_code: 200
     FourPaws\Catalog\Exception\CategoryNotFoundException:
       code: 404
