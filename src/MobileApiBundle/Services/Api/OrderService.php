@@ -784,6 +784,8 @@ class OrderService
                 break;
         }
         $cartParamArray['deliveryId'] = $cartParamArray['deliveryTypeId'];
+        $cartParamArray['comment1'] = $cartParamArray['comment'];
+        $cartParamArray['comment2'] = $cartParamArray['secondComment'];
         $storage = $this->orderStorageService->getStorage();
         $this->couponStorage->save($storage->getPromoCode()); // because we can't use sessions we get promo code from the database, save it into session for current hit and creating order
         foreach (\FourPaws\SaleBundle\Enum\OrderStorage::STEP_ORDER as $step) {
