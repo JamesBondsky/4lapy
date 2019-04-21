@@ -36,6 +36,7 @@ use FourPaws\LocationBundle\LocationService;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct;
 use FourPaws\CatalogBundle\Helper\MarkHelper;
+use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct\Tag;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Exception\CategoryNotFoundException;
 use FourPaws\MobileApiBundle\Exception\NotFoundProductException;
@@ -265,10 +266,20 @@ class ProductService
     public function getTags(Offer $offer)
     {
         $tags = [];
+        if ($offer->isShare()) {
+            /** @var Share $share */
+            $share = $offer->getShare()->first();
+            if ($share->hasLabelImage() && $tag = $this->getTagFromPng($share->getPropertyLabelImageFileSrc())) {
+                $tags[] = $tag;
+            }
+            if ($share->hasLabel() && $tag = $this->getTagFromTitle($share->getPropertyLabel())) {
+                $tags[] = $tag;
+            }
+        }
         if (
-            ($offer->isHit() && $tag = $this->getTag(MarkHelper::MARK_HIT_IMAGE_SRC))
-            || ($offer->isNew() && $tag = $this->getTag(MarkHelper::MARK_NEW_IMAGE_SRC))
-            || ($offer->isSale() && $tag = $this->getTag(MarkHelper::MARK_SALE_IMAGE_SRC))
+            (($offer->isHit() || $offer->isPopular()) && $tag = $this->getTagFromPng(MarkHelper::MARK_HIT_IMAGE_SRC))
+            || ($offer->isNew() && $tag = $this->getTagFromPng(MarkHelper::MARK_NEW_IMAGE_SRC))
+            || ($offer->isSale() && $tag = $this->getTagFromPng(MarkHelper::MARK_SALE_IMAGE_SRC))
         ) {
             $tags[] = $tag;
         }
@@ -277,7 +288,7 @@ class ProductService
 
     /**
      * @param string $svg
-     * @return ShortProduct\Tag|false
+     * @return Tag|false
      */
     public function getTag(string $svg)
     {
@@ -288,7 +299,27 @@ class ProductService
         } catch (NotFoundException $e) {
             return false;
         }
-        return (new ShortProduct\Tag())->setImg($png);
+        return $this->getTagFromPng($png);
+    }
+
+    /**
+     * @param string $png
+     *
+     * @return Tag
+     */
+    public function getTagFromPng(string $png): Tag
+    {
+        return (new Tag())->setImg($png);
+    }
+
+    /**
+     * @param string $title
+     *
+     * @return Tag
+     */
+    public function getTagFromTitle(string $title): Tag
+    {
+        return (new Tag())->setTitle($title);
     }
 
     /**
