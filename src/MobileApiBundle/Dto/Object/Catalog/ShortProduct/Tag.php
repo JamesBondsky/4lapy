@@ -86,6 +86,11 @@ class Tag
         return $this;
     }
 
+    /**
+     * @param string $title
+     * 
+     * @return Tag
+     */
     public function setTitle(string $title): Tag
     {
         $this->title = $title;
