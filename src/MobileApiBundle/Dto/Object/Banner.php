@@ -58,6 +58,15 @@ class Banner
     protected $link = '';
 
     /**
+     * Привязанный элемент
+     * @Serializer\SerializedName("alt_target_element")
+     * @Serializer\Type("int")
+     * @Serializer\SkipWhenEmpty()
+     * @var int
+     */
+    protected $elementLink;
+
+    /**
      * Ссылка с баннера, подготовленная для мобильного приложения
      * @Serializer\SerializedName("target")
      * @Serializer\Type("string")
@@ -157,6 +166,15 @@ class Banner
         $this->link = (string) new FullHrefDecorator($link);
         $this->cityId = $cityId;
         $this->preparedLink = $this->getPreparedLink();
+        return $this;
+    }
+
+    /**
+     * @param $elementLink
+     * @return Banner
+     */
+    public function setElementLink($elementLink): Banner {
+        $this->elementLink = $elementLink;
         return $this;
     }
 

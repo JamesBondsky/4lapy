@@ -61,6 +61,10 @@ class BannerService
             ->setPicture($bannerModel->getPictureForMobile())
             ->setLink($bannerModel->getLink(), $this->cityId);
 
+        if ($elementLink = $bannerModel->getElementLink()) {
+            $banner->setElementLink($bannerModel->getElementLink());
+        }
+
         return $banner;
     }
 }
