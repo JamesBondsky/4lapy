@@ -316,7 +316,7 @@ class ExpertsenderService implements LoggerAwareInterface
             try {
                 $this->getUserId($curUserEmail);
                 $hasNewEmailInSender = true;
-            } catch (ExpertsenderServiceApiException $e) {
+            } catch (ExpertsenderServiceApiException|ExpertsenderServiceException $e) {
             }
         }
 
