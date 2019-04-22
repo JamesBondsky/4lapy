@@ -67,7 +67,7 @@ class OrderSubscribeProcessOld20190415174353 extends \Adv\Bitrixtools\Migration\
 
                 /** @var Address $address */
                 foreach($addresses as $address){
-                    if($address->getStreet() == $street && $address->getHouse() == $house){
+                    if(strpos($address->getStreet(), $street) !== false && trim($address->getHouse()) == trim($house)){
                         $addressId = $address->getId();
                     }
                 }
