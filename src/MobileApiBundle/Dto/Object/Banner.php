@@ -216,7 +216,7 @@ class Banner
             $type = 'articles';
         } else if (strpos($link, '/shares/') !== false) {
             // ссылка на акцию
-            $type = 'shares';
+            $type = 'action';
         }
         $this->type = $type;
         return $type;
