@@ -506,8 +506,17 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
                 $deliveryId = $this->arResult['FIELD_VALUES']['deliveryId'];
                 if($deliveryId){
-                    $orderSubscribe->setDeliveryId($deliveryId)
-                        ->setDeliveryPlace($this->arResult['FIELD_VALUES']['addressId'] ?: $this->arResult['FIELD_VALUES']['shopId']);
+                    $orderSubscribe->setDeliveryId($deliveryId);
+
+                    $deliveryService = $this->getDeliveryService();
+                    $deliveryCode = $deliveryService->getDeliveryCodeById($deliveryId);
+                    if($deliveryService->isDeliveryCode($deliveryCode)){
+                        $deliveryPlace = $this->arResult['FIELD_VALUES']['addressId'];
+                    } else {
+                        $deliveryPlace = $this->arResult['FIELD_VALUES']['shopId'];
+                    }
+
+                    $orderSubscribe->setDeliveryPlace($deliveryPlace);
                 }
 
                 if($this->arResult['FIELD_VALUES']['subscribeBonus']){

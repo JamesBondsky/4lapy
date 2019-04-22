@@ -54,11 +54,11 @@ class OrderSubscribeController extends Controller
             $actionResult = $result['SUBSCRIBE_ACTION'] ?? [];
             if ($actionResult && $actionResult['SUCCESS'] === 'Y') {
                 $message = 'Подписка на доставку оформлена';
-                $redirectUrl = '/personal/subscribe/';
+                $redirectUrl = '';
                 if ($actionResult['TYPE'] === 'UPDATE') {
                     $message = 'Подписка на доставку возобновлена';
                     if ($actionResult['RESUMED'] !== 'Y') {
-                        //$redirectUrl = '';
+                        $redirectUrl = '';
                         $message = 'Подписка на доставку изменена';
                     }
                 }
@@ -67,7 +67,7 @@ class OrderSubscribeController extends Controller
                     200,
                     [],
                     [
-                        'reload' => $redirectUrl !== '' ? false : true,
+                        'reload' => $redirectUrl === '' ? true : false,
                         'redirect' => $redirectUrl,
                     ]
                 );
