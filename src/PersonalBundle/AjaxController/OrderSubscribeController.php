@@ -58,7 +58,7 @@ class OrderSubscribeController extends Controller
                 if ($actionResult['TYPE'] === 'UPDATE') {
                     $message = 'Подписка на доставку возобновлена';
                     if ($actionResult['RESUMED'] !== 'Y') {
-                        $redirectUrl = '';
+                        //$redirectUrl = '';
                         $message = 'Подписка на доставку изменена';
                     }
                 }

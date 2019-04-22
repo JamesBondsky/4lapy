@@ -390,10 +390,10 @@ class OrderSubscribe extends BaseEntity
     }
 
     /**
-     * @param int $deliveryDay
+     * @param $deliveryDay
      * @return OrderSubscribe
      */
-    public function setDeliveryDay(int $deliveryDay): OrderSubscribe
+    public function setDeliveryDay($deliveryDay): OrderSubscribe
     {
         $this->deliveryDay = $deliveryDay;
         return $this;

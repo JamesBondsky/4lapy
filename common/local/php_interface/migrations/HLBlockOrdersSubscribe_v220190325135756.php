@@ -752,6 +752,8 @@ class HLBlockOrdersSubscribe_v220190325135756 extends \Adv\Bitrixtools\Migration
         $fieldName = 'UF_DATE_START';
         $userTypeEntityHelper->deleteUserTypeEntityIfExists($entityId, $fieldName);
 
+        $GLOBALS['DB']->Query('ALTER TABLE `'.static::TABLE_NAME.'` drop index `UF_ORDER_ID`;', true);
+
         return true;
     }
 

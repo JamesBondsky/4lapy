@@ -193,6 +193,8 @@ class OrderSubscribeService implements LoggerAwareInterface
             if (!$this->orderSubscribeRepository->create()) {
                 $result->addError(new Error('Неизвестная ошибка при создании подписки', 'orderSubscriveService::add'));
             }
+
+            $result->setData(['ID' => $subscribe->getId()]);
         } catch (\Exception $e) {
             $result->addError(new Error($e->getMessage(), 'orderSubscriveService::add'));
             $this->log()->error(sprintf('failed to create order subscribe: %s', $e->getMessage()), [

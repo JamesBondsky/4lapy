@@ -410,7 +410,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function hasOrderDeliveryPage(): bool
     {
-        return $this->isOrderDeliveryPage() || $this->isOrderSubscribePage();
+        return $this->isOrderDeliveryPage() || $this->isOrderSubscribePage() || $this->isOrderHistoryPage();
     }
 
     /**

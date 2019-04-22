@@ -36,9 +36,6 @@ $selectedShop = $arResult['SELECTED_SHOP'];
 /** @var Basket $basket */
 $basket = $arResult['BASKET'];
 
-/** @var OrderSubscribe $subscribe */
-$subscribe = $arResult['SUBSCRIBE'];
-
 $subscribeIntervals = $component->getOrderSubscribeService()->getFrequencies();
 
 $daysOfWeek = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
