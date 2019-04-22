@@ -68,7 +68,7 @@ $daysOfWeek = ["Понедельник", "Вторник", "Среда", "Чет
         Для уточнения точной даты и&nbsp;времени доставки с&nbsp;вами будет связываться менеджер за&nbsp;несколько дней в&nbsp;момент формирования заказа
     </div>
     <div class="b-checkbox b-checkbox--withdraw-bonuses-order">
-        <input class="b-checkbox__input js-no-valid" type="checkbox" name="subscribeBonus" id="withdraw_bonuses" value="1" required="required" <?=($payWithBonus) ? 'checked' : ''?> />
+        <input class="b-checkbox__input js-no-valid" type="checkbox" name="subscribeBonus" id="withdraw_bonuses" value="1" required="required" <?=(!$orderSubscribe || $payWithBonus) ? 'checked' : ''?> />
         <span class="b-error"><span class="js-message"></span></span>
         <label class="b-checkbox__name" for="withdraw_bonuses">
             Списывать все доступные баллы на&nbsp;заказы по&nbsp;подписке
