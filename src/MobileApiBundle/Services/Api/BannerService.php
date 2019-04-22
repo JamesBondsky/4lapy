@@ -62,7 +62,7 @@ class BannerService
             ->setLink($bannerModel->getLink(), $this->cityId);
 
         if ($elementLink = $bannerModel->getElementLink()) {
-            $banner->setElementLink($bannerModel->getElementLink());
+            $banner->setLink($elementLink);
         }
 
         return $banner;
