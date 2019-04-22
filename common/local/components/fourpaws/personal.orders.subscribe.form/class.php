@@ -955,7 +955,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             $this->data['ORDER'] = null;
             $orderId = $this->arParams['ORDER_ID'];
 
-            if($this->getOrderSubscribe()){
+            if($this->arParams['SUBSCRIBE_ID'] > 0){
                 $orderId = $this->getOrderSubscribe()->getOrderId();
             }
 
