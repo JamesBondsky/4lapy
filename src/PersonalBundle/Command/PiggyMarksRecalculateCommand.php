@@ -26,6 +26,7 @@ use FourPaws\App\Application;
 use FourPaws\AppBundle\Service\LockerInterface;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
+use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SapBundle\Pipeline\PipelineRegistry;
 use Psr\Log\LoggerAwareInterface;
@@ -190,20 +191,25 @@ class PiggyMarksRecalculateCommand extends Command implements LoggerAwareInterfa
         $orders = OrderTable::query()
             ->setSelect(['ID'])
             ->where(Query::filter()
-                ->logic('or')
+                ->logic('and')
+                ->where('STATUS_ID', '!=', OrderStatus::STATUS_CANCEL_COURIER)
+                ->where('STATUS_ID', '!=', OrderStatus::STATUS_CANCEL_PICKUP)
                 ->where(Query::filter()
-                    ->logic('and')
-                    ->where('IS_NEW_SITE_ORDER.VALUE', BitrixUtils::BX_BOOL_TRUE)
-                    ->where('DATE_INSERT', '>=', $dateStart)
-                    ->where('DATE_INSERT', '<=', $dateFinish)
-                    ->where('DATE_UPDATE', '>=', $dateStart)
-                    ->where('DATE_UPDATE', '<=', $dateFinish)
-                )
-                ->where(Query::filter()
-                    ->logic('and')
-                    ->where('IS_MANZANA_ORDER.VALUE', BitrixUtils::BX_BOOL_TRUE)
-                    ->where('DATE_INSERT', '>=', $dateStart)
-                    ->where('DATE_INSERT', '<=', $dateFinish)
+                    ->logic('or')
+                    ->where(Query::filter()
+                        ->logic('and')
+                        ->where('IS_NEW_SITE_ORDER.VALUE', BitrixUtils::BX_BOOL_TRUE)
+                        ->where('DATE_INSERT', '>=', $dateStart)
+                        ->where('DATE_INSERT', '<=', $dateFinish)
+                        ->where('DATE_UPDATE', '>=', $dateStart)
+                        ->where('DATE_UPDATE', '<=', $dateFinish)
+                    )
+                    ->where(Query::filter()
+                        ->logic('and')
+                        ->where('IS_MANZANA_ORDER.VALUE', BitrixUtils::BX_BOOL_TRUE)
+                        ->where('DATE_INSERT', '>=', $dateStart)
+                        ->where('DATE_INSERT', '<=', $dateFinish)
+                    )
                 )
             )
             ->registerRuntimeField(
