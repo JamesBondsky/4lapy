@@ -53,7 +53,7 @@ class OrderSubscribeProcessOld20190415174353 extends \Adv\Bitrixtools\Migration\
             $delCode = $deliveryService->getDeliveryCodeById($params['deliveryId']);
             $isDelivery = $deliveryService->isDeliveryCode($delCode);
 
-            $dbres = \Bitrix\Sale\Internals\OrderPropsValueTable::getList(['filter' => ['ORDER_ID' => $order['ID'], 'CODE' => ['STREET', 'HOUSE', 'DELIVERY_PLACE_CODE', '	DELIVERY_INTERVAL']]]);
+            $dbres = \Bitrix\Sale\Internals\OrderPropsValueTable::getList(['filter' => ['ORDER_ID' => $order['ID'], 'CODE' => ['STREET', 'HOUSE', 'DELIVERY_PLACE_CODE', '	DELIVERY_INTERVAL', 'CITY_CODE']]]);
             $propCollection = [];
             while($property = $dbres->fetch()){
                 $propCollection[$property['CODE']] = $property['VALUE'];
@@ -92,7 +92,7 @@ class OrderSubscribeProcessOld20190415174353 extends \Adv\Bitrixtools\Migration\
                 ->setDeliveryPlace($params['deliveryPlace'])
                 ->setDeliveryId($params['deliveryId'])
                 ->setUserId($order['USER_ID'])
-                ->setLocationId($locationService->getCurrentLocation())
+                ->setLocationId($propCollection['CITY_CODE'])
                 ->setDeliveryTime($propCollection['DELIVERY_INTERVAL']);
 
             //$orderSubscribeService->update($orderSubscribe);
