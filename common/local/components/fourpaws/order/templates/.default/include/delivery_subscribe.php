@@ -13,9 +13,12 @@ $orderSubscribeService = $component->getOrderSubscribeService();
 /** @var OrderSubscribe $orderSubscribe */
 $orderSubscribe = $arResult['ORDER_SUBSCRIBE'];
 if($orderSubscribe){
+    // выбранные опции
     $selectedFrequency = $orderSubscribe->getFrequency();
     $selectedDeliveryDay = $orderSubscribe->getDeliveryDay();
 }
+
+// если периодичность меньше месяца, то скрываем день доставки
 $deliveryDayDisplay = !$orderSubscribe || $orderSubscribeService->isWeekFrequency($selectedFrequency) ? 'style="display: none"' : '';
 ?>
 <div class="subscribe-delivery-order" data-subscribe-delivery-order="true">

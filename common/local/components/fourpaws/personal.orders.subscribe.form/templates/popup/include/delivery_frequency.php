@@ -2,19 +2,23 @@
 
 use FourPaws\Decorators\SvgDecorator;
 
-$nextDelivery = null;
 $orderSubscribe = $component->getOrderSubscribe();
 $orderSubscribeService = $component->getOrderSubscribeService();
+
 if($orderSubscribe){
-    $nextDelivery = $orderSubscribeService->countNextDate($orderSubscribe);
+    // выбранные опции
+    $selectedFrequency = $orderSubscribe->getFrequency();
+    $selectedDeliveryDay = $orderSubscribe->getDeliveryDay();
+    $payWithBonus = $orderSubscribe->isPayWithbonus();
 }
 
+// если периодичность меньше месяца, то скрываем день доставки
 $deliveryDayDisplay = !$orderSubscribe || $orderSubscribeService->isWeekFrequency($orderSubscribe->getFrequency()) ? 'style="display: none"' : '';
 
 $subscribeIntervals = $component->getOrderSubscribeService()->getFrequencies();
 $daysOfWeek = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
-
 ?>
+
 <div class="subscribe-delivery-order" data-subscribe-delivery-order="true">
     <div class="subscribe-delivery-order__fields">
         <div class="b-input-line b-input-line--delivery-frequency-subscribe" data-select-wrap-delivery-order="subscribeFrequency">
@@ -26,7 +30,10 @@ $daysOfWeek = ["Понедельник", "Вторник", "Среда", "Чет
                     <option value="" disabled="disabled">выберите</option>
                     <?php
                     foreach ($subscribeIntervals as $i => $frequency) { ?>
-                        <option value="<?= $frequency['ID'] ?>" <?=($orderSubscribe && $orderSubscribe->getFrequency() == $frequency['ID']) ? 'selected' : ''?>data-freq-type="<?=$component->getOrderSubscribeService()->getFrequencyType($frequency)?>" data-freq-value="<?=$component->getOrderSubscribeService()->getFrequencyValue($frequency)?>">
+                        <option value="<?= $frequency['ID'] ?>"
+                            <?=($selectedFrequency == $frequency['ID']) ? 'selected' : ''?>
+                            data-freq-type="<?=$orderSubscribeService->getFrequencyType($frequency)?>"
+                            data-freq-value="<?=$orderSubscribeService->getFrequencyValue($frequency)?>">
                             <?= (string)$frequency['VALUE'] ?>
                         </option>
                     <?php } ?>
@@ -42,7 +49,7 @@ $daysOfWeek = ["Понедельник", "Вторник", "Среда", "Чет
                     <option value="" disabled="disabled" selected="selected">выберите</option>
                     <?php
                     foreach ($daysOfWeek as $i => $day) { ?>
-                        <option value="<?= ($i+1) ?>" <?=($orderSubscribe && $orderSubscribe->getDeliveryDay() == ($i+1)) ? 'selected' : ''?>>
+                        <option value="<?= ($i+1) ?>" <?=($selectedDeliveryDay == ($i+1)) ? 'selected' : ''?>>
                             <?= $day ?>
                         </option>
                     <?php } ?>
@@ -61,7 +68,7 @@ $daysOfWeek = ["Понедельник", "Вторник", "Среда", "Чет
         Для уточнения точной даты и&nbsp;времени доставки с&nbsp;вами будет связываться менеджер за&nbsp;несколько дней в&nbsp;момент формирования заказа
     </div>
     <div class="b-checkbox b-checkbox--withdraw-bonuses-order">
-        <input class="b-checkbox__input js-no-valid" type="checkbox" name="subscribeBonus" id="withdraw_bonuses" value="1" required="required" <?=($orderSubscribe && $orderSubscribe->isPayWithbonus()) ? 'checked' : ''?> />
+        <input class="b-checkbox__input js-no-valid" type="checkbox" name="subscribeBonus" id="withdraw_bonuses" value="1" required="required" <?=($payWithBonus) ? 'checked' : ''?> />
         <span class="b-error"><span class="js-message"></span></span>
         <label class="b-checkbox__name" for="withdraw_bonuses">
             Списывать все доступные баллы на&nbsp;заказы по&nbsp;подписке

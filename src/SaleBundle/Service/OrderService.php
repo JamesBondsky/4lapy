@@ -1223,7 +1223,7 @@ class OrderService implements LoggerAwareInterface
                 $subscribe->setActive(true)->setOrderId($order->getId());
 
                 // Привяжем созданный адрес
-                if($subscribe->getDeliveryPlace() == 0 && $storage->getAddressId() > 0){
+                if($subscribe->getDeliveryPlace() === '0' && $storage->getAddressId() > 0){
                     $subscribe->setDeliveryPlace($storage->getAddressId());
                 }
 

@@ -94,7 +94,12 @@ class FourPawsPersonalCabinetOrderItemComponent extends FourPawsComponent
         $this->arResult['ORDER'] = $personalOrder;
         $this->arResult['METRO'] = new ArrayCollection($this->storeService->getMetroInfo());
         if($this->arParams['ORDER_SUBSCRIBE']){
-            $this->arResult['ITEMS'] = $this->getSubscribeItemsFormatted();
+            try {
+                $this->arResult['ITEMS'] = $this->getSubscribeItemsFormatted();
+            } catch (\Exception $e) {
+                $this->setError(sprintf("Произошла ошибка: %s", $e->getMessage()));
+            }
+
         }
     }
 
@@ -132,12 +137,18 @@ class FourPawsPersonalCabinetOrderItemComponent extends FourPawsComponent
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\PersonalBundle\Exception\NotFoundException
+     * @throws Exception
      */
     protected function getSubscribeItemsFormatted()
     {
         $items = [];
         $orderSubscribe = $this->arParams['ORDER_SUBSCRIBE'];
         $orderSubscribeItems = $this->getOrderSubscribeService()->getItemsBySubscribeId($orderSubscribe->getId());
+
+        if($orderSubscribeItems->isEmpty()){
+            throw new Exception('Не найдены товары в подписке');
+        }
+
         /** @var OrderSubscribeItem $orderSubscribeItem */
         foreach($orderSubscribeItems as $orderSubscribeItem){
             /** @var Offer $offer */
@@ -196,4 +207,14 @@ class FourPawsPersonalCabinetOrderItemComponent extends FourPawsComponent
 
         return $path;
     }
+
+    /**
+     * @param $message
+     * @return mixed
+     */
+    private function setError($message)
+    {
+        return $this->arResult['ERROR'] = $message;
+    }
+
 }

@@ -400,6 +400,14 @@ class MainTemplate extends TemplateAbstract
     /**
      * @return bool
      */
+    public function isOrderHistoryPage(): bool
+    {
+        return $this->isDir('/personal/orders');
+    }
+
+    /**
+     * @return bool
+     */
     public function hasOrderDeliveryPage(): bool
     {
         return $this->isOrderDeliveryPage() || $this->isOrderSubscribePage();
