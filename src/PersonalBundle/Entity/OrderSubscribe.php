@@ -750,6 +750,8 @@ class OrderSubscribe extends BaseEntity
      */
     public function getDeliveryPrice()
     {
+        $price = 0;
+
         /** @var DeliveryService $deliveryService */
         $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
 
@@ -759,7 +761,8 @@ class OrderSubscribe extends BaseEntity
 
         $calcResults = $deliveryService->getByBasket($basket, $this->getLocationId(), [$deliveryCode]);
         $calcResult = current($calcResults);
-        $price = $calcResult->getPrice();
+        if($calcResult)
+            $price = $calcResult->getPrice();
 
         return $price;
     }
