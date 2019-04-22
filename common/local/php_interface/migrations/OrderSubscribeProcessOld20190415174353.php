@@ -70,7 +70,7 @@ class OrderSubscribeProcessOld20190415174353 extends \Adv\Bitrixtools\Migration\
                 }
 
                 if(!$addressId){
-                    $this->log()->error('Address not found', ['orderId' => $order->getId()]);
+                    $this->log()->error('Address not found', ['orderId' => $order['ID']]);
                     continue;
                 }
 
@@ -78,7 +78,7 @@ class OrderSubscribeProcessOld20190415174353 extends \Adv\Bitrixtools\Migration\
             } else{
                 $deliveryPlace = $propCollection['DELIVERY_PLACE_CODE'];
                 if(!$deliveryPlace){
-                    $this->log()->error('Address not found', ['orderId' => $order->getId()]);
+                    $this->log()->error('Address not found', ['orderId' => $order['ID']]);
                     continue;
                 }
 
