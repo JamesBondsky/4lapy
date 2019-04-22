@@ -190,7 +190,7 @@ class UserController extends FOSRestController
         return (new ApiResponse())
             ->setData([
                 'result' => CEvent::SendImmediate(
-                    'VERIFICATION_CODE',
+                    'VerificationCode',
                     's1',
                     [
                         'USER_EMAIL' => $verificationCodeRequest->getEmail(),
