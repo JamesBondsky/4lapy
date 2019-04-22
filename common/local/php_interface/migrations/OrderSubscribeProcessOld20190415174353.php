@@ -7,6 +7,7 @@ use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeItem;
@@ -24,12 +25,14 @@ class OrderSubscribeProcessOld20190415174353 extends \Adv\Bitrixtools\Migration\
          * @var OrderSubscribeService $orderSubscribeService
          * @var DeliveryService $deliveryService
          * @var OrderSubscribe $orderSubscribe
+         * @var LocationService $locationService
          */
         $updateSubscribes = [];
 
         $orderSubscribeService = Application::getInstance()->getContainer()->get('order_subscribe.service');
         $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
         $addressService = Application::getInstance()->getContainer()->get('address.service');
+        $locationService = Application::getInstance()->getContainer()->get('location.service');
 
         $subscribeCollection = $orderSubscribeService->getOrderSubscribeRepository()->findBy(['filter' => ['UF_ACTIVE' => true, 'UF_USER_ID' => false]]);
 
@@ -50,7 +53,7 @@ class OrderSubscribeProcessOld20190415174353 extends \Adv\Bitrixtools\Migration\
             $delCode = $deliveryService->getDeliveryCodeById($params['deliveryId']);
             $isDelivery = $deliveryService->isDeliveryCode($delCode);
 
-            $dbres = \Bitrix\Sale\Internals\OrderPropsValueTable::getList(['filter' => ['ORDER_ID' => $order['ID'], 'CODE' => ['STREET', 'HOUSE', 'DELIVERY_PLACE_CODE']]]);
+            $dbres = \Bitrix\Sale\Internals\OrderPropsValueTable::getList(['filter' => ['ORDER_ID' => $order['ID'], 'CODE' => ['STREET', 'HOUSE', 'DELIVERY_PLACE_CODE', '	DELIVERY_INTERVAL']]]);
             $propCollection = [];
             while($property = $dbres->fetch()){
                 $propCollection[$property['CODE']] = $property['VALUE'];
@@ -87,7 +90,10 @@ class OrderSubscribeProcessOld20190415174353 extends \Adv\Bitrixtools\Migration\
 
             $orderSubscribe->setDeliveryDay($params['deliveryDay'])
                 ->setDeliveryPlace($params['deliveryPlace'])
-                ->setDeliveryId($params['deliveryId']);
+                ->setDeliveryId($params['deliveryId'])
+                ->setUserId($order['USER_ID'])
+                ->setLocationId($locationService->getCurrentLocation())
+                ->setDeliveryTime($propCollection['DELIVERY_INTERVAL']);
 
             //$orderSubscribeService->update($orderSubscribe);
             if($orderSubscribeService->update($orderSubscribe)){
