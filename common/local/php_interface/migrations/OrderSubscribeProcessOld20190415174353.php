@@ -53,7 +53,7 @@ class OrderSubscribeProcessOld20190415174353 extends \Adv\Bitrixtools\Migration\
             $delCode = $deliveryService->getDeliveryCodeById($params['deliveryId']);
             $isDelivery = $deliveryService->isDeliveryCode($delCode);
 
-            $dbres = \Bitrix\Sale\Internals\OrderPropsValueTable::getList(['filter' => ['ORDER_ID' => $order['ID'], 'CODE' => ['STREET', 'HOUSE', 'DELIVERY_PLACE_CODE', '	DELIVERY_INTERVAL', 'CITY_CODE']]]);
+            $dbres = \Bitrix\Sale\Internals\OrderPropsValueTable::getList(['filter' => ['ORDER_ID' => $order['ID']]]);
             $propCollection = [];
             while($property = $dbres->fetch()){
                 $propCollection[$property['CODE']] = $property['VALUE'];
@@ -95,7 +95,8 @@ class OrderSubscribeProcessOld20190415174353 extends \Adv\Bitrixtools\Migration\
                 ->setLocationId($propCollection['CITY_CODE'])
                 ->setDeliveryTime($propCollection['DELIVERY_INTERVAL']);
 
-            //$orderSubscribeService->update($orderSubscribe);
+            $orderSubscribeService->countNextDate($orderSubscribe);
+
             if($orderSubscribeService->update($orderSubscribe)){
                 $this->log()->info(sprintf('Подписка обновлена: %s', $orderSubscribe->getId()));
             } else {
@@ -129,7 +130,7 @@ class OrderSubscribeProcessOld20190415174353 extends \Adv\Bitrixtools\Migration\
                 }
             }
 
-            break;
+            //break;
         }
 
         return true;
