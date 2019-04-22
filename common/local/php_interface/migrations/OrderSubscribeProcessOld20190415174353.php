@@ -31,7 +31,7 @@ class OrderSubscribeProcessOld20190415174353 extends \Adv\Bitrixtools\Migration\
         $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
         $addressService = Application::getInstance()->getContainer()->get('address.service');
 
-        $subscribeCollection = $orderSubscribeService->getOrderSubscribeRepository()->findBy([]);
+        $subscribeCollection = $orderSubscribeService->getOrderSubscribeRepository()->findBy(['filter' => ['UF_ACTIVE' => true, 'UF_USER_ID' => false]]);
 
         foreach($subscribeCollection as $orderSubscribe){
             $orderId = $orderSubscribe->getOrderId();
@@ -90,11 +90,11 @@ class OrderSubscribeProcessOld20190415174353 extends \Adv\Bitrixtools\Migration\
                 ->setDeliveryId($params['deliveryId']);
 
             //$orderSubscribeService->update($orderSubscribe);
-            /*if($orderSubscribeService->update($orderSubscribe)){
+            if($orderSubscribeService->update($orderSubscribe)){
                 $this->log()->info(sprintf('Подписка обновлена: %s', $orderSubscribe->getId()));
             } else {
                 $this->log()->info(sprintf('Не удалось обновить подписку: %s', $orderSubscribe->getId()));
-            }*/
+            }
 
             $dbres = Basket::getList(['filter' => ['ORDER_ID' => $orderId]]);
             $basket = [];
@@ -116,11 +116,11 @@ class OrderSubscribeProcessOld20190415174353 extends \Adv\Bitrixtools\Migration\
                     continue;
                 }
 
-                /*if($orderSubscribeService->addSubscribeItem($orderSubscribe, $subscribeItem)){
+                if($orderSubscribeService->addSubscribeItem($orderSubscribe, $subscribeItem)){
                     $this->log()->info(sprintf('Товар добавлен в подписку: %s subId: %s', $subscribeItem->getOfferId(), $orderSubscribe->getId()));
                 } else {
                     $this->log()->error(sprintf('Ошибка добавления товара в подписку: %s subId: %s', $subscribeItem->getOfferId(), $orderSubscribe->getId()));
-                }*/
+                }
             }
 
             break;
