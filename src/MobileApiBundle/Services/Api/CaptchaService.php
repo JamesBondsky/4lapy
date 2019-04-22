@@ -83,7 +83,6 @@ class CaptchaService
                 break;
         }
 
-        // toDo когда заведут транзакционный шаблон для смены email и настроят механизм смены email на сайте
         $confirmationCodeType = $this->getConfirmationCodeType($loginType, $sender);
         $captchaName = ConfirmCodeService::getCookieName($confirmationCodeType);
         $captchaId = $_COOKIE[$captchaName];
@@ -143,11 +142,12 @@ class CaptchaService
     /**
      * @param string $email
      * @param string $sender
+     * @throws \Bitrix\Main\ArgumentException
      * @throws \FourPaws\External\Exception\ExpertsenderServiceException
-     * @throws \GuzzleHttp\Exception\GuzzleException
-     * @throws \LinguaLeo\ExpertSender\ExpertSenderException
+     * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
+     * @throws \FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException
      */
-    private function sendValidationByEmail($email, $sender)
+    private function sendValidationByEmail($email, $sender): void
     {
         $this->checkSender($sender);
         $user = $this->appUserService->getCurrentUser();
@@ -155,12 +155,9 @@ class CaptchaService
             $user->setEmail($email);
             $this->expertSenderService->sendChangeBonusCardFromMobileApp($user);
         } else if ($sender === static::SENDER_EDIT_INFO) {
-            $oldUser = $user;
-            $curUser = clone $user;
-            $curUser->setEmail($email);
-            $this->expertSenderService->sendChangeEmailFromMobileApp($oldUser, $curUser);
+            ConfirmCodeService::sendConfirmEmail($email);
         } else {
-            throw new RuntimeException("Invalid sender: expected card_activation|user_edit, got $sender");
+            throw new RuntimeException("Invalid sender: expected " . static::SENDER_CARD_ACTIVATION . "|" . static::SENDER_EDIT_INFO . ", got $sender");
         }
     }
 

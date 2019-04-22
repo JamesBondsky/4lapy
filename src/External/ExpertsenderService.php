@@ -98,6 +98,7 @@ class ExpertsenderService implements LoggerAwareInterface
     public const FORGOT_BASKET2_LIST_ID = 7767;
     public const CHANGE_EMAIL_LIST_ID = 7766;
     public const CHANGE_EMAIL_TO_NEW_EMAIL_LIST = 7768;
+    public const CHANGE_EMAIL_CODE_LIST_ID = 8009;
     public const SUBSCRIBE_EMAIL_UNDER_3_WEEK_LIST_ID = 7769;
     public const SUBSCRIBE_EMAIL_UNDER_3_DAYS_LIST_ID = 7773;
 
@@ -840,43 +841,27 @@ class ExpertsenderService implements LoggerAwareInterface
     }
 
     /**
-     * @param User $oldUser
-     * @param User $curUser
+     * @param string $email
+     * @param string $code
+     *
      * @return bool
      * @throws ExpertSenderException
      * @throws ExpertsenderServiceException
-     * @throws GuzzleException
      */
-    public function sendChangeEmailFromMobileApp(User $oldUser, User $curUser)
+    public function sendConfirmEmail(string $email, string $code): bool
     {
-        return $this->sendChangeEmail($oldUser, $curUser);
-        // toDo когда заведут транзакционный шаблон для смены email и настроят механизм смены email на сайте
-        /*
-        $transactionIdOld = self::CHANGE_EMAIL_LIST_ID;
+        $transactionIdCode = self::CHANGE_EMAIL_CODE_LIST_ID;
 
-        $curUserEmail = $curUser->getEmail();
-        $oldUserEmail = $oldUser->getEmail();
-        if ($oldUser->hasEmail()) {
-
-            $this->log()->info(
-                __FUNCTION__,
-                [
-                    'curUserEmail' => $curUserEmail,
-                    'oldUserEmail' => $oldUserEmail,
-                    'transactionIdOld' => $transactionIdOld,
-                    'oldUserId' => $oldUser->getId(),
-                    'curUserId' => $curUser->getId(),
-                ]
-            );
-
-            // отправка почты на старый email
-            try {
-                $this->sendSystemTransactional($transactionIdOld, $oldUserEmail);
-            } catch (ExpertsenderServiceApiException $e) {
-            }
+        try {
+            $snippets = [];
+            $snippets[] = new Snippet('text', 'Код подтверждения смены адреса электронной почты. Если вы не вносили этих изменений, свяжитесь с нами по телефону +7 (800) 770-00-22');
+            $snippets[] = new Snippet('code', $code);
+            $this->sendSystemTransactional($transactionIdCode, $email, $snippets);
+            return true;
+        } catch (ExpertsenderServiceApiException $e) {
         }
+
         return false;
-        */
     }
 
     /**
