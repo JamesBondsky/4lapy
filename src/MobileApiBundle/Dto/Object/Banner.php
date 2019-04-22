@@ -51,7 +51,7 @@ class Banner
 
     /**
      * Ссылка с баннера
-     * @Serializer\SerializedName("alt_target")
+     * @Serializer\SerializedName("target_alt")
      * @Serializer\Type("string")
      * @var string
      */
