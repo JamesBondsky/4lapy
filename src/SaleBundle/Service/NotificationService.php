@@ -460,7 +460,7 @@ class NotificationService implements LoggerAwareInterface
 
         $type = (new \CUserFieldEnum())->GetList([], [
             'USER_FIELD_ID' => $userField['ID'],
-            'XML_ID' => 'change_order_status',
+            'XML_ID' => 'status',
         ])->fetch();
 
         $pushMessage = (new ApiPushMessage())
