@@ -72,6 +72,8 @@ class BannerService
 
         if ($elementLink = $bannerModel->getElementLink()) {
             $banner->setLink($elementLink);
+        } elseif ($sectionLink = $bannerModel->getSectionLink()) {
+            $banner->setLink($sectionLink);
         }
 
         return $banner;

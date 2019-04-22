@@ -117,6 +117,13 @@ class Banner extends IblockElement
     protected $PROPERTY_ELEMENT;
 
     /**
+     * @var array
+     * @Type("array")
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $PROPERTY_SECTION;
+
+    /**
      * @return string
      */
     public function getLink() {
@@ -128,6 +135,13 @@ class Banner extends IblockElement
      */
     public function getElementLink() {
         return $this->PROPERTY_ELEMENT ? (int)$this->PROPERTY_ELEMENT : null;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getSectionLink() {
+        return $this->PROPERTY_SECTION ? (int)$this->PROPERTY_SECTION[0] : null;
     }
 
     /**
