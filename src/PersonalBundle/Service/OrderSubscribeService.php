@@ -38,6 +38,7 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -1647,14 +1648,17 @@ class OrderSubscribeService implements LoggerAwareInterface
                 $subscribe = $this->getById($storage->getSubscribeId());
             }
 
-            $interval = $storage->getDeliveryInterval() ? $intervalService->getIntervalByCode($storage->getDeliveryInterval()) : '';
-
             $selectedDelivery = $this->getDeliveryService()->getNextDeliveries($orderStorageService->getSelectedDelivery($storage), 10)[$storage->getDeliveryDate()];
             $deliveryDate = new DateTime($selectedDelivery->getDeliveryDate()->format('d.m.Y H:i:s'));
             if(!$deliveryDate){
                 throw new OrderSubscribeException("Некорректная дата первой доставки");
             }
             $subscribe->setNextDate($deliveryDate);
+
+            if (($intervalIndex = $storage->getDeliveryInterval() - 1) >= 0) {
+                /** @var Interval $interval */
+                $interval = $selectedDelivery->getAvailableIntervals()[$intervalIndex];
+            }
 
             if($this->isWeekFrequency($data['subscribeFrequency'])) {
                 $deliveryDay = $deliveryDate->format('N');
@@ -1667,7 +1671,7 @@ class OrderSubscribeService implements LoggerAwareInterface
 
             $subscribe->setDeliveryId($deliveryId)
                 ->setFrequency($data['subscribeFrequency'])
-                ->setDeliveryTime($interval)
+                ->setDeliveryTime((string)$interval)
                 ->setActive(false);
 
             if($this->getDeliveryService()->isDelivery($orderStorageService->getSelectedDelivery($storage))){

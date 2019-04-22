@@ -249,7 +249,7 @@ class OrderSubscribe extends BaseEntity
      * @param string $deliveryTime
      * @return OrderSubscribe
      */
-    public function setDeliveryTime(string $deliveryTime): OrderSubscribe
+    public function setDeliveryTime($deliveryTime): OrderSubscribe
     {
         $this->deliveryTime = $deliveryTime;
         return $this;
