@@ -37,6 +37,7 @@ use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Dto\Object\PriceWithQuantity;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartOrderRequest;
 use FourPaws\MobileApiBundle\Exception\BonusSubtractionException;
+use FourPaws\MobileApiBundle\Exception\OrderNotFoundException;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
 use FourPaws\PersonalBundle\Service\BonusService as AppBonusService;
@@ -222,6 +223,9 @@ class OrderService
     {
         $user = $this->appUserService->getCurrentUser();
         $order = $this->personalOrderService->getUserOrderByNumber($user, $orderNumber);
+        if (!$order) {
+            throw new OrderNotFoundException();
+        }
         return $this->toApiFormat($order);
     }
 

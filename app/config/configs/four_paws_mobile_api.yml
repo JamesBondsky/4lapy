@@ -29,6 +29,10 @@ four_paws_mobile_api:
       code: 44
       message: 'Данные о станциях метро для этого города отсутствуют'
       status_code: 200
+    FourPaws\MobileApiBundle\Exception\OrderNotFoundException:
+      code: 52
+      message: 'Заказ с таким номером не найден'
+      status_code: 200
     FourPaws\MobileApiBundle\Exception\EmailAlreadyUsed:
       code: 55
       message: 'Данный почтовый ящик уже используется. Выберите другой.'
