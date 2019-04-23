@@ -526,11 +526,12 @@ class CatalogElementDetailComponent extends \CBitrixComponent
 
     /**
      * @param Product $product
-     * @param int     $offerId
+     * @param int $offerId
      *
      * @throws LoaderException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
+     * @throws NotFoundException
      *
      * @return Offer
      */
