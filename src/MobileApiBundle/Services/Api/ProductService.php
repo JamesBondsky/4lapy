@@ -147,7 +147,12 @@ class ProductService
         $productCollection = $productSearchResult->getProductCollection();
 
         return (new ArrayCollection([
-            'products' => $productCollection->map(\Closure::fromCallable([$this, 'mapProductForList']))->getValues(),
+            'products' => $productCollection
+                ->map(\Closure::fromCallable([$this, 'mapProductForList']))
+                ->filter(function($value) {
+                    return !is_null($value);
+                })
+                ->getValues(),
             'cdbResult' => $productCollection->getCdbResult()
         ]));
     }
@@ -155,14 +160,17 @@ class ProductService
     /**
      * Мэппинг полей товара для списка
      * @param Product $product
-     * @return FullProduct
+     * @return FullProduct|null
      * @throws \Bitrix\Main\ArgumentException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    protected function mapProductForList(Product $product): FullProduct
+    protected function mapProductForList(Product $product)
     {
         /** @var Offer $currentOffer */
         $currentOffer = $this->getCurrentOfferForList($product);
+        if (!$currentOffer) {
+            return null;
+        }
         $fullProduct = $this->convertToFullProduct($product, $currentOffer, true);
 
         // товары всегда доступны в каталоге (недоступные просто не должны быть в выдаче)
@@ -183,6 +191,9 @@ class ProductService
         $offers = $product->getOffersSorted();
         $foundOfferWithImages = false;
         $currentOffer = $offers->last();
+        if (!$currentOffer) {
+            return null;
+        }
         /** @var Offer $offer */
         foreach ($offers as $offer) {
             $offer->setProduct($product);
