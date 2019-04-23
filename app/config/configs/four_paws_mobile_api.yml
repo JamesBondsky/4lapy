@@ -17,6 +17,10 @@ four_paws_mobile_api:
       code: 6
       message: 'Код подтверждения указан не верно'
       status_code: 200
+    FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException:
+      code: 6
+      message: 'Код подтверждения указан не верно'
+      status_code: 200
     Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException:
       code: 9
       status_code: 200
