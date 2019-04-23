@@ -20,26 +20,14 @@ $markup = PawsApplication::markup();
     <div class="section-seperator">
         <div class="content-md container">
             <div class="row">
-
+                <div class="col-sm-12">
+                    <h5>ФЕСТИВАЛЬ «ЧЕТЫРЕ ЛАПЫ» 2019</h5>
+                </div>
             </div>
             <!--// end row -->
         </div>
     </div>
     <!-- End Links -->
-
-    <!-- Copyright -->
-    <div class="content container">
-        <div class="row">
-            <div class="col-xs-6">
-                <img class="footer-logo" src="img/logo-dark.png" alt="Aironepage Logo">
-            </div>
-            <div class="col-xs-6 text-right">
-                <p class="margin-b-0"><a class="fweight-700" href="http://keenthemes.com/preview/aironepage/">Aironepage</a> Theme Powered by: <a class="fweight-700" href="http://www.keenthemes.com/">KeenThemes.com</a></p>
-            </div>
-        </div>
-        <!--// end row -->
-    </div>
-    <!-- End Copyright -->
 </footer>
 <!--========== END FOOTER ==========-->
 
@@ -72,7 +60,7 @@ $markup = PawsApplication::markup();
 <script src="vendor/masonry/imagesloaded.pkgd.min.js" type="text/javascript"></script>
 
 <!-- PAGE LEVEL SCRIPTS -->
-<?/*!--<script src="js/shapes.js" type="text/javascript"></script>--*/?>
+<?/*<script src="js/shapes.js" type="text/javascript"></script>*/?>
 <script src="js/jquery.scrollme.min.js" type="text/javascript"></script>
 <script src="js/layout.min.js" type="text/javascript"></script>
 <script src="js/components/wow.min.js" type="text/javascript"></script>
@@ -81,7 +69,58 @@ $markup = PawsApplication::markup();
 <script src="js/components/masonry.min.js" type="text/javascript"></script>
 <script src="js/components/gmap.min.js" type="text/javascript"></script>
 
-<!-- MAIN SITE ADDITIONAL -->
+<script>
+    var tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    function checkPosition(){
+        //функция проверки видимости элемента на jquery
+        var div_position = $('#videoHolder').offset();
+        var div_top = div_position.top;
+        var div_left = div_position.left;
+        var div_width = $('#videoHolder').width();
+        var div_height = $('#videoHolder').height();
+        var top_scroll = $(document).scrollTop();
+        var left_scroll = $(document).scrollLeft();
+        var screen_width = $(window).width();
+        var screen_height = $(window).height()+600;
+        var see_x1 = left_scroll;
+        var see_x2 = screen_width + left_scroll;
+        var see_y1 = top_scroll;
+        var see_y2 = screen_height + top_scroll;
+        var div_x1 = div_left;
+        var div_x2 = div_left + div_height;
+        var div_y1 = div_top;
+        var div_y2 = div_top + div_width;
+        if( div_x1 >= see_x1 && div_x2 <= see_x2 && div_y1 >= see_y1 && div_y2 <= see_y2 ){
+            //если элемент видим на экране, запускаем видео Youtube
+            player.playVideo();
+        }else{
+            //если не видим, ставим видео на паузу
+            player.pauseVideo();
+        }
+    }
+
+    $(document).ready(function(){
+        //запускаем функцию проверки видимости элемента
+        $(document).scroll(function(){
+            checkPosition();
+        });
+        $(window).resize(function(){
+            checkPosition();
+        });
+    });
+
+    function onYouTubeIframeAPIReady() {
+        //рисуем видеопроигрыватель Youtube
+        player = new YT.Player('videoHolder', {
+
+            playerVars: { 'autoplay': 0, 'controls': 0, 'showinfo': 0, 'rel': 0}, //тонкие настройки видеопроигрывателя
+            videoId: 'yqijA5mbcoU', //здесь id ролика
+        });}
+</script>
 
 </body>
 </html>

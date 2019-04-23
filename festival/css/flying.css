@@ -510,7 +510,7 @@
 .c-shapes--dynamic .c-shapes__wrapper
 {
     margin: auto;
-    top: -170px;
+    top: 266px;
 }
 
 @media (min-width:1200px)
@@ -599,7 +599,7 @@
     background: url(../img/figures/vt03.png);
     background-repeat: no-repeat;
     background-size: cover;
-    left: 835px;
+    left: 911px;
     top: 539px;
     width: 76px;
     height: 86px;
@@ -849,7 +849,7 @@
 }
 
 #scene-home .row {
-    padding-bottom: 200px;
+    padding-bottom: 280px;
 }
 
 .container {
