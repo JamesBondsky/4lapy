@@ -391,6 +391,30 @@ class Order
     protected $couponNumber;
 
     /**
+     * Долгота
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\SerializedName("Longitude")
+     * @Serializer\Type("string")
+     *
+     * @var string
+     */
+    protected $Longitude;
+
+    /**
+     * Широта
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\SerializedName("Latitude")
+     * @Serializer\Type("string")
+     *
+     * @var string
+     */
+    protected $Latitude;
+
+    /**
      * @return string
      */
     public function getId(): string
@@ -946,6 +970,46 @@ class Order
     public function setCouponNumber(string $couponNumber): Order
     {
         $this->couponNumber = $couponNumber;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLongitude(): string
+    {
+        return $this->Longitude;
+    }
+
+    /**
+     * @param string $Longitude
+     *
+     * @return Order
+     */
+    public function setLongitude(string $Longitude): Order
+    {
+        $this->Longitude = $Longitude;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLatitude(): string
+    {
+        return $this->Latitude;
+    }
+
+    /**
+     * @param string $Latitude
+     *
+     * @return Order
+     */
+    public function setLatitude(string $Latitude): Order
+    {
+        $this->Latitude = $Latitude;
 
         return $this;
     }

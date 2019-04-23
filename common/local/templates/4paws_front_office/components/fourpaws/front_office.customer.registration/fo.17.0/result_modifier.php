@@ -123,16 +123,16 @@ if (isset($arResult['CONTACT_DATA']['USER']) && $arResult['CONTACT_DATA']['USER'
         $arResult['PRINT_FIELDS'][$setKey]['contactId']['READONLY'] = true;
 
         $arResult['PRINT_FIELDS'][$setKey]['lastName']['VALUE'] = htmlspecialcharsbx($contactData['LAST_NAME']);
-        $arResult['PRINT_FIELDS'][$setKey]['lastName']['READONLY'] = $contactData['LAST_NAME'] !== '';
+        $arResult['PRINT_FIELDS'][$setKey]['lastName']['READONLY'] = false; //$contactData['LAST_NAME'] !== '';
 
         $arResult['PRINT_FIELDS'][$setKey]['firstName']['VALUE'] = htmlspecialcharsbx($contactData['FIRST_NAME']);
-        $arResult['PRINT_FIELDS'][$setKey]['firstName']['READONLY'] = $contactData['FIRST_NAME'] !== '';
+        $arResult['PRINT_FIELDS'][$setKey]['firstName']['READONLY'] = false; //$contactData['FIRST_NAME'] !== '';
 
         $arResult['PRINT_FIELDS'][$setKey]['secondName']['VALUE'] = htmlspecialcharsbx($contactData['SECOND_NAME']);
-        $arResult['PRINT_FIELDS'][$setKey]['secondName']['READONLY'] = $contactData['SECOND_NAME'] !== '';
+        $arResult['PRINT_FIELDS'][$setKey]['secondName']['READONLY'] = false; //$contactData['SECOND_NAME'] !== '';
 
         $arResult['PRINT_FIELDS'][$setKey]['birthDay']['VALUE'] = htmlspecialcharsbx($contactData['_BIRTHDAY_FORMATTED_']);
-        $arResult['PRINT_FIELDS'][$setKey]['birthDay']['READONLY'] = $contactData['_BIRTHDAY_FORMATTED_'] !== '';
+        $arResult['PRINT_FIELDS'][$setKey]['birthDay']['READONLY'] = false; //$contactData['_BIRTHDAY_FORMATTED_'] !== '';
 
         $arResult['PRINT_FIELDS'][$setKey]['genderCode']['VALUE'] = htmlspecialcharsbx($contactData['GENDER_CODE']);
         $arResult['PRINT_FIELDS'][$setKey]['genderCode']['READONLY'] = false;
@@ -141,7 +141,7 @@ if (isset($arResult['CONTACT_DATA']['USER']) && $arResult['CONTACT_DATA']['USER'
         $arResult['PRINT_FIELDS'][$setKey]['phone']['READONLY'] = $contactData['_PHONE_NORMALIZED_'] !== '';
 
         $arResult['PRINT_FIELDS'][$setKey]['email']['VALUE'] = htmlspecialcharsbx($contactData['EMAIL']);
-        //$arResult['PRINT_FIELDS'][$setKey]['email']['READONLY'] = $contactData['EMAIL'] !== '';
+        $arResult['PRINT_FIELDS'][$setKey]['email']['READONLY'] = false; //$contactData['EMAIL'] !== '';
     }
 }
 

@@ -3,6 +3,7 @@
 namespace FourPaws\Search;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Highloadblock\DataManager;
 use Bitrix\Main\ArgumentException;
 use Elastica\Exception\InvalidException;
 use Elastica\Query;
@@ -11,6 +12,7 @@ use Elastica\Query\BoolQuery;
 use Elastica\QueryBuilder;
 use Elastica\Search;
 use Elastica\Suggest;
+use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Filter\FilterInterface;
@@ -37,6 +39,8 @@ class SearchService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
+    public const BRAND_EXACT_MATCH_QUERY_NAME = 'name-fuzzy-word-brand-0';
+
     /**
      * @var IndexHelper
      */
@@ -49,6 +53,10 @@ class SearchService implements LoggerAwareInterface
      * @var SortService
      */
     private $sortService;
+    /**
+     * @var string
+     */
+    private $searchUrl;
 
     /**
      * SearchService constructor.
@@ -283,7 +291,7 @@ class SearchService implements LoggerAwareInterface
                 ->setFuzziness(0)
                 ->setAnalyzer('default')
                 ->setParam('boost', 100.0)
-                ->setParam('_name', 'name-fuzzy-word')
+                ->setParam('_name', self::BRAND_EXACT_MATCH_QUERY_NAME)
                 ->setOperator('and')
         );
 
@@ -296,7 +304,7 @@ class SearchService implements LoggerAwareInterface
                 ->setFuzziness(1)
                 ->setAnalyzer('default')
                 ->setParam('boost', 45.0)
-                ->setParam('_name', 'name-fuzzy-word')
+                ->setParam('_name', 'name-fuzzy-word-brand-1')
                 ->setOperator('and')
         );
 
@@ -309,7 +317,7 @@ class SearchService implements LoggerAwareInterface
                 ->setFuzziness(0)
                 ->setAnalyzer('full-text-brand-hard-search')
                 ->setParam('boost', 10.0)
-                ->setParam('_name', 'name-fuzzy-word')
+                ->setParam('_name', 'name-fuzzy-word-brand-stemmer')
                 ->setOperator('or')
         );
 
@@ -967,5 +975,57 @@ class SearchService implements LoggerAwareInterface
                     )
             )
             ->setScoreMode('sum');
+    }
+
+    /**
+     * @param string $query
+     *
+     * @return array
+     */
+    public function getHLSearchSuggestions(string $query): array
+    {
+        if (!$query)
+        {
+            return [];
+        }
+
+        $container = App::getInstance()->getContainer();
+        /** @var DataManager $searchSuggestionsManager */
+        $searchSuggestionsManager = $container->get('bx.hlblock.searchsuggestions');
+
+        $searchSuggestions = $searchSuggestionsManager::query()
+            ->setSelect([
+                'UF_SUGGESTION',
+            ])
+            ->setFilter([
+                'UF_SUGGESTION' => $query . '%',
+            ])
+            ->setLimit(5)
+            ->setOrder([
+                'UF_RATE' => 'DESC',
+            ])
+            ->exec()
+            ->fetchAll();
+
+        return $searchSuggestions;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSearchUrl(): string
+    {
+        if ($this->searchUrl) {
+            return $this->searchUrl;
+        }
+
+        /** @var \Symfony\Bundle\FrameworkBundle\Routing\Router */
+        $router = App::getInstance()->getContainer()->get('router');
+        /** @var Symfony\Component\Routing\RouteCollection $routes */
+        $routes = $router->getRouteCollection();
+        $route = $routes->get('fourpaws_catalog_catalog_search');
+        $this->searchUrl = $route->getPath();
+
+        return $this->searchUrl;
     }
 }

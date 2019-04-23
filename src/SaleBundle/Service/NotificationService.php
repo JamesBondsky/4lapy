@@ -9,6 +9,7 @@ use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Order;
+use Bitrix\Sale\Payment;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -23,6 +24,7 @@ use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyParams;
 use FourPaws\SaleBundle\Dto\Notification\ForgotBasketNotification;
 use FourPaws\SaleBundle\Enum\ForgotBasketEnum;
+use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Exception\Notification\UnknownMessageTypeException;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -175,7 +177,6 @@ class NotificationService implements LoggerAwareInterface
      * @param Order $order
      *
      * @throws ObjectNotFoundException
-     * @throws SystemException
      */
     public function sendNewOrderMessage(Order $order): void
     {
@@ -235,7 +236,17 @@ class NotificationService implements LoggerAwareInterface
                 $smsTemplate = 'FourPawsSaleBundle:Sms:order.new.delivery.dpd.html.php';
                 break;
             case $parameters['deliveryCode'] === DeliveryService::DELIVERY_DOSTAVISTA_CODE:
-                $smsTemplate = 'FourPawsSaleBundle:Sms:order.new.delivery.dostavista.html.php';
+                /** @var Payment $payment */
+                foreach ($order->getPaymentCollection() as $payment) {
+                    $paymentCode = $payment->getPaySystem()->getField('CODE');
+                    if ($paymentCode === OrderPayment::PAYMENT_CASH_OR_CARD || $paymentCode === OrderPayment::PAYMENT_CASH) {
+                        $smsTemplate = 'FourPawsSaleBundle:Sms:order.new.delivery.dostavista.is.not.paid.html.php';
+                        break;
+                    } elseif($paymentCode == OrderPayment::PAYMENT_ONLINE && $order->isPaid()) {
+                        $smsTemplate = 'FourPawsSaleBundle:Sms:order.new.delivery.dostavista.is.paid.html.php';
+                        break;
+                    }
+                }
                 break;
         }
 
@@ -288,7 +299,11 @@ class NotificationService implements LoggerAwareInterface
             $this->log()->error($e->getMessage());
         }
         $parameters = $this->getOrderData($order);
-        $this->sendSms('FourPawsSaleBundle:Sms:order.paid.html.php', $parameters, true);
+        if ($parameters['deliveryCode'] === DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
+            $this->sendSms('FourPawsSaleBundle:Sms:order.new.delivery.dostavista.is.paid.html.php', $parameters, true);
+        } else {
+            $this->sendSms('FourPawsSaleBundle:Sms:order.paid.html.php', $parameters, true);
+        }
         $this->sendNewUserSms($parameters);
         static::$isSending = false;
     }
