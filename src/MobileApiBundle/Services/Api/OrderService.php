@@ -37,6 +37,7 @@ use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Dto\Object\PriceWithQuantity;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartOrderRequest;
 use FourPaws\MobileApiBundle\Exception\BonusSubtractionException;
+use FourPaws\MobileApiBundle\Exception\OrderNotFoundException;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
 use FourPaws\PersonalBundle\Service\BonusService as AppBonusService;
@@ -222,6 +223,9 @@ class OrderService
     {
         $user = $this->appUserService->getCurrentUser();
         $order = $this->personalOrderService->getUserOrderByNumber($user, $orderNumber);
+        if (!$order) {
+            throw new OrderNotFoundException();
+        }
         return $this->toApiFormat($order);
     }
 
@@ -696,20 +700,19 @@ class OrderService
             /** @var DeliveryResult $delivery */
             $deliveryDate = $delivery->getDeliveryDate();
             $intervals = $delivery->getAvailableIntervals();
-            $dayOfTheWeek = FormatDate('l', $delivery->getDeliveryDate()->getTimestamp());
+            $day = FormatDate('d.m.Y l', $delivery->getDeliveryDate()->getTimestamp());
             if (!empty($intervals) && count($intervals)) {
                 foreach ($intervals as $deliveryIntervalIndex => $interval) {
                     /** @var Interval $interval */
                     $dates[] = (new DeliveryTime())
-                        ->setTitle($dayOfTheWeek . ' ' . $interval)
-                        ->setDeliveryDate($deliveryDate)
+                        ->setTitle($day . ' ' . $interval)
                         ->setDeliveryDateIndex($deliveryDateIndex)
                         ->setDeliveryIntervalIndex($deliveryIntervalIndex)
                     ;
                 }
             } else {
                 $dates[] = (new DeliveryTime())
-                    ->setTitle($dayOfTheWeek)
+                    ->setTitle($day)
                     ->setDeliveryDate($deliveryDate)
                     ->setDeliveryDateIndex($deliveryDateIndex)
                 ;
@@ -785,6 +788,8 @@ class OrderService
                 break;
         }
         $cartParamArray['deliveryId'] = $cartParamArray['deliveryTypeId'];
+        $cartParamArray['comment1'] = $cartParamArray['comment'];
+        $cartParamArray['comment2'] = $cartParamArray['secondComment'];
         $storage = $this->orderStorageService->getStorage();
         $this->couponStorage->save($storage->getPromoCode()); // because we can't use sessions we get promo code from the database, save it into session for current hit and creating order
         foreach (\FourPaws\SaleBundle\Enum\OrderStorage::STEP_ORDER as $step) {

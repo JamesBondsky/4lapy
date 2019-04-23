@@ -218,7 +218,7 @@ class ProductService
     {
         $offer = (new OfferQuery())->getById($id);
         if (!$offer) {
-            throw new NotFoundProductException("Предложение с ID $id не найдено");
+            throw new NotFoundProductException();
         }
         $product = $offer->getProduct();
 

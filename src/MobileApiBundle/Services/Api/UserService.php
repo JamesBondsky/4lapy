@@ -15,6 +15,7 @@ use FourPaws\MobileApiBundle\Dto\Object\User;
 use FourPaws\MobileApiBundle\Dto\Request\LoginRequest;
 use FourPaws\MobileApiBundle\Dto\Response\PostUserInfoResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserLoginResponse;
+use FourPaws\MobileApiBundle\Exception\InvalidCredentialException;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\MobileApiBundle\Exception\TokenNotFoundException;
 use FourPaws\MobileApiBundle\Security\ApiToken;
@@ -120,7 +121,7 @@ class UserService
 
             if (!in_array($loginRequest->getLogin(), $excludePhonesFromCaptchaCheck)) {
                 if (!ConfirmCodeService::checkCode($loginRequest->getCaptchaValue(), 'phone')) {
-                    throw new RuntimeException('Некорректный код');
+                    throw new InvalidCredentialException();
                 }
             }
             $userId = $this->userRepository->findIdentifierByRawLogin($loginRequest->getLogin());
