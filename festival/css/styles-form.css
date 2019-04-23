@@ -4,20 +4,26 @@
 }
 
 body {
-	background: #000;
+
 }
 
 .popwrap {
-	background: url('../img/reg_pop.png');
-	width: 736px;
-	height: 382px;
-	padding: 165px 0 0 0;
+    background: url(../img/reg_pop.png);
+    width: 736px;
+    height: 546px;
+    padding: 165px 0 0 0;
+    left: 50%;
+    position: relative;
+    margin-left: -365px;
+    top: 100px;
+    display: none;
 }
 
 .popwrap2 {
 	background: url('../img/thnks_desk.png');
 	width: 490px;
 	height: 349px;
+	display: none;
 }
 
 .popwrap2 .formwrap {
@@ -53,13 +59,20 @@ body {
 }
 
 .formitem p, .formitem li, .formitem label {
-	font-size: 11px;
-	line-height: 13px;
-	text-transform: uppercase;
+    font-size: 11px;
+    line-height: 13px;
+    text-transform: uppercase;
+    color: #000;
+}
+
+.formitem li {
+    margin: 0 0 10px -43px;
+    list-style: disc outside;
 }
 
 .formitem label {
-	display: block;
+    display: block;
+    clear: none;
 }
 
 .formitem input {
@@ -67,13 +80,15 @@ body {
 }
 
 .formitem input[type="checkbox"] {
-	display: block;
-	float: left;
-	margin: 0 5px 0 0;
+    display: block;
+    float: left;
+    margin: 0 5px 0 0;
+    width: auto;
 }
 
-.formitem button {
+.formittem button {
 	display: block;
+	margin-top: 0;
 }
 
 .formitem input[type="text"], .formitem input[type="email"], .formitem input[type="phone"] {
@@ -91,10 +106,6 @@ body {
 	position: relative;
 	top: 10px;
 	left: -5px;
-}
-
-.formitem li {
-	margin: 0 0 10px -23px;
 }
 
 .join_btn {
@@ -117,27 +128,28 @@ body {
 @media screen and (max-width: 600px) {
 	.popwrap {
 	    background: #fff;
-	    width: auto;
+	    width: 94%;
 	    height: auto;
 	    padding: 20px;
 	    border-radius: 30px;
+	    margin-left: -47%;
 	}
 
 	.formwrap {
 		display: grid;
 		 grid-template-columns: 1fr;
-		 max-width: 500px;
+		 max-width: 400px;
 		 margin: 0 auto;
 	}
 
 	.formitem {
-		column-width: 400px;
-	  	max-width: 800px;
+		column-width: 350px;
+	  	max-width: 275px;
 	  	margin: 0 auto;
 	}
 
 	.formitem input[type="text"], .formitem input[type="email"], .formitem input[type="phone"] {
-		width: 90%;
+		width: 100%;
 	}
 
 	.formitem label {
