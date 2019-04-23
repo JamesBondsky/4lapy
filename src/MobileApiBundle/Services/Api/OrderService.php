@@ -413,8 +413,8 @@ class OrderService
             }
 
             $orderParameter->setAddressText(
-                $orderParameter->getCity()->getTitle()
-                . ', ' . $orderParameter->getStreet()
+                (($cityParameter = $orderParameter->getCity()) ? $cityParameter->getTitle() . ', '  : '')
+                . $orderParameter->getStreet()
                 . ' д.' . $orderParameter->getHouse()
                 . ' ' . $orderParameter->getBuilding()
                 . ($orderParameter->getPorch() ? ' подъезд ' . $orderParameter->getBuilding() : '')
