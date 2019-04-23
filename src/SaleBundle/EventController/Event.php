@@ -982,6 +982,11 @@ class Event extends BaseServiceHandler
                     );
                 }
 
+                $order->setFieldNoDemand(
+                    'PRICE',
+                    $order->getBasket()->getOrderableItems()->getPrice() + $order->getDeliveryPrice()
+                );
+
             }
         } catch (\Exception $e) {
             $logger = LoggerFactory::create('piggyBank');
