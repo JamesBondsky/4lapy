@@ -217,6 +217,9 @@ class Banner
         } else if (strpos($link, '/shares/') !== false) {
             // ссылка на акцию
             $type = 'action';
+        } else {
+            // ссылка на акцию
+            $type = 'browser';
         }
         $this->type = $type;
         return $type;
@@ -233,7 +236,7 @@ class Banner
                 $methodName = 'goods_item';
                 break;
             case 'goods_list':
-                $methodName = 'goods_item_list';
+                $methodName = 'goods_list';
                 break;
             case 'catalog':
                 $methodName = 'categories';
