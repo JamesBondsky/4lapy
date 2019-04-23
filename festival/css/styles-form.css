@@ -1,0 +1,164 @@
+@charset "UTF-8";.link,body {
+    position: relative;
+    font-family: 'Open Sans',sans-serif
+}
+
+body {
+	background: #000;
+}
+
+.popwrap {
+	background: url('../img/reg_pop.png');
+	width: 736px;
+	height: 382px;
+	padding: 165px 0 0 0;
+}
+
+.popwrap2 {
+	background: url('../img/thnks_desk.png');
+	width: 490px;
+	height: 349px;
+}
+
+.popwrap2 .formwrap {
+	position: relative;
+	top: 100px;
+	left: 0px;
+	display: block;
+	width: 320px;
+}
+
+.formwrap {
+	display: grid;
+	 grid-template-columns: 1fr 1fr;
+	 grid-gap: 30px;
+	 max-width: 500px;
+	 margin: 0 auto;
+}
+
+.popwrap2 .formwrap .formitem {
+	column-width: 300px;
+}
+
+.formitem {
+	column-width: 220px;
+  	max-width: 800px;
+  	margin: 0 auto;
+}
+
+.popwrap2 .formitem p {
+	font-size: 14px;
+	line-height: 18px;
+	text-transform: uppercase;
+}
+
+.formitem p, .formitem li, .formitem label {
+	font-size: 11px;
+	line-height: 13px;
+	text-transform: uppercase;
+}
+
+.formitem label {
+	display: block;
+}
+
+.formitem input {
+	display: block;
+}
+
+.formitem input[type="checkbox"] {
+	display: block;
+	float: left;
+	margin: 0 5px 0 0;
+}
+
+.formitem button {
+	display: block;
+}
+
+.formitem input[type="text"], .formitem input[type="email"], .formitem input[type="phone"] {
+	border-radius: 5px;
+	width: 100%;
+	border: 1px solid #ccc;
+	padding: 10px;
+	margin-bottom: 10px;
+}
+
+.formitem input::placeholder {
+	color: #ccc;
+	font-size: 10px;
+	text-transform: uppercase;
+	position: relative;
+	top: 10px;
+	left: -5px;
+}
+
+.formitem li {
+	margin: 0 0 10px -23px;
+}
+
+.join_btn {
+    background: #ff4d15;
+    border: none;
+    border-radius: 40px;
+    color: #fff;
+    text-transform: uppercase;
+    font-size: 18px;
+    font-weight: 600;
+    padding: 7px 26px;
+    margin-top: 10px;
+    transition: all .5s ease;
+}
+
+.join_btn:hover {
+    background: #088c3d;
+}
+
+@media screen and (max-width: 600px) {
+	.popwrap {
+	    background: #fff;
+	    width: auto;
+	    height: auto;
+	    padding: 20px;
+	    border-radius: 30px;
+	}
+
+	.formwrap {
+		display: grid;
+		 grid-template-columns: 1fr;
+		 max-width: 500px;
+		 margin: 0 auto;
+	}
+
+	.formitem {
+		column-width: 400px;
+	  	max-width: 800px;
+	  	margin: 0 auto;
+	}
+
+	.formitem input[type="text"], .formitem input[type="email"], .formitem input[type="phone"] {
+		width: 90%;
+	}
+
+	.formitem label {
+		margin-bottom: 20px;
+	}
+
+	.join_btn {
+	    margin: 0 auto;
+	}
+
+	.popwrap2 {
+		background: url('../img/thnks_mob.png');
+		width: 358px;
+		height: 451px;
+	}
+
+	.popwrap2 .formwrap {
+		position: relative;
+		top: 100px;
+		left: 10px;
+		display: block;
+		width: 160px;
+	}
+}
