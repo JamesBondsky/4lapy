@@ -165,6 +165,32 @@ class ProductController extends FOSRestController
     }
 
     /**
+     * @Rest\Get("/goods_item_list/")
+     * @Rest\View(serializerGroups={"Default", "productsList"})
+     * @param Request $request
+     * @param GoodsListRequest $goodsListRequest
+     * @return Response\ProductListResponse
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public function getGoodsItemListAction(Request $request, GoodsListRequest $goodsListRequest)
+    {
+        $categoryId = $goodsListRequest->getCategoryId();
+        $sort = $goodsListRequest->getSort();
+        $page = $goodsListRequest->getPage();
+        $count = $goodsListRequest->getCount();
+
+        $productsList = $this->apiProductService->getList($request, $categoryId, $sort, $count, $page);
+        /** @var \CIBlockResult $cdbResult */
+        $cdbResult = $productsList->get('cdbResult');
+        return (new Response\ProductListResponse())
+            ->setProductList($productsList->get('products'))
+            ->setTotalPages($cdbResult->NavPageCount)
+            ->setTotalItems($cdbResult->NavRecordCount);
+    }
+
+    /**
      * @Rest\Get("/goods_item/")
      * @Rest\View(serializerGroups={"Default", "product"})
      * @param GoodsItemRequest $goodsItemRequest
