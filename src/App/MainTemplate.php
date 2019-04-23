@@ -254,6 +254,38 @@ class MainTemplate extends TemplateAbstract
     /**
      * @return bool
      */
+    public function hasPiggyBank(): bool
+    {
+        return $this->isPiggyBank();
+    }
+
+        /**
+     * @return bool
+     */
+    public function isPiggyBank(): bool
+    {
+        return $this->isDir('/personal/kopi-marki');
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasPersonalOffers(): bool
+    {
+        return $this->isPersonalOffers();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPersonalOffers(): bool
+    {
+        return $this->isDir('/personal/personal-offers');
+    }
+
+    /**
+     * @return bool
+     */
     public function hasHeaderBlockShopList(): bool
     {
         return $this->isShopList();
@@ -425,7 +457,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function hasUserAuth(): bool
     {
-        return $this->isPartitionDirByFilePath('/ajax/user/auth/login-s') || $this->isPartitionDirByFilePath('/personal') || $this->isPartitionDirByFilePath('/sale');
+        return $this->isPartitionDirByFilePath('/ajax/user/auth/login-r') || $this->isPartitionDirByFilePath('/personal') || $this->isPartitionDirByFilePath('/sale');
     }
 
     /**

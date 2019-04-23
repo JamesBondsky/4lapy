@@ -68,8 +68,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                          role="presentation">
                 </div>
                 <div class="b-avantage__text">
-                    <div class="b-avantage__title">Online заказ <br/> за час</div>
-                    <span class="b-avantage__info">Возможность забрать заказ из любого магазина через час</span>
+                    <div class="b-avantage__title">Online заказ <br/> за 30 минут</div>
+                    <span class="b-avantage__info">Возможность забрать заказ из любого магазина через 30 минут</span>
                 </div>
             </div>
         </div>

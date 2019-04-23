@@ -61,7 +61,7 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
      * RetailRocketFeedService constructor.
      *
      * @param SerializerInterface $serializer
-     * @param Filesystem          $filesystem
+     * @param Filesystem $filesystem
      */
     public function __construct(SerializerInterface $serializer, Filesystem $filesystem)
     {
@@ -70,8 +70,8 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
 
     /**
      * @param ConfigurationInterface $configuration
-     * @param int                    $step
-     * @param string                 $stockID
+     * @param int $step
+     * @param string $stockID
      *
      * If need to continue, return true. Else - false.
      *
@@ -95,7 +95,7 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
 
             $feed = new Feed();
             $this->processFeed($feed, $configuration)
-                 ->processCategories($feed, $configuration);
+                ->processCategories($feed, $configuration, false);
 
             $this->saveFeed($this->getStorageKey(), $feed);
         } else {
@@ -106,8 +106,8 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
             } catch (OffersIsOver $isOver) {
                 $feed = $this->loadFeed($this->getStorageKey());
                 $feed->getShop()
-                     ->setOffset(null);
-
+                    ->setOffset(null);
+                $this->processCategories($feed, $configuration, true);
                 $this->publicFeed($feed, Application::getAbsolutePath($configuration->getExportFile()));
                 $this->clearFeed($this->getStorageKey());
 
@@ -119,7 +119,7 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
     }
 
     /**
-     * @param Feed          $feed
+     * @param Feed $feed
      * @param Configuration $configuration
      *
      * @return RetailRocketFeedService
@@ -134,7 +134,7 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
     }
 
     /**
-     * @param Feed          $feed
+     * @param Feed $feed
      * @param Configuration $configuration
      *
      * @return RetailRocketFeedService
@@ -149,10 +149,10 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
     {
         $limit = 500;
         $offers = $feed->getShop()
-                       ->getOffers();
+            ->getOffers();
 
         $offset = $feed->getShop()
-                       ->getOffset();
+            ->getOffset();
         $offset = $offset ?? 0;
 
         $offerCollection = $this->getOffers($this->buildOfferFilter($feed, $configuration), $offset, $limit);
@@ -180,8 +180,8 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
 
 
         $feed->getShop()
-             ->setOffers($offers)
-             ->setOffset($offset);
+            ->setOffers($offers)
+            ->setOffset($offset);
         $this->saveFeed($this->getStorageKey(), $feed);
 
         $cdbResult = $offerCollection->getCdbResult();
@@ -193,38 +193,9 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
     }
 
     /**
-     * @param array $filter
-     * @param int   $offset
-     * @param int   $limit
-     *
-     * @return OfferCollection
-     */
-    protected function getOffers(array $filter, int $offset = 0, $limit = 500): OfferCollection
-    {
-        /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return (new OfferQuery())->withFilter($filter)
-                                 ->withNav([
-                                     'nPageSize' => $limit,
-                                     'iNumPage'  => $this->getPageNumber($offset, $limit),
-                                 ])
-                                 ->exec();
-    }
-
-    /**
-     * @param int $offset
-     * @param int $limit
-     *
-     * @return int
-     */
-    protected function getPageNumber(int $offset, int $limit): int
-    {
-        return (int)\ceil(($offset + 1) / $limit);
-    }
-
-    /**
-     * @param Offer           $offer
+     * @param Offer $offer
      * @param ArrayCollection $collection
-     * @param string          $host
+     * @param string $host
      *
      * @throws InvalidArgumentException
      * @throws NotFoundException
@@ -243,9 +214,12 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
     public function addOffer(Offer $offer, ArrayCollection $collection, string $host): void
     {
         $currentImage = (new FullHrefDecorator($offer->getResizeImages(240, 240)
-                                                     ->first()
-                                                     ->getSrc()))->setHost($host)->__toString();
+            ->first()
+            ->getSrc()))->setHost($host)->__toString();
         $detailPath = (new FullHrefDecorator($offer->getDetailPageUrl()))->setHost($host)->__toString();
+
+        $sectionId = $offer->getProduct()->getIblockSectionId();
+        $this->categoriesInProducts[$sectionId] = $sectionId;
 
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         /** @noinspection PassingByReferenceCorrectnessInspection */
@@ -255,14 +229,13 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
                 ->setName(\sprintf(
                     '%s %s',
                     $offer->getProduct()
-                          ->getBrandName(),
+                        ->getBrandName(),
                     $offer->getName()
                 ))
-                ->setCategoryId($offer->getProduct()
-                    ->getIblockSectionId())
+                ->setCategoryId($sectionId)
                 ->setDescription(\substr(\strip_tags($offer->getProduct()
-                                                           ->getDetailText()
-                                                           ->getText()), 0, 2990))
+                    ->getDetailText()
+                    ->getText()), 0, 2990))
                 ->setAvailable($offer->isAvailable())
                 ->setGroupId($offer->getProduct()->getId())
                 ->setPrice($offer->getPrice())
@@ -280,7 +253,7 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
     }
 
     /**
-     * @param Feed          $feed
+     * @param Feed $feed
      * @param Configuration $configuration
      *
      * @return array
@@ -291,104 +264,48 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
     {
         $sectionIds = \array_reduce(
             $feed->getShop()
-                 ->getCategories()
-                 ->toArray(),
+                ->getCategories()
+                ->toArray(),
             function ($carry, RrCategory $item) {
                 return \array_merge($carry, [$item->getId()]);
             },
             []
         );
 
+        $dbItems = \CIBlockElement::GetList(
+            [],
+            [
+                'IBLOCK_ID' => IblockUtils::getIblockId(
+                    IblockType::CATALOG,
+                    IblockCode::PRODUCTS
+                ),
+                'SECTION_ID' => $sectionIds,
+                'INCLUDE_SUBSECTIONS' => 'Y',
+                'ACTIVE' => 'Y'
+            ],
+            false,
+            false,
+            [
+                'ID',
+                'IBLOCK_ID'
+            ]
+        );
         $idList = [];
-
-        try {
-            $idList = \array_reduce(
-                ElementTable::query()
-                            ->setSelect(['ID'])
-                            ->setFilter([
-                                'IBLOCK_ID'         => IblockUtils::getIblockId(
-                                    IblockType::CATALOG,
-                                    IblockCode::PRODUCTS
-                                ),
-                                'IBLOCK_SECTION_ID' => $sectionIds,
-                                'ACTIVE'            => 'Y',
-                            ])
-                            ->exec()
-                            ->fetchAll()
-                    ?: [],
-                function ($carry, $on) {
-                    $carry[] = $on['ID'];
-
-                    return $carry;
-                }, []);
-        } catch (Exception $e) {
+        while ($arItem = $dbItems->Fetch()) {
+            $idList[] = $arItem['ID'];
         }
 
         $idList = $idList ?: [-1];
 
         return [
             '=PROPERTY_CML2_LINK' => $idList,
-            '<XML_ID'             => 2000000,
-            'ACTIVE'              => 'Y',
+            '<XML_ID' => 2000000,
+            'ACTIVE' => 'Y',
         ];
     }
 
     /**
-     * @param Feed          $feed
-     * @param Configuration $configuration
-     *
-     * @return RetailRocketFeedService
-     */
-    protected function processCategories(Feed $feed, Configuration $configuration): RetailRocketFeedService
-    {
-        $categories = new ArrayCollection();
-
-        /**
-         * @var CategoryCollection $parentCategories
-         */
-        $parentCategories = (new CategoryQuery())
-            ->withFilter([
-                'ID'            => $configuration->getSectionIds(),
-                'GLOBAL_ACTIVE' => 'Y',
-            ])
-            ->withOrder(['LEFT_MARGIN' => 'ASC'])
-            ->exec();
-
-        /**
-         * @var Category $parentCategory
-         */
-        foreach ($parentCategories as $parentCategory) {
-            if ($categories->get($parentCategory->getId())) {
-                continue;
-            }
-
-            $this->addCategory($parentCategory, $categories);
-
-            if ($parentCategory->getRightMargin() - $parentCategory->getLeftMargin() < 3) {
-                continue;
-            }
-
-            $childCategories = (new CategoryQuery())
-                ->withFilter([
-                    '>LEFT_MARGIN'  => $parentCategory->getLeftMargin(),
-                    '<RIGHT_MARGIN' => $parentCategory->getRightMargin(),
-                    'GLOBAL_ACTIVE' => 'Y',
-                ])
-                ->withOrder(['LEFT_MARGIN' => 'ASC'])
-                ->exec();
-
-            foreach ($childCategories as $category) {
-                $this->addCategory($category, $categories);
-            }
-        }
-
-        $feed->getShop()->setCategories($categories);
-
-        return $this;
-    }
-
-    /**
-     * @param Category        $category
+     * @param Category $category
      * @param ArrayCollection $categoryCollection
      */
     protected function addCategory(Category $category, ArrayCollection $categoryCollection): void
@@ -401,10 +318,10 @@ class RetailRocketFeedService extends FeedService implements LoggerAwareInterfac
                 ->setName(
                     \implode(' - ',
                         \array_reverse($category->getFullPathCollection()
-                                                ->map(function (Category $category) {
-                                                    return \preg_replace('~\'|"~', '', $category->getName());
-                                                })
-                                                ->toArray()
+                            ->map(function (Category $category) {
+                                return \preg_replace('~\'|"~', '', $category->getName());
+                            })
+                            ->toArray()
                         )
                     )
                 )

@@ -61,7 +61,7 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
      * GoogleMerchantFeedService constructor.
      *
      * @param SerializerInterface $serializer
-     * @param Filesystem          $filesystem
+     * @param Filesystem $filesystem
      */
     public function __construct(SerializerInterface $serializer, Filesystem $filesystem, StoreService $storeService)
     {
@@ -72,8 +72,8 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
 
     /**
      * @param ConfigurationInterface $configuration
-     * @param int                    $step
-     * @param string                 $stockID
+     * @param int $step
+     * @param string $stockID
      *
      * If need to continue, return true. Else - false.
      *
@@ -141,7 +141,7 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
     }
 
     /**
-     * @param Feed          $feed
+     * @param Feed $feed
      * @param Configuration $configuration
      *
      * @return GoogleMerchantFeedService
@@ -184,8 +184,8 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
 
 
         $feed->getChannel()
-             ->setItems($offers)
-             ->setOffset($offset);
+            ->setItems($offers)
+            ->setOffset($offset);
         $this->saveFeed($this->getStorageKey(), $feed);
 
         $cdbResult = $offerCollection->getCdbResult();
@@ -194,35 +194,6 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
         }
 
         return $this;
-    }
-
-    /**
-     * @param array $filter
-     * @param int   $offset
-     * @param int   $limit
-     *
-     * @return OfferCollection
-     */
-    protected function getOffers(array $filter, int $offset = 0, $limit = 500): OfferCollection
-    {
-        /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return (new OfferQuery())->withFilter($filter)
-                                 ->withNav([
-                                     'nPageSize' => $limit,
-                                     'iNumPage'  => $this->getPageNumber($offset, $limit),
-                                 ])
-                                 ->exec();
-    }
-
-    /**
-     * @param int $offset
-     * @param int $limit
-     *
-     * @return int
-     */
-    protected function getPageNumber(int $offset, int $limit): int
-    {
-        return (int)\ceil(($offset + 1) / $limit);
     }
 
     /**
@@ -238,7 +209,7 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
          */
         $parentCategories = (new CategoryQuery())
             ->withFilter([
-                'ID'            => $configuration->getSectionIds(),
+                'ID' => $configuration->getSectionIds(),
                 'GLOBAL_ACTIVE' => 'Y'
             ])
             ->withSelect([
@@ -267,7 +238,7 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
 
             $childCategories = (new CategoryQuery())
                 ->withFilter([
-                    '>LEFT_MARGIN'  => $parentCategory->getLeftMargin(),
+                    '>LEFT_MARGIN' => $parentCategory->getLeftMargin(),
                     '<RIGHT_MARGIN' => $parentCategory->getRightMargin(),
                     'GLOBAL_ACTIVE' => 'Y'
                 ])
@@ -290,7 +261,7 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
     }
 
     /**
-     * @param Feed          $feed
+     * @param Feed $feed
      * @param Configuration $configuration
      *
      * @return array
@@ -301,44 +272,42 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
     {
         $sectionIds = \array_values($this->getCategoryIds($configuration));
 
+        $dbItems = \CIBlockElement::GetList(
+            [],
+            [
+                'IBLOCK_ID' => IblockUtils::getIblockId(
+                    IblockType::CATALOG,
+                    IblockCode::PRODUCTS
+                ),
+                'SECTION_ID' => $sectionIds,
+                'INCLUDE_SUBSECTIONS' => 'Y',
+                'ACTIVE' => 'Y'
+            ],
+            false,
+            false,
+            [
+                'ID',
+                'IBLOCK_ID'
+            ]
+        );
         $idList = [];
-
-        try {
-            $idList = \array_reduce(
-                ElementTable::query()
-                            ->setSelect(['ID'])
-                            ->setFilter([
-                                'IBLOCK_ID'         => IblockUtils::getIblockId(
-                                    IblockType::CATALOG,
-                                    IblockCode::PRODUCTS
-                                ),
-                                'IBLOCK_SECTION_ID' => $sectionIds,
-                                'ACTIVE'            => 'Y'
-                            ])
-                            ->exec()
-                            ->fetchAll()
-                    ?: [],
-                function ($carry, $on) {
-                    $carry[] = $on['ID'];
-
-                    return $carry;
-                }, []);
-        } catch (Exception $e) {
+        while ($arItem = $dbItems->Fetch()) {
+            $idList[] = $arItem['ID'];
         }
 
         $idList = $idList ?: [-1];
 
         return [
             '=PROPERTY_CML2_LINK' => $idList,
-            '<XML_ID'             => 2000000,
-            'ACTIVE'              => 'Y'
+            '<XML_ID' => 2000000,
+            'ACTIVE' => 'Y'
         ];
     }
 
     /**
-     * @param Offer           $offer
+     * @param Offer $offer
      * @param ArrayCollection $collection
-     * @param string          $host
+     * @param string $host
      *
      * @throws InvalidArgumentException
      * @throws NotFoundException
@@ -363,8 +332,8 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
         }
 
         $currentImage = (new FullHrefDecorator($offer->getImages()
-                                                     ->first()
-                                                     ->getSrc()))->setHost($host)->__toString();
+            ->first()
+            ->getSrc()))->setHost($host)->__toString();
         $detailPath = (new FullHrefDecorator($this->getLink($offer)))->setHost($host)->__toString();
 
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
@@ -374,14 +343,14 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
             ->setName(\sprintf(
                 '%s %s',
                 $offer->getProduct()
-                      ->getBrandName(),
+                    ->getBrandName(),
                 $offer->getName()
             ))
             ->setLink($detailPath)
             ->setGroupId($offer->getProduct()->getGoogleCategory())
             ->setDescription(\substr(\strip_tags($offer->getProduct()
-                                                       ->getDetailText()
-                                                       ->getText()), 0, 4990))
+                ->getDetailText()
+                ->getText()), 0, 4990))
             ->setPicture($currentImage)
             ->setVendor($offer->getProduct()->getBrandName())
             ->setGtin($offer->getBarcodes()[0] ?? '');
@@ -392,10 +361,10 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
                     '%d RUB',
                     $offer->getCatalogOldPrice()
                 ))
-                 ->setSalePrice(\sprintf(
-                     '%d RUB',
-                     $offer->getCatalogPrice()
-                 ));
+                ->setSalePrice(\sprintf(
+                    '%d RUB',
+                    $offer->getCatalogPrice()
+                ));
         } else {
             $item->setPrice(
                 \sprintf(
@@ -419,6 +388,7 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
 
     /**
      * @return Store
+     * @throws NotFoundException
      */
     private function getRcStock(): Store
     {
@@ -427,5 +397,14 @@ class GoogleMerchantFeedService extends FeedService implements LoggerAwareInterf
         }
 
         return $this->rcStock;
+    }
+
+    /**
+     * @param Category $category
+     * @param ArrayCollection $categoryCollection
+     */
+    protected function addCategory(Category $category, ArrayCollection $categoryCollection): void
+    {
+        // TODO: Implement addCategory() method.
     }
 }
