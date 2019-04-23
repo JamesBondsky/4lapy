@@ -553,7 +553,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
             }
         }
 
-        if(!$offers->last()){
+        if(!$offer && $offers && !$offers->last()){
             throw new NotFoundException("Offers not found");
         }
 
