@@ -7,6 +7,7 @@
 namespace FourPaws\SaleBundle\AjaxController;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -19,6 +20,7 @@ use Bitrix\Main\Web\Uri;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\App\MainTemplate;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -37,6 +39,7 @@ use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
+use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\ShopInfoService;
@@ -48,6 +51,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Validator\ConstraintViolation;
+use FourPaws\App\Application as App;
 
 /**
  * Class BasketController
@@ -134,6 +138,45 @@ class OrderController extends Controller implements LoggerAwareInterface
     public function storeSearchAction(): JsonResponse
     {
         $storage = $this->orderStorageService->getStorage();
+
+        return JsonSuccessResponse::createWithData(
+            'Подгрузка успешна',
+            $this->shopInfoService->toArray(
+                $this->shopInfoService->getShopInfo(
+                    $storage,
+                    $this->orderStorageService->getPickupDelivery($storage)
+                )
+            )
+        );
+    }
+
+    /**
+     * @Route("/store-search-by-items/", methods={"GET"})
+     *
+     * @throws SystemException
+     * @throws \Exception
+     * @throws ApplicationCreateException
+     * @return JsonResponse
+     */
+    public function storeSearchByItemsAction(Request $request): JsonResponse
+    {
+        /** @var BasketService $basketService */
+        $basketService = App::getInstance()->getContainer()->get(BasketService::class);
+        $storage = $this->orderStorageService->getStorage();
+        $items = $request->get('items');
+
+        if(empty($items)){
+            return JsonSuccessResponse::create('Не переданы товары для создания службы доставки');
+        }
+
+        // данные с 2 шага оформления заказа помешают расчётам
+        if($storage->getDeliveryId() > 0){
+            $this->orderStorageService->clearStorage($storage);
+            $storage = $this->orderStorageService->getStorage();
+        }
+
+
+        $basket = $basketService->createBasketFromItems($items);
 
         return JsonSuccessResponse::createWithData(
             'Подгрузка успешна',

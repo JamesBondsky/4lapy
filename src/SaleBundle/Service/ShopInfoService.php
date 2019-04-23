@@ -245,6 +245,7 @@ class ShopInfoService
      * @param array                 $metroList
      * @param array                 $paymentInfo
      * @param bool                  $recalculateBasket
+     * @param bool                  $isSubscribe
      *
      * @return Shop
      * @throws ArgumentException

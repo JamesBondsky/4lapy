@@ -30,7 +30,7 @@ switch ($arResult['CURRENT_STAGE']) {
         break;
     // возобновление подписки
     case 'renewal':
-        $currentDelivery = $arResult['SELECTED_DELIVERY'];
+        $currentDelivery = $selectedDelivery = $arResult['SELECTED_DELIVERY'];
         include __DIR__. '/include/delivery_first_date.php';
         include __DIR__. '/include/delivery_frequency.php';
         break;

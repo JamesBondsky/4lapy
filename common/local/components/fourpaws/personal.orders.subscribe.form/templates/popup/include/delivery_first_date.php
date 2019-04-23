@@ -19,7 +19,7 @@ $selectedFirstDate = null;
 $selectedInterval = null;
 $orderSubscribe = $component->getOrderSubscribe();
 if($orderSubscribe && $orderSubscribe->getId() > 0){
-    $hideFirstDateSelect = true;
+    // $hideFirstDateSelect = true;
     $selectedFirstDate = $orderSubscribe->getNextDate();
     $selectedInterval = $orderSubscribe->getDeliveryTime();
 }
@@ -30,7 +30,7 @@ if($orderSubscribe && $orderSubscribe->getId() > 0){
             <div class="delivery-block__type visible">
                 <div class="b-input-line b-input-line--desired-date <?=($hideFirstDateSelect) ? 'js-no-valid' : ''?>" <?=($hideFirstDateSelect) ? 'style="display: none"' : ''?>>
                     <div class="b-input-line__label-wrapper">
-                        <span class="b-input-line__label">Желаемая дата первой доставки</span>
+                        <span class="b-input-line__label">Желаемая дата доставки</span>
                     </div>
                     <div class="b-select b-select--recall b-select--feedback-page">
                         <?php

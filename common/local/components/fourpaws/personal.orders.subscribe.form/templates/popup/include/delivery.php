@@ -23,7 +23,16 @@ $selectedAddressId = 0;
 $showNewAddressForm = false;
 $showNewAddressFormHeader = false;
 
-if ($addresses && !$addresses->isEmpty()) {
+$orderSubscribe = $component->getOrderSubscribe();
+if($orderSubscribe){
+    $deliveryService = $component->getDeliveryService();
+    $deliveryCode = $deliveryService->getDeliveryCodeById($orderSubscribe->getDeliveryId());
+    $hasDeliveryAddress = $deliveryService->isDeliveryCode($deliveryCode);
+}
+
+if ($hasDeliveryAddress){
+    $selectedAddressId = (int)$orderSubscribe->getDeliveryPlace();
+} else if ($addresses && !$addresses->isEmpty()) {
     $selectedAddressId = $addresses->first()->getId();
     $showNewAddressFormHeader = true;
 } else {
@@ -39,8 +48,8 @@ if ($addresses && !$addresses->isEmpty()) {
         <span class="b-input-line__label">Адрес доставки</span>
     </div>
     <?php /** @var Address $address */ ?>
-    <?php foreach ($addresses as $address) {
-        ?>
+    <?php
+    foreach ($addresses as $address) { ?>
         <div class="b-radio b-radio--tablet-big js-item-saved-delivery-address">
             <input class="b-radio__input"
                    type="radio"
@@ -55,8 +64,7 @@ if ($addresses && !$addresses->isEmpty()) {
                 </span>
             </label>
         </div>
-        <?php
-    } ?>
+        <?php } ?>
     <div class="b-radio b-radio--tablet-big js-item-saved-delivery-address">
         <input class="b-radio__input"
                type="radio"

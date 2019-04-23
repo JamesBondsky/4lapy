@@ -30,6 +30,7 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeItem;
 use FourPaws\PersonalBundle\Service\AddressService;
@@ -461,7 +462,6 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
      */
     protected function subscribeAction()
     {
-        /** @todo подписка для оффлайн заказов - заказы из манзаны */
         $this->initPostFields();
         if ($this->arResult['FIELD_VALUES']['orderId']) {
             $this->arParams['ORDER_ID'] = (int)$this->arResult['FIELD_VALUES']['orderId'];
@@ -506,17 +506,53 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
                 $deliveryId = $this->arResult['FIELD_VALUES']['deliveryId'];
                 if($deliveryId){
-                    $orderSubscribe->setDeliveryId($deliveryId);
-
                     $deliveryService = $this->getDeliveryService();
                     $deliveryCode = $deliveryService->getDeliveryCodeById($deliveryId);
+
                     if($deliveryService->isDeliveryCode($deliveryCode)){
-                        $deliveryPlace = $this->arResult['FIELD_VALUES']['addressId'];
+                        if(!empty($this->arResult['FIELD_VALUES']['addressId'])){
+                            $deliveryPlace = $this->arResult['FIELD_VALUES']['addressId'];
+                        } else {
+                            /** @var AddressService $addressService */
+                            $addressService = Application::getInstance()->getContainer()->get('address.service');
+                            $locationService = $this->getLocationService();
+                            $userService = $this->getUserService();
+
+                            $personalAddress = (new Address())->setCity($userService->getSelectedCity()['NAME'])
+                                ->setLocation($locationService->getCurrentLocation())
+                                ->setStreet($this->arResult['FIELD_VALUES']['street'])
+                                ->setHouse($this->arResult['FIELD_VALUES']['house'])
+                                ->setHousing($this->arResult['FIELD_VALUES']['building'])
+                                ->setEntrance($this->arResult['FIELD_VALUES']['porch'])
+                                ->setFloor($this->arResult['FIELD_VALUES']['floor'])
+                                ->setFlat($this->arResult['FIELD_VALUES']['apartment'])
+                                ->setUserId($order->getUserId());
+
+                            try {
+                                $addressService->add($personalAddress);
+                                $deliveryPlace = $personalAddress->getId();
+                            } catch (\Exception $e) {
+                                $this->log()->error(sprintf('failed to save address: %s', $e->getMessage()), [
+                                    'city' => $personalAddress->getCity(),
+                                    'location' => $personalAddress->getLocation(),
+                                    'userId' => $personalAddress->getUserId(),
+                                    'street' => $personalAddress->getStreet(),
+                                    'house' => $personalAddress->getHouse(),
+                                    'housing' => $personalAddress->getHousing(),
+                                    'entrance' => $personalAddress->getEntrance(),
+                                    'floor' => $personalAddress->getFloor(),
+                                    'flat' => $personalAddress->getFlat(),
+                                ]);
+
+                                $this->setExecError('personalAddress', 'Не удалось сохранить новый адрес');
+                            }
+                        }
                     } else {
                         $deliveryPlace = $this->arResult['FIELD_VALUES']['shopId'];
                     }
 
-                    $orderSubscribe->setDeliveryPlace($deliveryPlace);
+                    $orderSubscribe->setDeliveryId($deliveryId)
+                        ->setDeliveryPlace($deliveryPlace);
                 }
 
                 if($this->arResult['FIELD_VALUES']['subscribeBonus']){
@@ -727,7 +763,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                 $this->arResult['TITLE'] = "Редактирование подписки";
             } catch (\Exception $e) {
                 $result->addError(new Error(
-                    sprintf("Failed to get basket for form: %s", $e->getMessage()),
+                    sprintf("Ошибка формирования корзины: %s", $e->getMessage()),
                     'getBasketBySubscribeId',
                     ['id' => $this->arParams['SUBSCRIBE_ID']]
                 ));
@@ -748,11 +784,15 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                 $this->arResult['TITLE'] = "Создание подписки";
             } catch (\Exception $e) {
                 $result->addError(new Error(
-                    sprintf("Failed to get basket for form: %s", $e->getMessage()),
+                    sprintf("Ошибка формирования корзины: %s", $e->getMessage()),
                     'getBasket',
                     ['id' => $this->arParams['ORDER_ID']]
                 ));
             }
+        }
+
+        if(!$result->isSuccess()){
+            return $result;
         }
 
         if(null !== $basket) {
