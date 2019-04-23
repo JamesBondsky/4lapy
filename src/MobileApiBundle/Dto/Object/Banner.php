@@ -260,20 +260,21 @@ class Banner
 
         switch ($type) {
             case 'goods':
-            case 'goods_list':
             case 'catalog':
                 $queryData = [
-                    //'token' => $this->User['token'],
                     'id' => $this->link
+                ];
+                break;
+            case 'goods_list':
+                $queryData = [
+                    'category_id' => $this->link
                 ];
                 break;
             case 'news':
             case 'action':
                 $queryData = [
-                    //'token' => $this->User['token'],
                     'type' => $this->getType(),
                     'info_id' => $this->link,
-                    // 'city_id' => $cityId
                 ];
                 break;
         }
