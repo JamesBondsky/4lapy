@@ -4,6 +4,7 @@ use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use FourPaws\App\Application as App;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\MobileApiBundle\Services\Api\BannerService;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
@@ -21,10 +22,10 @@ $APPLICATION->IncludeComponent('bitrix:news.list',
         'IBLOCK_TYPE'                     => IblockType::PUBLICATION,
         'IBLOCK_ID'                       => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::BANNERS),
         'NEWS_COUNT'                      => '20',
-        'SORT_BY1'                        => 'SORT',
-        'SORT_ORDER1'                     => 'ASC',
-        'SORT_BY2'                        => 'ACTIVE_FROM',
-        'SORT_ORDER2'                     => 'DESC',
+        'SORT_BY1'                        => BannerService::BANNER_LIST_SORT_BY1,
+        'SORT_ORDER1'                     => BannerService::BANNER_LIST_SORT_ORDER1,
+        'SORT_BY2'                        => BannerService::BANNER_LIST_SORT_BY2,
+        'SORT_ORDER2'                     => BannerService::BANNER_LIST_SORT_ORDER2,
         'FILTER_NAME'                     => '',
         'FIELD_CODE'                      => [
             0 => 'NAME',

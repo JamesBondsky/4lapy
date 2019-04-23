@@ -174,7 +174,7 @@ class PushMessagesService
             ->setViewed($pushEvent->getViewed())
             ->setOptions(
                 (new PushEventOptions())
-                    ->setId($pushEvent->getMessageId())
+                    ->setId($pushEvent->getEventId())
                     ->setType($pushEvent->getMessageTypeEntity()->getXmlId())
             );
     }

@@ -19,6 +19,11 @@ class BannerService
      */
     private $cityId = '';
 
+    public const BANNER_LIST_SORT_BY1 = 'SORT';
+    public const BANNER_LIST_SORT_ORDER1 = 'ASC';
+    public const BANNER_LIST_SORT_BY2 = 'ACTIVE_FROM';
+    public const BANNER_LIST_SORT_ORDER2 = 'DESC';
+
     /**
      * @param string $sectionCode
      * @return BannerListResponse
@@ -28,6 +33,10 @@ class BannerService
         $res = (new BannerQuery())
             ->withFilterParameter('ACTIVE', 'Y')
             ->withType($sectionCode)
+            ->withOrder([
+                self::BANNER_LIST_SORT_BY1 => self::BANNER_LIST_SORT_ORDER1,
+                self::BANNER_LIST_SORT_BY2 => self::BANNER_LIST_SORT_ORDER2,
+            ])
             ->exec();
         $banners = $this->mapBanners($res->getValues())->toArray();
         return (new BannerListResponse())->setBannerList($banners);
@@ -60,6 +69,12 @@ class BannerService
             ->setTitle($bannerModel->getName())
             ->setPicture($bannerModel->getPictureForMobile())
             ->setLink($bannerModel->getLink(), $this->cityId);
+
+        if ($elementLink = $bannerModel->getElementLink()) {
+            $banner->setLink($elementLink);
+        } elseif ($sectionLink = $bannerModel->getSectionLink()) {
+            $banner->setLink($sectionLink);
+        }
 
         return $banner;
     }

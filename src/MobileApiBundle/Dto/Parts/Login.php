@@ -13,7 +13,6 @@ trait Login
      * @Serializer\Type("string")
 
      * @Assert\NotBlank()
-     * @AssertPhoneNumber(defaultRegion="RU")
 
      * @var string
      */

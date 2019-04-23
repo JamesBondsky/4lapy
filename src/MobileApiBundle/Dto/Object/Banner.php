@@ -51,7 +51,7 @@ class Banner
 
     /**
      * Ссылка с баннера
-     * @Serializer\SerializedName("alt_target")
+     * @Serializer\SerializedName("target_alt")
      * @Serializer\Type("string")
      * @var string
      */
@@ -154,9 +154,14 @@ class Banner
      * @return Banner
      */
     public function setLink($link, $cityId = ''): Banner {
-        $this->link = (string) new FullHrefDecorator($link);
-        $this->cityId = $cityId;
+        if ($link === (int)$link) {
+            $this->link = $link;
+        } else {
+            $this->link = (string) new FullHrefDecorator($link);
+            $this->cityId = $cityId;
+        }
         $this->preparedLink = $this->getPreparedLink();
+
         return $this;
     }
 
@@ -211,7 +216,7 @@ class Banner
             $type = 'articles';
         } else if (strpos($link, '/shares/') !== false) {
             // ссылка на акцию
-            $type = 'shares';
+            $type = 'action';
         }
         $this->type = $type;
         return $type;

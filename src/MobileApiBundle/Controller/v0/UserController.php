@@ -6,11 +6,13 @@
 
 namespace FourPaws\MobileApiBundle\Controller\v0;
 
+use CEvent;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Request\LoginExistRequest;
 use FourPaws\MobileApiBundle\Dto\Request\LoginRequest;
 use FourPaws\MobileApiBundle\Dto\Request\PostUserInfoRequest;
+use FourPaws\MobileApiBundle\Dto\Request\VerificationCodeSendByEmailRequest;
 use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
 use FourPaws\MobileApiBundle\Services\Api\UserService as ApiUserService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
@@ -173,5 +175,30 @@ class UserController extends FOSRestController
     {
         return (new PersonalBonusResponse())
             ->setPersonalBonus($this->apiUserService->getPersonalBonus());
+    }
+
+    /**
+     * @Rest\Post(path="/email_code/")
+     * @Rest\View()
+     * @Security("has_role('REGISTERED_USERS')")
+     *
+     * @param VerificationCodeSendByEmailRequest $verificationCodeRequest
+     * @return ApiResponse
+     */
+    public function postEmailCodeAction(VerificationCodeSendByEmailRequest $verificationCodeRequest): ApiResponse
+    {
+        return (new ApiResponse())
+            ->setData([
+                'result' => CEvent::SendImmediate(
+                    'VerificationCode',
+                    's1',
+                    [
+                        'USER_EMAIL' => $verificationCodeRequest->getEmail(),
+                        'CODE' => $verificationCodeRequest->getCode(),
+                        'TEXT' => 'Код подтверждения смены адреса электронной почты. Если вы не вносили этих изменений, свяжитесь с нами по телефону +7 (800) 770-00-22',
+                    ],
+                    'N'
+                )
+            ]);
     }
 }

@@ -314,6 +314,7 @@ class BasketController extends Controller implements LoggerAwareInterface
      *
      * @return JsonResponse
      * @throws RuntimeException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public function applyPromoCodeAction(Request $request): JsonResponse
     {

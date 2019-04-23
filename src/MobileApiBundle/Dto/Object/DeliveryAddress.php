@@ -163,11 +163,11 @@ class DeliveryAddress
     }
 
     /**
-     * @return null|string
+     * @return string
      */
     public function getFlat(): string
     {
-        return $this->flat;
+        return $this->flat ?? '';
     }
 
     /**
