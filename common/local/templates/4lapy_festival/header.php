@@ -1106,8 +1106,8 @@ $markup = PawsApplication::markup();
                     </div>
                     <div class="portrait">
                         <div class="portrait_title">
-                            <h3 class="gray">Елена</h3>
-                            <h3 class="gray_text">Сажина</h3>
+                            <h3 class="gray">Helen</h3>
+                            <h3 class="gray_text">Yes</h3>
                         </div>
                         <img src="img/sazhina.jpg" alt="" /></div>
                 </div>
