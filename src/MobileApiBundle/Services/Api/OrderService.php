@@ -580,6 +580,9 @@ class OrderService
              * @var $orderItem OrderItem
              */
             $offer = OfferQuery::getById($orderItem->getProductId());
+            if (!$offer) {
+                continue;
+            }
             $product = $this->apiBasketService->getBasketProduct(
                 $orderItem->getId(),
                 $offer,
