@@ -14,22 +14,23 @@ use FourPaws\App\Application as PawsApplication;
 $markup = PawsApplication::markup();
 ?>
 
-<!--========== FOOTER ==========-->
-<footer class="footer">
-    <!-- Links -->
-    <div class="section-seperator">
-        <div class="content-md container">
-            <div class="row">
-                <div class="col-sm-12">
-                    <h5>ФЕСТИВАЛЬ «ЧЕТЫРЕ ЛАПЫ» 2019</h5>
+    <!--========== FOOTER ==========-->
+    <footer class="footer">
+        <!-- Links -->
+        <div class="section-seperator">
+            <div class="content-md container">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <h5>ФЕСТИВАЛЬ «ЧЕТЫРЕ ЛАПЫ» 2019</h5>
+                    </div>
                 </div>
+                <!--// end row -->
             </div>
-            <!--// end row -->
         </div>
-    </div>
-    <!-- End Links -->
-</footer>
-<!--========== END FOOTER ==========-->
+        <!-- End Links -->
+    </footer>
+    <!--========== END FOOTER ==========-->
+</div>
 
 <!-- Back To Top -->
 <a href="javascript:void(0);" class="js-back-to-top back-to-top">Наверх</a>
