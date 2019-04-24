@@ -279,7 +279,6 @@ class OrderService
             // toDo подписка на заказ
         }
         $orderItems = $order->getItems();
-        $basketProducts = $this->getBasketProducts($orderItems);
 
         $dateInsert = (new \DateTime())->setTimestamp($order->getDateInsert()->getTimestamp());
 
@@ -287,15 +286,22 @@ class OrderService
             ->setTitle($order->getStatus())
             ->setCode($order->getStatusId());
 
-        return (new Order())
-            ->setId($order->getAccountNumber())
-            ->setDateFormat($dateInsert)
-            // ->setReviewEnabled($order->) // toDo reviews выбираются из таблички opros_checks, поля opros_4, opros_5, opros_8
-            ->setStatus($status)
-            ->setCompleted($order->isClosed())
-            ->setPaid($order->isPayed())
-            ->setCartParam($this->getOrderParameter($basketProducts, $order))
-            ->setCartCalc($this->getOrderCalculate($basketProducts, false, 0, $order));
+        $response = new Order();
+
+        if ($order->getAccountNumber()) {
+            $basketProducts = $this->getBasketProducts($orderItems);
+            $response
+                ->setId($order->getAccountNumber())
+                ->setDateFormat($dateInsert)
+                // ->setReviewEnabled($order->) // toDo reviews выбираются из таблички opros_checks, поля opros_4, opros_5, opros_8
+                ->setStatus($status)
+                ->setCompleted($order->isClosed())
+                ->setPaid($order->isPayed())
+                ->setCartParam($this->getOrderParameter($basketProducts, $order))
+                ->setCartCalc($this->getOrderCalculate($basketProducts, false, 0, $order));
+        }
+
+        return $response;
     }
 
     /**
