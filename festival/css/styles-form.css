@@ -160,9 +160,28 @@ body {
 	    background: #fff;
 	    width: 94%;
 	    height: auto;
-	    padding: 20px;
+	    padding: 30px 20px 20px;
 	    border-radius: 30px;
 	    margin-left: -47%;
+	}
+
+	.btn-close {
+		width: 30px;
+		height: 30px;
+	}
+	.btn-close:before, .btn-close:after {
+		top: 14px;
+		left: 5px;
+		width: 20px;
+		height: 2px;
+	}
+	.btn-close--form {
+		top: 5px;
+		right: 20px;
+	}
+	.btn-close--message-form {
+		top: 70px;
+		right: 50px;
 	}
 
 	.formwrap {
