@@ -4,7 +4,7 @@
 }
 
 body {
-
+	
 }
 
 .popwrap {
@@ -20,10 +20,14 @@ body {
 }
 
 .popwrap2 {
-	background: url('../img/thnks_desk.png');
-	width: 490px;
-	height: 349px;
-	display: none;
+    background: url(../img/thnks_desk.png);
+    width: 490px;
+    height: 349px;
+    display: none;
+    position: relative;
+    left: 50%;
+    margin-left: -245px;
+    top: 200px;
 }
 
 .popwrap2 .formwrap {
@@ -109,16 +113,7 @@ body {
 }
 
 .join_btn {
-    background: #ff4d15;
-    border: none;
-    border-radius: 40px;
-    color: #fff;
-    text-transform: uppercase;
-    font-size: 18px;
-    font-weight: 600;
-    padding: 7px 26px;
-    margin-top: 10px;
-    transition: all .5s ease;
+    margin-top: 10px !important;
 }
 
 .join_btn:hover {
@@ -161,9 +156,10 @@ body {
 	}
 
 	.popwrap2 {
-		background: url('../img/thnks_mob.png');
-		width: 358px;
-		height: 451px;
+	    background: url(../img/thnks_mob.png);
+	    width: 358px;
+	    height: 451px;
+	    margin-left: -179px;
 	}
 
 	.popwrap2 .formwrap {
