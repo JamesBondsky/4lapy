@@ -612,6 +612,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
                 if($this->getActionReal() == 'renewalSubmit'){
                     $orderSubscribe->setActive(true);
+                    $this->arResult['SUBSCRIBE_ACTION']['RESUMED'] = 'Y';
                 }
 
                 BitrixApplication::getConnection()->startTransaction();
@@ -622,7 +623,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     try {
                         $updateResult = $orderSubscribeService->update($orderSubscribe);
                         if ($updateResult->isSuccess()) {
-                            $this->arResult['SUBSCRIBE_ACTION']['RESUMED'] = $orderSubscribe->isActive() ? 'Y' : 'N';
+
                             $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
 
                             // отправка уведомления о созданной подписке (в данном случае - возобновленной)
