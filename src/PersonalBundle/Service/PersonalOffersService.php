@@ -228,6 +228,54 @@ class PersonalOffersService
     }
 
     /**
+     * @param string $phone
+     * @param int $userId
+     * @throws InvalidArgumentException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ObjectException
+     */
+    public function addFestivalCouponToUser(string $phone, int $userId): void
+    {
+        $container = App::getInstance()->getContainer();
+        /** @var PersonalOffersService $personalOffersService */
+        $personalOffersService = $container->get('personal_offers.service');
+        $festivalOffer = $personalOffersService->getActiveOffers(['CODE' => 'festival']);
+        if (!$festivalOffer->isEmpty()
+            && ($festivalOfferId = (int)$festivalOffer->first()['ID'])
+        ) {
+            if ($phone) {
+                /** @var DataManager $festivalUsersDataManager */
+                $festivalUsersDataManager = $container->get('bx.hlblock.festivalusersdata');
+                $festivalUser = $festivalUsersDataManager::query()
+                    ->setFilter([
+                        '=UF_PHONE' => $phone,
+                        '=UF_USER' => false,
+                    ])
+                    ->setSelect([
+                        'ID',
+                        'UF_FESTIVAL_USER_ID',
+                    ])
+                    ->setLimit(1)
+                    ->exec()
+                    ->fetch();
+                if ($festivalUser) {
+                    $festivalUsersDataManager::update($festivalUser['ID'], [
+                        'UF_USER' => $userId,
+                    ]);
+                }
+
+                $coupons = [
+                    $festivalUser['UF_FESTIVAL_USER_ID'] => [$userId]
+                ];
+                /** @var PersonalOffersService $personalOffersService */
+                $personalOffersService = $container->get('personal_offers.service');
+                $personalOffersService->importOffers($festivalOfferId, $coupons);
+            }
+        }
+    }
+
+    /**
      * @param int $festivalOfferId
      *
      * @return bool|int
