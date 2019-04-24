@@ -179,13 +179,14 @@ class LandingController extends Controller
      * @throws ApplicationCreateException
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ObjectException
      */
     public function addFestivalUser(Request $request): JsonResponse
     {
         global $USER;
         $userId = $USER->GetID();
 
-        $idOffset = 10000;
+        $idOffset = 9999;
         $phone = $request->get('phone');
 
         try {
@@ -236,7 +237,7 @@ class LandingController extends Controller
                 $logger->critical(sprintf(
                     'Не удалось создать ID регистрации на фестиваль. %s method. %s',
                     __METHOD__,
-                    $e ?? ''
+                    $e->getMessage() ?? ''
                 ));
                 throw new JsonResponseException($this->ajaxMess->getSystemError());
             }
