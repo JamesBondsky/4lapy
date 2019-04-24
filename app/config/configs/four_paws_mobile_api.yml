@@ -29,6 +29,10 @@ four_paws_mobile_api:
       code: 20
       message: 'Ошибка при добавлении профиля доставки'
       status_code: 200
+    FourPaws\MobileApiBundle\Exception\CardAlreadyUsedException:
+      code: 42
+      message: 'Данная карта уже привязана'
+      status_code: 200
     FourPaws\MobileApiBundle\Exception\NoneMetroInCityException:
       code: 44
       message: 'Данные о станциях метро для этого города отсутствуют'
@@ -45,6 +49,10 @@ four_paws_mobile_api:
       code: 55
       message: 'Данный почтовый ящик уже используется. Выберите другой.'
       status_code: 200
+    FourPaws\MobileApiBundle\Exception\PhoneAlreadyUsed:
+      code: 56
+      message: 'Данный номер телефона уже используется. Используйте другой.'
+      status_code: 200
     FourPaws\Catalog\Exception\CategoryNotFoundException:
       code: 404
       message: 'Категория не найдена'
@@ -59,4 +67,3 @@ four_paws_mobile_api:
       code: 1021
       message: 'Ошибка при обновления профиля доставки'
       status_code: 200
-

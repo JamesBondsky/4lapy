@@ -142,8 +142,41 @@ class ProductService
         $nav = (new Navigation())
             ->withPage($page)
             ->withPageSize($count);
+        ;
 
         $productSearchResult = $this->searchService->searchProducts($filters, $sort, $nav, $searchQuery);
+        /** @var ProductCollection $productCollection */
+        $productCollection = $productSearchResult->getProductCollection();
+
+        return (new ArrayCollection([
+            'products' => $productCollection
+                ->map(\Closure::fromCallable([$this, 'mapProductForList']))
+                ->filter(function($value) {
+                    return !is_null($value);
+                })
+                ->getValues(),
+            'cdbResult' => $productCollection->getCdbResult()
+        ]));
+    }
+
+    /**
+     * @param int[] $ids
+     * @return ArrayCollection
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\Catalog\Exception\CategoryNotFoundException
+     */
+    public function getListFromIds(array $ids)
+    {
+        $filters = new FilterCollection();
+        $filters->add([
+            'ID' => $ids
+        ]);
+
+        $sort = $this->sortService->getSorts('popular')->getSelected();
+
+        $productSearchResult = $this->searchService->searchProducts($filters, $sort, new Navigation());
         /** @var ProductCollection $productCollection */
         $productCollection = $productSearchResult->getProductCollection();
 

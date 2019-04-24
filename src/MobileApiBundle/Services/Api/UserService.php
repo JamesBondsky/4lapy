@@ -15,12 +15,15 @@ use FourPaws\MobileApiBundle\Dto\Object\User;
 use FourPaws\MobileApiBundle\Dto\Request\LoginRequest;
 use FourPaws\MobileApiBundle\Dto\Response\PostUserInfoResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserLoginResponse;
+use FourPaws\MobileApiBundle\Exception\EmailAlreadyUsed;
 use FourPaws\MobileApiBundle\Exception\InvalidCredentialException;
+use FourPaws\MobileApiBundle\Exception\PhoneAlreadyUsed;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\MobileApiBundle\Exception\TokenNotFoundException;
 use FourPaws\MobileApiBundle\Security\ApiToken;
 use FourPaws\MobileApiBundle\Services\Session\SessionHandler;
 use FourPaws\UserBundle\Entity\User as AppUser;
+use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Repository\GroupRepository;
 use FourPaws\UserBundle\Repository\UserRepository;
@@ -166,6 +169,31 @@ class UserService
     public function update(User $user): PostUserInfoResponse
     {
         $currentUser = $this->userBundleService->getCurrentUser();
+
+        if ($user->getPhone() && $user->getPhone() !== $currentUser->getPersonalPhone()) {
+            try {
+                if ($userByPhone = $this->userBundleService->findOneByPhone($user->getPhone())) {
+                    if ($userByPhone->isPhoneConfirmed()) {
+                        throw new PhoneAlreadyUsed();
+                    }
+                }
+            } catch (NotFoundException $e) {
+                // do nothing
+            }
+        }
+
+        if ($user->getEmail() && $user->getEmail() !== $currentUser->getEmail()) {
+            try {
+                if ($userByEmail = $this->userBundleService->findOneByEmail($user->getEmail())) {
+                    if ($userByEmail->isEmailConfirmed()) {
+                        throw new EmailAlreadyUsed();
+                    }
+                }
+            } catch (NotFoundException $e) {
+                // do nothing
+            }
+        }
+
         if ($user->getEmail() && $currentUser->getEmail() === $currentUser->getLogin()) {
             $currentUser->setLogin($user->getEmail());
         } elseif ($user->getPhone() && $currentUser->getPersonalPhone() === $currentUser->getLogin()) {
