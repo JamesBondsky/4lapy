@@ -400,7 +400,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
             } ?>
 
             <? if($arParams['IS_POPUP']) { ?>
-                <a class="b-counter-basket__basket-link js-basket-add js-this-product"
+                <a class="b-counter-basket__basket-link b-counter-basket__basket-link--subscribe js-basket-add js-this-product"
                    href="javascript:void(0)"
                    title=""
                    data-offerId="<?= $currentOffer->getId(); ?>"
