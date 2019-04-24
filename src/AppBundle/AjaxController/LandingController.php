@@ -4,6 +4,8 @@ namespace FourPaws\AppBundle\AjaxController;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Entity\DataManager;
+use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
@@ -224,19 +226,6 @@ class LandingController extends Controller
 
             $email = $request->get('email');
 
-            $requestIblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::GRANDIN_REQUEST);
-            if ($landingType === self::$festivalLanding) {
-                $filter = [
-                    'IBLOCK_ID' => $requestIblockId,
-                    'CHECK_PERMISSIONS' => 'N',
-                    '=CODE' => $landingType . '_requests',
-                ];
-                $sections = \CIBlockSection::GetList([], $filter, false, ['ID', 'IBLOCK_ID', 'NAME', 'CODE'])->Fetch();
-                if (!empty($sections['ID'])) {
-                    $sectionId = $sections['ID'];
-                }
-            }
-
             $rsFestivalUserId = 0;
             try {
                 $rsFestivalUserId = FestivalUsersTable::addCustomized(md5(implode(',', $arFields)));
@@ -261,9 +250,9 @@ class LandingController extends Controller
                 } catch (\Exception $e) {
                 }
             }
+            $container = App::getInstance()->getContainer();
             if ($userId) {
                 $festivalPersonalOfferLinked = false;
-                $container = App::getInstance()->getContainer();
                 /** @var PersonalOffersService $personalOffersService */
                 $personalOffersService = $container->get('personal_offers.service');
                 $festivalOffer = $personalOffersService->getActiveOffers(['CODE' => 'festival']);
@@ -293,22 +282,20 @@ class LandingController extends Controller
                     ));
                 }
             }
-            $resultAdd = $iblockElement->Add([
-                'IBLOCK_ID' => $requestIblockId,
-                'NAME' => implode(' ', [$request->get('surname'), $request->get('name'), $phone, $request->get('email')]),
-                'IBLOCK_SECTION_ID' => ($sectionId) ? $sectionId : false,
-                'PROPERTY_VALUES' => [
-                    'USER' => $userId,
-                    'SURNAME' => $request->get('surname'),
-                    'NAME' => $request->get('name'),
-                    'PHONE' => $phone,
-                    'EMAIL' => $email,
-                    'RULES' => $request->get('rules') === 'on',
-                    'FESTIVAL_USER_ID' => $festivalUserId,
-                ],
-            ]);
+            /** @var DataManager $festivalUsersDataManager */
+            $festivalUsersDataManager = $container->get('bx.hlblock.festivalusersdata');
+            $isfestivalUserAddSuccess = $festivalUsersDataManager::add([
+                'UF_USER' => $userId,
+                'UF_SURNAME' => $request->get('surname'),
+                'UF_NAME' => $request->get('name'),
+                'UF_PHONE' => $phone,
+                'UF_EMAIL' => $email,
+                'UF_RULES' => $request->get('rules') === 'on',
+                'UF_FESTIVAL_USER_ID' => $festivalUserId,
+                'UF_DATE_CREATED' => new DateTime(),
+            ])->isSuccess();
 
-            if (!$resultAdd) {
+            if (!$isfestivalUserAddSuccess) {
                 throw new JsonResponseException($this->ajaxMess->getAddError($iblockElement->LAST_ERROR));
             }
 
