@@ -353,6 +353,7 @@ class PersonalOffersService
                     'PREVIEW_TEXT',
                     'DATE_ACTIVE_TO',
                     'PROPERTY_DISCOUNT',
+                    'PROPERTY_NO_USED_STATUS',
                 ]
             );
             if ($res = $rsOffers->GetNext())
@@ -365,5 +366,18 @@ class PersonalOffersService
         }
 
         return new ArrayCollection($offer);
+    }
+
+    /**
+     * @param string $promoCode
+     *
+     * @return bool
+     * @throws InvalidArgumentException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\LoaderException
+     */
+    public function isNoUsedStatus(string $promoCode): bool
+    {
+        return (bool)$this->getOfferFieldsByPromoCode($promoCode)->get('PROPERTY_NO_USED_STATUS_VALUE');
     }
 }
