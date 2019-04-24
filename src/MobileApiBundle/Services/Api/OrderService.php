@@ -573,6 +573,9 @@ class OrderService
     {
         $basketProducts = new BasketProductCollection();
         foreach ($orderItems as $orderItem) {
+            if (!$orderItem) {
+                continue;
+            }
             /**
              * @var $orderItem OrderItem
              */
