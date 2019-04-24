@@ -288,7 +288,7 @@ class OrderService
 
         $response = new Order();
 
-        if ($order->getAccountNumber()) {
+        if (empty($order->getAccountNumber())) {
             $basketProducts = $this->getBasketProducts($orderItems);
             $response
                 ->setId($order->getAccountNumber())
