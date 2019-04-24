@@ -297,7 +297,11 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                             <li class="b-price-subscribe-delivery-cart__item">
                                 <div class="b-price-subscribe-delivery-cart__text">
                                     <div class="b-price-subscribe-delivery-cart__clipped-text">
-                                        3 товара (1,2 кг)
+                                        <?= WordHelper::numberFormat($arResult['TOTAL_QUANTITY'],
+                                            0) ?> <?= WordHelper::declension($arResult['TOTAL_QUANTITY'],
+                                            ['товар', 'товара', 'товаров']) ?>
+                                        <?php if ($arResult['BASKET_WEIGHT'] > 0) { ?>(<?= WordHelper::showWeight($arResult['BASKET_WEIGHT'],
+                                            true) ?>)<?php } ?>
                                     </div>
                                 </div>
                                 <div class="b-price-subscribe-delivery-cart__value">
@@ -512,7 +516,11 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                             <li class="b-price-subscribe-delivery-cart__item">
                                 <div class="b-price-subscribe-delivery-cart__text">
                                     <div class="b-price-subscribe-delivery-cart__clipped-text">
-                                        3 товара (1,2 кг)
+                                        <?= WordHelper::numberFormat($arResult['TOTAL_QUANTITY'],
+                                            0) ?> <?= WordHelper::declension($arResult['TOTAL_QUANTITY'],
+                                            ['товар', 'товара', 'товаров']) ?>
+                                        <?php if ($arResult['BASKET_WEIGHT'] > 0) { ?>(<?= WordHelper::showWeight($arResult['BASKET_WEIGHT'],
+                                            true) ?>)<?php } ?>
                                     </div>
                                 </div>
                                 <div class="b-price-subscribe-delivery-cart__value">
