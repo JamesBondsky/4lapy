@@ -307,7 +307,7 @@ class OrderService
     public function getUserOrders()
     {
         $user = $this->appUserService->getCurrentUser();
-        return $this->personalOrderService->getUserOrders($user);
+        return $this->personalOrderService->getUserOrders($user, 1, 0);
     }
 
     /**
