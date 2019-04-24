@@ -215,7 +215,6 @@ class LandingController extends Controller
                 $request->get('email'),
                 $request->get('rules')
             ];
-            $landingType = $request->get('landingType');
 
             if (count(array_filter($arFields)) < count($arFields)) {
                 throw new JsonResponseException($this->ajaxMess->getEmptyDataError());
@@ -227,17 +226,30 @@ class LandingController extends Controller
 
             $email = $request->get('email');
 
+            $container = App::getInstance()->getContainer();
+            /** @var DataManager $festivalUsersDataManager */
+            $festivalUsersDataManager = $container->get('bx.hlblock.festivalusersdata');
+            $isUserAlreadyRegistered = (bool)$festivalUsersDataManager::getCount([
+                'LOGIC' => 'OR',
+                'UF_PHONE' => $phone,
+                'UF_EMAIL' => $email,
+            ]);
+            if ($isUserAlreadyRegistered) {
+                throw new JsonResponseException(JsonErrorResponse::createWithData('Вы уже были зарегистрированы на фестиваль'));
+            }
+
             $rsFestivalUserId = 0;
             try {
                 $rsFestivalUserId = FestivalUsersTable::addCustomized(md5(implode(',', $arFields)));
             } catch (\Exception $e) {
+                $exceptionMessage = $e->getMessage();
             }
             if ($rsFestivalUserId <= 0) {
                 $logger = LoggerFactory::create('Festival');
                 $logger->critical(sprintf(
                     'Не удалось создать ID регистрации на фестиваль. %s method. %s',
                     __METHOD__,
-                    $e->getMessage() ?? ''
+                    $exceptionMessage ?? ''
                 ));
                 throw new JsonResponseException($this->ajaxMess->getSystemError());
             }
@@ -251,7 +263,6 @@ class LandingController extends Controller
                 } catch (\Exception $e) {
                 }
             }
-            $container = App::getInstance()->getContainer();
             if ($userId) {
                 $festivalPersonalOfferLinked = false;
                 /** @var PersonalOffersService $personalOffersService */
@@ -283,8 +294,6 @@ class LandingController extends Controller
                     ));
                 }
             }
-            /** @var DataManager $festivalUsersDataManager */
-            $festivalUsersDataManager = $container->get('bx.hlblock.festivalusersdata');
             $isfestivalUserAddSuccess = $festivalUsersDataManager::add([
                 'UF_USER' => $userId,
                 'UF_SURNAME' => $request->get('surname'),
