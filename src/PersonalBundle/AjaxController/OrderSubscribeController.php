@@ -247,4 +247,56 @@ class OrderSubscribeController extends Controller
 
         return $return;
     }
+
+    /**
+     * @Route("/get-delivery-dates/", methods={"POST"})
+     * @param Request $request
+     * @return JsonResponse
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getDeliveryDatesAction(Request $request) : JsonResponse
+    {
+        $return = null;
+
+        try {
+            /** @var \FourPawsPersonalCabinetOrdersSubscribeFormComponent $component */
+            $component = $GLOBALS['APPLICATION']->IncludeComponent(
+                'fourpaws:personal.orders.subscribe.form',
+                'popup',
+                [
+                    'INCLUDE_TEMPLATE' => 'N',
+                    'GET_DELIVERY_DATES' => true,
+                    'ITEMS' => $request->get('items'),
+                    'STORE_ID' => $request->get('shopId'),
+                ],
+                null,
+                [
+                    'HIDE_ICONS' => 'Y',
+                ]
+            );
+        } catch (\Exception $e) {
+            return JsonErrorResponse::createWithData(
+                $e->getMessage(),
+                [],
+                200,
+                [
+                    'success' => false,
+                ]);
+        }
+
+        
+        $return = JsonErrorResponse::createWithData(
+            '',
+            [
+                'dates' => $component->arResult['DATES']
+            ],
+            200,
+            [
+                'reload' => false,
+                'redirect' => ''
+            ]
+        );
+
+        return $return;
+    }
 }

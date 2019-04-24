@@ -38,7 +38,7 @@ use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Dpd\TerminalTable;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\PriceForAmount;
 use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\DeliveryBundle\Exception\DeliveryInitializeException;
@@ -981,14 +981,13 @@ class DeliveryService implements LoggerAwareInterface
                 $dateOffset++;
             } while (\count($result) < $count);
         } else {
-            //$result[] = clone $delivery; // иначе первая дата доставки будет на день позже
             while(\count($result) < $count){
-                $curDate = new \DateTime(sprintf('+%s days', $dateOffset));
-                /** @var PickupResultInterface $currentDelivery */
+                $deliveryDate = clone $delivery->getDeliveryDate();
+                $deliveryDate->modify(sprintf('+%s days', $dateOffset));
+
+                /** @var PickupResult $tmpPickup */
                 $tmpPickup = clone $delivery;
-                //if($curDate->format('d.m.Y') !== date('d.m.Y')){
-                    $tmpPickup->setCurrentDate($curDate);
-                //}
+                $tmpPickup->setDeliveryDate($deliveryDate);
                 $result[] = $tmpPickup;
                 $dateOffset++;
             }

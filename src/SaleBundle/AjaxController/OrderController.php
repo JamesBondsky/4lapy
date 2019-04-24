@@ -151,7 +151,7 @@ class OrderController extends Controller implements LoggerAwareInterface
     }
 
     /**
-     * @Route("/store-search-by-items/", methods={"GET"})
+     * @Route("/store-search-by-items/", methods={"POST"})
      *
      * @throws SystemException
      * @throws \Exception
@@ -162,6 +162,8 @@ class OrderController extends Controller implements LoggerAwareInterface
     {
         /** @var BasketService $basketService */
         $basketService = App::getInstance()->getContainer()->get(BasketService::class);
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = App::getInstance()->getContainer()->get('delivery.service');
         $storage = $this->orderStorageService->getStorage();
         $items = $request->get('items');
 
@@ -175,15 +177,20 @@ class OrderController extends Controller implements LoggerAwareInterface
             $storage = $this->orderStorageService->getStorage();
         }
 
-
+        // получение самовывоза из набора товаров
         $basket = $basketService->createBasketFromItems($items);
+        $deliveries = $deliveryService->getByBasket($basket, '', [DeliveryService::INNER_PICKUP_CODE]);
+        if(empty($deliveries)){
+            return JsonSuccessResponse::create('Нет доступных магазинов для самовывоза');
+        }
+        $pickup = current($deliveries);
 
         return JsonSuccessResponse::createWithData(
             'Подгрузка успешна',
             $this->shopInfoService->toArray(
                 $this->shopInfoService->getShopInfo(
                     $storage,
-                    $this->orderStorageService->getPickupDelivery($storage)
+                    $pickup
                 )
             )
         );

@@ -22,6 +22,7 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
@@ -160,8 +161,12 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     public function executeComponent()
     {
         try {
-            $this->setAction($this->prepareAction());
-            $this->doAction();
+            if($this->arParams['GET_DELIVERY_DATES']){
+                $this->arResult['DATES'] = $this->getDeliveryDates($this->arParams['STORE_ID'], $this->arParams['ITEMS']);
+            } else{
+                $this->setAction($this->prepareAction());
+                $this->doAction();
+            }
         } catch (\Exception $exception) {
             $this->log()->critical(
                 sprintf(
@@ -175,6 +180,55 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         }
 
         return $this;
+    }
+
+    /**
+     * @param $storeXmlId
+     * @param $items
+     * @return array
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Sale\UserMessageException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws Exception
+     */
+    public function getDeliveryDates($storeXmlId, $items)
+    {
+        $dates = [];
+        $basketService = $this->getBasketService();
+        $deliveryService = $this->getDeliveryService();
+        $storeService = $this->getStoreService();
+
+        $store = $storeService->getStoreByXmlId($storeXmlId);
+
+        $basket = $basketService->createBasketFromItems($items);
+        $deliveries = $deliveryService->getByBasket($basket, '', [DeliveryService::INNER_PICKUP_CODE]);
+        if(empty($deliveries)){
+            throw new Exception("Не удалось сформировать службы доставки");
+        }
+
+        /** @var PickupResult $pickup */
+        $pickup = current($deliveries);
+        $pickup->setSelectedShop($store);
+
+        $nextDeliveries = $deliveryService->getNextDeliveries($pickup, 10);
+        foreach($nextDeliveries as $delivery){
+            $tmpPickup = clone $delivery;
+            $dates[] = [
+                'value' => $tmpPickup->getDeliveryDate()->format('d.m.Y'),
+                'name' => FormatDate('l, d.m.Y', $delivery->getDeliveryDate()->getTimestamp()),
+            ];
+        }
+
+        return $dates;
     }
 
     /**
@@ -372,9 +426,6 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                 break;
             case 'item':
                 $action = 'getItem';
-                break;
-            case 'getDeliveryDates':
-                $action = 'getDeliveryDates';
                 break;
         }
 
@@ -994,12 +1045,6 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                 $this->setFieldError($fieldName, 'Значение задано некорректно', 'not_valid');
             }
         }*/
-    }
-
-
-    public function getDeliveryDates($store, $items)
-    {
-
     }
 
     /**
