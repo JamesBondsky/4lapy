@@ -288,7 +288,7 @@ class OrderService
             ->setCode($order->getStatusId());
 
         return (new Order())
-            ->setId($order->getAccountNumber())
+            ->setId($order->getAccountNumber() ?? 0)
             ->setDateFormat($dateInsert)
             // ->setReviewEnabled($order->) // toDo reviews выбираются из таблички opros_checks, поля opros_4, opros_5, opros_8
             ->setStatus($status)
