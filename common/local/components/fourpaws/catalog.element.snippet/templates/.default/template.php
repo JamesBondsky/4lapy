@@ -213,7 +213,7 @@ if (!$currentOffer->getImagesIds()) {
         </div>
         <?php $offerId = $currentOffer->getId();
         if($arParams['IS_POPUP']) { ?>
-            <a class="b-common-item__add-to-cart js-basket-add"
+            <a class="b-common-item__add-to-cart b-common-item__add-to-cart--subscribe js-basket-add"
                href="javascript:void(0);"
                title=""
                data-offerid="<?= $offerId ?>">

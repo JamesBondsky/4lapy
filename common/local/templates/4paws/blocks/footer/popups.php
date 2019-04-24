@@ -57,7 +57,6 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
         include __DIR__ . '/change-subscribe-delivery.php';
         include __DIR__ . '/catalog-subscribe-delivery.php';
         include __DIR__ . '/message-change-subscribe-delivery.php';
-        include __DIR__ . '/message-product-add-subscribe-delivery.php';
     }
 
     if($template->isOrderSubscribePage()){
