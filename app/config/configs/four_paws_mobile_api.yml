@@ -17,7 +17,7 @@ four_paws_mobile_api:
       code: 6
       message: 'Код подтверждения указан не верно'
       status_code: 200
-    FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException:
+    FourPaws\MobileApiBundle\Exception\InvalidCredentialException:
       code: 6
       message: 'Код подтверждения указан не верно'
       status_code: 200

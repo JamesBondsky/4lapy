@@ -23,6 +23,7 @@ use FourPaws\MobileApiBundle\Exception\TokenNotFoundException;
 use FourPaws\MobileApiBundle\Security\ApiToken;
 use FourPaws\MobileApiBundle\Services\Session\SessionHandler;
 use FourPaws\UserBundle\Entity\User as AppUser;
+use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Repository\GroupRepository;
@@ -115,7 +116,7 @@ class UserService
             '9991693811',
             '9263987654',
             '9653770455',
-            '9165919854'
+            // '9165919854'
         ];
 
         try {
@@ -123,7 +124,11 @@ class UserService
             $_COOKIE[ConfirmCodeService::getCookieName('phone')] = $loginRequest->getCaptchaId();
 
             if (!in_array($loginRequest->getLogin(), $excludePhonesFromCaptchaCheck)) {
-                if (!ConfirmCodeService::checkCode($loginRequest->getCaptchaValue(), 'phone')) {
+                try {
+                    if (!ConfirmCodeService::checkCode($loginRequest->getCaptchaValue(), 'phone')) {
+                        throw new InvalidCredentialException();
+                    }
+                } catch (NotFoundConfirmedCodeException $e) {
                     throw new InvalidCredentialException();
                 }
             }
