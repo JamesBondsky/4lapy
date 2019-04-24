@@ -9,7 +9,10 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\MobileApiBundle\Dto\Response\CaptchaSendValidationResponse;
 use FourPaws\MobileApiBundle\Dto\Response\CaptchaVerifyResponse;
+use FourPaws\MobileApiBundle\Exception\EmailAlreadyUsed;
+use FourPaws\MobileApiBundle\Exception\PhoneAlreadyUsed;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
+use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\UserService as AppUserService;
@@ -67,16 +70,48 @@ class CaptchaService
 
         switch ($loginType) {
             case 'phone':
+
+                // check if phone exists
+                if (in_array($sender, [static::SENDER_CARD_ACTIVATION, static::SENDER_EDIT_INFO])) {
+                    try {
+                        if ($user = $this->appUserService->findOneByPhone($phoneOrEmail)) {
+                            if ($user->isPhoneConfirmed()) {
+                                throw new PhoneAlreadyUsed();
+                            }
+                        }
+                    } catch (NotFoundException $e) {
+                        // do nothing
+                    }
+                }
+
                 if (!in_array($sender, [static::SENDER_USER_REGISTRATION, static::SENDER_EDIT_INFO])) {
                     throw new RuntimeException("Для отправки подтверждения по sms sender может быть либо " . static::SENDER_EDIT_INFO . ", либо " . static::SENDER_USER_REGISTRATION . ". Передан $sender");
                 }
+
                 $this->sendValidationBySms($phoneOrEmail, $sender);
+
                 break;
             case 'email':
+
+                // check if email exists
+                if (in_array($sender, [static::SENDER_CARD_ACTIVATION, static::SENDER_EDIT_INFO])) {
+                    try {
+                        if ($user = $this->appUserService->findOneByEmail($phoneOrEmail)) {
+                            if ($user->isEmailConfirmed()) {
+                                throw new EmailAlreadyUsed();
+                            }
+                        }
+                    } catch (NotFoundException $e) {
+                        // do nothing
+                    }
+                }
+
                 if (!in_array($sender, [static::SENDER_EDIT_INFO, static::SENDER_CARD_ACTIVATION])) {
                     throw new RuntimeException("Для отправки подтверждения по почте sender может быть либо " . static::SENDER_EDIT_INFO . ", либо " . static::SENDER_CARD_ACTIVATION . ". Передан $sender");
                 }
+
                 $this->sendValidationByEmail($phoneOrEmail, $sender);
+
                 break;
             default:
                 throw new RuntimeException("Телефон или email не распознан в параметре $phoneOrEmail");
