@@ -1,5 +1,5 @@
 <section class="popwrap2 js-popup-section" data-popup="response-form-festival">
-    <div class="js-close-popup"></div>
+    <div class="btn-close btn-close--message-form js-close-popup"></div>
     <div class="formwrap">
         <div class="formitem">
             <p><b>ПОЗДРАВЛЯЕМ</b></p>

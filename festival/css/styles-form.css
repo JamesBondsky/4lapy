@@ -38,6 +38,41 @@ body {
 	width: 320px;
 }
 
+.btn-close {
+	display: block;
+	position: absolute;
+	z-index: 2;
+	top: 0;
+	right: 0;
+	width: 38px;
+	height: 38px;
+	cursor: pointer;
+}
+	.btn-close:before, .btn-close:after {
+		content: '';
+		display: block;
+		position: absolute;
+		top: 19px;
+		left: 0;
+		width: 38px;
+		height: 4px;
+		background-color: #ff4e00;
+		-webkit-transform: none;
+		-ms-transform: none;
+		transform: rotate(45deg);
+	}
+	.btn-close:after {
+		transform: rotate(-45deg);
+	}
+	.btn-close--form {
+		 top: -35px;
+		 right: 55px;
+	}
+	.btn-close--message-form {
+		 top: 40px;
+		 right: 5px;
+	}
+
 .formwrap {
 	display: grid;
 	 grid-template-columns: 1fr 1fr;

@@ -1,5 +1,5 @@
 <section class="popwrap js-popup-section" data-popup="form-festival">
-    <div class="js-close-popup"></div>
+    <div class="btn-close btn-close--form js-close-popup"></div>
     <div class="formwrap">
         <div class="formitem">
             <p><b>До фестиваля «Четыре лапы» осталось совсем чуть-чуть. Заполни короткую форму регистрации, и мы отправим на эелектронную почту приглашение с персональным кодом участника.</b></p>
