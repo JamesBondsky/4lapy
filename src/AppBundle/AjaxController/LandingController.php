@@ -6,13 +6,20 @@ use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Exception\JsonResponseException;
 use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\External\ExpertsenderService;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\ProtectorHelper;
+use FourPaws\PersonalBundle\Service\PersonalOffersService;
+use FourPaws\UserBundle\Repository\FestivalUsersTable;
+use FourPaws\UserBundle\Service\UserSearchInterface;
+use FourPaws\UserBundle\Service\UserService;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -33,10 +40,11 @@ class LandingController extends Controller
         'otherDog' => 'Собака средней или крупной породы',
     ];
 
-    static $landingSites = ['s2', 's3'];
+    static $landingSites = ['s2', 's3', 's4'];
 
     static $grandinLanding = 'grandin';
     static $royalCaninLanding = 'royal_canin';
+    static $festivalLanding = 'festival';
 
     /** @var AjaxMess */
     private $ajaxMess;
@@ -155,6 +163,181 @@ class LandingController extends Controller
         } catch (JsonResponseException $e) {
 
             $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD);
+            $token['value'] = $token['token'];
+            unset($token['token']);
+
+            return $e->getJsonResponse()->extendData($token);
+        }
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws ApplicationCreateException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\LoaderException
+     */
+    public function addFestivalUser(Request $request): JsonResponse
+    {
+        global $USER;
+        $userId = $USER->GetID();
+
+        $idOffset = 10000;
+        $phone = $request->get('phone');
+
+        try {
+            $isCorrectPhone = false;
+            try {
+                if (PhoneHelper::isPhone($phone)) {
+                    $phone = PhoneHelper::normalizePhone($phone);
+                    $isCorrectPhone = true;
+                }
+            } catch (\Exception $e) {
+                $logger = LoggerFactory::create('Festival');
+                $logger->info(sprintf(
+                    'Неверный номер телефона: ' . $request->get('phone') . '. %s method. %s',
+                    __METHOD__,
+                    $e
+                ));
+            }
+            if (!$isCorrectPhone) {
+                throw new JsonResponseException(JsonErrorResponse::createWithData('Неверный номер телефона'));
+            }
+
+            $arFields = [
+                $request->get('surname'),
+                $request->get('name'),
+                $phone,
+                $request->get('email'),
+                $request->get('rules')
+            ];
+            $landingType = $request->get('landingType');
+
+            if (count(array_filter($arFields)) < count($arFields)) {
+                throw new JsonResponseException($this->ajaxMess->getEmptyDataError());
+            }
+
+            if (!ProtectorHelper::checkToken($request->get(ProtectorHelper::getField(ProtectorHelper::TYPE_FESTIVAL_REQUEST_ADD)), ProtectorHelper::TYPE_FESTIVAL_REQUEST_ADD)) {
+                throw new JsonResponseException($this->ajaxMess->getWrongParamsError());
+            }
+
+            $email = $request->get('email');
+
+            $requestIblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::GRANDIN_REQUEST);
+            if ($landingType === self::$festivalLanding) {
+                $filter = [
+                    'IBLOCK_ID' => $requestIblockId,
+                    'CHECK_PERMISSIONS' => 'N',
+                    '=CODE' => $landingType . '_requests',
+                ];
+                $sections = \CIBlockSection::GetList([], $filter, false, ['ID', 'IBLOCK_ID', 'NAME', 'CODE'])->Fetch();
+                if (!empty($sections['ID'])) {
+                    $sectionId = $sections['ID'];
+                }
+            }
+
+            $rsFestivalUserId = 0;
+            try {
+                $rsFestivalUserId = FestivalUsersTable::addCustomized(md5(implode(',', $arFields)));
+            } catch (\Exception $e) {
+            }
+            if ($rsFestivalUserId <= 0) {
+                $logger = LoggerFactory::create('Festival');
+                $logger->critical(sprintf(
+                    'Не удалось создать ID регистрации на фестиваль. %s method. %s',
+                    __METHOD__,
+                    $e ?? ''
+                ));
+                throw new JsonResponseException($this->ajaxMess->getSystemError());
+            }
+            $iblockElement = new \CIBlockElement();
+            $festivalUserId = $idOffset + $rsFestivalUserId;
+            if (!$userId) {
+                try {
+                    /** @var UserService $userService */
+                    $userService = App::getInstance()->getContainer()->get(UserSearchInterface::class);
+                    $userId = $userService->findOneByPhone($phone)->getId();
+                } catch (\Exception $e) {
+                }
+            }
+            if ($userId) {
+                $festivalPersonalOfferLinked = false;
+                $container = App::getInstance()->getContainer();
+                /** @var PersonalOffersService $personalOffersService */
+                $personalOffersService = $container->get('personal_offers.service');
+                $festivalOffer = $personalOffersService->getActiveOffers(['CODE' => 'festival']);
+                if (!$festivalOffer->isEmpty()
+                    && ($festivalOfferId = (int)$festivalOffer->first()['ID'])
+                ) {
+                    try {
+                        $coupons = [
+                            $festivalUserId => [$userId]
+                        ];
+                        $personalOffersService->importOffers($festivalOfferId, $coupons);
+                        $festivalPersonalOfferLinked = true;
+                    } catch (\Exception $e) {
+                        $logger = LoggerFactory::create('Festival');
+                        $logger->critical(sprintf(
+                            'error while creating user\'s promo code. %s method. %s',
+                            __METHOD__,
+                            $e
+                        ));
+                    }
+                }
+                if (!$festivalPersonalOfferLinked) {
+                    $logger = LoggerFactory::create('Festival');
+                    $logger->critical(sprintf(
+                        '%s: couldn\'t create festival coupon for user',
+                        __METHOD__
+                    ));
+                }
+            }
+            $resultAdd = $iblockElement->Add([
+                'IBLOCK_ID' => $requestIblockId,
+                'NAME' => implode(' ', [$request->get('surname'), $request->get('name'), $phone, $request->get('email')]),
+                'IBLOCK_SECTION_ID' => ($sectionId) ? $sectionId : false,
+                'PROPERTY_VALUES' => [
+                    'USER' => $userId,
+                    'SURNAME' => $request->get('surname'),
+                    'NAME' => $request->get('name'),
+                    'PHONE' => $phone,
+                    'EMAIL' => $email,
+                    'RULES' => $request->get('rules') === 'on',
+                    'FESTIVAL_USER_ID' => $festivalUserId,
+                ],
+            ]);
+
+            if (!$resultAdd) {
+                throw new JsonResponseException($this->ajaxMess->getAddError($iblockElement->LAST_ERROR));
+            }
+
+            try {
+                /** @var ExpertsenderService $sender */
+                $sender = App::getInstance()->getContainer()->get('expertsender.service');
+                $sender->sendAfterFestivalUserReg([
+                    'userEmail' => $email,
+                ]);
+            }
+            catch (\Exception $exception)
+            {
+                $logger = LoggerFactory::create('expertSender');
+                $logger->error(sprintf(
+                    'Error while sending mail. %s exception: %s',
+                    __METHOD__,
+                    $exception->getMessage()
+                ));
+            }
+
+            $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_FESTIVAL_REQUEST_ADD);
+            return JsonSuccessResponse::createWithData('<p><b>ПОЗДРАВЛЯЕМ</b></p>
+            <p>Ты – участник Квеста «Хочу в Париж» и почетный гость Фестиваля. На почте уже ждет приглашение с персональным кодом участника и праздничная скидка.</p>', [
+                'field' => $token['field'],
+                'value' => $token['token'],
+            ]);
+        } catch (JsonResponseException $e) {
+
+            $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_FESTIVAL_REQUEST_ADD);
             $token['value'] = $token['token'];
             unset($token['token']);
 

@@ -123,14 +123,25 @@ class PersonalOffersService
     }
 
     /**
+     * @param array $filter
+     *
      * @return ArrayCollection
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\LoaderException
      */
-    public function getActiveOffers(): ArrayCollection
+    public function getActiveOffers($filter = []): ArrayCollection
     {
         if (!Loader::includeModule('iblock')) {
             throw new SystemException('Module iblock is not installed');
+        }
+
+        $arFilter = [
+            '=IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::PERSONAL_OFFERS),
+            '=ACTIVE' => 'Y',
+            '=ACTIVE_DATE' => 'Y',
+        ];
+        if ($filter) {
+            $arFilter = array_merge($arFilter, $filter);
         }
 
         $offers = [];
@@ -138,11 +149,7 @@ class PersonalOffersService
             [
                 'DATE_ACTIVE_TO' => 'asc,nulls'
             ],
-            [
-                '=IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::PERSONAL_OFFERS),
-                '=ACTIVE' => 'Y',
-                '=ACTIVE_DATE' => 'Y',
-            ],
+            $arFilter,
             false,
             false,
             [
@@ -218,6 +225,47 @@ class PersonalOffersService
             }
             unset($couponId);
         }
+    }
+
+    /**
+     * @param int $festivalOfferId
+     *
+     * @return bool|int
+     */
+    public function getCouponIdByOfferId(int $festivalOfferId)
+    {
+        $coupon = $this->personalCouponManager::query()
+            ->setSelect(['ID'])
+            ->setFilter([
+                'UF_OFFER' => $festivalOfferId,
+            ])
+            ->exec()
+            ->fetch();
+        if ($coupon) {
+            return (int)$coupon['ID'];
+        }
+
+        return false;
+    }
+
+    /**
+     * @param int $couponId
+     * @param int $userId
+     * @throws \Bitrix\Main\ObjectException
+     * @throws InvalidArgumentException
+     */
+    public function linkCouponToUser(int $couponId, int $userId): void
+    {
+        if ($couponId <= 0 || $userId <= 0) {
+            throw new InvalidArgumentException('Не удалось привязать купон к пользователю. $couponId: ' . $couponId . '. $userId: ' . $userId);
+        }
+
+        $this->personalCouponUsersManager::add([
+            'UF_USER_ID' => $userId,
+            'UF_COUPON' => $couponId,
+            'UF_DATE_CREATED' => new DateTime(),
+            'UF_DATE_CHANGED' => new DateTime(),
+        ]);
     }
 
     /**

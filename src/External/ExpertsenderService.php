@@ -118,6 +118,7 @@ class ExpertsenderService implements LoggerAwareInterface
     public const PERSONAL_OFFER_COUPON_SEND_EMAIL = 9234;
     public const GRANDIN_NEW_CHECK_REG_LIST_ID = 8906;
     public const ROYAL_CANIN_NEW_CHECK_REG_LIST_ID = 9195;
+    public const FESTIVAL_NEW_USER_REG_LIST_ID = 9233;
     /**
      * BirthDay mail ids
      */
@@ -1226,7 +1227,7 @@ class ExpertsenderService implements LoggerAwareInterface
     }
 
     /**
-     * @param User $user
+     * @param array $params
      *
      * @return bool
      * @throws ExpertSenderException
@@ -1257,6 +1258,36 @@ class ExpertsenderService implements LoggerAwareInterface
                     'email' => $email,
                     'transactionId' => $transactionId,
                     'userId' => $userId,
+                ]
+            );
+
+            $this->sendSystemTransactional($transactionId, $email);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array $params
+     *
+     * @return bool
+     * @throws ExpertSenderException
+     * @throws ExpertsenderServiceApiException
+     * @throws ExpertsenderServiceException
+     */
+    public function sendAfterFestivalUserReg(array $params): bool
+    {
+        $email = $params['userEmail'];
+
+        if ($email) {
+            $transactionId = self::FESTIVAL_NEW_USER_REG_LIST_ID;
+
+            $this->log()->info(
+                __FUNCTION__,
+                [
+                    'email' => $email,
+                    'transactionId' => $transactionId
                 ]
             );
 

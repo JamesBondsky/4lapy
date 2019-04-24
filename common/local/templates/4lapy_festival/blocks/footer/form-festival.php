@@ -1,3 +1,19 @@
+<?
+
+use FourPaws\App\Application;
+use FourPaws\AppBundle\AjaxController\LandingController;
+use FourPaws\Helpers\ProtectorHelper;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+
+$container = Application::getInstance()->getContainer();
+/** @var \FourPaws\UserBundle\Service\UserService $userService */
+$userService = $container->get(CurrentUserProviderInterface::class);
+$isAuthorized = $userService->isAuthorized();
+if ($isAuthorized)
+{
+	$currentUser = $userService->getCurrentUser();
+}
+?>
 <section class="popwrap js-popup-section" data-popup="form-festival">
     <div class="js-close-popup"></div>
     <div class="formwrap">
@@ -12,13 +28,16 @@
             </ul>
         </div>
         <div class="formitem">
-            <form>
-                <input type="text" placeholder="ИМЯ" />
-                <input type="text" placeholder="ФАМИЛИЯ" />
-                <input type="email" placeholder="EMAIL" />
-                <input type="phone" placeholder="ТЕЛЕФОН" />
+            <form action="/ajax/landing/festival/user/add/" method="post">
+                <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_FESTIVAL_REQUEST_ADD); ?>
+	            <input class="js-no-valid" type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
+	            <input class="js-no-valid" type="hidden" name="landingType" value="<?= LandingController::$festivalLanding ?>">
+                <input type="text" placeholder="ИМЯ" name="name" <?= $isAuthorized ? 'value="' . $currentUser->getName() . '"' : '' ?> />
+                <input type="text" placeholder="ФАМИЛИЯ" name="surname" <?= $isAuthorized ? 'value="' . $currentUser->getLastName() . '"' : '' ?> />
+                <input type="email" placeholder="EMAIL" name="email" <?= $isAuthorized ? 'value="' . $currentUser->getEmail() . '"' : '' ?> />
+                <input type="phone" placeholder="ТЕЛЕФОН" name="phone" <?= $isAuthorized ? 'value="' . $currentUser->getPersonalPhone() . '"' : '' ?> />
 
-                <input type="checkbox" id="agree" /> <label for="agree">Я принимаю условия пользовательского соглашения, правил, политики обработки персональных данных, даю согласие на обработку персональных данных.</label>
+                <input type="checkbox" id="agree" name="rules" /> <label for="agree">Я принимаю условия пользовательского соглашения, правил, политики обработки персональных данных, даю согласие на обработку персональных данных.</label>
                 <button class="join_btn">я пойду!</button>
             </form>
         </div>
