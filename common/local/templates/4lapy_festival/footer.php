@@ -53,7 +53,7 @@ $markup = PawsApplication::markup();
 <!-- PAGE LEVEL PLUGINS -->
 <script src="vendor/jquery.easing.js" type="text/javascript"></script>
 <script src="vendor/jquery.back-to-top.js" type="text/javascript"></script>
-<script src="vendor/jquery.smooth-scroll.js" type="text/javascript"></script>
+<?/*<script src="vendor/jquery.smooth-scroll.js" type="text/javascript"></script>*/?>
 <script src="vendor/jquery.wow.min.js" type="text/javascript"></script>
 <script src="vendor/swiper/js/swiper.jquery.min.js" type="text/javascript"></script>
 <script src="vendor/magnific-popup/jquery.magnific-popup.min.js" type="text/javascript"></script>
