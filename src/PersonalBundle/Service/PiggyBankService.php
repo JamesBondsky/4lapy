@@ -49,6 +49,9 @@ class PiggyBankService implements LoggerAwareInterface
             'XML_ID' => 3006077,
             'MARK_PRODUCT_ID' => 89727
         ],
+        'OLD_VIRTUAL' => [
+            'ID' => 89617, // используется как костыль для правильных расчетов с учетом марки, которую удалили из каталога после начала акции
+        ],
     ];
     public const MARK_RATE = 400;
     public const MARKS_PER_RATE = 1;
@@ -677,6 +680,14 @@ class PiggyBankService implements LoggerAwareInterface
 
         $this->virtualMarkId = $this->getElementIdByXmlId($this->getVirtualMarkXmlId());
         return $this->virtualMarkId;
+    }
+
+    /**
+     * @return int
+     */
+    public function getOldVirtualMarkId(): int
+    {
+        return self::MARKS['OLD_VIRTUAL']['ID'];
     }
 
     /**
