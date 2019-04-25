@@ -1273,12 +1273,13 @@ class ExpertsenderService implements LoggerAwareInterface
      * @param string $email
      * @param string $coupon
      * @param string $base64
+     * @param string $discount
      * @return bool
      * @throws ExpertSenderException
      * @throws ExpertsenderServiceApiException
      * @throws ExpertsenderServiceException
      */
-    public function sendPiggyBankEmail($userId, $fullname, $email, $coupon, $base64): bool
+    public function sendPiggyBankEmail($userId, $fullname, $email, $coupon, $base64, $discount): bool
     {
         if ($email) {
             $transactionId = self::PIGGY_BANK_SEND_EMAIL;
@@ -1295,7 +1296,12 @@ class ExpertsenderService implements LoggerAwareInterface
                 ]
             );
 
-            $this->sendSystemTransactional($transactionId, $email);
+            $snippets = [];
+            $snippets[] = new Snippet('sale', htmlspecialcharsbx($discount));
+            $snippets[] = new Snippet('coupon', htmlspecialcharsbx($coupon));
+            $snippets[] = new Snippet('url_img', $base64);
+
+            $this->sendSystemTransactional($transactionId, $email, $snippets);
             return true;
         }
 
@@ -1336,7 +1342,14 @@ class ExpertsenderService implements LoggerAwareInterface
                 ]
             );
 
-            $this->sendSystemTransactional($transactionId, $email);
+            $snippets = [];
+            $snippets[] = new Snippet('sale', htmlspecialcharsbx($discountValue));
+            $snippets[] = new Snippet('coupon', htmlspecialcharsbx($coupon));
+            $snippets[] = new Snippet('date', htmlspecialcharsbx($couponDateActiveTo));
+            $snippets[] = new Snippet('url_img', $base64);
+            //$snippets[] = new Snippet('text', htmlspecialcharsbx());
+
+            $this->sendSystemTransactional($transactionId, $email, $snippets);
             return true;
         }
 
