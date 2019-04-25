@@ -11,4 +11,5 @@ class HlblockCode
 {
    public const PERSONAL_COUPON = 'PersonalCoupon';
    public const PERSONAL_COUPON_USERS = 'PersonalCouponUsers';
+   public const FESTIVAL_USERS_DATA = 'FestivalUsersData';
 }
