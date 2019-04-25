@@ -15,6 +15,7 @@ body {
     left: 50%;
     position: relative;
     margin-left: -365px;
+	margin-bottom: 40px;
     top: 100px;
     display: none;
 }
@@ -27,6 +28,7 @@ body {
     position: relative;
     left: 50%;
     margin-left: -245px;
+	margin-bottom: 40px;
     top: 200px;
 }
 
@@ -157,12 +159,14 @@ body {
 
 @media screen and (max-width: 600px) {
 	.popwrap {
+		top: 20px;
 	    background: #fff;
 	    width: 94%;
 	    height: auto;
 	    padding: 30px 20px 20px;
 	    border-radius: 30px;
 	    margin-left: -47%;
+		margin-bottom: 20px;
 	}
 
 	.btn-close {
@@ -210,10 +214,12 @@ body {
 	}
 
 	.popwrap2 {
+		top: 20px;
 	    background: url(../img/thnks_mob.png);
 	    width: 358px;
 	    height: 451px;
 	    margin-left: -179px;
+		margin-bottom: 20px;
 	}
 
 	.popwrap2 .formwrap {

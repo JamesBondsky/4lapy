@@ -11,7 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /** @var CMain $APPLICATION */
 /** @noinspection PhpUnhandledExceptionInspection */
 $template = MainTemplate::getInstance(Application::getInstance()->getContext()); ?>
-<div class="b-popup-wrapper js-popup-wrapper">
+<div class="b-popup-wrapper b-popup-wrapper--festival js-popup-wrapper">
     <?php
     /**
      * Область для вставки инлайновых попапов

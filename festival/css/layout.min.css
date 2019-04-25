@@ -28,8 +28,12 @@
 }
 
 html {
-    height: auto;
+    height: 100%;
     overflow-x: hidden
+}
+
+body {
+    height: auto;
 }
 
 body,html,html a {
@@ -2577,6 +2581,16 @@ footer .content-md {
         top: -7px;
         position: relative;
         left: -35px;
+    }
+
+    .header .nav-item,.header .nav-item-child {
+        display: block;
+        position: relative;
+        padding-top: 0px;
+    }
+
+    .page-on-scroll .header .nav-item {
+        padding-top: 0px;
     }
     
     .navbar {
