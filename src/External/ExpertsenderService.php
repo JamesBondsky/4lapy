@@ -368,7 +368,7 @@ class ExpertsenderService implements LoggerAwareInterface
                         $addUserToList->setEmail($curUserEmail);
                         $addUserToList->setId($expertSenderId);
 
-                        $addUserToList->setName($curUser->getName());
+                        $addUserToList->setFirstName($curUser->getName());
                         $addUserToList->setLastName($curUser->getLastName());
                         /** ip юзверя */
                         $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_IP_ID, 'string',
@@ -432,7 +432,7 @@ class ExpertsenderService implements LoggerAwareInterface
             $addUserToList->setId($expertSenderId);
 
             $addUserToList->setEmail($curUser->getEmail());
-            $addUserToList->setName($curUser->getName());
+            $addUserToList->setFirstName($curUser->getName());
             $addUserToList->setLastName($curUser->getLastName());
             /** ip юзверя */
             $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_IP_ID, 'string',
