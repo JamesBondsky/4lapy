@@ -28,6 +28,7 @@
 }
 
 html {
+    height: auto;
     overflow-x: hidden
 }
 
@@ -432,7 +433,7 @@ h3,h4 {
 .work .work-popup-overlay {
     position: absolute;
     right: 0;
-    z-index: 99999;
+    z-index: 9;
     visibility: hidden;
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
@@ -2343,6 +2344,8 @@ hr.header_line {
 .interactive_map #icon8:hover .st6{transition: .2s ease; fill:#ffffff;}
 
 .join_btn {
+    position: relative;
+    z-index: 10;
     background: #ff4d15;
     border: none;
     border-radius: 40px;
@@ -2353,6 +2356,7 @@ hr.header_line {
     padding: 7px 26px;
     margin-top: 100px;
     transition: all .5s ease;
+    cursor: pointer;
 }
 
 #guest .join_btn, #activity .join_btn, #gala .join_btn, #dobrolap .join_btn {
@@ -2609,6 +2613,7 @@ footer .content-md {
 
     .interactive_map .work-popup-content img {
         height: 100%;
+        left: 0;
     }
 
     .block_wrapper:nth-child(1), .block_wrapper:nth-child(3), .block_wrapper:nth-child(5), .block_wrapper:nth-child(7) {
@@ -2868,7 +2873,13 @@ footer .content-md {
     }
 
     #permanent_popup {
-        bottom: 170px;
+        bottom: auto;
+        margin-top: 35px;
+    }
+    #permanent_popup .work-popup-content {
+        width: 95%;
+        margin-left: auto;
+        margin-right: auto;
     }
 
     .work-popup-content .sm-margin-t-0 {
@@ -2888,24 +2899,34 @@ footer .content-md {
     }
 
     .work .work-popup-overlay {
-        top: 183px;
-        width: 100%;
+        overflow-x: visible;
+        top: auto;
+        bottom: auto;
         left: 0;
+        width: 100%;
+        height: 570px;
+        margin-top: 35px;
         margin-left: 0;
-        height: 534px;
     }
 
     .work .work-popup-content {
-        top: 146px;
+        position: relative;
+        top: 0;
+        transform: translate3d(0,0,0);
+        box-shadow: none;
     }
 
     #map .join_btn {
-        margin-top: 466px;
+        margin-top: 640px;
     }
 
     #map .work .work-popup-close {
-        top: 150px;
-        margin-left: 155px;
+        position: absolute;
+        top: 200px;
+        left: auto;
+        right: -15px;
+        width: 30px;
+        margin-left: 0;
     }
 
     .back-to-top {
