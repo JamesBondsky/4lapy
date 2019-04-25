@@ -15,7 +15,7 @@ $APPLICATION->ShowHead();
     <label for='file_name'>Имя файла для чтения</label>
     <input name='file_name' type='text' value='users.csv' id='file_name'><br><br>
     <label for='cnt'>Количество записей обрабатываемых за один раз</label>
-    <input name='cnt' type='number' value='100' min='10' max='200' id='cnt'><br><br>
+    <input name='cnt' type='number' value='300' min='10' max='500' id='cnt'><br><br>
     <label for='step'>Номер страницы, с которой начать выгрузку</label>
     <input name='step' type='number' value='0' min='0' max='0' id='step'><br><br>
     <progress id='status-bar' value='0' max='100'></progress>
@@ -47,6 +47,11 @@ $APPLICATION->ShowHead();
             URL: '../ajax/AjaxUserControl.php',
             TIME: 0,
             STOP: false,
+            USERS_ADDED: 0,
+            USERS_FOUND: 0,
+            PETS_ADDED: 0,
+            PETS_FOUND: 0,
+            TOTAL_PETS: 0,
             init: function () {
                 let that = this;
                 this.$form.submit(function (e) {
@@ -101,7 +106,13 @@ $APPLICATION->ShowHead();
                 */
                 let that = this;
                 let data = $('#user-import-form').serialize();
-                data += '&step=process_elements_on_page&page_number=' + this.STEP + '&file_name=' + this.$fileNameInput.val();
+                data += '&step=process_elements_on_page&page_number=' + this.STEP +
+                    '&file_name=' + this.$fileNameInput.val() +
+                    '&users_added=' + this.USERS_ADDED +
+                    '&users_found=' + this.USERS_FOUND +
+                    '&pets_added=' + this.PETS_ADDED +
+                    '&pets_found=' + this.PETS_FOUND +
+                    '&total_pets=' + this.TOTAL_PETS;
                 $.ajax({
                     url: that.URL,
                     method: that.METHOD,
@@ -111,8 +122,21 @@ $APPLICATION->ShowHead();
                 });
             },
             onAjaxPostPartDataSuccess: function (response) {
+                let res = JSON.parse(response);
                 this.STEP += 1;
-                console.log('success process part ' + this.STEP + ' of ' + this.PAGE_COUNT);
+                this.USERS_ADDED = res.users_added;
+                this.USERS_FOUND = res.users_found;
+                this.PETS_ADDED = res.pets_added;
+                this.PETS_FOUND = res.pets_found;
+                this.TOTAL_PETS = res.total_pets;
+                console.log('');
+                console.log('success process part ' + this.STEP + ' of ' + this.PAGE_COUNT + '. Element processed: ' + (parseInt(this.STEP) * parseInt(this.$ctnInput.val())));
+                console.log('Users added: ' + this.USERS_ADDED);
+                console.log('Users found: ' + this.USERS_FOUND);
+                console.log('Pets added: ' + this.PETS_ADDED);
+                console.log('Pets found: ' + this.PETS_FOUND);
+                console.log('Total pets: ' + this.TOTAL_PETS);
+                console.log('');
                 this.$statusBar.prop('value', this.STEP);
                 this.$step.val(this.STEP);
                 this.$percentages.text(Math.floor(this.STEP / this.PAGE_COUNT * 100) + '%');

@@ -1,10 +1,12 @@
 <?
 
-use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Loader;
 use Bitrix\Main\UserTable;
 use Bitrix\Main\Type\DateTime;
-
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ObjectException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 class UserControlExport extends UserControl
 {
     const FOLDER_CHMOD = 0775;
@@ -25,7 +27,12 @@ class UserControlExport extends UserControl
     }
 
     /**
-     * @return int
+     *
+     * @return array
+     * @throws ArgumentException
+     * @throws ObjectException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
     public function getUsersCnt()
     {
@@ -69,8 +76,12 @@ class UserControlExport extends UserControl
      * @param $file
      * @param $offset
      * @param null $id
-     * @param $petsIblockId
+     * @param null $petsIblockId
      * @return false|string
+     * @throws ArgumentException
+     * @throws ObjectException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
     public function exportPart($file, $offset, $id = null, $petsIblockId = null)
     {
@@ -162,6 +173,8 @@ class UserControlExport extends UserControl
     }
 
     /**
+     * Выбираем питомцев пользователей
+     *
      * @param $petsIblockId
      * @param array $userIds
      */
@@ -218,6 +231,8 @@ class UserControlExport extends UserControl
     }
 
     /**
+     * Записываем часть данных в файл
+     *
      * @return int|null
      */
     private function writeToFile()
@@ -255,7 +270,7 @@ class UserControlExport extends UserControl
             $ext = pathinfo($path)['extension'];
             $petUser = $revertFileImages[$file['ID']];
             copy($path, $this->petImagesPath . '/' . $file['ID'] . '.' . $ext);
-            $this->usersPets[$petUser['USER_ID']][$petUser['PET_ID']]['PET_IMAGE_FILE_NAME'][] = $file['ID'];
+            $this->usersPets[$petUser['USER_ID']][$petUser['PET_ID']]['PET_IMAGE_FILE_NAME'][] = $file['ID'] . '.' . $ext;
         }
     }
 

@@ -6,9 +6,13 @@
 
 namespace FourPaws\PersonalBundle\Service;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Security\SecurityException;
+use Bitrix\Main\SystemException;
 use Doctrine\Common\Collections\ArrayCollection;
+use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\BaseEntity;
@@ -28,6 +32,9 @@ use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\Helpers\TaggedCacheHelper;
+use function in_array;
+use function is_array;
+use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
@@ -88,10 +95,10 @@ class PetService
      * @throws ServiceNotFoundException
      * @throws InvalidIdentifierException
      * @throws ServiceCircularReferenceException
-     * @throws \RuntimeException
+     * @throws RuntimeException
      * @throws ValidationException
      * @throws BitrixRuntimeException
-     * @throws \Exception
+     * @throws Exception
      * @return bool
      */
     public function add(array $data): bool
@@ -118,7 +125,7 @@ class PetService
      * @throws ServiceNotFoundException
      * @throws InvalidIdentifierException
      * @throws ApplicationCreateException
-     * @throws \RuntimeException
+     * @throws RuntimeException
      * @throws ServiceCircularReferenceException
      * @throws ObjectPropertyException
      */
@@ -170,12 +177,10 @@ class PetService
     /**
      * @param User|int $user
      *
-     * @throws ObjectPropertyException
-     * @throws NotAuthorizedException
-     * @throws InvalidIdentifierException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
      * @return ArrayCollection
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
     public function getUserPets($user): ArrayCollection
     {
@@ -183,12 +188,24 @@ class PetService
     }
 
     /**
+     * @param array $users
+     * @return ArrayCollection
+     * @throws ObjectPropertyException
+     * @throws ArgumentException
+     * @throws SystemException
+     */
+    public function getUsersPets(array $users): ArrayCollection
+    {
+        return $this->petRepository->findByUsersIds($users);
+    }
+
+    /**
      * @param User|int $userId
      *
      * @return array
      * @throws ObjectPropertyException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\SystemException
+     * @throws ArgumentException
+     * @throws SystemException
      */
     public function getUserPetsTypesCodes($userId): array
     {
@@ -228,19 +245,19 @@ class PetService
             'koshki-sobaki',
             '3@11',
         ];
-        $client->ffBird = \in_array('ptitsy', $types, true) || \in_array('ptitsy-gryzuny', $types,
-            true) || \in_array('90000001', $types, true) ? 1 : 0;
-        $client->ffCat = \in_array('koshki', $types, true) || \in_array('koshki-sobaki', $types,
-            true) || \in_array('3@11', $types, true) ? 1 : 0;
-        $client->ffDog = \in_array('sobaki', $types, true) || \in_array('koshki-sobaki', $types,
-            true) || \in_array('3@11', $types, true) ? 1 : 0;
-        $client->ffFish = \in_array('ryby', $types, true) ? 1 : 0;
-        $client->ffRodent = \in_array('gryzuny', $types, true) || \in_array('ptitsy-gryzuny', $types,
-            true) || \in_array('90000001', $types, true) ? 1 : 0;
+        $client->ffBird = in_array('ptitsy', $types, true) || in_array('ptitsy-gryzuny', $types,
+            true) || in_array('90000001', $types, true) ? 1 : 0;
+        $client->ffCat = in_array('koshki', $types, true) || in_array('koshki-sobaki', $types,
+            true) || in_array('3@11', $types, true) ? 1 : 0;
+        $client->ffDog = in_array('sobaki', $types, true) || in_array('koshki-sobaki', $types,
+            true) || in_array('3@11', $types, true) ? 1 : 0;
+        $client->ffFish = in_array('ryby', $types, true) ? 1 : 0;
+        $client->ffRodent = in_array('gryzuny', $types, true) || in_array('ptitsy-gryzuny', $types,
+            true) || in_array('90000001', $types, true) ? 1 : 0;
         $others = 0;
-        if (\is_array($types) && !empty($types)) {
+        if (is_array($types) && !empty($types)) {
             foreach ($types as $type) {
-                if (!\in_array($type, $baseTypes, true)) {
+                if (!in_array($type, $baseTypes, true)) {
                     $others = 1;
                     break;
                 }
@@ -258,13 +275,13 @@ class PetService
      * @throws EmptyEntityClass
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws \RuntimeException
+     * @throws RuntimeException
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws BitrixRuntimeException
      * @throws ConstraintDefinitionException
      * @throws ObjectPropertyException
-     * @throws \Exception
+     * @throws Exception
      * @return bool
      */
     public function update(array $data): bool
@@ -299,12 +316,12 @@ class PetService
      * @throws SecurityException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws \RuntimeException
+     * @throws RuntimeException
      * @throws InvalidIdentifierException
      * @throws BitrixRuntimeException
      * @throws ConstraintDefinitionException
      * @throws ObjectPropertyException
-     * @throws \Exception
+     * @throws Exception
      * @return bool
      */
     public function delete(int $id): bool
@@ -321,7 +338,7 @@ class PetService
      * @param int $id
      *
      * @throws ObjectPropertyException
-     * @throws \Exception
+     * @throws Exception
      * @throws NotFoundException
      * @return BaseEntity|Pet
      */
@@ -333,9 +350,9 @@ class PetService
     /**
      * @return array
      * @throws ObjectPropertyException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectException
-     * @throws \Bitrix\Main\SystemException
+     * @throws ArgumentException
+     * @throws ObjectException
+     * @throws SystemException
      */
     public function getBirthdayPets()
     {
@@ -357,8 +374,8 @@ class PetService
      * @param int $typeId
      * @return array
      * @throws ObjectPropertyException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\SystemException
+     * @throws ArgumentException
+     * @throws SystemException
      */
     public function getPetBreed(int $typeId): array
     {
@@ -388,8 +405,8 @@ class PetService
      * @param array $filter
      * @return array
      * @throws ObjectPropertyException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\SystemException
+     * @throws ArgumentException
+     * @throws SystemException
      */
     public function getPetTypes(array $filter): array
     {

@@ -33,19 +33,25 @@ switch ($exchangeType) {
         }
         break;
     case 'import':
-        require_once('../classes/UserControlImport.php');
-        $userControl = new UserControlImport($pageCnt);
         $fileName = $_REQUEST['file_name'];
         if (ctype_alnum($fileName) || !preg_match('/^(?:[a-z0-9_-]|\.(?!\.))+$/iD', $fileName)) {
             $fileName = 'users.csv';
         }
+        require_once('../classes/UserControlImport.php');
+        $usersAdded = $_REQUEST['users_added'];
+        $usersFound = $_REQUEST['users_found'];
+        $petsAdded = $_REQUEST['pets_added'];
+        $petsFound = $_REQUEST['pets_found'];
+        $totalPets = $_REQUEST['total_pets'];
+        $userControl = new UserControlImport($pageCnt, $usersAdded, $usersFound, $petsAdded, $petsFound, $totalPets);
         switch ($step) {
             case 'get_pages_count':
                 echo ceil($userControl->getUsersCntFromFile($fileName) / $pageCnt);
                 break;
             case 'process_elements_on_page':
                 $pageNumber = $_REQUEST['page_number'];
-                echo $userControl->importPart($fileName, $pageNumber);
+                $result = json_encode($userControl->importPart($fileName, $pageNumber));
+                echo $result;
                 break;
         }
         break;

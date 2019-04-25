@@ -2,9 +2,15 @@
 
 namespace FourPaws\PersonalBundle\Repository;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\Date;
 use Bitrix\Main\UserTable;
 use Doctrine\Common\Collections\ArrayCollection;
+use Exception;
 use FourPaws\AppBundle\Repository\BaseHlRepository;
 use FourPaws\PersonalBundle\Entity\Pet;
 use FourPaws\UserBundle\Entity\User;
@@ -58,7 +64,7 @@ class PetRepository extends BaseHlRepository
      * @throws NotAuthorizedException
      * @throws BitrixRuntimeException
      * @throws ServiceCircularReferenceException
-     * @throws \Exception
+     * @throws Exception
      */
     public function create(): bool
     {
@@ -75,11 +81,9 @@ class PetRepository extends BaseHlRepository
 
     /**
      * @return ArrayCollection|Pet[]
-     * @throws InvalidIdentifierException
-     * @throws ServiceNotFoundException
-     * @throws NotAuthorizedException
-     * @throws ServiceCircularReferenceException
+     * @throws ArgumentException
      * @throws ObjectPropertyException
+     * @throws SystemException
      */
     public function findByCurUser(): ArrayCollection
     {
@@ -93,11 +97,9 @@ class PetRepository extends BaseHlRepository
     /**
      * @param User|int $user
      * @return ArrayCollection|Pet[]
-     * @throws InvalidIdentifierException
-     * @throws ServiceNotFoundException
-     * @throws NotAuthorizedException
-     * @throws ServiceCircularReferenceException
+     * @throws ArgumentException
      * @throws ObjectPropertyException
+     * @throws SystemException
      */
     public function findByUser($user): ArrayCollection
     {
@@ -110,15 +112,31 @@ class PetRepository extends BaseHlRepository
     }
 
     /**
+     * @param array $users
+     * @return ArrayCollection|Pet[]
+     * @throws ObjectPropertyException
+     * @throws ArgumentException
+     * @throws SystemException
+     */
+    public function findByUsersIds(array $users): ArrayCollection
+    {
+        return $this->findBy(
+            [
+                'filter' => ['UF_USER_ID' => $users],
+            ]
+        );
+    }
+
+    /**
      * @return array
      * @throws ObjectPropertyException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectException
-     * @throws \Bitrix\Main\SystemException
+     * @throws ArgumentException
+     * @throws ObjectException
+     * @throws SystemException
      */
     public function findPetsForBirthDayNotify()
     {
-        $today = new \Bitrix\Main\Type\Date();
+        $today = new Date();
         $oPets = $this->getDataManager()->getList([
             'select' => ['UF_USER_ID', 'ID', 'UF_NAME', 'UF_BIRTHDAY', 'UF_TYPE', 'USER_EMAIL' => 'REF_USER.EMAIL', 'USER_NAME' => 'REF_USER.NAME', 'USER_SECOND_NAME' => 'REF_USER.SECOND_NAME', 'USER_LAST_NAME' => 'REF_USER.LAST_NAME', 'PET_TYPE' => 'REF_PET_TYPE.UF_CODE'],
             'filter' => [
@@ -126,11 +144,11 @@ class PetRepository extends BaseHlRepository
                 ['UF_BIRTHDAY' => $today]
             ],
             'runtime' => [
-                new \Bitrix\Main\Entity\ReferenceField('REF_USER',
+                new ReferenceField('REF_USER',
                     UserTable::class, [
                         '=this.UF_USER_ID' => 'ref.ID'
                     ]),
-                new \Bitrix\Main\Entity\ReferenceField('REF_PET_TYPE',
+                new ReferenceField('REF_PET_TYPE',
                     'ForWho', [
                         '=this.UF_TYPE' => 'ref.ID'
                     ])
