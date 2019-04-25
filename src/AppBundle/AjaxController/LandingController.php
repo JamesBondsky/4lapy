@@ -22,6 +22,8 @@ use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use FourPaws\UserBundle\Repository\FestivalUsersTable;
 use FourPaws\UserBundle\Service\UserSearchInterface;
 use FourPaws\UserBundle\Service\UserService;
+use Picqer\Barcode\BarcodeGenerator;
+use Picqer\Barcode\BarcodeGeneratorPNG;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -310,10 +312,15 @@ class LandingController extends Controller
             }
 
             try {
+                $barcodeGenerator = new BarcodeGeneratorPNG();
                 /** @var ExpertsenderService $sender */
                 $sender = App::getInstance()->getContainer()->get('expertsender.service');
                 $sender->sendAfterFestivalUserReg([
                     'userEmail' => $email,
+                    'coupon' => $festivalUserId,
+                    'firstname' => $request->get('name'),
+                    'lastname' => $request->get('surname'),
+                    'url_img' => 'data:image/png;base64,' . base64_encode($barcodeGenerator->getBarcode($festivalUserId, BarcodeGenerator::TYPE_CODE_128, 2.132310384278889, 127)),
                 ]);
             }
             catch (\Exception $exception)
