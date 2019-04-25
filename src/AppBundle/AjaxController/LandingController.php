@@ -237,7 +237,7 @@ class LandingController extends Controller
                 'UF_EMAIL' => $email,
             ]);
             if ($isUserAlreadyRegistered) {
-                throw new JsonResponseException(JsonErrorResponse::createWithData('Вы уже были зарегистрированы на фестиваль'));
+                throw new JsonResponseException(JsonErrorResponse::createWithData('Такой пользователь уже зарегистирован'));
             }
 
             $rsFestivalUserId = 0;
