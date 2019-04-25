@@ -1279,6 +1279,10 @@ class ExpertsenderService implements LoggerAwareInterface
     public function sendAfterFestivalUserReg(array $params): bool
     {
         $email = $params['userEmail'];
+        $coupon = $params['coupon'];
+        $firstname = $params['firstname'];
+        $lastname = $params['lastname'];
+        $base64 = $params['url_img'];
 
         if ($email) {
             $transactionId = self::FESTIVAL_NEW_USER_REG_LIST_ID;
@@ -1287,11 +1291,21 @@ class ExpertsenderService implements LoggerAwareInterface
                 __FUNCTION__,
                 [
                     'email' => $email,
-                    'transactionId' => $transactionId
+                    'transactionId' => $transactionId,
+                    'coupon' => $coupon,
+                    'firstname' => $firstname,
+                    'lastname' => $lastname,
+                    'url_img' => $base64,
                 ]
             );
 
-            $this->sendSystemTransactional($transactionId, $email);
+            $snippets = [];
+            $snippets[] = new Snippet('coupon', htmlspecialcharsbx($coupon));
+            $snippets[] = new Snippet('firstname', htmlspecialcharsbx($firstname));
+            $snippets[] = new Snippet('lastname', htmlspecialcharsbx($lastname));
+            $snippets[] = new Snippet('url_img', $base64);
+
+            $this->sendSystemTransactional($transactionId, $email, $snippets);
             return true;
         }
 
