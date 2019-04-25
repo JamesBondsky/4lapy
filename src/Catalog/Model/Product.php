@@ -680,6 +680,12 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @var array
      */
     protected $fullDeliveryAvailability;
+    
+    /**
+     * @var array
+     * @Serializer\Exclude()
+     */
+    protected $deliveryAvailableMap;
 
     /**
      * @var Category
@@ -2210,6 +2216,33 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
         return $this->fullDeliveryAvailability;
     }
+    
+    /**
+     * @param string $zone
+     * @return mixed
+     * @throws ApplicationCreateException
+     */
+    public function deliveryAvailableByZone(string $zone = '')
+    {
+        if($this->deliveryAvailableMap[$zone] === null) {
+            $canDeliver = !$this->isDeliveryForbidden();
+            $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+            $result = [];
+            foreach ($deliveryService->getByZone($zone) as $deliveryCode) {
+                switch (true) {
+                    case $canDeliver && \in_array($deliveryCode, DeliveryService::DELIVERY_CODES, true):
+                        $result[] = static::AVAILABILITY_DELIVERY;
+                        break;
+                    case $deliveryCode === DeliveryService::INNER_PICKUP_CODE:
+                    case $canDeliver && $deliveryCode === DeliveryService::DPD_PICKUP_CODE:
+                        $result[] = static::AVAILABILITY_PICKUP;
+                        break;
+                }
+            }
+            $this->deliveryAvailableMap[$zone] = $result;
+        }
+        return $this->deliveryAvailableMap[$zone];
+    }
 
     /**
      * @throws ApplicationCreateException
@@ -2244,7 +2277,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         /** @var DeliveryService $deliveryService */
         $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
 
-        return $this->getFullDeliveryAvailability()[$deliveryService->getCurrentDeliveryZone()] ?? [];
+        return $this->deliveryAvailableByZone($deliveryService->getCurrentDeliveryZone());//$this->getFullDeliveryAvailability()[$deliveryService->getCurrentDeliveryZone()] ?? [];
     }
 
     /**
