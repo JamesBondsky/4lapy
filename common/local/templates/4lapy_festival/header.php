@@ -132,7 +132,7 @@ $markup = PawsApplication::markup();
                             <!--<li class="js_nav-item nav-item"><a class="nav-item-child nav-item-hover" href="#interview">Я ПОЙДУ!</a></li>-->
                             <li class="js_nav-item nav-item"><a class="nav-item-child nav-item-hover" href="#partners">партнеры</a></li>
                             <li class="js_nav-item nav-item"><a class="nav-item-child nav-item-hover" href="#contacts">контакты</a></li>
-                            <li class="nav-item join-item"><a class="nav-item-child nav-item-hover js-open-popup" href="#" data-popup-id="form-festival"><span>Я ПОЙДУ</span></a></li>
+                            <li class="nav-item join-item"><a class="nav-item-child nav-item-hover js-open-popup" href="javascript:void(0);" data-popup-id="form-festival"><span>Я ПОЙДУ</span></a></li>
                         </ul>
                     </div>
                 </div>
@@ -1271,7 +1271,7 @@ $markup = PawsApplication::markup();
                             </div>
 
                             <div class="mobile">
-                                <iframe width="345" height="169" src="https://www.youtube.com/embed/St9BslKyfgE" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                <iframe width="100%" height="169" src="https://www.youtube.com/embed/St9BslKyfgE" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                             </div>
                             <!--<div class="work-popup-overlay">
                                 <div class="work-popup-content">
