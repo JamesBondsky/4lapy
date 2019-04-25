@@ -587,6 +587,7 @@ class Event extends BaseServiceHandler
                             'trim',
                             explode(',', fgets($fileHandler))
                         );
+                        $coupons[$couponInfo[1]] = [];
                         if (PhoneHelper::isPhone($couponInfo[0]))
                         {
                             $couponInfo[0] = PhoneHelper::formatPhone($couponInfo[0], PhoneHelper::FORMAT_SHORT);
@@ -601,27 +602,30 @@ class Event extends BaseServiceHandler
                     fclose($fileHandler);
                     $phonesArray = array_unique(array_filter($phonesArray));
 
-                    // Получение пользователей, которым надо выдать купоны
-                    $users = UserTable::query()
-                        ->setSelect([
-                            'ID',
-                            'PERSONAL_PHONE',
-                        ])
-                        ->setFilter([
-                            '=PERSONAL_PHONE' => $phonesArray,
-                        ])
-                        ->exec()
-                        ->fetchAll();
-                    $userIds = [];
-                    foreach ($users as $user)
+                    if ($phonesArray)
                     {
-                        $userIds[$user['PERSONAL_PHONE']] = $user['ID'];
-                    }
-                    foreach ($coupons as $promoCode => $couponUsers)
-                    {
-                        foreach ($couponUsers as $phone => $userId)
+                        // Получение пользователей, которым надо выдать купоны
+                        $users = UserTable::query()
+                            ->setSelect([
+                                'ID',
+                                'PERSONAL_PHONE',
+                            ])
+                            ->setFilter([
+                                '=PERSONAL_PHONE' => $phonesArray,
+                            ])
+                            ->exec()
+                            ->fetchAll();
+                        $userIds = [];
+                        foreach ($users as $user)
                         {
-                            $coupons[$promoCode][$phone] = $userIds[$phone];
+                            $userIds[$user['PERSONAL_PHONE']] = $user['ID'];
+                        }
+                        foreach ($coupons as $promoCode => $couponUsers)
+                        {
+                            foreach ($couponUsers as $phone => $userId)
+                            {
+                                $coupons[$promoCode][$phone] = $userIds[$phone];
+                            }
                         }
                     }
 
