@@ -118,6 +118,7 @@ class ExpertsenderService implements LoggerAwareInterface
     public const PERSONAL_OFFER_COUPON_SEND_EMAIL = 9234;
     public const GRANDIN_NEW_CHECK_REG_LIST_ID = 8906;
     public const ROYAL_CANIN_NEW_CHECK_REG_LIST_ID = 9195;
+    public const FESTIVAL_NEW_USER_REG_LIST_ID = 9233;
     /**
      * BirthDay mail ids
      */
@@ -1226,7 +1227,7 @@ class ExpertsenderService implements LoggerAwareInterface
     }
 
     /**
-     * @param User $user
+     * @param array $params
      *
      * @return bool
      * @throws ExpertSenderException
@@ -1261,6 +1262,50 @@ class ExpertsenderService implements LoggerAwareInterface
             );
 
             $this->sendSystemTransactional($transactionId, $email);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array $params
+     *
+     * @return bool
+     * @throws ExpertSenderException
+     * @throws ExpertsenderServiceApiException
+     * @throws ExpertsenderServiceException
+     */
+    public function sendAfterFestivalUserReg(array $params): bool
+    {
+        $email = $params['userEmail'];
+        $coupon = $params['coupon'];
+        $firstname = $params['firstname'];
+        $lastname = $params['lastname'];
+        $base64 = $params['url_img'];
+
+        if ($email) {
+            $transactionId = self::FESTIVAL_NEW_USER_REG_LIST_ID;
+
+            $this->log()->info(
+                __FUNCTION__,
+                [
+                    'email' => $email,
+                    'transactionId' => $transactionId,
+                    'coupon' => $coupon,
+                    'firstname' => $firstname,
+                    'lastname' => $lastname,
+                    'url_img' => $base64,
+                ]
+            );
+
+            $snippets = [];
+            $snippets[] = new Snippet('coupon', htmlspecialcharsbx($coupon));
+            $snippets[] = new Snippet('firstname', htmlspecialcharsbx($firstname));
+            $snippets[] = new Snippet('lastname', htmlspecialcharsbx($lastname));
+            $snippets[] = new Snippet('url_img', $base64);
+
+            $this->sendSystemTransactional($transactionId, $email, $snippets);
             return true;
         }
 

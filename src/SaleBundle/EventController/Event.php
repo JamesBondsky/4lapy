@@ -681,7 +681,10 @@ class Event extends BaseServiceHandler
                 {
                     /** @var PersonalOffersService $personalOffersService */
                     $personalOffersService = Application::getInstance()->getContainer()->get('personal_offers.service');
-                    $personalOffersService->setUsedStatusByPromoCode($promocodeValue);
+                    if (!$personalOffersService->isNoUsedStatus($promocodeValue))
+                    {
+                        $personalOffersService->setUsedStatusByPromoCode($promocodeValue);
+                    }
                 }
             }
         } catch (\Exception $e) {
