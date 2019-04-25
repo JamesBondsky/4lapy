@@ -270,7 +270,7 @@ $markup = PawsApplication::markup();
                         <div class="bar"><h5>карта</h5></div>
                         <h2>ВКЛЮЧАЙСЯ!</h2>
                         <hr class="header_line" />
-                        <p>Проведи праздник с&nbsp;удовольствием. На&nbsp;пути к&nbsp;главному призу построй маршрут: попробуй свои силы в&nbsp;соревнованиях с&nbsp;питомцем, перекуси и&nbsp;обязательно загляни на&nbsp;Блогер-шоу. Зарегистрируйся, чтобы получить Паспорт участника и&nbsp;приходи на&nbsp;праздник с&nbsp;друзьями.</p>
+                        <p>Проведи праздник с&nbsp;удовольствием. На&nbsp;пути к&nbsp;главному призу построй маршрут: попробуй свои силы в&nbsp;соревнованиях с&nbsp;питомцем, перекуси и&nbsp;обязательно загляни на&nbsp;блогер-шоу. Зарегистрируйся, чтобы получить паспорт участника и&nbsp;приходи на&nbsp;праздник с&nbsp;друзьями.</p>
                         <div class="interactive_map">
                             <img src="img/map.jpg" alt="" />
                             <div class="work-popup-overlay" id="permanent_popup">
@@ -1039,7 +1039,7 @@ $markup = PawsApplication::markup();
                                     </div>
                                 </div>
                             </div>
-                            <button class="join_btn">я пойду!</button>
+                            <button class="join_btn js-open-popup" data-popup-id="form-festival">я пойду!</button>
                         </div>
                     </div>
                 </div>
@@ -1067,7 +1067,7 @@ $markup = PawsApplication::markup();
                         <div class="bar"><h5>блогеры</h5></div>
                         <h2>Блогер-Шоу</h2>
                         <hr class="header_line" />
-                        <p>В&nbsp;самый разгар праздника, на&nbsp;Блогер-Шоу, выступят популярные интернет-звезды, эксперты, актеры и&nbsp;ТВ ведущие. За&nbsp;их&nbsp;блогами следит вся страна, их&nbsp;питомцев знает каждый. Они расскажут яркие истории, поделятся секретами и&nbsp;полезными советами. Они будут рядом и&nbsp;вместе&nbsp;&mdash; не&nbsp;пропусти встречу!</p>
+                        <p>В&nbsp;самый разгар праздника, на&nbsp;блогер-шоу, выступят популярные интернет-звезды, эксперты, актеры и&nbsp;ТВ ведущие. За&nbsp;их&nbsp;блогами следит вся страна, их&nbsp;питомцев знает каждый. Они расскажут яркие истории, поделятся секретами и&nbsp;полезными советами.<br/> Они будут рядом и&nbsp;вместе&nbsp;&mdash; не&nbsp;пропусти встречу!</p>
                     </div>
                     <!-- Latest Products -->
                 </div>
@@ -1075,13 +1075,13 @@ $markup = PawsApplication::markup();
             <div class="festival-guest">
                 <div class="block_wrapper">
                     <div class="colour_descr violet">
-                        <p>звездный блогер самых популярных каналов о&nbsp;животных Magic Family и&nbsp;Magic Pets. Мама 5&nbsp;собачек и&nbsp;кошки Рики</p>
+                        <p>ANNY MAGIC - Звездный блогер каналов о жизни с животными MAGIC FAMILY и MAGIC PETS. Мама 5 собачек и кошки Рикки.</p>
                         <div class="triangle violet-triangle-right"></div>
                     </div>
                     <div class="portrait">
                         <div class="portrait_title">
                             <h3 class="violet">Anny</h3>
-                            <h3 class="violet_text">Magick</h3>
+                            <h3 class="violet_text">Magic</h3>
                         </div>
                         <img src="img/anny_magic.jpg" alt="" />
                     </div>
@@ -1177,7 +1177,7 @@ $markup = PawsApplication::markup();
                     </div>
                 </div>
             </div>
-            <button class="join_btn">я пойду!</button>
+            <button class="join_btn js-open-popup" data-popup-id="form-festival">я пойду!</button>
         </div>
         <!-- End guest -->
         <div id="dog_fest">
@@ -1187,11 +1187,11 @@ $markup = PawsApplication::markup();
                         <div class="bar"><h5>DOG FEST</h5></div>
                         <h2>ИГРАЙ И ПОБЕЖДАЙ</h2>
                         <hr class="header_line" />
-                        <p>Праздник для собак и&nbsp;про собак. Отличная возможность принять участие в&nbsp;спортивных играх с&nbsp;питомцем, поиграть в&nbsp;бассейне, стать звездой на&nbsp;костюмированном параде собак, найти новых друзей и&nbsp;попробовать силы в&nbsp;Аджилити и&nbsp;Фрисби. Принять участие может каждый. Приходи&nbsp;&mdash; друзья ждут!</p>
+                        <p>Праздник для собак и&nbsp;про собак. Отличная возможность принять участие в&nbsp;спортивных играх с&nbsp;питомцем, поиграть в&nbsp;бассейне, стать звездой на&nbsp;костюмированном параде собак, найти новых друзей и&nbsp;попробовать силы в&nbsp;аджилити и&nbsp;фрисби. Принять участие может каждый.<br/> Приходи&nbsp;&mdash; друзья ждут!</p>
 
                         <div id="videoHolder"></div>
 
-                        <button class="join_btn">я пойду!</button>
+                        <button class="join_btn js-open-popup" data-popup-id="form-festival">я пойду!</button>
                     </div>
                 </div>
                 <!--// end row -->
@@ -1205,7 +1205,7 @@ $markup = PawsApplication::markup();
                         <div class="bar"><h5>активности</h5></div>
                         <h2>отдыхай активно</h2>
                         <hr class="header_line" />
-                        <p>Более 50&nbsp;веселых площадок для хорошего настроения. Самых маленьких ждут соревнования, мастер-классы и&nbsp;игры с&nbsp;питомцами. А&nbsp;еще мы&nbsp;подготовили аквагрим и&nbsp;фото-зону для 1000&nbsp;лайков. Если зажигательная ZUMBA, то&nbsp;обязательно на&nbsp;танцевальных площадках фестиваля. С&nbsp;друзьями, родителями, детьми и&nbsp;питомцами не&nbsp;останавливайся&nbsp;&mdash; участвуй во&nbsp;всем!</p>
+                        <p>Более 50&nbsp;веселых площадок для хорошего настроения. Самых маленьких ждут соревнования, мастер-классы и&nbsp;игры с&nbsp;питомцами. А&nbsp;еще мы&nbsp;подготовили аквагрим и&nbsp;фото-зону для 1000&nbsp;лайков. Если зажигательная ZUMBA, то&nbsp;обязательно на&nbsp;танцевальных площадках фестиваля.<br/> С&nbsp;друзьями, родителями, детьми и&nbsp;питомцами не&nbsp;останавливайся&nbsp;&mdash; участвуй во&nbsp;всем!</p>
                     </div>
                     <!-- Latest Products -->
                 </div>
@@ -1244,7 +1244,7 @@ $markup = PawsApplication::markup();
                     <div class="milk_bar"><h3>НАСТОЛЬНЫЕ ИГРЫ</h3></div>
                 </div>
             </div>
-            <button class="join_btn">я пойду!</button>
+            <button class="join_btn js-open-popup" data-popup-id="form-festival">я пойду!</button>
         </div>
         <!-- End acitvity -->
 
@@ -1256,7 +1256,7 @@ $markup = PawsApplication::markup();
                         <div class="bar"><h5>ГЛАВНАЯ СЦЕНА</h5></div>
                         <h2>зажигай на главной сцене</h2>
                         <hr class="header_line" />
-                        <p>Вечер обещает быть жарким: на&nbsp;открытой площадке Звездные гости Фестиваля&nbsp;&mdash; группа ARTIK&amp;ASTI и&nbsp;ведущие московские диджеи. Любимые хиты и&nbsp;впервые на&nbsp;открытой площадке новый альбом &laquo;7&raquo;. Музыкальная сцена ждет!</p>
+                        <p>Вечер обещает быть жарким: на&nbsp;главной сцене Звездные гости Фестиваля&nbsp;&mdash; группа ARTIK&amp;ASTI и&nbsp;ведущие московские диджеи. Любимые хиты и&nbsp;впервые на&nbsp;открытой площадке новый альбом &laquo;7&raquo;. Музыкальная сцена ждет!</p>
                         <!-- Latest Products -->
                     </div>
                 </div>
@@ -1464,7 +1464,7 @@ $markup = PawsApplication::markup();
                     </div>
                 </div>
                 <!-- End Masonry Grid -->
-                <button class="join_btn">я пойду!</button>
+                <button class="join_btn js-open-popup" data-popup-id="form-festival">я пойду!</button>
             </div>
         </div>
         <!-- Work -->
@@ -1539,7 +1539,7 @@ $markup = PawsApplication::markup();
                     </div>
                 </div>
                 <!-- End Masonry Grid -->
-                <button class="join_btn">я пойду!</button>
+                <button class="join_btn js-open-popup" data-popup-id="form-festival">я пойду!</button>
             </div>
         </div>
         <div id="konkurs">
@@ -1592,7 +1592,7 @@ $markup = PawsApplication::markup();
                     </div>
                 </div>
             </div>
-            <button class="join_btn">я пойду!</button>
+            <button class="join_btn js-open-popup" data-popup-id="form-festival">я пойду!</button>
         </div>
         <!-- End Promo Banner -->
 
