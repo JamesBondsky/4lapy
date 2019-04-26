@@ -345,11 +345,13 @@ class InfoService implements LoggerAwareInterface
         $infoItems = (new ArrayCollection($items))
             ->map(function ($item) use ($imageCollection, $withId) {
                 $apiView = new Info();
+                $detailText = '';
                 if ($item['ID'] ?? null) {
                     $apiView->setId((string)$item['ID']);
                 }
 
                 if ($item['NAME'] ?? null) {
+                    $detailText .= '<h1 class="b-title b-title--h1">' . $item['NAME'] . '</h1>';
                     $apiView->setName((string)$item['NAME']);
                 }
 
@@ -369,11 +371,13 @@ class InfoService implements LoggerAwareInterface
                     $apiView->setIcon($this->imageProcessor->findImage($item['PREVIEW_PICTURE'], $imageCollection));
                 }
 
+                $detailText .= '<div class="b-detail-page__date">';
                 if ($item['DATE_ACTIVE_FROM'] ?? null) {
                     $dateTime = \DateTime::createFromFormat(
                         $this->bitrixPhpDateTimeFormat,
                         $item['DATE_ACTIVE_FROM']
                     );
+                    $detailText .= $item['DATE_ACTIVE_FROM'];
                     $apiView->setDateFrom($dateTime ?: null);
                 }
 
@@ -382,7 +386,14 @@ class InfoService implements LoggerAwareInterface
                         $this->bitrixPhpDateTimeFormat,
                         $item['DATE_ACTIVE_TO']
                     );
+                    $detailText .= ' - ' . $item['DATE_ACTIVE_TO'];
                     $apiView->setDateTo($dateTime ?: null);
+                }
+                $detailText .= '</div>';
+
+                if (in_array($item['IBLOCK_CODE'], [IblockCode::NEWS, IblockCode::ARTICLES])) {
+                    $detailText .= '<img src="' . $this->imageProcessor->findImage($item['PREVIEW_PICTURE'], $imageCollection) . '" />';
+                    $apiView->setDetailText($detailText);
                 }
 
                 if ($item['IBLOCK_CODE'] === IblockCode::SHARES && $withId) {
