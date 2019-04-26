@@ -493,7 +493,7 @@ $markup = PawsApplication::markup();
                                             <div class="col-sm-2">
                                                 <div class="margin-t-10 sm-margin-t-0">
                                                     <h2>добролап</h2>
-                                                    <p>Гостей, неравнодушных к пушистым четверолапым ждут на выставке-пристройстве, чтобы поддержать питомцев, или обрести друга</p>
+                                                    <p>Гостей, неравнодушных к пушистым четверолапым, ждут на выставке-пристройстве, чтобы поддержать питомцев, или обрести друга</p>
                                                 </div>
                                             </div>
                                             <div class="col-sm-2">
@@ -647,7 +647,7 @@ $markup = PawsApplication::markup();
                                             <div class="col-sm-2">
                                                 <div class="margin-t-10 sm-margin-t-0">
                                                     <h2>КОНЦЕРТ</h2>
-                                                    <p>На главной сцене Фестиваля весь день зажигательные мастер-классы, танцы, конкурсы и сеты от модных DJ Москвы. В 18.00 ARTIK@ASTI взорвут танцпол.</p>
+                                                    <p>На главной сцене Фестиваля весь день зажигательные мастер-классы, танцы, конкурсы и сеты от модных DJ Москвы. В 18.00 ARTIK и ASTI взорвут танцпол.</p>
                                                 </div>
                                             </div>
                                             <div class="col-sm-2">
@@ -1061,10 +1061,10 @@ $markup = PawsApplication::markup();
             <div class="container content-lg">
                 <div class="row text-center margin-b-40">
                     <div class="col-sm-8 col-sm-offset-2">
-                        <div class="bar"><h5>блогеры</h5></div>
-                        <h2>Блогер-Шоу</h2>
+                        <div class="bar"><h5>блогер-шоу</h5></div>
+                        <h2>Общайся на Блогер-Шоу</h2>
                         <hr class="header_line" />
-                        <p>В&nbsp;самый разгар праздника, на&nbsp;блогер-шоу, выступят популярные интернет-звезды, эксперты, актеры и&nbsp;ТВ ведущие. За&nbsp;их&nbsp;блогами следит вся страна, их&nbsp;питомцев знает каждый. Они расскажут яркие истории, поделятся секретами и&nbsp;полезными советами.<br/> Они будут рядом и&nbsp;вместе&nbsp;&mdash; не&nbsp;пропусти встречу!</p>
+                        <p>В&nbsp;самый разгар праздника на&nbsp;блогер-шоу выступят популярные интернет-звезды, эксперты, актеры и&nbsp;ТВ ведущие. За&nbsp;их&nbsp;блогами следит вся страна, их&nbsp;питомцев знает каждый. Они расскажут яркие истории, поделятся секретами и&nbsp;полезными советами.<br/> Они будут рядом и&nbsp;вместе&nbsp;&mdash; не&nbsp;пропусти встречу!</p>
                     </div>
                     <!-- Latest Products -->
                 </div>
@@ -1098,7 +1098,8 @@ $markup = PawsApplication::markup();
                 </div>
                 <div class="block_wrapper">
                     <div class="colour_descr gray">
-                        <p>инстаграм-блогер, актриса, певица и&nbsp;самая весёлая мама двойняшек</p>
+                        <p>Helen Yes - инстаграм-блогер, актриса, певица и&nbsp;самая весёлая мама двойняшек. Городские
+	                        приключения и полезные советы мамы, собаки и малышей.</p>
                         <div class="triangle gray-triangle-left"></div>
                     </div>
                     <div class="portrait">
@@ -1123,7 +1124,7 @@ $markup = PawsApplication::markup();
                 </div>
                 <div class="block_wrapper">
                     <div class="colour_descr green">
-                        <p>актриса, спортсменка, ТЕЛЕВЕДУЩАЯ. мама ДВУХ терьерОВ, и&nbsp;щеночка Оливии</p>
+                        <p>Юлия Костюшкина – телеведущая, спортсменка, актриса и мама двух терьеров Олава и Оливии.</p>
                         <div class="triangle green-triangle-right"></div>
                     </div>
                     <div class="portrait">
@@ -1162,7 +1163,8 @@ $markup = PawsApplication::markup();
                 </div>
                 <div class="block_wrapper">
                     <div class="colour_descr pink">
-                        <p>ведущий программы &laquo;Кто в&nbsp;доме хозяин&raquo; и&nbsp;организатор Школы Орлова по&nbsp;воспитанию ПИТОМЦЕВ</p>
+                        <p>Виталий Орлов – педагог, руководитель кинологического центра «Школа Орлова», 30 лет
+	                        практики работы с домашними животными.</p>
                         <div class="triangle pink-triangle-left"></div>
                     </div>
                     <div class="portrait">
