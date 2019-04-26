@@ -23,9 +23,6 @@ $markup = PawsApplication::markup();
 <!DOCTYPE html>
 <html lang="en" class="no-js">
 <head>
-    <base href="<?= PawsApplication::getInstance()
-        ->getSiteDomain() ?>">
-
     <meta charset="utf-8"/>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta content="width=device-width, initial-scale=1" name="viewport"/>
@@ -50,7 +47,7 @@ $markup = PawsApplication::markup();
     ?>
 
     <!-- GLOBAL MANDATORY STYLES -->
-    <link href="http://fonts.googleapis.com/css?family=Hind:300,400,500,600,700" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Hind:300,400,500,600,700" rel="stylesheet" type="text/css">
     <link href="vendor/simple-line-icons/css/simple-line-icons.css" rel="stylesheet" type="text/css"/>
     <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
     <link href="css/main.css" rel="stylesheet" type="text/css"/>
@@ -277,7 +274,7 @@ $markup = PawsApplication::markup();
                                 <div class="work-popup-content">
                                     <div class="row">
 
-                                        <div class="col-sm-3">
+                                        <div class="col-sm-3 hidden-mobile-img">
                                             <img src="img/img05_1.jpg" alt="" />
                                         </div>
                                         <div class="col-sm-2">
@@ -374,7 +371,7 @@ $markup = PawsApplication::markup();
                                         <a href="javascript:void(0);" class="work-popup-close">×</a>
                                         <div class="row">
 
-                                            <div class="col-sm-3">
+                                            <div class="col-sm-3 hidden-mobile-img">
                                                 <img src="img/img05_1.jpg" alt="" />
                                             </div>
                                             <div class="col-sm-2">
@@ -487,7 +484,7 @@ $markup = PawsApplication::markup();
                                         <a href="javascript:void(0);" class="work-popup-close">×</a>
                                         <div class="row">
 
-                                            <div class="col-sm-2">
+                                            <div class="col-sm-2 hidden-mobile-img">
                                                 <img src="img/img02_1.jpg" alt="" />
                                             </div>
                                             <div class="col-sm-3">
@@ -565,7 +562,7 @@ $markup = PawsApplication::markup();
                                         <a href="javascript:void(0);" class="work-popup-close">×</a>
                                         <div class="row">
 
-                                            <div class="col-sm-3">
+                                            <div class="col-sm-3 hidden-mobile-img">
                                                 <img src="img/img03_1.jpg" alt="" />
                                             </div>
                                             <div class="col-sm-2">
@@ -641,7 +638,7 @@ $markup = PawsApplication::markup();
                                         <a href="javascript:void(0);" class="work-popup-close">×</a>
                                         <div class="row">
 
-                                            <div class="col-sm-3">
+                                            <div class="col-sm-3 hidden-mobile-img">
                                                 <img src="img/img01_1.jpg" alt="" />
                                             </div>
                                             <div class="col-sm-2">
@@ -771,7 +768,7 @@ $markup = PawsApplication::markup();
                                         <a href="javascript:void(0);" class="work-popup-close">×</a>
                                         <div class="row">
 
-                                            <div class="col-sm-2">
+                                            <div class="col-sm-2 hidden-mobile-img">
                                                 <img src="img/img04_1.jpg" alt="" />
                                             </div>
                                             <div class="col-sm-3">
@@ -862,7 +859,7 @@ $markup = PawsApplication::markup();
                                         <a href="javascript:void(0);" class="work-popup-close">×</a>
                                         <div class="row">
 
-                                            <div class="col-sm-3">
+                                            <div class="col-sm-3 hidden-mobile-img">
                                                 <img src="img/img06_1.jpg" alt="" />
                                             </div>
                                             <div class="col-sm-2">
@@ -937,7 +934,7 @@ $markup = PawsApplication::markup();
                                         <a href="javascript:void(0);" class="work-popup-close">×</a>
                                         <div class="row">
 
-                                            <div class="col-sm-3">
+                                            <div class="col-sm-3 hidden-mobile-img">
                                                 <img src="img/img07_1.jpg" alt="" />
                                             </div>
                                             <div class="col-sm-2">
@@ -1017,7 +1014,7 @@ $markup = PawsApplication::markup();
                                         <a href="javascript:void(0);" class="work-popup-close">×</a>
                                         <div class="row">
 
-                                            <div class="col-sm-2">
+                                            <div class="col-sm-2 hidden-mobile-img">
                                                 <img src="img/img08_1.jpg" alt="" />
                                             </div>
                                             <div class="col-sm-3">
