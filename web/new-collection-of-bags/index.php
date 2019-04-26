@@ -13,8 +13,8 @@ global $APPLICATION;
 $offerData = [
     [
         'TITLE' => 'Модные сумки',
-        'SUBTITLE' => 'рыбатекст рыбатекст рыбатекст рыбатекст рыбатекст рыбатекст рыбатекст',
-        'IMAGE' => '/upload/vetapteka_images/banner-free processing.png',
+        'IMAGE' => '/upload/bags_images/bags_new-collection.jpg',
+        'IMAGE_MOBILE' => '/upload/bags_images/bags_new-collection_small.jpg',
         'OFFERS' => [
             1029856,
             1029857,
@@ -31,8 +31,8 @@ $offerData = [
     ],
     [
         'TITLE' => 'Спортивные сумки',
-        'SUBTITLE' => 'рыбатекст рыбатекст рыбатекст рыбатекст рыбатекст рыбатекст рыбатекст',
-        'IMAGE' => '/upload/vetapteka_images/banner-free processing.png',
+        'IMAGE' => '/upload/bags_images/bags_trips.jpg',
+        'IMAGE_MOBILE' => '/upload/bags_images/bags_trips_small.jpg',
         'OFFERS' => [
             1029852,
             1029853,
@@ -44,8 +44,8 @@ $offerData = [
     ],
     [
         'TITLE' => 'Классические сумки',
-        'SUBTITLE' => 'рыбатекст рыбатекст рыбатекст рыбатекст рыбатекст рыбатекст рыбатекст',
-        'IMAGE' => '/upload/vetapteka_images/banner-free processing.png',
+        'IMAGE' => '/upload/bags_images/bags_walks.jpg',
+        'IMAGE_MOBILE' => '/upload/bags_images/bags_walks_small.jpg',
         'OFFERS' => [
             1029850,
             1024096,
@@ -78,8 +78,8 @@ $offerData = [
     ],
     [
         'TITLE' => 'Сумки 2 в 1',
-        'SUBTITLE' => 'рыбатекст рыбатекст рыбатекст рыбатекст рыбатекст рыбатекст рыбатекст',
-        'IMAGE' => '/upload/vetapteka_images/banner-free processing.png',
+        'IMAGE' => '/upload/bags_images/bags_travels.jpg',
+        'IMAGE_MOBILE' => '/upload/bags_images/bags_travels_small.jpg',
         'OFFERS' => [
             1029849,
             1024091
@@ -89,8 +89,8 @@ $offerData = [
 ?>
     <div class="b-container b-container--news">
         <div class="b-news">
-            <h1 class="b-title b-title--h1">Новая коллекция сумок – переносок</h1>
-            <div class="b-container">
+            <h1 class="b-title b-title--h1  b-title--new-collection-bags">Новая коллекция сумок – переносок</h1>
+            <div class="b-container b-container--new-collection-bags">
                 <?
                 foreach ($offerData as $offerDatum) {
                     $offerCollection = (new OfferQuery())
@@ -104,12 +104,12 @@ $offerData = [
                     }
                     ?>
                     <section class="b-common-section" data-url="">
-                        <?//b-fleas-protection-banner--new-collection-of-bags - новый класс, для него писать стили, чтоб не затереть?>
-                        <div class="b-fleas-protection-banner b-fleas-protection-banner--catalog b-fleas-protection-banner--new-collection-of-bags">
-                            <div class="b-fleas-protection-banner__bg" style="background-image: url('<?=$offerDatum['IMAGE']?>')"></div>
-                            <div class="b-fleas-protection-banner__content">
-                                <div class="b-fleas-protection-banner__title"><?=$offerDatum['TITLE']?></div>
-                                <div class="b-fleas-protection-banner__subtitle"><?=$offerDatum['SUBTITLE']?></div>
+                        <div class="b-bags-banner">
+                            <div class="b-bags-banner__img-wrap b-bags-banner__img-wrap--desktop">
+                                <img src="<?=$offerDatum['IMAGE']?>">
+                            </div>
+                            <div class="b-bags-banner__img-wrap b-bags-banner__img-wrap--mobile">
+                                <img src="<?=$offerDatum['IMAGE_MOBILE']?>">
                             </div>
                         </div>
                         <div class="b-common-wrapper b-common-wrapper--visible js-catalog-wrapper">
