@@ -367,10 +367,6 @@ class InfoService implements LoggerAwareInterface
                     $apiView->setUrl((string)$item['CANONICAL_PAGE_URL']);
                 }
 
-                if ($item['PREVIEW_PICTURE'] ?? null) {
-                    $apiView->setIcon($this->imageProcessor->findImage($item['PREVIEW_PICTURE'], $imageCollection));
-                }
-
                 $detailText .= '<div class="b-detail-page__date">';
                 if ($item['DATE_ACTIVE_FROM'] ?? null) {
                     $dateTime = \DateTime::createFromFormat(
@@ -391,8 +387,12 @@ class InfoService implements LoggerAwareInterface
                 }
                 $detailText .= '</div>';
 
-                if (in_array($item['IBLOCK_CODE'], [IblockCode::NEWS, IblockCode::ARTICLES])) {
+                if ($item['PREVIEW_PICTURE'] ?? null) {
                     $detailText .= '<img src="' . $this->imageProcessor->findImage($item['PREVIEW_PICTURE'], $imageCollection) . '" />';
+                    $apiView->setIcon($this->imageProcessor->findImage($item['PREVIEW_PICTURE'], $imageCollection));
+                }
+
+                if (in_array($item['IBLOCK_CODE'], [IblockCode::NEWS, IblockCode::ARTICLES])) {
                     $detailText .= (string)$item['DETAIL_TEXT'];
                     $apiView->setDetailText($detailText);
                 }
