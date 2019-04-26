@@ -12,39 +12,8 @@ global $APPLICATION;
 
 $offerData = [
     [
-        'TITLE' => 'Модные сумки',
-        'IMAGE' => '/upload/bags_images/bags_new-collection.jpg',
-        'IMAGE_MOBILE' => '/upload/bags_images/bags_new-collection_small.jpg',
-        'OFFERS' => [
-            1029856,
-            1029857,
-            1029858,
-            1029861,
-            1029862,
-            1029863,
-            1029864,
-            1029884,
-            1029885,
-            1029886,
-            1029887
-        ]
-    ],
-    [
-        'TITLE' => 'Спортивные сумки',
-        'IMAGE' => '/upload/bags_images/bags_trips.jpg',
-        'IMAGE_MOBILE' => '/upload/bags_images/bags_trips_small.jpg',
-        'OFFERS' => [
-            1029852,
-            1029853,
-            1029855,
-            1024100,
-            1029865,
-            1029866
-        ]
-    ],
-    [
         'TITLE' => 'Классические сумки',
-        'IMAGE' => '/upload/bags_images/bags_walks.jpg',
+        'IMAGE' => '/upload/bags_images/bags_new-collection.jpg',
         'IMAGE_MOBILE' => '/upload/bags_images/bags_walks_small.jpg',
         'OFFERS' => [
             1029850,
@@ -74,6 +43,37 @@ $offerData = [
             1032133,
             1032134,
             1032135,
+        ]
+    ],
+    [
+        'TITLE' => 'Модные сумки',
+        'IMAGE' => '/upload/bags_images/bags_walks.jpg',
+        'IMAGE_MOBILE' => '/upload/bags_images/bags_new-collection_small.jpg',
+        'OFFERS' => [
+            1029856,
+            1029857,
+            1029858,
+            1029861,
+            1029862,
+            1029863,
+            1029864,
+            1029884,
+            1029885,
+            1029886,
+            1029887
+        ]
+    ],
+    [
+        'TITLE' => 'Спортивные сумки',
+        'IMAGE' => '/upload/bags_images/bags_trips.jpg',
+        'IMAGE_MOBILE' => '/upload/bags_images/bags_trips_small.jpg',
+        'OFFERS' => [
+            1029852,
+            1029853,
+            1029855,
+            1024100,
+            1029865,
+            1029866
         ]
     ],
     [
