@@ -73,6 +73,13 @@ class DeliveryAddress
     protected $details;
 
     /**
+     * @Serializer\SerializedName("str")
+     * @Serializer\Type("string")
+     * @var null|string
+     */
+    protected $building;
+
+    /**
      * @return int
      */
     public function getId(): int
@@ -195,6 +202,24 @@ class DeliveryAddress
     public function setDetails(string $details): DeliveryAddress
     {
         $this->details = $details;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBuilding(): string
+    {
+        return $this->building ?? '';
+    }
+
+    /**
+     * @param null|string $building
+     * @return DeliveryAddress
+     */
+    public function setBuilding(string $building): DeliveryAddress
+    {
+        $this->building = $building;
         return $this;
     }
 }

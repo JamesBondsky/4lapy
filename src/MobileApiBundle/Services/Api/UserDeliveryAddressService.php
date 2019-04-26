@@ -150,7 +150,8 @@ class UserDeliveryAddressService implements LoggerAwareInterface
                     ->setStreetName($address->getStreet())
                     ->setHouse($address->getHouse())
                     ->setFlat($address->getFlat())
-                    ->setDetails($address->getDetails());
+                    ->setDetails($address->getDetails())
+                    ->setBuilding($address->getHousing());
 
                 if ($address->getLocation()) {
                     if ($city = $this->cityService->searchByCode($address->getLocation())->first()) {
