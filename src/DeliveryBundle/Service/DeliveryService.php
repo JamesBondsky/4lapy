@@ -149,7 +149,11 @@ class DeliveryService implements LoggerAwareInterface
 
     /** @var string */
     protected $currentDeliveryZone;
+    
+    protected $allZones;
 
+    protected $deliveryByZoneMap;
+    
     /**
      * DeliveryService public constructor.
      *
@@ -297,43 +301,45 @@ class DeliveryService implements LoggerAwareInterface
         if (!$zone) {
             $zone = $this->getCurrentDeliveryZone();
         }
-
-        $getServiceCodes = function () use ($zone) {
-            $zoneData = $this->getAllZones(true)[$zone];
-            $result = [];
-            if (!empty($zoneData['LOCATIONS'])) {
-                $location = current($zoneData['LOCATIONS']);
-                if(!empty($location)) {
-                    $shipment = $this->generateShipment($location);
-                    $availableServices = Manager::getRestrictedObjectsList($shipment);
-
-                    foreach ($availableServices as $service) {
-                        $result[] = $service->getCode();
+        if($this->deliveryByZoneMap[$zone] == null) {
+            $getServiceCodes = function () use ($zone) {
+                $zoneData = $this->getAllZones(true)[$zone];
+                $result = [];
+                if (!empty($zoneData['LOCATIONS'])) {
+                    $location = current($zoneData['LOCATIONS']);
+                    if (!empty($location)) {
+                        $shipment = $this->generateShipment($location);
+                        $availableServices = Manager::getRestrictedObjectsList($shipment);
+                
+                        foreach ($availableServices as $service) {
+                            $result[] = $service->getCode();
+                        }
                     }
                 }
+        
+                return ['result' => $result];
+            };
+    
+            $result = [];
+            try {
+                $result = (new BitrixCache())
+                    ->withId(__METHOD__ . $zone)
+                    ->withTag('location:groups')
+                    ->resultOf($getServiceCodes)['result'];
+            } catch (\Exception $e) {
+                $this->log()->error(
+                    sprintf(
+                        'failed to get deliveries by zone: %s: %s',
+                        \get_class($e),
+                        $e->getMessage()
+                    ),
+                    ['zone' => $zone]
+                );
             }
-
-            return ['result' => $result];
-        };
-
-        $result = [];
-        try {
-            $result = (new BitrixCache())
-                ->withId(__METHOD__ . $zone)
-                ->withTag('location:groups')
-                ->resultOf($getServiceCodes)['result'];
-        } catch (\Exception $e) {
-            $this->log()->error(
-                sprintf(
-                    'failed to get deliveries by zone: %s: %s',
-                    \get_class($e),
-                    $e->getMessage()
-                ),
-                ['zone' => $zone]
-            );
+            $this->deliveryByZoneMap[$zone] = $result;
         }
 
-        return $result;
+        return $this->deliveryByZoneMap[$zone];
     }
 
     /**
@@ -492,7 +498,10 @@ class DeliveryService implements LoggerAwareInterface
      */
     public function getAllZones($withLocations = true): array
     {
-        return $this->locationService->getLocationGroups($withLocations);
+        if($this->allZones[intval($withLocations)] === null) {
+            $this->allZones[intval($withLocations)] = $this->locationService->getLocationGroups($withLocations);
+        }
+        return $this->allZones[intval($withLocations)];
     }
 
     /**
