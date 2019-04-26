@@ -34,6 +34,7 @@ $(window).load(function(){
             popupFormFestival.removeClass('opened').fadeOut(0);
             messagePopup.addClass('opened').fadeIn(150, function () {
                 unlock = locky.lockyOn('.js-popup-wrapper');
+                $('html').css('overflow-y', 'hidden');
             });
 
             if (!!data.data && !!data.data.field && !!data.data.value)
@@ -58,10 +59,12 @@ $(window).load(function(){
   if(popupFormFestival.length || responsePopupFormFestival.length) {
     $('[data-popup-id="form-festival"].js-open-popup').on('click', function () {
       unlock = locky.lockyOn('.js-popup-wrapper');
+      $('html').css('overflow-y', 'hidden');
     });
 
     $('[data-popup="form-festival"].opened .js-close-popup, [data-popup="response-form-festival"].opened').on('click', function () {
       unlock();
+      $('html').removeAttr('style');
     });
 
     $('.js-popup-wrapper').on('click', function () {
@@ -69,6 +72,7 @@ $(window).load(function(){
 
       if($this.find('[data-popup="form-festival"].opened') || $this.find('[data-popup="response-form-festival"].opened')) {
         unlock();
+        $('html').removeAttr('style');
       }
     });
   }
