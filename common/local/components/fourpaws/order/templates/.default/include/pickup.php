@@ -102,6 +102,7 @@ $metro = $arResult['METRO'][$selectedShop->getMetro()];
                 <?php
                 $nextDeliveries = $deliveryService->getNextDeliveries($pickup, 10);
                 $currentDelivery = $pickup;
+                $selectorStorage = $storage;
                 $selectorName = 'deliveryDate';
                 include 'delivery_date_select.php'
                 ?>
