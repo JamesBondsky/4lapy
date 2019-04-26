@@ -92,7 +92,6 @@ $APPLICATION->ShowHead();
                 console.log('init');
             },
             onAjaxPostCountSuccess: function (response) {
-                console.log(response);
                 let res = JSON.parse(response);
                 this.PAGE_COUNT = res.CNT;
                 this.PETS_IBLOCK_ID = res.PETS_IBLOCK_ID;

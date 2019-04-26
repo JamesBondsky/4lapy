@@ -17,7 +17,7 @@ $APPLICATION->ShowHead();
     <label for='cnt'>Количество записей обрабатываемых за один раз</label>
     <input name='cnt' type='number' value='200' min='100' max='200' id='cnt'><br><br>
     <label for='step'>Номер страницы, с которой начать выгрузку</label>
-    <input name='step' type='number' value='0' min='0' max='0' id='step'><br><br>
+    <input name='step' type='number' value='0' min='0' max='2000' id='step'><br><br>
     <progress id='status-bar' value='0' max='100'></progress>
     <span id='percentages'></span><br><br>
     <span id='time'></span><br><br>
@@ -43,6 +43,7 @@ $APPLICATION->ShowHead();
         UserExporter.prototype = {
             STEP: 0,
             PAGE_COUNT: null,
+            CNT: null,
             METHOD: 'POST',
             URL: '../ajax/AjaxUserControl.php',
             TIME: 0,
@@ -87,11 +88,13 @@ $APPLICATION->ShowHead();
                 console.log('init');
             },
             onAjaxPostCountSuccess: function (response) {
-                if (response == 0) {
+                let res = JSON.parse(response);
+                if (res.pages == 0) {
                     console.log('Файл не найден!');
                     return false;
                 }
-                this.PAGE_COUNT = response;
+                this.PAGE_COUNT = res.pages;
+                this.CNT = res.cnt;
                 console.log('pageCount', this.PAGE_COUNT);
                 this.$step.prop('max', this.PAGE_COUNT);
                 this.$statusBar.prop({
@@ -122,15 +125,19 @@ $APPLICATION->ShowHead();
                 });
             },
             onAjaxPostPartDataSuccess: function (response) {
-                let res = JSON.parse(response);
                 this.STEP += 1;
+                let res = JSON.parse(response),
+                    cntProc = (parseInt(this.STEP) * parseInt(this.$ctnInput.val()));
+                if (cntProc > this.CNT) {
+                    cntProc = this.CNT;
+                }
                 this.USERS_ADDED = res.users_added;
                 this.USERS_FOUND = res.users_found;
                 this.PETS_ADDED = res.pets_added;
                 this.PETS_FOUND = res.pets_found;
                 this.TOTAL_PETS = res.total_pets;
                 console.log('');
-                console.log('success process part ' + this.STEP + ' of ' + this.PAGE_COUNT + '. Element processed: ' + (parseInt(this.STEP) * parseInt(this.$ctnInput.val())));
+                console.log('success process part ' + this.STEP + ' of ' + this.PAGE_COUNT + '. Element processed: ' + cntProc);
                 console.log('Users added: ' + this.USERS_ADDED);
                 console.log('Users found: ' + this.USERS_FOUND);
                 console.log('Pets added: ' + this.PETS_ADDED);

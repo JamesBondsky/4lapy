@@ -52,7 +52,13 @@ switch ($exchangeType) {
         $userControl = new UserControlImport($pageCnt, $usersAdded, $usersFound, $petsAdded, $petsFound, $totalPets);
         switch ($step) {
             case 'get_pages_count':
-                echo ceil($userControl->getUsersCntFromFile($fileName) / $pageCnt);
+                $cnt = $userControl->getUsersCntFromFile($fileName);
+                echo json_encode(
+                    [
+                        'cnt' => $cnt,
+                        'pages' => ceil($cnt / $pageCnt)
+                    ]
+                );
                 break;
             case 'process_elements_on_page':
                 $pageNumber = $_REQUEST['page_number'];
