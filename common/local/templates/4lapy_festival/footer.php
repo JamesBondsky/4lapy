@@ -59,6 +59,8 @@ $markup = PawsApplication::markup();
 <script src="vendor/magnific-popup/jquery.magnific-popup.min.js" type="text/javascript"></script>
 <script src="vendor/masonry/jquery.masonry.pkgd.min.js" type="text/javascript"></script>
 <script src="vendor/masonry/imagesloaded.pkgd.min.js" type="text/javascript"></script>
+<!-- Скрипт для блокирования скролла, кроме выбранного блока. Нужен для скрола попапов на айфоне -->
+<script src="vendor/dom-locky/dom-locky.js" type="text/javascript"></script>
 
 <!-- PAGE LEVEL SCRIPTS -->
 <?/*<script src="js/shapes.js" type="text/javascript"></script>*/?>
@@ -69,6 +71,7 @@ $markup = PawsApplication::markup();
 <script src="js/components/maginific-popup.min.js" type="text/javascript"></script>
 <script src="js/components/masonry.min.js" type="text/javascript"></script>
 <script src="js/components/gmap.min.js" type="text/javascript"></script>
+<script src="js/components/forms.js" type="text/javascript"></script>
 
 <script>
     var tag = document.createElement('script');
