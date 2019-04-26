@@ -33,7 +33,7 @@ $(window).load(function(){
 
             popupFormFestival.removeClass('opened').fadeOut(0);
             messagePopup.addClass('opened').fadeIn(150, function () {
-                unlock = locky.lockyOn('.js-popup-wrapper', 'onEscape');
+                unlock = locky.lockyOn('.js-popup-wrapper');
             });
 
             if (!!data.data && !!data.data.field && !!data.data.value)
@@ -57,7 +57,7 @@ $(window).load(function(){
   }
   if(popupFormFestival.length || responsePopupFormFestival.length) {
     $('[data-popup-id="form-festival"].js-open-popup').on('click', function () {
-      unlock = locky.lockyOn('.js-popup-wrapper', 'onEscape');
+      unlock = locky.lockyOn('.js-popup-wrapper');
     });
 
     $('[data-popup="form-festival"].opened .js-close-popup, [data-popup="response-form-festival"].opened').on('click', function () {
