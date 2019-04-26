@@ -99,7 +99,7 @@ $APPLICATION->ShowHead();
                 this.$step.prop('max', this.PAGE_COUNT);
                 this.$statusBar.prop({
                     'value': this.STEP,
-                    'max': this.PAGE_COUNT - this.STEP
+                    'max': this.PAGE_COUNT
                 });
                 this.ajaxPostPartData();
             },
