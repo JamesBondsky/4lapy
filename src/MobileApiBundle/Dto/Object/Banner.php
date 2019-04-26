@@ -198,17 +198,16 @@ class Banner
      */
     protected function guessBannerType() {
         $link = $this->link;
-        $type = '';
         if (strpos($link, '/catalog/') !== false && strpos($link, '.html') !== false) {
             // ссылка на товар
             $type = 'goods';
-        } else if (preg_match('\/catalog\/$', $link)) {
-            // ссылка на главную каталога
-            $type = 'catalog';
         } else if (strpos($link, '/catalog/') !== false && strpos($link, '.html') === false) {
+            // ссылка на раздел каталога
+            $type = 'catalog';
+        } /* else if (strpos($link, '/catalog/') !== false && strpos($link, '.html') === false) {
             // ссылка на список товаров
             $type = 'goods_list';
-        } else if (strpos($link, '/news/') !== false) {
+        }*/ else if (strpos($link, '/news/') !== false) {
             // ссылка на новость
             $type = 'news';
         } else if (strpos($link, '/articles/') !== false) {
