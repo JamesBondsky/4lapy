@@ -393,6 +393,7 @@ class InfoService implements LoggerAwareInterface
 
                 if (in_array($item['IBLOCK_CODE'], [IblockCode::NEWS, IblockCode::ARTICLES])) {
                     $detailText .= '<img src="' . $this->imageProcessor->findImage($item['PREVIEW_PICTURE'], $imageCollection) . '" />';
+                    $detailText .= (string)$item['DETAIL_TEXT'];
                     $apiView->setDetailText($detailText);
                 }
 
