@@ -6,6 +6,12 @@ $exchangeType = $_REQUEST['exchange_type'];
 $pageCnt = $_REQUEST['cnt'];
 $step = $_REQUEST['step'];
 
+global $USER;
+
+if (!$USER->IsAdmin()) {
+    die('Скрипт доступен только администратору!');
+}
+
 switch ($exchangeType) {
     case 'export':
         require_once('../classes/UserControlExport.php');
