@@ -165,12 +165,12 @@ class CaptchaService
         $user = $this->userRepository->findOneByPhone($phone);
         if (
             $sender == static::SENDER_USER_REGISTRATION
-            || ($sender == static::SENDER_EDIT_INFO && !$user)
+            || ($sender == static::SENDER_EDIT_INFO && $user)
             || ($sender == static::SENDER_CARD_ACTIVATION && $user)
         ) {
             ConfirmCodeService::sendConfirmSms($phone);
         } else {
-            throw new RuntimeException("Некорреткные условия отправки проверочного кода в SMS, sender=$sender");
+            throw new PhoneAlreadyUsed();
         }
     }
 
