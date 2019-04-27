@@ -163,15 +163,17 @@ class CaptchaService
     {
         $this->checkSender($sender);
         $user = $this->userRepository->findOneByPhone($phone);
-        if (
-            $sender == static::SENDER_USER_REGISTRATION
-            || ($sender == static::SENDER_EDIT_INFO && !$user)
-            || ($sender == static::SENDER_CARD_ACTIVATION && $user)
-        ) {
-            ConfirmCodeService::sendConfirmSms($phone);
-        } else {
+
+        if ($sender == static::SENDER_EDIT_INFO && $user) {
             throw new PhoneAlreadyUsed();
         }
+
+        if ($sender == static::SENDER_CARD_ACTIVATION && !$user) {
+            throw new RuntimeException("Ошибка активации карты. Пользователь с номером $phone не найден.");
+        }
+
+        ConfirmCodeService::sendConfirmSms($phone);
+
     }
 
     /**
