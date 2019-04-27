@@ -307,6 +307,7 @@ class InfoService implements LoggerAwareInterface
             'NAME',
             'PREVIEW_TEXT',
             'PREVIEW_PICTURE',
+            'DETAIL_PICTURE',
             'DETAIL_TEXT',
             'CANONICAL_PAGE_URL',
             'SUB_ITEMS',
@@ -342,8 +343,17 @@ class InfoService implements LoggerAwareInterface
         }
         $imageCollection = ImageCollection::createFromIds($imagesIds);
 
+        $detailImagesIds = [];
+        if (\in_array('DETAIL_PICTURE', $select, true)) {
+            $detailImagesIds = array_map(function ($item) {
+                return $item['DETAIL_PICTURE'] ?? '';
+            }, $items);
+            $detailImagesIds = array_filter($detailImagesIds);
+        }
+        $detailImageCollection = ImageCollection::createFromIds($detailImagesIds);
+
         $infoItems = (new ArrayCollection($items))
-            ->map(function ($item) use ($imageCollection, $withId) {
+            ->map(function ($item) use ($imageCollection, $detailImageCollection, $withId) {
                 $apiView = new Info();
                 $detailText = '';
                 if ($item['ID'] ?? null) {
@@ -388,8 +398,11 @@ class InfoService implements LoggerAwareInterface
                 $detailText .= '</div>';
 
                 if ($item['PREVIEW_PICTURE'] ?? null) {
-                    $detailText .= '<img src="' . $this->imageProcessor->findImage($item['PREVIEW_PICTURE'], $imageCollection) . '" />';
                     $apiView->setIcon($this->imageProcessor->findImage($item['PREVIEW_PICTURE'], $imageCollection));
+                }
+
+                if ($item['DETAIL_PICTURE']) {
+                    $detailText .= '<img src="' . $this->imageProcessor->findImage($item['DETAIL_PICTURE'], $detailImageCollection) . '" />';
                 }
 
                 if (in_array($item['IBLOCK_CODE'], [IblockCode::NEWS, IblockCode::ARTICLES])) {
