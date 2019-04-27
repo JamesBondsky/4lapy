@@ -10,7 +10,10 @@ use Bitrix\Main\UserTable;
 use FourPaws\MobileApiBundle\Dto\Error;
 use FourPaws\MobileApiBundle\Dto\Object\ChangeCardProfile;
 use FourPaws\MobileApiBundle\Dto\Response;
+use FourPaws\MobileApiBundle\Exception\CardAlreadyUsedException;
 use FourPaws\MobileApiBundle\Exception\EmailAlreadyUsed;
+use FourPaws\MobileApiBundle\Exception\InvalidCardException;
+use FourPaws\MobileApiBundle\Exception\InvalidCredentialException;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\PersonalBundle\Exception\CardNotValidException;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
@@ -177,19 +180,19 @@ class CardService
         $confirmationCodeType = 'email_change_bonus_card';
         $_COOKIE[ConfirmCodeService::getCookieName($confirmationCodeType)] = $captchaId;
         if (!ConfirmCodeService::checkCode($captchaValue, $confirmationCodeType)) {
-             throw new RuntimeException('Некорректный код');
+             throw new InvalidCredentialException();
         }
 
         // 2. проверяем, нет ли уже в базе такого номера карты
         if ($this->isActive($cardProfile->getNewCardNumber())) {
-            throw new RuntimeException('Карта уже используется');
+            throw new CardAlreadyUsedException();
         }
 
         // 3. заменяем карту в манзане
         // 3.1 получаем ID старой карты
         $newCardValidResult = $this->appManzanaService->validateCardByNumberRaw($newCard);
         if (!$newCardValidResult->cardId) {
-            throw new CardNotValidException('Замена невозможна. Обратитесь на Горячую Линию.');
+            throw new InvalidCardException();
         }
         $newCardId = $newCardValidResult->cardId;
 
@@ -197,7 +200,7 @@ class CardService
         $client = $this->appManzanaService->getContactByUser($user);
         $card = $this->appManzanaService->getCardInfo($oldCard, $client->contactId);
         if ($card === null) {
-            throw new CardNotValidException('Замена невозможна. Обратитесь на Горячую Линию.');
+            throw new InvalidCardException();
         }
         $oldCardId = $card->cardId;
 

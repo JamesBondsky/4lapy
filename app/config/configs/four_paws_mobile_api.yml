@@ -25,6 +25,10 @@ four_paws_mobile_api:
       code: 9
       status_code: 200
       message: 'Доступ запрещен'
+    FourPaws\MobileApiBundle\Exception\InvalidCardException:
+      code: 11
+      message: 'Замена карты невозможна. Пожалуйста, обратитесь на Горячую линию.'
+      status_code: 200
     FourPaws\MobileApiBundle\Exception\DeliveryAddressAddError:
       code: 20
       message: 'Ошибка при добавлении профиля доставки'
