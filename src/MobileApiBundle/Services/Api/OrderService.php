@@ -295,13 +295,14 @@ class OrderService
 
             $closedOrderStatuses = $this->personalOrderService->getClosedOrderStatuses();
             $currentMinusMonthDate = (new \DateTime)->modify('-1 month');
+            $isCompleted = $order->getDateUpdate() > $currentMinusMonthDate || in_array($order->getStatusId(), $closedOrderStatuses, true);
 
             $response
                 ->setId($order->getAccountNumber())
                 ->setDateFormat($dateInsert)
                 // ->setReviewEnabled($order->) // toDo reviews выбираются из таблички opros_checks, поля opros_4, opros_5, opros_8
                 ->setStatus($status)
-                ->setCompleted($order->getDateUpdate() < $currentMinusMonthDate && !in_array($order->getStatusId(), $closedOrderStatuses, true))
+                ->setCompleted($isCompleted)
                 ->setPaid($order->isPayed())
                 ->setCartParam($this->getOrderParameter($basketProducts, $order))
                 ->setCartCalc($this->getOrderCalculate($basketProducts, false, 0, $order));
