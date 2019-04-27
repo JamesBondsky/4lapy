@@ -80,7 +80,7 @@ class CardController extends FOSRestController
 
         $newCardNumber = $changeCardValidateRequest->getNewCardNumber();
         if ($apiResponse = $this->apiCardService->isActive($newCardNumber)) {
-            throw new RuntimeException('Карта уже используется');
+            throw new CardAlreadyUsedException();
         }
         return (new Response())
             ->setData([
