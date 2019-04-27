@@ -301,7 +301,7 @@ class OrderService
                 ->setDateFormat($dateInsert)
                 // ->setReviewEnabled($order->) // toDo reviews выбираются из таблички opros_checks, поля opros_4, opros_5, opros_8
                 ->setStatus($status)
-                ->setCompleted($order->getDateUpdate() >= $currentMinusMonthDate && !in_array($order->getStatusId(), $closedOrderStatuses, true))
+                ->setCompleted($order->getDateUpdate() < $currentMinusMonthDate && !in_array($order->getStatusId(), $closedOrderStatuses, true))
                 ->setPaid($order->isPayed())
                 ->setCartParam($this->getOrderParameter($basketProducts, $order))
                 ->setCartCalc($this->getOrderCalculate($basketProducts, false, 0, $order));
