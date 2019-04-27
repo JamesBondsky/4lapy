@@ -178,9 +178,7 @@ class UserService
         if ($user->getPhone() && $user->getPhone() !== $currentUser->getPersonalPhone()) {
             try {
                 if ($userByPhone = $this->userBundleService->findOneByPhone($user->getPhone())) {
-                    if ($userByPhone->isPhoneConfirmed()) {
-                        throw new PhoneAlreadyUsed();
-                    }
+                    throw new PhoneAlreadyUsed();
                 }
             } catch (NotFoundException $e) {
                 // do nothing
@@ -190,9 +188,7 @@ class UserService
         if ($user->getEmail() && $user->getEmail() !== $currentUser->getEmail()) {
             try {
                 if ($userByEmail = $this->userBundleService->findOneByEmail($user->getEmail())) {
-                    if ($userByEmail->isEmailConfirmed()) {
-                        throw new EmailAlreadyUsed();
-                    }
+                    throw new EmailAlreadyUsed();
                 }
             } catch (NotFoundException $e) {
                 // do nothing
