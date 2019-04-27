@@ -336,18 +336,14 @@ class InfoService implements LoggerAwareInterface
 
         $imagesIds = [];
         if (\in_array('PREVIEW_PICTURE', $select, true)) {
-            $imagesIds = array_map(function ($item) {
-                return $item['PREVIEW_PICTURE'] ?? '';
-            }, $items);
+            $imagesIds = array_map(function ($item) { return $item['PREVIEW_PICTURE'] ?? ''; }, $items);
             $imagesIds = array_filter($imagesIds);
         }
         $imageCollection = ImageCollection::createFromIds($imagesIds);
 
         $detailImagesIds = [];
         if (\in_array('DETAIL_PICTURE', $select, true)) {
-            $detailImagesIds = array_map(function ($item) {
-                return $item['DETAIL_PICTURE'] ?? '';
-            }, $items);
+            $detailImagesIds = array_map(function ($item) { return $item['DETAIL_PICTURE'] ?? ''; }, $items);
             $detailImagesIds = array_filter($detailImagesIds);
         }
         $detailImageCollection = ImageCollection::createFromIds($detailImagesIds);
