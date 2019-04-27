@@ -38,11 +38,13 @@ use FourPaws\MobileApiBundle\Dto\Object\PriceWithQuantity;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartOrderRequest;
 use FourPaws\MobileApiBundle\Exception\BonusSubtractionException;
 use FourPaws\MobileApiBundle\Exception\OrderNotFoundException;
+use FourPaws\MobileApiBundle\Exception\ProductsAmountUnavailableException;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
 use FourPaws\PersonalBundle\Service\BonusService as AppBonusService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
+use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 use FourPaws\PersonalBundle\Entity\OrderStatusChange;
@@ -818,7 +820,13 @@ class OrderService
         }
 
         $storage->setFromApp(true)->setFromAppDevice($platform);
-        $order = $this->appOrderService->createOrder($storage);
+        try {
+            $order = $this->appOrderService->createOrder($storage);
+        } catch (OrderCreateException $e) {
+            if ($e->getMessage() === 'Basket is empty') {
+                throw new ProductsAmountUnavailableException();
+            }
+        }
         $firstOrder = $this->personalOrderService->getOrderByNumber($order->getField('ACCOUNT_NUMBER'));
         $response = [
             $this->toApiFormat($firstOrder)

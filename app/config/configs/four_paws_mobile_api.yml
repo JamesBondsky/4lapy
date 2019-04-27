@@ -67,3 +67,7 @@ four_paws_mobile_api:
       code: 1021
       message: 'Ошибка при обновления профиля доставки'
       status_code: 200
+    FourPaws\MobileApiBundle\Exception\ProductsAmountUnavailableException:
+      code: 1030
+      message: 'Данное количество товара не доступно к оформлению'
+      status_code: 200
