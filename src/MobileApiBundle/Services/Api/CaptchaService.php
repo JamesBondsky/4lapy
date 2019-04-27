@@ -10,6 +10,7 @@ use FourPaws\Helpers\PhoneHelper;
 use FourPaws\MobileApiBundle\Dto\Response\CaptchaSendValidationResponse;
 use FourPaws\MobileApiBundle\Dto\Response\CaptchaVerifyResponse;
 use FourPaws\MobileApiBundle\Exception\EmailAlreadyUsed;
+use FourPaws\MobileApiBundle\Exception\InvalidCredentialException;
 use FourPaws\MobileApiBundle\Exception\PhoneAlreadyUsed;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\UserBundle\Exception\NotFoundException;
@@ -142,7 +143,7 @@ class CaptchaService
         $confirmationCodeType = $this->getConfirmationCodeType($loginType, static::SENDER_EDIT_INFO);
         $_COOKIE[ConfirmCodeService::getCookieName($confirmationCodeType)] = $captchaId;
         if (!ConfirmCodeService::checkCode($captchaValue, $confirmationCodeType)) {
-            throw new RuntimeException('Некорректный код');
+            throw new InvalidCredentialException();
         }
         $text = $loginType == 'phone' ? 'Номер телефона подтвержден' : 'E-mail подтвержден';
         return (new CaptchaVerifyResponse($text))
