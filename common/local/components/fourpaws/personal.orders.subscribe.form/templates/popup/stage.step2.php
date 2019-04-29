@@ -79,6 +79,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                     </header>
                     <form class="b-order-contacts__form b-order-contacts__form--choose-delivery js-form-validation"
                           data-url="<?= $arResult['URL']['DELIVERY_VALIDATION'] ?>"
+                          data-form-step2-subscribe="true"
                           method="post"
                           id="order-step">
                         <input type="hidden" name="shopId" class="js-no-valid"
