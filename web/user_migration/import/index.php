@@ -84,6 +84,11 @@ $APPLICATION->ShowHead();
                 this.$stopBtn.click(function (e) {
                     e.preventDefault();
                     that.STOP = true;
+                    that.USERS_ADDED = 0;
+                    that.USERS_FOUND = 0;
+                    that.PETS_ADDED = 0;
+                    that.PETS_FOUND = 0;
+                    that.TOTAL_PETS = 0;
                 });
                 console.log('init');
             },
@@ -137,7 +142,7 @@ $APPLICATION->ShowHead();
                 this.PETS_FOUND = res.pets_found;
                 this.TOTAL_PETS = res.total_pets;
                 console.log('');
-                console.log('success process part ' + this.STEP + ' of ' + this.PAGE_COUNT + '. Element processed: ' + cntProc);
+                console.log('success process part ' + this.STEP + ' of ' + this.PAGE_COUNT + '. Users processed: ' + cntProc);
                 console.log('Users added: ' + this.USERS_ADDED);
                 console.log('Users found: ' + this.USERS_FOUND);
                 console.log('Pets added: ' + this.PETS_ADDED);
