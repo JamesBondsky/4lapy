@@ -107,7 +107,7 @@ class UserService
     public function loginOrRegister(LoginRequest $loginRequest): UserLoginResponse
     {
 
-        $excludePhonesFromCaptchaCheck = [
+        $excludeLoginsFromCaptchaCheck = [
             '9778016362',
             '9660949453',
             '9299821844',
@@ -116,14 +116,15 @@ class UserService
             '9991693811',
             '9263987654',
             '9653770455',
-            '9165919854'
+            '9165919854',
+            'a.vorobyev@articul.ru',
         ];
 
         try {
 
             $_COOKIE[ConfirmCodeService::getCookieName('phone')] = $loginRequest->getCaptchaId();
 
-            if (!in_array($loginRequest->getLogin(), $excludePhonesFromCaptchaCheck)) {
+            if (!in_array($loginRequest->getLogin(), $excludeLoginsFromCaptchaCheck)) {
                 try {
                     if (!ConfirmCodeService::checkCode($loginRequest->getCaptchaValue(), 'phone')) {
                         throw new InvalidCredentialException();
