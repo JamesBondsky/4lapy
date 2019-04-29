@@ -52,7 +52,7 @@ $markup = PawsApplication::markup();
     <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
     <link href="css/main.css" rel="stylesheet" type="text/css"/>
     <link href="css/flying.css" rel="stylesheet" type="text/css"/>
-    <link href="css/styles-form.css" rel="stylesheet" type="text/css"/>
+    <link href="css/styles-form.css?v=2" rel="stylesheet" type="text/css"/>
 
     <!-- PAGE LEVEL PLUGIN STYLES -->
     <link href="css/animate.css" rel="stylesheet">
@@ -60,7 +60,7 @@ $markup = PawsApplication::markup();
     <link href="vendor/magnific-popup/magnific-popup.css" rel="stylesheet" type="text/css"/>
 
     <!-- THEME STYLES -->
-    <link href="css/layout.min.css" rel="stylesheet" type="text/css"/>
+    <link href="css/layout.min.css?v=2" rel="stylesheet" type="text/css"/>
 
     <!-- Favicon -->
     <link rel="shortcut icon" href="favicon.ico"/>
@@ -1107,7 +1107,7 @@ $markup = PawsApplication::markup();
                             <h3 class="gray">Helen</h3>
                             <h3 class="gray_text">Yes</h3>
                         </div>
-                        <img src="img/sazhina.jpg" alt="" /></div>
+                        <img src="img/sazhina.jpg?v=2" alt="" /></div>
                 </div>
                 <div class="block_wrapper">
                     <div class="colour_descr pink">
@@ -1172,7 +1172,7 @@ $markup = PawsApplication::markup();
                             <h3 class="pink">Виталий</h3>
                             <h3 class="pink_text">Орлов</h3>
                         </div>
-                        <img src="img/orlov.jpg" alt="" />
+                        <img src="img/orlov.jpg?v=2" alt="" />
                     </div>
                 </div>
             </div>
@@ -1637,13 +1637,13 @@ $markup = PawsApplication::markup();
                 <div class="masonry-grid row row-space-2">
                     <div class="partners_wrap">
                         <div class="pertner_item">
-                            <img class="partner_logo" src="img/partners05.jpg" alt="">
-                        </div>
-                        <div class="pertner_item">
                             <img class="partner_logo" src="img/partners06.jpg" alt="">
                         </div>
                         <div class="pertner_item">
                             <img class="partner_logo" src="img/partners07.jpg" alt="">
+                        </div>
+                        <div class="pertner_item">
+                            <img class="partner_logo" src="img/partners18.jpg" alt="">
                         </div>
                         <div class="pertner_item">
                             <img class="partner_logo" src="img/partners08.jpg" alt="">
@@ -1654,7 +1654,6 @@ $markup = PawsApplication::markup();
                         <div class="pertner_item">
                             <img class="partner_logo" src="img/partners10.jpg" alt="">
                         </div>
-
                         <div class="pertner_item">
                             <img class="partner_logo" src="img/partners11.jpg" alt="">
                         </div>
@@ -1677,13 +1676,13 @@ $markup = PawsApplication::markup();
                             <img class="partner_logo" src="img/partners12.jpg" alt="">
                         </div>
                         <div class="pertner_item">
+                            <img class="partner_logo" src="img/partners15.jpg" alt="">
+                        </div>
+                        <div class="pertner_item">
                             <img class="partner_logo" src="img/partners13.jpg" alt="">
                         </div>
                         <div class="pertner_item">
                             <img class="partner_logo" src="img/partners14.jpg" alt="">
-                        </div>
-                        <div class="pertner_item">
-                            <img class="partner_logo" src="img/partners15.jpg" alt="">
                         </div>
                         <div class="pertner_item">
                             <img class="partner_logo" src="img/partners16.jpg" alt="">

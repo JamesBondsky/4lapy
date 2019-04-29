@@ -18,8 +18,7 @@ if ($isAuthorized)
     <div class="btn-close btn-close--form js-close-popup"></div>
     <div class="formwrap">
         <div class="formitem">
-            <p><b>До фестиваля «Четыре лапы» осталось совсем чуть-чуть. Заполни короткую форму регистрации, и мы отправим на электронную почту приглашение с персональным кодом участника.</b></p>
-            <p>Это отличная возможность:</p>
+            <p><b>Заполни короткую форму регистрации и&nbsp;получи на&nbsp;электронную почту приглашение с&nbsp;персональным кодом участника, это отличная возможность:</b></p>
             <ul>
                 <li>Стать участником квеста и выиграть поездку в Париж!</li>
                 <li>Принять участие в розыгрыше более 100 призов</li>
@@ -37,7 +36,7 @@ if ($isAuthorized)
                 <input type="email" placeholder="EMAIL" name="email" <?= $isAuthorized ? 'value="' . $currentUser->getEmail() . '"' : '' ?> />
                 <input type="phone" placeholder="ТЕЛЕФОН" name="phone" <?= $isAuthorized ? 'value="' . $currentUser->getPersonalPhone() . '"' : '' ?> />
 
-                <input type="checkbox" id="agree" name="rules" /> <label for="agree">Я принимаю условия пользовательского соглашения, правил, политики обработки персональных данных, даю согласие на обработку персональных данных.</label>
+                <input type="checkbox" id="agree" name="rules" /> <label for="agree">я даю своё согласие на обработку персональных данных</label>
                 <button class="join_btn">я пойду!</button>
             </form>
         </div>
