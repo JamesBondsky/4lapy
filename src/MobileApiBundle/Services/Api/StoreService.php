@@ -18,6 +18,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
+use FourPaws\MobileApiBundle\Dto\Object\PriceWithQuantity;
 use FourPaws\MobileApiBundle\Dto\Object\Store\Store as ApiStore;
 use FourPaws\MobileApiBundle\Dto\Object\Store\StoreService as ApiStoreServiceDto;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListRequest;
@@ -400,11 +401,14 @@ class StoreService
     protected function convertToBasketProductCollection(ArrayCollection $shopListOffers)
     {
         $basketProductCollection = new BasketProductCollection();
-        foreach ($this->basketService->getBasket()->getOrderableItems() as $basketItem) {
-            /** @var BasketItem $basketItem */
+        foreach ($shopListOffers as $shopListOffer) {
+            /** @var \FourPaws\SaleBundle\Dto\ShopList\Offer $shopListOffer */
 
-            foreach ($shopListOffers as $shopListOffer) {
-                /** @var \FourPaws\SaleBundle\Dto\ShopList\Offer $shopListOffer */
+            $prices = [];
+            $orderableItems = $this->basketService->getBasket()->getOrderableItems();
+            foreach ($orderableItems as $basketItem) {
+                /** @var BasketItem $basketItem */
+
                 if ((int) $shopListOffer->getId() !== (int) $basketItem->getProductId()) {
                     continue;
                 }
@@ -416,11 +420,19 @@ class StoreService
                     $shortProduct->setGiftDiscountId($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT']['VALUE']);
                     $shortProduct->setPrice((new Price())->setActual(0)->setOld(0));
                 }
+
+                $prices[] = (new PriceWithQuantity())
+                    ->setQuantity($basketItem->getQuantity())
+                    ->setPrice((new Price())->setActual($basketItem->getPrice())->setOld($basketItem->getBasePrice()));
+            }
+            if ($orderableItems)
+            {
                 $basketProductCollection->add(
                     (new Product())
-                        ->setBasketItemId($basketItem->getId())
+                        ->setBasketItemId($shopListOffer->getId())
                         ->setShortProduct($shortProduct)
                         ->setQuantity($quantity)
+                        ->setPrices($prices)
                 );
             }
         }
