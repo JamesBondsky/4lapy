@@ -1,30 +1,47 @@
 <?php
 
 use FourPaws\Catalog\Model\Category;
-use FourPaws\Catalog\Query\CategoryQuery;
 
-$aMenuLinks = [];
-$sections = (new CategoryQuery())
-    ->withFilter([
-        'CODE' => [
-            'koshki',
-            'sobaki',
-            'zashchita-ot-blokh-i-kleshchey',
-            'ryby',
-            'gryzuny-i-khorki',
-            'reptilii',
-            'ptitsy',
-            'veterinarnaya-apteka',
-        ]
-    ])
-    ->withOrder(['SORT' => 'ASC'])
-    ->exec();
+$sections = [
+    [
+        'NAME' => 'Товары для кошек',
+        'URL' => '/catalog/koshki/'
+    ],
+    [
+        'NAME' => 'Товары для собак',
+        'URL' => '/catalog/sobaki/'
+    ],
+    [
+        'NAME' => 'Защита от блох и клещей',
+        'URL' => '/catalog/veterinarnaya-apteka/zashchita-ot-blokh-i-kleshchey/'
+    ],
+    [
+        'NAME' => 'Товары для аквариумистики',
+        'URL' => '/catalog/ryby/'
+    ],
+    [
+        'NAME' => 'Товары для грызунов и хорьков',
+        'URL' => '/catalog/gryzuny-i-khorki/'
+    ],
+    [
+        'NAME' => 'Товары для черепах и рептилий',
+        'URL' => '/catalog/reptilii/'
+    ],
+    [
+        'NAME' => 'Товары для птиц',
+        'URL' => '/catalog/ptitsy/'
+    ],
+    [
+        'NAME' => 'Ветаптека',
+        'URL' => '/catalog/veterinarnaya-apteka/'
+    ]
+];
 
 /** @var Category $section */
 foreach ($sections as $section) {
     $aMenuLinks[] = [
-        $section->getName(),
-        $section->getSectionPageUrl(),
+        $section['NAME'],
+        $section['URL'],
         [],
         [],
         '',
