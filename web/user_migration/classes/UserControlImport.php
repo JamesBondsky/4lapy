@@ -127,8 +127,8 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
                     $this->forWho[$oldCatName] = $forWho['ID'];
                 }
             }
-            $cache->StartDataCache(static::CACHE_TIME, $cacheID, $cachePath, ["UserControlForWho" => $this->forWho]);
-            $cache->EndDataCache(["UserControlForWho" => $this->forWho]);
+            $cache->StartDataCache(static::CACHE_TIME, $cacheID, $cachePath, ['UserControlForWho' => $this->forWho]);
+            $cache->EndDataCache(['UserControlForWho' => $this->forWho]);
         }
     }
 
@@ -145,12 +145,15 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
         }
 
         if (!is_array($this->gender)) {
-            $genderDb = Application::getHlBlockDataManager('bx.hlblock.petgender')::getList();
-            while ($gender = $genderDb->fetch()) {
-                $this->gender[mb_strtolower($gender['UF_NAME'])] = $gender['ID'];
+            $obGender = new CUserFieldEnum;
+            /** @var CDBResult $dbGender */
+            $dbGender = $obGender->GetList([], ['USER_FIELD_NAME' => 'UF_GENDER']);
+            while($gender = $dbGender->Fetch())
+            {
+                $this->gender[mb_strtolower($gender['VALUE'])] = $gender['ID'];
             }
-            $cache->StartDataCache(static::CACHE_TIME, $cacheID, $cachePath, ["UserControlGender" => $this->gender]);
-            $cache->EndDataCache(["UserControlGender" => $this->gender]);
+            $cache->StartDataCache(static::CACHE_TIME, $cacheID, $cachePath, ['UserControlGender' => $this->gender]);
+            $cache->EndDataCache(['UserControlGender' => $this->gender]);
         }
     }
 
@@ -171,8 +174,8 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
             while ($breed = $dbBreeds->fetch()) {
                 $this->breeds[mb_strtolower($breed['UF_NAME'])] = $breed['ID'];
             }
-            $cache->StartDataCache(static::CACHE_TIME, $cacheID, $cachePath, ["UserControlBreed" => $this->breeds]);
-            $cache->EndDataCache(["UserControlBreed" => $this->breeds]);
+            $cache->StartDataCache(static::CACHE_TIME, $cacheID, $cachePath, ['UserControlBreed' => $this->breeds]);
+            $cache->EndDataCache(['UserControlBreed' => $this->breeds]);
         }
     }
 
@@ -354,7 +357,7 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
     private function tryFindUsers()
     {
         $filter[] = [
-            "LOGIC" => "OR"
+            'LOGIC' => 'OR'
         ];
 
         $userTmp = [];
