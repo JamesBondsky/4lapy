@@ -289,6 +289,12 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
                         $this->basketService->addOfferToBasket($basketItem['PRODUCT_ID'], $basketItem['QUANTITY']);
                     }
+
+                    // если ранее была создана подписка - удаляем
+                    if($storage->getSubscribeId() > 0){
+                        $this->getOrderSubscribeService()->delete($storage->getSubscribeId());
+                        $storage->setSubscribeId(null);
+                    }
                 }
 
                 $storage->setSubscribe(true);
@@ -425,7 +431,11 @@ class FourPawsOrderComponent extends \CBitrixComponent
             }
 
             if($storage->getSubscribeId() > 0){ // для выбора дня первой доставки
-                $this->arResult['ORDER_SUBSCRIBE'] = $this->getOrderSubscribeService()->getById($storage->getSubscribeId());
+                try {
+                    $this->arResult['ORDER_SUBSCRIBE'] = $this->getOrderSubscribeService()->getById($storage->getSubscribeId());
+                } catch (\Exception $e) {
+
+                }
             }
 
             $this->arResult['PICKUP']               = $pickup;
@@ -710,6 +720,11 @@ class FourPawsOrderComponent extends \CBitrixComponent
      */
     public function getOrderSubscribeService()
     {
+        if (!$this->orderSubscribeService) {
+            $this->orderSubscribeService = Application::getInstance()->getContainer()->get(
+                'order_subscribe.service'
+            );
+        }
         return $this->orderSubscribeService;
     }
 }

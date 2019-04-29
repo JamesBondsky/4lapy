@@ -7,7 +7,7 @@
                        href="javascript:void(0);"
                        data-close-subscribe-delivery-popup="false"
                        title="Закрыть"></a>
-                    <h1 class="b-popup-subscribe-delivery__title">Добавление товаров в подписку</h1>
+                    <h1 class="b-popup-subscribe-delivery__title">Вернуться в подписку</h1>
                 </div>
             </div>
 

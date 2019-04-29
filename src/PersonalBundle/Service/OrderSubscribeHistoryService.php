@@ -217,9 +217,10 @@ class OrderSubscribeHistoryService
      * @throws ArgumentException
      * @throws SystemException
      */
-    public function getLastCreatedOrderId(int $originOrderId): int
+    public function getLastCreatedOrderId(OrderSubscribe $orderSubscribe): int
     {
         $lastCreatedOrderId = 0;
+        $originOrderId = $orderSubscribe->getOrderId();
         $params = [
             'order' => [
                 'UF_NEW_ORDER_ID' => 'desc',
@@ -240,14 +241,19 @@ class OrderSubscribeHistoryService
                     ]
                 ),
             ],
-            'limit' => 1,
+            //'limit' => 1,
             'select' => [
-                'ID', 'UF_NEW_ORDER_ID'
+                'ID', 'UF_NEW_ORDER_ID', 'UF_SUBS_DATA'
             ]
         ];
-        $item = $this->findBy($params)->fetch();
-        if ($item) {
+        $dbres = $this->findBy($params);
+        while ($item = $dbres->fetch()) {
+            $subData = unserialize($item['UF_SUBS_DATA']);
+            if($subData['ID'] != $orderSubscribe->getId()){
+                continue;
+            }
             $lastCreatedOrderId = $item['UF_NEW_ORDER_ID'];
+            break;
         }
 
         return $lastCreatedOrderId;
@@ -291,9 +297,10 @@ class OrderSubscribeHistoryService
             ]
         ];
         $dbres = $this->findBy($params);
-        while ($row = $dbres->fetch()) {
 
-            // нужно было завести отдельное поле для ID подписки, но времени у меня маловато для этого
+        // [костыль] здесь сравнивается id подписки,
+        // т.к. из ожного заказа можно сформировать несколько подписок
+        while ($row = $dbres->fetch()) {
             $subData = unserialize($row['UF_SUBS_DATA']);
             if($subData['ID'] != $orderSubscribe->getId()){
                 continue;
@@ -357,8 +364,8 @@ class OrderSubscribeHistoryService
             ]
         );
 
+        // [костыль] см. метод getNotDeliveredOrderIds
         while ($row = $dbres->fetch()) {
-            // см. метод getNotDeliveredOrderIds
             $subData = unserialize($row['UF_SUBS_DATA']);
             if($subData['ID'] != $orderSubscribe->getId()){
                 continue;

@@ -62,6 +62,7 @@ use FourPaws\LocationBundle\Exception\AddressSplitException;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\PersonalBundle\Service\AddressService;
+use FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -1246,11 +1247,12 @@ class OrderService implements LoggerAwareInterface
                 // добавим заказ в историю закзаов по подписке
                 $result = $this->orderSubscribeService->update($subscribe);
                 if($result->isSuccess()){
+                    /** @var OrderSubscribeHistoryService $orderSubscribeHistoryService */
                     $orderSubscribeHistoryService = Application::getInstance()->getContainer()->get('order_subscribe_history.service');
                     $historyAddResult = $orderSubscribeHistoryService->add(
                         $subscribe,
                         $order->getId(),
-                        (new \DateTime($subscribe->getNextDate()->toString()))
+                        (new \DateTime($this->getOrderPropertyByCode($order, 'DELIVERY_DATE')->getValue()))
                     );
                     if (!$historyAddResult->isSuccess()) {
                         throw new \Exception('Ошибка сохранения записи в истории');

@@ -37,7 +37,7 @@ if (!$coupons->isEmpty()) {
 		            <div class="b-personal-offers-item__offers">
 		                <div class="b-personal-offers-item__percent">
 		                    <div class="percent-title"><?= $offer['PROPERTY_DISCOUNT_VALUE'] ?>%</div>
-		                    <div class="percent-descr"><?= $offer['~PREVIEW_TEXT'] ?><?= $offer['DATE_ACTIVE_TO'] ? ' до&nbsp;<nobr>' . $offer['DATE_ACTIVE_TO'] . '</nobr>' : '' ?></div>
+		                    <div class="percent-descr"><?= $offer['~PREVIEW_TEXT'] ?></div>
 		                </div>
 		            </div>
 		            <div class="b-personal-offers-item__data-wrap">

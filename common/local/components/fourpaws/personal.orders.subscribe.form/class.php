@@ -669,19 +669,6 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                                 }
                             }
 
-                            // и создать новый заказ
-                            $result = $orderSubscribeService->processOrderSubscribe($orderSubscribe);
-                            if(!$result->isSuccess()){
-                                throw new Exception('Не удалось создать заказ по новой подписке');
-                            }
-
-                            // отправка уведомления о созданной подписке (в данном случае - возобновленной)
-                            if ($this->arResult['SUBSCRIBE_ACTION']['RESUMED'] === 'Y') {
-                                $this->sendOrderSubscribedNotification(
-                                    $orderSubscribe->getId()
-                                );
-                            }
-
                             if($this->getActionReal() != 'renewalSubmit') {
                                 $orderSubscribeService->deleteAllItems($orderSubscribe->getId());
                             }
@@ -702,9 +689,6 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                         $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
                         $this->arResult['SUBSCRIBE_ACTION']['SUBSCRIPTION_ID'] = $orderSubscribe->getId();
 
-                        // отправка уведомления о созданной подписке
-                        $this->sendOrderSubscribedNotification($orderSubscribe->getId());
-
                         $this->flushOrderSubscribe();
                         $this->clearTaggedCache();
                     } else {
@@ -712,22 +696,37 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     }
                 }
 
-                $items = $this->request->get('items');
-                if(empty($items) && $this->getActionReal() != 'renewalSubmit'){
-                    $this->setExecError('subscribeAction', "Не переданы товары для подписки", 'subscriptionAdd');
-                }
-                if(!empty($items)){
-                    /** @var BasketItem $basketItem */
-                    foreach($items as $item){
-                        $subscribeItem = (new OrderSubscribeItem())
-                            ->setOfferId($item['productId'])
-                            ->setQuantity($item['quantity']);
+                // привязка товаров
+                if(empty($this->arResult['ERROR'])){
+                    $items = $this->request->get('items');
+                    if(empty($items) && $this->getActionReal() != 'renewalSubmit'){
+                        $this->setExecError('subscribeAction', "Не переданы товары для подписки", 'subscriptionAdd');
+                    }
+                    if(!empty($items)){
+                        /** @var BasketItem $basketItem */
+                        foreach($items as $item){
+                            $subscribeItem = (new OrderSubscribeItem())
+                                ->setOfferId($item['productId'])
+                                ->setQuantity($item['quantity']);
 
-                        if(!$orderSubscribeService->addSubscribeItem($orderSubscribe, $subscribeItem)){
-                            $this->setExecError('subscribeAction', sprintf("Не удалось добавить товар %s", $subscribeItem->getOfferId()), 'subscriptionAdd');
+                            if(!$orderSubscribeService->addSubscribeItem($orderSubscribe, $subscribeItem)){
+                                $this->setExecError('subscribeAction', sprintf("Не удалось добавить товар %s", $subscribeItem->getOfferId()), 'subscriptionAdd');
+                            }
                         }
                     }
+
+                    // создание нового заказа по подписке
+                    if($this->arResult['SUBSCRIBE_ACTION']['TYPE'] == 'UPDATE' && $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] == 'Y'){
+                        $result = $orderSubscribeService->processOrderSubscribe($orderSubscribe);
+                        if(!$result->isSuccess()){
+                            throw new Exception('Не удалось создать заказ по новой подписке');
+                        }
+                    }
+
+                    // отправка уведомления о возобновленной или отредактированной подписке
+                    $this->sendOrderSubscribedNotification($orderSubscribe->getId());
                 }
+
 
 
                 if (empty($this->arResult['ERROR'])) {
@@ -982,38 +981,45 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         }
 
         if($result->isSuccess()){
-            $selectedCity     = $this->getUserService()->getSelectedCity();
-            $deliveries       = $this->getDeliveries($basket);
-            $selectedDelivery = $this->getSelectedDelivery();
+            try{
+                $selectedCity     = $this->getUserService()->getSelectedCity();
+                $deliveries       = $this->getDeliveries($basket);
+                $selectedDelivery = $this->getSelectedDelivery();
 
-            $this->getPickupData($deliveries);
+                $this->getPickupData($deliveries);
 
-            $addresses = null;
-            if ($this->getUserService()->getCurrentUserId()) {
-                /** @var AddressService $addressService */
-                $addressService = Application::getInstance()->getContainer()->get('address.service');
-                $addresses      = $addressService->getAddressesByUser($this->getUserService()->getCurrentUserId(), $selectedCity['CODE']);
-            }
-
-            $delivery = null;
-            $pickup   = null;
-            foreach ($deliveries as $calculationResult) {
-                if ($this->deliveryService->isPickup($calculationResult)) {
-                    $pickup = $calculationResult;
-                } elseif ($this->deliveryService->isDelivery($calculationResult)) {
-                    $delivery = $calculationResult;
+                $addresses = null;
+                if ($this->getUserService()->getCurrentUserId()) {
+                    /** @var AddressService $addressService */
+                    $addressService = Application::getInstance()->getContainer()->get('address.service');
+                    $addresses      = $addressService->getAddressesByUser($this->getUserService()->getCurrentUserId(), $selectedCity['CODE']);
                 }
+
+                $delivery = null;
+                $pickup   = null;
+                foreach ($deliveries as $calculationResult) {
+                    if ($this->deliveryService->isPickup($calculationResult)) {
+                        $pickup = $calculationResult;
+                    } elseif ($this->deliveryService->isDelivery($calculationResult)) {
+                        $delivery = $calculationResult;
+                    }
+                }
+
+                $this->arResult['PICKUP']               = $pickup;
+                $this->arResult['DELIVERY']             = $delivery;
+                $this->arResult['ADDRESSES']            = $addresses;
+                $this->arResult['SELECTED_DELIVERY']    = $selectedDelivery;
+                $this->arResult['PICKUP_AVAILABLE_PAYMENTS'] = $this->getAvailablePayments();
+
+                $this->arResult['SELECTED_CITY'] = $selectedCity;
+                $this->arResult['DADATA_CONSTRAINTS'] = $this->getLocationService()->getDadataJsonFromLocationArray($selectedCity);
+                $this->arResult['METRO'] = $this->getStoreService()->getMetroInfo();
+            } catch (\Exception $e) {
+                $result->addError(new Error(
+                    sprintf("Не удалось активировать 2 шаг: %s", $e->getMessage())
+                ));
             }
 
-            $this->arResult['PICKUP']               = $pickup;
-            $this->arResult['DELIVERY']             = $delivery;
-            $this->arResult['ADDRESSES']            = $addresses;
-            $this->arResult['SELECTED_DELIVERY']    = $selectedDelivery;
-            $this->arResult['PICKUP_AVAILABLE_PAYMENTS'] = $this->getAvailablePayments();
-
-            $this->arResult['SELECTED_CITY'] = $selectedCity;
-            $this->arResult['DADATA_CONSTRAINTS'] = $this->getLocationService()->getDadataJsonFromLocationArray($selectedCity);
-            $this->arResult['METRO'] = $this->getStoreService()->getMetroInfo();
         }
 
         if(!$result->isSuccess()){
@@ -1607,16 +1613,8 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
         $selectedDelivery = current($deliveries);
         if (!$selectedDelivery) {
-            throw new NotFoundException('No deliveries available');
+            throw new NotFoundException('в данный момент нет подходящих служб доставки для оформления подписки на указанный список товаров');
         }
-
-        /*if ($selectedDelivery instanceof PickupResultInterface && $storage->getDeliveryPlaceCode()) {
-            $selectedDelivery->setSelectedShop($this->getSelectedShop($storage, $selectedDelivery));
-            if (!$selectedDelivery->isSuccess()) {
-                $selectedDelivery->setSelectedShop($selectedDelivery->getBestShops()
-                    ->first());
-            }
-        }*/
 
         return $selectedDelivery;
     }

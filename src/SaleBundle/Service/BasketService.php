@@ -1305,6 +1305,7 @@ class BasketService implements LoggerAwareInterface
                         'LOGIC' => 'OR',
                         ['PRODUCT_ID' => $piggyBankService->getVirtualMarkId()],
                         ['PRODUCT_ID' => $piggyBankService->getPhysicalMarkId()],
+                        ['PRODUCT_ID' => $piggyBankService->getOldVirtualMarkId()],
                     ],
                     $isPayedFilter,
                     'ORDER.USER_ID' => $userId,

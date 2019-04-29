@@ -294,7 +294,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                 </div>
             </div>
         </div>
-        <button class="b-button b-button--order-step-3 b-button--next b-button--fixed-bottom js-order-next js-order-step-3-submit">
+        <button class="b-button b-button--order-step-3 b-button--next b-button--fixed-bottom js-order-next js-order-step-3-submit <?=($storage->isSubscribe()) ? 'b-button--next-subscribe-delivery' : ''?>">
             <?php if ($selectedPayment['CODE'] === OrderPayment::PAYMENT_ONLINE) { ?>
                 Перейти к оплате
             <?php } else { ?>

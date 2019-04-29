@@ -108,6 +108,7 @@ $metro = $arResult['METRO'][$selectedShop->getMetro()];
                 ?>
             </div>
         </div>
+        <? include 'delivery_subscribe.php'; ?>
     <? } else { ?>
         <div class="b-input-line b-input-line--partially">
             <div class="b-input-line__label-wrapper b-input-line__label-wrapper--order-full">

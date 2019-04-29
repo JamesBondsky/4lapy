@@ -364,51 +364,13 @@ class OrderSubscribeCopyParams
             // − Исходного заказа, если создается первый заказ по подписке;
             // − Предыдущего заказа по подписке, если создается не первый заказ по подписке.
             $originOrderId = $this->getOriginOrderId();
-            $this->copyOrderId = $orderSubscribeHistoryService->getLastCreatedOrderId($originOrderId);
+            $this->copyOrderId = $orderSubscribeHistoryService->getLastCreatedOrderId($this->getOrderSubscribe());
             if ($this->copyOrderId <= 0) {
                 $this->copyOrderId = $originOrderId;
             }
         }
 
         return $this->copyOrderId;
-    }
-
-    /**
-     * Возвращает CalculationResult заказа, который будет копироваться по подписке
-     * CalculationResult берется от клона копируемого заказа.
-     *
-     * @return BaseResult
-     * @throws BitrixOrderNotFoundException
-     * @throws RuntimeException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\NotImplementedException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \Exception
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\PersonalBundle\Exception\NotFoundException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
-     */
-    public function getCopyOrderDeliveryCalculationResult(): BaseResult
-    {
-        if (!$this->copyOrderDeliveryCalculationResult) {
-            $bitrixOrder = $this->getCopyOrder();
-            if (!$bitrixOrder) {
-                throw new BitrixOrderNotFoundException('Копируемый заказ не найден');
-            }
-
-            $orderSubscribeService = $this->getOrderSubscribeService();
-            $calculationResult = $orderSubscribeService->getDeliveryCalculationResult($bitrixOrder);
-            if (!$calculationResult || !$calculationResult->isSuccess()) {
-                throw new RuntimeException('Не удалось получить расчет доставки');
-            }
-
-            $this->copyOrderDeliveryCalculationResult = $calculationResult;
-        }
-
-        return $this->copyOrderDeliveryCalculationResult;
     }
 
     /**

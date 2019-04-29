@@ -46,12 +46,11 @@ if ($orderSubscribe) {
 
 $activeSubscribe = $orderSubscribe->isActive();
 
+$nearestDeliveryDate = null;
 if($activeSubscribe){
     $nearestDeliveryDate = $orderSubscribe->getNearestDelivery();
     if($nearestDeliveryDate){
         $nearestDeliveryDate = (new \DateTime($nearestDeliveryDate))->format('d #n# Y');
-    } else {
-        $arResult['ERROR'] = 'Не найдена ближайшая дата доставки';
     }
 }
 
@@ -105,14 +104,17 @@ if(!empty($arResult['ERROR'])){
             <? if($activeSubscribe) { ?>
                 <div class="b-accordion-order-item__date b-accordion-order-item__date--new">
                     <?php
+                    if($nearestDeliveryDate){
                         echo 'Следующая доставка ';
                         echo DateHelper::replaceRuMonth(
                             $nearestDeliveryDate,
                             DateHelper::GENITIVE,
                             true
                         );
-                        echo '</span>';
-                     ?>
+                    } else {
+                        echo 'Не удалось получить информацию о ближайшей дате доставки';
+                    }
+                    ?>
                 </div>
             <? } ?>
             <div class="b-adress-info b-adress-info--order">

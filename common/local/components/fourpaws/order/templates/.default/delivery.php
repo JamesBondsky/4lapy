@@ -204,27 +204,24 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                         </div>
                         <ul class="b-radio-tab js-myself-shop">
                             <?php if ($delivery) {
+                                $isHidden = $selectedDelivery->getDeliveryId() !== $delivery->getDeliveryId();
                                 ?>
                                 <li class="b-radio-tab__tab js-telephone-recovery"
-                                    <?= $selectedDelivery->getDeliveryId() !== $delivery->getDeliveryId() ? 'style="display:none"' : '' ?>>
+                                    <?= $isHidden ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/delivery.php' ?>
                                 </li>
                                 <?php
                             } ?>
                             <?php if ($pickup) {
+                                $isHidden = $selectedDelivery->getDeliveryId() !== $delivery->getDeliveryId();
                                 ?>
                                 <li class="b-radio-tab__tab js-email-recovery"
-                                    <?= $selectedDelivery->getDeliveryId() !== $pickup->getDeliveryId() ? 'style="display:none"' : '' ?>>
+                                    <?= $isHidden ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/pickup.php' ?>
                                 </li>
                                 <?php
                             } ?>
                         </ul>
-                        <?php
-                        if($storage->isSubscribe()){
-                            include 'include/delivery_subscribe.php';
-                        }
-                        ?>
                     </form>
                 </article>
             </div>
@@ -282,7 +279,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                 </li>
             </ul>
         </div>
-        <button class="b-button b-button--social b-button--next b-button--fixed-bottom js-order-next js-valid-out-sub">
+        <button class="b-button b-button--social b-button--next b-button--fixed-bottom js-order-next js-valid-out-sub <?=($storage->isSubscribe()) ? 'b-button--next-subscribe-delivery' : ''?>">
             Далее
         </button>
     </div>

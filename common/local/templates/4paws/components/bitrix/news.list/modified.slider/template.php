@@ -22,7 +22,7 @@ if (!\is_array($arResult['ITEMS']) || empty($arResult['ITEMS'])) {
     <div class="b-container">
         <div class="b-promo-banner__list js-promo-banner">
 	        <? foreach ($arResult['ITEMS'] as $key => $item) { ?>
-		        <div class="b-promo-banner-item<?= $item['MOD']['ADDITIONAL_CLASSES'] ?>">
+		        <div class="b-promo-banner-item<?= $item['MOD']['ADDITIONAL_CLASSES'] ?> <? if ($item['EXTERNAL_ID'] == 'festival') { ?>b-promo-banner-item--festival<? } ?>">
 	                <div class="b-promo-banner-item__content">
 	                    <div class="b-promo-banner-item__left">
 	                        <div class="b-promo-banner-item__logo"></div>
@@ -32,7 +32,13 @@ if (!\is_array($arResult['ITEMS']) || empty($arResult['ITEMS'])) {
 	                    </div>
 	                    <div class="b-promo-banner-item__descr"><?= $item['PREVIEW_TEXT'] ?></div>
 	                    <div class="b-promo-banner-item__link-wrap">
-	                        <a class="b-promo-banner-item__link" href="<?= $item['DISPLAY_PROPERTIES']['LINK']['VALUE'] ?>">Подробнее</a>
+	                        <a class="b-promo-banner-item__link" href="<?= $item['DISPLAY_PROPERTIES']['LINK']['VALUE'] ?>">
+                                <? if ($item['EXTERNAL_ID'] == 'festival') { ?>
+                                    Я пойду
+                                <? }else { ?>
+                                    Подробнее
+                                <? } ?>
+                            </a>
 	                    </div>
 	                </div>
 	            </div>

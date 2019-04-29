@@ -40,33 +40,17 @@ $daysOfWeek = ["Понедельник", "Вторник", "Среда", "Чет
                 </select>
             </div>
         </div>
-        <div class="b-input-line b-input-line--date-delivery-subscribe <?=$deliveryDayDisplay ? 'js-no-valid' : ''?>" data-select-wrap-delivery-order="subscribeDay" <?=$deliveryDayDisplay?>>
-            <div class="b-input-line__label-wrapper">
-                <span class="b-input-line__label">День доставки</span>
-            </div>
-            <div class="b-select b-select--recall b-select--feedback-page">
-                <select class="b-select__block b-select__block--recall b-select__block--feedback-page <?=$deliveryDayDisplay ? 'js-no-valid' : ''?>" name="subscribeDay" data-select="0" data-select-delivery-order="subscribeDay">
-                    <option value="" disabled="disabled" selected="selected">выберите</option>
-                    <?php
-                    foreach ($daysOfWeek as $i => $day) { ?>
-                        <option value="<?= ($i+1) ?>" <?=($selectedDeliveryDay == ($i+1)) ? 'selected' : ''?>>
-                            <?= $day ?>
-                        </option>
-                    <?php } ?>
-                </select>
-            </div>
-        </div>
         <div class="subscribe-delivery-order__date-second-delivery" data-wrap-date-second-delivery-subscribe="true" style="display: none;">
             Дата следующей доставки:<br/>
             <span class="bold js-date-second-delivery"></span>
         </div>
     </div>
-    <div class="subscribe-delivery-order__info js-info-subscribe-delivery-order" <?=$deliveryDayDisplay?>>
+    <?/*<div class="subscribe-delivery-order__info js-info-subscribe-delivery-order" <?=$deliveryDayDisplay?>>
         <span class="subscribe-delivery-order__icon">
             <?= new SvgDecorator('icon-info-contour', 18, 18) ?>
         </span>
         Для уточнения точной даты и&nbsp;времени доставки с&nbsp;вами будет связываться менеджер за&nbsp;несколько дней в&nbsp;момент формирования заказа
-    </div>
+    </div>*/?>
     <div class="b-checkbox b-checkbox--withdraw-bonuses-order">
         <input class="b-checkbox__input js-no-valid" type="checkbox" name="subscribeBonus" id="withdraw_bonuses" value="1" required="required" <?=(!$orderSubscribe || $payWithBonus) ? 'checked' : ''?> />
         <span class="b-error"><span class="js-message"></span></span>

@@ -304,7 +304,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
             </aside>
         </div>
 
-        <button class="b-button b-button--social b-button--next b-button--fixed-bottom js-order-next js-valid-out-sub">
+        <button class="b-button b-button--social b-button--next b-button--fixed-bottom js-order-next js-valid-out-sub <?=($storage->isSubscribe()) ? 'b-button--next-subscribe-delivery' : ''?>">
             Далее
         </button>
     </div>

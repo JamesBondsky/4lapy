@@ -477,12 +477,6 @@ class OrderSubscribe extends BaseEntity
      */
     protected function getOrderSubscribeService() : OrderSubscribeService
     {
-//        if(null === $this->orderSubscribeService){
-//            $appCont = Application::getInstance()->getContainer();
-//            /** @var OrderSubscribeService $orderSubscribeService */
-//            $this->orderSubscribeService = $appCont->get('order_subscribe.service');
-//        }
-
         $orderSubscribeService = Application::getInstance()->getContainer()->get('order_subscribe.service');
         return $orderSubscribeService;
     }
@@ -493,14 +487,7 @@ class OrderSubscribe extends BaseEntity
      */
     protected function getOrderSubscribeHistoryService() : OrderSubscribeHistoryService
     {
-//        if(null === $this->orderSubscribeHistoryService){
-//            $appCont = Application::getInstance()->getContainer();
-//            /** @var OrderSubscribeService $orderSubscribeService */
-//            $this->orderSubscribeHistoryService = $appCont->get('order_subscribe_history.service');
-//        }
-
         $orderSubscribeHistoryService = Application::getInstance()->getContainer()->get('order_subscribe_history.service');
-
         return $orderSubscribeHistoryService;
     }
 
@@ -592,6 +579,10 @@ class OrderSubscribe extends BaseEntity
     {
         $deliveryDate->setTime(0,0,0,0);
         $checkDays = (int)$deliveryDate->diff(new \DateTime(date('d.m.y')))->format('%d');
+        // хотя бы один день для подстраховки
+        if($checkDays == 0){
+            $checkDays = 1;
+        }
         $this->checkDays = $checkDays;
         return $this;
     }
