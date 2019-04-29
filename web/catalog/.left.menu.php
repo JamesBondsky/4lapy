@@ -15,20 +15,3 @@ foreach ($sections as $section) {
         '',
     ];
 }
-
-$aMenuLinks = array_merge($aMenuLinks, [
-    [
-        'Котята',
-        '/catalog/koshki/zaveli-kotenka/',
-        [],
-        [],
-        '',
-    ],
-    [
-        'Щенки',
-        '/catalog/sobaki/zaveli-shchenka/',
-        [],
-        [],
-        '',
-    ],
-]);
