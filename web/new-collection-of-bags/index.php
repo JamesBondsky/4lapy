@@ -14,7 +14,7 @@ $offerData = [
     [
         'TITLE' => 'Классические сумки',
         'IMAGE' => '/upload/bags_images/bags_new-collection.jpg',
-        'IMAGE_MOBILE' => '/upload/bags_images/bags_walks_small.jpg',
+        'IMAGE_MOBILE' => '/upload/bags_images/bags_new-collection_small.jpg',
         'OFFERS' => [
             1029850,
             1024096,
@@ -48,7 +48,7 @@ $offerData = [
     [
         'TITLE' => 'Модные сумки',
         'IMAGE' => '/upload/bags_images/bags_walks.jpg',
-        'IMAGE_MOBILE' => '/upload/bags_images/bags_new-collection_small.jpg',
+        'IMAGE_MOBILE' => '/upload/bags_images/bags_walks_small.jpg',
         'OFFERS' => [
             1029856,
             1029857,
