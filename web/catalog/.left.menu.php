@@ -1,7 +1,5 @@
 <?php
 
-use FourPaws\Catalog\Model\Category;
-
 $sections = [
     [
         'NAME' => 'Товары для кошек',
@@ -37,7 +35,6 @@ $sections = [
     ]
 ];
 
-/** @var Category $section */
 foreach ($sections as $section) {
     $aMenuLinks[] = [
         $section['NAME'],
