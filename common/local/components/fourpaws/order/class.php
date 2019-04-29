@@ -19,6 +19,7 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\Internals\BasketTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
@@ -40,6 +41,7 @@ use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
+use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
@@ -265,7 +267,30 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
         // режим подписки на доставку
         if ($this->currentStep === OrderStorageEnum::AUTH_STEP) {
-            if (!$storage->isSubscribe() && $_POST['subscribe']) {
+            if ($_POST['subscribe'] && ($_POST['orderId'] > 0 || !$storage->isSubscribe())) {
+
+                // переход из истории заказов иммитирует добавление всех товаров из заказа
+                $orderId = (int)$_POST['orderId'];
+                if($orderId > 0){
+                    $basket = new CSaleBasket();
+                    $basket->DeleteAll(CSaleBasket::GetBasketUserID());
+
+                    $dbres = BasketTable::getList([
+                        'select' => ['PRODUCT_ID', 'QUANTITY'],
+                        'filter' => ['ORDER_ID' => $orderId]
+                    ]);
+
+                    /** @var PiggyBankService $piggyBankService */
+                    $piggyBankService = Application::getInstance()->getContainer()->get('piggy_bank.service');
+
+                    while($basketItem = $dbres->fetch()){
+                        if (in_array($basketItem['PRODUCT_ID'], $piggyBankService->getMarksIds(), false))
+                            continue;
+
+                        $this->basketService->addOfferToBasket($basketItem['PRODUCT_ID'], $basketItem['QUANTITY']);
+                    }
+                }
+
                 $storage->setSubscribe(true);
                 $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
             }

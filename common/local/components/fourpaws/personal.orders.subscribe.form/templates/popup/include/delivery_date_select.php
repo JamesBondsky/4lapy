@@ -4,7 +4,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use Bitrix\Main\Type\DateTime;
 
 
-$isHidden = (!$selectedDelivery && $deliveryService->isPickup($currentDelivery))
+$isHidden = (!$selectedDelivery && $deliveryService->isPickup($currentDelivery) && !empty($arResult['DELIVERY']))
     || ($selectedDelivery instanceof CalculationResultInterface && ($currentDelivery->getDeliveryId() != $selectedDelivery->getDeliveryId()))
     || $hideFirstDateSelect;
 ?>

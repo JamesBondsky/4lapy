@@ -18,16 +18,17 @@ $arResult['AUTH'] = $component->userAuthService->isAuthorized();
         var epilogHandlers = {
             handlers: [],
             add: function (handler) {
-                this.handlers[this.handlers.length] = handler;
+                this.getInstance().handlers[this.handlers.length] = handler;
             },
             execute: function () {
-                this.handlers.forEach(function (handler) {
+                this.getInstance().handlers.forEach(function (handler) {
                     if (typeof handler === 'function') {
                         handler();
                     }
                 });
-                this.handlers = [];
+                this.getInstance().handlers = [];
             },
+            getInstance() { return this }
         };
     }
 

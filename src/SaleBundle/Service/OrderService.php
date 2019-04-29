@@ -14,6 +14,7 @@ use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketPropertyItem;
@@ -1229,7 +1230,7 @@ class OrderService implements LoggerAwareInterface
                 }
             }
 
-            // Активация подписки на доставку
+            // активация подписки на доставку
             if($storage->isSubscribe()){
                 if(null === $storage->getSubscribeId()){
                     throw new OrderSubscribeException('Susbcribe not found');
@@ -1237,12 +1238,24 @@ class OrderService implements LoggerAwareInterface
                 $subscribe = $this->orderSubscribeService->getById($storage->getSubscribeId());
                 $subscribe->setActive(true)->setOrderId($order->getId());
 
-                // Привяжем созданный адрес
+                // привяжем созданный адрес
                 if($subscribe->getDeliveryPlace() === '0' && $storage->getAddressId() > 0){
                     $subscribe->setDeliveryPlace($storage->getAddressId());
                 }
 
-                $this->orderSubscribeService->update($subscribe);
+                // добавим заказ в историю закзаов по подписке
+                $result = $this->orderSubscribeService->update($subscribe);
+                if($result->isSuccess()){
+                    $orderSubscribeHistoryService = Application::getInstance()->getContainer()->get('order_subscribe_history.service');
+                    $historyAddResult = $orderSubscribeHistoryService->add(
+                        $subscribe,
+                        $order->getId(),
+                        (new \DateTime($subscribe->getNextDate()->toString()))
+                    );
+                    if (!$historyAddResult->isSuccess()) {
+                        throw new \Exception('Ошибка сохранения записи в истории');
+                    }
+                }
             }
 
         } catch (\Exception $e) {

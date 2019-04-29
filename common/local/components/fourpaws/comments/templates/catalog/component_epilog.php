@@ -11,21 +11,22 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 $request = Application::getInstance()->getContext()->getRequest();
 ?>
 <script type="text/javascript" data-epilog-handlers="true">
-    if (epilogHandlers === undefined) {
+    if(epilogHandlers === undefined){
         // класс для комплексного выполнения всех обработчиков
         var epilogHandlers = {
             handlers: [],
             add: function (handler) {
-                this.handlers[this.handlers.length] = handler;
+                this.getInstance().handlers[this.handlers.length] = handler;
             },
             execute: function () {
-                this.handlers.forEach(function (handler) {
+                this.getInstance().handlers.forEach(function (handler) {
                     if (typeof handler === 'function') {
                         handler();
                     }
                 });
-                this.handlers = [];
+                this.getInstance().handlers = [];
             },
+            getInstance() { return this }
         };
     }
 

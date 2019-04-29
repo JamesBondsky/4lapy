@@ -22,6 +22,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\PersonalBundle\Exception\NotFoundException;
 use FourPaws\PersonalBundle\Service\AddressService;
+use FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
@@ -161,8 +162,22 @@ class OrderSubscribe extends BaseEntity
      */
     protected $payWithbonus = false;
 
-    /** @var UserFieldEnumService $userFieldEnumService */
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("UF_CHECK_DAYS")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $checkDays;
+
+
+    /**
+     * @var UserFieldEnumService $userFieldEnumService
+     * @Serializer\Exclude()
+     */
     private $userFieldEnumService;
+
 
     /**
      * @return array
@@ -462,11 +477,31 @@ class OrderSubscribe extends BaseEntity
      */
     protected function getOrderSubscribeService() : OrderSubscribeService
     {
-        $appCont = Application::getInstance()->getContainer();
-        /** @var OrderSubscribeService $orderSubscribeService */
-        $orderSubscribeService = $appCont->get('order_subscribe.service');
+//        if(null === $this->orderSubscribeService){
+//            $appCont = Application::getInstance()->getContainer();
+//            /** @var OrderSubscribeService $orderSubscribeService */
+//            $this->orderSubscribeService = $appCont->get('order_subscribe.service');
+//        }
 
+        $orderSubscribeService = Application::getInstance()->getContainer()->get('order_subscribe.service');
         return $orderSubscribeService;
+    }
+
+    /**
+     * @return OrderSubscribeService
+     * @throws ApplicationCreateException
+     */
+    protected function getOrderSubscribeHistoryService() : OrderSubscribeHistoryService
+    {
+//        if(null === $this->orderSubscribeHistoryService){
+//            $appCont = Application::getInstance()->getContainer();
+//            /** @var OrderSubscribeService $orderSubscribeService */
+//            $this->orderSubscribeHistoryService = $appCont->get('order_subscribe_history.service');
+//        }
+
+        $orderSubscribeHistoryService = Application::getInstance()->getContainer()->get('order_subscribe_history.service');
+
+        return $orderSubscribeHistoryService;
     }
 
     /**
@@ -540,6 +575,25 @@ class OrderSubscribe extends BaseEntity
         }
 
         return $this->userFieldEnumService;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCheckDays()
+    {
+        return $this->checkDays;
+    }
+
+    /**
+     * @param $checkDays
+     */
+    public function setCheckDays(\DateTime $deliveryDate): self
+    {
+        $deliveryDate->setTime(0,0,0,0);
+        $checkDays = (int)$deliveryDate->diff(new \DateTime(date('d.m.y')))->format('%d');
+        $this->checkDays = $checkDays;
+        return $this;
     }
 
     /**
@@ -765,6 +819,29 @@ class OrderSubscribe extends BaseEntity
             $price = $calcResult->getPrice();
 
         return $price;
+    }
+
+    /**
+     * @return DateTime|null
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ObjectException
+     */
+    public function getPreviousDate()
+    {
+        return $this->getOrderSubscribeService()->getPreviousDate($this);
+    }
+
+    /**
+     * @return array|false
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getNearestDelivery()
+    {
+        return $this->getOrderSubscribeHistoryService()->getNearestDelivery($this);
     }
 
 

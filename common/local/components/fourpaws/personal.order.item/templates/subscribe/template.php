@@ -33,7 +33,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 $order = $arResult['ORDER'];
 
 /** @var OrderSubscribe $orderSubscribe */
-// ORDER_SUBSCRIBE приходит только если нужно вывести форму редактирования подписки
 $orderSubscribe = $arParams['ORDER_SUBSCRIBE'] ?? null;
 $isOrderSubscribePage = $orderSubscribe ? true : false;
 
@@ -46,6 +45,16 @@ if ($orderSubscribe) {
 }
 
 $activeSubscribe = $orderSubscribe->isActive();
+
+if($activeSubscribe){
+    $nearestDeliveryDate = $orderSubscribe->getNearestDelivery();
+    if($nearestDeliveryDate){
+        $nearestDeliveryDate = (new \DateTime($nearestDeliveryDate))->format('d #n# Y');
+    } else {
+        $arResult['ERROR'] = 'Не найдена ближайшая дата доставки';
+    }
+}
+
 
 if(!empty($arResult['ERROR'])){
     ShowError($arResult['ERROR']);
@@ -98,8 +107,7 @@ if(!empty($arResult['ERROR'])){
                     <?php
                         echo 'Следующая доставка ';
                         echo DateHelper::replaceRuMonth(
-                            $orderSubscribe->getNextDate()
-                                ->format('d #n# Y'),
+                            $nearestDeliveryDate,
                             DateHelper::GENITIVE,
                             true
                         );

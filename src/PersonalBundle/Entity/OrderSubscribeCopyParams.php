@@ -493,15 +493,7 @@ class OrderSubscribeCopyParams
     public function getDateForOrderCreate(): \DateTimeImmutable
     {
         if (!$this->dateForOrderCreate) {
-            $orderSubscribeService = $this->getOrderSubscribeService();
-
-            $calculationResult = $this->getNewOrderDeliveryCalculationResult();
-            $dateForOrderCreate = $orderSubscribeService->getDateForOrderCreate(
-                $calculationResult,
-                $this->getDeliveryDate(),
-                $this->getCurrentDate()
-            );
-            $this->dateForOrderCreate = \DateTimeImmutable::createFromMutable($dateForOrderCreate);
+            $this->dateForOrderCreate = $this->getDeliveryDate()->modify(sprintf("-%s days", $this->getOrderSubscribe()->getCheckDays()));
         }
 
         return $this->dateForOrderCreate;

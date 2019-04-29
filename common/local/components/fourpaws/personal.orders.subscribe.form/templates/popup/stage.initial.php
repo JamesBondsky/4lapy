@@ -49,12 +49,13 @@ if ($arResult['isActualSubscription']) {
     <?php
 } elseif ($arResult['canBeSubscribed']) {
     ?>
-    <a href="javascript:void(0)" class="b-accordion-order-item__subscribe"
-       data-subscribe-delivery-popup="add"
-       data-order-id="<?= $arParams['ORDER_ID'] ?>"
-       data-popup-id="change-subscribe-delivery">
-        Подписаться на&nbsp;доставку
-    </a>
+    <form action="/sale/order/" method="post">
+        <button class="b-accordion-order-item__subscribe">
+            Подписаться на&nbsp;доставку
+        </button>
+        <input type="hidden" name="orderId" value="<?=$arParams['ORDER_ID']?>">
+        <input type="hidden" name="subscribe" value="true">
+    </form>
     <?php
 }
 $arResult['CONTROLS_HTML']['ADD'] = ob_get_clean();

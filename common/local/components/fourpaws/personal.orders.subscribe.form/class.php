@@ -35,11 +35,13 @@ use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeItem;
 use FourPaws\PersonalBundle\Service\AddressService;
+use FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\ShopInfoService;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Repository\UserRepository;
@@ -64,6 +66,12 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
     /** @var OrderSubscribeService $orderSubscribeService */
     private $orderSubscribeService;
+
+    /** @var OrderSubscribeService $orderSubscribeService */
+    private $orderSubscribeHistoryService;
+
+    /** @var OrderService $orderService */
+    private $orderService;
 
     /** @var DeliveryService $deliveryService */
     private $deliveryService;
@@ -270,6 +278,18 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     }
 
     /**
+     * @return OrderService
+     */
+    public function getOrderService(): OrderService
+    {
+        if (!$this->orderService) {
+            $appCont = Application::getInstance()->getContainer();
+            $this->orderService = $appCont->get(OrderService::class);
+        }
+        return $this->orderService;
+    }
+
+    /**
      * @return array
      */
     public function getItems(): array
@@ -379,6 +399,20 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         }
 
         return $this->orderSubscribeService;
+    }
+
+    /**
+     * @return OrderSubscribeHistoryService
+     * @throws ApplicationCreateException
+     */
+    public function getOrderSubscribeHistoryService()
+    {
+        if (!$this->orderSubscribeHistoryService) {
+            $appCont = Application::getInstance()->getContainer();
+            $this->orderSubscribeHistoryService = $appCont->get('order_subscribe_history.service');
+        }
+
+        return $this->orderSubscribeHistoryService;
     }
 
     /**
@@ -534,22 +568,19 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             if (empty($this->arResult['ERROR']['EXEC'])) {
                 if (!$orderSubscribe) {
                     $orderSubscribe = (new OrderSubscribe());
+                } else {
+                    $orderIdsForDelete = $this->getOrderSubscribeHistoryService()->getNotDeliveredOrderIds($orderSubscribe);
                 }
 
                 $orderSubscribe->setOrderId($order->getId())
                     ->setLastCheck(null);
 
                 $deliveryDate = new DateTime($this->arResult['FIELD_VALUES']['deliveryDate']);
-                $orderSubscribe->setNextDate($deliveryDate);
+                $orderSubscribe->setNextDate($deliveryDate)
+                    ->setCheckDays(new \DateTime($deliveryDate->toString()));
 
                 $frequency = $this->arResult['FIELD_VALUES']['subscribeFrequency'];
                 $orderSubscribe->setFrequency($frequency);
-
-                $deliveryDay = $this->arResult['FIELD_VALUES']['subscribeDay'];
-                if($orderSubscribeService->isWeekFrequency($frequency)){
-                    $deliveryDay = $deliveryDate->format('N');
-                }
-                $orderSubscribe->setDeliveryDay($deliveryDay);
 
                 if(!empty($this->arResult['FIELD_VALUES']['deliveryInterval'])){
                     $orderSubscribe->setDeliveryTime($this->arResult['FIELD_VALUES']['deliveryInterval']);
@@ -564,6 +595,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                         if(!empty($this->arResult['FIELD_VALUES']['addressId'])){
                             $deliveryPlace = $this->arResult['FIELD_VALUES']['addressId'];
                         } else {
+                            // создание адреса
                             /** @var AddressService $addressService */
                             $addressService = Application::getInstance()->getContainer()->get('address.service');
                             $locationService = $this->getLocationService();
@@ -608,6 +640,8 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
                 if($this->arResult['FIELD_VALUES']['subscribeBonus']){
                     $orderSubscribe->setPayWithbonus(true);
+                } else {
+                    $orderSubscribe->setPayWithbonus(false);
                 }
 
                 if($this->getActionReal() == 'renewalSubmit'){
@@ -623,8 +657,23 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     try {
                         $updateResult = $orderSubscribeService->update($orderSubscribe);
                         if ($updateResult->isSuccess()) {
-
                             $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
+
+                            // при успешном обновлении нам нужно удалить ранее созданные, но не доставленные заказы по подписке
+                            if(count($orderIdsForDelete) > 0){
+                                foreach($orderIdsForDelete as $orderIdForDelete){
+                                    $orderService = $this->getOrderService();
+                                    $order = $orderService->getOrderById($orderIdForDelete);
+                                    $order->setField('CANCELED', 'Y');
+                                    $order->save();
+                                }
+                            }
+
+                            // и создать новый заказ
+                            $result = $orderSubscribeService->processOrderSubscribe($orderSubscribe);
+                            if(!$result->isSuccess()){
+                                throw new Exception('Не удалось создать заказ по новой подписке');
+                            }
 
                             // отправка уведомления о созданной подписке (в данном случае - возобновленной)
                             if ($this->arResult['SUBSCRIBE_ACTION']['RESUMED'] === 'Y') {
@@ -681,7 +730,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                 }
 
 
-                if (empty($this->arResult['ERROR']['FIELD'])) {
+                if (empty($this->arResult['ERROR'])) {
                     BitrixApplication::getConnection()->commitTransaction();
                 } else{
                     BitrixApplication::getConnection()->rollbackTransaction();
@@ -709,8 +758,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             $this->arResult['UNSUBSCRIBE_ACTION']['SUBSCRIPTION_ID'] = $orderSubscribe->getId();
             // не удаляем запись, а деактивируем
             try {
-                $orderSubscribe->setActive(false);
-                $updateResult = $this->getOrderSubscribeService()->update($orderSubscribe);
+                $updateResult = $this->getOrderSubscribeService()->deactivateSubscription($orderSubscribe);
                 if ($updateResult->isSuccess()) {
                     $this->arResult['UNSUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
                     $this->flushOrderSubscribe();

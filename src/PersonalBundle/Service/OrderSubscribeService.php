@@ -66,6 +66,7 @@ use FourPaws\SaleBundle\Service\NotificationService;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SapBundle\Consumer\ConsumerRegistry;
+use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
 use http\Exception\InvalidArgumentException;
@@ -238,6 +239,25 @@ class OrderSubscribeService implements LoggerAwareInterface
     }
 
     /**
+     * @param OrderSubscribe $orderSubscribe
+     * @return bool
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function isCurrentDeliveryDateOrderAlreadyCreated(OrderSubscribe $orderSubscribe): bool
+    {
+        $orderSubscribeHistoryService = $this->getOrderSubscribeHistoryService();
+        $result = $orderSubscribeHistoryService->wasOrderCreated(
+            $orderSubscribe->getOrderId(),
+            $orderSubscribe->getDeliveryDate()
+        );
+
+        return $result;
+    }
+
+    /**
      * @param int $id
      * @return bool
      * @throws ArgumentException
@@ -335,8 +355,6 @@ class OrderSubscribeService implements LoggerAwareInterface
         if(null === $nextDate){
             $nextDate = new DateTime();
         }
-        $nextDay = $orderSubscribe->getDeliveryDay();
-        $currentDay = $nextDate->format('N');
 
         switch ($orderSubscribe->getFrequency()){
             case $freqs['WEEK_1']['ID']:
@@ -348,24 +366,53 @@ class OrderSubscribeService implements LoggerAwareInterface
             case $freqs['WEEK_3']['ID']:
                 $nextDate->add("+3 week");
                 break;
-            case $freqs['MONTH_1']['ID']:
-                $nextDate->add("+1 month");
+            case $freqs['WEEK_4']['ID']:
+                $nextDate->add("+4 week");
                 break;
-            case $freqs['MONTH_2']['ID']:
-                $nextDate->add("+2 month");
-                break;
-            case $freqs['MONTH_3']['ID']:
-                $nextDate->add("+3 month");
+            case $freqs['WEEK_5']['ID']:
+                $nextDate->add("+5 week");
                 break;
             default:
                 throw new Exception('Не найдена подходящая периодичность');
         }
 
-        $daysDiff = $nextDay - $currentDay;
-        $weeksAdd = ($daysDiff < 0) ? 1 : 0;
-        $nextDate->add(sprintf("+%s week", $weeksAdd));
-
         $orderSubscribe->setNextDate($nextDate);
+        return $nextDate;
+    }
+
+    /**
+     * @param OrderSubscribe $orderSubscribe
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Exception
+     */
+    public function getPreviousDate(OrderSubscribe $orderSubscribe)
+    {
+        $freqs = $this->getFrequencies();
+        $nextDate = $orderSubscribe->getNextDate();
+        if(null === $nextDate){
+            $nextDate = new DateTime();
+        }
+
+        switch ($orderSubscribe->getFrequency()){
+            case $freqs['WEEK_1']['ID']:
+                $nextDate->add("-1 week");
+                break;
+            case $freqs['WEEK_2']['ID']:
+                $nextDate->add("-2 week");
+                break;
+            case $freqs['WEEK_3']['ID']:
+                $nextDate->add("-3 week");
+                break;
+            case $freqs['WEEK_4']['ID']:
+                $nextDate->add("-4 week");
+                break;
+            case $freqs['WEEK_5']['ID']:
+                $nextDate->add("-5 week");
+                break;
+            default:
+                throw new Exception('Не найдена подходящая периодичность');
+        }
+
         return $nextDate;
     }
 
@@ -737,10 +784,17 @@ class OrderSubscribeService implements LoggerAwareInterface
         $calculationResult = null;
         try {
             $deliveryService = $this->getDeliveryService();
+            /** @var StoreService $storeService */
+            $storeService = Application::getInstance()->getContainer()->get('store.service');
+
             $deliveryCode = $deliveryService->getDeliveryCodeById($subscribe->getDeliveryId());
             $basket = $this->getBasketBySubscribeId($subscribe->getId());
             $arCalculationResult = $deliveryService->getByBasket($basket, $subscribe->getLocationId(), [$deliveryCode]);
             $calculationResult = reset($arCalculationResult);
+
+            if($deliveryService->isPickup($calculationResult)){
+                $calculationResult->setSelectedStore($storeService->getStoreByXmlId($subscribe->getDeliveryPlace()));
+            }
         } catch (\Exception $e) {
             throw new NotFoundException($e->getMessage());
         }
@@ -1040,7 +1094,7 @@ class OrderSubscribeService implements LoggerAwareInterface
             }
         }
 
-        // Деактивация подписки
+        // деактивация подписки
         if ($deactivateSubscription) {
             try {
                 $deactivateResult = $this->deactivateSubscription($orderSubscribe, true);
@@ -1106,8 +1160,10 @@ class OrderSubscribeService implements LoggerAwareInterface
                     // дата, когда нужно создать заказ, чтобы доставить его к сроку,
                     // дата возвращается без времени (00:00:00)
                     // (результат может быть меньше текущей даты)
-                    $orderCreateDate = $params->getDateForOrderCreate();
-                    if ($orderCreateDate < $currentDateNoTime) {
+                    $orderDeliveryDate = clone $deliveryCalculationResult->getDeliveryDate();
+                    $subscribeDeliveryDate = new \DateTime($orderSubscribe->getNextDate()->format('d.m.Y'));
+                    $daysDiff = $this->compareInDays($orderDeliveryDate, $subscribeDeliveryDate);
+                    if ($daysDiff < 0) {
                         // заказ не может быть доставлен к установленному сроку
                         $notGetInTime = true;
                     }
@@ -1156,7 +1212,7 @@ class OrderSubscribeService implements LoggerAwareInterface
                         }
                         $orderComments .= 'Заказ должен быть готов к выдаче '.$deliveryDate->format('d.m.Y H:i:s').', ';
                         $orderComments .= 'плановая дата готовности '.$resultDeliveryDate->format('d.m.Y H:i:s').' ';
-                        $orderComments .= 'Причина: '.implode(";\r\n ", $products);
+                        $orderComments .= '\r\n Причина: '.implode(";\r\n ", $products);
                     } catch (\Exception $exception) {
                         $result->addError(
                             new Error(
@@ -1188,7 +1244,7 @@ class OrderSubscribeService implements LoggerAwareInterface
                 $orderCopyHelper = $params->getOrderCopyHelper();
                 $orderCopyHelper->setPropValueByCode(
                     'DELIVERY_INTERVAL',
-                    $orderSubscribe->getDeliveryTime()
+                    str_replace(" ", "", $orderSubscribe->getDeliveryTime())
                 );
                 $orderCopyHelper->setPropValueByCode(
                     'DELIVERY_DATE',
@@ -1392,12 +1448,13 @@ class OrderSubscribeService implements LoggerAwareInterface
                 // устанавливаем текущего пользователя и местоположение
                 // для расчёта цен и даты доставки
                 global $USER;
-                $USER->authorize($orderSubscribe->getUserId());
+                if(!$USER->IsAuthorized()){
+                    $USER->authorize($orderSubscribe->getUserId());
 
-                /** @var UserService $currentUser */
-                $currentUser = $this->getCurrentUserService();
-                $currentUser->setSelectedCity($orderSubscribe->getLocationId());
-
+                    /** @var UserService $currentUser */
+                    $currentUser = $this->getCurrentUserService();
+                    $currentUser->setSelectedCity($orderSubscribe->getLocationId());
+                }
             } catch (\Exception $exception) {
                 $result->addError(
                     new Error(
@@ -1566,10 +1623,21 @@ class OrderSubscribeService implements LoggerAwareInterface
      * @throws \Exception
      * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      */
-    protected function deactivateSubscription(OrderSubscribe $orderSubscribe, bool $sendNotifications = true)
+    public function deactivateSubscription(OrderSubscribe $orderSubscribe, bool $sendNotifications = true)
     {
         $updateResult = $this->update($orderSubscribe->setActive(false));
         if ($updateResult->isSuccess()) {
+
+            $orderIdsForDelete = $this->getOrderSubscribeHistoryService()->getNotDeliveredOrderIds($orderSubscribe);
+            if(count($orderIdsForDelete) > 0){
+                foreach($orderIdsForDelete as $orderIdForDelete){
+                    $orderService = $this->getOrderService();
+                    $order = $orderService->getOrderById($orderIdForDelete);
+                    $order->setField('CANCELED', 'Y');
+                    $order->save();
+                }
+            }
+
             TaggedCacheHelper::clearManagedCache(
                 [
                     'order:item:'.$orderSubscribe->getOrderId()
@@ -1636,8 +1704,6 @@ class OrderSubscribeService implements LoggerAwareInterface
         $data = $request->request->all();
 
         try {
-            /** @var IntervalService $intervalService */
-            $intervalService = Application::getInstance()->getContainer()->get(IntervalService::class);
             /** @var OrderStorageService $orderStorageService */
             $orderStorageService = Application::getInstance()->getContainer()->get(OrderStorageService::class);
 
@@ -1655,20 +1721,12 @@ class OrderSubscribeService implements LoggerAwareInterface
             if(!$deliveryDate){
                 throw new OrderSubscribeException("Некорректная дата первой доставки");
             }
-            $subscribe->setNextDate($deliveryDate);
+            $subscribe->setNextDate($deliveryDate)
+                ->setCheckDays((new \DateTime($deliveryDate->toString())));
 
             if (($intervalIndex = $storage->getDeliveryInterval() - 1) >= 0) {
                 /** @var Interval $interval */
                 $interval = $selectedDelivery->getAvailableIntervals()[$intervalIndex];
-            }
-
-            if($this->isWeekFrequency($data['subscribeFrequency'])) {
-                $deliveryDay = $deliveryDate->format('N');
-                $subscribe->setDeliveryDay($deliveryDay);
-            } else if(!empty($data['subscribeDay'])) {
-                $subscribe->setDeliveryDay($data['subscribeDay']);
-            } else {
-                throw new OrderSubscribeException("Не указан день доставки");
             }
 
             $subscribe->setDeliveryId($deliveryId)
@@ -1687,7 +1745,6 @@ class OrderSubscribeService implements LoggerAwareInterface
             }
 
             if($subscribe->getId() > 0){
-                //$this->countNextDate($subscribe);
                 $this->update($subscribe);
             }
             else{
@@ -1784,6 +1841,18 @@ class OrderSubscribeService implements LoggerAwareInterface
         $deliveryService = $this->getDeliveryService();
         $deliveryCode = $deliveryService->getDeliveryCodeById($deliveryId);
         return $deliveryService->isDeliveryCode($deliveryCode);
+    }
+
+    /**
+     * @param \DateTime $date1
+     * @param \DateTime $date2
+     * @return int
+     */
+    public function compareInDays(\DateTime $date1, \DateTime $date2)
+    {
+        $date1->setTime(0,0,0,0);
+        $date2->setTime(0,0,0,0);
+        return $date1->diff($date2)->format('%r%d');
     }
 
 }

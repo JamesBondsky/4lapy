@@ -83,8 +83,21 @@ class OrderSubscribeHistoryService
                     'UF_NEW_ORDER_ID'
                 ],
                 'filter' => [
+                    '=ORDER.CANCELED' => 'N',
                     '=UF_ORIGIN_ORDER_ID' => (int)$originOrderId,
                     '=UF_DELIVERY_DATE' => new Date($deliveryDate->format('d.m.Y')),
+                ],
+                'runtime' => [
+                    new ReferenceField(
+                        'ORDER',
+                        \Bitrix\Sale\Internals\OrderTable::getEntity(),
+                        [
+                            '=this.UF_NEW_ORDER_ID' => 'ref.ID',
+                        ],
+                        [
+                            //'join_type' => 'inner'
+                        ]
+                    ),
                 ],
                 //'limit' => 1
             ]
@@ -241,6 +254,57 @@ class OrderSubscribeHistoryService
     }
 
     /**
+     * Возвращает id созданных, но ещё не доставленных заказов по подписке
+     *
+     * @param OrderSubscribe $orderSubscribe
+     * @return array
+     * @throws ArgumentException
+     * @throws SystemException
+     */
+    public function getNotDeliveredOrderIds(OrderSubscribe $orderSubscribe)
+    {
+        $orderIds = [];
+        $params = [
+            'order' => [
+                'UF_NEW_ORDER_ID' => 'desc',
+            ],
+            'filter' => [
+                'ORDER.CANCELED' => 'N',
+                'UF_ORIGIN_ORDER_ID' => $orderSubscribe->getOrderId(),
+                '!=ORDER.ID' => false,
+                '>=UF_DELIVERY_DATE' => new Date(),
+            ],
+            'runtime' => [
+                new ReferenceField(
+                    'ORDER',
+                    \Bitrix\Sale\Internals\OrderTable::getEntity(),
+                    [
+                        '=this.UF_NEW_ORDER_ID' => 'ref.ID',
+                    ],
+                    [
+                        //'join_type' => 'inner'
+                    ]
+                ),
+            ],
+            'select' => [
+                'ID', 'UF_NEW_ORDER_ID', 'UF_SUBS_DATA'
+            ]
+        ];
+        $dbres = $this->findBy($params);
+        while ($row = $dbres->fetch()) {
+
+            // нужно было завести отдельное поле для ID подписки, но времени у меня маловато для этого
+            $subData = unserialize($row['UF_SUBS_DATA']);
+            if($subData['ID'] != $orderSubscribe->getId()){
+                continue;
+            }
+            $orderIds[] = $row['UF_NEW_ORDER_ID'];
+        }
+
+        return $orderIds;
+    }
+
+    /**
      * @param array $params
      * @return \Bitrix\Main\DB\Result
      * @throws ArgumentException
@@ -250,7 +314,58 @@ class OrderSubscribeHistoryService
     protected function findBy(array $params): \Bitrix\Main\DB\Result
     {
         $result = $this->dataManager::getList($params);
-
         return $result;
+    }
+
+    /**
+     * @param OrderSubscribe $orderSubscribe
+     * @return array|false
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     */
+    public function getNearestDelivery(OrderSubscribe $orderSubscribe)
+    {
+        $dbres = $this->findBy(
+            [
+                'select' => [
+                    'ID',
+                    'UF_DELIVERY_DATE',
+                    'UF_SUBS_DATA'
+                ],
+                'filter' => [
+                    'ORDER.CANCELED' => 'N',
+                    '=UF_ORIGIN_ORDER_ID' => (int)$orderSubscribe->getOrderId(),
+                    '>=UF_DELIVERY_DATE' => new Date(),
+                ],
+                'runtime' => [
+                    new ReferenceField(
+                        'ORDER',
+                        \Bitrix\Sale\Internals\OrderTable::getEntity(),
+                        [
+                            '=this.UF_NEW_ORDER_ID' => 'ref.ID',
+                        ],
+                        [
+                            //'join_type' => 'inner'
+                        ]
+                    ),
+                ],
+                'order' => [
+                    'UF_NEW_ORDER_ID' => 'asc',
+                ],
+            ]
+        );
+
+        while ($row = $dbres->fetch()) {
+            // см. метод getNotDeliveredOrderIds
+            $subData = unserialize($row['UF_SUBS_DATA']);
+            if($subData['ID'] != $orderSubscribe->getId()){
+                continue;
+            }
+            $order = $row;
+        }
+
+        return $order ? $order['UF_DELIVERY_DATE'] : null;
     }
 }
