@@ -2,6 +2,13 @@
 
 $aMenuLinks = Array(
 	Array(
+		"Новости",
+		"/news/",
+		Array(),
+		Array(),
+		""
+	),
+	Array(
 		"Магазины", 
 		"/shops/", 
 		Array(), 
