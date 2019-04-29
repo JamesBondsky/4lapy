@@ -22,7 +22,6 @@ use Exception;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Templates\MediaEnum;
-use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\BitrixOrm\Collection\ImageCollection;
 use FourPaws\BitrixOrm\Model\Exceptions\CatalogProductNotFoundException;
 use FourPaws\Catalog\Collection\OfferCollection;
@@ -149,14 +148,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                 return false;
             }
 
-            try {
-                $currentOffer = $this->getCurrentOffer($product, (int)$this->arParams['OFFER_ID']);
-            } catch (Exception $e) {
-                $this->abortResultCache();
-                Tools::process404([], true, true, true);
-
-                return false;
-            }
+            $currentOffer = $this->getCurrentOffer($product, (int)$this->arParams['OFFER_ID']);
 
             TaggedCacheHelper::addManagedCacheTags([
                 'iblock:item:' . $product->getId(),
@@ -551,10 +543,6 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                     break;
                 }
             }
-        }
-
-        if(!$offers->last()){
-            throw new NotFoundException("Offers not found");
         }
 
         return $offer ?? $offers->last();

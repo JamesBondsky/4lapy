@@ -123,14 +123,25 @@ class PersonalOffersService
     }
 
     /**
+     * @param array $filter
+     *
      * @return ArrayCollection
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\LoaderException
      */
-    public function getActiveOffers(): ArrayCollection
+    public function getActiveOffers($filter = []): ArrayCollection
     {
         if (!Loader::includeModule('iblock')) {
             throw new SystemException('Module iblock is not installed');
+        }
+
+        $arFilter = [
+            '=IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::PERSONAL_OFFERS),
+            '=ACTIVE' => 'Y',
+            '=ACTIVE_DATE' => 'Y',
+        ];
+        if ($filter) {
+            $arFilter = array_merge($arFilter, $filter);
         }
 
         $offers = [];
@@ -138,11 +149,7 @@ class PersonalOffersService
             [
                 'DATE_ACTIVE_TO' => 'asc,nulls'
             ],
-            [
-                '=IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::PERSONAL_OFFERS),
-                '=ACTIVE' => 'Y',
-                '=ACTIVE_DATE' => 'Y',
-            ],
+            $arFilter,
             false,
             false,
             [
@@ -218,6 +225,95 @@ class PersonalOffersService
             }
             unset($couponId);
         }
+    }
+
+    /**
+     * @param string $phone
+     * @param int $userId
+     * @throws InvalidArgumentException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ObjectException
+     */
+    public function addFestivalCouponToUser(string $phone, int $userId): void
+    {
+        $container = App::getInstance()->getContainer();
+        /** @var PersonalOffersService $personalOffersService */
+        $personalOffersService = $container->get('personal_offers.service');
+        $festivalOffer = $personalOffersService->getActiveOffers(['CODE' => 'festival']);
+        if (!$festivalOffer->isEmpty()
+            && ($festivalOfferId = (int)$festivalOffer->first()['ID'])
+        ) {
+            if ($phone) {
+                /** @var DataManager $festivalUsersDataManager */
+                $festivalUsersDataManager = $container->get('bx.hlblock.festivalusersdata');
+                $festivalUser = $festivalUsersDataManager::query()
+                    ->setFilter([
+                        '=UF_PHONE' => $phone,
+                        '=UF_USER' => false,
+                    ])
+                    ->setSelect([
+                        'ID',
+                        'UF_FESTIVAL_USER_ID',
+                    ])
+                    ->setLimit(1)
+                    ->exec()
+                    ->fetch();
+                if ($festivalUser) {
+                    $festivalUsersDataManager::update($festivalUser['ID'], [
+                        'UF_USER' => $userId,
+                    ]);
+                }
+
+                $coupons = [
+                    $festivalUser['UF_FESTIVAL_USER_ID'] => [$userId]
+                ];
+                /** @var PersonalOffersService $personalOffersService */
+                $personalOffersService = $container->get('personal_offers.service');
+                $personalOffersService->importOffers($festivalOfferId, $coupons);
+            }
+        }
+    }
+
+    /**
+     * @param int $festivalOfferId
+     *
+     * @return bool|int
+     */
+    public function getCouponIdByOfferId(int $festivalOfferId)
+    {
+        $coupon = $this->personalCouponManager::query()
+            ->setSelect(['ID'])
+            ->setFilter([
+                'UF_OFFER' => $festivalOfferId,
+            ])
+            ->exec()
+            ->fetch();
+        if ($coupon) {
+            return (int)$coupon['ID'];
+        }
+
+        return false;
+    }
+
+    /**
+     * @param int $couponId
+     * @param int $userId
+     * @throws \Bitrix\Main\ObjectException
+     * @throws InvalidArgumentException
+     */
+    public function linkCouponToUser(int $couponId, int $userId): void
+    {
+        if ($couponId <= 0 || $userId <= 0) {
+            throw new InvalidArgumentException('Не удалось привязать купон к пользователю. $couponId: ' . $couponId . '. $userId: ' . $userId);
+        }
+
+        $this->personalCouponUsersManager::add([
+            'UF_USER_ID' => $userId,
+            'UF_COUPON' => $couponId,
+            'UF_DATE_CREATED' => new DateTime(),
+            'UF_DATE_CHANGED' => new DateTime(),
+        ]);
     }
 
     /**
@@ -353,6 +449,7 @@ class PersonalOffersService
                     'PREVIEW_TEXT',
                     'DATE_ACTIVE_TO',
                     'PROPERTY_DISCOUNT',
+                    'PROPERTY_NO_USED_STATUS',
                 ]
             );
             if ($res = $rsOffers->GetNext())
@@ -365,5 +462,18 @@ class PersonalOffersService
         }
 
         return new ArrayCollection($offer);
+    }
+
+    /**
+     * @param string $promoCode
+     *
+     * @return bool
+     * @throws InvalidArgumentException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\LoaderException
+     */
+    public function isNoUsedStatus(string $promoCode): bool
+    {
+        return (bool)$this->getOfferFieldsByPromoCode($promoCode)->get('PROPERTY_NO_USED_STATUS_VALUE');
     }
 }
