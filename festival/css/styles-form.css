@@ -106,8 +106,12 @@ body {
     color: #000;
 }
 
+.formitem ul {
+	padding-left: 0;
+}
+
 .formitem li {
-    margin: 0 0 10px -43px;
+    margin: 0 0 10px 0;
     list-style: disc outside;
 }
 
@@ -159,7 +163,7 @@ body {
 
 @media screen and (max-width: 600px) {
 	.popwrap {
-		top: 20px;
+		top: 10px;
 	    background: #fff;
 	    width: 94%;
 	    height: auto;
@@ -190,9 +194,10 @@ body {
 
 	.formwrap {
 		display: grid;
-		 grid-template-columns: 1fr;
-		 max-width: 400px;
-		 margin: 0 auto;
+		grid-template-columns: 1fr;
+		max-width: 400px;
+		margin: 0 auto;
+		grid-gap: 10px;
 	}
 
 	.formitem {
@@ -201,12 +206,20 @@ body {
 	  	margin: 0 auto;
 	}
 
+	.formitem p {
+		margin-bottom: 10px;
+	}
+
+	.formitem li {
+		margin-bottom: 7px;
+	}
+
 	.formitem input[type="text"], .formitem input[type="email"], .formitem input[type="phone"] {
 		width: 100%;
 	}
 
 	.formitem label {
-		margin-bottom: 20px;
+		margin-bottom: 10px;
 	}
 
 	.join_btn {
