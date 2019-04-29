@@ -84,11 +84,6 @@ $APPLICATION->ShowHead();
                 this.$stopBtn.click(function (e) {
                     e.preventDefault();
                     that.STOP = true;
-                    that.USERS_ADDED = 0;
-                    that.USERS_FOUND = 0;
-                    that.PETS_ADDED = 0;
-                    that.PETS_FOUND = 0;
-                    that.TOTAL_PETS = 0;
                 });
                 console.log('init');
             },
@@ -154,6 +149,11 @@ $APPLICATION->ShowHead();
                 this.$percentages.text(Math.floor(this.STEP / this.PAGE_COUNT * 100) + '%');
                 if (parseInt(this.STEP) === parseInt(this.PAGE_COUNT) || this.STOP) {
                     console.log('done');
+                    this.USERS_ADDED = 0;
+                    this.USERS_FOUND = 0;
+                    this.PETS_ADDED = 0;
+                    this.PETS_FOUND = 0;
+                    this.TOTAL_PETS = 0;
                     this.$submitBtn.prop('disabled', false);
                     this.$stopBtn.prop('disabled', true);
                     this.TIME = Math.floor((performance.now() - this.TIME) / 1000); //секунды
