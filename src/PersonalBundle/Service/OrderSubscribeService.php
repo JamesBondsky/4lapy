@@ -373,7 +373,7 @@ class OrderSubscribeService implements LoggerAwareInterface
                 $nextDate->add("+5 week");
                 break;
             default:
-                throw new Exception('Не найдена подходящая периодичность');
+                throw new \Exception('Не найдена подходящая периодичность');
         }
 
         $orderSubscribe->setNextDate($nextDate);
