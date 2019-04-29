@@ -13,8 +13,8 @@ global $APPLICATION;
 $offerData = [
     [
         'TITLE' => 'Классические сумки',
-        'IMAGE' => '/upload/bags_images/bags_new-collection.jpg',
-        'IMAGE_MOBILE' => '/upload/bags_images/bags_new-collection_small.jpg',
+        'IMAGE' => '/upload/bags_images/bags_sport.jpg',
+        'IMAGE_MOBILE' => '/upload/bags_images/bags_sport_small.jpg',
         'OFFERS' => [
             1029850,
             1024096,
@@ -36,9 +36,6 @@ $offerData = [
             1029848,
             1024085,
             1024087,
-            1024088,
-            1024089,
-            1024090,
             1032132,
             1032133,
             1032134,
@@ -55,7 +52,6 @@ $offerData = [
             1029858,
             1029861,
             1029862,
-            1029863,
             1029864,
             1029884,
             1029885,
@@ -106,10 +102,10 @@ $offerData = [
                     <section class="b-common-section" data-url="">
                         <div class="b-bags-banner">
                             <div class="b-bags-banner__img-wrap b-bags-banner__img-wrap--desktop">
-                                <img src="<?=$offerDatum['IMAGE']?>">
+                                <img src="<?=$offerDatum['IMAGE']?>?v=2">
                             </div>
                             <div class="b-bags-banner__img-wrap b-bags-banner__img-wrap--mobile">
-                                <img src="<?=$offerDatum['IMAGE_MOBILE']?>">
+                                <img src="<?=$offerDatum['IMAGE_MOBILE']?>?v=2">
                             </div>
                         </div>
                         <div class="b-common-wrapper b-common-wrapper--visible js-catalog-wrapper">
