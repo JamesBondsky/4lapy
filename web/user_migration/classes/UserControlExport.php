@@ -16,7 +16,7 @@ class UserControlExport extends UserControl
     const PETS_BREEDS_IBLOCK_CODE = 'kinds';
     const DATE_REGISTER_FROM = '2018-05-01 00-00-00';
     const TIME_REGISTER_FROM = '00-00-00';
-    const DISCOUNT_USER_FIELD_CODE = 'UF_DISCOUNT_CARD';
+    const DISCOUNT_USER_FIELD_CODE = 'UF_DISCOUNT';
     const PET_MAP = 'PETS';
 
     /** @var DateTime $dateRegisterFrom */
