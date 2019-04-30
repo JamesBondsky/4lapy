@@ -23,6 +23,13 @@ class ShopsForProductCardRequest implements SimpleUnserializeRequest, GetRequest
     protected $productId;
 
     /**
+     * @Serializer\SerializedName("city_id")
+     * @Serializer\Type("string")
+     * @var string
+     */
+    protected $cityId;
+
+    /**
      * @return int
      */
     public function getProductId(): int
@@ -37,6 +44,24 @@ class ShopsForProductCardRequest implements SimpleUnserializeRequest, GetRequest
     public function setProductId(int $productId): ShopsForProductCardRequest
     {
         $this->productId = $productId;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCityId(): string
+    {
+        return $this->cityId;
+    }
+
+    /**
+     * @param string $cityId
+     * @return ShopsForProductCardRequest
+     */
+    public function setCityId(string $cityId): ShopsForProductCardRequest
+    {
+        $this->cityId = $cityId;
         return $this;
     }
 }

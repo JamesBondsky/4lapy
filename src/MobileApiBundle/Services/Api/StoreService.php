@@ -9,6 +9,7 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 use Bitrix\Sale\BasketItem;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use FourPaws\App\Application;
 use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\BitrixOrm\Model\Image;
@@ -29,6 +30,7 @@ use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Dto\ShopList\Shop as StoreBundleShop;
 use FourPaws\SaleBundle\Dto\ShopList\Shop as SaleBundleShop;
 use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Enum\StoreLocationType;
 use FourPaws\StoreBundle\Service\ShopInfoService as StoreShopInfoService;
 use FourPaws\SaleBundle\Service\ShopInfoService as SaleShopInfoService;
 use FourPaws\StoreBundle\Service\StoreService as AppStoreService;
@@ -111,12 +113,16 @@ class StoreService
 
     /**
      * @param int $offerId
+     * @param string $locationCode
      * @return Collection
      * @throws NotFoundException
      * @throws \Exception
      */
-    public function getListWithProductAvailability(int $offerId): Collection
+    public function getListWithProductAvailability(int $offerId, string $locationCode): Collection
     {
+        $locationService = Application::getInstance()->getContainer()->get('location.service');
+        $subRegionCode = $locationService->findLocationSubRegion($locationCode)['CODE'] ?? '';
+
         $storeCollection = new StoreCollection();
         if (!$offer = OfferQuery::getById($offerId)) {
             throw new NotFoundException("Offer with ID $offerId is not found");
@@ -143,6 +149,11 @@ class StoreService
                     $metroList,
                     $servicesList,
                     $offer
+                );
+                $shop->setLocationType(
+                    (($store->getLocation() === $locationCode) || ($store->getSubRegion() && $store->getSubRegion() === $subRegionCode))
+                        ? StoreLocationType::SUBREGIONAL
+                        : StoreLocationType::REGIONAL
                 );
                 $storeCollection->add($this->storeBundleShopToApiFormat($shop, $stockAmount, $servicesList));
             } catch (\Exception $exception) {
@@ -282,6 +293,7 @@ class StoreService
             ->setPickupDate($shop->getPickupDate())
             ->setPickupFewGoodsFullDate($shop->getPickupDate())
             ->setProductQuantityString($shop->getAvailableAmount())
+            ->setLocationType($shop->getLocationType())
             ;
     }
 

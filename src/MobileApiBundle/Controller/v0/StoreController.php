@@ -6,8 +6,10 @@
 
 namespace FourPaws\MobileApiBundle\Controller\v0;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\App\Application;
 use FourPaws\MobileApiBundle\Dto\Request\ShopsForCheckoutRequest;
 use FourPaws\MobileApiBundle\Dto\Request\ShopsForProductCardRequest;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListRequest;
@@ -15,6 +17,7 @@ use FourPaws\MobileApiBundle\Dto\Response\StoreListAvailableResponse;
 use FourPaws\MobileApiBundle\Dto\Response\StoreListResponse;
 use FourPaws\MobileApiBundle\Services\Api\StoreService as ApiStoreService;
 use FourPaws\MobileApiBundle\Services\Api\UserService as ApiUserService;
+use FourPaws\StoreBundle\Service\ShopInfoService;
 
 class StoreController extends FOSRestController
 {
@@ -65,11 +68,22 @@ class StoreController extends FOSRestController
      */
     public function getShopsForProductCardAction(ShopsForProductCardRequest $storeAvailableRequest): StoreListResponse
     {
-        return new StoreListResponse(
-            $this->apiStoreService->getListWithProductAvailability(
-                $storeAvailableRequest->getProductId()
-            )
+        $storeCollection = $this->apiStoreService->getListWithProductAvailability(
+            $storeAvailableRequest->getProductId(),
+            $storeAvailableRequest->getCityId()
         );
+
+        /** @var ShopInfoService $shopInfoService */
+        $shopInfoService = Application::getInstance()->getContainer()->get(ShopInfoService::class);
+
+        $stores = $storeCollection->getValues();
+        array_walk($stores, [$shopInfoService, 'locationTypeSortDecorate']);
+        usort($stores, [$shopInfoService, 'shopCompareByLocationType']);
+        array_walk($stores, [$shopInfoService, 'locationTypeSortUndecorate']);
+
+        $storeCollection = new ArrayCollection($stores);
+
+        return new StoreListResponse($storeCollection);
     }
 
     /**
