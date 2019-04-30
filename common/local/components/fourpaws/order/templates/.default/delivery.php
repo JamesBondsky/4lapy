@@ -214,7 +214,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 <?php
                             } ?>
                             <?php if ($pickup) {
-                                $isHidden = $selectedDelivery->getDeliveryId() !== $delivery->getDeliveryId();
+                                $isHidden = $selectedDelivery->getDeliveryId() !== $pickup->getDeliveryId();
                                 ?>
                                 <li class="b-radio-tab__tab js-email-recovery"
                                     <?= $isHidden ? 'style="display:none"' : '' ?>>
