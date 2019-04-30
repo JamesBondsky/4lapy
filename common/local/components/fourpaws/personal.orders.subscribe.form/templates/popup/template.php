@@ -32,7 +32,6 @@ switch ($arResult['CURRENT_STAGE']) {
     case 'renewal':
         $currentDelivery = $selectedDelivery = $arResult['SELECTED_DELIVERY'];
         include __DIR__. '/include/delivery_first_date.php';
-        include __DIR__. '/include/delivery_frequency.php';
         break;
     // шаблон товара
     case 'item':
