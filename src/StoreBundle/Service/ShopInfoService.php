@@ -591,4 +591,37 @@ class ShopInfoService
 
         return $results[$offer->getId()];
     }
+
+    /**
+     * @param array $a
+     * @param array $b
+     *
+     * @return int
+     */
+    public function shopCompareByLocationType(array $a, array $b): int
+    {
+        if ($a['location_type'][0] === $b['location_type'][0])
+        {
+            return $a['location_type'][1] - $b['location_type'][1]; // сохранение порядка элементов с совпадающими location_type
+        } else {
+            return $a['location_type'][0] === 'regional' ? 1 : -1;
+        }
+    }
+
+    /**
+     * @param $item
+     * @param $key
+     */
+    public function locationTypeSortDecorate(&$item, $key): void
+    {
+        $item['location_type'] = [$item['location_type'], $key];
+    }
+
+    /**
+     * @param $item
+     */
+    public function locationTypeSortUndecorate(&$item): void
+    {
+        $item['location_type'] = $item['location_type'][0];
+    }
 }
