@@ -14,7 +14,7 @@ use FourPaws\Catalog\Model\Offer;
 final class MarkHelper
 {
     public const MARK_SALE_IMAGE_SRC = '/upload/labels/s-proc.png';
-    public const MARK_GIFT_IMAGE_SRC = '/static/build/images/inhtml/s-gift.svg';
+    public const MARK_GIFT_IMAGE_SRC = '/upload/labels/s-gift.png';
     public const MARK_HIT_IMAGE_SRC = '/upload/labels/hot.png';
     public const MARK_NEW_IMAGE_SRC = '/upload/labels/new.png';
 

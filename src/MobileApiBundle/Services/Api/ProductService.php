@@ -319,6 +319,11 @@ class ProductService
             if ($share->hasLabel() && $tag = $this->getTagFromTitle($share->getPropertyLabel())) {
                 $tags[] = $tag;
             }
+
+            if (!$tags)
+            {
+                $tags[] = $this->getTagFromPng(MarkHelper::MARK_GIFT_IMAGE_SRC);
+            }
         }
         if (
             (($offer->isHit() || $offer->isPopular()) && $tag = $this->getTagFromPng(MarkHelper::MARK_HIT_IMAGE_SRC))
