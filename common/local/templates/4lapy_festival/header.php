@@ -60,6 +60,7 @@ $markup = PawsApplication::markup();
     <link href="vendor/magnific-popup/magnific-popup.css" rel="stylesheet" type="text/css"/>
 
     <!-- THEME STYLES -->
+    <link href="css/elements.css?v=1" rel="stylesheet" type="text/css"/>
     <link href="css/layout.min.css?v=2" rel="stylesheet" type="text/css"/>
 
     <!-- Favicon -->
@@ -90,7 +91,7 @@ $markup = PawsApplication::markup();
         }
     </script>
 </head>
-<body id="body" data-spy="scroll" data-target=".header">
+<body id="body" data-spy="scroll" data-target=".header" class="body-landing-festival">
 <?php $APPLICATION->ShowPanel(); ?>
 
     <!--========== HEADER ==========-->
@@ -1605,25 +1606,22 @@ $markup = PawsApplication::markup();
                         <!-- Latest Products -->
                     </div>
                 </div>
-                <!-- Masonry Grid -->
-                <div class="masonry-grid row row-space-2">
-                    <div class="partners_wrap">
-                        <div class="pertner_item">
-                            <img class="partner_logo" src="img/partners01.jpg" alt="">
-                        </div>
-                        <div class="pertner_item">
-                            <img class="partner_logo" src="img/partners02.jpg" alt="">
-                        </div>
-                        <div class="pertner_item">
-                            <img class="partner_logo" src="img/partners03.jpg" alt="">
-                        </div>
-                        <div class="pertner_item">
-                            <img class="partner_logo" src="img/partners04.jpg" alt="">
-                        </div>
+                <div class="partners_wrap">
+                    <div class="partner_item">
+                        <img class="partner_logo" src="img/partners01.jpg" alt="">
                     </div>
-                    <div class="clear"></div>
+                    <div class="partner_item">
+                        <img class="partner_logo" src="img/partners02.jpg" alt="">
+                    </div>
+                    <div class="partner_item">
+                        <img class="partner_logo" src="img/partners03.jpg" alt="">
+                    </div>
+                    <div class="partner_item">
+                        <img class="partner_logo" src="img/partners04.jpg" alt="">
+                    </div>
                 </div>
-                <!-- End Masonry Grid -->
+                <div class="clear"></div>
+
             </div>
             <div class="content-md container">
                 <div class="row text-center">
@@ -1633,33 +1631,29 @@ $markup = PawsApplication::markup();
                         <!-- Latest Products -->
                     </div>
                 </div>
-                <!-- Masonry Grid -->
-                <div class="masonry-grid row row-space-2">
-                    <div class="partners_wrap">
-                        <div class="pertner_item">
-                            <img class="partner_logo" src="img/partners06.jpg" alt="">
-                        </div>
-                        <div class="pertner_item">
-                            <img class="partner_logo" src="img/partners07.jpg" alt="">
-                        </div>
-                        <div class="pertner_item">
-                            <img class="partner_logo" src="img/partners18.jpg" alt="">
-                        </div>
-                        <div class="pertner_item">
-                            <img class="partner_logo" src="img/partners08.jpg" alt="">
-                        </div>
-                        <div class="pertner_item">
-                            <img class="partner_logo" src="img/partners09.jpg" alt="">
-                        </div>
-                        <div class="pertner_item">
-                            <img class="partner_logo" src="img/partners10.jpg" alt="">
-                        </div>
-                        <div class="pertner_item">
-                            <img class="partner_logo" src="img/partners11.jpg" alt="">
-                        </div>
+                <div class="partners_wrap">
+                    <div class="partner_item">
+                        <img class="partner_logo" src="img/partners06.jpg" alt="">
+                    </div>
+                    <div class="partner_item">
+                        <img class="partner_logo" src="img/partners07.jpg" alt="">
+                    </div>
+                    <div class="partner_item">
+                        <img class="partner_logo" src="img/partners18.jpg" alt="">
+                    </div>
+                    <div class="partner_item">
+                        <img class="partner_logo" src="img/partners08.jpg" alt="">
+                    </div>
+                    <div class="partner_item">
+                        <img class="partner_logo" src="img/partners09.jpg" alt="">
+                    </div>
+                    <div class="partner_item">
+                        <img class="partner_logo" src="img/partners10.jpg" alt="">
+                    </div>
+                    <div class="partner_item">
+                        <img class="partner_logo" src="img/partners11.jpg" alt="">
                     </div>
                 </div>
-                <!-- End Masonry Grid -->
             </div>
             <div class="content-md container">
                 <div class="row text-center">
@@ -1669,30 +1663,26 @@ $markup = PawsApplication::markup();
                         <!-- Latest Products -->
                     </div>
                 </div>
-                <!-- Masonry Grid -->
-                <div class="masonry-grid row row-space-2">
-                    <div class="partners_wrap">
-                        <div class="pertner_item">
-                            <img class="partner_logo" src="img/partners12.jpg" alt="">
-                        </div>
-                        <div class="pertner_item">
-                            <img class="partner_logo" src="img/partners15.jpg" alt="">
-                        </div>
-                        <div class="pertner_item">
-                            <img class="partner_logo" src="img/partners13.jpg" alt="">
-                        </div>
-                        <div class="pertner_item">
-                            <img class="partner_logo" src="img/partners14.jpg" alt="">
-                        </div>
-                        <div class="pertner_item">
-                            <img class="partner_logo" src="img/partners16.jpg" alt="">
-                        </div>
-                        <div class="pertner_item">
-                            <img class="partner_logo" src="img/partners17.jpg" alt="">
-                        </div>
+                <div class="partners_wrap">
+                    <div class="partner_item">
+                        <img class="partner_logo" src="img/partners12.jpg" alt="">
+                    </div>
+                    <div class="partner_item">
+                        <img class="partner_logo" src="img/partners15.jpg" alt="">
+                    </div>
+                    <div class="partner_item">
+                        <img class="partner_logo" src="img/partners13.jpg" alt="">
+                    </div>
+                    <div class="partner_item">
+                        <img class="partner_logo" src="img/partners14.jpg" alt="">
+                    </div>
+                    <div class="partner_item">
+                        <img class="partner_logo" src="img/partners16.jpg" alt="">
+                    </div>
+                    <div class="partner_item">
+                        <img class="partner_logo" src="img/partners17.jpg" alt="">
                     </div>
                 </div>
-                <!-- End Masonry Grid -->
             </div>
         </div>
         <!-- End partners -->
@@ -1706,23 +1696,19 @@ $markup = PawsApplication::markup();
                         <!-- Latest Products -->
                     </div>
                 </div>
-                <!-- Masonry Grid -->
-                <div class="masonry-grid row row-space-2">
-                    <div class="contacts_wrap">
-                        <div class="contacts_item">
-                            <img class="contacts_logo" src="img/contacts01.jpg" alt="">
-                        </div>
-                        <div class="contacts_item">
-                            <img class="contacts_logo" src="img/contacts02.jpg" alt="">
-                        </div>
-                        <div class="contacts_item">
-                            <a href="https://4lapy.ru" target="_blank"><img class="contacts_logo" src="img/contacts03.jpg" alt=""></a>
-                        </div>
+                <div class="contacts_wrap">
+                    <div class="contacts_item">
+                        <img class="contacts_logo" src="img/contacts01.jpg" alt="">
                     </div>
-                    <div class="clear"></div>
-                    <p>Организатор Фестиваля&nbsp;&mdash; первая профессиональная сеть магазинов для домашних животных &laquo;Четыре лапы&raquo; объединяет владельцев питомцев, компании-партнеров и&nbsp;зоо-экспертов вместе, чтобы создать Pet friendly среду&nbsp;&mdash; территорию, где самое важное&nbsp;&mdash; это искренняя забота и&nbsp;ответственность за&nbsp;качество жизни, воспитание и&nbsp;взаимная любовь к&nbsp;четверолапым друзьям.</p>
+                    <div class="contacts_item">
+                        <img class="contacts_logo" src="img/contacts02.jpg" alt="">
+                    </div>
+                    <div class="contacts_item">
+                        <a href="https://4lapy.ru" target="_blank"><img class="contacts_logo" src="img/contacts03.jpg" alt=""></a>
+                    </div>
                 </div>
-                <!-- End Masonry Grid -->
+                <div class="clear"></div>
+                <p>Организатор Фестиваля&nbsp;&mdash; первая профессиональная сеть магазинов для домашних животных &laquo;Четыре лапы&raquo; объединяет владельцев питомцев, компании-партнеров и&nbsp;зоо-экспертов вместе, чтобы создать Pet friendly среду&nbsp;&mdash; территорию, где самое важное&nbsp;&mdash; это искренняя забота и&nbsp;ответственность за&nbsp;качество жизни, воспитание и&nbsp;взаимная любовь к&nbsp;четверолапым друзьям.</p>
             </div>
         </div>
         <!-- End contacts -->
