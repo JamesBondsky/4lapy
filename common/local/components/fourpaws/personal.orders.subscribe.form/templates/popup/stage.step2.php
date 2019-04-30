@@ -40,11 +40,10 @@ $subscribeIntervals = $component->getOrderSubscribeService()->getFrequencies();
 
 $daysOfWeek = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
 
+// выбранный магазин
 $selectedShopCode = '';
-$isPickup = false;
-if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode()) {
+if ($pickup && $selectedDelivery->getDeliveryId() === $pickup->getDeliveryId()) {
     $selectedShopCode = $arResult['SELECTED_SHOP']->getXmlId();
-    $isPickup = true;
 }
 
 if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
@@ -120,22 +119,22 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                         data-check="js-list-orders-static"/>
                                 <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step"
                                        for="order-delivery-address">
-                            <span class="b-choice-recovery__main-text">
-                                <span class="b-choice-recovery__main-text">
-                                    <span class="b-choice-recovery__first">Доставка</span>
-                                    <span class="b-choice-recovery__second">курьером</span>
-                                </span>
-                            </span>
+                                    <span class="b-choice-recovery__main-text">
+                                        <span class="b-choice-recovery__main-text">
+                                            <span class="b-choice-recovery__first">Доставка</span>
+                                            <span class="b-choice-recovery__second">курьером</span>
+                                        </span>
+                                    </span>
                                     <span class="b-choice-recovery__addition-text js-cur-pickup">
-                                <?= /** @noinspection PhpUnhandledExceptionInspection */
-                                DeliveryTimeHelper::showTime($delivery) ?>,
-                                <span class="js-delivery--price"><?= $delivery->getPrice() ?></span>₽
-                            </span>
+                                        <?= /** @noinspection PhpUnhandledExceptionInspection */
+                                        DeliveryTimeHelper::showTime($delivery) ?>,
+                                        <span class="js-delivery--price"><?= $delivery->getPrice() ?></span>₽
+                                    </span>
                                     <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-cur-pickup-mobile">
-                                <?= /** @noinspection PhpUnhandledExceptionInspection */
-                                DeliveryTimeHelper::showTime($delivery, ['SHORT' => true]) ?>,
-                                <span class="js-delivery--price"><?= $delivery->getPrice() ?></span>₽
-                            </span>
+                                        <?= /** @noinspection PhpUnhandledExceptionInspection */
+                                        DeliveryTimeHelper::showTime($delivery, ['SHORT' => true]) ?>,
+                                        <span class="js-delivery--price"><?= $delivery->getPrice() ?></span>₽
+                                    </span>
                                 </label>
                             <?php }
                             if ($pickup) {
@@ -161,29 +160,29 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                        data-popup-id="popup-order-stores">
                                     <span class="b-choice-recovery__main-text">Самовывоз</span>
                                     <span class="b-choice-recovery__addition-text js-my-pickup js-pickup-tab">
-                                <?= /** @noinspection PhpUnhandledExceptionInspection */
-                                DeliveryTimeHelper::showTime(
-                                    $pickup,
-                                    [
-                                        'SHOW_TIME' => !$deliveryService->isDpdPickup(
-                                            $pickup
-                                        ),
-                                    ]
-                                ) ?>, <?= mb_strtolower(CurrencyHelper::formatPrice($pickup->getPrice(),
-                                            true)) ?>
-                            </span>
+                                        <?= /** @noinspection PhpUnhandledExceptionInspection */
+                                        DeliveryTimeHelper::showTime(
+                                            $pickup,
+                                            [
+                                                'SHOW_TIME' => !$deliveryService->isDpdPickup(
+                                                    $pickup
+                                                ),
+                                            ]
+                                        ) ?>, <?= mb_strtolower(CurrencyHelper::formatPrice($pickup->getPrice(),
+                                                    true)) ?>
+                                    </span>
                                     <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-my-pickup js-pickup-tab">
-                                <?= /** @noinspection PhpUnhandledExceptionInspection */
-                                DeliveryTimeHelper::showTime(
-                                    $pickup,
-                                    [
-                                        'SHORT' => true,
-                                        'SHOW_TIME' => !$deliveryService->isDpdPickup(
-                                            $pickup
-                                        ),
-                                    ]
-                                ) ?>, <?= CurrencyHelper::formatPrice($pickup->getPrice(), false) ?>
-                            </span>
+                                        <?= /** @noinspection PhpUnhandledExceptionInspection */
+                                        DeliveryTimeHelper::showTime(
+                                            $pickup,
+                                            [
+                                                'SHORT' => true,
+                                                'SHOW_TIME' => !$deliveryService->isDpdPickup(
+                                                    $pickup
+                                                ),
+                                            ]
+                                        ) ?>, <?= CurrencyHelper::formatPrice($pickup->getPrice(), false) ?>
+                                    </span>
                                 </label>
                                 <?php
                             } ?>
@@ -194,8 +193,8 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 <li class="b-radio-tab__tab js-telephone-recovery"
                                     <?= $selectedDelivery->getDeliveryId() !== $delivery->getDeliveryId() ? 'style="display:none"' : '' ?>>
                                     <?php
-                                        include 'include/delivery.php';
                                         $currentDelivery = $delivery;
+                                        include 'include/delivery.php';
                                         include 'include/delivery_first_date.php';
                                     ?>
                                 </li>
@@ -206,15 +205,14 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 <li class="b-radio-tab__tab js-email-recovery"
                                     <?= $selectedDelivery->getDeliveryId() !== $pickup->getDeliveryId() ? 'style="display:none"' : '' ?>>
                                     <?php
-                                        include 'include/pickup.php';
                                         $currentDelivery = $pickup;
+                                        include 'include/pickup.php';
                                         include 'include/delivery_first_date.php';
                                     ?>
                                 </li>
                                 <?php
                             } ?>
                         </ul>
-                        <?php include 'include/delivery_frequency.php' ?>
                     </form>
                 </article>
             </div>

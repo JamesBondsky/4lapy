@@ -2,19 +2,16 @@
 
 use FourPaws\Decorators\SvgDecorator;
 
+// выбранные опции
 $orderSubscribe = $component->getOrderSubscribe();
 $orderSubscribeService = $component->getOrderSubscribeService();
-
 if($orderSubscribe){
-    // выбранные опции
     $selectedFrequency = $orderSubscribe->getFrequency();
     $selectedDeliveryDay = $orderSubscribe->getDeliveryDay();
     $payWithBonus = $orderSubscribe->isPayWithbonus();
 }
 
-// если периодичность меньше месяца, то скрываем день доставки
-$deliveryDayDisplay = !$orderSubscribe || $orderSubscribeService->isWeekFrequency($orderSubscribe->getFrequency()) ? 'style="display: none"' : '';
-
+// периодичность
 $subscribeIntervals = $component->getOrderSubscribeService()->getFrequencies();
 $daysOfWeek = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
 ?>
@@ -26,7 +23,11 @@ $daysOfWeek = ["Понедельник", "Вторник", "Среда", "Чет
                 <span class="b-input-line__label">Как часто доставлять</span>
             </div>
             <div class="b-select b-select--recall b-select--feedback-page">
-                <select class="b-select__block b-select__block--recall b-select__block--feedback-page" name="subscribeFrequency" data-select="0" data-select-delivery-order="subscribeFrequency">
+                <select class="b-select__block b-select__block--recall b-select__block--feedback-page <?=($isHidden) ? 'js-no-valid' : ''?>"
+                        name="subscribeFrequency"
+                        data-select="0"
+                        data-select-delivery-order="subscribeFrequency"
+                        <?=($isHidden) ? 'disabled' : ''?>>
                     <option value="" disabled="disabled">выберите</option>
                     <?php
                     foreach ($subscribeIntervals as $i => $frequency) { ?>

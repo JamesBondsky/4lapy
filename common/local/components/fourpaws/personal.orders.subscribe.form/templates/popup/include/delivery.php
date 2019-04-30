@@ -23,13 +23,13 @@ $selectedAddressId = 0;
 $showNewAddressForm = false;
 $showNewAddressFormHeader = false;
 
+// проверка на существование адреса
 $orderSubscribe = $component->getOrderSubscribe();
 if($orderSubscribe){
     $deliveryService = $component->getDeliveryService();
     $deliveryCode = $deliveryService->getDeliveryCodeById($orderSubscribe->getDeliveryId());
     $hasDeliveryAddress = $deliveryService->isDeliveryCode($deliveryCode);
 }
-
 if ($hasDeliveryAddress){
     $selectedAddressId = (int)$orderSubscribe->getDeliveryPlace();
 } else if ($addresses && !$addresses->isEmpty()) {

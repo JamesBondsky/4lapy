@@ -13,6 +13,7 @@ if ($tmpDelivery = $nextDeliveries[0]) {
         </div>
         <div class="b-select b-select--recall b-select--feedback-page b-select--interval">
             <select class="b-select__block b-select__block--recall b-select__block--feedback-page b-select__block--interval js-select-recovery <?=($isHidden) ? 'js-no-valid' : ''?>"
+                    <?=($isHidden) ? 'disabled' : ''?>
                     name="<?= $selectorName ?>">
                 <option value="" disabled="disabled" selected="selected">
                     выберите
