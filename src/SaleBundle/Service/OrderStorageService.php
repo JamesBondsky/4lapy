@@ -545,15 +545,21 @@ class OrderStorageService
     {
         if (null === $this->deliveries || $reload) {
             $basket = $this->basketService->getBasket();
+            $codes = [];
             if (null === $basket->getOrder()) {
                 $order = Order::create(SITE_ID, $storage->getUserId() ?: null);
                 $order->setBasket($basket);
             }
 
+            // для подписки оставляем только наши службы доставки
+            if($storage->isSubscribe()){
+                $codes = [DeliveryService::INNER_DELIVERY_CODE, DeliveryService::INNER_PICKUP_CODE];
+            }
+
             $this->deliveries = $this->deliveryService->getByBasket(
                 $basket,
                 $storage->getCityCode(),
-                [],
+                $codes,
                 $storage->getCurrentDate()
             );
         }
