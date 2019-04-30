@@ -6,8 +6,10 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\Type\Date;
+use Exception;
 use FourPaws\App\Application;
 use FourPaws\Enum\UserGroup as UserGroupEnum;
 use FourPaws\External\ExpertsenderService;
@@ -226,9 +228,14 @@ class UserService
         $this->userBundleService->getUserRepository()->update($currentUser);
 
         if ($user->getEmail() && $user->getEmail() !== $oldUser->getEmail()) {
-            /** @var ExpertsenderService $expertSenderService */
-            $expertSenderService = Application::getInstance()->getContainer()->get('expertsender.service');
-            $expertSenderService->sendChangeEmail($oldUser, $currentUser);
+            try {
+                /** @var ExpertsenderService $expertSenderService */
+                $expertSenderService = Application::getInstance()->getContainer()->get('expertsender.service');
+                $expertSenderService->sendChangeEmail($oldUser, $currentUser);
+            } catch (Exception $exception) {
+                $logger = LoggerFactory::create('change_email');
+                $logger->error(sprintf('%s exception: %s', __FUNCTION__, $exception->getMessage()));
+            }
         }
 
         return new PostUserInfoResponse($this->getCurrentApiUser());
