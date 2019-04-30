@@ -233,7 +233,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             $dates[] = [
                 'value' => $tmpPickup->getDeliveryDate()->format('d.m.Y'),
                 'name' => FormatDate('l, d.m.Y', $delivery->getDeliveryDate()->getTimestamp()),
-                'data' => FormatDate('l, Y-m-d', $delivery->getDeliveryDate()->getTimestamp()),
+                'date' => FormatDate('l, Y-m-d', $delivery->getDeliveryDate()->getTimestamp()),
             ];
         }
 
