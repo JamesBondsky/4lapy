@@ -49,6 +49,11 @@ if ($pickup && $selectedDelivery->getDeliveryId() === $pickup->getDeliveryId()) 
 if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
     echo $arResult['ECOMMERCE_VIEW_SCRIPT'];
 }
+
+$orderSubscribe = $component->getOrderSubscribe();
+if($orderSubscribe){
+    $payWithBonus = $orderSubscribe->isPayWithbonus();
+}
 ?>
 
 <div class="b-popup-subscribe-delivery__inner js-step2-inner-subscribe-delivery">
@@ -213,6 +218,13 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 <?php
                             } ?>
                         </ul>
+                        <div class="b-checkbox b-checkbox--withdraw-bonuses-order">
+                            <input class="b-checkbox__input js-no-valid" type="checkbox" name="subscribeBonus" id="withdraw_bonuses" value="1" required="required" <?=(!$orderSubscribe || $payWithBonus) ? 'checked' : ''?> />
+                            <span class="b-error"><span class="js-message"></span></span>
+                            <label class="b-checkbox__name" for="withdraw_bonuses">
+                                Списывать все доступные баллы на&nbsp;заказы по&nbsp;подписке
+                            </label>
+                        </div>
                     </form>
                 </article>
             </div>
