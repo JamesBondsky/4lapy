@@ -8,7 +8,9 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\Type\Date;
+use FourPaws\App\Application;
 use FourPaws\Enum\UserGroup as UserGroupEnum;
+use FourPaws\External\ExpertsenderService;
 use FourPaws\MobileApiBundle\Dto\Object\City;
 use FourPaws\MobileApiBundle\Dto\Object\ClientCard;
 use FourPaws\MobileApiBundle\Dto\Object\User;
@@ -175,6 +177,7 @@ class UserService
     public function update(User $user): PostUserInfoResponse
     {
         $currentUser = $this->userBundleService->getCurrentUser();
+        $oldUser = clone $currentUser;
 
         if ($user->getPhone() && $user->getPhone() !== $currentUser->getPersonalPhone()) {
             try {
@@ -221,6 +224,13 @@ class UserService
             $currentUser->setDiscountCardNumber($user->getCard()->getNumber());
         }
         $this->userBundleService->getUserRepository()->update($currentUser);
+
+        if ($user->getEmail() && $user->getEmail() !== $oldUser->getEmail()) {
+            /** @var ExpertsenderService $expertSenderService */
+            $expertSenderService = Application::getInstance()->getContainer()->get('expertsender.service');
+            $expertSenderService->sendChangeEmail($oldUser, $currentUser);
+        }
+
         return new PostUserInfoResponse($this->getCurrentApiUser());
     }
 
