@@ -18,8 +18,10 @@ $APPLICATION->ShowHead();
     <input name='cnt' type='number' value='1000' min='1000' max='10000' id='cnt'><br><br>
     <label for='step'>Номер страницы, с которой начать выгрузку</label>
     <input name='step' type='number' value='0' min='0' max='0' id='step'><br><br>
-    <input name='date_register' type='date' value='2018-05-01' id='date_register'><br><br>
     <label for='date_register'>Дата регистрации, с которой выбирать пользователей</label>
+    <input name='date_register' type='date' value='2018-05-01' id='date_register'><br><br>
+    <label for='date_register_to'>Дата регистрации, до которой выбирать пользователей</label>
+    <input name='date_register_to' type='date' value='<?= date('Y-m-d')?>' id='date_register_to'><br><br>
     <progress id='status-bar' value='0' max='100'></progress>
     <span id='percentages'></span><br><br>
     <span id='time'></span><br><br>
@@ -37,6 +39,7 @@ $APPLICATION->ShowHead();
             this.$webFormCode = this.$form.find('[name=web_form_code]');
             this.$fileNameInput = this.$form.find('[name=file_name]');
             this.$dateRegisterInput = this.$form.find('[name=date_register]');
+            this.$dateRegisterToInput = this.$form.find('[name=date_register_to]');
             this.$ctnInput = this.$form.find('[name=cnt]');
             this.$submitBtn = this.$form.find('#start');
             this.$stopBtn = this.$form.find('#stop');
@@ -71,6 +74,7 @@ $APPLICATION->ShowHead();
                     that.$ctnInput.prop('readonly', true);
                     that.$fileNameInput.prop('readonly', true);
                     that.$dateRegisterInput.prop('readonly', true);
+                    that.$dateRegisterToInput.prop('readonly', true);
                     that.$fileLink.attr({
                         'href': '',
                         'download': ''

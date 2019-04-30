@@ -148,8 +148,7 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
             $obGender = new CUserFieldEnum;
             /** @var CDBResult $dbGender */
             $dbGender = $obGender->GetList([], ['USER_FIELD_NAME' => 'UF_GENDER']);
-            while($gender = $dbGender->Fetch())
-            {
+            while ($gender = $dbGender->Fetch()) {
                 $this->gender[mb_strtolower($gender['VALUE'])] = $gender['ID'];
             }
             $cache->StartDataCache(static::CACHE_TIME, $cacheID, $cachePath, ['UserControlGender' => $this->gender]);
@@ -402,6 +401,12 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
                 $userData['LID'] = static::LID;
                 $userData['LANGUAGE_ID'] = static::LANGUAGE_ID;
                 $userData['TIMESTAMP_X'] = new DateTime();
+                if ($userData['PERSONAL_BIRTHDAY'] != null && $userData['PERSONAL_BIRTHDAY'] != '') {
+                    $userData['PERSONAL_BIRTHDAY'] = new DateTime($userData['PERSONAL_BIRTHDAY']);
+                } else {
+                    unset($userData['PERSONAL_BIRTHDAY']);
+                }
+
                 /** добавляем пользователя */
                 $userID = $cUser->add($userData);
                 if ($userID) {

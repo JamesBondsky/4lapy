@@ -11,20 +11,22 @@ use Bitrix\Main\SystemException;
 class UserControlExport extends UserControl
 {
     const FOLDER_CHMOD = 0775;
-    const DATE_TIME_FORMAT = 'Y-m-d H-i-s';
     const PETS_IBLOCK_CODE = 'user_pets';
     const PETS_BREEDS_IBLOCK_CODE = 'kinds';
     const DATE_REGISTER_FROM = '2018-05-01 00-00-00';
     const TIME_REGISTER_FROM = '00-00-00';
-    const DISCOUNT_USER_FIELD_CODE = 'UF_DISC';
+    const TIME_REGISTER_TO = '23-59-59';
+    const DISCOUNT_USER_FIELD_CODE = 'UF_DISCOUNT_CARD';
     const PET_MAP = 'PETS';
 
     /** @var DateTime $dateRegisterFrom */
     protected $dateRegisterFrom;
+    /** @var DateTime $dateRegisterTo */
+    protected $dateRegisterTo;
 
     protected $fileExportPath = false;
 
-    function __construct($pageSize = 1000, $dateRegisterFrom = '2018-05-01')
+    function __construct($pageSize = 1000, $dateRegisterFrom = '2018-05-01', $dateRegisterTo = null)
     {
         Loader::IncludeModule('iblock');
         $this->pageSize = intval($pageSize);
@@ -32,6 +34,18 @@ class UserControlExport extends UserControl
             $this->dateRegisterFrom = new DateTime($dateRegisterFrom . ' ' . static::TIME_REGISTER_FROM, static::DATE_TIME_FORMAT);
         } catch (ObjectException $e) {
             $this->dateRegisterFrom = new DateTime(static::DATE_REGISTER_FROM, static::DATE_TIME_FORMAT);
+        }
+
+        if ($dateRegisterTo) {
+            try {
+                $this->dateRegisterTo = new DateTime($dateRegisterTo . ' ' . static::TIME_REGISTER_TO, static::DATE_TIME_FORMAT);
+            } catch (ObjectException $e) {
+                $this->dateRegisterTo = null;
+            }
+        }
+
+        if ($dateRegisterTo != null && $this->dateRegisterTo < $this->dateRegisterFrom) {
+            $this->dateRegisterTo = new DateTime();
         }
 
         parent::__construct();
@@ -46,17 +60,18 @@ class UserControlExport extends UserControl
      */
     public function getUsersCnt()
     {
+        $select = ['CNT'];
+        $filter = [
+            '>=DATE_REGISTER' => $this->dateRegisterFrom
+        ];
+
+        if ($this->dateRegisterTo) {
+            $filter['<=DATE_REGISTER'] = $this->dateRegisterTo;
+        }
+
         $usersCnt = UserTable::query()
-            ->setSelect(
-                [
-                    'CNT'
-                ]
-            )
-            ->setFilter(
-                [
-                    '>=DATE_REGISTER' => $this->dateRegisterFrom
-                ]
-            )
+            ->setSelect($select)
+            ->setFilter($filter)
             ->registerRuntimeField(
                 'CNT',
                 [
@@ -129,17 +144,21 @@ class UserControlExport extends UserControl
             $this->usersPart = [];
         }
 
+        $filter = [
+            '>ID' => $id,
+            '>=DATE_REGISTER' => $this->dateRegisterFrom
+        ];
+
+        if ($this->dateRegisterTo) {
+            $filter['<=DATE_REGISTER'] = $this->dateRegisterTo;
+        }
+
         $dbUsers = UserTable::query()
             ->setSelect($select)
+            ->setFilter($filter)
             ->setOrder(
                 [
                     $this->sortBy => $this->orderBy
-                ]
-            )
-            ->setFilter(
-                [
-                    '>ID' => $id,
-                    '>=DATE_REGISTER' => $this->dateRegisterFrom
                 ]
             )
             ->setLimit($this->pageSize)

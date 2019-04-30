@@ -3,6 +3,7 @@
 abstract class UserControl
 {
     const DELIMITER = "\t";
+    const DATE_TIME_FORMAT = 'Y-m-d H-i-s';
     const UPLOAD_SUB_PATH = '/upload/users';
     const MAPPING = [
         'ID',

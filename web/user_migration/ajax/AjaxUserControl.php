@@ -16,7 +16,8 @@ switch ($exchangeType) {
     case 'export':
         require_once('../classes/UserControlExport.php');
         $dateRegister = $_REQUEST['date_register'];
-        $userControl = new UserControlExport($pageCnt, $dateRegister);
+        $dateRegisterTo = $_REQUEST['date_register_to'];
+        $userControl = new UserControlExport($pageCnt, $dateRegister, $dateRegisterTo);
         switch ($step) {
             case 'get_pages_count':
                 $response = $userControl->getUsersCnt();
