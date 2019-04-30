@@ -18,6 +18,8 @@ $APPLICATION->ShowHead();
     <input name='cnt' type='number' value='1000' min='1000' max='10000' id='cnt'><br><br>
     <label for='step'>Номер страницы, с которой начать выгрузку</label>
     <input name='step' type='number' value='0' min='0' max='0' id='step'><br><br>
+    <input name='date_register' type='date' value='2018-05-01' id='date_register'><br><br>
+    <label for='date_register'>Дата регистрации, с которой выбирать пользователей</label>
     <progress id='status-bar' value='0' max='100'></progress>
     <span id='percentages'></span><br><br>
     <span id='time'></span><br><br>
@@ -34,6 +36,7 @@ $APPLICATION->ShowHead();
             this.$form = form;
             this.$webFormCode = this.$form.find('[name=web_form_code]');
             this.$fileNameInput = this.$form.find('[name=file_name]');
+            this.$dateRegisterInput = this.$form.find('[name=date_register]');
             this.$ctnInput = this.$form.find('[name=cnt]');
             this.$submitBtn = this.$form.find('#start');
             this.$stopBtn = this.$form.find('#stop');
@@ -67,6 +70,7 @@ $APPLICATION->ShowHead();
                     that.$webFormCode.prop('readonly', true);
                     that.$ctnInput.prop('readonly', true);
                     that.$fileNameInput.prop('readonly', true);
+                    that.$dateRegisterInput.prop('readonly', true);
                     that.$fileLink.attr({
                         'href': '',
                         'download': ''
@@ -96,6 +100,10 @@ $APPLICATION->ShowHead();
                 this.PAGE_COUNT = res.CNT;
                 this.PETS_IBLOCK_ID = res.PETS_IBLOCK_ID;
                 console.log('pageCount', this.PAGE_COUNT);
+                if (this.PAGE_COUNT == 0) {
+                    console.log('done');
+                    return false;
+                }
                 this.$step.prop('max', this.PAGE_COUNT);
                 this.$statusBar.prop({
                     'value': this.STEP,

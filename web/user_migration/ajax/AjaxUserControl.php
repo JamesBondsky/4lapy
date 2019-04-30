@@ -15,14 +15,15 @@ if (!$USER->IsAdmin()) {
 switch ($exchangeType) {
     case 'export':
         require_once('../classes/UserControlExport.php');
-        $userControl = new UserControlExport($pageCnt);
+        $dateRegister = $_REQUEST['date_register'];
+        $userControl = new UserControlExport($pageCnt, $dateRegister);
         switch ($step) {
             case 'get_pages_count':
                 $response = $userControl->getUsersCnt();
                 echo json_encode(
                     [
                         'CNT' => ceil($response['CNT'] / $pageCnt),
-                        'PETS_IBLOCK_ID' => $response['PETS_IBLOCK_ID']
+                        'PETS_IBLOCK_ID' => $response['PETS_IBLOCK_ID'] ?: false
                     ]
                 );
                 break;

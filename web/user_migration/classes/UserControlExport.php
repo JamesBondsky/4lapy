@@ -11,19 +11,29 @@ use Bitrix\Main\SystemException;
 class UserControlExport extends UserControl
 {
     const FOLDER_CHMOD = 0775;
-    const DATE_TIME_FORMAT = 'd.m.Y H:i:s';
+    const DATE_TIME_FORMAT = 'Y-m-d H-i-s';
     const PETS_IBLOCK_CODE = 'user_pets';
     const PETS_BREEDS_IBLOCK_CODE = 'kinds';
-    const DATE_REGISTER_FROM = '01.05.2018 00:00:00';
-    const DISCOUNT_USER_FIELD_CODE = 'UF_DISC';
+    const DATE_REGISTER_FROM = '2018-05-01 00-00-00';
+    const TIME_REGISTER_FROM = '00-00-00';
+    const DISCOUNT_USER_FIELD_CODE = 'UF_DISCOUNT_CARD';
     const PET_MAP = 'PETS';
+
+    /** @var DateTime $dateRegisterFrom */
+    protected $dateRegisterFrom;
 
     protected $fileExportPath = false;
 
-    function __construct($pageSize = 1000)
+    function __construct($pageSize = 1000, $dateRegisterFrom = '2018-05-01')
     {
         Loader::IncludeModule('iblock');
         $this->pageSize = intval($pageSize);
+        try {
+            $this->dateRegisterFrom = new DateTime($dateRegisterFrom . ' ' . static::TIME_REGISTER_FROM, static::DATE_TIME_FORMAT);
+        } catch (ObjectException $e) {
+            $this->dateRegisterFrom = new DateTime(static::DATE_REGISTER_FROM, static::DATE_TIME_FORMAT);
+        }
+
         parent::__construct();
     }
 
@@ -31,7 +41,6 @@ class UserControlExport extends UserControl
      *
      * @return array
      * @throws ArgumentException
-     * @throws ObjectException
      * @throws ObjectPropertyException
      * @throws SystemException
      */
@@ -45,7 +54,7 @@ class UserControlExport extends UserControl
             )
             ->setFilter(
                 [
-                    '>=DATE_REGISTER' => new DateTime(static::DATE_REGISTER_FROM, static::DATE_TIME_FORMAT)
+                    '>=DATE_REGISTER' => $this->dateRegisterFrom
                 ]
             )
             ->registerRuntimeField(
@@ -80,7 +89,6 @@ class UserControlExport extends UserControl
      * @param null $petsIblockId
      * @return false|string
      * @throws ArgumentException
-     * @throws ObjectException
      * @throws ObjectPropertyException
      * @throws SystemException
      */
@@ -131,7 +139,7 @@ class UserControlExport extends UserControl
             ->setFilter(
                 [
                     '>ID' => $id,
-                    '>=DATE_REGISTER' => new DateTime(static::DATE_REGISTER_FROM, static::DATE_TIME_FORMAT)
+                    '>=DATE_REGISTER' => $this->dateRegisterFrom
                 ]
             )
             ->setLimit($this->pageSize)
