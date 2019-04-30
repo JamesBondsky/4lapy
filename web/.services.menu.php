@@ -2,22 +2,29 @@
 
 $aMenuLinks = Array(
     Array(
-        "Клубы и питомники",
-        "https://breeders.4lapy.ru/catalog/?owners=clubs",
+        "Подписка на доставку",
+        "/podpiska/",
         Array(),
         Array(),
         ""
     ),
     Array(
-        "Доска объявлений",
-        "https://breeders.4lapy.ru/advertisements/",
+        "Подбор корма",
+        "/catalog/food-selection/",
         Array(),
         Array(),
         ""
     ),
     Array(
-        "Зоогостиницы",
-        "https://breeders.4lapy.ru/catalog/?owners=hotels",
+        "Сравнение кормов",
+        "/comparing/",
+        Array(),
+        Array(),
+        ""
+    ),
+    Array(
+        "Добролап",
+        "https://www.dobrolap.ru/",
         Array(),
         Array(),
         ""
@@ -30,15 +37,8 @@ $aMenuLinks = Array(
         ""
     ),
     Array(
-        "Новости",
-        "/news/",
-        Array(),
-        Array(),
-        ""
-    ),
-    Array(
-        "Подбор корма",
-        "/catalog/food-selection/",
+        "Клубы и питомники",
+        "https://breeders.4lapy.ru/catalog/?owners=clubs",
         Array(),
         Array(),
         ""

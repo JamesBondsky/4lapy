@@ -2956,7 +2956,7 @@ footer .content-md {
     }
 
     .back-to-top {
-        z-index: 999999;
+        z-index: 999;
     }
 
 }
