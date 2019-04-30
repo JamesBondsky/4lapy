@@ -211,13 +211,21 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     public function getDeliveryDates($storeXmlId, $items)
     {
         $dates = [];
+        $isOrder = false;
         $basketService = $this->getBasketService();
         $deliveryService = $this->getDeliveryService();
         $storeService = $this->getStoreService();
-
         $store = $storeService->getStoreByXmlId($storeXmlId);
 
-        $basket = $basketService->createBasketFromItems($items);
+        // запрос может прийти без товаров из оформления заказов
+        // в таком случае value это id-шник службы доставки из массива getNextDeliveries
+        if(!empty($items)){
+            $basket = $basketService->createBasketFromItems($items);
+        } else {
+            $basket = $basketService->getBasket();
+            $isOrder = true;
+        }
+
         $deliveries = $deliveryService->getByBasket($basket, '', [DeliveryService::INNER_PICKUP_CODE]);
         if(empty($deliveries)){
             throw new Exception("Не удалось сформировать службы доставки");
@@ -228,10 +236,10 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         $pickup->setSelectedShop($store);
 
         $nextDeliveries = $deliveryService->getNextDeliveries($pickup, 10);
-        foreach($nextDeliveries as $delivery){
+        foreach($nextDeliveries as $i => $delivery){
             $tmpPickup = clone $delivery;
             $dates[] = [
-                'value' => $tmpPickup->getDeliveryDate()->format('d.m.Y'),
+                'value' => ($isOrder) ? $i : $tmpPickup->getDeliveryDate()->format('d.m.Y'),
                 'name' => FormatDate('l, d.m.Y', $delivery->getDeliveryDate()->getTimestamp()),
                 'date' => FormatDate('l, Y-m-d', $delivery->getDeliveryDate()->getTimestamp()),
             ];

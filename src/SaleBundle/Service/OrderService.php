@@ -358,6 +358,12 @@ class OrderService implements LoggerAwareInterface
         }
 
         $selectedDelivery = clone $selectedDelivery;
+
+        // при создании из подписки выбирается желаемая дата доставки
+        if ($storage->isSubscribe()) {
+            $selectedDelivery = $this->deliveryService->getNextDeliveries($selectedDelivery, 10)[$storage->getDeliveryDate()];
+        }
+
         if (!$selectedDelivery->isSuccess()) {
             $this->log()->error('Selected delivery is not available', [
                 'fuserId' => $storage->getFuserId(),
