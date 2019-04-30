@@ -29,10 +29,8 @@ use FourPaws\StoreBundle\Entity\Store;
 $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
-
 /** @var Store $selectedShop */
 $selectedShop = $arResult['SELECTED_SHOP'];
-
 /** @var StockResultCollection $available */
 $available = $arResult['PICKUP_STOCKS_AVAILABLE'];
 /** @var StockResultCollection $delayed */
