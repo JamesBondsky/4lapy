@@ -457,6 +457,12 @@ a:hover {
     margin-bottom: 100px!important
 }
 
+@media (max-width: 1339px) {
+    .content-md {
+        padding-bottom: 50px
+    }
+}
+
 @media (max-width: 992px) {
     .md-margin-b-0 {
         margin-bottom:0!important

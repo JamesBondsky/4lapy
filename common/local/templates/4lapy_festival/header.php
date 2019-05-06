@@ -119,7 +119,7 @@ $markup = PawsApplication::markup();
                 <!-- Collect the nav links, forms, and other content for toggling -->
                 <div class="collapse navbar-collapse nav-collapse">
                     <div class="menu-container">
-                        <ul class="nav navbar-nav navbar-nav-right">
+                        <ul class="nav navbar-nav">
                             <li class="js_nav-item nav-item"><a class="nav-item-child nav-item-hover" href="#map">карта</a></li>
                             <li class="js_nav-item nav-item"><a class="nav-item-child nav-item-hover" href="#guest">Блогер-Шоу</a></li>
                             <li class="js_nav-item nav-item"><a class="nav-item-child nav-item-hover" href="#dog_fest">dog fest</a></li>
@@ -217,7 +217,7 @@ $markup = PawsApplication::markup();
                             <p>Листайте ленту, регистрируйтесь и&nbsp;приходите!</p>
                         </div>
 
-                        <div class="col-sm-8 col-sm-offset-2">
+                        <div class="col-sm-12 col-lg-8 col-lg-offset-2">
                             <div class="icon_wrap">
                                 <div class="icon">
                                     <img src="img/icons/ic01.png" alt="" />
@@ -270,27 +270,27 @@ $markup = PawsApplication::markup();
                         <hr class="header_line" />
                         <p>Проведи праздник с&nbsp;удовольствием. На&nbsp;пути к&nbsp;главному призу построй маршрут: попробуй свои силы в&nbsp;соревнованиях с&nbsp;питомцем, перекуси и&nbsp;обязательно загляни на&nbsp;блогер-шоу. Зарегистрируйся, чтобы получить паспорт участника и&nbsp;приходи на&nbsp;праздник с&nbsp;друзьями.</p>
                         <div class="interactive_map">
-                            <img src="img/map.jpg" alt="" />
+                            <img src="img/map.jpg" alt="" class="interactive_map-main" />
                             <div class="work-popup-overlay" id="permanent_popup">
                                 <div class="work-popup-content">
                                     <div class="row">
 
-                                        <div class="col-sm-3 hidden-mobile-img">
+                                        <div class="col-lg-3 hidden-xs hidden-sm hidden-md">
                                             <img src="img/img05_1.jpg" alt="" />
                                         </div>
-                                        <div class="col-sm-2">
+                                        <div class="col-sm-4 col-lg-2">
                                             <img src="img/img02_1.jpg" alt="" />
                                         </div>
-                                        <div class="col-sm-2">
+                                        <div class="col-sm-4 col-lg-2">
                                             <div class="margin-t-10 sm-margin-t-0">
                                                 <h2>НАЧНИ ПУТЕШЕСТВИЕ</h2>
                                                 <p>Выбери площадку на карте Фестиваля и кликни на иконку, чтобы узнать больше.</p>
                                             </div>
                                         </div>
-                                        <div class="col-sm-2">
+                                        <div class="col-sm-4 col-lg-2">
                                             <img src="img/img01_3.jpg" alt="" />
                                         </div>
-                                        <div class="col-sm-3">
+                                        <div class="col-lg-3 hidden-xs hidden-sm hidden-md">
                                             <img src="img/img03_3.jpg" alt="" />
                                         </div>
                                     </div>
@@ -372,22 +372,22 @@ $markup = PawsApplication::markup();
                                         <a href="javascript:void(0);" class="work-popup-close">×</a>
                                         <div class="row">
 
-                                            <div class="col-sm-3 hidden-mobile-img">
+                                            <div class="col-lg-3 hidden-xs hidden-sm hidden-md">
                                                 <img src="img/img05_1.jpg" alt="" />
                                             </div>
-                                            <div class="col-sm-2">
+                                            <div class="col-sm-4 col-lg-2">
                                                 <img src="img/img05_2.jpg" alt="" />
                                             </div>
-                                            <div class="col-sm-2">
+                                            <div class="col-sm-4 col-lg-2">
                                                 <div class="margin-t-10 sm-margin-t-0">
                                                     <h2>DOG FEST</h2>
                                                     <p>Взрывной заряд энергии на спортивных площадках аджилити и фрисби , парад собак и игры в бассейне.</p>
                                                 </div>
                                             </div>
-                                            <div class="col-sm-2">
+                                            <div class="col-sm-4 col-lg-2">
                                                 <img src="img/img05_3.jpg" alt="" />
                                             </div>
-                                            <div class="col-sm-3">
+                                            <div class="col-lg-3 hidden-xs hidden-sm hidden-md">
                                                 <img src="img/img05_4.jpg" alt="" />
                                             </div>
                                         </div>
@@ -485,22 +485,22 @@ $markup = PawsApplication::markup();
                                         <a href="javascript:void(0);" class="work-popup-close">×</a>
                                         <div class="row">
 
-                                            <div class="col-sm-2 hidden-mobile-img">
+                                            <div class="col-lg-2 hidden-xs hidden-sm hidden-md">
                                                 <img src="img/img02_1.jpg" alt="" />
                                             </div>
-                                            <div class="col-sm-3">
+                                            <div class="col-sm-4 col-lg-3">
                                                 <img src="img/img02_2.jpg" alt="" />
                                             </div>
-                                            <div class="col-sm-2">
+                                            <div class="col-sm-4 col-lg-2">
                                                 <div class="margin-t-10 sm-margin-t-0">
                                                     <h2>добролап</h2>
                                                     <p>Гостей, неравнодушных к пушистым четверолапым, ждут на выставке-пристройстве, чтобы поддержать питомцев, или обрести друга</p>
                                                 </div>
                                             </div>
-                                            <div class="col-sm-2">
+                                            <div class="col-sm-4 col-lg-2">
                                                 <img src="img/img02_3.jpg" alt="" />
                                             </div>
-                                            <div class="col-sm-3">
+                                            <div class="col-lg-3 hidden-xs hidden-sm hidden-md">
                                                 <img src="img/img02_4.jpg" alt="" />
                                             </div>
                                         </div>
@@ -563,22 +563,22 @@ $markup = PawsApplication::markup();
                                         <a href="javascript:void(0);" class="work-popup-close">×</a>
                                         <div class="row">
 
-                                            <div class="col-sm-3 hidden-mobile-img">
+                                            <div class="col-lg-3 hidden-xs hidden-sm hidden-md">
                                                 <img src="img/img03_1.jpg" alt="" />
                                             </div>
-                                            <div class="col-sm-2">
+                                            <div class="col-sm-4 col-lg-2">
                                                 <img src="img/img03_2.jpg" alt="" />
                                             </div>
-                                            <div class="col-sm-2">
+                                            <div class="col-sm-4 col-lg-2">
                                                 <div class="margin-t-10 sm-margin-t-0">
                                                     <h2>РАЗВЛЕЧЕНИЯ ДЛЯ ДЕТЕЙ</h2>
                                                     <p>Наших маленьких участников встречают веселые аниматоры с занимательными играми, аквагримом, мастер-классами, танцами.</p>
                                                 </div>
                                             </div>
-                                            <div class="col-sm-3">
+                                            <div class="col-sm-4 col-lg-3">
                                                 <img src="img/img03_3.jpg" alt="" />
                                             </div>
-                                            <div class="col-sm-2">
+                                            <div class="col-lg-2 hidden-xs hidden-sm hidden-md">
                                                 <img src="img/img03_4.jpg" alt="" />
                                             </div>
                                         </div>
@@ -639,22 +639,22 @@ $markup = PawsApplication::markup();
                                         <a href="javascript:void(0);" class="work-popup-close">×</a>
                                         <div class="row">
 
-                                            <div class="col-sm-3 hidden-mobile-img">
+                                            <div class="col-lg-3 hidden-xs hidden-sm hidden-md">
                                                 <img src="img/img01_1.jpg" alt="" />
                                             </div>
-                                            <div class="col-sm-2">
+                                            <div class="col-sm-4 col-lg-2">
                                                 <img src="img/img01_2.jpg" alt="" />
                                             </div>
-                                            <div class="col-sm-2">
+                                            <div class="col-sm-4 col-lg-2">
                                                 <div class="margin-t-10 sm-margin-t-0">
                                                     <h2>КОНЦЕРТ</h2>
                                                     <p>На главной сцене Фестиваля весь день зажигательные мастер-классы, танцы, конкурсы и сеты от модных DJ Москвы. В 18.00 ARTIK и ASTI взорвут танцпол.</p>
                                                 </div>
                                             </div>
-                                            <div class="col-sm-2">
+                                            <div class="col-sm-4 col-lg-2">
                                                 <img src="img/img01_3.jpg" alt="" />
                                             </div>
-                                            <div class="col-sm-3">
+                                            <div class="col-lg-3 hidden-xs hidden-sm hidden-md">
                                                 <img src="img/img01_4.jpg" alt="" />
                                             </div>
                                         </div>
@@ -769,22 +769,22 @@ $markup = PawsApplication::markup();
                                         <a href="javascript:void(0);" class="work-popup-close">×</a>
                                         <div class="row">
 
-                                            <div class="col-sm-2 hidden-mobile-img">
+                                            <div class="col-lg-2 hidden-xs hidden-sm hidden-md">
                                                 <img src="img/img04_1.jpg" alt="" />
                                             </div>
-                                            <div class="col-sm-3">
+                                            <div class="col-sm-4 col-lg-3">
                                                 <img src="img/img04_2.jpg" alt="" />
                                             </div>
-                                            <div class="col-sm-2">
+                                            <div class="col-sm-4 col-lg-2">
                                                 <div class="margin-t-10 sm-margin-t-0">
                                                     <h2>КВЕСТ «ХОЧУ В ПАРИЖ»</h2>
                                                     <p>Для самых активных: супер-квест, конкурсы и розыгрыш главного приза – путешествия в Париж.</p>
                                                 </div>
                                             </div>
-                                            <div class="col-sm-2">
+                                            <div class="col-sm-4 col-lg-2">
                                                 <img src="img/img04_3.jpg" alt="" />
                                             </div>
-                                            <div class="col-sm-3">
+                                            <div class="col-lg-3 hidden-xs hidden-sm hidden-md">
                                                 <img src="img/img04_4.jpg" alt="" />
                                             </div>
                                         </div>
@@ -860,22 +860,22 @@ $markup = PawsApplication::markup();
                                         <a href="javascript:void(0);" class="work-popup-close">×</a>
                                         <div class="row">
 
-                                            <div class="col-sm-3 hidden-mobile-img">
+                                            <div class="col-lg-3 hidden-xs hidden-sm hidden-md">
                                                 <img src="img/img06_1.jpg" alt="" />
                                             </div>
-                                            <div class="col-sm-2">
+                                            <div class="col-sm-4 col-lg-2">
                                                 <img src="img/img06_2.jpg" alt="" />
                                             </div>
-                                            <div class="col-sm-2">
+                                            <div class="col-sm-4 col-lg-2">
                                                 <div class="margin-t-10 sm-margin-t-0">
                                                     <h2>гастромаркет</h2>
                                                     <p>Утолить разгулявшийся аппетит можно в многочисленных маркетах вкусной еды.</p>
                                                 </div>
                                             </div>
-                                            <div class="col-sm-3">
+                                            <div class="col-sm-4 col-lg-3">
                                                 <img src="img/img06_3.jpg" alt="" />
                                             </div>
-                                            <div class="col-sm-2">
+                                            <div class="col-lg-2 hidden-xs hidden-sm hidden-md">
                                                 <img src="img/img06_4.jpg" alt="" />
                                             </div>
                                         </div>
@@ -935,22 +935,22 @@ $markup = PawsApplication::markup();
                                         <a href="javascript:void(0);" class="work-popup-close">×</a>
                                         <div class="row">
 
-                                            <div class="col-sm-3 hidden-mobile-img">
+                                            <div class="col-lg-3 hidden-xs hidden-sm hidden-md">
                                                 <img src="img/img07_1.jpg" alt="" />
                                             </div>
-                                            <div class="col-sm-2">
+                                            <div class="col-sm-4 col-lg-2">
                                                 <img src="img/img07_2.jpg" alt="" />
                                             </div>
-                                            <div class="col-sm-2">
+                                            <div class="col-sm-4 col-lg-2">
                                                 <div class="margin-t-10 sm-margin-t-0">
                                                     <h2>лекторий</h2>
                                                     <p>Прокачай себя в модном лектории – узнаешь много интересного о питомцах и познакомишься с ведущими зоо-экспертами. </p>
                                                 </div>
                                             </div>
-                                            <div class="col-sm-3">
+                                            <div class="col-sm-4 col-lg-3">
                                                 <img src="img/img07_3.jpg" alt="" />
                                             </div>
-                                            <div class="col-sm-2">
+                                            <div class="col-lg-2 hidden-xs hidden-sm hidden-md">
                                                 <img src="img/img07_4.jpg" alt="" />
                                             </div>
                                         </div>
@@ -1015,22 +1015,22 @@ $markup = PawsApplication::markup();
                                         <a href="javascript:void(0);" class="work-popup-close">×</a>
                                         <div class="row">
 
-                                            <div class="col-sm-2 hidden-mobile-img">
+                                            <div class="col-lg-2 hidden-xs hidden-sm hidden-md">
                                                 <img src="img/img08_1.jpg" alt="" />
                                             </div>
-                                            <div class="col-sm-3">
+                                            <div class="col-sm-4 col-lg-3">
                                                 <img src="img/img08_2.jpg" alt="" />
                                             </div>
-                                            <div class="col-sm-2">
+                                            <div class="col-sm-4 col-lg-2">
                                                 <div class="margin-t-10 sm-margin-t-0">
                                                     <h2>БЛОГЕР-ШОУ</h2>
                                                     <p>Самая горячая ток-площадка в разгар праздника! Собери друзей и не пропусти шоу с ведущими интернет-звездами.</p>
                                                 </div>
                                             </div>
-                                            <div class="col-sm-3">
+                                            <div class="col-sm-4 col-lg-3">
                                                 <img src="img/img08_3.jpg" alt="" />
                                             </div>
-                                            <div class="col-sm-2">
+                                            <div class="col-lg-2 hidden-xs hidden-sm hidden-md">
                                                 <img src="img/img08_4.jpg" alt="" />
                                             </div>
                                         </div>
@@ -1071,109 +1071,111 @@ $markup = PawsApplication::markup();
                 </div>
             </div>
             <div class="festival-guest">
-                <div class="block_wrapper">
-                    <div class="colour_descr violet">
-                        <p>ANNY MAGIC - Звездный блогер каналов о жизни с животными MAGIC FAMILY и MAGIC PETS. Мама 5 собачек и кошки Рикки.</p>
-                        <div class="triangle violet-triangle-right"></div>
-                    </div>
-                    <div class="portrait">
-                        <div class="portrait_title">
-                            <h3 class="violet">Anny</h3>
-                            <h3 class="violet_text">Magic</h3>
+                <div class="festival-guest__list">
+                    <div class="block_wrapper">
+                        <div class="colour_descr violet">
+                            <p>Звездный блогер, автор популярных каналов о&nbsp;жизни с&nbsp;животными Magic&nbsp;Family и&nbsp;Magic&nbsp;Pets. Хозяйка 4&nbsp;собачек и&nbsp;кошки.</p>
+                            <div class="triangle violet-triangle-right"></div>
                         </div>
-                        <img src="img/anny_magic.jpg" alt="" />
-                    </div>
-                </div>
-                <div class="block_wrapper">
-                    <div class="colour_descr blue">
-                        <p>самый юный видео-блогер, ведет канал на Youtube. Ждет в гости РЕБЯТ, которые любят снимать видео со своими питомцами</p>
-                        <div class="triangle blue-triangle-right"></div>
-                    </div>
-                    <div class="portrait">
-                        <div class="portrait_title">
-                            <h3 class="blue">Viki</h3>
-                            <h3 class="blue_text">Show</h3>
+                        <div class="portrait">
+                            <div class="portrait_title">
+                                <h3 class="violet">Anny</h3>
+                                <h3 class="second-portrait-title violet_text">Magic</h3>
+                            </div>
+                            <img src="img/anny_magic.jpg" alt="" />
                         </div>
-                        <img src="img/vicky_show.jpg" alt="" />
                     </div>
-                </div>
-                <div class="block_wrapper">
-                    <div class="colour_descr gray">
-                        <p>Helen Yes - инстаграм-блогер, актриса, певица и&nbsp;самая весёлая мама двойняшек. Городские
-	                        приключения и полезные советы мамы, собаки и малышей.</p>
-                        <div class="triangle gray-triangle-left"></div>
-                    </div>
-                    <div class="portrait">
-                        <div class="portrait_title">
-                            <h3 class="gray">Helen</h3>
-                            <h3 class="gray_text">Yes</h3>
+                    <div class="block_wrapper">
+                        <div class="colour_descr blue">
+                            <p>самый юный видео-блогер, ведет канал на&nbsp;Youtube. Ждет в&nbsp;гости РЕБЯТ, которые любят снимать видео со&nbsp;своими питомцами</p>
+                            <div class="triangle blue-triangle-right"></div>
                         </div>
-                        <img src="img/sazhina.jpg?v=2" alt="" /></div>
-                </div>
-                <div class="block_wrapper">
-                    <div class="colour_descr pink">
-                        <p>друг и&nbsp;хозяин четырех хаски Юбэк, Бугатти, Фрэя и&nbsp;Даная. Автор историй с&nbsp;хаски в&nbsp;&laquo;Добром блоге Леши&raquo;</p>
-                        <div class="triangle pink-triangle-left"></div>
-                    </div>
-                    <div class="portrait">
-                        <div class="portrait_title">
-                            <h3 class="pink">Alexey</h3>
-                            <h3 class="pink_text">Husky</h3>
+                        <div class="portrait">
+                            <div class="portrait_title">
+                                <h3 class="blue">Viki</h3>
+                                <h3 class="second-portrait-title blue_text">Show</h3>
+                            </div>
+                            <img src="img/vicky_show.jpg" alt="" />
                         </div>
-                        <img src="img/sorokin.jpg" alt="" />
                     </div>
-                </div>
-                <div class="block_wrapper">
-                    <div class="colour_descr green">
-                        <p>Юлия Костюшкина – телеведущая, спортсменка, актриса и мама двух терьеров Олава и Оливии.</p>
-                        <div class="triangle green-triangle-right"></div>
-                    </div>
-                    <div class="portrait">
-                        <div class="portrait_title">
-                            <h3 class="green">Юлия</h3>
-                            <h3 class="green_text">Костюшкина</h3>
+                    <div class="block_wrapper">
+                        <div class="colour_descr gray">
+                            <p>Helen Yes - инстаграм-блогер, актриса, певица и&nbsp;самая весёлая мама двойняшек. Городские
+                                приключения и&nbsp;полезные советы мамы, собаки и&nbsp;малышей.</p>
+                            <div class="triangle gray-triangle-left"></div>
                         </div>
-                        <img src="img/kostyushkina.jpg" alt="" />
+                        <div class="portrait">
+                            <div class="portrait_title">
+                                <h3 class="gray">Helen</h3>
+                                <h3 class="second-portrait-title gray_text">Yes</h3>
+                            </div>
+                            <img src="img/sazhina.jpg?v=2" alt="" /></div>
                     </div>
-                </div>
-                <div class="block_wrapper">
-                    <div class="colour_descr blue">
-                        <p>мама двоих детей, педиатр, ведущая рубрики &laquo;Супермама&raquo;, автор книг и&nbsp;любимый блогер всех мам</p>
-                        <div class="triangle blue-triangle-right"></div>
-                    </div>
-                    <div class="portrait">
-                        <div class="portrait_title">
-                            <h3 class="blue">Анна</h3>
-                            <h3 class="blue_text">Левадная</h3>
+                    <div class="block_wrapper">
+                        <div class="colour_descr pink">
+                            <p>друг и&nbsp;хозяин четырех хаски Юбэк, Бугатти, Фрэя и&nbsp;Даная. Автор историй с&nbsp;хаски в&nbsp;&laquo;Добром блоге Леши&raquo;</p>
+                            <div class="triangle pink-triangle-left"></div>
                         </div>
-                        <img src="img/levadnaya.jpg" alt="" />
-                    </div>
-                </div>
-                <div class="block_wrapper">
-                    <div class="colour_descr violet">
-                        <p>ветеринар-эксперт, любящий папа для всех пушистых питомцев. зНАЕТ ВСЕ ОБ&nbsp;УХОДЕ ЗА&nbsp;ДОМАШНИМИ ЖИВОТНЫМИ</p>
-                        <div class="triangle violet-triangle-left"></div>
-                    </div>
-                    <div class="portrait">
-                        <div class="portrait_title">
-                            <h3 class="violet">Кирилл</h3>
-                            <h3 class="violet_text">Скачков</h3>
+                        <div class="portrait">
+                            <div class="portrait_title">
+                                <h3 class="pink">Alexey</h3>
+                                <h3 class="second-portrait-title pink_text">Husky</h3>
+                            </div>
+                            <img src="img/sorokin.jpg" alt="" />
                         </div>
-                        <img src="img/skachkov.jpg" alt="" />
                     </div>
-                </div>
-                <div class="block_wrapper">
-                    <div class="colour_descr pink">
-                        <p>Виталий Орлов – педагог, руководитель кинологического центра «Школа Орлова», 30 лет
-	                        практики работы с домашними животными.</p>
-                        <div class="triangle pink-triangle-left"></div>
-                    </div>
-                    <div class="portrait">
-                        <div class="portrait_title">
-                            <h3 class="pink">Виталий</h3>
-                            <h3 class="pink_text">Орлов</h3>
+                    <div class="block_wrapper">
+                        <div class="colour_descr green">
+                            <p>Юлия Костюшкина – телеведущая, спортсменка, актриса и&nbsp;мама двух терьеров Олава и&nbsp;Оливии.</p>
+                            <div class="triangle green-triangle-right"></div>
                         </div>
-                        <img src="img/orlov.jpg?v=2" alt="" />
+                        <div class="portrait">
+                            <div class="portrait_title">
+                                <h3 class="green">Юлия</h3>
+                                <h3 class="second-portrait-title green_text">Костюшкина</h3>
+                            </div>
+                            <img src="img/kostyushkina.jpg" alt="" />
+                        </div>
+                    </div>
+                    <div class="block_wrapper">
+                        <div class="colour_descr blue">
+                            <p>мама двоих детей, педиатр, ведущая рубрики &laquo;Супермама&raquo;, автор книг и&nbsp;любимый блогер всех мам</p>
+                            <div class="triangle blue-triangle-right"></div>
+                        </div>
+                        <div class="portrait">
+                            <div class="portrait_title">
+                                <h3 class="blue">Анна</h3>
+                                <h3 class="second-portrait-title blue_text">Левадная</h3>
+                            </div>
+                            <img src="img/levadnaya.jpg" alt="" />
+                        </div>
+                    </div>
+                    <div class="block_wrapper">
+                        <div class="colour_descr violet">
+                            <p>ветеринар-эксперт, любящий папа для&nbsp;всех пушистых питомцев. зНАЕТ ВСЕ ОБ&nbsp;УХОДЕ ЗА&nbsp;ДОМАШНИМИ ЖИВОТНЫМИ</p>
+                            <div class="triangle violet-triangle-left"></div>
+                        </div>
+                        <div class="portrait">
+                            <div class="portrait_title">
+                                <h3 class="violet">Кирилл</h3>
+                                <h3 class="second-portrait-title violet_text">Скачков</h3>
+                            </div>
+                            <img src="img/skachkov.jpg" alt="" />
+                        </div>
+                    </div>
+                    <div class="block_wrapper">
+                        <div class="colour_descr pink">
+                            <p>Виталий Орлов – педагог, руководитель кинологического центра «Школа Орлова», 30 лет
+                                практики работы с&nbsp;домашними животными.</p>
+                            <div class="triangle pink-triangle-left"></div>
+                        </div>
+                        <div class="portrait">
+                            <div class="portrait_title">
+                                <h3 class="pink">Виталий</h3>
+                                <h3 class="second-portrait-title pink_text">Орлов</h3>
+                            </div>
+                            <img src="img/orlov.jpg?v=2" alt="" />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1211,37 +1213,39 @@ $markup = PawsApplication::markup();
                 </div>
             </div>
             <div class="activity-frame">
-                <div class="image_wrapper">
-                    <img src="img/relax01.jpg" alt="" />
-                    <div class="milk_bar"><h3>ГИГАНТСКИЙ ТИР</h3></div>
-                </div>
-                <div class="image_wrapper">
-                    <img src="img/relax02.jpg" alt="" />
-                    <div class="milk_bar"><h3>МИНИ-ФУТБОЛ</h3></div>
-                </div>
-                <div class="image_wrapper">
-                    <img src="img/relax03.jpg" alt="" />
-                    <div class="milk_bar"><h3>МАСТЕР-КЛАССЫ</h3></div>
-                </div>
-                <div class="image_wrapper">
-                    <img src="img/relax04.jpg" alt="" />
-                    <div class="milk_bar"><h3>БАССЕЙН С ШАРИКАМИ</h3></div>
-                </div>
-                <div class="image_wrapper">
-                    <img src="img/relax05.jpg" alt="" />
-                    <div class="milk_bar"><h3>ЗУМБА</h3></div>
-                </div>
-                <div class="image_wrapper">
-                    <img src="img/relax06.jpg" alt="" />
-                    <div class="milk_bar"><h3>МИНИ-ГОЛЬФ</h3></div>
-                </div>
-                <div class="image_wrapper">
-                    <img src="img/relax07.jpg" alt="" />
-                    <div class="milk_bar"><h3>АКВАГРИМ</h3></div>
-                </div>
-                <div class="image_wrapper">
-                    <img src="img/relax08.jpg" alt="" />
-                    <div class="milk_bar"><h3>НАСТОЛЬНЫЕ ИГРЫ</h3></div>
+                <div class="activity-frame__list">
+                    <div class="image_wrapper">
+                        <img src="img/relax01.jpg" alt="" />
+                        <div class="milk_bar"><h3>ГИГАНТСКИЙ ТИР</h3></div>
+                    </div>
+                    <div class="image_wrapper">
+                        <img src="img/relax02.jpg" alt="" />
+                        <div class="milk_bar"><h3>МИНИ-ФУТБОЛ</h3></div>
+                    </div>
+                    <div class="image_wrapper">
+                        <img src="img/relax03.jpg" alt="" />
+                        <div class="milk_bar"><h3>МАСТЕР-КЛАССЫ</h3></div>
+                    </div>
+                    <div class="image_wrapper">
+                        <img src="img/relax04.jpg" alt="" />
+                        <div class="milk_bar"><h3>БАССЕЙН С ШАРИКАМИ</h3></div>
+                    </div>
+                    <div class="image_wrapper">
+                        <img src="img/relax05.jpg" alt="" />
+                        <div class="milk_bar"><h3>ЗУМБА</h3></div>
+                    </div>
+                    <div class="image_wrapper">
+                        <img src="img/relax06.jpg" alt="" />
+                        <div class="milk_bar"><h3>МИНИ-ГОЛЬФ</h3></div>
+                    </div>
+                    <div class="image_wrapper">
+                        <img src="img/relax07.jpg" alt="" />
+                        <div class="milk_bar"><h3>АКВАГРИМ</h3></div>
+                    </div>
+                    <div class="image_wrapper">
+                        <img src="img/relax08.jpg" alt="" />
+                        <div class="milk_bar"><h3>НАСТОЛЬНЫЕ ИГРЫ</h3></div>
+                    </div>
                 </div>
             </div>
             <button class="join_btn js-open-popup" data-popup-id="form-festival">я пойду!</button>
@@ -1267,11 +1271,13 @@ $markup = PawsApplication::markup();
                         <!-- Work -->
                         <div class="work work-popup-trigger">
                             <div class="full_width">
-                                <iframe width="908" height="450" src="https://www.youtube.com/embed/St9BslKyfgE" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                <img class="full-width img-responsive" src="img/stub-video-gala.png" alt="">
+                                <iframe class="gala__video" src="https://www.youtube.com/embed/St9BslKyfgE" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                             </div>
 
                             <div class="mobile">
-                                <iframe width="100%" height="169" src="https://www.youtube.com/embed/St9BslKyfgE" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                <img class="full-width img-responsive" src="img/stub-video-gala_mobile.png" alt="">
+                                <iframe class="gala__video" src="https://www.youtube.com/embed/St9BslKyfgE" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                             </div>
                             <!--<div class="work-popup-overlay">
                                 <div class="work-popup-content">
@@ -1553,40 +1559,35 @@ $markup = PawsApplication::markup();
                 <div class="container-sm content-lg">
                     <div class="row text-center margin-b-40">
                         <div class="col-sm-8 col-sm-offset-2">
-                            <div class="bar"><h5>квест «Хочу в париж»</h5></div>
-                            <h2>выиграй путешествие в париж</h2>
+                            <div class="bar"><h5>квест «Хочу в&nbsp;париж»</h5></div>
+                            <h2>выиграй путешествие в&nbsp;париж</h2>
                             <hr class="header_line" />
-                            <p class="promo-banner-text">всего четыре шага и ты у цели</p>
+                            <p class="promo-banner-text">всего четыре шага и&nbsp;ты у&nbsp;цели</p>
                         </div>
                     </div>
                     <div class="konkurs_scheme">
-                        <div class="vertical_line">
-                            <div class="step">
-                                <div class="step_inner">
-                                    <h5>шаг 1</h5>
-                                    <h3>Зарегистрируйся и&nbsp;получи Приглашение с&nbsp;индивидуальным кодом участника.</h3>
-                                </div>
+                        <div class="step">
+                            <div class="step_inner">
+                                <h5>шаг 1</h5>
+                                <h3>Зарегистрируйся и&nbsp;получи Приглашение с&nbsp;индивидуальным кодом участника.</h3>
                             </div>
-
-                            <div class="step">
-                                <div class="step_inner">
-                                    <h5>шаг 2</h5>
-                                    <h3>Приходи на&nbsp;Фестиваль 9&nbsp;июня, получи Паспорт участника и&nbsp;скидку&nbsp;10% на&nbsp;любые покупки в&nbsp;зоомагазине &laquo;Четыре лапы&raquo;.</h3>
-                                </div>
+                        </div>
+                        <div class="step">
+                            <div class="step_inner">
+                                <h5>шаг 2</h5>
+                                <h3>Приходи на&nbsp;Фестиваль 9&nbsp;июня, получи Паспорт участника и&nbsp;скидку&nbsp;10% на&nbsp;любые покупки в&nbsp;зоомагазине &laquo;Четыре лапы&raquo;.</h3>
                             </div>
-
-                            <div class="step">
-                                <div class="step_inner">
-                                    <h5>шаг 3</h5>
-                                    <h3>Путешествуй по&nbsp;Фестивалю, отдыхай, участвуй в&nbsp;конкурсах.</h3>
-                                </div>
+                        </div>
+                        <div class="step">
+                            <div class="step_inner">
+                                <h5>шаг 3</h5>
+                                <h3>Путешествуй по&nbsp;Фестивалю, отдыхай, участвуй в&nbsp;конкурсах.</h3>
                             </div>
-
-                            <div class="step">
-                                <div class="step_inner">
-                                    <h5>шаг 4</h5>
-                                    <h3>Выиграй путешествие в&nbsp;Париж и&nbsp;еще множество призов</h3>
-                                </div>
+                        </div>
+                        <div class="step">
+                            <div class="step_inner">
+                                <h5>шаг 4</h5>
+                                <h3>Выиграй путешествие в&nbsp;Париж и&nbsp;еще множество призов</h3>
                             </div>
                         </div>
                     </div>
