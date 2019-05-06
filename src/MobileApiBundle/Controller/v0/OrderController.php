@@ -10,9 +10,11 @@ use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Request\OrderInfoRequest;
 use FourPaws\MobileApiBundle\Dto\Request\OrderStatusHistoryRequest;
+use FourPaws\MobileApiBundle\Dto\Request\PaginationRequest;
 use FourPaws\MobileApiBundle\Dto\Response\OrderInfoResponse;
 use FourPaws\MobileApiBundle\Dto\Response\OrderListResponse;
 use FourPaws\MobileApiBundle\Dto\Response\OrderStatusHistoryResponse;
+use FourPaws\PersonalBundle\Repository\OrderRepository;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use FourPaws\MobileApiBundle\Services\Api\OrderService as ApiOrderService;
 
@@ -37,14 +39,23 @@ class OrderController extends FOSRestController
     /**
      * @Rest\Get(path="/order_list_v2/")
      * @Rest\View()
+     * @param PaginationRequest $paginationRequest
+     * @param OrderRepository $orderRepository
      * @return OrderListResponse
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
      */
-    public function getOrderListAction()
+    public function getOrderListAction(PaginationRequest $paginationRequest, OrderRepository $orderRepository)
     {
-        return (new OrderListResponse())->setOrderList($this->apiOrderService->getList()->getValues());
+        $orders = $this->apiOrderService->getList($paginationRequest)->getValues();
+        $pagination = $orderRepository->getNav();
+
+        return (new OrderListResponse())
+            ->setOrderList($orders)
+            ->setTotalItems($pagination->getRecordCount())
+            ->setTotalPages($pagination->getPageCount())
+        ;
     }
 
     /**

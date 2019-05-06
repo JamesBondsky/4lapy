@@ -35,6 +35,7 @@ use FourPaws\MobileApiBundle\Dto\Object\OrderParameter;
 use FourPaws\MobileApiBundle\Dto\Object\OrderStatus;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Dto\Object\PriceWithQuantity;
+use FourPaws\MobileApiBundle\Dto\Request\PaginationRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartOrderRequest;
 use FourPaws\MobileApiBundle\Exception\BonusSubtractionException;
 use FourPaws\MobileApiBundle\Exception\OrderNotFoundException;
@@ -154,14 +155,15 @@ class OrderService
     }
 
     /**
+     * @param PaginationRequest $paginationRequest
      * @return ArrayCollection
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
      */
-    public function getList()
+    public function getList($paginationRequest)
     {
-        $orders = $this->getUserOrders();
+        $orders = $this->getUserOrders($paginationRequest);
         // toDo подписка на заказ
         // $user = $this->appUserService->getCurrentUser();
         // $subscriptions = $this->appOrderSubscribeService->getSubscriptionsByUser($user->getId());
@@ -312,15 +314,16 @@ class OrderService
     }
 
     /**
+     * @param PaginationRequest $paginationRequest
      * @return ArrayCollection
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
      */
-    public function getUserOrders()
+    public function getUserOrders($paginationRequest)
     {
         $user = $this->appUserService->getCurrentUser();
-        return $this->personalOrderService->getUserOrders($user, 1, 0);
+        return $this->personalOrderService->getUserOrders($user, $paginationRequest->getPage(), $paginationRequest->getCount());
     }
 
     /**
