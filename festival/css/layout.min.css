@@ -2047,6 +2047,7 @@ hr.header_line {
 
     .promo-block .desktop_hat {
         padding-top: 95px;
+        padding-bottom: 0;
     }
 
     #activity {}
@@ -2059,15 +2060,6 @@ hr.header_line {
                 #activity .activity-frame .milk_bar h3{
                     font-size: 22px;
                 }
-
-    #gala {}
-        #gala .work-popup-trigger .full_width {
-            display: none;
-        }
-        #gala .work-popup-trigger .mobile {
-            display: block;
-        }
-
 
     #map .interactive_map .interactive_map-main {
         width: 730px;
@@ -2154,9 +2146,13 @@ hr.header_line {
                 top: -7px;
                 left: -35px;
             }
-        .header .navbar-nav .nav-item,
-        .header .navbar-nav .nav-item-child {
+        .header .navbar-nav .nav-item {
             display: block;
+            position: relative;
+            padding-top: 0px;
+        }
+
+        .header .navbar-nav .nav-item-child {
             position: relative;
             padding-top: 0px;
         }
@@ -2296,6 +2292,14 @@ hr.header_line {
                 #activity .activity-frame .milk_bar h3{
                     font-size: 30px;
                 }
+
+    #gala {}
+        #gala .work-popup-trigger .full_width {
+            display: none;
+        }
+        #gala .work-popup-trigger .mobile {
+            display: block;
+        }
 
     #konkurs_scheme {}
         #konkurs .promo-banner .content-lg {
