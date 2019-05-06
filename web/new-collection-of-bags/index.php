@@ -12,9 +12,53 @@ global $APPLICATION;
 
 $offerData = [
     [
-        'TITLE' => 'Классические сумки',
+        'TITLE' => 'Чувствуй свободу - будь в тренде!',
+        'DESCR' => 'Новая коллекция стильных сумок для путешествий и&nbsp;отдыха. Модные рюкзаки с&nbsp;полным обзором и&nbsp;с&nbsp;объемным иллюминатором имеют инновационный дизайн и&nbsp;созданы по&nbsp;последним технологиям, что позволяет поддерживать комфортную температуру внутри и&nbsp;циркуляцию воздуха.',
+        'IMAGE' => '/upload/bags_images/bags_walks.jpg',
+        'IMAGE_MOBILE' => '/upload/bags_images/bags_walks_small.jpg',
+        'OFFERS' => [
+            1029856,
+            1029857,
+            1029858,
+            1029861,
+            1029862,
+            1029884,
+            1029885,
+            1029886,
+            1029887
+        ]
+    ],
+    [
+        'TITLE' => 'Будь активным – живи ярко!',
+        'DESCR' => 'Спортивные рюкзаки созданы, чтобы не&nbsp;мечтать, а&nbsp;действовать. Это сочетание стиля и&nbsp;функциональности для тех, кто в&nbsp;постоянном движении. Регулирующий поясной ремень, удерживает плотно рюкзак на&nbsp;спине, что очень удобно в&nbsp;дороге. Внутри каждого рюкзака&nbsp;&mdash; мягкий коврик и&nbsp;фиксирующий карабин безопасности.',
         'IMAGE' => '/upload/bags_images/bags_sport.jpg',
         'IMAGE_MOBILE' => '/upload/bags_images/bags_sport_small.jpg',
+        'OFFERS' => [
+            1029852,
+            1029853,
+            1029855,
+            1024100,
+            1029865,
+            1029866,
+            1029863,
+            1029864,
+        ]
+    ],
+    [
+        'TITLE' => 'Путешествуйте вместе!',
+        'DESCR' => 'Новая коллекция сумок для тех, кто не&nbsp;любит расставаться. В&nbsp;отпуск, на&nbsp;дачу, в&nbsp;путешествие своим ходом&nbsp;&mdash; питомцу уютно и&nbsp;не&nbsp;жарко в&nbsp;сумке на&nbsp;колесах.',
+        'IMAGE' => '/upload/bags_images/bags_travels.jpg',
+        'IMAGE_MOBILE' => '/upload/bags_images/bags_travels_small.jpg',
+        'OFFERS' => [
+            1029849,
+            1024091
+        ]
+    ],
+    [
+        'TITLE' => 'Качество, проверенное временем',
+        'DESCR' => 'Классические <nobr>сумки-переноски</nobr>&nbsp;&mdash; хит продаж. Современные, удобные практичные, они незаменимые помощники в&nbsp;дороге, по&nbsp;делам и&nbsp;для поездки в&nbsp;гости. Сумки имеют наплечный ремень с&nbsp;мягкой подкладкой, который можно отрегулировать по&nbsp;длине.',
+        'IMAGE' => '/upload/bags_images/bags_trips.jpg',
+        'IMAGE_MOBILE' => '/upload/bags_images/bags_trips_small.jpg',
         'OFFERS' => [
             1029850,
             1024096,
@@ -42,46 +86,6 @@ $offerData = [
             1032135,
         ]
     ],
-    [
-        'TITLE' => 'Модные сумки',
-        'IMAGE' => '/upload/bags_images/bags_walks.jpg',
-        'IMAGE_MOBILE' => '/upload/bags_images/bags_walks_small.jpg',
-        'OFFERS' => [
-            1029856,
-            1029857,
-            1029858,
-            1029861,
-            1029862,
-            1029863,
-            1029864,
-            1029884,
-            1029885,
-            1029886,
-            1029887
-        ]
-    ],
-    [
-        'TITLE' => 'Спортивные сумки',
-        'IMAGE' => '/upload/bags_images/bags_trips.jpg',
-        'IMAGE_MOBILE' => '/upload/bags_images/bags_trips_small.jpg',
-        'OFFERS' => [
-            1029852,
-            1029853,
-            1029855,
-            1024100,
-            1029865,
-            1029866
-        ]
-    ],
-    [
-        'TITLE' => 'Сумки 2 в 1',
-        'IMAGE' => '/upload/bags_images/bags_travels.jpg',
-        'IMAGE_MOBILE' => '/upload/bags_images/bags_travels_small.jpg',
-        'OFFERS' => [
-            1029849,
-            1024091
-        ]
-    ],
 ];
 ?>
     <div class="b-container b-container--news">
@@ -103,11 +107,14 @@ $offerData = [
                     <section class="b-common-section" data-url="">
                         <div class="b-bags-banner">
                             <div class="b-bags-banner__img-wrap b-bags-banner__img-wrap--desktop">
-                                <img src="<?=$offerDatum['IMAGE']?>?v=2">
+                                <img src="<?=$offerDatum['IMAGE']?>?v=3">
                             </div>
                             <div class="b-bags-banner__img-wrap b-bags-banner__img-wrap--mobile">
-                                <img src="<?=$offerDatum['IMAGE_MOBILE']?>?v=2">
+                                <img src="<?=$offerDatum['IMAGE_MOBILE']?>?v=3">
                             </div>
+
+                            <div class="b-bags-banner__title"><?=$offerDatum['TITLE']?></div>
+                            <div class="b-bags-banner__descr"><?=$offerDatum['DESCR']?></div>
                         </div>
                         <div class="b-common-wrapper b-common-wrapper--visible js-catalog-wrapper">
                             <?
