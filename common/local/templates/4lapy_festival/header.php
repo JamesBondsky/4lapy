@@ -60,8 +60,8 @@ $markup = PawsApplication::markup();
     <link href="vendor/magnific-popup/magnific-popup.css" rel="stylesheet" type="text/css"/>
 
     <!-- THEME STYLES -->
-    <link href="css/elements.css?v=1" rel="stylesheet" type="text/css"/>
-    <link href="css/layout.min.css?v=2" rel="stylesheet" type="text/css"/>
+    <link href="css/elements.css?v=3" rel="stylesheet" type="text/css"/>
+    <link href="css/layout.min.css?v=3" rel="stylesheet" type="text/css"/>
 
     <!-- Favicon -->
     <link rel="shortcut icon" href="favicon.ico"/>
@@ -1267,7 +1267,7 @@ $markup = PawsApplication::markup();
                 <!-- Masonry Grid -->
                 <div class="masonry-grid row row-space-2">
                     <div class="masonry-grid-sizer col-xs-6 col-sm-6 col-md-1"></div>
-                    <div class="masonry-grid-item col-xs-12 col-sm-6 col-md-8 margin-b-4">
+                    <div class="masonry-grid-item col-xs-12 col-sm-12 col-md-8 margin-b-4">
                         <!-- Work -->
                         <div class="work work-popup-trigger">
                             <div class="full_width">
