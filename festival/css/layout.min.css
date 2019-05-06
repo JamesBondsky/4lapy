@@ -222,9 +222,9 @@ body {
     height: auto;
     display: block;
     margin: 0 auto;
-    -webkit-transform: translate3d(0,-50%,0);
-    -moz-transform: translate3d(0,-50%,0);
-    transform: translate3d(0,-50%,0)
+    -webkit-transform: translateY(-50%);
+    -moz-transform: translateY(-50%);
+    transform: translateY(-50%);
     border-radius: 20px;
     box-shadow: 0 0 40px rgba(120, 120, 120, .5);
 }
@@ -1100,7 +1100,7 @@ hr.header_line {
     }
         #about .icon_wrap .icon {
             max-width: 25%;
-            padding: 3%;
+            padding: 20px;
         }
             #about .icon_wrap .icon img {
                 max-width: 100%;
