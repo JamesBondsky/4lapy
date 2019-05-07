@@ -37,7 +37,7 @@ class UserGroup
     /** id лучше не юзать */
     public const OPT_ID = 32;
     public const OPT_CODE = 'VIP';
-    public const NOT_AUTH_CODE = 'NOT_AUTH';
+    public const NOT_AUTH_CODE = 'NOT_AUTH'; // "Неавторизованные"
 
-    public const BASKET_RULES = 'BASKET_RULES';
+    public const BASKET_RULES = 'BASKET_RULES'; // "Применяются правила работы с корзиной"
 }

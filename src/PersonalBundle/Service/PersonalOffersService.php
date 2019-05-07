@@ -29,6 +29,11 @@ class PersonalOffersService
 {
     use LoggerAwareTrait;
 
+    public const SECOND_ORDER_OFFER_CODE = 'second_order';
+    public const TIME_PASSED_AFTER_LAST_ORDER_OFFER_CODE = 'after_2_months';
+
+    public const DISCOUNT_PREFIX = 'personal_offer';
+
     /** @var DataManager */
     protected $personalCouponManager;
     /** @var DataManager */
