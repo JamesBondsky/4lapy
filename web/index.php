@@ -4,6 +4,7 @@ use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use FourPaws\App\Application as App;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
@@ -305,35 +306,37 @@ $APPLICATION->IncludeComponent('fourpaws:items.list',
  * Просмотренные товары
  */
 $APPLICATION->IncludeComponent(
-    'bitrix:main.include',
-    '',
-    [
-        'AREA_FILE_SHOW' => 'file',
-        'PATH'           => '/local/include/blocks/index.viewed_products.php',
-        'EDIT_TEMPLATE'  => '',
-    ],
-    null,
-    [
-        'HIDE_ICONS' => 'Y',
-    ]
+	'bitrix:main.include',
+	'',
+	[
+		'AREA_FILE_SHOW' => 'file',
+		'PATH' => '/local/include/blocks/index.viewed_products.php',
+		'EDIT_TEMPLATE' => '',
+	],
+	null,
+	[
+		'HIDE_ICONS' => 'Y',
+	]
 );
 
 /**
  * Контейнер текста на странице
  */
-$APPLICATION->IncludeComponent(
-    'bitrix:main.include',
-    '',
-    [
-        'AREA_FILE_SHOW' => 'file',
-        'PATH'           => '/local/include/blocks/index.seo_text.php',
-        'EDIT_TEMPLATE'  => '',
-    ],
-    null,
-    [
-        'HIDE_ICONS' => 'N',
-    ]
-);
+if (!KioskService::isKioskMode()) {
+	$APPLICATION->IncludeComponent(
+		'bitrix:main.include',
+		'',
+		[
+			'AREA_FILE_SHOW' => 'file',
+			'PATH' => '/local/include/blocks/index.seo_text.php',
+			'EDIT_TEMPLATE' => '',
+		],
+		null,
+		[
+			'HIDE_ICONS' => 'N',
+		]
+	);
+}
 
 echo '</div>';
 
