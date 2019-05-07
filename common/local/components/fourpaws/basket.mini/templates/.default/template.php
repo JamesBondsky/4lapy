@@ -28,27 +28,8 @@ if (true !== $arParams['IS_AJAX']) {
 <?php if ($itemCount) { ?>
     <div class="b-popover b-popover--cart js-popover js-content-popover-mobile-header">
         <div class="b-cart-popover">
-            <span class="b-cart-popover__amount">
-                <?= $itemCount ?>
-                <?= WordHelper::declension(
-                    $itemCount, [
-                        'Товар',
-                        'Товара',
-                        'Товаров',
-                    ]
-                ) ?>
-            </span>
-            <span class="b-cart-popover__link" style="width: 58%">
-                <a class="b-link b-link--popover-cart" href="<?= $arParams['PATH_TO_BASKET'] ?>" title="Редактировать">
-                    Редактировать
-                </a>
-            </span>
-            <a class="b-link b-link--popover-cart-mobile" href="<?= $arParams['PATH_TO_BASKET'] ?>"
-               title="Редактировать">
-                Редактировать товары в корзине
-            </a>
-            <a class="b-button b-button--popover-cart" href="<?= $arParams['PATH_TO_ORDER'] ?>" title="Оформить заказ">
-                Оформить заказ
+            <a class="b-button b-button--popover-cart" href="<?= $arParams['PATH_TO_BASKET'] ?>" title="Перейти в корзину">
+                Перейти в корзину
             </a>
             <?php
             if ($itemCount) {
