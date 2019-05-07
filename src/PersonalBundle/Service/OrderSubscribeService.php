@@ -264,17 +264,18 @@ class OrderSubscribeService implements LoggerAwareInterface
      * @throws ObjectPropertyException
      * @throws SecurityException
      * @throws SystemException
+     * @throws ApplicationCreateException
      */
     public function delete(int $id): bool
     {
         try {
-            /** @var OrderSubscribe $deleteEntity */
-            $deleteEntity = $this->orderSubscribeRepository->findById($id);
+            /** @var OrderSubscribe $orderSubscribe */
+            $orderSubscribe = $this->orderSubscribeRepository->findById($id);
         } catch (\FourPaws\AppBundle\Exception\NotFoundException $e) {
             return true;
         }
 
-        if ($deleteEntity->getUserId() !== $this->currentUser->getCurrentUserId()) {
+        if ($orderSubscribe->getUserId() !== $this->currentUser->getCurrentUserId()) {
             throw new SecurityException('не хватает прав доступа для совершения данной операции');
         }
 
@@ -282,6 +283,17 @@ class OrderSubscribeService implements LoggerAwareInterface
         /** @var OrderSubscribeItem $item */
         foreach ($deleteEntityItems as $item) {
             $this->deleteSubscribeItem($item->getId());
+        }
+
+        // удалим созданные по подписке заказы
+        $orderIdsForDelete = $this->getOrderSubscribeHistoryService()->getNotDeliveredOrderIds($orderSubscribe);
+        if(count($orderIdsForDelete) > 0){
+            foreach($orderIdsForDelete as $orderIdForDelete){
+                $orderService = $this->getOrderService();
+                $order = $orderService->getOrderById($orderIdForDelete);
+                $order->setField('CANCELED', 'Y');
+                $order->save();
+            }
         }
 
         return $this->orderSubscribeRepository->delete($id);

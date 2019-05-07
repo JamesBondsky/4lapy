@@ -67,39 +67,39 @@ if ($arParams['SHOW_SUBSCRIBE_ACTION'] === 'Y') {
 /**
  * Элементы управления, выводимые на странице списка подписанных заказов
  */
-ob_start();
-if ($arResult['isActualSubscription']) {
-    ?>
-    <div class="b-accordion-order-item__subscribe-link">
-        <?php
-        if ($arResult['canBeSubscribed']) {
-            ?>
-            <a class="b-accordion-order-item__edit js-open-popup js-subscribe-delivery-edit"
-               href="javascript:void(0);"
-               title="Редактировать подписку"
-               data-popup-id="<?= $attrPopupId ?>">
-            <span class="b-icon b-icon--account-block">
-                <?= new SvgDecorator('icon-edit', 23, 20) ?>
-            </span>
-                <span>Редактировать</span>
-            </a>
-            <?php
-        }
-        ?>
-        <a class="b-accordion-order-item__del-subscribe js-delete"
-           href="javascript:void(0);"
-           title="Удалить подписку"
-           data-id="<?=$order->getId()?>"
-           data-url="/ajax/personal/orderSubscribe/delete/?orderId=<?=$order->getId()?>">
-            <span class="b-icon b-icon--account-block">
-                <?= new SvgDecorator('icon-trash', 23, 20) ?>
-            </span>
-            <span>Удалить</span>
-        </a>
-    </div>
-    <?php
-}
-$arResult['CONTROLS_HTML']['EDIT'] = ob_get_clean();
+//ob_start();
+//if ($arResult['isActualSubscription']) {
+//    ?>
+<!--    <div class="b-accordion-order-item__subscribe-link">-->
+<!--        --><?php
+//        if ($arResult['canBeSubscribed']) {
+//            ?>
+<!--            <a class="b-accordion-order-item__edit js-open-popup js-subscribe-delivery-edit"-->
+<!--               href="javascript:void(0);"-->
+<!--               title="Редактировать подписку"-->
+<!--               data-popup-id="--><?//= $attrPopupId ?><!--">-->
+<!--            <span class="b-icon b-icon--account-block">-->
+<!--                --><?//= new SvgDecorator('icon-edit', 23, 20) ?>
+<!--            </span>-->
+<!--                <span>Редактировать</span>-->
+<!--            </a>-->
+<!--            --><?php
+//        }
+//        ?>
+<!--        <a class="b-accordion-order-item__del-subscribe js-delete"-->
+<!--           href="javascript:void(0);"-->
+<!--           title="Удалить подписку"-->
+<!--           data-id="--><?//=$order->getId()?><!--"-->
+<!--           data-url="/ajax/personal/orderSubscribe/delete/?id=--><?//=$orderSubscribe->getId()?><!--">-->
+<!--            <span class="b-icon b-icon--account-block">-->
+<!--                --><?//= new SvgDecorator('icon-trash', 23, 20) ?>
+<!--            </span>-->
+<!--            <span>Удалить</span>-->
+<!--        </a>-->
+<!--    </div>-->
+<!--    --><?php
+//}
+//$arResult['CONTROLS_HTML']['EDIT'] = ob_get_clean();
 
 if ($arParams['SHOW_SUBSCRIBE_EDIT_ACTION'] === 'Y') {
     echo $arResult['CONTROLS_HTML']['EDIT'];

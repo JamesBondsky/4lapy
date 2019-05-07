@@ -1614,10 +1614,16 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     {
         $deliveries = $this->getDeliveries();
         if($this->getSubscribe()){
-            $deliveries = array_filter($deliveries, function($delivery){
-                /** @var BaseResult $delivery */
-                return $delivery->getDeliveryId() == $this->getSubscribe()->getDeliveryId();
-            });
+//            $deliveries = array_filter($deliveries, function($delivery){
+//                /** @var BaseResult $delivery */
+//                return $delivery->getDeliveryId() == $this->getSubscribe()->getDeliveryId();
+//            });
+
+            foreach ($deliveries as $delivery){
+                if($delivery->getDeliveryId() == $this->getSubscribe()->getDeliveryId()){
+                    return $delivery;
+                }
+            }
         }
 
         $selectedDelivery = current($deliveries);

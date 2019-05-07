@@ -577,8 +577,9 @@ class OrderSubscribe extends BaseEntity
      */
     public function setCheckDays(\DateTime $deliveryDate): self
     {
-        $deliveryDate->setTime(0,0,0,0);
-        $checkDays = (int)$deliveryDate->diff(new \DateTime(date('d.m.y')))->format('%d');
+        $deliveryDate = clone $deliveryDate->setTime(0,0,0,0);
+        $curDate = (new \DateTime())->setTime(0,0,0,0);
+        $checkDays = (int)$deliveryDate->diff($curDate)->format('%d');
         // хотя бы один день для подстраховки
         if($checkDays == 0){
             $checkDays = 1;

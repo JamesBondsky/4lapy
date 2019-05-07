@@ -2,6 +2,7 @@
 
 namespace FourPaws\PersonalBundle\AjaxController;
 
+use FourPaws\App\Application;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -120,12 +121,14 @@ class OrderSubscribeController extends Controller
     }
 
     /**
-     * @Route("/delete/", methods={"POST"})
+     * Остановить подписку (не удалять)
+     *
+     * @Route("/cancel/", methods={"POST"})
      * @param Request $request
      * @return JsonResponse
      * @throws \Bitrix\Main\SystemException
      */
-    public function deleteAction(Request $request) : JsonResponse
+    public function cancelAction(Request $request) : JsonResponse
     {
         $return = null;
 
@@ -197,6 +200,48 @@ class OrderSubscribeController extends Controller
 
         return $return;
     }
+
+    /**
+     * Удалить подписку
+     *
+     * @Route("/delete/", methods={"GET"})
+     * @param Request $request
+     * @return JsonResponse
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function deleteAction(Request $request) : JsonResponse
+    {
+        $return = null;
+        $orderSubscribeId = $request->get('id');
+        /** @var OrderSubscribeService $orderSubscribeService */
+        $orderSubscribeService = Application::getInstance()->getContainer()->get('order_subscribe.service');;
+
+        if($orderSubscribeService->delete($orderSubscribeId)){
+            $return = JsonSuccessResponse::create(
+                'Подписка на доставку удалена',
+                200,
+                [],
+                [
+                    'reload' => false,
+                ]
+            );
+        }
+
+
+        if (!$return) {
+            $return = JsonErrorResponse::createWithData(
+                'Неизвестная ошибка. Пожалуйста, обратитесь к администратору сайта',
+                [
+                    'errors' => [
+                        'systemError' => 'Неизвестная ошибка. Пожалуйста, обратитесь к администратору сайта'
+                    ]
+                ]
+            );
+        }
+
+        return $return;
+    }
+
 
     /**
      * @Route("/get/", methods={"POST"})

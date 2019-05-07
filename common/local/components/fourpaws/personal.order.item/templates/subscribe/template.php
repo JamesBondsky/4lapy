@@ -154,6 +154,18 @@ if(!empty($arResult['ERROR'])){
                 <span class="b-ruble b-ruble--account-accordion">&nbsp;₽</span>
             </div>
         </div>
+        <div class="b-accordion-order-item__subscribe-link">
+            <a class="b-accordion-order-item__del-subscribe js-delete"
+               href="javascript:void(0);"
+               title="Удалить подписку"
+               data-id="<?=$order->getId()?>"
+               data-url="/ajax/personal/orderSubscribe/delete/?id=<?=$orderSubscribe->getId()?>">
+                <span class="b-icon b-icon--account-block">
+                    <?= new SvgDecorator('icon-trash', 23, 20) ?>
+                </span>
+                <span>Удалить</span>
+            </a>
+        </div>
     </div>
     <div class="b-accordion-order-item__hidden js-hidden-order">
         <ul class="b-list-order">
