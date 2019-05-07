@@ -85,14 +85,6 @@ class DostavistaDeliveryResult extends BaseResult implements DeliveryResultInter
             }
         }
 
-        //TODO проверить почему не тот магаз
-        /**
-         * 55.597238, 37.589068	R024 Москва	ЮГ
-         * 55.710762, 37.818368	R045 Москва	ВОСТОК
-         * 55.845551, 37.438419	R247 Москва	СЕВЕРО-ЗАПАД
-         *
-         * тестируемый оффер есть во всех трех магазинах http://4lapy.ubuntu.articul.ru/catalog/koshki/korm-koshki/sukhoy/Korm_suhoy_dlya_koshek_Arden_Grendg_bezzernovoy_sensitiv_s_beloy_ryboy_ikartofelem_mesh__4_kg_1022728.html?offer=49287
-         */
         return $this->nearShop;
     }
 
