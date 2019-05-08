@@ -123,12 +123,15 @@ var Layout = function () {
             trigger = $('.work-popup-trigger');
 
         trigger.on('click', function() {
+            trigger.removeClass('active');
+            $(this).addClass('active');
             $(this).find('.work-popup-overlay').removeClass('work-popup-overlay-show');
             $(this).find('.work-popup-overlay').addClass('work-popup-overlay-show');
         });
 
         close.on('click', function(e) {
             e.stopPropagation();
+            trigger.removeClass('active');
             overlay.removeClass('work-popup-overlay-show');
         });
     }

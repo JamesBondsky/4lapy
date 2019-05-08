@@ -127,6 +127,11 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     private $basketService;
 
     /**
+     * @var int
+     */
+    private $lastOrderId = null;
+
+    /**
      * @var PropertyValueCollectionBase
      */
     private $propertyCollection = null;
@@ -190,9 +195,16 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      */
     private function getPropertyCollection(Order $order): PropertyValueCollectionBase
     {
-        if ($this->propertyCollection == null) {
+        $needReloadProperties = false;
+        if ($this->lastOrderId == null || $this->lastOrderId != $order->getId()) {
+            $this->lastOrderId = $order->getId();
+            $needReloadProperties = true;
+        }
+
+        if ($needReloadProperties || $this->propertyCollection == null) {
             $this->propertyCollection = $order->getPropertyCollection();
         }
+
         return $this->propertyCollection;
     }
 
