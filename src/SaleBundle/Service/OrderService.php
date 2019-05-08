@@ -1263,6 +1263,7 @@ class OrderService implements LoggerAwareInterface
                     if (!$historyAddResult->isSuccess()) {
                         throw new \Exception('Ошибка сохранения записи в истории');
                     }
+                    $this->orderSubscribeService->sendOrderSubscribedNotification($subscribe);
                 }
             }
 
