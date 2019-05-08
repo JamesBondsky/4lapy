@@ -398,6 +398,7 @@ class InfoService implements LoggerAwareInterface
                 }
 
                 if ($item['DETAIL_PICTURE']) {
+                    $apiView->setIconDetail($this->imageProcessor->findImage($item['DETAIL_PICTURE'], $detailImageCollection));
                     $detailText .= '<img src="' . $this->imageProcessor->findImage($item['DETAIL_PICTURE'], $detailImageCollection) . '" />';
                 }
 
