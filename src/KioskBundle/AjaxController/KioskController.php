@@ -25,9 +25,7 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class KioskController extends Controller
 {
-
     protected $userSearchInterface;
-
 
     public function __construct(
         UserSearchInterface $userSearchInterface
