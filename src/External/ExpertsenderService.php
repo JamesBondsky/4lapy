@@ -954,7 +954,7 @@ class ExpertsenderService implements LoggerAwareInterface
 
         $snippets[] = new Snippet('user_name', htmlspecialcharsbx($personalOrder->getPropValue('NAME')));
         $snippets[] = new Snippet('delivery_address', htmlspecialcharsbx($orderService->getOrderDeliveryAddress($order)));
-        $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($orderSubscribe->getDateStartFormatted()));
+        $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($orderSubscribe->getNearestDelivery()));
         $snippets[] = new Snippet('delivery_period', htmlspecialcharsbx($orderSubscribe->getDeliveryTimeFormattedRu()));
         $snippets[] = new Snippet('tel_number', PhoneHelper::formatPhone($personalOrder->getPropValue('PHONE')));
         $snippets[] = new Snippet('total_bonuses', (int)$orderService->getOrderBonusSum($order));
