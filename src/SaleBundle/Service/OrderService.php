@@ -569,11 +569,11 @@ class OrderService implements LoggerAwareInterface
         /**
          * Заполнение координаты пользователя
          */
-        $lng = $storage->getLng();
         $lat = $storage->getLat();
-        $userCoords = [$lng, $lat];
+        $lng = $storage->getLng();
+        $userCoords = [floatval($lat), floatval($lng)];
         if ($this->deliveryService->isDostavistaDelivery($selectedDelivery) || $this->deliveryService->isDelivery($selectedDelivery)) {
-            $this->setOrderPropertiesByCode($order, ['USER_COORDS' => $lng . ',' . $lat]);
+            $this->setOrderPropertiesByCode($order, ['USER_COORDS' => $lat . ',' . $lng]);
         }
 
         /**
@@ -1122,11 +1122,11 @@ class OrderService implements LoggerAwareInterface
                     ]);
                 }
                 //заполняем свойство "Координаты пользователя"
-                $lng = $storage->getLng();
                 $lat = $storage->getLat();
-                $userCoords = [$lng, $lat];
+                $lng = $storage->getLng();
+                $userCoords = [floatval($lat), floatval($lng)];
                 if ($this->deliveryService->isDostavistaDelivery($selectedDelivery) || $this->deliveryService->isDelivery($selectedDelivery)) {
-                    $this->setOrderPropertiesByCode($order, ['USER_COORDS' => $lng . ',' . $lat]);
+                    $this->setOrderPropertiesByCode($order, ['USER_COORDS' => $lat . ',' . $lng]);
                 }
 
                 //получаем ближайший магазин по координатам адреса пользователя и коодинатам магазинов, где все в наличие
