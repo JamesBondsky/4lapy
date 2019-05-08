@@ -294,7 +294,7 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                     </div>
                     <div class="b-subscribe-delivery-cart__bottom">
                         <ul class="b-price-subscribe-delivery-cart">
-                            <li class="b-price-subscribe-delivery-cart__item">
+                            <?/*<li class="b-price-subscribe-delivery-cart__item">
                                 <div class="b-price-subscribe-delivery-cart__text">
                                     <div class="b-price-subscribe-delivery-cart__clipped-text">
                                         <?= WordHelper::numberFormat($arResult['TOTAL_QUANTITY'],
@@ -316,11 +316,11 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                                         <span class="b-ruble">₽</span>
                                     </div>
                                 </div>
-                            </li>
+                            </li>*/?>
                             <li class="b-price-subscribe-delivery-cart__item">
                                 <div class="b-price-subscribe-delivery-cart__text">
                                     <div class="b-price-subscribe-delivery-cart__clipped-text">
-                                        Итого без учета доставки
+                                        Итого стоимость по подписке
                                     </div>
                                 </div>
                                 <div class="b-price-subscribe-delivery-cart__value">
@@ -513,7 +513,7 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                     </div>
                     <div class="b-subscribe-delivery-cart__bottom">
                         <ul class="b-price-subscribe-delivery-cart">
-                            <li class="b-price-subscribe-delivery-cart__item">
+                            <?/*<li class="b-price-subscribe-delivery-cart__item">
                                 <div class="b-price-subscribe-delivery-cart__text">
                                     <div class="b-price-subscribe-delivery-cart__clipped-text">
                                         <?= WordHelper::numberFormat($arResult['TOTAL_QUANTITY'],
@@ -535,11 +535,11 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                                         <span class="b-ruble">₽</span>
                                     </div>
                                 </div>
-                            </li>
+                            </li>*/?>
                             <li class="b-price-subscribe-delivery-cart__item">
                                 <div class="b-price-subscribe-delivery-cart__text">
                                     <div class="b-price-subscribe-delivery-cart__clipped-text">
-                                        Итого без учета доставки
+                                        Итого стоимость по подписке
                                     </div>
                                 </div>
                                 <div class="b-price-subscribe-delivery-cart__value">
