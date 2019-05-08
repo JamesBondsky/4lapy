@@ -22,6 +22,7 @@ use Bitrix\Sale\Payment;
 use Bitrix\Sale\PropertyValue;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
+use FourPaws\App\Application as App;
 use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\Helpers\BusinessValueHelper;
 use FourPaws\Helpers\BxCollection;
@@ -538,6 +539,9 @@ class PaymentService implements LoggerAwareInterface
      */
     private function getCartItems(Order $order, bool $skipGifts = true): CartItems
     {
+        /** @var PiggyBankService $piggyBankService */
+        $piggyBankService = App::getInstance()->getContainer()->get('piggy_bank.service');
+
         $items = new ArrayCollection();
 
         $measureList = [];
@@ -561,13 +565,19 @@ class PaymentService implements LoggerAwareInterface
             0  => 1,
             10 => 2,
             18 => 3,
-            20 => 3
+            20 => 6
         ];
 
         $position = 0;
         /** @var BasketItem $basketItem */
         foreach ($order->getBasket() as $basketItem) {
             if ($basketItem->isDelay()) {
+                continue;
+            }
+
+            $productId = $basketItem->getProductId();
+
+            if (in_array($productId, $piggyBankService->getMarksIds(), false)) {
                 continue;
             }
 
@@ -595,6 +605,11 @@ class PaymentService implements LoggerAwareInterface
             $tax = (new ItemTax())->setType($vatGateway[$taxType]);
 
             $itemPrice = round($basketItem->getPrice() * 100);
+
+            if($itemPrice == 0){
+                continue;
+            }
+
             $item = (new Item())
                 ->setPositionId(++$position)
                 ->setName($basketItem->getField('NAME') ?: '')

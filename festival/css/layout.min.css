@@ -616,7 +616,10 @@ hr.header_line {
     margin-top: 100px;
 }
 
-
+.interactive_map .work-popup-trigger.active svg {
+    transition: .2s ease;
+    transform: scale(1.2);
+}
 
 .interactive_map #icon1 {
     transition: .2s ease;
@@ -647,6 +650,12 @@ hr.header_line {
 .interactive_map #icon1:hover .st5{transition: .2s ease; fill:#ff4d15;}
 .interactive_map #icon1:hover .st6{transition: .2s ease; fill:#ffffff;}
 
+.interactive_map .work-popup-trigger.active #icon1 .st1{transition: .2s ease; fill:#7f321e;}
+.interactive_map .work-popup-trigger.active #icon1 .st3{transition: .2s ease; fill:#7f321e;}
+.interactive_map .work-popup-trigger.active #icon1 .st4{transition: .2s ease; fill:#A5A4A4;}
+.interactive_map .work-popup-trigger.active #icon1 .st5{transition: .2s ease; fill:#ff4d15;}
+.interactive_map .work-popup-trigger.active #icon1 .st6{transition: .2s ease; fill:#ffffff;}
+
 .interactive_map #icon2 {
     transition: .2s ease;
     cursor:pointer;
@@ -676,6 +685,11 @@ hr.header_line {
 .interactive_map #icon2:hover .st5{transition: .2s ease; fill:#ff4d15;}
 .interactive_map #icon2:hover .st6{transition: .2s ease; fill:#ffffff;}
 
+.interactive_map .work-popup-trigger.active #icon2 .st1{transition: .2s ease; fill:#7f321e;}
+.interactive_map .work-popup-trigger.active #icon2 .st3{transition: .2s ease; fill:#7f321e;}
+.interactive_map .work-popup-trigger.active #icon2 .st4{transition: .2s ease; fill:#A5A4A4;}
+.interactive_map .work-popup-trigger.active #icon2 .st5{transition: .2s ease; fill:#ff4d15;}
+.interactive_map .work-popup-trigger.active #icon2 .st6{transition: .2s ease; fill:#ffffff;}
 
 .interactive_map #icon3 {
     transition: .2s ease;
@@ -699,6 +713,12 @@ hr.header_line {
 .interactive_map #icon3:hover .st5{transition: .2s ease; fill:#ff4d15;}
 .interactive_map #icon3:hover .st6{transition: .2s ease; fill:#ffffff;}
 
+.interactive_map .work-popup-trigger.active #icon3 .st1{transition: .2s ease; fill:#7f321e;}
+.interactive_map .work-popup-trigger.active #icon3 .st3{transition: .2s ease; fill:#7f321e;}
+.interactive_map .work-popup-trigger.active #icon3 .st4{transition: .2s ease; fill:#A5A4A4;}
+.interactive_map .work-popup-trigger.active #icon3 .st5{transition: .2s ease; fill:#ff4d15;}
+.interactive_map .work-popup-trigger.active #icon3 .st6{transition: .2s ease; fill:#ffffff;}
+
 .interactive_map #icon4 {
     transition: .2s ease;
     cursor:pointer;
@@ -720,6 +740,12 @@ hr.header_line {
 .interactive_map #icon4:hover .st4{transition: .2s ease; fill:#A5A4A4;}
 .interactive_map #icon4:hover .st5{transition: .2s ease; fill:#ff4d15;}
 .interactive_map #icon4:hover .st6{transition: .2s ease; fill:#ffffff;}
+
+.interactive_map .work-popup-trigger.active #icon4 .st1{transition: .2s ease; fill:#7f321e;}
+.interactive_map .work-popup-trigger.active #icon4 .st3{transition: .2s ease; fill:#7f321e;}
+.interactive_map .work-popup-trigger.active #icon4 .st4{transition: .2s ease; fill:#A5A4A4;}
+.interactive_map .work-popup-trigger.active #icon4 .st5{transition: .2s ease; fill:#ff4d15;}
+.interactive_map .work-popup-trigger.active #icon4 .st6{transition: .2s ease; fill:#ffffff;}
 
 .interactive_map #icon5 {
     transition: .2s ease;
@@ -747,6 +773,15 @@ hr.header_line {
 .interactive_map #icon5:hover .st7{transition: .2s ease; fill:#ffffff;}
 .interactive_map #icon5:hover .st8{transition: .2s ease; fill:#ffffff;}
 
+.interactive_map .work-popup-trigger.active #icon5 .st1{transition: .2s ease; fill:#7f321e;}
+.interactive_map .work-popup-trigger.active #icon5 .st3{transition: .2s ease; fill:#7f321e;}
+.interactive_map .work-popup-trigger.active #icon5 .st4{transition: .2s ease; fill:#A5A4A4;}
+.interactive_map .work-popup-trigger.active #icon5 .st5{transition: .2s ease; fill:#ff4d15;}
+.interactive_map .work-popup-trigger.active #icon5 .st6{transition: .2s ease; fill:#ffffff;}
+.interactive_map .work-popup-trigger.active #icon5 .st7{transition: .2s ease; fill:#ffffff;}
+.interactive_map .work-popup-trigger.active #icon5 .st8{transition: .2s ease; fill:#ffffff;}
+
+
 .interactive_map #icon6 {
     transition: .2s ease;
     cursor:pointer;
@@ -768,6 +803,12 @@ hr.header_line {
 .interactive_map #icon6:hover .st4{transition: .2s ease; fill:#A5A4A4;}
 .interactive_map #icon6:hover .st5{transition: .2s ease; fill:#ff4d15;}
 .interactive_map #icon6:hover .st6{transition: .2s ease; fill:#ffffff;}
+
+.interactive_map .work-popup-trigger.active #icon6 .st1{transition: .2s ease; fill:#7f321e;}
+.interactive_map .work-popup-trigger.active #icon6 .st3{transition: .2s ease; fill:#7f321e;}
+.interactive_map .work-popup-trigger.active #icon6 .st4{transition: .2s ease; fill:#A5A4A4;}
+.interactive_map .work-popup-trigger.active #icon6 .st5{transition: .2s ease; fill:#ff4d15;}
+.interactive_map .work-popup-trigger.active #icon6 .st6{transition: .2s ease; fill:#ffffff;}
 
 .interactive_map #icon7 {
     transition: .2s ease;
@@ -791,6 +832,12 @@ hr.header_line {
 .interactive_map #icon7:hover .st5{transition: .2s ease; fill:#ff4d15;}
 .interactive_map #icon7:hover .st6{transition: .2s ease; fill:#ffffff;}
 
+.interactive_map .work-popup-trigger.active #icon7 .st1{transition: .2s ease; fill:#7f321e;}
+.interactive_map .work-popup-trigger.active #icon7 .st3{transition: .2s ease; fill:#7f321e;}
+.interactive_map .work-popup-trigger.active #icon7 .st4{transition: .2s ease; fill:#A5A4A4;}
+.interactive_map .work-popup-trigger.active #icon7 .st5{transition: .2s ease; fill:#ff4d15;}
+.interactive_map .work-popup-trigger.active #icon7 .st6{transition: .2s ease; fill:#ffffff;}
+
 .interactive_map #icon8 {
     transition: .2s ease;
     cursor:pointer;
@@ -812,6 +859,13 @@ hr.header_line {
 .interactive_map #icon8:hover .st4{transition: .2s ease; fill:#A5A4A4;}
 .interactive_map #icon8:hover .st5{transition: .2s ease; fill:#ff4d15;}
 .interactive_map #icon8:hover .st6{transition: .2s ease; fill:#ffffff;}
+
+.interactive_map .work-popup-trigger.active #icon8 .st1{transition: .2s ease; fill:#7f321e;}
+.interactive_map .work-popup-trigger.active #icon8 .st3{transition: .2s ease; fill:#7f321e;}
+.interactive_map .work-popup-trigger.active #icon8 .st4{transition: .2s ease; fill:#A5A4A4;}
+.interactive_map .work-popup-trigger.active #icon8 .st5{transition: .2s ease; fill:#ff4d15;}
+.interactive_map .work-popup-trigger.active #icon8 .st6{transition: .2s ease; fill:#ffffff;}
+.interactive_map .work-popup-trigger.active #icon8 .st6{transition: .2s ease; fill:#ffffff;}
 
 .navbar-fixed-top .navbar-collapse {
     max-height: 100%;
