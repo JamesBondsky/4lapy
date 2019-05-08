@@ -368,6 +368,14 @@ class User implements UserInterface
      */
     protected $esSubscribed = false;
 
+    /**
+     * @var bool
+     * @Serializer\Type("boolean")
+     * @Serializer\SerializedName("UF_2ND_ORDER_COUPON")
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
+     */
+    protected $hasSecondOrderCoupon = false;
+
     public function __construct()
     {
         $this->roles = new ArrayCollection();
@@ -1376,6 +1384,25 @@ class User implements UserInterface
     public function setEsSubscribed(bool $esSubscribed): void
     {
         $this->esSubscribed = $esSubscribed;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isHasSecondOrderCoupon(): bool
+    {
+        return $this->hasSecondOrderCoupon ?? false;
+    }
+
+    /**
+     * @param bool $hasSecondOrderCoupon
+     * @return User
+     */
+    public function setHasSecondOrderCoupon(bool $hasSecondOrderCoupon): User
+    {
+        $this->hasSecondOrderCoupon = $hasSecondOrderCoupon;
+
+        return $this;
     }
 
     /**

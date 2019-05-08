@@ -644,7 +644,7 @@ class Event extends BaseServiceHandler
                     $container = Application::getInstance()->getContainer();
                     /** @var PersonalOffersService $personalOffersService */
                     $personalOffersService = $container->get('personal_offers.service');
-                    $personalOffersService->importOffers($arFields['ID'], $coupons);
+                    $personalOffersService->importOffers($arFields['ID'], $coupons, true);
                 }
             }
         }
@@ -677,27 +677,9 @@ class Event extends BaseServiceHandler
 
         if ($discountPropertyId > 0 && ($discountProperty = $arFields['PROPERTY_VALUES'][$discountPropertyId]) && ($discount = array_values($discountProperty)[0]['VALUE']) && $discount > 0)
         {
-            $rsDiscount = CSaleDiscount::GetList(
-                [
-                    'ID' => 'DESC',
-                ],
-                [
-                    'XML_ID' => $personalOffersService::DISCOUNT_PREFIX . '_' . $discount,
-                ],
-                false,
-                [
-                    'nTopCount' => 1,
-                ],
-                [
-                    'ID'
-                ]
-            )->GetNext();
-            if ($rsDiscount)
-            {
-                $discountId = $rsDiscount['ID'];
-            }
+            $discountId = $personalOffersService->getUniqueOfferDiscountIdByDiscountValue($discount);
 
-            if (!isset($discountId) || $discountId <= 0)
+            if ($discountId <= 0)
             {
                 $rsGroups = GroupTable::getList([
                     'filter' => ['=STRING_ID' => [

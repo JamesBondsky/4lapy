@@ -20,7 +20,9 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketItemCollection;
+use Bitrix\Sale\Internals\Fields;
 use Bitrix\Sale\Order;
+use Bitrix\Sale\OrderTable;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
 use Exception;
@@ -52,8 +54,11 @@ use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\PaymentService;
 use FourPaws\SaleBundle\Service\UserAccountService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserSearchInterface;
+use FourPaws\UserBundle\Service\UserService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -205,6 +210,15 @@ class Event extends BaseServiceHandler
         static::initHandler('OnSaleOrderSaved', [
             self::class,
             'setCouponUsed'
+        ], $module);
+
+        static::initHandler('OnSaleOrderSaved', [
+            self::class,
+            'addCouponForSecondOrder'
+        ], $module);
+        static::initHandler('OnSaleOrderEntitySaved', [
+            self::class,
+            'addCouponForSecondOrder'
         ], $module);
 
         /**
@@ -687,7 +701,7 @@ class Event extends BaseServiceHandler
                     }
                 }
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             static::getLogger()
                 ->error(
                     sprintf(
@@ -696,6 +710,89 @@ class Event extends BaseServiceHandler
                         $e->getMessage()
                     )
                 );
+        }
+    }
+
+    /**
+     * @param BitrixEvent $event
+     */
+    public static function addCouponForSecondOrder(BitrixEvent $event): void
+    {
+        // --------- Проверка, что заказ оплачен, завершен, не отменен и хотя бы одно из этих полей было изменено ---------
+        $isCheckNeeded = false;
+        $eventType = $event->getEventType();
+        if ($eventType === 'OnSaleOrderEntitySaved' && \FourPaws\PersonalBundle\Service\OrderService::STATUS_FINAL) {
+            $isCheckNeeded = true;
+        } elseif ($eventType === 'OnSaleOrderSaved') {
+            $isNew = $event->getParameter('IS_NEW');
+            $isChanged = $event->getParameter('IS_CHANGED');
+            if ($isNew || $isChanged) {
+                $isCheckNeeded = true;
+            }
+        }
+
+        if (!$isCheckNeeded) {
+            return;
+        }
+
+        /** @var Order $order */
+        $order = $event->getParameter('ENTITY');
+        /** @var Fields $fields */
+        $fields = $order->getFields();
+        $changedFields = $fields->getChangedKeys();
+
+        if ($order->isCanceled()
+            || (
+                !in_array('PAYED', $changedFields, true)
+                && !in_array('STATUS_ID', $changedFields, true)
+                && !in_array('CANCELED', $changedFields, true)
+            )
+        ) {
+            return;
+        }
+
+        $isPaid = $order->isPaid();
+        $isFinished = in_array($order->getField('STATUS_ID'), \FourPaws\PersonalBundle\Service\OrderService::STATUS_FINAL, true);
+
+        if (!$isPaid || !$isFinished) {
+            return;
+        }
+
+        /** @var UserService $userService */
+        $userService = Application::getInstance()->getContainer()->get(UserSearchInterface::class);
+        $userId = $order->getUserId();
+        try
+        {
+            $user = $userService->findOne($userId);
+        } catch (NotFoundException $e)
+        {
+        }
+        if (isset($user) && !$user->isHasSecondOrderCoupon()) { // Если еще не был выдан купон на второй заказ
+            // --------- Проверка, что это первый завершенный заказ пользователя ---------
+            $finishedOrdersCount = (int)OrderTable::getCount([
+                    '=USER_ID' => $userId,
+                    '=PAYED' => 'Y',
+                    '=CANCELED' => 'N',
+                    '=STATUS_ID' => \FourPaws\PersonalBundle\Service\OrderService::STATUS_FINAL,
+                ]);
+            if ($finishedOrdersCount === 1) {
+                /** @var PersonalOffersService $personalOffersService */
+                $personalOffersService = Application::getInstance()->getContainer()->get('personal_offers.service');
+                try
+                {
+                    $personalOffersService->addUniqueOfferCoupon($userId);
+
+                    $user->setHasSecondOrderCoupon(true);
+                    Application::getInstance()->getContainer()->get(UserRepository::class)->update($user);
+                } catch (Exception $e) {
+                    self::getLogger()
+                        ->critical(\sprintf(
+                            '%s. Ошибка добавления купона на второй заказ: %s',
+                            __FUNCTION__,
+                            $e->getMessage()
+                        ));
+                }
+            }
         }
     }
 
@@ -991,7 +1088,7 @@ class Event extends BaseServiceHandler
                 );
 
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $logger = LoggerFactory::create('piggyBank');
             $logger->critical('failed to add PiggyBank marks for order: ' . $e->getMessage());
         }
