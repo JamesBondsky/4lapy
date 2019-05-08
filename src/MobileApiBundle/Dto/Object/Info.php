@@ -96,6 +96,16 @@ class Info
     protected $icon;
 
     /**
+     * Ссылка на detail картинку страницы
+     *
+     * @Serializer\Type("api_image_src")
+     * @Serializer\SerializedName("icon_detail")
+     *
+     * @var null|ImageInterface
+     */
+    protected $iconDetail;
+
+    /**
      *
      * @Serializer\Type("api_image_collection_src")
      * @Serializer\SerializedName("images")
@@ -307,6 +317,22 @@ class Info
     {
         $this->icon = $icon;
         return $this;
+    }
+
+    /**
+     * @return ImageInterface|null
+     */
+    public function getIconDetail(): ?ImageInterface
+    {
+        return $this->iconDetail;
+    }
+
+    /**
+     * @param ImageInterface|null $iconDetail
+     */
+    public function setIconDetail(?ImageInterface $iconDetail): void
+    {
+        $this->iconDetail = $iconDetail;
     }
 
     /**
