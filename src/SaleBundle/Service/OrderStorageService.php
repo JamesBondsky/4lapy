@@ -22,6 +22,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Exception\TerminalNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
@@ -493,6 +494,15 @@ class OrderStorageService
                         unset($payments[$id]);
                         break;
                     }
+                }
+            }
+        }
+
+        // в режиме киоска доступна только оплата при получении
+        if(KioskService::isKioskMode()){
+            foreach ($payments as $id => $payment) {
+                if (!in_array($payment['CODE'], [OrderPayment::PAYMENT_CASH_OR_CARD, OrderPayment::PAYMENT_CASH])) {
+                    unset($payments[$id]);
                 }
             }
         }
