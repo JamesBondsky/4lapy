@@ -358,7 +358,7 @@ class OrderSubscribeHistoryService
                     ),
                 ],
                 'order' => [
-                    'UF_NEW_ORDER_ID' => 'desc',
+                    'UF_NEW_ORDER_ID' => 'asc',
                 ],
             ]
         );
