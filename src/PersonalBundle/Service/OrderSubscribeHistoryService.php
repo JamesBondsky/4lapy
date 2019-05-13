@@ -326,7 +326,6 @@ class OrderSubscribeHistoryService
 
     /**
      * @param OrderSubscribe $orderSubscribe
-     * @return array|false
      * @throws ArgumentException
      * @throws SystemException
      * @throws \Bitrix\Main\ObjectException
@@ -359,7 +358,7 @@ class OrderSubscribeHistoryService
                     ),
                 ],
                 'order' => [
-                    'UF_NEW_ORDER_ID' => 'asc',
+                    'UF_NEW_ORDER_ID' => 'desc',
                 ],
             ]
         );
@@ -373,6 +372,6 @@ class OrderSubscribeHistoryService
             $order = $row;
         }
 
-        return $order ? $order['UF_DELIVERY_DATE'] : null;
+        return $order ? $order['UF_DELIVERY_DATE'] : $orderSubscribe->getNextDate();
     }
 }
