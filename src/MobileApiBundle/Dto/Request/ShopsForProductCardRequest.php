@@ -50,7 +50,7 @@ class ShopsForProductCardRequest implements SimpleUnserializeRequest, GetRequest
     /**
      * @return string
      */
-    public function getCityId(): string
+    public function getCityId(): ?string
     {
         return $this->cityId;
     }
