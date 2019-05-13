@@ -10,6 +10,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\App\Application;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\MobileApiBundle\Dto\Request\ShopsForCheckoutRequest;
 use FourPaws\MobileApiBundle\Dto\Request\ShopsForProductCardRequest;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListRequest;
@@ -17,6 +18,7 @@ use FourPaws\MobileApiBundle\Dto\Response\StoreListAvailableResponse;
 use FourPaws\MobileApiBundle\Dto\Response\StoreListResponse;
 use FourPaws\MobileApiBundle\Services\Api\StoreService as ApiStoreService;
 use FourPaws\MobileApiBundle\Services\Api\UserService as ApiUserService;
+use FourPaws\MobileApiBundle\Services\Api\UserService;
 use FourPaws\StoreBundle\Service\ShopInfoService;
 
 class StoreController extends FOSRestController
@@ -62,12 +64,21 @@ class StoreController extends FOSRestController
      * @Rest\Get(path="/get_shops_available/")
      * @Rest\View(serializerGroups={"Default", "withProductInfo"})
      * @param ShopsForProductCardRequest $storeAvailableRequest
+     * @param UserService $userService
+     * @param LocationService $locationService
      *
      * @throws \Exception
      * @return StoreListResponse
      */
-    public function getShopsForProductCardAction(ShopsForProductCardRequest $storeAvailableRequest): StoreListResponse
+    public function getShopsForProductCardAction(ShopsForProductCardRequest $storeAvailableRequest, UserService $userService, LocationService $locationService): StoreListResponse
     {
+
+        if (!$storeAvailableRequest->getCityId()) {
+            $storeAvailableRequest->setCityId($_COOKIE['selected_city_code'] ?: $userService->getCurrentApiUser()->getLocationId());
+        } else {
+            $locationService->setCurrentLocation($storeAvailableRequest->getCityId());
+        }
+
         $storeCollection = $this->apiStoreService->getListWithProductAvailability(
             $storeAvailableRequest->getProductId(),
             $storeAvailableRequest->getCityId()
