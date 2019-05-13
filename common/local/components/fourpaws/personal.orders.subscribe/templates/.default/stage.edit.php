@@ -20,11 +20,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <div class="b-popup-subscribe-delivery__top">
             <div class="b-popup-subscribe-delivery__header">
                 <div class="b-container">
-                    <a class="b-popup-subscribe-delivery__close"
-                       href="javascript:void(0);"
-                       data-close-subscribe-delivery-popup="true"
-                       title="Закрыть"></a>
-                    <h1 class="b-popup-subscribe-delivery__title">Редактирование подписки</h1>
+                    <div class="b-popup-subscribe-delivery__inner-header">
+                        <h1 class="b-popup-subscribe-delivery__title">Редактирование подписки</h1>
+                        <a class="b-popup-subscribe-delivery__close"
+                           href="javascript:void(0);"
+                           data-close-subscribe-delivery-popup="true"
+                           title="Закрыть"></a>
+                    </div>
                 </div>
             </div>
 
