@@ -9,8 +9,11 @@
 namespace FourPaws\KioskBundle\AjaxController;
 
 use CUser;
+use FourPaws\App\Application;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserService;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Component\HttpFoundation\Request;
@@ -67,6 +70,47 @@ class KioskController extends Controller
         } catch (\Exception $e) {
             $responce = JsonSuccessResponse::create(
                 sprintf("Не удалось авторизоваться: %s", $e->getMessage()),
+                200,
+                [],
+                [
+                    'reload' => true,
+                    'redirect' => '',
+                ]
+            );
+        }
+
+
+        return $responce;
+    }
+
+
+    /**
+     * @Route("/logout/", methods={"GET", "POST"})
+     * @throws \Exception
+     */
+    public function logout(Request $request)
+    {
+        try {
+            /** @var UserService $userService */
+            $userService = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+            if(!$userService->logout()){
+                global $USER;
+                $USER->Logout();
+            }
+
+            $responce = JsonSuccessResponse::create(
+                sprintf("Пользователь успешно разавторизован"),
+                200,
+                [],
+                [
+                    'reload' => true,
+                    'redirect' => '',
+                ]
+            );
+
+        } catch (\Exception $e) {
+            $responce = JsonSuccessResponse::create(
+                sprintf("Не удалось разавторизоваться: %s", $e->getMessage()),
                 200,
                 [],
                 [

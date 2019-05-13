@@ -191,7 +191,7 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
                         // количество популярных брендов в пункте меню "По бренду"
                         'BRANDS_MENU_POPULAR_LIMIT' => '8',
                         // режим киоска
-                        'IS_KIOSK'                  => '8',
+                        'IS_KIOSK'                  => KioskService::isKioskMode(),
                     ],
                     null,
                     [
