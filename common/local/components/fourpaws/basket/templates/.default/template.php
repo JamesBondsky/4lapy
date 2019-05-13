@@ -254,7 +254,7 @@ if ($arParams['IS_AJAX']) {
                     } else { ?>
                         <span class="b-information-order__pay-points b-information-order__pay-points--flex">
                             Уже покупали у нас?
-                            <a class="b-link-gift b-link-gift--shopping-aside js-open-popup" href="#!"
+                            <a class="b-link-gift b-link-gift--shopping-aside js-open-popup" href="javascript:void(0);"
                                data-popup-id="authorization">
                                 <span class="b-link-gift__text">Войти</span>
                             </a>

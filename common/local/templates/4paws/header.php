@@ -94,7 +94,7 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
 <header class="b-header <?= $template->getHeaderClass() ?> js-header">
     <?php
     if(!KioskService::isKioskMode()) {
-        require_once __DIR__ . '/blocks/header/promo_top_acarid.php';
+        require_once __DIR__ . '/blocks/header/promo_top_festival.php';
     }
     ?>
     <?php
@@ -191,7 +191,7 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
                         // количество популярных брендов в пункте меню "По бренду"
                         'BRANDS_MENU_POPULAR_LIMIT' => '8',
                         // режим киоска
-                        'IS_KIOSK'                  => KioskService::isKioskMode(),
+                        'IS_KIOSK'                  => '8',
                     ],
                     null,
                     [

@@ -6,7 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 ?>
-<section class="b-adventure">
+<section class="b-adventure hidden-xs hidden-sm">
     <h1 class="b-title b-title--h1-main">ПОЧЕМУ НАШИ КЛИЕНТЫ ВЫБИРАЮТ ИНТЕРНЕТ-ЗООМАГАЗИН &laquo;ЧЕТЫРЕ ЛАПЫ&raquo;?</h1>
     <p>
         <nobr>Интернет-магазин</nobr> зоотоваров &laquo;Четыре Лапы&raquo;&nbsp;&mdash; это сайт крупнейшей сети зоомагазинов с&nbsp;доставкой по&nbsp;всей	России.

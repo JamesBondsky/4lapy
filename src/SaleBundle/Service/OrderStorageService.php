@@ -171,8 +171,8 @@ class OrderStorageService
 
         if (isset($data['deliveryCoords'])) {
             $coords = explode(',', $data['deliveryCoords']);
-            $data['lng'] = $coords[0];
-            $data['lat'] = $coords[1];
+            $data['lat'] = $coords[0];
+            $data['lng'] = $coords[1];
         }
 
         /**

@@ -46,6 +46,8 @@ $(window).load(function(){
               newTokenField.classList = "js-no-valid";
               form.append(newTokenField);
             }
+
+            window.dataLayer.push({'fest_fillform':'successful_form_submission'});
           },
           beforeSend: function () {},
           complete: function(jqXHR, textStatus) {},
