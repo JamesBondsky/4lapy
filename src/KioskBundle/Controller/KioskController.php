@@ -6,28 +6,33 @@
  * Time: 15:09
  */
 
-namespace FourPaws\KioskBundle\AjaxController;
+namespace FourPaws\KioskBundle\Controller;
 
 use CUser;
 use FourPaws\App\Application;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\App\Tools\RefererTrait;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Class KioskController
  *
- * @package FourPaws\KioskBundle\AjaxController
+ * @package FourPaws\KioskBundle\Controller
  *
- * @Route("/controller")
+ * @Route("/kiosk")
  */
 class KioskController extends Controller
 {
-    protected $userSearchInterface;
+    use RefererTrait;
+
+    const ERROR_BAD_CARD = 1; // не удалось распознать ШК
 
     /**
      * @param $card
@@ -37,6 +42,10 @@ class KioskController extends Controller
     public function authByCard(Request $request)
     {
         global $USER;
+
+        if(!KioskService::isKioskMode()){
+            throw $this->createAccessDeniedException();
+        }
 
         try {
             $card = $request->get('card');
@@ -57,30 +66,21 @@ class KioskController extends Controller
                 $USER->Logout();
             }
             $USER->Authorize($user['ID']);
+            $resultParams = ['auth' => 1];
 
-            $responce = JsonSuccessResponse::create(
-                "Авторизация прошла успешно",
-                200,
-                [],
-                [
-                    'reload' => true,
-                    'redirect' => '',
-                ]
-            );
         } catch (\Exception $e) {
-            $responce = JsonSuccessResponse::create(
-                sprintf("Не удалось авторизоваться: %s", $e->getMessage()),
-                200,
-                [],
-                [
-                    'reload' => true,
-                    'redirect' => '',
-                ]
-            );
+            $resultParams = ['auth' => 0, 'error' => 1];
         }
 
+        $lastUrl = $request->headers->get('referer');
+        $query = parse_url($lastUrl, PHP_URL_QUERY);
+        if ($query) {
+            $lastUrl .= sprintf("&%s", http_build_query($resultParams));
+        } else {
+            $lastUrl .= sprintf("?%s", http_build_query($resultParams));
+        }
 
-        return $responce;
+        return $this->redirect($lastUrl);
     }
 
 
