@@ -132,3 +132,6 @@ services:
 
   catalog_group.service:
     class: FourPaws\CatalogBundle\Service\CatalogGroupService
+
+  kkm.service:
+    class: FourPaws\KkmBundle\Service\KkmService

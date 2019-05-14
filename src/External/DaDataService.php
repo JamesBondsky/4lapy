@@ -247,4 +247,16 @@ class DaDataService
 
         return $response;
     }
+
+    /**
+     * @param $query
+     * @return array
+     */
+    public function getKkmSuggestions($query): array
+    {
+        $params = [
+            'query' => $query
+        ];
+        return $this->client->getAddresses($params);
+    }
 }
