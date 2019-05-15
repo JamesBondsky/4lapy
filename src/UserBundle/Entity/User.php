@@ -374,7 +374,7 @@ class User implements UserInterface
      * @Serializer\SerializedName("UF_2ND_ORDER_COUPON")
      * @Serializer\Groups(groups={"dummy","create","read","update"})
      */
-    protected $hasSecondOrderCoupon = false;
+    protected $gotSecondOrderCoupon = false;
 
     public function __construct()
     {
@@ -1389,18 +1389,18 @@ class User implements UserInterface
     /**
      * @return bool
      */
-    public function isHasSecondOrderCoupon(): bool
+    public function isGotSecondOrderCoupon(): bool
     {
-        return $this->hasSecondOrderCoupon ?? false;
+        return $this->gotSecondOrderCoupon ?? false;
     }
 
     /**
-     * @param bool $hasSecondOrderCoupon
+     * @param bool $gotSecondOrderCoupon
      * @return User
      */
-    public function setHasSecondOrderCoupon(bool $hasSecondOrderCoupon): User
+    public function setGotSecondOrderCoupon(bool $gotSecondOrderCoupon): User
     {
-        $this->hasSecondOrderCoupon = $hasSecondOrderCoupon;
+        $this->gotSecondOrderCoupon = $gotSecondOrderCoupon;
 
         return $this;
     }

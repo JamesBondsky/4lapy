@@ -43,6 +43,11 @@ https://api.esv2.com - валидный адрес
 - /usr/bin/supervisorctl restart 4lapy_manzana_orders_import
 ```
 
+## Запуск генерирования купонов
+```
+- ./bin/symfony_console fourpaws:coupons:returning_users:generate manzana_update # для пользователей, не делавших заказы в течение 2 месяцев
+```
+
 ## Запуск импорта из SAP 
 
 ```

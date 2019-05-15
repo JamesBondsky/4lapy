@@ -9,9 +9,11 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\GroupTable;
 use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Fuser;
+use Bitrix\Sale\Internals\OrderTable;
 use CAllUser;
 use CUser;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -31,6 +33,8 @@ use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\UserBonus;
 use FourPaws\PersonalBundle\Service\BonusService;
+use FourPaws\PersonalBundle\Service\OrderService;
+use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use FourPaws\UserBundle\Entity\Group;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Enum\UserLocationEnum;
@@ -1069,5 +1073,50 @@ class UserService implements
     {
         $this->setAvatarHostUserId(0);
         $this->setAvatarGuestUserId(0);
+    }
+
+    /**
+     * @param int $personalOfferId
+     *
+     * @return array
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
+     */
+    public function getUsersWithNoRecentPaidOrders(int $personalOfferId): array
+    {
+        $date = (new DateTime())->add('-2 month')->format('Y-m-d H:i:s');
+
+        $query = OrderTable::query()
+            ->setFilter([
+                //'=USER_ID' => [1480156, 43, 1411576], // Воробьев, Балезин, Дущенко
+                '=PAYED' => 'Y',
+                '=CANCELED' => 'N',
+                '=STATUS_ID' => OrderService::STATUS_FINAL,
+                '<LAST_DATE_INSERT' => $date,
+            ])
+            ->setSelect([
+                'USER_ID',
+                new ExpressionField('LAST_DATE_INSERT', 'MAX(%s)', ['DATE_INSERT']),
+            ])
+            ->setGroup(['USER_ID']);
+
+        $orders = $query->exec()
+            ->fetchAll();
+
+        /** @var PersonalOffersService $personalOffersService */
+        $personalOffersService = App::getInstance()->getContainer()->get('personal_offers.service');
+        $coupons = $personalOffersService->getReturningUsersCoupons(array_column($orders, 'USER_ID'), $personalOfferId);
+
+        $usersToGiveCouponTo = [];
+        foreach ($orders as $order)
+        {
+            if (!key_exists($order['USER_ID'], $coupons) || $order['LAST_DATE_INSERT'] > $coupons[$order['USER_ID']]['LAST_DATE_CREATED']) {
+                $usersToGiveCouponTo[] = (int)$order['USER_ID'];
+            }
+        }
+
+        return $usersToGiveCouponTo;
     }
 }

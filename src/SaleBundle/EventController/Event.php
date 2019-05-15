@@ -767,7 +767,7 @@ class Event extends BaseServiceHandler
         } catch (NotFoundException $e)
         {
         }
-        if (isset($user) && !$user->isHasSecondOrderCoupon()) { // Если еще не был выдан купон на второй заказ
+        if (isset($user) && !$user->isGotSecondOrderCoupon()) { // Если еще не был выдан купон на второй заказ
             // --------- Проверка, что это первый завершенный заказ пользователя ---------
             $finishedOrdersCount = (int)OrderTable::getCount([
                     '=USER_ID' => $userId,
@@ -780,9 +780,9 @@ class Event extends BaseServiceHandler
                 $personalOffersService = Application::getInstance()->getContainer()->get('personal_offers.service');
                 try
                 {
-                    $personalOffersService->addUniqueOfferCoupon($userId);
+                    $personalOffersService->addUniqueOfferCoupon($userId, $personalOffersService::SECOND_ORDER_OFFER_CODE);
 
-                    $user->setHasSecondOrderCoupon(true);
+                    $user->setGotSecondOrderCoupon(true);
                     Application::getInstance()->getContainer()->get(UserRepository::class)->update($user);
                 } catch (Exception $e) {
                     self::getLogger()
