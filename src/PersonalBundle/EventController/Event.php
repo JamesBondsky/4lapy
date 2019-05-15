@@ -655,6 +655,7 @@ class Event extends BaseServiceHandler
      * @throws ArgumentException
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Adv\Bitrixtools\Exception\IblockPropertyNotFoundException
+     * @throws SystemException
      */
     public static function createDiscountFromPersonalOffer($arFields): void
     {
@@ -696,6 +697,15 @@ class Event extends BaseServiceHandler
                     'LID' => 's1',
                     'NAME' => 'Персональное предложение ' . $discount . '%',
                     'ACTIVE' => BitrixUtils::BX_BOOL_TRUE,
+                    'PRIORITY' => 1,
+                    'SORT' => 100,
+                    'LAST_LEVEL_DISCOUNT' => BitrixUtils::BX_BOOL_FALSE,
+                    /*
+                    // если нужно предотвратить выполнение других скидок
+                    'PRIORITY' => 1000,
+                    'SORT' => 1,
+                    'LAST_LEVEL_DISCOUNT' => BitrixUtils::BX_BOOL_TRUE,
+                    */
                     'LAST_DISCOUNT' => BitrixUtils::BX_BOOL_TRUE,
                     'USER_GROUPS' => $groupsIds,
                     'CURRENCY' => 'RUB',
