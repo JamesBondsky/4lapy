@@ -7,6 +7,7 @@ use FourPaws\CatalogBundle\Service\CatalogLandingService;
 use FourPaws\Helpers\ProtectorHelper;
 use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
+use FourPaws\Decorators\SvgDecorator;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -101,8 +102,8 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
             <button class="b-button b-button--social b-button--full-width b-button--popup-authorization">
                 Войти
             </button>
+            <span class="b-registration__else b-registration__else--authorization">или</span>
             <? if(!KioskService::isKioskMode()) { ?>
-                <span class="b-registration__else b-registration__else--authorization">или</span>
                 <?php $APPLICATION->IncludeComponent(
                     'bitrix:socserv.auth.form',
                     'socserv_auth',
@@ -121,9 +122,12 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
                                 class="b-link__text b-link__text--authorization">Зарегистрироваться</span></a>
                 </div>
             <? } else { ?>
-                <button class="b-button b-button--social b-button--full-width b-button--popup-authorization">
-                    Авторизоваться по карте
-                </button>
+                <div class="b-authorize-by-card">
+                    <span class="b-icon">
+                        <?= new SvgDecorator('icon-barcode', 51, 37) ?>
+                    </span>
+                    <div class="b-authorize-by-card__text">Отсканировать карту</div>
+                </div>
             <? } ?>
 
             <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_AUTH); ?>

@@ -71,18 +71,18 @@ if (mb_strpos($APPLICATION->GetCurDir(), '/cart/') === false && mb_strpos($APPLI
 ?>
 <footer class="b-footer js-main-footer <?= $template->getFooterClass() ?>">
     <?php if (!$template->hasShortHeaderFooter()) { ?>
-        <div class="b-footer__communication">
-            <div class="b-container">
-                <div class="b-footer__inner">
-                    <? if(!KioskService::isKioskMode()) { ?>
+        <? if(!KioskService::isKioskMode()) { ?>
+            <div class="b-footer__communication">
+                <div class="b-container">
+                    <div class="b-footer__inner">
                         <div class="b-footer-communication">
                             <?php require_once __DIR__ . '/blocks/footer/communication_area.php' ?>
                         </div>
-                    <? } ?>
-                    <?php require_once __DIR__ . '/blocks/footer/social_links.php' ?>
+                        <?php require_once __DIR__ . '/blocks/footer/social_links.php' ?>
+                    </div>
                 </div>
             </div>
-        </div>
+        <? } ?>
     <?php } ?>
     <div class="b-footer__nav">
         <div class="b-container">
@@ -126,24 +126,26 @@ if (mb_strpos($APPLICATION->GetCurDir(), '/cart/') === false && mb_strpos($APPLI
                 <div class="b-footer__column">
                     <?php require_once __DIR__ . '/blocks/footer/copyright.php' ?>
                 </div>
-                <div class="b-footer__column 
-                            b-footer__column--small 
-                            b-footer__column--change-viewport 
-                            <?= ($sViewportCookie === 'mobile') ? 'mobile' : '' ?>"
-                            data-footer-links-change-viewport="true">
-                    <?php if ($sViewportCookie === null) { ?>
-                        <div class="link-toggle-view active mobile" data-change-viewport-mode='mobile' data-type="desktop">
-                            Перейти в<br/> полноэкранный режим
-                        </div>
-                    <?php }else{ ?>
-                        <div class="link-toggle-view <?= $sViewportCookie === 'desktop' ? 'active' : '' ?>" data-change-viewport-mode='desktop' data-type="mobile">
-                            Перейти в<br/> мобильную версию
-                        </div>
-                        <div class="link-toggle-view <?= $sViewportCookie === 'mobile' ? 'active mobile' : '' ?>" data-change-viewport-mode='mobile' data-type="desktop">
-                            Перейти в<br/> полноэкранный режим
-                        </div>
-                    <?php } ?>
-                </div>
+                <? if(!KioskService::isKioskMode()) { ?>
+                    <div class="b-footer__column
+                                b-footer__column--small
+                                b-footer__column--change-viewport
+                                <?= ($sViewportCookie === 'mobile') ? 'mobile' : '' ?>"
+                                data-footer-links-change-viewport="true">
+                        <?php if ($sViewportCookie === null) { ?>
+                            <div class="link-toggle-view active mobile" data-change-viewport-mode='mobile' data-type="desktop">
+                                Перейти в<br/> полноэкранный режим
+                            </div>
+                        <?php }else{ ?>
+                            <div class="link-toggle-view <?= $sViewportCookie === 'desktop' ? 'active' : '' ?>" data-change-viewport-mode='desktop' data-type="mobile">
+                                Перейти в<br/> мобильную версию
+                            </div>
+                            <div class="link-toggle-view <?= $sViewportCookie === 'mobile' ? 'active mobile' : '' ?>" data-change-viewport-mode='mobile' data-type="desktop">
+                                Перейти в<br/> полноэкранный режим
+                            </div>
+                        <?php } ?>
+                    </div>
+                <?php } ?>
             </div>
         </div>
     </div>
