@@ -43,12 +43,14 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\CatalogBundle\Service\BrandService;
 use FourPaws\CatalogBundle\Service\CatalogGroupService;
+use FourPaws\CatalogBundle\Service\SubscribeDiscountService;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
+use FourPaws\SaleBundle\Helper\PriceHelper;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StockService;
@@ -67,6 +69,7 @@ use JMS\Serializer\SerializerInterface;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Symfony\Component\EventDispatcher\Tests\SubscriberService;
 
 /**
  * Class Offer
@@ -2309,4 +2312,52 @@ class Offer extends IblockElement
         return (null !== $this->getCurrentRegionPrice())
             && !in_array($this->getCurrentRegionPrice()->getCatalogGroupId(), [self::CATALOG_GROUP_ID_BASE, self::CATALOG_GROUP_ID_MOSCOW]);
     }
+
+    /**
+     * @return int
+     * @throws ApplicationCreateException
+     */
+    public function getSubscribeDiscount()
+    {
+        $discountValue = null;
+
+        /** @var SubscribeDiscountService $subscribeDiscountService */
+        $subscribeDiscountService = Application::getInstance()->getContainer()->get(SubscribeDiscountService::class);
+        /** @var LocationService $locationService */
+        $locationService = Application::getInstance()->getContainer()->get('location.service');
+
+        $region = $locationService->getCurrentRegionCode();
+        $discountsByRegion = $subscribeDiscountService->getDiscountsByRegion($region);
+        if(count($discountsByRegion) > 1){
+            $discountWithoutBrand = null;
+            foreach ($discountsByRegion as $discount){
+                if(in_array($this->getProduct()->getBrandId(), $discount['BRANDS'])){
+                    $discountValue = $discount['PERCENT'];
+                    break;
+                }
+                elseif (empty($discount['BRANDS']) && (!$discountWithoutBrand || $discount['PERCENT'] > $discountWithoutBrand)) {
+                    $discountWithoutBrand = $discount;
+                }
+            }
+            if(!$discountValue && $discountWithoutBrand){
+                $discountValue = $discountWithoutBrand['PERCENT'];
+            }
+        }
+        elseif(!empty($discountsByRegion) && (empty($discountsByRegion[0]['BRAND']) || in_array($this->getProduct()->getBrandId(), $discountsByRegion[0]['BRAND']))){
+            $discountValue = $discountsByRegion[0]['PERCENT'];
+        }
+
+        return $discountValue ?: 0;
+    }
+
+    /**
+     * @return int
+     * @throws ApplicationCreateException
+     */
+    public function getSubscribePrice()
+    {
+        $discountValue = $this->getSubscribeDiscount();
+        return $discountValue > 0 ? \round($this->getPrice()*((100-$discountValue)/100), 1, PHP_ROUND_HALF_DOWN) : $this->getPrice();
+    }
+
 }

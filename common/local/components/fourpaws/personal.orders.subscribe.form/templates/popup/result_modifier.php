@@ -20,7 +20,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 $component = $this->getComponent();
 
 // Запрашиваемое представление страницы
-$arResult['CURRENT_STAGE'] = 'initial';
+//$arResult['CURRENT_STAGE'] = 'initial';
 
 $arResult['isCorrect'] = true;
 

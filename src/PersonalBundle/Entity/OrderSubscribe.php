@@ -1,70 +1,67 @@
 <?php
+/**
+ * Created by PhpStorm.
+ * User: mmasterkov
+ * Date: 25.03.2019
+ * Time: 16:18
+ */
 
 namespace FourPaws\PersonalBundle\Entity;
 
+
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
-use FourPaws\App\Application;
+use Bitrix\Sale\Basket;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\AppBundle\Entity\UserFieldEnumValue;
 use FourPaws\AppBundle\Service\UserFieldEnumService;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\DateHelper;
-use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\NotFoundException;
-use FourPaws\PersonalBundle\Exception\RuntimeException;
+use FourPaws\PersonalBundle\Service\AddressService;
+use FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
+use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
+use FourPaws\App\Application;
 
 class OrderSubscribe extends BaseEntity
 {
     /**
      * @var int
      * @Serializer\Type("integer")
-     * @Serializer\SerializedName("UF_ORDER_ID")
-     * @Serializer\Groups(groups={"create","read"})
-     * @Serializer\SkipWhenEmpty()
-     * @Assert\NotBlank(groups={"create","read"})
-     */
-    protected $orderId;
-    /**
-     * @var DateTime
-     * @Serializer\Type("bitrix_date_time_ex")
-     * @Serializer\SerializedName("UF_DATE_CREATE")
-     * @Serializer\Groups(groups={"create","read"})
-     * @Serializer\SkipWhenEmpty()
-     * @Assert\NotBlank(groups={"create","read"})
-     */
-    protected $dateCreate;
-    /**
-     * @var DateTime
-     * @Serializer\Type("bitrix_date_time_ex")
-     * @Serializer\SerializedName("UF_DATE_EDIT")
+     * @Serializer\SerializedName("UF_USER_ID")
      * @Serializer\Groups(groups={"create","read","update"})
-     * @Serializer\SkipWhenEmpty()
-     * @Assert\NotBlank(groups={"create","read","update"})
-     */
-    protected $dateEdit;
-    /**
-     * @var Date
-     * @Serializer\Type("bitrix_date_ex")
-     * @Serializer\SerializedName("UF_DATE_START")
-     * @Serializer\Groups(groups={"create","read","update"})
-     * @Serializer\SkipWhenEmpty()
      * @Assert\NotBlank(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $dateStart;
+    protected $userId;
+
+    /**
+     * @var int
+     * @Serializer\Type("integer")
+     * @Serializer\SerializedName("UF_DEL_TYPE")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $deliveryId;
+
     /**
      * @var int
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("UF_FREQUENCY")
      * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
-     * @Assert\NotBlank(groups={"create","read","update"})
      */
-    protected $deliveryFrequency;
+    protected $frequency;
+
     /**
      * @var string
      * @Serializer\Type("string")
@@ -73,6 +70,27 @@ class OrderSubscribe extends BaseEntity
      * @Serializer\SkipWhenEmpty()
      */
     protected $deliveryTime;
+
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_DEL_PLACE")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $deliveryPlace;
+
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_LOCATION")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $locationId;
+
     /**
      * @var bool
      * @Serializer\Type("bool")
@@ -80,7 +98,44 @@ class OrderSubscribe extends BaseEntity
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $active;
+    protected $active = true;
+
+    /**
+     * @var int
+     * @Serializer\Type("integer")
+     * @Serializer\SerializedName("UF_ORDER_ID")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $orderId;
+
+    /**
+     * @var DateTime
+     * @Serializer\Type("bitrix_date_time_ex")
+     * @Serializer\SerializedName("UF_NEXT_DEL")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $nextDate;
+
+    /**
+     * @var DateTime
+     * @Serializer\Type("bitrix_date_time_ex")
+     * @Serializer\SerializedName("UF_DATE_CREATE")
+     * @Serializer\Groups(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $dateCreate;
+
+    /**
+     * @var DateTime
+     * @Serializer\Type("bitrix_date_time_ex")
+     * @Serializer\SerializedName("UF_DATE_EDIT")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $dateUpdate;
+
     /**
      * @var DateTime
      * @Serializer\Type("bitrix_date_time_ex")
@@ -89,14 +144,40 @@ class OrderSubscribe extends BaseEntity
      */
     protected $lastCheck;
 
-    /** @var UserFieldEnumService $userFieldEnumService */
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("UF_DEL_DAY")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $deliveryDay;
+
+    /**
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("UF_BONUS")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $payWithbonus = false;
+
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("UF_CHECK_DAYS")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $checkDays;
+
+
+    /**
+     * @var UserFieldEnumService $userFieldEnumService
+     * @Serializer\Exclude()
+     */
     private $userFieldEnumService;
-    /** @var null|Order $order */
-    private $order;
-    /** @var UserFieldEnumValue $deliveryFrequencyEntity */
-    private $deliveryFrequencyEntity;
-    /** @var User $user */
-    private $user;
+
 
     /**
      * @return array
@@ -107,9 +188,8 @@ class OrderSubscribe extends BaseEntity
             'ID' => $this->getId(),
             'UF_ORDER_ID' => $this->getOrderId(),
             'UF_DATE_CREATE' => $this->getDateCreate(),
-            'UF_DATE_EDIT' => $this->getDateEdit(),
-            'UF_DATE_START' => $this->getDateStart(),
-            'UF_FREQUENCY' => $this->getDeliveryFrequency(),
+            'UF_DATE_UPDATE' => $this->getDateUpdate(),
+            'UF_FREQUENCY' => $this->getFrequency(),
             'UF_DELIVERY_TIME' => $this->getDeliveryTime(),
             'UF_ACTIVE' => $this->isActive(),
             'UF_LAST_CHECK' => $this->getLastCheck(),
@@ -121,151 +201,235 @@ class OrderSubscribe extends BaseEntity
     /**
      * @return int
      */
-    public function getOrderId() : int
+    public function getUserId(): ?int
     {
-        return $this->orderId ?? 0;
+        return $this->userId;
     }
 
     /**
-     * @param int $orderId
-     *
-     * @return self
+     * @param int $userId
+     * @return OrderSubscribe
      */
-    public function setOrderId(int $orderId) : self
+    public function setUserId(int $userId): OrderSubscribe
     {
-        $this->orderId = $orderId;
-        if (isset($this->order)) {
-            unset($this->order);
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return null|DateTime
-     */
-    public function getDateCreate()
-    {
-        return $this->dateCreate ?? null;
-    }
-
-    /**
-     * @param null|DateTime|string $dateCreate
-     *
-     * @return self
-     */
-    public function setDateCreate($dateCreate) : self
-    {
-        $this->dateCreate = $this->processDateTimeValue($dateCreate);
-
-        return $this;
-    }
-
-    /**
-     * @return null|DateTime
-     */
-    public function getDateEdit()
-    {
-        return $this->dateEdit ?? null;
-    }
-
-    /**
-     * @param null|DateTime|string $dateEdit
-     *
-     * @return self
-     */
-    public function setDateEdit($dateEdit) : self
-    {
-        $this->dateEdit = $this->processDateTimeValue($dateEdit);
-
-        return $this;
-    }
-
-    /**
-     * Дата первой доставки заказа
-     *
-     * @return null|Date
-     */
-    public function getDateStart()
-    {
-        return $this->dateStart ?? null;
-    }
-
-    /**
-     * @param null|Date|string $dateStart
-     *
-     * @return self
-     */
-    public function setDateStart($dateStart) : self
-    {
-        $this->dateStart = $this->processDateValue($dateStart);
-
+        $this->userId = $userId;
         return $this;
     }
 
     /**
      * @return int
      */
-    public function getDeliveryFrequency() : int
+    public function getDeliveryId(): ?int
     {
-        return $this->deliveryFrequency ?? 0;
+        return $this->deliveryId;
     }
 
     /**
-     * @param int $deliveryFrequency
-     *
-     * @return self
+     * @param int $deliveryId
+     * @return OrderSubscribe
      */
-    public function setDeliveryFrequency(int $deliveryFrequency) : self
+    public function setDeliveryId(int $deliveryId): OrderSubscribe
     {
-        $this->deliveryFrequency = (int)$deliveryFrequency;
-        if (isset($this->deliveryFrequencyEntity)) {
-            unset($this->deliveryFrequencyEntity);
-        }
+        $this->deliveryId = $deliveryId;
+        return $this;
+    }
 
+    /**
+     * @return int
+     */
+    public function getFrequency(): ?int
+    {
+        return $this->frequency;
+    }
+
+    /**
+     * @param int $frequency
+     * @return OrderSubscribe
+     */
+    public function setFrequency(int $frequency): OrderSubscribe
+    {
+        $this->frequency = $frequency;
         return $this;
     }
 
     /**
      * @return string
      */
-    public function getDeliveryTime() : string
+    public function getDeliveryTime(): ?string
     {
-        $value = $this->deliveryTime ? str_replace(' ', '', $this->deliveryTime) : '';
-
-        return $value;
+        return $this->deliveryTime;
     }
 
     /**
      * @param string $deliveryTime
-     *
-     * @return self
+     * @return OrderSubscribe
      */
-    public function setDeliveryTime(string $deliveryTime) : self
+    public function setDeliveryTime($deliveryTime): OrderSubscribe
     {
         $this->deliveryTime = $deliveryTime;
+        return $this;
+    }
 
+    /**
+     * @return string
+     */
+    public function getDeliveryPlace(): ?string
+    {
+        return $this->deliveryPlace;
+    }
+
+    /**
+     * @param string $deliveryPlace
+     * @return OrderSubscribe
+     */
+    public function setDeliveryPlace(string $deliveryPlace): OrderSubscribe
+    {
+        $this->deliveryPlace = $deliveryPlace;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLocationId(): ?string
+    {
+        return $this->locationId;
+    }
+
+    /**
+     * @param string $locationId
+     * @return OrderSubscribe
+     */
+    public function setLocationId(string $locationId): OrderSubscribe
+    {
+        $this->locationId = $locationId;
         return $this;
     }
 
     /**
      * @return bool
      */
-    public function isActive() : bool
+    public function isActive(): bool
     {
-        return $this->active ?? true;
+        return $this->active;
     }
 
     /**
      * @param bool $active
-     *
-     * @return self
+     * @return OrderSubscribe
      */
-    public function setActive(bool $active) : self
+    public function setActive(bool $active): OrderSubscribe
     {
         $this->active = $active;
-
         return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getOrderId(): ?int
+    {
+        return $this->orderId;
+    }
+
+    /**
+     * @param int $orderId
+     * @return OrderSubscribe
+     */
+    public function setOrderId(int $orderId): OrderSubscribe
+    {
+        $this->orderId = $orderId;
+        return $this;
+    }
+
+    /**
+     * @return DateTime
+     */
+    public function getNextDate(): ?DateTime
+    {
+        return $this->nextDate;
+    }
+
+    /**
+     * @param DateTime $nextDate
+     * @return OrderSubscribe
+     */
+    public function setNextDate(DateTime $nextDate): OrderSubscribe
+    {
+        $this->nextDate = $nextDate;
+        return $this;
+    }
+
+    /**
+     * @return DateTime
+     */
+    public function getDateCreate(): DateTime
+    {
+        return $this->dateCreate;
+    }
+
+    /**
+     * @param DateTime $dateCreate
+     * @return OrderSubscribe
+     */
+    public function setDateCreate(DateTime $dateCreate): OrderSubscribe
+    {
+        $this->dateCreate = $dateCreate;
+        return $this;
+    }
+
+    /**
+     * @return DateTime
+     */
+    public function getDateUpdate(): ?DateTime
+    {
+        return $this->dateUpdate;
+    }
+
+    /**
+     * @param DateTime $dateUpdate
+     * @return OrderSubscribe
+     */
+    public function setDateUpdate(DateTime $dateUpdate): OrderSubscribe
+    {
+        $this->dateUpdate = $dateUpdate;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDeliveryDay(): ?int
+    {
+        return $this->deliveryDay;
+    }
+
+    /**
+     * @param $deliveryDay
+     * @return OrderSubscribe
+     */
+    public function setDeliveryDay($deliveryDay): OrderSubscribe
+    {
+        $this->deliveryDay = $deliveryDay;
+        return $this;
+    }
+
+    /**
+     * @param bool $payWithbonus
+     * @return OrderSubscribe
+     */
+    public function setPayWithbonus(bool $payWithbonus): OrderSubscribe
+    {
+        $this->payWithbonus = $payWithbonus;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPayWithbonus(): bool
+    {
+        return $this->payWithbonus ?: false;
     }
 
     /**
@@ -289,103 +453,22 @@ class OrderSubscribe extends BaseEntity
     }
 
     /**
-     * Рассчитывает и возвращает очередную дату, на которую необходимо доставить заказ по подписке.
-     * Если текущий день ($baseDate) совпадает с расчетной очередной датой,
-     * то вплоть до 23:59:59 он будет считаться очередной датой.
-     *
-     * @param string|\DateTimeInterface $baseDate Базовая дата для расчета в формате d.m.Y
-     * @return \DateTime
-     * @throws ApplicationCreateException
-     * @throws InvalidArgumentException
-     * @throws RuntimeException
-     * @throws \Exception
+     * @param $value
+     * @return DateTime|null|string
      */
-    public function getNextDeliveryDate($baseDate = null) : \DateTime
+    protected function processDateTimeValue($value)
     {
-        $dateStartRaw = $this->getDateStart();
-        if (!$dateStartRaw) {
-            throw new RuntimeException('Дата первой поставки не задана', 100);
-        }
-        // Принудительное приведение к требуемому формату - время нам здесь не нужно
-        $baseDate = $baseDate ?: '';
-        if (is_string($baseDate)) {
-            $baseDateValue = (new \DateTime($baseDate))->format('d.m.Y');
-        } elseif ($baseDate instanceof \DateTimeInterface) {
-            $baseDateValue = $baseDate->format('d.m.Y');
-        } else {
-            throw new InvalidArgumentException('Дата задана некорректно');
-        }
-        $result = null;
-
-        // Дата первой доставки.
-        // Принимаем, что ровно в 00:00:00 указанного дня заказ уже должен быть готов к выдаче клиенту.
-        $dateStart = new \DateTime($dateStartRaw->format('d.m.Y'));
-        $baseDate = new \DateTime($baseDateValue);
-        $intervalPassed = $dateStart->diff($baseDate);
-        if ($intervalPassed->invert) {
-            // если дата первой доставки еще не наступила, то она и будет очередной датой доставки
-            $result = $dateStart;
-        } else {
-            $periodIntervalSpec = '';
-            $frequencyXmlId = $this->getDeliveryFrequencyEntity()->getXmlId();
-            switch ($frequencyXmlId) {
-                case 'WEEK_1':
-                    // раз в неделю
-                    $periodIntervalSpec = 'P1W';
-                    break;
-
-                case 'WEEK_2':
-                    // раз в две недели
-                    $periodIntervalSpec = 'P2W';
-                    break;
-
-                case 'WEEK_3':
-                    // раз в три недели
-                    $periodIntervalSpec = 'P3W';
-                    break;
-
-                case 'MONTH_1':
-                    // раз в месяц (каждые 4 недели)
-                    $periodIntervalSpec = 'P4W';
-                    break;
-
-                case 'MONTH_2':
-                    // раз в два месяца (каждые 8 недель)
-                    $periodIntervalSpec = 'P8W';
-                    break;
-
-                case 'MONTH_3':
-                    // раз в три месяца (каждые 12 недель)
-                    $periodIntervalSpec = 'P12W';
-                    break;
-            }
-
-            if (!$periodIntervalSpec) {
-                throw new RuntimeException('Не удалось определить периодичность доставки', 200);
-            }
-
-            $periodStart = $dateStart;
-            $periodEnd = clone $baseDate;
-            $periodInterval = new \DateInterval($periodIntervalSpec);
-            // конечная дата периода: +два интервала
-            $periodEnd->add($periodInterval);
-            $periodEnd->add($periodInterval);
-
-            $period = new \DatePeriod($periodStart, $periodInterval, $periodEnd);
-            foreach($period as $periodDate) {
-                /** @var \DateTime $periodDate */
-                if ($periodDate >= $baseDate) {
-                    $result = new \DateTime($periodDate->format('d.m.Y'));
-                    break;
-                }
+        if (!($value instanceof DateTime)) {
+            if ($value === '' || $value === false) {
+                $value = '';
+            } elseif (is_string($value) && $value !== '') {
+                $value = new DateTime($value, 'd.m.Y H:i:s');
+            } else {
+                $value = null;
             }
         }
 
-        if (!$result) {
-            throw new RuntimeException('Не удалось определить дату доставки', 300);
-        }
-
-        return $result;
+        return $value;
     }
 
     /**
@@ -394,25 +477,18 @@ class OrderSubscribe extends BaseEntity
      */
     protected function getOrderSubscribeService() : OrderSubscribeService
     {
-        $appCont = Application::getInstance()->getContainer();
-        /** @var OrderSubscribeService $orderSubscribeService */
-        $orderSubscribeService = $appCont->get('order_subscribe.service');
-
+        $orderSubscribeService = Application::getInstance()->getContainer()->get('order_subscribe.service');
         return $orderSubscribeService;
     }
 
     /**
-     * @return UserFieldEnumService
+     * @return OrderSubscribeService
      * @throws ApplicationCreateException
      */
-    protected function getUserFieldEnumService() : UserFieldEnumService
+    protected function getOrderSubscribeHistoryService() : OrderSubscribeHistoryService
     {
-        if (!$this->userFieldEnumService) {
-            $appCont = Application::getInstance()->getContainer();
-            $this->userFieldEnumService = $appCont->get('userfield_enum.service');
-        }
-
-        return $this->userFieldEnumService;
+        $orderSubscribeHistoryService = Application::getInstance()->getContainer()->get('order_subscribe_history.service');
+        return $orderSubscribeHistoryService;
     }
 
     /**
@@ -436,6 +512,29 @@ class OrderSubscribe extends BaseEntity
     }
 
     /**
+     * @return User
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
+     * @throws \Exception
+     */
+    public function getUser() : User
+    {
+        if (!isset($this->user)) {
+            $this->user = null;
+            $subscribeService = $this->getOrderSubscribeService();
+            $userRepository = $subscribeService->getCurrentUserService()->getUserRepository();
+            $this->user = $userRepository->find(
+                $this->getUserId()
+            );
+        }
+        if (!$this->user) {
+            throw new NotFoundException('Пользователь не найден');
+        }
+
+        return $this->user;
+    }
+
+    /**
      * @return UserFieldEnumValue
      * @throws ApplicationCreateException
      * @throws \Exception
@@ -444,11 +543,49 @@ class OrderSubscribe extends BaseEntity
     {
         if (!isset($this->deliveryFrequencyEntity)) {
             $this->deliveryFrequencyEntity = $this->getUserFieldEnumService()->getEnumValueEntity(
-                $this->getDeliveryFrequency()
+                $this->getFrequency()
             );
         }
 
         return $this->deliveryFrequencyEntity;
+    }
+
+    /**
+     * @return UserFieldEnumService
+     * @throws ApplicationCreateException
+     */
+    protected function getUserFieldEnumService() : UserFieldEnumService
+    {
+        if (!$this->userFieldEnumService) {
+            $appCont = Application::getInstance()->getContainer();
+            $this->userFieldEnumService = $appCont->get('userfield_enum.service');
+        }
+
+        return $this->userFieldEnumService;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCheckDays()
+    {
+        return $this->checkDays;
+    }
+
+    /**
+     * @param $checkDays
+     */
+    public function setCheckDays(\DateTime $deliveryDate): self
+    {
+        $deliveryDate = clone $deliveryDate->setTime(0,0,0,0);
+        $curDate = (new \DateTime())->setTime(0,0,0,0);
+        $checkDays = (int)$deliveryDate->diff($curDate)->format('%d');
+        // хотя бы один день для подстраховки
+        if($checkDays == 0){
+            $checkDays = 1;
+        }
+        $this->checkDays = $checkDays;
+        return $this;
     }
 
     /**
@@ -471,31 +608,12 @@ class OrderSubscribe extends BaseEntity
     }
 
     /**
-     * @param $value
-     * @return DateTime|null|string
-     */
-    protected function processDateTimeValue($value)
-    {
-        if (!($value instanceof DateTime)) {
-            if ($value === '' || $value === false) {
-                $value = '';
-            } elseif (is_string($value) && $value !== '') {
-                $value = new DateTime($value, 'd.m.Y H:i:s');
-            } else {
-                $value = null;
-            }
-        }
-
-        return $value;
-    }
-
-    /**
      * @param string $format
      * @return string
      */
     public function getDateStartFormatted(string $format = 'd.m.Y') : string
     {
-        $date =  $this->getDateStart();
+        $date =  $this->getDateCreate();
 
         return $date ? $date->format($format) : '';
     }
@@ -505,7 +623,7 @@ class OrderSubscribe extends BaseEntity
      */
     public function getDateStartWeekday() : int
     {
-        $dateStart = $this->getDateStart();
+        $dateStart = $this->getDateCreate();
 
         return $dateStart ? (int)$dateStart->format('N') : 0;
     }
@@ -571,25 +689,152 @@ class OrderSubscribe extends BaseEntity
     }
 
     /**
-     * @return User
+     * @return \Doctrine\Common\Collections\ArrayCollection
      * @throws ApplicationCreateException
-     * @throws NotFoundException
-     * @throws \Exception
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
-    public function getUser() : User
+    public function getItems()
     {
-        if (!isset($this->user)) {
-            $this->user = null;
-            $subscribeService = $this->getOrderSubscribeService();
-            $userRepository = $subscribeService->getCurrentUserService()->getUserRepository();
-            $this->user = $userRepository->find(
-                $this->getOrder()->getUserId()
-            );
-        }
-        if (!$this->user) {
-            throw new NotFoundException('Пользователь не найден');
+        return $this->getOrderSubscribeService()->getItemsBySubscribeId($this->getId());
+    }
+
+    /**
+     * Возвращает полный адрес места доставки
+     *
+     * @return \FourPaws\LocationBundle\Entity\Address|string|null
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\AppBundle\Exception\NotFoundException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
+    public function getDeliveryPlaceAddress()
+    {
+        $result = null;
+
+        /** @var OrderSubscribeService $orderSubscribeService */
+        $orderSubscribeService = $this->getOrderSubscribeService();
+        /** @var AddressService $addressService */
+        $addressService = Application::getInstance()->getContainer()->get('address.service');
+        /** @var StoreService $storeService */
+        $storeService = Application::getInstance()->getContainer()->get('store.service');
+
+        if($orderSubscribeService->isDelivery($this)){
+            $address = $addressService->getById($this->getDeliveryPlace());
+            $result = $address->getFullAddress();
+        } else {
+            $store = $storeService->getStoreByXmlId($this->getDeliveryPlace());
+            $result = $store->getAddress();
         }
 
-        return $this->user;
+        return $result;
     }
+
+    /**
+     * @return bool
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     */
+    public function isDelivery()
+    {
+        return $this->getOrderSubscribeService()->isDelivery($this);
+    }
+
+    /**
+     * Возвращает цену товаров в подписке
+     *
+     * @return float|int
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getPrice()
+    {
+        $sum = 0;
+        $orderSubscribeItems = $this->getItems();
+        $items = [];
+
+        /** @var OrderSubscribeItem $orderSubscribeItem */
+        foreach($orderSubscribeItems as $orderSubscribeItem){
+            $items[$orderSubscribeItem->getOfferId()] = [
+                'ID' => $orderSubscribeItem->getOfferId(),
+                'QUANTITY' => $orderSubscribeItem->getQuantity(),
+            ];
+        }
+
+        $offerCollection = (new OfferQuery())->withFilter(['ID' => array_column($items, 'ID')])->exec();
+        /** @var Offer $offer */
+        foreach($offerCollection as $offer){
+            $sum += $offer->getSubscribePrice() * $items[$offer->getId()]['QUANTITY'];
+        }
+
+        return $sum;
+    }
+
+    /**
+     * Возвращает цену доставки
+     *
+     * @return float|int
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Sale\UserMessageException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\PersonalBundle\Exception\OrderSubscribeException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
+    public function getDeliveryPrice()
+    {
+        $price = 0;
+
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+
+        $delivery = $deliveryService->getDeliveryById($this->getDeliveryId());
+        $deliveryCode = $deliveryService->getDeliveryCodeById($delivery['ID']);
+        $basket = $this->getOrderSubscribeService()->getBasketBySubscribeId($this->getId());
+
+        $calcResults = $deliveryService->getByBasket($basket, $this->getLocationId(), [$deliveryCode]);
+        $calcResult = current($calcResults);
+        if($calcResult)
+            $price = $calcResult->getPrice();
+
+        return $price;
+    }
+
+    /**
+     * @return DateTime|null
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ObjectException
+     */
+    public function getPreviousDate()
+    {
+        return $this->getOrderSubscribeService()->getPreviousDate($this);
+    }
+
+    /**
+     * @return array|false
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getNearestDelivery()
+    {
+        return $this->getOrderSubscribeHistoryService()->getNearestDelivery($this);
+    }
+
+
 }
