@@ -21,6 +21,10 @@ $markup = PawsApplication::markup();
  * @var $sViewportCookie - Значение куки отвечающе за переключение вьпорта с мобильного на десктоп.
  */
 $sViewportCookie = $_COOKIE['viewport'] ?? null;
+
+$bodyClass = '';
+if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk'; }
+
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -87,7 +91,7 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
 
     <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_header.php'; ?>
 </head>
-<body>
+<body <? if($bodyClass != ''){ ?>class="<?= $bodyClass ?>"<? } ?>>
 <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_body.php'; ?>
 <?php $APPLICATION->ShowPanel(); ?>
 

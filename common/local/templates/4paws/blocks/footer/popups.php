@@ -2,6 +2,7 @@
 
 use Bitrix\Main\Application;
 use FourPaws\App\MainTemplate;
+use FourPaws\KioskBundle\Service\KioskService;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -51,6 +52,10 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
 
     if ($template->hasPersonalOffers()) {
         include __DIR__ . '/personal_offers_form.php';
+    }
+
+    if(KioskService::isKioskMode()) {
+        include __DIR__ . '/start_kiosk.php';
     }
 
     include __DIR__ . '/gifts_popup.php';
