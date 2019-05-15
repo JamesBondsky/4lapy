@@ -8,6 +8,7 @@
 
 namespace FourPaws\KioskBundle\Service;
 
+use Symfony\Component\HttpFoundation\Request;
 
 class KioskService
 {
@@ -30,5 +31,22 @@ class KioskService
     public static function getHiddenMenuList () {
         return self::$menu;
     }
+
+    public function getLastPageUrl(Request $request)
+    {
+        return $request->headers->get('referer');
+    }
+
+    public function addParamsToUrl($url, $params)
+    {
+        $query = parse_url($url, PHP_URL_QUERY);
+        if ($query) {
+            $url .= sprintf("&%s", http_build_query($params));
+        } else {
+            $url .= sprintf("?%s", http_build_query($params));
+        }
+        return $url;
+    }
+
 
 }

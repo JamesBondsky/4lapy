@@ -30,11 +30,15 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class KioskController extends Controller
 {
-    use RefererTrait;
 
+    /**
+     * Типы ошибок при сканировани ШК
+     */
     const ERROR_BAD_CARD = 1; // не удалось распознать ШК
 
     /**
+     * Авторизация по ШК
+     *
      * @param $card
      * @Route("/auth/", methods={"GET", "POST"})
      * @throws \Exception
@@ -72,17 +76,13 @@ class KioskController extends Controller
             $resultParams = ['auth' => 0, 'error' => 1];
         }
 
-        $lastUrl = $request->headers->get('referer');
-        $query = parse_url($lastUrl, PHP_URL_QUERY);
-        if ($query) {
-            $lastUrl .= sprintf("&%s", http_build_query($resultParams));
-        } else {
-            $lastUrl .= sprintf("?%s", http_build_query($resultParams));
-        }
+        /** @var KioskService $kioskService */
+        $kioskService = Application::getInstance()->getContainer()->get('kiosk.service');
+        $lastUrl = $kioskService->getLastPageUrl($request);
+        $lastUrl = $kioskService->addParamsToUrl($lastUrl, $resultParams);
 
         return $this->redirect($lastUrl);
     }
-
 
     /**
      * @Route("/logout/", methods={"GET", "POST"})
