@@ -46,16 +46,17 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
         $APPLICATION->IncludeComponent('fourpaws:fast.order', '', [], null, ['HIDE_ICONS' => 'Y']);
     }
 
+    if(KioskService::isKioskMode() && $template->isIndex()) {
+        include __DIR__ . '/start_kiosk.php';
+    }
+
+
     if ($template->hasPiggyBank()) {
         include __DIR__ . '/popup_email_kopilka.php';
     }
 
     if ($template->hasPersonalOffers()) {
         include __DIR__ . '/personal_offers_form.php';
-    }
-
-    if(KioskService::isKioskMode()) {
-        include __DIR__ . '/start_kiosk.php';
     }
 
     include __DIR__ . '/gifts_popup.php';
