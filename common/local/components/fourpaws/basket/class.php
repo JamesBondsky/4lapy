@@ -497,7 +497,7 @@ class BasketComponent extends CBitrixComponent
         foreach ($orderableBasket as $basketItem) {
             if (!isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
                 $offer = $this->getOffer((int)$basketItem->getProductId());
-                if (!$offer || $offer->getSubscribeDiscount() == 0) {
+                if (!$offer) {
                     continue;
                 }
                 $itemQuantity = (int)$basketItem->getQuantity();
