@@ -338,19 +338,26 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                 continue;
             }
 
-            if($storage->isSubscribe() && !$this->basketService->getBasketItemPropertyValue($basketItem, "SUBSCRIBE_PRICE")){
-                $price = $basketItem->getPrice() * ((100 - $percent)/100);
+            $subscribeActive = $this->basketService->getBasketItemPropertyValue($basketItem, "SUBSCRIBE_PRICE");
+
+            // такое мудрёное округление цены нужно для того,
+            // чтобы после перерасчёта корзины манзаной не было расхождения
+            // т.к. там цена округялется через PriceHelper::roundPrice
+            if($storage->isSubscribe() && !$subscribeActive){
+                $price = PriceHelper::roundPrice($basketItem->getPrice()) * ((100 - $percent)/100);
+                $manzanaPrice = PriceHelper::roundPrice($price);
                 $basketItem->setFieldsNoDemand([
-                    'PRICE' => $price,
+                    'PRICE' => $manzanaPrice,
                     'DISCOUNT_PRICE' => $basketItem->getBasePrice() - $price,
                     'CUSTOM_PRICE' => 'Y'
                 ]);
                 $this->basketService->setBasketItemPropertyValue($basketItem, "SUBSCRIBE_PRICE", true);
             }
-            else if(!$storage->isSubscribe() && $this->basketService->getBasketItemPropertyValue($basketItem, "SUBSCRIBE_PRICE")){
-                $price = ($basketItem->getPrice()*100)/$percent;
+            else if(!$storage->isSubscribe() && $subscribeActive){
+                $price = (PriceHelper::roundPrice($basketItem->getPrice())*100)/$percent;
+                $manzanaPrice = PriceHelper::roundPrice($price);
                 $basketItem->setFieldsNoDemand([
-                    'PRICE' => $price,
+                    'PRICE' => $manzanaPrice,
                     'DISCOUNT_PRICE' => $basketItem->getBasePrice() - $price,
                     'CUSTOM_PRICE' => 'Y'
                 ]);

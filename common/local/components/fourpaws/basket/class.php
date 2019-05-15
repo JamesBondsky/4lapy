@@ -30,6 +30,7 @@ use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils\Detach\Adder;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
+use FourPaws\SaleBundle\Helper\PriceHelper;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponSessionStorage;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Service\BasketService;
@@ -415,8 +416,6 @@ class BasketComponent extends CBitrixComponent
     }
 
     /**
-     *
-     *
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws \Bitrix\Main\ArgumentNullException
@@ -496,13 +495,19 @@ class BasketComponent extends CBitrixComponent
         $orderableBasket = $basket->getOrderableItems();
 
         foreach ($orderableBasket as $basketItem) {
-            $itemQuantity = (int)$basketItem->getQuantity();
             if (!isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
                 $offer = $this->getOffer((int)$basketItem->getProductId());
-                if (!$offer) {
+                if (!$offer || $offer->getSubscribeDiscount() == 0) {
                     continue;
                 }
-                $subscribePrice += $offer->getSubscribePrice() * $itemQuantity;
+                $itemQuantity = (int)$basketItem->getQuantity();
+                $itemPrice = $basketItem->getPrice();
+                $percent = $offer->getSubscribeDiscount();
+
+                $price = $itemPrice * ((100 - $percent)/100);
+                $manzanaPrice = PriceHelper::roundPrice($price);
+
+                $subscribePrice += $manzanaPrice * $itemQuantity;
             }
         }
 

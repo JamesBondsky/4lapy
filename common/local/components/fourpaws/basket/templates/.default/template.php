@@ -73,7 +73,7 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
             <div class="b-panel-subscribe-cart">
                 <div class="b-panel-subscribe-cart__content">
                     <div class="b-panel-subscribe-cart__info">
-                        Подпишитесь на&nbsp;доставку и&nbsp;получите скидку <?= ($subscribePriceDiff > 0) ? WordHelper::numberFormat($subscribePriceDiff, 0).' ₽' : ''?> на&nbsp;вашу корзину&nbsp;&mdash;
+                        Подпишитесь на&nbsp;доставку и&nbsp;получите скидку <?= ($subscribePriceDiff > 0) ? WordHelper::numberFormat($subscribePriceDiff, 2).' ₽' : ''?> на&nbsp;вашу корзину&nbsp;&mdash;
                         <a href="javascript:void(0);" class="b-link" data-show-subscribe-delivery-cart="true">узнать подробнее</a>
                     </div>
                 </div>
