@@ -67,6 +67,10 @@ four_paws_mobile_api:
     FourPaws\MobileApiBundle\Exception\HackerException:
       code: 401
       status_code: 401
+    FourPaws\External\Manzana\Exception\CardNotFoundException:
+      code: 1001
+      message: 'Карта не найдена'
+      status_code: 200
     FourPaws\MobileApiBundle\Exception\DeliveryAddressUpdateError:
       code: 1021
       message: 'Ошибка при обновления профиля доставки'
