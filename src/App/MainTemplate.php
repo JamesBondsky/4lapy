@@ -2,6 +2,8 @@
 
 namespace FourPaws\App;
 
+use Bitrix\Main\Application as BitrixApplication;
+
 /**
  * Class MainTemplate
  *
@@ -390,9 +392,25 @@ class MainTemplate extends TemplateAbstract
     /**
      * @return bool
      */
+    public function isOrderSubscribePage(): bool
+    {
+        return $this->isDir('/personal/subscribe');
+    }
+
+    /**
+     * @return bool
+     */
+    public function isOrderHistoryPage(): bool
+    {
+        return $this->isDir('/personal/orders');
+    }
+
+    /**
+     * @return bool
+     */
     public function hasOrderDeliveryPage(): bool
     {
-        return $this->isOrderDeliveryPage();
+        return $this->isOrderDeliveryPage() || $this->isOrderSubscribePage() || $this->isOrderHistoryPage();
     }
 
     /**
@@ -467,4 +485,14 @@ class MainTemplate extends TemplateAbstract
     {
         return $this->isDir('/catalog/search');
     }
+
+    /**
+     * @return bool
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function isCatalogPopup(): bool
+    {
+        return $this->isPartitionDir('/ajax/catalog');
+    }
+
 }

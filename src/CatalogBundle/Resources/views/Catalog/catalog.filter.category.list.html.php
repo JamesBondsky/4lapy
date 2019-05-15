@@ -132,7 +132,7 @@ if ($childs !== null && $childs->count()) { ?>
                                 ><?= $child->getName() ?></a>
                             </label>
                         <?php } else { ?>
-                            <a class="b-filter-link-list__link"
+                            <a class="b-filter-link-list__link js-filter-link-list-category"
                                href="<?= $catalogRequest instanceof ChildCategoryRequest ? $catalogRequest->getCategoryPathByCategory($child) : $parent->getSectionPageUrl() ?>"
                                title="<?= $child->getCanonicalName() ?>">
                                 <?= $child->getCanonicalName() ?>
