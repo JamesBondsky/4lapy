@@ -296,7 +296,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                                 <div class="info-subscribe-product__icon">
                                     <?= new SvgDecorator('icon-calendar', 24, 24) ?>
                                 </div>
-                                <div class="info-subscribe-product__text">Выберите нужную вам частоту доставки&nbsp;&mdash; от&nbsp;недели до&nbsp;трех месяцев.</div>
+                                <div class="info-subscribe-product__text">Выберите нужную вам частоту доставки&nbsp;&mdash; от&nbsp;недели до&nbsp;двух месяцев.</div>
                             </div>
                             <div class="info-subscribe-product__item">
                                 <div class="info-subscribe-product__icon">

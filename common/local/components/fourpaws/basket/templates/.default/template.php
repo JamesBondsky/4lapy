@@ -280,7 +280,7 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                                 <?= new SvgDecorator('icon-calendar', 24, 24) ?>
                             </div>
                             <div class="item__text">
-                                Выберите нужную вам частоту доставки&nbsp;&mdash; от&nbsp;недели до&nbsp;трех месяцев.
+                                Выберите нужную вам частоту доставки&nbsp;&mdash; от&nbsp;недели до&nbsp;двух месяцев.
                             </div>
                         </div>
                         <div class="item">
@@ -499,7 +499,7 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                                 <?= new SvgDecorator('icon-calendar', 24, 24) ?>
                             </div>
                             <div class="item__text">
-                                Выберите нужную вам частоту доставки&nbsp;&mdash; от&nbsp;недели до&nbsp;трех месяцев.
+                                Выберите нужную вам частоту доставки&nbsp;&mdash; от&nbsp;недели до&nbsp;двух месяцев.
                             </div>
                         </div>
                         <div class="item">

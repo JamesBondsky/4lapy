@@ -17,7 +17,8 @@ use FourPaws\Decorators\SvgDecorator;
                             <span class="hide-mobile">Назад</span>
                         </div>
                         <h1 class="b-popup-subscribe-delivery__title">
-                            Добавление товаров в подписку
+                            <span data-title-add-products-in-subscribe="default">Добавление товаров в подписку</span>
+                            <span class="hide" data-title-add-products-in-subscribe="active">Завершить добавление в подписку</span>
                         </h1>
                         <a class="b-popup-subscribe-delivery__close"
                            href="javascript:void(0);"
