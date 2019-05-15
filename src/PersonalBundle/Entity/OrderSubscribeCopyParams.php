@@ -456,6 +456,9 @@ class OrderSubscribeCopyParams
     {
         if (!$this->dateForOrderCreate) {
             $this->dateForOrderCreate = $this->getDeliveryDate()->modify(sprintf("-%s days", $this->getOrderSubscribe()->getCheckDays()));
+            if(!$this->dateForOrderCreate){
+                throw new RuntimeException('Не удалось получить дату для создания заказа');
+            }
         }
 
         return $this->dateForOrderCreate;
