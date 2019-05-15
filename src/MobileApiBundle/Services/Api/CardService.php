@@ -9,6 +9,7 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 use Bitrix\Main\UserTable;
 use FourPaws\MobileApiBundle\Dto\Error;
 use FourPaws\MobileApiBundle\Dto\Object\ChangeCardProfile;
+use FourPaws\MobileApiBundle\Dto\Object\User;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Exception\CardAlreadyUsedException;
 use FourPaws\MobileApiBundle\Exception\EmailAlreadyUsed;
@@ -16,6 +17,7 @@ use FourPaws\MobileApiBundle\Exception\InvalidCardException;
 use FourPaws\MobileApiBundle\Exception\InvalidCredentialException;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\PersonalBundle\Exception\CardNotValidException;
+use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\UserService as AppUserService;
 use FourPaws\PersonalBundle\Entity\UserBonus as AppUserBonus;
@@ -138,20 +140,25 @@ class CardService
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\External\Exception\ExpertsenderServiceException
      * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @throws \FourPaws\UserBundle\Exception\EmptyPhoneException
      * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
      * @throws \FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException
-     * @throws \FourPaws\UserBundle\Exception\NotFoundException
      * @throws \GuzzleHttp\Exception\GuzzleException
      * @throws \LinguaLeo\ExpertSender\ExpertSenderException
      */
     public function sendConfirmationToEmail(string $email)
     {
-        if ($user = $this->appUserService->findOneByEmail($email)) {
-            if ($user->isEmailConfirmed()) {
-                throw new EmailAlreadyUsed();
+        try {
+            if ($user = $this->appUserService->findOneByEmail($email)) {
+                if ($user->isEmailConfirmed()) {
+                    throw new EmailAlreadyUsed();
+                }
             }
+        } catch (NotFoundException $e) {
+            $this->apiUserService->update((new User())->setEmail($email));
         }
         return $this->apiCaptchaService->sendValidation($email, 'card_activation');
     }
