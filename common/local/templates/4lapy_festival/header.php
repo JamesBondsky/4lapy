@@ -28,6 +28,7 @@ $markup = PawsApplication::markup();
     <meta content="width=device-width, initial-scale=1" name="viewport"/>
     <meta content="" name="description"/>
     <meta content="" name="author"/>
+    <meta name="yandex-verification" content="6266e34669b85ed6">
 
     <?php /** @todo Mobe onto right place  */ ?>
     <script src="/static/build/js/jquery/jquery.min.js"></script>
@@ -94,6 +95,7 @@ $markup = PawsApplication::markup();
     <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_header.php'; ?>
 </head>
 <body id="body" data-spy="scroll" data-target=".header" class="body-landing-festival">
+<?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_body.php'; ?>
 <?php $APPLICATION->ShowPanel(); ?>
 
     <!--========== HEADER ==========-->
