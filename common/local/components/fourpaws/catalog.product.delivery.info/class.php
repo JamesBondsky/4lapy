@@ -72,37 +72,6 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
     }
 
     /**
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws CityNotFoundException
-     * @throws DeliveryNotFoundException
-     * @throws InvalidArgumentException
-     * @throws LogicException
-     * @throws NotFoundException
-     * @throws RuntimeException
-     * @throws ObjectPropertyException
-     * @throws SystemException
-     * @throws ServiceCircularReferenceException
-     * @throws ServiceNotFoundException
-     */
-    public function prepareResult(): void
-    {
-        if (!$this->arParams['OFFER']) {
-            throw new \InvalidArgumentException('Invalid component parameters');
-        }
-
-        parent::prepareResult();
-
-        if (isset($this->arResult['PICKUP']) &&
-            $this->arResult['PICKUP']['CODE'] === DeliveryService::INNER_PICKUP_CODE
-        ) {
-            $this->arResult['PICKUP']['SHOP_COUNT'] = $this->getShopCount(
-                $this->arResult['PICKUP']['RESULT']
-            );
-        }
-    }
-
-    /**
      * @param string $locationCode
      * @param array  $possibleDeliveryCodes
      *
@@ -139,52 +108,5 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
         return OfferQuery::getById($id);
     }
 
-    /**
-     * @param PickupResultInterface $pickup
-     *
-     * @return int[]
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws DeliveryNotFoundException
-     * @throws NotFoundException
-     */
-    protected function getShopCount(PickupResultInterface $pickup): array
-    {
-        $shops = $pickup->getBestShops();
-        $pickup = clone $pickup;
 
-        $countTotal = 0;
-        $hasToday = false;
-        $countFirst = 0;
-        $firstDate = null;
-        $currentDate = new \DateTime();
-        /** @var Store $shop */
-        foreach ($shops as $shop) {
-            $pickup->setSelectedStore($shop);
-            if (!$pickup->isSuccess()) {
-                break;
-            }
-
-            if (abs($pickup->getDeliveryDate()->getTimestamp() - $currentDate->getTimestamp()) < 2 * 3600) {
-                $hasToday = true;
-                $countFirst++;
-            }
-
-            if (!$hasToday) {
-                if (null === $firstDate) {
-                    $firstDate = $pickup->getDeliveryDate();
-                }
-                if ($pickup->getDeliveryDate()->format('z') === $firstDate->format('z')) {
-                    $countFirst++;
-                }
-            }
-            $countTotal++;
-        }
-
-        return [
-            'AVAILABLE' => $countFirst,
-            'HAS_TODAY' => $hasToday,
-            'TOTAL'     => $countTotal,
-        ];
-    }
 }

@@ -86,7 +86,6 @@ class ShopInfoService
 
     /**
      * @param Offer $offer
-     *
      * @return StoreCollection
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -95,8 +94,8 @@ class ShopInfoService
      * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
-     * @throws UserMessageException
      * @throws SystemException
+     * @throws UserMessageException
      */
     public function getShopsByOffer(Offer $offer): StoreCollection
     {
@@ -183,7 +182,6 @@ class ShopInfoService
      * @throws ObjectNotFoundException
      * @throws SystemException
      * @throws UserMessageException
-     * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Exception
      * @throws ServiceCircularReferenceException
      * @throws ServiceNotFoundException
@@ -198,51 +196,26 @@ class ShopInfoService
         $shops = new ArrayCollection();
         $services = new ArrayCollection();
 
-        $subregionCode = $this->locationService->findLocationSubRegion($locationCode)['CODE'] ?? '';
+        $subRegionCode = $this->locationService->findLocationSubRegion($locationCode)['CODE'] ?? '';
         $regionCode = $this->locationService->findLocationRegion($locationCode)['CODE'] ?? '';
         $availableStores = new StoreCollection();
 
         /** @var Store $store */
         foreach ($stores as $store) {
             try {
-                $shop = $this->getStoreInfo($store, $metroList, $servicesList);
+                $shop = $this->getStoreInfo(
+                    $store,
+                    $metroList,
+                    $servicesList,
+                    $offer
+                );
+                $shop->setLocationType(
+                    (($store->getLocation() === $locationCode) || ($store->getSubRegion() && $store->getSubRegion() === $subRegionCode))
+                        ? StoreLocationType::SUBREGIONAL
+                        : StoreLocationType::REGIONAL
+                );
 
-                if ($offer) {
-                    $pickupResult = $this->getPickupResultByStore($store, $offer);
 
-                    /** @var StockResult $stockResultByStore */
-                    $stockResultByStore = $pickupResult->getStockResult()->first();
-                    $amount = $stockResultByStore->getOffer()
-                        ->getAllStocks()
-                        ->filterByStore($store)
-                        ->getTotalAmount();
-
-                    $amountString = 'под заказ';
-                    if ($amount) {
-                        $amountString = $amount > 5 ? 'много' : 'мало';
-                    }
-
-                    $shop
-                        ->setPickupDate(
-                            DeliveryTimeHelper::showTime(
-                                $pickupResult,
-                                [
-                                    'SHOW_TIME' => true,
-                                    'SHORT'     => true,
-                                ]
-                            )
-                        )
-                        ->setAvailableAmount(str_replace(' ', '&nbsp;', $amountString))
-                        ->setAvailability(
-                            $stockResultByStore->getType() === StockResult::TYPE_AVAILABLE
-                                ? OrderAvailability::AVAILABLE
-                                : OrderAvailability::DELAYED
-                        )->setLocationType(
-                            (($store->getLocation() === $locationCode) || ($store->getSubRegion() && $store->getSubRegion() === $subregionCode))
-                                ? StoreLocationType::SUBREGIONAL
-                                : StoreLocationType::REGIONAL
-                        );
-                }
             } catch (PickupUnavailableException|EmptyCoordinatesException|EmptyAddressException $e) {
                 continue;
             }
@@ -272,7 +245,7 @@ class ShopInfoService
             $mapCenter = $this->storeService->getMapCenter(
                 $availableStores,
                 $locationCode,
-                $subregionCode,
+                $subRegionCode,
                 $regionCode
             );
         } else {
@@ -287,6 +260,32 @@ class ShopInfoService
             ->setServices($services);
 
         return $shopList;
+    }
+
+    /**
+     * @param Store $store
+     * @param Offer $offer
+     * @return int
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws DeliveryNotFoundException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws PickupUnavailableException
+     * @throws SystemException
+     * @throws UserMessageException
+     */
+    public function getStockAmount(Store $store, Offer $offer)
+    {
+        $pickupResult = $this->getPickupResultByStore($store, $offer);
+
+        /** @var StockResult $stockResultByStore */
+        $stockResultByStore = $pickupResult->getStockResult()->first();
+        return $stockResultByStore->getOffer()
+            ->getAllStocks()
+            ->filterByStore($store)
+            ->getTotalAmount();
     }
 
     /**
@@ -424,15 +423,26 @@ class ShopInfoService
      * @param Store $store
      * @param array $metroList
      * @param array $servicesList
+     * @param Offer|null $offer
      *
      * @return Shop
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws DeliveryNotFoundException
      * @throws EmptyAddressException
      * @throws EmptyCoordinatesException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws PickupUnavailableException
+     * @throws SystemException
+     * @throws UserMessageException
      */
-    protected function getStoreInfo(
+    public function getStoreInfo(
         Store $store,
         array $metroList,
-        array $servicesList
+        array $servicesList,
+        Offer $offer = null
     ): Shop
     {
         if (!$store->getAddress()) {
@@ -459,6 +469,7 @@ class ShopInfoService
         if ($metroId = $store->getMetro()) {
             $shop
                 ->setMetro('м. ' . $metroList[$metroId]['UF_NAME'])
+                ->setMetroColor($metroList[$metroId]['BRANCH']['UF_COLOUR_CODE'])
                 ->setMetroCssClass('--' . $metroList[$metroId]['BRANCH']['UF_CLASS']);
         }
 
@@ -482,6 +493,39 @@ class ShopInfoService
             }
         }
         $shop->setServices($services);
+
+        if ($offer) {
+            $pickupResult = $this->getPickupResultByStore($store, $offer);
+
+            /** @var StockResult $stockResultByStore */
+            $stockResultByStore = $pickupResult->getStockResult()->first();
+            $amount = $stockResultByStore->getOffer()
+                ->getAllStocks()
+                ->filterByStore($store)
+                ->getTotalAmount();
+
+            $amountString = 'под заказ';
+            if ($amount) {
+                $amountString = $amount > 5 ? 'много' : 'мало';
+            }
+
+            $shop
+                ->setPickupDate(
+                    DeliveryTimeHelper::showTime(
+                        $pickupResult,
+                        [
+                            'SHOW_TIME' => true,
+                            'SHORT'     => true,
+                        ]
+                    )
+                )
+                ->setAvailableAmount(str_replace(' ', '&nbsp;', $amountString))
+                ->setAvailability(
+                    $stockResultByStore->getType() === StockResult::TYPE_AVAILABLE
+                        ? OrderAvailability::AVAILABLE
+                        : OrderAvailability::DELAYED
+                );
+        }
 
         return $shop;
     }
@@ -541,17 +585,17 @@ class ShopInfoService
 
     /**
      * @param Offer $offer
-     *
      * @return PickupResultInterface
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws DeliveryNotFoundException
      * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
-     * @throws UserMessageException
-     * @throws DeliveryNotFoundException
      * @throws PickupUnavailableException
      * @throws SystemException
+     * @throws UserMessageException
+     * @throws \Bitrix\Main\ObjectPropertyException
      */
     protected function getPickupResult(Offer $offer): PickupResultInterface
     {
@@ -561,6 +605,7 @@ class ShopInfoService
         }
 
         if (null === $results[$offer->getId()]) {
+
             $currentLocation = $this->locationService->getCurrentLocation();
             if ($this->deliveryService->getCurrentDeliveryZone() === DeliveryService::ZONE_4) {
                 $regionalStores = $this->storeService->getShopsByLocation($currentLocation);
@@ -569,7 +614,7 @@ class ShopInfoService
                 }
             }
 
-            $availableDeliveries = $this->deliveryService->getByProduct($offer, $currentLocation);
+            $availableDeliveries = $this->deliveryService->getByProduct($offer, $currentLocation, [], null);
             $pickup = null;
             foreach ($availableDeliveries as $availableDelivery) {
                 if ($this->deliveryService->isInnerPickup($availableDelivery)) {
@@ -590,5 +635,62 @@ class ShopInfoService
         }
 
         return $results[$offer->getId()];
+    }
+
+    /**
+     * @param \FourPaws\MobileApiBundle\Dto\Object\Store\Store|array $a
+     * @param \FourPaws\MobileApiBundle\Dto\Object\Store\Store|array $b
+     *
+     * @return int
+     */
+    public function shopCompareByLocationType($a, $b): int
+    {
+        if ($a instanceof \FourPaws\MobileApiBundle\Dto\Object\Store\Store && $b instanceof \FourPaws\MobileApiBundle\Dto\Object\Store\Store)
+        {
+            /** @var \FourPaws\MobileApiBundle\Dto\Object\Store\Store $a */
+            /** @var \FourPaws\MobileApiBundle\Dto\Object\Store\Store $b */
+            if ($a->getLocationType()[0] === $b->getLocationType()[0])
+            {
+                return $a->getLocationType()[1] - $b->getLocationType()[1]; // сохранение порядка элементов с совпадающими location_type
+            } else {
+                return $a->getLocationType()[0] === 'regional' ? 1 : -1;
+            }
+        } else {
+            if ($a['location_type'][0] === $b['location_type'][0])
+            {
+                return $a['location_type'][1] - $b['location_type'][1]; // сохранение порядка элементов с совпадающими location_type
+            } else {
+                return $a['location_type'][0] === 'regional' ? 1 : -1;
+            }
+        }
+    }
+
+    /**
+     * @param \FourPaws\MobileApiBundle\Dto\Object\Store\Store|array $item
+     * @param $key
+     */
+    public function locationTypeSortDecorate(&$item, $key): void
+    {
+        if ($item instanceof \FourPaws\MobileApiBundle\Dto\Object\Store\Store)
+        {
+            /** @var \FourPaws\MobileApiBundle\Dto\Object\Store\Store $item */
+            $item->setLocationType([$item->getLocationType(), $key]);
+        } else {
+            $item['location_type'] = [$item['location_type'], $key];
+        }
+    }
+
+    /**
+     * @param \FourPaws\MobileApiBundle\Dto\Object\Store\Store|array $item
+     */
+    public function locationTypeSortUndecorate(&$item): void
+    {
+        if ($item instanceof \FourPaws\MobileApiBundle\Dto\Object\Store\Store)
+        {
+            /** @var \FourPaws\MobileApiBundle\Dto\Object\Store\Store $item */
+            $item->setLocationType($item->getLocationType()[0]);
+        } else {
+            $item['location_type'] = $item['location_type'][0];
+        }
     }
 }

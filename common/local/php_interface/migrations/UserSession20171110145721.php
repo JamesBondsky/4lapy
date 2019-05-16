@@ -8,11 +8,8 @@ use FourPaws\MobileApiBundle\Tables\ApiUserSessionTable;
 
 class UserSession20171110145721 extends SprintMigrationBase
 {
-    public function __construct()
-    {
-        $this->description = 'Create User Session Table for mobile api';
-        parent::__construct();
-    }
+
+    protected $description = 'Create User Session Table for mobile api';
 
     public function up()
     {

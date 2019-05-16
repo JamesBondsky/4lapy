@@ -42,6 +42,12 @@ class Share extends IblockElement
     protected $ACTIVE_TO = '';
 
     /**
+     * @var int
+     * @Type("string")
+     */
+    protected $PREVIEW_PICTURE;
+
+    /**
      * @var string
      * @Type("string")
      */
@@ -485,5 +491,13 @@ class Share extends IblockElement
     public function getPropertyLabelImageFileSrc($width = 0, $height = 0)
     {
         return $this->getPropertyLabelImageFile($width, $height)['SRC'];
+    }
+
+    /**
+     * @return string
+     */
+    public function getPreviewPictureSrc(): string
+    {
+        return \CFile::getPath($this->PREVIEW_PICTURE);
     }
 }

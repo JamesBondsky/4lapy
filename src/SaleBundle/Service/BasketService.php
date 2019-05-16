@@ -7,13 +7,16 @@ use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Catalog\PriceTable;
 use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Currency\CurrencyManager;
+use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
-use Bitrix\Main\Entity\Query;
+use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\Entity\Query;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
@@ -27,7 +30,6 @@ use Bitrix\Sale\BasketPropertyItem;
 use Bitrix\Sale\Compatible\DiscountCompatibility;
 use Bitrix\Sale\Internals\BasketPropertyTable;
 use Bitrix\Sale\Internals\BasketTable;
-use Bitrix\Sale\Internals\FuserTable;
 use Bitrix\Sale\Internals\OrderTable;
 use Bitrix\Sale\Order;
 use Exception;
@@ -36,7 +38,6 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Collection\ShareCollection;
 use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\Catalog\Collection\OfferCollection;
-use FourPaws\Catalog\Collection\PriceCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\PriceQuery;
@@ -1240,6 +1241,23 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
+     * @param int $basketItemId
+     * @param Basket|null $basket
+     * @return int
+     */
+    public function getProductIdByBasketItemId(int $basketItemId, ?Basket $basket = null)
+    {
+        $basket = $basket instanceof Basket ? $basket : $this->getBasket();
+        /** @var BasketItem $basketItem */
+        foreach ($basket as $basketItem) {
+            if ($basketItem->getId() === $basketItemId) {
+                return $basketItem->getProductId();
+            }
+        }
+        return 0;
+    }
+
+    /**
      *
      * @param array $applyResult - только для того чтобы не генерировать много запросов
      * @param int $discountId - настоящий id правила
@@ -1273,6 +1291,72 @@ class BasketService implements LoggerAwareInterface
                 }
             }
         }
+        return $result;
+    }
+
+    /**
+     * @param int $limit
+     * @return int[]
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws ArgumentException
+     */
+    public function getPopularOfferIds(int $limit = 10): array
+    {
+        try {
+            $userId = $this->currentUserProvider->getCurrentUserId();
+        } catch (NotAuthorizedException $e) {
+        }
+        $offersIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS);
+        /**
+         * Все элементы корзины из заказов, принадлежащих данному пользователю,
+         * у которых цена > 0 и активен оффер, оффер не является подарком
+         */
+        $query = BasketTable::query()
+            ->setSelect([
+                'PRODUCT_ID',
+            ])
+            ->setFilter([
+                '>CATALOG_PRICE.PRICE' => 0,
+                'ORDER.USER_ID'        => $userId,
+                '!ELEMENT.XML_ID' => '3%'
+            ])
+            ->setGroup(['PRODUCT_ID'])
+            ->registerRuntimeField(
+                new ExpressionField('CNT', 'COUNT(*)')
+            )
+            ->registerRuntimeField(
+                new ReferenceField(
+                    'ORDER',
+                    OrderTable::class,
+                    ['=this.ORDER_ID' => 'ref.ID'],
+                    ['join_type' => 'INNER']
+                )
+            )
+            ->registerRuntimeField(
+                new ReferenceField(
+                    'ELEMENT', ElementTable::class,
+                    Query\Join::on('this.PRODUCT_ID', 'ref.ID')
+                        ->where('ref.ACTIVE', BitrixUtils::BX_BOOL_TRUE)
+                        ->where('ref.IBLOCK_ID', $offersIblockId),
+                    ['join_type' => 'INNER']
+                )
+            )
+            ->registerRuntimeField(
+                new ReferenceField(
+                    'CATALOG_PRICE', PriceTable::class,
+                    Query\Join::on('this.PRODUCT_ID', 'ref.PRODUCT_ID')->where('ref.CATALOG_GROUP_ID', 2),
+                    ['join_type' => 'INNER']
+                )
+            )
+            ->setOrder(['CNT' => 'DESC'])
+            ->setLimit($limit)
+            ->exec();
+
+        $result = [];
+        while ($offerId = $query->fetch()) {
+            $result[] = $offerId['PRODUCT_ID'];
+        }
+
         return $result;
     }
 

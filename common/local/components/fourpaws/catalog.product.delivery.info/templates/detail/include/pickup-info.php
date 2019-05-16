@@ -3,14 +3,16 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-use Bitrix\Sale\Delivery\CalculationResult;
-use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
-use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\Helpers\WordHelper;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 
 /**
  * @var array $pickup
  */
+
+/**
+ * @var PickupResult $pickupResult
+ */
+$pickupResult = $pickup['RESULT'];
 
 ?>
 
@@ -79,5 +81,7 @@ use FourPaws\Helpers\WordHelper;
         <?php } else { ?>
             <?= DeliveryTimeHelper::showByDate($pickup['DELIVERY_DATE'], 0, ['DATE_FORMAT' => 'XX']) ?>
         <?php } ?>
+    <div class="b-product-information__value">
+        <?=$pickupResult->getTextForOffer()?>
     </div>
 </li>
