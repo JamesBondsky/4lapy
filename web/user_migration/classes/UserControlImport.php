@@ -420,7 +420,7 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
                         $this->usersAdded++;
                     } catch (Exception $e) {
                         UserTable::delete($userID);
-                        $this->log()->error('Не удалось обновить хэш пароля пользователя (удален): ', $userData);
+                        $this->log()->error('Не удалось обновить хэш пароля пользователя (удален): ' . $e->getMessage(), $userData);
                     }
                     /** Получаем объект пользака */
                     $curUser = $userRepo->find($userID);
@@ -459,7 +459,7 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
                     }
                 }
             } catch (Exception $e) {
-                $this->log()->error('Невозможно создать пользователя с данными', $userData);
+                $this->log()->error('Невозможно создать пользователя с данными: ' . $e->getMessage(), $userData);
             }
         }
     }
