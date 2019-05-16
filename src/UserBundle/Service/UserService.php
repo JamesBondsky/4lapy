@@ -11,6 +11,7 @@ use Bitrix\Main\GroupTable;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\UserAuthActionTable;
 use Bitrix\Sale\Fuser;
 use CAllUser;
 use CUser;
@@ -899,6 +900,36 @@ class UserService implements
         }
 
         return false;
+    }
+
+    /**
+     * Сбрасывает событие logout для юзера, чтобы его не разлогинивало
+     *
+     * @param User $user
+     * @throws \Bitrix\Main\ObjectException
+     */
+    public function refreshUserAuthActions(User $user)
+    {
+        $bUser = new CUser;
+        //calculate a session lifetime
+        $policy = $bUser->GetSecurityPolicy();
+        $phpSessTimeout = ini_get("session.gc_maxlifetime");
+        if($policy["SESSION_TIMEOUT"] > 0)
+        {
+            $interval = min($policy["SESSION_TIMEOUT"]*60, $phpSessTimeout);
+        }
+        else
+        {
+            $interval = $phpSessTimeout;
+        }
+        $date = new DateTime();
+        $date->add("-T".$interval."S");
+
+        UserAuthActionTable::deleteByFilter(array(
+            "=USER_ID" => $user->getId(),
+            ">ACTION_DATE" => $date,
+            "=ACTION" => 'logout',
+        ));
     }
 
     /**

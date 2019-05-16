@@ -72,6 +72,7 @@ class PiggyBankController extends Controller
                 $piggyBankService = App::getInstance()->getContainer()->get('piggy_bank.service');
                 $barcodeGenerator = new BarcodeGeneratorPNG();
                 $coupon = $piggyBankService->getActiveCoupon()['COUPON_NUMBER'];
+                $discount = $piggyBankService->getActiveCoupon()['DISCOUNT'];
 
                 /** в случае если в email пользователя указана не корректная почта, то переписываем её почтой на которую отправляется купон */
                 if (false
@@ -91,7 +92,8 @@ class PiggyBankController extends Controller
                     $USER->GetFullName(),
                     $request->get('email'),
                     $coupon,
-                    'data:image/png;base64,' . $barcodeGenerator->getBarcode($coupon, \Picqer\Barcode\BarcodeGenerator::TYPE_CODE_128, 2.803149606299213, 127)
+                    'data:image/png;base64,' . base64_encode($barcodeGenerator->getBarcode($coupon, \Picqer\Barcode\BarcodeGenerator::TYPE_CODE_128, 2.803149606299213, 127)),
+                    $discount
                 );
             }
             catch (\Exception $exception)

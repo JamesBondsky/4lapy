@@ -46,7 +46,7 @@ class AuthController extends Controller
     }
 
     /**
-     * @Route("/login-s/", methods={"GET", "POST"})
+     * @Route("/login-r/", methods={"GET", "POST"})
      * @param Request $request
      *
      * @return JsonResponse
@@ -103,7 +103,7 @@ class AuthController extends Controller
     }
 
     /**
-     * @Route("/register-s/", methods={"GET", "POST"})
+     * @Route("/register-r/", methods={"GET", "POST"})
      * @param Request $request
      *
      * @return JsonResponse

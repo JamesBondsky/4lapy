@@ -22,13 +22,16 @@ use Bitrix\Sale\Payment;
 use Bitrix\Sale\PropertyValue;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
+use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\Helpers\BusinessValueHelper;
+use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\LocationBundle\Exception\AddressSplitException;
+use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Dto\Fiscalization\CartItems;
 use FourPaws\SaleBundle\Dto\Fiscalization\CustomerDetails;
@@ -541,6 +544,9 @@ class PaymentService implements LoggerAwareInterface
      */
     private function getCartItems(Order $order, bool $skipGifts = true): CartItems
     {
+        /** @var PiggyBankService $piggyBankService */
+        $piggyBankService = App::getInstance()->getContainer()->get('piggy_bank.service');
+
         $items = new ArrayCollection();
 
         $measureList = [];
@@ -564,7 +570,7 @@ class PaymentService implements LoggerAwareInterface
             0  => 1,
             10 => 2,
             18 => 3,
-            20 => 3
+            20 => 6
         ];
 
         $position = 0;
@@ -574,11 +580,27 @@ class PaymentService implements LoggerAwareInterface
                 continue;
             }
 
+            $productId = $basketItem->getProductId();
+
+            if (in_array($productId, $piggyBankService->getMarksIds(), false)) {
+                continue;
+            }
+
             if ($skipGifts && $this->basketService->isGiftProduct($basketItem)) {
                 continue;
             }
 
             $arProduct = \CCatalogProduct::GetByID($basketItem->getProductId());
+
+
+            if ($arProduct === false) {
+                continue;
+            }
+
+            if (is_array($arProduct) && in_array($arProduct['ID'], PiggyBankService::getMarkProductIds())) {
+                continue;
+            }
+
             $taxType = $arProduct['VAT_ID'] > 0 ? (int)$vatList[$arProduct['VAT_ID']] : -1;
 
             $quantity = (new ItemQuantity())
@@ -588,6 +610,11 @@ class PaymentService implements LoggerAwareInterface
             $tax = (new ItemTax())->setType($vatGateway[$taxType]);
 
             $itemPrice = round($basketItem->getPrice() * 100);
+
+            if($itemPrice == 0){
+                continue;
+            }
+
             $item = (new Item())
                 ->setPositionId(++$position)
                 ->setName($basketItem->getField('NAME') ?: '')
@@ -1223,7 +1250,10 @@ class PaymentService implements LoggerAwareInterface
         $periodTo = $deliveryData['CONFIG']['MAIN']['PERIOD']['TO'];
         $address = $orderService->compileOrderAddress($order)->setValid(true);
         if (isset($order) && $name && $phone && $periodTo && $nearShop) {
-            $orderService->sendToDostavista($order, $name, $phone, $comments, $periodTo, $nearShop, $isPaid);
+            $isExportedToQueue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'IS_EXPORTED_TO_DOSTAVISTA_QUEUE')->getValue();
+            if ($isExportedToQueue != BitrixUtils::BX_BOOL_TRUE) {
+                $orderService->sendToDostavistaQueue($order, $name, $phone, $comments, $periodTo, $nearShop, $isPaid);
+            }
         }
     }
 

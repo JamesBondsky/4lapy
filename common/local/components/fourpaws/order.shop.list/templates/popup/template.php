@@ -115,7 +115,7 @@ use FourPaws\DeliveryBundle\Collection\StockResultCollection;
                     </div>
                 </div>
                 <div class="b-availability__show-block">
-                    <div class="b-tab-delivery-map b-tab-delivery-map--order js-content-map">
+                    <div class="b-tab-delivery-map b-tab-delivery-map--order js-content-map <?=$arResult['IS_SUBSCRIBE_MAP'] ? 'js-ajax-init-order-map' : ''?> ">
                         <div class="b-tab-delivery-map__map" id="map" data-url="<?= $arResult['STORE_LIST_URL'] ?>">
                         </div>
                         <a class="b-link b-link--close-baloon js-product-list" href="javascript:void(0);" title="">

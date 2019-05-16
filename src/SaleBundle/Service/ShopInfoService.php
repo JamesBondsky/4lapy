@@ -213,7 +213,7 @@ class ShopInfoService
             /** @var Store $store */
             foreach ($storeCollection as $store) {
                 try {
-                    $item = $this->getShopData($pickupResult, $store, $metroList, $paymentInfo, $recalculateBasket);
+                    $item = $this->getShopData($pickupResult, $store, $metroList, $paymentInfo, $recalculateBasket, $orderStorage->isSubscribe());
                     $locationType = (($store->getLocation() === $locationCode) || ($store->getSubRegion() && $store->getSubRegion() === $subregionCode))
                         ? StoreLocationType::SUBREGIONAL
                         : StoreLocationType::REGIONAL;
@@ -245,6 +245,7 @@ class ShopInfoService
      * @param array                 $metroList
      * @param array                 $paymentInfo
      * @param bool                  $recalculateBasket
+     * @param bool                  $isSubscribe
      *
      * @return Shop
      * @throws ArgumentException
@@ -266,7 +267,8 @@ class ShopInfoService
         Store $store,
         array $metroList,
         array $paymentInfo,
-        bool $recalculateBasket = false
+        bool $recalculateBasket = false,
+        bool $isSubscribe = false
     ): Shop
     {
         $fullResult = (clone $pickup)->setSelectedShop($store);
@@ -277,8 +279,13 @@ class ShopInfoService
         $splitStockResult = $this->orderSplitService->splitStockResult($fullResult);
         $available = $splitStockResult->getAvailable();
         $delayed = $splitStockResult->getDelayed();
-        $canGetPartial = $this->orderSplitService->canGetPartial($fullResult);
-        $canSplit = $this->orderSplitService->canSplitOrder($fullResult);
+        if($isSubscribe) {
+            $canGetPartial = false;
+            $canSplit = false;
+        } else{
+            $canGetPartial = $this->orderSplitService->canGetPartial($fullResult);
+            $canSplit = $this->orderSplitService->canSplitOrder($fullResult);
+        }
         $partialResult = ($canSplit || $canGetPartial) ? (clone $fullResult)->setStockResult($available) : $fullResult;
         /**
          * пересчет скидок корзины для частичного получения заказа
@@ -313,13 +320,14 @@ class ShopInfoService
                             ->setMetroColor($metroColor)
                             ->setMetroCssClass($metroCssClass)
                             ->setAvailability(
-                                $this->getShopAvailabilityType($splitStockResult, $canSplit, $canGetPartial)
+                                $this->getShopAvailabilityType($splitStockResult, $canSplit, $canGetPartial, $isSubscribe)
                             )
                             ->setPayments($this->getShopPayments($store, $price, $paymentInfo))
                             ->setAvailableItems($this->getShopItems($available))
                             ->setDelayedItems($this->getShopItems($delayed))
                             ->setPrice(WordHelper::numberFormat($price))
                             ->setFullPrice(WordHelper::numberFormat($fullResult->getStockResult()->getPrice()))
+                            ->setIsSubscribe($isSubscribe)
                             ->setPickupDate(
                                 DeliveryTimeHelper::showTime(
                                     $available->isEmpty() ? $fullResult : $partialResult,
@@ -466,7 +474,8 @@ class ShopInfoService
     protected function getShopAvailabilityType(
         SplitStockResult $splitStockResult,
         bool $canSplit,
-        bool $canGetPartial
+        bool $canGetPartial,
+        bool $isSubscribe
     ): string
     {
         $result = OrderAvailability::AVAILABLE;
@@ -474,7 +483,7 @@ class ShopInfoService
             $result = OrderAvailability::PARTIAL;
         } elseif ($canSplit) {
             $result = OrderAvailability::SPLIT;
-        } elseif (!$splitStockResult->getDelayed()->isEmpty()) {
+        } elseif (!$splitStockResult->getDelayed()->isEmpty() && !$isSubscribe) {
             $result = OrderAvailability::DELAYED;
         }
 

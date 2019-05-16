@@ -16,6 +16,7 @@ use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Exception;
 use FourPaws\App\Application as App;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -27,6 +28,7 @@ use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Discount\Manzana;
 use FourPaws\SaleBundle\Exception\BaseExceptionInterface;
@@ -69,6 +71,10 @@ class BasketController extends Controller implements LoggerAwareInterface
      * @var GoogleEcommerceService
      */
     private $ecommerceService;
+    /**
+     * @var PersonalOffersService
+     */
+    private $personalOffersService;
     /**
      * @var SalePreset
      */
@@ -314,7 +320,7 @@ class BasketController extends Controller implements LoggerAwareInterface
      *
      * @return JsonResponse
      * @throws RuntimeException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      */
     public function applyPromoCodeAction(Request $request): JsonResponse
     {
@@ -322,6 +328,9 @@ class BasketController extends Controller implements LoggerAwareInterface
 
         try {
             $promoCode = \htmlspecialchars($promoCode);
+
+            $personalOfferService = $this->getPersonalOffersService();
+            $personalOfferService->checkCoupon($promoCode);
 
             /** @var PiggyBankService $piggyBankService */
             $piggyBankService = App::getInstance()->getContainer()->get('piggy_bank.service');
@@ -369,6 +378,7 @@ class BasketController extends Controller implements LoggerAwareInterface
      *
      * @return JsonResponse
      * @throws RuntimeException
+     * @throws ApplicationCreateException
      */
     public function deletePromoCodeAction(Request $request): JsonResponse
     {
@@ -744,5 +754,20 @@ class BasketController extends Controller implements LoggerAwareInterface
         }
 
         return $response;
+    }
+
+    /**
+     * @return PersonalOffersService|object
+     */
+    protected function getPersonalOffersService()
+    {
+        if ($this->personalOffersService)
+        {
+            return $this->personalOffersService;
+        }
+
+        $this->personalOffersService = App::getInstance()->getContainer()->get('personal_offers.service');
+
+        return $this->personalOffersService;
     }
 }

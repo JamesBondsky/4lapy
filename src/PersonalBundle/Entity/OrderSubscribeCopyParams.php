@@ -2,6 +2,7 @@
 
 namespace FourPaws\PersonalBundle\Entity;
 
+use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException;
@@ -92,7 +93,8 @@ class OrderSubscribeCopyParams
     {
         if (!$this->orderCopyHelper) {
             $this->orderCopyHelper = new OrderCopy(
-                $this->getCopyOrderId()
+                $this->getCopyOrderId(),
+                $this->getOrderSubscribe()
             );
 
             // принудительно отключаем применение скидок - на данный момент они работают только в контексте текущего юзера
@@ -136,6 +138,7 @@ class OrderSubscribeCopyParams
     {
         if (!$this->getOrderCopyHelper()->isBasketCopied()) {
             $this->getOrderCopyHelper()->doBasicCopy();
+
         }
     }
 
@@ -253,7 +256,7 @@ class OrderSubscribeCopyParams
         $deliveryDate = $deliveryDate ?: '';
         if (is_string($deliveryDate)) {
             $dateValue = (new \DateTime($deliveryDate))->format('d.m.Y');
-        } elseif ($deliveryDate instanceof \DateTimeInterface) {
+        } elseif ($deliveryDate instanceof \DateTimeInterface || $deliveryDate instanceof DateTime) {
             $dateValue = $deliveryDate->format('d.m.Y');
         } else {
             throw new InvalidArgumentException('Дата задана некорректно');
@@ -281,8 +284,8 @@ class OrderSubscribeCopyParams
     {
         if (!$this->deliveryDate) {
             $this->setDeliveryDate(
-                $this->getOrderSubscribe()->getNextDeliveryDate(
-                    $this->getCurrentDate()
+                $this->getOrderSubscribe()->getNextDate(
+                    //$this->getCurrentDate()
                 )
             );
         }
@@ -361,51 +364,13 @@ class OrderSubscribeCopyParams
             // − Исходного заказа, если создается первый заказ по подписке;
             // − Предыдущего заказа по подписке, если создается не первый заказ по подписке.
             $originOrderId = $this->getOriginOrderId();
-            $this->copyOrderId = $orderSubscribeHistoryService->getLastCreatedOrderId($originOrderId);
+            $this->copyOrderId = $orderSubscribeHistoryService->getLastCreatedOrderId($this->getOrderSubscribe());
             if ($this->copyOrderId <= 0) {
                 $this->copyOrderId = $originOrderId;
             }
         }
 
         return $this->copyOrderId;
-    }
-
-    /**
-     * Возвращает CalculationResult заказа, который будет копироваться по подписке
-     * CalculationResult берется от клона копируемого заказа.
-     *
-     * @return BaseResult
-     * @throws BitrixOrderNotFoundException
-     * @throws RuntimeException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\NotImplementedException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \Exception
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\PersonalBundle\Exception\NotFoundException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
-     */
-    public function getCopyOrderDeliveryCalculationResult(): BaseResult
-    {
-        if (!$this->copyOrderDeliveryCalculationResult) {
-            $bitrixOrder = $this->getCopyOrder();
-            if (!$bitrixOrder) {
-                throw new BitrixOrderNotFoundException('Копируемый заказ не найден');
-            }
-
-            $orderSubscribeService = $this->getOrderSubscribeService();
-            $calculationResult = $orderSubscribeService->getDeliveryCalculationResult($bitrixOrder);
-            if (!$calculationResult || !$calculationResult->isSuccess()) {
-                throw new RuntimeException('Не удалось получить расчет доставки копируемого заказа');
-            }
-
-            $this->copyOrderDeliveryCalculationResult = $calculationResult;
-        }
-
-        return $this->copyOrderDeliveryCalculationResult;
     }
 
     /**
@@ -457,9 +422,8 @@ class OrderSubscribeCopyParams
     public function getNewOrderDeliveryCalculationResult(): BaseResult
     {
         if (!$this->newOrderDeliveryCalculationResult) {
-            $bitrixOrder = $this->getNewOrder();
             $orderSubscribeService = $this->getOrderSubscribeService();
-            $calculationResult = $orderSubscribeService->getDeliveryCalculationResult($bitrixOrder);
+            $calculationResult = $orderSubscribeService->getDeliveryCalculationResult($this->getOrderSubscribe());
             if (!$calculationResult || !$calculationResult->isSuccess()) {
                 throw new RuntimeException('Не удалось получить расчет доставки нового заказа');
             }
@@ -491,14 +455,10 @@ class OrderSubscribeCopyParams
     public function getDateForOrderCreate(): \DateTimeImmutable
     {
         if (!$this->dateForOrderCreate) {
-            $calculationResult = $this->getNewOrderDeliveryCalculationResult();
-            $orderSubscribeService = $this->getOrderSubscribeService();
-            $dateForOrderCreate = $orderSubscribeService->getDateForOrderCreate(
-                $calculationResult,
-                $this->getDeliveryDate(),
-                $this->getCurrentDate()
-            );
-            $this->dateForOrderCreate = \DateTimeImmutable::createFromMutable($dateForOrderCreate);
+            $this->dateForOrderCreate = $this->getDeliveryDate()->modify(sprintf("-%s days", $this->getOrderSubscribe()->getCheckDays()));
+            if(!$this->dateForOrderCreate){
+                throw new RuntimeException('Не удалось получить дату для создания заказа');
+            }
         }
 
         return $this->dateForOrderCreate;

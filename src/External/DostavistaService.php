@@ -3,7 +3,7 @@
 namespace FourPaws\External;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use FourPaws\App\Application;
+use Exception;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\External\Dostavista\Client;
 use FourPaws\External\Dostavista\Model\CancelOrder;
@@ -106,15 +106,15 @@ class DostavistaService implements LoggerAwareInterface, SapOutInterface
             try {
                 $result = $this->client->addOrder($data);
                 if ($result['success']) {
-                    $this->log()->info('Order ' . $data['point'][1]['client_order_id'] . ' success create in Dostavista service', $data);
+                    $this->log()->info('Order ' . $data['points'][1]['client_order_id'] . ' success create in Dostavista service', $result);
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $result = [
                     'success' => false,
                     'message' => $res['message'],
                     'data' => $data
                 ];
-                $this->log()->error('Order ' . $data['point'][1]['client_order_id'] . ' import failed in "Dostavista" service', $result);
+                $this->log()->error('Order ' . $data['points'][1]['client_order_id'] . ' import failed in "Dostavista" service', $result);
             }
         } else {
             $result = [
@@ -146,7 +146,7 @@ class DostavistaService implements LoggerAwareInterface, SapOutInterface
                 } else {
                     $this->log()->info('Order ' . $orderId . ' error canceled in Dostavista service', $result);
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $result = [
                     'success' => false,
                     'message' => 'Ошибка импорта заказа'
@@ -177,7 +177,7 @@ class DostavistaService implements LoggerAwareInterface, SapOutInterface
             //пробуем отменить заказ в достависте
             try {
                 $result = $this->client->listOrder($query);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $result = [
                     'success' => false,
                     'message' => 'Ошибка получения списка заказа'
@@ -197,12 +197,20 @@ class DostavistaService implements LoggerAwareInterface, SapOutInterface
 
     /**
      * @param Order $order
+     * @return bool
      */
-    public function dostavistaOrderAdd(Order $order)
+    public function dostavistaOrderAdd(Order $order): bool
     {
-        /** @noinspection MissingService */
-        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.dostavista_orders_add_producer');
-        $producer->publish($this->serializer->serialize($order, 'json'));
+        $res = true;
+        try {
+            /** @noinspection MissingService */
+            $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.dostavista_orders_add_producer');
+            $producer->publish($this->serializer->serialize($order, 'json'));
+        } catch (Exception $e) {
+            $this->log()->error('[' . $e->getCode() . '] ' . $e->getMessage());
+            $res = false;
+        }
+        return $res;
     }
 
     /**
@@ -330,8 +338,8 @@ class DostavistaService implements LoggerAwareInterface, SapOutInterface
     {
         $emailFields = [
             'DATE_TIME' => $dateTime,
-            'HTTP_CODE' => $code,
-            'JSON_DATA' => $data
+            //'HTTP_CODE' => $code,
+            //'JSON_DATA' => $data
         ];
 
         if ($orderId != 0) {

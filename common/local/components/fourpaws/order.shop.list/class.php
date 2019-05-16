@@ -15,6 +15,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\App\MainTemplate;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
@@ -25,6 +26,7 @@ use Symfony\Component\DependencyInjection\Exception\ParameterNotFoundException;
 use Symfony\Component\DependencyInjection\Exception\RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Bitrix\Main\Application as BitrixApplication;
 
 CBitrixComponent::includeComponentClass('fourpaws:shop.list');
 
@@ -90,6 +92,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
      * @throws FileLoaderLoadException
      * @throws ParameterNotFoundException
      * @throws RuntimeException
+     * @throws SystemException
      */
     protected function prepareResult(array $city = [])
     {
@@ -106,6 +109,11 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             $this->arResult['DELIVERY_CODE'] = $pickupDelivery->getDeliveryCode();
             $this->arResult['IS_DPD'] = $this->deliveryService->isDpdPickup($pickupDelivery);
             $this->arResult['STORE_LIST_URL'] = $storeListUrlRoute ? $storeListUrlRoute->getPath() : '';
+
+            // для подписки карта загружается после перехода на 2 шаг
+            /** @var MainTemplate $template */
+            $template = MainTemplate::getInstance(BitrixApplication::getInstance()->getContext());
+            $this->arResult['IS_SUBSCRIBE_MAP'] = $template->isOrderSubscribePage() || $template->isOrderHistoryPage();
         }
         return true;
     }

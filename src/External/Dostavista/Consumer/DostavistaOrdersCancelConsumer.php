@@ -7,7 +7,7 @@ use Bitrix\Sale\Order;
 use FourPaws\UserBundle\EventController\Event;
 use PhpAmqpLib\Message\AMQPMessage;
 use FourPaws\External\Dostavista\Exception\DostavistaOrdersAddConsumerException;
-use FourPaws\App\Application;
+use Bitrix\Main\Application;
 
 /**
  * Class DostavistaOrdersCancelConsumer
@@ -19,6 +19,7 @@ class DostavistaOrdersCancelConsumer extends DostavistaConsumerBase
     /**
      * @param AMQPMessage $message
      * @return bool
+     * @throws \Bitrix\Main\Db\SqlQueryException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function execute(AMQPMessage $message): bool
@@ -79,7 +80,7 @@ class DostavistaOrdersCancelConsumer extends DostavistaConsumerBase
             );
             $order->save();
             $result = static::MSG_ACK;
-        } catch (\Exception $e) {
+        } catch (DostavistaOrdersAddConsumerException|\Exception $e) {
             $this->log()->error('Dostavista error, code: ' . $e->getCode() . ' message: ' . $e->getMessage());
         }
 

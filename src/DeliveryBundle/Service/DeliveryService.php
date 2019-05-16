@@ -38,6 +38,7 @@ use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Dpd\TerminalTable;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\PriceForAmount;
 use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\DeliveryBundle\Exception\DeliveryInitializeException;
@@ -120,9 +121,14 @@ class DeliveryService implements LoggerAwareInterface
     public const ZONE_IVANOVO = 'ZONE_IVANOVO';
     public const ZONE_IVANOVO_REGION = 'ZONE_IVANOVO_REGION';
     /**
-     * Зона Москва
+     * Зона Москва для Достависты
      */
     public const ZONE_MOSCOW = 'ZONE_MOSCOW';
+
+    /**
+     * Новые зоны с префиксом, работают как зона 2
+     */
+    public const ADD_DELIVERY_ZONE_CODE_PATTERN = 'ADD_DELIVERY_ZONE_';
 
     public const PICKUP_CODES = [
         DeliveryService::INNER_PICKUP_CODE,
@@ -144,7 +150,11 @@ class DeliveryService implements LoggerAwareInterface
 
     /** @var string */
     protected $currentDeliveryZone;
+    
+    protected $allZones;
 
+    protected $deliveryByZoneMap;
+    
     /**
      * DeliveryService public constructor.
      *
@@ -292,43 +302,45 @@ class DeliveryService implements LoggerAwareInterface
         if (!$zone) {
             $zone = $this->getCurrentDeliveryZone();
         }
-
-        $getServiceCodes = function () use ($zone) {
-            $zoneData = $this->getAllZones(true)[$zone];
-            $result = [];
-            if (!empty($zoneData['LOCATIONS'])) {
-                $location = current($zoneData['LOCATIONS']);
-                if(!empty($location)) {
-                    $shipment = $this->generateShipment($location);
-                    $availableServices = Manager::getRestrictedObjectsList($shipment);
-
-                    foreach ($availableServices as $service) {
-                        $result[] = $service->getCode();
+        if($this->deliveryByZoneMap[$zone] == null) {
+            $getServiceCodes = function () use ($zone) {
+                $zoneData = $this->getAllZones(true)[$zone];
+                $result = [];
+                if (!empty($zoneData['LOCATIONS'])) {
+                    $location = current($zoneData['LOCATIONS']);
+                    if (!empty($location)) {
+                        $shipment = $this->generateShipment($location);
+                        $availableServices = Manager::getRestrictedObjectsList($shipment);
+                
+                        foreach ($availableServices as $service) {
+                            $result[] = $service->getCode();
+                        }
                     }
                 }
+        
+                return ['result' => $result];
+            };
+    
+            $result = [];
+            try {
+                $result = (new BitrixCache())
+                    ->withId(__METHOD__ . $zone)
+                    ->withTag('location:groups')
+                    ->resultOf($getServiceCodes)['result'];
+            } catch (\Exception $e) {
+                $this->log()->error(
+                    sprintf(
+                        'failed to get deliveries by zone: %s: %s',
+                        \get_class($e),
+                        $e->getMessage()
+                    ),
+                    ['zone' => $zone]
+                );
             }
-
-            return ['result' => $result];
-        };
-
-        $result = [];
-        try {
-            $result = (new BitrixCache())
-                ->withId(__METHOD__ . $zone)
-                ->withTag('location:groups')
-                ->resultOf($getServiceCodes)['result'];
-        } catch (\Exception $e) {
-            $this->log()->error(
-                sprintf(
-                    'failed to get deliveries by zone: %s: %s',
-                    \get_class($e),
-                    $e->getMessage()
-                ),
-                ['zone' => $zone]
-            );
+            $this->deliveryByZoneMap[$zone] = $result;
         }
 
-        return $result;
+        return $this->deliveryByZoneMap[$zone];
     }
 
     /**
@@ -487,7 +499,10 @@ class DeliveryService implements LoggerAwareInterface
      */
     public function getAllZones($withLocations = true): array
     {
-        return $this->locationService->getLocationGroups($withLocations);
+        if($this->allZones[intval($withLocations)] === null) {
+            $this->allZones[intval($withLocations)] = $this->locationService->getLocationGroups($withLocations);
+        }
+        return $this->allZones[intval($withLocations)];
     }
 
     /**
@@ -819,6 +834,25 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
+     * @param string $id
+     *
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @return array
+     */
+    public function getDeliveryById($id): array
+    {
+        $delivery = DeliveryServiceTable::getList(['filter' => ['ID' => $id]])->fetch();
+        if (!$delivery) {
+            throw new NotFoundException('Delivery service not found');
+        }
+
+        return $delivery;
+    }
+
+    /**
      * @param int $id
      *
      * @throws ArgumentException
@@ -923,7 +957,7 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
-     * @param DeliveryResultInterface $delivery
+     * @param CalculationResultInterface $delivery
      * @param int                        $count
      *
      * @return DeliveryResultInterface[]
@@ -932,25 +966,41 @@ class DeliveryService implements LoggerAwareInterface
      * @throws NotFoundException
      * @throws StoreNotFoundException
      */
-    public function getNextDeliveries(DeliveryResultInterface $delivery, int $count = 1): array
+    public function getNextDeliveries(CalculationResultInterface $delivery, int $count = 1): array
     {
-        /** @var \DateTime $lastDate */
-        $lastDate = null;
-        $dateOffset = 0;
         /** @var DeliveryResultInterface[] $result */
         $result = [];
-        do {
-            $currentDelivery = clone $delivery;
-            $currentDeliveryDate = $currentDelivery->setDateOffset($dateOffset)->getDeliveryDate();
-            if ((null === $lastDate) ||
-                ($lastDate->getTimestamp() < $currentDeliveryDate->getTimestamp())
-            ) {
-                $result[] = $currentDelivery;
-            }
+        $dateOffset = 0;
 
-            $lastDate = $currentDeliveryDate;
-            $dateOffset++;
-        } while (\count($result) < $count);
+        if($this->isDelivery($delivery)){
+            /** @var \DateTime $lastDate */
+            $lastDate = null;
+
+            do {
+                /** @var DeliveryResultInterface $currentDelivery */
+                $currentDelivery = clone $delivery;
+                $currentDeliveryDate = $currentDelivery->setDateOffset($dateOffset)->getDeliveryDate();
+                if ((null === $lastDate) ||
+                    ($lastDate->getTimestamp() < $currentDeliveryDate->getTimestamp())
+                ) {
+                    $result[] = $currentDelivery;
+                }
+
+                $lastDate = $currentDeliveryDate;
+                $dateOffset++;
+            } while (\count($result) < $count);
+        } else {
+            while(\count($result) < $count){
+                $deliveryDate = clone $delivery->getDeliveryDate();
+                $deliveryDate->modify(sprintf('+%s days', $dateOffset));
+
+                /** @var PickupResult $tmpPickup */
+                $tmpPickup = clone $delivery;
+                $tmpPickup->setDeliveryDate($deliveryDate);
+                $result[] = $tmpPickup;
+                $dateOffset++;
+            }
+        }
 
         return $result;
     }

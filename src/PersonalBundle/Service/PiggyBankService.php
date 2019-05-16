@@ -42,10 +42,16 @@ class PiggyBankService implements LoggerAwareInterface
         'VIRTUAL' => [
             'ID' => 89617, // не использовать
             'XML_ID' => 2000341,
+            'MARK_PRODUCT_ID' => 94010
         ],
         'PHYSICAL' => [
             'ID' => 89728, // не использовать
             'XML_ID' => 3006077,
+            'MARK_PRODUCT_ID' => 89727
+        ],
+        'OLD_VIRTUAL' => [
+            'ID' => 89617, // используется как костыль для правильных расчетов с учетом марки, которую удалили из каталога после начала акции
+            'NO_XML_ID' => true,
         ],
     ];
     public const MARK_RATE = 400;
@@ -130,11 +136,26 @@ class PiggyBankService implements LoggerAwareInterface
         $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
     }
 
-    public static function getMarkXmlIds()
+    /**
+     * @return array
+     */
+    public static function getMarkXmlIds(): array
     {
         return [
             self::MARKS['VIRTUAL']['XML_ID'],
             self::MARKS['PHYSICAL']['XML_ID'],
+        ];
+    }
+
+
+    /**
+     * @return array
+     */
+    public static function getMarkProductIds(): array
+    {
+        return [
+            self::MARKS['VIRTUAL']['MARK_PRODUCT_ID'],
+            self::MARKS['PHYSICAL']['MARK_PRODUCT_ID']
         ];
     }
 
@@ -438,15 +459,11 @@ class PiggyBankService implements LoggerAwareInterface
     {
         global $USER;
 
-        if (!$this->isCouponNumberFormatOk($couponNumber)) {
-            throw new CouponIsNotAvailableForUseException('coupon is not available for use');
-        }
-
-        if ($this->isPiggyBankCoupon($couponNumber))
+        if ($this->isCouponNumberFormatOk($couponNumber) && $this->isPiggyBankCoupon($couponNumber))
         {
             //if(($this->isPiggyBankCouponsApplyingDateExpired() && !$USER->IsAdmin()) || !$this->isCouponAvailableToCurrentUser($couponNumber)) {
             if($this->isPiggyBankCouponsApplyingDateExpired() || !$this->isCouponAvailableToCurrentUser($couponNumber)) {
-                throw new CouponIsNotAvailableForUseException('coupon is not available for use');
+                throw new CouponIsNotAvailableForUseException('coupon is not available for use. Promo code: ' . $couponNumber);
             }
         }
     }
@@ -598,7 +615,7 @@ class PiggyBankService implements LoggerAwareInterface
             return $this->marksIds;
         }
 
-        $marksIds = array_map(function($mark) { return $this->getElementIdByXmlId($mark['XML_ID']); }, self::MARKS);
+        $marksIds = array_map(function($mark) { return $mark['NO_XML_ID'] ? $mark['ID'] : $this->getElementIdByXmlId($mark['XML_ID']); }, self::MARKS);
 
         $this->marksIds = $marksIds;
         return $this->marksIds;
@@ -669,6 +686,14 @@ class PiggyBankService implements LoggerAwareInterface
     /**
      * @return int
      */
+    public function getOldVirtualMarkId(): int
+    {
+        return self::MARKS['OLD_VIRTUAL']['ID'];
+    }
+
+    /**
+     * @return int
+     */
     public function getVirtualMarkXmlId(): int
     {
         if ($this->virtualMarkXmlId)
@@ -705,7 +730,7 @@ class PiggyBankService implements LoggerAwareInterface
         {
             for ($i = $this->couponLevelsQuantity; $i > $this->activeCouponLevelNumber; --$i)
             {
-                if ($this->marksAvailable > self::COUPON_LEVELS[$i]['MARKS_TO_LEVEL_UP_FROM_BOTTOM'] - $this->activeCouponNominalPrice)
+                if ($this->marksAvailable >= self::COUPON_LEVELS[$i]['MARKS_TO_LEVEL_UP_FROM_BOTTOM'] - $this->activeCouponNominalPrice)
                 {
                     $availableLevel = $i;
                     break;

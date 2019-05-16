@@ -2,6 +2,7 @@
 
 namespace FourPaws\PersonalBundle\AjaxController;
 
+use FourPaws\App\Application;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -41,6 +42,8 @@ class OrderSubscribeController extends Controller
                 '',
                 [
                     'INCLUDE_TEMPLATE' => 'N',
+                    'ORDER_ID' => $request->get('orderId'),
+                    'SUBSCRIBE_ID' => $request->get('subscribeId'),
                 ],
                 null,
                 [
@@ -51,13 +54,13 @@ class OrderSubscribeController extends Controller
             $result = $component->arResult;
             $actionResult = $result['SUBSCRIBE_ACTION'] ?? [];
             if ($actionResult && $actionResult['SUCCESS'] === 'Y') {
-                $message = 'Подписка на доставку оформлена';
-                $redirectUrl = '/personal/subscribe/';
+                $message = 'Ваша подписка на доставку успешно оформлена';
+                $redirectUrl = '';
                 if ($actionResult['TYPE'] === 'UPDATE') {
                     $message = 'Подписка на доставку возобновлена';
                     if ($actionResult['RESUMED'] !== 'Y') {
                         $redirectUrl = '';
-                        $message = 'Подписка на доставку изменена';
+                        $message = 'Ваша подписка на доставку успешно изменена';
                     }
                 }
                 $return = JsonSuccessResponse::create(
@@ -65,7 +68,7 @@ class OrderSubscribeController extends Controller
                     200,
                     [],
                     [
-                        'reload' => $redirectUrl !== '' ? false : true,
+                        'reload' => $redirectUrl === '' ? true : false,
                         'redirect' => $redirectUrl,
                     ]
                 );
@@ -118,12 +121,14 @@ class OrderSubscribeController extends Controller
     }
 
     /**
-     * @Route("/delete/", methods={"GET"})
+     * Остановить подписку (не удалять)
+     *
+     * @Route("/cancel/", methods={"POST"})
      * @param Request $request
      * @return JsonResponse
      * @throws \Bitrix\Main\SystemException
      */
-    public function deleteAction(Request $request) : JsonResponse
+    public function cancelAction(Request $request) : JsonResponse
     {
         $return = null;
 
@@ -192,6 +197,150 @@ class OrderSubscribeController extends Controller
                 ]
             );
         }
+
+        return $return;
+    }
+
+    /**
+     * Удалить подписку
+     *
+     * @Route("/delete/", methods={"GET"})
+     * @param Request $request
+     * @return JsonResponse
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function deleteAction(Request $request) : JsonResponse
+    {
+        $return = null;
+        $orderSubscribeId = $request->get('id');
+        /** @var OrderSubscribeService $orderSubscribeService */
+        $orderSubscribeService = Application::getInstance()->getContainer()->get('order_subscribe.service');;
+
+        if($orderSubscribeService->delete($orderSubscribeId)){
+            $return = JsonSuccessResponse::create(
+                'Подписка на доставку удалена',
+                200,
+                [],
+                [
+                    'reload' => false,
+                ]
+            );
+        }
+
+
+        if (!$return) {
+            $return = JsonErrorResponse::createWithData(
+                'Неизвестная ошибка. Пожалуйста, обратитесь к администратору сайта',
+                [
+                    'errors' => [
+                        'systemError' => 'Неизвестная ошибка. Пожалуйста, обратитесь к администратору сайта'
+                    ]
+                ]
+            );
+        }
+
+        return $return;
+    }
+
+
+    /**
+     * @Route("/get/", methods={"POST"})
+     * @param Request $request
+     * @return JsonResponse
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getAction(Request $request) : JsonResponse
+    {
+        $return = null;
+        $step = $request->get('step') ?: 1;
+        $subscribeId = $request->get('subscribeId');
+        $orderId = $request->get('orderId');
+
+        ob_start();
+        /** @var \FourPawsPersonalCabinetOrdersSubscribeFormComponent $component */
+        $component = $GLOBALS['APPLICATION']->IncludeComponent(
+            'fourpaws:personal.orders.subscribe.form',
+            'popup',
+            [
+                'INCLUDE_TEMPLATE' => 'Y',
+                'STEP' => $step,
+                'SUBSCRIBE_ID' => $subscribeId,
+                'ORDER_ID' => $orderId,
+            ],
+            null,
+            [
+                'HIDE_ICONS' => 'Y',
+            ]
+        );
+        $content = ob_get_contents();
+        ob_end_clean();
+
+        $items = $component->arResult['ITEMS'];
+
+        $return = JsonErrorResponse::createWithData(
+            '',
+            [
+                'content' => $content,
+                'items' => $items
+            ],
+            200,
+            [
+                'reload' => false,
+                'redirect' => ''
+            ]
+        );
+
+        return $return;
+    }
+
+    /**
+     * @Route("/get-delivery-dates/", methods={"POST"})
+     * @param Request $request
+     * @return JsonResponse
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getDeliveryDatesAction(Request $request) : JsonResponse
+    {
+        $return = null;
+
+        try {
+            /** @var \FourPawsPersonalCabinetOrdersSubscribeFormComponent $component */
+            $component = $GLOBALS['APPLICATION']->IncludeComponent(
+                'fourpaws:personal.orders.subscribe.form',
+                'popup',
+                [
+                    'INCLUDE_TEMPLATE' => 'N',
+                    'GET_DELIVERY_DATES' => true,
+                    'ITEMS' => $request->get('items'),
+                    'STORE_ID' => $request->get('shopId'),
+                ],
+                null,
+                [
+                    'HIDE_ICONS' => 'Y',
+                ]
+            );
+        } catch (\Exception $e) {
+            return JsonErrorResponse::createWithData(
+                $e->getMessage(),
+                [],
+                200,
+                [
+                    'success' => false,
+                ]);
+        }
+
+        
+        $return = JsonErrorResponse::createWithData(
+            '',
+            [
+                'dates' => $component->arResult['DATES']
+            ],
+            200,
+            [
+                'reload' => false,
+                'redirect' => ''
+            ]
+        );
 
         return $return;
     }

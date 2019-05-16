@@ -72,8 +72,18 @@ landing.request.add:
   defaults: { _controller: '\FourPaws\AppBundle\AjaxController\LandingController::addRequestAction' }
   methods: [POST]
 
+landing.festival.user.add:
+  path: /landing/festival/user/add/
+  defaults: { _controller: '\FourPaws\AppBundle\AjaxController\LandingController::addFestivalUser' }
+  methods: [POST]
+
 piggy-bank.email.send:
   path: /piggy-bank/email/send/
   defaults: { _controller: '\FourPaws\AppBundle\AjaxController\PiggyBankController::sendEmailAction' }
+  methods: [POST]
+
+personal-offers.email.send:
+  path: /personal-offers/email/send/
+  defaults: { _controller: '\FourPaws\AppBundle\AjaxController\PersonalOffersController::sendEmailAction' }
   methods: [POST]
 

@@ -188,6 +188,14 @@ class Shop
     protected $fullPickupDateShortFormat;
 
     /**
+     * @var bool
+     *
+     * @Serializer\SerializedName("is_subscribe")
+     * @Serializer\Type("bool")
+     */
+    protected $isSubscribe = false;
+
+    /**
      * @return int
      */
     public function getId(): int
@@ -643,6 +651,24 @@ class Shop
     public function setFullPickupDateShortFormat(string $fullPickupDateShortFormat): Shop
     {
         $this->fullPickupDateShortFormat = $fullPickupDateShortFormat;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSubscribe(): bool
+    {
+        return $this->isSubscribe;
+    }
+
+    /**
+     * @param bool $isSubscribe
+     */
+    public function setIsSubscribe(bool $isSubscribe): Shop
+    {
+        $this->isSubscribe = $isSubscribe;
 
         return $this;
     }
