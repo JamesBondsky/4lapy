@@ -297,7 +297,8 @@ class OrderService
 
             $closedOrderStatuses = $this->personalOrderService->getClosedOrderStatuses();
             $currentMinusMonthDate = (new \DateTime)->modify('-1 month');
-            $isCompleted = $order->getDateUpdate() > $currentMinusMonthDate || in_array($order->getStatusId(), $closedOrderStatuses, true);
+            $orderDateUpdate = \DateTime::createFromFormat('d.m.Y H:i:s', $order->getDateUpdate()->toString());
+            $isCompleted = $orderDateUpdate < $currentMinusMonthDate || in_array($order->getStatusId(), $closedOrderStatuses, true);
 
             $response
                 ->setId($order->getAccountNumber())
