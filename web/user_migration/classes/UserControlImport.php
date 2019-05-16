@@ -24,6 +24,10 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
     const CACHE_TIME = 86400;
     const LID = 's1';
     const LANGUAGE_ID = 'ru';
+    const USER_GROUPS = [
+        6, //register users
+        42 //apply basket rules
+    ];
 
     /** коды с нового сайта => название на старом сайте */
     const CATEGORIES_FROM_OLD_SITE = [
@@ -406,6 +410,8 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
                 } else {
                     unset($userData['PERSONAL_BIRTHDAY']);
                 }
+
+                $userData['GROUP_ID'] = static::USER_GROUPS;
 
                 /** добавляем пользователя */
                 $userID = $cUser->add($userData);
