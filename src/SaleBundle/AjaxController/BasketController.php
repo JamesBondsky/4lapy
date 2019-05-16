@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 namespace FourPaws\SaleBundle\AjaxController;
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
@@ -14,6 +15,7 @@ use Bitrix\Main\Grid\Declension;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Sale\Internals\DiscountCouponTable;
 use Exception;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -28,6 +30,7 @@ use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\PersonalBundle\Exception\CouponIsNotAvailableForUseException;
 use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Discount\Manzana;
@@ -335,6 +338,20 @@ class BasketController extends Controller implements LoggerAwareInterface
             /** @var PiggyBankService $piggyBankService */
             $piggyBankService = App::getInstance()->getContainer()->get('piggy_bank.service');
             $piggyBankService->checkPiggyBankCoupon($promoCode);
+
+            $bitrixCoupon = DiscountCouponTable::query()
+                ->setFilter([
+                    'COUPON' => $promoCode,
+                ])
+                ->setSelect([
+                    'ACTIVE',
+                ])
+                ->setLimit(1)
+                ->exec()
+                ->fetch();
+            if ($bitrixCoupon && $bitrixCoupon['ACTIVE'] === BitrixUtils::BX_BOOL_FALSE) {
+                throw new CouponIsNotAvailableForUseException(__FUNCTION__ . '. Купон ' . $promoCode . ' неактивен');
+            }
 
             $this->manzana->setPromocode($promoCode);
             $this->manzana->calculate();

@@ -20,6 +20,7 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketItemCollection;
+use Bitrix\Sale\Internals\DiscountCouponTable;
 use Bitrix\Sale\Internals\Fields;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\OrderTable;
@@ -682,6 +683,28 @@ class Event extends BaseServiceHandler
             $promocode = BxCollection::getOrderPropertyByCode($propertyCollection, 'PROMOCODE');
             if ($promocode && $promocodeValue = $promocode->getValue())
             {
+                $bitrixCouponId = DiscountCouponTable::query()
+                    ->setFilter([
+                        'COUPON' => $promocodeValue,
+                    ])
+                    ->setSelect([
+                        'ID',
+                    ])
+                    ->setLimit(1)
+                    ->exec()
+                    ->fetch();
+                $bitrixCouponDeactivateResult = DiscountCouponTable::update($bitrixCouponId, ['ACTIVE' => 'N']);
+                if (!$bitrixCouponDeactivateResult->isSuccess()) {
+                    static::getLogger()
+                        ->error(
+                            sprintf(
+                                '%s. failed to deactivate bitrix coupon: %s',
+                                __FUNCTION__,
+                                implode('.', $bitrixCouponDeactivateResult->getErrorMessages())
+                            )
+                        );
+                }
+
                 $isPromoCodeProcessed = false;
                 try {
                     /** @var CouponService $couponService */

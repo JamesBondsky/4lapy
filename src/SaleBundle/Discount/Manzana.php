@@ -10,6 +10,7 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\Internals\DiscountCouponTable;
 use Bitrix\Sale\Order;
 use FourPaws\App\Application as App;
 use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
@@ -124,7 +125,15 @@ class Manzana implements LoggerAwareInterface
         $request = $this->manzanaPosService->buildRequestFromBasket($basket, $card, $this->basketService);
 
         try {
-            if ($this->promocode) {
+            $isBitrixCoupon = false;
+            if ($this->promocode && ($order || isset($user))) {
+                $isBitrixCoupon = (bool)DiscountCouponTable::getCount([
+                    'COUPON' => $this->promocode,
+                    'USER_ID' => isset($order) ? $order->getUserId() : $user->getId(),
+                ]);
+            }
+
+            if ($this->promocode && !$isBitrixCoupon) {
                 /** @var PiggyBankService $piggyBankService */
                 $piggyBankService = App::getInstance()->getContainer()->get('piggy_bank.service');
                 $piggyBankService->checkPiggyBankCoupon($this->promocode);
