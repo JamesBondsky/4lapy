@@ -97,8 +97,8 @@ class ExportOrders20190516162223 extends SprintMigrationBase
                  */
                 $this->resultDataToCsv[] = [
                     'ACCOUNT_NUMBER' => $orderId,
-                    'SUMM_10'        => $summ10,
-                    'SUMM_20'        => $summ20,
+                    'SUMM_10'        => str_replace('.', ',', (string)$summ10),
+                    'SUMM_20'        => str_replace('.', ',', (string)$summ20),
                     'STATUS'         => $this->statuses[$statusId] . ' [' . $statusId . ']',
                 ];
             } else {
