@@ -133,5 +133,9 @@ services:
   catalog_group.service:
     class: FourPaws\CatalogBundle\Service\CatalogGroupService
 
+  order_subscribe.service:
+    class: FourPaws\PersonalBundle\Service\OrderSubscribeService
+    public: true
+
   kkm.service:
     class: FourPaws\KkmBundle\Service\KkmService
