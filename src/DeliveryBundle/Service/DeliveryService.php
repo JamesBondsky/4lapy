@@ -38,6 +38,7 @@ use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Dpd\TerminalTable;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\PriceForAmount;
 use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\DeliveryBundle\Exception\DeliveryInitializeException;
@@ -833,6 +834,25 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
+     * @param string $id
+     *
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @return array
+     */
+    public function getDeliveryById($id): array
+    {
+        $delivery = DeliveryServiceTable::getList(['filter' => ['ID' => $id]])->fetch();
+        if (!$delivery) {
+            throw new NotFoundException('Delivery service not found');
+        }
+
+        return $delivery;
+    }
+
+    /**
      * @param int $id
      *
      * @throws ArgumentException
@@ -937,7 +957,7 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
-     * @param DeliveryResultInterface $delivery
+     * @param CalculationResultInterface $delivery
      * @param int                        $count
      *
      * @return DeliveryResultInterface[]
@@ -946,25 +966,41 @@ class DeliveryService implements LoggerAwareInterface
      * @throws NotFoundException
      * @throws StoreNotFoundException
      */
-    public function getNextDeliveries(DeliveryResultInterface $delivery, int $count = 1): array
+    public function getNextDeliveries(CalculationResultInterface $delivery, int $count = 1): array
     {
-        /** @var \DateTime $lastDate */
-        $lastDate = null;
-        $dateOffset = 0;
         /** @var DeliveryResultInterface[] $result */
         $result = [];
-        do {
-            $currentDelivery = clone $delivery;
-            $currentDeliveryDate = $currentDelivery->setDateOffset($dateOffset)->getDeliveryDate();
-            if ((null === $lastDate) ||
-                ($lastDate->getTimestamp() < $currentDeliveryDate->getTimestamp())
-            ) {
-                $result[] = $currentDelivery;
-            }
+        $dateOffset = 0;
 
-            $lastDate = $currentDeliveryDate;
-            $dateOffset++;
-        } while (\count($result) < $count);
+        if($this->isDelivery($delivery)){
+            /** @var \DateTime $lastDate */
+            $lastDate = null;
+
+            do {
+                /** @var DeliveryResultInterface $currentDelivery */
+                $currentDelivery = clone $delivery;
+                $currentDeliveryDate = $currentDelivery->setDateOffset($dateOffset)->getDeliveryDate();
+                if ((null === $lastDate) ||
+                    ($lastDate->getTimestamp() < $currentDeliveryDate->getTimestamp())
+                ) {
+                    $result[] = $currentDelivery;
+                }
+
+                $lastDate = $currentDeliveryDate;
+                $dateOffset++;
+            } while (\count($result) < $count);
+        } else {
+            while(\count($result) < $count){
+                $deliveryDate = clone $delivery->getDeliveryDate();
+                $deliveryDate->modify(sprintf('+%s days', $dateOffset));
+
+                /** @var PickupResult $tmpPickup */
+                $tmpPickup = clone $delivery;
+                $tmpPickup->setDeliveryDate($deliveryDate);
+                $result[] = $tmpPickup;
+                $dateOffset++;
+            }
+        }
 
         return $result;
     }

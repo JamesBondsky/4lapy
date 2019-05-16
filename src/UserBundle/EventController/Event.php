@@ -503,6 +503,8 @@ class Event extends BaseServiceHandler
             $userService->refreshUserCard($userService->getCurrentUser());
             /** обновление группы оптовиков */
             $userService->refreshUserOpt($userService->getCurrentUser());
+            /** сброс счётка на разлогинивание при сбросе пароля */
+            $userService->refreshUserAuthActions($userService->getCurrentUser());
         } catch (NotAuthorizedException $e) {
             // обработка не требуется
         } catch (\Exception $e) {

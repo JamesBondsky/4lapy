@@ -46,6 +46,9 @@ interface CalculationResultInterface
      */
     public function getDeliveryDate(): \DateTime;
 
+
+    public function setDeliveryDate(\DateTime $date): CalculationResultInterface;
+
     /**
      * @return int
      */

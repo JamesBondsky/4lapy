@@ -330,7 +330,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                         </div>
                         <div class="b-select b-select--recall b-select--feedback-page">
                             <?php
-                            $selectorDelivery = $delivery;
+                            $currentDelivery = $delivery;
                             $selectorStorage = $storage;
                             $selectorName = 'deliveryDate';
                             include 'delivery_date_select.php'
@@ -342,7 +342,11 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                         $selectorStorage = $storage;
                         $selectorName = 'deliveryInterval';
                         include 'delivery_interval_select.php';
-                    } ?>
+                    }
+                    if($storage->isSubscribe()){
+                        include 'delivery_subscribe.php';
+                    }
+                    ?>
                     <div class="b-input-line b-input-line--textarea b-input-line--address-textarea js-no-valid">
                         <div class="b-input-line__label-wrapper">
                             <label class="b-input-line__label" for="order-comment">
