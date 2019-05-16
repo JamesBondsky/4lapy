@@ -153,7 +153,7 @@ class CardService
     {
         try {
             if ($user = $this->appUserService->findOneByEmail($email)) {
-                if ($user->isEmailConfirmed()) {
+                if ($user->isEmailConfirmed() && $this->apiUserService->getCurrentApiUser()->getId() !== $user->getId()) {
                     throw new EmailAlreadyUsed();
                 }
             }

@@ -98,7 +98,7 @@ class CaptchaService
                 if (in_array($sender, [static::SENDER_CARD_ACTIVATION, static::SENDER_EDIT_INFO])) {
                     try {
                         if ($user = $this->appUserService->findOneByEmail($phoneOrEmail)) {
-                            if ($user->isEmailConfirmed()) {
+                            if ($user->isEmailConfirmed() && ($sender !== static::SENDER_CARD_ACTIVATION || $this->appUserService->getCurrentUser()->getId() !== $user->getId())) {
                                 throw new EmailAlreadyUsed();
                             }
                         }
