@@ -17,7 +17,7 @@ $(window).load(function(){
 
         var msg = form.serialize();
 
-        // Отправляем аналитику
+        // Отправляем данные формы в аналитику
         ga('send', 'event', {
           eventCategory: 'fest_fillform',
           eventAction: 'submit',
@@ -64,7 +64,39 @@ $(window).load(function(){
         });
       }, 350);
     });
+
+    popupFormFestival.on('blur', '[data-field-form-festival]', function () {
+      var $this = $(this),
+          _valueField = $this.val();
+
+        if(_valueField) {
+          // Отправляем аналитику при потере фокуса в поле формы
+          ga('send', 'event', {
+            eventCategory: 'fest_fillform',
+            eventAction: 'blur',
+            eventLabel: $this.attr('name'),
+            fieldsObject: {
+              valueField: _valueField
+            }
+          });
+        }
+    });
+
+    popupFormFestival.on('change', '[data-checkbox-form-festival]', function () {
+      var $this = $(this);
+
+      // Отправляем аналитику при изменении чекбоксов
+      ga('send', 'event', {
+        eventCategory: 'fest_fillform',
+        eventAction: 'blur',
+        eventLabel: $this.data('checkbox-form-festival'),
+        fieldsObject: {
+          valueField: $this.prop('checked')
+        }
+      });
+    });
   }
+
   if(popupFormFestival.length || responsePopupFormFestival.length) {
     $('[data-popup-id="form-festival"].js-open-popup').on('click', function () {
       unlock = locky.lockyOn('.js-popup-wrapper');
