@@ -37,7 +37,6 @@ class OrderSubscribe extends BaseEntity
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("UF_USER_ID")
      * @Serializer\Groups(groups={"create","read","update"})
-     * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $userId;
