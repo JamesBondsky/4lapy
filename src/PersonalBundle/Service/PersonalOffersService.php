@@ -100,6 +100,12 @@ class PersonalOffersService
                             ->where(Query::filter()
                                 ->logic('or')
                                 ->where([
+                                    ['ref.UF_DATE_ACTIVE_TO', '>', new DateTime()],
+                                    ['ref.UF_DATE_ACTIVE_TO', '=', null],
+                                ]))
+                            ->where(Query::filter()
+                                ->logic('or')
+                                ->where([
                                     ['ref.UF_USED', null],
                                     ['ref.UF_USED', false],
                                 ])),

@@ -15,6 +15,7 @@ use Bitrix\Main\Grid\Declension;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Internals\DiscountCouponTable;
 use Exception;
 use FourPaws\App\Application as App;
@@ -345,11 +346,17 @@ class BasketController extends Controller implements LoggerAwareInterface
                 ])
                 ->setSelect([
                     'ACTIVE',
+                    'ACTIVE_FROM',
+                    'ACTIVE_TO',
                 ])
                 ->setLimit(1)
                 ->exec()
                 ->fetch();
-            if ($bitrixCoupon && $bitrixCoupon['ACTIVE'] === BitrixUtils::BX_BOOL_FALSE) {
+            if ($bitrixCoupon && (
+                    $bitrixCoupon['ACTIVE'] === BitrixUtils::BX_BOOL_FALSE
+                    || ($bitrixCoupon['ACTIVE_FROM'] && $bitrixCoupon['ACTIVE_FROM'] > new DateTime())
+                    || ($bitrixCoupon['ACTIVE_TO'] && $bitrixCoupon['ACTIVE_TO'] < new DateTime())
+                )) {
                 throw new CouponIsNotAvailableForUseException(__FUNCTION__ . '. Купон ' . $promoCode . ' неактивен');
             }
 
