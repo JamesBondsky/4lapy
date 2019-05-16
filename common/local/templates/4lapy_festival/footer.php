@@ -73,6 +73,8 @@ $markup = PawsApplication::markup();
 <script src="js/components/gmap.min.js" type="text/javascript"></script>
 <script src="js/components/forms.js" type="text/javascript"></script>
 
+<script src="js/interactive_map.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/js/interactive_map.js') ?>" type="text/javascript"></script>
+
 <script>
     var tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
