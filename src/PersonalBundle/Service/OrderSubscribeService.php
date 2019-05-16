@@ -34,7 +34,6 @@ use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Shipment;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\AppBundle\Collection\UserFieldEnumCollection;
-use FourPaws\AppBundle\Service\UserFieldEnumService;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\AppBundle\Traits\UserFieldEnumTrait;
