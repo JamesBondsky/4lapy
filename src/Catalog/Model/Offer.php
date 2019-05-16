@@ -2314,8 +2314,14 @@ class Offer extends IblockElement
     }
 
     /**
+     * Процент скидки по подписке
+     *
      * @return int
      * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      */
     public function getSubscribeDiscount()
     {
@@ -2323,36 +2329,22 @@ class Offer extends IblockElement
 
         /** @var SubscribeDiscountService $subscribeDiscountService */
         $subscribeDiscountService = Application::getInstance()->getContainer()->get(SubscribeDiscountService::class);
-        /** @var LocationService $locationService */
-        $locationService = Application::getInstance()->getContainer()->get('location.service');
-
-        $region = $locationService->getCurrentRegionCode();
-        $discountsByRegion = $subscribeDiscountService->getDiscountsByRegion($region);
-        if(count($discountsByRegion) > 1){
-            $discountWithoutBrand = null;
-            foreach ($discountsByRegion as $discount){
-                if(in_array($this->getProduct()->getBrandId(), $discount['BRANDS'])){
-                    $discountValue = $discount['PERCENT'];
-                    break;
-                }
-                elseif (empty($discount['BRANDS']) && (!$discountWithoutBrand || $discount['PERCENT'] > $discountWithoutBrand)) {
-                    $discountWithoutBrand = $discount;
-                }
-            }
-            if(!$discountValue && $discountWithoutBrand){
-                $discountValue = $discountWithoutBrand['PERCENT'];
-            }
-        }
-        elseif(!empty($discountsByRegion) && (empty($discountsByRegion[0]['BRAND']) || in_array($this->getProduct()->getBrandId(), $discountsByRegion[0]['BRAND']))){
-            $discountValue = $discountsByRegion[0]['PERCENT'];
+        if($discount = $subscribeDiscountService->getBestDiscount($this)){
+            $discountValue = $subscribeDiscountService->getDiscountValue($discount);
         }
 
         return $discountValue ?: 0;
     }
 
     /**
-     * @return int
+     * Цена по подписке
+     *
+     * @return float
      * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      */
     public function getSubscribePrice()
     {
