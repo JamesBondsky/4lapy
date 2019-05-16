@@ -19,6 +19,7 @@ use FourPaws\AppBundle\Service\UserFieldEnumService;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\AppBundle\Traits\UserFieldEnumTrait;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\PersonalBundle\Exception\NotFoundException;
 use FourPaws\PersonalBundle\Service\AddressService;
@@ -32,6 +33,8 @@ use FourPaws\App\Application;
 
 class OrderSubscribe extends BaseEntity
 {
+    use UserFieldEnumTrait;
+
     /**
      * @var int
      * @Serializer\Type("integer")
@@ -177,6 +180,14 @@ class OrderSubscribe extends BaseEntity
      */
     private $userFieldEnumService;
 
+    /** @var null|Order $order */
+    private $order;
+
+    /** @var UserFieldEnumValue $deliveryFrequencyEntity */
+    private $deliveryFrequencyEntity;
+
+    /** @var User $user */
+    private $user;
 
     /**
      * @return array
@@ -472,7 +483,6 @@ class OrderSubscribe extends BaseEntity
 
     /**
      * @return OrderSubscribeService
-     * @throws ApplicationCreateException
      */
     protected function getOrderSubscribeService() : OrderSubscribeService
     {
@@ -488,6 +498,20 @@ class OrderSubscribe extends BaseEntity
     {
         $orderSubscribeHistoryService = Application::getInstance()->getContainer()->get('order_subscribe_history.service');
         return $orderSubscribeHistoryService;
+    }
+
+    /**
+     * @return UserFieldEnumService
+     * @throws ApplicationCreateException
+     */
+    protected function getUserFieldEnumService() : UserFieldEnumService
+    {
+        if (!$this->userFieldEnumService) {
+            $appCont = Application::getInstance()->getContainer();
+            $this->userFieldEnumService = $appCont->get('userfield_enum.service');
+        }
+
+        return $this->userFieldEnumService;
     }
 
     /**

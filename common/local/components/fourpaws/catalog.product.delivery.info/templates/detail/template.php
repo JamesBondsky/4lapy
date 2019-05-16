@@ -26,13 +26,7 @@ $currentOffer = $arParams['OFFER'];
 ?>
 <li class="b-product-information__item">
     <div class="b-product-information__title-info">Наличие</div>
-    <?php if ($currentOffer->isByRequest() && $currentOffer->isAvailable()) { ?>
-        <div class="b-product-information__value">Только под заказ</div>
-    <?php } elseif (!$currentOffer->isAvailable()) { ?>
-        <div class="b-product-information__value">Нет в наличии</div>
-    <?php } else { ?>
-        <div class="b-product-information__value">В наличии</div>
-    <?php } ?>
+    <div class="b-product-information__value"><?=$currentOffer->getAvailabilityText()?></div>
 </li>
 <?php
 if ($currentOffer->isAvailable()) {
