@@ -161,6 +161,14 @@ $APPLICATION->ShowHead();
                         stringTime = this.TIME + ' сек.';
                     }
                     this.$time.text(stringTime);
+                    if(!this.STOP){
+                        this.$webFormCode.prop('readonly', false);
+                        this.$ctnInput.prop('readonly', false);
+                        this.$step.val('0');
+                        this.$fileNameInput.prop('readonly', false);
+                        this.$dateRegisterInput.prop('readonly', false);
+                        this.$dateRegisterToInput.prop('readonly', false);
+                    }
                 } else {
                     this.ajaxPostPartData(res.last_id);
                 }

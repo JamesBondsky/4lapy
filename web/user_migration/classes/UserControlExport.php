@@ -75,7 +75,7 @@ class UserControlExport extends UserControl
             ->registerRuntimeField(
                 'CNT',
                 [
-                    'data_type' => 'integer',
+                    'data_type'  => 'integer',
                     'expression' => [
                         'count(%s)',
                         'ID'
@@ -92,7 +92,7 @@ class UserControlExport extends UserControl
         }
 
         return [
-            'CNT' => $usersCnt['CNT'],
+            'CNT'            => $usersCnt['CNT'],
             'PETS_IBLOCK_ID' => $petIblockId
         ];
     }
@@ -123,8 +123,10 @@ class UserControlExport extends UserControl
             mkdir($this->petImagesPath, static::FOLDER_CHMOD);
         }
 
-
-        $this->fileExportPath = $_SERVER['DOCUMENT_ROOT'] . static::UPLOAD_SUB_PATH . '/' . $file;
+        $fileName = $this->dateRegisterFrom->format('d.m.Y') . '-' .
+            (($this->dateRegisterTo instanceof DateTime) ? $this->dateRegisterTo->format('d.m.Y') : (new DateTime)->format('d.m.Y')) .
+            '-' . $file;
+        $this->fileExportPath = $_SERVER['DOCUMENT_ROOT'] . static::UPLOAD_SUB_PATH . '/' . $fileName;
 
         if ($offset == 0 && file_exists($this->fileExportPath)) {
             unlink($this->fileExportPath);
@@ -145,7 +147,7 @@ class UserControlExport extends UserControl
         }
 
         $filter = [
-            '>ID' => $id,
+            '>ID'             => $id,
             '>=DATE_REGISTER' => $this->dateRegisterFrom
         ];
 
@@ -172,18 +174,18 @@ class UserControlExport extends UserControl
             /** @var DateTime $birthDate */
             $birthDate = $user['PERSONAL_BIRTHDAY'];
             $this->usersPart[$user['ID']] = [
-                'ID' => $user['ID'],
-                'NAME' => $user['NAME'] ?: '',
-                'SECOND_NAME' => $user['SECOND_NAME'] ?: '',
-                'LAST_NAME' => $user['LAST_NAME'] ?: '',
-                'EMAIL' => $user['EMAIL'] ?: '',
-                'PERSONAL_PHONE' => $user['PERSONAL_PHONE'] ?: '',
-                'LOGIN' => $user['LOGIN'] ?: '',
-                'PASSWORD' => $user['PASSWORD'] ?: '',
-                'PERSONAL_GENDER' => $user['PERSONAL_GENDER'] ?: '',
+                'ID'                => $user['ID'],
+                'NAME'              => $user['NAME'] ?: '',
+                'SECOND_NAME'       => $user['SECOND_NAME'] ?: '',
+                'LAST_NAME'         => $user['LAST_NAME'] ?: '',
+                'EMAIL'             => $user['EMAIL'] ?: '',
+                'PERSONAL_PHONE'    => $user['PERSONAL_PHONE'] ?: '',
+                'LOGIN'             => $user['LOGIN'] ?: '',
+                'PASSWORD'          => $user['PASSWORD'] ?: '',
+                'PERSONAL_GENDER'   => $user['PERSONAL_GENDER'] ?: '',
                 'PERSONAL_BIRTHDAY' => ($birthDate) ? $birthDate->format(static::DATE_TIME_FORMAT) : '',
-                'DATE_REGISTER' => $registerDate->format(static::DATE_TIME_FORMAT),
-                'UF_DISCOUNT_CARD' => $user['UF_DISCOUNT_CARD'] ?: ''
+                'DATE_REGISTER'     => $registerDate->format(static::DATE_TIME_FORMAT),
+                'UF_DISCOUNT_CARD'  => $user['UF_DISCOUNT_CARD'] ?: ''
             ];
 
             $userIds[] = $user['ID'];
@@ -195,7 +197,7 @@ class UserControlExport extends UserControl
         $fileSize = $this->writeToFile();
 
         return json_encode([
-            'last_id' => $lastID,
+            'last_id'   => $lastID,
             'file_size' => $fileSize
         ]);
     }
@@ -217,7 +219,7 @@ class UserControlExport extends UserControl
         ];
 
         $arFilter = [
-            'IBLOCK_ID' => $petsIblockId,
+            'IBLOCK_ID'        => $petsIblockId,
             'PROPERTY_USER_ID' => $userIds
         ];
 
@@ -231,12 +233,12 @@ class UserControlExport extends UserControl
                 continue;
             }
             $this->usersPets[$petUser][$pet['ID']] = [
-                'NAME' => $pet['NAME'],
-                'BIRTHDAY' => $pet['PROPERTIES']['PET_BIRTHDAY']['VALUE'],
-                'CATEGORY' => ($pet['PROPERTIES']['PET_CATEGORY']['VALUE']) ? $this->breeds[$pet['PROPERTIES']['PET_CATEGORY']['VALUE']] : '',
-                'BREED' => ($pet['PROPERTY_PET_BREED_NAME']) ?: '',
+                'NAME'        => $pet['NAME'],
+                'BIRTHDAY'    => $pet['PROPERTIES']['PET_BIRTHDAY']['VALUE'],
+                'CATEGORY'    => ($pet['PROPERTIES']['PET_CATEGORY']['VALUE']) ? $this->breeds[$pet['PROPERTIES']['PET_CATEGORY']['VALUE']] : '',
+                'BREED'       => ($pet['PROPERTY_PET_BREED_NAME']) ?: '',
                 'OTHER_BREED' => ($pet['PROPERTIES']['PET_BREED_OTHER']['VALUE']) ?: '',
-                'GENDER' => ($pet['PROPERTY_PET_SEX_NAME']) ?: '',
+                'GENDER'      => ($pet['PROPERTY_PET_SEX_NAME']) ?: '',
             ];
             if ($pet['PROPERTIES']['PET_PHOTO']['VALUE'] !== false) {
                 foreach ($pet['PROPERTIES']['PET_PHOTO']['VALUE'] as $fileID) {
@@ -287,7 +289,7 @@ class UserControlExport extends UserControl
                 foreach ($arrImage as $key => $imageID) {
                     $revertFileImages[$imageID] = [
                         'USER_ID' => $userID,
-                        'PET_ID' => $petID
+                        'PET_ID'  => $petID
                     ];
                 }
             }
@@ -335,7 +337,7 @@ class UserControlExport extends UserControl
             }
             if ($cacheTime > 0) {
                 $cache->StartDataCache($cacheTime, $cacheID, $cachePath);
-                $cache->EndDataCache(array("arIBlockListID" => $this->breeds));
+                $cache->EndDataCache(["arIBlockListID" => $this->breeds]);
             }
         }
     }

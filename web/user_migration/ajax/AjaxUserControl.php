@@ -23,7 +23,7 @@ switch ($exchangeType) {
                 $response = $userControl->getUsersCnt();
                 echo json_encode(
                     [
-                        'CNT' => ceil($response['CNT'] / $pageCnt),
+                        'CNT'            => ceil($response['CNT'] / $pageCnt),
                         'PETS_IBLOCK_ID' => $response['PETS_IBLOCK_ID'] ?: false
                     ]
                 );
@@ -57,7 +57,7 @@ switch ($exchangeType) {
                 $cnt = $userControl->getUsersCntFromFile($fileName);
                 echo json_encode(
                     [
-                        'cnt' => $cnt,
+                        'cnt'   => $cnt,
                         'pages' => ceil($cnt / $pageCnt)
                     ]
                 );

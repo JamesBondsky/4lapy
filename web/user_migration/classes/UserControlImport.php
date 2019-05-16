@@ -27,12 +27,12 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
 
     /** коды с нового сайта => название на старом сайте */
     const CATEGORIES_FROM_OLD_SITE = [
-        'ryby' => 'Рыбка',
+        'ryby'    => 'Рыбка',
         'gryzuny' => 'Грызун',
-        'koshki' => 'Кошка',
+        'koshki'  => 'Кошка',
         'prochee' => 'Другое',
-        'sobaki' => 'Собака',
-        'ptitsy' => 'Птичка'
+        'sobaki'  => 'Собака',
+        'ptitsy'  => 'Птичка'
     ];
 
     /**
@@ -221,9 +221,9 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
         return [
             'users_added' => $this->usersAdded,
             'users_found' => $this->usersFound,
-            'pets_added' => $this->petsAdded,
-            'pets_found' => $this->petsFound,
-            'total_pets' => $this->totalPets
+            'pets_added'  => $this->petsAdded,
+            'pets_found'  => $this->petsFound,
+            'total_pets'  => $this->totalPets
         ];
     }
 
@@ -362,7 +362,7 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
         $userTmp = [];
         foreach ($this->usersPart as $userID => $userData) {
             $filter[0][] = [
-                'EMAIL' => $userData['EMAIL'],
+                'EMAIL'          => $userData['EMAIL'],
                 'PERSONAL_PHONE' => $userData['PERSONAL_PHONE']
             ];
             $userTmp[$userData['EMAIL'] . $userData['PERSONAL_PHONE']] = $userID;
@@ -500,7 +500,7 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
 
             $data = [
                 'UF_USER_ID' => $userID,
-                'UF_NAME' => $pet['NAME']
+                'UF_NAME'    => $pet['NAME']
             ];
 
             if ($category) {
