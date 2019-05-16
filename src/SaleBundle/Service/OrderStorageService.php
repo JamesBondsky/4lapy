@@ -551,9 +551,9 @@ class OrderStorageService
                 $order->setBasket($basket);
             }
 
-            // для подписки оставляем только наши службы доставки
+            // для подписки оставляем всё, кроме достависты
             if($storage->isSubscribe()){
-                $codes = [DeliveryService::INNER_DELIVERY_CODE, DeliveryService::INNER_PICKUP_CODE];
+                $codes = array_merge(DeliveryService::PICKUP_CODES, DeliveryService::DELIVERY_CODES);
             }
 
             $this->deliveries = $this->deliveryService->getByBasket(

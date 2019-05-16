@@ -1250,6 +1250,11 @@ class OrderService implements LoggerAwareInterface
                     $subscribe->setDeliveryPlace($storage->getAddressId());
                 }
 
+                // привяжем пользователя
+                if(!$subscribe->getUserId()){
+                    $subscribe->setUserId($order->getUserId());
+                }
+
                 // добавим заказ в историю закзаов по подписке
                 $result = $this->orderSubscribeService->update($subscribe);
                 if($result->isSuccess()){
