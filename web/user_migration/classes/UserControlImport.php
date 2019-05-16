@@ -402,7 +402,7 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
                 $userData['LANGUAGE_ID'] = static::LANGUAGE_ID;
                 $userData['TIMESTAMP_X'] = new DateTime();
                 if ($userData['PERSONAL_BIRTHDAY'] != null && $userData['PERSONAL_BIRTHDAY'] != '') {
-                    $userData['PERSONAL_BIRTHDAY'] = new DateTime($userData['PERSONAL_BIRTHDAY']);
+                    $userData['PERSONAL_BIRTHDAY'] = new DateTime($userData['PERSONAL_BIRTHDAY'], 'Y-m-d H-i-s');
                 } else {
                     unset($userData['PERSONAL_BIRTHDAY']);
                 }
