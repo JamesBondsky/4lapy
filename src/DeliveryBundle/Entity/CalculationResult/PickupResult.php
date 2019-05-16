@@ -133,18 +133,4 @@ class PickupResult extends BaseResult implements PickupResultInterface
             $date->modify('+1 hour');
         }
     }
-
-    /**
-     * Изменяет дату доставки
-     * используется для расчёта желаемой даты доставки
-     * в подписке на доставку
-     *
-     * @param \DateTime $date
-     * @param Store     $store
-     */
-    public function setDeliveryDate(\DateTime $date)
-    {
-        $this->deliveryDate = $date;
-        return $this;
-    }
 }

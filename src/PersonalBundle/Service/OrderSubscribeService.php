@@ -67,6 +67,7 @@ use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
 use http\Exception\InvalidArgumentException;
@@ -183,7 +184,11 @@ class OrderSubscribeService implements LoggerAwareInterface
 
         try {
             if (empty($subscribe->getUserId())) {
-                $subscribe->setUserId($this->currentUser->getCurrentUserId());
+                try {
+                    $subscribe->setUserId($this->currentUser->getCurrentUserId());
+                } catch (NotAuthorizedException $e) {
+                    // можем привязать пользователя позже, т.к. доступно для неавторизованных
+                }
             }
             if (empty($subscribe->getLocationId())) {
                 $subscribe->setLocationId($this->locationService->getCurrentLocation());
@@ -275,9 +280,9 @@ class OrderSubscribeService implements LoggerAwareInterface
             return true;
         }
 
-        if ($orderSubscribe->getUserId() !== $this->currentUser->getCurrentUserId()) {
-            throw new SecurityException('не хватает прав доступа для совершения данной операции');
-        }
+//        if ($orderSubscribe->getUserId() !== $this->currentUser->getCurrentUserId()) {
+//            throw new SecurityException('не хватает прав доступа для совершения данной операции');
+//        }
 
         $deleteEntityItems = $this->orderSubscribeItemRepository->findBySubscribe($id);
         /** @var OrderSubscribeItem $item */
@@ -1706,6 +1711,8 @@ class OrderSubscribeService implements LoggerAwareInterface
     }
 
     /**
+     * Создание подписки
+     *
      * @param OrderStorage $storage
      * @param $data
      * @return Result
