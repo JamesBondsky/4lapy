@@ -212,6 +212,37 @@ class DeliveryService implements LoggerAwareInterface
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
+     * @param OfferCollection $offers
+     * @param array $quantities
+     * @param string $locationCode
+     * @param array $codes
+     * @param \DateTime|null $from
+     * @return array
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     * @throws UserMessageException
+     */
+    public function getByOfferCollection(OfferCollection $offers, array $quantities, string $locationCode = '', array $codes = [], ?\DateTime $from = null): array
+    {
+        $basket = Basket::createFromRequest([]);
+        /** @var Offer $offer */
+        foreach ($offers as $offer) {
+            $basketItem = BasketItem::create($basket, 'sale', $offer->getId());
+            $basketItem->setFieldNoDemand('CAN_BUY', 'Y');
+            $basketItem->setFieldNoDemand('PRICE', $offer->getPrice());
+            $basketItem->setFieldNoDemand('QUANTITY', $quantities[$offer->getXmlId()]);
+            $basket->addItem($basketItem);
+        }
+
+        return $this->getByBasket($basket, $locationCode, $codes, $from);
+    }
+
+    /**
      * Получение доставок для корзины
      * @param BasketBase     $basket
      * @param string         $locationCode

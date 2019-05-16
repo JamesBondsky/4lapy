@@ -101,7 +101,6 @@ class KkmController extends Controller
         }
 
         //get suggestions
-
         $text = $request->get('text');
         $res = $this->kkmService->getSuggestions($text);
         if ($res['success'] == false) {
@@ -118,6 +117,50 @@ class KkmController extends Controller
         return new JsonResponse(
             [
                 'suggestions' => $res['suggestions']
+            ],
+            200
+        );
+    }
+
+
+    /**
+     * @Route("/geocode/", methods={"POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     *
+     */
+    public function geocode(Request $request): JsonResponse
+    {
+        //validate old token
+        $token = $request->headers->get('token');
+        $res = $this->kkmService->validateToken($token);
+        if ($res['success'] == false) {
+            return new JsonResponse(
+                [
+                    'code'    => 200,
+                    'message' => $res['error']
+                ],
+                200
+            );
+        }
+
+        $text = $request->get('text');
+        $res = $this->kkmService->geocode($text);
+        if ($res['success'] == false) {
+            return new JsonResponse(
+                [
+                    'code'    => 200,
+                    'message' => $res['error']
+                ],
+                200
+            );
+        }
+
+        return new JsonResponse(
+            [
+                'address' => $res['address']
             ],
             200
         );
@@ -151,27 +194,23 @@ class KkmController extends Controller
         $kladrId = $content['kladr_id'];
         $products = $content['products'];
 
-        $data = [
-            'rc'      => true,
-            'courier' => [
-                'price' => 'Стоимость доставки.', //350
-                'date'  => 'Массив доступных дат для доставки.', //["15.03.2019", "16.03.2019", "17.03.2019"]
-                'time'  => 'Массив доступных интервалов времени.' //[1, 2]
-                /**
-                 * Коды интервалов времени, как в SAP:
-                 * 1 - (09:00 – 18:00);
-                 * 2 - (18:00 – 24:00);
-                 * 3 - (08:00 – 12:00);
-                 * 4 - (12:00 – 16:00);
-                 * 5 - (16:00 – 20:00);
-                 * 6 - (20:00 – 24:00).
-                 */
-            ]
-        ];
+        $res = $this->kkmService->getDeliveryRules($kladrId, $products);
 
-        //return data
+        if ($res['success'] == false) {
+            return new JsonResponse(
+                [
+                    'code'    => 200,
+                    'message' => $res['error']
+                ],
+                200
+            );
+        }
+
         return new JsonResponse(
-            $data,
+            [
+                'code'    => 200,
+                'message' => $res['delivery_rules']
+            ],
             200
         );
     }
