@@ -58,17 +58,17 @@ class PersonalOffersService
 
     /**
      * @param int $userId
-     *
+     * @param bool|null $withUnrestrictedCoupons
      * @return array
      *
-     * @throws HLBlockNotFoundException
      * @throws InvalidArgumentException
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ObjectException
      * @throws \Bitrix\Main\SystemException
      */
-    public function getActiveUserCoupons(int $userId): array
+    public function getActiveUserCoupons(int $userId, ?bool $withUnrestrictedCoupons = false): array
     {
         if ($userId <= 0)
         {
@@ -78,7 +78,7 @@ class PersonalOffersService
         $coupons = [];
         $offersCollection = new ArrayCollection();
 
-        $activeOffersCollection = $this->getActiveOffers();
+        $activeOffersCollection = $this->getActiveOffers([], $withUnrestrictedCoupons);
 
         if (!$activeOffersCollection->isEmpty())
         {
@@ -96,7 +96,10 @@ class PersonalOffersService
                     new ReferenceField(
                         'USER_COUPONS', $this->personalCouponUsersManager::getEntity()->getDataClass(),
                         Query\Join::on('this.ID', 'ref.UF_COUPON')
-                            ->where('ref.UF_USER_ID', '=', $userId)
+                            ->where([
+                                    ['ref.UF_USER_ID', '=', $userId],
+                                    ['ref.UF_DATE_USED', '=', null],
+                                ])
                             ->where(Query::filter()
                                 ->logic('or')
                                 ->where([
@@ -141,11 +144,12 @@ class PersonalOffersService
     /**
      * @param array $filter
      *
+     * @param bool|null $withUnrestrictedCoupons
      * @return ArrayCollection
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\LoaderException
      */
-    public function getActiveOffers($filter = []): ArrayCollection
+    public function getActiveOffers($filter = [], ?bool $withUnrestrictedCoupons = false): ArrayCollection
     {
         if (!Loader::includeModule('iblock')) {
             throw new SystemException('Module iblock is not installed');
@@ -153,9 +157,21 @@ class PersonalOffersService
 
         $arFilter = [
             '=IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::PERSONAL_OFFERS),
-            '=ACTIVE' => 'Y',
-            '=ACTIVE_DATE' => 'Y',
         ];
+        if ($withUnrestrictedCoupons)
+        {
+            $arFilter[] = [
+                'LOGIC' => 'OR',
+                'PROPERTY_IS_UNRESTRICTED_ACTIVITY' => true,
+                [
+                    '=ACTIVE' => 'Y',
+                    '=ACTIVE_DATE' => 'Y',
+                ],
+            ];
+        } else {
+            $arFilter['=ACTIVE'] = 'Y';
+            $arFilter['=ACTIVE_DATE'] = 'Y';
+        }
         if ($filter) {
             $arFilter = array_merge($arFilter, $filter);
         }
@@ -528,10 +544,12 @@ class PersonalOffersService
      * @param string $promoCode
      *
      * @throws CouponIsNotAvailableForUseException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\LoaderException
      * @throws \Bitrix\Main\SystemException
      */
-    public function checkCoupon(string $promoCode)
+    public function checkCoupon(string $promoCode): void
     {
         global $USER;
 
@@ -540,10 +558,15 @@ class PersonalOffersService
             return;
         }
 
-        $isPromoCodeUsed = (bool)$this->personalCouponUsersManager::query()
-            ->setSelect(['ID'])
+        $arPromoCode = $this->personalCouponUsersManager::query()
+            ->setSelect([
+                //'ID',
+                'UF_USED',
+                'UF_DATE_USED',
+                'USER_COUPONS.UF_OFFER',
+            ])
             ->setFilter([
-                'UF_USED' => true,
+                //'UF_USED' => true,
                 '=UF_USER_ID' => $userId,
             ])
             ->registerRuntimeField(
@@ -555,10 +578,18 @@ class PersonalOffersService
                 )
             )
             ->exec()
-            ->getSelectedRowsCount();
+            ->fetch();
 
-        if ($isPromoCodeUsed) {
-            throw new CouponIsNotAvailableForUseException('coupon is not available for use. Promo code: ' . $promoCode . '. User id: ' . $userId);
+        $activeOffers = $this->getActiveOffers([], true);
+        $activeOffersIds = $activeOffers->getKeys();
+
+        if ($arPromoCode
+            && ($arPromoCode['UF_USED']
+                || $arPromoCode['UF_DATE_USED']
+                || ($activeOffersIds && !in_array($arPromoCode['PERSONAL_COUPON_USERS_USER_COUPONS_UF_OFFER'], $activeOffersIds, false))
+            )
+        ) {
+            throw new CouponIsNotAvailableForUseException('coupon is not available for use. Already used or deactivated. Promo code: ' . $promoCode . '. User id: ' . $userId);
         }
     }
 
