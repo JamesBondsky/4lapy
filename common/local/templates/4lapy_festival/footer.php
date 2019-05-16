@@ -64,6 +64,8 @@ $markup = PawsApplication::markup();
 
 <!-- PAGE LEVEL SCRIPTS -->
 <?/*<script src="js/shapes.js" type="text/javascript"></script>*/?>
+<script src="js/jquery.validate.min.js" type="text/javascript"></script>
+<script src="js/jquery.validate.localization_ru.js" type="text/javascript"></script>
 <script src="js/jquery.scrollme.min.js" type="text/javascript"></script>
 <script src="js/layout.min.js" type="text/javascript"></script>
 <script src="js/components/wow.min.js" type="text/javascript"></script>
