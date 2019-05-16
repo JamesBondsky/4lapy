@@ -28,6 +28,7 @@ $markup = PawsApplication::markup();
     <meta content="width=device-width, initial-scale=1" name="viewport"/>
     <meta content="" name="description"/>
     <meta content="" name="author"/>
+    <meta name="yandex-verification" content="6266e34669b85ed6">
 
     <?php /** @todo Mobe onto right place  */ ?>
     <script src="/static/build/js/jquery/jquery.min.js"></script>
@@ -90,8 +91,11 @@ $markup = PawsApplication::markup();
             cValue: 'e0a5fe5fe86ada300005a1978e97b378493ad3f'
         }
     </script>
+
+    <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_header.php'; ?>
 </head>
 <body id="body" data-spy="scroll" data-target=".header" class="body-landing-festival">
+<?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_body.php'; ?>
 <?php $APPLICATION->ShowPanel(); ?>
 
     <!--========== HEADER ==========-->
@@ -130,7 +134,7 @@ $markup = PawsApplication::markup();
                             <!--<li class="js_nav-item nav-item"><a class="nav-item-child nav-item-hover" href="#interview">Я ПОЙДУ!</a></li>-->
                             <li class="js_nav-item nav-item"><a class="nav-item-child nav-item-hover" href="#partners">партнеры</a></li>
                             <li class="js_nav-item nav-item"><a class="nav-item-child nav-item-hover" href="#contacts">контакты</a></li>
-                            <li class="nav-item join-item"><a class="nav-item-child nav-item-hover js-open-popup" href="javascript:void(0);" data-popup-id="form-festival"><span>Я ПОЙДУ</span></a></li>
+                            <li class="nav-item join-item"><a class="nav-item-child nav-item-hover js-open-popup" href="javascript:void(0);" onclick="dataLayer.push({'fest_go':'btn_menu_fest'});" data-popup-id="form-festival"><span>Я ПОЙДУ</span></a></li>
                         </ul>
                     </div>
                 </div>
@@ -1037,7 +1041,7 @@ $markup = PawsApplication::markup();
                                     </div>
                                 </div>
                             </div>
-                            <button class="join_btn js-open-popup" data-popup-id="form-festival">я пойду!</button>
+                            <button class="join_btn js-open-popup" onclick="dataLayer.push({'fest_go':'btn_map_fest'});" data-popup-id="form-festival">я пойду!</button>
                         </div>
                     </div>
                 </div>
@@ -1179,7 +1183,7 @@ $markup = PawsApplication::markup();
                     </div>
                 </div>
             </div>
-            <button class="join_btn js-open-popup" data-popup-id="form-festival">я пойду!</button>
+            <button class="join_btn js-open-popup" onclick="dataLayer.push({'fest_go':'btn_guest_fest'});" data-popup-id="form-festival">я пойду!</button>
         </div>
         <!-- End guest -->
         <div id="dog_fest">
@@ -1193,7 +1197,7 @@ $markup = PawsApplication::markup();
 
                         <div id="videoHolder"></div>
 
-                        <button class="join_btn js-open-popup" data-popup-id="form-festival">я пойду!</button>
+                        <button class="join_btn js-open-popup" onclick="dataLayer.push({'fest_go':'btn_dog_fest'});" data-popup-id="form-festival">я пойду!</button>
                     </div>
                 </div>
                 <!--// end row -->
@@ -1248,7 +1252,7 @@ $markup = PawsApplication::markup();
                     </div>
                 </div>
             </div>
-            <button class="join_btn js-open-popup" data-popup-id="form-festival">я пойду!</button>
+            <button class="join_btn js-open-popup" onclick="dataLayer.push({'fest_go':'btn_activity_fest'});" data-popup-id="form-festival">я пойду!</button>
         </div>
         <!-- End acitvity -->
 
@@ -1470,7 +1474,7 @@ $markup = PawsApplication::markup();
                     </div>
                 </div>
                 <!-- End Masonry Grid -->
-                <button class="join_btn js-open-popup" data-popup-id="form-festival">я пойду!</button>
+                <button class="join_btn js-open-popup" onclick="dataLayer.push({'fest_go':'btn_gala_fest'});" data-popup-id="form-festival">я пойду!</button>
             </div>
         </div>
         <!-- Work -->
@@ -1545,7 +1549,7 @@ $markup = PawsApplication::markup();
                     </div>
                 </div>
                 <!-- End Masonry Grid -->
-                <button class="join_btn js-open-popup" data-popup-id="form-festival">я пойду!</button>
+                <button class="join_btn js-open-popup" onclick="dataLayer.push({'fest_go':'btn_dobrolap_fest'});" data-popup-id="form-festival">я пойду!</button>
             </div>
         </div>
         <div id="konkurs">
@@ -1593,7 +1597,7 @@ $markup = PawsApplication::markup();
                     </div>
                 </div>
             </div>
-            <button class="join_btn js-open-popup" data-popup-id="form-festival">я пойду!</button>
+            <button class="join_btn js-open-popup" onclick="dataLayer.push({'fest_go':'btn_konkurs_fest'});" data-popup-id="form-festival">я пойду!</button>
         </div>
         <!-- End Promo Banner -->
 

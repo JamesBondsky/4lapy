@@ -33,6 +33,7 @@ use FourPaws\Helpers\PhoneHelper;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\Pet;
 use FourPaws\PersonalBundle\Models\PetCongratulationsNotify;
+use FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Dto\Fiscalization\Item;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
@@ -947,11 +948,13 @@ class ExpertsenderService implements LoggerAwareInterface
 
         /** @var OrderService $orderService */
         $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
-        $order = $personalOrder->getBitrixOrder();
+        /** @var OrderSubscribeHistoryService $orderSubscribeHistoryService */
+        $orderSubscribeHistoryService = Application::getInstance()->getContainer()->get('order_subscribe_history.service');
+        $order = $orderService->getOrderById($orderSubscribeHistoryService->getLastCreatedOrderId($orderSubscribe));
 
         $snippets[] = new Snippet('user_name', htmlspecialcharsbx($personalOrder->getPropValue('NAME')));
         $snippets[] = new Snippet('delivery_address', htmlspecialcharsbx($orderService->getOrderDeliveryAddress($order)));
-        $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($orderSubscribe->getDateStartFormatted()));
+        $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($orderSubscribe->getNearestDelivery()));
         $snippets[] = new Snippet('delivery_period', htmlspecialcharsbx($orderSubscribe->getDeliveryTimeFormattedRu()));
         $snippets[] = new Snippet('tel_number', PhoneHelper::formatPhone($personalOrder->getPropValue('PHONE')));
         $snippets[] = new Snippet('total_bonuses', (int)$orderService->getOrderBonusSum($order));
@@ -966,7 +969,7 @@ class ExpertsenderService implements LoggerAwareInterface
             [
                 'email' => $email,
                 'transactionId' => $transactionId,
-                'orderId' => $personalOrder->getId(),
+                'orderId' => $order->getId(),
                 'snippets' => implode(
                     '; ',
                     array_map(

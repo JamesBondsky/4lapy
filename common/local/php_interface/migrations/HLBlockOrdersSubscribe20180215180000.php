@@ -407,7 +407,7 @@ class HLBlockOrdersSubscribe20180215180000 extends \Adv\Bitrixtools\Migration\Sp
             ]
         );
 
-        $GLOBALS['DB']->Query('ALTER TABLE `'.static::TABLE_NAME.'` ADD UNIQUE(`UF_ORDER_ID`);', true);
+        //$GLOBALS['DB']->Query('ALTER TABLE `'.static::TABLE_NAME.'` ADD UNIQUE(`UF_ORDER_ID`);', true);
 
         return true;
     }

@@ -32,9 +32,11 @@ use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils\Detach\Adder;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
+use FourPaws\SaleBundle\Helper\PriceHelper;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponSessionStorage;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -43,6 +45,7 @@ use FourPaws\UserBundle\Service\UserService;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 
 /** @noinspection AutoloadingIssuesInspection */
 /** @noinspection EfferentObjectCouplingInspection */
@@ -78,6 +81,10 @@ class BasketComponent extends CBitrixComponent
      */
     private $ecommerceService;
     /**
+     * @var OrderStorageService
+     */
+    private $orderStorageService;
+    /**
      * @var SalePreset
      */
     private $ecommerceSalePreset;
@@ -104,6 +111,7 @@ class BasketComponent extends CBitrixComponent
         $this->deliveryService = $container->get(DeliveryService::class);
         $this->ecommerceService = $container->get(GoogleEcommerceService::class);
         $this->ecommerceSalePreset = $container->get(SalePreset::class);
+        $this->orderStorageService = $container->get(OrderStorageService::class);
     }
 
     /** @noinspection PhpMissingParentCallCommonInspection
@@ -147,8 +155,14 @@ class BasketComponent extends CBitrixComponent
 
         // привязывать к заказу нужно для расчета скидок
         if (null === $order = $basket->getOrder()) {
-            $coupon = $this->couponsStorage->getApplicableCoupon();
+            // в корзине надо всегда сбрасывать состояние подписки для пересчёта цен
+            $storage = $this->orderStorageService->getStorage();
+            if($storage->isSubscribe()){
+                $storage->setSubscribe(false);
+                $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+            }
 
+            $coupon = $this->couponsStorage->getApplicableCoupon();
             /*$isBitrixCoupon = (bool)DiscountCouponTable::getCount([
                 'COUPON' => $coupon,
                 'USER_ID' => $order->getUserId(),
@@ -190,6 +204,7 @@ class BasketComponent extends CBitrixComponent
         $this->arResult['POSSIBLE_GIFT_GROUPS'] = Gift::getPossibleGiftGroups($order);
         $this->arResult['POSSIBLE_GIFTS'] = Gift::getPossibleGifts($order);
         $this->calcTemplateFields();
+        $this->calcSubscribeFields();
         $this->checkSelectedGifts();
         $this->arResult['SHOW_FAST_ORDER'] = $this->deliveryService->getCurrentDeliveryZone() !== $this->deliveryService::ZONE_4;
         $this->arResult['ECOMMERCE_VIEW_BASKET'] = $this->ecommerceService->renderScript(
@@ -427,8 +442,6 @@ class BasketComponent extends CBitrixComponent
     }
 
     /**
-     *
-     *
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws \Bitrix\Main\ArgumentNullException
@@ -494,6 +507,38 @@ class BasketComponent extends CBitrixComponent
         $this->arResult['TOTAL_DISCOUNT'] = PriceMaths::roundPrecision($basePrice - $price);
         $this->arResult['TOTAL_PRICE'] = $price;
         $this->arResult['TOTAL_BASE_PRICE'] = $basePrice;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     */
+    private function calcSubscribeFields()
+    {
+        $subscribePrice = 0;
+        /** @var Basket $basket */
+        $basket = $this->arResult['BASKET'];
+        /** @var BasketItem $basketItem */
+        $orderableBasket = $basket->getOrderableItems();
+
+        foreach ($orderableBasket as $basketItem) {
+            if (!isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
+                $offer = $this->getOffer((int)$basketItem->getProductId());
+                if (!$offer) {
+                    continue;
+                }
+                $itemQuantity = (int)$basketItem->getQuantity();
+                $itemPrice = $basketItem->getPrice();
+                $percent = $offer->getSubscribeDiscount();
+
+                $price = $itemPrice * ((100 - $percent)/100);
+                $manzanaPrice = PriceHelper::roundPrice($price);
+
+                $subscribePrice += $manzanaPrice * $itemQuantity;
+            }
+        }
+
+        $this->arResult['SUBSCRIBE_PRICE'] = $subscribePrice;
+        $this->arResult['SUBSCRIBE_ALLOWED'] = true;
     }
 
     /**
