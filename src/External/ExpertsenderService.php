@@ -1375,6 +1375,8 @@ class ExpertsenderService implements LoggerAwareInterface
                 throw new ExpertSenderException(__METHOD__ . 'Не удалось отправить письмо: Ошибка #' . $senderApiResult->getErrorCode() . '. ' .  $senderApiResult->getErrorMessage() . '. $params: ' . print_r($params, true));
             }
             return true;
+        } else {
+            throw new ExpertsenderEmptyEmailException(__METHOD__ . 'Не удалось отправить письмо: не указан email. $params: ' . print_r($params, true));
         }
 
         return false;
