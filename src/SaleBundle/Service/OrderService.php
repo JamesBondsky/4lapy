@@ -1067,6 +1067,19 @@ class OrderService implements LoggerAwareInterface
             )
         );
 
+        if($storage->isSubscribe()){
+            $this->setOrderPropertyByCode(
+                $order,
+                'IS_SUBSCRIBE',
+                'Y'
+            );
+            $this->setOrderPropertyByCode(
+                $order,
+                'SUBSCRIBE_ID',
+                $storage->getSubscribeId()
+            );
+        }
+
         $address = null;
         if (!$fastOrder) {
             if ($this->deliveryService->isDelivery($selectedDelivery) || $this->deliveryService->isDostavistaDelivery($selectedDelivery)) {

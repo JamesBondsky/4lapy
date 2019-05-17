@@ -20,7 +20,9 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\DateHelper;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Exception\NotFoundException;
+use FourPaws\StoreBundle\Exception\NotFoundException as NotFoundStoreException;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
@@ -702,14 +704,13 @@ class OrderSubscribe extends BaseEntity
     /**
      * Возвращает полный адрес места доставки
      *
-     * @return \FourPaws\LocationBundle\Entity\Address|string|null
+     * @return string|null
      * @throws ApplicationCreateException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\AppBundle\Exception\NotFoundException
      * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
-     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public function getDeliveryPlaceAddress()
     {
@@ -721,12 +722,22 @@ class OrderSubscribe extends BaseEntity
         $addressService = Application::getInstance()->getContainer()->get('address.service');
         /** @var StoreService $storeService */
         $storeService = Application::getInstance()->getContainer()->get('store.service');
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
 
         if($orderSubscribeService->isDelivery($this)){
             $address = $addressService->getById($this->getDeliveryPlace());
             $result = $address->getFullAddress();
         } else {
-            $store = $storeService->getStoreByXmlId($this->getDeliveryPlace());
+            try {
+                $store = $storeService->getStoreByXmlId($this->getDeliveryPlace());
+            } catch (NotFoundStoreException $e) {
+                // трудно проверять здесь DPD это или самовывоз,
+                // если склад не найден - попробуем найти его в DPD
+                $terminals = $deliveryService->getDpdTerminalsByLocation($this->getLocationId());
+                $store = $terminals[$this->getDeliveryPlace()];
+            }
+
             $result = $store->getAddress();
         }
 
