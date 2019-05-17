@@ -239,7 +239,140 @@ class DeliveryService implements LoggerAwareInterface
             $basket->addItem($basketItem);
         }
 
-        return $this->getByBasket($basket, $locationCode, $codes, $from);
+        if (!$locationCode) {
+            $locationCode = $this->locationService->getCurrentLocation();
+        }
+
+        $shipment = $this->generateShipment($locationCode, $basket);
+
+        $isToEnableExtendDiscount = DiscountManager::isExtendDiscountEnabled();
+
+        if ($isToEnableExtendDiscount) {
+            DiscountManager::disableExtendsDiscount();
+            $isToEnableExtendDiscount = true;
+        }
+
+        $availableServices = Manager::getRestrictedObjectsList($shipment);
+
+        $result = [];
+        $errors = [];
+        $location = $this->getDeliveryLocation($shipment);
+        foreach ($availableServices as $service) {
+            if ($codes && !\in_array($service->getCode(), $codes, true)) {
+                continue;
+            }
+
+            if ($service::isProfile()) {
+                $name = $service->getNameWithParent();
+            } else {
+                $name = $service->getName();
+            }
+
+            try {
+                $shipment->setFieldsNoDemand(
+                    [
+                        'DELIVERY_ID'   => $service->getId(),
+                        'DELIVERY_NAME' => $name,
+                    ]
+                );
+            } catch (\Exception $e) {
+                $this->log()->error(sprintf('Cannot set shipment fields: %s', $e->getMessage()), [
+                    'location' => $location,
+                    'service'  => $service->getCode(),
+                ]);
+                continue;
+            }
+
+            $calculationResult = $shipment->calculateDelivery();
+            if (!$calculationResult->isSuccess()) {
+                $errors[$service->getCode()] = $calculationResult->getErrorMessages();
+                continue;
+            }
+
+            try {
+                $calculationResult = CalculationResultFactory::fromBitrixResult($calculationResult, $service, $shipment);
+            } catch (UnknownDeliveryException|DeliveryInitializeException $e) {
+                $this->log()->critical($e->getMessage(), [
+                    'service'  => $service->getCode(),
+                    'location' => $location,
+                    'trace' => $e->getTrace()
+                ]);
+                continue;
+            }
+            $deliveryZone = $this->getDeliveryZoneForShipment($shipment);
+            $calculationResult->setDeliveryZone($deliveryZone);
+            $calculationResult->setDeliveryId($service->getId());
+            $calculationResult->setDeliveryName($name);
+            $calculationResult->setDeliveryCode($service->getCode());
+            $calculationResult->setCurrentDate($from ?? new \DateTime());
+
+            //проверка, что достависта работает еще в течение 3ех часов
+            if ($calculationResult->getDeliveryCode() == DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
+                $deliveryDate = clone $calculationResult->getDeliveryDate();
+                $deliveryDateOfMonth = clone $calculationResult->getDeliveryDate(); //клонируем для проверки, что следующие сутки не наступили
+                $deliveryStartTime = clone $calculationResult->getDeliveryDate(); //клонируем для проверки, что курьерская доставка сейчас работает
+                $deliveryEndTime = clone $calculationResult->getDeliveryDate(); //клонируем для проверки, что курьерская доставка еще будет работать с учетом времени доставки
+                //проверяем размеры товаров
+                /** @var OrderService $orderService */
+                $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+                $parentOrder = $shipment->getParentOrder();
+                if ($parentOrder->getBasket()->isEmpty())
+                {
+                    /** @var BasketService $basketService */
+                    $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
+                    $offers = $basketService->getBasketOffers();
+                }
+                else
+                {
+                    /** @var OfferCollection $offers */
+                    $offers = $orderService->getOrderProducts($parentOrder);
+                }
+
+                if (!$offers->isEmpty()) {
+                    foreach ($offers as $offer) {
+                        $length = WordHelper::showLengthNumber($offer->getCatalogProduct()->getLength());
+                        $width = WordHelper::showLengthNumber($offer->getCatalogProduct()->getWidth());
+                        $height = WordHelper::showLengthNumber($offer->getCatalogProduct()->getHeight());
+                        if ($length > 150 || $width > 150 || $height > 150) {
+                            $calculationResult->setPeriodTo(300);
+                            break;
+                        }
+                    }
+                }
+                $deliveryDateOfMonth->modify(sprintf('+%s minutes', $calculationResult->getPeriodTo())); //прибавляем максимальное время доставки
+                $startTime = $calculationResult->getData()['DELIVERY_START_TIME']; //когда доставка открывается
+                $arStartTime = explode(':', $startTime);
+                $deliveryStartTime->setTime($arStartTime[0], $arStartTime[1]); //получаем сегодня, когда доставка открывается
+                $endTime = $calculationResult->getData()['DELIVERY_END_TIME']; //когда доставка закрывается
+                $arEndTime = explode(':', $endTime);
+                $deliveryEndTime->setTime($arEndTime[0], $arEndTime[1]); //получаем сегодня, когда доставка закроется
+                $oldDayOfMonth = $calculationResult->getDeliveryDate()->format('d'); //получаем номер старого дня в месяце
+                $newDayOfMonth = $deliveryDateOfMonth->format('d'); //получаем номер нового дня в месяце с учетом времени доставки
+                if ($oldDayOfMonth != $newDayOfMonth || $deliveryDateOfMonth > $deliveryEndTime || $deliveryDate < $deliveryStartTime) {
+                    continue;
+                }
+            }
+
+            //тут рассчет времени доставки
+            if ($calculationResult->isSuccess()) {
+                $result[] = $calculationResult;
+            } else {
+                $errors[$calculationResult->getDeliveryCode()] = $calculationResult->getErrorMessages();
+            }
+        }
+
+        if (empty($codes) && empty($result)) {
+            $this->log()->info('No available deliveries', [
+                'location' => $location,
+                'errors' => $errors
+            ]);
+        }
+
+        if ($isToEnableExtendDiscount) {
+            DiscountManager::enableExtendsDiscount();
+        }
+
+        return $result;
     }
 
     /**

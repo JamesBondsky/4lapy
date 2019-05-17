@@ -10,6 +10,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreBundleNotFoundException;
@@ -371,13 +372,18 @@ class KkmService implements LoggerAwareInterface
             $innerDeliveryAvailable = false;
             $deliveryPrice = false;
             $deliveryDate = false;
+            $intervals = [];
             /** @var CalculationResultInterface $delivery */
             foreach ($deliveries as $delivery) {
                 if ($delivery->getDeliveryCode() == DeliveryService::INNER_DELIVERY_CODE) {
+                    /** @var DeliveryResultInterface $delivery */
                     $innerDeliveryAvailable = true;
                     $rc = true;
                     $deliveryPrice = $delivery->getDeliveryPrice();
                     $deliveryDate = $delivery->getDeliveryDate()->format('d.m.Y');
+                    foreach ($delivery->getAvailableIntervals() as $interval){
+                        $intervals[] = str_replace(" ", "", (string)$interval);
+                    }
                 }
             }
 
@@ -390,10 +396,7 @@ class KkmService implements LoggerAwareInterface
                 "courier" => [
                     "price" => $deliveryPrice,
                     "date"  => [$deliveryDate],
-                    "time"  => [
-                        1,
-                        2
-                    ]
+                    "time"  => $intervals
                 ]
             ];
 
