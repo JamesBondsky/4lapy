@@ -102,6 +102,7 @@ class ExpertsenderService implements LoggerAwareInterface
     public const CHANGE_EMAIL_TO_NEW_EMAIL_LIST = 7768;
     public const SUBSCRIBE_EMAIL_UNDER_3_WEEK_LIST_ID = 7769;
     public const SUBSCRIBE_EMAIL_UNDER_3_DAYS_LIST_ID = 7773;
+    public const SUBSCRIBE_CANCEL = 9413;
 
     public const NEW_ORDER_PAY_LIST_ID = 7774;
     public const NEW_ORDER_NOT_PAY_LIST_ID = 7775;
@@ -1062,6 +1063,55 @@ class ExpertsenderService implements LoggerAwareInterface
                 'email' => $email,
                 'transactionId' => $transactionId,
                 'orderId' => $order->getId(),
+                'snippets' => implode(
+                    '; ',
+                    array_map(
+                        function($snp) {
+                            return $snp instanceof Snippet ? $snp->getName().': '.$snp->getValue() : '-';
+                        },
+                        $snippets
+                    )
+                ),
+            ]
+        );
+
+        $this->sendSystemTransactional($transactionId, $email, $snippets);
+
+        return $transactionId;
+    }
+
+    /**
+     * @param OrderSubscribe $orderSubscribe
+     * @return int
+     * @throws ApplicationCreateException
+     * @throws ExpertSenderException
+     * @throws ExpertsenderEmptyEmailException
+     * @throws ExpertsenderServiceApiException
+     * @throws ExpertsenderServiceException
+     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
+     * @throws \FourPaws\PersonalBundle\Exception\NotFoundException
+     */
+    public function sendOrderSubscribeCancelEmail(OrderSubscribe $orderSubscribe): int
+    {
+        $transactionId = self::SUBSCRIBE_CANCEL;
+        $snippets = [];
+        $personalOrder = $orderSubscribe->getOrder();
+
+        $email = $personalOrder->getPropValue('EMAIL');
+        if (empty($email)) {
+            throw new ExpertsenderEmptyEmailException('order email is empty');
+        }
+
+        $snippets[] = new Snippet('user_name', htmlspecialcharsbx($personalOrder->getPropValue('NAME')));
+        $snippets[] = new Snippet('order_number', htmlspecialcharsbx($orderSubscribe->getOrderId()));
+        $snippets[] = new Snippet('date', htmlspecialcharsbx($orderSubscribe->getDateCreate()));
+
+        $this->log()->info(
+            __FUNCTION__,
+            [
+                'email' => $email,
+                'transactionId' => $transactionId,
+                'orderId' => $orderSubscribe->getOrderId(),
                 'snippets' => implode(
                     '; ',
                     array_map(
