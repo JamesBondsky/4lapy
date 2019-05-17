@@ -375,7 +375,13 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
         ];
 
         $userTmp = [];
-        foreach ($this->usersPart as $userID => $userData) {
+        foreach ($this->usersPart as $userID => &$userData) {
+            if ($userData['EMAIL'][0] == 7) {
+                $userData['EMAIL'] = substr($userData['EMAIL'], 1);
+            }
+            if ($userData['PERSONAL_PHONE'][0] == 7) {
+                $userData['PERSONAL_PHONE'] = substr($userData['PERSONAL_PHONE'], 1);
+            }
             $filter[0][] = [
                 'EMAIL'          => $userData['EMAIL'],
                 'PERSONAL_PHONE' => $userData['PERSONAL_PHONE']
