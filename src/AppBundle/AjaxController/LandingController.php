@@ -327,7 +327,7 @@ class LandingController extends Controller
             {
                 $logger = LoggerFactory::create('expertSender');
                 $logger->error(sprintf(
-                    'Error while sending mail. %s exception: %s',
+                    'Error while sending mail with coupon ' . $festivalUserId . ' to address ' . $email . '. %s exception: %s',
                     __METHOD__,
                     $exception->getMessage()
                 ));
