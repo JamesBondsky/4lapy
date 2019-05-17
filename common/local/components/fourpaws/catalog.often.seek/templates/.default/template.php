@@ -34,7 +34,7 @@ if($items->isEmpty())
     <dd class="b-catalog-filter__block">
         <?php /** @var OftenSeek $item */
         foreach ($items as $item) { ?>
-            <a class="b-link b-link--filter" href="<?=$item->getLink()?>" title="<?= $item->getName() ?>">
+            <a class="b-link b-link--filter js-filter-catalog-often-searched" href="<?=$item->getLink()?>" title="<?= $item->getName() ?>">
                 <?= $item->getName() ?>
             </a>
         <?php } ?>

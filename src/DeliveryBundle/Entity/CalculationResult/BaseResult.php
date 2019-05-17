@@ -133,6 +133,19 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     }
 
     /**
+     * Изменять дату доставки не предусмотрено
+     * это используется только для расчёта желаемой даты доставки
+     * в подписке на доставку
+     *
+     * @param \DateTime $date
+     */
+    public function setDeliveryDate(\DateTime $date) : CalculationResultInterface
+    {
+        $this->deliveryDate = $date;
+        return $this;
+    }
+
+    /**
      * @return int
      */
     public function getDeliveryId(): int
@@ -311,16 +324,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      */
     protected function doCalculateDeliveryDate(): void
     {
-        /*$start = microtime(true);
-        $setTime = function() use (&$start){
-            $start = microtime(true);
-        };
-        $getTime = function() use ($start, $setTime){
-            $setTime();
-            return ($start - microtime(true).' сек');
-        };*/
-
-            
         $date = clone $this->getCurrentDate();
         $this->deliveryDate = $date;
 

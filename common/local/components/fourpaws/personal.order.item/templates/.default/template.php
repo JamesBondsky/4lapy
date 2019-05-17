@@ -92,9 +92,9 @@ if ($genSubscribeControls) {
 
 $attr = '';
 if ($orderSubscribe) {
-    $attr .= ' data-first-subscribe="' . $orderSubscribe->getDateStart() . '"';
+    $attr .= ' data-first-subscribe="' . $orderSubscribe->getDateCreate() . '"';
     $attr .= ' data-interval="' . $orderSubscribe->getDeliveryTime() . '"';
-    $attr .= ' data-frequency="' . $orderSubscribe->getDeliveryFrequency() . '"';
+    $attr .= ' data-frequency="' . $orderSubscribe->getFrequency() . '"';
 }
 
 ?>
@@ -166,7 +166,7 @@ if ($orderSubscribe) {
                         echo '<span>';
                         echo 'Следующая доставка ';
                         echo DateHelper::replaceRuMonth(
-                            $orderSubscribe->getNextDeliveryDate()
+                            $orderSubscribe->getNextDate()
                                 ->format('d #n# Y'),
                             DateHelper::GENITIVE,
                             true

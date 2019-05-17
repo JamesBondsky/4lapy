@@ -31,12 +31,12 @@ if ($isAuthorized)
                 <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_FESTIVAL_REQUEST_ADD); ?>
 	            <input class="js-no-valid" type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
 	            <input class="js-no-valid" type="hidden" name="landingType" value="<?= LandingController::$festivalLanding ?>">
-                <input type="text" placeholder="ИМЯ" name="name" <?= $isAuthorized ? 'value="' . $currentUser->getName() . '"' : '' ?> />
-                <input type="text" placeholder="ФАМИЛИЯ" name="surname" <?= $isAuthorized ? 'value="' . $currentUser->getLastName() . '"' : '' ?> />
-                <input type="email" placeholder="EMAIL" name="email" <?= $isAuthorized ? 'value="' . $currentUser->getEmail() . '"' : '' ?> />
-                <input type="phone" placeholder="ТЕЛЕФОН" name="phone" <?= $isAuthorized ? 'value="' . $currentUser->getPersonalPhone() . '"' : '' ?> />
+                <input type="text" placeholder="ИМЯ" name="name" data-field-form-festival="true" <?= $isAuthorized ? 'value="' . $currentUser->getName() . '"' : '' ?> />
+                <input type="text" placeholder="ФАМИЛИЯ" name="surname" data-field-form-festival="true" <?= $isAuthorized ? 'value="' . $currentUser->getLastName() . '"' : '' ?> />
+                <input type="email" placeholder="EMAIL" name="email" data-field-form-festival="true" <?= $isAuthorized ? 'value="' . $currentUser->getEmail() . '"' : '' ?> />
+                <input type="phone" placeholder="ТЕЛЕФОН" name="phone" data-field-form-festival="true" <?= $isAuthorized ? 'value="' . $currentUser->getPersonalPhone() . '"' : '' ?> />
 
-                <input type="checkbox" id="agree" name="rules" /> <label for="agree">я даю своё согласие на обработку персональных данных</label>
+                <input type="checkbox" id="agree" name="rules" data-checkbox-form-festival="agree-personal-data-processing" /> <label for="agree">я даю своё согласие на обработку персональных данных</label>
                 <button class="join_btn">я пойду!</button>
             </form>
         </div>

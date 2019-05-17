@@ -17,6 +17,15 @@ $(window).load(function(){
 
         var msg = form.serialize();
 
+        // Отправляем данные формы в аналитику
+        ga('send', 'event', {
+          eventCategory: 'fest_fillform',
+          eventAction: 'submit',
+          fieldsObject: {
+            dataForm: msg
+          }
+        });
+
         $.ajax({
           type: 'POST',
           url: '/ajax/landing/festival/user/add/',
@@ -46,8 +55,6 @@ $(window).load(function(){
               newTokenField.classList = "js-no-valid";
               form.append(newTokenField);
             }
-
-            window.dataLayer.push({'fest_fillform':'successful_form_submission'});
           },
           beforeSend: function () {},
           complete: function(jqXHR, textStatus) {},
@@ -57,14 +64,52 @@ $(window).load(function(){
         });
       }, 350);
     });
+
+    popupFormFestival.on('blur', '[data-field-form-festival]', function () {
+      var $this = $(this),
+          _valueField = $this.val();
+
+        if(_valueField) {
+          // Отправляем аналитику при потере фокуса в поле формы
+          ga('send', 'event', {
+            eventCategory: 'fest_fillform',
+            eventAction: 'blur',
+            eventLabel: $this.attr('name'),
+            fieldsObject: {
+              valueField: _valueField
+            }
+          });
+        }
+    });
+
+    popupFormFestival.on('change', '[data-checkbox-form-festival]', function () {
+      var $this = $(this);
+
+      // Отправляем аналитику при изменении чекбоксов
+      ga('send', 'event', {
+        eventCategory: 'fest_fillform',
+        eventAction: 'blur',
+        eventLabel: $this.data('checkbox-form-festival'),
+        fieldsObject: {
+          valueField: $this.prop('checked')
+        }
+      });
+    });
   }
+
   if(popupFormFestival.length || responsePopupFormFestival.length) {
     $('[data-popup-id="form-festival"].js-open-popup').on('click', function () {
       unlock = locky.lockyOn('.js-popup-wrapper');
       $('html').css('overflow-y', 'hidden');
+
+      ga('send', 'event', {
+        eventCategory: 'fest_go',
+        eventAction: 'click',
+        eventLabel: $(this).data('type-block-fest')
+      });
     });
 
-    $('[data-popup="form-festival"].opened .js-close-popup, [data-popup="response-form-festival"].opened').on('click', function () {
+    $('[data-popup="form-festival"] .js-close-popup, [data-popup="response-form-festival"] .js-close-popup').on('click', function () {
       unlock();
       $('html').removeAttr('style');
     });

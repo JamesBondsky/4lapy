@@ -2,14 +2,18 @@
 
 namespace FourPaws\SaleBundle\Service;
 
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\Error;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
@@ -22,6 +26,11 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Exception\TerminalNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\DeliveryBundle\Service\IntervalService;
+use FourPaws\PersonalBundle\Entity\OrderSubscribe;
+use FourPaws\PersonalBundle\Entity\OrderSubscribeItem;
+use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
@@ -40,6 +49,8 @@ use Symfony\Component\HttpFoundation\Request;
 
 class OrderStorageService
 {
+    use LazyLoggerAwareTrait;
+
     public const SESSION_EXPIRED_VIOLATION = 'session-expired';
 
     /**
@@ -83,6 +94,11 @@ class OrderStorageService
     protected $storeService;
 
     /**
+     * @var OrderSubscribeService
+     */
+    protected $orderSubscribeService;
+
+    /**
      * OrderStorageService constructor.
      *
      * @param BasketService                $basketService
@@ -96,7 +112,8 @@ class OrderStorageService
         CurrentUserProviderInterface $currentUserProvider,
         DatabaseStorageRepository $storageRepository,
         DeliveryService $deliveryService,
-        StoreService $storeService
+        StoreService $storeService,
+        OrderSubscribeService $orderSubscribeService
     )
     {
         $this->basketService = $basketService;
@@ -104,6 +121,7 @@ class OrderStorageService
         $this->storageRepository = $storageRepository;
         $this->deliveryService = $deliveryService;
         $this->storeService = $storeService;
+        $this->orderSubscribeService = $orderSubscribeService;
     }
 
     /**
@@ -141,12 +159,13 @@ class OrderStorageService
 
     /**
      * @param OrderStorage $storage
-     * @param Request      $request
-     * @param string       $step
+     * @param Request $request
+     * @param string $step
      *
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
+     * @throws OrderSubscribeException
      * @return OrderStorage
      */
     public function setStorageValuesFromRequest(OrderStorage $storage, Request $request, string $step): OrderStorage
@@ -214,7 +233,7 @@ class OrderStorageService
                                 $data['secondDeliveryInterval'] = $data['deliveryInterval2'];
                                 $data['deliveryDate'] = $data['deliveryDate1'];
                                 $data['secondDeliveryDate'] = $data['deliveryDate2'];
-                                if($deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE){
+                                if ($deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
                                     $data['comment'] = $data['comment_dostavista'];
                                 } else {
                                     $data['comment'] = $data['comment1'];
@@ -426,6 +445,15 @@ class OrderStorageService
         }
 
         /**
+         * Для заказа по подписке доступна только оплата при получении
+         */
+        if($storage->isSubscribe()){
+            $payments = array_filter($payments, function($item){
+                return in_array($item['CODE'], [OrderPayment::PAYMENT_CASH, OrderPayment::PAYMENT_CASH_OR_CARD]);
+            });
+        }
+
+        /**
          * Если выбран самовывоз DPD и терминал, то оставляем только доступные в этом терминале способы оплаты
          */
         if ($storage->getDeliveryPlaceCode() && $storage->getDeliveryId()) {
@@ -527,15 +555,21 @@ class OrderStorageService
     {
         if (null === $this->deliveries || $reload) {
             $basket = $this->basketService->getBasket();
+            $codes = [];
             if (null === $basket->getOrder()) {
                 $order = Order::create(SITE_ID, $storage->getUserId() ?: null);
                 $order->setBasket($basket);
             }
 
+            // для подписки оставляем всё, кроме достависты
+            if($storage->isSubscribe()){
+                $codes = array_merge(DeliveryService::PICKUP_CODES, DeliveryService::DELIVERY_CODES);
+            }
+
             $this->deliveries = $this->deliveryService->getByBasket(
                 $basket,
                 $storage->getCityCode(),
-                [],
+                $codes,
                 $storage->getCurrentDate()
             );
         }
