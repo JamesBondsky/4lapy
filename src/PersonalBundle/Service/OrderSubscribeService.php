@@ -1704,12 +1704,12 @@ class OrderSubscribeService implements LoggerAwareInterface
             return;
         }
 
-        // передача заказа в SAP
-        /** @var ConsumerRegistry $consumerRegistry */
-        $consumerRegistry = Application::getInstance()->getContainer()->get(
-            ConsumerRegistry::class
-        );
-        $consumerRegistry->consume($order);
+        // передача заказа в SAP (upd: отправляется штатными средставми)
+//        /** @var ConsumerRegistry $consumerRegistry */
+//        $consumerRegistry = Application::getInstance()->getContainer()->get(
+//            ConsumerRegistry::class
+//        );
+//        $consumerRegistry->consume($order);
 
         // отправка email
         /** @var NotificationService $notificationService */
