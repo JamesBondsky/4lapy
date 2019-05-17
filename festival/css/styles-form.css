@@ -8,9 +8,9 @@ body {
 }
 
 .popwrap {
-    background: url(../img/reg_pop.png);
+    background: url(../img/reg_pop1.png);
     width: 736px;
-    height: 546px;
+    height: 620px;
     padding: 165px 0 0 0;
     left: 50%;
     position: relative;
@@ -105,6 +105,34 @@ body {
     text-transform: uppercase;
     color: #000;
 }
+.formitem label.error{
+    margin-top: 3px;
+    padding-left: 7px;
+    color: red;
+    font-size: 10px;
+    line-height: 12px;
+    text-transform: none;
+    font-weight: normal;
+}
+.formitem .field{
+    position: relative;
+}
+.formitem .field span.required{
+    color: red;
+    font-size: 13px;
+    line-height: 15px;
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    display: block;
+    z-index: 1;
+}
+.formitem .field.field_checkbox span.required{
+    position: relative;
+    right: auto;
+    top: auto;
+    display: inline;
+}
 
 .formitem ul {
 	padding-left: 0;
@@ -136,12 +164,14 @@ body {
 	margin-top: 0;
 }
 
+.formitem .form-group {
+    margin-bottom: 10px;
+}
 .formitem input[type="text"], .formitem input[type="email"], .formitem input[type="phone"] {
 	border-radius: 5px;
 	width: 100%;
 	border: 1px solid #ccc;
 	padding: 10px;
-	margin-bottom: 10px;
 }
 
 .formitem input::placeholder {
