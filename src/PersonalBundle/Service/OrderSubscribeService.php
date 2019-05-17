@@ -392,7 +392,7 @@ class OrderSubscribeService implements LoggerAwareInterface
                 $nextDate->add("+5 week");
                 break;
             case $freqs['WEEK_6']['ID']:
-                $nextDate->add("-6 week");
+                $nextDate->add("+6 week");
                 break;
             default:
                 throw new \Exception('Не найдена подходящая периодичность');
