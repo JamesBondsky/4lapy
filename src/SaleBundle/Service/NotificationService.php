@@ -180,12 +180,6 @@ class NotificationService implements LoggerAwareInterface
      */
     public function sendNewOrderMessage(Order $order): void
     {
-        if ($this->orderService->isSubscribe($order)) {
-            // Для заказов, созданных по подписке, свои триггеры
-            $this->sendOrderSubscribeOrderNewMessage($order);
-            return;
-        }
-
         if (static::$isSending) {
             return;
         }
@@ -204,15 +198,21 @@ class NotificationService implements LoggerAwareInterface
         static::$isSending = true;
 
         $this->setOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT');
-        try {
-            $transactionId = $this->emailService->sendOrderNewEmail($order);
-            if ($transactionId) {
-                $this->logMessage($order, $transactionId);
+
+        // Для заказов, созданных по подписке, свои шаблон
+        if ($this->orderService->isSubscribe($order)) {
+            $this->sendOrderSubscribeOrderNewMessage($order);
+        } else {
+            try {
+                $transactionId = $this->emailService->sendOrderNewEmail($order);
+                if ($transactionId) {
+                    $this->logMessage($order, $transactionId);
+                }
+            } catch (ExpertsenderEmptyEmailException $e) {
+                $this->log()->info('не установлен email для отправки у заказа - '.$order->getId());
+            } catch (ExpertsenderServiceException|\Exception $e) {
+                $this->log()->error($e->getMessage());
             }
-        } catch (ExpertsenderEmptyEmailException $e) {
-            $this->log()->info('не установлен email для отправки у заказа - '.$order->getId());
-        } catch (ExpertsenderServiceException|\Exception $e) {
-            $this->log()->error($e->getMessage());
         }
 
         $smsTemplate = null;
