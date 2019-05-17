@@ -1126,7 +1126,7 @@ class OrderStorage
      */
     public function isSubscribe(): bool
     {
-        return $this->subscribe || $this->subscribeId > 0;
+        return $this->subscribe;
     }
 
     /**

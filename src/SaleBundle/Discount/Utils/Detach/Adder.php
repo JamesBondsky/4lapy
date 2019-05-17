@@ -18,6 +18,7 @@ use Bitrix\Sale\BasketItem;
 use Exception;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Helpers\BxCollection;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\SaleBundle\Discount\Utils\AdderInterface;
 use FourPaws\SaleBundle\Discount\Utils\BaseDiscountPostHandler;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
@@ -321,8 +322,10 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
     {
         /** @var OrderStorageService $storageService */
         $storageService = App::getInstance()->getContainer()->get(OrderStorageService::class);
-        $storage = $storageService->getStorage();
+        /** @var OrderSubscribeService $orderSubscribeService */
+        $orderSubscribeService = App::getInstance()->getContainer()->get('order_subscribe.service');
 
+        $storage = $storageService->getStorage();
         $offerCollection = $this->basketService->getOfferCollection();
 
         /** @var BasketItem $basketItem */
@@ -338,26 +341,21 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                 continue;
             }
 
-            $subscribeActive = $this->basketService->getBasketItemPropertyValue($basketItem, "SUBSCRIBE_PRICE");
+            $isSubscribeActive = $this->basketService->getBasketItemPropertyValue($basketItem, "SUBSCRIBE_PRICE");
 
-            // такое мудрёное округление цены нужно для того,
-            // чтобы после перерасчёта корзины манзаной не было расхождения
-            // т.к. там цена округялется через PriceHelper::roundPrice
-            if($storage->isSubscribe() && !$subscribeActive){
-                $price = PriceHelper::roundPrice($basketItem->getPrice()) * ((100 - $percent)/100);
-                $manzanaPrice = PriceHelper::roundPrice($price);
+            if($storage->isSubscribe() && !$isSubscribeActive){
+                $price = $orderSubscribeService->countSubscribePrice($basketItem->getPrice(), $percent);
                 $basketItem->setFieldsNoDemand([
-                    'PRICE' => $manzanaPrice,
+                    'PRICE' => $price,
                     'DISCOUNT_PRICE' => $basketItem->getBasePrice() - $price,
                     'CUSTOM_PRICE' => 'Y'
                 ]);
                 $this->basketService->setBasketItemPropertyValue($basketItem, "SUBSCRIBE_PRICE", true);
             }
-            else if(!$storage->isSubscribe() && $subscribeActive){
-                $price = (PriceHelper::roundPrice($basketItem->getPrice())*100)/$percent;
-                $manzanaPrice = PriceHelper::roundPrice($price);
+            else if(!$storage->isSubscribe() && $isSubscribeActive){
+                $price = $orderSubscribeService->countSubscribePrice($basketItem->getPrice(), $percent, true);
                 $basketItem->setFieldsNoDemand([
-                    'PRICE' => $manzanaPrice,
+                    'PRICE' => $price,
                     'DISCOUNT_PRICE' => $basketItem->getBasePrice() - $price,
                     'CUSTOM_PRICE' => 'Y'
                 ]);
