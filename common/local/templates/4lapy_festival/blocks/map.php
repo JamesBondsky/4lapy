@@ -818,103 +818,137 @@
                                         <div class="point point_small point_lecturehall" data-interactive-map-pavilion-point="lecturehall" data-point-title="Лекторий" data-point-description="Прокачай себя в модном лектории – узнаешь много интересного о питомцах и познакомишься с ведущими зоо-экспертами." data-point-image="/img/img07_3.jpg">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
-                                                <div class="icon" style="background-image: url('/img/interactive_map/brands/lecturehall.jpg');"></div>
+                                                <div class="icon">
+                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/lecturehall.jpg');"></div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="point point_medium point_rc">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
-                                                <div class="icon" style="background-image: url('/img/interactive_map/brands/rc.jpg');"></div>
+                                                <div class="icon">
+                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/rc.jpg');"></div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="point point_medium point_proplan">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
-                                                <div class="icon" style="background-image: url('/img/interactive_map/brands/proplan.jpg');"></div>
+                                                <div class="icon">
+                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/proplan.jpg');"></div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="point point_small point_acana">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
-                                                <div class="icon" style="background-image: url('/img/interactive_map/brands/acana.jpg');"></div>
+                                                <div class="icon">
+                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/acana.jpg');"></div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="point point_small point_freshstep">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
-                                                <div class="icon" style="background-image: url('/img/interactive_map/brands/freshstep.jpg');"></div>
+                                                <div class="icon">
+                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/freshstep.jpg');"></div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="point point_small point_dobrolap" data-interactive-map-pavilion-point="dobrolap" data-point-title="Добролап" data-point-description="Гостей, неравнодушных к пушистым четверолапым, ждут на выставке-пристройстве, чтобы поддержать питомцев, или обрести друга" data-point-image="/img/img02_3.jpg">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
-                                                <div class="icon" style="background-image: url('/img/interactive_map/brands/dobrolap.jpg');"></div>
+                                                <div class="icon">
+                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/dobrolap.jpg');"></div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="point point_small point_mosigra">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
-                                                <div class="icon" style="background-image: url('/img/interactive_map/brands/mosigra.jpg');"></div>
+                                                <div class="icon">
+                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/mosigra.jpg');"></div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="point point_small point_hills">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
-                                                <div class="icon" style="background-image: url('/img/interactive_map/brands/hills.jpg');"></div>
+                                                <div class="icon">
+                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/hills.jpg');"></div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="point point_small point_msd">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
-                                                <div class="icon" style="background-image: url('/img/interactive_map/brands/msd_small.jpg');"></div>
+                                                <div class="icon">
+                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/msd_small.jpg');"></div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="point point_small point_bayer">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
-                                                <div class="icon" style="background-image: url('/img/interactive_map/brands/bayer.jpg');"></div>
+                                                <div class="icon">
+                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/bayer.jpg');"></div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="point point_small point_elanco">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
-                                                <div class="icon" style="background-image: url('/img/interactive_map/brands/elanco.jpg');"></div>
+                                                <div class="icon">
+                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/elanco.jpg');"></div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="point point_small point_shop1">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
-                                                <div class="icon" style="background-image: url('/img/interactive_map/brands/shop_not_name.jpg');"></div>
+                                                <div class="icon">
+                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/shop_not_name.jpg');"></div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="point point_small point_shop2">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
-                                                <div class="icon" style="background-image: url('/img/interactive_map/brands/shop_not_name.jpg');"></div>
+                                                <div class="icon">
+                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/shop_not_name.jpg');"></div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="point point_small point_barbershop">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
-                                                <div class="icon" style="background-image: url('/img/interactive_map/brands/barbershop_not_name.jpg');"></div>
+                                                <div class="icon">
+                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/barbershop_not_name.jpg');"></div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_gastromarket" data-interactive-map-pavilion-point="gastromarket" data-point-title="Гастромаркет" data-point-description="Утолить разгулявшийся аппетит можно в многочисленных маркетах вкусной еды." data-point-image="/img/img06_3.jpg">
+                                        <div class="point point_small point_gastromarket" data-interactive-map-pavilion-point="gastromarket" data-point-title="Гастромаркет" data-point-description="Утолить разгулявшийся аппетит можно в&nbsp;многочисленных маркетах вкусной&nbsp;еды." data-point-image="/img/img06_3.jpg">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
-                                                <div class="icon" style="background-image: url('/img/interactive_map/brands/gastromarket.jpg');"></div>
+                                                <div class="icon">
+                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/gastromarket.jpg');"></div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="point point_small point_boehriager">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
-                                                <div class="icon" style="background-image: url('/img/interactive_map/brands/boehriager_small.jpg');"></div>
+                                                <div class="icon">
+                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/boehriager_small.jpg');"></div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_voice" data-interactive-map-pavilion-point="voice" data-point-title="Концерт" data-point-description="На главной сцене Фестиваля весь день зажигательные мастер-классы, танцы, конкурсы и сеты от модных DJ Москвы. В 18.00 ARTIK и ASTI взорвут танцпол." data-point-image="/img/img01_3.jpg">
+                                        <div class="point point_small point_voice" data-interactive-map-pavilion-point="voice" data-point-title="Концерт" data-point-description="На главной сцене Фестиваля весь день зажигательные мастер-классы, танцы, конкурсы и&nbsp;сеты от&nbsp;модных DJ Москвы. В 18.00 ARTIK и&nbsp;ASTI взорвут&nbsp;танцпол." data-point-image="/img/img01_3.jpg">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
-                                                <div class="icon" style="background-image: url('/img/interactive_map/brands/voice_small.jpg');"></div>
+                                                <div class="icon">
+                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/voice_small.jpg');"></div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

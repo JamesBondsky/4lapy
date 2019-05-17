@@ -64,6 +64,7 @@ $markup = PawsApplication::markup();
 
 <!-- PAGE LEVEL SCRIPTS -->
 <?/*<script src="js/shapes.js" type="text/javascript"></script>*/?>
+<script src="js/jquery.maskedinput.js" type="text/javascript"></script>
 <script src="js/jquery.validate.min.js" type="text/javascript"></script>
 <script src="js/jquery.validate.localization_ru.js" type="text/javascript"></script>
 <script src="js/jquery.scrollme.min.js" type="text/javascript"></script>
@@ -73,7 +74,7 @@ $markup = PawsApplication::markup();
 <script src="js/components/maginific-popup.min.js" type="text/javascript"></script>
 <script src="js/components/masonry.min.js" type="text/javascript"></script>
 <script src="js/components/gmap.min.js" type="text/javascript"></script>
-<script src="js/components/forms.js" type="text/javascript"></script>
+<script src="js/components/forms.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/js/components/forms.js') ?>" type="text/javascript"></script>
 
 <script src="js/interactive_map.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/js/interactive_map.js') ?>" type="text/javascript"></script>
 
