@@ -20,7 +20,7 @@ $(document).ready(function(){
 
         $('[data-interactive-map-pavilion-title]').html(title);
         $('[data-interactive-map-pavilion-description]').html(description);
-        $('[data-interactive-map-pavilion-image]').removeAttr('style');
+        //$('[data-interactive-map-pavilion-image]').removeAttr('style');
 
         $('[data-interactive-map-pavilion-brand]').removeClass('selected');
         $('[data-interactive-map-pavilion]').removeClass('is_open_brands');
@@ -48,13 +48,13 @@ $(document).ready(function(){
         $('[data-interactive-map-pavilion-brand]').removeClass('selected');
         $('[data-interactive-map-pavilion-brand="' + selected + '"]').addClass('selected');
 
-        $('[data-interactive-map-pavilion-image]').removeAttr('style');
+        /*$('[data-interactive-map-pavilion-image]').removeAttr('style');
         $('[data-interactive-map-pavilion-image]').removeClass('set_image');
 
         if (!!image && image.length){
             $('[data-interactive-map-pavilion-image]').addClass('set_image');
             $('[data-interactive-map-pavilion-image]').css('background-image', 'url(' + image + ')');
-        }
+        }*/
 
     })
 

@@ -67,8 +67,10 @@ $markup = PawsApplication::markup();
 <script src="js/jquery.maskedinput.js" type="text/javascript"></script>
 <script src="js/jquery.validate.min.js" type="text/javascript"></script>
 <script src="js/jquery.validate.localization_ru.js" type="text/javascript"></script>
+<script src="js/jquery.cookie.min.js" type="text/javascript"></script>
 <script src="js/jquery.scrollme.min.js" type="text/javascript"></script>
 <script src="js/layout.min.js" type="text/javascript"></script>
+<script src="js/header.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/js/header.js') ?>" type="text/javascript"></script>
 <script src="js/components/wow.min.js" type="text/javascript"></script>
 <script src="js/components/swiper.min.js" type="text/javascript"></script>
 <script src="js/components/maginific-popup.min.js" type="text/javascript"></script>

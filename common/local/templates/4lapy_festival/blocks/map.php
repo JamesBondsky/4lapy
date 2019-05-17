@@ -807,7 +807,7 @@
                             <div class="interactive_map_pavilion__scrollpavilion">
                                 <div class="interactive_map_pavilion__bg">
                                     <div class="interactive_map_pavilion__center">
-                                        <div class="point point_large point_4lapy" data-interactive-map-pavilion-point="4lapy" data-point-title="Стенд «Четыре Лапы»" data-point-description="Интернет-магазин зоотоваров «Четыре Лапы» — это сайт крупнейшей сети зоомагазинов с&nbsp;доставкой по&nbsp;всей России.">
+                                        <div class="point point_large point_4lapy" data-interactive-map-pavilion-point="4lapy" data-point-title="Магазин Четыре Лапы" data-point-description="<br><br>">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -823,7 +823,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_medium point_rc">
+                                        <div class="point point_medium point_rc" data-interactive-map-pavilion-point="royalcanin" data-point-title="ROYAL CANIN" data-point-description="ROYAL CANIN&nbsp;&mdash; эксперт в&nbsp;области здорового питания для кошек и&nbsp;собак.<br>Бренд Royal Canin основал ветеринарный врач Жан Катари в&nbsp;1968 году во&nbsp;Франции.Компания ориентированна на&nbsp;изучение потребностей животных, уважение к&nbsp;их&nbsp;особенностям и&nbsp;создание продуктов,отвечающих их&nbsp;нуждам.<br>Royal Canin остается в&nbsp;авангарде производства кормов для животных и&nbsp;может гордиться целым рядом специализированных разработок, не&nbsp;имеющих аналогов в&nbsp;мире.">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -839,7 +839,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_acana">
+                                        <div class="point point_small point_acana" data-interactive-map-pavilion-point="acana" data-point-title="ACANA" data-point-description="&laquo;Компания Акана&raquo; представляет в&nbsp;России канадские корма для кошек и&nbsp;собак Acana и&nbsp;Orijen. Мы&nbsp;делаем всё, чтобы хозяева питомцев нашей страны узнали стандарты качества биологически соответствующих кормов.">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -855,7 +855,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_dobrolap" data-interactive-map-pavilion-point="dobrolap" data-point-title="Добролап" data-point-description="Гостей, неравнодушных к пушистым четверолапым, ждут на выставке-пристройстве, чтобы поддержать питомцев, или обрести друга" data-point-image="/img/img02_3.jpg">
+                                        <div class="point point_small point_dobrolap" data-interactive-map-pavilion-point="dobrolap" data-point-title="Добролап" data-point-description="Гостей, неравнодушных к&nbsp;пушистым четверолапым, ждут на&nbsp;выставке-пристройстве, чтобы поддержать питомцев, или обрести друга." data-point-image="/img/img02_3.jpg">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -863,15 +863,15 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_mosigra">
+                                        <div class="point point_small point_childrengames" data-interactive-map-pavilion-point="childrengames" data-point-title="Мастер-классы для детей" data-point-description="Наших маленьких участников встречают веселые аниматоры с&nbsp;занимательными играми, аквагримом, мастер-классами,&nbsp;танцами." data-point-image="/img/img03_3.jpg">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
-                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/mosigra.jpg');"></div>
+                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/childrengames_small.svg');"></div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_hills">
+                                        <div class="point point_small point_hills" data-interactive-map-pavilion-point="hills" data-point-title="Hill’s" data-point-description="С&nbsp;1939 года компания Hill&rsquo;s&trade; производит высококачественные рационы для питомцев любого возраста и&nbsp;с&nbsp;учетом их&nbsp;индивидуальных потребностей. Наш долг&nbsp;&mdash; обеспечить каждому питомцу лучшую заботу, на&nbsp;которую только способен человек.">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -879,7 +879,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_msd">
+                                        <div class="point point_small point_msd" data-interactive-map-pavilion-point="msd" data-point-title="MSD Animal Health" data-point-description="Миссия MSD Animal Health&nbsp;&mdash; защитить и&nbsp;улучшить здоровье и&nbsp;благополучие животных, предлагать продукты высочайшего качества, что достигается за&nbsp;счет сильнейшей научной базы и&nbsp;мощного отдела исследований и&nbsp;разработок.">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -887,7 +887,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_bayer">
+                                        <div class="point point_small point_bayer" data-interactive-map-pavilion-point="bayer" data-point-title="BAYER" data-point-description="Концерн Bayer играет ведущую роль в&nbsp;области защиты животных от&nbsp;наружных и&nbsp;внутренних паразитов, благодаря внедрению новых продуктов. Запатентовав &laquo;репеллентный эффект&raquo; (ошейник Форесто<sup class='reg'>&reg;</sup>, капли Адвантикс<sup class='reg'>&reg;</sup>), Bayer открыл новые возможности защиты животных от&nbsp;клещей.">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -895,7 +895,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_elanco">
+                                        <div class="point point_small point_elanco"  data-interactive-map-pavilion-point="elanco" data-point-title="Elanco" data-point-description="Компания Elanco (США)&nbsp;&mdash; это более 300 брендов по&nbsp;всему миру, включая такие известные препараты как: Мильбемакс,Практик,Суролан,Онсиор и&nbsp;Фортекор. Более 60&nbsp;лет мы&nbsp;помогаем улучшать здоровье животных.">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -943,11 +943,11 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_voice" data-interactive-map-pavilion-point="voice" data-point-title="Концерт" data-point-description="На главной сцене Фестиваля весь день зажигательные мастер-классы, танцы, конкурсы и&nbsp;сеты от&nbsp;модных DJ Москвы. В 18.00 ARTIK и&nbsp;ASTI взорвут&nbsp;танцпол." data-point-image="/img/img01_3.jpg">
+                                        <div class="point point_small point_bloggershow" data-interactive-map-pavilion-point="bloggershow" data-point-title="Блогер-шоу" data-point-description="Самая горячая ток-площадка в разгар праздника! Собери друзей и не пропусти шоу с ведущими интернет-звездами." data-point-image="/img/img08_3.jpg">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
-                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/voice_small.jpg');"></div>
+                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/bloggershow_small.svg');"></div>
                                                 </div>
                                             </div>
                                         </div>
@@ -962,12 +962,12 @@
 
                         <div class="interactive_map_pavilion__content">
                             <div class="interactive_map_pavilion__container">
-                                <button type="button" class="interactive_map_pavilion__closecontent" data-interactive-map-pavilion-closecontent="true" data-point-title="Начни путешествие" data-point-description="Выбери площадку на&nbsp;карте Фестиваля и&nbsp;кликни на&nbsp;иконку, чтобы&nbsp;узнать&nbsp;больше."></button>
+                                <button type="button" class="interactive_map_pavilion__closecontent" data-interactive-map-pavilion-closecontent="true" data-point-title="Начни путешествие" data-point-description="Выбери площадку на&nbsp;карте павильона и&nbsp;кликни на&nbsp;иконку, чтобы&nbsp;узнать&nbsp;больше."></button>
                                 <div class="interactive_map_pavilion__title" data-interactive-map-pavilion-title="true">
                                     Начни путешествие
                                 </div>
                                 <div class="interactive_map_pavilion__description" data-interactive-map-pavilion-description="true">
-                                    Выбери площадку на&nbsp;карте Фестиваля и&nbsp;кликни на&nbsp;иконку, чтобы&nbsp;узнать&nbsp;больше.
+                                    Выбери площадку на&nbsp;карте павильона и&nbsp;кликни на&nbsp;иконку, чтобы&nbsp;узнать&nbsp;больше.
                                 </div>
                             </div>
                             <div class="interactive_map_pavilion__image" data-interactive-map-pavilion-image="true"></div>
@@ -980,12 +980,12 @@
                                             <div class="icon" style="background-image: url('/img/interactive_map/brands/dobrolap.jpg');"></div>
                                         </div>
                                     </div>
-                                    <div class="brands-list__item" data-interactive-map-pavilion-brand="mosigra">
+                                    <div class="brands-list__item" data-interactive-map-pavilion-brand="childrengames">
                                         <div class="brand">
-                                            <div class="icon" style="background-image: url('/img/interactive_map/brands/mosigra.jpg');"></div>
+                                            <div class="icon" style="background-image: url('/img/interactive_map/brands/childrengames.svg');"></div>
                                         </div>
                                     </div>
-                                    <div class="brands-list__item" data-interactive-map-pavilion-brand="rc">
+                                    <div class="brands-list__item" data-interactive-map-pavilion-brand="royalcanin">
                                         <div class="brand">
                                             <div class="icon" style="background-image: url('/img/interactive_map/brands/rc.jpg');"></div>
                                         </div>
@@ -995,19 +995,19 @@
                                             <div class="icon" style="background-image: url('/img/interactive_map/brands/lecturehall.jpg');"></div>
                                         </div>
                                     </div>
-                                    <div class="brands-list__item" data-interactive-map-pavilion-brand="gastromarket">
+                                    <div class="brands-list__item" data-interactive-map-pavilion-brand="freshstep">
                                         <div class="brand">
-                                            <div class="icon" style="background-image: url('/img/interactive_map/brands/gastromarket.jpg');"></div>
+                                            <div class="icon" style="background-image: url('/img/interactive_map/brands/freshstep.jpg');"></div>
                                         </div>
                                     </div>
-                                    <div class="brands-list__item" data-interactive-map-pavilion-brand="hills">
+                                    <div class="brands-list__item" data-interactive-map-pavilion-brand="barbershop_not_name">
                                         <div class="brand">
-                                            <div class="icon" style="background-image: url('/img/interactive_map/brands/hills.jpg');"></div>
+                                            <div class="icon" style="background-image: url('/img/interactive_map/brands/barbershop_not_name.jpg');"></div>
                                         </div>
                                     </div>
-                                    <div class="brands-list__item" data-interactive-map-pavilion-brand="boehriager">
+                                    <div class="brands-list__item" data-interactive-map-pavilion-brand="acana">
                                         <div class="brand">
-                                            <div class="icon" style="background-image: url('/img/interactive_map/brands/boehriager.jpg');"></div>
+                                            <div class="icon" style="background-image: url('/img/interactive_map/brands/acana.jpg');"></div>
                                         </div>
                                     </div>
                                     <div class="brands-list__item" data-interactive-map-pavilion-brand="shop_not_name">
@@ -1024,6 +1024,11 @@
                                     </div>
                                 </div>
                                 <div class="brands-list brands-list_right">
+                                    <div class="brands-list__item" data-interactive-map-pavilion-brand="proplan">
+                                        <div class="brand">
+                                            <div class="icon" style="background-image: url('/img/interactive_map/brands/proplan.jpg');"></div>
+                                        </div>
+                                    </div>
                                     <div class="brands-list__item" data-interactive-map-pavilion-brand="msd">
                                         <div class="brand">
                                             <div class="icon" style="background-image: url('/img/interactive_map/brands/msd.jpg');"></div>
@@ -1039,29 +1044,24 @@
                                             <div class="icon" style="background-image: url('/img/interactive_map/brands/elanco.jpg');"></div>
                                         </div>
                                     </div>
-                                    <div class="brands-list__item" data-interactive-map-pavilion-brand="voice">
+                                    <div class="brands-list__item" data-interactive-map-pavilion-brand="bloggershow">
                                         <div class="brand">
-                                            <div class="icon" style="background-image: url('/img/interactive_map/brands/voice.jpg');"></div>
+                                            <div class="icon" style="background-image: url('/img/interactive_map/brands/bloggershow.svg');"></div>
                                         </div>
                                     </div>
-                                    <div class="brands-list__item" data-interactive-map-pavilion-brand="acana">
+                                    <div class="brands-list__item" data-interactive-map-pavilion-brand="boehriager">
                                         <div class="brand">
-                                            <div class="icon" style="background-image: url('/img/interactive_map/brands/acana.jpg');"></div>
+                                            <div class="icon" style="background-image: url('/img/interactive_map/brands/boehriager.jpg');"></div>
                                         </div>
                                     </div>
-                                    <div class="brands-list__item" data-interactive-map-pavilion-brand="barbershop_not_name">
+                                    <div class="brands-list__item" data-interactive-map-pavilion-brand="hills">
                                         <div class="brand">
-                                            <div class="icon" style="background-image: url('/img/interactive_map/brands/barbershop_not_name.jpg');"></div>
+                                            <div class="icon" style="background-image: url('/img/interactive_map/brands/hills.jpg');"></div>
                                         </div>
                                     </div>
-                                    <div class="brands-list__item" data-interactive-map-pavilion-brand="freshstep">
+                                    <div class="brands-list__item" data-interactive-map-pavilion-brand="gastromarket">
                                         <div class="brand">
-                                            <div class="icon" style="background-image: url('/img/interactive_map/brands/freshstep.jpg');"></div>
-                                        </div>
-                                    </div>
-                                    <div class="brands-list__item" data-interactive-map-pavilion-brand="proplan">
-                                        <div class="brand">
-                                            <div class="icon" style="background-image: url('/img/interactive_map/brands/proplan.jpg');"></div>
+                                            <div class="icon" style="background-image: url('/img/interactive_map/brands/gastromarket.jpg');"></div>
                                         </div>
                                     </div>
                                 </div>

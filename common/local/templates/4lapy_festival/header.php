@@ -64,6 +64,7 @@ $markup = PawsApplication::markup();
     <link href="css/elements.css?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/css/elements.css') ?>" rel="stylesheet" type="text/css"/>
     <link href="css/layout.min.css?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/css/layout.min.css') ?>" rel="stylesheet" type="text/css"/>
     <link href="css/interactive_map.css?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/css/interactive_map.css') ?>" rel="stylesheet" type="text/css"/>
+    <link href="css/banner-top.css?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/css/banner-top.css') ?>" rel="stylesheet" type="text/css"/>
 
     <!-- Favicon -->
     <link rel="shortcut icon" href="favicon.ico"/>
@@ -95,14 +96,18 @@ $markup = PawsApplication::markup();
 
     <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_header.php'; ?>
 </head>
-<body id="body" data-spy="scroll" data-target=".header" class="body-landing-festival">
+<body id="body" class="body-landing-festival">
 <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_body.php'; ?>
 <?php $APPLICATION->ShowPanel(); ?>
 
+<!-- data-spy="scroll" data-target=".header" -->
+
+    <?php include __DIR__ . '/blocks/banner-top.php'; ?>
+
     <!--========== HEADER ==========-->
-    <header class="header navbar-fixed-top">
+    <header class="header navbar-static-top" data-header="true">
         <!-- Navbar -->
-        <nav class="navbar" role="navigation">
+        <nav class="navbar" role="navigation" data-header-navbar="true">
             <div class="container">
                 <!-- Brand and toggle get grouped for better mobile display -->
                 <div class="menu-container js_nav-item">
@@ -148,7 +153,7 @@ $markup = PawsApplication::markup();
 
     <div class="b-page-wrapper b-page-wrapper--festival">
         <!--========== SLIDER ==========-->
-        <!--<div class="promo-block">
+        <?/*<div class="promo-block">
             <video class="video-bg__video" preload="metadata" data-video-mute-btn="yes" data-video="{&quot;autoplay&quot;:true,&quot;loop&quot;:true,&quot;muted&quot;:false,&quot;controls&quot;:false,&quot;webkit-playsinline&quot;:&quot;&quot;,&quot;playsinline&quot;:&quot;&quot;}" id="video-bg-0" autoplay="" loop="" muted="false" webkit-playsinline="" playsinline="">
                 <source src="img/1018230703-preview.mp4">
                 Sorry, but your browser not support this format video
@@ -176,8 +181,8 @@ $markup = PawsApplication::markup();
 
 
             </div>
-        </div>-->
-        <div class="promo-block">
+        </div>*/?>
+        <div class="promo-block" data-promo-block="true">
             <div class="desktop_hat">
                 <img src="img/slide01.jpg" alt="" />
             </div>

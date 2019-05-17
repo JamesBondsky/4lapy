@@ -156,6 +156,8 @@ $(window).load(function(){
   }
 
   if(popupFormFestival.length || responsePopupFormFestival.length) {
+    var hash = window.location.hash.match(/^#?(.*)$/)[1];
+
     $('[data-popup-id="form-festival"].js-open-popup').on('click', function () {
       unlock = locky.lockyOn('.js-popup-wrapper');
       $('html').css('overflow-y', 'hidden');
@@ -168,6 +170,11 @@ $(window).load(function(){
       $('[data-popup="form-festival"]').find('form-group.form-group_error').removeClass('form-group_error');
       $('[data-popup="form-festival"]').find('input.error').removeClass('error');
       $('[data-popup="form-festival"]').find('label.error').remove();
+
+
+      if (!!hash && hash == 'reg'){
+        window.location.hash = '';
+      }
     });
 
     $('.js-popup-wrapper').on('click', function () {
@@ -177,6 +184,24 @@ $(window).load(function(){
         unlock();
         $('html').removeAttr('style');
       }
+
+      if (!!hash && hash == 'reg'){
+        window.location.hash = '';
+      }
     });
+
+
+    var $popupFestival = $('.b-popup-wrapper section[data-popup="form-festival"]');
+
+    if (hash == 'reg' && $popupFestival.length && !$popupFestival.hasClass('opened')){
+        var $pageWrapper = $('.b-page-wrapper');
+        $('.js-popup-wrapper').addClass('active');
+        $pageWrapper.addClass('no-scroll');
+
+        unlock = locky.lockyOn('.js-popup-wrapper');
+        $('html').css('overflow-y', 'hidden');
+
+        $popupFestival.addClass('opened').fadeIn(150);
+    }
   }
 });

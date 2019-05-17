@@ -365,7 +365,7 @@
     position: relative;
     width: 1047px;
     height: 460px;
-    background-image: url('../img/interactive_map/pavilion_bg.png?v=1');
+    background-image: url('../img/interactive_map/pavilion_bg.png?v=2');
     background-position: 50% 50%;
     background-repeat: no-repeat;
     left: 50%;
@@ -450,14 +450,14 @@
     height: 52px;
 }
 .interactive_map_pavilion .point_small .point__icon {
-    padding: 5px 5px 15px 9px;
+    padding: 4px 4px 15px 9px;
 }
 .interactive_map_pavilion .point_medium{
     width: 61px;
     height: 68px;
 }
 .interactive_map_pavilion .point_medium .point__icon {
-    padding: 7px 7px 21px 12px;
+    padding: 6px 5px 20px 12px;
 }
 .interactive_map_pavilion .point_large{
     width: 73px;
@@ -519,7 +519,7 @@
 
 .interactive_map_pavilion .point_lecturehall    { left: -24px; top: -151px; }
 .interactive_map_pavilion .point_dobrolap       { left: -380px; bottom: -47px; }
-.interactive_map_pavilion .point_mosigra        { left: -270px; top: -111px; }
+.interactive_map_pavilion .point_childrengames  { left: -270px; top: -111px; }
 .interactive_map_pavilion .point_rc             { left: -176px; top: -120px; }
 .interactive_map_pavilion .point_freshstep      { left: -270px; bottom: -47px; }
 .interactive_map_pavilion .point_barbershop     { left: -188px; bottom: -47px; }
@@ -530,10 +530,10 @@
 .interactive_map_pavilion .point_msd            { right: -269px; top: -100px; }
 .interactive_map_pavilion .point_bayer          { right: -319px; top: -100px; }
 .interactive_map_pavilion .point_elanco         { right: -369px; top: -100px; }
-.interactive_map_pavilion .point_boehriager     { right: -206px; bottom: -24px; }
-.interactive_map_pavilion .point_hills          { right: -192px; bottom: -77px; }
+.interactive_map_pavilion .point_boehriager     { right: -181px; bottom: -24px; }
+.interactive_map_pavilion .point_hills          { right: -157px; bottom: -72px; }
 .interactive_map_pavilion .point_gastromarket   { right: -435px; bottom: -125px; }
-.interactive_map_pavilion .point_voice          { right: -365px; bottom: -47px; }
+.interactive_map_pavilion .point_bloggershow    { right: -365px; bottom: -47px; }
 .interactive_map_pavilion .point_shop2          { right: -195px; bottom: -155px; }
 
 
@@ -821,7 +821,7 @@
     }
     .interactive_map_pavilion .point_lecturehall    { left: -24px; top: -116px; }
     .interactive_map_pavilion .point_dobrolap       { left: -280px; bottom: -47px; }
-    .interactive_map_pavilion .point_mosigra        { left: -192px; top: -91px; }
+    .interactive_map_pavilion .point_childrengames  { left: -192px; top: -91px; }
     .interactive_map_pavilion .point_rc             { left: -132px; top: -90px; }
     .interactive_map_pavilion .point_freshstep      { left: -197px; bottom: -47px; }
     .interactive_map_pavilion .point_barbershop     { left: -148px; bottom: -47px; }
@@ -832,10 +832,10 @@
     .interactive_map_pavilion .point_msd            { right: -200px; top: -75px; }
     .interactive_map_pavilion .point_bayer          { right: -237px; top: -75px; }
     .interactive_map_pavilion .point_elanco         { right: -274px; top: -75px; }
-    .interactive_map_pavilion .point_boehriager     { right: -160px; bottom: -24px; }
-    .interactive_map_pavilion .point_hills          { right: -138px; bottom: -60px; }
+    .interactive_map_pavilion .point_boehriager     { right: -140px; bottom: -20px; }
+    .interactive_map_pavilion .point_hills          { right: -118px; bottom: -55px; }
     .interactive_map_pavilion .point_gastromarket   { right: -310px; bottom: -100px; }
-    .interactive_map_pavilion .point_voice          { right: -265px; bottom: -47px; }
+    .interactive_map_pavilion .point_bloggershow    { right: -265px; bottom: -47px; }
     .interactive_map_pavilion .point_shop2          { right: -145px; bottom: -115px; }
 }
 
@@ -954,7 +954,7 @@
     }
     .interactive_map_pavilion .point_lecturehall    { left: -24px; top: -102px; }
     .interactive_map_pavilion .point_dobrolap       { left: -246px; bottom: -41px; }
-    .interactive_map_pavilion .point_mosigra        { left: -172px; top: -70px; }
+    .interactive_map_pavilion .point_childrengames  { left: -172px; top: -70px; }
     .interactive_map_pavilion .point_rc             { left: -118px; top: -82px; }
     .interactive_map_pavilion .point_freshstep      { left: -172px; bottom: -41px; }
     .interactive_map_pavilion .point_barbershop     { left: -126px; bottom: -41px; }
@@ -965,20 +965,20 @@
     .interactive_map_pavilion .point_msd            { right: -172px; top: -68px; }
     .interactive_map_pavilion .point_bayer          { right: -202px; top: -68px; }
     .interactive_map_pavilion .point_elanco         { right: -232px; top: -68px; }
-    .interactive_map_pavilion .point_boehriager     { right: -133px; bottom: -29px; }
-    .interactive_map_pavilion .point_hills          { right: -123px; bottom: -60px; }
+    .interactive_map_pavilion .point_boehriager     { right: -123px; bottom: -24px; }
+    .interactive_map_pavilion .point_hills          { right: -103px; bottom: -55px; }
     .interactive_map_pavilion .point_gastromarket   { right: -270px; bottom: -90px; }
-    .interactive_map_pavilion .point_voice          { right: -228px; bottom: -41px; }
+    .interactive_map_pavilion .point_bloggershow    { right: -228px; bottom: -41px; }
     .interactive_map_pavilion .point_shop2          { right: -125px; bottom: -104px; }
 
     .interactive_map_pavilion .point_small .point__icon {
-        padding: 5px 5px 17px 9px;
+        padding: 5px 5px 17px 10px;
     }
     .interactive_map_pavilion .point_medium .point__icon {
-        padding: 7px 7px 23px 12px;
+        padding: 6px 6px 20px 13px;
     }
     .interactive_map_pavilion .point_large .point__icon {
-        padding: 5px 4px 22px 12px;
+        padding: 7px 4px 22px 14px;
     }
     .interactive_map_pavilion__content{
         margin-top: 15px;
