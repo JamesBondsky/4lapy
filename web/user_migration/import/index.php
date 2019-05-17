@@ -15,7 +15,7 @@ $APPLICATION->ShowHead();
     <label for='file_name'>Имя файла для чтения</label>
     <input name='file_name' type='text' value='users.csv' id='file_name'><br><br>
     <label for='cnt'>Количество записей обрабатываемых за один раз</label>
-    <input name='cnt' type='number' value='100' min='100' max='200' id='cnt'><br><br>
+    <input name='cnt' type='number' value='25' min='25' max='100' id='cnt'><br><br>
     <label for='step'>Номер страницы, с которой начать выгрузку</label>
     <input name='step' type='number' value='0' min='0' max='2000' id='step'><br><br>
     <progress id='status-bar' value='0' max='100'></progress>

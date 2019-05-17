@@ -21,6 +21,7 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
 
     const LOG_NAME = 'ControlImport';
     const DISCOUNT_USER_FIELD_CODE = 'UF_DISCOUNT_CARD';
+    const DISCOUNT_OLD_USER_FIELD_CODE = 'UF_DISC';
     const CACHE_TIME = 86400;
     const LID = 's1';
     const LANGUAGE_ID = 'ru';
@@ -37,6 +38,14 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
         'prochee' => 'Другое',
         'sobaki'  => 'Собака',
         'ptitsy'  => 'Птичка'
+    ];
+
+    const UPDATE_USER_FIELDS = [
+        'NAME',
+        'LAST_NAME',
+        'SECOND_NAME',
+        'PERSONAL_BIRTHDAY',
+        'PERSONAL_GENDER'
     ];
 
     /**
@@ -207,6 +216,8 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
                 $this->needCreateUsers[$needCeateUsersID] = $this->usersPart[$needCeateUsersID];
             }
         }
+
+        $this->updateFoundUsersInfo();
 
         /** Считаем количество питомцев в части */
         foreach ($this->usersPart as $user) {
@@ -406,12 +417,24 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
                 $userData['LANGUAGE_ID'] = static::LANGUAGE_ID;
                 $userData['TIMESTAMP_X'] = new DateTime();
                 if ($userData['PERSONAL_BIRTHDAY'] != null && $userData['PERSONAL_BIRTHDAY'] != '') {
+                    $personalBirthdayStr = $userData['PERSONAL_BIRTHDAY'];
                     $userData['PERSONAL_BIRTHDAY'] = new DateTime($userData['PERSONAL_BIRTHDAY'], 'Y-m-d H-i-s');
                 } else {
                     unset($userData['PERSONAL_BIRTHDAY']);
                 }
 
                 $userData['GROUP_ID'] = static::USER_GROUPS;
+
+                /** удаляем 7ку из логина/email`a и телефона */
+                if ($userData['LOGIN'][0] == 7) {
+                    $userData['LOGIN'] = substr($userData['LOGIN'], 1);
+                }
+                if ($userData['EMAIL'][0] == 7) {
+                    $userData['EMAIL'] = substr($userData['EMAIL'], 1);
+                }
+                if ($userData['PERSONAL_PHONE'][0] == 7) {
+                    $userData['PERSONAL_PHONE'] = substr($userData['PERSONAL_PHONE'], 1);
+                }
 
                 /** добавляем пользователя */
                 $userID = $cUser->add($userData);
@@ -437,6 +460,7 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
                     /** Добавляем задачу в рэббит на обновление заказов */
                     $this->addManzanaTask($curUser);
                 } else {
+                    $userData['PERSONAL_BIRTHDAY'] = $personalBirthdayStr;
                     $curUserFound = null;
                     $this->log()->error('Невозможно создать пользователя с данными или обновить пароль: ' . ($cUser->LAST_ERROR), $userData);
                     /** исключение, что такой юзер с тамик e-mail`ом есть, обработка питомцев */
@@ -447,6 +471,7 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
                             ->setFilter(['EMAIL' => $userData['EMAIL']])
                             ->exec()->fetch();
                         $this->log()->notice('Пользователь ' . $userOldId . ' найден по e-mail', $userData);
+                        $this->updateUserInfo($userData, $curUserFound);
                     } elseif (mb_strpos($cUser->LAST_ERROR, 'Пользователь с логином') !== false) {
                         /** получаем пользователя */
                         $curUserFound = UserTable::query()
@@ -454,6 +479,7 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
                             ->setFilter(['LOGIN' => $userData['LOGIN']])
                             ->exec()->fetch();
                         $this->log()->notice('Пользователь ' . $userOldId . ' найден по логину', $userData);
+                        $this->updateUserInfo($userData, $curUserFound);
                     }
                     /** Если мы нашли пользователя по email, либо по логину (точное совпадение), то добавляем его питомцев в апдейт массив */
                     if ($curUserFound['ID'] && !empty($arPets)) {
@@ -540,6 +566,46 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
                 $this->petsAdded++;
             } catch (Exception $e) {
                 $this->log()->error('Ошибка создания питомца:' . $e->getMessage() . '[' . $e->getCode() . ']', $arPets);
+            }
+        }
+    }
+
+    private function updateFoundUsersInfo()
+    {
+        foreach ($this->foundUsers as $userOldId => $foundUser) {
+            $oldUser = $this->usersPart[$userOldId];
+            $this->updateUserInfo($oldUser, $foundUser);
+        }
+    }
+
+    /**
+     * @param $oldUser
+     * @param $foundUser
+     */
+    private function updateUserInfo($oldUser, $foundUser)
+    {
+        $updateFields = [];
+        foreach (static::UPDATE_USER_FIELDS as $field) {
+            if ($foundUser[$field] == '' && $oldUser[$field]) {
+                if ($field == 'PERSONAL_BIRTHDAY') {
+                    $updateFields[$field] = new DateTime($oldUser[$field], 'Y-m-d H-i-s');
+                } else {
+                    $updateFields[$field] = $oldUser[$field];
+                }
+            }
+        }
+
+        if ($foundUser[static::DISCOUNT_USER_FIELD_CODE] == '' && $oldUser[static::DISCOUNT_OLD_USER_FIELD_CODE]) {
+            $updateFields[static::DISCOUNT_USER_FIELD_CODE] = $oldUser[static::DISCOUNT_OLD_USER_FIELD_CODE];
+        }
+
+        if (count($updateFields)) {
+            $cUser = new CUser;
+            $res = $cUser->Update($foundUser['ID'], $updateFields);
+            if (!$res) {
+                $this->log()->error('Невозможно обновить данные пользователя ' . $foundUser['ID'] . ' ' . $cUser->LAST_ERROR, $updateFields);
+            } else {
+                $this->log()->notice('Данные пользователя ' . $foundUser['ID'] . ' успешно обновлены', $updateFields);
             }
         }
     }
