@@ -1,0 +1,186 @@
+body.is_open_banner_top{
+    padding-top: 60px;
+}
+
+.banner-top{
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 60px;
+    background-color: #8E30B5;
+    z-index: 1031;
+    overflow: hidden;
+    background-image: url('../img/banner-top/balls.png');
+    background-position: 50% -20px;
+    background-repeat: no-repeat;
+}
+    .banner-top__container{
+        position: relative;
+        max-width: 1164px;
+        margin-left: auto;
+        margin-right: auto;
+        height: 100%;
+        padding: 0 30px 0 0;
+    }
+    .banner-top__link{
+        display: -ms-flexbox;
+        display: -webkit-flex;
+        display: flex;
+        -webkit-flex-direction: row;
+        -ms-flex-direction: row;
+        flex-direction: row;
+        -webkit-flex-wrap: nowrap;
+        -ms-flex-wrap: nowrap;
+        flex-wrap: nowrap;
+        -webkit-justify-content: space-between;
+        -ms-flex-pack: justify;
+        justify-content: space-between;
+        -webkit-align-content: stretch;
+        -ms-flex-line-pack: stretch;
+        align-content: stretch;
+         -webkit-align-items: center;
+        -ms-flex-align: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+        padding: 0 20px;
+    }
+        .banner-top__button{
+            padding-left: 15px;
+        }
+        .banner-top__image{
+            padding-right: 15px;
+        }
+        .banner-top__text{}
+        .banner-top__img{
+            max-width: 100%;
+        }
+            .banner-top__img_desktop{
+                display: block;
+            }
+            .banner-top__img_mobile{
+                display: none;
+            }
+        .banner-top__btn{
+            display: block;
+            max-width: 100%;
+        }
+    .banner-top__close{
+        position: absolute;
+        right: 0;
+        top: 50%;
+        width: 30px;
+        height: 30px;
+        margin-top: -15px;
+    }
+        .banner-top__close-btn{
+            display: block;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            background: none;
+            border: 0;
+            padding: 0;
+        }
+            .banner-top__close-btn:before, .banner-top__close-btn:after {
+                content: '';
+                display: block;
+                position: absolute;
+                top: 13px;
+                left: 5px;
+                width: 18px;
+                height: 2px;
+                background-color: #ffffff;
+                -webkit-transform: none;
+                -ms-transform: none;
+                transform: rotate(45deg);
+            }
+            .banner-top__close-btn:after {
+                transform: rotate(-45deg);
+            }
+
+/* desktop */
+@media screen and (max-width: 1439px) {
+    .banner-top{
+        background-size: 110% auto;
+        -moz-background-size: 110% auto;
+        -webkit-background-size: 110% auto;
+        -o-background-size: 110% auto;
+    }
+    .banner-top__container{
+        max-width: 900px;
+    }
+}
+
+/* tablet */
+@media screen and (max-width: 991px) {
+    .banner-top{
+        background-image: url('../img/banner-top/balls_tablet.png');
+        background-size: 100% auto;
+        -moz-background-size: 100% auto;
+        -ms-background-size: 100% auto;
+        -webkit-background-size: 100% auto;
+        -o-background-size: 100% auto;
+    }
+        .banner-top__container{
+            max-width: 840px;
+        }
+        .banner-top__link{
+            -webkit-justify-content: center;
+            -ms-flex-pack: center;
+            justify-content: center;
+        }
+        .banner-top__image{
+            padding-right: 0;
+        }
+        .banner-top__button{
+            display: none;
+        }
+}
+
+/* mobile */
+@media screen and (max-width: 767px) {
+    body.is_open_banner_top{
+        padding-top: 50px;
+    }
+    body.is_open_banner_top .header.navbar-fixed-top{
+        top: 50px;
+    }
+    body.page_on_scroll.is_open_banner_top .promo-block{
+        margin-top: 50px;
+    }
+    .banner-top{
+        height: 50px;
+        background-image: none;
+    }
+        .banner-top__container{
+            max-width: 380px;
+        }
+        .banner-top__link{
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+        .banner-top__img.banner-top__img_desktop{
+            display: none;
+        }
+        .banner-top__img.banner-top__img_mobile{
+            display: block;
+        }
+        .banner-top__image{
+            padding-right: 15px;
+        }
+        .banner-top__button{
+            display: block;
+            width: 135px;
+        }
+
+}
+
+/* small mobile */
+@media screen and (max-width: 480px) {
+    .banner-top__image {
+        padding-right: 0;
+    }
+}
