@@ -393,6 +393,9 @@ class OrderSubscribeService implements LoggerAwareInterface
             case $freqs['WEEK_5']['ID']:
                 $nextDate->add("+5 week");
                 break;
+            case $freqs['WEEK_6']['ID']:
+                $nextDate->add("+6 week");
+                break;
             default:
                 throw new \Exception('Не найдена подходящая периодичность');
         }
@@ -429,6 +432,9 @@ class OrderSubscribeService implements LoggerAwareInterface
                 break;
             case $freqs['WEEK_5']['ID']:
                 $nextDate->add("-5 week");
+                break;
+            case $freqs['WEEK_6']['ID']:
+                $nextDate->add("-6 week");
                 break;
             default:
                 throw new Exception('Не найдена подходящая периодичность');
@@ -1685,12 +1691,12 @@ class OrderSubscribeService implements LoggerAwareInterface
             return;
         }
 
-        // передача заказа в SAP
-        /** @var ConsumerRegistry $consumerRegistry */
-        $consumerRegistry = Application::getInstance()->getContainer()->get(
-            ConsumerRegistry::class
-        );
-        $consumerRegistry->consume($order);
+        // передача заказа в SAP (upd: отправляется штатными средставми)
+//        /** @var ConsumerRegistry $consumerRegistry */
+//        $consumerRegistry = Application::getInstance()->getContainer()->get(
+//            ConsumerRegistry::class
+//        );
+//        $consumerRegistry->consume($order);
 
         // отправка email
         /** @var NotificationService $notificationService */

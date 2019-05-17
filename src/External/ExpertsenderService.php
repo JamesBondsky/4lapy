@@ -1158,7 +1158,7 @@ class ExpertsenderService implements LoggerAwareInterface
         }
 
         $snippets[] = new Snippet('user_name', htmlspecialcharsbx($personalOrder->getPropValue('NAME')));
-        $snippets[] = new Snippet('order_number', htmlspecialcharsbx($orderSubscribe->getOrderId()));
+        $snippets[] = new Snippet('order_number', htmlspecialcharsbx($personalOrder->getAccountNumber()));
         $snippets[] = new Snippet('date', htmlspecialcharsbx($orderSubscribe->getDateCreate()));
 
         $this->log()->info(
