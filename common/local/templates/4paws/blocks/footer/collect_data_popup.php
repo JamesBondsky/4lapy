@@ -16,7 +16,7 @@ if($USER->IsAuthorized()) {
     {
         $modal_counts_txt = CUser::GetByID( $USER->GetID() )->Fetch()['UF_MODALS_CNTS'];
         $modal_counts = explode(' ', $modal_counts_txt);
-        if($modal_counts != '3 3 3') // модалки не по 3 штуки
+        if($modal_counts != '3 3 3') // модалки не по 3 штуки //сравнение массива и строки - равносильно if (true)
         {
             if($USER->GetParam('data_collect') !== 'Y') // модалку в сессии еще не показали
             {
