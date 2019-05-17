@@ -1739,7 +1739,7 @@ class OrderSubscribeService implements LoggerAwareInterface
             $subscribe->setNextDate($deliveryDate)
                 ->setCheckDays((new \DateTime($deliveryDate->toString())));
 
-            if (($intervalIndex = $storage->getDeliveryInterval() - 1) >= 0) {
+            if ($this->getDeliveryService()->isDelivery($selectedDelivery) && ($intervalIndex = $storage->getDeliveryInterval() - 1) >= 0) {
                 /** @var Interval $interval */
                 $interval = $selectedDelivery->getAvailableIntervals()[$intervalIndex];
             }
