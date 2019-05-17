@@ -13,7 +13,15 @@ var Header = function () {
 
     // handle on page scroll
     var handleHeaderOnScroll = function() {
-        if ($(window).scrollTop() > 60) {
+        var $bannerTop = $('[data-banner-top]'),
+            $promo = $('[data-promo-block]'),
+            startScroll = 60;
+
+        if ($bannerTop.length && !$bannerTop.hasClass('hidden')){
+            startScroll = $bannerTop.height() + $promo.height()/2;
+        }
+
+        if ($(window).scrollTop() > startScroll) {
             $('body').addClass("page_on_scroll");
 
             if ($('[data-header]').hasClass('navbar-static-top')){
