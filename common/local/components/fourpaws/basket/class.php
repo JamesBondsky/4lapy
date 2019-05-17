@@ -26,6 +26,7 @@ use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\DateHelper;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils\Detach\Adder;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
@@ -493,6 +494,8 @@ class BasketComponent extends CBitrixComponent
         $basket = $this->arResult['BASKET'];
         /** @var BasketItem $basketItem */
         $orderableBasket = $basket->getOrderableItems();
+        /** @var OrderSubscribeService $orderSubscribeService */
+        $orderSubscribeService = Application::getInstance()->getContainer()->get('order_subscribe.service');
 
         foreach ($orderableBasket as $basketItem) {
             if (!isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
@@ -500,14 +503,13 @@ class BasketComponent extends CBitrixComponent
                 if (!$offer) {
                     continue;
                 }
+
                 $itemQuantity = (int)$basketItem->getQuantity();
                 $itemPrice = $basketItem->getPrice();
                 $percent = $offer->getSubscribeDiscount();
+                $price = $orderSubscribeService->countSubscribePrice($itemPrice, $percent);
 
-                $price = $itemPrice * ((100 - $percent)/100);
-                $manzanaPrice = PriceHelper::roundPrice($price);
-
-                $subscribePrice += $manzanaPrice * $itemQuantity;
+                $subscribePrice += $price * $itemQuantity;
             }
         }
 

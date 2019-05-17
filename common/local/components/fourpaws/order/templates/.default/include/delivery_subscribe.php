@@ -33,7 +33,7 @@ if($orderSubscribe){
                     <?php
                     foreach ($subscribeIntervals as $i => $frequency) { ?>
                         <option value="<?= $frequency['ID'] ?>"
-                                <?=($selectedFrequency == $frequency) ? 'selected' : ''?>
+                                <?=($selectedFrequency == $frequency['ID']) ? 'selected' : ''?>
                                 data-freq-type="<?=$orderSubscribeService->getFrequencyType($frequency)?>"
                                 data-freq-value="<?=$orderSubscribeService->getFrequencyValue($frequency)?>">
                             <?= (string)$frequency['VALUE'] ?>
