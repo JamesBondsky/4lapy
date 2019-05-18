@@ -143,7 +143,7 @@ class ShortProduct
      *
      * @var bool
      * @Serializer\Type("bool")
-     * @Serializer\SerializedName("pickupOnly")
+     * @Serializer\SerializedName("isPickup")
      * @Serializer\Groups({"basket"})
      */
     protected $pickupOnly = false;
