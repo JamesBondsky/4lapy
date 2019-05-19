@@ -151,42 +151,43 @@ class UserService
                 ->setPassword(randString(20));
             $user = $this->userBundleService->register($user);
             $this->userBundleService->authorize($user->getId());
+        }
+        try {
+            $container = Application::getInstance()->getContainer();
 
-            try {
-                $container = Application::getInstance()->getContainer();
+            /** @var ManzanaService $manzanaService */
+            $manzanaService = $container->get('manzana.service');
+            /** @noinspection PhpUnusedLocalVariableInspection */
+            //$manzanaItem = $manzanaService->getContactByPhone(PhoneHelper::getManzanaPhone($user->getPersonalPhone()));
 
-                /** @var ManzanaService $manzanaService */
-                $manzanaService = $container->get('manzana.service');
-                /** @noinspection PhpUnusedLocalVariableInspection */
-                //$manzanaItem = $manzanaService->getContactByPhone(PhoneHelper::getManzanaPhone($user->getPersonalPhone()));
-
-                /**
-                 * @var UserService $userService
-                 */
-                $userService = $container->get(CurrentUserProviderInterface::class);
-                //$user = $userService->getUserRepository()->find((int)$user->getId());
-
-                if ($user === null) {
-                    throw new UserException('Пользователь не найден');
-                }
-
-                $client = new Client();
-                if ($_SESSION['MANZANA_CONTACT_ID']) {
-                    $client->contactId = $_SESSION['MANZANA_CONTACT_ID'];
-                    unset($_SESSION['MANZANA_CONTACT_ID']);
-                }
-
-                $userService->setClientPersonalDataByCurUser($client, $user);
-
-                $manzanaService->updateContact($client);
-
-                if ($client->phone && $client->contactId) {
-                    $manzanaService->updateUserCardByClient($client);
-                }
-            } catch (Exception $e) {
-                $logger = LoggerFactory::create('loginOrRegister');
-                $logger->error(sprintf('%s exception: %s', __METHOD__, $e->getMessage()));
+            /**
+             * @var UserService $userService
+             */
+            $userService = $container->get(CurrentUserProviderInterface::class);
+            if (!isset($user)) {
+                $user = $userService->getUserRepository()->find($userId);
             }
+
+            if ($user === null) {
+                throw new UserException('Пользователь не найден');
+            }
+
+            $client = new Client();
+            if ($_SESSION['MANZANA_CONTACT_ID']) {
+                $client->contactId = $_SESSION['MANZANA_CONTACT_ID'];
+                unset($_SESSION['MANZANA_CONTACT_ID']);
+            }
+
+            $userService->setClientPersonalDataByCurUser($client, $user);
+
+            $manzanaService->updateContact($client);
+
+            if ($client->phone && $client->contactId) {
+                $manzanaService->updateUserCardByClient($client);
+            }
+        } catch (Exception $e) {
+            $logger = LoggerFactory::create('loginOrRegister');
+            $logger->error(sprintf('%s exception: %s', __METHOD__, $e->getMessage()));
         }
         $this->sessionHandler->login();
         return new UserLoginResponse($this->getCurrentApiUser());
