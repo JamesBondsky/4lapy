@@ -425,7 +425,6 @@ class ProductService
         } catch (\Exception $e) {
             $shortProduct->setPickupOnly(false);
         }
-        $shortProduct->setPickupOnly(true);
 
         // лейблы
         $shortProduct->setTag($this->getTags($offer));
