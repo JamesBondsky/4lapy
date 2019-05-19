@@ -4,6 +4,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
+use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Helpers\WordHelper;
 
 /**
  * @var array $pickup
@@ -19,8 +22,7 @@ $pickupResult = $pickup['RESULT'];
 <li class="b-product-information__item">
     <div class="b-product-information__title-info">Самовывоз</div>
     <div class="b-product-information__value b-product-information__value--link disabled js-open-tab-link" data-tab="availability">
-        <?php if ($pickup['CODE'] === DeliveryService::INNER_PICKUP_CODE) { ?>
-            <?php
+        <?php if ($pickup['CODE'] === DeliveryService::INNER_PICKUP_CODE) {
             $totalCount = $pickup['SHOP_COUNT']['TOTAL'];
             $availableCount = $pickup['SHOP_COUNT']['AVAILABLE'];
             $hasToday = $pickup['SHOP_COUNT']['HAS_TODAY'];

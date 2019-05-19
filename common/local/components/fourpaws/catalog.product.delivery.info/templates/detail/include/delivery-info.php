@@ -35,6 +35,7 @@ $text = $deliveryResult->getTextForOffer($offer->getPrice(), $isByRequest);
         <?php } elseif ($delivery['FREE_FROM']) { ?>
             бесплатно от <?= $delivery['FREE_FROM'] ?>
             <span class="b-ruble b-ruble--value-information">₽</span>
+        <?php } ?>
     <div class="b-product-information__value">
         <?= $text ?>
         <?php if (!$isByRequest && $delivery['FREE_FROM']) { ?>
