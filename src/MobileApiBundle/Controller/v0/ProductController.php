@@ -266,18 +266,19 @@ class ProductController extends FOSRestController
      */
     public function getGoodsPersonalAction()
     {
-        $offerIds = $this->appBasketService->getPopularOfferIds(10);
-        $offers = (new OfferQuery())
-            ->withFilter(['=ID' => $offerIds])
-            ->exec();
-
-        /** @var Offer $offer */
         $products = [];
-        foreach ($offers as $offer) {
-            $product = $offer->getProduct();
-            $products[] = $this->apiProductService->convertToFullProduct($product, $offer);
-        }
+        $offerIds = $this->appBasketService->getPopularOfferIds(10);
+        if (!empty($offerIds)) {
+            $offers = (new OfferQuery())
+                ->withFilter(['=ID' => $offerIds])
+                ->exec();
 
+            /** @var Offer $offer */
+            foreach ($offers as $offer) {
+                $product = $offer->getProduct();
+                $products[] = $this->apiProductService->convertToFullProduct($product, $offer);
+            }
+        }
         return (new Response\ProductListResponse())
             ->setProductList($products);
     }
