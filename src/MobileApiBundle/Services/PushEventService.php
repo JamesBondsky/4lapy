@@ -381,7 +381,9 @@ class PushEventService
                 '=USER_ID' => $user->getId(),
             ], ['ID' => 'DESC'], 1)[0];
 
-            if (!($userSession->getPlatform() && $userSession->getPushToken())) {
+            if (!$userSession) {
+                $this->log()->warning("PushEventService: у пользователя с номером телефона $personalPhone нет сессий в мобильном приложении");
+            } else if (!($userSession->getPlatform() && $userSession->getPushToken())) {
                 $this->log()->warning("PushEventService: у пользователя с номером телефона $personalPhone не установлено мобильное приложение");
             } else {
                 if ($this->shouldSendPushMessage($user, $typeCode)) {
