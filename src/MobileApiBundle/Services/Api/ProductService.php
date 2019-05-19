@@ -533,7 +533,9 @@ class ProductService
     {
         /** @var $pickupResult PickupResult */
         if ($pickupResult = $this->filterPickups($this->getDeliveries($offer))) {
-            return $pickupResult->getTextForOffer(false);
+            return $pickupResult->getDeliveryCode() === DeliveryService::INNER_PICKUP_CODE
+                ? $pickupResult->getTextForOffer(false)
+                : '';
         }
         return '';
     }
