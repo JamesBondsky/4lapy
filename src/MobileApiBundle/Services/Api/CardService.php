@@ -212,10 +212,12 @@ class CardService
         $oldCardId = $card->cardId;
 
         // 3.3 производим замену
-        $this->appManzanaService->changeCard($oldCardId, $newCardId);
+        $manzanaChangeCardResult = $this->appManzanaService->changeCard($oldCardId, $newCardId);
 
         // 4. заменяем данные в битриксовом профиле пользователя
-        $user->setDiscountCardNumber($newCard);
-        $this->userRepository->update($user);
+        if ($manzanaChangeCardResult) {
+            $user->setDiscountCardNumber($newCard);
+            $this->userRepository->update($user);
+        }
     }
 }
