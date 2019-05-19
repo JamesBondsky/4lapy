@@ -6,8 +6,13 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\BitrixOrm\Model\Share;
@@ -415,6 +420,13 @@ class ProductService
             ->setIsByRequest($offer->isByRequest())
             ->setIsAvailable($offer->isAvailable());
 
+        try {
+            $shortProduct->setPickupOnly(!$offer->isDeliverable() && $product->isPickupAvailable() && $offer->isPickupAvailable());
+        } catch (\Exception $e) {
+            $shortProduct->setPickupOnly(false);
+        }
+        $shortProduct->setPickupOnly(true);
+
         // лейблы
         $shortProduct->setTag($this->getTags($offer));
 
@@ -458,7 +470,8 @@ class ProductService
             ->setBonusAll($shortProduct->getBonusAll())
             ->setBonusUser($shortProduct->getBonusUser())
             ->setIsByRequest($shortProduct->getIsByRequest())
-            ->setIsAvailable($shortProduct->getIsAvailable());
+            ->setIsAvailable($shortProduct->getIsAvailable())
+            ->setPickupOnly($shortProduct->getPickupOnly());
 
         if ($needPackingVariants) {
             $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct));   // фасовки
