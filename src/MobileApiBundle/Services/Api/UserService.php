@@ -13,6 +13,8 @@ use Exception;
 use FourPaws\App\Application;
 use FourPaws\Enum\UserGroup as UserGroupEnum;
 use FourPaws\External\ExpertsenderService;
+use FourPaws\External\Manzana\Model\Client;
+use FourPaws\External\ManzanaService;
 use FourPaws\MobileApiBundle\Dto\Object\City;
 use FourPaws\MobileApiBundle\Dto\Object\ClientCard;
 use FourPaws\MobileApiBundle\Dto\Object\User;
@@ -29,10 +31,12 @@ use FourPaws\MobileApiBundle\Services\Session\SessionHandler;
 use FourPaws\UserBundle\Entity\User as AppUser;
 use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Exception\NotFoundException;
+use FourPaws\UserBundle\Exception\UserException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Repository\GroupRepository;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService as UserBundleService;
 use FourPaws\MobileApiBundle\Services\Api\CaptchaService as ApiCaptchaService;
 use FourPaws\External\ManzanaService as AppManzanaService;
@@ -147,6 +151,42 @@ class UserService
                 ->setPassword(randString(20));
             $user = $this->userBundleService->register($user);
             $this->userBundleService->authorize($user->getId());
+
+            try {
+                $container = Application::getInstance()->getContainer();
+
+                /** @var ManzanaService $manzanaService */
+                $manzanaService = $container->get('manzana.service');
+                /** @noinspection PhpUnusedLocalVariableInspection */
+                //$manzanaItem = $manzanaService->getContactByPhone(PhoneHelper::getManzanaPhone($user->getPersonalPhone()));
+
+                /**
+                 * @var UserService $userService
+                 */
+                $userService = $container->get(CurrentUserProviderInterface::class);
+                //$user = $userService->getUserRepository()->find((int)$user->getId());
+
+                if ($user === null) {
+                    throw new UserException('Пользователь не найден');
+                }
+
+                $client = new Client();
+                if ($_SESSION['MANZANA_CONTACT_ID']) {
+                    $client->contactId = $_SESSION['MANZANA_CONTACT_ID'];
+                    unset($_SESSION['MANZANA_CONTACT_ID']);
+                }
+
+                $userService->setClientPersonalDataByCurUser($client, $user);
+
+                $manzanaService->updateContact($client);
+
+                if ($client->phone && $client->contactId) {
+                    $manzanaService->updateUserCardByClient($client);
+                }
+            } catch (Exception $e) {
+                $logger = LoggerFactory::create('loginOrRegister');
+                $logger->error(sprintf('%s exception: %s', __METHOD__, $e->getMessage()));
+            }
         }
         $this->sessionHandler->login();
         return new UserLoginResponse($this->getCurrentApiUser());
