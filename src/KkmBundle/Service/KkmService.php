@@ -23,7 +23,7 @@ use Bitrix\Main\ObjectPropertyException;
 use FourPaws\LocationBundle\LocationService;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\KkmBundle\Repository\Table\KkmTokenTable;
-use FourPaws\External\Dostavista\Exception\KkmException;
+use FourPaws\KkmBundle\Exception\KkmException;
 
 /**
  * Class KkmService
@@ -249,7 +249,7 @@ class KkmService implements LoggerAwareInterface
                 throw new KkmException('Yandex api failed', 200);
             }
 
-            $arrayResponse = json_decode(json_encode($xmlResponse), TRUE);
+            $arrayResponse = json_decode(json_encode($xmlResponse), true);
             $found = $arrayResponse['GeoObjectCollection']['metaDataProperty']['GeocoderResponseMetaData']['found'];
 
             if ($found == 0) {
@@ -371,7 +371,7 @@ class KkmService implements LoggerAwareInterface
             $rc = false;
             $innerDeliveryAvailable = false;
             $deliveryPrice = false;
-            $deliveryDate = false;
+            $deliveryDates = [];
             $intervals = [];
             /** @var CalculationResultInterface $delivery */
             foreach ($deliveries as $delivery) {
@@ -380,14 +380,18 @@ class KkmService implements LoggerAwareInterface
                     $innerDeliveryAvailable = true;
                     $rc = true;
                     $deliveryPrice = $delivery->getDeliveryPrice();
-                    $deliveryDate = $delivery->getDeliveryDate()->format('d.m.Y');
-                    foreach ($delivery->getAvailableIntervals() as $interval){
+                    $nextDeliveries = $this->deliveryService->getNextDeliveries($delivery, 10);
+                    foreach ($nextDeliveries as $nextDelivery) {
+                        $deliveryDates[] = FormatDate('d.m.Y', $nextDelivery->getDeliveryDate()->getTimestamp());
+                    }
+
+                    foreach ($delivery->getAvailableIntervals() as $interval) {
                         $intervals[] = str_replace(" ", "", (string)$interval);
                     }
                 }
             }
 
-            if(!$innerDeliveryAvailable){
+            if (!$innerDeliveryAvailable) {
                 throw new KkmException('Delivery 4lapy is not available', 200);
             }
 
@@ -395,7 +399,7 @@ class KkmService implements LoggerAwareInterface
                 "rc"      => $rc,
                 "courier" => [
                     "price" => $deliveryPrice,
-                    "date"  => [$deliveryDate],
+                    "date"  => $deliveryDates,
                     "time"  => $intervals
                 ]
             ];

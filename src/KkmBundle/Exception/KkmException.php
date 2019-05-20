@@ -1,11 +1,11 @@
 <?php
 
-namespace FourPaws\External\Dostavista\Exception;
+namespace FourPaws\KkmBundle\Exception;
 
 /**
  * Class KkmException
  *
- * @package FourPaws\External\Dostavista\Exception
+ * @package FourPaws\KkmBundle\Exception
  */
 class KkmException extends \Exception
 {

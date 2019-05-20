@@ -14,7 +14,7 @@ use Symfony\Component\Routing\Annotation\Route;
  *
  * @package FourPaws\KkmBundle\Controller
  *
- * @Route("/api/kkm/v1")
+ * @Route("api/kkm/v1/")
  */
 class KkmController extends Controller
 {
@@ -33,12 +33,13 @@ class KkmController extends Controller
     }
 
     /**
-     * @Route("/update_token/", methods={"POST"})
+     * @Route("update_token/", methods={"POST"})
      *
      * @param Request $request
      *
      * @return JsonResponse
      */
+    /**
     public function updateToken(Request $request): JsonResponse
     {
         //validate old token
@@ -75,10 +76,10 @@ class KkmController extends Controller
             200
         );
     }
-
+    */
 
     /**
-     * @Route("/suggestions/", methods={"POST"})
+     * @Route("suggestions/address/", methods={"POST"})
      *
      * @param Request $request
      *
@@ -124,7 +125,7 @@ class KkmController extends Controller
 
 
     /**
-     * @Route("/geocode/", methods={"POST"})
+     * @Route("geocode/", methods={"POST"})
      *
      * @param Request $request
      *
@@ -167,7 +168,7 @@ class KkmController extends Controller
     }
 
     /**
-     * @Route("/get_delivery_rules/", methods={"POST"})
+     * @Route("delivery/rules/", methods={"POST"})
      *
      * @param Request $request
      *
@@ -207,10 +208,7 @@ class KkmController extends Controller
         }
 
         return new JsonResponse(
-            [
-                'code'    => 200,
-                'message' => $res['delivery_rules']
-            ],
+            $res['delivery_rules'],
             200
         );
     }
