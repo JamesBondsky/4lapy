@@ -6,6 +6,7 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
@@ -401,16 +402,24 @@ class OrderService
                 // ->setCommunicationWay($order->getPropValue('COM_WAY'))
             ;
 
-            $deliveryCode = $this->appDeliveryService->getDeliveryCodeById($order->getDeliveryId());
-            switch ($deliveryCode) {
-                case in_array($deliveryCode, DeliveryService::DELIVERY_CODES):
-                    $orderParameter->setDeliveryType(self::DELIVERY_TYPE_COURIER);
-                    $date = $order->getDateDelivery() . ' ' .  $order->getPropValue('DELIVERY_INTERVAL');
-                    $orderParameter->setDeliveryDateTimeText($date);
-                    break;
-                case in_array($deliveryCode, DeliveryService::PICKUP_CODES):
-                    $orderParameter->setDeliveryType(self::DELIVERY_TYPE_PICKUP);
-                    break;
+            try {
+                $deliveryCode = $this->appDeliveryService->getDeliveryCodeById($order->getDeliveryId());
+            } catch (NotFoundException $e) {
+                $logger = LoggerFactory::create('orderParameter');
+                $logger->error(__METHOD__ . ' error. deliveryId: ' . $order->getDeliveryId() . '. userId: ' . $userId . '. orderId: ' . $order->getId() . '. Exception. : ' . $e->getMessage() . '. ' . $e->getTraceAsString());
+            }
+            if (isset($deliveryCode))
+            {
+                switch ($deliveryCode) {
+                    case in_array($deliveryCode, DeliveryService::DELIVERY_CODES):
+                        $orderParameter->setDeliveryType(self::DELIVERY_TYPE_COURIER);
+                        $date = $order->getDateDelivery() . ' ' .  $order->getPropValue('DELIVERY_INTERVAL');
+                        $orderParameter->setDeliveryDateTimeText($date);
+                        break;
+                    case in_array($deliveryCode, DeliveryService::PICKUP_CODES):
+                        $orderParameter->setDeliveryType(self::DELIVERY_TYPE_PICKUP);
+                        break;
+                }
             }
 
             if ($cityCode = $order->getPropValue('CITY_CODE')) {
