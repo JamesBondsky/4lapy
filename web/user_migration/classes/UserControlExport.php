@@ -173,6 +173,35 @@ class UserControlExport extends UserControl
             $registerDate = $user['DATE_REGISTER'];
             /** @var DateTime $birthDate */
             $birthDate = $user['PERSONAL_BIRTHDAY'];
+
+            /** удаляем 7ку из логина/email`a и телефона */
+            if ($user['LOGIN'][0] == 7) {
+                $user['LOGIN'] = substr($user['LOGIN'], 1);
+            }
+            if ($user['EMAIL'][0] == 7) {
+                $user['EMAIL'] = substr($user['EMAIL'], 1);
+            }
+            if ($user['PERSONAL_PHONE'][0] == 7) {
+                $user['PERSONAL_PHONE'] = substr($user['PERSONAL_PHONE'], 1);
+            }
+
+            //@fastorder.ru && @register.phone
+            if (strpos($user['EMAIL'], '@fastorder.ru') !== false) {
+                if ($user['PERSONAL_PHONE']) {
+                    $user['EMAIL'] = '';
+                    $user['LOGIN'] = $user['PERSONAL_PHONE'];
+                } else {
+                    continue;
+                }
+            } elseif (strpos($user['EMAIL'], '@register.phone') !== false) {
+                if ($user['PERSONAL_PHONE']) {
+                    $user['EMAIL'] = '';
+                    $user['LOGIN'] = $user['PERSONAL_PHONE'];
+                } else {
+                    continue;
+                }
+            }
+
             $this->usersPart[$user['ID']] = [
                 'ID'                => $user['ID'],
                 'NAME'              => $user['NAME'] ?: '',
@@ -187,6 +216,7 @@ class UserControlExport extends UserControl
                 'DATE_REGISTER'     => $registerDate->format(static::DATE_TIME_FORMAT),
                 'UF_DISCOUNT_CARD'  => $user['UF_DISCOUNT_CARD'] ?: ''
             ];
+
 
             $userIds[] = $user['ID'];
             $lastID = $user['ID'];
