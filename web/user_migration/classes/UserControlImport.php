@@ -381,14 +381,20 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
                     'EMAIL'          => $userData['EMAIL'],
                     'PERSONAL_PHONE' => $userData['PERSONAL_PHONE']
                 ];
+                $filter[0][] = [
+                    'LOGIN' => $userData['LOGIN'],
+                ];
                 $userTmp[$userData['EMAIL'] . $userData['PERSONAL_PHONE']] = $userIDFromOldSite;
+                $userTmp[$userData['LOGIN']] = $userIDFromOldSite;
             } else {
                 $filter[0][] = [
                     'LOGIN' => $userData['LOGIN'],
                 ];
-                $filter[0][] = [
-                    'PERSONAL_PHONE' => $userData['PERSONAL_PHONE'],
-                ];
+                if ($userData['PERSONAL_PHONE']) {
+                    $filter[0][] = [
+                        'PERSONAL_PHONE' => $userData['PERSONAL_PHONE'],
+                    ];
+                }
                 $userTmp[$userData['LOGIN']] = $userIDFromOldSite;
                 $userTmp[$userData['PERSONAL_PHONE']] = $userIDFromOldSite;
             }
