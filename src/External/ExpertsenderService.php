@@ -1425,8 +1425,13 @@ class ExpertsenderService implements LoggerAwareInterface
             $snippets[] = new Snippet('lastname', htmlspecialcharsbx($lastname));
             $snippets[] = new Snippet('url_img', $base64);
 
-            $this->sendSystemTransactional($transactionId, $email, $snippets);
+            $senderApiResult = $this->sendSystemTransactional($transactionId, $email, $snippets);
+            if (!$senderApiResult->isOk()) {
+                throw new ExpertSenderException(__METHOD__ . 'Не удалось отправить письмо: Ошибка #' . $senderApiResult->getErrorCode() . '. ' .  $senderApiResult->getErrorMessage() . '. $params: ' . print_r($params, true));
+            }
             return true;
+        } else {
+            throw new ExpertsenderEmptyEmailException(__METHOD__ . 'Не удалось отправить письмо: не указан email. $params: ' . print_r($params, true));
         }
 
         return false;
