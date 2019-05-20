@@ -110,8 +110,18 @@ class StoreController extends FOSRestController
     public function getStoreListAvailableAction(ShopsForCheckoutRequest $shopsForCheckoutRequest): StoreListAvailableResponse
     {
         $metroStations = $shopsForCheckoutRequest->getMetroStations();
-        return new StoreListAvailableResponse(
-            $this->apiStoreService->getListWithProductsInBasketAvailability($metroStations)
-        );
+        $storeCollection = $this->apiStoreService->getListWithProductsInBasketAvailability($metroStations);
+
+        /** @var ShopInfoService $shopInfoService */
+        $shopInfoService = Application::getInstance()->getContainer()->get(ShopInfoService::class);
+
+        $stores = $storeCollection->getValues();
+        array_walk($stores, [$shopInfoService, 'locationTypeSortDecorate']);
+        usort($stores, [$shopInfoService, 'shopCompareByLocationType']);
+        array_walk($stores, [$shopInfoService, 'locationTypeSortUndecorate']);
+
+        $storeCollection = new ArrayCollection($stores);
+
+        return new StoreListAvailableResponse($storeCollection);
     }
 }
