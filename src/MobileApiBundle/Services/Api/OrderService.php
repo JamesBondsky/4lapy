@@ -423,16 +423,22 @@ class OrderService
             }
 
             if ($cityCode = $order->getPropValue('CITY_CODE')) {
+                $isCitySet = false;
                 if (intval($cityCode)) {
                     $location = $this->locationService->findLocationByCode($cityCode);
-                    $city = (new City())
-                        ->setTitle($location['NAME'])
-                        ->setId($location['CODE'])
-                        ->setLongitude($location['LONGITUDE'])
-                        ->setLatitude($location['LATITUDE'])
-                        ->setPath([$location['PATH'][count($location['PATH']) - 1]['NAME']]);
-                    $orderParameter->setCity($city);
-                } else {
+                    if ($location && $location['NAME']) {
+                        $city = (new City())
+                            ->setTitle($location['NAME'])
+                            ->setId($location['CODE'])
+                            ->setLongitude($location['LONGITUDE'])
+                            ->setLatitude($location['LATITUDE'])
+                            ->setPath([$location['PATH'][count($location['PATH']) - 1]['NAME']]);
+                        $orderParameter->setCity($city);
+                        $isCitySet = true;
+                    }
+                }
+
+                if (!$isCitySet) {
                     $city = (new City())->setTitle($cityCode);
                     $orderParameter->setCity($city);
                 }
