@@ -248,8 +248,8 @@ class CardBonus
     public function getGeneratedSumToNext() : float
     {
         $sumToNext    = 0;
-        $realDiscount = $this->getRealDiscount();
-        if ($realDiscount > 0) {
+        // d$realDiscount = $this->getRealDiscount();
+        // if ($realDiscount > 0) {
             $sum           = $this->getSumDiscounted();
             $discountTable = UserBonus::$discountTable;
             $finalSum      = end($discountTable);
@@ -266,7 +266,7 @@ class CardBonus
                 }
                 $sumToNext = $nextSumCondition - $sum;
             }
-        }
+        // }
         
         return $sumToNext;
     }

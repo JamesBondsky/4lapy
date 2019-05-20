@@ -28,28 +28,19 @@ class OrderHistory
 
     /**
      * @internal
-     * @Serializer\Accessor(setter="setDate", getter="getDate")
      * @Serializer\SerializedName("date")
      * @Serializer\Type("DateTime<'d.m.Y'>")
-     * @var string
+     * @var \DateTime
      */
-    protected $date = '';
+    protected $date;
 
     /**
      * @internal
-     * @Serializer\Accessor(setter="setTime", getter="getTime")
      * @Serializer\SerializedName("time")
-     * @Serializer\Type("string")
-     * @var string
+     * @Serializer\Type("DateTime<'H:i'>")
+     * @var \DateTime
      */
-    protected $time = '';
-
-    /**
-     * @Serializer\SerializedName("extra_info")
-     * @Serializer\Type("string")
-     * @var string
-     */
-    protected $extraInfo = '';
+    protected $time;
 
     /**
      * @return \DateTime
@@ -67,6 +58,8 @@ class OrderHistory
     public function setDateChange(\DateTime $dateChange): OrderHistory
     {
         $this->dateChange = $dateChange;
+        $this->date = $this->dateChange;
+        $this->time = $this->dateChange;
         return $this;
     }
 
@@ -81,20 +74,6 @@ class OrderHistory
 
     /**
      * @internal
-     *
-     * @param string $time
-     *
-     * @return OrderHistory
-     */
-    public function setTime(string $time = '00:00'): OrderHistory
-    {
-        $this->dateChange = $this->dateChange instanceof \DateTime ? $this->dateChange : new \DateTime();
-        $this->dateChange->setTime(... explode(':', $time));
-        return $this;
-    }
-
-    /**
-     * @internal
      * @return \DateTime|string
      */
     public function getDate()
@@ -103,20 +82,20 @@ class OrderHistory
     }
 
     /**
-     * @internal
-     *
-     * @param \DateTime $date
-     *
+     * @return OrderStatus
+     */
+    public function getStatus(): OrderStatus
+    {
+        return $this->status;
+    }
+
+    /**
+     * @param OrderStatus $status
      * @return OrderHistory
      */
-    public function setDate(\DateTime $date): OrderHistory
+    public function setStatus(OrderStatus $status): OrderHistory
     {
-        $this->dateChange = $this->dateChange instanceof \DateTime ? $this->dateChange : $date;
-        $this->dateChange->setDate(
-            $date->format('Y'),
-            $date->format('n'),
-            $date->format('j')
-        );
+        $this->status = $status;
         return $this;
     }
 }

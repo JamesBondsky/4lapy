@@ -12,6 +12,7 @@ use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Enum\CrudGroups;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Exception\ExpertsenderBasketEmptyException;
 use FourPaws\External\Exception\ExpertsenderEmptyEmailException;
@@ -20,6 +21,7 @@ use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\ExpertSender\Dto\ForgotBasket;
 use FourPaws\External\ExpertsenderService;
 use FourPaws\External\SmsService;
+use FourPaws\MobileApiBundle\Entity\ApiPushMessage;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyParams;
 use FourPaws\SaleBundle\Dto\Notification\ForgotBasketNotification;
@@ -28,6 +30,8 @@ use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Exception\Notification\UnknownMessageTypeException;
 use FourPaws\StoreBundle\Service\StoreService;
+use JMS\Serializer\ArrayTransformerInterface;
+use JMS\Serializer\SerializationContext;
 use LinguaLeo\ExpertSender\ExpertSenderException;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Bundle\FrameworkBundle\Templating\DelegatingEngine;
@@ -74,25 +78,31 @@ class NotificationService implements LoggerAwareInterface
     protected static $isSending = false;
 
     /**
+     * @var ArrayTransformerInterface
+     */
+    private $transformer;
+
+    /**
      * NotificationService constructor.
-     * @param OrderService        $orderService
-     * @param SmsService          $smsService
-     * @param StoreService        $storeService
+     * @param OrderService $orderService
+     * @param SmsService $smsService
+     * @param StoreService $storeService
      * @param ExpertsenderService $emailService
-     *
-     * @throws ApplicationCreateException
+     * @param ArrayTransformerInterface $transformer
      */
     public function __construct(
         OrderService $orderService,
         SmsService $smsService,
         StoreService $storeService,
-        ExpertsenderService $emailService
+        ExpertsenderService $emailService,
+        ArrayTransformerInterface $transformer
     )
     {
         $this->orderService = $orderService;
         $this->smsService = $smsService;
         $this->storeService = $storeService;
         $this->emailService = $emailService;
+        $this->transformer = $transformer;
 
         $container = Application::getInstance()->getContainer();
         /** @noinspection MissingService */
@@ -177,6 +187,8 @@ class NotificationService implements LoggerAwareInterface
      * @param Order $order
      *
      * @throws ObjectNotFoundException
+     * @throws SystemException
+     * @throws ApplicationCreateException
      */
     public function sendNewOrderMessage(Order $order): void
     {
@@ -252,6 +264,7 @@ class NotificationService implements LoggerAwareInterface
 
         if ($smsTemplate) {
             $this->sendSms($smsTemplate, $parameters, true);
+            $this->addPushMessage($smsTemplate, $parameters);
         }
 
         $this->sendNewUserSms($parameters);
@@ -263,6 +276,7 @@ class NotificationService implements LoggerAwareInterface
      *
      * @throws ObjectNotFoundException
      * @throws SystemException
+     * @throws ApplicationCreateException
      */
     public function sendOrderPaymentMessage(Order $order): void
     {
@@ -299,17 +313,21 @@ class NotificationService implements LoggerAwareInterface
             $this->log()->error($e->getMessage());
         }
         $parameters = $this->getOrderData($order);
+
         if ($parameters['deliveryCode'] === DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
             $this->sendSms('FourPawsSaleBundle:Sms:order.new.delivery.dostavista.is.paid.html.php', $parameters, true);
         } else {
             $this->sendSms('FourPawsSaleBundle:Sms:order.paid.html.php', $parameters, true);
+            $this->addPushMessage('FourPawsSaleBundle:Sms:order.paid.html.php', $parameters);
         }
+
         $this->sendNewUserSms($parameters);
         static::$isSending = false;
     }
 
     /**
      * @param Order $order
+     * @throws ApplicationCreateException
      */
     public function sendOrderCancelMessage(Order $order): void
     {
@@ -329,11 +347,13 @@ class NotificationService implements LoggerAwareInterface
             'FourPawsSaleBundle:Sms:order.canceled.html.php',
             $parameters
         );
+        $this->addPushMessage('FourPawsSaleBundle:Sms:order.canceled.html.php', $parameters);
         static::$isSending = false;
     }
 
     /**
      * @param Order $order
+     * @throws ApplicationCreateException
      */
     public function sendOrderStatusMessage(Order $order): void
     {
@@ -400,6 +420,7 @@ class NotificationService implements LoggerAwareInterface
                 $smsTemplate,
                 $parameters
             );
+            $this->addPushMessage($smsTemplate, $parameters);
         }
 
         static::$isSending = false;
@@ -431,6 +452,53 @@ class NotificationService implements LoggerAwareInterface
     }
 
     /**
+     * @param string $tpl
+     * @param array $parameters
+     * @throws ApplicationCreateException
+     * @throws \Exception
+     */
+    protected function addPushMessage(string $tpl, array $parameters): void
+    {
+        if (empty($parameters) || !$parameters['userId']) {
+            return;
+        }
+
+        $text = $this->renderer->render($tpl, $parameters);
+
+        $hlblock = \Bitrix\HighloadBlock\HighloadBlockTable::getList([
+            'filter' => [
+                'TABLE_NAME' => 'api_push_messages'
+            ]
+        ])->fetch();
+
+        $userField = (new \CUserTypeEntity())->GetList([], [
+            'ENTITY_ID' => 'HLBLOCK_' . $hlblock,
+            'XML_ID' => 'UF_TYPE',
+        ])->fetch();
+
+        $type = (new \CUserFieldEnum())->GetList([], [
+            'USER_FIELD_ID' => $userField['ID'],
+            'XML_ID' => 'status',
+        ])->fetch();
+
+        $pushMessage = (new ApiPushMessage())
+            ->setActive(true)
+            ->setMessage($text)
+            ->setUserIds([$parameters['userId']])
+            ->setEventId($parameters['accountNumber'])
+            ->setStartSend(new \DateTime())
+            ->setTypeId($type['ID']);
+
+        $data = $this->transformer->toArray(
+            $pushMessage,
+            SerializationContext::create()->setGroups([CrudGroups::CREATE])
+        );
+
+        $hlBlockPushMessages = Application::getHlBlockDataManager('bx.hlblock.pushmessages');
+        $hlBlockPushMessages->add($data);
+    }
+
+    /**
      * @param Order $order
      *
      * @return array
@@ -452,6 +520,8 @@ class NotificationService implements LoggerAwareInterface
                 ]
             );
 
+            $result['userId'] = $order->getUserId();
+            $result['orderId'] = $order->getId();
             $result['accountNumber'] = $order->getField('ACCOUNT_NUMBER');
             $result['dcDelivery'] = (bool)$properties['SHIPMENT_PLACE_CODE'];
             $result['phone'] = $properties['PHONE'];
@@ -488,6 +558,7 @@ class NotificationService implements LoggerAwareInterface
 
     /**
      * @param array $parameters
+     * @throws ApplicationCreateException
      */
     protected function sendNewUserSms(array $parameters): void
     {
@@ -673,6 +744,7 @@ class NotificationService implements LoggerAwareInterface
 
                     $smsTemplate = 'FourPawsSaleBundle:Sms:order.subscribe.upcoming.delivery.html.php';
                     $this->sendSms($smsTemplate, $parameters);
+                    $this->addPushMessage($smsTemplate, $parameters);
                     $this->smsService->markAlreadySent($smsEventName, $smsEventKey);
                 }
             }

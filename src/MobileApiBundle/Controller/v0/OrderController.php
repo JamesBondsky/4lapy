@@ -1,6 +1,6 @@
 <?php
 
-/*
+/**
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
@@ -10,35 +10,88 @@ use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Request\OrderInfoRequest;
 use FourPaws\MobileApiBundle\Dto\Request\OrderStatusHistoryRequest;
+use FourPaws\MobileApiBundle\Dto\Request\PaginationRequest;
 use FourPaws\MobileApiBundle\Dto\Response\OrderInfoResponse;
 use FourPaws\MobileApiBundle\Dto\Response\OrderListResponse;
 use FourPaws\MobileApiBundle\Dto\Response\OrderStatusHistoryResponse;
+use FourPaws\PersonalBundle\Repository\OrderRepository;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
+use FourPaws\MobileApiBundle\Services\Api\OrderService as ApiOrderService;
 
+/**
+ * Class PushController
+ * @package FourPaws\MobileApiBundle\Controller
+ * @Security("has_role('REGISTERED_USERS')")
+ */
 class OrderController extends FOSRestController
 {
     /**
-     * @Rest\Get(path="/order_list")
-     * @see OrderListResponse
+     * @var ApiOrderService
      */
-    public function getOrderListAction()
+    private $apiOrderService;
+
+    public function __construct(
+        ApiOrderService $apiOrderService
+    )
     {
+        $this->apiOrderService = $apiOrderService;
+    }
+    /**
+     * @Rest\Get(path="/order_list_v2/")
+     * @Rest\View()
+     * @param PaginationRequest $paginationRequest
+     * @param OrderRepository $orderRepository
+     * @return OrderListResponse
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
+     */
+    public function getOrderListAction(PaginationRequest $paginationRequest, OrderRepository $orderRepository)
+    {
+        $orders = $this->apiOrderService->getList($paginationRequest)->getValues();
+        $pagination = $orderRepository->getNav();
+
+        return (new OrderListResponse())
+            ->setOrderList($orders)
+            ->setTotalItems($pagination->getRecordCount())
+            ->setTotalPages($pagination->getPageCount())
+        ;
     }
 
     /**
-     * @Rest\Get(path="/order_status_history")
-     * @see OrderStatusHistoryRequest
-     * @see OrderStatusHistoryResponse
+     * @Rest\Get(path="/order_status_history/")
+     * @Rest\View()
+     * @param OrderStatusHistoryRequest $orderStatusHistoryRequest
+     * @return OrderStatusHistoryResponse
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
-    public function getOrderStatusHistoryAction()
+    public function getOrderStatusHistoryAction(OrderStatusHistoryRequest $orderStatusHistoryRequest)
     {
+        $orderNumber = $orderStatusHistoryRequest->getOrderNumber();
+        $statusHistory = $this->apiOrderService->getHistoryForCurrentUser($orderNumber);
+        return new OrderStatusHistoryResponse($statusHistory);
     }
 
     /**
-     * @Rest\Get(path="/order_info")
-     * @see OrderInfoRequest
-     * @see OrderInfoResponse
+     * @Rest\Get(path="/order_info/")
+     * @Rest\View()
+     * @param OrderInfoRequest $orderInfoRequest
+     * @return OrderInfoResponse
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
-    public function getOrderInfoAction()
+    public function getOrderInfoAction(OrderInfoRequest $orderInfoRequest)
     {
+        $orderNumber = $orderInfoRequest->getOrderNumber();
+        $order = $this->apiOrderService->getOneByNumberForCurrentUser($orderNumber);
+        return new OrderInfoResponse($order);
     }
 }
