@@ -3,6 +3,7 @@
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
@@ -277,15 +278,8 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
         }
     }
 
-    /**
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
-     */
     protected function addNotFoundUserPets()
     {
-        /** @var UserRepository $userRepo */
-        $userRepo = Application::getInstance()->getContainer()->get(UserRepository::class);
         foreach ($this->needUpdatePets as $userID => $petsFromOldSite) {
             $petsDiff = [];
             $petsFormNewSite = ($this->foundUsersPets[$userID]) ?: [];
@@ -302,11 +296,7 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
                 }
             }
             if (!empty($petsDiff)) {
-                /** Получаем объект пользака */
-                $curUser = $userRepo->find($userID);
-                if ($curUser) {
-                    $this->createUserPets($curUser, $petsDiff);
-                }
+                $this->createUserPets($userID, $petsDiff);
             }
         }
     }
@@ -325,6 +315,7 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
     /**
      * Читает весь файл
      *
+     * @param $file
      * @return array
      */
     private function readFromFile($file)
@@ -375,19 +366,36 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
         ];
 
         $userTmp = [];
-        foreach ($this->usersPart as $userID => &$userData) {
+        foreach ($this->usersPart as $userIDFromOldSite => &$userData) {
             if ($userData['EMAIL'][0] == 7) {
                 $userData['EMAIL'] = substr($userData['EMAIL'], 1);
             }
             if ($userData['PERSONAL_PHONE'][0] == 7) {
                 $userData['PERSONAL_PHONE'] = substr($userData['PERSONAL_PHONE'], 1);
             }
-            $filter[0][] = [
-                'EMAIL'          => $userData['EMAIL'],
-                'PERSONAL_PHONE' => $userData['PERSONAL_PHONE']
-            ];
-            $userTmp[$userData['EMAIL'] . $userData['PERSONAL_PHONE']] = $userID;
+            if ($userData['LOGIN'][0] == 7) {
+                $userData['LOGIN'] = substr($userData['LOGIN'], 1);
+            }
+            if ($userData['EMAIL']) {
+                $filter[0][] = [
+                    'EMAIL'          => $userData['EMAIL'],
+                    'PERSONAL_PHONE' => $userData['PERSONAL_PHONE']
+                ];
+                $userTmp[$userData['EMAIL'] . $userData['PERSONAL_PHONE']] = $userIDFromOldSite;
+            } else {
+                $filter[0][] = [
+                    'LOGIN' => $userData['LOGIN'],
+                ];
+                $filter[0][] = [
+                    'PERSONAL_PHONE' => $userData['PERSONAL_PHONE'],
+                ];
+                $userTmp[$userData['LOGIN']] = $userIDFromOldSite;
+                $userTmp[$userData['PERSONAL_PHONE']] = $userIDFromOldSite;
+            }
+
         }
+
+        unset($userIDFromOldSite);
 
         $select = array_merge(static::MAPPING, [static::DISCOUNT_USER_FIELD_CODE]);
         $foundUsers = [];
@@ -399,7 +407,17 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
         if ($dbRes->getSelectedRowsCount() > 0) {
             while ($foundUser = $dbRes->fetch()) {
                 $userIDFromOldSite = $userTmp[$foundUser['EMAIL'] . $foundUser['PERSONAL_PHONE']];
+                if (!$userIDFromOldSite) {
+                    $userIDFromOldSite = $userTmp[$foundUser['LOGIN']];
+                }
+                if (!$userIDFromOldSite) {
+                    $userIDFromOldSite = $userTmp[$foundUser['PERSONAL_PHONE']];
+                }
+                if (!$userIDFromOldSite) {
+                    continue;
+                }
                 $foundUsers[$userIDFromOldSite] = $foundUser;
+                unset($userIDFromOldSite);
             }
         }
 
@@ -413,8 +431,6 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
     {
         global $DB;
         $cUser = new CUser;
-        /** @var UserRepository $userRepo */
-        $userRepo = Application::getInstance()->getContainer()->get(UserRepository::class);
         foreach ($this->needCreateUsers as $userOldId => &$userData) {
             try {
                 $arPets = $userData[static::PET_MAP] ?: [];
@@ -430,6 +446,11 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
                 }
 
                 $userData['GROUP_ID'] = static::USER_GROUPS;
+
+                //@fastorder.ru && @register.phone
+                if (strpos($userData['EMAIL'], '@fastorder.ru') !== false || strpos($userData['EMAIL'], '@register.phone') !== false) {
+                    $userData['EMAIL'] = '';
+                }
 
                 /** удаляем 7ку из логина/email`a и телефона */
                 if ($userData['LOGIN'][0] == 7) {
@@ -457,14 +478,12 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
                         UserTable::delete($userID);
                         $this->log()->error('Не удалось обновить хэш пароля пользователя (удален): ' . $e->getMessage(), $userData);
                     }
-                    /** Получаем объект пользака */
-                    $curUser = $userRepo->find($userID);
                     /** Создаем питомцев для нового пользователя. если они есть */
                     if (!empty($arPets)) {
-                        $this->createUserPets($curUser, $arPets);
+                        $this->createUserPets($userID, $arPets);
                     }
                     /** Добавляем задачу в рэббит на обновление заказов */
-                    $this->addManzanaTask($curUser);
+                    $this->addManzanaTask($userID);
                 } else {
                     $userData['PERSONAL_BIRTHDAY'] = $personalBirthdayStr;
                     $curUserFound = null;
@@ -504,26 +523,11 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
 
 
     /**
-     * @param User $user
-     */
-    private function addManzanaTask(User $user)
-    {
-        /** @var ManzanaService $manzanaService */
-        $manzanaService = Application::getInstance()->getContainer()->get('manzana.service');
-        if ($user) {
-            $manzanaService->importUserOrdersAsync($user);
-        }
-    }
-
-
-    /**
-     * @param User $user
+     * @param $userID
      * @param $arPets
-     *
      */
-    private function createUserPets(User $user, $arPets)
+    private function createUserPets($userID, $arPets)
     {
-        $userID = $user->getId();
         /** @var PetService $petService */
         $petService = Application::getInstance()->getContainer()->get('pet.service');
         foreach ($arPets as $pet) {
@@ -594,7 +598,12 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
         foreach (static::UPDATE_USER_FIELDS as $field) {
             if ($foundUser[$field] == '' && $oldUser[$field]) {
                 if ($field == 'PERSONAL_BIRTHDAY') {
-                    $updateFields[$field] = new DateTime($oldUser[$field], 'Y-m-d H-i-s');
+                    try {
+                        $date = new DateTime($oldUser[$field], 'Y-m-d H-i-s');
+                        $updateFields[$field] = $date;
+                    } catch (ObjectException $e) {
+                        continue;
+                    }
                 } else {
                     $updateFields[$field] = $oldUser[$field];
                 }
@@ -608,11 +617,31 @@ class UserControlImport extends UserControl implements LoggerAwareInterface
         if (count($updateFields)) {
             $cUser = new CUser;
             $res = $cUser->Update($foundUser['ID'], $updateFields);
+            $this->addManzanaTask($foundUser['ID']);
             if (!$res) {
                 $this->log()->error('Невозможно обновить данные пользователя ' . $foundUser['ID'] . ' ' . $cUser->LAST_ERROR, $updateFields);
             } else {
                 $this->log()->notice('Данные пользователя ' . $foundUser['ID'] . ' успешно обновлены', $updateFields);
             }
+        }
+    }
+
+    /**
+     * @param $userID
+     */
+    private function addManzanaTask($userID)
+    {
+        /** @var UserRepository $userRepo */
+        $userRepo = Application::getInstance()->getContainer()->get(UserRepository::class);
+        /** @var ManzanaService $manzanaService */
+        $manzanaService = Application::getInstance()->getContainer()->get('manzana.service');
+        /** Получаем объект пользака */
+        try {
+            $curUser = $userRepo->find($userID);
+            if ($curUser) {
+                $manzanaService->importUserOrdersAsync($curUser);
+            }
+        } catch (SystemException| ArgumentException| ObjectPropertyException $e) {
         }
     }
 }
