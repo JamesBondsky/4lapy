@@ -102,20 +102,11 @@ class ApiPushEventRepository implements ApiPushEventRepositoryInterface
         if ($dbResult->getSelectedRowsCount() === 0) {
             return [];
         }
-
-        $pushEvents = $this->transformer->fromArray(
+        return $this->transformer->fromArray(
             $dbResult->fetchAll(),
             'array<' . ApiPushEvent::class . '>',
             DeserializationContext::create()->setGroups([CrudGroups::READ])
         );
-
-        /** @var ApiPushEvent $pushEvent */
-        foreach ($pushEvents as $pushEvent) {
-            $userField = \CUserFieldEnum::getList([], ['ID' => $pushEvent->getMessageType()])->fetch();
-            $pushEvent->setMessageType($userField['XML_ID']);
-        }
-
-        return $pushEvents;
     }
 
     /**
