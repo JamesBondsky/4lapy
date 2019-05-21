@@ -81,7 +81,7 @@ class DostavistaOrdersCancelConsumer extends DostavistaConsumerBase
             $order->save();
             $result = static::MSG_ACK;
         } catch (DostavistaOrdersAddConsumerException|\Exception $e) {
-            $this->log()->error('Dostavista error, code: ' . $e->getCode() . ' message: ' . $e->getMessage());
+            $this->log()->error('Dostavista error, code: ' . $e->getCode() . ' message: ', [$e->getMessage()]);
         }
 
         Event::enableEvents();
