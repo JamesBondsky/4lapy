@@ -39,8 +39,7 @@ class KkmController extends Controller
      *
      * @return JsonResponse
      */
-    /**
-    public function updateToken(Request $request): JsonResponse
+    /*public function updateToken(Request $request): JsonResponse
     {
         //validate old token
         $token = $request->headers->get('token');
@@ -75,8 +74,7 @@ class KkmController extends Controller
             ],
             200
         );
-    }
-    */
+    }*/
 
     /**
      * @Route("suggestions/address/", methods={"GET"})
@@ -94,10 +92,10 @@ class KkmController extends Controller
         if ($res['success'] == false) {
             return new JsonResponse(
                 [
-                    'code'    => 200,
+                    'code'    => $res['code'],
                     'message' => $res['error']
                 ],
-                200
+                $res['code']
             );
         }
 
@@ -107,7 +105,7 @@ class KkmController extends Controller
         if ($res['success'] == false) {
             return new JsonResponse(
                 [
-                    'code'    => 200,
+                    'code'    => $res['code'],
                     'message' => $res['error']
                 ],
                 200
@@ -119,7 +117,7 @@ class KkmController extends Controller
             [
                 'suggestions' => $res['suggestions']
             ],
-            200
+            KkmService::RESPONSE_STATUSES['success']['code']
         );
     }
 
@@ -140,10 +138,10 @@ class KkmController extends Controller
         if ($res['success'] == false) {
             return new JsonResponse(
                 [
-                    'code'    => 200,
+                    'code'    => $res['code'],
                     'message' => $res['error']
                 ],
-                200
+                $res['code']
             );
         }
 
@@ -152,10 +150,10 @@ class KkmController extends Controller
         if ($res['success'] == false) {
             return new JsonResponse(
                 [
-                    'code'    => 200,
+                    'code'    => $res['code'],
                     'message' => $res['error']
                 ],
-                200
+                $res['code']
             );
         }
 
@@ -163,7 +161,7 @@ class KkmController extends Controller
             [
                 'address' => $res['address']
             ],
-            200
+            KkmService::RESPONSE_STATUSES['success']['code']
         );
     }
 
@@ -183,10 +181,10 @@ class KkmController extends Controller
         if ($res['success'] == false) {
             return new JsonResponse(
                 [
-                    'code'    => 200,
+                    'code'    => $res['code'],
                     'message' => $res['error']
                 ],
-                200
+                $res['code']
             );
         }
 
@@ -202,7 +200,7 @@ class KkmController extends Controller
         if ($res['success'] == false) {
             return new JsonResponse(
                 [
-                    'code'    => 200,
+                    'code'    => $res['code'],
                     'message' => $res['error']
                 ],
                 200
@@ -211,7 +209,7 @@ class KkmController extends Controller
 
         return new JsonResponse(
             $res['delivery_rules'],
-            200
+            KkmService::RESPONSE_STATUSES['success']['code']
         );
     }
 }

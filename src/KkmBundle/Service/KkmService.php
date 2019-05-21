@@ -8,6 +8,7 @@ use Bitrix\Sale\UserMessageException;
 use Exception;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\OfferCollection;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
@@ -55,6 +56,29 @@ class KkmService implements LoggerAwareInterface
         'house'    => 'house'
     ];
 
+    const RESPONSE_STATUSES = [
+        'success'        => [
+            'code'    => 200,
+            'message' => 'Успешно'
+        ],
+        'success_empty'  => [
+            'code'    => 204,
+            'message' => 'Успешно, но тело ответа пустое'
+        ],
+        'syntax_error'   => [
+            'code'    => 400,
+            'message' => 'В запросе синтаксическая ошибка'
+        ],
+        'unauthorized'   => [
+            'code'    => 401,
+            'message' => 'Для доступа к запрашиваемому ресурсу требуется аутентификация'
+        ],
+        'internal_error' => [
+            'code'    => 500,
+            'message' => 'Внутренняя ошибка сервера. Обратитесь к администратору сайта'
+        ]
+    ];
+
     /**
      * @var DaDataService $daDataService
      */
@@ -92,7 +116,8 @@ class KkmService implements LoggerAwareInterface
         if (strlen($token) != static::TOKEN_LENGTH) {
             $res = [
                 'success' => false,
-                'error'   => 'Token Length error!'
+                'error'   => static::RESPONSE_STATUSES['syntax_error']['message'] . ': поле токена слишком короткое или пустое!',
+                'code'    => static::RESPONSE_STATUSES['syntax_error']['code']
             ];
         } else {
             try {
@@ -105,7 +130,8 @@ class KkmService implements LoggerAwareInterface
                     case 0:
                         $res = [
                             'success' => false,
-                            'error'   => 'Token not Found!'
+                            'error'   => static::RESPONSE_STATUSES['unauthorized']['message'] . ': данный токен не найден в системе!',
+                            'code'    => static::RESPONSE_STATUSES['unauthorized']['code']
                         ];
                         break;
                     case 1:
@@ -120,19 +146,21 @@ class KkmService implements LoggerAwareInterface
                     default:
                         $res = [
                             'success' => false,
-                            'error'   => 'Multiple token Found!'
+                            'error'   => static::RESPONSE_STATUSES['unauthorized']['message'] . ': по данному токену найдено несколько записей в таблице!',
+                            'code'    => static::RESPONSE_STATUSES['unauthorized']['code']
                         ];
                 }
             } catch (ObjectPropertyException|ArgumentException|SystemException $e) {
                 $res = [
                     'success' => false,
-                    'error'   => $e->getMessage()
+                    'error'   => $e->getMessage(),
+                    'code'    => $e->getCode()
                 ];
             }
         }
 
         if (!$res['success']) {
-            $this->log()->error($res['error'], ['token' => $token]);
+            $this->log()->error($res['code'] . ' ' . $res['error'], ['token' => $token]);
         }
 
         return $res;
@@ -155,7 +183,7 @@ class KkmService implements LoggerAwareInterface
      * @param string $id
      * @return array
      */
-    public function updateToken(string $id): array
+    /*public function updateToken(string $id): array
     {
         try {
             $token = $this->generateToken();
@@ -183,7 +211,7 @@ class KkmService implements LoggerAwareInterface
         }
 
         return $res;
-    }
+    }*/
 
     /**
      * @param string $query
@@ -194,13 +222,19 @@ class KkmService implements LoggerAwareInterface
         //check text length
         try {
             if (mb_strlen($query) < 5) {
-                throw new KkmException('Text is too short', 200);
+                throw new KkmException(
+                    static::RESPONSE_STATUSES['syntax_error']['message'] . ': текст слишком короткий',
+                    static::RESPONSE_STATUSES['syntax_error']['code']
+                );
             }
 
             $suggestions = $this->daDataService->getKkmSuggestions($query);
 
             if (count($suggestions) == 0) {
-                throw new KkmException('Suggestions not found by query', 200);
+                throw new KkmException(
+                    static::RESPONSE_STATUSES['success_empty']['message'] . ': по вводимым данным подсказки не найдены',
+                    static::RESPONSE_STATUSES['success_empty']['code']
+                );
             }
 
             foreach ($suggestions as $key => &$suggestion) {
@@ -230,7 +264,7 @@ class KkmService implements LoggerAwareInterface
         }
 
         if (!$res['success']) {
-            $this->log()->error($res['error']);
+            $this->log()->error($res['code'] . ' ' . $res['error'], ['query' => $query]);
         }
 
         return $res;
@@ -244,20 +278,29 @@ class KkmService implements LoggerAwareInterface
     {
         try {
             if (mb_strlen($query) < 5) {
-                throw new KkmException('Text is too short', 200);
+                throw new KkmException(
+                    static::RESPONSE_STATUSES['syntax_error']['message'] . ': адрес слишком короткий',
+                    static::RESPONSE_STATUSES['syntax_error']['code']
+                );
             }
 
             $xmlResponse = simplexml_load_file(static::YANDEX_GEOCODE_URL . urlencode($query) . '&key=' . urlencode(static::YANDEX_API_KEY) . '&results=1');
 
             if (!$xmlResponse instanceof SimpleXMLElement) {
-                throw new KkmException('Yandex api failed', 200);
+                throw new KkmException(
+                    static::RESPONSE_STATUSES['internal_error']['message'] . ': ошибка запроса в яндекс АПИ',
+                    static::RESPONSE_STATUSES['internal_error']['code']
+                );
             }
 
             $arrayResponse = json_decode(json_encode($xmlResponse), true);
             $found = $arrayResponse['GeoObjectCollection']['metaDataProperty']['GeocoderResponseMetaData']['found'];
 
             if ($found == 0) {
-                throw new KkmException('Object by query not found', 200);
+                throw new KkmException(
+                    static::RESPONSE_STATUSES['success_empty']['message'] . ': не найдено совпадений для данного адреса',
+                    static::RESPONSE_STATUSES['success_empty']['code']
+                );
             }
 
             $geoObject = $arrayResponse['GeoObjectCollection']['featureMember']['GeoObject'];
@@ -304,7 +347,7 @@ class KkmService implements LoggerAwareInterface
         }
 
         if (!$res['success']) {
-            $this->log()->error($res['error']);
+            $this->log()->error($res['code'] . ' ' . $res['error'], ['query' => $query]);
         }
 
         return $res;
@@ -320,20 +363,32 @@ class KkmService implements LoggerAwareInterface
     {
         try {
             if (!$kladrId) {
-                throw new KkmException('kladr_id is too short', 200);
+                throw new KkmException(
+                    static::RESPONSE_STATUSES['syntax_error']['message'] . ': кладр ID слишком короткий',
+                    static::RESPONSE_STATUSES['syntax_error']['code']
+                );
             }
 
             if (count($products) == 0) {
-                throw new KkmException('empty products array', 200);
+                throw new KkmException(
+                    static::RESPONSE_STATUSES['syntax_error']['message'] . ': товары не переданы',
+                    static::RESPONSE_STATUSES['syntax_error']['code']
+                );
             }
 
             try {
                 $location = $this->locationService->findLocationByExtService('KLADR', $kladrId);
                 if (count($location) == 0) {
-                    throw new KkmException('Bitrix location not found by kladr_id', 200);
+                    throw new KkmException(
+                        static::RESPONSE_STATUSES['internal_error']['message'] . ': не найдено местоположение Битрикса по кладр ID: ' . $kladrId,
+                        static::RESPONSE_STATUSES['internal_error']['code']
+                    );
                 }
             } catch (SystemException|ObjectPropertyException|ArgumentException $e) {
-                throw new KkmException($e->getMessage(), $e->getCode());
+                throw new KkmException(
+                    static::RESPONSE_STATUSES['internal_error']['message'] . $e->getMessage(),
+                    static::RESPONSE_STATUSES['internal_error']['code']
+                );
             }
             $location = current($location)['CODE'];
 
@@ -356,11 +411,29 @@ class KkmService implements LoggerAwareInterface
                 ->exec();
 
             if ($offers->count() == 0) {
-                throw new KkmException('Offers not found', 200);
+                throw new KkmException(
+                    static::RESPONSE_STATUSES['syntax_error']['message'] . ': не найдены товары',
+                    static::RESPONSE_STATUSES['syntax_error']['code']
+                );
             }
 
             if ($offers->count() != count($quantities)) {
-                throw new KkmException('Some offers not found', 200); //TODO кинуть экспешн что не все офферы найдены и какие имеено
+                $missedOffers = [];
+                foreach ($products as $product) {
+                    /** @var OfferCollection $filteredCollection */
+                    $filteredCollection = $offers->filter(function ($offer) use ($product) {
+                        /** @var Offer $offer */
+                        return $offer->getXmlId() == $product['uid'];
+                    });
+                    if ($filteredCollection->count() == 0) {
+                        $missedOffers[] = $product['uid'];
+                    }
+                    unset($filteredCollection);
+                }
+                throw new KkmException(
+                    static::RESPONSE_STATUSES['syntax_error']['message'] . ': товары ' . implode(', ', $missedOffers) . ' не найдены на сайте',
+                    static::RESPONSE_STATUSES['syntax_error']['code']
+                );
             }
 
             try {
@@ -370,7 +443,10 @@ class KkmService implements LoggerAwareInterface
             ObjectNotFoundException|UserMessageException|
             SystemException|ApplicationCreateException|
             NotFoundException|StoreBundleNotFoundException $e) {
-                throw new KkmException($e->getMessage(), $e->getCode());
+                throw new KkmException(
+                    static::RESPONSE_STATUSES['internal_error']['message'] . $e->getMessage(),
+                    static::RESPONSE_STATUSES['internal_error']['code']
+                );
             }
 
             $rc = false;
@@ -391,7 +467,10 @@ class KkmService implements LoggerAwareInterface
                             $deliveryDates[] = FormatDate('d.m.Y', $nextDelivery->getDeliveryDate()->getTimestamp());
                         }
                     } catch (ArgumentException|ApplicationCreateException|NotFoundException| StoreBundleNotFoundException $e) {
-                        throw new KkmException($e->getMessage(), $e->getCode());
+                        throw new KkmException(
+                            static::RESPONSE_STATUSES['internal_error']['message'] . $e->getMessage(),
+                            static::RESPONSE_STATUSES['internal_error']['code']
+                        );
                     }
                     foreach ($delivery->getAvailableIntervals() as $interval) {
                         $intervals[] = str_replace(' ', '', (string)$interval);
@@ -400,7 +479,10 @@ class KkmService implements LoggerAwareInterface
             }
 
             if (!$innerDeliveryAvailable) {
-                throw new KkmException('Delivery 4lapy is not available', 200);
+                throw new KkmException(
+                    static::RESPONSE_STATUSES['internal_error']['message'] . ': доставка не разрешена для заданного местоположения',
+                    static::RESPONSE_STATUSES['internal_error']['code']
+                );
             }
 
             $deliveryRules = [
