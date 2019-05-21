@@ -44,6 +44,7 @@ use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\ShopInfoService;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
+use FourPaws\StoreBundle\Service\ShopInfoService as StoreShopInfoService;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Protobuf\Exception;
 use Psr\Log\LoggerAwareInterface;
@@ -88,6 +89,11 @@ class OrderController extends Controller implements LoggerAwareInterface
     private $shopInfoService;
 
     /**
+     * @var StoreShopInfoService
+     */
+    private $storeShopInfoService;
+
+    /**
      * @var DeliveryService
      */
     private $deliveryService;
@@ -106,6 +112,7 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @param OrderSubscribeService      $orderSubscribeService
      * @param UserAuthorizationInterface $userAuthProvider
      * @param ShopInfoService            $shopInfoService
+     * @param StoreShopInfoService       $storeShopInfoService
      * @param ReCaptchaService           $recaptcha
      */
     public function __construct(
@@ -115,6 +122,7 @@ class OrderController extends Controller implements LoggerAwareInterface
         OrderSubscribeService $orderSubscribeService,
         UserAuthorizationInterface $userAuthProvider,
         ShopInfoService $shopInfoService,
+        StoreShopInfoService $storeShopInfoService,
         ReCaptchaService $recaptcha
     )
     {
@@ -124,6 +132,7 @@ class OrderController extends Controller implements LoggerAwareInterface
         $this->orderSubscribeService = $orderSubscribeService;
         $this->userAuthProvider = $userAuthProvider;
         $this->shopInfoService = $shopInfoService;
+        $this->storeShopInfoService = $storeShopInfoService;
         $this->recaptcha = $recaptcha;
     }
 
@@ -139,14 +148,19 @@ class OrderController extends Controller implements LoggerAwareInterface
     {
         $storage = $this->orderStorageService->getStorage();
 
+        $shopInfo = $this->shopInfoService->toArray(
+            $this->shopInfoService->getShopInfo(
+                $storage,
+                $this->orderStorageService->getPickupDelivery($storage)
+            )
+        );
+        array_walk($shopInfo['items'], [$this->storeShopInfoService, 'locationTypeSortDecorate']);
+        usort($shopInfo['items'], [$this->storeShopInfoService, 'shopCompareByLocationType']);
+        array_walk($shopInfo['items'], [$this->storeShopInfoService, 'locationTypeSortUndecorate']);
+
         return JsonSuccessResponse::createWithData(
             'Подгрузка успешна',
-            $this->shopInfoService->toArray(
-                $this->shopInfoService->getShopInfo(
-                    $storage,
-                    $this->orderStorageService->getPickupDelivery($storage)
-                )
-            )
+            $shopInfo
         );
     }
 
