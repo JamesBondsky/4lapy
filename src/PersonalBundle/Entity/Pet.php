@@ -53,7 +53,6 @@ class Pet extends BaseEntity
      * @Serializer\Type("int")
      * @Serializer\SerializedName("UF_TYPE")
      * @Serializer\Groups(groups={"create","read","update"})
-     * @Assert\NotBlank(groups={"create"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $type;
@@ -72,7 +71,6 @@ class Pet extends BaseEntity
      * @Serializer\Type("int")
      * @Serializer\SerializedName("UF_BREED_ID")
      * @Serializer\Groups(groups={"create","read","update"})
-     * @Assert\NotBlank(groups={"create"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $breedId;
