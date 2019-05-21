@@ -45,11 +45,6 @@ form:
     type: annotation
     prefix: '/form'
 
-kiosk:
-    resource: '@FourPawsKioskBundle/AjaxController'
-    type: annotation
-    prefix: '/kiosk'
-
 autosort.property.hint:
   path: /autosort/property-hint/{propertyId}
   defaults: { _controller: '\FourPaws\ProductAutoSort\Controller\AutosortController::propertyHint' }
