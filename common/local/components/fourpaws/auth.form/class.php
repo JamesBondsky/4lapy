@@ -31,6 +31,7 @@ use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\ProtectorHelper;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\Model\City;
 use FourPaws\PersonalBundle\Service\PetService;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
@@ -124,6 +125,10 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 }
 
                 $this->arResult['NAME'] = $curUser->getName() ?? $curUser->getLogin();
+            }
+            if (KioskService::isKioskMode() && !$this->userAuthorizationService->isAuthorized()) {
+                $this->arResult['KIOSK'] = true;
+                $this->arResult['AUTH_LINK'] = KioskService::getAuthLink();
             }
             $this->setSocial();
             unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
