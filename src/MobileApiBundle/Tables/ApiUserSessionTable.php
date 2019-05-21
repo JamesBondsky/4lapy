@@ -53,24 +53,26 @@ class ApiUserSessionTable extends DataManager
             'HTTP_X_FORWARDED_FOR' => new StringField('HTTP_X_FORWARDED_FOR', [
                 'default_value' => $_SERVER['HTTP_X_FORWARDED_FOR'],
             ]),
-            'FUSER_ID'             => new IntegerField('FUSER_ID', [
-                'default_value' => null,
-            ]),
             'TOKEN'                => new StringField('TOKEN', [
                 'required'      => true,
                 'unique'        => true,
                 'default_value' => md5(random_bytes(32)),
             ]),
-            new ReferenceField(
-                'FUSER',
-                'Bitrix\Sale\Internals\Fuser',
-                ['=this.FUSER_ID' => 'ref.ID'],
-                ['join_type' => 'INNER']
-            ),
+            'USER_ID'              => new IntegerField('USER_ID', []),
+            'FUSER_ID'             => new IntegerField('FUSER_ID', [ // это поле используется, в случае если пользователь не авторизован чтобы узнать его корзину
+                'default_value' => null,
+            ]),
+            'PLATFORM'                => new StringField('PLATFORM', [
+                'default_value' => '',
+            ]),
+            'PUSH_TOKEN'                => new StringField('PUSH_TOKEN', [
+                'unique'        => true,
+                'default_value' => '',
+            ]),
             new ReferenceField(
                 'USER',
                 'Bitrix\Main\User',
-                ['=ref.ID' => 'this.FUSER.USER_ID']
+                ['=this.USER_ID' => 'ref.ID']
             ),
 
         ];

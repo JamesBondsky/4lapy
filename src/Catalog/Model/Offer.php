@@ -35,6 +35,7 @@ use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\BitrixOrm\Model\Interfaces\ResizeImageInterface;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
+use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Query\ShareQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
@@ -43,12 +44,14 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\CatalogBundle\Service\BrandService;
 use FourPaws\CatalogBundle\Service\CatalogGroupService;
+use FourPaws\CatalogBundle\Service\SubscribeDiscountService;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
+use FourPaws\SaleBundle\Helper\PriceHelper;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StockService;
@@ -67,6 +70,7 @@ use JMS\Serializer\SerializerInterface;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Symfony\Component\EventDispatcher\Tests\SubscriberService;
 
 /**
  * Class Offer
@@ -1663,22 +1667,26 @@ class Offer extends IblockElement
     public function getShare(): ShareCollection
     {
         if ($this->share === null) {
-            $this->share = (new ShareQuery())->withOrder(['SORT' => 'ASC', 'ACTIVE_FROM' => 'DESC'])->withFilter(
-                [
+            $this->share = (new ShareQuery())
+                ->withOrder([
+                    'SORT' => 'ASC',
+                    'ACTIVE_FROM' => 'DESC'
+                ])
+                ->withFilter([
                     'ACTIVE'            => 'Y',
                     'ACTIVE_DATE'       => 'Y',
                     'PROPERTY_PRODUCTS' => $this->getXmlId(),
-                ]
-            )->withSelect(
-                [
+                ])
+                ->withSelect([
                     'ID',
                     'NAME',
                     'IBLOCK_ID',
+                    'PREVIEW_PICTURE',
                     'PREVIEW_TEXT',
                     'DATE_ACTIVE_FROM',
                     'DATE_ACTIVE_TO',
-                ]
-            )->exec();
+                ])
+                ->exec();
         }
 
         return $this->share;
@@ -2245,6 +2253,29 @@ class Offer extends IblockElement
     }
 
     /**
+     * Возвращает текст о наличии для карточки товара на сайте и в приложении
+     * @return string
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     */
+    public function getAvailabilityText(): string
+    {
+        if ($this->isByRequest() && $this->isAvailable()) {
+            $availability = 'Только под заказ';
+        } else if (!$this->isAvailable()) {
+            $availability = 'Нет в наличии';
+        } else {
+            $availability = 'В наличии';
+        }
+        return $availability;
+    }
+
+    public function getPickupInfo()
+    {
+
+    }
+
+    /**
      * @return float|null
      */
     public function getPriceAction(): ?float
@@ -2309,4 +2340,44 @@ class Offer extends IblockElement
         return (null !== $this->getCurrentRegionPrice())
             && !in_array($this->getCurrentRegionPrice()->getCatalogGroupId(), [self::CATALOG_GROUP_ID_BASE, self::CATALOG_GROUP_ID_MOSCOW]);
     }
+
+    /**
+     * Процент скидки по подписке
+     *
+     * @return int
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     */
+    public function getSubscribeDiscount()
+    {
+        $discountValue = null;
+
+        /** @var SubscribeDiscountService $subscribeDiscountService */
+        $subscribeDiscountService = Application::getInstance()->getContainer()->get(SubscribeDiscountService::class);
+        if($discount = $subscribeDiscountService->getBestDiscount($this)){
+            $discountValue = $subscribeDiscountService->getDiscountValue($discount);
+        }
+
+        return $discountValue ?: 0;
+    }
+
+    /**
+     * Цена по подписке
+     *
+     * @return float
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     */
+    public function getSubscribePrice()
+    {
+        $discountValue = $this->getSubscribeDiscount();
+        return $discountValue > 0 ? \round($this->getPrice()*((100-$discountValue)/100), 1, PHP_ROUND_HALF_DOWN) : $this->getPrice();
+    }
+
 }

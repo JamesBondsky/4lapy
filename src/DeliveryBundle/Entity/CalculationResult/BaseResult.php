@@ -92,6 +92,11 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     protected $shipmentResults;
 
     /**
+     * @var string
+     */
+    protected $currency = '₽';
+
+    /**
      * @return \DateTime
      */
     public function getCurrentDate(): \DateTime
@@ -130,6 +135,19 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             $this->doCalculatePeriod();
         }
         return $this->deliveryDate;
+    }
+
+    /**
+     * Изменять дату доставки не предусмотрено
+     * это используется только для расчёта желаемой даты доставки
+     * в подписке на доставку
+     *
+     * @param \DateTime $date
+     */
+    public function setDeliveryDate(\DateTime $date) : CalculationResultInterface
+    {
+        $this->deliveryDate = $date;
+        return $this;
     }
 
     /**
@@ -303,6 +321,17 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         return $this;
     }
 
+    public function getCurrency()
+    {
+        return $this->currency;
+    }
+
+    public function setCurrency($currency): CalculationResultInterface
+    {
+        $this->currency = $currency;
+        return $this;
+    }
+
     /**
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -311,16 +340,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      */
     protected function doCalculateDeliveryDate(): void
     {
-        /*$start = microtime(true);
-        $setTime = function() use (&$start){
-            $start = microtime(true);
-        };
-        $getTime = function() use ($start, $setTime){
-            $setTime();
-            return ($start - microtime(true).' сек');
-        };*/
-
-            
         $date = clone $this->getCurrentDate();
         $this->deliveryDate = $date;
 

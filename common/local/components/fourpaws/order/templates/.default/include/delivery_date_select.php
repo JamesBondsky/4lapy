@@ -12,9 +12,9 @@ use FourPaws\SaleBundle\Enum\OrderStorage;
  * @var CalculationResultInterface[] $nextDeliveries
  * @var FourPawsOrderComponent       $component
  */
-
 ?>
-<select class="b-select__block b-select__block--recall b-select__block--feedback-page js-select-recovery js-change-date js-pickup-date"
+<select class="b-select__block b-select__block--recall b-select__block--feedback-page js-select-recovery js-change-date js-pickup-date <?=$isHidden ? 'js-no-valid' : ''?>"
+        <?=$isHidden ? 'disabled' : ''?>
         name="<?= $selectorName ?>">
     <option value="" disabled="disabled" selected="selected">выберите</option>
     <?php foreach ($nextDeliveries as $i => $nextDelivery) { ?>

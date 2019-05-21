@@ -31,13 +31,39 @@ if ($isAuthorized)
                 <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_FESTIVAL_REQUEST_ADD); ?>
 	            <input class="js-no-valid" type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
 	            <input class="js-no-valid" type="hidden" name="landingType" value="<?= LandingController::$festivalLanding ?>">
-                <input type="text" placeholder="ИМЯ" name="name" <?= $isAuthorized ? 'value="' . $currentUser->getName() . '"' : '' ?> />
-                <input type="text" placeholder="ФАМИЛИЯ" name="surname" <?= $isAuthorized ? 'value="' . $currentUser->getLastName() . '"' : '' ?> />
-                <input type="email" placeholder="EMAIL" name="email" <?= $isAuthorized ? 'value="' . $currentUser->getEmail() . '"' : '' ?> />
-                <input type="phone" placeholder="ТЕЛЕФОН" name="phone" <?= $isAuthorized ? 'value="' . $currentUser->getPersonalPhone() . '"' : '' ?> />
 
-                <input type="checkbox" id="agree" name="rules" /> <label for="agree">я даю своё согласие на обработку персональных данных</label>
-                <button class="join_btn">я пойду!</button>
+                <div class="form-group">
+                    <div class="field">
+                        <span class="required">*</span>
+                        <input type="text" placeholder="ИМЯ" name="name" onblur="ga('send', 'pageview', '/virtualpage/name')" <?= $isAuthorized ? 'value="' . $currentUser->getName() . '"' : '' ?> required autocomplete="off" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="field">
+                        <span class="required">*</span>
+                        <input type="text" placeholder="ФАМИЛИЯ" name="surname" onblur="ga('send', 'pageview', '/virtualpage/surname')" <?= $isAuthorized ? 'value="' . $currentUser->getLastName() . '"' : '' ?> required autocomplete="off" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="field">
+                        <span class="required">*</span>
+                        <input type="email" placeholder="EMAIL" name="email" onblur="ga('send', 'pageview', '/virtualpage/email')" <?= $isAuthorized ? 'value="' . $currentUser->getEmail() . '"' : '' ?> required autocomplete="off" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="field">
+                        <span class="required">*</span>
+                        <input type="phone" placeholder="ТЕЛЕФОН" name="phone" onblur="ga('send', 'pageview', '/virtualpage/phone')" <?= $isAuthorized ? 'value="' . $currentUser->getPersonalPhone() . '"' : '' ?> class="isPhone" required autocomplete="off" data-mask-phone />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="field field_checkbox">
+                        <input type="checkbox" id="agree" name="rules" onchange="ga('send', 'pageview', '/virtualpage/agree')" required /> <label for="agree">я даю своё согласие на обработку персональных данных <span class="required">*</span></label>
+                    </div>
+                </div>
+                <div class="form-group_submit">
+                    <button class="join_btn" onsubmit="ga('send', 'event', 'fest_go', 'submit')">я пойду!</button>
+                </div>
             </form>
         </div>
     </div>

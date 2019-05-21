@@ -14,6 +14,7 @@ use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\BasketPropertyItem;
@@ -59,7 +60,10 @@ use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\LocationBundle\Exception\AddressSplitException;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\PersonalBundle\Service\AddressService;
+use FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
@@ -70,6 +74,7 @@ use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
+use FourPaws\SaleBundle\Repository\OrderStatusRepository;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
@@ -150,6 +155,11 @@ class OrderService implements LoggerAwareInterface
     protected $orderStorageService;
 
     /**
+     * @var OrderSubscribeService
+     */
+    protected $orderSubscribeService;
+
+    /**
      * @var OrderSplitService
      */
     protected $orderSplitService;
@@ -207,6 +217,7 @@ class OrderService implements LoggerAwareInterface
      * @param LocationService                   $locationService
      * @param StoreService                      $storeService
      * @param OrderStorageService               $orderStorageService
+     * @param OrderSubscribeService             $orderSubscribeService
      * @param OrderSplitService                 $orderSplitService
      * @param UserAvatarAuthorizationInterface  $userAvatarAuthorization
      * @param UserRegistrationProviderInterface $userRegistrationProvider
@@ -224,6 +235,7 @@ class OrderService implements LoggerAwareInterface
         LocationService $locationService,
         StoreService $storeService,
         OrderStorageService $orderStorageService,
+        orderSubscribeService $orderSubscribeService,
         OrderSplitService $orderSplitService,
         UserAvatarAuthorizationInterface $userAvatarAuthorization,
         UserRegistrationProviderInterface $userRegistrationProvider,
@@ -239,6 +251,7 @@ class OrderService implements LoggerAwareInterface
         $this->deliveryService = $deliveryService;
         $this->storeService = $storeService;
         $this->orderStorageService = $orderStorageService;
+        $this->orderSubscribeService = $orderSubscribeService;
         $this->orderSplitService = $orderSplitService;
         $this->userAvatarAuthorization = $userAvatarAuthorization;
         $this->userRegistrationProvider = $userRegistrationProvider;
@@ -346,6 +359,12 @@ class OrderService implements LoggerAwareInterface
         }
 
         $selectedDelivery = clone $selectedDelivery;
+
+        // при создании из подписки выбирается желаемая дата доставки
+        if ($storage->isSubscribe()) {
+            $selectedDelivery = $this->deliveryService->getNextDeliveries($selectedDelivery, 10)[$storage->getDeliveryDate()];
+        }
+
         if (!$selectedDelivery->isSuccess()) {
             $this->log()->error('Selected delivery is not available', [
                 'fuserId' => $storage->getFuserId(),
@@ -880,6 +899,18 @@ class OrderService implements LoggerAwareInterface
         $propName = $propertyValueCollection->getPayerName();
         $propName->setValue(str_replace('#', '', $propName->getValue()));
 
+        if ($storage->isFromApp()) {
+            /** @var PropertyValue $propertyValue */
+            foreach ($propertyValueCollection as $propertyValue) {
+                $code = $propertyValue->getProperty()['CODE'];
+                if ($code === 'FROM_APP') {
+                    $value = 'Y';
+                    $propertyValue->setValue($value);
+                    break;
+                }
+            }
+        }
+
 
         if ($isDiscountEnabled) {
             Manager::enableExtendsDiscount();
@@ -1048,6 +1079,19 @@ class OrderService implements LoggerAwareInterface
                 $user->getDiscountCardNumber() ?: $storage->getDiscountCardNumber()
             )
         );
+
+        if($storage->isSubscribe()){
+            $this->setOrderPropertyByCode(
+                $order,
+                'IS_SUBSCRIBE',
+                'Y'
+            );
+            $this->setOrderPropertyByCode(
+                $order,
+                'SUBSCRIBE_ID',
+                $storage->getSubscribeId()
+            );
+        }
 
         $address = null;
         if (!$fastOrder) {
@@ -1218,6 +1262,42 @@ class OrderService implements LoggerAwareInterface
                     }
                 }
             }
+
+            // активация подписки на доставку
+            if($storage->isSubscribe()){
+                if(null === $storage->getSubscribeId()){
+                    throw new OrderSubscribeException('Susbcribe not found');
+                }
+                $subscribe = $this->orderSubscribeService->getById($storage->getSubscribeId());
+                $subscribe->setActive(true)->setOrderId($order->getId());
+
+                // привяжем созданный адрес
+                if($subscribe->getDeliveryPlace() === '0' && $storage->getAddressId() > 0){
+                    $subscribe->setDeliveryPlace($storage->getAddressId());
+                }
+
+                // привяжем пользователя
+                if(!$subscribe->getUserId()){
+                    $subscribe->setUserId($order->getUserId());
+                }
+
+                // добавим заказ в историю закзаов по подписке
+                $result = $this->orderSubscribeService->update($subscribe);
+                if($result->isSuccess()){
+                    /** @var OrderSubscribeHistoryService $orderSubscribeHistoryService */
+                    $orderSubscribeHistoryService = Application::getInstance()->getContainer()->get('order_subscribe_history.service');
+                    $historyAddResult = $orderSubscribeHistoryService->add(
+                        $subscribe,
+                        $order->getId(),
+                        (new \DateTime($this->getOrderPropertyByCode($order, 'DELIVERY_DATE')->getValue()))
+                    );
+                    if (!$historyAddResult->isSuccess()) {
+                        throw new \Exception('Ошибка сохранения записи в истории');
+                    }
+                    $this->orderSubscribeService->sendOrderSubscribedNotification($subscribe);
+                }
+            }
+
         } catch (\Exception $e) {
             /** ошибка при создании заказа - удаляем ошибочный заказ, если он был создан */
             if ($order->getId() > 0) {
@@ -1864,7 +1944,7 @@ class OrderService implements LoggerAwareInterface
      *
      * @return Order
      */
-    protected function setOrderAddress(Order $order, Address $address): Order
+    public function setOrderAddress(Order $order, Address $address): Order
     {
         $properties = [
             'REGION'        => $address->getRegion(),

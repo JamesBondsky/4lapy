@@ -305,12 +305,18 @@ class Event extends BaseServiceHandler
 
             unset($_SESSION['NOT_MANZANA_UPDATE']);
 
+            /**
+             * @var UserService $userService
+             */
             $userService = $container->get(CurrentUserProviderInterface::class);
             $user = $userService->getUserRepository()->find((int)$fields['ID']);
             if ($user === null) {
                 return false;
             }
 
+            /**
+             * @var ManzanaService $manzanaService
+             */
             $manzanaService = $container->get('manzana.service');
 
             $client = new Client();
@@ -503,6 +509,8 @@ class Event extends BaseServiceHandler
             $userService->refreshUserCard($userService->getCurrentUser());
             /** обновление группы оптовиков */
             $userService->refreshUserOpt($userService->getCurrentUser());
+            /** сброс счётка на разлогинивание при сбросе пароля */
+            $userService->refreshUserAuthActions($userService->getCurrentUser());
         } catch (NotAuthorizedException $e) {
             // обработка не требуется
         } catch (\Exception $e) {

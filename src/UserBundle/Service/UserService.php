@@ -11,6 +11,7 @@ use Bitrix\Main\GroupTable;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\UserAuthActionTable;
 use Bitrix\Sale\Fuser;
 use CAllUser;
 use CUser;
@@ -25,6 +26,7 @@ use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\TooManyActiveCardFound;
 use FourPaws\External\Manzana\Model\Client;
+use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
@@ -235,6 +237,8 @@ class UserService implements
             $id = (int)$this->bitrixUserService->GetID();
             if ($id > 0) {
                 return $id;
+            } else {
+                throw new NotAuthorizedException('User is not authorized');
             }
         }
         throw new NotAuthorizedException('Trying to get user id without authorization');
@@ -259,7 +263,7 @@ class UserService implements
         $validationResult = $this->userRepository->getValidator()
                                                  ->validate($user, null, ['create']);
         if ($validationResult->count() > 0) {
-            throw new ValidationException('Wrong entity passed to create');
+            throw new ValidationException($validationResult);
         }
 
         Application::getConnection()
@@ -840,6 +844,9 @@ class UserService implements
             return false;
         }
         try {
+            /**
+             * @var ManzanaService $manzanaService
+             */
             $manzanaService = App::getInstance()
                                  ->getContainer()
                                  ->get('manzana.service');
@@ -893,6 +900,36 @@ class UserService implements
         }
 
         return false;
+    }
+
+    /**
+     * Сбрасывает событие logout для юзера, чтобы его не разлогинивало
+     *
+     * @param User $user
+     * @throws \Bitrix\Main\ObjectException
+     */
+    public function refreshUserAuthActions(User $user)
+    {
+        $bUser = new CUser;
+        //calculate a session lifetime
+        $policy = $bUser->GetSecurityPolicy();
+        $phpSessTimeout = ini_get("session.gc_maxlifetime");
+        if($policy["SESSION_TIMEOUT"] > 0)
+        {
+            $interval = min($policy["SESSION_TIMEOUT"]*60, $phpSessTimeout);
+        }
+        else
+        {
+            $interval = $phpSessTimeout;
+        }
+        $date = new DateTime();
+        $date->add("-T".$interval."S");
+
+        UserAuthActionTable::deleteByFilter(array(
+            "=USER_ID" => $user->getId(),
+            ">ACTION_DATE" => $date,
+            "=ACTION" => 'logout',
+        ));
     }
 
     /**

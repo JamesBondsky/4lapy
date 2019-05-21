@@ -6,7 +6,6 @@
 
 namespace FourPaws\MobileApiBundle\Services\Session;
 
-use Bitrix\Sale\Fuser;
 use FourPaws\MobileApiBundle\Exception\BitrixException;
 use FourPaws\MobileApiBundle\Exception\ValidationException;
 use FourPaws\MobileApiBundle\Exception\WrongTransformerResultException;
@@ -66,8 +65,13 @@ class SessionHandler implements SessionHandlerInterface
         $token = $this->tokenStorage->getToken();
 
         if ($token && $token instanceof ApiToken && $session = $token->getApiUserSession()) {
-            $session->setFUserId($this->userService->getCurrentFUserId());
             $session->setUserId($this->userService->getCurrentUserId());
+            /**
+             * после авторизации нужно обновить ID корзины в табличке с токенами
+             * т.к. битрикс может удалить только что созданную корзину методом /start и подвязать уже созданную старую
+             * @see \CAllSaleUser::OnUserLogin
+             */
+            $session->setFUserId($_SESSION['SALE_USER_ID']);
             $token->setApiUserSession($session);
             $this->sessionRepository->update($session);
 
@@ -92,7 +96,6 @@ class SessionHandler implements SessionHandlerInterface
         $token = $this->tokenStorage->getToken();
         if ($token && $token instanceof ApiToken && $session = $token->getApiUserSession()) {
             $session->setUserId(0);
-            $session->setFUserId(Fuser::getId());
             $token->setApiUserSession($session);
             $this->sessionRepository->update($session);
             $token->setUser('');

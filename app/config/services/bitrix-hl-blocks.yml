@@ -261,3 +261,7 @@ services:
   bx.hlblock.searchsuggestions:
     arguments: ['SearchSuggestions']
     parent: bx.hlblock.base
+
+  bx.hlblock.pushmessages:
+    arguments: ['PushMessages']
+    parent: bx.hlblock.base

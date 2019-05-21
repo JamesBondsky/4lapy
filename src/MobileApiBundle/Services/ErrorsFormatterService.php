@@ -20,7 +20,7 @@ class ErrorsFormatterService
          * @var ConstraintViolationInterface $symfonyError
          */
         foreach ($constraintViolationList as $symfonyError) {
-            if ($error = $this->converteViolation($symfonyError)) {
+            if ($error = $this->convertViolation($symfonyError)) {
                 $errors->add($error);
             }
         }
@@ -32,7 +32,7 @@ class ErrorsFormatterService
      *
      * @return null|Error
      */
-    public function converteViolation(ConstraintViolationInterface $constraintViolation)
+    public function convertViolation(ConstraintViolationInterface $constraintViolation)
     {
         /**
          * @todo Error code

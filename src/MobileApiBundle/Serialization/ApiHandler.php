@@ -25,6 +25,7 @@ class ApiHandler implements SubscribingHandlerInterface
         'title'    => 'NAME',
         'details'  => 'PREVIEW_TEXT',
         'icon'     => 'PREVIEW_PICTURE',
+        'icon_detail' => 'DETAIL_PICTURE',
         'html'     => 'DETAIL_TEXT',
         'web_url'  => 'CANONICAL_PAGE_URL',
 

@@ -12,19 +12,19 @@ use FourPaws\MobileApiBundle\Dto\Object\Settings;
 use FourPaws\MobileApiBundle\Dto\Request\SettingsRequest;
 use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
 use FourPaws\UserBundle\Entity\User;
-use FourPaws\UserBundle\Service\UserService;
+use FourPaws\UserBundle\Service\UserService as AppUserService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 
 class SettingsController extends FOSRestController
 {
     /**
-     * @var UserService
+     * @var AppUserService
      */
-    private $userService;
+    private $appUserService;
 
-    public function __construct(UserService $userService)
+    public function __construct(AppUserService $appUserService)
     {
-        $this->userService = $userService;
+        $this->appUserService = $appUserService;
     }
 
     /**
@@ -62,7 +62,7 @@ class SettingsController extends FOSRestController
         $settings = $settingsRequest->getSettings();
         $settings->configureUser($user);
 
-        $this->userService->getUserRepository()->update($user);
+        $this->appUserService->getUserRepository()->update($user);
 
         return (new ApiResponse())->setData([
             'feedback_text' => 'Настройки приложения успешно сохранены',

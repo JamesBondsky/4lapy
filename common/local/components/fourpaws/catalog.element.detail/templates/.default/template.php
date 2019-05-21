@@ -265,6 +265,51 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                         <span class="b-product-information__bonus js-bonus-<?= $currentOffer->getId() ?>"></span>
                     </div>
                 </li>
+
+                <li class="b-product-information__item b-product-information__item--subscribe js-subscribe-price-block">
+                    <div class="b-product-information__title-info b-product-information__title-info--subscribe">По подписке</div>
+                    <div class="b-product-information__value b-product-information__value--subscribe">
+                        <span class="b-product-information__price js-subscribe-price"></span>
+                        <span class="b-ruble b-ruble--product-information"> ₽</span>
+                        <span class="b-product-information__icon-subscribe">
+                            <span class="b-icon b-icon--info-contour">
+                                <?= new SvgDecorator('icon-info-contour', 15, 15) ?>
+                            </span>
+                            <span class="b-icon b-icon--info-fill">
+                                <?= new SvgDecorator('icon-info-fill', 15, 15) ?>
+                            </span>
+                        </span>
+                        <div class="info-subscribe-product">
+                            <div class="info-subscribe-product__item">
+                                <div class="info-subscribe-product__icon">
+                                    <?= new SvgDecorator('icon-retime', 24, 24) ?>
+                                </div>
+                                <div class="info-subscribe-product__text">Регулярная доставка необходимых товаров в&nbsp;удобное для вас время.</div>
+                            </div>
+                            <div class="info-subscribe-product__item">
+                                <div class="info-subscribe-product__icon">
+                                    <?= new SvgDecorator('icon-price', 24, 24) ?>
+                                </div>
+                                <div class="info-subscribe-product__text">Получайте специальную цену на&nbsp;некоторые товары.</div>
+                            </div>
+                            <div class="info-subscribe-product__item">
+                                <div class="info-subscribe-product__icon">
+                                    <?= new SvgDecorator('icon-calendar', 24, 24) ?>
+                                </div>
+                                <div class="info-subscribe-product__text">Выберите нужную вам частоту доставки&nbsp;&mdash; от&nbsp;недели до&nbsp;двух месяцев.</div>
+                            </div>
+                            <div class="info-subscribe-product__item">
+                                <div class="info-subscribe-product__icon">
+                                    <?= new SvgDecorator('icon-cancel', 24, 24) ?>
+                                </div>
+                                <div class="info-subscribe-product__text">Вы&nbsp;можете отказаться от&nbsp;подписки в&nbsp;любое время.</div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+
+
+
                 <?php if (!empty($currentOffer->getFlavourCombination())) {
                     $unionOffers = $component->getOffersByUnion('flavour', $currentOffer->getFlavourCombination());
                     if (!$unionOffers->isEmpty()) {
@@ -353,15 +398,29 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                 </a>
                 <?php
             } ?>
-            <a class="b-counter-basket__basket-link js-basket-add js-this-product"
-               href="javascript:void(0)"
-               <?= $arResult['BASKET_LINK_EVENT'] ?>
-               title=""
-               data-offerId="<?= $currentOffer->getId(); ?>"
-               data-url="/ajax/sale/basket/add/">
-                <span class="b-counter-basket__basket-text">Добавить в корзину</span>
-                <span class="b-icon b-icon--advice"><?= new SvgDecorator('icon-cart', 20, 20) ?></span>
-            </a>
+
+            <? if($arParams['IS_POPUP']) { ?>
+                <a class="b-counter-basket__basket-link b-counter-basket__basket-link--subscribe js-basket-add js-this-product"
+                   href="javascript:void(0)"
+                   title=""
+                   data-offerId="<?= $currentOffer->getId(); ?>"
+                   data-url="/ajax/sale/basket/add/">
+                    <span class="b-counter-basket__basket-text">Добавить в подписку</span>
+                    <span class="b-icon b-icon--advice"><?= new SvgDecorator('icon-add-to-discribe', 20, 20) ?></span>
+                </a>
+            <? } else { ?>
+                <a class="b-counter-basket__basket-link js-basket-add js-this-product"
+                   href="javascript:void(0)"
+                   <?= $arResult['BASKET_LINK_EVENT'] ?>
+                   title=""
+                   data-offerId="<?= $currentOffer->getId(); ?>"
+                   data-url="/ajax/sale/basket/add/">
+                    <span class="b-counter-basket__basket-text">Добавить в корзину</span>
+                    <span class="b-icon b-icon--advice"><?= new SvgDecorator('icon-cart', 20, 20) ?></span>
+                </a>
+            <? } ?>
+
+
             <?php if ($arResult['SHOW_FAST_ORDER']) { ?>
                 <a class="b-link b-link--one-click js-open-popup js-open-popup--one-click" href="javascript:void(0)"
                    title="Купить в 1 клик" data-popup-id="buy-one-click" data-url="/ajax/sale/fast_order/load/"
@@ -375,7 +434,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                 foreach ($currentOffer->getShare() as $share) {
                     $activeFrom = $share->getDateActiveFrom();
                     $activeTo = $share->getDateActiveTo(); ?>
-                    <a href="<?= $share->getDetailPageUrl() ?>" title="<?= $share->getName() ?>">
+                    <a href="<?= $share->getDetailPageUrl() ?>" title="<?= $share->getName() ?>" <?= $arParams['IS_POPUP'] ? 'target="_blank"' : ''?>>
                         <p class="b-counter-basket__text b-counter-basket__text--red">
                             <?= $share->getName() ?>
                         </p>
