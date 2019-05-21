@@ -35,6 +35,7 @@ class KioskController extends Controller
      * Типы ошибок при сканировани ШК
      */
     const ERROR_BAD_CARD = 1; // не удалось распознать ШК
+    const ERROR_MORE_THAN_ONE_USER = 2; // более 1 юзера
 
     /**
      * Авторизация по ШК
@@ -54,15 +55,15 @@ class KioskController extends Controller
         try {
             $card = $request->get('card');
             if(empty($card)){
-                throw new \Exception('не передан номер карты');
+                throw new \Exception(self::ERROR_BAD_CARD);
             }
 
             $dbres = CUser::GetList($by, $order, ['UF_DISCOUNT_CARD' => $card]);
             if($dbres->SelectedRowsCount() > 1){
-                throw new \Exception('найдено больше одного пользователя');
+                throw new \Exception(self::ERROR_MORE_THAN_ONE_USER);
             }
             if($dbres->SelectedRowsCount() == 0){
-                throw new \Exception('не найдено ни одного пользователя');
+                return $this->redirect('/personal/register/');
             }
             $user = $dbres->Fetch();
 
@@ -73,7 +74,7 @@ class KioskController extends Controller
             $resultParams = ['auth' => 1];
 
         } catch (\Exception $e) {
-            $resultParams = ['auth' => 0, 'error' => 1];
+            $resultParams = ['auth' => 0, 'error' => $e->getMessage()];
         }
 
         /** @var KioskService $kioskService */

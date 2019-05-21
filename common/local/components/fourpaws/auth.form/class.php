@@ -86,6 +86,10 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @var DataLayerService
      */
     private $dataLayerService;
+    /**
+     * @var KioskService
+     */
+    private $kioskService;
 
     /**
      * FourPawsAuthFormComponent constructor.
@@ -104,6 +108,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             $this->retailRocketService = $container->get(RetailRocketService::class);
             $this->userAuthorizationService = $container->get(UserAuthorizationInterface::class);
             $this->dataLayerService = $container->get(DataLayerService::class);
+            $this->kioskService = $container->get('kiosk.service');
             $this->ajaxMess = $container->get('ajax.mess');
         } catch (Exception $e) {
         }
@@ -128,7 +133,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             }
             if (KioskService::isKioskMode() && !$this->userAuthorizationService->isAuthorized()) {
                 $this->arResult['KIOSK'] = true;
-                $this->arResult['AUTH_LINK'] = KioskService::getAuthLink();
+                $this->arResult['AUTH_LINK'] = $this->kioskService->getAuthLink();
+                $this->arResult['REDIRECT_TO_BONUS'] = $this->kioskService->redirectToBonusAfterAuth();
+                $this->arResult['BACK_URL'] = $this->kioskService->removeParamFromUrl('showscan');
             }
             $this->setSocial();
             unset($_SESSION['COUNT_AUTH_AUTHORIZE']);

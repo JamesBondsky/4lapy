@@ -136,3 +136,7 @@ services:
   order_subscribe.service:
     class: FourPaws\PersonalBundle\Service\OrderSubscribeService
     public: true
+
+  kiosk.service:
+    class: FourPaws\KioskBundle\Service\KioskService
+    public: true

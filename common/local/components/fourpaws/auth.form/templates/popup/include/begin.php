@@ -40,6 +40,13 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
             $backUrl = preg_replace('/anchor=([^&]*[&]?)/', '', $backUrl) . '&anchor=' . $arParams['BACK_URL_HASH']; //FIXME Сделано для быстроты реализации, нужно сделать более корректный метод установки параметра
         }
     }
+    if ($arResult['KIOSK']){
+        if ($arResult['REDIRECT_TO_BONUS']) {
+            $backUrl = '/personal/bonus/';
+        } else {
+            $backUrl = $arResult['BACK_URL'];
+        }
+    }
     ?>
     <div class="b-registration b-registration--popup-authorization js-auth-block js-ajax-replace-block">
         <header class="b-registration__header">
@@ -103,7 +110,7 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
                 Войти
             </button>
             <span class="b-registration__else b-registration__else--authorization">или</span>
-            <? if(!KioskService::isKioskMode()) { ?>
+            <? if(!$arResult['KIOSK']) { ?>
                 <?php $APPLICATION->IncludeComponent(
                     'bitrix:socserv.auth.form',
                     'socserv_auth',
