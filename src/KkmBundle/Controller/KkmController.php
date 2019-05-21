@@ -79,7 +79,7 @@ class KkmController extends Controller
     */
 
     /**
-     * @Route("suggestions/address/", methods={"POST"})
+     * @Route("suggestions/address/", methods={"GET"})
      *
      * @param Request $request
      *
@@ -125,7 +125,7 @@ class KkmController extends Controller
 
 
     /**
-     * @Route("geocode/", methods={"POST"})
+     * @Route("geocode/", methods={"GET"})
      *
      * @param Request $request
      *
@@ -190,12 +190,14 @@ class KkmController extends Controller
             );
         }
 
+        $storeCode = $res['store_code'];
+
         $content = json_decode($request->getContent(), true);
 
         $kladrId = $content['kladr_id'];
         $products = $content['products'];
 
-        $res = $this->kkmService->getDeliveryRules($kladrId, $products);
+        $res = $this->kkmService->getDeliveryRules($kladrId, $products, $storeCode);
 
         if ($res['success'] == false) {
             return new JsonResponse(

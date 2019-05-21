@@ -23,10 +23,13 @@ class KkmTokenTable extends DataManager
     {
         return [
             new IntegerField('id', [
-                'primary' => true,
+                'primary'      => true,
                 'autocomplete' => true,
             ]),
             new StringField('token', [
+                'required' => true,
+            ]),
+            new StringField('store_code', [
                 'required' => true,
             ])
         ];

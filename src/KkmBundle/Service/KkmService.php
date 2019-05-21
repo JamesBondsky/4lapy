@@ -48,7 +48,8 @@ class KkmService implements LoggerAwareInterface
 
     const YANDEX_ADDRESS_COMPONENT = [
         'country'  => 'country',
-        'province' => 'region/area',
+        'province' => 'region/district',
+        'area'     => 'area',
         'locality' => 'city',
         'street'   => 'street',
         'house'    => 'house'
@@ -73,6 +74,7 @@ class KkmService implements LoggerAwareInterface
      * KkmService constructor.
      * @param DaDataService $daDataService
      * @param LocationService $locationService
+     * @param DeliveryService $deliveryService
      */
     public function __construct(DaDataService $daDataService, LocationService $locationService, DeliveryService $deliveryService)
     {
@@ -95,7 +97,7 @@ class KkmService implements LoggerAwareInterface
         } else {
             try {
                 $dbResult = KkmTokenTable::query()
-                    ->setSelect(['*'])
+                    ->setSelect(['id', 'token', 'store_code'])
                     ->setFilter(['token' => $token])
                     ->exec();
                 $tokensCnt = $dbResult->getSelectedRowsCount();
@@ -109,8 +111,10 @@ class KkmService implements LoggerAwareInterface
                     case 1:
                         $tokenData = $dbResult->fetch();
                         $res = [
-                            'success' => true,
-                            'id'      => $tokenData['id']
+                            'success'    => true,
+                            'id'         => $tokenData['id'],
+                            'token'      => $tokenData['token'],
+                            'store_code' => $tokenData['store_code']
                         ];
                         break;
                     default:
@@ -138,7 +142,7 @@ class KkmService implements LoggerAwareInterface
      * @return string
      * @throws Exception
      */
-    private function generateToken(): string
+    public function generateToken(): string
     {
         $randomString = '';
         for ($i = 0; $i < static::TOKEN_LENGTH; $i++) {
@@ -263,7 +267,7 @@ class KkmService implements LoggerAwareInterface
             $addressRes = [
                 'text'        => $address['formatted'],
                 'precision'   => $geoObject['metaDataProperty']['GeocoderMetaData']['precision'],
-                'postal_code' => $address['postal_code'],
+                'postal_code' => $address['postal_code']
             ];
 
             foreach ($addressComponent as $component) {
@@ -309,9 +313,10 @@ class KkmService implements LoggerAwareInterface
     /**
      * @param string $kladrId
      * @param array $products
+     * @param $storeCode
      * @return array
      */
-    public function getDeliveryRules(string $kladrId, array $products): array
+    public function getDeliveryRules(string $kladrId, array $products, $storeCode): array
     {
         try {
             if (!$kladrId) {
@@ -380,13 +385,16 @@ class KkmService implements LoggerAwareInterface
                     $innerDeliveryAvailable = true;
                     $rc = true;
                     $deliveryPrice = $delivery->getDeliveryPrice();
-                    $nextDeliveries = $this->deliveryService->getNextDeliveries($delivery, 10);
-                    foreach ($nextDeliveries as $nextDelivery) {
-                        $deliveryDates[] = FormatDate('d.m.Y', $nextDelivery->getDeliveryDate()->getTimestamp());
+                    try {
+                        $nextDeliveries = $this->deliveryService->getNextDeliveries($delivery, 10);
+                        foreach ($nextDeliveries as $nextDelivery) {
+                            $deliveryDates[] = FormatDate('d.m.Y', $nextDelivery->getDeliveryDate()->getTimestamp());
+                        }
+                    } catch (ArgumentException|ApplicationCreateException|NotFoundException| StoreBundleNotFoundException $e) {
+                        throw new KkmException($e->getMessage(), $e->getCode());
                     }
-
                     foreach ($delivery->getAvailableIntervals() as $interval) {
-                        $intervals[] = str_replace(" ", "", (string)$interval);
+                        $intervals[] = str_replace(' ', '', (string)$interval);
                     }
                 }
             }
@@ -396,11 +404,11 @@ class KkmService implements LoggerAwareInterface
             }
 
             $deliveryRules = [
-                "rc"      => $rc,
-                "courier" => [
-                    "price" => $deliveryPrice,
-                    "date"  => $deliveryDates,
-                    "time"  => $intervals
+                'rc'      => $rc,
+                'courier' => [
+                    'price' => $deliveryPrice,
+                    'date'  => $deliveryDates,
+                    'time'  => $intervals
                 ]
             ];
 
