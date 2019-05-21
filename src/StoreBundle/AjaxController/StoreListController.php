@@ -219,6 +219,28 @@ class StoreListController extends Controller implements LoggerAwareInterface
                     )
                 );
 
+                $full = [];
+                $delay = [];
+                foreach ($result['items'] as $shop)
+                {
+                    if ($shop['order'] === 'full')
+                    {
+                        $full[] = $shop;
+                    } else {
+                        $delay[] = $shop;
+                    }
+                }
+
+                array_walk($full, [$this->shopInfoService, 'locationTypeSortDecorate']);
+                usort($full, [$this->shopInfoService, 'shopCompareByLocationType']);
+                array_walk($full, [$this->shopInfoService, 'locationTypeSortUndecorate']);
+
+                array_walk($delay, [$this->shopInfoService, 'locationTypeSortDecorate']);
+                usort($delay, [$this->shopInfoService, 'shopCompareByLocationType']);
+                array_walk($delay, [$this->shopInfoService, 'locationTypeSortUndecorate']);
+
+                $result['items'] = array_merge($full, $delay);
+
                 $result = JsonSuccessResponse::createWithData(
                     '', $result
                 );

@@ -7,10 +7,12 @@
 namespace FourPaws\MobileApiBundle\Dto\Request;
 
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryAddress;
+use FourPaws\MobileApiBundle\Dto\Request\Types\PutRequest;
+use FourPaws\MobileApiBundle\Dto\Request\Types\SimpleUnserializeRequest;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class DeliveryAddressCreateRequest implements PostRequest, SimpleUnserializeRequest, CreateRequest
+class DeliveryAddressCreateRequest implements PutRequest, SimpleUnserializeRequest
 {
     /**
      * @Assert\NotBlank()

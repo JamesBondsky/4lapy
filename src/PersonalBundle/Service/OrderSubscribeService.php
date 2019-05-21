@@ -34,8 +34,10 @@ use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Shipment;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\AppBundle\Collection\UserFieldEnumCollection;
+use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\AppBundle\Traits\UserFieldEnumTrait;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
@@ -61,6 +63,7 @@ use FourPaws\PersonalBundle\Repository\OrderSubscribeItemRepository;
 use FourPaws\PersonalBundle\Repository\OrderSubscribeRepository;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
+use FourPaws\SaleBundle\Helper\PriceHelper;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\NotificationService;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
@@ -81,6 +84,7 @@ use Symfony\Component\Intl\Exception\NotImplementedException;
 class OrderSubscribeService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
+    use UserFieldEnumTrait;
 
     const UPCOMING_DAYS_DELIVERY_MESS = 3;
 
@@ -389,6 +393,9 @@ class OrderSubscribeService implements LoggerAwareInterface
             case $freqs['WEEK_5']['ID']:
                 $nextDate->add("+5 week");
                 break;
+            case $freqs['WEEK_6']['ID']:
+                $nextDate->add("+6 week");
+                break;
             default:
                 throw new \Exception('Не найдена подходящая периодичность');
         }
@@ -405,7 +412,7 @@ class OrderSubscribeService implements LoggerAwareInterface
     public function getPreviousDate(OrderSubscribe $orderSubscribe)
     {
         $freqs = $this->getFrequencies();
-        $nextDate = $orderSubscribe->getNextDate();
+        $nextDate = clone $orderSubscribe->getNextDate();
         if(null === $nextDate){
             $nextDate = new DateTime();
         }
@@ -426,6 +433,9 @@ class OrderSubscribeService implements LoggerAwareInterface
             case $freqs['WEEK_5']['ID']:
                 $nextDate->add("-5 week");
                 break;
+            case $freqs['WEEK_6']['ID']:
+                $nextDate->add("-6 week");
+                break;
             default:
                 throw new Exception('Не найдена подходящая периодичность');
         }
@@ -434,10 +444,11 @@ class OrderSubscribeService implements LoggerAwareInterface
     }
 
     /**
-     * @param int $id
-     *
-     * @throws \Exception
-     * @return bool
+     * @return array
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Bitrix\Main\LoaderException
      */
     public function getFrequencies(): array
     {
@@ -569,21 +580,6 @@ class OrderSubscribeService implements LoggerAwareInterface
         }
 
         return $this->deliveryService;
-    }
-
-    /**
-     * @return UserFieldEnumService
-     * @throws ApplicationCreateException
-     */
-    protected function getUserFieldEnumService(): UserFieldEnumService
-    {
-        if (!$this->userFieldEnumService) {
-            $this->userFieldEnumService = Application::getInstance()->getContainer()->get(
-                'userfield_enum.service'
-            );
-        }
-
-        return $this->userFieldEnumService;
     }
 
     /**
@@ -1695,12 +1691,12 @@ class OrderSubscribeService implements LoggerAwareInterface
             return;
         }
 
-        // передача заказа в SAP
-        /** @var ConsumerRegistry $consumerRegistry */
-        $consumerRegistry = Application::getInstance()->getContainer()->get(
-            ConsumerRegistry::class
-        );
-        $consumerRegistry->consume($order);
+        // передача заказа в SAP (upd: отправляется штатными средставми)
+//        /** @var ConsumerRegistry $consumerRegistry */
+//        $consumerRegistry = Application::getInstance()->getContainer()->get(
+//            ConsumerRegistry::class
+//        );
+//        $consumerRegistry->consume($order);
 
         // отправка email
         /** @var NotificationService $notificationService */
@@ -1743,7 +1739,7 @@ class OrderSubscribeService implements LoggerAwareInterface
             $subscribe->setNextDate($deliveryDate)
                 ->setCheckDays((new \DateTime($deliveryDate->toString())));
 
-            if (($intervalIndex = $storage->getDeliveryInterval() - 1) >= 0) {
+            if ($this->getDeliveryService()->isDelivery($selectedDelivery) && ($intervalIndex = $storage->getDeliveryInterval() - 1) >= 0) {
                 /** @var Interval $interval */
                 $interval = $selectedDelivery->getAvailableIntervals()[$intervalIndex];
             }
@@ -1872,6 +1868,53 @@ class OrderSubscribeService implements LoggerAwareInterface
         $date1->setTime(0,0,0,0);
         $date2->setTime(0,0,0,0);
         return $date1->diff($date2)->format('%r%d');
+    }
+
+    public function countBasketPriceDiff(BasketBase $basketSubscribe): float
+    {
+        $priceDiff = 0;
+        $offerIds = [];
+        foreach ($basketSubscribe as $basketItem){
+            $offerIds[] = $basketItem->getProductId();
+        }
+
+        /** @var OfferCollection $offerCollection */
+        $offerCollection = (new OfferQuery())->withFilter(['ID' => $offerIds])->exec();
+
+        /** @var BasketItem $basketItem */
+        foreach ($basketSubscribe as $basketItem){
+            /** @var Offer $offer */
+            $offer = $offerCollection->getById($basketItem->getProductId());
+            $percent = $offer->getSubscribeDiscount();
+            $priceSubscribe = $basketItem->getPrice();
+            $priceDefault = $this->countSubscribePrice($priceSubscribe, $percent, true);
+            $priceDiff += $priceDefault - $priceSubscribe;
+        }
+
+        return (float)$priceDiff;
+    }
+
+
+    /**
+     * Считает цену по подписке
+     *
+     * @param $price
+     * @param $percent
+     * @param bool $reverse
+     * @return int
+     */
+    public function countSubscribePrice($price, $percent, $reverse = false): float
+    {
+        // такое мудрёное округление цены нужно для того,
+        // чтобы после перерасчёта корзины манзаной не было расхождения
+        // т.к. там цена округялется через PriceHelper::roundPrice
+        if ($reverse) {
+            $price = (PriceHelper::roundPrice($price) * 100) / (100 - $percent);
+        } else {
+            $price = PriceHelper::roundPrice($price) * ((100 - $percent) / 100);
+        }
+
+        return $price = PriceHelper::roundPrice($price);;
     }
 
 }

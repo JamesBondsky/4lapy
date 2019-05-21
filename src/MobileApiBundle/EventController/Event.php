@@ -32,10 +32,11 @@ class Event extends BaseServiceHandler
     {
         parent::initHandlers($eventManager);
 
-        $module = 'main';
-        static::initHandler('OnUserLogin', [self::class,'updateTokenAfterLogin'], $module);
-        static::initHandler('OnAfterUserLogout', [self::class,'updateTokenAfterLogout'], $module);
-        static::initHandler('onAfterUserUpdate', [self::class,'updateUser'], $module);
+        // toDo не понятный для чего легаси код
+        // $module = 'main';
+        // static::initHandler('OnUserLogin', [self::class,'updateTokenAfterLogin'], $module);
+        // static::initHandler('OnAfterUserLogout', [self::class,'updateTokenAfterLogout'], $module);
+        // static::initHandler('onAfterUserUpdate', [self::class,'updateUser'], $module);
     }
 
     /**

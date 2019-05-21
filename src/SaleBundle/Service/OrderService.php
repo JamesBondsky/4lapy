@@ -74,6 +74,7 @@ use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
+use FourPaws\SaleBundle\Repository\OrderStatusRepository;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
@@ -898,6 +899,18 @@ class OrderService implements LoggerAwareInterface
         $propName = $propertyValueCollection->getPayerName();
         $propName->setValue(str_replace('#', '', $propName->getValue()));
 
+        if ($storage->isFromApp()) {
+            /** @var PropertyValue $propertyValue */
+            foreach ($propertyValueCollection as $propertyValue) {
+                $code = $propertyValue->getProperty()['CODE'];
+                if ($code === 'FROM_APP') {
+                    $value = 'Y';
+                    $propertyValue->setValue($value);
+                    break;
+                }
+            }
+        }
+
 
         if ($isDiscountEnabled) {
             Manager::enableExtendsDiscount();
@@ -1066,6 +1079,19 @@ class OrderService implements LoggerAwareInterface
                 $user->getDiscountCardNumber() ?: $storage->getDiscountCardNumber()
             )
         );
+
+        if($storage->isSubscribe()){
+            $this->setOrderPropertyByCode(
+                $order,
+                'IS_SUBSCRIBE',
+                'Y'
+            );
+            $this->setOrderPropertyByCode(
+                $order,
+                'SUBSCRIBE_ID',
+                $storage->getSubscribeId()
+            );
+        }
 
         $address = null;
         if (!$fastOrder) {

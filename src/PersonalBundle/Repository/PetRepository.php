@@ -91,6 +91,25 @@ class PetRepository extends BaseHlRepository
     }
 
     /**
+     * @param int $id
+     * @return ArrayCollection|Pet[]
+     * @throws ObjectPropertyException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function findByCurUserAndId(int $id): ArrayCollection
+    {
+        return $this->findBy(
+            [
+                'filter' => [
+                    '=UF_USER_ID' => $this->curUserService->getCurrentUserId(),
+                    '=ID' => $id
+                ],
+            ]
+        );
+    }
+
+    /**
      * @param User|int $user
      * @return ArrayCollection|Pet[]
      * @throws InvalidIdentifierException

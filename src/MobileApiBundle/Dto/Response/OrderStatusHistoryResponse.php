@@ -10,10 +10,18 @@ class OrderStatusHistoryResponse
     /**
      * ОбъектЗаказИстория[]
      * @Serializer\SerializedName("status_history")
-     * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\OrderHistory")
+     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\OrderHistory>")
      * @var OrderHistory[]
      */
     protected $statusHistory = [];
+
+    /**
+     * @param OrderHistory[] $statusHistory
+     */
+    public function __construct(array $statusHistory)
+    {
+        $this->statusHistory = $statusHistory;
+    }
 
     /**
      * @return OrderHistory[]

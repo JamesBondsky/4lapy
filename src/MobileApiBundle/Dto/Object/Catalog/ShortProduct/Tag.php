@@ -6,7 +6,9 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct;
 
+use FourPaws\Decorators\FullHrefDecorator;
 use JMS\Serializer\Annotation as Serializer;
+use JMS\Serializer\Annotation\SkipWhenEmpty;
 
 /**
  * Class Tag
@@ -30,10 +32,21 @@ class Tag
      * графического представления тега
      * @Serializer\Type("string")
      * @Serializer\SerializedName("img")
+     * @SkipWhenEmpty
      *
      * @var string
      */
     protected $img;
+
+    /**
+     * Текст тега
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("title")
+     * @SkipWhenEmpty
+     *
+     * @var string
+     */
+    protected $title;
 
     /**
      * @return int
@@ -69,7 +82,18 @@ class Tag
      */
     public function setImg(string $img): Tag
     {
-        $this->img = $img;
+        $this->img = (string) new FullHrefDecorator($img);
+        return $this;
+    }
+
+    /**
+     * @param string $title
+     * 
+     * @return Tag
+     */
+    public function setTitle(string $title): Tag
+    {
+        $this->title = $title;
         return $this;
     }
 }

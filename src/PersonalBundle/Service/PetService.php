@@ -8,15 +8,18 @@ namespace FourPaws\PersonalBundle\Service;
 
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Security\SecurityException;
+use Bitrix\Main\UserFieldTable;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\BaseEntity;
+use FourPaws\AppBundle\Entity\UserFieldEnumValue;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\HighloadHelper;
 use FourPaws\PersonalBundle\Entity\Pet;
 use FourPaws\PersonalBundle\Models\PetCongratulationsNotify;
 use FourPaws\PersonalBundle\Repository\PetRepository;
@@ -31,6 +34,7 @@ use FourPaws\Helpers\TaggedCacheHelper;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
+use FourPaws\AppBundle\Service\UserFieldEnumService;
 
 /**
  * Class PetService
@@ -50,6 +54,11 @@ class PetService
     /** @var ManzanaService $currentUser */
     private $manzanaService;
 
+    /**
+     * @var UserFieldEnumService
+     */
+    private $userFieldEnumService;
+
     public const PETS_TYPE = [
         'koshki' => 'cat',
         'sobaki' => 'dog',
@@ -62,21 +71,21 @@ class PetService
     /**
      * PetService constructor.
      *
-     * @param PetRepository                $petRepository
+     * @param PetRepository $petRepository
      * @param CurrentUserProviderInterface $currentUserProvider
-     * @param ManzanaService               $manzanaService
-     *
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
+     * @param ManzanaService $manzanaService
+     * @param UserFieldEnumService $userFieldEnumService
      */
     public function __construct(
         PetRepository $petRepository,
         CurrentUserProviderInterface $currentUserProvider,
-        ManzanaService $manzanaService
+        ManzanaService $manzanaService,
+        UserFieldEnumService $userFieldEnumService
     ) {
         $this->petRepository = $petRepository;
         $this->currentUser = $currentUserProvider;
         $this->manzanaService = $manzanaService;
+        $this->userFieldEnumService = $userFieldEnumService;
     }
 
     /**
@@ -168,6 +177,18 @@ class PetService
     }
 
     /**
+     * @param int $id
+     * @return Pet
+     * @throws ObjectPropertyException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getCurUserPetById(int $id): Pet
+    {
+        return $this->petRepository->findByCurUserAndId($id)->current();
+    }
+
+    /**
      * @param User|int $user
      *
      * @throws ObjectPropertyException
@@ -201,9 +222,9 @@ class PetService
             }
             if (count($userPetsTypeIds)) {
                 $petBreeds = $this->getPetTypes(['ID' => $userPetsTypeIds]);
-                foreach ($petBreeds as $petBreed) {
-                    if (in_array($petBreed, array_keys(static::PETS_TYPE))) {
-                        $petsTypes[static::PETS_TYPE[$petBreed]] = true;
+                foreach ($petBreeds as $petBreedCode => $petBreed) {
+                    if (in_array($petBreedCode, array_keys(static::PETS_TYPE))) {
+                        $petsTypes[static::PETS_TYPE[$petBreedCode]] = true;
                     }
                 }
             }
@@ -352,6 +373,32 @@ class PetService
         return $result;
     }
 
+    /**
+     * @return array
+     * @throws \Exception
+     */
+    public function getPetBreedAll(): array
+    {
+        //if ($this->startResultCache()){
+        // Для тегированного кеша нет функционала для highload-иб
+        /*TaggedCacheHelper::addManagedCacheTags([
+            'hlb:field:pets_user:' . $this->currentUserProvider->getCurrentUserId()
+        ]);*/
+
+        return HLBlockFactory::createTableObject(Pet::PET_BREED)::query()
+            ->setSelect([
+                'ID',
+                'UF_NAME',
+                'UF_PET_TYPE'
+            ])
+            ->setOrder([
+                'UF_NAME' => 'asc'
+            ])
+            ->exec()
+            ->fetchAll();
+        //}
+    }
+
 
     /**
      * @param int $typeId
@@ -397,13 +444,64 @@ class PetService
         $res = HLBlockFactory::createTableObject(Pet::PET_TYPE)::query()->setFilter($filter)->setSelect(
             [
                 'ID',
+                'UF_NAME',
                 'UF_CODE'
             ]
         )->setOrder(['UF_CODE' => 'asc'])->exec();
         while ($item = $res->fetch()) {
-            $arBreeds[$item['UF_CODE']] = $item['UF_CODE'];
+            $arBreeds[$item['UF_CODE']] = $item;
         }
 
         return $arBreeds;
+    }
+
+    /**
+     * @param int $petId
+     * @return bool
+     * @throws NotFoundException
+     * @throws ObjectPropertyException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
+     */
+    public function deletePetPhoto(int $petId)
+    {
+        /** @var Pet $pet */
+        $pet = $this->petRepository->findById($petId);
+        if ($photoId = $pet->getPhoto()) {
+            \CFile::delete($photoId);
+        }
+        $pet->setPhoto(0);
+        return $this->petRepository->setEntity($pet)->update();
+    }
+
+    /**
+     * @return \FourPaws\AppBundle\Collection\UserFieldEnumCollection
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\LoaderException
+     */
+    public function getGenders()
+    {
+        $userFieldId = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
+            [
+                'FIELD_NAME' => 'UF_GENDER',
+                'ENTITY_ID' => 'HLBLOCK_' . HighloadHelper::getIdByName('Pet'),
+            ]
+        )->exec()->fetch()['ID'];
+        return $this->userFieldEnumService->getEnumValueCollection($userFieldId);
+    }
+
+    /**
+     * @param string $genderCode
+     * @return UserFieldEnumValue
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\LoaderException
+     */
+    public function getGenderByCode(string $genderCode)
+    {
+        return $this->getGenders()->filter(function ($gender) use($genderCode) {
+            /** @var UserFieldEnumValue $gender */
+            return $genderCode === $gender->getXmlId();
+        })->current();
     }
 }

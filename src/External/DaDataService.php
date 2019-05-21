@@ -106,6 +106,30 @@ class DaDataService
     }
 
     /**
+     * @param string $street
+     * @param string $city
+     * @return array
+     */
+    public function getStreets(string $street, string $city): array
+    {
+        $params = [
+            'query'      => $street,
+            'count'      => 20,
+            'locations'  => [
+                'city'         => $city,
+            ],
+            'restrict_value' => false,
+            'from_bound'   => [
+                'value' => 'street',
+            ],
+            'to_bound'   => [
+                'value' => 'street',
+            ],
+        ];
+        return $this->client->getAddresses($params);
+    }
+
+    /**
      * @param        $region
      * @param string $fiasCode
      *

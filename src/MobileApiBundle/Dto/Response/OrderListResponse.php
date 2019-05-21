@@ -14,6 +14,16 @@ class OrderListResponse
     protected $orderList = [];
 
     /**
+     * @var int
+     */
+    protected $totalItems = 0;
+
+    /**
+     * @var int
+     */
+    protected $totalPages = 0;
+
+    /**
      * @return Order[]
      */
     public function getOrderList(): array
@@ -31,4 +41,43 @@ class OrderListResponse
         $this->orderList = $orderList;
         return $this;
     }
+
+    /**
+     * @return int
+     */
+    public function getTotalItems(): int
+    {
+        return $this->totalItems;
+    }
+
+    /**
+     * @param int $totalItems
+     *
+     * @return OrderListResponse
+     */
+    public function setTotalItems(int $totalItems): OrderListResponse
+    {
+        $this->totalItems = $totalItems;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getTotalPages(): int
+    {
+        return $this->totalPages;
+    }
+
+    /**
+     * @param int $totalPages
+     *
+     * @return OrderListResponse
+     */
+    public function setTotalPages(int $totalPages): OrderListResponse
+    {
+        $this->totalPages = $totalPages;
+        return $this;
+    }
+
 }

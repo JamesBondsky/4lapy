@@ -1,61 +1,195 @@
 <?php
 
-/*
+/**
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\Type\Date;
-use FourPaws\Decorators\FullHrefDecorator;
+use Exception;
+use FourPaws\App\Application;
+use FourPaws\Enum\UserGroup as UserGroupEnum;
+use FourPaws\External\ExpertsenderService;
+use FourPaws\External\Manzana\Model\Client;
+use FourPaws\External\ManzanaService;
+use FourPaws\MobileApiBundle\Dto\Object\City;
 use FourPaws\MobileApiBundle\Dto\Object\ClientCard;
 use FourPaws\MobileApiBundle\Dto\Object\User;
-use FourPaws\MobileApiBundle\Dto\Request\LoginExistRequest;
 use FourPaws\MobileApiBundle\Dto\Request\LoginRequest;
-use FourPaws\MobileApiBundle\Dto\Request\PostUserInfoRequest;
 use FourPaws\MobileApiBundle\Dto\Response\PostUserInfoResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserLoginResponse;
+use FourPaws\MobileApiBundle\Exception\EmailAlreadyUsed;
+use FourPaws\MobileApiBundle\Exception\InvalidCredentialException;
+use FourPaws\MobileApiBundle\Exception\PhoneAlreadyUsed;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
+use FourPaws\MobileApiBundle\Exception\TokenNotFoundException;
+use FourPaws\MobileApiBundle\Security\ApiToken;
+use FourPaws\MobileApiBundle\Services\Session\SessionHandler;
 use FourPaws\UserBundle\Entity\User as AppUser;
+use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
+use FourPaws\UserBundle\Exception\NotFoundException;
+use FourPaws\UserBundle\Exception\UserException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
+use FourPaws\UserBundle\Repository\GroupRepository;
+use FourPaws\UserBundle\Repository\UserRepository;
+use FourPaws\UserBundle\Service\ConfirmCodeService;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService as UserBundleService;
+use FourPaws\MobileApiBundle\Services\Api\CaptchaService as ApiCaptchaService;
+use FourPaws\External\ManzanaService as AppManzanaService;
+use FourPaws\MobileApiBundle\Dto\Object\PersonalBonus;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Exception\SessionUnavailableException;
+use FourPaws\MobileApiBundle\Services\Api\CityService as ApiCityService;
+use FourPaws\PersonalBundle\Service\BonusService as AppBonusService;
+use FourPaws\PersonalBundle\Service\OrderService as PersonalOrderService;
 
 class UserService
 {
-    /**
-     * @var UserBundleService
-     */
+    /** @var UserBundleService */
     private $userBundleService;
 
-    public function __construct(UserBundleService $userBundleService)
+    /** @var UserRepository */
+    private $userRepository;
+
+    /** @var ApiCaptchaService */
+    private $apiCaptchaService;
+
+    /** @var SessionHandler */
+    private $sessionHandler;
+
+    /** @var AppManzanaService */
+    private $appManzanaService;
+
+    /** @var TokenStorageInterface */
+    private $tokenStorage;
+
+    /** @var ApiCityService */
+    private $apiCityService;
+
+    /** @var AppBonusService */
+    private $appBonusService;
+
+    /** @var PersonalOrderService */
+    private $personalOrderService;
+
+    public function __construct(
+        UserBundleService $userBundleService,
+        UserRepository $userRepository,
+        ApiCaptchaService $apiCaptchaService,
+        SessionHandler $sessionHandler,
+        AppManzanaService $appManzanaService,
+        TokenStorageInterface $tokenStorage,
+        ApiCityService $apiCityService,
+        AppBonusService $appBonusService,
+        PersonalOrderService $personalOrderService
+    )
     {
         $this->userBundleService = $userBundleService;
+        $this->userRepository = $userRepository;
+        $this->apiCaptchaService = $apiCaptchaService;
+        $this->sessionHandler = $sessionHandler;
+        $this->appManzanaService = $appManzanaService;
+        $this->tokenStorage = $tokenStorage;
+        $this->apiCityService = $apiCityService;
+        $this->appBonusService = $appBonusService;
+        $this->personalOrderService = $personalOrderService;
     }
 
     /**
      * @param LoginRequest $loginRequest
-     *
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
-     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
-     * @throws \Bitrix\Main\Db\SqlQueryException
-     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
      * @return UserLoginResponse
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\Db\SqlQueryException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @throws \FourPaws\UserBundle\Exception\EmptyPhoneException
+     * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
+     * @throws \FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException
      */
     public function loginOrRegister(LoginRequest $loginRequest): UserLoginResponse
     {
+
+        $excludeLoginsFromCaptchaCheck = [
+            '9778016362',
+            '9660949453',
+            '9299821844',
+            '9007531672',
+            '9007523221',
+            '9991693811',
+            '9263987654',
+            '9653770455',
+            '9165919854',
+            'a.vorobyev@articul.ru',
+        ];
+
         try {
-            $this->userBundleService->login($loginRequest->getLogin(), $loginRequest->getPassword());
+
+            $_COOKIE[ConfirmCodeService::getCookieName('phone')] = $loginRequest->getCaptchaId();
+
+            if (!in_array($loginRequest->getLogin(), $excludeLoginsFromCaptchaCheck)) {
+                try {
+                    if (!ConfirmCodeService::checkCode($loginRequest->getCaptchaValue(), 'phone')) {
+                        throw new InvalidCredentialException();
+                    }
+                } catch (NotFoundConfirmedCodeException $e) {
+                    throw new InvalidCredentialException();
+                }
+            }
+            $userId = $this->userRepository->findIdentifierByRawLogin($loginRequest->getLogin());
+            $this->userBundleService->authorize($userId);
         } catch (UsernameNotFoundException $exception) {
             $user = new AppUser();
             $user
                 ->setPersonalPhone($loginRequest->getLogin())
                 ->setLogin($user->getPersonalPhone())
-                ->setPassword($loginRequest->getPassword());
+                ->setPassword(randString(20));
             $user = $this->userBundleService->register($user);
             $this->userBundleService->authorize($user->getId());
         }
+        try {
+            $container = Application::getInstance()->getContainer();
+
+            /** @var ManzanaService $manzanaService */
+            $manzanaService = $container->get('manzana.service');
+            /** @noinspection PhpUnusedLocalVariableInspection */
+            //$manzanaItem = $manzanaService->getContactByPhone(PhoneHelper::getManzanaPhone($user->getPersonalPhone()));
+
+            /**
+             * @var UserService $userService
+             */
+            $userService = $container->get(CurrentUserProviderInterface::class);
+            if (!isset($user)) {
+                $user = $userService->getUserRepository()->find($userId);
+            }
+
+            if ($user === null) {
+                throw new UserException('Пользователь не найден');
+            }
+
+            $client = new Client();
+            if ($_SESSION['MANZANA_CONTACT_ID']) {
+                $client->contactId = $_SESSION['MANZANA_CONTACT_ID'];
+                unset($_SESSION['MANZANA_CONTACT_ID']);
+            }
+
+            $userService->setClientPersonalDataByCurUser($client, $user);
+
+            $manzanaService->updateContact($client);
+
+            if ($client->phone && $client->contactId) {
+                $manzanaService->updateUserCardByClient($client);
+            }
+        } catch (Exception $e) {
+            $logger = LoggerFactory::create('loginOrRegister');
+            $logger->error(sprintf('%s exception: %s', __METHOD__, $e->getMessage()));
+        }
+        $this->sessionHandler->login();
         return new UserLoginResponse($this->getCurrentApiUser());
     }
 
@@ -67,99 +201,252 @@ class UserService
         if (!$this->userBundleService->logout()) {
             throw new RuntimeException('Cant logout user');
         }
+        $this->sessionHandler->logout();
         return [
             'feedback_text' => 'Вы вышли из своей учетной записи',
         ];
     }
 
     /**
-     * @param PostUserInfoRequest $userInfoRequest
+     * @param User $user
      *
-     * @throws \FourPaws\UserBundle\Exception\ValidationException
-     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
      * @return PostUserInfoResponse
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\UserBundle\Exception\EmptyPhoneException
      */
-    public function update(PostUserInfoRequest $userInfoRequest): PostUserInfoResponse
+    public function update(User $user): PostUserInfoResponse
     {
-        $fromRequestUser = $userInfoRequest->getUser();
-        $user = $this->userBundleService->getCurrentUser();
-        if ($fromRequestUser->getEmail() && $user->getEmail() === $user->getLogin()) {
-            $user->setLogin($fromRequestUser->getEmail());
-        } elseif ($fromRequestUser->getPhone() && $user->getPersonalPhone() === $user->getLogin()) {
-            $user->setLogin($fromRequestUser->getPhone());
-        }
-        $user
-            ->setEmail($fromRequestUser->getEmail() ?? $user->getEmail())
-            ->setPersonalPhone($fromRequestUser->getPhone() ?? $user->getPersonalPhone())
-            ->setName($fromRequestUser->getFirstName() ?? $user->getName())
-            ->setLastName($fromRequestUser->getLastName() ?? $user->getLastName())
-            ->setSecondName($fromRequestUser->getMidName() ?? $user->getSecondName());
+        $currentUser = $this->userBundleService->getCurrentUser();
+        $oldUser = clone $currentUser;
 
-        if ('' === $fromRequestUser->getBirthDate()) {
-            $user->setBirthday(null);
-        } elseif (null !== $fromRequestUser->getBirthDate()) {
+        if ($user->getPhone() && $user->getPhone() !== $currentUser->getPersonalPhone()) {
             try {
-                $user->setBirthday(new Date($fromRequestUser->getBirthDate(), 'd.m.Y'));
+                if ($userByPhone = $this->userBundleService->findOneByPhone($user->getPhone())) {
+                    throw new PhoneAlreadyUsed();
+                }
+            } catch (NotFoundException $e) {
+                // do nothing
+            }
+        }
+
+        if ($user->getEmail() && $user->getEmail() !== $currentUser->getEmail()) {
+            try {
+                if ($userByEmail = $this->userBundleService->findOneByEmail($user->getEmail())) {
+                    throw new EmailAlreadyUsed();
+                }
+            } catch (NotFoundException $e) {
+                // do nothing
+            }
+        }
+
+        if ($user->getEmail() && $currentUser->getEmail() === $currentUser->getLogin()) {
+            $currentUser->setLogin($user->getEmail());
+        } elseif ($user->getPhone() && $currentUser->getPersonalPhone() === $currentUser->getLogin()) {
+            $currentUser->setLogin($user->getPhone());
+        }
+        $currentUser
+            ->setEmail($user->getEmail() ?? $currentUser->getEmail())
+            ->setPersonalPhone($user->getPhone() ?? $currentUser->getPersonalPhone())
+            ->setName($user->getFirstName() ?? $currentUser->getName())
+            ->setLastName($user->getLastName() ?? $currentUser->getLastName())
+            ->setSecondName($user->getMidName() ?? $currentUser->getSecondName())
+            ->setLocation($user->getLocationId() ?? $currentUser->getLocation());
+
+        if ('' === $user->getBirthDate()) {
+            $currentUser->setBirthday(null);
+        } elseif (null !== $user->getBirthDate()) {
+            try {
+                $currentUser->setBirthday(new Date($user->getBirthDate(), 'd.m.Y'));
             } catch (ObjectException $e) {
             }
         }
-        $this->userBundleService->getUserRepository()->update($user);
+        if ($user->getCard()) {
+            $currentUser->setDiscountCardNumber($user->getCard()->getNumber());
+        }
+        $this->userBundleService->getUserRepository()->update($currentUser);
+
+        if ($user->getEmail() && $user->getEmail() !== $oldUser->getEmail()) {
+            try {
+                /** @var ExpertsenderService $expertSenderService */
+                $expertSenderService = Application::getInstance()->getContainer()->get('expertsender.service');
+                $expertSenderService->sendChangeEmail($oldUser, $currentUser);
+            } catch (Exception $exception) {
+                $logger = LoggerFactory::create('change_email');
+                $logger->error(sprintf('%s exception: %s', __FUNCTION__, $exception->getMessage()));
+            }
+        }
+
         return new PostUserInfoResponse($this->getCurrentApiUser());
     }
 
     /**
-     * @param LoginExistRequest $existRequest
-     *
-     * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
-     * @return array
+     * @param string $locationId
+     * @return bool
      */
-    public function isExist(LoginExistRequest $existRequest): array
+    public function updateLocationId(string $locationId)
     {
-        $exist = $this->userBundleService->getUserRepository()->isExist($existRequest->getLogin());
-        /**
-         * @todo Необходимо предусмотреть максимальное кол-во попыток
-         */
-
-        return [
-            'exist'         => $exist,
-            'feedback_text' => $exist ? '' : 'Проверьте правильность заполнения поля. Введите ваш E-mail или номер телефона',
-        ];
+        $currentUser = $this->userBundleService->getCurrentUser()->setLocation($locationId);
+        return $this->userBundleService->getUserRepository()->update($currentUser);
     }
 
     /**
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @param string $login
+     *
+     * @return bool
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function doesExist(string $login): bool
+    {
+        /**
+         * @todo Необходимо предусмотреть максимальное кол-во попыток
+         */
+        return $this->userRepository->doesExist($login);
+    }
+
+    /**
+     * Берем данные о пользователе из переданного токена
      * @return User
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\UserBundle\Exception\EmptyPhoneException
      */
     public function getCurrentApiUser(): User
     {
-        $user = $this->userBundleService->getCurrentUser();
+        /**
+         * @var ApiToken $token | null
+         */
+        if (!$token = $this->tokenStorage->getToken()) {
+            throw new TokenNotFoundException();
+        }
+        if (!$session = $token->getApiUserSession()) {
+            throw new SessionUnavailableException();
+        }
+        $user = $this->userRepository->find($session->getUserId());
+
         $apiUser = new User();
         $apiUser
+            ->setId($user->getId())
             ->setEmail($user->getEmail())
             ->setFirstName($user->getName())
             ->setLastName($user->getLastName())
             ->setMidName($user->getSecondName())
             ->setPhone($user->getPersonalPhone())
-            ->setCard($this->getCard($user->getId()));
+            ->setCard($this->getCard($user))
+        ;
         if ($user->getBirthday()) {
             $apiUser->setBirthDate($user->getBirthday()->format('d.m.Y'));
+        }
+        if ($userLocation = $this->getLocation($user)) {
+            $apiUser
+                ->setLocation($userLocation)
+                ->setLocationId($userLocation->getId());
         }
         return $apiUser;
     }
 
-    protected function getCard(int $userId): ClientCard
+    /**
+     * @param AppUser $user
+     * @return ClientCard|null
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\UserBundle\Exception\EmptyPhoneException
+     */
+    protected function getCard(AppUser $user)
     {
-        // ToDo: Сделать реальное получение карты
-        return (new ClientCard())->setTitle('Карта клиента')
-            ->setPicture(new FullHrefDecorator('/upload/card/img.png'))
-            ->setBalance(1500)
-            ->setNumber('000011112222')
-            ->setBarCode('60832513')
-            ->setSaleAmount(3);
+        if (!$user->getDiscountCardNumber()) {
+            return null;
+        }
+        $bonusInfo = null;
+        try {
+            $bonusInfo = $this->appBonusService->getManzanaBonusInfo($user);
+        } catch (\FourPaws\External\Exception\ManzanaServiceContactSearchNullException $exception) {
+            return null;
+        } catch (\FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException $exception) {
+            return null;
+        } catch (\FourPaws\External\Exception\ManzanaServiceException $exception) {
+            return null;
+        }
+        return (new ClientCard())
+            ->setTitle('Карта клиента')
+            ->setBalance($bonusInfo->getActiveBonus())
+            ->setNumber($user->getDiscountCardNumber())
+            ->setSaleAmount($bonusInfo->getGeneratedRealDiscount());
+    }
+
+    /**
+     * @param AppUser $user
+     * @return City
+     */
+    protected function getLocation(AppUser $user)
+    {
+        return $this->apiCityService->searchByCode($user->getLocation())->current();
+    }
+
+    /**
+     *
+     * Актуализирует группы пользователя в битрикс
+     * Если у пользователя есть заказы с флагом "из мобильного приложения" - помещаем в группу "Делал заказы из МП"
+     * @see UserGroupEnum::HAS_ORDERS_FROM_MOBILE_APP
+     * Если нет заказов с флагом "из мобильного приложения" - помещаем в группу "Не делал заказы из МП"
+     * @see UserGroupEnum::NO_ORDERS_FROM_MOBILE_APP
+     *
+     * Вызывается в методе app_launch
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
+     */
+    public function actualizeUserGroupsForApp()
+    {
+        $user = $this->userBundleService->getCurrentUser();
+        $groupIds = \CUser::GetUserGroup($user->getId());
+
+        if ($this->personalOrderService->isUserHasOrdersFromApp($user)) {
+            $newGroupId = GroupRepository::getIdByCode(UserGroupEnum::HAS_ORDERS_FROM_MOBILE_APP);
+            $deleteGroupId = GroupRepository::getIdByCode(UserGroupEnum::NO_ORDERS_FROM_MOBILE_APP);
+            if ($deleteGroupIdKey = array_search($deleteGroupId, $groupIds)) {
+                unset($groupIds[$deleteGroupIdKey]);
+            }
+        } else {
+            $newGroupId = GroupRepository::getIdByCode(UserGroupEnum::NO_ORDERS_FROM_MOBILE_APP);
+        }
+        $groupIds = array_merge([$newGroupId], $groupIds);
+        \CUser::SetUserGroup($user->getId(), $groupIds);
+    }
+
+    /**
+     * @return PersonalBonus
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException
+     * @throws \FourPaws\External\Exception\ManzanaServiceException
+     * @throws \FourPaws\UserBundle\Exception\EmptyPhoneException
+     */
+    public function getPersonalBonus()
+    {
+        /**
+         * @var ApiToken $token | null
+         */
+        if (!$token = $this->tokenStorage->getToken()) {
+            throw new TokenNotFoundException();
+        }
+        if (!$session = $token->getApiUserSession()) {
+            throw new SessionUnavailableException();
+        }
+        $user = $this->userRepository->find($session->getUserId());
+        $bonusInfo = $this->appBonusService->getManzanaBonusInfo($user);
+
+        return (new PersonalBonus())
+            ->setAmount($bonusInfo->getSumDiscounted() ?? 0)
+            ->setTotalIncome($bonusInfo->getDebit() ?? 0)
+            ->setTotalOutgo($bonusInfo->getCredit() ?? 0)
+            ->setNextStage($bonusInfo->getSumToNext());
     }
 }
