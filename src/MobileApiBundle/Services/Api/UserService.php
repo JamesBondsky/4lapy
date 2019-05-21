@@ -444,7 +444,7 @@ class UserService
         $bonusInfo = $this->appBonusService->getManzanaBonusInfo($user);
 
         return (new PersonalBonus())
-            ->setAmount($bonusInfo->getSumDiscounted() ?? 0)
+            ->setAmount($bonusInfo->getGeneratedRealDiscount() ?? 0)
             ->setTotalIncome($bonusInfo->getDebit() ?? 0)
             ->setTotalOutgo($bonusInfo->getCredit() ?? 0)
             ->setNextStage($bonusInfo->getSumToNext());
