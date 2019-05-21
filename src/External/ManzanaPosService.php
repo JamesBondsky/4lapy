@@ -63,12 +63,11 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
 
         $hasItems = false;
         $basketItems = $basket->getBasketItems();
-        if (!empty($basketItems))
-        {
-            $productIds = array_map(function($item) {
-                    /** @var BasketItem $item */
-                    return $item->getProductId();
-                }, $basketItems
+        if (!empty($basketItems)) {
+            $productIds = array_map(function ($item) {
+                /** @var BasketItem $item */
+                return $item->getProductId();
+            }, $basketItems
             );
             $offerCollection = (new OfferQuery())->withFilter(['=ID' => $productIds])->exec();
         }
@@ -114,25 +113,24 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                 }
                 $basketService->setBasketItemPropertyValue($item, 'HAS_BONUS', $signCharge);
 
-                if (isset($offerCollection))
-                {
+                if (isset($offerCollection)) {
                     /** @var Offer $offer */
                     $offer = $offerCollection->getById($item->getProductId());
-                    if ($offer->isShare())
-                    {
+                    if ($offer->isShare()) {
                         /** @var PiggyBankService $piggyBankService */
                         $piggyBankService = App::getInstance()->getContainer()->get('piggy_bank.service');
 
-                        $pseudoAction = $offer->getShare()->filter(function(Share $action) use ($piggyBankService) {
-                            return in_array($action->getCode(), [
-                                $piggyBankService::ACTION_CODE,
-                                'royal-canin-vyigray-poezdku',
-                                'novaya-kollektsiya-lezhakov-2019',
-                                'pro-plan-vyigray-iphone-garantirovannye-prizy'
-                            ]);
+                        $pseudoAction = $offer->getShare()->filter(function (Share $action) use ($piggyBankService) {
+                            return (in_array($action->getCode(), [
+                                    $piggyBankService::ACTION_CODE,
+                                    'royal-canin-vyigray-poezdku',
+                                    'novaya-kollektsiya-lezhakov-2019',
+                                    'pro-plan-vyigray-iphone-garantirovannye-prizy',
+                                    'grandin-12-3kg-sukhogo-korma-dlya-sobak-v-podarok',
+                                    'grandin-15-na-sukhoy-korm-dlya-sobak-05'
+                                ]) || $action->getPropertySigncharge());
                         });
-                        if (!$pseudoAction->isEmpty())
-                        {
+                        if (!$pseudoAction->isEmpty()) {
                             $basketService->setBasketItemPropertyValue($item, 'IS_PSEUDO_ACTION', BitrixUtils::BX_BOOL_TRUE);
                         }
                     }
@@ -145,7 +143,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
             $hasItems = true;
         }
 
-        if(!$hasItems){
+        if (!$hasItems) {
             return $request;
         }
 

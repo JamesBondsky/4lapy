@@ -124,6 +124,12 @@ class Share extends IblockElement
     protected $PROPERTY_PREMISE_BONUS = false;
 
     /**
+     * @var bool
+     * @Type("bool")
+     */
+    protected $PROPERTY_SIGNCHARGE = false;
+
+    /**
      * @var OfferCollection
      */
     protected $products;
@@ -443,6 +449,25 @@ class Share extends IblockElement
     public function getPropertyPremiseBonus(): string
     {
         return $this->PROPERTY_PREMISE_BONUS;
+    }
+
+    /**
+     * @param bool|null $value
+     *
+     * @return $this
+     */
+    public function setPropertySigncharge(?bool $value): Share
+    {
+        $this->PROPERTY_SIGNCHARGE = $value;
+        return $this;
+    }
+
+    /**
+     * @return bool|null
+     */
+    public function getPropertySigncharge(): ?bool
+    {
+        return $this->PROPERTY_SIGNCHARGE;
     }
 
     /**
