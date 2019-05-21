@@ -80,7 +80,7 @@ class ApiPushEvent
     /**
      * @var int
      * @Serializer\SerializedName("MESSAGE_TYPE")
-     * @Serializer\Type("int")
+     * @Serializer\Type("string")
      * @Serializer\Groups(groups={"read"})
      */
     protected $messageType;
@@ -229,9 +229,19 @@ class ApiPushEvent
     /**
      * @return int
      */
-    public function getMessageType(): int
+    public function getMessageType(): string
     {
         return $this->messageType;
+    }
+
+    /**
+     * @param $messageType
+     * @return ApiPushEvent
+     */
+    public function setMessageType($messageType): ApiPushEvent
+    {
+        $this->messageType = $messageType;
+        return $this;
     }
 
     /**
