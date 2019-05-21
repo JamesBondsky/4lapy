@@ -116,6 +116,20 @@ class Sberbank
     }
 
     /**
+     * @return array
+     */
+    public function getSettingsArray(): array
+    {
+        return [
+            'user_name' => $this->user_name,
+            'password' => $this->password,
+            'two_stage' => $this->two_stage,
+            'test_mode' => $this->test_mode,
+            'logging' => $this->logging,
+        ];
+    }
+
+    /**
      * @param bool $isMobilePayment
      * @param string $mobilePaymentSystem
      * @return string

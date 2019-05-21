@@ -473,25 +473,21 @@ class PaymentService implements LoggerAwareInterface
         return $this->getSberbankProcessing()->parseResponse($response);
     }
 
-    private function getSberbankSettings(): array
-    {
-        /** @noinspection PhpIncludeInspection */
-        return BusinessValueHelper::getPaysystemSettings(3, [
-            'USER_NAME',
-            'PASSWORD',
-            'TEST_MODE',
-            'TWO_STAGE',
-            'LOGGING',
-        ]);
-    }
-
     /**
      * @return Sberbank
      */
     private function getSberbankProcessing(): Sberbank
     {
         if (null === $this->sberbankProcessing) {
-            $settings = $this->getSberbankSettings();
+            /** @noinspection PhpIncludeInspection */
+            $settings = BusinessValueHelper::getPaysystemSettings(3, [
+                'USER_NAME',
+                'PASSWORD',
+                'TEST_MODE',
+                'TWO_STAGE',
+                'LOGGING',
+            ]);
+
             $this->sberbankProcessing = new Sberbank(
                 $settings['USER_NAME'],
                 $settings['PASSWORD'],
@@ -743,7 +739,7 @@ class PaymentService implements LoggerAwareInterface
         }
         /* END Фискализация */
 
-        $settings = $this->getSberbankSettings();
+        $sberbankProcessing = $this->getSberbankProcessing();
 
         /**
          * Подключение файла настроек
@@ -758,7 +754,7 @@ class PaymentService implements LoggerAwareInterface
         require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sberbank.ecom/payment/rbs.php';
 
         /** @noinspection PhpMethodParametersCountMismatchInspection */
-        $rbs = new \RBS(array_change_key_case($settings));
+        $rbs = new \RBS($sberbankProcessing->getSettingsArray());
 
         $response = $rbs->register_order(
             $order->getField('ACCOUNT_NUMBER'),
