@@ -41,7 +41,7 @@ class CityService implements LoggerAwareInterface
      * @return City[]|Collection
      * @todo change metro check by metroways
      */
-    public function search(string $query, ?int $limit = null, bool $exact = false, array $filter = []): Collection
+    public function search(string $query, ?int $limit = 0, bool $exact = false, array $filter = []): Collection
     {
         try {
             /** NAME_UPPER в индексе */
@@ -117,27 +117,21 @@ class CityService implements LoggerAwareInterface
     }
 
     /**
-     * @throws \FourPaws\MobileApiBundle\Exception\SystemException
      * @return City[]|Collection
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      */
     public function getDefaultCity()
     {
-        $defaultCities = DefaultSiteTable::query()
-            ->addSelect('LOCATION_CODE')
-            ->setCacheTtl(604800)
-            ->exec()
-            ->fetchAll();
-        $defaultCities = array_map(function ($city) {
-            return $city['LOCATION_CODE'];
-        }, $defaultCities);
-
+        $availableCities = $this->locationService->getAvailableCitiesEx();
         $locations = [];
-        if ($defaultCities) {
-            try {
-                $locations = array($this->locationService->findLocationByCode($defaultCities));
-            } catch (CityNotFoundException $e) {
-            } catch (\Exception $e) {
-                throw new SystemException($e->getMessage(), $e->getCode(), $e);
+        foreach ($availableCities as $cityGroup) {
+            foreach ($cityGroup as $city) {
+                try {
+                    $locations[] = $this->locationService->findLocationByCode($city['CODE']);
+                } catch (CityNotFoundException $e) {
+                } catch (\Exception $e) {
+                    throw new SystemException($e->getMessage(), $e->getCode(), $e);
+                }
             }
         }
         return $this->mapLocations($locations);
@@ -192,6 +186,8 @@ class CityService implements LoggerAwareInterface
             ->setPath(array_map(function ($item) {
                 return $item['NAME'];
             }, $data['PATH']))
-            ->setHasMetro($data['CODE'] === LocationService::LOCATION_CODE_MOSCOW);
+            ->setHasMetro($data['CODE'] === LocationService::LOCATION_CODE_MOSCOW)
+            ->setLatitude($data['LATITUDE'])
+            ->setLongitude($data['LONGITUDE']);
     }
 }

@@ -182,6 +182,8 @@ class LandingController extends Controller
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\LoaderException
      * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
     public function addFestivalUser(Request $request): JsonResponse
     {
@@ -308,6 +310,8 @@ class LandingController extends Controller
             ])->isSuccess();
 
             if (!$isfestivalUserAddSuccess) {
+                $logger = LoggerFactory::create('expertSender');
+                $logger->error('Не удалось добавить купон ' . $festivalUserId . ' для пользователя ' . $userId . '. ' . __METHOD__ . ' ' . $iblockElement->LAST_ERROR);
                 throw new JsonResponseException($this->ajaxMess->getAddError($iblockElement->LAST_ERROR));
             }
 
@@ -327,7 +331,7 @@ class LandingController extends Controller
             {
                 $logger = LoggerFactory::create('expertSender');
                 $logger->error(sprintf(
-                    'Error while sending mail. %s exception: %s',
+                    'Error while sending mail with coupon ' . $festivalUserId . ' to address ' . $email . '. %s exception: %s',
                     __METHOD__,
                     $exception->getMessage()
                 ));

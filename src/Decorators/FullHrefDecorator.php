@@ -18,6 +18,7 @@ use Bitrix\Main\SystemException;
 class FullHrefDecorator
 {
     private $path;
+    private $query;
     /** @var string Домен */
     private static $host = null;
     /** @var string Протокол: http|https */
@@ -26,11 +27,18 @@ class FullHrefDecorator
     /**
      * FullHrefDecorator constructor.
      *
-     * @param string $path
+     * @param string $url
      */
-    public function __construct(string $path)
+    public function __construct(string $url)
     {
-        $this->setPath($path);
+        if ($parsedUrl = parse_url($url)) {
+            if ($parsedUrl['path']) {
+                $this->setPath($parsedUrl['path']);
+            }
+            if ($parsedUrl['query']) {
+                $this->setQuery($parsedUrl['query']);
+            }
+        }
     }
     
     /**
@@ -39,6 +47,11 @@ class FullHrefDecorator
     public function setPath($path): void
     {
         $this->path = $path;
+    }
+
+    public function setQuery($query): void
+    {
+        $this->query = $query;
     }
     
     /**
@@ -51,7 +64,7 @@ class FullHrefDecorator
         } catch (SystemException $e) {
             try {
                 $logger = LoggerFactory::create('fullHrefDecorator');
-                $logger->critical('Системная ошибка при получении пукбличного пути ' . $e->getTraceAsString());
+                $logger->critical('Системная ошибка при получении публичного пути ' . $e->getTraceAsString());
             } catch (\RuntimeException $e) {
             }
             
@@ -65,10 +78,19 @@ class FullHrefDecorator
      */
     public function getFullPublicPath() : string
     {
+        if (!$this->path) {
+            return '';
+        }
         $prefix = $this->getProto();
         $host = $this->getHost();
 
-        return $prefix . '://' . $host . $this->path;
+        $url = $prefix . '://' . $host . $this->path;
+
+        if ($this->query) {
+            $url .= '?' . $this->query;
+        }
+
+        return $url;
     }
     
     /**

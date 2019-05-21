@@ -297,6 +297,15 @@ class ShopInfoService
         $price = $canGetPartial ? $available->getPrice() : $fullResult->getStockResult()->getPrice();
         $address = $this->getShopAddress($store, $metroList);
         $showTime = $this->deliveryService->isInnerPickup($pickup);
+        $metroCssClass = '';
+        $metroName = '';
+        $metroColor = '';
+        if ($metroId = $store->getMetro()) {
+            $metro = $metroList[$store->getMetro()];
+            $metroName = $metro['UF_NAME'];
+            $metroColor = $metro['BRANCH']['UF_COLOUR_CODE'];
+            $metroCssClass = '--' . $metro['BRANCH']['UF_CLASS'];
+        }
 
         $shop = (new Shop())->setId($store->getId())
                             ->setXmlId($store->getXmlId())
@@ -306,7 +315,10 @@ class ShopInfoService
                             ->setLongitude($store->getLongitude())
                             ->setName($address)
                             ->setAddress($address)
-                            ->setMetroCssClass($store->getMetro() ? '--' . $metroList[$store->getMetro()]['BRANCH']['UF_CLASS'] : '')
+                            ->setMetroId($metroId)
+                            ->setMetroName($metroName)
+                            ->setMetroColor($metroColor)
+                            ->setMetroCssClass($metroCssClass)
                             ->setAvailability(
                                 $this->getShopAvailabilityType($splitStockResult, $canSplit, $canGetPartial, $isSubscribe)
                             )
@@ -517,6 +529,7 @@ class ShopInfoService
                 (new ShopOffer())->setId($item->getOffer()->getId())
                                  ->setPrice($item->getPrice())
                                  ->setQuantity($item->getAmount())
+                                 ->setWeight($item->getOffer()->getCatalogProduct()->getWeight())
             );
         }
 

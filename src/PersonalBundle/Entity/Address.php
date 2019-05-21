@@ -414,7 +414,7 @@ class Address extends BaseEntity
      */
     public function getDetails(): string
     {
-        return $this->details;
+        return $this->details ?? '';
     }
 
     /**

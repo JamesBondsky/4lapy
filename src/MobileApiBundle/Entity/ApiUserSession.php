@@ -39,9 +39,19 @@ class ApiUserSession
      * @var null|int
      * @Serializer\SerializedName("USER_ID")
      * @Serializer\Type("int")
-     * @Serializer\Groups(groups={"read"})
+     * @Serializer\Groups(groups={"read","update","create"})
      */
     protected $userId;
+
+    /**
+     * ID корзины
+     * Используется, в случае если пользователь не авторизован чтобы узнать его корзину
+     * @var null|int
+     * @Serializer\SerializedName("FUSER_ID")
+     * @Serializer\Type("int")
+     * @Serializer\Groups(groups={"read","update","create"})
+     */
+    protected $fUserId;
 
     /**
      * @var null|string
@@ -50,16 +60,6 @@ class ApiUserSession
      * @Serializer\Groups(groups={"read","update","create"})
      */
     protected $userAgent;
-
-    /**
-     * @var int
-     * @Serializer\SerializedName("FUSER_ID")
-     * @Serializer\Type("int")
-     * @Serializer\Groups(groups={"read","update","create"})
-     * @Assert\GreaterThanOrEqual(value="1", groups={"update","create"})
-     * @Assert\Type(type="int", groups={"update","create"})
-     */
-    protected $fUserId;
 
     /**
      * @var string
@@ -94,6 +94,22 @@ class ApiUserSession
      * @var string
      */
     protected $httpXForwardedFor;
+
+    /**
+     * @Serializer\SerializedName("PLATFORM")
+     * @Serializer\Type("string")
+     * @Serializer\Groups(groups={"read","update","create"})
+     * @var string
+     */
+    protected $platform;
+
+    /**
+     * @Serializer\SerializedName("PUSH_TOKEN")
+     * @Serializer\Type("string")
+     * @Serializer\Groups(groups={"read","update","create"})
+     * @var string
+     */
+    protected $pushToken;
 
     /**
      * @return int
@@ -222,9 +238,28 @@ class ApiUserSession
      *
      * @return ApiUserSession
      */
-    public function setUserId(int $userId): ApiUserSession
+    public function setUserId($userId): ApiUserSession
     {
         $this->userId = $userId;
+        return $this;
+    }
+
+    /**
+     * @return null|int
+     */
+    public function getFUserId()
+    {
+        return $this->fUserId;
+    }
+
+    /**
+     * @param null|int $fUserId
+     *
+     * @return ApiUserSession
+     */
+    public function setFUserId($fUserId): ApiUserSession
+    {
+        $this->fUserId = $fUserId;
         return $this;
     }
 
@@ -248,24 +283,6 @@ class ApiUserSession
     }
 
     /**
-     * @return int
-     */
-    public function getFUserId(): int
-    {
-        return $this->fUserId;
-    }
-
-    /**
-     * @param int $fUserId
-     * @return ApiUserSession
-     */
-    public function setFUserId(int $fUserId): ApiUserSession
-    {
-        $this->fUserId = $fUserId;
-        return $this;
-    }
-
-    /**
      * @return string
      */
     public function getToken(): string
@@ -280,6 +297,42 @@ class ApiUserSession
     public function setToken(string $token): ApiUserSession
     {
         $this->token = $token;
+        return $this;
+    }
+
+    /**
+ * @return string
+ */
+    public function getPlatform(): string
+    {
+        return $this->platform ?: '';
+    }
+
+    /**
+     * @param string $platform
+     * @return ApiUserSession
+     */
+    public function setPlatform(string $platform): ApiUserSession
+    {
+        $this->platform = $platform;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPushToken(): string
+    {
+        return $this->pushToken ?: '';
+    }
+
+    /**
+     * @param string $pushToken
+     * @return ApiUserSession
+     */
+    public function setPushToken(string $pushToken): ApiUserSession
+    {
+        $this->pushToken = $pushToken;
         return $this;
     }
 }

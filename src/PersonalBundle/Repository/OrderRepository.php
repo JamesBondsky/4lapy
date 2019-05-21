@@ -17,6 +17,7 @@ use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Sale\Internals\BasketPropertyTable;
 use Bitrix\Sale\Internals\BasketTable;
 use Bitrix\Sale\Internals\OrderPropsValueTable;
@@ -81,24 +82,28 @@ class OrderRepository extends BaseRepository
      * @param int $userId
      * @param int $limit
      * @param int $offset
-     *
+     * @param array $additionalFilter
      * @return ArrayCollection
      * @throws ArgumentException
-     * @throws SystemException
      * @throws ObjectPropertyException
+     * @throws SystemException
      */
-    public function getUserOrders(int $userId, int $limit = 0, int $offset = 0): ArrayCollection
+    public function getUserOrders(int $userId, int $limit = 0, int $offset = 0, array $additionalFilter = []): ArrayCollection
     {
         /** @var OrderService $orderService */
         $orderService = Application::getInstance()->getContainer()->get('order.service');
         $closedOrderStatuses = $orderService->getClosedOrderStatusesForQuery();
+
+
+        $filter = $additionalFilter;
+        $filter['USER_ID'] = $userId;
 
         $query = $this->getDataManager()::query()
                       ->setSelect([
                           'IS_CURRENT',
                           '*',
                       ])
-                      ->setFilter(['USER_ID' => $userId])
+                      ->setFilter($filter)
                       ->setOrder([
                           'IS_CURRENT'   => 'DESC',
                           'DATE_INSERT' => 'DESC',
@@ -112,12 +117,48 @@ class OrderRepository extends BaseRepository
                           ]
                       ));
 
+        $this->setNav((new PageNavigation($userId.'_user_orders_nav'))
+            ->setPageSize(PHP_INT_MAX)
+            ->setCurrentPage(1)
+        );
+
         if ($limit) {
             $query->setLimit($limit)
                   ->setOffset($offset);
+
+            $this->getNav()
+                ->setPageSize($limit)
+                ->setCurrentPage(floor($offset / $limit) + 1)
+            ;
         }
 
         return $this->findBy($query);
+    }
+
+    /**
+     * @param int $userId
+     * @param int $orderId
+     * @return Order
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function getUserOrderById(int $userId, int $orderId)
+    {
+        return $this->getUserOrders($userId, 1, 0, ['ID' => $orderId])->current();
+    }
+
+    /**
+     * @param int $userId
+     * @param int $orderNumber
+     * @return Order
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function getUserOrderByNumber(int $userId, int $orderNumber)
+    {
+        return $this->getUserOrders($userId, 1, 0, ['ACCOUNT_NUMBER' => $orderNumber])->current();
     }
 
     /**
