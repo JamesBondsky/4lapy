@@ -794,7 +794,7 @@
                         </div>
                     </div>
 
-                    <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go', 'click', 'btn_map_fest')" data-popup-id="form-festival">я пойду!</button>
+                    <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go_map', 'click', 'btn_map_fest')" data-popup-id="form-festival">я пойду!</button>
 
                     <div class="interactive_map_back">
                         <button type="button" class="interactive_map_back__btn" data-interactive-map-back="true">

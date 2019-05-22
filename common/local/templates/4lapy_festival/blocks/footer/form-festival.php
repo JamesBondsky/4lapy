@@ -62,7 +62,7 @@ if ($isAuthorized)
                     </div>
                 </div>
                 <div class="form-group_submit">
-                    <button class="join_btn" onsubmit="ga('send', 'event', 'fest_go', 'submit')">я пойду!</button>
+                    <button class="join_btn" onsubmit="ga('send', 'event', 'fest_fillform', 'submit')">я пойду!</button>
                 </div>
             </form>
         </div>
