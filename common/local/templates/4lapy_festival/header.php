@@ -100,8 +100,6 @@ $markup = PawsApplication::markup();
 <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_body.php'; ?>
 <?php $APPLICATION->ShowPanel(); ?>
 
-<!-- data-spy="scroll" data-target=".header" -->
-
     <?php include __DIR__ . '/blocks/banner-top.php'; ?>
 
     <!--========== HEADER ==========-->
