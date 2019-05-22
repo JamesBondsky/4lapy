@@ -108,7 +108,7 @@ $markup = PawsApplication::markup();
         <nav class="navbar" role="navigation" data-header-navbar="true">
             <div class="container">
                 <!-- Brand and toggle get grouped for better mobile display -->
-                <div class="menu-container js_nav-item">
+                <div class="menu-container js_nav-item" data-header-menu-container-mobile="true">
                     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
                         <span class="sr-only">Переключить навигацию</span>
                         <span class="toggle-icon"></span>
