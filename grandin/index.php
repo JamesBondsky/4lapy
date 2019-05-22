@@ -14,7 +14,12 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
 <section id="registr-check" data-id-section-landing="registr-check" class="registr-check-landing">
     <div class="container-landing">
 
-        <?/*if ($USER->IsAuthorized()) {?>
+        <div class="registr-check-landing__important-information <?if ($USER->IsAuthorized()) {?>registr-check-landing__important-information--indent<? } ?>">
+            <p>Личные данные, вводимые при регистрации в&nbsp;акции, должны совпадать с&nbsp;личными данными,<br class="hidden-mobile" /> к&nbsp;которым привязана бонусная карта Четыре Лапы, также используемая для регистрации в&nbsp;акции.</p>
+            <p>Участники, у&nbsp;которых указанная информация не&nbsp;совпадает, автоматически выбывают из&nbsp;общего списка зарегистрированных участников для начисления бонусов и&nbsp;розыгрыша призов.</p>
+        </div>
+
+        <?if ($USER->IsAuthorized()) {?>
             <? $arUser = \CUser::GetById($USER->GetID())->Fetch(); ?>
 
             <div class="registr-check-landing__form-wrap" data-wrap-form-registr-chek-landing="true">
@@ -65,22 +70,6 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
                         </div>
                     </div>
 
-                    <div class="form-group form-group_select js-wrap-select-form-registr-check-landing">
-                    	<label for="petType">Мой питомец</label>
-                        <select class="b-select__block" id="PET_TYPE_REG_CHECK_GRANDIN" name="petType" data-select-form-registr-check-landing="true">
-                            <option value="" disabled="disabled" selected="selected">Выберите вид</option>
-
-                            <? foreach (GrandinController::$petTypes as $key => $value) { ?>
-                                <option value="<?=$key?>"><?=$value?></option>
-                            <?}?>
-
-                        </select>
-
-                        <div class="b-error">
-                            <span class="js-message"></span>
-                        </div>
-                    </div>
-
                     <div class="read-rules">
                         <input type="checkbox" id="READ_RULES_REG_CHECK_GRANDIN" name="rules" value="Y" checked>
                         <label for="READ_RULES_REG_CHECK_GRANDIN"><span></span> с <a href="/grandin_rules.pdf" target="_blank">правилами</a> акции ознакомлен</label>
@@ -97,21 +86,7 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
                 <div class="registr-check-landing__response" data-response-form-landing="true"></div>
             </div>
 
-        <?} else {?>
-
-            <div class="registr-check-landing__message">
-                <div class="landing-title landing-title_dark">
-                    Регистрируйте чеки<br/> и&nbsp;выигрывайте призы каждую неделю
-                </div>
-            </div>
-
-        <?}*/?>
-
-        <div class="registr-check-landing__message">
-            <div class="landing-title landing-title_dark">
-                Акция завершена
-            </div>
-        </div>
+        <? } ?>
 
     </div>
 </section>
