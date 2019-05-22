@@ -1107,4 +1107,20 @@ class UserService implements
         $this->setAvatarHostUserId(0);
         $this->setAvatarGuestUserId(0);
     }
+
+    /**
+     * @param string $login
+     * @return bool
+     */
+    public function clearLoginAttempts(string $login) : bool
+    {
+        try {
+            $userLogin = $this->userRepository->findLoginByRawLogin($login);
+            $user = CUser::GetByLogin($userLogin)->Fetch();
+            $obUser = new CUser;
+            return $obUser->Update($user['ID'], ['LOGIN_ATTEMPTS' => 0]);
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
 }
