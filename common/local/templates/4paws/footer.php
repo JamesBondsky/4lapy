@@ -12,6 +12,7 @@ use Bitrix\Main\Application;
 use FourPaws\App\Application as PawsApplication;
 use FourPaws\App\MainTemplate;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\KioskBundle\Service\KioskService;
 
 global $APPLICATION;
 
@@ -66,50 +67,54 @@ if ($template->hasMainWrapper()) {
 
 <footer class="b-footer js-main-footer <?= $template->getFooterClass() ?>">
     <?php if (!$template->hasShortHeaderFooter()) { ?>
-        <div class="b-footer__communication">
-            <div class="b-container">
-                <div class="b-footer__inner">
-                    <div class="b-footer-communication">
-                        <?php require_once __DIR__ . '/blocks/footer/communication_area.php' ?>
+        <? if(!KioskService::isKioskMode()) { ?>
+            <div class="b-footer__communication">
+                <div class="b-container">
+                    <div class="b-footer__inner">
+                        <div class="b-footer-communication">
+                            <?php require_once __DIR__ . '/blocks/footer/communication_area.php' ?>
+                        </div>
+                        <?php require_once __DIR__ . '/blocks/footer/social_links.php' ?>
                     </div>
-                    <?php require_once __DIR__ . '/blocks/footer/social_links.php' ?>
                 </div>
             </div>
-        </div>
+        <? } ?>
     <?php } ?>
     <div class="b-footer__nav">
         <div class="b-container">
             <?php if (!$template->hasShortHeaderFooter()) { ?>
                 <div class="b-footer__line">
-                    <div class="b-footer__column js-here-permutantion">
-                        <?php $APPLICATION->IncludeComponent(
-                            'bitrix:menu',
-                            'footer.menu',
-                            [
-                                'COMPONENT_TEMPLATE'   => 'footer.menu',
-                                'ROOT_MENU_TYPE'       => 'top',
-                                'MENU_CACHE_TYPE'      => 'A',
-                                'MENU_CACHE_TIME'      => '360000',
-                                'CACHE_SELECTED_ITEMS' => 'N',
-                                'TEMPLATE_NO_CACHE'    => 'N',
-                                'MENU_CACHE_GET_VARS'  => [],
-                                'MAX_LEVEL'            => '2',
-                                'CHILD_MENU_TYPE'      => 'left',
-                                'USE_EXT'              => 'N',
-                                'DELAY'                => 'N',
-                                'ALLOW_MULTI_SELECT'   => 'N',
-                            ],
-                            false,
-                            ['HIDE_ICONS' => 'Y']
-                        ); ?>
-                        <?php $APPLICATION->IncludeComponent(
-                            'fourpaws:expertsender.form',
-                            '',
-                            [],
-                            false,
-                            ['HIDE_ICONS' => 'Y']
-                        ); ?>
-                    </div>
+                    <? if(!KioskService::isKioskMode()) { ?>
+                        <div class="b-footer__column js-here-permutantion">
+                            <?php $APPLICATION->IncludeComponent(
+                                'bitrix:menu',
+                                'footer.menu',
+                                [
+                                    'COMPONENT_TEMPLATE'   => 'footer.menu',
+                                    'ROOT_MENU_TYPE'       => 'top',
+                                    'MENU_CACHE_TYPE'      => 'A',
+                                    'MENU_CACHE_TIME'      => '360000',
+                                    'CACHE_SELECTED_ITEMS' => 'N',
+                                    'TEMPLATE_NO_CACHE'    => 'N',
+                                    'MENU_CACHE_GET_VARS'  => [],
+                                    'MAX_LEVEL'            => '2',
+                                    'CHILD_MENU_TYPE'      => 'left',
+                                    'USE_EXT'              => 'N',
+                                    'DELAY'                => 'N',
+                                    'ALLOW_MULTI_SELECT'   => 'N',
+                                ],
+                                false,
+                                ['HIDE_ICONS' => 'Y']
+                            ); ?>
+                            <?php $APPLICATION->IncludeComponent(
+                                'fourpaws:expertsender.form',
+                                '',
+                                [],
+                                false,
+                                ['HIDE_ICONS' => 'Y']
+                            ); ?>
+                        </div>
+                    <? } ?>
                     <?php require_once __DIR__ . '/blocks/footer/application_links.php'; ?>
                 </div>
             <?php } ?>
@@ -117,24 +122,26 @@ if ($template->hasMainWrapper()) {
                 <div class="b-footer__column">
                     <?php require_once __DIR__ . '/blocks/footer/copyright.php' ?>
                 </div>
-                <div class="b-footer__column 
-                            b-footer__column--small 
-                            b-footer__column--change-viewport 
-                            <?= ($sViewportCookie === 'mobile') ? 'mobile' : '' ?>"
-                            data-footer-links-change-viewport="true">
-                    <?php if ($sViewportCookie === null) { ?>
-                        <div class="link-toggle-view active mobile" data-change-viewport-mode='mobile' data-type="desktop">
-                            Перейти в<br/> полноэкранный режим
-                        </div>
-                    <?php }else{ ?>
-                        <div class="link-toggle-view <?= $sViewportCookie === 'desktop' ? 'active' : '' ?>" data-change-viewport-mode='desktop' data-type="mobile">
-                            Перейти в<br/> мобильную версию
-                        </div>
-                        <div class="link-toggle-view <?= $sViewportCookie === 'mobile' ? 'active mobile' : '' ?>" data-change-viewport-mode='mobile' data-type="desktop">
-                            Перейти в<br/> полноэкранный режим
-                        </div>
-                    <?php } ?>
-                </div>
+                <? if(!KioskService::isKioskMode()) { ?>
+                    <div class="b-footer__column
+                                b-footer__column--small
+                                b-footer__column--change-viewport
+                                <?= ($sViewportCookie === 'mobile') ? 'mobile' : '' ?>"
+                                data-footer-links-change-viewport="true">
+                        <?php if ($sViewportCookie === null) { ?>
+                            <div class="link-toggle-view active mobile" data-change-viewport-mode='mobile' data-type="desktop">
+                                Перейти в<br/> полноэкранный режим
+                            </div>
+                        <?php }else{ ?>
+                            <div class="link-toggle-view <?= $sViewportCookie === 'desktop' ? 'active' : '' ?>" data-change-viewport-mode='desktop' data-type="mobile">
+                                Перейти в<br/> мобильную версию
+                            </div>
+                            <div class="link-toggle-view <?= $sViewportCookie === 'mobile' ? 'active mobile' : '' ?>" data-change-viewport-mode='mobile' data-type="desktop">
+                                Перейти в<br/> полноэкранный режим
+                            </div>
+                        <?php } ?>
+                    </div>
+                <?php } ?>
             </div>
         </div>
     </div>
