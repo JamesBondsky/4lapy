@@ -34,7 +34,7 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
                     <input class="js-no-valid" type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
                     <input class="js-no-valid" type="hidden" name="landingType" value="<?= LandingController::$grandinLanding ?>">
                     <div class="form-group">
-                        <input type="dateDatepicker" id="DATE_REG_CHECK_GRANDIN" name="date" value="" placeholder="Дата чека" data-datepicker-landing="true" >
+                        <input type="dateDatepicker" id="DATE_REG_CHECK_GRANDIN" name="date" value="" placeholder="Дата чека" autocomplete="off" data-min-date="2019-06-01" data-max-date="2019-06-30" data-datepicker-landing="true" >
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
