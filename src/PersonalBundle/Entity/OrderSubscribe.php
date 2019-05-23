@@ -576,20 +576,6 @@ class OrderSubscribe extends BaseEntity
     }
 
     /**
-     * @return UserFieldEnumService
-     * @throws ApplicationCreateException
-     */
-    protected function getUserFieldEnumService() : UserFieldEnumService
-    {
-        if (!$this->userFieldEnumService) {
-            $appCont = Application::getInstance()->getContainer();
-            $this->userFieldEnumService = $appCont->get('userfield_enum.service');
-        }
-
-        return $this->userFieldEnumService;
-    }
-
-    /**
      * @return int
      */
     public function getCheckDays()

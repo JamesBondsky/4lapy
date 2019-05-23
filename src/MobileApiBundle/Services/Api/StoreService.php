@@ -363,6 +363,7 @@ class StoreService
                     $delayedGoodsPrice
                 )
             )
+            ->setLocationType($shop->getLocationType() ?? '')
             ->setAvailability($shop->getAvailability())
             ->setAvailableGoods($this->convertToBasketProductCollection($shop->getAvailableItems()))
             ->setDelayedGoods($this->convertToBasketProductCollection($shop->getDelayedItems()));

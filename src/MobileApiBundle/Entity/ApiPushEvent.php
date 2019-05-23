@@ -65,7 +65,7 @@ class ApiPushEvent
      * @var int
      * @Serializer\SerializedName("EVENT_ID")
      * @Serializer\Type("int")
-     * @Serializer\Groups(groups={"read","update","create"})
+     * @Serializer\Groups(groups={"read"})
      */
     protected $eventId;
 

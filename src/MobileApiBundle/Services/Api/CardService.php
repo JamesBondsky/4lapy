@@ -7,6 +7,8 @@
 namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Bitrix\Main\UserTable;
+use FourPaws\External\Manzana\Enum\Card;
+use FourPaws\External\Manzana\Exception\CardNotFoundException;
 use FourPaws\MobileApiBundle\Dto\Error;
 use FourPaws\MobileApiBundle\Dto\Object\ChangeCardProfile;
 use FourPaws\MobileApiBundle\Dto\Object\User;
@@ -103,32 +105,67 @@ class CardService
     public function getCardDataFromManzana($cardNumber): ChangeCardProfile
     {
         $user = $this->appUserService->getCurrentUser();
-        $card = $this->appManzanaService->searchCardByNumber($cardNumber);
 
-        $userPhone = preg_replace("/^(?:.*)(?|\((\d{3})\)(\d{3})|\((\d{4})\)(\d{2})|(\d{3})(\d{3}))(\d{2})(\d{2})$/", "$1$2$3$4", $user->getPersonalPhone());
-        $cardPhone = preg_replace("/^(?:.*)(?|\((\d{3})\)(\d{3})|\((\d{4})\)(\d{2})|(\d{3})(\d{3}))(\d{2})(\d{2})$/", "$1$2$3$4", $card->phone);
+        $isCardNotLinked = false;
+        try {
+            $card = $this->appManzanaService->searchCardByNumber($cardNumber);
+            if (!$card->contactId) {
+                throw new CardNotFoundException(); // На самом деле найдена, но для совместимости со старым кодом кидаем прежнее исключение
+            }
 
-        if (!empty($cardPhone) && $userPhone != $cardPhone) {
-            throw new \Exception("Не удалось получить данные по бонусной карте: номер телефона авторизованного пользователя $userPhone и номер телефона карты $cardPhone не совпадают.");
+            $cardInfo = $this->appManzanaService->getCardInfo(
+                $cardNumber,
+                $card->contactId
+            );
+
+            if (!$cardInfo || !\in_array($cardInfo->status, [Card::STATUS_NEW, Card::STATUS_ACTIVE], true)) {
+                throw new CardNotValidException('Замена невозможна. Обратитесь на Горячую Линию.');
+            }
+
+            $userPhone = preg_replace("/^(?:.*)(?|\((\d{3})\)(\d{3})|\((\d{4})\)(\d{2})|(\d{3})(\d{3}))(\d{2})(\d{2})$/", "$1$2$3$4", $user->getPersonalPhone());
+            $cardPhone = preg_replace("/^(?:.*)(?|\((\d{3})\)(\d{3})|\((\d{4})\)(\d{2})|(\d{3})(\d{3}))(\d{2})(\d{2})$/", "$1$2$3$4", $card->phone);
+
+            if (!empty($cardPhone) && $userPhone != $cardPhone) {
+                throw new \Exception("Не удалось получить данные по бонусной карте: номер телефона авторизованного пользователя $userPhone и номер телефона карты $cardPhone не совпадают.");
+            }
+        } catch (CardNotFoundException $e) {
+            // если не найдена - значит, еще не привязана ни к одному клиенту
+            $isCardNotLinked = true;
+        }
+
+        if ($isCardNotLinked)
+        {
+            $userPhone = $user->getPersonalPhone();
+            $lastName = $user->getLastName();
+            $firstName = $user->getName();
+            $secondName = $user->getSecondName();
+            $birthDateBase = $user->getBirthday();
+            $email = $user->getEmail();
+        } else {
+            $lastName = $card->lastName;
+            $firstName = $card->firstName;
+            $secondName = $card->secondName;
+            $birthDateBase = $card->birthDate;
+            $email = $card->email;
         }
 
         $cardProfile = (new ChangeCardProfile())
             ->setNewCardNumber($cardNumber)
-            ->setLastName($card->lastName ?? '')
-            ->setFirstName($card->firstName ?? '')
+            ->setLastName($lastName ?? '')
+            ->setFirstName($firstName ?? '')
             ->setPhone($userPhone);
 
-        if ($card->birthDate) {
-            $birthDate = (new \DateTime())->setTimestamp($card->birthDate->getTimestamp());
+        if ($birthDateBase) {
+            $birthDate = (new \DateTime())->setTimestamp($birthDateBase->getTimestamp());
             $cardProfile->setBirthDate($birthDate);
         }
 
-        if (stristr($card->email, '@register.phone') === false) {
-            $cardProfile->setEmail($card->email ?? '');
+        if (stristr($email, '@register.phone') === false) {
+            $cardProfile->setEmail($email ?? '');
         }
 
-        if ($card->secondName) {
-            $cardProfile->setSecondName($card->secondName);
+        if ($secondName) {
+            $cardProfile->setSecondName($secondName);
         }
 
         return $cardProfile;
