@@ -82,12 +82,20 @@ class LandingController extends Controller
             $arFields = [$request->get('date'), $request->get('sum'), $request->get('surname'), $request->get('name'), $request->get('phone'), $request->get('email'), $request->get('rules')];
             $landingType = $request->get('landingType');
 
+            if ($landingType == self::$grandinLanding) {
+                $arFields[] = $request->get('petType');
+            }
+
             if (count(array_filter($arFields)) < count($arFields)) {
                 throw new JsonResponseException($this->ajaxMess->getEmptyDataError());
             }
 
             if (!ProtectorHelper::checkToken($request->get(ProtectorHelper::getField(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD)), ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD)) {
                 throw new JsonResponseException($this->ajaxMess->getWrongParamsError());
+            }
+
+            if ($landingType == self::$grandinLanding && !in_array($request->get('petType'), array_keys(self::$petTypes))) {
+                throw new JsonResponseException($this->ajaxMess->getWrongDataError());
             }
 
             if ($landingType == self::$grandinLanding && $request->get('sum') < 1800 || $landingType == self::$royalCaninLanding && $request->get('sum') < 1000) {
