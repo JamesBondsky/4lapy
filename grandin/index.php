@@ -70,6 +70,22 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
                         </div>
                     </div>
 
+                    <div class="form-group form-group_select js-wrap-select-form-registr-check-landing">
+                        <label for="petType">Мой питомец</label>
+                        <select class="b-select__block" id="PET_TYPE_REG_CHECK_GRANDIN" name="petType" data-select-form-registr-check-landing="true">
+                            <option value="" disabled="disabled" selected="selected">Выберите вид</option>
+
+                            <? foreach (LandingController::$petTypes as $key => $value) { ?>
+                                <option value="<?=$key?>"><?=$value?></option>
+                            <?}?>
+
+                        </select>
+
+                        <div class="b-error">
+                            <span class="js-message"></span>
+                        </div>
+                    </div>
+
                     <div class="read-rules">
                         <input type="checkbox" id="READ_RULES_REG_CHECK_GRANDIN" name="rules" value="Y" checked>
                         <label for="READ_RULES_REG_CHECK_GRANDIN"><span></span> с <a href="/grandin_rules.pdf" target="_blank">правилами</a> акции ознакомлен</label>
