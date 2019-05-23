@@ -45,13 +45,19 @@ var Header = function () {
             event.preventDefault();
 
             var $offset = 0;
-            $offset = $(".navbar-fixed-top").height()-20;
+
+            if (Header.getViewPort().width > 991){
+                $offset = $(".navbar-fixed-top").height()-20;
+            } else {
+                $offset = $("[data-header-menu-container-mobile]").height();
+            }
 
             if ($('body').hasClass('is_open_banner_top')){
                 $offset = $offset + $('[data-banner-top]').height();
             }
 
             var $position = $($(this).attr('href')).offset().top;
+
             $('html, body').stop().animate({
                 scrollTop: $position - $offset
             }, 600);

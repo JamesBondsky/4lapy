@@ -16,6 +16,8 @@
                         <img src="img/x.png" alt="" class="map map_desktop" border="0" usemap="#usemap_desktop"/>
                         <img src="img/x.png" alt="" class="map map_tablet" border="0" usemap="#usemap_tablet"/>
                         <img src="img/x.png" alt="" class="map map_mobile" border="0" usemap="#usemap_mobile"/>
+
+                        <div class="interactive_map-hover-pavilion"></div>
                     </div>
 
                     <map name="usemap_desktop" id="usemap_desktop">
@@ -823,7 +825,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_medium point_rc" data-interactive-map-pavilion-point="royalcanin" data-point-title="ROYAL CANIN" data-point-description="ROYAL CANIN&nbsp;&mdash; эксперт в&nbsp;области здорового питания для кошек и&nbsp;собак.<br>Бренд Royal Canin основал ветеринарный врач Жан Катари в&nbsp;1968 году во&nbsp;Франции.Компания ориентированна на&nbsp;изучение потребностей животных, уважение к&nbsp;их&nbsp;особенностям и&nbsp;создание продуктов,отвечающих их&nbsp;нуждам.<br>Royal Canin остается в&nbsp;авангарде производства кормов для животных и&nbsp;может гордиться целым рядом специализированных разработок, не&nbsp;имеющих аналогов в&nbsp;мире.">
+                                        <div class="point point_medium point_rc" data-interactive-map-pavilion-point="royalcanin" data-point-title="ROYAL CANIN" data-point-description="ROYAL CANIN&nbsp;&mdash; эксперт в&nbsp;области здорового питания для&nbsp;кошек и&nbsp;собак. Бренд Royal Canin основал ветеринарный врач Жан&nbsp;Катари в&nbsp;1968 году во&nbsp;Франции.Компания ориентированна на&nbsp;изучение потребностей животных, уважение к&nbsp;их&nbsp;особенностям и&nbsp;создание продуктов,отвечающих их&nbsp;нуждам. Royal Canin остается в&nbsp;авангарде производства кормов для&nbsp;животных и&nbsp;может гордиться целым рядом специализированных разработок, не&nbsp;имеющих аналогов в&nbsp;мире.">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -839,7 +841,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_acana" data-interactive-map-pavilion-point="acana" data-point-title="ACANA" data-point-description="&laquo;Компания Акана&raquo; представляет в&nbsp;России канадские корма для кошек и&nbsp;собак Acana и&nbsp;Orijen. Мы&nbsp;делаем всё, чтобы хозяева питомцев нашей страны узнали стандарты качества биологически соответствующих кормов.">
+                                        <div class="point point_small point_acana" data-interactive-map-pavilion-point="acana" data-point-title="ACANA" data-point-description="&laquo;Компания Акана&raquo; представляет в&nbsp;России канадские корма для&nbsp;кошек и&nbsp;собак Acana и&nbsp;Orijen. Мы&nbsp;делаем всё, чтобы хозяева питомцев нашей страны узнали стандарты качества биологически соответствующих кормов.">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -863,7 +865,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_childrengames" data-interactive-map-pavilion-point="childrengames" data-point-title="Мастер-классы для детей" data-point-description="Наших маленьких участников встречают веселые аниматоры с&nbsp;занимательными играми, аквагримом, мастер-классами,&nbsp;танцами." data-point-image="/img/img03_3.jpg">
+                                        <div class="point point_small point_childrengames" data-interactive-map-pavilion-point="childrengames" data-point-title="Мастер-классы для&nbsp;детей" data-point-description="Наших маленьких участников встречают веселые аниматоры с&nbsp;занимательными играми, аквагримом, мастер-классами,&nbsp;танцами." data-point-image="/img/img03_3.jpg">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -871,7 +873,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_hills" data-interactive-map-pavilion-point="hills" data-point-title="Hill’s" data-point-description="С&nbsp;1939 года компания Hill&rsquo;s&trade; производит высококачественные рационы для питомцев любого возраста и&nbsp;с&nbsp;учетом их&nbsp;индивидуальных потребностей. Наш долг&nbsp;&mdash; обеспечить каждому питомцу лучшую заботу, на&nbsp;которую только способен человек.">
+                                        <div class="point point_small point_hills" data-interactive-map-pavilion-point="hills" data-point-title="Hill’s" data-point-description="С&nbsp;1939 года компания Hill&rsquo;s&trade; производит высококачественные рационы для&nbsp;питомцев любого возраста и&nbsp;с&nbsp;учетом их&nbsp;индивидуальных потребностей. Наш долг&nbsp;&mdash; обеспечить каждому питомцу лучшую заботу, на&nbsp;которую только способен человек.">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
