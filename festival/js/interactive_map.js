@@ -58,4 +58,13 @@ $(document).ready(function(){
 
     })
 
+
+    $('[data-interactive-map-current="pavilion"]').on('mouseenter', function(){
+        $('[data-interactive-map]').addClass('hover_pavilion');
+    })
+
+    $('[data-interactive-map-current="pavilion"]').on('mouseleave', function(){
+        $('[data-interactive-map]').removeClass('hover_pavilion');
+    })
+
 });

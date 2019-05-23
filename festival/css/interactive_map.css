@@ -9,6 +9,7 @@
 
 .interactive_map .interactive_map-main{
     display: block;
+    position: relative;
     width: 940px;
     height: 620px;
     margin-left: auto;
@@ -18,7 +19,7 @@
     display: block;
     width: 940px;
     height: 620px;
-    background-image: url('../img/interactive_map/map1.jpg');
+    background-image: url('../img/interactive_map/map2.jpg');
     background-repeat: no-repeat;
     background-position: 50% 50%;
     background-size: 940px auto;
@@ -273,6 +274,31 @@
     .interactive_map .work-popup-trigger.active #icon8 .st6{transition: .2s ease; fill:#ffffff;}
 
 
+/* hovers area map */
+.interactive_map-hover-pavilion{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-position: 50% 50%;
+    background-repeat: no-repeat;
+    background-size: cover;
+    -moz-background-size: cover;
+    -webkit-background-size: cover;
+    -o-background-size: cover;
+    background-image: url('../img/interactive_map/map2_hover_pavilion.png');
+    pointer-events: none;
+    -webkit-transition: .2s ease opacity;
+    -o-transition: .2s ease opacity;
+    transition: .2s ease opacity;
+    opacity: 0;
+}
+    .interactive_map.hover_pavilion .interactive_map-hover-pavilion{
+        opacity: 1;
+    }
+
+
 .interactive_map_back__btn{
     display: none;
     position: absolute;
@@ -353,7 +379,7 @@
     right: 0;
     top: 0;
     bottom: 0;
-    background-color: rgba(225, 227, 235, 0.9);
+    background-color: rgba(225, 227, 235, 1);
     z-index: -1;
 }
 
@@ -538,10 +564,14 @@
 
 
 .interactive_map_pavilion__content{
-    width: 540px;
+    width: 100%;
+    max-width: 860px;
     margin-left: auto;
     margin-right: auto;
     margin-top: -45px;
+}
+.interactive_map_pavilion__container{
+    min-height: 133px;
 }
 .interactive_map_pavilion__title{
     margin-bottom: 16px;
@@ -837,6 +867,10 @@
     .interactive_map_pavilion .point_gastromarket   { right: -310px; bottom: -100px; }
     .interactive_map_pavilion .point_bloggershow    { right: -265px; bottom: -47px; }
     .interactive_map_pavilion .point_shop2          { right: -145px; bottom: -115px; }
+
+    .interactive_map_pavilion__container{
+        min-height: 153px;
+    }
 }
 
 /* mobile */
@@ -983,8 +1017,10 @@
     .interactive_map_pavilion__content{
         margin-top: 15px;
         width: 100%;
-        max-width: 540px;
+        max-width: 100%;
         padding: 0 10px;
+        margin-left: auto;
+        margin-right: auto;
     }
     .interactive_map_pavilion__title{
         font-size: 28px;
@@ -997,6 +1033,7 @@
     .interactive_map_pavilion__container{
         position: relative;
         z-index: 2;
+        min-height: 234px;
     }
     .interactive_map_pavilion__image{
         margin-top: -40px;
@@ -1098,6 +1135,14 @@
         left: 0;
         margin-left: 0;
     }
+    .interactive_map_pavilion__container{
+        min-height: 254px;
+    }
+}
+@media screen and (max-width: 520px) {
+    .interactive_map_pavilion__container{
+        min-height: 274px;
+    }
 }
 @media screen and (max-width: 480px) {
     .interactive_map{
@@ -1109,14 +1154,25 @@
     .interactive_map.is_open_pavilion .interactive_map_back__btn{
         top: -60px;
     }
+    .interactive_map_pavilion__container{
+        min-height: 314px;
+    }
 }
 @media screen and (max-width: 420px) {
     .interactive_map_pavilion__scrollicon{
         margin-top: -10px;
     }
+    .interactive_map_pavilion__container{
+        min-height: 314px;
+    }
 }
 @media screen and (max-width: 415px) {
     #map .interactive_map .interactive_map-main {
         margin-left: -20px;
+    }
+}
+@media screen and (max-width: 355px) {
+    .interactive_map_pavilion__container{
+        min-height: 374px;
     }
 }
