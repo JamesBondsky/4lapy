@@ -10,7 +10,7 @@
                 <div class="item__primary">и перейти в каталог</div>
             </div>
             <div class="item">
-                <a href="/?showscan=1&page=bonus" class="item__btn item__btn--orange">Посмотреть баллы</a>
+                <a href="/?showScan=1&page=bonus" class="item__btn item__btn--orange">Посмотреть баллы</a>
                 <div class="item__primary">отсканировав карту</div>
             </div>
         </div>

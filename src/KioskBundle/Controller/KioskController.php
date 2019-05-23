@@ -79,8 +79,7 @@ class KioskController extends Controller
 
         /** @var KioskService $kioskService */
         $kioskService = Application::getInstance()->getContainer()->get('kiosk.service');
-        $lastUrl = $kioskService->getLastPageUrl($request);
-        $lastUrl = $kioskService->addParamsToUrl($lastUrl, $resultParams);
+        $lastUrl = $kioskService->addParamsToUrl($kioskService->getLastPageUrl($request), $resultParams);
 
         return $this->redirect($lastUrl);
     }

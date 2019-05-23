@@ -38,16 +38,20 @@ class KioskService
 
     public function getAuthLink () {
         $curPage = Application::getInstance()->getContext()->getRequest()->getRequestUri();
-        $url = $this->addParamsToUrl($curPage, ['showscan' => true]);
+        $url = $this->addParamsToUrl($curPage, ['showScan' => true]);
         return $url;
     }
 
     public function getLastPageUrl(Request $request)
     {
-        return $request->headers->get('referer');
+        $lastUrl = $request->headers->get('referer');
+        if(!$lastUrl){
+            $lastUrl = '/';
+        }
+        return $lastUrl;
     }
 
-    public function redirectToBonusAfterAuth()
+    public function isRedirectToBonusAfterAuth()
     {
         $url = Application::getInstance()->getContext()->getRequest()->getRequestUri();
         $query = parse_url($url, PHP_URL_QUERY);
