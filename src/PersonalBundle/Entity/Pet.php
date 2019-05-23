@@ -303,19 +303,19 @@ class Pet extends BaseEntity
     }
 
     /**
-     * @return int
+     * @return int|null
      */
-    public function getBreedId() : int
+    public function getBreedId() : ?int
     {
         return $this->breedId ?? 0;
     }
 
     /**
-     * @param int $breedId
+     * @param int|null $breedId
      *
      * @return Pet
      */
-    public function setBreedId(int $breedId) : Pet
+    public function setBreedId(?int $breedId) : Pet
     {
         $this->breedId = $breedId;
 
