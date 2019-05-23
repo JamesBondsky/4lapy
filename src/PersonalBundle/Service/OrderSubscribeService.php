@@ -1461,7 +1461,7 @@ class OrderSubscribeService implements LoggerAwareInterface
                 // устанавливаем текущего пользователя и местоположение
                 // для расчёта цен и даты доставки
                 global $USER;
-                if(!$USER->IsAuthorized()){
+                if(!$USER->IsAuthorized() || $orderSubscribe->getUserId() != $USER->GetID()){
                     $USER->authorize($orderSubscribe->getUserId());
 
                     /** @var UserService $currentUser */
