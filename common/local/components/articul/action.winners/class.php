@@ -28,7 +28,7 @@
     
         protected function getWinners()
         {
-            $dbSections = CIBlockSection::GetList(['SORT' => 'ASC', 'NAME' => 'ASC'], ['IBLOCK_ID' => $this->iblockId, 'SECTION_ID' => $this->actionSectionId]);
+            $dbSections = CIBlockSection::GetList(['SORT' => 'ASC', 'NAME' => 'ASC'], ['IBLOCK_ID' => $this->iblockId, 'SECTION_ID' => $this->actionSectionId, 'ACTIVE' => 'Y']);
             $arSections = [];
             $arSectionsMap = [];
             while ($arSection = $dbSections->Fetch()) {
