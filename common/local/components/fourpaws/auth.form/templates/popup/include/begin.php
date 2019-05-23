@@ -78,9 +78,11 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
             <div class="b-input-line b-input-line--popup-authorization">
                 <div class="b-input-line__label-wrapper">
                     <label class="b-input-line__label" for="password-authorization">Пароль</label>
-                    <a class="b-link-gray b-link-gray--label"
-                       href="/personal/forgot-password/?backurl=<?= $backUrl ?>"
-                       title="Забыли пароль?">Забыли пароль?</a>
+                    <? if(!$arResult['KIOSK']) { ?>
+                        <a class="b-link-gray b-link-gray--label"
+                           href="/personal/forgot-password/?backurl=<?= $backUrl ?>"
+                           title="Забыли пароль?">Забыли пароль?</a>
+                    <? } ?>
                 </div>
                 <div class="b-input b-input--registration-form">
                     <input class="b-input__input-field b-input__input-field--registration-form"

@@ -12,6 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\KioskBundle\Service\KioskService;
 
 $uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arParams['OBJECT_ID']; ?>
 <div class="b-container">
@@ -152,8 +153,10 @@ $uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arP
                               maxlength="1000"></textarea>
                         <div class="b-error"><span class="js-message"></span></div>
                     </div>
+                    <? if (KioskService::isKioskMode()) { ?>
                     <div class="js-comments-captcha-block-<?= $uniqueCommentString ?> js-recaptcha-block"
                          style="display: none"></div>
+                    <? } ?>
                     <button class="b-button b-button--form-review" type="submit">Отправить</button>
                 </div>
                 <div class="b-form-review__wrapper-blocks js-success-review">

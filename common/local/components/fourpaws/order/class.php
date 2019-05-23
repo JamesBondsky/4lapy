@@ -36,6 +36,7 @@ use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\ManzanaService;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Service\AddressService;
@@ -265,8 +266,10 @@ class FourPawsOrderComponent extends \CBitrixComponent
             throw new OrderCreateException('Failed to initialize storage');
         }
 
-        // режим подписки на доставку
+
         if ($this->currentStep === OrderStorageEnum::AUTH_STEP) {
+
+            // режим подписки на доставку
             if ($_POST['subscribe'] && ($_POST['orderId'] > 0 || !$storage->isSubscribe())) {
 
                 // переход из истории заказов иммитирует добавление всех товаров из заказа
@@ -306,6 +309,12 @@ class FourPawsOrderComponent extends \CBitrixComponent
                     $storage->setSubscribeId(null);
                 }
                 $storage->setSubscribe(false);
+                $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+            }
+
+            // капча в киоске не нужна
+            if (KioskService::isKioskMode() && !$storage->isCaptchaFilled()) {
+                $storage->setCaptchaFilled(true);
                 $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
             }
         }
