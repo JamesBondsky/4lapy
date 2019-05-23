@@ -179,8 +179,8 @@ class PushEventService
                 $response = $this->fireBaseCloudMessagingService->sendNotification(
                     $pushEvent->getPushToken(),
                     $pushEvent->getMessageText(),
-                    $pushEvent->getMessageId(),
-                    $pushEvent->getMessageType()
+                    $pushEvent->getEventId(),
+                    $pushEvent->getMessageTypeEntity()->getXmlId()
                 );
                 $execCode = $response->getStatusCode() === 200 ? ApiPushEvent::EXEC_SUCCESS_CODE : ApiPushEvent::EXEC_FAIL_CODE;
                 $pushEvent->setSuccessExec($execCode);
@@ -206,8 +206,8 @@ class PushEventService
                 $this->applePushNotificationService->sendNotification(
                     $pushEvent->getPushToken(),
                     $pushEvent->getMessageText(),
-                    $pushEvent->getMessageId(),
-                    $pushEvent->getMessageType()
+                    $pushEvent->getEventId(),
+                    $pushEvent->getMessageTypeEntity()->getXmlId()
                 );
 
                 foreach ($this->applePushNotificationService->getLogMessages() as $logMessage) {

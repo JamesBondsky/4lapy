@@ -109,6 +109,9 @@ class CardService
         $isCardNotLinked = false;
         try {
             $card = $this->appManzanaService->searchCardByNumber($cardNumber);
+            if (!$card->contactId) {
+                throw new CardNotFoundException(); // На самом деле найдена, но для совместимости со старым кодом кидаем прежнее исключение
+            }
 
             $cardInfo = $this->appManzanaService->getCardInfo(
                 $cardNumber,
