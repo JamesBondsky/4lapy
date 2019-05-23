@@ -81,7 +81,7 @@ if ($template->hasMainWrapper()) { ?>
     </section>
     <? } ?>
 
-    <section data-id-section-landing="winners" class="winners-landing winners-landing--grandin-prague" style="background-image: url('/img/bg-winners-grandin-prague.png')">
+    <section data-id-section-landing="winners" class="winners-landing winners-landing--grandin-prague" style="background-image: url('/img/bg-winners-grandin-prague.png'); <?$APPLICATION->ShowViewContent('empty-winners');?>">
         <div class="winners-landing__spoon" style="background-image: url('/img/winners-spoon-grandin-prague.png')"></div>
 
         <div class="winners-landing__container">
