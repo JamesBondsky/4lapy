@@ -140,7 +140,7 @@ $markup = PawsApplication::markup();
                             <!--<li class="js_nav-item nav-item"><a class="nav-item-child nav-item-hover" href="#interview">Я ПОЙДУ!</a></li>-->
                             <li class="js_nav-item nav-item"><a class="nav-item-child nav-item-hover" href="#partners">партнеры</a></li>
                             <li class="js_nav-item nav-item"><a class="nav-item-child nav-item-hover" href="#contacts">контакты</a></li>
-                            <li class="nav-item join-item"><a class="nav-item-child nav-item-hover js-open-popup" href="javascript:void(0);" onclick="ga('send', 'event', 'fest_go', 'click', 'btn_menu_fest')" data-popup-id="form-festival"><span>Я ПОЙДУ</span></a></li>
+                            <li class="nav-item join-item"><a class="nav-item-child nav-item-hover js-open-popup" href="javascript:void(0);" onclick="ga('send', 'event', 'fest_go_menu', 'click', 'btn_menu_fest')" data-popup-id="form-festival"><span>Я ПОЙДУ</span></a></li>
                         </ul>
                     </div>
                 </div>
@@ -396,7 +396,7 @@ $markup = PawsApplication::markup();
                     </div>
                 </div>
             </div>
-            <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go', 'click', 'btn_guest_fest')" data-popup-id="form-festival">я пойду!</button>
+            <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go_guest', 'click', 'btn_guest_fest')" data-popup-id="form-festival">я пойду!</button>
         </div>
         <!-- End guest -->
         <div id="dog_fest">
@@ -410,7 +410,7 @@ $markup = PawsApplication::markup();
 
                         <div id="videoHolder"></div>
 
-                        <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go', 'click', 'btn_dog_fest')" data-popup-id="form-festival">я пойду!</button>
+                        <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go_dog', 'click', 'btn_dog_fest')" data-popup-id="form-festival">я пойду!</button>
                     </div>
                 </div>
                 <!--// end row -->
@@ -465,7 +465,7 @@ $markup = PawsApplication::markup();
                     </div>
                 </div>
             </div>
-            <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go', 'click', 'btn_activity_fest')" data-popup-id="form-festival">я пойду!</button>
+            <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go_activity', 'click', 'btn_activity_fest')" data-popup-id="form-festival">я пойду!</button>
         </div>
         <!-- End acitvity -->
 
@@ -687,7 +687,7 @@ $markup = PawsApplication::markup();
                     </div>
                 </div>
                 <!-- End Masonry Grid -->
-                <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go', 'click', 'btn_gala_fest')" data-popup-id="form-festival">я пойду!</button>
+                <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go_gala_fest', 'click', 'btn_gala_fest')" data-popup-id="form-festival">я пойду!</button>
             </div>
         </div>
         <!-- Work -->
@@ -762,7 +762,7 @@ $markup = PawsApplication::markup();
                     </div>
                 </div>
                 <!-- End Masonry Grid -->
-                <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go', 'click', 'btn_dobrolap_fest')" data-popup-id="form-festival">я пойду!</button>
+                <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go_dobrolap', 'click', 'btn_dobrolap_fest')" data-popup-id="form-festival">я пойду!</button>
             </div>
         </div>
         <div id="konkurs">
@@ -810,7 +810,7 @@ $markup = PawsApplication::markup();
                     </div>
                 </div>
             </div>
-            <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_fillform', 'click', 'btn_konkurs_fest')" data-popup-id="form-festival">я пойду!</button>
+            <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go_konkurs', 'click', 'btn_konkurs_fest')" data-popup-id="form-festival">я пойду!</button>
         </div>
         <!-- End Promo Banner -->
 
