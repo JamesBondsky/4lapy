@@ -22,6 +22,7 @@ use FourPaws\Catalog\Model\Product;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\SapBundle\Dto\In\Offers\Material;
+use FourPaws\SapBundle\Enum\SapOfferProperty;
 use FourPaws\SapBundle\Enum\SapProductField;
 use FourPaws\SapBundle\Enum\SapProductProperty;
 use FourPaws\SapBundle\Exception\NotFoundPropertyException;
@@ -138,6 +139,13 @@ class ProductService
                 SapProductProperty::PACKING_COMBINATION
             )->first()
         );
+
+        $product = $product ?: $this->findByColour(
+            $material->getProperties()->getPropertyValues(
+                SapOfferProperty::COLOUR_COMBINATION
+            )->first()
+        );
+
         return $product ?: $this->findByOfferWithoutCombination($material->getOfferXmlId());
     }
 
@@ -155,6 +163,45 @@ class ProductService
         return $this->productRepository->findBy([
             'PROPERTY_PACKING_COMBINATION' => $combination,
         ], [], 1)->first() ?: null;
+    }
+
+    /**
+     * @param string $colour
+     *
+     * @return null|Product
+     * @throws IblockNotFoundException
+     */
+    protected function findByColour(string $colour): ?Product
+    {
+        if (!$colour) {
+            return null;
+        }
+
+        $product = null;
+
+        $dbResult = \CIBlockElement::GetList(
+            [],
+            [
+                '!PROPERTY_CML2_LINK'         => false,
+                'IBLOCK_ID'                   => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
+                'PROPERTY_COLOUR_COMBINATION' => $colour,
+            ],
+            false,
+            false,
+            [
+                'PROPERTY_CML2_LINK',
+                'PROPERTY_CML2_LINK.PROPERTY_COLOUR_COMBINATION',
+            ]
+        );
+        $data = $dbResult->Fetch();
+        $id = $data['PROPERTY_CML2_LINK_VALUE'] ?? 0;
+
+        if ($id) {
+            /** @var Product $product */
+            $product = $this->productRepository->find($id);
+        }
+
+        return $product;
     }
 
     /**

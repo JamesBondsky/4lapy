@@ -159,11 +159,17 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
         <?php //&& $product->isFood()
         if ($offers->count() > 0) {
             /** @noinspection PhpUnhandledExceptionInspection */
-            if ($currentOffer->getPackageLabelType() === Offer::PACKAGE_LABEL_TYPE_SIZE) { ?>
-                <div class="b-product-card__weight">Размеры</div>
-            <?php } else { ?>
-                <div class="b-product-card__weight">Варианты фасовки</div>
-            <?php } ?>
+            switch ($currentOffer->getPackageLabelType()) {
+                case Offer::PACKAGE_LABEL_TYPE_SIZE:
+                    echo '<div class="b-product-card__weight">Размеры</div>';
+                    break;
+                case Offer::PACKAGE_LABEL_TYPE_COLOUR:
+                    echo '<div class="b-product-card__weight">Варианты цветов</div>';
+                    break;
+                default:
+                    echo '<div class="b-product-card__weight">Варианты фасовки</div>';
+            }
+            ?>
             <div class="b-weight-container b-weight-container--product">
                 <ul class="b-weight-container__list b-weight-container__list--product">
                     <?php
