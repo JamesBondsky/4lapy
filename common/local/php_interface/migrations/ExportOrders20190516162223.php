@@ -26,6 +26,8 @@ class ExportOrders20190516162223 extends SprintMigrationBase
         'сумма товаров НДС 20%',
         'статус заказа'
     ];
+    protected const CODING_IN = 'UTF-8';
+    protected const CODING_OUT = 'WINDOWS-1251';
 
     protected $description = 'Экспорт заказов в csv файл';
 
@@ -68,7 +70,10 @@ class ExportOrders20190516162223 extends SprintMigrationBase
         }
 
 
-        $this->resultDataToCsv[] = static::CSV_HEADER;
+        $this->resultDataToCsv[] = array_map(function ($item) {
+            return iconv(static::CODING_IN, static::CODING_OUT, $item);
+        }, static::CSV_HEADER);
+
         foreach ($ordersIds as $orderId) {
             $order = $orders->get($orderId);
             if ($order instanceof Order) {
@@ -89,6 +94,9 @@ class ExportOrders20190516162223 extends SprintMigrationBase
                             break;
                     }
                 }
+
+                $summ20 += $order->getDeliveryPrice();
+
                 /**
                  * 'id заказа',
                  * 'сумма товаров НДС 10%',
@@ -99,14 +107,14 @@ class ExportOrders20190516162223 extends SprintMigrationBase
                     'ACCOUNT_NUMBER' => $orderId,
                     'SUMM_10'        => str_replace('.', ',', (string)$summ10),
                     'SUMM_20'        => str_replace('.', ',', (string)$summ20),
-                    'STATUS'         => $this->statuses[$statusId] . ' [' . $statusId . ']',
+                    'STATUS'         => iconv(static::CODING_IN, static::CODING_OUT, $this->statuses[$statusId] . ' [' . $statusId . ']'),
                 ];
             } else {
                 $this->resultDataToCsv[] = [
                     'ACCOUNT_NUMBER' => $orderId,
                     'SUMM_10'        => '',
                     'SUMM_20'        => '',
-                    'STATUS'         => 'Заказ не найден на сайте',
+                    'STATUS'         => iconv(static::CODING_IN, static::CODING_OUT, 'Заказ не найден на сайте'),
                 ];
             }
             unset($order);
