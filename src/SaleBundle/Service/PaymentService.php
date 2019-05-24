@@ -15,6 +15,7 @@ use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order;
@@ -42,8 +43,10 @@ use FourPaws\SaleBundle\Dto\Fiscalization\ItemQuantity;
 use FourPaws\SaleBundle\Dto\Fiscalization\ItemTax;
 use FourPaws\SaleBundle\Dto\Fiscalization\OrderBundle;
 use FourPaws\SaleBundle\Dto\SberbankOrderInfo\Attribute;
+use FourPaws\SaleBundle\Dto\SberbankOrderInfo\CardAuthInfo;
 use FourPaws\SaleBundle\Dto\SberbankOrderInfo\OrderBundle\Item as SberbankOrderItem;
 use FourPaws\SaleBundle\Dto\SberbankOrderInfo\OrderInfo;
+use FourPaws\SaleBundle\Dto\SberbankOrderInfo\PaymentAmountInfo;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Exception\FiscalValidation\FiscalAmountExceededException;
 use FourPaws\SaleBundle\Exception\FiscalValidation\FiscalAmountException;
@@ -852,11 +855,12 @@ class PaymentService implements LoggerAwareInterface
 
     /**
      * @param OrderInfo $orderInfo
+     * @param bool|null $isMobile
      *
      * @return string
      * @throws SberBankOrderNumberNotFoundException
      */
-    public function getSberbankPaymentUrl(OrderInfo $orderInfo): string
+    public function getSberbankPaymentUrl(OrderInfo $orderInfo, ?bool $isMobile = false): string
     {
         $orderNumber = $this->getSberbankOrderId($orderInfo);
         $urlParts = \parse_url($this->getSberbankProcessing()->getApiUrl());
@@ -864,7 +868,7 @@ class PaymentService implements LoggerAwareInterface
             self::SBERBANK_PAYMENT_URL_FORMAT,
             $urlParts['scheme'],
             $urlParts['host'],
-            $this->getSberbankProcessing()->getMerchantName(),
+            $isMobile ? $this->getSberbankProcessing()->getMobileMerchantName() : $this->getSberbankProcessing()->getMerchantName(),
             $orderNumber
         );
 
@@ -874,23 +878,29 @@ class PaymentService implements LoggerAwareInterface
     /**
      * @param Order $order
      * @param $paymentToken
+     * @return string
+     * @throws AddressSplitException
      * @throws ArgumentException
      * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
      * @throws NotImplementedException
      * @throws ObjectException
      * @throws ObjectNotFoundException
-     * @throws PaymentException
+     * @throws ObjectPropertyException
      * @throws SberBankOrderNumberNotFoundException
+     * @throws SberbankOrderNotFoundException
      * @throws SberbankOrderNotPaidException
      * @throws SberbankOrderPaymentDeclinedException
      * @throws SberbankPaymentException
      * @throws SystemException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function processApplePay(Order $order, $paymentToken)
+    public function processApplePay(Order $order, $paymentToken): string
     {
         $response = $this->getSberbankProcessing()->paymentViaMobile($order->getField('ACCOUNT_NUMBER'), $paymentToken, 'applepay');
-        $this->processOnlinePaymentViaMobile($order, $response);
+        return $this->processOnlinePaymentViaMobile($order, $response);
     }
 
     /**
@@ -1073,7 +1083,7 @@ class PaymentService implements LoggerAwareInterface
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    protected function processOnlinePayment(Order $order, OrderInfo $response): void
+    protected function processOnlinePayment(Order $order, OrderInfo $response)
     {
         $isSuccess = $response->getErrorCode() === Sberbank::SUCCESS_CODE;
         if ($isSuccess && \in_array(
@@ -1102,7 +1112,7 @@ class PaymentService implements LoggerAwareInterface
             $onlinePayment->setField('PS_STATUS_CODE', 'Y');
             $onlinePayment->setField('PS_STATUS_MESSAGE', $response->getPaymentAmountInfo()->getPaymentState());
             $onlinePayment->save();
-            $order->save();
+            $orderSaveResult = $order->save();
 
             /** Отправка данных в достависту если доставка Достависта */
             $deliveryId = $order->getField('DELIVERY_ID');
@@ -1112,6 +1122,8 @@ class PaymentService implements LoggerAwareInterface
             if ($this->deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
                 $this->sendOnlinePaymentDostavistaOrder($order, $deliveryCode, $deliveryData, true);
             }
+
+            return $orderSaveResult->getId();
         } else {
             if ($response->getOrderStatus() === Sberbank::ORDER_STATUS_DECLINED) {
                 throw new SberbankOrderPaymentDeclinedException('Order not paid');
@@ -1131,32 +1143,48 @@ class PaymentService implements LoggerAwareInterface
     /**
      * @param Order $order
      * @param array $response
+     * @return string
+     * @throws AddressSplitException
      * @throws ArgumentException
      * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
      * @throws NotImplementedException
      * @throws ObjectException
      * @throws ObjectNotFoundException
-     * @throws PaymentException
+     * @throws ObjectPropertyException
      * @throws SberBankOrderNumberNotFoundException
      * @throws SberbankOrderNotFoundException
      * @throws SberbankOrderNotPaidException
      * @throws SberbankOrderPaymentDeclinedException
      * @throws SberbankPaymentException
      * @throws SystemException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    protected function processOnlinePaymentViaMobile(Order $order, array $response)
+    protected function processOnlinePaymentViaMobile(Order $order, array $response): string
     {
         $orderInfo = (new OrderInfo());
         if (!empty($response['error'])) {
             $orderInfo->setErrorCode($response['error']['code']);
             $orderInfo->setErrorMessage($response['error']['message']);
         } else {
-            //toDo - мэппинг ответа в случае успеха
-            var_dump($response);
-
-            //$orderInfo->setErrorCode(Sberbank::SUCCESS_CODE);
-            //$orderInfo->setOrderStatus(Sberbank::ORDER_STATUS_PAID);
+            //$orderInfo = $this->arrayTransformer->fromArray($response, OrderInfo::class);
+            $orderInfo->setErrorCode($response['orderStatus']['errorCode']);
+            $orderInfo->setOrderStatus($response['orderStatus']['orderStatus']);
+            //$orderInfo->setOrderNumber($response['data']['orderId']);
+            $orderInfo->setAttributes(new ArrayCollection([
+                (new Attribute())->setName(Sberbank::ORDER_NUMBER_ATTRIBUTE)->setValue($response['data']['orderId']),
+            ]));
+            $orderInfo->setAmount($response['orderStatus']['amount']);
+            $orderInfo->setCurrency($response['orderStatus']['currency']);
+            $orderInfo->setCardAuthInfo((new CardAuthInfo())
+                ->setPan($response['orderStatus']['cardAuthInfo']['pan'])
+                ->setCardHolderName($response['orderStatus']['cardAuthInfo']['cardholderName'])
+            );
+            $orderInfo->setPaymentAmountInfo((new PaymentAmountInfo())
+                ->setPaymentState($response['orderStatus']['paymentAmountInfo']['paymentState'])
+            );
 
             /*
              * if (($response['orderStatus']['orderStatus'] == 1)) { //hold
@@ -1200,7 +1228,9 @@ class PaymentService implements LoggerAwareInterface
         if ($orderInfo->getErrorCode() === Sberbank::ERROR_ORDER_NOT_FOUND) {
             throw new SberbankOrderNotFoundException($orderInfo->getErrorMessage(), $orderInfo->getErrorCode());
         }
-        $this->processOnlinePayment($order, $orderInfo);
+        $orderId = $this->processOnlinePayment($order, $orderInfo);
+
+        return (new FullHrefDecorator(new Uri(sprintf('/sale/order/complete/%s/', $orderId))))->getFullPublicPath();
     }
 
     /**

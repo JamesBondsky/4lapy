@@ -87,10 +87,10 @@ class PaymentService
                 $url = $this->appPaymentService->registerOrder($bitrixOrder, $amount);
                 break;
             case 'applepay':
-                $response = $this->appPaymentService->processApplePay($bitrixOrder, $payToken);
-                if ($response['error']) {
+                $url = $this->appPaymentService->processApplePay($bitrixOrder, $payToken);
+                /*if ($response['error']) {
                     throw new \Exception($response['error']['message'], $response['error']['code']);
-                }
+                }*/
                 break;
             case 'android':
                 $response = $this->appPaymentService->processGooglePay($bitrixOrder, $payToken, $amount);
