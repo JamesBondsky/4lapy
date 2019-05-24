@@ -15,9 +15,11 @@ use Doctrine\Common\Collections\Collection;
 use FourPaws\BitrixOrm\Collection\ImageCollection;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Query\IblockElementQuery;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\HighloadHelper;
+use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct;
 use FourPaws\MobileApiBundle\Dto\Object\Info;
 use FourPaws\MobileApiBundle\Enum\InfoEnum;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
@@ -27,19 +29,22 @@ class InfoService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
-    /**
-     * @var ImageProcessor
-     */
+    /** @var ImageProcessor */
     private $imageProcessor;
 
-    /**
-     * @var string
-     */
+    /** @var string */
     private $bitrixPhpDateTimeFormat;
 
-    public function __construct(ImageProcessor $imageProcessor)
+    /** @var ProductService */
+    private $productService;
+
+    /** @var ShortProduct[]  */
+    private static $cache = [];
+
+    public function __construct(ImageProcessor $imageProcessor, ProductService $productService)
     {
         $this->imageProcessor = $imageProcessor;
+        $this->productService = $productService;
         $this->bitrixPhpDateTimeFormat = Date::convertFormatToPhp(\FORMAT_DATETIME) ?: '';
     }
 
@@ -88,6 +93,7 @@ class InfoService implements LoggerAwareInterface
             $filterTypes = [];
             $filter = [
                 'ACTIVE'    => 'Y',
+                'ACTIVE_DATE' => 'Y',
                 'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES),
                 '!PROPERTY_TYPE' => false,
             ];
@@ -99,7 +105,11 @@ class InfoService implements LoggerAwareInterface
                 $filterTypes[$row['PROPERTY_TYPE_VALUE']] = $row['PROPERTY_TYPE_VALUE'];
             }
 
-            $result = [];
+            $result = [[
+                'id' => 1,
+                'name' => 'Все',
+                'code' => 'vse'
+            ]];
             $sHlEntityClass = \Bitrix\Highloadblock\HighloadBlockTable::compileEntity($hlBlock)->getDataClass();
             $res = $sHlEntityClass::getList(
                 [
@@ -285,6 +295,8 @@ class InfoService implements LoggerAwareInterface
         }
 
         $order = [
+            'DATE_ACTIVE_FROM' => 'DESC,NULLS',
+            'SORT' => 'ASC',
             'ID' => 'DESC',
         ];
 
@@ -295,6 +307,7 @@ class InfoService implements LoggerAwareInterface
             'NAME',
             'PREVIEW_TEXT',
             'PREVIEW_PICTURE',
+            'DETAIL_PICTURE',
             'DETAIL_TEXT',
             'CANONICAL_PAGE_URL',
             'SUB_ITEMS',
@@ -314,6 +327,7 @@ class InfoService implements LoggerAwareInterface
         array $select = [],
         int $limit = 50
     ) {
+        $withId = intval($criteria['ID']) > 0;
         $items = [];
         $dbResult = \CIBlockElement::GetList($orderBy, $criteria, false, ['nTopCount' => $limit], $select);
         while ($dbItem = $dbResult->GetNext()) {
@@ -322,21 +336,28 @@ class InfoService implements LoggerAwareInterface
 
         $imagesIds = [];
         if (\in_array('PREVIEW_PICTURE', $select, true)) {
-            $imagesIds = array_map(function ($item) {
-                return $item['PREVIEW_PICTURE'] ?? '';
-            }, $items);
+            $imagesIds = array_map(function ($item) { return $item['PREVIEW_PICTURE'] ?? ''; }, $items);
             $imagesIds = array_filter($imagesIds);
         }
         $imageCollection = ImageCollection::createFromIds($imagesIds);
 
+        $detailImagesIds = [];
+        if (\in_array('DETAIL_PICTURE', $select, true)) {
+            $detailImagesIds = array_map(function ($item) { return $item['DETAIL_PICTURE'] ?? ''; }, $items);
+            $detailImagesIds = array_filter($detailImagesIds);
+        }
+        $detailImageCollection = ImageCollection::createFromIds($detailImagesIds);
+
         $infoItems = (new ArrayCollection($items))
-            ->map(function ($item) use ($imageCollection) {
+            ->map(function ($item) use ($imageCollection, $detailImageCollection, $withId) {
                 $apiView = new Info();
+                $detailText = '';
                 if ($item['ID'] ?? null) {
                     $apiView->setId((string)$item['ID']);
                 }
 
                 if ($item['NAME'] ?? null) {
+                    $detailText .= '<h1 class="b-title b-title--h1">' . $item['NAME'] . '</h1>';
                     $apiView->setName((string)$item['NAME']);
                 }
 
@@ -352,15 +373,13 @@ class InfoService implements LoggerAwareInterface
                     $apiView->setUrl((string)$item['CANONICAL_PAGE_URL']);
                 }
 
-                if ($item['PREVIEW_PICTURE'] ?? null) {
-                    $apiView->setIcon($this->imageProcessor->findImage($item['PREVIEW_PICTURE'], $imageCollection));
-                }
-
+                $detailText .= '<div class="b-detail-page__date">';
                 if ($item['DATE_ACTIVE_FROM'] ?? null) {
                     $dateTime = \DateTime::createFromFormat(
                         $this->bitrixPhpDateTimeFormat,
                         $item['DATE_ACTIVE_FROM']
                     );
+                    $detailText .= $item['DATE_ACTIVE_FROM'];
                     $apiView->setDateFrom($dateTime ?: null);
                 }
 
@@ -369,11 +388,57 @@ class InfoService implements LoggerAwareInterface
                         $this->bitrixPhpDateTimeFormat,
                         $item['DATE_ACTIVE_TO']
                     );
+                    $detailText .= ' - ' . $item['DATE_ACTIVE_TO'];
                     $apiView->setDateTo($dateTime ?: null);
+                }
+                $detailText .= '</div>';
+
+                if ($item['PREVIEW_PICTURE'] ?? null) {
+                    $apiView->setIcon($this->imageProcessor->findImage($item['PREVIEW_PICTURE'], $imageCollection));
+                }
+
+                if ($item['DETAIL_PICTURE']) {
+                    $apiView->setIconDetail($this->imageProcessor->findImage($item['DETAIL_PICTURE'], $detailImageCollection));
+                    $detailText .= '<img src="' . $this->imageProcessor->findImage($item['DETAIL_PICTURE'], $detailImageCollection) . '" />';
+                }
+
+                if (in_array($item['IBLOCK_CODE'], [IblockCode::NEWS, IblockCode::ARTICLES])) {
+                    $detailText .= (string)$item['DETAIL_TEXT'];
+                    $apiView->setDetailText($detailText);
+                }
+
+                if ($item['IBLOCK_CODE'] === IblockCode::SHARES && $withId) {
+                    $apiView->setGoods($this->getGoods($item['ID']));
                 }
 
                 return $apiView;
             });
         return $infoItems;
+    }
+
+    /**
+     * @param int $specialOfferId
+     * @return ArrayCollection
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    private function getGoods(int $specialOfferId)
+    {
+        $products = new ArrayCollection();
+        $iblockId = IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES);
+        $rs = CIBlockElement::GetProperty($iblockId, $specialOfferId, [], ['CODE' => 'PRODUCTS', 'EMPTY' => 'N']);
+        while ($property = $rs->fetch()) {
+            $offerId = $property['VALUE'];
+
+            if (!array_key_exists($property['VALUE'], self::$cache)) {
+                $offer = (new OfferQuery())->withFilter(['=XML_ID' => $offerId])->exec()->current();
+                $product = $offer->getProduct();
+                self::$cache[$offerId] = $this->productService->convertToShortProduct($product, $offer);
+            }
+
+            $products->add(self::$cache[$offerId]);
+        }
+        return $products;
     }
 }

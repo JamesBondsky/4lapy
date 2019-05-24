@@ -87,14 +87,16 @@ class SearchController extends Controller
 
             $converted = $result->getCollection()->toArray();
 
+            $brands = [];
             /** @var Product|Brand $product */
             foreach ($converted as $key => $arItems) {
                 foreach ($arItems as $item) {
                     if ($item instanceof Brand) {
-                        $res['brands'][] = [
+                        $brands[] = [
                             'DETAIL_PAGE_URL' => $item->getDetailPageUrl(),
                             'NAME' => $item->getName(),
                             'SCORE' => $item->getHitMetaInfo()->getScore(),
+                            'EXACT' => in_array(SearchService::BRAND_EXACT_MATCH_QUERY_NAME, $item->getHitMetaInfo()->getMatchedQueries(), true),
                         ];
                     } elseif ($item instanceof Product) {
                         //проверка, по точному совпадению с внешним кодом
@@ -180,6 +182,11 @@ class SearchController extends Controller
                     }
                 }
             }
+
+            $exactBrands = array_filter($brands, static function($brand) {
+                return $brand['EXACT'];
+            });
+            $res['brands'] = $exactBrands ?: $brands;
         }
 
         usort($res['suggests'], function ($a, $b) {
@@ -193,10 +200,24 @@ class SearchController extends Controller
             $res['products'] = [];
         } elseif (isset($res['products'][0])) {
             $res['products'] = [$res['products'][0]];
-            $res['suggests'] = [];
+            //$res['suggests'] = [];
             $res['brands'] = [];
         } else {
             $res['products'] = [];
+        }
+
+        if (isset($searchString) && $searchString != '')
+        {
+            $popularSuggestions = $searchService->getHLSearchSuggestions($searchString);
+            $popularSuggestions = array_map(function($suggestion) use($searchService) {
+                $suggestionText = $suggestion['UF_SUGGESTION'];
+                return [
+                    'DETAIL_PAGE_URL' => $searchService->getSearchUrl() . '?query=' . $suggestionText,
+                    'NAME' => $suggestionText,
+                ];
+            }, $popularSuggestions);
+
+            $res['popular_suggests'] = $popularSuggestions;
         }
 
         return JsonSuccessResponse::createWithData('', $res)->setEncodingOptions(JSON_UNESCAPED_UNICODE);

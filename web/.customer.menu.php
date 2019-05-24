@@ -15,15 +15,15 @@ $aMenuLinks = Array(
 		"" 
 	),
 	Array(
-		"Как купить", 
-		"/how-to-buy/", 
-		Array(), 
-		Array(), 
-		"" 
+		"Бонусная программа",
+		"/bonus-program/",
+		Array(),
+		Array(),
+		""
 	),
 	Array(
-		"Бонусная программа", 
-		"/bonus-program/", 
+		"Как купить", 
+		"/how-to-buy/", 
 		Array(), 
 		Array(), 
 		"" 
@@ -38,13 +38,6 @@ $aMenuLinks = Array(
 	Array(
 		"Возврат товара", 
 		"/return/", 
-		Array(), 
-		Array(), 
-		"" 
-	),
-	Array(
-		"Подписка на доставку",
-		"/podpiska/",
 		Array(), 
 		Array(), 
 		"" 

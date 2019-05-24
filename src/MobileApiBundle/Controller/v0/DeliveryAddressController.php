@@ -43,7 +43,7 @@ class DeliveryAddressController extends FOSRestController
      * @param DeliveryAddressGetRequest $deliveryAddressGetRequest
      * @return DeliveryAddressGetResponse
      */
-    public function listAction(DeliveryAddressGetRequest $deliveryAddressGetRequest): DeliveryAddressGetResponse
+    public function listDeliveryAddressAction(DeliveryAddressGetRequest $deliveryAddressGetRequest): DeliveryAddressGetResponse
     {
         /**
          * @var User $user
@@ -66,7 +66,7 @@ class DeliveryAddressController extends FOSRestController
      * @throws DeliveryAddressAddError
      * @return FeedbackResponse
      */
-    public function createAction(DeliveryAddressCreateRequest $request): FeedbackResponse
+    public function createDeliveryAddressAction(DeliveryAddressCreateRequest $request): FeedbackResponse
     {
         /**
          * @var User $user
@@ -88,7 +88,7 @@ class DeliveryAddressController extends FOSRestController
      * @throws \FourPaws\MobileApiBundle\Exception\DeliveryAddressUpdateError
      * @return FeedbackResponse
      */
-    public function updateAction(DeliveryAddressUpdateRequest $addressUpdateRequest): FeedbackResponse
+    public function updateDeliveryAddressAction(DeliveryAddressUpdateRequest $addressUpdateRequest): FeedbackResponse
     {
         $user = $this->getUser();
         $this->apiUserDeliveryAddressService->update($user->getId(), $addressUpdateRequest->getAddress());
@@ -103,7 +103,7 @@ class DeliveryAddressController extends FOSRestController
      * @param DeliveryAddressDeleteRequest $addressDeleteRequest
      * @return FeedbackResponse
      */
-    public function removeAction(DeliveryAddressDeleteRequest $addressDeleteRequest): FeedbackResponse
+    public function removeDeliveryAddressAction(DeliveryAddressDeleteRequest $addressDeleteRequest): FeedbackResponse
     {
         $user = $this->getUser();
         $this->apiUserDeliveryAddressService->delete($user->getId(), $addressDeleteRequest->getId());

@@ -6,15 +6,20 @@ use FourPaws\AppBundle\AjaxController\LandingController;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
-$APPLICATION->SetPageProperty('title', '');
-$APPLICATION->SetPageProperty('description', 'Для участия в акции купите любой корм Grandin на сумму от 1800 рублей и зарегистрируйте покупку  на сайте акции grandin.4lapy.ru.');
-$APPLICATION->SetTitle('Как выиграть запас корма Grandin на год вперед?');
+$APPLICATION->SetPageProperty('title', 'Выиграй путешествие в Прагу на двоих!');
+$APPLICATION->SetPageProperty('description', 'Для участия в акции купите любой корм Grandin на сумму от 1800 рублей и зарегистрируйте покупку на сайте акции grandin.4lapy.ru.');
+$APPLICATION->SetTitle('Выиграй путешествие в Прагу на двоих!');
 ?>
 
 <section id="registr-check" data-id-section-landing="registr-check" class="registr-check-landing">
     <div class="container-landing">
 
-        <?/*if ($USER->IsAuthorized()) {?>
+        <div class="registr-check-landing__important-information <?if ($USER->IsAuthorized()) {?>registr-check-landing__important-information--indent<? } ?>">
+            <p>Личные данные, вводимые при регистрации в&nbsp;акции, должны совпадать с&nbsp;личными данными,<br class="hidden-mobile" /> к&nbsp;которым привязана бонусная карта Четыре Лапы, также используемая для регистрации в&nbsp;акции.</p>
+            <p>Участники, у&nbsp;которых указанная информация не&nbsp;совпадает, автоматически выбывают из&nbsp;общего списка зарегистрированных участников для начисления бонусов и&nbsp;розыгрыша призов.</p>
+        </div>
+
+        <?if ($USER->IsAuthorized()) {?>
             <? $arUser = \CUser::GetById($USER->GetID())->Fetch(); ?>
 
             <div class="registr-check-landing__form-wrap" data-wrap-form-registr-chek-landing="true">
@@ -29,7 +34,7 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
                     <input class="js-no-valid" type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
                     <input class="js-no-valid" type="hidden" name="landingType" value="<?= LandingController::$grandinLanding ?>">
                     <div class="form-group">
-                        <input type="dateDatepicker" id="DATE_REG_CHECK_GRANDIN" name="date" value="" placeholder="Дата чека" data-datepicker-landing="true" >
+                        <input type="dateDatepicker" id="DATE_REG_CHECK_GRANDIN" name="date" value="" placeholder="Дата чека" autocomplete="off" data-min-date="2019-06-01" data-max-date="2019-06-30" data-datepicker-landing="true" >
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
@@ -66,11 +71,11 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
                     </div>
 
                     <div class="form-group form-group_select js-wrap-select-form-registr-check-landing">
-                    	<label for="petType">Мой питомец</label>
+                        <label for="petType">Мой питомец</label>
                         <select class="b-select__block" id="PET_TYPE_REG_CHECK_GRANDIN" name="petType" data-select-form-registr-check-landing="true">
                             <option value="" disabled="disabled" selected="selected">Выберите вид</option>
 
-                            <? foreach (GrandinController::$petTypes as $key => $value) { ?>
+                            <? foreach (LandingController::$petTypes as $key => $value) { ?>
                                 <option value="<?=$key?>"><?=$value?></option>
                             <?}?>
 
@@ -97,21 +102,7 @@ $APPLICATION->SetTitle('Как выиграть запас корма Grandin н
                 <div class="registr-check-landing__response" data-response-form-landing="true"></div>
             </div>
 
-        <?} else {?>
-
-            <div class="registr-check-landing__message">
-                <div class="landing-title landing-title_dark">
-                    Регистрируйте чеки<br/> и&nbsp;выигрывайте призы каждую неделю
-                </div>
-            </div>
-
-        <?}*/?>
-
-        <div class="registr-check-landing__message">
-            <div class="landing-title landing-title_dark">
-                Акция завершена
-            </div>
-        </div>
+        <? } ?>
 
     </div>
 </section>

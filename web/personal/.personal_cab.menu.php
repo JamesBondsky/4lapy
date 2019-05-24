@@ -45,9 +45,13 @@ $aMenuLinks = [
         'Подписка на доставку',
         '/personal/subscribe/',
     ],
-    [
+    /*[
         'Копи марки',
         '/personal/kopi-marki/',
+    ],*/
+    [
+        'Персональные предложения',
+        '/personal/personal-offers/',
     ],
     [
     'Топ 10 товаров',

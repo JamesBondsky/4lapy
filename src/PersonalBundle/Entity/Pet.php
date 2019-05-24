@@ -53,7 +53,6 @@ class Pet extends BaseEntity
      * @Serializer\Type("int")
      * @Serializer\SerializedName("UF_TYPE")
      * @Serializer\Groups(groups={"create","read","update"})
-     * @Assert\NotBlank(groups={"create"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $type;
@@ -72,7 +71,6 @@ class Pet extends BaseEntity
      * @Serializer\Type("int")
      * @Serializer\SerializedName("UF_BREED_ID")
      * @Serializer\Groups(groups={"create","read","update"})
-     * @Assert\NotBlank(groups={"create"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $breedId;
@@ -305,19 +303,19 @@ class Pet extends BaseEntity
     }
 
     /**
-     * @return int
+     * @return int|null
      */
-    public function getBreedId() : int
+    public function getBreedId() : ?int
     {
         return $this->breedId ?? 0;
     }
 
     /**
-     * @param int $breedId
+     * @param int|null $breedId
      *
      * @return Pet
      */
-    public function setBreedId(int $breedId) : Pet
+    public function setBreedId(?int $breedId) : Pet
     {
         $this->breedId = $breedId;
 

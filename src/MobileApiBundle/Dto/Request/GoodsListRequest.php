@@ -65,6 +65,7 @@ class GoodsListRequest implements SimpleUnserializeRequest, GetRequest
      * @var int
      */
     protected $page = 1;
+
     /**
      * Количество товаров, начиная с 1
      *

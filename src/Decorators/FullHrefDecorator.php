@@ -32,6 +32,9 @@ class FullHrefDecorator
     public function __construct(string $url)
     {
         if ($parsedUrl = parse_url($url)) {
+            if ($parsedUrl['host']) {
+                $this::$host = $parsedUrl['host'];
+            }
             if ($parsedUrl['path']) {
                 $this->setPath($parsedUrl['path']);
             }

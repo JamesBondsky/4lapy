@@ -4,6 +4,7 @@ namespace FourPaws\Catalog\Model;
 
 use DateTimeImmutable;
 use FourPaws\BitrixOrm\Model\IblockElement;
+use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
@@ -109,10 +110,38 @@ class Banner extends IblockElement
     protected $PROPERTY_LINK = '';
 
     /**
+     * @var int
+     * @Type("int")
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $PROPERTY_ELEMENT;
+
+    /**
+     * @var array
+     * @Type("array")
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $PROPERTY_SECTION;
+
+    /**
      * @return string
      */
     public function getLink() {
         return $this->PROPERTY_LINK;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getElementLink() {
+        return $this->PROPERTY_ELEMENT ? (int)$this->PROPERTY_ELEMENT : null;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getSectionLink() {
+        return $this->PROPERTY_SECTION ? (int)$this->PROPERTY_SECTION[0] : null;
     }
 
     /**

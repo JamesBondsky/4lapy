@@ -179,8 +179,8 @@ class PushEventService
                 $response = $this->fireBaseCloudMessagingService->sendNotification(
                     $pushEvent->getPushToken(),
                     $pushEvent->getMessageText(),
-                    $pushEvent->getMessageId(),
-                    $pushEvent->getMessageType()
+                    $pushEvent->getEventId(),
+                    $pushEvent->getMessageTypeEntity()->getXmlId()
                 );
                 $execCode = $response->getStatusCode() === 200 ? ApiPushEvent::EXEC_SUCCESS_CODE : ApiPushEvent::EXEC_FAIL_CODE;
                 $pushEvent->setSuccessExec($execCode);
@@ -206,8 +206,8 @@ class PushEventService
                 $this->applePushNotificationService->sendNotification(
                     $pushEvent->getPushToken(),
                     $pushEvent->getMessageText(),
-                    $pushEvent->getMessageId(),
-                    $pushEvent->getMessageType()
+                    $pushEvent->getEventId(),
+                    $pushEvent->getMessageTypeEntity()->getXmlId()
                 );
 
                 foreach ($this->applePushNotificationService->getLogMessages() as $logMessage) {
@@ -381,7 +381,9 @@ class PushEventService
                 '=USER_ID' => $user->getId(),
             ], ['ID' => 'DESC'], 1)[0];
 
-            if (!($userSession->getPlatform() && $userSession->getPushToken())) {
+            if (!$userSession) {
+                $this->log()->warning("PushEventService: у пользователя с номером телефона $personalPhone нет сессий в мобильном приложении");
+            } else if (!($userSession->getPlatform() && $userSession->getPushToken())) {
                 $this->log()->warning("PushEventService: у пользователя с номером телефона $personalPhone не установлено мобильное приложение");
             } else {
                 if ($this->shouldSendPushMessage($user, $typeCode)) {

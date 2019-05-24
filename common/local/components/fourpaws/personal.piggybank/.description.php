@@ -12,7 +12,7 @@ $arComponentDescription = [
     'PATH'        => [
         'ID'    => 'utility',
         'CHILD' => [
-            'ID'   => 'personal_orders',
+            'ID'   => 'personal_piggybank',
             'NAME' => Loc::getMessage('MAIN_PERSONAL_CABINET_PIGGYBANK_GROUP_NAME'),
         ],
     ],

@@ -308,11 +308,13 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                             </label>
                         </div>
                         <div class="b-input b-input--registration-form">
-                        <textarea class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form"
+                        <textarea class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form b-input__input-field--step2-order"
                                   id="comment-express-delivery"
                                   name="comment_dostavista"
-                                  placeholder="Укажите здесь дополнительную информацию к заказу.
-Например, если для доставки заказа курьеру необходимо въехать на территорию с пропускным режимом. В таком случае курьер свяжется с Вами заранее для заказа пропуска на территорию."><?= $storage->getComment() ?></textarea>
+                                  placeholder="Укажите здесь ваши комментарии.
+Например, если для доставки необходим въезд на закрытую территорию. Курьер свяжется с Вами для оформления пропуска.
+При отсутствии пропуска – доставка будет осуществляться до КПП/шлагбаума.
+Доставка силами курьера осуществляется на расстояние не более 200м от КПП/шлагбаума."><?= $storage->getComment() ?></textarea>
                             <div class="b-error">
                                 <span class="js-message"></span>
                             </div>
@@ -328,7 +330,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                         </div>
                         <div class="b-select b-select--recall b-select--feedback-page">
                             <?php
-                            $selectorDelivery = $delivery;
+                            $currentDelivery = $delivery;
                             $selectorStorage = $storage;
                             $selectorName = 'deliveryDate';
                             include 'delivery_date_select.php'
@@ -340,7 +342,11 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                         $selectorStorage = $storage;
                         $selectorName = 'deliveryInterval';
                         include 'delivery_interval_select.php';
-                    } ?>
+                    }
+                    if($storage->isSubscribe()){
+                        include 'delivery_subscribe.php';
+                    }
+                    ?>
                     <div class="b-input-line b-input-line--textarea b-input-line--address-textarea js-no-valid">
                         <div class="b-input-line__label-wrapper">
                             <label class="b-input-line__label" for="order-comment">
@@ -348,11 +354,13 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                             </label>
                         </div>
                         <div class="b-input b-input--registration-form">
-                    <textarea class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form b-input__input-field--focus-placeholder"
+                    <textarea class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form b-input__input-field--step2-order b-input__input-field--focus-placeholder"
                               id="order-comment"
                               name="comment"
-                              placeholder="Укажите здесь дополнительную информацию к заказу.
-Например, если для доставки заказа курьеру необходимо въехать на территорию с пропускным режимом. В таком случае курьер свяжется с Вами заранее для заказа пропуска на территорию."><?= $storage->getComment() ?></textarea>
+                              placeholder="Укажите здесь ваши комментарии.
+Например, если для доставки необходим въезд на закрытую территорию. Курьер свяжется с Вами для оформления пропуска.
+При отсутствии пропуска – доставка будет осуществляться до КПП/шлагбаума.
+Доставка силами курьера осуществляется на расстояние не более 200м от КПП/шлагбаума."><?= $storage->getComment() ?></textarea>
                             <div class="b-error">
                                 <span class="js-message"></span>
                             </div>

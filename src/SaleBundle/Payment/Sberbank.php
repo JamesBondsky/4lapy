@@ -41,6 +41,7 @@ class Sberbank
 
     private const TEST_MERCHANT = '4lapy';
     private const PROD_MERCHANT = 'sbersafe';
+    private const MOBILE_PROD_MERCHANT = '4lapy2';
 
     public const SUCCESS_CODE = 0;
 
@@ -116,6 +117,20 @@ class Sberbank
     }
 
     /**
+     * @return array
+     */
+    public function getSettingsArray(): array
+    {
+        return [
+            'user_name' => $this->user_name,
+            'password' => $this->password,
+            'two_stage' => $this->two_stage,
+            'test_mode' => $this->test_mode,
+            'logging' => $this->logging,
+        ];
+    }
+
+    /**
      * @param bool $isMobilePayment
      * @param string $mobilePaymentSystem
      * @return string
@@ -146,6 +161,16 @@ class Sberbank
     }
 
     /**
+     * @return string
+     */
+    public function getMobileMerchantName(): string
+    {
+        return $this->test_mode
+            ? self::TEST_MERCHANT // на самом деле тестового мерчанта для мобильных нет
+            : self::MOBILE_PROD_MERCHANT;
+    }
+
+    /**
      * ЗАПРОС В ПШ
      *
      * Формирование запроса в платежный шлюз и парсинг JSON-ответа
@@ -162,7 +187,7 @@ class Sberbank
     protected function gatewayQuery($method, $data, bool $isMobilePayment = false, $mobilePaymentSystem = ''): array
     {
         if ($isMobilePayment) {
-            $data['merchant'] = $this->getMerchantName();
+            $data['merchant'] = $this->getMobileMerchantName();
             $data['preAuth'] = true;
             $dataEncoded = \json_encode($data);
         } else {

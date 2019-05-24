@@ -9,6 +9,7 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 use Bitrix\Sale\BasketItem;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use FourPaws\App\Application;
 use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\BitrixOrm\Model\Image;
@@ -18,6 +19,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
+use FourPaws\MobileApiBundle\Dto\Object\PriceWithQuantity;
 use FourPaws\MobileApiBundle\Dto\Object\Store\Store as ApiStore;
 use FourPaws\MobileApiBundle\Dto\Object\Store\StoreService as ApiStoreServiceDto;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListRequest;
@@ -28,6 +30,7 @@ use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Dto\ShopList\Shop as StoreBundleShop;
 use FourPaws\SaleBundle\Dto\ShopList\Shop as SaleBundleShop;
 use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Enum\StoreLocationType;
 use FourPaws\StoreBundle\Service\ShopInfoService as StoreShopInfoService;
 use FourPaws\SaleBundle\Service\ShopInfoService as SaleShopInfoService;
 use FourPaws\StoreBundle\Service\StoreService as AppStoreService;
@@ -110,12 +113,16 @@ class StoreService
 
     /**
      * @param int $offerId
+     * @param string $locationCode
      * @return Collection
      * @throws NotFoundException
      * @throws \Exception
      */
-    public function getListWithProductAvailability(int $offerId): Collection
+    public function getListWithProductAvailability(int $offerId, string $locationCode): Collection
     {
+        $locationService = Application::getInstance()->getContainer()->get('location.service');
+        $subRegionCode = $locationService->findLocationSubRegion($locationCode)['CODE'] ?? '';
+
         $storeCollection = new StoreCollection();
         if (!$offer = OfferQuery::getById($offerId)) {
             throw new NotFoundException("Offer with ID $offerId is not found");
@@ -142,6 +149,11 @@ class StoreService
                     $metroList,
                     $servicesList,
                     $offer
+                );
+                $shop->setLocationType(
+                    (($store->getLocation() === $locationCode) || ($store->getSubRegion() && $store->getSubRegion() === $subRegionCode))
+                        ? StoreLocationType::SUBREGIONAL
+                        : StoreLocationType::REGIONAL
                 );
                 $storeCollection->add($this->storeBundleShopToApiFormat($shop, $stockAmount, $servicesList));
             } catch (\Exception $exception) {
@@ -203,6 +215,9 @@ class StoreService
         if (!empty($storeListRequest->getMetroStation())) {
             $result['UF_METRO'] = $storeListRequest->getMetroStation();
         }
+        if (!empty($_COOKIE['selected_city_code'])) {
+            $result['UF_LOCATION'] = $_COOKIE['selected_city_code'];
+        }
         if (!empty($storeListRequest->getCityId())) {
             $result['UF_LOCATION'] = $storeListRequest->getCityId();
         }
@@ -240,7 +255,7 @@ class StoreService
             ->setAddress($metroAddressText . $store->getAddress())
             ->setCode($store->getXmlId())
             ->setTitle($this->formatStoreTitle($store->getXmlId(), $store->getTitle()))
-            ->setDetails($store->getDescription())
+            ->setDetails(strip_tags($store->getDescription()))
             ->setLatitude($store->getLatitude())
             ->setLongitude($store->getLongitude())
             ->setMetroColor($metroColor)
@@ -278,6 +293,7 @@ class StoreService
             ->setPickupDate($shop->getPickupDate())
             ->setPickupFewGoodsFullDate($shop->getPickupDate())
             ->setProductQuantityString($shop->getAvailableAmount())
+            ->setLocationType($shop->getLocationType())
             ;
     }
 
@@ -347,6 +363,7 @@ class StoreService
                     $delayedGoodsPrice
                 )
             )
+            ->setLocationType($shop->getLocationType() ?? '')
             ->setAvailability($shop->getAvailability())
             ->setAvailableGoods($this->convertToBasketProductCollection($shop->getAvailableItems()))
             ->setDelayedGoods($this->convertToBasketProductCollection($shop->getDelayedItems()));
@@ -397,11 +414,14 @@ class StoreService
     protected function convertToBasketProductCollection(ArrayCollection $shopListOffers)
     {
         $basketProductCollection = new BasketProductCollection();
-        foreach ($this->basketService->getBasket()->getOrderableItems() as $basketItem) {
-            /** @var BasketItem $basketItem */
+        foreach ($shopListOffers as $shopListOffer) {
+            /** @var \FourPaws\SaleBundle\Dto\ShopList\Offer $shopListOffer */
 
-            foreach ($shopListOffers as $shopListOffer) {
-                /** @var \FourPaws\SaleBundle\Dto\ShopList\Offer $shopListOffer */
+            $prices = [];
+            $orderableItems = $this->basketService->getBasket()->getOrderableItems();
+            foreach ($orderableItems as $basketItem) {
+                /** @var BasketItem $basketItem */
+
                 if ((int) $shopListOffer->getId() !== (int) $basketItem->getProductId()) {
                     continue;
                 }
@@ -413,11 +433,19 @@ class StoreService
                     $shortProduct->setGiftDiscountId($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT']['VALUE']);
                     $shortProduct->setPrice((new Price())->setActual(0)->setOld(0));
                 }
+
+                $prices[] = (new PriceWithQuantity())
+                    ->setQuantity($basketItem->getQuantity())
+                    ->setPrice((new Price())->setActual($basketItem->getPrice())->setOld($basketItem->getBasePrice()));
+            }
+            if ($orderableItems)
+            {
                 $basketProductCollection->add(
                     (new Product())
-                        ->setBasketItemId($basketItem->getId())
+                        ->setBasketItemId($shopListOffer->getId())
                         ->setShortProduct($shortProduct)
                         ->setQuantity($quantity)
+                        ->setPrices($prices)
                 );
             }
         }

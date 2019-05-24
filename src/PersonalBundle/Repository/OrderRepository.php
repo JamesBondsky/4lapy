@@ -17,6 +17,7 @@ use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Sale\Internals\BasketPropertyTable;
 use Bitrix\Sale\Internals\BasketTable;
 use Bitrix\Sale\Internals\OrderPropsValueTable;
@@ -116,9 +117,19 @@ class OrderRepository extends BaseRepository
                           ]
                       ));
 
+        $this->setNav((new PageNavigation($userId.'_user_orders_nav'))
+            ->setPageSize(PHP_INT_MAX)
+            ->setCurrentPage(1)
+        );
+
         if ($limit) {
             $query->setLimit($limit)
                   ->setOffset($offset);
+
+            $this->getNav()
+                ->setPageSize($limit)
+                ->setCurrentPage(floor($offset / $limit) + 1)
+            ;
         }
 
         return $this->findBy($query);

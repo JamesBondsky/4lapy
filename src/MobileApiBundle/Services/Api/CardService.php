@@ -7,11 +7,19 @@
 namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Bitrix\Main\UserTable;
+use FourPaws\External\Manzana\Enum\Card;
+use FourPaws\External\Manzana\Exception\CardNotFoundException;
 use FourPaws\MobileApiBundle\Dto\Error;
 use FourPaws\MobileApiBundle\Dto\Object\ChangeCardProfile;
+use FourPaws\MobileApiBundle\Dto\Object\User;
 use FourPaws\MobileApiBundle\Dto\Response;
+use FourPaws\MobileApiBundle\Exception\CardAlreadyUsedException;
+use FourPaws\MobileApiBundle\Exception\EmailAlreadyUsed;
+use FourPaws\MobileApiBundle\Exception\InvalidCardException;
+use FourPaws\MobileApiBundle\Exception\InvalidCredentialException;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\PersonalBundle\Exception\CardNotValidException;
+use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\UserService as AppUserService;
 use FourPaws\PersonalBundle\Entity\UserBonus as AppUserBonus;
@@ -97,32 +105,67 @@ class CardService
     public function getCardDataFromManzana($cardNumber): ChangeCardProfile
     {
         $user = $this->appUserService->getCurrentUser();
-        $card = $this->appManzanaService->searchCardByNumber($cardNumber);
 
-        $userPhone = preg_replace("/^(?:.*)(?|\((\d{3})\)(\d{3})|\((\d{4})\)(\d{2})|(\d{3})(\d{3}))(\d{2})(\d{2})$/", "$1$2$3$4", $user->getPersonalPhone());
-        $cardPhone = preg_replace("/^(?:.*)(?|\((\d{3})\)(\d{3})|\((\d{4})\)(\d{2})|(\d{3})(\d{3}))(\d{2})(\d{2})$/", "$1$2$3$4", $card->phone);
+        $isCardNotLinked = false;
+        try {
+            $card = $this->appManzanaService->searchCardByNumber($cardNumber);
+            if (!$card->contactId) {
+                throw new CardNotFoundException(); // На самом деле найдена, но для совместимости со старым кодом кидаем прежнее исключение
+            }
 
-        if (!empty($cardPhone) && $userPhone != $cardPhone) {
-            throw new \Exception("Не удалось получить данные по бонусной карте: номер телефона авторизованного пользователя $userPhone и номер телефона карты $cardPhone не совпадают.");
+            $cardInfo = $this->appManzanaService->getCardInfo(
+                $cardNumber,
+                $card->contactId
+            );
+
+            if (!$cardInfo || !\in_array($cardInfo->status, [Card::STATUS_NEW, Card::STATUS_ACTIVE], true)) {
+                throw new CardNotValidException('Замена невозможна. Обратитесь на Горячую Линию.');
+            }
+
+            $userPhone = preg_replace("/^(?:.*)(?|\((\d{3})\)(\d{3})|\((\d{4})\)(\d{2})|(\d{3})(\d{3}))(\d{2})(\d{2})$/", "$1$2$3$4", $user->getPersonalPhone());
+            $cardPhone = preg_replace("/^(?:.*)(?|\((\d{3})\)(\d{3})|\((\d{4})\)(\d{2})|(\d{3})(\d{3}))(\d{2})(\d{2})$/", "$1$2$3$4", $card->phone);
+
+            if (!empty($cardPhone) && $userPhone != $cardPhone) {
+                throw new \Exception("Не удалось получить данные по бонусной карте: номер телефона авторизованного пользователя $userPhone и номер телефона карты $cardPhone не совпадают.");
+            }
+        } catch (CardNotFoundException $e) {
+            // если не найдена - значит, еще не привязана ни к одному клиенту
+            $isCardNotLinked = true;
+        }
+
+        if ($isCardNotLinked)
+        {
+            $userPhone = $user->getPersonalPhone();
+            $lastName = $user->getLastName();
+            $firstName = $user->getName();
+            $secondName = $user->getSecondName();
+            $birthDateBase = $user->getBirthday();
+            $email = $user->getEmail();
+        } else {
+            $lastName = $card->lastName;
+            $firstName = $card->firstName;
+            $secondName = $card->secondName;
+            $birthDateBase = $card->birthDate;
+            $email = $card->email;
         }
 
         $cardProfile = (new ChangeCardProfile())
             ->setNewCardNumber($cardNumber)
-            ->setLastName($card->lastName ?? '')
-            ->setFirstName($card->firstName ?? '')
+            ->setLastName($lastName ?? '')
+            ->setFirstName($firstName ?? '')
             ->setPhone($userPhone);
 
-        if ($card->birthDate) {
-            $birthDate = (new \DateTime())->setTimestamp($card->birthDate->getTimestamp());
+        if ($birthDateBase) {
+            $birthDate = (new \DateTime())->setTimestamp($birthDateBase->getTimestamp());
             $cardProfile->setBirthDate($birthDate);
         }
 
-        if (stristr($card->email, '@register.phone') === false) {
-            $cardProfile->setEmail($card->email ?? '');
+        if (stristr($email, '@register.phone') === false) {
+            $cardProfile->setEmail($email ?? '');
         }
 
-        if ($card->secondName) {
-            $cardProfile->setSecondName($card->secondName);
+        if ($secondName) {
+            $cardProfile->setSecondName($secondName);
         }
 
         return $cardProfile;
@@ -134,20 +177,25 @@ class CardService
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\External\Exception\ExpertsenderServiceException
      * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @throws \FourPaws\UserBundle\Exception\EmptyPhoneException
      * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
      * @throws \FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException
-     * @throws \FourPaws\UserBundle\Exception\NotFoundException
      * @throws \GuzzleHttp\Exception\GuzzleException
      * @throws \LinguaLeo\ExpertSender\ExpertSenderException
      */
     public function sendConfirmationToEmail(string $email)
     {
-        if ($user = $this->appUserService->findOneByEmail($email)) {
-            if ($user->isEmailConfirmed()) {
-                throw new RuntimeException("Пользователь с email $email уже подтвердил свой email");
+        try {
+            if ($user = $this->appUserService->findOneByEmail($email)) {
+                if ($user->isEmailConfirmed() && $this->apiUserService->getCurrentApiUser()->getId() !== $user->getId()) {
+                    throw new EmailAlreadyUsed();
+                }
             }
+        } catch (NotFoundException $e) {
+            $this->apiUserService->update((new User())->setEmail($email));
         }
         return $this->apiCaptchaService->sendValidation($email, 'card_activation');
     }
@@ -176,19 +224,19 @@ class CardService
         $confirmationCodeType = 'email_change_bonus_card';
         $_COOKIE[ConfirmCodeService::getCookieName($confirmationCodeType)] = $captchaId;
         if (!ConfirmCodeService::checkCode($captchaValue, $confirmationCodeType)) {
-             throw new RuntimeException('Некорректный код');
+             throw new InvalidCredentialException();
         }
 
         // 2. проверяем, нет ли уже в базе такого номера карты
         if ($this->isActive($cardProfile->getNewCardNumber())) {
-            throw new RuntimeException('Карта уже используется');
+            throw new CardAlreadyUsedException();
         }
 
         // 3. заменяем карту в манзане
         // 3.1 получаем ID старой карты
         $newCardValidResult = $this->appManzanaService->validateCardByNumberRaw($newCard);
         if (!$newCardValidResult->cardId) {
-            throw new CardNotValidException('Замена невозможна. Обратитесь на Горячую Линию.');
+            throw new InvalidCardException();
         }
         $newCardId = $newCardValidResult->cardId;
 
@@ -196,15 +244,17 @@ class CardService
         $client = $this->appManzanaService->getContactByUser($user);
         $card = $this->appManzanaService->getCardInfo($oldCard, $client->contactId);
         if ($card === null) {
-            throw new CardNotValidException('Замена невозможна. Обратитесь на Горячую Линию.');
+            throw new InvalidCardException();
         }
         $oldCardId = $card->cardId;
 
         // 3.3 производим замену
-        $this->appManzanaService->changeCard($oldCardId, $newCardId);
+        $manzanaChangeCardResult = $this->appManzanaService->changeCard($oldCardId, $newCardId);
 
         // 4. заменяем данные в битриксовом профиле пользователя
-        $user->setDiscountCardNumber($newCard);
-        $this->userRepository->update($user);
+        if ($manzanaChangeCardResult) {
+            $user->setDiscountCardNumber($newCard);
+            $this->userRepository->update($user);
+        }
     }
 }

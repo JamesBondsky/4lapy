@@ -9,6 +9,7 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Catalog\PriceTable;
 use Bitrix\Catalog\Product\CatalogProvider;
+use Bitrix\Currency\CurrencyManager;
 use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
@@ -39,6 +40,7 @@ use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Catalog\Query\PriceQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Enum\UserGroup;
@@ -1387,6 +1389,7 @@ class BasketService implements LoggerAwareInterface
                         'LOGIC' => 'OR',
                         ['PRODUCT_ID' => $piggyBankService->getVirtualMarkId()],
                         ['PRODUCT_ID' => $piggyBankService->getPhysicalMarkId()],
+                        ['PRODUCT_ID' => $piggyBankService->getOldVirtualMarkId()],
                     ],
                     $isPayedFilter,
                     'ORDER.USER_ID' => $userId,
@@ -1456,5 +1459,76 @@ class BasketService implements LoggerAwareInterface
         if($safe){
             $basketItem->save();
         }
+    }
+
+    /**
+     * Возвращает объект корзины из массива вида ['productId', 'quantity']
+     *
+     * @param array $items
+     * @return \Bitrix\Sale\BasketBase
+     * @throws ApplicationCreateException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws Exception
+     */
+    public function createBasketFromItems(array $items)
+    {
+        $basket = Basket::create(SITE_ID);
+        $tItems = [];
+        foreach($items as $item){
+            $tItems[$item['productId']] = [
+                'OFFER_ID' => $item['productId'],
+                'QUANTITY' => $item['quantity']
+            ];
+        }
+
+        $offerIds = array_column($tItems, 'OFFER_ID');
+        if(empty($offerIds)){
+            throw new Exception("Empty offerIds");
+        }
+
+        $offers = (new OfferQuery())
+            ->withFilter(["ID" => $offerIds])
+            ->exec();
+
+        /** @var Offer $offer */
+        foreach($offers as $offer){
+            $tItems[$offer->getId()]['PRICE'] = $offer->getSubscribePrice();
+            $tItems[$offer->getId()]['BASE_PRICE'] = $offer->getPrice();
+            $tItems[$offer->getId()]['NAME'] = $offer->getName();
+            $tItems[$offer->getId()]['WEIGHT'] = $offer->getCatalogProduct()->getWeight();
+            $tItems[$offer->getId()]['DETAIL_PAGE_URL'] = $offer->getDetailPageUrl();
+            $tItems[$offer->getId()]['PRODUCT_XML_ID'] = $offer->getXmlId();
+            if($tItems[$offer->getId()]['QUANTITY'] > $offer->getQuantity()){
+                $tItems[$offer->getId()]['QUANTITY'] = $offer->getQuantity();
+            }
+        }
+
+        foreach($tItems as $item){
+            $basketItem = BasketItem::create($basket, 'sale', $item['OFFER_ID']);
+            $basketItem->setFields([
+                'PRICE'                  => $item['PRICE'],
+                'BASE_PRICE'             => $item['BASE_PRICE'],
+                'CUSTOM_PRICE'           => BitrixUtils::BX_BOOL_TRUE,
+                'QUANTITY'               => $item['QUANTITY'],
+                'CURRENCY'               => CurrencyManager::getBaseCurrency(),
+                'NAME'                   => $item['NAME'],
+                'WEIGHT'                 => $item['WEIGHT'],
+                'DETAIL_PAGE_URL'        => $item['DETAIL_PAGE_URL'],
+                'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
+                'CATALOG_XML_ID'         => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
+                'PRODUCT_XML_ID'         => $item['PRODUCT_XML_ID'],
+                'CAN_BUY'                => "Y",
+            ]);
+
+            /** @noinspection PhpInternalEntityUsedInspection */
+            $basket->addItem($basketItem);
+        }
+
+        return $basket;
     }
 }

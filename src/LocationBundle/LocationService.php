@@ -88,6 +88,9 @@ class LocationService
     private $locationsByCode = [];
     private $locationsById = [];
 
+    /** @var string */
+    private $currentLocation = null;
+
     /**
      * LocationService constructor.
      *
@@ -857,6 +860,10 @@ class LocationService
      */
     public function getCurrentLocation(): string
     {
+        if ($this->currentLocation) {
+            return (string)$this->currentLocation;
+        }
+
         try {
             /** @var UserService $userService */
             $userService = Application::getInstance()
@@ -876,6 +883,16 @@ class LocationService
         }
 
         return $result;
+    }
+
+    /**
+     * @param string $currentLocation
+     * @return $this
+     */
+    public function setCurrentLocation(string $currentLocation): LocationService
+    {
+        $this->currentLocation = $currentLocation;
+        return $this;
     }
 
     /**

@@ -6,6 +6,7 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
@@ -35,16 +36,21 @@ use FourPaws\MobileApiBundle\Dto\Object\OrderParameter;
 use FourPaws\MobileApiBundle\Dto\Object\OrderStatus;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Dto\Object\PriceWithQuantity;
+use FourPaws\MobileApiBundle\Dto\Request\PaginationRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartOrderRequest;
+use FourPaws\MobileApiBundle\Exception\BonusSubtractionException;
+use FourPaws\MobileApiBundle\Exception\OrderNotFoundException;
+use FourPaws\MobileApiBundle\Exception\ProductsAmountUnavailableException;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
+use FourPaws\PersonalBundle\Service\BonusService as AppBonusService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
+use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 use FourPaws\PersonalBundle\Entity\OrderStatusChange;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
-use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\OrderService as AppOrderService;
@@ -127,7 +133,8 @@ class OrderService
         ApiProductService $apiProductService,
         Serializer $serializer,
         CouponStorageInterface $couponStorage,
-        TokenStorageInterface $tokenStorage
+        TokenStorageInterface $tokenStorage,
+        AppBonusService $appBonusService
     )
     {
         $this->apiBasketService = $apiBasketService;
@@ -144,18 +151,20 @@ class OrderService
         $this->apiProductService = $apiProductService;
         $this->serializer = $serializer;
         $this->couponStorage = $couponStorage;
+        $this->appBonusService = $appBonusService;
         $this->tokenStorage = $tokenStorage;
     }
 
     /**
+     * @param PaginationRequest $paginationRequest
      * @return ArrayCollection
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
      */
-    public function getList()
+    public function getList($paginationRequest)
     {
-        $orders = $this->getUserOrders();
+        $orders = $this->getUserOrders($paginationRequest);
         // toDo подписка на заказ
         // $user = $this->appUserService->getCurrentUser();
         // $subscriptions = $this->appOrderSubscribeService->getSubscriptionsByUser($user->getId());
@@ -219,6 +228,9 @@ class OrderService
     {
         $user = $this->appUserService->getCurrentUser();
         $order = $this->personalOrderService->getUserOrderByNumber($user, $orderNumber);
+        if (!$order) {
+            throw new OrderNotFoundException();
+        }
         return $this->toApiFormat($order);
     }
 
@@ -272,7 +284,6 @@ class OrderService
             // toDo подписка на заказ
         }
         $orderItems = $order->getItems();
-        $basketProducts = $this->getBasketProducts($orderItems);
 
         $dateInsert = (new \DateTime())->setTimestamp($order->getDateInsert()->getTimestamp());
 
@@ -280,27 +291,41 @@ class OrderService
             ->setTitle($order->getStatus())
             ->setCode($order->getStatusId());
 
-        return (new Order())
-            ->setId($order->getAccountNumber())
-            ->setDateFormat($dateInsert)
-            // ->setReviewEnabled($order->) // toDo reviews выбираются из таблички opros_checks, поля opros_4, opros_5, opros_8
-            ->setStatus($status)
-            ->setCompleted($order->isClosed())
-            ->setPaid($order->isPayed())
-            ->setCartParam($this->getOrderParameter($basketProducts, $order))
-            ->setCartCalc($this->getOrderCalculate($basketProducts, false, 0, $order));
+        $response = new Order();
+
+        if (!empty($order->getAccountNumber()) && $orderItems) {
+            $basketProducts = $this->getBasketProducts($orderItems);
+
+            $closedOrderStatuses = $this->personalOrderService->getClosedOrderStatuses();
+            $currentMinusMonthDate = (new \DateTime)->modify('-1 month');
+            $orderDateUpdate = \DateTime::createFromFormat('d.m.Y H:i:s', $order->getDateUpdate()->toString());
+            $isCompleted = $orderDateUpdate < $currentMinusMonthDate || in_array($order->getStatusId(), $closedOrderStatuses, true);
+
+            $response
+                ->setId($order->getAccountNumber())
+                ->setDateFormat($dateInsert)
+                // ->setReviewEnabled($order->) // toDo reviews выбираются из таблички opros_checks, поля opros_4, opros_5, opros_8
+                ->setStatus($status)
+                ->setCompleted($isCompleted)
+                ->setPaid($order->isPayed())
+                ->setCartParam($this->getOrderParameter($basketProducts, $order))
+                ->setCartCalc($this->getOrderCalculate($basketProducts, false, 0, $order));
+        }
+
+        return $response;
     }
 
     /**
+     * @param PaginationRequest $paginationRequest
      * @return ArrayCollection
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
      */
-    public function getUserOrders()
+    public function getUserOrders($paginationRequest)
     {
         $user = $this->appUserService->getCurrentUser();
-        return $this->personalOrderService->getUserOrders($user);
+        return $this->personalOrderService->getUserOrders($user, $paginationRequest->getPage(), $paginationRequest->getCount());
     }
 
     /**
@@ -371,43 +396,57 @@ class OrderService
                 ->setPorch($order->getPropValue('PORCH'))
                 ->setFloor($order->getPropValue('FLOOR'))
                 ->setApartment($order->getPropValue('APARTMENT'))
-                ->setComment($order->getBitrixOrder()->getField('USER_DESCRIPTION'))
+                ->setComment($order->getBitrixOrder()->getField('USER_DESCRIPTION') ?: '')
                 ->setDeliveryPlaceCode($order->getPropValue('DELIVERY_PLACE_CODE'))
                 /** значение может меняться автоматически, @see \FourPaws\SaleBundle\Service\OrderService::updateCommWayProperty  */
                 // ->setCommunicationWay($order->getPropValue('COM_WAY'))
             ;
 
-            $deliveryCode = $this->appDeliveryService->getDeliveryCodeById($order->getDeliveryId());
-            switch ($deliveryCode) {
-                case in_array($deliveryCode, DeliveryService::DELIVERY_CODES):
-                    $orderParameter->setDeliveryType(self::DELIVERY_TYPE_COURIER);
-                    $date = $order->getDateDelivery() . ' ' .  $order->getPropValue('DELIVERY_INTERVAL');
-                    $orderParameter->setDeliveryDateTimeText($date);
-                    break;
-                case in_array($deliveryCode, DeliveryService::PICKUP_CODES):
-                    $orderParameter->setDeliveryType(self::DELIVERY_TYPE_PICKUP);
-                    break;
+            try {
+                $deliveryCode = $this->appDeliveryService->getDeliveryCodeById($order->getDeliveryId());
+            } catch (NotFoundException $e) {
+                $logger = LoggerFactory::create('orderParameter');
+                $logger->error(__METHOD__ . ' error. deliveryId: ' . $order->getDeliveryId() . '. userId: ' . $userId . '. orderId: ' . $order->getId() . '. Exception. : ' . $e->getMessage() . '. ' . $e->getTraceAsString());
+            }
+            if (isset($deliveryCode))
+            {
+                switch ($deliveryCode) {
+                    case in_array($deliveryCode, DeliveryService::DELIVERY_CODES):
+                        $orderParameter->setDeliveryType(self::DELIVERY_TYPE_COURIER);
+                        $date = $order->getDateDelivery() . ' ' .  $order->getPropValue('DELIVERY_INTERVAL');
+                        $orderParameter->setDeliveryDateTimeText($date);
+                        break;
+                    case in_array($deliveryCode, DeliveryService::PICKUP_CODES):
+                        $orderParameter->setDeliveryType(self::DELIVERY_TYPE_PICKUP);
+                        break;
+                }
             }
 
             if ($cityCode = $order->getPropValue('CITY_CODE')) {
+                $isCitySet = false;
                 if (intval($cityCode)) {
                     $location = $this->locationService->findLocationByCode($cityCode);
-                    $city = (new City())
-                        ->setTitle($location['NAME'])
-                        ->setId($location['CODE'])
-                        ->setLongitude($location['LONGITUDE'])
-                        ->setLatitude($location['LATITUDE'])
-                        ->setPath([$location['PATH'][count($location['PATH']) - 1]['NAME']]);
-                    $orderParameter->setCity($city);
-                } else {
+                    if ($location && $location['NAME']) {
+                        $city = (new City())
+                            ->setTitle($location['NAME'])
+                            ->setId($location['CODE'])
+                            ->setLongitude($location['LONGITUDE'])
+                            ->setLatitude($location['LATITUDE'])
+                            ->setPath([$location['PATH'][count($location['PATH']) - 1]['NAME']]);
+                        $orderParameter->setCity($city);
+                        $isCitySet = true;
+                    }
+                }
+
+                if (!$isCitySet) {
                     $city = (new City())->setTitle($cityCode);
                     $orderParameter->setCity($city);
                 }
             }
 
             $orderParameter->setAddressText(
-                $orderParameter->getCity()->getTitle()
-                . ', ' . $orderParameter->getStreet()
+                (($cityParameter = $orderParameter->getCity()) ? $cityParameter->getTitle() . ', '  : '')
+                . $orderParameter->getStreet()
                 . ' д.' . $orderParameter->getHouse()
                 . ' ' . $orderParameter->getBuilding()
                 . ($orderParameter->getPorch() ? ' подъезд ' . $orderParameter->getBuilding() : '')
@@ -442,7 +481,8 @@ class OrderService
      * @param float $bonusSubtractAmount
      * @param OrderEntity|null $order
      * @return OrderCalculate
-     * @throws OrderStorageSaveException
+     * @throws ApplicationCreateException
+     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
      */
     public function getOrderCalculate(
         BasketProductCollection $basketProducts,
@@ -451,89 +491,102 @@ class OrderService
         OrderEntity $order = null
     )
     {
+        $basketPrice = $basketProducts->getTotalPrice();
+        $basketPriceWithDiscount = $basketPrice->getActual();
+        $basketPriceWithoutDiscount = $basketPrice->getOld();
         $deliveryPrice = 0;
-        try {
-            if ($isCourierDelivery) {
-                $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
-                foreach ($deliveries as $calculationResult) {
-                    if ($this->appDeliveryService->isDelivery($calculationResult)) {
-                        $delivery = $calculationResult;
-                        $deliveryPrice = $delivery->getPrice();
+        $bonusAddAmount = 0;
+
+        if ($order) {
+            // if there is an order
+            $deliveryPrice = $order->getDelivery()->getPriceDelivery();
+            $priceWithoutDiscount = $basketPriceWithDiscount;
+            try {
+                $priceWithDiscount = $order->getItemsSum();
+                $bonusSubtractAmount = $order->getBonusPay();
+                $discount = max($priceWithoutDiscount - $priceWithDiscount, 0);
+            } catch (\Exception $e) {
+                // do nothing
+            }
+
+            $totalPriceWithDiscount = $order->getPrice() - $bonusSubtractAmount;
+            $totalPriceWithoutDiscount = $basketPriceWithDiscount + $deliveryPrice;
+        } else {
+            $priceWithDiscount = $basketPriceWithDiscount;
+            $priceWithoutDiscount = $basketPriceWithoutDiscount;
+            $discount = $basketProducts->getDiscount();
+            try {
+                if ($isCourierDelivery) {
+                    $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
+                    foreach ($deliveries as $calculationResult) {
+                        if ($this->appDeliveryService->isDelivery($calculationResult)) {
+                            $delivery = $calculationResult;
+                            $deliveryPrice = $delivery->getPrice();
+                        }
                     }
                 }
+            } catch (\Exception $e) {
+                // do nothing
             }
-        } catch (ArgumentException $e) {
-        } catch (NotSupportedException $e) {
-        } catch (ObjectNotFoundException $e) {
-        } catch (UserMessageException $e) {
-        } catch (ApplicationCreateException $e) {
-        } catch (NotFoundException $e) {
-        } catch (\FourPaws\StoreBundle\Exception\NotFoundException $e) {
-            $deliveryPrice = 0;
+            // if method called from the basket and there is no order yet
+
+            $totalPriceWithDiscount = $priceWithDiscount + $deliveryPrice;
+            $totalPriceWithoutDiscount = $priceWithoutDiscount + $deliveryPrice;
+            $bonusAddAmount = $basketProducts->getTotalBonuses();
+
+            if ($bonusSubtractAmount > 0) {
+                try {
+                    $user = $this->appUserService->getCurrentUser();
+                    $bonusInfo = $this->appBonusService->getManzanaBonusInfo($user);
+                    if ($bonusSubtractAmount > $bonusInfo->getActiveBonus()) {
+                        throw new BonusSubtractionException('Указано некорректное количество бонусов для списания');
+                    }
+                    $storage = $this->orderStorageService->getStorage();
+                    $storage->setBonus($bonusSubtractAmount);
+                    $this->orderStorageService->updateStorage($storage);
+                    $totalPriceWithDiscount -= $bonusSubtractAmount;
+                } catch (BonusSubtractionException $e) {
+                    throw new BonusSubtractionException($e->getMessage());
+                } catch (\Exception $e) {
+                    // do nothing
+                }
+            }
         }
 
-        $orderCalculate = (new OrderCalculate())
-            ->setTotalPrice($basketProducts->getTotalPrice())
+        return (new OrderCalculate())
+            ->setPriceDetails([
+                (new Detailing())
+                    ->setId('cart_price_old')
+                    ->setTitle('Стоимость товаров без скидки')
+                    ->setValue($priceWithoutDiscount),
+                (new Detailing())
+                    ->setId('cart_price')
+                    ->setTitle('Стоимость товаров со скидкой')
+                    ->setValue($priceWithDiscount),
+                (new Detailing())
+                    ->setId('discount')
+                    ->setTitle('Скидка')
+                    ->setValue($discount),
+                (new Detailing())
+                    ->setId('delivery')
+                    ->setTitle('Стоимость доставки')
+                    ->setValue($deliveryPrice)
+            ])
             ->setCardDetails([
                 (new Detailing())
                     ->setId('bonus_add')
                     ->setTitle('Начислено')
-                    ->setValue($basketProducts->getTotalBonuses()),
+                    ->setValue($bonusAddAmount),
                 (new Detailing())
                     ->setId('bonus_sub')
                     ->setTitle('Списано')
                     ->setValue($bonusSubtractAmount),
-            ]);
-
-        $priceDetails = [];
-
-        $basketPriceWithoutDiscount = $basketProducts->getTotalPrice()->getOld();
-        $basketPriceWithDiscount = $basketProducts->getTotalPrice()->getActual();
-
-        if ($order) {
-            // if there is an order
-
-            $basketPrice = max($basketPriceWithoutDiscount, $basketPriceWithDiscount);
-            $priceWithDiscount = $order->getPrice();
-            $priceWithoutDiscount = $priceWithDiscount !== $basketPrice ? $basketPrice : 0;
-            $discount = max($priceWithoutDiscount - $priceWithDiscount, 0);
-
-            $priceDetails[] = (new Detailing())
-                ->setId('cart_price_old')
-                ->setTitle('Стоимость товаров без скидки')
-                ->setValue($priceWithoutDiscount);
-            $priceDetails[] = (new Detailing())
-                ->setId('cart_price')
-                ->setTitle('Стоимость товаров со скидкой')
-                ->setValue($priceWithDiscount);
-            $priceDetails[] = (new Detailing())
-                ->setId('discount')
-                ->setTitle('Скидка')
-                ->setValue($discount);
-        } else {
-            // if method called from the basket and there is no order yet
-            $priceDetails[] = (new Detailing())
-                ->setId('cart_price_old')
-                ->setTitle('Стоимость товаров без скидки')
-                ->setValue($basketPriceWithoutDiscount);
-            $priceDetails[] = (new Detailing())
-                ->setId('cart_price')
-                ->setTitle('Стоимость товаров со скидкой')
-                ->setValue($basketPriceWithDiscount);
-            $priceDetails[] = (new Detailing())
-                ->setId('discount')
-                ->setTitle('Скидка')
-                ->setValue($basketProducts->getDiscount());
-        }
-
-        $priceDetails[] = (new Detailing())
-            ->setId('delivery')
-            ->setTitle('Стоимость доставки')
-            ->setValue($deliveryPrice);
-
-        $orderCalculate->setPriceDetails($priceDetails);
-
-        return $orderCalculate;
+            ])
+            ->setTotalPrice(
+                (new Price())
+                    ->setActual($totalPriceWithDiscount)
+                    ->setOld($totalPriceWithoutDiscount)
+            );
     }
 
     /**
@@ -546,10 +599,16 @@ class OrderService
     {
         $basketProducts = new BasketProductCollection();
         foreach ($orderItems as $orderItem) {
+            if (!$orderItem) {
+                continue;
+            }
             /**
              * @var $orderItem OrderItem
              */
             $offer = OfferQuery::getById($orderItem->getProductId());
+            if (!$offer) {
+                continue;
+            }
             $product = $this->apiBasketService->getBasketProduct(
                 $orderItem->getId(),
                 $offer,
@@ -679,20 +738,19 @@ class OrderService
             /** @var DeliveryResult $delivery */
             $deliveryDate = $delivery->getDeliveryDate();
             $intervals = $delivery->getAvailableIntervals();
-            $dayOfTheWeek = FormatDate('l', $delivery->getDeliveryDate()->getTimestamp());
+            $day = FormatDate('d.m.Y l', $delivery->getDeliveryDate()->getTimestamp());
             if (!empty($intervals) && count($intervals)) {
                 foreach ($intervals as $deliveryIntervalIndex => $interval) {
                     /** @var Interval $interval */
                     $dates[] = (new DeliveryTime())
-                        ->setTitle($dayOfTheWeek . ' ' . $interval)
-                        ->setDeliveryDate($deliveryDate)
+                        ->setTitle($day . ' ' . $interval)
                         ->setDeliveryDateIndex($deliveryDateIndex)
                         ->setDeliveryIntervalIndex($deliveryIntervalIndex)
                     ;
                 }
             } else {
                 $dates[] = (new DeliveryTime())
-                    ->setTitle($dayOfTheWeek)
+                    ->setTitle($day)
                     ->setDeliveryDate($deliveryDate)
                     ->setDeliveryDateIndex($deliveryDateIndex)
                 ;
@@ -767,6 +825,9 @@ class OrderService
                 //toDo доставка DPD должна определяться автоматически, в зависимости от зоны
                 break;
         }
+        $cartParamArray['deliveryId'] = $cartParamArray['deliveryTypeId'];
+        $cartParamArray['comment1'] = $cartParamArray['comment'];
+        $cartParamArray['comment2'] = $cartParamArray['secondComment'];
         $storage = $this->orderStorageService->getStorage();
         $this->couponStorage->save($storage->getPromoCode()); // because we can't use sessions we get promo code from the database, save it into session for current hit and creating order
         foreach (\FourPaws\SaleBundle\Enum\OrderStorage::STEP_ORDER as $step) {
@@ -783,7 +844,13 @@ class OrderService
         }
 
         $storage->setFromApp(true)->setFromAppDevice($platform);
-        $order = $this->appOrderService->createOrder($storage);
+        try {
+            $order = $this->appOrderService->createOrder($storage);
+        } catch (OrderCreateException $e) {
+            if ($e->getMessage() === 'Basket is empty') {
+                throw new ProductsAmountUnavailableException();
+            }
+        }
         $firstOrder = $this->personalOrderService->getOrderByNumber($order->getField('ACCOUNT_NUMBER'));
         $response = [
             $this->toApiFormat($firstOrder)

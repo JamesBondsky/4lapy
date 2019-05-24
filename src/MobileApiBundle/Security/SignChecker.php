@@ -18,12 +18,10 @@ class SignChecker implements SignCheckerInterface
 
     public function handle(Request $request): bool
     {
-        switch ($request->getMethod()) {
-            case Request::METHOD_GET:
-                $paramBag = $request->query;
-                break;
-            default:
-                $paramBag = $request->request;
+        if (!empty($request->query->get(static::SIGN_FIELD, ''))) {
+            $paramBag = $request->query;
+        } else {
+            $paramBag = $request->request;
         }
 
         $sign = $paramBag->get(static::SIGN_FIELD, '');

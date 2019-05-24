@@ -33,6 +33,8 @@ use FourPaws\Helpers\PhoneHelper;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\Pet;
 use FourPaws\PersonalBundle\Models\PetCongratulationsNotify;
+use FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Dto\Fiscalization\Item;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
@@ -98,8 +100,10 @@ class ExpertsenderService implements LoggerAwareInterface
     public const FORGOT_BASKET2_LIST_ID = 7767;
     public const CHANGE_EMAIL_LIST_ID = 7766;
     public const CHANGE_EMAIL_TO_NEW_EMAIL_LIST = 7768;
+    public const CHANGE_EMAIL_CODE_LIST_ID = 8009;
     public const SUBSCRIBE_EMAIL_UNDER_3_WEEK_LIST_ID = 7769;
     public const SUBSCRIBE_EMAIL_UNDER_3_DAYS_LIST_ID = 7773;
+    public const SUBSCRIBE_CANCEL = 9413;
 
     public const NEW_ORDER_PAY_LIST_ID = 7774;
     public const NEW_ORDER_NOT_PAY_LIST_ID = 7775;
@@ -110,6 +114,7 @@ class ExpertsenderService implements LoggerAwareInterface
     public const NEW_ORDER_NOT_PAY_LIST_ID_ROYAL_CANIN = 9179;
     public const NEW_ORDER_NOT_REG_PAY_LIST_ID_ROYAL_CANIN = 9180;
     public const NEW_ORDER_NOT_REG_NOT_PAY_LIST_ID_ROYAL_CANIN = 9181;
+    public const NEW_ORDER_SUBSCRIBE = 9404;
 
     public const COMPLETE_ORDER_LIST_ID = 7778;
     public const FORGOT_PASSWORD_LIST_ID = 7779;
@@ -117,8 +122,10 @@ class ExpertsenderService implements LoggerAwareInterface
     public const NEW_CHECK_REG_LIST_ID = 8906;
     public const CHANGE_BONUS_CARD = 8026;
     public const PIGGY_BANK_SEND_EMAIL = 9006;
+    public const PERSONAL_OFFER_COUPON_SEND_EMAIL = 9234;
     public const GRANDIN_NEW_CHECK_REG_LIST_ID = 8906;
     public const ROYAL_CANIN_NEW_CHECK_REG_LIST_ID = 9195;
+    public const FESTIVAL_NEW_USER_REG_LIST_ID = 9233;
     /**
      * BirthDay mail ids
      */
@@ -316,7 +323,7 @@ class ExpertsenderService implements LoggerAwareInterface
             try {
                 $this->getUserId($curUserEmail);
                 $hasNewEmailInSender = true;
-            } catch (ExpertsenderServiceApiException $e) {
+            } catch (ExpertsenderServiceApiException|ExpertsenderServiceException $e) {
             }
         }
 
@@ -369,7 +376,7 @@ class ExpertsenderService implements LoggerAwareInterface
                         $addUserToList->setEmail($curUserEmail);
                         $addUserToList->setId($expertSenderId);
 
-                        $addUserToList->setName($curUser->getName());
+                        $addUserToList->setFirstName($curUser->getName());
                         $addUserToList->setLastName($curUser->getLastName());
                         /** ip юзверя */
                         $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_IP_ID, 'string',
@@ -433,7 +440,7 @@ class ExpertsenderService implements LoggerAwareInterface
             $addUserToList->setId($expertSenderId);
 
             $addUserToList->setEmail($curUser->getEmail());
-            $addUserToList->setName($curUser->getName());
+            $addUserToList->setFirstName($curUser->getName());
             $addUserToList->setLastName($curUser->getLastName());
             /** ip юзверя */
             $addUserToList->addProperty(new Property(static::MAIN_LIST_PROP_IP_ID, 'string',
@@ -583,6 +590,7 @@ class ExpertsenderService implements LoggerAwareInterface
             'USER_REGISTERED',
             'COM_WAY',
             'EMAIL',
+            'SUBSCRIBE_ID',
         ]);
 
         /**
@@ -840,43 +848,27 @@ class ExpertsenderService implements LoggerAwareInterface
     }
 
     /**
-     * @param User $oldUser
-     * @param User $curUser
+     * @param string $email
+     * @param string $code
+     *
      * @return bool
      * @throws ExpertSenderException
      * @throws ExpertsenderServiceException
-     * @throws GuzzleException
      */
-    public function sendChangeEmailFromMobileApp(User $oldUser, User $curUser)
+    public function sendConfirmEmail(string $email, string $code): bool
     {
-        return $this->sendChangeEmail($oldUser, $curUser);
-        // toDo когда заведут транзакционный шаблон для смены email и настроят механизм смены email на сайте
-        /*
-        $transactionIdOld = self::CHANGE_EMAIL_LIST_ID;
+        $transactionIdCode = self::CHANGE_EMAIL_CODE_LIST_ID;
 
-        $curUserEmail = $curUser->getEmail();
-        $oldUserEmail = $oldUser->getEmail();
-        if ($oldUser->hasEmail()) {
-
-            $this->log()->info(
-                __FUNCTION__,
-                [
-                    'curUserEmail' => $curUserEmail,
-                    'oldUserEmail' => $oldUserEmail,
-                    'transactionIdOld' => $transactionIdOld,
-                    'oldUserId' => $oldUser->getId(),
-                    'curUserId' => $curUser->getId(),
-                ]
-            );
-
-            // отправка почты на старый email
-            try {
-                $this->sendSystemTransactional($transactionIdOld, $oldUserEmail);
-            } catch (ExpertsenderServiceApiException $e) {
-            }
+        try {
+            $snippets = [];
+            $snippets[] = new Snippet('text', 'Код подтверждения смены адреса электронной почты. Если вы не вносили этих изменений, свяжитесь с нами по телефону +7 (800) 770-00-22');
+            $snippets[] = new Snippet('code', $code);
+            $this->sendSystemTransactional($transactionIdCode, $email, $snippets);
+            return true;
+        } catch (ExpertsenderServiceApiException $e) {
         }
+
         return false;
-        */
     }
 
     /**
@@ -1004,7 +996,7 @@ class ExpertsenderService implements LoggerAwareInterface
      */
     public function sendOrderSubscribedEmail(OrderSubscribe $orderSubscribe): int
     {
-        $transactionId = self::SUBSCRIBE_EMAIL_UNDER_3_WEEK_LIST_ID;
+        $transactionId = self::NEW_ORDER_SUBSCRIBE;
         $snippets = [];
 
         $personalOrder = $orderSubscribe->getOrder();
@@ -1015,15 +1007,26 @@ class ExpertsenderService implements LoggerAwareInterface
 
         /** @var OrderService $orderService */
         $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
-        $order = $personalOrder->getBitrixOrder();
+        /** @var OrderSubscribeHistoryService $orderSubscribeHistoryService */
+        $orderSubscribeHistoryService = Application::getInstance()->getContainer()->get('order_subscribe_history.service');
+        $order = $orderService->getOrderById($orderSubscribeHistoryService->getLastCreatedOrderId($orderSubscribe));
+
+        /** @var OrderSubscribeService $orderSubscribeService */
+        $orderSubscribeService = Application::getInstance()->getContainer()->get('order_subscribe.service');
+        $frequency = $orderSubscribe->getFrequency();
+        $frequencyList = $orderSubscribeService->getFrequencies();
+        $curFrequency = current(array_filter($frequencyList, function($item) use ($frequency) { return $item['ID'] == $frequency; }));
+        $saleBonus = $orderSubscribeService->countBasketPriceDiff($order->getBasket());
 
         $snippets[] = new Snippet('user_name', htmlspecialcharsbx($personalOrder->getPropValue('NAME')));
         $snippets[] = new Snippet('delivery_address', htmlspecialcharsbx($orderService->getOrderDeliveryAddress($order)));
-        $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($orderSubscribe->getDateStartFormatted()));
-        $snippets[] = new Snippet('delivery_period', htmlspecialcharsbx($orderSubscribe->getDeliveryTimeFormattedRu()));
+        $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($orderSubscribeService->getPreviousDate($orderSubscribe)->format('d.m.Y')));
         $snippets[] = new Snippet('tel_number', PhoneHelper::formatPhone($personalOrder->getPropValue('PHONE')));
         $snippets[] = new Snippet('total_bonuses', (int)$orderService->getOrderBonusSum($order));
         $snippets[] = new Snippet('delivery_cost', (float)$order->getShipmentCollection()->getPriceDelivery());
+        $snippets[] = new Snippet('delivery_period', (string)$curFrequency['VALUE']);
+        $snippets[] = new Snippet('next_delivery_date', $orderSubscribe->getNextDate()->format('d.m.Y'));
+        $snippets[] = new Snippet('sale_bonus', abs($saleBonus));
 
         $items = $this->getAltProductsItems($order);
         $items = '<Products>' . implode('', $items) . '</Products>';
@@ -1034,7 +1037,7 @@ class ExpertsenderService implements LoggerAwareInterface
             [
                 'email' => $email,
                 'transactionId' => $transactionId,
-                'orderId' => $personalOrder->getId(),
+                'orderId' => $order->getId(),
                 'snippets' => implode(
                     '; ',
                     array_map(
@@ -1115,6 +1118,55 @@ class ExpertsenderService implements LoggerAwareInterface
                 'email' => $email,
                 'transactionId' => $transactionId,
                 'orderId' => $order->getId(),
+                'snippets' => implode(
+                    '; ',
+                    array_map(
+                        function($snp) {
+                            return $snp instanceof Snippet ? $snp->getName().': '.$snp->getValue() : '-';
+                        },
+                        $snippets
+                    )
+                ),
+            ]
+        );
+
+        $this->sendSystemTransactional($transactionId, $email, $snippets);
+
+        return $transactionId;
+    }
+
+    /**
+     * @param OrderSubscribe $orderSubscribe
+     * @return int
+     * @throws ApplicationCreateException
+     * @throws ExpertSenderException
+     * @throws ExpertsenderEmptyEmailException
+     * @throws ExpertsenderServiceApiException
+     * @throws ExpertsenderServiceException
+     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
+     * @throws \FourPaws\PersonalBundle\Exception\NotFoundException
+     */
+    public function sendOrderSubscribeCancelEmail(OrderSubscribe $orderSubscribe): int
+    {
+        $transactionId = self::SUBSCRIBE_CANCEL;
+        $snippets = [];
+        $personalOrder = $orderSubscribe->getOrder();
+
+        $email = $personalOrder->getPropValue('EMAIL');
+        if (empty($email)) {
+            throw new ExpertsenderEmptyEmailException('order email is empty');
+        }
+
+        $snippets[] = new Snippet('user_name', htmlspecialcharsbx($personalOrder->getPropValue('NAME')));
+        $snippets[] = new Snippet('order_number', htmlspecialcharsbx($personalOrder->getAccountNumber()));
+        $snippets[] = new Snippet('date', htmlspecialcharsbx($orderSubscribe->getDateCreate()));
+
+        $this->log()->info(
+            __FUNCTION__,
+            [
+                'email' => $email,
+                'transactionId' => $transactionId,
+                'orderId' => $orderSubscribe->getOrderId(),
                 'snippets' => implode(
                     '; ',
                     array_map(
@@ -1295,7 +1347,7 @@ class ExpertsenderService implements LoggerAwareInterface
     }
 
     /**
-     * @param User $user
+     * @param array $params
      *
      * @return bool
      * @throws ExpertSenderException
@@ -1337,17 +1389,67 @@ class ExpertsenderService implements LoggerAwareInterface
     }
 
     /**
-     * @param int $userId
-     * @param string $fullname
-     * @param string $email
-     * @param string $coupon
-     * @param string $base64
+     * @param array $params
+     *
      * @return bool
      * @throws ExpertSenderException
      * @throws ExpertsenderServiceApiException
      * @throws ExpertsenderServiceException
      */
-    public function sendPiggyBankEmail($userId, $fullname, $email, $coupon, $base64): bool
+    public function sendAfterFestivalUserReg(array $params): bool
+    {
+        $email = $params['userEmail'];
+        $coupon = $params['coupon'];
+        $firstname = $params['firstname'];
+        $lastname = $params['lastname'];
+        $base64 = $params['url_img'];
+
+        if ($email) {
+            $transactionId = self::FESTIVAL_NEW_USER_REG_LIST_ID;
+
+            $this->log()->info(
+                __FUNCTION__,
+                [
+                    'email' => $email,
+                    'transactionId' => $transactionId,
+                    'coupon' => $coupon,
+                    'firstname' => $firstname,
+                    'lastname' => $lastname,
+                    'url_img' => $base64,
+                ]
+            );
+
+            $snippets = [];
+            $snippets[] = new Snippet('coupon', htmlspecialcharsbx($coupon));
+            $snippets[] = new Snippet('firstname', htmlspecialcharsbx($firstname));
+            $snippets[] = new Snippet('lastname', htmlspecialcharsbx($lastname));
+            $snippets[] = new Snippet('url_img', $base64);
+
+            $senderApiResult = $this->sendSystemTransactional($transactionId, $email, $snippets);
+            if (!$senderApiResult->isOk()) {
+                throw new ExpertSenderException(__METHOD__ . 'Не удалось отправить письмо: Ошибка #' . $senderApiResult->getErrorCode() . '. ' .  $senderApiResult->getErrorMessage() . '. $params: ' . print_r($params, true));
+            }
+            return true;
+        } else {
+            throw new ExpertsenderEmptyEmailException(__METHOD__ . 'Не удалось отправить письмо: не указан email. $params: ' . print_r($params, true));
+        }
+
+        return false;
+    }
+
+    /**
+     * @param int $userId
+     * @param string $fullname
+     * @param string $email
+     * @param string $coupon
+     * @param string $base64
+     * @param string $discount
+     * @return bool
+     * @throws ExpertSenderException
+     * @throws ExpertsenderServiceApiException
+     * @throws ExpertsenderServiceException
+     */
+    public function sendPiggyBankEmail($userId, $fullname, $email, $coupon, $base64, $discount): bool
     {
         if ($email) {
             $transactionId = self::PIGGY_BANK_SEND_EMAIL;
@@ -1364,7 +1466,60 @@ class ExpertsenderService implements LoggerAwareInterface
                 ]
             );
 
-            $this->sendSystemTransactional($transactionId, $email);
+            $snippets = [];
+            $snippets[] = new Snippet('sale', htmlspecialcharsbx($discount));
+            $snippets[] = new Snippet('coupon', htmlspecialcharsbx($coupon));
+            $snippets[] = new Snippet('url_img', $base64);
+
+            $this->sendSystemTransactional($transactionId, $email, $snippets);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param int $userId
+     * @param string $name
+     * @param string $email
+     * @param string $coupon
+     * @param string $base64
+     * @param string $couponDescription
+     * @param string $couponDateActiveTo
+     * @param string $discountValue
+     * @return bool
+     * @throws ExpertSenderException
+     * @throws ExpertsenderServiceApiException
+     * @throws ExpertsenderServiceException
+     */
+    public function sendPersonalOfferCouponEmail($userId, $name, $email, $coupon, $base64, $couponDescription, $couponDateActiveTo, $discountValue): bool
+    {
+        if ($email) {
+            $transactionId = self::PERSONAL_OFFER_COUPON_SEND_EMAIL;
+
+            $this->log()->info(
+                __FUNCTION__,
+                [
+                    'userId' => $userId,
+                    'name' => $name,
+                    'email' => $email,
+                    'coupon' => $coupon,
+                    'text' => $couponDescription,
+                    'date' => $couponDateActiveTo,
+                    'url_img' => $base64,
+                    'transactionId' => $transactionId,
+                    'sale' => $discountValue,
+                ]
+            );
+
+            $snippets = [];
+            $snippets[] = new Snippet('sale', htmlspecialcharsbx($discountValue));
+            $snippets[] = new Snippet('coupon', htmlspecialcharsbx($coupon));
+            $snippets[] = new Snippet('date', htmlspecialcharsbx($couponDateActiveTo));
+            $snippets[] = new Snippet('url_img', $base64);
+            //$snippets[] = new Snippet('text', htmlspecialcharsbx());
+
+            $this->sendSystemTransactional($transactionId, $email, $snippets);
             return true;
         }
 

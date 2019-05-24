@@ -1,67 +1,129 @@
 <?php
+/**
+ * Created by PhpStorm.
+ * User: mmasterkov
+ * Date: 25.03.2019
+ * Time: 17:25
+ */
 
 namespace FourPaws\PersonalBundle\Service;
 
+
+use Adv\Bitrixtools\Tools\BitrixUtils;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Catalog\Product\CatalogProvider;
+use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
-use Bitrix\Main\Entity\AddResult;
-use Bitrix\Main\Entity\DeleteResult;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Entity\UpdateResult;
 use Bitrix\Main\Error;
-use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Result;
+use Bitrix\Main\Security\SecurityException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\UserFieldTable;
+use Bitrix\Sale\Basket;
+use Bitrix\Sale\BasketBase;
+use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Shipment;
 use Doctrine\Common\Collections\ArrayCollection;
-use FourPaws\App\Application;
-use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Collection\UserFieldEnumCollection;
+use FourPaws\Catalog\Collection\OfferCollection;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\AppBundle\Traits\UserFieldEnumTrait;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
-use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\Interval;
+use FourPaws\DeliveryBundle\Service\IntervalService;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\PersonalBundle\Entity\Order;
+use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Entity\BaseEntity;
+use FourPaws\AppBundle\Service\UserFieldEnumService;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Helpers\HighloadHelper;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyParams;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyResult;
-use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
+use FourPaws\PersonalBundle\Entity\OrderSubscribeItem;
 use FourPaws\PersonalBundle\Exception\NotFoundException;
+use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
+use FourPaws\PersonalBundle\Repository\OrderSubscribeItemRepository;
 use FourPaws\PersonalBundle\Repository\OrderSubscribeRepository;
+use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Enum\OrderPayment;
+use FourPaws\SaleBundle\Helper\PriceHelper;
+use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\NotificationService;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
+use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SapBundle\Consumer\ConsumerRegistry;
+use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserService;
+use http\Exception\InvalidArgumentException;
+use mysql_xdevapi\Exception;
+use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Intl\Exception\NotImplementedException;
 
-/**
- * Class OrderSubscribeService
- *
- * @package FourPaws\PersonalBundle\Service
- */
-class OrderSubscribeService
+class OrderSubscribeService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
     use UserFieldEnumTrait;
 
-    // За сколько дней до предстоящей доставки должно отправляться напоминание
     const UPCOMING_DAYS_DELIVERY_MESS = 3;
+
+    // при запуске из консоли SITE_ID определяется как 's2'
+    const SITE_ID = 's1';
+
+    /**
+     * Интервалы доставки
+     * @var array $frequencies
+     */
+    private $frequencies;
 
     /** @var OrderSubscribeRepository $orderSubscribeRepository */
     private $orderSubscribeRepository;
+
+    /** @var OrderSubscribeItemRepository $orderSubscribeRepository */
+    private $orderSubscribeItemRepository;
+
     /** @var CurrentUserProviderInterface $currentUser */
     private $currentUser;
+
+    /** @var LocationService $locationService */
+    private $locationService;
+
     /** @var OrderService $personalOrderService */
     private $personalOrderService;
-    /** @var \FourPaws\SaleBundle\Service\OrderService $saleOrderService */
-    private $saleOrderService;
+
     /** @var DeliveryService $deliveryService */
     private $deliveryService;
+
+    /** @var \FourPaws\SaleBundle\Service\OrderService $saleOrderService */
+    private $saleOrderService;
+
+    /** @var BasketService $basketService */
+    private $basketService;
+
+    /** @var UserFieldEnumService $userFieldEnumService */
+    private $userFieldEnumService;
+
     /** @var OrderSubscribeHistoryService $orderSubscribeHistoryService */
     private $orderSubscribeHistoryService;
 
@@ -70,6 +132,7 @@ class OrderSubscribeService
 
     /** @var array Исключаемые свойства корзины */
     private $basketItemExcludeProps = [];
+
     /** @var array Исключаемые свойства заказа */
     private $orderExcludeProps = [
         // заказ выгружен в SAP, всегда N
@@ -88,17 +151,375 @@ class OrderSubscribeService
         'OPERATOR_EMAIL', 'OPERATOR_SHOP',
     ];
 
+
     /**
      * OrderSubscribeService constructor.
      *
      * @param OrderSubscribeRepository $orderSubscribeRepository
+     * @param CurrentUserProviderInterface $currentUserProvider
      *
-     * @throws ApplicationCreateException
+     * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      */
-    public function __construct(OrderSubscribeRepository $orderSubscribeRepository)
+    public function __construct(
+        OrderSubscribeRepository $orderSubscribeRepository,
+        OrderSubscribeItemRepository $orderSubscribeItemRepository,
+        CurrentUserProviderInterface $currentUserProvider,
+        LocationService $locationService,
+        BasketService $basketService
+    )
     {
         $this->orderSubscribeRepository = $orderSubscribeRepository;
+        $this->orderSubscribeItemRepository = $orderSubscribeItemRepository;
+        $this->currentUser = $currentUserProvider;
+        $this->locationService = $locationService;
+        $this->basketService = $basketService;
+    }
+
+
+    /**
+     * @param OrderSubscribe $subscribe
+     * @return bool
+     * @throws \Bitrix\Main\ObjectException
+     */
+    public function add(OrderSubscribe $subscribe): Result
+    {
+        $result = new Result();
+
+        try {
+            if (empty($subscribe->getUserId())) {
+                try {
+                    $subscribe->setUserId($this->currentUser->getCurrentUserId());
+                } catch (NotAuthorizedException $e) {
+                    // можем привязать пользователя позже, т.к. доступно для неавторизованных
+                }
+            }
+            if (empty($subscribe->getLocationId())) {
+                $subscribe->setLocationId($this->locationService->getCurrentLocation());
+            }
+
+            $this->countNextDate($subscribe);
+            $this->orderSubscribeRepository->setEntity($subscribe);
+            if (!$this->orderSubscribeRepository->create()) {
+                $result->addError(new Error('Неизвестная ошибка при создании подписки', 'orderSubscriveService::add'));
+            }
+
+            $result->setData(['ID' => $subscribe->getId()]);
+        } catch (\Exception $e) {
+            $result->addError(new Error($e->getMessage(), 'orderSubscriveService::add'));
+            $this->log()->error(sprintf('failed to create order subscribe: %s', $e->getMessage()), [
+                'userId' => $this->currentUser->getCurrentUser()->getId(),
+            ]);
+        }
+
+        return $result;
+    }
+
+
+    public function update(OrderSubscribe $subscribe): UpdateResult
+    {
+        $result = new UpdateResult();
+
+        /** @var OrderSubscribe $updateEntity */
+        try{
+            $updateEntity = $this->orderSubscribeRepository->findById($subscribe->getId());
+            // Обход подписок запускается из консоли и здесь возникает ошибка, когда юзер не авторизован
+            // if ($updateEntity->getUserId() !== $this->currentUser->getCurrentUserId()) {
+            //     throw new SecurityException('не хватает прав доступа для совершения данной операции');
+            // }
+        } catch (\Exception $e) {
+            $result->addError(new Error($e->getMessage(), $e->getCode()));
+        }
+
+
+        if ($subscribe->getUserId() === 0) {
+            $subscribe->setUserId($updateEntity->getUserId());
+        }
+
+        $subscribe->setDateUpdate(new DateTime());
+
+        try{
+            $this->orderSubscribeRepository->setEntity($subscribe)->update();
+        } catch (\Exception $e) {
+            $result->addError(new Error($e->getMessage(), $e->getCode()));
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param OrderSubscribe $orderSubscribe
+     * @return bool
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function isCurrentDeliveryDateOrderAlreadyCreated(OrderSubscribe $orderSubscribe): bool
+    {
+        $orderSubscribeHistoryService = $this->getOrderSubscribeHistoryService();
+        $result = $orderSubscribeHistoryService->wasOrderCreated(
+            $orderSubscribe->getOrderId(),
+            $orderSubscribe->getDeliveryDate()
+        );
+
+        return $result;
+    }
+
+    /**
+     * @param int $id
+     * @return bool
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SecurityException
+     * @throws SystemException
+     * @throws ApplicationCreateException
+     */
+    public function delete(int $id): bool
+    {
+        try {
+            /** @var OrderSubscribe $orderSubscribe */
+            $orderSubscribe = $this->orderSubscribeRepository->findById($id);
+        } catch (\FourPaws\AppBundle\Exception\NotFoundException $e) {
+            return true;
+        }
+
+//        if ($orderSubscribe->getUserId() !== $this->currentUser->getCurrentUserId()) {
+//            throw new SecurityException('не хватает прав доступа для совершения данной операции');
+//        }
+
+        $deleteEntityItems = $this->orderSubscribeItemRepository->findBySubscribe($id);
+        /** @var OrderSubscribeItem $item */
+        foreach ($deleteEntityItems as $item) {
+            $this->deleteSubscribeItem($item->getId());
+        }
+
+        // удалим созданные по подписке заказы
+        $orderIdsForDelete = $this->getOrderSubscribeHistoryService()->getNotDeliveredOrderIds($orderSubscribe);
+        if(count($orderIdsForDelete) > 0){
+            foreach($orderIdsForDelete as $orderIdForDelete){
+                $orderService = $this->getOrderService();
+                $order = $orderService->getOrderById($orderIdForDelete);
+                $order->setField('CANCELED', 'Y');
+                $order->save();
+            }
+        }
+
+        return $this->orderSubscribeRepository->delete($id);
+    }
+
+    /**
+     * @param OrderSubscribe $orderSubscribe
+     * @param OrderSubscribeItem $orderSubscribeItem
+     * @return bool
+     * @throws \Exception
+     */
+    public function addSubscribeItem(OrderSubscribe $orderSubscribe, OrderSubscribeItem $orderSubscribeItem): bool
+    {
+        if (!$orderSubscribe->getId()) {
+            throw new OrderSubscribeException('Добавлять товары можно только на существующую подписку');
+        }
+
+        $orderSubscribeItem->setSubscribeId($orderSubscribe->getId());
+        $this->orderSubscribeItemRepository->setEntity($orderSubscribeItem);
+
+        return $this->orderSubscribeItemRepository->create();
+    }
+
+    /**
+     * @param OrderSubscribeItem $orderSubscribeItem
+     * @return bool
+     * @throws \Exception
+     */
+    public function updateSubscribeItem(OrderSubscribeItem $orderSubscribeItem): bool
+    {
+        if (!$orderSubscribeItem->getId()) {
+            throw new Exception('Обновлять можно только существующие товары');
+        }
+        return $this->orderSubscribeItemRepository->setEntity($orderSubscribeItem)->update();
+    }
+
+    /**
+     * @param OrderSubscribeItem $orderSubscribeItem
+     * @return bool
+     * @throws \Exception
+     */
+    public function deleteSubscribeItem($id): bool
+    {
+        return $this->orderSubscribeItemRepository->delete($id);
+    }
+
+    /**
+     * @param int $orderSubscribeId
+     * @return bool
+     * @throws \Exception
+     */
+    public function deleteAllItems($orderSubscribeId): bool
+    {
+        $items = $this->orderSubscribeItemRepository->findBySubscribe($orderSubscribeId);
+        foreach($items as $item){
+            $this->orderSubscribeItemRepository->delete($item->getId());
+        }
+        return true;
+    }
+
+
+    /**
+     * @param OrderSubscribe $orderSubscribe
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Exception
+     */
+    public function countNextDate(OrderSubscribe &$orderSubscribe)
+    {
+        $freqs = $this->getFrequencies();
+        $nextDate = $orderSubscribe->getNextDate();
+        if(null === $nextDate){
+            $nextDate = new DateTime();
+        }
+
+        switch ($orderSubscribe->getFrequency()){
+            case $freqs['WEEK_1']['ID']:
+                $nextDate->add("+1 week");
+                break;
+            case $freqs['WEEK_2']['ID']:
+                $nextDate->add("+2 week");
+                break;
+            case $freqs['WEEK_3']['ID']:
+                $nextDate->add("+3 week");
+                break;
+            case $freqs['WEEK_4']['ID']:
+                $nextDate->add("+4 week");
+                break;
+            case $freqs['WEEK_5']['ID']:
+                $nextDate->add("+5 week");
+                break;
+            case $freqs['WEEK_6']['ID']:
+                $nextDate->add("+6 week");
+                break;
+            default:
+                throw new \Exception('Не найдена подходящая периодичность');
+        }
+
+        $orderSubscribe->setNextDate($nextDate);
+        return $nextDate;
+    }
+
+    /**
+     * @param OrderSubscribe $orderSubscribe
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Exception
+     */
+    public function getPreviousDate(OrderSubscribe $orderSubscribe)
+    {
+        $freqs = $this->getFrequencies();
+        $nextDate = clone $orderSubscribe->getNextDate();
+        if(null === $nextDate){
+            $nextDate = new DateTime();
+        }
+
+        switch ($orderSubscribe->getFrequency()){
+            case $freqs['WEEK_1']['ID']:
+                $nextDate->add("-1 week");
+                break;
+            case $freqs['WEEK_2']['ID']:
+                $nextDate->add("-2 week");
+                break;
+            case $freqs['WEEK_3']['ID']:
+                $nextDate->add("-3 week");
+                break;
+            case $freqs['WEEK_4']['ID']:
+                $nextDate->add("-4 week");
+                break;
+            case $freqs['WEEK_5']['ID']:
+                $nextDate->add("-5 week");
+                break;
+            case $freqs['WEEK_6']['ID']:
+                $nextDate->add("-6 week");
+                break;
+            default:
+                throw new Exception('Не найдена подходящая периодичность');
+        }
+
+        return $nextDate;
+    }
+
+    /**
+     * @return array
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Bitrix\Main\LoaderException
+     */
+    public function getFrequencies(): array
+    {
+        if(null === $this->frequencies){
+            $userFieldId = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
+                [
+                    'FIELD_NAME' => 'UF_FREQUENCY',
+                    'ENTITY_ID' => 'HLBLOCK_' . HighloadHelper::getIdByName('OrderSubscribe'),
+                ]
+            )->exec()->fetch()['ID'];
+            $userFieldEnum = new \CUserFieldEnum();
+            $res = $userFieldEnum->GetList([], ['USER_FIELD_ID' => $userFieldId]);
+            while ($item = $res->Fetch()) {
+                $this->frequencies[$item['XML_ID']] = $item;
+            }
+        }
+
+        return $this->frequencies;
+    }
+
+    /**
+     * @param int $id
+     *
+     * @throws \Exception
+     * @return bool
+     */
+    public function isWeekFrequency($id): bool
+    {
+        foreach($this->getFrequencies() as $frequency){
+            if($frequency['ID'] == $id){
+                return strpos($frequency['XML_ID'], 'WEEK') !== false;
+            }
+        }
+
+        return false;
+    }
+
+
+    /**
+     * @param $frequency
+     * @return string|null
+     * @throws \Exception
+     */
+    public function getFrequencyType($frequency)
+    {
+        $arSlice = explode("_", $frequency['XML_ID']);
+        return count($arSlice) > 1 ? (string)$arSlice[0] : null;
+    }
+
+    /**
+     * @param $frequency
+     * @return int|null
+     * @throws \Exception
+     */
+    public function getFrequencyValue($frequency)
+    {
+        $arSlice = explode("_", $frequency['XML_ID']);
+        return count($arSlice) > 1 ? (int)$arSlice[1] : null;
+    }
+
+    /**
+     * @param $id
+     * @return BaseEntity|OrderSubscribe|null
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\AppBundle\Exception\NotFoundException
+     */
+    public function getById($id)
+    {
+        return $this->orderSubscribeRepository->findById($id);
     }
 
     /**
@@ -274,6 +695,7 @@ class OrderSubscribeService
         if ($filterActive) {
             $params['filter']['=UF_ACTIVE'] = 1;
         }
+        $params['filter']['!UF_ORDER_ID'] = false;
 
         return $this->orderSubscribeRepository->findByUser($userId, $params);
     }
@@ -320,42 +742,19 @@ class OrderSubscribeService
     }
 
     /**
-     * @return AddResult
-     * @throws ArgumentException
-     * @throws InvalidArgumentException
-     * @throws SystemException
-     * @throws \Exception
+     * @return OrderSubscribeRepository
      */
-    public function add(): AddResult
+    public function getOrderSubscribeRepository(): OrderSubscribeRepository
     {
-        $addResult = call_user_func_array([$this->orderSubscribeRepository, 'createEx'], func_get_args());
-
-        return $addResult;
+        return $this->orderSubscribeRepository;
     }
 
     /**
-     * @return UpdateResult
-     * @throws ArgumentException
-     * @throws InvalidArgumentException
-     * @throws SystemException
-     * @throws \Exception
+     * @return OrderSubscribeItemRepository
      */
-    public function update(): UpdateResult
+    public function getOrderSubscribeItemRepository(): OrderSubscribeItemRepository
     {
-        $updateResult = call_user_func_array([$this->orderSubscribeRepository, 'updateEx'], func_get_args());
-
-        return $updateResult;
-    }
-
-    /**
-     * @param int $id
-     * @return DeleteResult
-     */
-    public function delete(int $id): DeleteResult
-    {
-        $deleteResult = $this->orderSubscribeRepository->deleteEx($id);
-
-        return $deleteResult;
+        return $this->orderSubscribeItemRepository;
     }
 
     /**
@@ -389,46 +788,29 @@ class OrderSubscribeService
     }
 
     /**
-     * Возвращает CalculationResult для уже созданного заказа.
-     * CalculationResult берется от клона заказа.
-     *
-     * @param \Bitrix\Sale\Order $bitrixOrder
-     * @return BaseResult|null
-     * @throws ApplicationCreateException
-     * @throws ArgumentOutOfRangeException
-     * @throws NotSupportedException
-     * @throws \Exception
+     * @param OrderSubscribe $subscribe
+     * @return CalculationResultInterface
+     * @throws NotFoundException
      */
-    public function getDeliveryCalculationResult(\Bitrix\Sale\Order $bitrixOrder)
+    public function getDeliveryCalculationResult(OrderSubscribe $subscribe)
     {
         $calculationResult = null;
-        if (!$bitrixOrder->isClone()) {
-            // !!! делаем клон заказа, чтобы методы расчета доставки не изменили оригинальный заказ !!!
-            $bitrixOrderCloned = $bitrixOrder->createClone();
-
+        try {
             $deliveryService = $this->getDeliveryService();
-            $shipmentCollect = $bitrixOrderCloned->getShipmentCollection();
-            foreach ($shipmentCollect as $shipment) {
-                /** @var Shipment $shipment */
-                if ($shipment->isSystem()) {
-                    continue;
-                }
+            /** @var StoreService $storeService */
+            $storeService = Application::getInstance()->getContainer()->get('store.service');
 
-                $calcResultList = $deliveryService->calculateDeliveries(
-                    $shipment,
-                    [
-                        $shipment->getDelivery()->getCode(),
-                    ]
-                );
-                if ($calcResultList) {
-                    $calculationResult = reset($calcResultList);
-                    break;
-                }
+            $deliveryCode = $deliveryService->getDeliveryCodeById($subscribe->getDeliveryId());
+            $basket = $this->getBasketBySubscribeId($subscribe->getId());
+            $arCalculationResult = $deliveryService->getByBasket($basket, $subscribe->getLocationId(), [$deliveryCode]);
+            $calculationResult = reset($arCalculationResult);
+
+            if($deliveryService->isPickup($calculationResult)){
+                $calculationResult->setSelectedStore($storeService->getStoreByXmlId($subscribe->getDeliveryPlace()));
             }
-        } else {
-            throw new InvalidArgumentException('Передан некорректный заказ', 100);
+        } catch (\Exception $e) {
+            throw new NotFoundException($e->getMessage());
         }
-
         return $calculationResult;
     }
 
@@ -524,6 +906,94 @@ class OrderSubscribeService
             'orderExcludeProps' => $this->orderExcludeProps,
             'basketItemExcludeProps' => $this->basketItemExcludeProps,
         ];
+    }
+
+    /**
+     * @param $id
+     * @return ArrayCollection
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     */
+    public function getItemsBySubscribeId($id): ArrayCollection
+    {
+        return $this->orderSubscribeItemRepository->findBySubscribe($id);
+    }
+
+    /**
+     * Метод возвращает объект корзины
+     * !!! Чтобы создать заказ необходимо после сохранить корзину в БД !!!
+     *
+     * @param $id
+     * @return BasketBase
+     * @throws OrderSubscribeException
+     */
+    public function getBasketBySubscribeId($id): Basket
+    {
+        try {
+            $subscribe = $this->getById($id);
+
+            if($this->getCurrentUserService()->getCurrentUserId() != $subscribe->getUserId()){
+                throw new OrderSubscribeException('Для корректного расчёта цен необходимо быть авторизованным за пользователя из подписки');
+            }
+
+            $subscribeItems = $this->orderSubscribeItemRepository->findBySubscribe($id);
+            $basket = Basket::create(self::SITE_ID);
+            $items = [];
+            /** @var OrderSubscribeItem $item */
+            foreach($subscribeItems as $item){
+                $items[$item->getOfferId()] = [
+                    'OFFER_ID' => $item->getOfferId(),
+                    'QUANTITY' => $item->getQuantity()
+                ];
+            }
+
+            $offers = (new OfferQuery())
+                ->withFilter(["ID" => array_column($items, 'OFFER_ID')])
+                ->exec();
+
+            /** @var Offer $offer */
+            foreach($offers as $offer){
+                $items[$offer->getId()]['PRICE'] = $offer->getSubscribePrice();
+                $items[$offer->getId()]['BASE_PRICE'] = $offer->getPrice();
+                $items[$offer->getId()]['NAME'] = $offer->getName();
+                $items[$offer->getId()]['WEIGHT'] = $offer->getCatalogProduct()->getWeight();
+                $items[$offer->getId()]['DETAIL_PAGE_URL'] = $offer->getDetailPageUrl();
+                $items[$offer->getId()]['PRODUCT_XML_ID'] = $offer->getXmlId();
+            }
+
+            foreach($items as $item){
+                $basketItem = BasketItem::create($basket, 'sale', $item['OFFER_ID']);
+                $basketItem->setFields([
+                    'PRICE'                  => $item['PRICE'],
+                    'BASE_PRICE'             => $item['BASE_PRICE'],
+                    'CUSTOM_PRICE'           => BitrixUtils::BX_BOOL_TRUE,
+                    'QUANTITY'               => $item['QUANTITY'],
+                    'CURRENCY'               => CurrencyManager::getBaseCurrency(),
+                    'NAME'                   => $item['NAME'],
+                    'WEIGHT'                 => $item['WEIGHT'],
+                    'DETAIL_PAGE_URL'        => $item['DETAIL_PAGE_URL'],
+                    'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
+                    'CATALOG_XML_ID'         => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
+                    'PRODUCT_XML_ID'         => $item['PRODUCT_XML_ID'],
+                    'CAN_BUY'                => "Y",
+                ]);
+
+                /** @noinspection PhpInternalEntityUsedInspection */
+                $basket->addItem($basketItem);
+            }
+
+            //$basket->save();
+
+            return $basket;
+        } catch(\Exception $e) {
+            throw new OrderSubscribeException($e->getMessage(), $e->getCode());
+        }
+    }
+
+    public function getPaymentCodes()
+    {
+        return [OrderPayment::PAYMENT_CASH, OrderPayment::PAYMENT_CASH_OR_CARD];
     }
 
     /**
@@ -637,7 +1107,7 @@ class OrderSubscribeService
             }
         }
 
-        // Деактивация подписки
+        // деактивация подписки
         if ($deactivateSubscription) {
             try {
                 $deactivateResult = $this->deactivateSubscription($orderSubscribe, true);
@@ -703,8 +1173,10 @@ class OrderSubscribeService
                     // дата, когда нужно создать заказ, чтобы доставить его к сроку,
                     // дата возвращается без времени (00:00:00)
                     // (результат может быть меньше текущей даты)
-                    $orderCreateDate = $params->getDateForOrderCreate();
-                    if ($orderCreateDate < $currentDateNoTime) {
+                    $orderDeliveryDate = clone $deliveryCalculationResult->getDeliveryDate();
+                    $subscribeDeliveryDate = new \DateTime($orderSubscribe->getNextDate()->format('d.m.Y'));
+                    $daysDiff = $this->compareInDays($orderDeliveryDate, $subscribeDeliveryDate);
+                    if ($daysDiff < 0) {
                         // заказ не может быть доставлен к установленному сроку
                         $notGetInTime = true;
                     }
@@ -753,7 +1225,7 @@ class OrderSubscribeService
                         }
                         $orderComments .= 'Заказ должен быть готов к выдаче '.$deliveryDate->format('d.m.Y H:i:s').', ';
                         $orderComments .= 'плановая дата готовности '.$resultDeliveryDate->format('d.m.Y H:i:s').' ';
-                        $orderComments .= 'Причина: '.implode('; ', $products);
+                        $orderComments .= '\r\n Причина: '.implode(";\r\n ", $products);
                     } catch (\Exception $exception) {
                         $result->addError(
                             new Error(
@@ -785,7 +1257,7 @@ class OrderSubscribeService
                 $orderCopyHelper = $params->getOrderCopyHelper();
                 $orderCopyHelper->setPropValueByCode(
                     'DELIVERY_INTERVAL',
-                    $orderSubscribe->getDeliveryTime()
+                    str_replace(" ", "", $orderSubscribe->getDeliveryTime())
                 );
                 $orderCopyHelper->setPropValueByCode(
                     'DELIVERY_DATE',
@@ -814,28 +1286,28 @@ class OrderSubscribeService
         }
 
         // В заказах по подписке только оплата наличными может быть
-        if ($result->isSuccess()) {
-            $cashPaySystemService = $this->getOrderService()->getCashPaySystemService();
-            if ($cashPaySystemService) {
-                try {
-                    $params->getOrderCopyHelper()->setPayment($cashPaySystemService);
-                } catch (\Exception $exception) {
-                    $result->addError(
-                        new Error(
-                            $exception->getMessage(),
-                            'orderSetPaymentException'
-                        )
-                    );
-                }
-            } else {
-                $result->addError(
-                    new Error(
-                        'Не удалось получить платежную систему "Оплата наличными"',
-                        'orderCashPaymentNotFound'
-                    )
-                );
-            }
-        }
+//        if ($result->isSuccess()) {
+//            $cashPaySystemService = $this->getPayments();
+//            if ($cashPaySystemService) {
+//                try {
+//                    $params->getOrderCopyHelper()->setPayment($cashPaySystemService);
+//                } catch (\Exception $exception) {
+//                    $result->addError(
+//                        new Error(
+//                            $exception->getMessage(),
+//                            'orderSetPaymentException'
+//                        )
+//                    );
+//                }
+//            } else {
+//                $result->addError(
+//                    new Error(
+//                        'Не удалось получить платежную систему "Оплата наличными"',
+//                        'orderCashPaymentNotFound'
+//                    )
+//                );
+//            }
+//        }
 
         // Финальные операции
         if ($result->isSuccess()) {
@@ -897,6 +1369,21 @@ class OrderSubscribeService
                     $this->doNewOrderIntegration(
                         $params->getOrderCopyHelper()->getNewOrder()
                     );
+                } catch (\Exception $exception) {
+                    $result->addError(
+                        new Error(
+                            $exception->getMessage(),
+                            'newOrderIntegrationException'
+                        )
+                    );
+                }
+            }
+
+            // установка следующей даты доставки
+            if ($result->isSuccess()) {
+                try {
+                    $this->countNextDate($orderSubscribe);
+                    $this->update($orderSubscribe);
                 } catch (\Exception $exception) {
                     $result->addError(
                         new Error(
@@ -969,6 +1456,17 @@ class OrderSubscribeService
                             'orderSubscribeUpdateError'
                         )
                     );
+                }
+
+                // устанавливаем текущего пользователя и местоположение
+                // для расчёта цен и даты доставки
+                global $USER;
+                if(!$USER->IsAuthorized() || $orderSubscribe->getUserId() != $USER->GetID()){
+                    $USER->authorize($orderSubscribe->getUserId());
+
+                    /** @var UserService $currentUser */
+                    $currentUser = $this->getCurrentUserService();
+                    $currentUser->setSelectedCity($orderSubscribe->getLocationId());
                 }
             } catch (\Exception $exception) {
                 $result->addError(
@@ -1138,16 +1636,21 @@ class OrderSubscribeService
      * @throws \Exception
      * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      */
-    protected function deactivateSubscription(OrderSubscribe $orderSubscribe, bool $sendNotifications = true)
+    public function deactivateSubscription(OrderSubscribe $orderSubscribe, bool $sendNotifications = true)
     {
-        $updateResult = $this->update(
-            $orderSubscribe->getId(),
-            [
-                'UF_ACTIVE' => 0
-            ]
-        );
+        $updateResult = $this->update($orderSubscribe->setActive(false));
         if ($updateResult->isSuccess()) {
-            $orderSubscribe->setActive(false);
+
+            $orderIdsForDelete = $this->getOrderSubscribeHistoryService()->getNotDeliveredOrderIds($orderSubscribe);
+            if(count($orderIdsForDelete) > 0){
+                foreach($orderIdsForDelete as $orderIdForDelete){
+                    $orderService = $this->getOrderService();
+                    $order = $orderService->getOrderById($orderIdForDelete);
+                    $order->setField('CANCELED', 'Y');
+                    $order->save();
+                }
+            }
+
             TaggedCacheHelper::clearManagedCache(
                 [
                     'order:item:'.$orderSubscribe->getOrderId()
@@ -1188,12 +1691,12 @@ class OrderSubscribeService
             return;
         }
 
-        // передача заказа в SAP
-        /** @var ConsumerRegistry $consumerRegistry */
-        $consumerRegistry = Application::getInstance()->getContainer()->get(
-            ConsumerRegistry::class
-        );
-        $consumerRegistry->consume($order);
+        // передача заказа в SAP (upd: отправляется штатными средставми)
+//        /** @var ConsumerRegistry $consumerRegistry */
+//        $consumerRegistry = Application::getInstance()->getContainer()->get(
+//            ConsumerRegistry::class
+//        );
+//        $consumerRegistry->consume($order);
 
         // отправка email
         /** @var NotificationService $notificationService */
@@ -1201,6 +1704,90 @@ class OrderSubscribeService
             NotificationService::class
         );
         $notificationService->sendOrderSubscribeOrderNewMessage($order);
+    }
+
+    /**
+     * Создание подписки
+     *
+     * @param OrderStorage $storage
+     * @param $data
+     * @return Result
+     */
+    public function createSubscriptionByRequest(OrderStorage $storage, Request $request): Result
+    {
+        $result = new Result();
+        $data = $request->request->all();
+
+        try {
+            /** @var OrderStorageService $orderStorageService */
+            $orderStorageService = Application::getInstance()->getContainer()->get(OrderStorageService::class);
+
+            $deliveryId = $storage->getDeliveryId();
+
+            if(!$storage->getSubscribeId()) {
+                $subscribe = (new OrderSubscribe());
+            }
+            else{
+                $subscribe = $this->getById($storage->getSubscribeId());
+            }
+
+            $selectedDelivery = $this->getDeliveryService()->getNextDeliveries($orderStorageService->getSelectedDelivery($storage), 10)[$storage->getDeliveryDate()];
+            $deliveryDate = new DateTime($selectedDelivery->getDeliveryDate()->format('d.m.Y H:i:s'));
+            if(!$deliveryDate){
+                throw new OrderSubscribeException("Некорректная дата первой доставки");
+            }
+            $subscribe->setNextDate($deliveryDate)
+                ->setCheckDays((new \DateTime($deliveryDate->toString())));
+
+            if ($this->getDeliveryService()->isDelivery($selectedDelivery) && ($intervalIndex = $storage->getDeliveryInterval() - 1) >= 0) {
+                /** @var Interval $interval */
+                $interval = $selectedDelivery->getAvailableIntervals()[$intervalIndex];
+            }
+
+            $subscribe->setDeliveryId($deliveryId)
+                ->setFrequency($data['subscribeFrequency'])
+                ->setDeliveryTime((string)$interval)
+                ->setActive(false);
+
+            if($this->getDeliveryService()->isDelivery($orderStorageService->getSelectedDelivery($storage))){
+                $subscribe->setDeliveryPlace($data['addressId']);
+            }
+            elseif($this->getDeliveryService()->isPickup($orderStorageService->getSelectedDelivery($storage))){
+                if(!$data['deliveryPlaceCode'] && !$data['shopId']){
+                    throw new OrderSubscribeException("Не выбран магазин для самовывоза");
+                }
+                $subscribe->setDeliveryPlace($data['deliveryPlaceCode'] ?: $data['shopId']);
+            }
+
+            if($subscribe->getId() > 0){
+                $this->update($subscribe);
+            }
+            else{
+                $result = $this->add($subscribe);
+
+                if(!$result->isSuccess()){
+                    throw new OrderSubscribeException(sprintf('Failed to create order subscribe: %s', print_r($result->getErrorMessages(),true)));
+                }
+
+                $items = $this->basketService->getBasket()->getOrderableItems();
+                /** @var BasketItem $basketItem */
+                foreach($items as $basketItem){
+                    $subscribeItem = (new OrderSubscribeItem())
+                        ->setOfferId($basketItem->getProductId())
+                        ->setQuantity($basketItem->getQuantity());
+
+                    if(!$this->addSubscribeItem($subscribe, $subscribeItem)){
+                        throw new OrderSubscribeException(sprintf('Failed to create order subscribe item: %s', print_r($data,true)));
+                    }
+                }
+            }
+
+            $result->setData(['subscribeId' => $subscribe->getId()]);
+        } catch (\Exception $e) {
+            $result->addError(new Error($e->getMessage(), 'createSubscription'));
+        }
+
+        return $result;
     }
 
     /**
@@ -1252,4 +1839,82 @@ class OrderSubscribeService
         );
         $notificationService->sendOrderSubscribeUpcomingDeliveryMessage($copyParams);
     }
+
+
+    /**
+     * @param OrderSubscribe $orderSubscribe
+     * @return bool
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     */
+    public function isDelivery(OrderSubscribe $orderSubscribe)
+    {
+        $deliveryId = $orderSubscribe->getDeliveryId();
+        $deliveryService = $this->getDeliveryService();
+        $deliveryCode = $deliveryService->getDeliveryCodeById($deliveryId);
+        return $deliveryService->isDeliveryCode($deliveryCode);
+    }
+
+    /**
+     * @param \DateTime $date1
+     * @param \DateTime $date2
+     * @return int
+     */
+    public function compareInDays(\DateTime $date1, \DateTime $date2)
+    {
+        $date1->setTime(0,0,0,0);
+        $date2->setTime(0,0,0,0);
+        return $date1->diff($date2)->format('%r%d');
+    }
+
+    public function countBasketPriceDiff(BasketBase $basketSubscribe): float
+    {
+        $priceDiff = 0;
+        $offerIds = [];
+        foreach ($basketSubscribe as $basketItem){
+            $offerIds[] = $basketItem->getProductId();
+        }
+
+        /** @var OfferCollection $offerCollection */
+        $offerCollection = (new OfferQuery())->withFilter(['ID' => $offerIds])->exec();
+
+        /** @var BasketItem $basketItem */
+        foreach ($basketSubscribe as $basketItem){
+            /** @var Offer $offer */
+            $offer = $offerCollection->getById($basketItem->getProductId());
+            $percent = $offer->getSubscribeDiscount();
+            $priceSubscribe = $basketItem->getPrice();
+            $priceDefault = $this->countSubscribePrice($priceSubscribe, $percent, true);
+            $priceDiff += $priceDefault - $priceSubscribe;
+        }
+
+        return (float)$priceDiff;
+    }
+
+
+    /**
+     * Считает цену по подписке
+     *
+     * @param $price
+     * @param $percent
+     * @param bool $reverse
+     * @return int
+     */
+    public function countSubscribePrice($price, $percent, $reverse = false): float
+    {
+        // такое мудрёное округление цены нужно для того,
+        // чтобы после перерасчёта корзины манзаной не было расхождения
+        // т.к. там цена округялется через PriceHelper::roundPrice
+        if ($reverse) {
+            $price = (PriceHelper::roundPrice($price) * 100) / (100 - $percent);
+        } else {
+            $price = PriceHelper::roundPrice($price) * ((100 - $percent) / 100);
+        }
+
+        return $price = PriceHelper::roundPrice($price);;
+    }
+
 }

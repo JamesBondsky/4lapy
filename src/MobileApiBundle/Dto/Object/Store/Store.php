@@ -202,6 +202,14 @@ class Store
     protected $availability;
 
     /**
+     * @var string|array
+     *
+     * @Serializer\SerializedName("location_type")
+     * @Serializer\Type("string")
+     */
+    protected $locationType;
+
+    /**
      * @param string $code
      * @return Store
      */
@@ -668,6 +676,26 @@ class Store
     public function setAvailability(string $availability): Store
     {
         $this->availability = $availability;
+
+        return $this;
+    }
+
+    /**
+     * @return string|array
+     */
+    public function getLocationType()
+    {
+        return $this->locationType;
+    }
+
+    /**
+     * @param string|array $locationType
+     *
+     * @return Store
+     */
+    public function setLocationType($locationType): Store
+    {
+        $this->locationType = $locationType;
 
         return $this;
     }

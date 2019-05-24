@@ -9,6 +9,7 @@ use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Order;
+use Bitrix\Sale\Payment;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Enum\CrudGroups;
@@ -25,6 +26,7 @@ use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeCopyParams;
 use FourPaws\SaleBundle\Dto\Notification\ForgotBasketNotification;
 use FourPaws\SaleBundle\Enum\ForgotBasketEnum;
+use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Exception\Notification\UnknownMessageTypeException;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -190,12 +192,6 @@ class NotificationService implements LoggerAwareInterface
      */
     public function sendNewOrderMessage(Order $order): void
     {
-        if ($this->orderService->isSubscribe($order)) {
-            // Для заказов, созданных по подписке, свои триггеры
-            $this->sendOrderSubscribeOrderNewMessage($order);
-            return;
-        }
-
         if (static::$isSending) {
             return;
         }
@@ -214,15 +210,21 @@ class NotificationService implements LoggerAwareInterface
         static::$isSending = true;
 
         $this->setOrderMessageFlag($order, 'NEW_ORDER_MESSAGE_SENT');
-        try {
-            $transactionId = $this->emailService->sendOrderNewEmail($order);
-            if ($transactionId) {
-                $this->logMessage($order, $transactionId);
+
+        // Для заказов, созданных по подписке, свои шаблон
+        if ($this->orderService->isSubscribe($order)) {
+            $this->sendOrderSubscribeOrderNewMessage($order);
+        } else {
+            try {
+                $transactionId = $this->emailService->sendOrderNewEmail($order);
+                if ($transactionId) {
+                    $this->logMessage($order, $transactionId);
+                }
+            } catch (ExpertsenderEmptyEmailException $e) {
+                $this->log()->info('не установлен email для отправки у заказа - '.$order->getId());
+            } catch (ExpertsenderServiceException|\Exception $e) {
+                $this->log()->error($e->getMessage());
             }
-        } catch (ExpertsenderEmptyEmailException $e) {
-            $this->log()->info('не установлен email для отправки у заказа - '.$order->getId());
-        } catch (ExpertsenderServiceException|\Exception $e) {
-            $this->log()->error($e->getMessage());
         }
 
         $smsTemplate = null;
@@ -246,7 +248,17 @@ class NotificationService implements LoggerAwareInterface
                 $smsTemplate = 'FourPawsSaleBundle:Sms:order.new.delivery.dpd.html.php';
                 break;
             case $parameters['deliveryCode'] === DeliveryService::DELIVERY_DOSTAVISTA_CODE:
-                $smsTemplate = 'FourPawsSaleBundle:Sms:order.new.delivery.dostavista.html.php';
+                /** @var Payment $payment */
+                foreach ($order->getPaymentCollection() as $payment) {
+                    $paymentCode = $payment->getPaySystem()->getField('CODE');
+                    if ($paymentCode === OrderPayment::PAYMENT_CASH_OR_CARD || $paymentCode === OrderPayment::PAYMENT_CASH) {
+                        $smsTemplate = 'FourPawsSaleBundle:Sms:order.new.delivery.dostavista.is.not.paid.html.php';
+                        break;
+                    } elseif($paymentCode == OrderPayment::PAYMENT_ONLINE && $order->isPaid()) {
+                        $smsTemplate = 'FourPawsSaleBundle:Sms:order.new.delivery.dostavista.is.paid.html.php';
+                        break;
+                    }
+                }
                 break;
         }
 
@@ -301,8 +313,14 @@ class NotificationService implements LoggerAwareInterface
             $this->log()->error($e->getMessage());
         }
         $parameters = $this->getOrderData($order);
-        $this->sendSms('FourPawsSaleBundle:Sms:order.paid.html.php', $parameters, true);
-        $this->addPushMessage('FourPawsSaleBundle:Sms:order.paid.html.php', $parameters);
+
+        if ($parameters['deliveryCode'] === DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
+            $this->sendSms('FourPawsSaleBundle:Sms:order.new.delivery.dostavista.is.paid.html.php', $parameters, true);
+        } else {
+            $this->sendSms('FourPawsSaleBundle:Sms:order.paid.html.php', $parameters, true);
+            $this->addPushMessage('FourPawsSaleBundle:Sms:order.paid.html.php', $parameters);
+        }
+
         $this->sendNewUserSms($parameters);
         static::$isSending = false;
     }
@@ -460,7 +478,7 @@ class NotificationService implements LoggerAwareInterface
 
         $type = (new \CUserFieldEnum())->GetList([], [
             'USER_FIELD_ID' => $userField['ID'],
-            'XML_ID' => 'change_order_status',
+            'XML_ID' => 'status',
         ])->fetch();
 
         $pushMessage = (new ApiPushMessage())
@@ -623,39 +641,41 @@ class NotificationService implements LoggerAwareInterface
     }
 
     /**
-     * Отправка уведомления об автоматической отмене подписки (админам)
+     * Отправка уведомления об отмене подписки
      *
      * @param OrderSubscribe $orderSubscribe
-     * @throws ApplicationCreateException
-     * @throws ArgumentNullException
-     * @throws NotImplementedException
-     * @throws \Exception
-     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
-     * @throws \FourPaws\PersonalBundle\Exception\NotFoundException
      */
     public function sendAutoUnsubscribeOrderMessage(OrderSubscribe $orderSubscribe): void
     {
-        $order = $orderSubscribe->getOrder()->getBitrixOrder();
-        $subscribeDateCreate = $orderSubscribe->getDateCreate();
-        $user = $orderSubscribe->getUser();
-        // 30.03.2018: Канал уведомления (email или sms), триггер и текст ожидаем от 4 Лап.
-        // 06.04.2018: Просто отправка письма, без ES, средствами системы
-        $fields = [
-            'ORDER_ID' => $order->getId(),
-            'ACCOUNT_NUMBER' => $order->getField('ACCOUNT_NUMBER'),
-            'SUBSCRIBE_ID' => $orderSubscribe->getId(),
-            'SUBSCRIBE_DATE' => $subscribeDateCreate ? $subscribeDateCreate->format('d.m.Y') : '',
-            'USER_ID' => $order->getUserId(),
-            'USER_NAME' => $user->getName(),
-            'USER_FULL_NAME' => $user->getFullName(),
-            'USER_EMAIL' => $user->getEmail(),
-        ];
+        try {
+            $this->emailService->sendOrderSubscribeCancelEmail($orderSubscribe);
+        } catch (ExpertsenderEmptyEmailException $e) {
+            $this->log()->info('не установлен email для отправки у заказа - '.$orderSubscribe->getId());
+        } catch (ExpertsenderServiceException|\Exception $e) {
+            $this->log()->error($e->getMessage());
+        }
 
-        \CEvent::SendImmediate(
-            '4PAWS_ORDER_SUBSCRIBE_AUTO_UNSUBSCRIBE',
-            's1',
-            $fields
-        );
+//        $order = $orderSubscribe->getOrder()->getBitrixOrder();
+//        $subscribeDateCreate = $orderSubscribe->getDateCreate();
+//        $user = $orderSubscribe->getUser();
+//        // 30.03.2018: Канал уведомления (email или sms), триггер и текст ожидаем от 4 Лап.
+//        // 06.04.2018: Просто отправка письма, без ES, средствами системы
+//        $fields = [
+//            'ORDER_ID' => $order->getId(),
+//            'ACCOUNT_NUMBER' => $order->getField('ACCOUNT_NUMBER'),
+//            'SUBSCRIBE_ID' => $orderSubscribe->getId(),
+//            'SUBSCRIBE_DATE' => $subscribeDateCreate ? $subscribeDateCreate->format('d.m.Y') : '',
+//            'USER_ID' => $order->getUserId(),
+//            'USER_NAME' => $user->getName(),
+//            'USER_FULL_NAME' => $user->getFullName(),
+//            'USER_EMAIL' => $user->getEmail(),
+//        ];
+//
+//        \CEvent::SendImmediate(
+//            '4PAWS_ORDER_SUBSCRIBE_AUTO_UNSUBSCRIBE',
+//            's1',
+//            $fields
+//        );
     }
 
     /**

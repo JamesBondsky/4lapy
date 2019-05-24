@@ -14,8 +14,8 @@ class Order
     /**
      * ID заказа
      * @Serializer\SerializedName("id")
-     * @Serializer\Type("int")
-     * @var int
+     * @Serializer\Type("string")
+     * @var string
      */
     protected $id;
 
@@ -105,18 +105,18 @@ class Order
     }
 
     /**
-     * @return int
+     * @return string
      */
-    public function getId(): int
+    public function getId(): string
     {
         return $this->id;
     }
 
     /**
-     * @param int $id
+     * @param string $id
      * @return Order
      */
-    public function setId(int $id): Order
+    public function setId(string $id): Order
     {
         $this->id = $id;
         return $this;

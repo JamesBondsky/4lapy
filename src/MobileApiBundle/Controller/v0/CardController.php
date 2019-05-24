@@ -12,6 +12,7 @@ use FourPaws\MobileApiBundle\Dto\Request\CardActivatedRequest;
 use FourPaws\MobileApiBundle\Dto\Request\ChangeCardConfirmPersonalRequest;
 use FourPaws\MobileApiBundle\Dto\Request\ChangeCardConfirmPinRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
+use FourPaws\MobileApiBundle\Exception\CardAlreadyUsedException;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use FourPaws\MobileApiBundle\Services\Api\CardService as ApiCardService;
@@ -55,7 +56,7 @@ class CardController extends FOSRestController
     public function isCardActivatedAction(CardActivatedRequest $cardActivatedRequest): CardActivatedResponse
     {
         if ($activated = $this->apiCardService->isActive($cardActivatedRequest->getCardNumber())) {
-            throw new RuntimeException('Данная карта уже привязана', 42);
+            throw new CardAlreadyUsedException();
         }
 
         return new CardActivatedResponse(
@@ -79,7 +80,7 @@ class CardController extends FOSRestController
 
         $newCardNumber = $changeCardValidateRequest->getNewCardNumber();
         if ($apiResponse = $this->apiCardService->isActive($newCardNumber)) {
-            throw new RuntimeException('Карта уже используется');
+            throw new CardAlreadyUsedException();
         }
         return (new Response())
             ->setData([
@@ -119,7 +120,11 @@ class CardController extends FOSRestController
      * @Rest\View()
      * @param ChangeCardConfirmPinRequest $changeCardConfirmPinRequest
      * @return FeedbackResponse
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException
+     * @throws \FourPaws\External\Exception\ManzanaServiceContactSearchNullException
      * @throws \FourPaws\External\Exception\ManzanaServiceException Задача: проверить капчу, и если все гут - апдейтить юзера в БД
+     * @throws \FourPaws\PersonalBundle\Exception\CardNotValidException
      * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
      * @throws \FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException
      */

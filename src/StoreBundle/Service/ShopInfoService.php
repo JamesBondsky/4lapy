@@ -636,4 +636,61 @@ class ShopInfoService
 
         return $results[$offer->getId()];
     }
+
+    /**
+     * @param \FourPaws\MobileApiBundle\Dto\Object\Store\Store|array $a
+     * @param \FourPaws\MobileApiBundle\Dto\Object\Store\Store|array $b
+     *
+     * @return int
+     */
+    public function shopCompareByLocationType($a, $b): int
+    {
+        if ($a instanceof \FourPaws\MobileApiBundle\Dto\Object\Store\Store && $b instanceof \FourPaws\MobileApiBundle\Dto\Object\Store\Store)
+        {
+            /** @var \FourPaws\MobileApiBundle\Dto\Object\Store\Store $a */
+            /** @var \FourPaws\MobileApiBundle\Dto\Object\Store\Store $b */
+            if ($a->getLocationType()[0] === $b->getLocationType()[0])
+            {
+                return $a->getLocationType()[1] - $b->getLocationType()[1]; // сохранение порядка элементов с совпадающими location_type
+            } else {
+                return $a->getLocationType()[0] === 'regional' ? 1 : -1;
+            }
+        } else {
+            if ($a['location_type'][0] === $b['location_type'][0])
+            {
+                return $a['location_type'][1] - $b['location_type'][1]; // сохранение порядка элементов с совпадающими location_type
+            } else {
+                return $a['location_type'][0] === 'regional' ? 1 : -1;
+            }
+        }
+    }
+
+    /**
+     * @param \FourPaws\MobileApiBundle\Dto\Object\Store\Store|array $item
+     * @param $key
+     */
+    public function locationTypeSortDecorate(&$item, $key): void
+    {
+        if ($item instanceof \FourPaws\MobileApiBundle\Dto\Object\Store\Store)
+        {
+            /** @var \FourPaws\MobileApiBundle\Dto\Object\Store\Store $item */
+            $item->setLocationType([$item->getLocationType(), $key]);
+        } else {
+            $item['location_type'] = [$item['location_type'], $key];
+        }
+    }
+
+    /**
+     * @param \FourPaws\MobileApiBundle\Dto\Object\Store\Store|array $item
+     */
+    public function locationTypeSortUndecorate(&$item): void
+    {
+        if ($item instanceof \FourPaws\MobileApiBundle\Dto\Object\Store\Store)
+        {
+            /** @var \FourPaws\MobileApiBundle\Dto\Object\Store\Store $item */
+            $item->setLocationType($item->getLocationType()[0]);
+        } else {
+            $item['location_type'] = $item['location_type'][0];
+        }
+    }
 }

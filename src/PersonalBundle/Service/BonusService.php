@@ -287,9 +287,14 @@ class BonusService
         }
 
         try {
+            $card = $this->manzanaService->searchCardByNumber($bonusCard);
+            if (!$card->contactId) {
+                throw new CardNotFoundException(); // На самом деле найдена, но для совместимости со старым кодом кидаем прежнее исключение
+            }
+
             $newCard = $this->manzanaService->getCardInfo(
                 $bonusCard,
-                $this->manzanaService->searchCardByNumber($bonusCard)->contactId
+                $card->contactId
             );
 
             if (!$newCard || !\in_array($newCard->status, [Card::STATUS_NEW, Card::STATUS_ACTIVE], true)) {

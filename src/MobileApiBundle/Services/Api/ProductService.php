@@ -6,8 +6,13 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\BitrixOrm\Model\Share;
@@ -18,6 +23,7 @@ use FourPaws\Catalog\Model\BundleItem;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\CatalogBundle\Controller\CatalogController;
 use FourPaws\CatalogBundle\Service\CategoriesService;
 use FourPaws\CatalogBundle\Service\FilterHelper;
 use FourPaws\CatalogBundle\Service\SortService;
@@ -35,9 +41,11 @@ use FourPaws\LocationBundle\LocationService;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct;
 use FourPaws\CatalogBundle\Helper\MarkHelper;
+use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct\Tag;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Exception\CategoryNotFoundException;
 use FourPaws\MobileApiBundle\Exception\NotFoundProductException;
+use FourPaws\Search\Helper\IndexHelper;
 use FourPaws\Search\Model\Navigation;
 use FourPaws\Search\SearchService;
 use FourPaws\StoreBundle\Service\StockService;
@@ -127,18 +135,63 @@ class ProductService
             $filters = $category->getFilters();
         }
 
+
+        if ($searchQuery) {
+            /** @see CatalogController::searchAction */
+            $searchQuery = mb_strtolower($searchQuery);
+            $searchQuery = IndexHelper::getAlias($searchQuery);
+        }
+
         $sort = $this->sortService->getSorts($sort, strlen($searchQuery) > 0)->getSelected();
 
         $nav = (new Navigation())
             ->withPage($page)
             ->withPageSize($count);
+        ;
 
         $productSearchResult = $this->searchService->searchProducts($filters, $sort, $nav, $searchQuery);
         /** @var ProductCollection $productCollection */
         $productCollection = $productSearchResult->getProductCollection();
 
         return (new ArrayCollection([
-            'products' => $productCollection->map(\Closure::fromCallable([$this, 'mapProductForList']))->getValues(),
+            'products' => $productCollection
+                ->map(\Closure::fromCallable([$this, 'mapProductForList']))
+                ->filter(function($value) {
+                    return !is_null($value);
+                })
+                ->getValues(),
+            'cdbResult' => $productCollection->getCdbResult()
+        ]));
+    }
+
+    /**
+     * @param int[] $ids
+     * @return ArrayCollection
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\Catalog\Exception\CategoryNotFoundException
+     */
+    public function getListFromIds(array $ids)
+    {
+        $filters = new FilterCollection();
+        $filters->add([
+            'ID' => $ids
+        ]);
+
+        $sort = $this->sortService->getSorts('popular')->getSelected();
+
+        $productSearchResult = $this->searchService->searchProducts($filters, $sort, new Navigation());
+        /** @var ProductCollection $productCollection */
+        $productCollection = $productSearchResult->getProductCollection();
+
+        return (new ArrayCollection([
+            'products' => $productCollection
+                ->map(\Closure::fromCallable([$this, 'mapProductForList']))
+                ->filter(function($value) {
+                    return !is_null($value);
+                })
+                ->getValues(),
             'cdbResult' => $productCollection->getCdbResult()
         ]));
     }
@@ -146,14 +199,17 @@ class ProductService
     /**
      * Мэппинг полей товара для списка
      * @param Product $product
-     * @return FullProduct
+     * @return FullProduct|null
      * @throws \Bitrix\Main\ArgumentException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    protected function mapProductForList(Product $product): FullProduct
+    protected function mapProductForList(Product $product)
     {
         /** @var Offer $currentOffer */
         $currentOffer = $this->getCurrentOfferForList($product);
+        if (!$currentOffer) {
+            return null;
+        }
         $fullProduct = $this->convertToFullProduct($product, $currentOffer, true);
 
         // товары всегда доступны в каталоге (недоступные просто не должны быть в выдаче)
@@ -174,6 +230,9 @@ class ProductService
         $offers = $product->getOffersSorted();
         $foundOfferWithImages = false;
         $currentOffer = $offers->last();
+        if (!$currentOffer) {
+            return null;
+        }
         /** @var Offer $offer */
         foreach ($offers as $offer) {
             $offer->setProduct($product);
@@ -208,7 +267,7 @@ class ProductService
     {
         $offer = (new OfferQuery())->getById($id);
         if (!$offer) {
-            throw new NotFoundProductException("Предложение с ID $id не найдено");
+            throw new NotFoundProductException();
         }
         $product = $offer->getProduct();
 
@@ -256,10 +315,25 @@ class ProductService
     public function getTags(Offer $offer)
     {
         $tags = [];
+        if ($offer->isShare()) {
+            /** @var Share $share */
+            $share = $offer->getShare()->first();
+            if ($share->hasLabelImage() && $tag = $this->getTagFromPng($share->getPropertyLabelImageFileSrc())) {
+                $tags[] = $tag;
+            }
+            if ($share->hasLabel() && $tag = $this->getTagFromTitle($share->getPropertyLabel())) {
+                $tags[] = $tag;
+            }
+
+            if (!$tags)
+            {
+                $tags[] = $this->getTagFromPng(MarkHelper::MARK_GIFT_IMAGE_SRC);
+            }
+        }
         if (
-            ($offer->isHit() && $tag = $this->getTag(MarkHelper::MARK_HIT_IMAGE_SRC))
-            || ($offer->isNew() && $tag = $this->getTag(MarkHelper::MARK_NEW_IMAGE_SRC))
-            || ($offer->isSale() && $tag = $this->getTag(MarkHelper::MARK_SALE_IMAGE_SRC))
+            (($offer->isHit() || $offer->isPopular()) && $tag = $this->getTagFromPng(MarkHelper::MARK_HIT_IMAGE_SRC))
+            || ($offer->isNew() && $tag = $this->getTagFromPng(MarkHelper::MARK_NEW_IMAGE_SRC))
+            || ($offer->isSale() && $tag = $this->getTagFromPng(MarkHelper::MARK_SALE_IMAGE_SRC))
         ) {
             $tags[] = $tag;
         }
@@ -268,7 +342,7 @@ class ProductService
 
     /**
      * @param string $svg
-     * @return ShortProduct\Tag|false
+     * @return Tag|false
      */
     public function getTag(string $svg)
     {
@@ -279,7 +353,27 @@ class ProductService
         } catch (NotFoundException $e) {
             return false;
         }
-        return (new ShortProduct\Tag())->setImg($png);
+        return $this->getTagFromPng($png);
+    }
+
+    /**
+     * @param string $png
+     *
+     * @return Tag
+     */
+    public function getTagFromPng(string $png): Tag
+    {
+        return (new Tag())->setImg($png);
+    }
+
+    /**
+     * @param string $title
+     *
+     * @return Tag
+     */
+    public function getTagFromTitle(string $title): Tag
+    {
+        return (new Tag())->setTitle($title);
     }
 
     /**
@@ -326,6 +420,12 @@ class ProductService
             ->setIsByRequest($offer->isByRequest())
             ->setIsAvailable($offer->isAvailable());
 
+        try {
+            $shortProduct->setPickupOnly(!$offer->isDeliverable() && $product->isPickupAvailable() && $offer->isPickupAvailable());
+        } catch (\Exception $e) {
+            $shortProduct->setPickupOnly(false);
+        }
+
         // лейблы
         $shortProduct->setTag($this->getTags($offer));
 
@@ -369,7 +469,8 @@ class ProductService
             ->setBonusAll($shortProduct->getBonusAll())
             ->setBonusUser($shortProduct->getBonusUser())
             ->setIsByRequest($shortProduct->getIsByRequest())
-            ->setIsAvailable($shortProduct->getIsAvailable());
+            ->setIsAvailable($shortProduct->getIsAvailable())
+            ->setPickupOnly($shortProduct->getPickupOnly());
 
         if ($needPackingVariants) {
             $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct));   // фасовки
@@ -444,7 +545,9 @@ class ProductService
     {
         /** @var $pickupResult PickupResult */
         if ($pickupResult = $this->filterPickups($this->getDeliveries($offer))) {
-            return $pickupResult->getTextForOffer(false);
+            return $pickupResult->getDeliveryCode() === DeliveryService::INNER_PICKUP_CODE
+                ? $pickupResult->getTextForOffer(false)
+                : '';
         }
         return '';
     }

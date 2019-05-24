@@ -62,6 +62,14 @@ class ApiPushEvent
     protected $messageId;
 
     /**
+     * @var int
+     * @Serializer\SerializedName("EVENT_ID")
+     * @Serializer\Type("int")
+     * @Serializer\Groups(groups={"read"})
+     */
+    protected $eventId;
+
+    /**
      * @var string
      * @Serializer\SerializedName("MESSAGE_TEXT")
      * @Serializer\Type("string")
@@ -189,6 +197,24 @@ class ApiPushEvent
     public function setMessageId(int $messageId): ApiPushEvent
     {
         $this->messageId = $messageId;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getEventId(): int
+    {
+        return $this->eventId;
+    }
+
+    /**
+     * @param int $eventId
+     * @return ApiPushEvent
+     */
+    public function setEventId(int $eventId): ApiPushEvent
+    {
+        $this->eventId = $eventId;
         return $this;
     }
 

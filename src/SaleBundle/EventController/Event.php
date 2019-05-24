@@ -31,7 +31,9 @@ use FourPaws\App\MainTemplate;
 use FourPaws\App\Tools\StaticLoggerTrait;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\PersonalBundle\Exception\CouponNotFoundException;
 use FourPaws\PersonalBundle\Service\CouponService;
+use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Discount\Action\Action\DetachedRowDiscount;
 use FourPaws\SaleBundle\Discount\Action\Action\DiscountFromProperty;
@@ -146,10 +148,10 @@ class Event extends BaseServiceHandler
         ], $module);
 
         /** добавление марок в заказ */
-        static::initHandler('OnSaleOrderBeforeSaved', [
+        /*static::initHandler('OnSaleOrderBeforeSaved', [
             self::class,
             'addMarksToOrderBasket'
-        ], $module);
+        ], $module);*/
 
         /** генерация номера заказа */
         static::initHandlerCompatible('OnBeforeOrderAccountNumberSet', [
@@ -300,6 +302,7 @@ class Event extends BaseServiceHandler
             //FIXME эта проверка работает неправильно из-за расчета делавшего это программиста на наличие "index.php" в url`е авторизации.
             //Сейчас index.php в url нет и метод на авторизации не работает.
             //Нужно переделать апдейт баланса асинхронно, после чего отрефакторить то, что тут происходит
+            // UPD: Условия исправлено, теперь это потенциально опасное место
             if (!$template->hasUserAuth()) {
                 return;
             }
@@ -358,8 +361,8 @@ class Event extends BaseServiceHandler
             ->get(
                 OrderService::class
             );
-        if ($orderService->isSubscribe($order) || $orderService->isManzanaOrder($order)) {
-            // пропускаются заказы, созданные по подписке
+        if ($orderService->isManzanaOrder($order)) {
+            // пропускаются заказы из манзаны
             return;
         }
 
@@ -666,9 +669,24 @@ class Event extends BaseServiceHandler
             $promocode = BxCollection::getOrderPropertyByCode($propertyCollection, 'PROMOCODE');
             if ($promocode && $promocodeValue = $promocode->getValue())
             {
-                /** @var CouponService $couponService */
-                $couponService = Application::getInstance()->getContainer()->get('coupon.service');
-                $couponService->setUsedStatusByNumber($promocodeValue);
+                $isPromoCodeProcessed = false;
+                try {
+                    /** @var CouponService $couponService */
+                    $couponService = Application::getInstance()->getContainer()->get('coupon.service');
+                    $couponService->setUsedStatusByNumber($promocodeValue);
+                    $isPromoCodeProcessed = true;
+                } catch (CouponNotFoundException $e) {
+                }
+
+                if (!$isPromoCodeProcessed)
+                {
+                    /** @var PersonalOffersService $personalOffersService */
+                    $personalOffersService = Application::getInstance()->getContainer()->get('personal_offers.service');
+                    if (!$personalOffersService->isNoUsedStatus($promocodeValue))
+                    {
+                        $personalOffersService->setUsedStatusByPromoCode($promocodeValue);
+                    }
+                }
             }
         } catch (\Exception $e) {
             static::getLogger()
@@ -870,7 +888,7 @@ class Event extends BaseServiceHandler
             $piggyBankService = Application::getInstance()->getContainer()->get('piggy_bank.service');
 
             global $USER;
-            if ($piggyBankService->isPiggyBankDateExpired() && !$USER->IsAdmin())
+            if ($piggyBankService->isPiggyBankDateExpired())// && !$USER->IsAdmin())
             {
                 return;
             }
@@ -967,6 +985,11 @@ class Event extends BaseServiceHandler
                         $basket
                     );
                 }
+
+                $order->setFieldNoDemand(
+                    'PRICE',
+                    $order->getBasket()->getOrderableItems()->getPrice() + $order->getDeliveryPrice()
+                );
 
             }
         } catch (\Exception $e) {

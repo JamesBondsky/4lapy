@@ -83,19 +83,21 @@ class BasketController extends FOSRestController
      */
     public function getUserCartAction(UserCartRequest $userCartRequest)
     {
-        if ($promoCode = $userCartRequest->getPromoCode()) {
+        $storage = $this->orderStorageService->getStorage();
+        $promoCode = $userCartRequest->getPromoCode() ?: $storage->getPromoCode();
+        if ($promoCode) {
             try {
                 /** @see \FourPaws\SaleBundle\AjaxController\BasketController::applyPromoCodeAction */
                 $this->manzana->setPromocode($promoCode);
                 $this->manzana->calculate();
 
-                $storage = $this->orderStorageService->getStorage();
                 $storage->setPromoCode($promoCode);
                 $this->orderStorageService->updateStorage($storage);
             } catch (ManzanaPromocodeUnavailableException $e) {
                 $promoCode = '';
             }
         }
+
         $basketProducts = $this->apiBasketService->getBasketProducts(false);
         $orderParameter = $this->apiOrderService->getOrderParameter($basketProducts);
         $orderCalculate = $this->apiOrderService->getOrderCalculate($basketProducts);
@@ -190,6 +192,16 @@ class BasketController extends FOSRestController
      */
     public function postUserCartCalcAction(UserCartCalcRequest $userCartCalcRequest)
     {
+        if ($promoCode = $this->orderStorageService->getStorage()->getPromoCode()) {
+            try {
+                /** @see \FourPaws\SaleBundle\AjaxController\BasketController::applyPromoCodeAction */
+                $this->manzana->setPromocode($promoCode);
+                $this->manzana->calculate();
+            } catch (ManzanaPromocodeUnavailableException $e) {
+                // do nothing
+            }
+        }
+
         $bonusSubtractAmount = $userCartCalcRequest->getBonusSubtractAmount();
         $basketProducts = $this->apiBasketService->getBasketProducts(false);
 

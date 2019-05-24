@@ -51,7 +51,7 @@ class Banner
 
     /**
      * Ссылка с баннера
-     * @Serializer\SerializedName("alt_target")
+     * @Serializer\SerializedName("target_alt")
      * @Serializer\Type("string")
      * @var string
      */
@@ -154,9 +154,14 @@ class Banner
      * @return Banner
      */
     public function setLink($link, $cityId = ''): Banner {
-        $this->link = (string) new FullHrefDecorator($link);
-        $this->cityId = $cityId;
+        if ($link === (int)$link) {
+            $this->link = $link;
+        } else {
+            $this->link = (string) new FullHrefDecorator($link);
+            $this->cityId = $cityId;
+        }
         $this->preparedLink = $this->getPreparedLink();
+
         return $this;
     }
 
@@ -193,22 +198,27 @@ class Banner
      */
     protected function guessBannerType() {
         $link = $this->link;
-        $type = '';
         if (strpos($link, '/catalog/') !== false && strpos($link, '.html') !== false) {
             // ссылка на товар
             $type = 'goods';
-        } else if (preg_match('\/catalog\/$', $link)) {
-            // ссылка на главную каталога
-            $type = 'catalog';
         } else if (strpos($link, '/catalog/') !== false && strpos($link, '.html') === false) {
+            // ссылка на раздел каталога
+            $type = 'catalog';
+        } /* else if (strpos($link, '/catalog/') !== false && strpos($link, '.html') === false) {
             // ссылка на список товаров
             $type = 'goods_list';
-        } else if (strpos($link, '/news/') !== false) {
+        }*/ else if (strpos($link, '/news/') !== false) {
             // ссылка на новость
             $type = 'news';
         } else if (strpos($link, '/articles/') !== false) {
+            // ссылка на статью
+            $type = 'articles';
+        } else if (strpos($link, '/shares/') !== false) {
             // ссылка на акцию
             $type = 'action';
+        } else {
+            // ссылка на акцию
+            $type = 'browser';
         }
         $this->type = $type;
         return $type;
@@ -225,7 +235,7 @@ class Banner
                 $methodName = 'goods_item';
                 break;
             case 'goods_list':
-                $methodName = 'goods_item_list';
+                $methodName = 'goods_list';
                 break;
             case 'catalog':
                 $methodName = 'categories';
@@ -249,20 +259,21 @@ class Banner
 
         switch ($type) {
             case 'goods':
-            case 'goods_list':
             case 'catalog':
                 $queryData = [
-                    //'token' => $this->User['token'],
                     'id' => $this->link
+                ];
+                break;
+            case 'goods_list':
+                $queryData = [
+                    'category_id' => $this->link
                 ];
                 break;
             case 'news':
             case 'action':
                 $queryData = [
-                    //'token' => $this->User['token'],
                     'type' => $this->getType(),
                     'info_id' => $this->link,
-                    // 'city_id' => $cityId
                 ];
                 break;
         }

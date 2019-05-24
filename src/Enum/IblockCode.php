@@ -42,5 +42,9 @@ class IblockCode
 
     public const GRANDIN_REQUEST = 'grandin_request';
 
+    public const PERSONAL_OFFERS  = 'personal_offers';
+
+    public const SUBSCRIBE_PRICES = 'subscribe_prices';
+
     public const MOBILE_APP_CONTENT = 'mobile_app_content';
 }

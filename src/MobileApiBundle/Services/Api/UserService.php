@@ -6,24 +6,37 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\Type\Date;
+use Exception;
+use FourPaws\App\Application;
 use FourPaws\Enum\UserGroup as UserGroupEnum;
+use FourPaws\External\ExpertsenderService;
+use FourPaws\External\Manzana\Model\Client;
+use FourPaws\External\ManzanaService;
 use FourPaws\MobileApiBundle\Dto\Object\City;
 use FourPaws\MobileApiBundle\Dto\Object\ClientCard;
 use FourPaws\MobileApiBundle\Dto\Object\User;
 use FourPaws\MobileApiBundle\Dto\Request\LoginRequest;
 use FourPaws\MobileApiBundle\Dto\Response\PostUserInfoResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserLoginResponse;
+use FourPaws\MobileApiBundle\Exception\EmailAlreadyUsed;
+use FourPaws\MobileApiBundle\Exception\InvalidCredentialException;
+use FourPaws\MobileApiBundle\Exception\PhoneAlreadyUsed;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\MobileApiBundle\Exception\TokenNotFoundException;
 use FourPaws\MobileApiBundle\Security\ApiToken;
 use FourPaws\MobileApiBundle\Services\Session\SessionHandler;
 use FourPaws\UserBundle\Entity\User as AppUser;
+use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
+use FourPaws\UserBundle\Exception\NotFoundException;
+use FourPaws\UserBundle\Exception\UserException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Repository\GroupRepository;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService as UserBundleService;
 use FourPaws\MobileApiBundle\Services\Api\CaptchaService as ApiCaptchaService;
 use FourPaws\External\ManzanaService as AppManzanaService;
@@ -102,7 +115,7 @@ class UserService
     public function loginOrRegister(LoginRequest $loginRequest): UserLoginResponse
     {
 
-        $excludePhonesFromCaptchaCheck = [
+        $excludeLoginsFromCaptchaCheck = [
             '9778016362',
             '9660949453',
             '9299821844',
@@ -111,16 +124,21 @@ class UserService
             '9991693811',
             '9263987654',
             '9653770455',
-            '9165919854'
+            '9165919854',
+            'a.vorobyev@articul.ru',
         ];
 
         try {
 
             $_COOKIE[ConfirmCodeService::getCookieName('phone')] = $loginRequest->getCaptchaId();
 
-            if (!in_array($loginRequest->getLogin(), $excludePhonesFromCaptchaCheck)) {
-                if (!ConfirmCodeService::checkCode($loginRequest->getCaptchaValue(), 'phone')) {
-                    throw new RuntimeException('Некорректный код');
+            if (!in_array($loginRequest->getLogin(), $excludeLoginsFromCaptchaCheck)) {
+                try {
+                    if (!ConfirmCodeService::checkCode($loginRequest->getCaptchaValue(), 'phone')) {
+                        throw new InvalidCredentialException();
+                    }
+                } catch (NotFoundConfirmedCodeException $e) {
+                    throw new InvalidCredentialException();
                 }
             }
             $userId = $this->userRepository->findIdentifierByRawLogin($loginRequest->getLogin());
@@ -133,6 +151,43 @@ class UserService
                 ->setPassword(randString(20));
             $user = $this->userBundleService->register($user);
             $this->userBundleService->authorize($user->getId());
+        }
+        try {
+            $container = Application::getInstance()->getContainer();
+
+            /** @var ManzanaService $manzanaService */
+            $manzanaService = $container->get('manzana.service');
+            /** @noinspection PhpUnusedLocalVariableInspection */
+            //$manzanaItem = $manzanaService->getContactByPhone(PhoneHelper::getManzanaPhone($user->getPersonalPhone()));
+
+            /**
+             * @var UserService $userService
+             */
+            $userService = $container->get(CurrentUserProviderInterface::class);
+            if (!isset($user)) {
+                $user = $userService->getUserRepository()->find($userId);
+            }
+
+            if ($user === null) {
+                throw new UserException('Пользователь не найден');
+            }
+
+            $client = new Client();
+            if ($_SESSION['MANZANA_CONTACT_ID']) {
+                $client->contactId = $_SESSION['MANZANA_CONTACT_ID'];
+                unset($_SESSION['MANZANA_CONTACT_ID']);
+            }
+
+            $userService->setClientPersonalDataByCurUser($client, $user);
+
+            $manzanaService->updateContact($client);
+
+            if ($client->phone && $client->contactId) {
+                $manzanaService->updateUserCardByClient($client);
+            }
+        } catch (Exception $e) {
+            $logger = LoggerFactory::create('loginOrRegister');
+            $logger->error(sprintf('%s exception: %s', __METHOD__, $e->getMessage()));
         }
         $this->sessionHandler->login();
         return new UserLoginResponse($this->getCurrentApiUser());
@@ -165,6 +220,28 @@ class UserService
     public function update(User $user): PostUserInfoResponse
     {
         $currentUser = $this->userBundleService->getCurrentUser();
+        $oldUser = clone $currentUser;
+
+        if ($user->getPhone() && $user->getPhone() !== $currentUser->getPersonalPhone()) {
+            try {
+                if ($userByPhone = $this->userBundleService->findOneByPhone($user->getPhone())) {
+                    throw new PhoneAlreadyUsed();
+                }
+            } catch (NotFoundException $e) {
+                // do nothing
+            }
+        }
+
+        if ($user->getEmail() && $user->getEmail() !== $currentUser->getEmail()) {
+            try {
+                if ($userByEmail = $this->userBundleService->findOneByEmail($user->getEmail())) {
+                    throw new EmailAlreadyUsed();
+                }
+            } catch (NotFoundException $e) {
+                // do nothing
+            }
+        }
+
         if ($user->getEmail() && $currentUser->getEmail() === $currentUser->getLogin()) {
             $currentUser->setLogin($user->getEmail());
         } elseif ($user->getPhone() && $currentUser->getPersonalPhone() === $currentUser->getLogin()) {
@@ -190,6 +267,18 @@ class UserService
             $currentUser->setDiscountCardNumber($user->getCard()->getNumber());
         }
         $this->userBundleService->getUserRepository()->update($currentUser);
+
+        if ($user->getEmail() && $user->getEmail() !== $oldUser->getEmail()) {
+            try {
+                /** @var ExpertsenderService $expertSenderService */
+                $expertSenderService = Application::getInstance()->getContainer()->get('expertsender.service');
+                $expertSenderService->sendChangeEmail($oldUser, $currentUser);
+            } catch (Exception $exception) {
+                $logger = LoggerFactory::create('change_email');
+                $logger->error(sprintf('%s exception: %s', __FUNCTION__, $exception->getMessage()));
+            }
+        }
+
         return new PostUserInfoResponse($this->getCurrentApiUser());
     }
 
@@ -355,7 +444,7 @@ class UserService
         $bonusInfo = $this->appBonusService->getManzanaBonusInfo($user);
 
         return (new PersonalBonus())
-            ->setAmount($bonusInfo->getSumDiscounted() ?? 0)
+            ->setAmount($bonusInfo->getGeneratedRealDiscount() ?? 0)
             ->setTotalIncome($bonusInfo->getDebit() ?? 0)
             ->setTotalOutgo($bonusInfo->getCredit() ?? 0)
             ->setNextStage($bonusInfo->getSumToNext());
