@@ -71,6 +71,10 @@ four_paws_mobile_api:
       code: 1001
       message: 'Карта не найдена'
       status_code: 200
+    FourPaws\SaleBundle\Exception\SberbankOrderNotPaidException:
+      code: 1001
+      message: 'Не удалось провести оплату в Сбербанке'
+      status_code: 200
     FourPaws\MobileApiBundle\Exception\DeliveryAddressUpdateError:
       code: 1021
       message: 'Ошибка при обновления профиля доставки'
