@@ -58,11 +58,11 @@ if ($isAuthorized)
                 </div>
                 <div class="form-group">
                     <div class="field field_checkbox">
-                        <input type="checkbox" id="agree" name="rules" onchange="ga('send', 'pageview', '/virtualpage/agree')" required /> <label for="agree">я даю своё согласие на обработку персональных данных <span class="required">*</span></label>
+                        <input type="checkbox" id="agree" name="rules" onchange="ga('send', 'pageview', '/virtualpage/agree')" required checked="checked" /> <label for="agree">я даю своё согласие на обработку персональных данных <span class="required">*</span></label>
                     </div>
                 </div>
                 <div class="form-group_submit">
-                    <button class="join_btn" onsubmit="ga('send', 'event', 'fest_go', 'submit')">я пойду!</button>
+                    <button class="join_btn" onsubmit="ga('send', 'event', 'fest_fillform', 'submit')">я пойду!</button>
                 </div>
             </form>
         </div>

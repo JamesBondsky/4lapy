@@ -40,4 +40,6 @@ if (!empty($arResult)) { ?>
             </div>
         </div>
     </div>
+<? } else { ?>
+    <? $this->SetViewTarget('empty-winners'); ?>display:none;<? $this->EndViewTarget(); ?>
 <? } ?>

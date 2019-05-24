@@ -37,4 +37,10 @@ interface UserAuthorizationInterface
      * @return bool
      */
     public function authorize(int $id): bool;
+
+    /**
+     * @param string $login
+     * @return bool
+     */
+    public function clearLoginAttempts(string $login) : bool;
 }
