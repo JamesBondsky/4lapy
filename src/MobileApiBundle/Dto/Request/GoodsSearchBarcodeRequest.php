@@ -6,10 +6,12 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Request;
 
+use FourPaws\MobileApiBundle\Dto\Request\Types\GetRequest;
+use FourPaws\MobileApiBundle\Dto\Request\Types\SimpleUnserializeRequest;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class GoodsSearchBarcodeRequest
+class GoodsSearchBarcodeRequest implements SimpleUnserializeRequest, GetRequest
 {
     /**
      * @Assert\Type("string")

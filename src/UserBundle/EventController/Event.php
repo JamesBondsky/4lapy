@@ -305,12 +305,18 @@ class Event extends BaseServiceHandler
 
             unset($_SESSION['NOT_MANZANA_UPDATE']);
 
+            /**
+             * @var UserService $userService
+             */
             $userService = $container->get(CurrentUserProviderInterface::class);
             $user = $userService->getUserRepository()->find((int)$fields['ID']);
             if ($user === null) {
                 return false;
             }
 
+            /**
+             * @var ManzanaService $manzanaService
+             */
             $manzanaService = $container->get('manzana.service');
 
             $client = new Client();

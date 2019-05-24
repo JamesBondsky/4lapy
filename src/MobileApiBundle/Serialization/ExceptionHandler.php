@@ -147,18 +147,22 @@ class ExceptionHandler implements SubscribingHandlerInterface
      */
     protected function convertToArray(\Exception $exception, Context $context): array
     {
+        $exceptionMessage = str_replace("\n", ', ', $exception->getMessage());
         $error = [
-            'title' => $this->getMessage($exception, $this->getStatusCode($context)),
+            'title' => $exceptionMessage ? $exceptionMessage : $this->getMessage($exception, $this->getStatusCode($context)),
             'code'  => $this->exceptionDataMap->resolveCode($exception) ?: $this->getDefaultErrorCode(),
         ];
         if ($this->isDebug()) {
             $error['exception'] = [
                 'type'  => get_class($exception),
-                'title' => $exception->getMessage(),
+                'title' => $exceptionMessage,
                 'file'  => $exception->getFile(),
                 'line'  => $exception->getLine(),
                 'code'  => $exception->getCode(),
-                'trace' => $exception->getTraceAsString(),
+                'trace' => array_map(
+                    function($v) { list($path, $method) = explode(': ', $v); return [$path . ':', $method]; },
+                    explode("\n", $exception->getTraceAsString())
+                ),
             ];
         }
 

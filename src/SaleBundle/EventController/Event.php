@@ -148,10 +148,10 @@ class Event extends BaseServiceHandler
         ], $module);
 
         /** добавление марок в заказ */
-        static::initHandler('OnSaleOrderBeforeSaved', [
+        /*static::initHandler('OnSaleOrderBeforeSaved', [
             self::class,
             'addMarksToOrderBasket'
-        ], $module);
+        ], $module);*/
 
         /** генерация номера заказа */
         static::initHandlerCompatible('OnBeforeOrderAccountNumberSet', [
@@ -361,8 +361,8 @@ class Event extends BaseServiceHandler
             ->get(
                 OrderService::class
             );
-        if ($orderService->isSubscribe($order) || $orderService->isManzanaOrder($order)) {
-            // пропускаются заказы, созданные по подписке
+        if ($orderService->isManzanaOrder($order)) {
+            // пропускаются заказы из манзаны
             return;
         }
 

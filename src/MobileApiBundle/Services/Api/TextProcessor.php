@@ -22,7 +22,6 @@ class TextProcessor
             $text = strip_tags($text);
             $text = str_replace('"', '', $text);
             $text = trim($text);
-            $text = htmlspecialcharsbx($text);
         }
         return $text;
     }
@@ -36,7 +35,6 @@ class TextProcessor
     {
         $text = trim($text);
         $text = $this->correctionLinkInText($text);
-        $text = htmlspecialcharsbx($text);
         return $text;
     }
 

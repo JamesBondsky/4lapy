@@ -26,6 +26,7 @@ use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\TooManyActiveCardFound;
 use FourPaws\External\Manzana\Model\Client;
+use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
@@ -236,6 +237,8 @@ class UserService implements
             $id = (int)$this->bitrixUserService->GetID();
             if ($id > 0) {
                 return $id;
+            } else {
+                throw new NotAuthorizedException('User is not authorized');
             }
         }
         throw new NotAuthorizedException('Trying to get user id without authorization');
@@ -260,7 +263,7 @@ class UserService implements
         $validationResult = $this->userRepository->getValidator()
                                                  ->validate($user, null, ['create']);
         if ($validationResult->count() > 0) {
-            throw new ValidationException('Wrong entity passed to create');
+            throw new ValidationException($validationResult);
         }
 
         Application::getConnection()
@@ -841,6 +844,9 @@ class UserService implements
             return false;
         }
         try {
+            /**
+             * @var ManzanaService $manzanaService
+             */
             $manzanaService = App::getInstance()
                                  ->getContainer()
                                  ->get('manzana.service');
@@ -1100,5 +1106,21 @@ class UserService implements
     {
         $this->setAvatarHostUserId(0);
         $this->setAvatarGuestUserId(0);
+    }
+
+    /**
+     * @param string $login
+     * @return bool
+     */
+    public function clearLoginAttempts(string $login) : bool
+    {
+        try {
+            $userLogin = $this->userRepository->findLoginByRawLogin($login);
+            $user = CUser::GetByLogin($userLogin)->Fetch();
+            $obUser = new CUser;
+            return $obUser->Update($user['ID'], ['LOGIN_ATTEMPTS' => 0]);
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 }

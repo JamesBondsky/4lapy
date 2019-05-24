@@ -94,14 +94,14 @@ class Event extends BaseServiceHandler
         $isDostavistaDelivery = $deliveryService->isDostavistaDeliveryCode($deliveryService->getDeliveryCodeById($order->getField('DELIVERY_ID')));
 
         /**
-         * Если заказ уже выгружен в SAP, оплата онлайн, или заказ создан по подписке, пропускаем
+         * Если заказ уже выгружен в SAP, оплата онлайн, пропускаем
          */
         if (
             self::isOrderExported($order)
             || self::isManzanaOrder($order)
             || self::isDostavistaOrder($order)
             || $orderService->isOnlinePayment($order) && !$isDostavistaDelivery
-            || $orderService->isSubscribe($order)
+            //|| $orderService->isSubscribe($order)
         ) {
             return;
         }

@@ -41,6 +41,7 @@ class ShareQuery extends IblockElementQuery
             'BASKET_RULES',
             'JSON_GROUP_SET',
             'PREMISE_BONUS',
+            'SIGNCHARGE'
         ];
     }
 

@@ -31,4 +31,5 @@ interface PickupResultInterface extends CalculationResultInterface
      * @return PickupResultInterface
      */
     public function setSelectedShop(Store $selectedStore): PickupResultInterface;
+
 }
