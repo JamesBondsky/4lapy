@@ -238,7 +238,7 @@ class LandingController extends Controller
                 'UF_EMAIL' => $email,
             ]);
             if ($isUserAlreadyRegistered) {
-                throw new JsonResponseException(JsonErrorResponse::createWithData('Такой пользователь уже зарегистирован'));
+                throw new JsonResponseException(JsonErrorResponse::createWithData('Такой пользователь уже зарегистрирован'));
             }
 
             /** @var PersonalOffersService $personalOffersService */

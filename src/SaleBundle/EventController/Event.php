@@ -148,10 +148,10 @@ class Event extends BaseServiceHandler
         ], $module);
 
         /** добавление марок в заказ */
-        static::initHandler('OnSaleOrderBeforeSaved', [
+        /*static::initHandler('OnSaleOrderBeforeSaved', [
             self::class,
             'addMarksToOrderBasket'
-        ], $module);
+        ], $module);*/
 
         /** генерация номера заказа */
         static::initHandlerCompatible('OnBeforeOrderAccountNumberSet', [
