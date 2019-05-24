@@ -17,8 +17,8 @@ class Order
 {
     public const DEFAULT_CONTRACTOR_CODE = '0000802070';
 
-    public const ORDER_SOURCE_MOBILE_APP_ANDROID = 'MOBI';
-    public const ORDER_SOURCE_MOBILE_APP_IOS     = 'MOB2';
+    public const ORDER_SOURCE_MOBILE_APP_IOS     = 'MOBI';
+    public const ORDER_SOURCE_MOBILE_APP_ANDROID = 'MOB2';
     public const ORDER_SOURCE_SITE               = 'DFUE';
 
     /**
