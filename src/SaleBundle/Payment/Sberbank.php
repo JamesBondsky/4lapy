@@ -2,6 +2,7 @@
 
 namespace FourPaws\SaleBundle\Payment;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Web\Json;
@@ -225,6 +226,7 @@ class Sberbank
             \CURLOPT_SSLVERSION => 6,
         ]);
         $response = \curl_exec($curl);
+        //$response = '{"success":true,"data":{"orderId":"e51f45c1-8411-7a83-aa2c-12b900151068"},"orderStatus":{"errorCode":"0","orderNumber":"999999__14","orderStatus":1,"actionCode":0,"actionCodeDescription":"","amount":100,"currency":"643","date":1558694938873,"ip":"31.173.55.17","merchantOrderParams":[],"attributes":[{"name":"mdOrder","value":"e51f45c1-8411-7a83-aa2c-12b900151068"}],"cardAuthInfo":{"expiration":"202202","cardholderName":"CARD HOLDER","approvalCode":"094923","paymentSystem":"MASTERCARD","secureAuthInfo":{"eci":7,"threeDSInfo":{"cavv":"AFFu8Y4XGZ+PAEUxNI3LAoABFA=="}},"pan":"544714XXXXXX5619"},"authDateTime":1558694939190,"authRefNum":"308203236946","paymentAmountInfo":{"paymentState":"APPROVED","approvedAmount":100,"depositedAmount":0,"refundedAmount":0},"bankInfo":{"bankName":"\"BANK \"SAINT PETERSBURG\" PUBLI","bankCountryCode":"RU","bankCountryName":""},"chargeback":false,"operations":[{"amount":100,"cardHolder":"CARD HOLDER","authCode":"094923"}]}}';
         \curl_close($curl);
 
         if (!$response) {
@@ -277,7 +279,12 @@ class Sberbank
             $url, $method, \json_encode($data), \json_encode($response)
         );
 
-        \AddMessage2Log($message);
+        $logger = LoggerFactory::create('Sberbank');
+        $logger->info(
+            __CLASS__ . ': ' . $message
+        );
+
+        //\AddMessage2Log($message);
     }
 
     /**
