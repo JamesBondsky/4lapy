@@ -6,9 +6,9 @@ use FourPaws\AppBundle\AjaxController\LandingController;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
-$APPLICATION->SetPageProperty('title', '');
-$APPLICATION->SetPageProperty('description', 'Для участия в акции купите любой корм Grandin на сумму от 1800 рублей и зарегистрируйте покупку  на сайте акции grandin.4lapy.ru.');
-$APPLICATION->SetTitle('Как выиграть запас корма Grandin на год вперед?');
+$APPLICATION->SetPageProperty('title', 'Выиграй путешествие в Прагу на двоих!');
+$APPLICATION->SetPageProperty('description', 'Для участия в акции купите любой корм Grandin на сумму от 1800 рублей и зарегистрируйте покупку на сайте акции grandin.4lapy.ru.');
+$APPLICATION->SetTitle('Выиграй путешествие в Прагу на двоих!');
 ?>
 
 <section id="registr-check" data-id-section-landing="registr-check" class="registr-check-landing">
