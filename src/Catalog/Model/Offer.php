@@ -968,6 +968,7 @@ class Offer extends IblockElement
 
     /**
      * @return null|HlbReferenceItem
+     * @throws ApplicationCreateException
      */
     public function getColourCombination(): ?HlbReferenceItem
     {
@@ -1819,16 +1820,16 @@ class Offer extends IblockElement
      */
     public function getPackageLabelType(): string
     {
+        if ($this->getColourCombination()) {
+            return self::PACKAGE_LABEL_TYPE_COLOUR;
+        }
+
         if ($this->getClothingSize()) {
             return self::PACKAGE_LABEL_TYPE_SIZE;
         }
 
         if ($this->getVolumeReference()) {
             return self::PACKAGE_LABEL_TYPE_VOLUME;
-        }
-
-        if ($this->getColourCombination()) {
-            return self::PACKAGE_LABEL_TYPE_COLOUR;
         }
 
         return self::PACKAGE_LABEL_TYPE_WEIGHT;
