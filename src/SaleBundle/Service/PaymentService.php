@@ -1155,6 +1155,9 @@ class PaymentService implements LoggerAwareInterface
             //toDo - мэппинг ответа в случае успеха
             var_dump($response);
 
+            //$orderInfo->setErrorCode(Sberbank::SUCCESS_CODE);
+            //$orderInfo->setOrderStatus(Sberbank::ORDER_STATUS_PAID);
+
             /*
              * if (($response['orderStatus']['orderStatus'] == 1)) { //hold
                 $arFieldsBlock = array(
