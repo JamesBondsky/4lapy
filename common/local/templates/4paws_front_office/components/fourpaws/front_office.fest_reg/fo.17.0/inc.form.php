@@ -270,7 +270,7 @@ if ($showForm) {
 
             if ($arResult['IS_REGISTERED'] === \Adv\Bitrixtools\Tools\BitrixUtils::BX_BOOL_TRUE) {
                 echo '<div class="form-page__field-wrap">';
-                echo sprintf($successBlock, 'Участник успешно зарегистрирован');
+                echo sprintf($successBlock, 'Участник успешно зарегистрирован, номер: ' . $arResult['PARTICIPANT_ID']);
                 echo '</div>';
             }
 

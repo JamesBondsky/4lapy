@@ -87,10 +87,10 @@ class FourPawsFrontOfficeFestSearchComponent extends \FourPaws\FrontOffice\Bitri
     {
         $this->initPostFields();
 
-        if ($this->canEnvUserAccess()) {
+        //if ($this->canEnvUserAccess()) {
             $this->processSearchFormFields();
             $this->obtainUserUpdateForm();
-        }
+        //}
 
         $this->loadData();
     }
@@ -100,14 +100,15 @@ class FourPawsFrontOfficeFestSearchComponent extends \FourPaws\FrontOffice\Bitri
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
+     * @throws InvalidIdentifierException
      */
     protected function userUpdateAction()
     {
         $this->initPostFields();
 
-        if ($this->canEnvUserAccess()) {
+        //if ($this->canEnvUserAccess()) {
             $this->updateFestivalUser();
-        }
+        //}
 
         $this->loadData();
     }
@@ -141,17 +142,17 @@ class FourPawsFrontOfficeFestSearchComponent extends \FourPaws\FrontOffice\Bitri
         }
 
 
-        if ($fields) {
-            /** @var DataManager $festivalUsersDataManager */
-            $festivalUsersDataManager = Application::getInstance()->getContainer()->get('bx.hlblock.festivalusersdata');
-            $updateResult = $festivalUsersDataManager::update($values['id'], $fields);
-            if (!$updateResult->isSuccess()) {
-                $this->arResult['UPDATE_ERROR'] = implode('. ', $updateResult->getErrorMessages());
-            } else {
-                $this->arResult['IS_UPDATED'] = true;
-            }
+        if (!$fields['UF_NAME'] || !$fields['UF_PHONE']) {
+            $this->arResult['UPDATE_ERROR'] = 'Не переданы обязательные поля';
+            return;
+        }
+        /** @var DataManager $festivalUsersDataManager */
+        $festivalUsersDataManager = Application::getInstance()->getContainer()->get('bx.hlblock.festivalusersdata');
+        $updateResult = $festivalUsersDataManager::update($values['id'], $fields);
+        if (!$updateResult->isSuccess()) {
+            $this->arResult['UPDATE_ERROR'] = implode('. ', $updateResult->getErrorMessages());
         } else {
-            $this->arResult['UPDATE_ERROR'] = 'Не переданы поля для изменения';
+            $this->arResult['IS_UPDATED'] = true;
         }
     }
 

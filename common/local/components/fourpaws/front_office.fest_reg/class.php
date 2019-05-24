@@ -78,10 +78,10 @@ class FourPawsFrontOfficeFestRegComponent extends \FourPaws\FrontOffice\Bitrix\C
     {
         $this->initPostFields();
 
-        if ($this->canEnvUserAccess()) {
+        //if ($this->canEnvUserAccess()) {
             $this->processRegFormFields();
             $this->regUser();
-        }
+        //}
 
         $this->loadData();
     }
@@ -107,7 +107,7 @@ class FourPawsFrontOfficeFestRegComponent extends \FourPaws\FrontOffice\Bitrix\C
         $fieldName = 'firstName';
         $value = $this->trimValue($this->getFormFieldValue($fieldName));
         if ($value == '') {
-            $this->setFieldError($fieldName, 'Не введено имя', 'incorrect_value');
+            $this->setFieldError($fieldName, 'Не введено имя', 'not_valid');
         }
 
         $fieldName = 'email';
@@ -152,9 +152,13 @@ class FourPawsFrontOfficeFestRegComponent extends \FourPaws\FrontOffice\Bitrix\C
             if ($values['email']) {
                 $checkingFilter['UF_EMAIL'] = $values['email'];
             }
-            $isUserAlreadyRegistered = (bool)$festivalUsersDataManager::getCount($checkingFilter);
-            if ($isUserAlreadyRegistered) {
-                $this->setExecError('', 'Такой пользователь уже зарегистирован');
+            $registeredUser = $festivalUsersDataManager::query()
+                ->setFilter($checkingFilter)
+                ->setSelect(['UF_FESTIVAL_USER_ID'])
+                ->setLimit(2)
+                ->fetchAll();
+            if ($registeredUser) {
+                $this->setExecError('', 'Такой пользователь уже зарегистрирован. Номер участника: ' . implode(', ', array_column($registeredUser, 'UF_FESTIVAL_USER_ID')));
                 return;
             }
 
@@ -175,7 +179,10 @@ class FourPawsFrontOfficeFestRegComponent extends \FourPaws\FrontOffice\Bitrix\C
                 return;
             }
 
+            $festivalUserId = $festivalUsersDataManager::getById($festivalUserAddResult->getId())->fetch()['UF_FESTIVAL_USER_ID'];
+
             $this->arResult['IS_REGISTERED'] = 'Y';
+            $this->arResult['PARTICIPANT_ID'] = $festivalUserId;
         }
         if ($searchResult) {
             $this->arResult['USERS_LIST'] = $searchResult->getData()['list'];

@@ -14,6 +14,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var string                                       $componentPath
  */
 
+/*if ($arResult['CAN_ACCESS'] !== 'Y') {
+    ShowError('При обработке запроса произошла ошибка: отказано в доступе');
+    return;
+}*/
+
 $jsonResult = [
     'success' => 'N',
     'message' => '',

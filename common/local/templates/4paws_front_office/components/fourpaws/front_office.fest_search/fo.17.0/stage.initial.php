@@ -90,7 +90,7 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                                         var json = JSON.parse(jqXHR.responseText);
                                         if (json.success === 'Y') {
                                             $('.js-update-result-message').remove();
-                                            submitForm.find('.form-page__submit-wrap').before('<div class="form-page__message js-update-result-message"><span class="text-h4 text-icon">' + json.message + '</span></div>');
+                                            submitForm.find('.form-page__submit-wrap').before('<div class="form-page__message js-update-result-message"><i class="icon icon-warning-ok"></i><span class="text-h4 text-icon">' + json.message + '</span></div>');
                                         } else {
                                             $('.js-update-result-message').remove();
                                             if (!json.message) {

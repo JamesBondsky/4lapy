@@ -1,5 +1,5 @@
 <?
-define('NEED_AUTH', true);
+//define('NEED_AUTH', true);
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/header.php");
 $APPLICATION->SetTitle("Регистрация на фестиваль");
 ?>
