@@ -42,6 +42,8 @@ use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException as SaleInvalidArgumentException;
 use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\SaleBundle\Service\OrderStorageService;
+use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -90,6 +92,10 @@ class FourPawsFastOrderComponent extends CBitrixComponent
      * @var RetailRocketService
      */
     private $retailRocketService;
+    /**
+     * @var OrderStorageService
+     */
+    private $orderStorageService;
 
     /**
      * AutoloadingIssuesInspection constructor.
@@ -115,6 +121,7 @@ class FourPawsFastOrderComponent extends CBitrixComponent
         $this->retailRocketService = $container->get(RetailRocketService::class);
         $this->deliveryService = $container->get(DeliveryService::class);
         $this->salePreset = $container->get(SalePreset::class);
+        $this->orderStorageService = $container->get(OrderStorageService::class);
     }
 
     /**
@@ -177,6 +184,12 @@ class FourPawsFastOrderComponent extends CBitrixComponent
                     try {
                         $userId = $this->currentUserProvider->getCurrentUserId();
                     } catch (NotAuthorizedException $e) {
+                    }
+                    // в корзине надо всегда сбрасывать состояние подписки для пересчёта цен
+                    $storage = $this->orderStorageService->getStorage();
+                    if($storage->isSubscribe()){
+                        $storage->setSubscribe(false);
+                        $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
                     }
                     $order = Order::create(SITE_ID, $userId);
                     $order->setBasket($basket);
