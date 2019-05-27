@@ -45,7 +45,7 @@ $bonus = $currentOffer->getBonusFormattedText($userService->getDiscount());
                     });
                     this.getInstance().handlers = [];
                 },
-                getInstance() { return this }
+                getInstance: function() { return this }
             };
         }
 
