@@ -96,6 +96,9 @@ class PaymentService implements LoggerAwareInterface
 
     protected const SBERBANK_PAYMENT_URL_FORMAT = '%s://%s/payment/merchants/%s/payment_ru.html?mdOrder=%s';
 
+    /** @var bool */
+    protected $compareCartItemsOnValidateFiscalization = true;
+
     /**
      * @var Sberbank
      */
@@ -158,7 +161,6 @@ class PaymentService implements LoggerAwareInterface
         $fiscal = (new Fiscal())
             ->setOrderBundle($orderBundle)
             ->setTaxSystem($taxSystem);
-
         $orderBundle
             ->setCustomerDetails($this->getCustomerDetails($order))
             ->setDateCreate(DateHelper::convertToDateTime($dateCreate))
@@ -188,36 +190,40 @@ class PaymentService implements LoggerAwareInterface
         $fiscalItems = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
         $fiscalAmount = $this->getFiscalTotal($fiscalization);
 
-        $sberbankOrderItems = $orderInfo->getOrderBundle()->getCartItems()->getItems();
+        if ($this->isCompareCartItemsOnValidateFiscalization()) {
+            $sberbankOrderItems = $orderInfo->getOrderBundle()->getCartItems()->getItems();
+        }
         /** @var Item $fiscalItem */
         foreach ($fiscalItems as $fiscalItem) {
-            /** @var SberbankOrderItem $matchingItem */
-            $matchingItem = null;
-            /** @var SberbankOrderItem $orderItem */
-            foreach ($sberbankOrderItems as $orderItem) {
-                if ((int)$orderItem->getPositionId() === $fiscalItem->getPositionId()) {
-                    $matchingItem = $orderItem;
-                    break;
+            if ($this->isCompareCartItemsOnValidateFiscalization()) {
+                /** @var SberbankOrderItem $matchingItem */
+                $matchingItem = null;
+                /** @var SberbankOrderItem $orderItem */
+                foreach ($sberbankOrderItems as $orderItem) {
+                    if ((int)$orderItem->getPositionId() === $fiscalItem->getPositionId()) {
+                        $matchingItem = $orderItem;
+                        break;
+                    }
                 }
-            }
 
-            if (null === $matchingItem) {
-                throw new NoMatchingFiscalItemException(
-                    \sprintf(
-                        'No matching item found for position %s',
-                        $fiscalItem->getPositionId()
-                    )
-                );
-            }
+                if (null === $matchingItem) {
+                    throw new NoMatchingFiscalItemException(
+                        \sprintf(
+                            'No matching item found for position %s',
+                            $fiscalItem->getPositionId()
+                        )
+                    );
+                }
 
-            if ($matchingItem->getItemCode() !== $fiscalItem->getCode()) {
-                throw new InvalidItemCodeException(
-                    \sprintf(
-                        'Item code %s for position %s doesn\'t, match existing item code',
-                        $fiscalItem->getCode(),
-                        $fiscalItem->getPositionId()
-                    )
-                );
+                if ($matchingItem->getItemCode() !== $fiscalItem->getCode()) {
+                    throw new InvalidItemCodeException(
+                        \sprintf(
+                            'Item code %s for position %s doesn\'t, match existing item code',
+                            $fiscalItem->getCode(),
+                            $fiscalItem->getPositionId()
+                        )
+                    );
+                }
             }
 
             if ($fiscalItem->getTotal() !== $fiscalItem->getQuantity()->getValue() * $fiscalItem->getPrice()) {
@@ -899,7 +905,25 @@ class PaymentService implements LoggerAwareInterface
      */
     public function processApplePay(Order $order, $paymentToken): string
     {
-        $response = $this->getSberbankProcessing()->paymentViaMobile($order->getField('ACCOUNT_NUMBER'), $paymentToken, 'applepay');
+        $fiscalization = \COption::GetOptionString('sberbank.ecom', 'FISCALIZATION', serialize([]));
+        /** @noinspection UnserializeExploitsInspection */
+        $fiscalization = unserialize($fiscalization, []);
+
+        $amount = 0;
+        $fiscal = [];
+        if ($fiscalization['ENABLE'] === 'Y') {
+            $fiscal = $this->getFiscalization($order, (int)$fiscalization['TAX_SYSTEM']);
+            $amount = $this->getFiscalTotal($fiscal);
+            $fiscal = $this->fiscalToArray($fiscal)['fiscal'];
+        }
+
+        $response = $this->getSberbankProcessing()->paymentViaMobile(
+            $order->getField('ACCOUNT_NUMBER'),
+            $paymentToken,
+            'applepay',
+            $amount,
+            $fiscal
+        );
         return $this->processOnlinePaymentViaMobile($order, $response);
     }
 
@@ -907,24 +931,46 @@ class PaymentService implements LoggerAwareInterface
      * @param Order $order
      * @param $paymentToken
      * @param $amount
+     * @throws AddressSplitException
      * @throws ArgumentException
      * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
+     * @throws InvalidPathException
      * @throws NotImplementedException
      * @throws ObjectException
      * @throws ObjectNotFoundException
-     * @throws PaymentException
+     * @throws ObjectPropertyException
      * @throws SberBankOrderNumberNotFoundException
      * @throws SberbankOrderNotFoundException
      * @throws SberbankOrderNotPaidException
      * @throws SberbankOrderPaymentDeclinedException
      * @throws SberbankPaymentException
      * @throws SystemException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function processGooglePay(Order $order, $paymentToken, $amount)
     {
-        $response = $this->getSberbankProcessing()->paymentViaMobile($order->getField('ACCOUNT_NUMBER'), $paymentToken, 'android', $amount);
-        $this->processOnlinePaymentViaMobile($order, $response);
+        $fiscalization = \COption::GetOptionString('sberbank.ecom', 'FISCALIZATION', serialize([]));
+        /** @noinspection UnserializeExploitsInspection */
+        $fiscalization = unserialize($fiscalization, []);
+
+        $fiscal = [];
+        if ($fiscalization['ENABLE'] === 'Y') {
+            $fiscal = $this->getFiscalization($order, (int)$fiscalization['TAX_SYSTEM']);
+            $amount = $this->getFiscalTotal($fiscal);
+            $fiscal = $this->fiscalToArray($fiscal)['fiscal'];
+        }
+
+        $response = $this->getSberbankProcessing()->paymentViaMobile(
+            $order->getField('ACCOUNT_NUMBER'),
+            $paymentToken,
+            'android',
+            $amount,
+            $fiscal
+        );
+        $this->processOnlinePaymentViaMobile($order,$response);
     }
 
     /**
@@ -1302,5 +1348,21 @@ class PaymentService implements LoggerAwareInterface
         }
 
         throw new SberBankOrderNumberNotFoundException('Order number not found');
+    }
+
+    /**
+     * @return bool
+     */
+    public function isCompareCartItemsOnValidateFiscalization(): bool
+    {
+        return $this->compareCartItemsOnValidateFiscalization;
+    }
+
+    /**
+     * @param bool $compareCartItemsOnValidateFiscalization
+     */
+    public function setCompareCartItemsOnValidateFiscalization(bool $compareCartItemsOnValidateFiscalization): void
+    {
+        $this->compareCartItemsOnValidateFiscalization = $compareCartItemsOnValidateFiscalization;
     }
 }

@@ -341,13 +341,14 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                 continue;
             }
 
+            $priceSubscribe = $offer->getSubscribePrice() * $basketItem->getQuantity();
+            $priceDefault = $basketItem->getPrice() * $basketItem->getQuantity();
             $isSubscribeActive = $this->basketService->getBasketItemPropertyValue($basketItem, "SUBSCRIBE_PRICE");
 
-            if($storage->isSubscribe() && !$isSubscribeActive){
-                $price = $orderSubscribeService->countSubscribePrice($basketItem->getPrice(), $percent);
+            if($storage->isSubscribe() && !$isSubscribeActive && $priceSubscribe <= $priceDefault){
                 $basketItem->setFieldsNoDemand([
-                    'PRICE' => $price,
-                    'DISCOUNT_PRICE' => $basketItem->getBasePrice() - $price,
+                    'PRICE' => $offer->getSubscribePrice(),
+                    'DISCOUNT_PRICE' => $basketItem->getBasePrice() - $offer->getSubscribePrice(),
                     'CUSTOM_PRICE' => 'Y'
                 ]);
                 $this->basketService->setBasketItemPropertyValue($basketItem, "SUBSCRIBE_PRICE", true);
