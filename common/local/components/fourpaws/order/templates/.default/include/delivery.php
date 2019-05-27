@@ -251,10 +251,10 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                     <span class="b-choice-recovery__main-text">Экспресс</span>
                 </span>
                     <span class="b-choice-recovery__addition-text">
-                    В&nbsp;течении <?= round($deliveryDostavista->getPeriodTo() / 60) ?>&nbsp;часов, <?= $deliveryDostavista->getPrice() ?>&nbsp;₽
+                    В&nbsp;течение <?= round($deliveryDostavista->getPeriodTo() / 60) ?>&nbsp;часов, <?= $deliveryDostavista->getPrice() ?>&nbsp;₽
                 </span>
                     <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
-                    В&nbsp;течении <?= round($deliveryDostavista->getPeriodTo() / 60) ?>&nbsp;часов, <?= $deliveryDostavista->getPrice() ?>&nbsp;₽
+                    В&nbsp;течение <?= round($deliveryDostavista->getPeriodTo() / 60) ?>&nbsp;часов, <?= $deliveryDostavista->getPrice() ?>&nbsp;₽
                 </span>
                 </label>
                 <input checked="checked"
