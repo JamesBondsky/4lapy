@@ -190,6 +190,9 @@ class Sberbank
         if ($isMobilePayment) {
             $data['merchant'] = $this->getMobileMerchantName();
             $data['preAuth'] = true;
+            //$data['orderNumber'] = '3194383_2'; //для тестовых платежей
+            //$data["orderBundle"]["cartItems"]["items"][0]["itemAmount"] = 1; //для тестовых платежей (1 копейка)
+            //$data["orderBundle"]["cartItems"]["items"][0]["itemPrice"] = '1'; //для тестовых платежей (1 копейка)
             $dataEncoded = \json_encode($data);
         } else {
             $data['CMS'] = 'Bitrix';
@@ -296,16 +299,20 @@ class Sberbank
      * @param string $paymentToken
      * @param string $mobilePaymentSystem
      * @param float $amount
+     * @param null|array $fiscal
      * @return array|mixed[]
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      */
-    public function paymentViaMobile(int $orderId, string $paymentToken, string $mobilePaymentSystem, float $amount = 0) {
+    public function paymentViaMobile(int $orderId, string $paymentToken, string $mobilePaymentSystem, float $amount = 0, ?array $fiscal = []) {
         $data = array(
             'merchant' => '4lapy',
             'orderNumber' => $orderId,
             'paymentToken' => $paymentToken,
             'preAuth' => true
         );
+        if ($fiscal) {
+            $data['orderBundle'] = $fiscal['orderBundle'];
+        }
         if ($mobilePaymentSystem === 'android') {
             $data['amount'] = $amount;
         }
