@@ -494,8 +494,6 @@ class BasketComponent extends CBitrixComponent
         $basket = $this->arResult['BASKET'];
         /** @var BasketItem $basketItem */
         $orderableBasket = $basket->getOrderableItems();
-        /** @var OrderSubscribeService $orderSubscribeService */
-        $orderSubscribeService = Application::getInstance()->getContainer()->get('order_subscribe.service');
 
         foreach ($orderableBasket as $basketItem) {
             if (!isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
@@ -504,12 +502,14 @@ class BasketComponent extends CBitrixComponent
                     continue;
                 }
 
-                $itemQuantity = (int)$basketItem->getQuantity();
-                $itemPrice = $basketItem->getPrice();
-                $percent = $offer->getSubscribeDiscount();
-                $price = $orderSubscribeService->countSubscribePrice($itemPrice, $percent);
+                $priceSubscribe = $offer->getSubscribePrice() * $basketItem->getQuantity();
+                $priceDefault = $basketItem->getPrice() * $basketItem->getQuantity();
+                $price = $priceDefault;
+                if($priceSubscribe < $priceDefault){
+                    $price = $priceSubscribe;
+                }
 
-                $subscribePrice += $price * $itemQuantity;
+                $subscribePrice += $price;
             }
         }
 
