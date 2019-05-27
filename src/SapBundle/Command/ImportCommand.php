@@ -8,6 +8,7 @@ namespace FourPaws\SapBundle\Command;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\AppBundle\Service\LockerInterface;
+use FourPaws\SaleBundle\Service\PaymentService;
 use FourPaws\SapBundle\Pipeline\PipelineRegistry;
 use FourPaws\SapBundle\Service\SapService;
 use Psr\Log\LoggerAwareInterface;
@@ -32,6 +33,8 @@ class ImportCommand extends Command implements LoggerAwareInterface
     private const ARGUMENT_PIPELINE = 'pipeline';
     private const OPTION_FORCE = 'force';
     private const OPTION_FORCE_SHORTCUT = 'f';
+    private const OPTION_NO_BASKET_VALIDATION = 'nobasketvalidation';
+    private const OPTION_NO_BASKET_VALIDATION_SHORTCUT = 'b';
 
     /**
      * @var PipelineRegistry
@@ -48,19 +51,26 @@ class ImportCommand extends Command implements LoggerAwareInterface
     private $lockerService;
 
     /**
+     * @var PaymentService
+     */
+    private $paymentService;
+
+    /**
      * ImportCommand constructor.
      *
      * @param SapService $sapService
      * @param PipelineRegistry $pipelineRegistry
      * @param LockerInterface $lockerService
+     * @param PaymentService $paymentService
      *
      * @throws LogicException
      */
-    public function __construct(SapService $sapService, PipelineRegistry $pipelineRegistry, LockerInterface $lockerService)
+    public function __construct(SapService $sapService, PipelineRegistry $pipelineRegistry, LockerInterface $lockerService, PaymentService $paymentService)
     {
         $this->pipelineRegistry = $pipelineRegistry;
         $this->sapService = $sapService;
         $this->lockerService = $lockerService;
+        $this->paymentService = $paymentService;
 
         parent::__construct();
     }
@@ -88,6 +98,12 @@ class ImportCommand extends Command implements LoggerAwareInterface
                 self::OPTION_FORCE_SHORTCUT,
                 InputOption::VALUE_NONE,
                 'Force - with unlock pipeline.'
+            )
+            ->addOption(
+                self::OPTION_NO_BASKET_VALIDATION,
+                self::OPTION_NO_BASKET_VALIDATION_SHORTCUT,
+                InputOption::VALUE_NONE,
+                'No basket validation on fiscalization validation.'
             );
     }
 
@@ -106,6 +122,7 @@ class ImportCommand extends Command implements LoggerAwareInterface
         $available = $this->pipelineRegistry->getCollection()->getKeys();
         $pipeline = $input->getArgument(self::ARGUMENT_PIPELINE);
         $force = $input->getOption(self::OPTION_FORCE);
+        $isNoBasketValidation = $input->getOption(self::OPTION_NO_BASKET_VALIDATION);
 
         if ($force) {
             $this->lockerService->unlock($pipeline);
@@ -136,6 +153,9 @@ class ImportCommand extends Command implements LoggerAwareInterface
         $this->lockerService->lock($pipeline);
 
         try {
+            if ($isNoBasketValidation) {
+                $this->paymentService->setCompareCartItemsOnValidateFiscalization(false);
+            }
             $this->sapService->execute($pipeline);
             $this->log()->info(\sprintf('%s`s exchange is done.', $pipeline));
         } catch (\Throwable $e) {
