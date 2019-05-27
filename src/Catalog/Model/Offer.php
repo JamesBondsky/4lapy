@@ -90,6 +90,8 @@ class Offer extends IblockElement
 
     public const PACKAGE_LABEL_TYPE_VOLUME = 'VOLUME';
 
+    public const PACKAGE_LABEL_TYPE_COLOUR = 'COLOUR';
+
     public const PACKAGE_LABEL_TYPE_WEIGHT = 'WEIGHT';
 
     public const CATALOG_GROUP_ID_BASE = 2;
@@ -268,8 +270,15 @@ class Offer extends IblockElement
 
     /**
      * @var string
+     * @Type("string")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_COLOUR_COMBINATION = '';
+
+    /**
+     * @var HlbReferenceItem
+     */
+    protected $colourCombination;
 
     /**
      * @var string
@@ -958,11 +967,42 @@ class Offer extends IblockElement
     }
 
     /**
+     * @return null|HlbReferenceItem
+     * @throws ApplicationCreateException
+     */
+    public function getColourCombination(): ?HlbReferenceItem
+    {
+        if ((null === $this->colourCombination) && $this->PROPERTY_COLOUR_COMBINATION) {
+            $this->colourCombination = ReferenceUtils::getReference(
+                Application::getHlBlockDataManager('bx.hlblock.colour'),
+                $this->PROPERTY_COLOUR_COMBINATION
+            );
+        }
+
+        return $this->colourCombination;
+    }
+
+    /**
      * @return string
      */
-    public function getColourCombination(): string
+    public function getColourCombinationXmlId(): string
     {
-        return (string)$this->PROPERTY_COLOUR_COMBINATION;
+        $this->PROPERTY_COLOUR_COMBINATION = $this->PROPERTY_COLOUR_COMBINATION ?: '';
+
+        return $this->PROPERTY_COLOUR_COMBINATION;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withColourCombinationXmlId(string $xmlId): self
+    {
+        $this->colourCombination = null;
+        $this->PROPERTY_COLOUR_COMBINATION = $xmlId;
+
+        return $this;
     }
 
     /**
@@ -1780,12 +1820,15 @@ class Offer extends IblockElement
      */
     public function getPackageLabelType(): string
     {
+        if ($this->getColourCombination()) {
+            return self::PACKAGE_LABEL_TYPE_COLOUR;
+        }
+
         if ($this->getClothingSize()) {
             return self::PACKAGE_LABEL_TYPE_SIZE;
         }
 
         if ($this->getVolumeReference()) {
-
             return self::PACKAGE_LABEL_TYPE_VOLUME;
         }
 

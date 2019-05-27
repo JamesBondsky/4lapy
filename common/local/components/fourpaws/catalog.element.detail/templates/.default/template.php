@@ -158,12 +158,18 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
     <div class="b-product-card__option-product js-weight-default">
         <?php //&& $product->isFood()
         if ($offers->count() > 0) {
-            /** @noinspection PhpUnhandledExceptionInspection */
-            if ($currentOffer->getPackageLabelType() === Offer::PACKAGE_LABEL_TYPE_SIZE) { ?>
-                <div class="b-product-card__weight">Размеры</div>
-            <?php } else { ?>
-                <div class="b-product-card__weight">Варианты фасовки</div>
-            <?php } ?>
+            $packageLabelType = $currentOffer->getPackageLabelType();
+            switch ($packageLabelType) {
+                case Offer::PACKAGE_LABEL_TYPE_SIZE:
+                    echo '<div class="b-product-card__weight">Размеры</div>';
+                    break;
+                case Offer::PACKAGE_LABEL_TYPE_COLOUR:
+                    echo '<div class="b-product-card__weight">Варианты цветов</div>';
+                    break;
+                default:
+                    echo '<div class="b-product-card__weight">Варианты фасовки</div>';
+            }
+            ?>
             <div class="b-weight-container b-weight-container--product">
                 <ul class="b-weight-container__list b-weight-container__list--product">
                     <?php
@@ -172,7 +178,15 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                     foreach ($offers as $offer) {
                         $isCurrentOffer = !$isCurrentOffer && $currentOffer->getId() === $offer->getId();
                         /** @noinspection PhpUnhandledExceptionInspection */
-                        $value = $offer->getPackageLabel(false, 0);
+                        switch ($packageLabelType) {
+                            case Offer::PACKAGE_LABEL_TYPE_COLOUR:
+                                $value = $offer->getColor()->getName();
+                                $image = $offer->getColor()->getFilePath();
+                                $colourCombination = true;
+                                break;
+                            default:
+                                $value = $offer->getPackageLabel(false, 0);
+                        }
                         ?>
                         <li class="b -weight-container__item b-weight-container__item--product<?= $isCurrentOffer ? ' active' : '' ?>">
                             <a class="b-weight-container__link b-weight-container__link--product js-offer-link-<?= $offer->getId() ?> js-price-product<?= $isCurrentOffer ? ' active-link' : '' ?>"
@@ -208,6 +222,9 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                                 <span class="b-weight-container__line" style="display: none" data-not-available>
                                     <span class="b-weight-container__not">Нет в наличии</span>
                                 </span>
+                                <? if ($colourCombination) { ?>
+                                    <div class="colour" style="background: url(<?=$image?>) center center repeat; height: 10px; width: 100%;"></div>
+                                <? } ?>
                             </a>
                         </li>
                     <?php } ?>
@@ -346,7 +363,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                         $continue = false;
                     }
                     if ($continue) {
-                        $unionOffers = $component->getOffersByUnion('color', $currentOffer->getColourCombination());
+                        $unionOffers = $component->getOffersByUnion('color', $currentOffer->getColourCombinationXmlId());
                         if (!$unionOffers->isEmpty()) {
 
                             $unionOffersSort = [];

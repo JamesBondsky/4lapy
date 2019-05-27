@@ -53,6 +53,7 @@ $offers = $product->getOffersSorted();
 /** @var Offer $currentOffer */
 $currentOffer = $arResult['CURRENT_OFFER'];
 $offerWithImages = $currentOffer;
+$packageLabelType = $currentOffer->getPackageLabelType();
 if (!$currentOffer->getImagesIds()) {
     /** @var Offer $offer */
     foreach ($offers as $offer) {
@@ -151,9 +152,15 @@ if (!$currentOffer->getImagesIds()) {
                 <ul class="b-weight-container__list">
                     <?php
                     foreach ($offers as $offer) {
-
-                        /** @noinspection PhpUnhandledExceptionInspection */
-                        $value = $offer->getPackageLabel(true, 999);
+                        switch ($packageLabelType) {
+                            case Offer::PACKAGE_LABEL_TYPE_COLOUR:
+                                $value = $offer->getColor()->getName();
+                                $image = $offer->getColor()->getFilePath();
+                                $colourCombination = true;
+                                break;
+                            default:
+                                $value = $offer->getPackageLabel(true, 999);
+                        }
                         $offerImage = $offer->getImagesIds()
                             ? $offer->getResizeImages(240, 240)->first()
                             : $offerWithImages->getResizeImages(240, 240)->first();
@@ -170,7 +177,8 @@ if (!$currentOffer->getImagesIds()) {
                                data-onclick="<?= $getOnClick($offer) ?>"
                                data-onmousedown="<?= $getOnMouseDown($offer) ?>"
                                data-image="<?= $offerImage ?>"
-                               data-link="<?= $offer->getLink() ?>"><?= $value ?></a>
+                               data-link="<?= $offer->getLink() ?>"
+                            style="background-image: url(<?=$image?>);"><?= $value ?></a>
                         </li>
                         <?php
                     } ?>

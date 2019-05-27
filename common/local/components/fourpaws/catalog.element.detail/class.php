@@ -160,7 +160,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
 
             foreach (['flavour', 'color'] as $combination) {
                 if (count($offersXmlIds) < 2) {
-                    $propVal = ($combination == 'flavour') ? $currentOffer->getFlavourCombination() : $currentOffer->getColourCombination();
+                    $propVal = ($combination == 'flavour') ? $currentOffer->getFlavourCombination() : $currentOffer->getColourCombinationXmlId();
                     if ($propVal != '' && $propVal != null) {
                         $unionOffers = $this->getOffersByUnion($combination, $propVal);
                         if (!$unionOffers->isEmpty()) {
