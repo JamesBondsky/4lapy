@@ -63,6 +63,14 @@ class ApiPushEvent
 
     /**
      * @var int
+     * @Serializer\SerializedName("USER_ID")
+     * @Serializer\Type("int")
+     * @Serializer\Groups(groups={"read","update","create"})
+     */
+    protected $userId;
+
+    /**
+     * @var int
      * @Serializer\SerializedName("EVENT_ID")
      * @Serializer\Type("int")
      * @Serializer\Groups(groups={"read"})
@@ -197,6 +205,24 @@ class ApiPushEvent
     public function setMessageId(int $messageId): ApiPushEvent
     {
         $this->messageId = $messageId;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getUserId(): int
+    {
+        return $this->userId;
+    }
+
+    /**
+     * @param int $userId
+     * @return ApiPushEvent
+     */
+    public function setUserId(int $userId): ApiPushEvent
+    {
+        $this->userId = $userId;
         return $this;
     }
 

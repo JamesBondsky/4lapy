@@ -69,14 +69,31 @@ class PushMessagesService
             throw new NotFoundException();
         }
         $pushToken = $session->getPushToken();
+        $userId = $session->getUserId();
         if (!$pushToken) {
             throw new NotFoundException('Push token is not set. Please run /app_launch method or set the token in database manually.');
         }
-        $pushEvents = $this->apiPushEventRepository->findBy([
-            '=PUSH_TOKEN' => $pushToken,
-            '=SUCCESS_EXEC' => ApiPushEvent::EXEC_SUCCESS_CODE,
+
+        $filter = [
+            '=SUCCESS_EXEC'    => ApiPushEvent::EXEC_SUCCESS_CODE,
             '!MESSAGE.UF_TYPE' => null
-        ]);
+        ];
+
+        if ($userId) {
+            $filter[] = [
+                'LOGIC' => 'OR',
+                [
+                    '=PUSH_TOKEN' => $pushToken,
+                ],
+                [
+                    '=USER_ID' => $userId,
+                ],
+            ];
+        } else {
+            $filter['=PUSH_TOKEN'] = $pushToken;
+        }
+
+        $pushEvents = $this->apiPushEventRepository->findBy($filter);
         return (new ArrayCollection($pushEvents))
             ->map(function (ApiPushEvent $pushEvent) {
                 return $this->pushEventToApiFormat($pushEvent);
@@ -96,13 +113,30 @@ class PushMessagesService
             throw new NotFoundException();
         }
         $pushToken = $session->getPushToken();
+        $userId = $session->getUserId();
         if (!$pushToken) {
             throw new NotFoundException('Push token is not set');
         }
-        $pushEvents = $this->apiPushEventRepository->findBy([
-            '=ID' => $id,
-            '=PUSH_TOKEN' => $pushToken,
-        ], [], 1);
+
+        $filter = [
+            '=ID' => $id
+        ];
+
+        if ($userId) {
+            $filter[] = [
+                'LOGIC' => 'OR',
+                [
+                    '=PUSH_TOKEN' => $pushToken,
+                ],
+                [
+                    '=USER_ID' => $userId,
+                ],
+            ];
+        } else {
+            $filter['=PUSH_TOKEN'] = $pushToken;
+        }
+
+        $pushEvents = $this->apiPushEventRepository->findBy($filter, [], 1);
         if (!$pushEvents) {
             throw new NotFoundException("Push event with ID=$id is not found");
         }
@@ -123,13 +157,30 @@ class PushMessagesService
             throw new NotFoundException();
         }
         $pushToken = $session->getPushToken();
+        $userId = $session->getUserId();
         if (!$pushToken) {
             throw new NotFoundException('Push token is not set');
         }
-        $pushEvents = $this->apiPushEventRepository->findBy([
-            '=ID' => $id,
-            '=PUSH_TOKEN' => $pushToken,
-        ], [], 1);
+
+        $filter = [
+            '=ID' => $id
+        ];
+
+        if ($userId) {
+            $filter[] = [
+                'LOGIC' => 'OR',
+                [
+                    '=PUSH_TOKEN' => $pushToken,
+                ],
+                [
+                    '=USER_ID' => $userId,
+                ],
+            ];
+        } else {
+            $filter['=PUSH_TOKEN'] = $pushToken;
+        }
+
+        $pushEvents = $this->apiPushEventRepository->findBy($filter, [], 1);
         if (!$pushEvents) {
             throw new NotFoundException("Push event with ID=$id is not found");
         }
