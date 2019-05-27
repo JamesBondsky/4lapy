@@ -41,11 +41,7 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
         }
     }
     if ($arResult['KIOSK']){
-        if ($arResult['REDIRECT_TO_BONUS']) {
-            $backUrl = '/personal/bonus/';
-        } else {
-            $backUrl = $arResult['BACK_URL'];
-        }
+        $backUrl = $arResult['BACK_URL'];
     }
     ?>
     <div class="b-registration b-registration--popup-authorization js-auth-block js-ajax-replace-block">

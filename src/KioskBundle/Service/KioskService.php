@@ -21,36 +21,65 @@ class KioskService
         'https://rabota4lapy.ru/',
     ];
 
-    public static function isKioskMode ()
+    public static function isKioskMode()
     {
-        return strpos( $_SERVER['HTTP_USER_AGENT'], 'PayLogicKiosk') != false;
+        return strpos($_SERVER['HTTP_USER_AGENT'], 'PayLogicKiosk') != false;
     }
 
-    public static function isHiddenInMenu ($url)
+    public static function isHiddenInMenu($url)
     {
-        return array_search( $url, self::$menu);
+        return array_search($url, self::$menu);
     }
 
-    public static function getHiddenMenuList ()
+    public static function getHiddenMenuList()
     {
         return self::$menu;
     }
 
-    public function getAuthLink () {
+    /**
+     * @return string
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getAuthLink()
+    {
         $curPage = Application::getInstance()->getContext()->getRequest()->getRequestUri();
         $url = $this->addParamsToUrl($curPage, ['showScan' => true]);
         return $url;
     }
 
-    public function getLastPageUrl(Request $request)
+    /**
+     * @return string
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getBonusPageUrl()
     {
-        $lastUrl = $request->headers->get('referer');
-        if(!$lastUrl){
+        return '/personal/bonus/';
+    }
+
+    public function getLastPageUrl()
+    {
+        $lastUrl = $_SESSION['LAST_PAGE_URL'];
+        if (!$lastUrl) {
             $lastUrl = '/';
         }
         return $lastUrl;
     }
 
+    /**
+     * @param string $url
+     * @return string
+     * @throws \Exception
+     */
+    public function setLastPageUrl(string $url)
+    {
+        $_SESSION['LAST_PAGE_URL'] = $url;
+        return $_SESSION['LAST_PAGE_URL'];
+    }
+
+    /**
+     * @return bool
+     * @throws \Bitrix\Main\SystemException
+     */
     public function isRedirectToBonusAfterAuth()
     {
         $url = Application::getInstance()->getContext()->getRequest()->getRequestUri();
@@ -60,16 +89,17 @@ class KioskService
 
     public function addParamsToUrl($url, $params)
     {
-        $query = parse_url($url, PHP_URL_QUERY);
+        preg_match("/\?(.*)/i", $url, $matches);
+        $query = $matches[1];
         if ($query) {
             $arQuery = explode("&", $query);
-            foreach ($params as $key => $param){
+            foreach ($params as $key => $param) {
                 $value = sprintf('%s=%s', $key, $param);
-                if(in_array($value, $arQuery)){
+                if (in_array($value, $arQuery)) {
                     unset($params[$key]);
                 }
             }
-            if (!empty($params)){
+            if (!empty($params)) {
                 $url .= sprintf("&%s", http_build_query($params));
             }
         } else {
@@ -78,9 +108,14 @@ class KioskService
         return $url;
     }
 
-    public function removeParamFromUrl($key) {
+    public function removeParamFromUrl($key)
+    {
         parse_str($_SERVER['QUERY_STRING'], $vars);
-        $url = strtok($_SERVER['REQUEST_URI'], '?') . http_build_query(array_diff_key($vars,array($key=>"")));
+        $url = strtok($_SERVER['REQUEST_URI'], '?');
+        $query = http_build_query(array_diff_key($vars, array($key => "")));
+        if($query){
+            $url .= '?' . $query;
+        }
         return $url;
     }
 

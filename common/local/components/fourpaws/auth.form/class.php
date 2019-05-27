@@ -119,6 +119,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     {
         try {
             $this->arResult['STEP'] = '';
+
             if ($this->getMode() === static::MODE_FORM) {
                 $this->arResult['STEP'] = 'begin';
             }
@@ -128,15 +129,23 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 if (!empty($curUser->getExternalAuthId() && !$curUser->hasEmail())) {
                     $this->arResult['STEP'] = 'addPhone';
                 }
-
                 $this->arResult['NAME'] = $curUser->getName() ?? $curUser->getLogin();
             }
+
             if (KioskService::isKioskMode() && !$this->userAuthorizationService->isAuthorized()) {
                 $this->arResult['KIOSK'] = true;
                 $this->arResult['AUTH_LINK'] = $this->kioskService->getAuthLink();
                 $this->arResult['REDIRECT_TO_BONUS'] = $this->kioskService->isRedirectToBonusAfterAuth();
-                $this->arResult['BACK_URL'] = $this->kioskService->removeParamFromUrl('showScan');
+                if($this->arResult['REDIRECT_TO_BONUS']){
+                    $backUrl = $this->kioskService->getBonusPageUrl();
+                } else {
+                    $backUrl = $this->kioskService->removeParamFromUrl('showScan');
+                }
+                // при сканировании шк backurl надо хранить в сессии
+                $this->kioskService->setLastPageUrl($backUrl);
+                $this->arResult['BACK_URL'] = $backUrl;
             }
+
             $this->setSocial();
             unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
             $this->includeComponentTemplate();
