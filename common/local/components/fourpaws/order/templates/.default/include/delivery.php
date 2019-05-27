@@ -294,7 +294,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                                    id="time-express-delivery"
                                    name="express_time_delivery"
                                    disabled="disabled"
-                                   value="Сегодня, <?= (new DateTime())->format('d.m.Y') ?> — в течении <?= round($deliveryDostavista->getPeriodTo() / 60) ?> часов с момента заказа"
+                                   value="Сегодня, <?= (new DateTime())->format('d.m.Y') ?> — в течение <?= round($deliveryDostavista->getPeriodTo() / 60) ?> часов с момента заказа"
                             />
                             <div class="b-error">
                                 <span class="js-message"></span>
