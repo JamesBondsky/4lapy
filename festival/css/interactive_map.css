@@ -869,7 +869,7 @@
     .interactive_map_pavilion .point_shop2          { right: -145px; bottom: -115px; }
 
     .interactive_map_pavilion__container{
-        min-height: 153px;
+        min-height: 154px;
     }
 }
 
@@ -1033,7 +1033,6 @@
     .interactive_map_pavilion__container{
         position: relative;
         z-index: 2;
-        min-height: 234px;
     }
     .interactive_map_pavilion__image{
         margin-top: -40px;
@@ -1135,14 +1134,6 @@
         left: 0;
         margin-left: 0;
     }
-    .interactive_map_pavilion__container{
-        min-height: 254px;
-    }
-}
-@media screen and (max-width: 520px) {
-    .interactive_map_pavilion__container{
-        min-height: 274px;
-    }
 }
 @media screen and (max-width: 480px) {
     .interactive_map{
@@ -1154,25 +1145,14 @@
     .interactive_map.is_open_pavilion .interactive_map_back__btn{
         top: -60px;
     }
-    .interactive_map_pavilion__container{
-        min-height: 314px;
-    }
 }
 @media screen and (max-width: 420px) {
     .interactive_map_pavilion__scrollicon{
         margin-top: -10px;
     }
-    .interactive_map_pavilion__container{
-        min-height: 314px;
-    }
 }
 @media screen and (max-width: 415px) {
     #map .interactive_map .interactive_map-main {
         margin-left: -20px;
-    }
-}
-@media screen and (max-width: 355px) {
-    .interactive_map_pavilion__container{
-        min-height: 374px;
     }
 }
