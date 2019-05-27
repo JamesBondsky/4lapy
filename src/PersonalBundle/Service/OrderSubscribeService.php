@@ -45,6 +45,7 @@ use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -1750,7 +1751,24 @@ class OrderSubscribeService implements LoggerAwareInterface
                 ->setActive(false);
 
             if($this->getDeliveryService()->isDelivery($orderStorageService->getSelectedDelivery($storage))){
-                $subscribe->setDeliveryPlace($data['addressId']);
+                if(!empty($storage->getAddressId())){
+                    $addressService = Application::getInstance()->getContainer()->get('address.service');
+                    $personalAddress = $addressService->getById($storage->getAddressId());
+                    $deliveryPlace = $personalAddress->getFullAddress();
+                } else {
+                    $address = (new Address())->setCity($storage->getCity())
+                        ->setLocation($storage->getCityCode())
+                        ->setStreet($storage->getStreet())
+                        ->setHouse($storage->getHouse())
+                        ->setHousing($storage->getBuilding())
+                        ->setEntrance($storage->getPorch())
+                        ->setFloor($storage->getFloor())
+                        ->setFlat($storage->getApartment());
+
+                    $deliveryPlace = $address->toStringExt();
+                }
+
+                $subscribe->setDeliveryPlace($deliveryPlace);
             }
             elseif($this->getDeliveryService()->isPickup($orderStorageService->getSelectedDelivery($storage))){
                 if(!$data['deliveryPlaceCode'] && !$data['shopId']){

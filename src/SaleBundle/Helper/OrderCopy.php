@@ -1523,8 +1523,8 @@ class OrderCopy
 
         // адрес доставки
         if($deliveryService->isDelivery($delivery)){
-            $personalAddress = $addressService->getById($subscribe->getDeliveryPlace());
-            $address = $locationService->splitAddress($personalAddress->__toString());
+            //$personalAddress = $addressService->getById($subscribe->getDeliveryPlace());
+            $address = $locationService->splitAddress($subscribe->getDeliveryPlace());
         } else {
             /** @var PickupResultInterface $delivery */
             $shop = $delivery->getSelectedShop();
