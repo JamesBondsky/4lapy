@@ -26,7 +26,7 @@ $request = Application::getInstance()->getContext()->getRequest();
                 });
                 this.getInstance().handlers = [];
             },
-            getInstance() { return this }
+            getInstance: function() { return this }
         };
     }
 
