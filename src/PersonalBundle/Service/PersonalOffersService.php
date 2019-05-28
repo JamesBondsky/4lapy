@@ -2,25 +2,24 @@
 
 namespace FourPaws\PersonalBundle\Service;
 
-use Adv\Bitrixtools\Exception\HLBlockNotFoundException;
-use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Highloadblock\DataManager;
-use Bitrix\Highloadblock\HighloadBlockTable;
-use Bitrix\Main\Entity\Query;
-use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Loader;
-use Bitrix\Main\Type\DateTime;
-use Doctrine\Common\Collections\ArrayCollection;
-use FourPaws\App\Application as App;
-use FourPaws\AppBundle\Exception\JsonResponseException;
-use FourPaws\Enum\HlblockCode;
+use Bitrix\Main\Entity\Query;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
-use FourPaws\PersonalBundle\Exception\CouponIsNotAvailableForUseException;
-use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
-use FourPaws\UserBundle\Repository\FestivalUsersTable;
 use Psr\Log\LoggerAwareTrait;
+use Bitrix\Main\Type\DateTime;
+use FourPaws\App\Application as App;
+use Bitrix\Highloadblock\DataManager;
+use Bitrix\Main\Entity\ReferenceField;
+use Picqer\Barcode\BarcodeGeneratorPNG;
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\UserBundle\Repository\FestivalUsersTable;
+use Adv\Bitrixtools\Exception\HLBlockNotFoundException;
+use FourPaws\AppBundle\Exception\JsonResponseException;
+use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
+use FourPaws\PersonalBundle\Exception\CouponIsNotAvailableForUseException;
 
 /**
  * Class PersonalOffersService
@@ -121,6 +120,93 @@ class PersonalOffersService
             'offers' => $offersCollection,
         ];
 
+        return $result;
+    }
+
+
+    /**
+     * @param int $userId
+     *
+     * @return array
+     *
+     * @throws InvalidArgumentException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Picqer\Barcode\Exceptions\BarcodeException
+     */
+    public function getActiveUserCouponsEx(int $userId): array
+    {
+        if ($userId <= 0)
+        {
+            throw new InvalidArgumentException('can\'t get user\'s coupons. userId: ' . $userId);
+        }
+
+        $coupons = [];
+        $offersCollection = new ArrayCollection();
+
+        $activeOffersCollection = $this->getActiveOffers();
+
+        if (!$activeOffersCollection->isEmpty())
+        {
+            $coupons = $this->personalCouponManager::query()
+                ->setSelect([
+                    'ID',
+                    'UF_OFFER',
+                    'UF_PROMO_CODE',
+                    'USER_COUPONS*',
+                ])
+                ->setFilter([
+                    '=UF_OFFER' => $activeOffersCollection->getKeys(),
+                ])
+                ->registerRuntimeField(
+                    new ReferenceField(
+                        'USER_COUPONS', $this->personalCouponUsersManager::getEntity()->getDataClass(),
+                        Query\Join::on('this.ID', 'ref.UF_COUPON')
+                            ->where('ref.UF_USER_ID', '=', $userId)
+                            ->where(Query::filter()
+                                ->logic('or')
+                                ->where([
+                                    ['ref.UF_USED', null],
+                                    ['ref.UF_USED', false],
+                                ])),
+                        ['join_type' => 'INNER']
+                    )
+                )
+                ->exec()
+                ->fetchAll();
+
+            $userOffers = array_unique(array_map(function($coupon) { return $coupon['UF_OFFER']; }, $coupons));
+            $offersCollection = $activeOffersCollection->filter(static function($offer) use ($userOffers) { return in_array($offer['ID'], $userOffers, true); });
+
+            $activeOffers = $offersCollection->getValues();
+            $offersOrder = [];
+            foreach ($activeOffers as $key => $offer)
+            {
+                $offersOrder[$offer['ID']] = $key;
+            }
+            uasort($coupons, static function($a, $b) use($offersOrder) {
+                return $offersOrder[$a['UF_OFFER']] <=> $offersOrder[$b['UF_OFFER']];
+            });
+        }
+
+        $result = [];
+        /** @var ArrayCollection $couponsCollection */
+        $couponsCollection = new ArrayCollection($coupons);
+        foreach($couponsCollection as $coupon){
+            $offer = $offersCollection->get($coupon['UF_OFFER']);
+            $barcodeGenerator = new BarcodeGeneratorPNG();
+            $barcode = 'data:image/png;base64,' . base64_encode($barcodeGenerator->getBarcode($coupon['UF_PROMO_CODE'], \Picqer\Barcode\BarcodeGenerator::TYPE_CODE_128, 2.132310384278889, 127));
+            $result[] = [
+                'id' => $coupon['ID'],
+                'promocode' => $coupon['UF_PROMO_CODE'],
+                'discount' => $offer['PROPERTY_DISCOUNT_VALUE'],
+                'text' => $offer['PREVIEW_TEXT'],
+                'barcode' => $barcode,
+            ];
+        }
         return $result;
     }
 
