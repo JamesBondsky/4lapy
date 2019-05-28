@@ -146,6 +146,19 @@ class DeliverySchedule
     protected $manualDays;
 
     /**
+     * Регулярность расписания
+     * 1 - регулярное
+     * 2 - нерегулярное
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("slReg")
+     *
+     * @var int
+     */
+    protected $regular;
+
+    /**
      * @return string
      */
     public function getXmlId(): string
@@ -351,5 +364,23 @@ class DeliverySchedule
         $this->manualDays = $manualDays;
 
         return $this;
+    }
+
+    /**
+     * @param int $regular
+     * @return DeliverySchedule
+     */
+    public function setRegular(int $regular): DeliverySchedule
+    {
+        $this->regular = $regular;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getRegular(): int
+    {
+        return $this->regular;
     }
 }

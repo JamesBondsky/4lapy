@@ -214,7 +214,6 @@ class DeliveryScheduleService implements LoggerAwareInterface
 
         /** Дни заказа и поставки */
         $orderDays = $schedule->getOrderDays();
-        //$obWeekDays = $schedule->getWeekDays();
 
         if ($orderDays->count()) {
             $arOrderDays = $this->serializer->toArray($orderDays->first());
@@ -262,6 +261,9 @@ class DeliveryScheduleService implements LoggerAwareInterface
 
         /** Дата изменения */
         $entity->setDateUpdate();
+
+        /** Дата изменения */
+        $entity->setRegular($schedule->getRegular());
 
         return $entity;
     }

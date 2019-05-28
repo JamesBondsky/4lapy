@@ -106,12 +106,11 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
             throw new RuntimeException('Transition count must be a positive integer value');
         }
 
-        $startGlobal = microtime(true);
+        $start_global = microtime(true);
 
         /** Расчёты не сгенерируются, если для первого отправителя не будет расписаний */
         $senders = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
         //$senders = [$this->storeService->getStoreByXmlId('0000100792')];
-
 
         /** @var Store $sender */
         foreach ($senders as $i => $sender) {
@@ -123,9 +122,9 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
             $totalDeleted = 0;
 
             try {
-                $totalDeleted += $this->scheduleResultService->deleteResultsForSender($sender);
-                $results = $this->scheduleResultService->calculateForSender($sender, $date, $tc);
-                [$created] = $this->scheduleResultService->updateResults($results);
+                $totalDeleted += $this->scheduleResultService->deleteResultsForSender($sender, $dateDelete);
+                $results = $this->scheduleResultService->calculateForSender($sender, $dateActive, $tc);
+                [$created] = $this->scheduleResultService->updateResults($results, $dateDelete);
                 $totalCreated += $created;
                 $isSuccess = true;
                 //break;
@@ -167,12 +166,6 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
                 );
             }
         }
-
-        /*if ($isSuccess) {
-            BitrixApplication::getConnection()->commitTransaction();
-        } else {
-            BitrixApplication::getConnection()->rollbackTransaction();
-        }*/
 
         TaggedCacheHelper::clearManagedCache(['catalog:store:schedule:results']);
 
