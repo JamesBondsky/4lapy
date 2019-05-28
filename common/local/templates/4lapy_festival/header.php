@@ -277,6 +277,9 @@ $markup = PawsApplication::markup();
             <div class="container content-lg">
                 <div class="row text-center margin-b-40">
                     <div class="col-sm-8 col-sm-offset-2">
+                        <div class="schedule">
+                            <a href="/files/schedule.docx" target="_blank">Расписание</a>
+                        </div>
                         <div class="bar"><h5>блогер-шоу</h5></div>
                         <h2>Общайся на Блогер-Шоу</h2>
                         <hr class="header_line" />
@@ -472,6 +475,9 @@ $markup = PawsApplication::markup();
             <div class="content-md container">
                 <div class="row text-center margin-b-40">
                     <div class="col-sm-8 col-sm-offset-2">
+                        <div class="schedule">
+                            <a href="/files/schedule.docx" target="_blank">Расписание</a>
+                        </div>
                         <div class="bar"><h5>ГЛАВНАЯ СЦЕНА</h5></div>
                         <h2>зажигай на главной сцене</h2>
                         <hr class="header_line" />
@@ -824,16 +830,16 @@ $markup = PawsApplication::markup();
                 </div>
                 <div class="partners_wrap">
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners01.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners01.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners02.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners02.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners03.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners03.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners04.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners04.jpg" alt="">
                     </div>
                 </div>
                 <div class="clear"></div>
@@ -847,27 +853,30 @@ $markup = PawsApplication::markup();
                         <!-- Latest Products -->
                     </div>
                 </div>
-                <div class="partners_wrap">
+                <div class="partners_wrap partners_wrap_line1">
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners06.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/elanco.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners07.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/msd.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners18.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/bayer.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners08.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/hills.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners09.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/acana.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners10.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/freshstep.png" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners11.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/everclean.png" alt="">
+                    </div>
+                    <div class="partner_item">
+                        <img class="partner_logo" src="img/partners/boehringeringelheim.jpg" alt="">
                     </div>
                 </div>
             </div>
@@ -881,22 +890,22 @@ $markup = PawsApplication::markup();
                 </div>
                 <div class="partners_wrap">
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners12.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners12.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners15.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners15.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners13.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners13.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners14.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners14.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners16.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners16.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners17.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners17.jpg" alt="">
                     </div>
                 </div>
             </div>

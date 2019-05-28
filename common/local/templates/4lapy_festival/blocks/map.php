@@ -809,7 +809,7 @@
                             <div class="interactive_map_pavilion__scrollpavilion">
                                 <div class="interactive_map_pavilion__bg">
                                     <div class="interactive_map_pavilion__center">
-                                        <div class="point point_large point_4lapy" data-interactive-map-pavilion-point="4lapy" data-point-title="Магазин Четыре Лапы" data-point-description="<br><br>">
+                                        <div class="point point_large point_4lapy" data-interactive-map-pavilion-point="4lapy" data-point-title="Магазин Четыре Лапы" data-point-description="Посетите флагманский магазин компании Четыре Лапы.">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -825,7 +825,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_medium point_rc" data-interactive-map-pavilion-point="royalcanin" data-point-title="ROYAL CANIN" data-point-description="ROYAL CANIN&nbsp;&mdash; эксперт в&nbsp;области здорового питания для&nbsp;кошек и&nbsp;собак. Бренд Royal Canin основал ветеринарный врач Жан&nbsp;Катари в&nbsp;1968 году во&nbsp;Франции.Компания ориентированна на&nbsp;изучение потребностей животных, уважение к&nbsp;их&nbsp;особенностям и&nbsp;создание продуктов,отвечающих их&nbsp;нуждам. Royal Canin остается в&nbsp;авангарде производства кормов для&nbsp;животных и&nbsp;может гордиться целым рядом специализированных разработок, не&nbsp;имеющих аналогов в&nbsp;мире.">
+                                        <div class="point point_medium point_rc" data-interactive-map-pavilion-point="royalcanin" data-point-title="ROYAL CANIN" data-point-description="ROYAL CANIN&nbsp;&mdash; эксперт в&nbsp;области здорового питания для кошек и&nbsp;собак. Компания ориентированна на&nbsp;изучение потребностей животных, уважение к&nbsp;их&nbsp;особенностям и&nbsp;создание продуктов,отвечающих их&nbsp;нуждам.">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -833,7 +833,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_medium point_proplan">
+                                        <div class="point point_medium point_proplan" data-interactive-map-pavilion-point="proplan" data-point-title="Про План" data-point-description="Нестле Пурина ПетКер искренне верит, что людям и&nbsp;домашним животным лучше вместе. Поэтому мы&nbsp;стремимся делать жизнь питомцев во&nbsp;всем мире более счастливой, здоровой и&nbsp;содействовать повышению продолжительности их&nbsp;жизни посредством качественного питания и&nbsp;ухода.">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -841,7 +841,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_acana" data-interactive-map-pavilion-point="acana" data-point-title="ACANA" data-point-description="&laquo;Компания Акана&raquo; представляет в&nbsp;России канадские корма для&nbsp;кошек и&nbsp;собак Acana и&nbsp;Orijen. Мы&nbsp;делаем всё, чтобы хозяева питомцев нашей страны узнали стандарты качества биологически соответствующих кормов.">
+                                        <div class="point point_small point_acana" data-interactive-map-pavilion-point="acana" data-point-title="ACANA" data-point-description="&laquo;Компания Акана&raquo; представляет в&nbsp;России канадские корма для&nbsp;кошек и&nbsp;собак Acana и&nbsp;Orijen. Мы&nbsp;делаем всё, чтобы хозяева питомцев нашей страны узнали стандарты качества биологически соответствующих кормов." data-point-images='{&quot;0&quot;:&quot;/img/interactive_map/brands/images/acana/acana1.jpg&quot;,&quot;1&quot;:&quot;/img/interactive_map/brands/images/acana/acana2.jpg&quot;,&quot;2&quot;:&quot;/img/interactive_map/brands/images/acana/acana4.jpg&quot;,&quot;3&quot;:&quot;/img/interactive_map/brands/images/acana/acana3.jpg&quot;}'>
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -849,7 +849,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_freshstep">
+                                        <div class="point point_small point_freshstep" data-interactive-map-pavilion-point="freshstep" data-point-title="Фреш Стэп" data-point-description="Fresh Step<sup class='reg'>&reg;</sup> и&nbsp;Ever Clean<sup class='reg'>&reg;</sup> расскажут о&nbsp;современных технологиях кошачьего быта и&nbsp;покажут, почему российские потребители уже более 20&nbsp;лет доверяют чистоту своего дома именно этим наполнителям.">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -881,6 +881,14 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        <?/*<div class="point point_small point_everclean" data-interactive-map-pavilion-point="everclean" data-point-title="Ever Clean" data-point-description="Ever Clean<sup class='reg'>&reg;</sup> и Fresh Step<sup class='reg'>&reg;</sup> расскажут о&nbsp;современных технологиях кошачьего быта и&nbsp;покажут, почему российские потребители уже более 20&nbsp;лет доверяют чистоту своего дома именно этим наполнителям.">
+                                            <div class="point__bg"></div>
+                                            <div class="point__icon">
+                                                <div class="icon">
+                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/everclean.png');"></div>
+                                                </div>
+                                            </div>
+                                        </div>*/?>
                                         <div class="point point_small point_msd" data-interactive-map-pavilion-point="msd" data-point-title="MSD Animal Health" data-point-description="Миссия MSD Animal Health&nbsp;&mdash; защитить и&nbsp;улучшить здоровье и&nbsp;благополучие животных, предлагать продукты высочайшего качества, что достигается за&nbsp;счет сильнейшей научной базы и&nbsp;мощного отдела исследований и&nbsp;разработок.">
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
@@ -964,13 +972,19 @@
 
                         <div class="interactive_map_pavilion__content">
                             <div class="interactive_map_pavilion__container">
-                                <button type="button" class="interactive_map_pavilion__closecontent" data-interactive-map-pavilion-closecontent="true" data-point-title="Начни путешествие" data-point-description="Выбери площадку на&nbsp;карте павильона и&nbsp;кликни на&nbsp;иконку, чтобы&nbsp;узнать&nbsp;больше."></button>
-                                <div class="interactive_map_pavilion__title" data-interactive-map-pavilion-title="true">
-                                    Начни путешествие
+                                <div class="interactive_map_pavilion__image-list" data-point-image-left="true"></div>
+                                <div class="interactive_map_pavilion__popup">
+                                    <div class="interactive_map_pavilion__popup-container">
+                                        <button type="button" class="interactive_map_pavilion__closecontent" data-interactive-map-pavilion-closecontent="true" data-point-title="Начни путешествие" data-point-description="Выбери площадку на&nbsp;карте павильона и&nbsp;кликни на&nbsp;иконку, чтобы&nbsp;узнать&nbsp;больше."></button>
+                                        <div class="interactive_map_pavilion__title" data-interactive-map-pavilion-title="true">
+                                            Начни путешествие
+                                        </div>
+                                        <div class="interactive_map_pavilion__description" data-interactive-map-pavilion-description="true">
+                                            Выбери площадку на&nbsp;карте павильона и&nbsp;кликни на&nbsp;иконку, чтобы&nbsp;узнать&nbsp;больше.
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="interactive_map_pavilion__description" data-interactive-map-pavilion-description="true">
-                                    Выбери площадку на&nbsp;карте павильона и&nbsp;кликни на&nbsp;иконку, чтобы&nbsp;узнать&nbsp;больше.
-                                </div>
+                                <div class="interactive_map_pavilion__image-list" data-point-image-right="true"></div>
                             </div>
                             <div class="interactive_map_pavilion__image" data-interactive-map-pavilion-image="true"></div>
                         </div>

@@ -26,6 +26,9 @@ $(document).ready(function(){
         $('[data-interactive-map-pavilion]').removeClass('is_open_brands');
 
         $('[data-interactive-map-pavilion-point]').removeClass('active');
+
+        $('[data-point-image-left]').html('');
+        $('[data-point-image-right]').html('');
     })
 
     $('[data-interactive-map-pavilion-point]').on('click', function(event){
@@ -34,7 +37,8 @@ $(document).ready(function(){
         var selected = $(this).data('interactive-map-pavilion-point'),
             title = $(this).data('point-title'),
             description = $(this).data('point-description'),
-            image = $(this).data('point-image');
+            image = $(this).data('point-image'),
+            images = $(this).data('point-images');
 
         $('[data-interactive-map-pavilion-title]').html(title);
         $('[data-interactive-map-pavilion-description]').html(description);
@@ -55,6 +59,30 @@ $(document).ready(function(){
             $('[data-interactive-map-pavilion-image]').addClass('set_image');
             $('[data-interactive-map-pavilion-image]').css('background-image', 'url(' + image + ')');
         }*/
+
+        if (!!images){
+            var arrImages = Object.keys(images).map(function(key) {
+              return images[key];
+            });
+            var htmlLeft = '',
+                htmlRight = '';
+
+            for (var i = 0; i < arrImages.length/2; i++) {
+                if (arrImages[i].length){
+                    htmlLeft = htmlLeft + '<div class="interactive_map_pavilion__image-item"><div class="image" style="background-image: url(' + arrImages[i] + ')"></div></div>';
+                }
+            }
+            for (var i = arrImages.length/2; i < arrImages.length; i++) {
+                if (arrImages[i].length){
+                    htmlRight = htmlRight + '<div class="interactive_map_pavilion__image-item"><div class="image" style="background-image: url(' + arrImages[i] + ')"></div></div>';
+                }
+            }
+
+            $('[data-point-image-left]').html(htmlLeft);
+            $('[data-point-image-right]').html(htmlRight);
+        }
+
+
 
     })
 

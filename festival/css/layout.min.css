@@ -1525,6 +1525,26 @@ body.is_open_banner_top .header.navbar-fixed-top{
             margin-bottom: 20px;
             padding: 0 10px;
         }
+    #partners .partners_wrap_line1 {
+        -webkit-align-items: center;
+        -ms-flex-align: center;
+        align-items: center;
+    }
+        #partners .partners_wrap_line1 .partner_item {
+            width: 12.5%;
+            margin-bottom: 20px;
+            padding: 0 10px;
+        }
+        @media screen and (max-width: 1439px){
+            #partners .partners_wrap_line1 .partner_item {
+                width: auto;
+            }
+        }
+        #partners .partners_wrap_line1 .partner_item .partner_logo{
+            display: block;
+            max-width: 100%;
+            margin: 0 auto;
+        }
 
 
 #contacts {
@@ -2302,4 +2322,45 @@ body.is_open_banner_top .header.navbar-fixed-top{
         width: 30px;
         margin-left: 0;
     }
+}
+
+.schedule {
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+@media screen and (max-width: 1339px){
+    .schedule {
+        top: -37px;
+    }
+}
+.schedule a{
+    display: inline-block;
+    vertical-align: top;
+    text-transform: uppercase;
+    font-size: 16px;
+    line-height: 1.4;
+    font-weight: 700;
+    color: #ffffff;
+    text-decoration: none;
+}
+.schedule a:hover{
+    color: #ffffff;
+    text-decoration: none;
+}
+#guest .schedule a{
+    padding: 5px 20px;
+    background: #c1c6d3;
+}
+#guest .schedule a:hover{
+    background: #ff4e00;
+}
+#gala .schedule a{
+    padding: 5px 20px;
+    background: #fff;
+    color: #515769;
+}
+#gala .schedule a:hover{
+    background: #ff4e00;
+    color: #fff;
 }
