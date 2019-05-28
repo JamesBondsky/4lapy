@@ -188,8 +188,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                                 $value = $offer->getPackageLabel(false, 0);
                         }
                         ?>
-                        <li class="b-weight-container__item b-weight-container__item--product <? if ($colourCombination) { ?>b-weight-container__item--color<? } ?> <?= $isCurrentOffer ? ' active' : '' ?>"
-                            <? if ($colourCombination) { ?>style="background-image: url(<?=$image?>)"<? } ?>>
+                        <li class="b-weight-container__item b-weight-container__item--product <? if ($colourCombination) { ?>b-weight-container__item--color<? } ?> <?= $isCurrentOffer ? ' active' : '' ?>">
                             <a class="b-weight-container__link b-weight-container__link--product <? if ($colourCombination) { ?>b-weight-container__link--color<? } ?> js-offer-link-<?= $offer->getId() ?> js-price-product<?= $isCurrentOffer ? ' active-link' : '' ?>"
                                href="<?= $offer->getLink() ?>"
                                data-weight=" <?= $value ?>"
@@ -223,6 +222,9 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                                 <span class="b-weight-container__line" style="display: none" data-not-available>
                                     <span class="b-weight-container__not">Нет в наличии</span>
                                 </span>
+                                <? if ($colourCombination) { ?>
+                                    <div class="b-weight-container__color" style="background: url(<?=$image?>);"></div>
+                                <? } ?>
                             </a>
                         </li>
                     <?php } ?>
