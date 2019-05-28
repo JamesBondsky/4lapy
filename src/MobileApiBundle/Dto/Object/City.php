@@ -46,6 +46,20 @@ class City
     protected $path = [];
 
     /**
+     * @Serializer\SerializedName("lat")
+     * @Serializer\Type("float")
+     * @var float
+     */
+    protected $latitude = 0.0;
+
+    /**
+     * @Serializer\SerializedName("lon")
+     * @Serializer\Type("float")
+     * @var float
+     */
+    protected $longitude = 0.0;
+
+    /**
      * @return string
      */
     public function getId(): string
@@ -114,6 +128,42 @@ class City
     public function setPath(array $path): City
     {
         $this->path = $path;
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getLatitude()
+    {
+        return $this->latitude;
+    }
+
+    /**
+     * @param $latitude
+     * @return City
+     */
+    public function setLatitude($latitude): City
+    {
+        $this->latitude = $latitude;
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getLongitude()
+    {
+        return $this->longitude;
+    }
+
+    /**
+     * @param $longitude
+     * @return City
+     */
+    public function setLongitude($longitude): City
+    {
+        $this->longitude = $longitude;
         return $this;
     }
 }

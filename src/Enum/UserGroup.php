@@ -38,6 +38,8 @@ class UserGroup
     public const OPT_ID = 32;
     public const OPT_CODE = 'VIP';
     public const NOT_AUTH_CODE = 'NOT_AUTH'; // "Неавторизованные"
+    public const HAS_ORDERS_FROM_MOBILE_APP = 'exist_orders_in_mp';
+    public const NO_ORDERS_FROM_MOBILE_APP = 'no_orders_in_mp';
 
     public const BASKET_RULES = 'BASKET_RULES'; // "Применяются правила работы с корзиной"
 }

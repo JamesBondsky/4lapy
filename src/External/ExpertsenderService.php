@@ -34,6 +34,7 @@ use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\Pet;
 use FourPaws\PersonalBundle\Models\PetCongratulationsNotify;
 use FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Dto\Fiscalization\Item;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
@@ -99,8 +100,10 @@ class ExpertsenderService implements LoggerAwareInterface
     public const FORGOT_BASKET2_LIST_ID = 7767;
     public const CHANGE_EMAIL_LIST_ID = 7766;
     public const CHANGE_EMAIL_TO_NEW_EMAIL_LIST = 7768;
+    public const CHANGE_EMAIL_CODE_LIST_ID = 8009;
     public const SUBSCRIBE_EMAIL_UNDER_3_WEEK_LIST_ID = 7769;
     public const SUBSCRIBE_EMAIL_UNDER_3_DAYS_LIST_ID = 7773;
+    public const SUBSCRIBE_CANCEL = 9413;
 
     public const NEW_ORDER_PAY_LIST_ID = 7774;
     public const NEW_ORDER_NOT_PAY_LIST_ID = 7775;
@@ -111,10 +114,13 @@ class ExpertsenderService implements LoggerAwareInterface
     public const NEW_ORDER_NOT_PAY_LIST_ID_ROYAL_CANIN = 9179;
     public const NEW_ORDER_NOT_REG_PAY_LIST_ID_ROYAL_CANIN = 9180;
     public const NEW_ORDER_NOT_REG_NOT_PAY_LIST_ID_ROYAL_CANIN = 9181;
+    public const NEW_ORDER_SUBSCRIBE = 9404;
 
     public const COMPLETE_ORDER_LIST_ID = 7778;
     public const FORGOT_PASSWORD_LIST_ID = 7779;
     public const CHANGE_PASSWORD_LIST_ID = 7780;
+    public const NEW_CHECK_REG_LIST_ID = 8906;
+    public const CHANGE_BONUS_CARD = 8026;
     public const PIGGY_BANK_SEND_EMAIL = 9006;
     public const PERSONAL_OFFER_COUPON_SEND_EMAIL = 9234;
     public const GRANDIN_NEW_CHECK_REG_LIST_ID = 8906;
@@ -317,7 +323,7 @@ class ExpertsenderService implements LoggerAwareInterface
             try {
                 $this->getUserId($curUserEmail);
                 $hasNewEmailInSender = true;
-            } catch (ExpertsenderServiceApiException $e) {
+            } catch (ExpertsenderServiceApiException|ExpertsenderServiceException $e) {
             }
         }
 
@@ -584,6 +590,7 @@ class ExpertsenderService implements LoggerAwareInterface
             'USER_REGISTERED',
             'COM_WAY',
             'EMAIL',
+            'SUBSCRIBE_ID',
         ]);
 
         /**
@@ -813,6 +820,58 @@ class ExpertsenderService implements LoggerAwareInterface
     }
 
     /**
+     * @param User $user
+     * @return bool
+     * @throws ExpertsenderServiceException
+     */
+    public function sendChangeBonusCardFromMobileApp(User $user)
+    {
+        if ($user->hasEmail()) {
+            try {
+                $transactionId = static::CHANGE_BONUS_CARD;
+                $email = $user->getEmail();
+
+                /** @var ConfirmCodeService $confirmService */
+                $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+                $confirmService::setGeneratedCode($email, 'email_change_bonus_card');
+                $snippets = [
+                    new Snippet('code', $confirmService::getGeneratedCode('email_change_bonus_card'))
+                ];
+                unset($confirmService);
+                $this->sendSystemTransactional($transactionId, $email, $snippets);
+                return true;
+            } catch (Exception $e) {
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @param string $email
+     * @param string $code
+     *
+     * @return bool
+     * @throws ExpertSenderException
+     * @throws ExpertsenderServiceException
+     */
+    public function sendConfirmEmail(string $email, string $code): bool
+    {
+        $transactionIdCode = self::CHANGE_EMAIL_CODE_LIST_ID;
+
+        try {
+            $snippets = [];
+            $snippets[] = new Snippet('text', 'Код подтверждения смены адреса электронной почты. Если вы не вносили этих изменений, свяжитесь с нами по телефону +7 (800) 770-00-22');
+            $snippets[] = new Snippet('code', $code);
+            $this->sendSystemTransactional($transactionIdCode, $email, $snippets);
+            return true;
+        } catch (ExpertsenderServiceApiException $e) {
+        }
+
+        return false;
+    }
+
+    /**
      * @param Basket $basket
      *
      * @return array
@@ -937,7 +996,7 @@ class ExpertsenderService implements LoggerAwareInterface
      */
     public function sendOrderSubscribedEmail(OrderSubscribe $orderSubscribe): int
     {
-        $transactionId = self::SUBSCRIBE_EMAIL_UNDER_3_WEEK_LIST_ID;
+        $transactionId = self::NEW_ORDER_SUBSCRIBE;
         $snippets = [];
 
         $personalOrder = $orderSubscribe->getOrder();
@@ -952,13 +1011,22 @@ class ExpertsenderService implements LoggerAwareInterface
         $orderSubscribeHistoryService = Application::getInstance()->getContainer()->get('order_subscribe_history.service');
         $order = $orderService->getOrderById($orderSubscribeHistoryService->getLastCreatedOrderId($orderSubscribe));
 
+        /** @var OrderSubscribeService $orderSubscribeService */
+        $orderSubscribeService = Application::getInstance()->getContainer()->get('order_subscribe.service');
+        $frequency = $orderSubscribe->getFrequency();
+        $frequencyList = $orderSubscribeService->getFrequencies();
+        $curFrequency = current(array_filter($frequencyList, function($item) use ($frequency) { return $item['ID'] == $frequency; }));
+        $saleBonus = $orderSubscribeService->countBasketPriceDiff($order->getBasket());
+
         $snippets[] = new Snippet('user_name', htmlspecialcharsbx($personalOrder->getPropValue('NAME')));
         $snippets[] = new Snippet('delivery_address', htmlspecialcharsbx($orderService->getOrderDeliveryAddress($order)));
-        $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($orderSubscribe->getNearestDelivery()));
-        $snippets[] = new Snippet('delivery_period', htmlspecialcharsbx($orderSubscribe->getDeliveryTimeFormattedRu()));
+        $snippets[] = new Snippet('delivery_date', htmlspecialcharsbx($orderSubscribeService->getPreviousDate($orderSubscribe)->format('d.m.Y')));
         $snippets[] = new Snippet('tel_number', PhoneHelper::formatPhone($personalOrder->getPropValue('PHONE')));
         $snippets[] = new Snippet('total_bonuses', (int)$orderService->getOrderBonusSum($order));
         $snippets[] = new Snippet('delivery_cost', (float)$order->getShipmentCollection()->getPriceDelivery());
+        $snippets[] = new Snippet('delivery_period', (string)$curFrequency['VALUE']);
+        $snippets[] = new Snippet('next_delivery_date', $orderSubscribe->getNextDate()->format('d.m.Y'));
+        $snippets[] = new Snippet('sale_bonus', abs($saleBonus));
 
         $items = $this->getAltProductsItems($order);
         $items = '<Products>' . implode('', $items) . '</Products>';
@@ -1050,6 +1118,55 @@ class ExpertsenderService implements LoggerAwareInterface
                 'email' => $email,
                 'transactionId' => $transactionId,
                 'orderId' => $order->getId(),
+                'snippets' => implode(
+                    '; ',
+                    array_map(
+                        function($snp) {
+                            return $snp instanceof Snippet ? $snp->getName().': '.$snp->getValue() : '-';
+                        },
+                        $snippets
+                    )
+                ),
+            ]
+        );
+
+        $this->sendSystemTransactional($transactionId, $email, $snippets);
+
+        return $transactionId;
+    }
+
+    /**
+     * @param OrderSubscribe $orderSubscribe
+     * @return int
+     * @throws ApplicationCreateException
+     * @throws ExpertSenderException
+     * @throws ExpertsenderEmptyEmailException
+     * @throws ExpertsenderServiceApiException
+     * @throws ExpertsenderServiceException
+     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
+     * @throws \FourPaws\PersonalBundle\Exception\NotFoundException
+     */
+    public function sendOrderSubscribeCancelEmail(OrderSubscribe $orderSubscribe): int
+    {
+        $transactionId = self::SUBSCRIBE_CANCEL;
+        $snippets = [];
+        $personalOrder = $orderSubscribe->getOrder();
+
+        $email = $personalOrder->getPropValue('EMAIL');
+        if (empty($email)) {
+            throw new ExpertsenderEmptyEmailException('order email is empty');
+        }
+
+        $snippets[] = new Snippet('user_name', htmlspecialcharsbx($personalOrder->getPropValue('NAME')));
+        $snippets[] = new Snippet('order_number', htmlspecialcharsbx($personalOrder->getAccountNumber()));
+        $snippets[] = new Snippet('date', htmlspecialcharsbx($orderSubscribe->getDateCreate()));
+
+        $this->log()->info(
+            __FUNCTION__,
+            [
+                'email' => $email,
+                'transactionId' => $transactionId,
+                'orderId' => $orderSubscribe->getOrderId(),
                 'snippets' => implode(
                     '; ',
                     array_map(
@@ -1308,8 +1425,13 @@ class ExpertsenderService implements LoggerAwareInterface
             $snippets[] = new Snippet('lastname', htmlspecialcharsbx($lastname));
             $snippets[] = new Snippet('url_img', $base64);
 
-            $this->sendSystemTransactional($transactionId, $email, $snippets);
+            $senderApiResult = $this->sendSystemTransactional($transactionId, $email, $snippets);
+            if (!$senderApiResult->isOk()) {
+                throw new ExpertSenderException(__METHOD__ . 'Не удалось отправить письмо: Ошибка #' . $senderApiResult->getErrorCode() . '. ' .  $senderApiResult->getErrorMessage() . '. $params: ' . print_r($params, true));
+            }
             return true;
+        } else {
+            throw new ExpertsenderEmptyEmailException(__METHOD__ . 'Не удалось отправить письмо: не указан email. $params: ' . print_r($params, true));
         }
 
         return false;

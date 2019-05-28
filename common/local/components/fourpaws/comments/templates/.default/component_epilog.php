@@ -28,7 +28,7 @@ $arResult['AUTH'] = $component->userAuthService->isAuthorized();
                 });
                 this.getInstance().handlers = [];
             },
-            getInstance() { return this }
+            getInstance: function() { return this }
         };
     }
 

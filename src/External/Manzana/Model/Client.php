@@ -427,6 +427,18 @@ class Client
     public $ffOthers;
 
     /**
+     * @Type("int")
+     * @SerializedName("ff_mobile_app")
+     */
+    public $ffMobileApp;
+
+    /**
+     * @Type("manzana_date_time_short")
+     * @SerializedName("ff_mobile_app_date")
+     */
+    public $ffMobileAppDate;
+
+    /**
      * Код места активации карты
      *   UpdatedByСlient - ЛК покупателя (привязка карты в личном кабинете)
      *   Ishop - Страница регистрации карты

@@ -28,6 +28,7 @@ use Bitrix\Sale\Internals\OrderTable;
 use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order as BitrixOrder;
 use Bitrix\Sale\PropertyValue;
+use Dadata\Response\Date;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -44,11 +45,14 @@ use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Cheque;
 use FourPaws\External\Manzana\Model\ChequeItem;
 use FourPaws\External\ManzanaService;
+use FourPaws\MobileApiBundle\Dto\Object\OrderHistory;
+use FourPaws\MobileApiBundle\Dto\Object\OrderStatus;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderDelivery;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Entity\OrderPayment;
 use FourPaws\PersonalBundle\Entity\OrderProp;
+use FourPaws\PersonalBundle\Entity\OrderStatusChange;
 use FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException;
 use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemArticleEmptyException;
@@ -65,6 +69,7 @@ use FourPaws\PersonalBundle\Repository\OrderRepository;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\EventController\Event;
 use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\SaleBundle\Repository\OrderStatusRepository;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
@@ -117,21 +122,29 @@ class OrderService
     protected $manzanaOrderOffers;
 
     /**
+     * @var OrderStatusRepository
+     */
+    protected $orderStatusRepository;
+
+    /**
      * OrderService constructor.
      *
      * @param OrderRepository $orderRepository
      * @param DeliveryService $deliveryService
-     * @param ManzanaService  $manzanaService
+     * @param ManzanaService $manzanaService
+     * @param OrderStatusRepository $orderStatusRepository
      */
     public function __construct(
         OrderRepository $orderRepository,
         DeliveryService $deliveryService,
-        ManzanaService $manzanaService
+        ManzanaService $manzanaService,
+        OrderStatusRepository $orderStatusRepository
     )
     {
         $this->orderRepository = $orderRepository;
         $this->manzanaService = $manzanaService;
         $this->deliveryService = $deliveryService;
+        $this->orderStatusRepository = $orderStatusRepository;
     }
 
     /**
@@ -381,6 +394,32 @@ class OrderService
 
     /**
      * @param User $user
+     * @param int $orderId
+     * @return Order
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function getUserOrderById(User $user, int $orderId)
+    {
+        return $this->orderRepository->getUserOrderById($user->getId(), $orderId);
+    }
+
+    /**
+     * @param User $user
+     * @param int $orderNumber
+     * @return Order
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function getUserOrderByNumber(User $user, int $orderNumber)
+    {
+        return $this->orderRepository->getUserOrderByNumber($user->getId(), $orderNumber);
+    }
+
+    /**
+     * @param User $user
      *
      * @return int
      * @throws ArgumentException
@@ -590,6 +629,39 @@ class OrderService
         $collection = $this->orderRepository->findBy($params);
 
         return $collection->count() ? $collection->first() : null;
+    }
+
+    /**
+     * @param int $orderNumber
+     *
+     * @return Order|null
+     * @throws \Exception
+     */
+    public function getOrderByNumber(int $orderNumber)
+    {
+        $params = [
+            'filter' => [
+                'ACCOUNT_NUMBER' => $orderNumber,
+            ],
+        ];
+        $collection = $this->orderRepository->findBy($params);
+
+        return $collection->count() ? $collection->first() : null;
+    }
+
+    /**
+     * @param User $user
+     * @return bool
+     * @throws ArgumentException
+     * @throws InvalidArgumentException
+     * @throws SystemException
+     */
+    public function isUserHasOrdersFromApp(User $user): bool
+    {
+        $ordersFromApp = $this->getUserOrders($user, 1, 0)->filter(function(Order $order) {
+            return $order->isFromApp();
+        });
+        return $ordersFromApp->count() > 0;
     }
 
     /**
@@ -1056,5 +1128,39 @@ class OrderService
         return \implode(',', \array_map(function ($status) {
             return sprintf('"%s"', $status);
         }, \array_merge(self::STATUS_CANCEL, self::STATUS_FINAL)));
+    }
+
+    /**
+     * @param Order $order
+     * @return ArrayCollection
+     * @throws ObjectException
+     */
+    public function getOrderStatuses(Order $order): ArrayCollection
+    {
+        $statuses = [
+            (new OrderStatusChange())
+                ->setOrderStatus($this->orderStatusRepository->findById('N'))
+                ->setDateCreate($order->getDateInsert())
+        ];
+
+        $rs = (new \CSaleOrderChange())->GetList(
+            ['DATE_CREATE' => 'ASC'],
+            [
+                'ORDER_ID' => $order->getId(),
+                'TYPE' => 'ORDER_STATUS_CHANGED'
+            ],
+            false,
+            false,
+            ['DATE_CREATE', 'DATA']
+        );
+        while($orderChange = $rs->Fetch()) {
+            $orderChangeData = unserialize($orderChange['DATA']);
+            $statuses[] = (new OrderStatusChange())
+                ->setOrderStatus($this->orderStatusRepository->findById($orderChangeData['STATUS_ID']))
+                ->setDateCreate(new DateTime($orderChange['DATE_CREATE']))
+            ;
+        }
+
+        return new ArrayCollection($statuses);
     }
 }

@@ -42,6 +42,12 @@ class Share extends IblockElement
     protected $ACTIVE_TO = '';
 
     /**
+     * @var int
+     * @Type("string")
+     */
+    protected $PREVIEW_PICTURE;
+
+    /**
      * @var string
      * @Type("string")
      */
@@ -116,6 +122,12 @@ class Share extends IblockElement
      * @Type("string")
      */
     protected $PROPERTY_PREMISE_BONUS = false;
+
+    /**
+     * @var bool
+     * @Type("bool")
+     */
+    protected $PROPERTY_SIGNCHARGE = false;
 
     /**
      * @var OfferCollection
@@ -440,6 +452,25 @@ class Share extends IblockElement
     }
 
     /**
+     * @param bool|null $value
+     *
+     * @return $this
+     */
+    public function setPropertySigncharge(?bool $value): Share
+    {
+        $this->PROPERTY_SIGNCHARGE = $value;
+        return $this;
+    }
+
+    /**
+     * @return bool|null
+     */
+    public function getPropertySigncharge(): ?bool
+    {
+        return $this->PROPERTY_SIGNCHARGE;
+    }
+
+    /**
      * @return bool
      */
     public function isBonus(): bool
@@ -485,5 +516,13 @@ class Share extends IblockElement
     public function getPropertyLabelImageFileSrc($width = 0, $height = 0)
     {
         return $this->getPropertyLabelImageFile($width, $height)['SRC'];
+    }
+
+    /**
+     * @return string
+     */
+    public function getPreviewPictureSrc(): string
+    {
+        return \CFile::getPath($this->PREVIEW_PICTURE);
     }
 }

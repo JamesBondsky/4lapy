@@ -182,13 +182,14 @@ class LandingController extends Controller
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\LoaderException
      * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
     public function addFestivalUser(Request $request): JsonResponse
     {
         global $USER;
         $userId = $USER->GetID();
 
-        $idOffset = 9999;
         $phone = $request->get('phone');
 
         try {
@@ -237,26 +238,14 @@ class LandingController extends Controller
                 'UF_EMAIL' => $email,
             ]);
             if ($isUserAlreadyRegistered) {
-                throw new JsonResponseException(JsonErrorResponse::createWithData('Такой пользователь уже зарегистирован'));
+                throw new JsonResponseException(JsonErrorResponse::createWithData('Такой пользователь уже зарегистрирован'));
             }
 
-            $rsFestivalUserId = 0;
-            try {
-                $rsFestivalUserId = FestivalUsersTable::addCustomized(md5(implode(',', $arFields)));
-            } catch (\Exception $e) {
-                $exceptionMessage = $e->getMessage();
-            }
-            if ($rsFestivalUserId <= 0) {
-                $logger = LoggerFactory::create('Festival');
-                $logger->critical(sprintf(
-                    'Не удалось создать ID регистрации на фестиваль. %s method. %s',
-                    __METHOD__,
-                    $exceptionMessage ?? ''
-                ));
-                throw new JsonResponseException($this->ajaxMess->getSystemError());
-            }
+            /** @var PersonalOffersService $personalOffersService */
+            $personalOffersService = $container->get('personal_offers.service');
+
             $iblockElement = new \CIBlockElement();
-            $festivalUserId = $idOffset + $rsFestivalUserId;
+            $festivalUserId = $personalOffersService->generateFestivalUserId();
             if (!$userId) {
                 try {
                     /** @var UserService $userService */
@@ -267,8 +256,6 @@ class LandingController extends Controller
             }
             if ($userId) {
                 $festivalPersonalOfferLinked = false;
-                /** @var PersonalOffersService $personalOffersService */
-                $personalOffersService = $container->get('personal_offers.service');
                 $festivalOffer = $personalOffersService->getActiveOffers(['CODE' => 'festival']);
                 if (!$festivalOffer->isEmpty()
                     && ($festivalOfferId = (int)$festivalOffer->first()['ID'])
@@ -308,6 +295,8 @@ class LandingController extends Controller
             ])->isSuccess();
 
             if (!$isfestivalUserAddSuccess) {
+                $logger = LoggerFactory::create('expertSender');
+                $logger->error('Не удалось добавить купон ' . $festivalUserId . ' для пользователя ' . $userId . '. ' . __METHOD__ . ' ' . $iblockElement->LAST_ERROR);
                 throw new JsonResponseException($this->ajaxMess->getAddError($iblockElement->LAST_ERROR));
             }
 
@@ -327,7 +316,7 @@ class LandingController extends Controller
             {
                 $logger = LoggerFactory::create('expertSender');
                 $logger->error(sprintf(
-                    'Error while sending mail. %s exception: %s',
+                    'Error while sending mail with coupon ' . $festivalUserId . ' to address ' . $email . '. %s exception: %s',
                     __METHOD__,
                     $exception->getMessage()
                 ));

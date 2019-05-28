@@ -170,7 +170,11 @@ class OrderStorageService
     public function setStorageValuesFromRequest(OrderStorage $storage, Request $request, string $step): OrderStorage
     {
         $data = $request->request->all();
+        return $this->setStorageValuesFromArray($storage, $data, $step);
+    }
 
+    public function setStorageValuesFromArray(OrderStorage $storage, array $data, string $step): OrderStorage
+    {
         $mapping = [
             'order-pick-time' => 'split',
             'shopId'          => 'deliveryPlaceCode',
@@ -551,9 +555,9 @@ class OrderStorageService
                 $order->setBasket($basket);
             }
 
-            // для подписки оставляем только наши службы доставки
+            // для подписки оставляем всё, кроме достависты
             if($storage->isSubscribe()){
-                $codes = [DeliveryService::INNER_DELIVERY_CODE, DeliveryService::INNER_PICKUP_CODE];
+                $codes = array_merge(DeliveryService::PICKUP_CODES, DeliveryService::DELIVERY_CODES);
             }
 
             $this->deliveries = $this->deliveryService->getByBasket(

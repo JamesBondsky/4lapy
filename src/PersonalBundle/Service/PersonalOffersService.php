@@ -16,12 +16,14 @@ use Bitrix\Sale\Internals\DiscountCouponTable;
 use CSaleDiscount;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
+use FourPaws\AppBundle\Exception\JsonResponseException;
 use FourPaws\Enum\HlblockCode;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\PersonalBundle\Exception\CouponIsNotAvailableForUseException;
 use FourPaws\PersonalBundle\Exception\CouponNotCreatedException;
 use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
+use FourPaws\UserBundle\Repository\FestivalUsersTable;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 
@@ -747,5 +749,34 @@ class PersonalOffersService
         }
 
         return $result;
+    }
+
+    /**
+     * @return int
+     * @throws JsonResponseException
+     */
+    public function generateFestivalUserId(): int
+    {
+        $idOffset = 9999;
+
+        $rsFestivalUserId = 0;
+        try {
+            $rsFestivalUserId = FestivalUsersTable::addCustomized(md5(implode(',', $arFields)));
+        } catch (\Exception $e) {
+            $exceptionMessage = $e->getMessage();
+        }
+        if ($rsFestivalUserId <= 0) {
+            $logger = LoggerFactory::create('Festival');
+            $logger->critical(sprintf(
+                'Не удалось создать ID регистрации на фестиваль. %s method. %s',
+                __METHOD__,
+                $exceptionMessage ?? ''
+            ));
+            throw new JsonResponseException($this->ajaxMess->getSystemError());
+        }
+
+        $festivalUserId = $idOffset + $rsFestivalUserId;
+
+        return $festivalUserId;
     }
 }

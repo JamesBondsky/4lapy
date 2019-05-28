@@ -921,18 +921,19 @@ class User implements UserInterface
     }
 
     /**
-     * @return \DateTimeImmutable
+     * @return \DateTimeImmutable|null
+     * @throws \Exception
      */
-    public function getManzanaDateRegister(): \DateTimeImmutable
+    public function getManzanaDateRegister(): ?\DateTimeImmutable
     {
         $dateRegister = $this->getDateRegister();
-        return new \DateTimeImmutable($dateRegister->format('Y-m-d\TH:i:s'));
+        return ($dateRegister) ? new \DateTimeImmutable($dateRegister->format('Y-m-d\TH:i:s')) : null;
     }
 
     /**
-     * @return DateTime
+     * @return DateTime|null
      */
-    public function getDateRegister(): DateTime
+    public function getDateRegister(): ?DateTime
     {
         return $this->dateRegister;
     }

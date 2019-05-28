@@ -101,6 +101,12 @@ https://api.esv2.com - валидный адрес
 - ./bin/symfony_console f:s:f:s 2 # повторное уведомление
 ```
 
+## Рассылка push-сообщений
+
+```
+- ./bin/symfony_console bitrix:mobileApi:push:queue
+```
+
 ## Фабрика фидов
 
 ```

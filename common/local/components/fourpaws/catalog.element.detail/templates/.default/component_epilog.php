@@ -45,7 +45,7 @@ $bonus = $currentOffer->getBonusFormattedText($userService->getDiscount());
                     });
                     this.getInstance().handlers = [];
                 },
-                getInstance() { return this }
+                getInstance: function() { return this }
             };
         }
 
@@ -65,7 +65,7 @@ $bonus = $currentOffer->getBonusFormattedText($userService->getDiscount());
             $('.js-plus-minus-count')
                 .data('cont-max', '<?=$currentOffer->getQuantity()?>')
                 .data('one-price', '<?=$currentOffer->getPrice()?>');
-            <? if($currentOffer->getPrice() != $currentOffer->getSubscribePrice()){ ?>
+            <? if($currentOffer->getSubscribeDiscount() > 0){ ?>
             $('.js-subscribe-price').html('<?= $currentOffer->getSubscribePrice() ?>');
             $('.js-subscribe-price-block').show();
             <? } ?>

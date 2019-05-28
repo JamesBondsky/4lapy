@@ -12,6 +12,14 @@ class DeliveryRangeResponse
     protected $ranges = [];
 
     /**
+     * @param DeliveryTime[] $ranges
+     */
+    public function __construct(array $ranges)
+    {
+        $this->setRanges($ranges);
+    }
+
+    /**
      * @return DeliveryTime[]
      */
     public function getRanges(): array
