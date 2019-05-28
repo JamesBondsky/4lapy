@@ -112,7 +112,6 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
         $senders = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
         //$senders = [$this->storeService->getStoreByXmlId('0000100792')];
 
-
         /** @var Store $sender */
         foreach ($senders as $i => $sender) {
             BitrixApplication::getConnection()->startTransaction();
@@ -167,12 +166,6 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
                 );
             }
         }
-
-        /*if ($isSuccess) {
-            BitrixApplication::getConnection()->commitTransaction();
-        } else {
-            BitrixApplication::getConnection()->rollbackTransaction();
-        }*/
 
         TaggedCacheHelper::clearManagedCache(['catalog:store:schedule:results']);
 
