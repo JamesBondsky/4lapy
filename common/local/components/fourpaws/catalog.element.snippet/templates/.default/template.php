@@ -167,7 +167,7 @@ if (!$currentOffer->getImagesIds()) {
                         ?>
                         <li class="b-weight-container__item">
                             <a href="javascript:void(0)"
-                               class="b-weight-container__link js-price<?= $currentOffer->getId()
+                               class="b-weight-container__link <? if ($image) { ?>b-weight-container__link--color-list<? } ?> js-price<?= $currentOffer->getId()
                                                                            === $offer->getId() ? ' active-link' : '' ?>"
                                data-oldprice="<?= $offer->getCatalogOldPrice()
                                                   !== $offer->getCatalogPrice() ? $offer->getCatalogOldPrice() : '' ?>"
