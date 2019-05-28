@@ -11,7 +11,6 @@ use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application as App;
 use Bitrix\Highloadblock\DataManager;
 use Bitrix\Main\Entity\ReferenceField;
-use Picqer\Barcode\BarcodeGeneratorPNG;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -197,14 +196,11 @@ class PersonalOffersService
         $couponsCollection = new ArrayCollection($coupons);
         foreach($couponsCollection as $coupon){
             $offer = $offersCollection->get($coupon['UF_OFFER']);
-            $barcodeGenerator = new BarcodeGeneratorPNG();
-            $barcode = 'data:image/png;base64,' . base64_encode($barcodeGenerator->getBarcode($coupon['UF_PROMO_CODE'], \Picqer\Barcode\BarcodeGenerator::TYPE_CODE_128, 2.132310384278889, 127));
             $result[] = [
                 'id' => $coupon['ID'],
                 'promocode' => $coupon['UF_PROMO_CODE'],
                 'discount' => $offer['PROPERTY_DISCOUNT_VALUE'],
-                'text' => $offer['PREVIEW_TEXT'],
-                'barcode' => $barcode,
+                'text' => HTMLToTxt($offer['PREVIEW_TEXT']),
             ];
         }
         return $result;
