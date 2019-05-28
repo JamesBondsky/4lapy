@@ -1868,23 +1868,7 @@ class Offer extends IblockElement
      */
     protected function checkOptimalPriceTmp(): void
     {
-        /**
-         * В эластике price индексируется с уже посчитанной скидкой,
-         * поэтому проводить расчеты ни к чему
-         * upd: цены зависят от региона
-         */
-        /*if ($this->oldPrice) {
-            return;
-        }*/
-
-        /** @var Price $arPrice */
-        $arPrice = $this->getCurrentRegionPrice();
-
-        if($arPrice){
-            $oldPrice = $price = (float)$arPrice->getPrice();
-        } else{
-            $oldPrice = $price = $this->price;
-        }
+        $oldPrice = $price = $this->getBasePrice();
 
         if ($this->isSimpleSaleAction()) {
             $price = (float)$this->getPriceAction();
@@ -1896,6 +1880,13 @@ class Offer extends IblockElement
              ->withOldPrice($oldPrice)
              ->withDiscount(round(100 * $oldPrice / $price));
         $this->isCounted = true;
+    }
+
+    public function getBasePrice()
+    {
+        /** @var Price $arPrice */
+        $arPrice = $this->getCurrentRegionPrice();
+        return !empty($arPrice) ? (float)$arPrice->getPrice() : $this->price;
     }
 
     /**
@@ -2420,7 +2411,16 @@ class Offer extends IblockElement
     public function getSubscribePrice()
     {
         $discountValue = $this->getSubscribeDiscount();
-        return $discountValue > 0 ? \round($this->getPrice()*((100-$discountValue)/100), 1, PHP_ROUND_HALF_DOWN) : $this->getPrice();
+        if($discountValue <= 0){
+            return $this->getPrice();
+        }
+        $priceDefault = $this->getPrice();
+        $priceSubscribe = \round($this->getBasePrice()*((100-$discountValue)/100), 1, PHP_ROUND_HALF_DOWN);
+        if($priceSubscribe > $priceDefault){
+            return $priceDefault;
+        }
+
+        return $priceSubscribe;
     }
 
 }
