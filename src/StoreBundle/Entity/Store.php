@@ -1118,7 +1118,7 @@ class Store extends Base
      */
     public function getStoreOrderTime(): string
     {
-        return $this->storeOrderTime;
+        return $this->storeOrderTime ?: '09:00:00';
     }
 
     /**

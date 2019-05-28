@@ -49,15 +49,6 @@ class BitrixExportConfigTranslator
      */
     public function getProfileData(int $profileId): array
     {
-        $cache = (new BitrixCache())
-            ->withId(\sprintf(
-                'export_profile_%d',
-                $profileId
-            ))
-            ->withTime(60 * 60 * 3);
-
-        return $cache->resultOf(function () use ($profileId) {
-            return CCatalogExport::GetByID($profileId);
-        });
+        return CCatalogExport::GetByID($profileId);
     }
 }

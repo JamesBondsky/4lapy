@@ -7,12 +7,22 @@
 namespace FourPaws\MobileApiBundle\Dto\Object\Catalog;
 
 use Doctrine\Common\Collections\Collection;
+use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct\Tag;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
 use JMS\Serializer\Annotation as Serializer;
 
 class ShortProduct
 {
+    /**
+     * ID
+     *
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("id")
+     */
+    protected $id;
+
     /**
      * Название
      *
@@ -27,7 +37,7 @@ class ShortProduct
      *
      * @var string
      * @Serializer\Type("string")
-     * @todo path?
+     * @Serializer\SerializedName("webpage")
      */
     protected $webPage = '';
 
@@ -64,35 +74,9 @@ class ShortProduct
      * @var int
      * @Serializer\Type("int")
      * @Serializer\SerializedName("in_pack")
+     * @Serializer\Groups({"specialOffers", "productsList", "product"})
      */
     protected $inPack = 1;
-
-    /**
-     * можно купить только упаковкой (кратным значению inPack)
-     *
-     * @var bool
-     * @Serializer\Type("bool")
-     * @Serializer\SerializedName("pack_only")
-     */
-    protected $packOnly = false;
-
-    /**
-     * Акционный текст
-     *
-     * @var string
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("discount_text")
-     */
-    protected $discountText = '';
-
-    /**
-     * Краткое описание
-     *
-     * @var string
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("info")
-     */
-    protected $info = '';
 
     /**
      * ОбъектЦена
@@ -107,8 +91,16 @@ class ShortProduct
      * @var Collection|Tag[]
      * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct\Tag>")
      * @Serializer\SerializedName("tag")
+     * @Serializer\Groups({"specialOffers", "productsList", "product"})
      */
     protected $tag = [];
+
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("brand_name")
+     */
+    protected $brandName = '';
 
     /**
      * Размер бонуса для авторизованных, неавторизованных пользователей
@@ -129,6 +121,72 @@ class ShortProduct
     protected $bonusAll = 0;
 
     /**
+     * Является ли товаром под заказ?
+     *
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("isByRequest")
+     */
+    protected $isByRequest = false;
+
+    /**
+     * Доступен ли товар к покупке (есть в магазине, либо на складе)
+     *
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("isAvailable")
+     */
+    protected $isAvailable = false;
+
+    /**
+     * Только самовывоз (товара нет на складе, есть только в некоторых магазинах)
+     *
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("isPickup")
+     */
+    protected $pickupOnly = false;
+
+    /**
+     * Акция в рамках которой товар является подарком (только для корзины)
+     *
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("giftDiscountId")
+     * @Serializer\Groups({"basket"})
+     */
+    protected $giftDiscountId = 0;
+
+    /**
+     * Количество бесплатных товаров в рамках акций n+1
+     *
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("freeGoodsAmount")
+     * @Serializer\Groups({"basket"})
+     */
+    protected $freeGoodsAmount = 0;
+
+    /**
+     * @return int
+     */
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    /**
+     * @param int $id
+     *
+     * @return $this
+     */
+    public function setId(int $id)
+    {
+        $this->id = $id;
+        return $this;
+    }
+
+    /**
      * @return string
      */
     public function getTitle(): string
@@ -139,9 +197,9 @@ class ShortProduct
     /**
      * @param string $title
      *
-     * @return ShortProduct
+     * @return $this
      */
-    public function setTitle(string $title): ShortProduct
+    public function setTitle(string $title)
     {
         $this->title = $title;
         return $this;
@@ -158,11 +216,11 @@ class ShortProduct
     /**
      * @param string $webPage
      *
-     * @return ShortProduct
+     * @return $this
      */
-    public function setWebPage(string $webPage): ShortProduct
+    public function setWebPage(string $webPage)
     {
-        $this->webPage = $webPage;
+        $this->webPage = (string) new FullHrefDecorator($webPage);
         return $this;
     }
 
@@ -177,9 +235,9 @@ class ShortProduct
     /**
      * @param string $xmlId
      *
-     * @return ShortProduct
+     * @return $this
      */
-    public function setXmlId(string $xmlId): ShortProduct
+    public function setXmlId(string $xmlId)
     {
         $this->xmlId = $xmlId;
         return $this;
@@ -196,11 +254,11 @@ class ShortProduct
     /**
      * @param string $picture
      *
-     * @return ShortProduct
+     * @return $this
      */
-    public function setPicture(string $picture): ShortProduct
+    public function setPicture(string $picture)
     {
-        $this->picture = $picture;
+        $this->picture = (string) new FullHrefDecorator($picture);
         return $this;
     }
 
@@ -215,11 +273,11 @@ class ShortProduct
     /**
      * @param string $picturePreview
      *
-     * @return ShortProduct
+     * @return $this
      */
-    public function setPicturePreview(string $picturePreview): ShortProduct
+    public function setPicturePreview(string $picturePreview)
     {
-        $this->picturePreview = $picturePreview;
+        $this->picturePreview = (string) new FullHrefDecorator($picturePreview);
         return $this;
     }
 
@@ -234,68 +292,11 @@ class ShortProduct
     /**
      * @param int $inPack
      *
-     * @return ShortProduct
+     * @return $this
      */
-    public function setInPack(int $inPack): ShortProduct
+    public function setInPack(int $inPack)
     {
         $this->inPack = $inPack;
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isPackOnly(): bool
-    {
-        return $this->packOnly;
-    }
-
-    /**
-     * @param bool $packOnly
-     *
-     * @return ShortProduct
-     */
-    public function setPackOnly(bool $packOnly): ShortProduct
-    {
-        $this->packOnly = $packOnly;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getDiscountText(): string
-    {
-        return $this->discountText;
-    }
-
-    /**
-     * @param string $discountText
-     *
-     * @return ShortProduct
-     */
-    public function setDiscountText(string $discountText): ShortProduct
-    {
-        $this->discountText = $discountText;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getInfo(): string
-    {
-        return $this->info;
-    }
-
-    /**
-     * @param string $info
-     *
-     * @return ShortProduct
-     */
-    public function setInfo(string $info): ShortProduct
-    {
-        $this->info = $info;
         return $this;
     }
 
@@ -310,9 +311,9 @@ class ShortProduct
     /**
      * @param Price $price
      *
-     * @return ShortProduct
+     * @return $this
      */
-    public function setPrice(Price $price): ShortProduct
+    public function setPrice(Price $price)
     {
         $this->price = $price;
         return $this;
@@ -329,11 +330,29 @@ class ShortProduct
     /**
      * @param Collection|Tag[] $tag
      *
-     * @return ShortProduct
+     * @return $this
      */
     public function setTag($tag)
     {
         $this->tag = $tag;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBrandName()
+    {
+        return $this->brandName;
+    }
+
+    /**
+     * @param string $brandName
+     * @return $this
+     */
+    public function setBrandName(string $brandName)
+    {
+        $this->brandName = $brandName;
         return $this;
     }
 
@@ -348,9 +367,9 @@ class ShortProduct
     /**
      * @param int $bonusUser
      *
-     * @return ShortProduct
+     * @return $this
      */
-    public function setBonusUser(int $bonusUser): ShortProduct
+    public function setBonusUser(int $bonusUser)
     {
         $this->bonusUser = $bonusUser;
         return $this;
@@ -367,11 +386,101 @@ class ShortProduct
     /**
      * @param int $bonusAll
      *
-     * @return ShortProduct
+     * @return $this
      */
-    public function setBonusAll(int $bonusAll): ShortProduct
+    public function setBonusAll(int $bonusAll)
     {
         $this->bonusAll = $bonusAll;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getIsByRequest(): bool
+    {
+        return $this->isByRequest;
+    }
+
+    /**
+     * @param bool $isByRequest
+     * @return $this
+     */
+    public function setIsByRequest(bool $isByRequest)
+    {
+        $this->isByRequest = $isByRequest;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getIsAvailable(): bool
+    {
+        return $this->isAvailable;
+    }
+
+    /**
+     * @param bool $isAvailable
+     * @return $this
+     */
+    public function setIsAvailable(bool $isAvailable)
+    {
+        $this->isAvailable = $isAvailable;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getPickupOnly(): bool
+    {
+        return $this->pickupOnly;
+    }
+
+    /**
+     * @param bool $pickupOnly
+     * @return $this
+     */
+    public function setPickupOnly(bool $pickupOnly)
+    {
+        $this->pickupOnly = $pickupOnly;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getGiftDiscountId()
+    {
+        return $this->giftDiscountId;
+    }
+
+    /**
+     * @param int $giftDiscountId
+     * @return $this
+     */
+    public function setGiftDiscountId(int $giftDiscountId)
+    {
+        $this->giftDiscountId = $giftDiscountId;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getFreeGoodsAmount()
+    {
+        return $this->freeGoodsAmount;
+    }
+
+    /**
+     * @param int $freeGoodsAmount
+     * @return $this
+     */
+    public function setFreeGoodsAmount(int $freeGoodsAmount)
+    {
+        $this->freeGoodsAmount = $freeGoodsAmount;
         return $this;
     }
 }

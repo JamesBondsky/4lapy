@@ -5,6 +5,7 @@ namespace FourPaws\MobileApiBundle\Dto\Object;
 
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use JMS\Serializer\Annotation as Serializer;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * ОбъектПараметрЗаказа
@@ -16,7 +17,7 @@ class OrderParameter
     /**
      * Массив объектов ОбъектКорзины.Товар
      * (в случае, когда ОбъектПараметрЗаказа присылается с сервера, например, при получении корзины)
-     * @Serializer\Groups("response")
+     *
      * @Serializer\SerializedName("goods")
      * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Basket\Product>")
      * @var Product[]
@@ -24,74 +25,175 @@ class OrderParameter
     protected $products = [];
 
     /**
-     * Массив объектов ОбъектКоличествоТовара
-     * (в случае, когда ОбъектПараметрЗаказа отправляется на сервер в качестве параметра, например, при оформлении заказа)
-     * @Serializer\Groups("request")
-     * @Serializer\SerializedName("goods")
-     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\ProductQuantity>")
-     * @var ProductQuantity[]
+     * Подарки
+     *
+     * @Serializer\SerializedName("gifts")
      */
-    protected $productsQuantity = [];
+    public $gifts = [];
 
     /**
-     * Номер карты
-     * @Serializer\SerializedName("card")
+     * Полное имя покупателя
      * @Serializer\Type("string")
+     * @Serializer\SerializedName("name")
      * @var string
      */
-    protected $card = '';
+    protected $name = '';
 
     /**
-     * Выбранное пользователем количество бонусов для списания с карты в пользу текущего заказа
-     * @Serializer\SerializedName("card_used")
+     * Телефон, который указал пользователь при оформлении
      * @Serializer\Type("string")
+     * @Serializer\SerializedName("phone")
      * @var string
      */
-    protected $cardBonusUsed = '';
+    protected $phone = '';
+
+    /**
+     * Email
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("email")
+     * @var string
+     */
+    protected $email = '';
+
+    /**
+     * Доп.телефон. Опция.
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("altPhone")
+     * @var string
+     */
+    protected $altPhone = '';
+
+    /**
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("communicationWay")
+     * @Assert\Choice({"01", "02"})
+     * @var string
+     */
+    protected $communicationWay = '';
 
     /**
      * Тип доставки
-     * @Serializer\SerializedName("delivery_type")
+     * @Serializer\SerializedName("deliveryType")
      * @Serializer\Type("string")
+     * @Assert\Choice({"courier", "pickup"})
      * @var string
      */
     protected $deliveryType = '';
 
     /**
-     * ОбъектАдресДоставки. Место доставки
-     * @Serializer\SerializedName("delivery_place")
-     * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\DeliveryAddress")
-     * @var DeliveryAddress
+     * Нужно ли делить заказ на два
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("split")
+     * @var int
      */
-    protected $deliveryPlace;
+    protected $split = 0;
 
     /**
-     * id времени доставки
-     * @Serializer\SerializedName("delivery_range_id")
+     * ID сохраненного адреса доставки
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("addressId")
+     * @var int
+     */
+    protected $addressId;
+
+    /**
+     * Строка с текстом адреса доставки или самовывоза (только для вывода)
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("addressText")
+     * @var string
+     */
+    protected $addressText;
+
+    /**
+     * Строка с текстом вида "6 товаров (10кг) на сумму 1000р" (только для вывода)
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("goodsInfo")
+     * @var string
+     */
+    protected $goodsInfo;
+
+    /**
+     * @Assert\Valid()
+     * @Serializer\SerializedName("city")
+     * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\City")
+     * @var null|City
+     */
+    protected $city;
+
+    /**
+     * Street (manually typed when user is not authorized)
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("street")
+     * @var string
+     */
+    protected $street = '';
+
+    /**
+     * House (manually typed when user is not authorized)
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("house")
+     * @var string
+     */
+    protected $house = '';
+
+    /**
+     * Building (manually typed when user is not authorized)
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("building")
+     * @var string
+     */
+    protected $building = '';
+
+    /**
+     * Porch (manually typed when user is not authorized)
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("porch")
+     * @var string
+     */
+    protected $porch = '';
+
+    /**
+     * Floor (manually typed when user is not authorized)
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("floor")
+     * @var string
+     */
+    protected $floor = '';
+
+    /**
+     * Apartment (manually typed when user is not authorized)
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("apartment")
+     * @var string
+     */
+    protected $apartment = '';
+
+    /**
+     * Индекс даты доставки
+     * @Serializer\SerializedName("deliveryDate")
+     * @Serializer\Type("int")
+     * @var int
+     */
+    protected $deliveryDate;
+
+    /**
+     * Индекс временного интервала доставки
+     * @Serializer\SerializedName("deliveryInterval")
+     * @Serializer\Type("int")
+     * @var int
+     */
+    protected $deliveryInterval;
+
+    /**
+     * Дата и время доставки в текстовом виде (только для вывода)
+     * @Serializer\SerializedName("deliveryDateTimeText")
      * @Serializer\Type("string")
      * @var string
      */
-    protected $deliveryRangeId = '';
+    protected $deliveryDateTimeText;
 
     /**
-     * Дата времени доставки
-     * @Serializer\SerializedName("delivery_range_date")
-     * @Serializer\Type("DateTime<d.m.Y>")
-     * @var \DateTime
-     */
-    protected $deliveryRangeDate;
-
-    /**
-     * id магазина для забора товара
-     * @todo По факту является адрессом
-     * @Serializer\SerializedName("pickup_place")
-     * @Serializer\Type("string")
-     * @var string
-     */
-    protected $pickupPlace = '';
-
-    /**
-     * Комментарий к заказу
+     * Comment
      * @Serializer\Type("string")
      * @Serializer\SerializedName("comment")
      * @var string
@@ -99,36 +201,51 @@ class OrderParameter
     protected $comment = '';
 
     /**
-     * Телефон, который указал пользователь при оформлении
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("user_phone")
-     * @var string
-     */
-    protected $userPhone = '';
-
-    /**
-     * Предпочтительный способ оплаты. [cash|cashless|applepay]
-     * @Serializer\SerializedName("payment_type")
+     * @Serializer\SerializedName("deliveryPlaceCode")
      * @Serializer\Type("string")
      * @var string
      */
-    protected $paymentType = '';
+    protected $deliveryPlaceCode;
 
     /**
-     * Дата, когда заказ доступен для самовывоза
-     * @Serializer\Type("DateTime<d.m.Y>")
-     * @Serializer\SerializedName("availability_date")
-     * @var \DateTime
-     */
-    protected $availabilityDate;
-
-    /**
-     * push | tel
+     * Номер карты
+     * @Serializer\SerializedName("discountCardNumber")
      * @Serializer\Type("string")
-     * @Serializer\SerializedName("communication_type")
      * @var string
      */
-    protected $communicationType = '';
+    protected $discountCardNumber = '';
+
+    /**
+     * ID платежной системы. [1 - наличными, 3 - оплата картой на сайте]
+     * @Serializer\SerializedName("paymentId")
+     * @Serializer\Type("int")
+     * @var string
+     */
+    protected $paymentId = '';
+
+    /**
+     * Комментарий ко второму заказу
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("secondComment")
+     * @var string
+     */
+    protected $secondComment = '';
+
+    /**
+     * Индекс даты доставки второго заказа
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("secondDeliveryDate")
+     * @var int
+     */
+    protected $secondDeliveryDate;
+
+    /**
+     * Индекс интервала доставки второго заказа
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("secondDeliveryInterval")
+     * @var int
+     */
+    protected $secondDeliveryInterval;
 
     /**
      * @Serializer\Type("string")
@@ -136,14 +253,6 @@ class OrderParameter
      * @var string
      */
     protected $promoCode = '';
-
-    /**
-     * Доп.телефон. Опция.
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("extra_phone")
-     * @var string
-     */
-    protected $extraPhone = '';
 
     /**
      * @return Product[]
@@ -165,59 +274,39 @@ class OrderParameter
     }
 
     /**
-     * @return ProductQuantity[]
+     * @return string
      */
-    public function getProductsQuantity(): array
+    public function getName(): string
     {
-        return $this->productsQuantity;
+        return $this->name;
     }
 
     /**
-     * @param ProductQuantity[] $productsQuantity
-     *
+     * @param string $name
      * @return OrderParameter
      */
-    public function setProductsQuantity(array $productsQuantity): OrderParameter
+    public function setName(string $name): OrderParameter
     {
-        $this->productsQuantity = $productsQuantity;
+        $this->name = $name;
         return $this;
     }
 
     /**
      * @return string
      */
-    public function getCard(): string
+    public function getDiscountCardNumber(): string
     {
-        return $this->card;
+        return $this->discountCardNumber;
     }
 
     /**
-     * @param string $card
+     * @param string $discountCardNumber
      *
      * @return OrderParameter
      */
-    public function setCard(string $card): OrderParameter
+    public function setDiscountCardNumber(string $discountCardNumber): OrderParameter
     {
-        $this->card = $card;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getCardBonusUsed(): string
-    {
-        return $this->cardBonusUsed;
-    }
-
-    /**
-     * @param string $cardBonusUsed
-     *
-     * @return OrderParameter
-     */
-    public function setCardBonusUsed(string $cardBonusUsed): OrderParameter
-    {
-        $this->cardBonusUsed = $cardBonusUsed;
+        $this->discountCardNumber = $discountCardNumber;
         return $this;
     }
 
@@ -241,78 +330,122 @@ class OrderParameter
     }
 
     /**
-     * @return DeliveryAddress
+     * @return int
      */
-    public function getDeliveryPlace(): DeliveryAddress
+    public function getDeliveryInterval(): int
     {
-        return $this->deliveryPlace;
+        return $this->deliveryInterval;
     }
 
     /**
-     * @param DeliveryAddress $deliveryPlace
+     * @return int
+     */
+    public function getDeliveryDate(): int
+    {
+        return $this->deliveryDate;
+    }
+
+    /**
+     * @param int $deliveryDate
      *
      * @return OrderParameter
      */
-    public function setDeliveryPlace(DeliveryAddress $deliveryPlace): OrderParameter
+    public function setDeliveryDate(int $deliveryDate): OrderParameter
     {
-        $this->deliveryPlace = $deliveryPlace;
+        $this->deliveryDate = $deliveryDate;
         return $this;
     }
 
     /**
      * @return string
      */
-    public function getDeliveryRangeId(): string
+    public function getDeliveryDateTimeText()
     {
-        return $this->deliveryRangeId;
+        return $this->deliveryDateTimeText;
     }
 
     /**
-     * @param string $deliveryRangeId
-     *
+     * @param string $deliveryDateTimeText
      * @return OrderParameter
      */
-    public function setDeliveryRangeId(string $deliveryRangeId): OrderParameter
+    public function setDeliveryDateTimeText(string $deliveryDateTimeText): OrderParameter
     {
-        $this->deliveryRangeId = $deliveryRangeId;
-        return $this;
-    }
-
-    /**
-     * @return \DateTime
-     */
-    public function getDeliveryRangeDate(): \DateTime
-    {
-        return $this->deliveryRangeDate;
-    }
-
-    /**
-     * @param \DateTime $deliveryRangeDate
-     *
-     * @return OrderParameter
-     */
-    public function setDeliveryRangeDate(\DateTime $deliveryRangeDate): OrderParameter
-    {
-        $this->deliveryRangeDate = $deliveryRangeDate;
+        $this->deliveryDateTimeText = $deliveryDateTimeText;
         return $this;
     }
 
     /**
      * @return string
      */
-    public function getPickupPlace(): string
+    public function getPhone(): string
     {
-        return $this->pickupPlace;
+        return $this->phone;
     }
 
     /**
-     * @param string $pickupPlace
+     * @param string $phone
      *
      * @return OrderParameter
      */
-    public function setPickupPlace(string $pickupPlace): OrderParameter
+    public function setPhone(string $phone): OrderParameter
     {
-        $this->pickupPlace = $pickupPlace;
+        $this->phone = $phone;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAltPhone(): string
+    {
+        return $this->altPhone;
+    }
+
+    /**
+     * @param string $altPhone
+     *
+     * @return OrderParameter
+     */
+    public function setAltPhone(string $altPhone): OrderParameter
+    {
+        $this->altPhone = $altPhone;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCommunicationWay(): string
+    {
+        return $this->communicationWay;
+    }
+
+    /**
+     * @param string $communicationWay
+     *
+     * @return OrderParameter
+     */
+    public function setCommunicationWay(string $communicationWay): OrderParameter
+    {
+        $this->communicationWay = $communicationWay;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getEmail(): string
+    {
+        return $this->email;
+    }
+
+    /**
+     * @param string $email
+     * @return OrderParameter
+     */
+    public function setEmail(string $email): OrderParameter
+    {
+        $this->email = $email;
         return $this;
     }
 
@@ -326,7 +459,6 @@ class OrderParameter
 
     /**
      * @param string $comment
-     *
      * @return OrderParameter
      */
     public function setComment(string $comment): OrderParameter
@@ -336,116 +468,182 @@ class OrderParameter
     }
 
     /**
-     * @return string
+     * @return null|City
      */
-    public function getUserPhone(): string
+    public function getCity(): ?City
     {
-        return $this->userPhone;
+        return $this->city;
     }
 
     /**
-     * @param string $userPhone
-     *
+     * @param null|City $city
      * @return OrderParameter
      */
-    public function setUserPhone(string $userPhone): OrderParameter
+    public function setCity(?City $city): OrderParameter
     {
-        $this->userPhone = $userPhone;
+        $this->city = $city;
         return $this;
     }
 
     /**
      * @return string
      */
-    public function getPaymentType(): string
+    public function getStreet(): string
     {
-        return $this->paymentType;
+        return $this->street;
     }
 
     /**
-     * @param string $paymentType
-     *
+     * @param string $street
      * @return OrderParameter
      */
-    public function setPaymentType(string $paymentType): OrderParameter
+    public function setStreet(string $street): OrderParameter
     {
-        $this->paymentType = $paymentType;
-        return $this;
-    }
-
-    /**
-     * @return \DateTime
-     */
-    public function getAvailabilityDate(): \DateTime
-    {
-        return $this->availabilityDate;
-    }
-
-    /**
-     * @param \DateTime $availabilityDate
-     *
-     * @return OrderParameter
-     */
-    public function setAvailabilityDate(\DateTime $availabilityDate): OrderParameter
-    {
-        $this->availabilityDate = $availabilityDate;
+        $this->street = $street;
         return $this;
     }
 
     /**
      * @return string
      */
-    public function getCommunicationType(): string
+    public function getHouse(): string
     {
-        return $this->communicationType;
+        return $this->house;
     }
 
     /**
-     * @param string $communicationType
-     *
+     * @param string $house
      * @return OrderParameter
      */
-    public function setCommunicationType(string $communicationType): OrderParameter
+    public function setHouse(string $house): OrderParameter
     {
-        $this->communicationType = $communicationType;
+        $this->house = $house;
         return $this;
     }
 
     /**
      * @return string
      */
-    public function getPromoCode(): string
+    public function getBuilding(): string
     {
-        return $this->promoCode;
+        return $this->building;
     }
 
     /**
-     * @param string $promoCode
-     *
+     * @param string $building
      * @return OrderParameter
      */
-    public function setPromoCode(string $promoCode): OrderParameter
+    public function setBuilding(string $building): OrderParameter
     {
-        $this->promoCode = $promoCode;
+        $this->building = $building;
         return $this;
     }
 
     /**
      * @return string
      */
-    public function getExtraPhone(): string
+    public function getPorch(): string
     {
-        return $this->extraPhone;
+        return $this->porch;
     }
 
     /**
-     * @param string $extraPhone
-     *
+     * @param string $porch
      * @return OrderParameter
      */
-    public function setExtraPhone(string $extraPhone): OrderParameter
+    public function setPorch(string $porch): OrderParameter
     {
-        $this->extraPhone = $extraPhone;
+        $this->porch = $porch;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFloor(): string
+    {
+        return $this->floor;
+    }
+
+    /**
+     * @param string $floor
+     * @return OrderParameter
+     */
+    public function setFloor(string $floor): OrderParameter
+    {
+        $this->floor = $floor;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getApartment(): string
+    {
+        return $this->apartment;
+    }
+
+    /**
+     * @param string $apartment
+     * @return $this
+     */
+    public function setApartment(string $apartment): OrderParameter
+    {
+        $this->apartment = $apartment;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDeliveryPlaceCode()
+    {
+        return $this->deliveryPlaceCode;
+    }
+
+    /**
+     * @param string $deliveryPlaceCode
+     * @return OrderParameter
+     */
+    public function setDeliveryPlaceCode(string $deliveryPlaceCode): OrderParameter
+    {
+        $this->deliveryPlaceCode = $deliveryPlaceCode;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAddressText(): string
+    {
+        return $this->addressText;
+    }
+
+    /**
+     * @param string $addressText
+     * @return OrderParameter
+     */
+    public function setAddressText(string $addressText): OrderParameter
+    {
+        $this->addressText = $addressText;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getGoodsInfo(): string
+    {
+        return $this->goodsInfo;
+    }
+
+    /**
+     * @param string $goodsInfo
+     * @return OrderParameter
+     */
+    public function setGoodsInfo(string $goodsInfo): OrderParameter
+    {
+        $this->goodsInfo = $goodsInfo;
         return $this;
     }
 }

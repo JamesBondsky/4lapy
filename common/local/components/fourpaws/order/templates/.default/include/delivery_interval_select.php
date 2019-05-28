@@ -25,7 +25,7 @@ if ($tmpDelivery = $nextDeliveries[$storage->getDeliveryDate()]) {
         </div>
         <div class="b-select b-select--recall b-select--feedback-page b-select--interval">
             <select class="b-select__block b-select__block--recall b-select__block--feedback-page b-select__block--interval js-select-recovery"
-                    name="<?= $selectorName ?>">
+                    name="<?= $selectorName ?>" <?=$isHidden ? 'disabled' : ''?>>
                 <option value="" disabled="disabled" selected="selected">
                     выберите
                 </option>

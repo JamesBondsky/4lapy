@@ -12,6 +12,7 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
+use FourPaws\App\MainTemplate;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\App\Templates\ViewsEnum;
@@ -37,6 +38,7 @@ global $APPLICATION;
 
 $logger = LoggerFactory::create('productDetail');
 $offerId = $productDetailRequest->getOfferId();
+$isPopup = MainTemplate::getInstance()->isCatalogPopup();
 
 /** @var Product $product */
 $product = $APPLICATION->IncludeComponent(
@@ -46,7 +48,8 @@ $product = $APPLICATION->IncludeComponent(
         'CODE' => $productDetailRequest->getProductSlug(),
         'OFFER_ID' => $offerId,
         'SET_TITLE' => 'Y',
-        'SHOW_FAST_ORDER' => $productDetailRequest->getZone() !== DeliveryService::ZONE_4,
+        'SHOW_FAST_ORDER' => $productDetailRequest->getZone() !== DeliveryService::ZONE_4 && !$isPopup,
+        'IS_POPUP' => $isPopup,
     ],
     false,
     ['HIDE_ICONS' => 'Y']
@@ -82,10 +85,12 @@ if (null === $offer) {
     /** нет оффера что-то пошло не так */
     $logger->error('Нет оффера');
     return;
-} ?>
+}
+?>
     <div class="b-product-card"
          data-productid="<?= $product->getId() ?>"
          data-offerId="<?= $offer->getId() ?>"
+         data-pagetype="catalogDetail"
          data-urlDelivery="/ajax/catalog/product-info/product/deliverySet/"
          itemprop="itemListElement" itemscope itemtype="http://schema.org/Product">
         <div class="b-container">
@@ -154,7 +159,7 @@ if (null === $offer) {
                 } ?>
             </div>
 
-            <? if ($rootCategory->isShowDelText()){ ?>
+            <? if ($rootCategory && $rootCategory->isShowDelText()){ ?>
                 <div class="b-information-message b-information-message--green b-information-message--product-detail"><?=Category::DEL_TEXT?></div>
             <? } ?>
 

@@ -251,10 +251,10 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                     <span class="b-choice-recovery__main-text">Экспресс</span>
                 </span>
                     <span class="b-choice-recovery__addition-text">
-                    В&nbsp;течении <?= round($deliveryDostavista->getPeriodTo() / 60) ?>&nbsp;часов, <?= $deliveryDostavista->getPrice() ?>&nbsp;₽
+                    В&nbsp;течение <?= round($deliveryDostavista->getPeriodTo() / 60) ?>&nbsp;часов, <?= $deliveryDostavista->getPrice() ?>&nbsp;₽
                 </span>
                     <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
-                    В&nbsp;течении <?= round($deliveryDostavista->getPeriodTo() / 60) ?>&nbsp;часов, <?= $deliveryDostavista->getPrice() ?>&nbsp;₽
+                    В&nbsp;течение <?= round($deliveryDostavista->getPeriodTo() / 60) ?>&nbsp;часов, <?= $deliveryDostavista->getPrice() ?>&nbsp;₽
                 </span>
                 </label>
                 <input checked="checked"
@@ -294,7 +294,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                                    id="time-express-delivery"
                                    name="express_time_delivery"
                                    disabled="disabled"
-                                   value="Сегодня, <?= (new DateTime())->format('d.m.Y') ?> — в течении <?= round($deliveryDostavista->getPeriodTo() / 60) ?> часов с момента заказа"
+                                   value="Сегодня, <?= (new DateTime())->format('d.m.Y') ?> — в течение <?= round($deliveryDostavista->getPeriodTo() / 60) ?> часов с момента заказа"
                             />
                             <div class="b-error">
                                 <span class="js-message"></span>
@@ -308,11 +308,13 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                             </label>
                         </div>
                         <div class="b-input b-input--registration-form">
-                        <textarea class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form"
+                        <textarea class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form b-input__input-field--step2-order"
                                   id="comment-express-delivery"
                                   name="comment_dostavista"
-                                  placeholder="Укажите здесь дополнительную информацию к заказу.
-Например, если для доставки заказа курьеру необходимо въехать на территорию с пропускным режимом. В таком случае курьер свяжется с Вами заранее для заказа пропуска на территорию."><?= $storage->getComment() ?></textarea>
+                                  placeholder="Укажите здесь ваши комментарии.
+Например, если для доставки необходим въезд на закрытую территорию. Курьер свяжется с Вами для оформления пропуска.
+При отсутствии пропуска – доставка будет осуществляться до КПП/шлагбаума.
+Доставка силами курьера осуществляется на расстояние не более 200м от КПП/шлагбаума."><?= $storage->getComment() ?></textarea>
                             <div class="b-error">
                                 <span class="js-message"></span>
                             </div>
@@ -328,7 +330,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                         </div>
                         <div class="b-select b-select--recall b-select--feedback-page">
                             <?php
-                            $selectorDelivery = $delivery;
+                            $currentDelivery = $delivery;
                             $selectorStorage = $storage;
                             $selectorName = 'deliveryDate';
                             include 'delivery_date_select.php'
@@ -340,7 +342,11 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                         $selectorStorage = $storage;
                         $selectorName = 'deliveryInterval';
                         include 'delivery_interval_select.php';
-                    } ?>
+                    }
+                    if($storage->isSubscribe()){
+                        include 'delivery_subscribe.php';
+                    }
+                    ?>
                     <div class="b-input-line b-input-line--textarea b-input-line--address-textarea js-no-valid">
                         <div class="b-input-line__label-wrapper">
                             <label class="b-input-line__label" for="order-comment">
@@ -348,11 +354,13 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                             </label>
                         </div>
                         <div class="b-input b-input--registration-form">
-                    <textarea class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form b-input__input-field--focus-placeholder"
+                    <textarea class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form b-input__input-field--step2-order b-input__input-field--focus-placeholder"
                               id="order-comment"
                               name="comment"
-                              placeholder="Укажите здесь дополнительную информацию к заказу.
-Например, если для доставки заказа курьеру необходимо въехать на территорию с пропускным режимом. В таком случае курьер свяжется с Вами заранее для заказа пропуска на территорию."><?= $storage->getComment() ?></textarea>
+                              placeholder="Укажите здесь ваши комментарии.
+Например, если для доставки необходим въезд на закрытую территорию. Курьер свяжется с Вами для оформления пропуска.
+При отсутствии пропуска – доставка будет осуществляться до КПП/шлагбаума.
+Доставка силами курьера осуществляется на расстояние не более 200м от КПП/шлагбаума."><?= $storage->getComment() ?></textarea>
                             <div class="b-error">
                                 <span class="js-message"></span>
                             </div>
@@ -389,7 +397,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
             <div class="b-input-line__label-wrapper"><span
                         class="b-input-line__label">Желаемая дата доставки первого заказа</span>
             </div>
-            <div class="b-select b-select--recall b-select--feedback-page js-select-recovery js-pickup-date">
+            <div class="b-select b-select--recall b-select--feedback-page js-select-recovery js-pickup-date" data-select-delivery-date="first">
                 <?php
                 $selectorStorage = $storage1;
                 $selectorName = 'deliveryDate1';
@@ -421,7 +429,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
             <div class="b-input-line__label-wrapper"><span
                         class="b-input-line__label">Желаемая дата доставки второго заказа</span>
             </div>
-            <div class="b-select b-select--recall b-select--feedback-page js-select-recovery js-pickup-date">
+            <div class="b-select b-select--recall b-select--feedback-page js-select-recovery js-pickup-date" data-select-delivery-date="second">
                 <?php
                 $selectorDelivery = $delivery2;
                 $selectorStorage = $storage2;
@@ -448,7 +456,11 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                 </div>
             </div>
         </div>
-        <div class="change-delivery-type"><span class="js-change-delivery-type" data-type="oneDelivery">Объединить заказы</span>
+
+        <div class="info-change-delivery-type js-info-change-delivery-type">
+            В&nbsp;указанное вами время доставки 1 заказа, мы&nbsp;можем доставить вам полный заказ
+        </div>
+        <div class="change-delivery-type change-delivery-type--combine"><span class="js-change-delivery-type" data-type="oneDelivery">Объединить заказы</span>
         </div>
     </div>
 <?php } ?>

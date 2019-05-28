@@ -32,6 +32,7 @@ use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
+use FourPaws\SaleBundle\Service\OrderService;
 
 abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterface
 {
@@ -395,6 +396,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                     case DeliveryService::ZONE_1:
                     case DeliveryService::ZONE_5:
                     case DeliveryService::ZONE_6:
+                    case DeliveryService::ZONE_IVANOVO:
                         /**
                          * условие доставки в эти зоны - наличие на складе
                          */
@@ -411,9 +413,8 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                     case DeliveryService::ZONE_YAROSLAVL_REGION:
                     case DeliveryService::ZONE_TULA:
                     case DeliveryService::ZONE_TULA_REGION:
-                    case DeliveryService::ZONE_KALUGA:
                     case DeliveryService::ZONE_KALUGA_REGION:
-                    case DeliveryService::ZONE_IVANOVO:
+                    case DeliveryService::ZONE_KALUGA:
                     case DeliveryService::ZONE_IVANOVO_REGION:
                         /**
                          * условие доставки в эту зону - наличие в базовом магазине
@@ -426,6 +427,13 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                                 ->getBaseShops();
                         }
                         break;
+                    default:
+                        if (mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false) {
+                            $result = $storeService->getBaseShops($locationCode);
+                            if ($result->isEmpty()) {
+                                $result = $storeService->getStores(StoreService::TYPE_ALL, ['XML_ID' => OrderService::STORE]);
+                            }
+                        }
                 }
                 break;
             case DeliveryService::DELIVERY_DOSTAVISTA_CODE:

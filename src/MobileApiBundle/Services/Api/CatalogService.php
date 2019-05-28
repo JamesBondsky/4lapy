@@ -1,44 +1,41 @@
 <?php
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
-
 namespace FourPaws\MobileApiBundle\Services\Api;
 
-use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\Catalog\Exception\CategoryNotFoundException;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Filter\RangeFilterInterface;
+use FourPaws\Catalog\Model\Sorting;
 use FourPaws\Catalog\Model\Variant;
 use FourPaws\CatalogBundle\Service\CategoriesService;
-use FourPaws\CatalogBundle\Service\FilterService;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\Filter;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\FilterVariant;
 use FourPaws\MobileApiBundle\Exception\CategoryNotFoundException as MobileCategoryNotFoundException;
 use FourPaws\MobileApiBundle\Exception\SystemException;
-use Psr\Log\LoggerAwareInterface;
+use FourPaws\Search\Model\Navigation;
+use FourPaws\Search\SearchService;
 
-class CatalogService implements LoggerAwareInterface
+class CatalogService
 {
-    use LazyLoggerAwareTrait;
-
     /**
      * @var CategoriesService
      */
     private $categoriesService;
 
     /**
-     * @var FilterService
+     * @var SearchService
      */
-    private $filterService;
+    private $searchService;
 
-    public function __construct(CategoriesService $categoriesService, FilterService $filterService)
+    public function __construct(
+        CategoriesService $categoriesService,
+        SearchService $searchService
+    )
     {
         $this->categoriesService = $categoriesService;
-        $this->filterService = $filterService;
+        $this->searchService = $searchService;
     }
 
     /**
@@ -59,10 +56,17 @@ class CatalogService implements LoggerAwareInterface
             throw new SystemException($exception->getMessage());
         }
 
+        /** we have to search for products to calculate amount of products per each filter  */
+        $this->searchService->searchProducts(
+            $category->getFilters(),
+            new Sorting(),
+            new Navigation()
+        );
 
-        $filters = $this
-            ->filterService->getCategoryFilters($category)
+        $filters = $category
+            ->getFilters()
             ->getFiltersToShow();
+
         return (new ArrayCollection($filters->toArray()))
             ->map(function (FilterBase $filter) {
                 $apiFilter = (new Filter())
@@ -74,8 +78,12 @@ class CatalogService implements LoggerAwareInterface
                         ->setMax($filter->getMaxValue());
                 } else {
                     $apiFilter->setValues(
-                        (new ArrayCollection($filter->getAllVariants()->toArray()))
-                            ->map(function (Variant $variant) {
+                        (new ArrayCollection($filter->getAvailableVariants()->toArray()))
+                            ->map(/**
+                             * @param Variant $variant
+                             * @return FilterVariant
+                             */
+                                function (Variant $variant) {
                                 return new FilterVariant($variant->getValue(), $variant->getName());
                             })
                     );
@@ -86,4 +94,5 @@ class CatalogService implements LoggerAwareInterface
                 return $data instanceof Filter;
             });
     }
+
 }

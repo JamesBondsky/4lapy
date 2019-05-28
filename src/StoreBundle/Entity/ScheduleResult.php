@@ -9,6 +9,8 @@ class ScheduleResult
 {
     public const RESULT_ERROR = -1;
 
+    public const DATE_ACTIVE_FORMAT = 'd.m.Y';
+
     /**
      * @var int
      * @Serializer\Type("integer")
@@ -82,6 +84,15 @@ class ScheduleResult
      * @Assert\NotBlank(groups={"create", "read","update","delete"})
      */
     protected $days24 = -1;
+
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_DATE_ACTIVE")
+     * @Serializer\Groups(groups={"create", "read","update","delete"})
+     * @Assert\NotBlank(groups={"create", "read","update","delete"})
+     */
+    protected $dateActive;
 
     /**
      * @return int
@@ -273,5 +284,23 @@ class ScheduleResult
         }
 
         return $result;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getDateActive(): ?string
+    {
+        return $this->dateActive;
+    }
+
+    /**
+     * @param string $dateActive
+     * @return ScheduleResult
+     */
+    public function setDateActive(string $dateActive): ScheduleResult
+    {
+        $this->dateActive = $dateActive;
+        return $this;
     }
 }

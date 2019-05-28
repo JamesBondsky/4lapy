@@ -3,6 +3,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use Bitrix\Main\Grid\Declension;
 use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
 use FourPaws\App\Application;
@@ -138,6 +139,17 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 $i++;
                             } ?>
                         </div>
+                        <? if($storage->isSubscribe()) { ?>
+                            <div class="b-checkbox b-checkbox--withdraw-bonuses-order">
+                                <input class="b-checkbox__input js-no-valid" type="checkbox" name="subscribeBonus" id="withdraw_bonuses" value="1" required="required" checked/>
+                                <span class="b-error">
+                                    <span class="js-message"></span>
+                                </span>
+                                <label class="b-checkbox__name" for="withdraw_bonuses">
+                                    Списывать все доступные баллы на&nbsp;заказы по&nbsp;подписке
+                                </label>
+                            </div>
+                        <? } ?>
                     </form>
                     <?php if ($user && $user->getDiscountCardNumber()) {
                         if ($arResult['MAX_BONUS_SUM']) {
@@ -145,7 +157,14 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                             ?>
                             <label class="b-order-contacts__label" for="point-pay">
                                 <b>Оплатить часть заказа бонусными баллами </b>
-                                (до <?= $arResult['MAX_BONUS_SUM'] ?>)
+	                            <?
+                                $temporaryBonusText = '';
+	                            if ($arResult['MAX_TEMPORARY_BONUS_SUM'])
+	                            {
+	                            	$temporaryBonusText = ', из них до ' . $arResult['MAX_TEMPORARY_BONUS_SUM'] . ' ' . (new Declension('временный', 'временных', 'временных'))->get($arResult['MAX_TEMPORARY_BONUS_SUM']);
+	                            }
+	                            ?>
+                                (до <?= $arResult['MAX_BONUS_SUM'] ?><?= $temporaryBonusText ?>)
                             </label>
                             <div class="b-input b-input--order-line js-pointspay-input<?= $active ? ' active' : '' ?>">
                                 <input class="b-input__input-field b-input__input-field--order-line js-pointspay-input js-only-number js-no-valid"
@@ -275,7 +294,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                 </div>
             </div>
         </div>
-        <button class="b-button b-button--order-step-3 b-button--next b-button--fixed-bottom js-order-next js-order-step-3-submit">
+        <button class="b-button b-button--order-step-3 <?=($storage->isSubscribe()) ? 'b-button--next-subscribe-delivery' : 'b-button--next'?> b-button--fixed-bottom js-order-next js-order-step-3-submit">
             <?php if ($selectedPayment['CODE'] === OrderPayment::PAYMENT_ONLINE) { ?>
                 Перейти к оплате
             <?php } else { ?>

@@ -856,7 +856,11 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                 $result=end($result);
             }
             $res = preg_match("/.*успешно.*/isu", $result);
-            return $res !== false && $res > 0;
+            $isSuccess = $res !== false && $res > 0;
+            if (!$isSuccess) {
+                $this->logger->error(__METHOD__ . '. Не удалось изменить карту. Ответ Manzana: ' . $result);
+            }
+            return $isSuccess;
         } catch (Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }

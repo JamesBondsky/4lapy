@@ -65,11 +65,18 @@ $aMenuLinks = [
         ['icon' => 'icon-profile'],
         "\$GLOBALS['isAuth']",
     ],
-    [
+    /*[
         'Копи марки',
         '/personal/kopi-marki/',
         [],
         ['icon' => 'icon-piggy-bank'],
+        "\$GLOBALS['isAuth']",
+    ],*/
+    [
+        'Персональные предложения',
+        '/personal/personal-offers/',
+        [],
+        ['icon' => 'icon-personal-offers'],
         "\$GLOBALS['isAuth']",
     ],
     [

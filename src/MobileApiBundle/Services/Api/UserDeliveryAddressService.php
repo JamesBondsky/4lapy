@@ -11,7 +11,7 @@ use Doctrine\Common\Collections\Collection;
 use FourPaws\BitrixOrmBundle\Orm\BitrixOrm;
 use FourPaws\BitrixOrmBundle\Orm\D7RepositoryInterface;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryAddress;
-use FourPaws\MobileApiBundle\Dto\Request\DeliveryAddressDeleteException;
+use FourPaws\MobileApiBundle\Exception\DeliveryAddressDeleteException;
 use FourPaws\MobileApiBundle\Exception\DeliveryAddressAddError;
 use FourPaws\MobileApiBundle\Exception\DeliveryAddressUpdateError;
 use FourPaws\MobileApiBundle\Exception\HackerException;
@@ -97,7 +97,7 @@ class UserDeliveryAddressService implements LoggerAwareInterface
      * @param int $deliveryAddressId
      * @throws \RuntimeException
      * @throws \FourPaws\MobileApiBundle\Exception\HackerException
-     * @throws \FourPaws\MobileApiBundle\Dto\Request\DeliveryAddressDeleteException
+     * @throws \FourPaws\MobileApiBundle\Exception\DeliveryAddressDeleteException
      */
     public function delete(int $userId, int $deliveryAddressId): void
     {
@@ -127,19 +127,21 @@ class UserDeliveryAddressService implements LoggerAwareInterface
 
     /**
      * @param int $userId
-     * @throws SystemException
+     * @param string $cityCode
      * @return Collection|DeliveryAddress[]
      */
-    public function getAll(int $userId)
+    public function getList(int $userId, string $cityCode = '')
     {
-        $addresses = $this->addressRepository->findBy(
-            [
-                'UF_USER_ID' => $userId,
-            ],
-            [
-                'ID' => 'ASC',
-            ]
-        );
+        $filter = [
+            '=UF_USER_ID' => $userId,
+        ];
+        if ($cityCode) {
+            $filter['=UF_CITY_LOCATION'] = $cityCode;
+        }
+        $order = [
+            'ID' => 'ASC',
+        ];
+        $addresses = $this->addressRepository->findBy($filter, $order);
         return $addresses
             ->map(function (Address $address) {
                 $deliveryAddress = (new DeliveryAddress())
@@ -148,11 +150,13 @@ class UserDeliveryAddressService implements LoggerAwareInterface
                     ->setStreetName($address->getStreet())
                     ->setHouse($address->getHouse())
                     ->setFlat($address->getFlat())
-                    ->setDetails($address->getDetails());
+                    ->setDetails($address->getDetails())
+                    ->setBuilding($address->getHousing());
 
                 if ($address->getLocation()) {
-                    $city = $this->cityService->search($address->getLocation())->first();
-                    $deliveryAddress->setCity($city);
+                    if ($city = $this->cityService->searchByCode($address->getLocation())->first()) {
+                        $deliveryAddress->setCity($city);
+                    }
                 }
 
                 return $deliveryAddress;
@@ -172,7 +176,8 @@ class UserDeliveryAddressService implements LoggerAwareInterface
             ->setStreet($deliveryAddress->getStreetName())
             ->setHouse($deliveryAddress->getHouse())
             ->setFlat($deliveryAddress->getFlat())
-            ->setDetails($deliveryAddress->getDetails());
+            ->setDetails($deliveryAddress->getDetails())
+            ->setHousing($deliveryAddress->getBuilding());
 
         $city = $deliveryAddress->getCity();
 

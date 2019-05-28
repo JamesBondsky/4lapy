@@ -2,6 +2,8 @@
 
 namespace FourPaws\App;
 
+use Bitrix\Main\Application as BitrixApplication;
+
 /**
  * Class MainTemplate
  *
@@ -254,6 +256,38 @@ class MainTemplate extends TemplateAbstract
     /**
      * @return bool
      */
+    public function hasPiggyBank(): bool
+    {
+        return $this->isPiggyBank();
+    }
+
+        /**
+     * @return bool
+     */
+    public function isPiggyBank(): bool
+    {
+        return $this->isDir('/personal/kopi-marki');
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasPersonalOffers(): bool
+    {
+        return $this->isPersonalOffers();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPersonalOffers(): bool
+    {
+        return $this->isDir('/personal/personal-offers');
+    }
+
+    /**
+     * @return bool
+     */
     public function hasHeaderBlockShopList(): bool
     {
         return $this->isShopList();
@@ -358,9 +392,25 @@ class MainTemplate extends TemplateAbstract
     /**
      * @return bool
      */
+    public function isOrderSubscribePage(): bool
+    {
+        return $this->isDir('/personal/subscribe');
+    }
+
+    /**
+     * @return bool
+     */
+    public function isOrderHistoryPage(): bool
+    {
+        return $this->isDir('/personal/orders');
+    }
+
+    /**
+     * @return bool
+     */
     public function hasOrderDeliveryPage(): bool
     {
-        return $this->isOrderDeliveryPage();
+        return $this->isOrderDeliveryPage() || $this->isOrderSubscribePage() || $this->isOrderHistoryPage();
     }
 
     /**
@@ -425,7 +475,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function hasUserAuth(): bool
     {
-        return $this->isPartitionDirByFilePath('/ajax/user/auth/login-s') || $this->isPartitionDirByFilePath('/personal') || $this->isPartitionDirByFilePath('/sale');
+        return $this->isDir('/ajax/user/auth/login-r') || $this->isPartitionDirByFilePath('/personal') || $this->isPartitionDirByFilePath('/sale');
     }
 
     /**
@@ -435,4 +485,14 @@ class MainTemplate extends TemplateAbstract
     {
         return $this->isDir('/catalog/search');
     }
+
+    /**
+     * @return bool
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function isCatalogPopup(): bool
+    {
+        return $this->isPartitionDir('/ajax/catalog');
+    }
+
 }

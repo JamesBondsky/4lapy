@@ -7,21 +7,6 @@ use JMS\Serializer\Annotation as Serializer;
 class DeliveryTime
 {
     /**
-     * id интервала в рамках одного дня
-     * @Serializer\Type("int")
-     * @Serializer\SerializedName("id")
-     * @var int
-     */
-    protected $id;
-
-    /**
-     * @Serializer\Type("DateTime<d.m.Y>")
-     * @Serializer\SerializedName("delivery_date")
-     * @var \DateTime
-     */
-    protected $deliveryDate;
-
-    /**
      * @Serializer\Type("string")
      * @Serializer\SerializedName("title")
      * @var string
@@ -29,47 +14,18 @@ class DeliveryTime
     protected $title = '';
 
     /**
-     * @Serializer\SerializedName("available")
-     * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\DeliveryTimeAvailable")
-     * @var DeliveryTimeAvailable
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("deliveryDateIndex")
+     * @var int
      */
-    protected $available;
+    protected $deliveryDateIndex;
 
     /**
-     * @return int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("deliveryIntervalIndex")
+     * @var int
      */
-    public function getId(): int
-    {
-        return $this->id;
-    }
-
-    /**
-     * @param int $id
-     * @return DeliveryTime
-     */
-    public function setId(int $id): DeliveryTime
-    {
-        $this->id = $id;
-        return $this;
-    }
-
-    /**
-     * @return \DateTime
-     */
-    public function getDeliveryDate(): \DateTime
-    {
-        return $this->deliveryDate;
-    }
-
-    /**
-     * @param \DateTime $deliveryDate
-     * @return DeliveryTime
-     */
-    public function setDeliveryDate(\DateTime $deliveryDate): DeliveryTime
-    {
-        $this->deliveryDate = $deliveryDate;
-        return $this;
-    }
+    protected $deliveryIntervalIndex;
 
     /**
      * @return string
@@ -90,20 +46,38 @@ class DeliveryTime
     }
 
     /**
-     * @return DeliveryTimeAvailable
+     * @return int
      */
-    public function getAvailable(): DeliveryTimeAvailable
+    public function getDeliveryDateIndex(): int
     {
-        return $this->available;
+        return $this->deliveryDateIndex;
     }
 
     /**
-     * @param DeliveryTimeAvailable $available
+     * @param int $deliveryDateIndex
      * @return DeliveryTime
      */
-    public function setAvailable(DeliveryTimeAvailable $available): DeliveryTime
+    public function setDeliveryDateIndex(int $deliveryDateIndex): DeliveryTime
     {
-        $this->available = $available;
+        $this->deliveryDateIndex = $deliveryDateIndex;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDeliveryIntervalIndex(): int
+    {
+        return $this->deliveryIntervalIndex;
+    }
+
+    /**
+     * @param int $deliveryIntervalIndex
+     * @return DeliveryTime
+     */
+    public function setDeliveryIntervalIndex(int $deliveryIntervalIndex): DeliveryTime
+    {
+        $this->deliveryIntervalIndex = $deliveryIntervalIndex;
         return $this;
     }
 }

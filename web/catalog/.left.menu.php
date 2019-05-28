@@ -1,34 +1,46 @@
 <?php
 
-use FourPaws\Catalog\Model\Category;
-use FourPaws\Catalog\Query\CategoryQuery;
+$sections = [
+    [
+        'NAME' => 'Товары для кошек',
+        'URL' => '/catalog/koshki/'
+    ],
+    [
+        'NAME' => 'Товары для собак',
+        'URL' => '/catalog/sobaki/'
+    ],
+    [
+        'NAME' => 'Защита от блох и клещей',
+        'URL' => '/catalog/veterinarnaya-apteka/zashchita-ot-blokh-i-kleshchey/'
+    ],
+    [
+        'NAME' => 'Товары для аквариумистики',
+        'URL' => '/catalog/ryby/'
+    ],
+    [
+        'NAME' => 'Товары для грызунов и хорьков',
+        'URL' => '/catalog/gryzuny-i-khorki/'
+    ],
+    [
+        'NAME' => 'Товары для черепах и рептилий',
+        'URL' => '/catalog/reptilii/'
+    ],
+    [
+        'NAME' => 'Товары для птиц',
+        'URL' => '/catalog/ptitsy/'
+    ],
+    [
+        'NAME' => 'Ветаптека',
+        'URL' => '/catalog/veterinarnaya-apteka/'
+    ]
+];
 
-$aMenuLinks = [];
-$sections   = (new CategoryQuery())->withFilterParameter('DEPTH_LEVEL', 1)->exec();
-/** @var Category $section */
 foreach ($sections as $section) {
     $aMenuLinks[] = [
-        $section->getName(),
-        $section->getSectionPageUrl(),
+        $section['NAME'],
+        $section['URL'],
         [],
         [],
         '',
     ];
 }
-
-$aMenuLinks = array_merge($aMenuLinks, [
-    [
-        'Котята',
-        '/catalog/koshki/zaveli-kotenka/',
-        [],
-        [],
-        '',
-    ],
-    [
-        'Щенки',
-        '/catalog/sobaki/zaveli-shchenka/',
-        [],
-        [],
-        '',
-    ],
-]);

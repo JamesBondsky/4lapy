@@ -30,6 +30,13 @@ class UserBonus
      * @var float
      */
     private $allBonus = 0;
+
+    /**
+     * количество бонусов, имеющих ограничение по сроку действия
+     *
+     * @var float
+     */
+    private $temporaryBonus = 0;
     
     /**
      * потраченные бонусы
@@ -116,6 +123,25 @@ class UserBonus
     public function setActiveBonus(float $activeBonus): self
     {
         $this->activeBonus = $activeBonus;
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getTemporaryBonus() : float
+    {
+        return $this->temporaryBonus ?? 0;
+    }
+
+    /**
+     * @param float $temporaryBonus
+     *
+     * @return UserBonus
+     */
+    public function setTemporaryBonus(float $temporaryBonus): self
+    {
+        $this->temporaryBonus = $temporaryBonus;
         return $this;
     }
     
