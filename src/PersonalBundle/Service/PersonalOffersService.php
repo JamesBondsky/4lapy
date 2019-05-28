@@ -79,10 +79,13 @@ class PersonalOffersService
                     'ID',
                     'UF_OFFER',
                     'UF_PROMO_CODE',
-                    'USER_COUPONS*',
+                    'USER_COUPONS',
                 ])
                 ->setFilter([
                     '=UF_OFFER' => $activeOffersCollection->getKeys(),
+                ])
+                ->setOrder([
+                    'USER_COUPONS.UF_DATE_CREATED' => 'desc',
                 ])
                 ->registerRuntimeField(
                     new ReferenceField(
@@ -104,7 +107,7 @@ class PersonalOffersService
             $userOffers = array_unique(array_map(function($coupon) { return $coupon['UF_OFFER']; }, $coupons));
             $offersCollection = $activeOffersCollection->filter(static function($offer) use ($userOffers) { return in_array($offer['ID'], $userOffers, true); });
 
-            $activeOffers = $offersCollection->getValues();
+            /*$activeOffers = $offersCollection->getValues();
             $offersOrder = [];
             foreach ($activeOffers as $key => $offer)
             {
@@ -112,7 +115,7 @@ class PersonalOffersService
             }
             uasort($coupons, static function($a, $b) use($offersOrder) {
                 return $offersOrder[$a['UF_OFFER']] <=> $offersOrder[$b['UF_OFFER']];
-            });
+            });*/
         }
 
         $couponsCollection = new ArrayCollection($coupons);
