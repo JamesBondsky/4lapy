@@ -38,12 +38,12 @@ class KioskController extends Controller
     const ERROR_MORE_THAN_ONE_USER = 2; // более 1 юзера
 
     /**
-     * Авторизация по ШК
-     *
-     * @param $card
-     * @Route("/auth/", methods={"GET", "POST"})
-     * @throws \Exception
-     */
+ * Авторизация по ШК
+ *
+ * @param $card
+ * @Route("/auth/", methods={"GET", "POST"})
+ * @throws \Exception
+ */
     public function authByCard(Request $request)
     {
         global $USER;
@@ -119,8 +119,35 @@ class KioskController extends Controller
                 ]
             );
         }
-
-
         return $responce;
+    }
+
+    /**
+     * Авторизация по ШК
+     *
+     * @param $card
+     * @Route("/bindcard/", methods={"GET", "POST"})
+     * @throws \Exception
+     */
+    public function bindCard(Request $request)
+    {
+        if(!KioskService::isKioskMode()){
+            throw $this->createAccessDeniedException();
+        }
+
+        /** @var KioskService $kioskService */
+        $kioskService = Application::getInstance()->getContainer()->get('kiosk.service');
+
+        try {
+            $card = $request->get('card');
+            if(empty($card)){
+                throw new \Exception(self::ERROR_BAD_CARD);
+            }
+            $kioskService->setCardNumber($card);
+        } catch (\Exception $e) {
+            // TODO: обработать ошибки
+        }
+
+        return $this->redirect('/sale/order/payment/');
     }
 }

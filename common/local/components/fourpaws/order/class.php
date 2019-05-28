@@ -9,6 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\LoaderException;
@@ -153,6 +154,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
     /** @var OrderSubscribeService $orderSubscribeService */
     private $orderSubscribeService;
 
+    /** @var KioskService $kioskService */
+    private $kioskService;
+
     /**
      * FourPawsOrderComponent constructor.
      *
@@ -183,6 +187,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $this->salePreset            = $container->get(SalePreset::class);
         $this->retailRocketService   = $container->get(RetailRocketService::class);
         $this->logger                = LoggerFactory::create('component_order');
+        $this->kioskService          = $container->get('kiosk.service');
 
         parent::__construct($component);
     }
@@ -517,6 +522,18 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 {
                     $this->arResult['MAX_TEMPORARY_BONUS_SUM'] = floor($maxTemporaryBonuses);
                 }
+            }
+
+            if($this->kioskService->isKioskMode()){
+                $curPage = BitrixApplication::getInstance()->getContext()->getRequest()->getRequestUri();
+                $url = $this->kioskService->addParamsToUrl($curPage, ['bindcard' => true]);
+                $this->arResult['BIND_CARD_URL'] = $url;
+                $this->arResult['KIOSK'] = true;
+                if ($this->kioskService->getCardNumber()) {
+                    $storage->setDiscountCardNumber($this->kioskService->getCardNumber());
+                    $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+                }
+
             }
 
             $payments = $this->orderStorageService->getAvailablePayments($storage, true, true, $basket->getPrice());

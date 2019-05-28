@@ -120,4 +120,24 @@ class KioskService
     }
 
 
+
+    /**
+     * @param string $card
+     * @return string
+     */
+    public function setCardNumber(string $card)
+    {
+        $_SESSION['KIOSK_CARD'] = $card;
+        return $card;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getCardNumber()
+    {
+        return $_SESSION['KIOSK_CARD'];
+    }
+
+
 }
