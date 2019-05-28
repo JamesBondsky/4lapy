@@ -6,11 +6,11 @@
 
 namespace FourPaws\MobileApiBundle\Controller\v0;
 
-use Exception;
 use FourPaws\MobileApiBundle\Dto\Error;
 use FourPaws\MobileApiBundle\Dto\Response;
+use FOS\RestBundle\Controller\Annotations;
+use Symfony\Component\HttpFoundation\Request;
 use FOS\RestBundle\Controller\FOSRestController;
-use FOS\RestBundle\Controller\Annotations as Rest;
 use FourPaws\MobileApiBundle\Services\Api\PersonalOffersService as ApiPersonalOffersService;
 
 class PersonalOffersController extends FOSRestController
@@ -27,18 +27,43 @@ class PersonalOffersController extends FOSRestController
     }
 
     /**
-     * @Rest\Get("/personal_offers/")
-     * @Rest\View()
+     * @Annotations\Get("/personal_offers/")
+     * @Annotations\View()
      *
-     * @throws Exception
+     * @return Response
      */
-    public function getPetCategoryAction()
+    public function getPersonalOffersAction(): Response
     {
         $response = new Response();
         $data = $this->apiPersonalOffersService->getPersonalOffers();
 
-        if (!isset($data['error'])) {
-            $response->setData($data);
+        if ($data['success']) {
+            $response->setData($data['data']);
+        } else {
+            $response->setData([]);
+            $response->addError(new Error($data['error']['code'], $data['error']['message']));
+        }
+
+        return $response;
+    }
+
+    /**
+     * @Annotations\Post("/personal_offers/email/send/")
+     * @Annotations\View()
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function sendEmailAction(Request $request): Response
+    {
+        $email = $request->get('email');
+        $promocode = $request->get('promocode');
+
+        $response = new Response();
+        $data = $this->apiPersonalOffersService->sendEmail($email ?: '', $promocode ?: '');
+
+        if ($data['success']) {
+            $response->setData($data['data']);
         } else {
             $response->setData([]);
             $response->addError(new Error($data['error']['code'], $data['error']['message']));
