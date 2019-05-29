@@ -376,7 +376,7 @@ class UserService
             ->setTitle('Карта клиента')
             ->setBalance($bonusInfo->getActiveBonus())
             ->setNumber($user->getDiscountCardNumber())
-            ->setSaleAmount($bonusInfo->getGeneratedRealDiscount());
+            ->setSaleAmount($user->getDiscount());
     }
 
     /**
@@ -444,7 +444,7 @@ class UserService
         $bonusInfo = $this->appBonusService->getManzanaBonusInfo($user);
 
         return (new PersonalBonus())
-            ->setAmount($bonusInfo->getGeneratedRealDiscount() ?? 0)
+            ->setAmount($user->getDiscount() ?? 0)
             ->setTotalIncome($bonusInfo->getDebit() ?? 0)
             ->setTotalOutgo($bonusInfo->getCredit() ?? 0)
             ->setNextStage($bonusInfo->getSumToNext());
