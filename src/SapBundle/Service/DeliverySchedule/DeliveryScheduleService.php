@@ -9,7 +9,9 @@ namespace FourPaws\SapBundle\Service\DeliverySchedule;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\SystemException;
 use Exception;
+use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Service\UserFieldEnumService;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\SapBundle\Dto\In\DeliverySchedule\DeliverySchedule;
 use FourPaws\SapBundle\Dto\In\DeliverySchedule\DeliverySchedules;
@@ -38,18 +40,17 @@ class DeliveryScheduleService implements LoggerAwareInterface
     use LazyLoggerAwareTrait;
 
     public const CACHE_TAG = 'delivery_schedule';
-    /**
-     * @var DeliveryScheduleRepository
-     */
+
+    /** @var DeliveryScheduleRepository */
     private $repository;
-    /**
-     * @var Serializer
-     */
+
+    /** @var Serializer */
     private $serializer;
-    /**
-     * @var BaseService
-     */
+
+    /** @var BaseService */
     private $baseService;
+
+    private $regular;
 
     /**
      * DeliveryScheduleService constructor.
@@ -263,10 +264,49 @@ class DeliveryScheduleService implements LoggerAwareInterface
         $entity->setDateUpdate();
 
         /** Дата изменения */
-        $entity->setRegular($schedule->getRegular());
+        $regular = $this->getRegularByXmlId($schedule->getRegular());
+        $entity->setRegular($regular->getId());
 
         return $entity;
     }
+
+    /**
+     * @param $xmlId
+     * @return mixed
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentException
+     */
+    public function getRegularByXmlId($xmlId)
+    {
+        $regular = $this->getRegular()->filter(function($item) use($xmlId) {
+            return $item->getXmlId() == $xmlId;
+        })->current();
+        return $regular;
+    }
+
+    /**
+     * @return \FourPaws\AppBundle\Collection\UserFieldEnumCollection
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentException
+     */
+    public function getRegular()
+    {
+        if(null === $this->regular){
+            /** @var UserFieldEnumService $userFieldEnumService */
+            $userFieldEnumService = Application::getInstance()->getContainer()->get('userfield_enum.service');
+            $hlBlockEntityFields = $this->repository->getHlBlockEntityFields();
+            if (isset($hlBlockEntityFields['UF_REGULAR'])) {
+                if ($hlBlockEntityFields['UF_REGULAR']['USER_TYPE_ID'] === 'enumeration') {
+                    $this->regular = $userFieldEnumService->getEnumValueCollection(
+                        $hlBlockEntityFields['UF_REGULAR']['ID']
+                    );
+                }
+            }
+        }
+
+        return $this->regular;
+    }
+
 
     /**
      * @param DeliveryScheduleEntity $entity
