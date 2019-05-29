@@ -95,6 +95,15 @@ class ScheduleResult
     protected $dateActive;
 
     /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("UF_REGULAR")
+     * @Serializer\Groups(groups={"create", "read","update","delete"})
+     * @Assert\NotBlank(groups={"create", "read","update","delete"})
+     */
+    protected $regularity;
+
+    /**
      * @return int
      */
     public function getId(): int
@@ -302,5 +311,23 @@ class ScheduleResult
     {
         $this->dateActive = $dateActive;
         return $this;
+    }
+
+    /**
+     * @param int $regularity
+     * @return ScheduleResult
+     */
+    public function setRegularity(int $regularity): ScheduleResult
+    {
+        $this->regularity = $regularity;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getRegularity(): int
+    {
+        return $this->regularity;
     }
 }

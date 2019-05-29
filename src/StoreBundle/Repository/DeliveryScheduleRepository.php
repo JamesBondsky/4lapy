@@ -14,6 +14,8 @@ use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Enum\HlblockCode;
+use FourPaws\Helpers\HighloadHelper;
 use FourPaws\StoreBundle\Collection\DeliveryScheduleCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\DeliverySchedule;
@@ -35,6 +37,8 @@ class DeliveryScheduleRepository extends BaseRepository
      * @var DataManager
      */
     protected $dataManager;
+    protected $hlEntityFields;
+    protected $hlBlockData;
 
     /**
      * DeliveryScheduleRepository constructor.
@@ -91,6 +95,33 @@ class DeliveryScheduleRepository extends BaseRepository
     }
 
     /**
+     * @param Store $receiver
+     * @param int $regularityId
+     * @param StoreCollection|null $senders
+     * @return DeliveryScheduleCollection
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     */
+    public function findByReceiverAndRegularity(
+        Store $receiver,
+        int $regularityId,
+        StoreCollection $senders = null
+    ): DeliveryScheduleCollection {
+        $filter = ['=UF_TPZ_RECEIVER' => $receiver->getXmlId(), '=UF_REGULAR' => $regularityId];
+        if ($senders && !$senders->isEmpty()) {
+            $filter['=UF_TPZ_RECEIVER'] = [];
+            /** @var Store $sender */
+            foreach ($senders as $sender) {
+                $filter['=UF_TPZ_SENDER'][] = $sender->getXmlId();
+            }
+        }
+
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
+        return $this->findBy($filter);
+    }
+
+    /**
      * @param Store $sender
      * @param StoreCollection $receivers
      * @return DeliveryScheduleCollection
@@ -110,6 +141,54 @@ class DeliveryScheduleRepository extends BaseRepository
 
         /** @noinspection PhpIncompatibleReturnTypeInspection */
         return $this->findBy($filter);
+    }
+
+    /**
+     * @param Store $sender
+     * @param StoreCollection $receivers
+     * @return DeliveryScheduleCollection
+     */
+    public function findBySenderAndRegularity(
+        Store $sender,
+        int $regularityId,
+        StoreCollection $receivers = null
+    ): DeliveryScheduleCollection {
+        $filter = ['=UF_TPZ_SENDER' => $sender->getXmlId(), '=UF_REGULAR' => $regularityId];
+        if ($receivers && !$receivers->isEmpty()) {
+            $filter['=UF_TPZ_RECEIVER'] = [];
+            /** @var Store $sender */
+            foreach ($receivers as $receiver) {
+                $filter['=UF_TPZ_RECEIVER'][] = $receiver->getXmlId();
+            }
+        }
+
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
+        return $this->findBy($filter);
+    }
+
+    /**
+     * @return array
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Exception
+     */
+    public function getHlBlockEntityFields(): array
+    {
+        if (!$this->hlEntityFields) {
+            $this->hlEntityFields = $GLOBALS['USER_FIELD_MANAGER']->GetUserFields('HLBLOCK_'.$this->getHlBlockId());
+        }
+        return $this->hlEntityFields;
+    }
+
+    /**
+     * @return int
+     * @throws ArgumentException
+     * @throws \Bitrix\Main\LoaderException
+     */
+    public function getHlBlockId(): int
+    {
+        $highloadHelper = new HighloadHelper();
+        return $highloadHelper->getIdByName(HlblockCode::DELIVERY_SCHEDULE);
     }
 
     /**
