@@ -80,7 +80,9 @@ class PersonalOffersService
         try {
             $result = [
                 'success' => true,
-                'data'    => $this->personalOffersService->getActiveUserCouponsEx($userId)
+                'data'    => [
+                    'personal_offers' => $this->personalOffersService->getActiveUserCouponsEx($userId)
+                ]
             ];
         } catch (BarcodeException|IblockNotFoundException|ArgumentException|LoaderException|SystemException|InvalidArgumentException $exception) {
             $result = [
@@ -157,7 +159,9 @@ class PersonalOffersService
             );
             $result = [
                 'success' => true,
-                'data'    => 'Купон успешно отправлен на почту'
+                'data'    => [
+                    'message' => 'Купон успешно отправлен на почту'
+                ]
             ];
         } catch (Exception|BarcodeException|IblockNotFoundException|InvalidArgumentException|LoaderException|ExpertsenderServiceApiException|ExpertsenderServiceException|ExpertSenderException $exception) {
             $result = [
