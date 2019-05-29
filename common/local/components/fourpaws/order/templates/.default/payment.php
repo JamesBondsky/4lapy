@@ -224,7 +224,11 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 <div class="b-new-bonus-card--info">
                                     <p>Бонусная карта для зачисления баллов:
                                         <span><?= $storage->getDiscountCardNumber() ?></span></p>
-                                    <span class="js-another-bonus-card">Указать другую карту</span>
+                                        <? if ($arResult['KIOSK']) { ?>
+                                            <a href="<?=$arResult['BIND_CARD_URL']?>"><span>Указать другую карту</span></a>
+                                        <? } else { ?>
+                                            <span class="js-another-bonus-card">Указать другую карту</span>
+                                        <? } ?>
                                 </div>
                             </div>
                         </div>
