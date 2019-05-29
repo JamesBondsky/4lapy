@@ -96,8 +96,6 @@ $(document).ready(function(){
                 start = part;
                 end = images.length;
             }
-            console.log(htmlLeft);
-            console.log(htmlRight);
             $('[data-point-image-left]').html(htmlLeft);
             $('[data-point-image-right]').html(htmlRight);
         } else {
