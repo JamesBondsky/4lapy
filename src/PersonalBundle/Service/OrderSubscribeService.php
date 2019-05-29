@@ -1424,9 +1424,15 @@ class OrderSubscribeService implements LoggerAwareInterface
      *
      * @param OrderSubscribe $orderSubscribe
      * @param bool $deactivateIfEmpty
-     * @param string|\DateTimeInterface $currentDate
+     * @param string $currentDate
      * @return Result
-     * @throws InvalidArgumentException
+     * @throws ApplicationCreateException
+     * @throws ArgumentNullException
+     * @throws NotFoundException
+     * @throws ObjectPropertyException
+     * @throws \FourPaws\AppBundle\Exception\NotFoundException
+     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
+     * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
      */
     public function processOrderSubscribe(
         OrderSubscribe $orderSubscribe,
@@ -1440,6 +1446,19 @@ class OrderSubscribeService implements LoggerAwareInterface
             $result->addError(
                 new Error(
                     'Подписка отменена',
+                    'orderSubscribeNotActive'
+                )
+            );
+        }
+
+        // баг с несозданным адресом
+        if ($orderSubscribe->getDeliveryPlace() == 0) {
+            $orderSubscribe->setActive(false);
+            $this->update($orderSubscribe);
+            $this->sendAutoUnsubscribeOrderNotification($orderSubscribe);
+            $result->addError(
+                new Error(
+                    'Подписка оформлена без адреса',
                     'orderSubscribeNotActive'
                 )
             );

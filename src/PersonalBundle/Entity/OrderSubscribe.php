@@ -296,6 +296,9 @@ class OrderSubscribe extends BaseEntity
             $personalAddress = $addressService->getById($this->deliveryPlace);
             $this->deliveryPlace = $personalAddress->getFullAddress();
         }
+        if($this->deliveryPlace === "0"){
+            $this->deliveryPlace = "Не удалось определить адрес";
+        }
         return $this->deliveryPlace;
     }
 
@@ -754,7 +757,12 @@ class OrderSubscribe extends BaseEntity
                 $store = $terminals[$this->getDeliveryPlace()];
             }
 
-            $result = $store->getAddress();
+            try {
+                $result = $store->getAddress();
+            } catch (\Exception $e) {
+                // ну давай хотя бы код магазина отбразим
+                $result = $this->getDeliveryPlace();
+            }
         }
 
         return $result;
