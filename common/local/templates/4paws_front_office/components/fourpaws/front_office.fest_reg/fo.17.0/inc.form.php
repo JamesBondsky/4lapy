@@ -160,7 +160,9 @@ if ($showForm) {
                        name="<?= $fieldName ?>"
                        value="<?= $value ?>"<?= $attr ?>
                        class="form-page__field mb-l"
-                       type="text">
+                       type="number"
+                       pattern="\d{0,10}"
+                >
                 <?php
                 if ($errMess) {
                     echo sprintf($errBlock, $errMess);

@@ -2,6 +2,10 @@
     if (window.FourPawsFrontOfficeFestSearchComponent) {
         return;
     }
+
+    var limitNumberInputLength = function() {
+        if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength);
+    };
     
     window.FourPawsFrontOfficeFestSearchComponent = function (params) {
         this.siteId            = params.siteId || '';
@@ -14,6 +18,9 @@
     };
     
     window.FourPawsFrontOfficeFestSearchComponent.prototype = {
+        limitNumberLength: function() {
+            $('[type=number][maxlength]').off('input', limitNumberInputLength).on('input', limitNumberInputLength);
+        },
         sendRequest: function (sendData, requestParams) {
             var requestUrl       = requestParams.requestUrl || this.componentPath + '/ajax.php' + (document.location.href.indexOf('clear_cache=Y') !== -1 ? '?clear_cache=Y' : '');
             var requestType      = requestParams.type || 'POST';

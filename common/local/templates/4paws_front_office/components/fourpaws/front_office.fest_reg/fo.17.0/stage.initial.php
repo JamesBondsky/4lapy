@@ -49,6 +49,8 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                 containerSelector: '#refreshingBlockContainer'
             }
         );
+
+        festRegComponent.limitNumberLength();
         
         $(document).ready(
             function () {
@@ -113,6 +115,8 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
 	                                        //submitForm.find('.form-page__submit-wrap').removeClass('loading');
 	                                    }
                                     }
+
+                                    festRegComponent.limitNumberLength();
                                 }
                             }
                         );

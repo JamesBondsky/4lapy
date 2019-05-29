@@ -50,6 +50,8 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
             }
         );
 
+        festSearchComponent.limitNumberLength();
+
         $(document).ready(
             function () {
                 function isJson(str) {
@@ -113,6 +115,8 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
 	                                        //submitForm.find('.form-page__submit-wrap').removeClass('loading');
 	                                    }
                                     }
+
+                                    festSearchComponent.limitNumberLength();
                                 }
                             }
                         );

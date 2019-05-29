@@ -38,7 +38,7 @@ if ($showForm) {
             $value     = $fieldMeta['VALUE'];
             $attr      = '';
             $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
-            $attr      .= ' maxlength="13"';
+            $attr      .= ' maxlength="5"';
             $errMess   = '';
             /** @var Bitrix\Main\Error $error */
             $error = $fieldMeta['ERROR'];
@@ -66,7 +66,9 @@ if ($showForm) {
                        name="<?= $fieldName ?>"
                        value="<?= $value ?>"<?= $attr ?>
                        class="form-page__field mb-l"
-                       type="text">
+                       type="number"
+                       pattern="\d{0,5}"
+                >
                 <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
             </div>
             <?php
@@ -106,7 +108,9 @@ if ($showForm) {
                        name="<?= $fieldName ?>"
                        value="<?= $value ?>"<?= $attr ?>
                        class="form-page__field mb-l"
-                       type="text">
+                       type="number"
+                       pattern="\d{0,10}"
+                >
                 <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
             </div>
             <?
@@ -146,7 +150,9 @@ if ($showForm) {
                        name="<?= $fieldName ?>"
                        value="<?= $value ?>"<?= $attr ?>
                        class="form-page__field mb-l"
-                       type="text">
+                       type="number"
+                       pattern="\d{0,13}"
+                >
                 <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
             </div>
 	        <?
