@@ -2365,3 +2365,110 @@ body.is_open_banner_top .header.navbar-fixed-top{
     background: #ff4e00;
     color: #fff;
 }
+
+
+.popup-schedule{}
+.popup-schedule__subtitle{
+    margin-bottom: 10px;
+    font-weight: 700;
+    text-align: center;
+}
+.popup-schedule__title{
+    margin-bottom: 10px;
+    font-weight: 700;
+    color: #515769;
+    font-size: 36px;
+    line-height: 1.4;
+    font-family: 'Open Sans',sans-serif;
+    text-transform: uppercase;
+    text-align: center;
+}
+.popup-schedule__list{
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+}
+.popup-schedule__list li{
+    margin-bottom: 10px;
+    font-size: 14px;
+    list-style: none;
+}
+.popup-schedule__list li{
+    display: table;
+    width: 100%;
+}
+.popup-schedule__list li .time{
+    display: table-cell;
+    vertical-align: top;
+    width: 105px;
+    color: #515769;
+}
+.popup-schedule__list li .event{
+    display: table-cell;
+    vertical-align: top;
+    color: #515769;
+}
+
+.popwrap.popwrap_content {
+    background: none;
+    width: 736px;
+    height: auto;
+    padding: 145px 67px 75px 69px;
+    left: 50%;
+    position: relative;
+    margin-left: -365px;
+    margin-bottom: 40px;
+    top: 100px;
+    display: none;
+}
+.popwrap.popwrap_content:before {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 220px;
+    background: url(../img/reg_pop1.png) 0 0 no-repeat;
+    z-index: -1;
+}
+.popwrap.popwrap_content:after {
+    content: "";
+    display: block;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 250px;
+    background: url(../img/reg_pop1.png) 0 100% no-repeat;
+    z-index: -1;
+}
+.popwrap.popwrap_content .popwrap__content{
+    background: #fff;
+    position: relative;
+    z-index: 1;
+    padding: 0 30px;
+}
+
+@media screen and (max-width: 600px) {
+    .popwrap.popwrap_content {
+        top: 10px;
+        background: #fff;
+        width: 94%;
+        height: auto;
+        padding: 30px 20px 20px;
+        border-radius: 30px;
+        margin-left: -47%;
+        margin-bottom: 20px;
+    }
+    .popwrap.popwrap_content:before,
+    .popwrap.popwrap_content:after {
+        display: none;
+    }
+    .popwrap.popwrap_content .popwrap__content{
+        padding: 0;
+    }
+    .popup-schedule__title{
+        font-size: 24px;
+    }
+}

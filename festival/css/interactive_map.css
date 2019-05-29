@@ -634,6 +634,17 @@
     position: relative;
     padding: 0;
 }
+.interactive_map_pavilion__image-list.list_left .interactive_map_pavilion__image-item.item_1:last-child{
+    width: 100%;
+}
+.interactive_map_pavilion__image-list.list_right .interactive_map_pavilion__image-item.item_2:last-child,
+.interactive_map_pavilion__image-list.list_right .interactive_map_pavilion__image-item.item_3:last-child{
+    width: 100%;
+}
+.interactive_map_pavilion__image-list.list_right .interactive_map_pavilion__image-item.item_2 + .interactive_map_pavilion__image-item.item_3{
+    width: 50%;
+}
+
     .interactive_map_pavilion__image-item .image{
         display: block;
         position: absolute;
@@ -1010,10 +1021,20 @@
     .interactive_map_pavilion__image-item{
         width: 100%;
     }
-    .interactive_map_pavilion__image-list[data-point-image-left] .interactive_map_pavilion__image-item:first-child{
+    .interactive_map_pavilion__image-list.list_left .interactive_map_pavilion__image-item:first-child{
         display: none;
     }
-    .interactive_map_pavilion__image-list[data-point-image-right] .interactive_map_pavilion__image-item:last-child{
+    .interactive_map_pavilion__image-list.list_right .interactive_map_pavilion__image-item:last-child{
+        display: none;
+    }
+    .interactive_map_pavilion__image-list.list_left .interactive_map_pavilion__image-item.item_1:last-child{
+        display: block;
+    }
+    .interactive_map_pavilion__image-list.list_right .interactive_map_pavilion__image-item.item_2:last-child,
+    .interactive_map_pavilion__image-list.list_right .interactive_map_pavilion__image-item.item_3:last-child{
+        display: block;
+    }
+    .interactive_map_pavilion__image-list.list_right .interactive_map_pavilion__image-item.item_2 + .interactive_map_pavilion__image-item.item_3{
         display: none;
     }
     .interactive_map_pavilion__popup{
@@ -1192,10 +1213,13 @@
         height: 0;
         padding-top: 60%;
     }
-    .interactive_map_pavilion__image-list[data-point-image-left] .interactive_map_pavilion__image-item:first-child{
+    .interactive_map_pavilion__image-list.list_left .interactive_map_pavilion__image-item:first-child{
         display: block;
     }
-    .interactive_map_pavilion__image-list[data-point-image-right] .interactive_map_pavilion__image-item:last-child{
+    .interactive_map_pavilion__image-list.list_right .interactive_map_pavilion__image-item:last-child{
+        display: block;
+    }
+    .interactive_map_pavilion__image-list.list_right .interactive_map_pavilion__image-item.item_2 + .interactive_map_pavilion__image-item.item_3{
         display: block;
     }
     .interactive_map_pavilion__image{

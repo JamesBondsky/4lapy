@@ -809,7 +809,7 @@
                             <div class="interactive_map_pavilion__scrollpavilion">
                                 <div class="interactive_map_pavilion__bg">
                                     <div class="interactive_map_pavilion__center">
-                                        <div class="point point_large point_4lapy" data-interactive-map-pavilion-point="4lapy" data-point-title="Магазин «Четыре Лапы»" data-point-description="Эксперты &laquo;Четыре Лапы&raquo; подберут для домашнего питомца лучший корм, развивающие игрушки, стильную одежду и&nbsp;не&nbsp;только. Приятное дополнение&nbsp;&mdash; скидка&nbsp;10% на&nbsp;любые подарки для вашего любимца." data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/4lapy/1.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/4lapy/2.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/4lapy/3.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/4lapy/4.jpg&quot;}]'>
+                                        <div class="point point_large point_4lapy" data-interactive-map-pavilion-point="4lapy" data-point-title="Магазин «Четыре Лапы»" data-point-description="Эксперты &laquo;Четыре Лапы&raquo; подберут для домашнего питомца лучший корм, развивающие игрушки, стильную одежду и&nbsp;не&nbsp;только. Приятное дополнение&nbsp;&mdash; скидка&nbsp;10% на&nbsp;любые подарки для вашего любимца." data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/4lapy/1-1.jpg&quot;,&quot;type&quot;:&quot;gorizontal&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/4lapy/3.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/4lapy/4.jpg&quot;}]'>
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -833,7 +833,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_medium point_proplan" data-interactive-map-pavilion-point="proplan" data-point-title="Про План" data-point-description="Нестле Пурина ПетКер искренне верит, что людям и&nbsp;домашним животным лучше вместе. Поэтому мы&nbsp;стремимся делать жизнь питомцев во&nbsp;всем мире более счастливой, здоровой и&nbsp;содействовать повышению продолжительности их&nbsp;жизни посредством качественного питания и&nbsp;ухода." data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/proplan/1.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/proplan/2.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/proplan/3.jpg&quot;}]'>
+                                        <div class="point point_medium point_proplan" data-interactive-map-pavilion-point="proplan" data-point-title="Pro Plan" data-point-description="Нестле Пурина ПетКер искренне верит, что людям и&nbsp;домашним животным лучше вместе. Поэтому мы&nbsp;стремимся делать жизнь питомцев во&nbsp;всем мире более счастливой, здоровой и&nbsp;содействовать повышению продолжительности их&nbsp;жизни посредством качественного питания и&nbsp;ухода." data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/proplan/1.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/proplan/3.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/proplan/2-1.jpg&quot;}]'>
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -849,7 +849,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_freshstep" data-interactive-map-pavilion-point="freshstep" data-point-title="Фреш Стэп" data-point-description="Fresh Step<sup class='reg'>&reg;</sup> и&nbsp;Ever Clean<sup class='reg'>&reg;</sup> расскажут о&nbsp;современных технологиях кошачьего быта и&nbsp;покажут, почему российские потребители уже более 20&nbsp;лет доверяют чистоту своего дома именно этим наполнителям." data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/freshstep/1.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/freshstep/2.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/freshstep/4.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/freshstep/3.jpg&quot;}]'>
+                                        <div class="point point_small point_freshstep" data-interactive-map-pavilion-point="freshstep" data-point-title="Fresh Step" data-point-description="Fresh Step<sup class='reg'>&reg;</sup> и&nbsp;Ever Clean<sup class='reg'>&reg;</sup> расскажут о&nbsp;современных технологиях кошачьего быта и&nbsp;покажут, почему российские потребители уже более 20&nbsp;лет доверяют чистоту своего дома именно этим наполнителям." data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/freshstep/1.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/freshstep/2.jpg&quot;}]'>
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -897,7 +897,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_bayer" data-interactive-map-pavilion-point="bayer" data-point-title="BAYER" data-point-description="Концерн Bayer играет ведущую роль в&nbsp;области защиты животных от&nbsp;наружных и&nbsp;внутренних паразитов, благодаря внедрению новых продуктов. Запатентовав &laquo;репеллентный эффект&raquo; (ошейник Форесто<sup class='reg'>&reg;</sup>, капли Адвантикс<sup class='reg'>&reg;</sup>), Bayer открыл новые возможности защиты животных от&nbsp;клещей." data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/bayer/1.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/bayer/2.jpg&quot;,&quot;position&quot;:&quot;top&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/bayer/3.jpg&quot;}]'>
+                                        <div class="point point_small point_bayer" data-interactive-map-pavilion-point="bayer" data-point-title="BAYER" data-point-description="Концерн Bayer играет ведущую роль в&nbsp;области защиты животных от&nbsp;наружных и&nbsp;внутренних паразитов, благодаря внедрению новых продуктов. Запатентовав &laquo;репеллентный эффект&raquo; (ошейник Форесто<sup class='reg'>&reg;</sup>, капли Адвантикс<sup class='reg'>&reg;</sup>), Bayer открыл новые возможности защиты животных от&nbsp;клещей." data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/bayer/1.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/bayer/2.jpg&quot;,&quot;position&quot;:&quot;top&quot;}]'>
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -972,7 +972,7 @@
 
                         <div class="interactive_map_pavilion__content">
                             <div class="interactive_map_pavilion__container">
-                                <div class="interactive_map_pavilion__image-list" data-point-image-left="true"></div>
+                                <div class="interactive_map_pavilion__image-list list_left" data-point-image-left="true"></div>
                                 <div class="interactive_map_pavilion__popup">
                                     <div class="interactive_map_pavilion__popup-container">
                                         <button type="button" class="interactive_map_pavilion__closecontent" data-interactive-map-pavilion-closecontent="true" data-point-title="Начни путешествие" data-point-description="Выбери площадку на&nbsp;карте павильона и&nbsp;кликни на&nbsp;иконку, чтобы&nbsp;узнать&nbsp;больше."></button>
@@ -984,7 +984,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="interactive_map_pavilion__image-list" data-point-image-right="true"></div>
+                                <div class="interactive_map_pavilion__image-list list_right" data-point-image-right="true"></div>
                             </div>
                             <div class="interactive_map_pavilion__image" data-interactive-map-pavilion-image="true"></div>
                         </div>

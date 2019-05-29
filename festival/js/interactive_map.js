@@ -85,15 +85,21 @@ $(document).ready(function(){
                             }
                         }
                         if (j == 0){
-                            htmlLeft += '<div class="interactive_map_pavilion__image-item"><div class="image" style="background-image: url(' + images[i].image + ');' + style_position + '"></div></div>';
+                            htmlLeft += '<div class="interactive_map_pavilion__image-item item_' + (i+1) + '"><div class="image" style="background-image: url(' + images[i].image + ');' + style_position + '"></div></div>';
                         }
                         if (j == 1){
-                            htmlRight += '<div class="interactive_map_pavilion__image-item"><div class="image" style="background-image: url(' + images[i].image + ');' + style_position + '"></div></div>';
+                            htmlRight += '<div class="interactive_map_pavilion__image-item item_' + (i+1) + '"><div class="image" style="background-image: url(' + images[i].image + ');' + style_position + '"></div></div>';
+                        }
+
+                        if (images[i].type == 'gorizontal') {
+                            start = i + 1;
+                            break;
+                        } else {
+                            start = part;
                         }
                         style_position = '';
                     }
                 }
-                start = part;
                 end = images.length;
             }
             $('[data-point-image-left]').html(htmlLeft);

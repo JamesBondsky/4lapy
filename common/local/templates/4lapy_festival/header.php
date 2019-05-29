@@ -278,7 +278,7 @@ $markup = PawsApplication::markup();
                 <div class="row text-center margin-b-40">
                     <div class="col-sm-8 col-sm-offset-2">
                         <div class="schedule">
-                            <a href="/files/schedule.docx" target="_blank">Расписание</a>
+                            <a href="javascript:void(0);" class="js-open-popup" data-popup-id="schedule-bloggershow">Расписание</a>
                         </div>
                         <div class="bar"><h5>блогер-шоу</h5></div>
                         <h2>Общайся на Блогер-Шоу</h2>
@@ -476,7 +476,7 @@ $markup = PawsApplication::markup();
                 <div class="row text-center margin-b-40">
                     <div class="col-sm-8 col-sm-offset-2">
                         <div class="schedule">
-                            <a href="/files/schedule.docx" target="_blank">Расписание</a>
+                            <a href="javascript:void(0);" class="js-open-popup" data-popup-id="schedule-gala">Расписание</a>
                         </div>
                         <div class="bar"><h5>ГЛАВНАЯ СЦЕНА</h5></div>
                         <h2>зажигай на главной сцене</h2>
