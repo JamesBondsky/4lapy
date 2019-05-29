@@ -809,7 +809,7 @@
                             <div class="interactive_map_pavilion__scrollpavilion">
                                 <div class="interactive_map_pavilion__bg">
                                     <div class="interactive_map_pavilion__center">
-                                        <div class="point point_large point_4lapy" data-interactive-map-pavilion-point="4lapy" data-point-title="Магазин Четыре Лапы" data-point-description="Посетите флагманский магазин компании Четыре Лапы.">
+                                        <div class="point point_large point_4lapy" data-interactive-map-pavilion-point="4lapy" data-point-title="Магазин «Четыре Лапы»" data-point-description="Эксперты &laquo;Четыре Лапы&raquo; подберут для домашнего питомца лучший корм, развивающие игрушки, стильную одежду и&nbsp;не&nbsp;только. Приятное дополнение&nbsp;&mdash; скидка&nbsp;10% на&nbsp;любые подарки для вашего любимца." data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/4lapy/1.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/4lapy/2.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/4lapy/3.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/4lapy/4.jpg&quot;}]'>
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -817,7 +817,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_lecturehall" data-interactive-map-pavilion-point="lecturehall" data-point-title="Лекторий" data-point-description="Прокачай себя в модном лектории – узнаешь много интересного о питомцах и познакомишься с ведущими зоо-экспертами." data-point-image="/img/img07_3.jpg">
+                                        <div class="point point_small point_lecturehall" data-interactive-map-pavilion-point="lecturehall" data-point-title="Лекторий" data-point-description="За знаниями отправляемся в&nbsp;лекторий, чтобы узнать много интересного и&nbsp;познакомиться с&nbsp;ведущими зоо-экспертами" data-point-image="/img/img07_3.jpg" data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/lecturehall/1.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/lecturehall/2.jpg&quot;,&quot;position&quot;:&quot;top&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/lecturehall/3.jpg&quot;,&quot;position&quot;:&quot;top&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/lecturehall/4.jpg&quot;}]'>
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -825,7 +825,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_medium point_rc" data-interactive-map-pavilion-point="royalcanin" data-point-title="ROYAL CANIN" data-point-description="ROYAL CANIN&nbsp;&mdash; эксперт в&nbsp;области здорового питания для кошек и&nbsp;собак. Компания ориентированна на&nbsp;изучение потребностей животных, уважение к&nbsp;их&nbsp;особенностям и&nbsp;создание продуктов,отвечающих их&nbsp;нуждам.">
+                                        <div class="point point_medium point_rc" data-interactive-map-pavilion-point="royalcanin" data-point-title="ROYAL CANIN" data-point-description="ROYAL CANIN&nbsp;&mdash; эксперт в&nbsp;области здорового питания для кошек и&nbsp;собак. Компания ориентированна на&nbsp;изучение потребностей животных, уважение к&nbsp;их&nbsp;особенностям и&nbsp;создание продуктов,отвечающих их&nbsp;нуждам." data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/royalcanin/1.jpg&quot;,&quot;position&quot;:&quot;bottom&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/royalcanin/2.jpg&quot;,&quot;position&quot;:&quot;bottom&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/royalcanin/3.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/royalcanin/4.jpg&quot;}]'>
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -833,7 +833,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_medium point_proplan" data-interactive-map-pavilion-point="proplan" data-point-title="Про План" data-point-description="Нестле Пурина ПетКер искренне верит, что людям и&nbsp;домашним животным лучше вместе. Поэтому мы&nbsp;стремимся делать жизнь питомцев во&nbsp;всем мире более счастливой, здоровой и&nbsp;содействовать повышению продолжительности их&nbsp;жизни посредством качественного питания и&nbsp;ухода.">
+                                        <div class="point point_medium point_proplan" data-interactive-map-pavilion-point="proplan" data-point-title="Про План" data-point-description="Нестле Пурина ПетКер искренне верит, что людям и&nbsp;домашним животным лучше вместе. Поэтому мы&nbsp;стремимся делать жизнь питомцев во&nbsp;всем мире более счастливой, здоровой и&nbsp;содействовать повышению продолжительности их&nbsp;жизни посредством качественного питания и&nbsp;ухода." data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/proplan/1.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/proplan/2.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/proplan/3.jpg&quot;}]'>
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -841,7 +841,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_acana" data-interactive-map-pavilion-point="acana" data-point-title="ACANA" data-point-description="&laquo;Компания Акана&raquo; представляет в&nbsp;России канадские корма для&nbsp;кошек и&nbsp;собак Acana и&nbsp;Orijen. Мы&nbsp;делаем всё, чтобы хозяева питомцев нашей страны узнали стандарты качества биологически соответствующих кормов." data-point-images='{&quot;0&quot;:&quot;/img/interactive_map/brands/images/acana/acana1.jpg&quot;,&quot;1&quot;:&quot;/img/interactive_map/brands/images/acana/acana2.jpg&quot;,&quot;2&quot;:&quot;/img/interactive_map/brands/images/acana/acana4.jpg&quot;,&quot;3&quot;:&quot;/img/interactive_map/brands/images/acana/acana3.jpg&quot;}'>
+                                        <div class="point point_small point_acana" data-interactive-map-pavilion-point="acana" data-point-title="ACANA" data-point-description="&laquo;Компания Акана&raquo; представляет в&nbsp;России канадские корма для&nbsp;кошек и&nbsp;собак Acana и&nbsp;Orijen. Мы&nbsp;делаем всё, чтобы хозяева питомцев нашей страны узнали стандарты качества биологически соответствующих кормов." data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/acana/1.jpg&quot;,&quot;position&quot;:&quot;top&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/acana/2.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/acana/4.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/acana/3.jpg&quot;}]'>
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -849,7 +849,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_freshstep" data-interactive-map-pavilion-point="freshstep" data-point-title="Фреш Стэп" data-point-description="Fresh Step<sup class='reg'>&reg;</sup> и&nbsp;Ever Clean<sup class='reg'>&reg;</sup> расскажут о&nbsp;современных технологиях кошачьего быта и&nbsp;покажут, почему российские потребители уже более 20&nbsp;лет доверяют чистоту своего дома именно этим наполнителям.">
+                                        <div class="point point_small point_freshstep" data-interactive-map-pavilion-point="freshstep" data-point-title="Фреш Стэп" data-point-description="Fresh Step<sup class='reg'>&reg;</sup> и&nbsp;Ever Clean<sup class='reg'>&reg;</sup> расскажут о&nbsp;современных технологиях кошачьего быта и&nbsp;покажут, почему российские потребители уже более 20&nbsp;лет доверяют чистоту своего дома именно этим наполнителям." data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/freshstep/1.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/freshstep/2.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/freshstep/4.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/freshstep/3.jpg&quot;}]'>
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -857,7 +857,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_dobrolap" data-interactive-map-pavilion-point="dobrolap" data-point-title="Добролап" data-point-description="Гостей, неравнодушных к&nbsp;пушистым четверолапым, ждут на&nbsp;выставке-пристройстве, чтобы поддержать питомцев, или обрести друга." data-point-image="/img/img02_3.jpg">
+                                        <div class="point point_small point_dobrolap" data-interactive-map-pavilion-point="dobrolap" data-point-title="Добролап" data-point-description="Гостей, неравнодушных к&nbsp;пушистым четверолапым, ждут на&nbsp;выставке-пристройстве, чтобы поддержать питомцев, или обрести друга." data-point-image="/img/img02_3.jpg" data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/dobrolap/1.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/dobrolap/2.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/dobrolap/3.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/dobrolap/4.jpg&quot;}]'>
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -865,7 +865,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_childrengames" data-interactive-map-pavilion-point="childrengames" data-point-title="Мастер-классы для&nbsp;детей" data-point-description="Наших маленьких участников встречают веселые аниматоры с&nbsp;занимательными играми, аквагримом, мастер-классами,&nbsp;танцами." data-point-image="/img/img03_3.jpg">
+                                        <div class="point point_small point_childrengames" data-interactive-map-pavilion-point="childrengames" data-point-title="Мастер-классы для&nbsp;детей" data-point-description="Наших маленьких участников встречают веселые аниматоры с&nbsp;занимательными играми, аквагримом, мастер-классами,&nbsp;танцами." data-point-image="/img/img03_3.jpg" data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/childrengames/1.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/childrengames/2.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/childrengames/3.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/childrengames/4.jpg&quot;}]'>
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -897,7 +897,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_bayer" data-interactive-map-pavilion-point="bayer" data-point-title="BAYER" data-point-description="Концерн Bayer играет ведущую роль в&nbsp;области защиты животных от&nbsp;наружных и&nbsp;внутренних паразитов, благодаря внедрению новых продуктов. Запатентовав &laquo;репеллентный эффект&raquo; (ошейник Форесто<sup class='reg'>&reg;</sup>, капли Адвантикс<sup class='reg'>&reg;</sup>), Bayer открыл новые возможности защиты животных от&nbsp;клещей.">
+                                        <div class="point point_small point_bayer" data-interactive-map-pavilion-point="bayer" data-point-title="BAYER" data-point-description="Концерн Bayer играет ведущую роль в&nbsp;области защиты животных от&nbsp;наружных и&nbsp;внутренних паразитов, благодаря внедрению новых продуктов. Запатентовав &laquo;репеллентный эффект&raquo; (ошейник Форесто<sup class='reg'>&reg;</sup>, капли Адвантикс<sup class='reg'>&reg;</sup>), Bayer открыл новые возможности защиты животных от&nbsp;клещей." data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/bayer/1.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/bayer/2.jpg&quot;,&quot;position&quot;:&quot;top&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/bayer/3.jpg&quot;}]'>
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -913,31 +913,31 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_shop1">
+                                        <div class="point point_small point_shop1" data-interactive-map-pavilion-point="market" data-point-title="Маркеты" data-point-description="Крафтовые лакомства и&nbsp;hand-made аксессуары можно купить только здесь." data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/market/1.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/market/2.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/market/3.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/market/4.jpg&quot;}]'>
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
-                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/shop_not_name.jpg');"></div>
+                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/market.jpg');"></div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_shop2">
+                                        <div class="point point_small point_shop2" data-interactive-map-pavilion-point="market" data-point-title="Маркеты" data-point-description="Крафтовые лакомства и&nbsp;hand-made аксессуары можно купить только здесь." data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/market/1.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/market/2.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/market/3.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/market/4.jpg&quot;}]'>
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
-                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/shop_not_name.jpg');"></div>
+                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/market.jpg');"></div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_barbershop">
+                                        <div class="point point_small point_groomingshow" data-interactive-map-pavilion-point="groomingshow" data-point-title="Груминг шоу" data-point-description="Приходи и&nbsp;посмотри на&nbsp;настоящее шоу преображения питомцев от&nbsp;профессионалов." data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/groomingshow/1.jpg&quot;,&quot;position&quot;:&quot;top&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/groomingshow/2.jpg&quot;,&quot;position&quot;:&quot;top&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/groomingshow/3.jpg&quot;,&quot;position&quot;:&quot;top&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/groomingshow/4.jpg&quot;,&quot;position&quot;:&quot;top&quot;}]'>
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
-                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/barbershop_not_name.jpg');"></div>
+                                                    <div class="icon_logo" style="background-image: url('/img/interactive_map/brands/groomingshow.jpg');"></div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_gastromarket" data-interactive-map-pavilion-point="gastromarket" data-point-title="Гастромаркет" data-point-description="Утолить разгулявшийся аппетит можно в&nbsp;многочисленных маркетах вкусной&nbsp;еды." data-point-image="/img/img06_3.jpg">
+                                        <div class="point point_small point_gastromarket" data-interactive-map-pavilion-point="gastromarket" data-point-title="Гастромаркет" data-point-description="Пробуем блюда со&nbsp;всего мира и&nbsp;на&nbsp;любой вкус!" data-point-image="/img/img06_3.jpg" data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/gastromarket/1.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/gastromarket/2.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/gastromarket/3.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/gastromarket/4.jpg&quot;}]'>
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -953,7 +953,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_bloggershow" data-interactive-map-pavilion-point="bloggershow" data-point-title="Блогер-шоу" data-point-description="Самая горячая ток-площадка в разгар праздника! Собери друзей и не пропусти шоу с ведущими интернет-звездами." data-point-image="/img/img08_3.jpg">
+                                        <div class="point point_small point_bloggershow" data-interactive-map-pavilion-point="bloggershow" data-point-title="Блогер-шоу" data-point-description="Самая горячая ток-площадка в&nbsp;разгар праздника! Собери друзей и&nbsp;не&nbsp;пропусти шоу с&nbsp;ведущими <nobr>интернет-звездами</nobr>." data-point-image="/img/img08_3.jpg" data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/bloggershow/1.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/bloggershow/2.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/bloggershow/3.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/bloggershow/4.jpg&quot;}]'>
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -1016,9 +1016,9 @@
                                             <div class="icon" style="background-image: url('/img/interactive_map/brands/freshstep.jpg');"></div>
                                         </div>
                                     </div>
-                                    <div class="brands-list__item" data-interactive-map-pavilion-brand="barbershop_not_name">
+                                    <div class="brands-list__item" data-interactive-map-pavilion-brand="groomingshow">
                                         <div class="brand">
-                                            <div class="icon" style="background-image: url('/img/interactive_map/brands/barbershop_not_name.jpg');"></div>
+                                            <div class="icon" style="background-image: url('/img/interactive_map/brands/groomingshow.jpg');"></div>
                                         </div>
                                     </div>
                                     <div class="brands-list__item" data-interactive-map-pavilion-brand="acana">
@@ -1026,9 +1026,9 @@
                                             <div class="icon" style="background-image: url('/img/interactive_map/brands/acana.jpg');"></div>
                                         </div>
                                     </div>
-                                    <div class="brands-list__item" data-interactive-map-pavilion-brand="shop_not_name">
+                                    <div class="brands-list__item" data-interactive-map-pavilion-brand="market">
                                         <div class="brand">
-                                            <div class="icon" style="background-image: url('/img/interactive_map/brands/shop_not_name.jpg');"></div>
+                                            <div class="icon" style="background-image: url('/img/interactive_map/brands/market.jpg');"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -1090,7 +1090,7 @@
         <!--// end row -->
 
 
-        <!--<div class="container-full-width">
+        <?/*<div class="container-full-width">
             <div class="row row-space-2">
                 <div class="col-sm-6 sm-margin-b-4">
                     <img class="img-responsive" src="img/970x647/01.jpg" alt="Image">
@@ -1099,6 +1099,6 @@
                     <img class="img-responsive" src="img/970x647/03.jpg" alt="Image">
                 </div>
             </div>
-        </div>-->
+        </div>*/?>
     </div>
 </div>

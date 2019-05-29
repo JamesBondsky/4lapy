@@ -61,26 +61,50 @@ $(document).ready(function(){
         }*/
 
         if (!!images){
-            var arrImages = Object.keys(images).map(function(key) {
-              return images[key];
-            });
             var htmlLeft = '',
-                htmlRight = '';
+                htmlRight = '',
+                part = Math.ceil(images.length/2),
+                style_position = '',
+                start = 0,
+                end = part;
 
-            for (var i = 0; i < arrImages.length/2; i++) {
-                if (arrImages[i].length){
-                    htmlLeft = htmlLeft + '<div class="interactive_map_pavilion__image-item"><div class="image" style="background-image: url(' + arrImages[i] + ')"></div></div>';
-                }
-            }
-            for (var i = arrImages.length/2; i < arrImages.length; i++) {
-                if (arrImages[i].length){
-                    htmlRight = htmlRight + '<div class="interactive_map_pavilion__image-item"><div class="image" style="background-image: url(' + arrImages[i] + ')"></div></div>';
-                }
-            }
+            for (var j = 0; j < 2; j++) {
+                for (var i = start; i < end; i++) {
+                    if (images[i]['image'].length){
 
+                        if (!!images[i].position){
+                            switch (images[i].position) {
+                              case 'top':
+                                style_position = ' background-position: 50% top;';
+                                break;
+                              case 'bottom':
+                                style_position = ' background-position: 50% bottom;';
+                                break;
+                              default:
+                                break;
+                            }
+                        }
+                        if (j == 0){
+                            htmlLeft += '<div class="interactive_map_pavilion__image-item"><div class="image" style="background-image: url(' + images[i].image + ');' + style_position + '"></div></div>';
+                        }
+                        if (j == 1){
+                            htmlRight += '<div class="interactive_map_pavilion__image-item"><div class="image" style="background-image: url(' + images[i].image + ');' + style_position + '"></div></div>';
+                        }
+                        style_position = '';
+                    }
+                }
+                start = part;
+                end = images.length;
+            }
+            console.log(htmlLeft);
+            console.log(htmlRight);
             $('[data-point-image-left]').html(htmlLeft);
             $('[data-point-image-right]').html(htmlRight);
+        } else {
+            $('[data-point-image-left]').html('');
+            $('[data-point-image-right]').html('');
         }
+
 
 
 

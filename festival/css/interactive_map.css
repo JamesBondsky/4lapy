@@ -439,8 +439,8 @@
         bottom: 0;
         background-position: 50% 50%;
         background-repeat: no-repeat;
-        -webkit-background-size: contain;
-        background-size: contain;
+        -webkit-background-size: cover;
+        background-size: cover;
     }
     .interactive_map_pavilion .point__bg:before{
         opacity: 1;
@@ -472,33 +472,43 @@
     pointer-events: none;
 }
 .interactive_map_pavilion .point_small{
-    width: 47px;
-    height: 52px;
+    width: 44px;
+    height: 54px;
 }
 .interactive_map_pavilion .point_small .point__icon {
-    padding: 4px 4px 15px 9px;
+    /* padding: 4px 4px 15px 4px; */
+}
+.interactive_map_pavilion .point_small .icon {
+    width: 36px;
+    height: 36px;
+    margin-left: -18px;
+    top: 4px;
 }
 .interactive_map_pavilion .point_medium{
-    width: 61px;
+    width: 56px;
     height: 68px;
 }
-.interactive_map_pavilion .point_medium .point__icon {
-    padding: 6px 5px 20px 12px;
+.interactive_map_pavilion .point_medium .icon {
+    width: 46px;
+    height: 46px;
+    margin-left: -23px;
+    top: 5px;
 }
 .interactive_map_pavilion .point_large{
-    width: 73px;
+    width: 68px;
     height: 82px;
 }
-.interactive_map_pavilion .point_large .point__icon {
-    padding: 7px 6px 22px 14px;
+.interactive_map_pavilion .point_large .icon {
+    width: 56px;
+    height: 56px;
+    margin-left: -28px;
+    top: 6px;
 }
-
 
 .interactive_map_pavilion .point__icon .icon{
     display: block;
-    position: relative;
-    width: 100%;
-    height: 100%;
+    position: absolute;
+    left: 50%;
     background-color: #ffffff;
     border-radius: 50%;
     padding: 2px;
@@ -516,8 +526,8 @@
 
 .interactive_map_pavilion .point_4lapy{
     top: -41px;
-    left: -37px;
-    width: 73px;
+    left: -34px;
+    width: 68px;
     height: 82px;
 }
 .interactive_map_pavilion .point_4lapy .point__bg:before,
@@ -526,11 +536,18 @@
 }
 
 .interactive_map_pavilion .point_4lapy .icon {
-    width: 53px;
-    height: 53px;
+    width: 54px;
+    height: 54px;
     border-radius: 50%;
     background-color: #ffffff;
-    padding: 5px;
+    padding: 4px;
+    position: absolute;
+    left: 50%;
+    margin-left: -27px;
+    top: 6px;
+}
+.interactive_map_pavilion .point_4lapy .point__icon{
+    padding: 0;
 }
 .interactive_map_pavilion .point_4lapy .point__icon .icon_4lapy{
     border-radius: 50%;
@@ -548,7 +565,7 @@
 .interactive_map_pavilion .point_childrengames  { left: -270px; top: -111px; }
 .interactive_map_pavilion .point_rc             { left: -176px; top: -120px; }
 .interactive_map_pavilion .point_freshstep      { left: -270px; bottom: -47px; }
-.interactive_map_pavilion .point_barbershop     { left: -188px; bottom: -47px; }
+.interactive_map_pavilion .point_groomingshow   { left: -188px; bottom: -47px; }
 .interactive_map_pavilion .point_acana          { left: -135px; bottom: -47px; }
 .interactive_map_pavilion .point_shop1          { left: -165px; bottom: -145px; }
 
@@ -631,7 +648,7 @@
 .interactive_map_pavilion__popup{
     width: 55.5556%;
     position: relative;
-    padding: 0 20px;
+    padding: 0 2px;
 }
     .interactive_map_pavilion__popup-container{
         position: relative;
@@ -970,7 +987,7 @@
     .interactive_map_pavilion .point_childrengames  { left: -192px; top: -91px; }
     .interactive_map_pavilion .point_rc             { left: -132px; top: -90px; }
     .interactive_map_pavilion .point_freshstep      { left: -197px; bottom: -47px; }
-    .interactive_map_pavilion .point_barbershop     { left: -148px; bottom: -47px; }
+    .interactive_map_pavilion .point_groomingshow   { left: -148px; bottom: -47px; }
     .interactive_map_pavilion .point_acana          { left: -105px; bottom: -47px; }
     .interactive_map_pavilion .point_shop1          { left: -145px; bottom: -115px; }
 
@@ -993,7 +1010,10 @@
     .interactive_map_pavilion__image-item{
         width: 100%;
     }
-    .interactive_map_pavilion__image-item + .interactive_map_pavilion__image-item{
+    .interactive_map_pavilion__image-list[data-point-image-left] .interactive_map_pavilion__image-item:first-child{
+        display: none;
+    }
+    .interactive_map_pavilion__image-list[data-point-image-right] .interactive_map_pavilion__image-item:last-child{
         display: none;
     }
     .interactive_map_pavilion__popup{
@@ -1119,7 +1139,7 @@
     .interactive_map_pavilion .point_childrengames  { left: -172px; top: -70px; }
     .interactive_map_pavilion .point_rc             { left: -118px; top: -82px; }
     .interactive_map_pavilion .point_freshstep      { left: -172px; bottom: -41px; }
-    .interactive_map_pavilion .point_barbershop     { left: -126px; bottom: -41px; }
+    .interactive_map_pavilion .point_groomingshow   { left: -126px; bottom: -41px; }
     .interactive_map_pavilion .point_acana          { left: -95px; bottom: -41px; }
     .interactive_map_pavilion .point_shop1          { left: -125px; bottom: -104px; }
 
@@ -1133,15 +1153,6 @@
     .interactive_map_pavilion .point_bloggershow    { right: -228px; bottom: -41px; }
     .interactive_map_pavilion .point_shop2          { right: -125px; bottom: -104px; }
 
-    .interactive_map_pavilion .point_small .point__icon {
-        padding: 5px 5px 17px 10px;
-    }
-    .interactive_map_pavilion .point_medium .point__icon {
-        padding: 6px 6px 20px 13px;
-    }
-    .interactive_map_pavilion .point_large .point__icon {
-        padding: 7px 4px 22px 14px;
-    }
     .interactive_map_pavilion__content{
         margin-top: 15px;
         width: 100%;
@@ -1162,6 +1173,30 @@
     .interactive_map_pavilion__container{
         position: relative;
         z-index: 2;
+        -webkit-flex-wrap: wrap;
+        -ms-flex-wrap: wrap;
+        flex-wrap: wrap;
+    }
+    .interactive_map_pavilion__popup{
+        width: 100%;
+        order: 1;
+        padding: 0;
+        margin-bottom: -6px;
+    }
+    .interactive_map_pavilion__image-list{
+        width: 50%;
+        order: 2;
+    }
+    .interactive_map_pavilion__image-item{
+        width: 50%;
+        height: 0;
+        padding-top: 60%;
+    }
+    .interactive_map_pavilion__image-list[data-point-image-left] .interactive_map_pavilion__image-item:first-child{
+        display: block;
+    }
+    .interactive_map_pavilion__image-list[data-point-image-right] .interactive_map_pavilion__image-item:last-child{
+        display: block;
     }
     .interactive_map_pavilion__image{
         margin-top: -40px;
@@ -1176,7 +1211,6 @@
         -o-background-size: cover;
         z-index: 1;
     }
-    
     .interactive_map_pavilion__brands{
         display: none !important;
     }
