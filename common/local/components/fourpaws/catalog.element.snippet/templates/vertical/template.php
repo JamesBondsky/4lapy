@@ -69,8 +69,18 @@ if (!$currentOffer->getImagesIds()) {
     }
 }
 
-/** @noinspection PhpUnhandledExceptionInspection */
-$value = $currentOffer->getPackageLabel(true, 999);
+$packageLabelType = $currentOffer->getPackageLabelType();
+
+switch ($packageLabelType) {
+    case Offer::PACKAGE_LABEL_TYPE_COLOUR:
+        $value = $currentOffer->getColor()->getName();
+        $image = $currentOffer->getColor()->getFilePath();
+        $colourCombination = true;
+        break;
+    default:
+        $value = $currentOffer->getPackageLabel(false, 999);
+}
+
 $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
 ?>
     <div class="b-common-item js-product-item" id="<?= $arParams['ITEM_ATTR_ID'] ?>"
@@ -129,9 +139,15 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
                         <?php
                         $countSizes = 0;
                         foreach ($offers as $offer) {
-
-                            /** @noinspection PhpUnhandledExceptionInspection */
-                            $value = $offer->getPackageLabel(false, 0);
+                            switch ($packageLabelType) {
+                                case Offer::PACKAGE_LABEL_TYPE_COLOUR:
+                                    $value = $offer->getColor()->getName();
+                                    $image = $offer->getColor()->getFilePath();
+                                    $colourCombination = true;
+                                    break;
+                                default:
+                                    $value = $offer->getPackageLabel(false, 0);
+                            }
 
                             $countSizes++;
                             $isOffersPrinted = true;

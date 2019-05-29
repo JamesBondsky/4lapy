@@ -139,8 +139,15 @@ if (!$currentOffer->getImagesIds()) {
             ?>
             <div class="b-weight-container b-weight-container--list">
                 <?php
-                /** @noinspection PhpUnhandledExceptionInspection */
-                $value = $currentOffer->getPackageLabel(true, 999);
+                switch ($packageLabelType) {
+                    case Offer::PACKAGE_LABEL_TYPE_COLOUR:
+                        $value = $currentOffer->getColor()->getName();
+                        $image = $currentOffer->getColor()->getFilePath();
+                        $colourCombination = true;
+                        break;
+                    default:
+                        $value = $currentOffer->getPackageLabel(false, 999);
+                }
                 ?>
                 <a class="b-weight-container__link <?= ($offers->count()
                                                         > 1) ? ' b-weight-container__link--mobile ' : '' ?> js-mobile-select js-select-mobile-package"
