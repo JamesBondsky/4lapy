@@ -140,7 +140,7 @@ trait Pet
      */
     public function getBreedId(): ?int
     {
-        return $this->breedId;
+        return $this->breedId ?: null;
     }
 
     /**
