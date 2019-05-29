@@ -17,12 +17,12 @@ $this->setFrameMode(true);
     <span class="b-icon b-icon--orange b-icon--brand-scroll-prev js-prev-brand-scroll">
         <?= new SvgDecorator('icon-arrow-down', 10, 10) ?>
     </span>
-    <span class="b-icon b-icon--orange b-icon--brand-scroll-next js-next-brand-scroll">
+    <span class="b-icon b-icon--orange b-icon--brand-scroll-next js-next-brand-scroll active">
         <?= new SvgDecorator('icon-arrow-down', 10, 10) ?>
     </span>
 
     <div class="b-link-list js-scroll-x js-arrows-scroll-x">
-        <div class="b-link-list__wrapper js-content-arrows-scroll-x"><?php
+        <div class="b-link-list__wrapper b-link-list__wrapper--content-brand js-content-arrows-scroll-x"><?php
             foreach ($arResult['PRINT'] as $arItem) {
                 $sTmpAddClass = '';
                 //if($arItem['SELECTED'] === 'Y') {
