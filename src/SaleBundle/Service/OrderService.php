@@ -2117,7 +2117,7 @@ class OrderService implements LoggerAwareInterface
             }
             $section = $offer->getProduct()->getSection();
             if ($section != null) {
-                $arSectionsNames[$section->getId()] = $section->getName();
+                $arSectionsNames[$section->getId()] = $section->getName(); //TODO исключить ветаптеку
             }
         }
 

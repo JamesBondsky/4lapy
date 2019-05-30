@@ -283,10 +283,19 @@ class OrderSubscribe extends BaseEntity
     }
 
     /**
-     * @return string
+     * @return string|null
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \FourPaws\AppBundle\Exception\NotFoundException
      */
     public function getDeliveryPlace(): ?string
     {
+        // в старых подписках хранился ID адреса
+        if($this->deliveryPlace > 0 && strcasecmp(intval($this->deliveryPlace), $this->deliveryPlace) === 0){
+            /** @var AddressService $addressService */
+            $addressService = Application::getInstance()->getContainer()->get('address.service');
+            $personalAddress = $addressService->getById($this->deliveryPlace);
+            $this->deliveryPlace = $personalAddress->getFullAddress();
+        }
         return $this->deliveryPlace;
     }
 
@@ -728,16 +737,16 @@ class OrderSubscribe extends BaseEntity
 
         /** @var OrderSubscribeService $orderSubscribeService */
         $orderSubscribeService = $this->getOrderSubscribeService();
-        /** @var AddressService $addressService */
-        $addressService = Application::getInstance()->getContainer()->get('address.service');
         /** @var StoreService $storeService */
         $storeService = Application::getInstance()->getContainer()->get('store.service');
         /** @var DeliveryService $deliveryService */
         $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
 
         if($orderSubscribeService->isDelivery($this)){
-            $address = $addressService->getById($this->getDeliveryPlace());
-            $result = $address->getFullAddress();
+            $result = $this->getDeliveryPlace();
+            if($result === "0"){
+                $result = "Не удалось определить адрес";
+            }
         } else {
             try {
                 $store = $storeService->getStoreByXmlId($this->getDeliveryPlace());
@@ -748,7 +757,12 @@ class OrderSubscribe extends BaseEntity
                 $store = $terminals[$this->getDeliveryPlace()];
             }
 
-            $result = $store->getAddress();
+            try {
+                $result = $store->getAddress();
+            } catch (\Exception $e) {
+                // ну давай хотя бы код магазина отбразим
+                $result = $this->getDeliveryPlace();
+            }
         }
 
         return $result;

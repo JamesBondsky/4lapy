@@ -12,9 +12,11 @@ use Bitrix\Main\Type\Date;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\Enum\UserGroup as UserGroupEnum;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\ExpertsenderService;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\MobileApiBundle\Dto\Object\City;
 use FourPaws\MobileApiBundle\Dto\Object\ClientCard;
 use FourPaws\MobileApiBundle\Dto\Object\User;
@@ -157,8 +159,6 @@ class UserService
 
             /** @var ManzanaService $manzanaService */
             $manzanaService = $container->get('manzana.service');
-            /** @noinspection PhpUnusedLocalVariableInspection */
-            //$manzanaItem = $manzanaService->getContactByPhone(PhoneHelper::getManzanaPhone($user->getPersonalPhone()));
 
             /**
              * @var UserService $userService
@@ -176,6 +176,18 @@ class UserService
             if ($_SESSION['MANZANA_CONTACT_ID']) {
                 $client->contactId = $_SESSION['MANZANA_CONTACT_ID'];
                 unset($_SESSION['MANZANA_CONTACT_ID']);
+            }
+
+            if (!$client->contactId) {
+                try {
+                    $manzanaContact = $manzanaService->getContactByPhone(PhoneHelper::getManzanaPhone($user->getPersonalPhone()));
+                    $client->contactId = $manzanaContact->contactId;
+                } catch (ManzanaServiceContactSearchNullException $e) {
+                    // Значит, новый пользователь
+                } catch (Exception $e) {
+                    $logger = LoggerFactory::create('loginOrRegister');
+                    $logger->error(sprintf('%s getContactByPhone exception: %s', __METHOD__, $e->getMessage()));
+                }
             }
 
             $userService->setClientPersonalDataByCurUser($client, $user);
@@ -376,7 +388,7 @@ class UserService
             ->setTitle('Карта клиента')
             ->setBalance($bonusInfo->getActiveBonus())
             ->setNumber($user->getDiscountCardNumber())
-            ->setSaleAmount($bonusInfo->getGeneratedRealDiscount());
+            ->setSaleAmount($user->getDiscount());
     }
 
     /**
@@ -444,7 +456,7 @@ class UserService
         $bonusInfo = $this->appBonusService->getManzanaBonusInfo($user);
 
         return (new PersonalBonus())
-            ->setAmount($bonusInfo->getGeneratedRealDiscount() ?? 0)
+            ->setAmount($user->getDiscount() ?? 0)
             ->setTotalIncome($bonusInfo->getDebit() ?? 0)
             ->setTotalOutgo($bonusInfo->getCredit() ?? 0)
             ->setNextStage($bonusInfo->getSumToNext());

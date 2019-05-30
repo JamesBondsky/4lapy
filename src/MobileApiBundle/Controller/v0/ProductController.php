@@ -31,6 +31,7 @@ use FourPaws\MobileApiBundle\Dto\Request\GoodsItemRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Exception\NotFoundProductException;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
+use FourPaws\UserBundle\Service\UserService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Component\HttpFoundation\Request;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
@@ -51,13 +52,20 @@ class ProductController extends FOSRestController
      */
     private $appBasketService;
 
+    /**
+     * @var UserService
+     */
+    private $userService;
+
     public function __construct(
         ApiProductService $apiProductService,
-        AppBasketService $appBasketService
+        AppBasketService $appBasketService,
+        UserService $userService
     )
     {
         $this->apiProductService = $apiProductService;
         $this->appBasketService = $appBasketService;
+        $this->userService = $userService;
     }
 
     /**
@@ -77,6 +85,7 @@ class ProductController extends FOSRestController
         $cacheId = md5(serialize([
             $specialOffersRequest->getCount(),
             $specialOffersRequest->getPage(),
+            $this->userService->getDiscount()
         ]));
         if ($cache->startDataCache($this->cacheTime, $cacheId, $this->cachePath)) {
             $tagCache = $cache->isStarted() ? new TaggedCacheHelper($this->cachePath) : null;

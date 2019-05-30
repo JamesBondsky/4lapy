@@ -9,6 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\LoaderException;
@@ -36,6 +37,7 @@ use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\ManzanaService;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Service\AddressService;
@@ -152,6 +154,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
     /** @var OrderSubscribeService $orderSubscribeService */
     private $orderSubscribeService;
 
+    /** @var KioskService $kioskService */
+    private $kioskService;
+
     /**
      * FourPawsOrderComponent constructor.
      *
@@ -182,6 +187,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $this->salePreset            = $container->get(SalePreset::class);
         $this->retailRocketService   = $container->get(RetailRocketService::class);
         $this->logger                = LoggerFactory::create('component_order');
+        $this->kioskService          = $container->get('kiosk.service');
 
         parent::__construct($component);
     }
@@ -265,8 +271,10 @@ class FourPawsOrderComponent extends \CBitrixComponent
             throw new OrderCreateException('Failed to initialize storage');
         }
 
-        // режим подписки на доставку
+
         if ($this->currentStep === OrderStorageEnum::AUTH_STEP) {
+
+            // режим подписки на доставку
             if ($_POST['subscribe'] && ($_POST['orderId'] > 0 || !$storage->isSubscribe())) {
 
                 // переход из истории заказов иммитирует добавление всех товаров из заказа
@@ -306,6 +314,12 @@ class FourPawsOrderComponent extends \CBitrixComponent
                     $storage->setSubscribeId(null);
                 }
                 $storage->setSubscribe(false);
+                $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+            }
+
+            // капча в киоске не нужна
+            if (KioskService::isKioskMode() && !$storage->isCaptchaFilled()) {
+                $storage->setCaptchaFilled(true);
                 $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
             }
         }
@@ -508,6 +522,18 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 {
                     $this->arResult['MAX_TEMPORARY_BONUS_SUM'] = floor($maxTemporaryBonuses);
                 }
+            }
+
+            if($this->kioskService->isKioskMode()){
+                $curPage = BitrixApplication::getInstance()->getContext()->getRequest()->getRequestUri();
+                $url = $this->kioskService->addParamsToUrl($curPage, ['bindcard' => true]);
+                $this->arResult['BIND_CARD_URL'] = $url;
+                $this->arResult['KIOSK'] = true;
+                if ($this->kioskService->getCardNumber()) {
+                    $storage->setDiscountCardNumber($this->kioskService->getCardNumber());
+                    $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+                }
+
             }
 
             $payments = $this->orderStorageService->getAvailablePayments($storage, true, true, $basket->getPrice());
