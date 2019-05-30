@@ -35,7 +35,9 @@ if ($showForm) {
 				// Поле: Номер паспорта
 	            $fieldName = 'passport';
 	            $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
-	            $value     = $fieldMeta['VALUE'];
+                if (empty($arResult['USER_INFO']) || !empty($arResult['ERROR']['EXEC']) || $fieldMeta['ERROR']) {
+	                $value     = $fieldMeta['VALUE'];
+                }
 	            $attr      = '';
 	            $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
 	            $attr      .= ' maxlength="5"';
