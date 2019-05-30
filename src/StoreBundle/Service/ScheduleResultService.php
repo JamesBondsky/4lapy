@@ -56,7 +56,9 @@ class ScheduleResultService implements LoggerAwareInterface
      */
     protected $deliveryScheduleService;
 
-    /** @var SapDeliveryScheduleService */
+    /**
+     * @var SapDeliveryScheduleService
+     */
     protected $sapDeliveryScheduleService;
 
     /**
@@ -69,7 +71,9 @@ class ScheduleResultService implements LoggerAwareInterface
      */
     protected $repository;
 
-    /** @var UserFieldEnumCollection */
+    /**
+     * @var UserFieldEnumCollection
+     */
     protected $regular;
 
     /**
@@ -89,7 +93,6 @@ class ScheduleResultService implements LoggerAwareInterface
         BitrixOrm $bitrixOrm
     )
     {
-
         $this->deliveryScheduleService = $deliveryScheduleService;
         $this->sapDeliveryScheduleService = $sapDeliveryScheduleService;
         $this->storeService = $storeService;
@@ -701,7 +704,7 @@ class ScheduleResultService implements LoggerAwareInterface
         /** @var UserFieldEnumService $userFieldEnumService */
         $userFieldEnumService = Application::getInstance()->getContainer()->get('userfield_enum.service');
         $scheduleRegularity = $userFieldEnumService->getEnumValueEntity($regularityId);
-        $regularity = $this->getRegularByXmlId($scheduleRegularity->getXmlId());
+        $regularity = $this->getRegularityEnumByXmlId($scheduleRegularity->getXmlId());
         return $regularity ? $regularity->getId() : null;
     }
 
@@ -714,22 +717,23 @@ class ScheduleResultService implements LoggerAwareInterface
      * @throws SystemException
      * @throws \Bitrix\Main\LoaderException
      */
-    public function getRegularByXmlId($xmlId)
+    public function getRegularityEnumByXmlId($xmlId)
     {
-        $regular = $this->getRegular()->filter(function($item) use($xmlId) {
+        $regular = $this->getRegularityEnumAll()->filter(function($item) use($xmlId) {
             return $item->getXmlId() == $xmlId;
         })->current();
         return $regular;
     }
 
+
     /**
-     * @return \FourPaws\AppBundle\Collection\UserFieldEnumCollection
-     * @throws \Bitrix\Main\ArgumentException
+     * @return UserFieldEnumCollection
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
      */
-    public function getRegular()
+    public function getRegularityEnumAll()
     {
         if(null === $this->regular){
             /** @var UserFieldEnumService $userFieldEnumService */
