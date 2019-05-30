@@ -105,12 +105,6 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                                     } else {
 	                                    if (textStatus === 'success') {
 	                                        $(component.containerSelector).html(jqXHR.responseText);
-	                                        $('html, body').animate(
-	                                            {
-	                                                scrollTop: $(document).height()
-	                                            },
-	                                            200
-	                                        );
 	                                        //submitButton.removeAttr('disabled');
 	                                        //submitForm.find('.form-page__submit-wrap').removeClass('loading');
 	                                    }
