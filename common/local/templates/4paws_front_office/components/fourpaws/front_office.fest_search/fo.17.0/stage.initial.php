@@ -50,6 +50,8 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
             }
         );
 
+        festSearchComponent.limitNumberLength();
+
         $(document).ready(
             function () {
                 function isJson(str) {
@@ -89,8 +91,15 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                                     if (isJson(jqXHR.responseText)) {
                                         var json = JSON.parse(jqXHR.responseText);
                                         if (json.success === 'Y') {
+                                            $('html, body').animate(
+                                                {
+                                                    scrollTop: 0
+                                                },
+                                                200
+                                            );
+                                            $('.form-page').find("input[type=text], input[type=number], textarea").val("");
                                             $('.js-update-result-message').remove();
-                                            submitForm.find('.form-page__submit-wrap').before('<div class="form-page__message js-update-result-message"><i class="icon icon-warning-ok"></i><span class="text-h4 text-icon">' + json.message + '</span></div>');
+                                            $('[data-name="festUserSearch"]').prepend('<div class="form-page__message js-update-result-message"><i class="icon icon-warning-ok"></i><span class="text-h4 text-icon">' + json.message + '</span></div>');
                                         } else {
                                             $('.js-update-result-message').remove();
                                             if (!json.message) {
@@ -113,6 +122,8 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
 	                                        //submitForm.find('.form-page__submit-wrap').removeClass('loading');
 	                                    }
                                     }
+
+                                    festSearchComponent.limitNumberLength();
                                 }
                             }
                         );
