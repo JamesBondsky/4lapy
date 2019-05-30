@@ -11,7 +11,6 @@ use DateTime;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Helpers\TaggedCacheHelper;
-use FourPaws\StoreBundle\Entity\ScheduleResult;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\DeliveryScheduleService;
 use FourPaws\StoreBundle\Service\ScheduleResultService;
@@ -112,10 +111,10 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
 
         /** Расчёты не сгенерируются, если для первого отправителя не будет расписаний */
         $senders = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
-        $senders = [$this->storeService->getStoreByXmlId('DC01')];
+        //$senders = [$this->storeService->getStoreByXmlId('DC01')];
 
         $regularities = $this->deliveryScheduleService->getRegular();
-        foreach($regularities as $regularityId => $regularity) {
+        foreach ($regularities as $regularityId => $regularity) {
 
             /** @var Store $sender */
             foreach ($senders as $i => $sender) {
@@ -132,20 +131,15 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
                     [$created] = $this->scheduleResultService->updateResults($results, $dateDelete);
                     $totalCreated += $created;
                     $isSuccess = true;
-                    //break;
                 } catch (\Exception $e) {
                     $this->log()->error(
                         sprintf('Failed to calculate schedule results: %s: %s', \get_class($e), $e->getMessage()),
                         ['sender' => $sender->getXmlId()]
                     );
-
-                    //$isSuccess = false;
-                    //break;
                 }
 
                 if ($isSuccess) {
                     BitrixApplication::getConnection()->commitTransaction();
-
                     $this->log()->info(
                         sprintf(
                             'Task finished for %s, time: %ss. %s of %s Created: %s, deleted: %s',
@@ -159,7 +153,6 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
                     );
                 } else {
                     BitrixApplication::getConnection()->rollbackTransaction();
-
                     $this->log()->info(
                         sprintf(
                             'Task failed for %s, time: %ss. %s of %s',
