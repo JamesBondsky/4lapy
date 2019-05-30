@@ -194,14 +194,28 @@ class PersonalOffersService
         $result = [];
         /** @var ArrayCollection $couponsCollection */
         $couponsCollection = new ArrayCollection($coupons);
-        foreach($couponsCollection as $coupon){
+        foreach ($couponsCollection as $coupon) {
             $offer = $offersCollection->get($coupon['UF_OFFER']);
-            $result[] = [
-                'id' => $coupon['ID'],
-                'promocode' => $coupon['UF_PROMO_CODE'],
-                'discount' => $offer['PROPERTY_DISCOUNT_VALUE'],
-                'text' => HTMLToTxt($offer['PREVIEW_TEXT']),
+
+            $item = [
+                'id'        => $coupon['ID'],
+                'promocode' => $coupon['UF_PROMO_CODE']
             ];
+
+            if ($offer['PROPERTY_DISCOUNT_VALUE']) {
+                $item['discount'] = $offer['PROPERTY_DISCOUNT_VALUE'] . '%';
+            }
+
+            if ($offer['PROPERTY_DISCOUNT_CURRENCY_VALUE']) {
+                $item['discount_currency'] = $offer['PROPERTY_DISCOUNT_CURRENCY_VALUE'] . ' ₽';
+            }
+
+            if ($offer['PROPERTY_ACTIVE_TO_VALUE']) {
+                $item['date_active'] = 'Действует до ' . $offer['PROPERTY_ACTIVE_TO_VALUE'];
+            }
+
+            $item['text'] = HTMLToTxt($offer['PREVIEW_TEXT']);
+            $result[] = $item;
         }
         return $result;
     }
@@ -239,8 +253,10 @@ class PersonalOffersService
             [
                 'ID',
                 'PROPERTY_DISCOUNT',
+                'PROPERTY_DISCOUNT_CURRENCY',
                 'PREVIEW_TEXT',
                 'DATE_ACTIVE_TO',
+                'PROPERTY_ACTIVE_TO'
             ]
         );
         while ($res = $rsOffers->GetNext())
