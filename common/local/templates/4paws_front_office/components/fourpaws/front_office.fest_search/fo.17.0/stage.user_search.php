@@ -392,12 +392,16 @@ if (!empty($arResult['USER_INFO'])) {
             }
 
 
-		    $btnText = 'Сохранить';
-		    ?>
-		    <div class="form-page__submit-wrap">
-			    <input id="ajaxSubmitButton" class="form-page__btn inline-block" type="submit" value="<?= $btnText ?>">
-			    <p><?= $requiredMark ?>&nbsp;&mdash;&nbsp;обязательное поле</p>
-		    </div>
+            if (!$arResult['FIELD_VALUES']['search_by_passport']) {
+			    $btnText = 'Сохранить';
+			    ?>
+			    <div class="form-page__submit-wrap">
+				    <input id="ajaxSubmitButton" class="form-page__btn inline-block" type="submit" value="<?= $btnText ?>">
+				    <p><?= $requiredMark ?>&nbsp;&mdash;&nbsp;обязательное поле</p>
+			    </div>
+	            <?
+            }
+            ?>
 		</div>
     </form>
     <?
