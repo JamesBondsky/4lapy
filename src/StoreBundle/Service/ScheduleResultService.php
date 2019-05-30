@@ -81,9 +81,8 @@ class ScheduleResultService implements LoggerAwareInterface
      *
      * @param DeliveryScheduleService $deliveryScheduleService
      * @param DeliveryScheduleService $deliveryScheduleService
-     * @param StoreService            $storeService
-     * @param BitrixOrm               $bitrixOrm
-     *
+     * @param StoreService $storeService
+     * @param BitrixOrm $bitrixOrm
      * @throws NotFoundRepository
      */
     public function __construct(
@@ -101,7 +100,6 @@ class ScheduleResultService implements LoggerAwareInterface
 
     /**
      * @param ScheduleResultCollection $results
-     *
      * @param DateTime $dateDelete
      * @return int[]
      * @throws NotFoundException
@@ -134,7 +132,6 @@ class ScheduleResultService implements LoggerAwareInterface
 
     /**
      * @param Store $sender
-     *
      * @param DateTime $dateDelete
      * @return int
      */
@@ -151,7 +148,6 @@ class ScheduleResultService implements LoggerAwareInterface
 
     /**
      * @param ScheduleResult $result
-     *
      * @return bool
      */
     public function updateResult(ScheduleResult $result): bool
@@ -161,7 +157,6 @@ class ScheduleResultService implements LoggerAwareInterface
 
     /**
      * @param ScheduleResult $result
-     *
      * @return bool
      */
     public function createResult(ScheduleResult $result): bool
@@ -171,7 +166,6 @@ class ScheduleResultService implements LoggerAwareInterface
 
     /**
      * @param ScheduleResult $result
-     *
      * @return bool
      */
     public function deleteResult(ScheduleResult $result): bool
@@ -181,7 +175,6 @@ class ScheduleResultService implements LoggerAwareInterface
 
     /**
      * @param ScheduleResult $result
-     *
      * @return bool
      */
     public function deleteAllResults(): bool
@@ -191,7 +184,6 @@ class ScheduleResultService implements LoggerAwareInterface
 
     /**
      * @param int $id
-     *
      * @return ScheduleResult
      */
     public function findResultById(int $id): ScheduleResult
@@ -217,7 +209,6 @@ class ScheduleResultService implements LoggerAwareInterface
 
     /**
      * @param Store $sender
-     *
      * @return ScheduleResultCollection
      * @throws \RuntimeException
      */
@@ -235,28 +226,6 @@ class ScheduleResultService implements LoggerAwareInterface
 
         return $result ?? new ScheduleResultCollection();
     }
-
-    /**
-     * @param Store $sender
-     *
-     * @param DateTime $dateActive
-     * @return ScheduleResultCollection
-     */
-    public function findResultsBySenderDateActive(Store $sender, DateTime $dateActive): ScheduleResultCollection
-    {
-        $result = null;
-        try {
-            $result = $this->repository->findBySender($sender->getXmlId())->filterByDateActive($dateActive);
-        } catch (\Exception $e) {
-            $this->log()->error(
-                sprintf('failed to get schedule results: %s: %s', \get_class($e), $e->getMessage()),
-                ['sender' => $sender->getXmlId()]
-            );
-        }
-
-        return $result ?? new ScheduleResultCollection();
-    }
-
 
     public function findResultsBySenderDateActiveAndRegular(Store $sender, DateTime $dateActive, int $regular): ScheduleResultCollection
     {
@@ -279,30 +248,8 @@ class ScheduleResultService implements LoggerAwareInterface
     }
 
     /**
-     * @param Store $receiver
-     *
-     * @return ScheduleResultCollection
-     * @throws \RuntimeException
-     */
-    public function findResultsByReceiver(Store $receiver): ScheduleResultCollection
-    {
-        $result = null;
-        try {
-            $result = $this->repository->findByReceiver($receiver->getXmlId());
-        } catch (\Exception $e) {
-            $this->log()->error(
-                sprintf('failed to get schedule results: %s: %s', \get_class($e), $e->getMessage()),
-                ['receiver' => $receiver->getXmlId()]
-            );
-        }
-
-        return $result ?? new ScheduleResultCollection();
-    }
-
-    /**
      * @param Store $sender
      * @param Store $receiver
-     *
      * @return ScheduleResultCollection
      * @throws \RuntimeException
      */
@@ -315,7 +262,7 @@ class ScheduleResultService implements LoggerAwareInterface
             $this->log()->error(
                 sprintf('failed to get schedule results: %s: %s', \get_class($e), $e->getMessage()),
                 [
-                    'sender'   => $sender->getXmlId(),
+                    'sender' => $sender->getXmlId(),
                     'receiver' => $receiver->getXmlId(),
                 ]
             );
@@ -329,12 +276,11 @@ class ScheduleResultService implements LoggerAwareInterface
      */
     public function getFilename()
     {
-        return $_SERVER['DOCUMENT_ROOT'].self::FILENAME;
+        return $_SERVER['DOCUMENT_ROOT'] . self::FILENAME;
     }
 
     /**
      * @param ScheduleResult $scheduleResult
-     *
      * @return Store
      * @throws NotFoundException
      */
@@ -345,7 +291,6 @@ class ScheduleResultService implements LoggerAwareInterface
 
     /**
      * @param ScheduleResult $scheduleResult
-     *
      * @return Store
      * @throws NotFoundException
      */
@@ -356,7 +301,6 @@ class ScheduleResultService implements LoggerAwareInterface
 
     /**
      * @param ScheduleResult $scheduleResult
-     *
      * @return Store
      * @throws NotFoundException
      */
@@ -369,29 +313,6 @@ class ScheduleResultService implements LoggerAwareInterface
 
     /**
      * @param ScheduleResultCollection $collection
-     *
-     * @return StoreCollection
-     * @throws NotFoundException
-     */
-    public function getReceivers(ScheduleResultCollection $collection): StoreCollection
-    {
-        $result = new StoreCollection();
-        /** @var ScheduleResult $item */
-        foreach ($collection->getIterator() as $item) {
-            $xmlId = $item->getReceiverCode();
-            if (isset($result[$xmlId])) {
-                continue;
-            }
-
-            $result[$xmlId] = $this->storeService->getStoreByXmlId($xmlId);
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param ScheduleResultCollection $collection
-     *
      * @return StoreCollection
      * @throws NotFoundException
      */
@@ -412,42 +333,70 @@ class ScheduleResultService implements LoggerAwareInterface
     }
 
     /**
-     * @param \DateTime $date
-     * @param int|null  $transitionCount
+     * Возвращает значения списка регулярность
      *
-     * @return ScheduleResultCollection
-     * @throws ApplicationCreateException
+     * @param $xmlId
+     * @return mixed
      * @throws ArgumentException
-     * @throws NotFoundException
      * @throws ObjectPropertyException
      * @throws SystemException
-     * @throws \Exception
+     * @throws \Bitrix\Main\LoaderException
      */
-    public function calculateForAll(
-        \DateTime $date,
-        ?int $transitionCount = null
-    ): ScheduleResultCollection
+    public function getRegularityEnumByXmlId($xmlId)
     {
-        $result = [];
-        $senders = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
-
-        /** @var Store $sender */
-        foreach ($senders as $sender) {
-            $results = $this->calculateForSender($sender, $date, $transitionCount);
-            if (!$results->isEmpty()) {
-                $result[] = $results->toArray();
-            }
-        }
-
-        return !empty($result)
-            ? new ScheduleResultCollection(\array_merge(...$result))
-            : new ScheduleResultCollection();
+        $regular = $this->getRegularityEnumAll()->filter(function ($item) use ($xmlId) {
+            return $item->getXmlId() == $xmlId;
+        })->current();
+        return $regular;
     }
 
     /**
-     * @param Store     $sender
+     * @return UserFieldEnumCollection
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Bitrix\Main\LoaderException
+     */
+    protected function getRegularityEnumAll()
+    {
+        if (null === $this->regular) {
+            /** @var UserFieldEnumService $userFieldEnumService */
+            $userFieldEnumService = Application::getInstance()->getContainer()->get('userfield_enum.service');
+            $userFieldId = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
+                [
+                    'FIELD_NAME' => 'UF_REGULAR',
+                    'ENTITY_ID' => 'HLBLOCK_' . HighloadHelper::getIdByName(HlblockCode::DELIVERY_SCHEDULE_RESULT),
+                ]
+            )->exec()->fetch()['ID'];
+            $this->regular = $userFieldEnumService->getEnumValueCollection($userFieldId);
+        }
+        return $this->regular;
+    }
+
+    /**
+     * Возвращает ID значения в списке регулярности
+     * в таблице результатов у регулярности другие id значений
+     *
+     * @param int $regularityId
+     * @return mixed
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Bitrix\Main\LoaderException
+     */
+    protected function getRegularityIdByScheduleRegularityId(int $regularityId)
+    {
+        /** @var UserFieldEnumService $userFieldEnumService */
+        $userFieldEnumService = Application::getInstance()->getContainer()->get('userfield_enum.service');
+        $scheduleRegularity = $userFieldEnumService->getEnumValueEntity($regularityId);
+        $regularity = $this->getRegularityEnumByXmlId($scheduleRegularity->getXmlId());
+        return $regularity ? $regularity->getId() : null;
+    }
+
+    /**
+     * @param Store $sender
      * @param \DateTime $date
-     * @param int|null  $transitionCount
+     * @param int|null $transitionCount
      *
      * @return ScheduleResultCollection
      * @throws ApplicationCreateException
@@ -469,8 +418,8 @@ class ScheduleResultService implements LoggerAwareInterface
             $transitionCount = self::MAX_TRANSITION_COUNT;
         }
 
-        //$receivers = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
-        $receivers = [$this->storeService->getStoreByXmlId('R001')];
+        $receivers = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
+        //$receivers = [$this->storeService->getStoreByXmlId('R001')];
 
         $result = [];
         /** @var Store $receiver */
@@ -493,10 +442,10 @@ class ScheduleResultService implements LoggerAwareInterface
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
-     * @param Store          $sender
-     * @param Store          $receiver
+     * @param Store $sender
+     * @param Store $receiver
      * @param \DateTime|null $from
-     * @param int            $maxTransitions
+     * @param int $maxTransitions
      *
      * @throws ArgumentException
      * @throws NotFoundException
@@ -571,7 +520,7 @@ class ScheduleResultService implements LoggerAwareInterface
             }
 
             /** На второй итерации маршрута товар готов к отгрузке уже в 9 утра */
-            if($transitionCount > 0){
+            if ($transitionCount > 0) {
                 /** @var \DateTime $date */
                 foreach ($from as $hour => $date) {
                     $date->setTime(9, 0, 0, 0);
@@ -582,9 +531,6 @@ class ScheduleResultService implements LoggerAwareInterface
                     $startDate->setTime(9, 0, 0, 0);
                 }
             }
-
-            //$modifier = 0;
-            //$modifier += static::SCHEDULE_DATE_MODIFIER;
 
             if (null === $route) {
                 $route = new StoreCollection();
@@ -637,13 +583,13 @@ class ScheduleResultService implements LoggerAwareInterface
                         ->setDateActive($dateActive->format(ScheduleResult::DATE_ACTIVE_FORMAT))
                         ->setRegularity($regularityIdResult);
                     /**
-                     * @var int       $hour
+                     * @var int $hour
                      * @var \DateTime $date
                      */
                     foreach ($nextDeliveries as $hour => $date) {
                         $days = $date->diff($startDates[$hour])->days;
 
-                        if($days < 0){
+                        if ($days < 0) {
                             $this->log()->error(sprintf(
                                 'delivery date can not be in the past'
                             ));
@@ -686,66 +632,5 @@ class ScheduleResultService implements LoggerAwareInterface
         }
 
         return $result;
-    }
-
-    /**
-     * Возвращает ID значения в списке регулярности
-     * в таблице результатов у регулярности другие id значений
-     *
-     * @param int $regularityId
-     * @return mixed
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
-     * @throws \Bitrix\Main\LoaderException
-     */
-    protected function getRegularityIdByScheduleRegularityId(int $regularityId)
-    {
-        /** @var UserFieldEnumService $userFieldEnumService */
-        $userFieldEnumService = Application::getInstance()->getContainer()->get('userfield_enum.service');
-        $scheduleRegularity = $userFieldEnumService->getEnumValueEntity($regularityId);
-        $regularity = $this->getRegularityEnumByXmlId($scheduleRegularity->getXmlId());
-        return $regularity ? $regularity->getId() : null;
-    }
-
-
-    /**
-     * @param $xmlId
-     * @return mixed
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
-     * @throws \Bitrix\Main\LoaderException
-     */
-    public function getRegularityEnumByXmlId($xmlId)
-    {
-        $regular = $this->getRegularityEnumAll()->filter(function($item) use($xmlId) {
-            return $item->getXmlId() == $xmlId;
-        })->current();
-        return $regular;
-    }
-
-
-    /**
-     * @return UserFieldEnumCollection
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
-     * @throws \Bitrix\Main\LoaderException
-     */
-    public function getRegularityEnumAll()
-    {
-        if(null === $this->regular){
-            /** @var UserFieldEnumService $userFieldEnumService */
-            $userFieldEnumService = Application::getInstance()->getContainer()->get('userfield_enum.service');
-            $userFieldId = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
-                [
-                    'FIELD_NAME' => 'UF_REGULAR',
-                    'ENTITY_ID' => 'HLBLOCK_' . HighloadHelper::getIdByName(HlblockCode::DELIVERY_SCHEDULE_RESULT),
-                ]
-            )->exec()->fetch()['ID'];
-            $this->regular = $userFieldEnumService->getEnumValueCollection($userFieldId);
-        }
-        return $this->regular;
     }
 }
