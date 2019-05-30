@@ -204,10 +204,8 @@ class PersonalOffersService
 
             if ($offer['PROPERTY_DISCOUNT_VALUE']) {
                 $item['discount'] = $offer['PROPERTY_DISCOUNT_VALUE'] . '%';
-            }
-
-            if ($offer['PROPERTY_DISCOUNT_CURRENCY_VALUE']) {
-                $item['discount_currency'] = $offer['PROPERTY_DISCOUNT_CURRENCY_VALUE'] . ' ₽';
+            } elseif ($offer['PROPERTY_DISCOUNT_CURRENCY_VALUE']) {
+                $item['discount'] = $offer['PROPERTY_DISCOUNT_CURRENCY_VALUE'] . ' ₽';
             }
 
             if ($offer['PROPERTY_ACTIVE_TO_VALUE']) {
