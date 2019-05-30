@@ -136,3 +136,6 @@ services:
   order_subscribe.service:
     class: FourPaws\PersonalBundle\Service\OrderSubscribeService
     public: true
+
+  kkm.service:
+    class: FourPaws\KkmBundle\Service\KkmService
