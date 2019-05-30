@@ -1452,7 +1452,7 @@ class OrderSubscribeService implements LoggerAwareInterface
         }
 
         // баг с несозданным адресом
-        if ($orderSubscribe->getDeliveryPlace() == 0) {
+        if ($orderSubscribe->getDeliveryPlace() === "0") {
             $orderSubscribe->setActive(false);
             $this->update($orderSubscribe);
             $this->sendAutoUnsubscribeOrderNotification($orderSubscribe);
