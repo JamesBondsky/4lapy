@@ -18,7 +18,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function getIndexMainClass(): string
     {
-        return $this->isIndex() ? ' b-wrapper--main' : '';
+        return $this->isIndex() ? ' b-wrapper--main js-main-page-wrapper' : '';
     }
 
     /**

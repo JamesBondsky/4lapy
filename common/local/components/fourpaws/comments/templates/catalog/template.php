@@ -13,6 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use FourPaws\App\Templates\ViewsEnum;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\KioskBundle\Service\KioskService;
 
 $uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arParams['OBJECT_ID'];
 
@@ -209,7 +210,9 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                               maxlength="1000"></textarea>
                     <div class="b-error"><span class="js-message"></span></div>
                 </div>
-                <div class="js-comments-captcha-block-<?= $uniqueCommentString ?>" style="display: none"></div>
+                <? if (KioskService::isKioskMode()) { ?>
+                    <div class="js-comments-captcha-block-<?= $uniqueCommentString ?>" style="display: none"></div>
+                <? } ?>
                 <button class="b-button b-button--form-review" type="submit">Отправить</button>
             </div>
             <div class="b-form-review__wrapper-blocks js-success-review" style="display: none;">

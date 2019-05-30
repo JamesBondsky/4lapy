@@ -10,6 +10,7 @@ use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\CurrencyHelper;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -192,7 +193,12 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                         <div class="b-new-bonus-card_block">
                             <div class="b-new-bonus-card--step1<?= $storage->getDiscountCardNumber() ? ' hidden' : '' ?>">
                                 <div class="b-new-bonus-card">
-                                    <p class="js-new-bonus-card">Укажите бонусную карту</p>
+                                    <? if ($arResult['KIOSK'] && !$user) { ?>
+                                        <a href="<?=$arResult['BIND_CARD_URL']?>"><p>Укажите бонусную карту</p></a>
+                                    <? } else { ?>
+                                        <p class="js-new-bonus-card">Укажите бонусную карту</p>
+                                    <? } ?>
+                                    
                                     <span>Для зачисления баллов</span>
                                 </div>
                             </div>
@@ -204,7 +210,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                     <div class="b-order-contacts__link b-order-contacts__link--hidden js-number-input">
                                         <div class="b-input b-input--account-bonus js-offers">
                                             <input class="b-input__input-field b-input__input-field--account-bonus js-offers ok"
-                                                   value="<?= $storage->getDiscountCardNumber() ?>"
+                                                   value="<?= ($arResult['KISOK'] &&  $arResult['KIOSK_CARD_NUMBER']) ? $arResult['KIOSK_CARD_NUMBER'] : $storage->getDiscountCardNumber() ?>"
                                                    type="text" id="bonus" placeholder="" name="text" data-url="">
                                             <div class="b-error b-error--ok">
                                                 <span class="js-message">Поле верно заполнено</span>
@@ -218,7 +224,11 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 <div class="b-new-bonus-card--info">
                                     <p>Бонусная карта для зачисления баллов:
                                         <span><?= $storage->getDiscountCardNumber() ?></span></p>
-                                    <span class="js-another-bonus-card">Указать другую карту</span>
+                                        <? if ($arResult['KIOSK']) { ?>
+                                            <a href="<?=$arResult['BIND_CARD_URL']?>"><span>Указать другую карту</span></a>
+                                        <? } else { ?>
+                                            <span class="js-another-bonus-card">Указать другую карту</span>
+                                        <? } ?>
                                 </div>
                             </div>
                         </div>

@@ -1052,8 +1052,13 @@ class LocationService
                 $locationCode = (new DaDataLocationAdapter())->convert($dadataLocation)->getCode();
             }
 
-            $result = new Address();
+            preg_match('/подъезд (\d+),/i', $address, $matches);
+            $entrance = $matches[1] ?: '';
+            preg_match('/этаж (\d+),/i', $address, $matches);
+            $floor = $matches[1] ?: '';
+
             $city = $dadataLocation->getCity() ?: $dadataLocation->getSettlementWithType();
+            $result = new Address();
             $result->setLocation($locationCode)
                 ->setRegion($locationCode === static::LOCATION_CODE_MOSCOW ? '' : $dadataLocation->getRegionWithType())
                 ->setArea($dadataLocation->getAreaWithType())
@@ -1062,17 +1067,22 @@ class LocationService
                 ->setStreetPrefix($dadataLocation->getStreetType())
                 ->setStreet($dadataLocation->getStreet())
                 ->setHouse($dadataLocation->getHouse())
+                ->setHousing($dadataLocation->getBlock())
                 ->setFlat($dadataLocation->getFlat())
-                ->setZipCode($dadataLocation->getPostalCode());
+                ->setZipCode($dadataLocation->getPostalCode())
+                ->setEntrance($entrance)
+                ->setFloor($floor);
 
             return ['result' => $result];
         };
 
         try {
-            $result = (new BitrixCache())
-                ->withId($address . '_' . $locationCode)
-                ->withTime(360000)
-                ->resultOf($splitAddress)['result'];
+//            $result = (new BitrixCache())
+//                ->withId($address . '_' . $locationCode)
+//                ->withTime(360000)
+//                ->resultOf($splitAddress)['result'];
+
+            $result = $splitAddress()['result'];
         } catch (\Exception $e) {
             $this->log()->error(
                 sprintf('failed to split address: %s: %s', \get_class($e), $e->getMessage()),

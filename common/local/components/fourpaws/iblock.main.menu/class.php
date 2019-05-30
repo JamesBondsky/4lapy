@@ -1,4 +1,8 @@
-<?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+<?
+
+use FourPaws\KioskBundle\Service\KioskService;
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 /**
@@ -328,16 +332,20 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
         $arRelElements = [];
         $arRelSections = [];
         $arAnchorSections = [];
+        $filter = [
+            'IBLOCK_ID' => $iIBlockId,
+            'ACTIVE' => 'Y',
+            'GLOBAL_ACTIVE' => 'Y',
+            '<=DEPTH_LEVEL' => $this->arParams['MAX_DEPTH_LEVEL'],
+        ];
+        if($this->arParams['IS_KIOSK']){
+            $filter['!=UF_HREF'] = KioskService::getHiddenMenuList();
+        }
         $dbItems = \CIBlockSection::GetList(
             [
                 'LEFT_MARGIN' => 'ASC' // !!!
             ],
-            [
-                'IBLOCK_ID' => $iIBlockId,
-                'ACTIVE' => 'Y',
-                'GLOBAL_ACTIVE' => 'Y',
-                '<=DEPTH_LEVEL' => $this->arParams['MAX_DEPTH_LEVEL'],
-            ],
+            $filter,
             false,
             [
                 'ID', 'NAME', 'IBLOCK_SECTION_ID',
@@ -412,16 +420,20 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
         $arRelElements = [];
         $arRelSections = [];
         $arAnchorSections = [];
+        $filter = [
+            'IBLOCK_ID' => $iIBlockId,
+            'ACTIVE' => 'Y',
+            'ACTIVE_DATE' => 'Y',
+        ];
+        if($this->arParams['IS_KIOSK']){
+            $filter['!=HREF'] = KioskService::getHiddenMenuList();
+        }
         $dbItems = \CIBlockElement::GetList(
             [
                 'SORT' => 'ASC',
                 'ID' => 'ASC',
             ],
-            [
-                'IBLOCK_ID' => $iIBlockId,
-                'ACTIVE' => 'Y',
-                'ACTIVE_DATE' => 'Y',
-            ],
+            $filter,
             false,
             false,
             [
