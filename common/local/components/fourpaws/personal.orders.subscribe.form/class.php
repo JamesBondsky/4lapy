@@ -723,8 +723,14 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     if($orderSubscribe->isActive()){
                         if($this->arResult['SUBSCRIBE_ACTION']['TYPE'] == 'UPDATE' && $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] == 'Y'){
                             $result = $orderSubscribeService->processOrderSubscribe($orderSubscribe);
+                            $result->addError(
+                                new Error(
+                                    'TEST',
+                                    'orderSubscribeNotActive'
+                                )
+                            );
                             if(!$result->isSuccess()){
-                                throw new Exception(sprintf('Не удалось создать заказ по новой подписке: %s', $result->getErrorMessages()));
+                                throw new Exception(sprintf('Не удалось создать заказ по новой подписке: %s', implode("; ", $result->getErrorMessages())));
                             }
                         }
 
