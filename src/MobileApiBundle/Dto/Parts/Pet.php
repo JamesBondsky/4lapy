@@ -40,7 +40,6 @@ trait Pet
      * @Serializer\Type("int")
      * @Serializer\SerializedName("breed_id")
      * @Serializer\SkipWhenEmpty()
-     * @Assert\NotBlank()
      * @var int
      */
     protected $breedId;
