@@ -299,7 +299,7 @@ if (!empty($arResult['USER_INFO'])) {
             $value     = $fieldMeta['VALUE'];
             $attr      = '';
             $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
-            //$attr      .= ' maxlength="13"';
+            $attr      .= ' maxlength="5"';
             $errMess   = '';
             /** @var Bitrix\Main\Error $error */
             $error = $fieldMeta['ERROR'];
@@ -327,7 +327,9 @@ if (!empty($arResult['USER_INFO'])) {
                        name="<?= $fieldName ?>"
                        value="<?= $value ?>"<?= $attr ?>
                        class="form-page__field mb-l"
-                       type="text">
+                       type="number"
+                       pattern="\d{0,5}"
+                >
                 <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
             </div>
 	        <?
