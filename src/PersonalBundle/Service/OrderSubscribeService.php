@@ -1458,7 +1458,7 @@ class OrderSubscribeService implements LoggerAwareInterface
             $this->sendAutoUnsubscribeOrderNotification($orderSubscribe);
             $result->addError(
                 new Error(
-                    'Подписка оформлена без адреса',
+                    sprintf('Подписка оформлена без адреса (%s)', $orderSubscribe->getDeliveryPlace()),
                     'orderSubscribeNotActive'
                 )
             );
