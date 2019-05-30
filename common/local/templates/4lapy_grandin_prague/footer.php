@@ -40,7 +40,7 @@ if ($template->hasMainWrapper()) { ?>
                     <div class="item-card item-card--bg-brown">
                         <div  class="item-card__img" style="background-image: url('/img/prizes-grandin-prague1.png')"></div>
                         <div class="item-card__info">
-                            100&nbsp;бонусов каждому<br class="hidden-mobile" /> после регистрации покупки.
+                            100 бонусов каждому<br class="hidden-mobile" /> после покупки.
                         </div>
                     </div>
                 </div>
