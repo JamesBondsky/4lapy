@@ -53,6 +53,9 @@ class ApiPushEventTable extends DataManager
             'MD5'=> new StringField('MD5', []),
             'SERVICE_RESPONSE_STATUS'=> new StringField('SERVICE_RESPONSE_STATUS', []),
             'SERVICE_RESPONSE_ERROR'=> new StringField('SERVICE_RESPONSE_ERROR', []),
+            'USER_ID' => new StringField('USER_ID', [
+                'required' => false,
+            ]),
             new ReferenceField(
                 'MESSAGE',
                 (Application::getHlBlockDataManager('bx.hlblock.pushmessages'))::getEntity(),
