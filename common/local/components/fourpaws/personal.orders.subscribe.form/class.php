@@ -600,8 +600,8 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     $deliveryService = $this->getDeliveryService();
                     $deliveryCode = $deliveryService->getDeliveryCodeById($deliveryId);
 
+                    // место доставки
                     if($deliveryService->isDeliveryCode($deliveryCode)){
-                        // создание адреса
                         $locationService = $this->getLocationService();
                         $userService = $this->getUserService();
 
@@ -654,7 +654,8 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
                 BitrixApplication::getConnection()->startTransaction();
 
-                if ($orderSubscribe->getId() > 0) { // подписка уже есть, обновляем
+                // создание или обновление подписки
+                if ($orderSubscribe->getId() > 0) {
                     $this->arResult['SUBSCRIBE_ACTION']['SUBSCRIPTION_ID'] = $orderSubscribe->getId();
                     $this->arResult['SUBSCRIBE_ACTION']['TYPE'] = 'UPDATE';
                     try {
@@ -684,7 +685,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     } catch (\Exception $exception) {
                         $this->setExecError('subscribeAction', $exception->getMessage(), 'subscriptionUpdateException');
                     }
-                } else { // создание новой подписки
+                } else {
                     $orderSubscribe->setActive(true);
                     $this->arResult['SUBSCRIBE_ACTION']['TYPE'] = 'CREATE';
                     $addResult = $orderSubscribeService->add($orderSubscribe);
@@ -718,12 +719,12 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                         }
                     }
 
+                    // создание нового заказа по подписке
                     if($orderSubscribe->isActive()){
-                        // создание нового заказа по подписке
                         if($this->arResult['SUBSCRIBE_ACTION']['TYPE'] == 'UPDATE' && $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] == 'Y'){
                             $result = $orderSubscribeService->processOrderSubscribe($orderSubscribe);
                             if(!$result->isSuccess()){
-                                throw new Exception('Не удалось создать заказ по новой подписке');
+                                throw new Exception(sprintf('Не удалось создать заказ по новой подписке: %s', $result->getErrorMessages()));
                             }
                         }
 
