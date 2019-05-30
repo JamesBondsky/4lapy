@@ -11,8 +11,10 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Type\DateTime;
+use Exception;
 use FourPaws\App\Application;
 use FourPaws\BitrixOrm\Utils\MysqlBatchOperations;
+use FourPaws\External\ExpertsenderService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
@@ -79,7 +81,7 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      * @throws ArgumentException
      * @throws \RuntimeException
      * @throws WrongPhoneNumberException
-     * @throws \Exception
+     * @throws Exception
      */
     public static function sendConfirmSms(string $phone): bool
     {
@@ -95,8 +97,37 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
                     $smsService->sendSmsImmediate($text, $phone);
 
                     return true;
-                } catch (\Exception $exception) {
+                } catch (Exception $exception) {
                     $logger = LoggerFactory::create('sms');
+                    $logger->error(sprintf('%s exception: %s', __FUNCTION__, $exception->getMessage()));
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param string $email
+     *
+     * @return bool
+     * @throws ArgumentException
+     * @throws ExpiredConfirmCodeException
+     * @throws NotFoundConfirmedCodeException
+     */
+    public static function sendConfirmEmail(string $email)
+    {
+        if ($email) {
+            static::setGeneratedCode($email, 'change_email');
+            $generatedCode = static::getGeneratedCode('change_email');
+            if (!empty($generatedCode)) {
+                try {
+                    /** @var ExpertsenderService $expertSenderService */
+                    $expertSenderService = Application::getInstance()->getContainer()->get('expertsender.service');
+                    $expertSenderService->sendConfirmEmail($email, $generatedCode);
+                    return true;
+                } catch (Exception $exception) {
+                    $logger = LoggerFactory::create('change_email');
                     $logger->error(sprintf('%s exception: %s', __FUNCTION__, $exception->getMessage()));
                 }
             }
@@ -124,7 +155,7 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      *
      * @throws \RuntimeException
      * @throws ArgumentException
-     * @throws \Exception
+     * @throws Exception
      */
     public static function setGeneratedCode(string $text, string $type = 'sms', float $time = 0): void
     {
@@ -139,7 +170,7 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      * @param float  $time
      *
      * @throws ArgumentException
-     * @throws \Exception
+     * @throws Exception
      */
     public static function setCode(string $code, string $type, float $time = 0): void
     {
@@ -158,11 +189,11 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
     /**
      * @param string $type
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public static function delCurrentCode(string $type = 'sms'): void
     {
-        $codeType = ToUpper($type) . '_ID';
+        $codeType = self::getCookieName($type);
         if (!empty($_COOKIE[$codeType])) {
             setcookie($codeType, '', time() - 5, '/');
             ConfirmCodeTable::delete($_COOKIE[$codeType]);
@@ -178,7 +209,7 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      * @throws ServiceNotFoundException
      * @throws ExpiredConfirmCodeException
      * @throws WrongPhoneNumberException
-     * @throws \Exception
+     * @throws Exception
      * @return bool
      */
     public static function checkConfirmSms(string $phone, string $confirmCode): bool
@@ -199,7 +230,7 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      * @return bool
      * @throws ExpiredConfirmCodeException
      * @throws NotFoundConfirmedCodeException
-     * @throws \Exception
+     * @throws Exception
      */
     public static function checkCode(string $confirmCode, string $type = 'sms'): bool
     {
@@ -221,13 +252,13 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      * @return string
      * @throws ExpiredConfirmCodeException
      * @throws NotFoundConfirmedCodeException
-     * @throws \Exception
+     * @throws Exception
      */
     public static function getGeneratedCode(string $type = 'sms'): string
     {
         $ConfirmCodeQuery = new ConfirmCodeQuery(ConfirmCodeTable::query());
         /** @var ConfirmCode $confirmCode */
-        $confirmCode = $ConfirmCodeQuery->withFilter(['ID' => $_COOKIE[ToUpper($type) . '_ID']])->exec()->first();
+        $confirmCode = $ConfirmCodeQuery->withFilter(['ID' => $_COOKIE[self::getCookieName($type)]])->exec()->first();
 
         if (!($confirmCode instanceof ConfirmCode)) {
             throw new NotFoundConfirmedCodeException('не найден код');
@@ -276,7 +307,7 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      * @return bool
      * @throws ExpiredConfirmCodeException
      * @throws NotFoundConfirmedCodeException
-     * @throws \Exception
+     * @throws Exception
      */
     public static function checkConfirmEmail(string $confirmCode): bool
     {
@@ -291,7 +322,7 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      *
      * @throws \RuntimeException
      * @throws ArgumentException
-     * @throws \Exception
+     * @throws Exception
      */
     public static function setGeneratedHash(string $text, string $type = 'sms', float $time = 0): void
     {
@@ -322,7 +353,7 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      *
      * @return bool
      * @throws ArgumentException
-     * @throws \Exception
+     * @throws Exception
      */
     public static function writeGeneratedCode($id, $code, $type): bool
     {
@@ -344,14 +375,14 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      * @param float   $time
      *
      * @return string
-     * @throws \Exception
+     * @throws Exception
      */
     public static function setCookie(string $type, float $time = 0): string
     {
         if (!$time) {
             $time = microtime(true);
         }
-        $cookieCode = ToUpper($type) . '_ID';
+        $cookieCode = self::getCookieName($type);
         if (!empty($_COOKIE[$cookieCode])) {
             static::delCurrentCode($type);
         }
@@ -384,5 +415,10 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
             $return = ToUpper($return);
         }
         return $return;
+    }
+
+    public static function getCookieName(string $type): string
+    {
+        return ToUpper($type) . '_ID';
     }
 }

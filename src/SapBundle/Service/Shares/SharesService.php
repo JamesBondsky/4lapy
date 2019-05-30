@@ -528,6 +528,96 @@ class SharesService implements LoggerAwareInterface
                     ]
                 ]
             ];
+        } elseif ($type === 'Z009') {
+            try {
+                $countOperator = $promo->isApplyOnce() ? 'once' : 'condition_count';
+            } /** @noinspection PhpUndefinedClassInspection */
+            catch (\TypeError $e) {
+                throw new InvalidArgumentException($e->getMessage());
+            }
+            if ($share->getMinPriceSum() < 1) {
+                throw new InvalidArgumentException('У акций типа Z008 должна быть установлена цена начала действия');
+            }
+            /** @var BonusBuyTo $itemsTo */
+            $itemsTo = $share->getBonusBuyTo()->first();
+            $productsTo = $itemsTo->getProductIds()->toArray();
+            $giftsCount = $itemsTo->getQuantity();
+
+            $productsFrom = [];
+            /** @var BonusBuyFrom $items */
+            foreach ($share->getBonusBuyFrom() as $items) {
+                $itemIds = $items->getProductIds()->toArray();
+                $productsFrom[] = $itemIds;
+            }
+
+            $allProductsFrom = [];
+            array_walk_recursive($productsFrom, function ($item) use (&$allProductsFrom) {
+                $allProductsFrom[] = $item;
+            });
+
+            $actions = [
+                'CLASS_ID' => 'CondGroup',
+                'DATA' => [
+                    'All' => 'AND'
+                ],
+                'CHILDREN' => [
+                    [
+                        'CLASS_ID' => 'ADV:Gift',
+                        'DATA' => [
+                            'Count_operator' => $countOperator,
+                            'count' => $giftsCount,
+                            'list' => $productsTo,
+                            'All' => 'AND',
+                        ],
+                        'CHILDREN' => [
+                            [
+                                'CLASS_ID' => 'ADV:BasketFilterBasePriceRatio',
+                                'DATA' => [
+                                    'All' => 'OR',
+                                    'Value' => $share->getMinPriceSum(),
+                                ],
+                                'CHILDREN' => [
+                                    [
+                                        'CLASS_ID' => 'CondIBElement',
+                                        'DATA' => [
+                                            'logic' => 'Equal',
+                                            'value' => $allProductsFrom
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ];
+
+            $conditions = [
+                'CLASS_ID' => 'CondGroup',
+                'DATA' => [
+                    'All' => 'AND',
+                    'True' => 'True',
+                ],
+                'CHILDREN' => []
+            ];
+            foreach ($productsFrom as $i => $items) {
+                $conditions['CHILDREN'][] = [
+                    'CLASS_ID' => 'CondBsktCntGroup',
+                    'DATA' => [
+                        'logic' => 'EqGr',
+                        'Value' => 1,
+                        'All' => 'OR',
+                    ],
+                    'CHILDREN' => [
+                        [
+                            'CLASS_ID' => 'CondIBElement',
+                            'DATA' => [
+                                'logic' => 'Equal',
+                                'value' => $items,
+                            ]
+                        ]
+                    ]
+                ];
+            }
         } elseif (
             $type === 'Z011'
             &&
@@ -678,13 +768,20 @@ class SharesService implements LoggerAwareInterface
             throw new \FourPaws\SapBundle\Exception\RuntimeException('TODO');
         }
 
-        return (new BasketRule())
+        $basketRule = (new BasketRule())
             ->setName($name)
             ->setXmlId($xmlId)
             ->setActiveFrom($activeFrom)
             ->setActiveTo($activeTo)
             ->setUserGroups($this->getGroupsForBasketRules())
-            ->setActions($actions);
+            ->setActions($actions)
+            ->setLid('s1');
+
+        if(!empty($conditions)){
+            $basketRule->setConditions($conditions);
+        }
+
+        return $basketRule;
     }
 
     /**

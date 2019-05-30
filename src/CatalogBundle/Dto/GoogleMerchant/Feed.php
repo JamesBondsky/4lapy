@@ -4,6 +4,7 @@ namespace FourPaws\CatalogBundle\Dto\GoogleMerchant;
 
 use Doctrine\Common\Annotations\Annotation\Required;
 use JMS\Serializer\Annotation as Serializer;
+use FourPaws\CatalogBundle\Dto\Feed\Feed as AbstractFeed;
 
 /**
  * Class Feed
@@ -13,7 +14,7 @@ use JMS\Serializer\Annotation as Serializer;
  * @Serializer\XmlRoot("rss")
  * @Serializer\XmlNamespace(uri="http://base.google.com/ns/1.0", prefix="g")
  */
-class Feed
+class Feed extends AbstractFeed
 {
     /**
      * @Serializer\XmlAttribute()

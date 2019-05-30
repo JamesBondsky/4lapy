@@ -168,6 +168,16 @@ class User implements UserInterface
      */
     protected $location = '';
 
+
+    /**
+     * @var null|DateTime
+     * @Serializer\Type("bitrix_date_time")
+     * @Serializer\SerializedName("UF_MANZANA_IMPORT_DT")
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $manzanaImportDateTime;
+
     /**
      * @var string
      * @Serializer\Type("string")
@@ -223,11 +233,13 @@ class User implements UserInterface
 
     /**
      * @var Collection|Role[]
+     * @Serializer\Exclude()
      */
     protected $roles;
 
     /**
      * @var Collection|Group[]
+     * @Serializer\Exclude()
      */
     protected $groups;
 
@@ -329,6 +341,24 @@ class User implements UserInterface
      * @Serializer\SkipWhenEmpty()
      */
     protected $discount = 3;
+
+    /**
+     * @var null|DateTime
+     * @Serializer\Type("bitrix_date_time")
+     * @Serializer\SerializedName("UF_DATE_BONUS_UPDATE")
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $bonusUpdateDate;
+
+    /**
+     * @var float
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("UF_TEMPORARY_BONUS")
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $temporaryBonus = 0;
 
     /** @var bool
      * @Serializer\Type("boolean")
@@ -546,6 +576,26 @@ class User implements UserInterface
     public function setLocation(string $location): User
     {
         $this->location = $location;
+
+        return $this;
+    }
+
+    /**
+     * @return null|DateTime
+     */
+    public function getManzanaImportDateTime(): ?DateTime
+    {
+        return $this->manzanaImportDateTime;
+    }
+
+    /**
+     * @param DateTime $manzanaImportDateTime
+     *
+     * @return User
+     */
+    public function setManzanaImportDateTime(DateTime $manzanaImportDateTime): User
+    {
+        $this->manzanaImportDateTime = $manzanaImportDateTime;
 
         return $this;
     }
@@ -863,18 +913,19 @@ class User implements UserInterface
     }
 
     /**
-     * @return \DateTimeImmutable
+     * @return \DateTimeImmutable|null
+     * @throws \Exception
      */
-    public function getManzanaDateRegister(): \DateTimeImmutable
+    public function getManzanaDateRegister(): ?\DateTimeImmutable
     {
         $dateRegister = $this->getDateRegister();
-        return new \DateTimeImmutable($dateRegister->format('Y-m-d\TH:i:s'));
+        return ($dateRegister) ? new \DateTimeImmutable($dateRegister->format('Y-m-d\TH:i:s')) : null;
     }
 
     /**
-     * @return DateTime
+     * @return DateTime|null
      */
-    public function getDateRegister(): DateTime
+    public function getDateRegister(): ?DateTime
     {
         return $this->dateRegister;
     }
@@ -1326,5 +1377,43 @@ class User implements UserInterface
     public function setEsSubscribed(bool $esSubscribed): void
     {
         $this->esSubscribed = $esSubscribed;
+    }
+
+    /**
+     * @return DateTime|null
+     */
+    public function getBonusUpdateDate(): ?DateTime
+    {
+        return $this->bonusUpdateDate;
+    }
+
+    /**
+     * @param DateTime $bonusUpdateDate
+     * @return User
+     */
+    public function setBonusUpdateDate(DateTime $bonusUpdateDate): User
+    {
+        $this->bonusUpdateDate = $bonusUpdateDate;
+
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getTemporaryBonus(): float
+    {
+        return $this->temporaryBonus ?? 0;
+    }
+
+    /**
+     * @param float $temporaryBonus
+     * @return User
+     */
+    public function setTemporaryBonus(float $temporaryBonus): User
+    {
+        $this->temporaryBonus = $temporaryBonus;
+
+        return $this;
     }
 }

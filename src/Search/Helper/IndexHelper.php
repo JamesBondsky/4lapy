@@ -39,6 +39,9 @@ class IndexHelper implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
+    const ENV_NUMBER_OF_SHARDS = 'ELS_NUMBER_OF_SHARDS';
+    const ENV_NUMBER_OF_REPLICAS = 'ELS_NUMBER_OF_REPLICAS';
+
     /**
      * @var Index
      */
@@ -142,6 +145,8 @@ class IndexHelper implements LoggerAwareInterface
      */
     public function getCatalogIndexSettings(): array
     {
+        $shards = (getenv(self::ENV_NUMBER_OF_SHARDS)) ?: 1;
+        $replicas = (getenv(self::ENV_NUMBER_OF_REPLICAS)) ?: 1;
         $qwertyRu = mb_split('\s', 'й ц у к е н г ш щ з х ъ ф ы в а п р о л д ж э я ч с м и т ь б ю');
         $qwertyEn = mb_split('\s', 'q w e r t y u i o p [ ] a s d f g h j k l ; \' z x c v b n m , .');
         $characterMap = function ($value1, $value2) {
@@ -152,7 +157,8 @@ class IndexHelper implements LoggerAwareInterface
 
         return [
             'settings' => [
-                'number_of_shards' => 1,
+                'number_of_shards' => $shards,
+                'number_of_replicas' => $replicas,
                 'analysis'         =>
                     [
                         'analyzer'    => [
@@ -308,17 +314,28 @@ class IndexHelper implements LoggerAwareInterface
                                 'PROPERTY_IS_NEW'           => ['type' => 'boolean'],
                                 'PROPERTY_IS_SALE'          => ['type' => 'boolean'],
                                 'PROPERTY_IS_POPULAR'       => ['type' => 'boolean'],
-                                'price'                     => ['type' => 'scaled_float', 'scaling_factor' => 100,],
+                                'price'                     => ['type' => 'scaled_float', 'scaling_factor' => 100],
                                 'currency'                  => ['type' => 'keyword'],
                                 'availableStores'           => ['type' => 'keyword'],
-//                                'prices'                   => [
-//                                    'type'       => 'nested',
-//                                    'properties' => [
-//                                        'REGION_ID' => ['type' => 'keyword'],
-//                                        'PRICE'     => ['type' => 'scaled_float', 'scaling_factor' => 100,],
-//                                        'CURRENCY'  => ['type' => 'keyword'],
-//                                    ],
-//                                ],
+                                'prices'                    => [
+                                    'type'       => 'nested',
+                                    'properties' => [
+                                        'ID'               => ['type' => 'keyword'],
+                                        'PRODUCT_ID'       => ['type' => 'keyword'],
+                                        'CATALOG_GROUP_ID' => ['type' => 'keyword'],
+                                        'PRICE'            => ['type' => 'keyword'],
+                                        'CURRENCY'         => ['type' => 'keyword'],
+                                    ],
+                                ],
+                                'PROPERTY_REGION_DISCOUNTS' => [
+                                    'type'       => 'nested',
+                                    'properties' => [
+                                        'id'               => ['type' => 'integer'],
+                                        'cond_for_action'  => ['type' => 'keyword'],
+                                        'price_action'     => ['type' => 'scaled_float', 'scaling_factor' => 100],
+                                        'cond_value'       => ['type' => 'scaled_float', 'scaling_factor' => 100],
+                                    ],
+                                ]
                             ],
                         ],
                         'active'                           => ['type' => 'boolean'],

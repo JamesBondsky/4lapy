@@ -167,6 +167,7 @@ class OfferService implements LoggerAwareInterface
     {
         $this->fillFields($offer, $material);
         $this->fillProperties($offer, $material);
+        $this->fillCatalogVat($offer, $material);
     }
 
     /**
@@ -213,6 +214,30 @@ class OfferService implements LoggerAwareInterface
         $this->fillReferenceProperties($offer, $material);
         $this->fillBarCodes($offer, $material);
         $this->fillVolume($offer, $material);
+    }
+
+    /**
+     * @param Offer $offer
+     * @param Material $material
+     */
+    protected function fillCatalogVat(Offer $offer, Material $material): void
+    {
+        $vatId = null;
+        $materialVat = $material->getVat();
+        if ($materialVat != '') {
+            $vatId = null;
+            $vatList = \CCatalogVat::GetListEx();
+            while ($vat = $vatList->Fetch()) {
+                if ((int)$vat['RATE'] == (int)$materialVat) {
+                    $vatId = $vat['ID'];
+                    break;
+                }
+            }
+        }
+
+        if ($vatId != null) {
+            $offer->withCatalogVatId((string)$vatId);
+        }
     }
 
     /**

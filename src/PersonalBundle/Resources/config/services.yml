@@ -43,6 +43,18 @@ services:
         class: FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService
         public: true
 
+    coupon.service:
+        class: FourPaws\PersonalBundle\Service\CouponService
+        public: true
+
+    piggy_bank.service:
+        class: FourPaws\PersonalBundle\Service\PiggyBankService
+        public: true
+
+    personal_offers.service:
+        class: FourPaws\PersonalBundle\Service\PersonalOffersService
+        public: true
+
     FourPaws\PersonalBundle\AjaxController\:
         resource: '../../AjaxController'
         public: true

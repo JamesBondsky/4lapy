@@ -2,14 +2,54 @@
     die();
 }
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\App\Application;
 use FourPaws\BitrixOrm\Model\Exceptions\CatalogProductNotFoundException;
+use FourPaws\Catalog\Model\Category;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Components\CatalogElementDetailComponent;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
+use FourPaws\LocationBundle\LocationService;
 
 class CatalogElementDetailKitComponent extends \CBitrixComponent
 {
+    /**
+     * @var bool $hideKitBlock
+     */
+    private $hideKitBlock;
+    /**
+     * @var Category $productSection
+     */
+    private $productSection;
+    /**
+     * @var array $productSections
+     */
+    private $productSections;
+    /**
+     * @var int $aquariumSection
+     */
+    private $aquariumSection;
+    /**
+     * @var Product $product
+     */
+    private $product;
+    /**
+     * @var Offer $offer
+     */
+    private $offer;
+    /**
+     * @var Offer $offer
+     */
+    private $additionalItem;
+    /**
+     * @var ArrayCollection $selectionOffers
+     */
+    private $selectionOffers;
+
     /**
      * @param $params
      *
@@ -28,67 +68,65 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
      * @return mixed
      *
      * @throws CatalogProductNotFoundException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Bitrix\Main\SystemException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      */
     public function executeComponent()
     {
-        if ($this->startResultCache($this->arParams['CACHE_TIME'], [$this->arParams['PRODUCT'], $this->arParams['OFFER']])) {
-            $hideKitBlock = false;
-            $product = $this->getProduct($this->arParams['CODE']);
+        /** @var LocationService $locationService */
+        $locationService = Application::getInstance()->getContainer()->get('location.service');
+        if ($this->startResultCache($this->arParams['CACHE_TIME'], [$this->arParams['PRODUCT'], $this->arParams['OFFER'], $locationService->getCurrentLocation()])) {
+            $this->hideKitBlock = false;
+            $this->product = $this->getProduct($this->arParams['CODE']);
             $catalogElementDetailClass = new CatalogElementDetailComponent();
-            $offer = $catalogElementDetailClass->getCurrentOffer($product, $this->arParams['OFFER_ID']);
+            $this->offer = $catalogElementDetailClass->getCurrentOffer($this->product, $this->arParams['OFFER_ID']);
 
-            $selectionOffers = new ArrayCollection();
-            $additionalItem = null;
-            $productSection = $product->getSection();
-            if ($productSection !== null && ($productSection->getCode() == 'banki-bez-kryshki-akvariumy' || $productSection->getCode() == 'detskie-akvariumy-akvariumy' || $productSection->getCode() == 'komplekty-akvariumy' || $product->getSection()->getCode() == 'tumby-podstavki-akvariumy') && $product->getAquariumCombination() != '') {
-                $isAquarium = $product->getSection()->getCode() != 'tumby-podstavki-akvariumy';
-                if($isAquarium){
-                    $additionalItem = $product->getPedestal($product->getAquariumCombination());
+            $this->selectionOffers = new ArrayCollection();
+            $this->additionalItem = null;
+            $this->productSection = $this->product->getSection();
+            $this->productSections = $this->product->getSectionsIdList();
+            $this->getAquariumSection();
+            if (
+                $this->productSection !== null &&
+                $this->product->getAquariumCombination() != '' &&
+                (
+                    $this->productSection->getCode() == 'banki-bez-kryshki-akvariumy' ||
+                    $this->productSection->getCode() == 'detskie-akvariumy-akvariumy' ||
+                    $this->productSection->getCode() == 'komplekty-akvariumy' ||
+                    $this->product->getSection()->getCode() == 'tumby-podstavki-akvariumy'
+                )
+            ) {
+                $isAquarium = $this->product->getSection()->getCode() != 'tumby-podstavki-akvariumy';
+                if ($isAquarium) {
+                    $this->additionalItem = $this->product->getPedestal($this->product->getAquariumCombination());
                 } else {
-                    $additionalItem = $product->getAquarium($product->getAquariumCombination());
+                    $this->additionalItem = $this->product->getAquarium($this->product->getAquariumCombination());
                 }
-                if (!empty($additionalItem)) {
-                    if($isAquarium){
-                        $volumeStr = strtolower($offer->getVolumeReference()->getName());
-                    } else {
-                        $volumeStr = strtolower($additionalItem->getVolumeReference()->getName());
-                    }
-                    if (mb_strpos($volumeStr, 'л')) {
-                        $volume = intval(str_replace(',', '.', preg_replace("/[^0-9]/", '', $volumeStr)));
-                        if ($volume < 250) {
-                            $selectionOffers['filters'] = $product->getInternalFilters($volume);
-                        } else {
-                            $selectionOffers['filters'] = $product->getExternalFilters($volume);
-                        }
-                        $selectionOffers['lamps'] = $product->getLamps();
-                        $selectionOffers['decor'] = $product->getDecor();
-                        if ($selectionOffers['filters']->count() == 0 || $selectionOffers['lamps']->count() == 0 || $selectionOffers['decor']->count() == 0) {
-                            $hideKitBlock = true;
-                        }
-                    } else {
-                        $hideKitBlock = true;
+                if (!empty($this->additionalItem)) {
+                    $volume = $this->getVolume($isAquarium);
+                    if (!$this->hideKitBlock) {
+                        $this->getSectionOffers($volume);
                     }
                 } else {
-                    $hideKitBlock = true;
+                    $this->hideKitBlock = true;
+                }
+            } elseif ($this->productSection !== null && ($this->productSection->getCode() == 'komplekty-akvariumy' || in_array($this->aquariumSection, $this->productSections))) {
+                $volume = $this->getVolume(true);
+                if (!$this->hideKitBlock) {
+                    $this->getSectionOffers($volume);
                 }
             } else {
-                $hideKitBlock = true;
+                $this->hideKitBlock = true;
             }
 
             $this->arResult = [
-                'HIDE_KIT_BLOCK' => $hideKitBlock,
-                'PRODUCT' => $product,
-                'OFFER' => $offer,
-                'ADDITIONAL_ITEM' => $additionalItem,
-                'SELECTION_OFFERS' => $selectionOffers
+                'HIDE_KIT_BLOCK' => $this->hideKitBlock,
+                'PRODUCT' => $this->product,
+                'OFFER' => $this->offer,
+                'ADDITIONAL_ITEM' => $this->additionalItem,
+                'SELECTION_OFFERS' => $this->selectionOffers
             ];
-
 
             $this->setResultCacheKeys([
                 'HIDE_BLOCK',
@@ -99,6 +137,60 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
             ]);
 
             $this->includeComponentTemplate();
+        }
+    }
+
+    /**
+     * @param bool $isAquarium
+     * @return int|null
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    protected function getVolume(bool $isAquarium)
+    {
+        $volume = null;
+        if ($isAquarium) {
+            $volumeStr = strtolower($this->offer->getVolumeReference()->getName());
+        } else {
+            $volumeStr = strtolower($this->additionalItem->getVolumeReference()->getName());
+        }
+        if (mb_strpos($volumeStr, 'л')) {
+            $volume = intval(str_replace(',', '.', preg_replace("/[^0-9]/", '', $volumeStr)));
+        } else {
+            $this->hideKitBlock = true;
+        }
+        return $volume;
+    }
+
+    /**
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    protected function getLamps()
+    {
+        $this->selectionOffers['lamps'] = $this->product->getLamps();
+    }
+
+    /**
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    protected function getDecor()
+    {
+        $this->selectionOffers['decor'] = $this->product->getDecor();
+    }
+
+    /**
+     * @param int $volume
+     * @return void
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    protected function getFilters(int $volume): void
+    {
+        if ($volume < 250) {
+            $this->selectionOffers['filters'] = $this->product->getInternalFilters($volume);
+        } else {
+            $this->selectionOffers['filters'] = $this->product->getExternalFilters($volume);
         }
     }
 
@@ -117,5 +209,44 @@ class CatalogElementDetailKitComponent extends \CBitrixComponent
         }
 
         return $res->first();
+    }
+
+    /**
+     * @param $volume
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    protected function getSectionOffers($volume)
+    {
+        $this->getFilters($volume);
+        if ($this->selectionOffers['filters']->count() > 0) {
+            $this->getLamps();
+            if ($this->selectionOffers['lamps']->count() > 0) {
+                $this->getDecor();
+                if ($this->selectionOffers['decor']->count() == 0) {
+                    $this->hideKitBlock = true;
+                }
+            } else {
+                $this->hideKitBlock = true;
+            }
+        } else {
+            $this->hideKitBlock = true;
+        }
+    }
+
+    /**
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     */
+    protected function getAquariumSection(): void
+    {
+        $arFilter = [
+            'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
+            'CODE' => 'komplekty-akvariumy'
+        ];
+        $rsSections = \CIBlockSection::GetList([], $arFilter, false, ['ID', 'IBLOCK_ID']);
+
+        if ($arSection = $rsSections->Fetch()) {
+            $this->aquariumSection = $arSection['ID'];
+        }
     }
 }

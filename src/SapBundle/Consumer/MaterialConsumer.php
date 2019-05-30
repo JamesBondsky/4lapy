@@ -6,7 +6,6 @@
 
 namespace FourPaws\SapBundle\Consumer;
 
-use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Application;
 use FourPaws\BitrixOrm\Model\CatalogProduct;
 use FourPaws\Catalog\Model\Brand;
@@ -28,7 +27,6 @@ use FourPaws\SapBundle\Service\Materials\CatalogProductService;
 use FourPaws\SapBundle\Service\Materials\OfferService;
 use FourPaws\SapBundle\Service\Materials\ProductService;
 use FourPaws\SapBundle\Service\ReferenceService;
-use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LogLevel;
 use RuntimeException as BaseRuntimeException;
 
@@ -37,10 +35,8 @@ use RuntimeException as BaseRuntimeException;
  *
  * @package FourPaws\SapBundle\Consumer
  */
-class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
+class MaterialConsumer extends SapConsumerBase
 {
-    use LazyLoggerAwareTrait;
-
     /**
      * @var ReferenceService
      */
@@ -125,6 +121,10 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
             $offer = $this->getOffer($material, $product);
             $this->getCatalogProduct($material, $offer);
             $this->connection->commitTransaction();
+
+            //апдейтим НДС после апдейта/создания товара/оффера, иначе он перетирается на null
+            $this->connection->query('UPDATE b_catalog_product SET `VAT_ID` = ' . $offer->getCatalogVatId() . ' WHERE `ID` = ' . $offer->getId());
+
             /**
              * Костыль! Уровень изоляции кривой.
              */

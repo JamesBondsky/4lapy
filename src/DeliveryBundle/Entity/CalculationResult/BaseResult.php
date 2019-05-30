@@ -28,6 +28,8 @@ use FourPaws\StoreBundle\Entity\Stock;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\ScheduleResultService;
+use DateTime;
+use Exception;
 
 abstract class BaseResult extends CalculationResult implements CalculationResultInterface
 {
@@ -90,6 +92,11 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     protected $shipmentResults;
 
     /**
+     * @var string
+     */
+    protected $currency = '₽';
+
+    /**
      * @return \DateTime
      */
     public function getCurrentDate(): \DateTime
@@ -127,8 +134,20 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             $this->doCalculateDeliveryDate();
             $this->doCalculatePeriod();
         }
-
         return $this->deliveryDate;
+    }
+
+    /**
+     * Изменять дату доставки не предусмотрено
+     * это используется только для расчёта желаемой даты доставки
+     * в подписке на доставку
+     *
+     * @param \DateTime $date
+     */
+    public function setDeliveryDate(\DateTime $date) : CalculationResultInterface
+    {
+        $this->deliveryDate = $date;
+        return $this;
     }
 
     /**
@@ -302,6 +321,17 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         return $this;
     }
 
+    public function getCurrency()
+    {
+        return $this->currency;
+    }
+
+    public function setCurrency($currency): CalculationResultInterface
+    {
+        $this->currency = $currency;
+        return $this;
+    }
+
     /**
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -366,12 +396,13 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     }
 
     /**
-     * @param Store                 $store
+     * @param Store $store
      * @param StockResultCollection $stockResult
      *
-     * @throws ApplicationCreateException
-     * @throws StoreNotFoundException
      * @return \DateTime
+     * @throws StoreNotFoundException
+     * @throws Exception
+     * @throws ApplicationCreateException
      */
     protected function getStoreShipmentDate(Store $store, StockResultCollection $stockResult): \DateTime
     {
@@ -409,7 +440,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
          */
         $resultCollection = new DeliveryScheduleResultCollection();
         foreach ($stocksByStore as $storeXmlId => $stocks) {
-            foreach ($this->getScheduleResults($stores[$storeXmlId], $store, $stocks, $delayed) as $scheduleResult) {
+            foreach ($this->getScheduleResults($stores[$storeXmlId], $store, $stocks, $delayed, $date) as $scheduleResult) {
                 $resultCollection->add($scheduleResult);
             }
         }
@@ -474,19 +505,21 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
-     * @param Store                 $sender
-     * @param Store                 $receiver
-     * @param StockCollection       $stocks
+     * @param Store $sender
+     * @param Store $receiver
+     * @param StockCollection $stocks
      * @param StockResultCollection $delayed
      *
-     * @throws ApplicationCreateException
+     * @param DateTime $date
      * @return DeliveryScheduleResultCollection
+     * @throws Exception
      */
     protected function getScheduleResults(
         Store $sender,
         Store $receiver,
         StockCollection $stocks,
-        StockResultCollection $delayed
+        StockResultCollection $delayed,
+        DateTime $date
     ): DeliveryScheduleResultCollection
     {
         /** @var Store $sender */
@@ -499,7 +532,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             $scheduleResults = new ScheduleResultCollection();
 
             /** @var ScheduleResult $scheduleResult */
-            foreach ($scheduleResultService->findResultsBySenderAndReceiver($sender, $receiver) as $scheduleResult) {
+            foreach ($scheduleResultService->findResultsBySenderAndReceiver($sender, $receiver)->filterByDateActiveEqual($date) as $scheduleResult) {
                 $key = implode(',', $scheduleResult->getRouteCodes());
 
                 $days = $scheduleResult->getDays($this->getCurrentDate());

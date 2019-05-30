@@ -6,10 +6,15 @@
 
 namespace FourPaws\External;
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
 use DateTimeImmutable;
 use Exception;
+use FourPaws\App\Application as App;
+use FourPaws\BitrixOrm\Model\Share;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\External\Interfaces\ManzanaServiceInterface;
 use FourPaws\External\Manzana\Dto\ChequePosition;
 use FourPaws\External\Manzana\Dto\SoftChequeRequest;
@@ -18,6 +23,7 @@ use FourPaws\External\Manzana\Exception\ExecuteErrorException;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\Traits\ManzanaServiceTrait;
 use FourPaws\Helpers\ArithmeticHelper;
+use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Service\BasketService;
 use Psr\Log\LoggerAwareInterface;
@@ -56,8 +62,18 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
         $request = new SoftChequeRequest();
 
         $hasItems = false;
+        $basketItems = $basket->getBasketItems();
+        if (!empty($basketItems)) {
+            $productIds = array_map(function ($item) {
+                /** @var BasketItem $item */
+                return $item->getProductId();
+            }, $basketItems
+            );
+            $offerCollection = (new OfferQuery())->withFilter(['=ID' => $productIds])->exec();
+        }
+
         /** @var BasketItem $item */
-        foreach ($basket->getBasketItems() as $k => $item) {
+        foreach ($basketItems as $k => $item) {
             if ($basketService->isGiftProduct($item)) {
                 continue;
             }
@@ -96,6 +112,29 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                     $signCharge = $item->getQuantity();
                 }
                 $basketService->setBasketItemPropertyValue($item, 'HAS_BONUS', $signCharge);
+
+                if (isset($offerCollection)) {
+                    /** @var Offer $offer */
+                    $offer = $offerCollection->getById($item->getProductId());
+                    if ($offer->isShare()) {
+                        /** @var PiggyBankService $piggyBankService */
+                        $piggyBankService = App::getInstance()->getContainer()->get('piggy_bank.service');
+
+                        $pseudoAction = $offer->getShare()->filter(function (Share $action) use ($piggyBankService) {
+                            return (in_array($action->getCode(), [
+                                    $piggyBankService::ACTION_CODE,
+                                    'royal-canin-vyigray-poezdku',
+                                    'novaya-kollektsiya-lezhakov-2019',
+                                    'pro-plan-vyigray-iphone-garantirovannye-prizy',
+                                    'grandin-12-3kg-sukhogo-korma-dlya-sobak-v-podarok',
+                                    'grandin-15-na-sukhoy-korm-dlya-sobak-05'
+                                ]) || $action->getPropertySigncharge());
+                        });
+                        if (!$pseudoAction->isEmpty()) {
+                            $basketService->setBasketItemPropertyValue($item, 'IS_PSEUDO_ACTION', BitrixUtils::BX_BOOL_TRUE);
+                        }
+                    }
+                }
             }
 
             $chequePosition->setSignCharge((bool)$signCharge ? 1 : 0);
@@ -104,7 +143,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
             $hasItems = true;
         }
 
-        if(!$hasItems){
+        if (!$hasItems) {
             return $request;
         }
 

@@ -22,6 +22,7 @@ final class SapOrder
      * 06 – Курьерская доставка из магазина;
      * 07 – Доставка внешним подрядчиком (курьер или самовывоз из пункта выдачи заказов);
      * 08 – РЦ – магазин – домой.
+     * 09 - Достависта Экспресс-доставка
      */
     public const DELIVERY_TYPE_COURIER_RC = '01';
     public const DELIVERY_TYPE_PICKUP = '02';
@@ -29,6 +30,7 @@ final class SapOrder
     public const DELIVERY_TYPE_COURIER_SHOP = '06';
     public const DELIVERY_TYPE_CONTRACTOR = '07';
     public const DELIVERY_TYPE_ROUTE = '08';
+    public const DELIVERY_TYPE_DOSTAVISTA = '09';
 
     /**
      * Тип доставки подрядчиком
@@ -47,6 +49,7 @@ final class SapOrder
     public const DELIVERY_ZONE_4_ARTICLE = '2000001';
     public const DELIVERY_ZONE_5_ARTICLE = '2000282';
     public const DELIVERY_ZONE_6_ARTICLE = '2000331';
+    public const DELIVERY_ZONE_MOSCOW_ARTICLE = '2000331';
 
     public const ORDER_PAYMENT_ONLINE_MERCHANT_ID = '851000018943';
     public const ORDER_PAYMENT_ONLINE_CODE = '05';

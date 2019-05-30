@@ -24,16 +24,16 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 $currentOffer = $arParams['OFFER'];
 
 ?>
-<li class="b-product-information__item">
+  <li class="b-product-information__item">
     <div class="b-product-information__title-info">Наличие</div>
-    <?php if ($currentOffer->isByRequest() && $currentOffer->isAvailable()) { ?>
+      <?php if ($currentOffer->isByRequest() && $currentOffer->isAvailable()) { ?>
         <div class="b-product-information__value">Только под заказ</div>
-    <?php } elseif (!$currentOffer->isAvailable()) { ?>
+      <?php } elseif (!$currentOffer->isAvailable()) { ?>
         <div class="b-product-information__value">Нет в наличии</div>
-    <?php } else { ?>
+      <?php } else { ?>
         <div class="b-product-information__value">В наличии</div>
-    <?php } ?>
-</li>
+      <?php } ?>
+  </li>
 <?php
 if ($currentOffer->isAvailable()) {
     if ($pickup = $arResult['PICKUP']) {

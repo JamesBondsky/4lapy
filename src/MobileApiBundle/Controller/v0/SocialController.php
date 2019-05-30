@@ -21,7 +21,7 @@ class SocialController extends FOSRestController
         $response->setData([
             'vkontakte'     =>
                 [
-                    'web'     => 'http://vk.com/4lapy_ru',
+                    'web'     => 'https://vk.com/4lapy_ru',
                     'ios'     => 'vk://vk.com/4lapy_ru',
                     'android' => '',
                 ],
@@ -41,6 +41,12 @@ class SocialController extends FOSRestController
                 [
                     'web'     => 'https://ok.ru/chetyre.lapy',
                     'ios'     => 'odnoklassniki://ok.ru/group/51483118272694',
+                    'android' => '',
+                ],
+            'youtube' =>
+                [
+                    'web'     => 'https://www.youtube.com/channel/UCduvxcmOQFwTewukh9DUpvQ',
+                    'ios'     => 'youtube://www.youtube.com/channel/UCduvxcmOQFwTewukh9DUpvQ',
                     'android' => '',
                 ],
         ]);

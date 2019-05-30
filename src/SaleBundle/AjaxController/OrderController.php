@@ -7,6 +7,7 @@
 namespace FourPaws\SaleBundle\AjaxController;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -19,6 +20,7 @@ use Bitrix\Main\Web\Uri;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\App\MainTemplate;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -26,6 +28,8 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
@@ -35,16 +39,20 @@ use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
+use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\ShopInfoService;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
+use FourPaws\StoreBundle\Service\ShopInfoService as StoreShopInfoService;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
+use Protobuf\Exception;
 use Psr\Log\LoggerAwareInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Validator\ConstraintViolation;
+use FourPaws\App\Application as App;
 
 /**
  * Class BasketController
@@ -66,6 +74,11 @@ class OrderController extends Controller implements LoggerAwareInterface
     private $orderStorageService;
 
     /**
+     * @var OrderSubscribeService
+     */
+    private $orderSubscribeService;
+
+    /**
      * @var UserAuthorizationInterface
      */
     private $userAuthProvider;
@@ -74,6 +87,11 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @var ShopInfoService
      */
     private $shopInfoService;
+
+    /**
+     * @var StoreShopInfoService
+     */
+    private $storeShopInfoService;
 
     /**
      * @var DeliveryService
@@ -91,24 +109,30 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @param OrderService               $orderService
      * @param DeliveryService            $deliveryService
      * @param OrderStorageService        $orderStorageService
+     * @param OrderSubscribeService      $orderSubscribeService
      * @param UserAuthorizationInterface $userAuthProvider
      * @param ShopInfoService            $shopInfoService
+     * @param StoreShopInfoService       $storeShopInfoService
      * @param ReCaptchaService           $recaptcha
      */
     public function __construct(
         OrderService $orderService,
         DeliveryService $deliveryService,
         OrderStorageService $orderStorageService,
+        OrderSubscribeService $orderSubscribeService,
         UserAuthorizationInterface $userAuthProvider,
         ShopInfoService $shopInfoService,
+        StoreShopInfoService $storeShopInfoService,
         ReCaptchaService $recaptcha
     )
     {
         $this->orderService = $orderService;
         $this->deliveryService = $deliveryService;
         $this->orderStorageService = $orderStorageService;
+        $this->orderSubscribeService = $orderSubscribeService;
         $this->userAuthProvider = $userAuthProvider;
         $this->shopInfoService = $shopInfoService;
+        $this->storeShopInfoService = $storeShopInfoService;
         $this->recaptcha = $recaptcha;
     }
 
@@ -124,12 +148,63 @@ class OrderController extends Controller implements LoggerAwareInterface
     {
         $storage = $this->orderStorageService->getStorage();
 
+        $shopInfo = $this->shopInfoService->toArray(
+            $this->shopInfoService->getShopInfo(
+                $storage,
+                $this->orderStorageService->getPickupDelivery($storage)
+            )
+        );
+        array_walk($shopInfo['items'], [$this->storeShopInfoService, 'locationTypeSortDecorate']);
+        usort($shopInfo['items'], [$this->storeShopInfoService, 'shopCompareByLocationType']);
+        array_walk($shopInfo['items'], [$this->storeShopInfoService, 'locationTypeSortUndecorate']);
+
+        return JsonSuccessResponse::createWithData(
+            'Подгрузка успешна',
+            $shopInfo
+        );
+    }
+
+    /**
+     * @Route("/store-search-by-items/", methods={"POST"})
+     *
+     * @throws SystemException
+     * @throws \Exception
+     * @throws ApplicationCreateException
+     * @return JsonResponse
+     */
+    public function storeSearchByItemsAction(Request $request): JsonResponse
+    {
+        /** @var BasketService $basketService */
+        $basketService = App::getInstance()->getContainer()->get(BasketService::class);
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = App::getInstance()->getContainer()->get('delivery.service');
+        $storage = $this->orderStorageService->getStorage();
+        $items = $request->get('items');
+
+        if(empty($items)){
+            return JsonSuccessResponse::create('Не переданы товары для создания службы доставки');
+        }
+
+        // данные с 2 шага оформления заказа помешают расчётам
+        if($storage->getDeliveryId() > 0){
+            $this->orderStorageService->clearStorage($storage);
+            $storage = $this->orderStorageService->getStorage();
+        }
+
+        // получение самовывоза из набора товаров
+        $basket = $basketService->createBasketFromItems($items);
+        $deliveries = $deliveryService->getByBasket($basket, '', [DeliveryService::INNER_PICKUP_CODE]);
+        if(empty($deliveries)){
+            return JsonSuccessResponse::create('Нет доступных магазинов для самовывоза');
+        }
+        $pickup = current($deliveries);
+
         return JsonSuccessResponse::createWithData(
             'Подгрузка успешна',
             $this->shopInfoService->toArray(
                 $this->shopInfoService->getShopInfo(
                     $storage,
-                    $this->orderStorageService->getPickupDelivery($storage)
+                    $pickup
                 )
             )
         );
@@ -305,10 +380,11 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @param \Symfony\Component\HttpFoundation\Request $request
      *
      * @return JsonResponse
+     * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ObjectPropertyException
      * @throws OrderStorageSaveException
      * @throws SystemException
-     * @throws ObjectPropertyException
      */
     public function validateDeliveryAction(Request $request): JsonResponse
     {
@@ -344,20 +420,22 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @param Request $request
      *
      * @return JsonResponse
+     * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws OrderStorageSaveException
-     * @throws SystemException
      * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
+     * @throws BitrixProxyException
      * @throws LoaderException
+     * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
      * @throws ObjectPropertyException
-     * @throws UserMessageException
-     * @throws ApplicationCreateException
-     * @throws NotFoundException
-     * @throws BitrixProxyException
+     * @throws OrderStorageSaveException
      * @throws StoreNotFoundException
+     * @throws SystemException
+     * @throws UserMessageException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function validatePaymentAction(Request $request): JsonResponse
     {
@@ -441,21 +519,49 @@ class OrderController extends Controller implements LoggerAwareInterface
     protected function fillStorage(OrderStorage $storage, Request $request, string $step): array
     {
         $errors = [];
-        $this->orderStorageService->setStorageValuesFromRequest(
-            $storage,
-            $request,
-            $step
-        );
 
-        try {
-            $this->orderStorageService->updateStorage($storage, $step);
-        } catch (OrderStorageValidationException $e) {
-            /** @var ConstraintViolation $error */
-            foreach ($e->getErrors() as $i => $error) {
-                $key = $error->getPropertyPath() ?: $error->getCode() ?: $i;
-                $errors[$key] = $error->getMessage();
+        try{
+            $this->orderStorageService->setStorageValuesFromRequest(
+                $storage,
+                $request,
+                $step
+            );
+        } catch (\Exception $e){
+            $errors[] = $e->getMessage();
+        }
+
+        if(empty($errors)){
+            try {
+                $this->orderStorageService->updateStorage($storage, $step);
+
+                if($storage->isSubscribe()){
+                    if($step == OrderStorageEnum::DELIVERY_STEP){ // создание подписки на доставку
+                        $result = $this->orderSubscribeService->createSubscriptionByRequest($storage, $request);
+                        if(!$result->isSuccess()){
+                            $this->log()->error(implode(";\r\n", $result->getErrorMessages()));
+                            throw new OrderSubscribeException("Произошла ошибка оформления подписки на доставку, пожалуйста, обратитесь к администратору");
+                        }
+                        $storage->setSubscribeId($result->getData()['subscribeId']);
+                        $this->orderStorageService->updateStorage($storage, $step);
+                    } else if($step == OrderStorageEnum::PAYMENT_STEP){ // установка свойства "Списывать все баллы по подписке"
+                        if($storage->isSubscribe() && $request->get('subscribeBonus')){
+                            $subscribe = $this->orderSubscribeService->getById($storage->getSubscribeId());
+                            $subscribe->setPayWithbonus(true);
+                            $this->orderSubscribeService->update($subscribe);
+                        }
+                    }
+                }
+            } catch (OrderStorageValidationException $e) {
+                /** @var ConstraintViolation $error */
+                foreach ($e->getErrors() as $i => $error) {
+                    $key = $error->getPropertyPath() ?: $error->getCode() ?: $i;
+                    $errors[$key] = $error->getMessage();
+                }
+                $step = $e->getRealStep();
+            } catch (\Exception $e) {
+                $errors[$e->getCode()] = "Произошла ошибка, пожалуйста, обратитесь к администратору";
+                $this->log()->error(sprintf('Error in order creating: %s: %s', \get_class($e), $e->getMessage()));
             }
-            $step = $e->getRealStep();
         }
 
         return [

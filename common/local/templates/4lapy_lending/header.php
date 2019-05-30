@@ -166,17 +166,6 @@ $markup = PawsApplication::markup();
                 <li>Зарегистрируйте покупку, и&nbsp;вы сможете принять участие в&nbsp;розыгрыше призов</li>
                 <li>Проверяйте результаты розыгрыша каждую&nbsp;пятницу</li>
             </ol>
-
-            <?if ($USER->IsAuthorized()) {?>
-                <div class="regulations-landing__btn">
-                    <div class="landing-btn" data-btn-scroll-landing="registr-check">Зарегистрировать чек</div>
-                </div>
-            <?} else {?>
-                <div class="regulations-landing__btn">
-                    <div class="landing-btn js-open-popup" data-popup-id="authorization">Принять участие</div>
-                </div>
-            <?}?>
-
         </div>
     </section>
 </div>

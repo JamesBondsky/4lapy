@@ -8,6 +8,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Entity\IntervalRule\TimeRuleInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 
@@ -66,7 +67,12 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
                  * для всех зон, кроме 2, при поставке со склада поставщика
                  * должны быть доступны интервалы для 9:00 с даты доступности товара на РЦ
                  */
-                if ((!in_array($this->getDeliveryZone(), DeliveryService::getZonesTwo())) && (bool)$this->getShipmentResults()) {
+                if ((bool)$this->getShipmentResults() &&
+                    !(
+                        in_array($this->getDeliveryZone(), DeliveryService::getZonesTwo()) ||
+                        mb_strpos($this->getDeliveryZone(), DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false
+                    )
+                ) {
                     $defaultDate = clone $this->deliveryDate;
                 } else {
                     $defaultDate = clone $this->currentDate;
@@ -123,6 +129,29 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
     protected function checkIsDeliverable(Offer $offer): bool
     {
         return parent::checkIsDeliverable($offer) && $offer->getProduct()->isDeliveryAvailable();
+    }
+
+    /**
+     * Возвращает отформатированный текст о доставке для карточки товара на сайте и в мобильном приложении
+     * @param float $offerPrice
+     * @param bool $isByRequest
+     * @param bool $withCurrency
+     * @return string
+     */
+    public function getTextForOffer(float $offerPrice, $isByRequest = false, $withCurrency = false): string
+    {
+        $text = DeliveryTimeHelper::showByDate($this->deliveryDate, 0, ['DATE_FORMAT' => 'XX']);
+        if ($isByRequest) {
+            $text .= ' ближайшая';
+        } elseif ($this->freeFrom && $offerPrice > $this->freeFrom) {
+            $text .= ' бесплатно ';
+        } else if ($this->freeFrom) {
+            $text .= ' бесплатно от ' . $this->freeFrom;
+            if ($withCurrency) {
+                $text .= $this->currency;
+            }
+        }
+        return $text;
     }
 
     protected function resetResult(): void

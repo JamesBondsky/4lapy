@@ -23,6 +23,8 @@ use FourPaws\StoreBundle\Entity\Store;
 
 /** @var CalculationResultInterface $delivery */
 $delivery = $arResult['DELIVERY'];
+/** @var CalculationResultInterface $deliveryDostavista */
+$deliveryDostavista = $arResult['DELIVERY_DOSTAVISTA'];
 /** @var PickupResultInterface $pickup */
 $pickup = $arResult['PICKUP'];
 /** @var CalculationResultInterface $selectedDelivery */
@@ -38,6 +40,10 @@ $basket = $arResult['BASKET'];
 
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
+
+$subscribeIntervals = $component->getOrderSubscribeService()->getFrequencies();
+
+$daysOfWeek = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
 
 $selectedShopCode = '';
 $isPickup = false;
@@ -88,6 +94,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                     </header>
                     <form class="b-order-contacts__form b-order-contacts__form--choose-delivery js-form-validation"
                           data-url="<?= $arResult['URL']['DELIVERY_VALIDATION'] ?>"
+                          <?=($storage->isSubscribe()) ? 'data-form-step2-subscribe="true"' : ''?>
                           method="post"
                           id="order-step">
                         <input type="hidden" name="shopId" class="js-no-valid"
@@ -96,10 +103,28 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                         <input type="hidden" name="delyveryType"
                                value="<?= (!empty($arResult['SPLIT_RESULT']) && $storage->isSplit()) ? 'twoDeliveries' : 'oneDelivery' ?>"
                                class="js-no-valid">
+                        <input type="hidden" name="deliveryTypeId"
+                               value="<?
+                                   if($selectedDelivery){
+                                       echo $selectedDelivery->getDeliveryId();
+                                   }
+                                   else if($delivery){
+                                       echo $delivery->getDeliveryId();
+                                   }
+                                   else if($pickup){
+                                       echo $pickup->getDeliveryId();
+                                   }
+                               ?>"
+                               class="js-no-valid">
+                        <input type="hidden" name="deliveryCoords" value="">
                         <div class="b-choice-recovery b-choice-recovery--order-step">
                             <?php if ($delivery) { ?>
-                                <input <?= $deliveryService->isDelivery($selectedDelivery) ? 'checked="checked"' : '' ?>
+                                <?
+                                $selectedDel = ($selectedDelivery->getDeliveryCode() == DeliveryService::DELIVERY_DOSTAVISTA_CODE || $selectedDelivery->getDeliveryCode() == DeliveryService::INNER_DELIVERY_CODE) ? $delivery : $selectedDelivery;
+                                ?>
+                                <input <?= $deliveryService->isDelivery($selectedDel) ? 'checked="checked"' : '' ?>
                                         class="b-choice-recovery__input js-recovery-telephone js-delivery"
+                                        data-set-delivery-type="<?= $delivery->getDeliveryId() ?>"
                                         id="order-delivery-address"
                                         type="radio"
                                         name="deliveryId"
@@ -125,9 +150,9 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                         <?= /** @noinspection PhpUnhandledExceptionInspection */
                                         DeliveryTimeHelper::showTime($delivery, ['SHORT' => true]) ?>,
                                         <span class="js-delivery--price"><?= $delivery->getPrice() ?></span>₽
+                                    </span>
                                 </label>
                             <?php }
-
                             if ($pickup) {
                                 $available = $arResult['PICKUP_STOCKS_AVAILABLE'];
                                 if ($arResult['PARTIAL_PICKUP_AVAILABLE'] && $storage->isSplit()) {
@@ -137,6 +162,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 } ?>
                                 <input <?= $deliveryService->isPickup($selectedDelivery) ? 'checked="checked"' : '' ?>
                                         class="b-choice-recovery__input js-recovery-email js-myself-shop js-delivery"
+                                        data-set-delivery-type="<?= $pickup->getDeliveryId()?>"
                                         id="order-delivery-pick-up"
                                         type="radio"
                                         name="deliveryId"
@@ -179,17 +205,19 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                         </div>
                         <ul class="b-radio-tab js-myself-shop">
                             <?php if ($delivery) {
+                                $isHidden = $selectedDelivery->getDeliveryId() !== $delivery->getDeliveryId();
                                 ?>
                                 <li class="b-radio-tab__tab js-telephone-recovery"
-                                    <?= $selectedDelivery->getDeliveryId() !== $delivery->getDeliveryId() ? 'style="display:none"' : '' ?>>
+                                    <?= $isHidden ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/delivery.php' ?>
                                 </li>
                                 <?php
                             } ?>
                             <?php if ($pickup) {
+                                $isHidden = $selectedDelivery->getDeliveryId() !== $pickup->getDeliveryId();
                                 ?>
                                 <li class="b-radio-tab__tab js-email-recovery"
-                                    <?= $selectedDelivery->getDeliveryId() !== $pickup->getDeliveryId() ? 'style="display:none"' : '' ?>>
+                                    <?= $isHidden ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/pickup.php' ?>
                                 </li>
                                 <?php
@@ -252,7 +280,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                 </li>
             </ul>
         </div>
-        <button class="b-button b-button--social b-button--next b-button--fixed-bottom js-order-next js-valid-out-sub">
+        <button class="b-button b-button--social <?=($storage->isSubscribe()) ? 'b-button--next-subscribe-delivery' : 'b-button--next'?> b-button--fixed-bottom js-order-next js-valid-out-sub">
             Далее
         </button>
     </div>

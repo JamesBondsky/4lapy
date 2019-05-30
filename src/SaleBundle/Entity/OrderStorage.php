@@ -8,6 +8,7 @@ namespace FourPaws\SaleBundle\Entity;
 
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\SaleBundle\Validation as SaleValidation;
 use JMS\Serializer\Annotation as Serializer;
 use Misd\PhoneNumberBundle\Validator\Constraints\PhoneNumber;
@@ -354,6 +355,74 @@ class OrderStorage
      * @var bool
      */
     protected $fastOrder = false;
+
+    /**
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("FROM_APP")
+     * @Serializer\Groups(groups={"read","create"})
+     */
+    protected $fromApp = false;
+
+    /**
+     * Тип устройства
+     *
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("PROPERTY_FROM_APP_DEVICE")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     * @SaleValidation\OrderPropertyVariant(propertyCode ="FROM_APP_DEVICE")
+     */
+    protected $fromAppDevice = '';
+
+    /**
+     * Долгота
+     *
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("PROPERTY_LNG")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $lng = '';
+
+    /**
+     * Широта
+     *
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("PROPERTY_LAT")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $lat = '';
+
+    /**
+     * Заказ по подписке
+     *
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("PROPERTY_SUBSCRIBE")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $subscribe = false;
+
+    /**
+     * Заказ по подписке
+     *
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $subscribeId;
+
+    /**
+     * Промокод. Используется в МП вместое CouponStorage т.к. в МП нет сессий
+     *
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("PROMO_CODE")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     * @var string
+     */
+    protected $promoCode = '';
 
     /**
      * @return int
@@ -1011,6 +1080,137 @@ class OrderStorage
     public function setFastOrder(bool $fastOrder): OrderStorage
     {
         $this->fastOrder = $fastOrder;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLng(): string
+    {
+        return $this->lng;
+    }
+
+    /**
+     * @param string $lng
+     * @return OrderStorage
+     */
+    public function setLng(string $lng): OrderStorage
+    {
+        $this->lng = $lng;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLat(): string
+    {
+        return $this->lat;
+    }
+
+    /**
+     * @param string $lat
+     * @return OrderStorage
+     */
+    public function setLat(string $lat): OrderStorage
+    {
+        $this->lat = $lat;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSubscribe(): bool
+    {
+        return $this->subscribe;
+    }
+
+    /**
+     * @param bool $subscribe
+     * @return OrderStorage
+     */
+    public function setSubscribe(bool $subscribe): OrderStorage
+    {
+        $this->subscribe = $subscribe;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getSubscribeId()
+    {
+        return $this->subscribeId;
+    }
+
+    /**
+     * @param $subscribeId
+     * @return OrderStorage
+     */
+    public function setSubscribeId($subscribeId): OrderStorage
+    {
+        $this->subscribeId = $subscribeId;
+        return $this;
+    }
+
+
+    /**
+     * @return bool
+     */
+    public function isFromApp(): bool
+    {
+        return $this->fromApp ?? false;
+    }
+
+    /**
+     * @param bool $fromApp
+     *
+     * @return OrderStorage
+     */
+    public function setFromApp(bool $fromApp): OrderStorage
+    {
+        $this->fromApp = $fromApp;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFromAppDevice(): string
+    {
+        return $this->fromAppDevice ?? '';
+    }
+
+    /**
+     * @param string $fromAppDevice
+     *
+     * @return OrderStorage
+     */
+    public function setFromAppDevice(string $fromAppDevice): OrderStorage
+    {
+        $this->fromAppDevice = $fromAppDevice;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPromoCode(): string
+    {
+        return $this->promoCode ?: '';
+    }
+
+    /**
+     * @param string $promoCode
+     * @return OrderStorage
+     */
+    public function setPromoCode(string $promoCode): OrderStorage
+    {
+        $this->promoCode = $promoCode;
         return $this;
     }
 }

@@ -6,11 +6,9 @@
 
 namespace FourPaws\SapBundle\Consumer;
 
-use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Sale\Order;
 use FourPaws\SapBundle\Exception\CantUpdateOrderException;
 use FourPaws\SapBundle\Service\Orders\OrderService;
-use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LogLevel;
 use RuntimeException;
 
@@ -19,10 +17,8 @@ use RuntimeException;
  *
  * @package FourPaws\SapBundle\Consumer
  */
-class OrderOutConsumer implements ConsumerInterface, LoggerAwareInterface
+class OrderOutConsumer extends SapConsumerBase
 {
-    use LazyLoggerAwareTrait;
-    
     /**
      * @var OrderService
      */

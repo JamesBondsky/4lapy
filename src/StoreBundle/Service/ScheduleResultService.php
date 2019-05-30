@@ -9,6 +9,7 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use DateTime;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrmBundle\Exception\NotFoundRepository;
 use FourPaws\BitrixOrmBundle\Orm\BitrixOrm;
@@ -20,6 +21,7 @@ use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Repository\ScheduleResultRepository;
 use Psr\Log\LoggerAwareInterface;
+use Bitrix\Main\Application as BitrixApplication;
 
 class ScheduleResultService implements LoggerAwareInterface
 {
@@ -75,11 +77,11 @@ class ScheduleResultService implements LoggerAwareInterface
     /**
      * @param ScheduleResultCollection $results
      *
+     * @param DateTime $dateDelete
      * @return int[]
      * @throws NotFoundException
-     * @throws \RuntimeException
      */
-    public function updateResults(ScheduleResultCollection $results): array
+    public function updateResults(ScheduleResultCollection $results, DateTime $dateDelete): array
     {
         $deleted = 0;
         $created = 0;
@@ -87,7 +89,7 @@ class ScheduleResultService implements LoggerAwareInterface
         /** @var Store $sender */
         foreach ($senders as $sender) {
             /** @var ScheduleResult $item */
-            foreach ($this->findResultsBySender($sender) as $item) {
+            foreach ($this->findResultsBySender($sender)->filterByDateActive($dateDelete) as $item) {
                 $this->deleteResult($item);
                 $deleted++;
             }
@@ -108,13 +110,13 @@ class ScheduleResultService implements LoggerAwareInterface
     /**
      * @param Store $sender
      *
+     * @param DateTime $dateDelete
      * @return int
-     * @throws \RuntimeException
      */
-    public function deleteResultsForSender(Store $sender): int
+    public function deleteResultsForSender(Store $sender, DateTime $dateDelete): int
     {
         $deleted = 0;
-        foreach ($this->findResultsBySender($sender) as $item) {
+        foreach ($this->findResultsBySenderDateActive($sender, $dateDelete) as $item) {
             $this->deleteResult($item);
             $deleted++;
         }
@@ -162,6 +164,22 @@ class ScheduleResultService implements LoggerAwareInterface
         return $this->repository->find($id);
     }
 
+
+    public function findAllResults(): ScheduleResultCollection
+    {
+        $result = null;
+        try {
+            $result = $this->repository->findAll();
+        } catch (\Exception $e) {
+            $this->log()->error(
+                sprintf('failed to get schedule results: %s: %s', \get_class($e), $e->getMessage()),
+                []
+            );
+        }
+
+        return $result ?? new ScheduleResultCollection();
+    }
+
     /**
      * @param Store $sender
      *
@@ -173,6 +191,27 @@ class ScheduleResultService implements LoggerAwareInterface
         $result = null;
         try {
             $result = $this->repository->findBySender($sender->getXmlId());
+        } catch (\Exception $e) {
+            $this->log()->error(
+                sprintf('failed to get schedule results: %s: %s', \get_class($e), $e->getMessage()),
+                ['sender' => $sender->getXmlId()]
+            );
+        }
+
+        return $result ?? new ScheduleResultCollection();
+    }
+
+    /**
+     * @param Store $sender
+     *
+     * @param DateTime $dateActive
+     * @return ScheduleResultCollection
+     */
+    public function findResultsBySenderDateActive(Store $sender, DateTime $dateActive): ScheduleResultCollection
+    {
+        $result = null;
+        try {
+            $result = $this->repository->findBySender($sender->getXmlId())->filterByDateActive($dateActive);
         } catch (\Exception $e) {
             $this->log()->error(
                 sprintf('failed to get schedule results: %s: %s', \get_class($e), $e->getMessage()),
@@ -366,6 +405,7 @@ class ScheduleResultService implements LoggerAwareInterface
         }
 
         $receivers = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
+        //$receivers = [$this->storeService->getStoreByXmlId('DC01')];
 
         $result = [];
         /** @var Store $receiver */
@@ -373,6 +413,8 @@ class ScheduleResultService implements LoggerAwareInterface
             if ($sender->getXmlId() === $receiver->getXmlId()) {
                 continue;
             }
+
+            BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
 
             $results = $this->calculateForSenderAndReceiver($sender, $receiver, $date, $transitionCount);
             if (!$results->isEmpty()) {
@@ -414,26 +456,26 @@ class ScheduleResultService implements LoggerAwareInterface
             24 => (clone $from)->setTime(23, 0, 0, 0),
         ];
 
-        return $this->doCalculateScheduleDate($sender, $receiver, $dates, $maxTransitions);
+        return $this->doCalculateScheduleDate($sender, $receiver, $dates, $from, $maxTransitions);
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
-     * @param Store                $sender
-     * @param Store                $receiver
-     * @param \DateTime[]          $dates
-     * @param int                  $maxTransitions
+     * @param Store $sender
+     * @param Store $receiver
+     * @param \DateTime[] $dates
+     * @param int $maxTransitions
      * @param StoreCollection|null $route
-     *
+     * @param DateTime $dateActive
+     * @return ScheduleResultCollection
+     * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws NotFoundException
-     * @throws ApplicationCreateException
-     * @return ScheduleResultCollection
-     * @throws \RuntimeException
      */
     protected function doCalculateScheduleDate(
         Store $sender,
         Store $receiver,
         array $dates,
+        DateTime $dateActive,
         int $maxTransitions = self::MAX_TRANSITION_COUNT,
         ?StoreCollection $route = null
     ): ScheduleResultCollection
@@ -455,14 +497,16 @@ class ScheduleResultService implements LoggerAwareInterface
                 $from[$hour] = clone $date;
             }
 
-            $modifier = 0;
             if ($sender->isSupplier()) {
                 if ($transitionCount === 0) {
                     $maxTransitions++;
                 }
+            }
 
+            /** На второй итерации маршрута товар готов к отгрузке уже в 9 утра */
+            if($transitionCount > 0){
+                /** @var \DateTime $date */
                 foreach ($from as $hour => $date) {
-                    /** по ТЗ при доставке со склада поставщика далее расчеты ведутся для времени 9:00 */
                     $date->setTime(9, 0, 0, 0);
 
                     /** время у стартовых дат нужно тоже изменить, чтобы корректно работал diff */
@@ -472,7 +516,8 @@ class ScheduleResultService implements LoggerAwareInterface
                 }
             }
 
-            $modifier += static::SCHEDULE_DATE_MODIFIER;
+            //$modifier = 0;
+            //$modifier += static::SCHEDULE_DATE_MODIFIER;
 
             if (null === $route) {
                 $route = new StoreCollection();
@@ -486,22 +531,25 @@ class ScheduleResultService implements LoggerAwareInterface
                  */
                 $nextDeliveries = [];
                 foreach ($from as $hour => $date) {
-                    /**
-                     * Дата отгрузки со склада
-                     */
-                    $shipmentDate = $this->storeService->getStoreShipmentDate($schedule->getReceiver(), $date);
+                    /** Дата отгрузки со склада (работало раньше, когда не было расписаний у магазина) */
+                    /*$shipmentDate = $this->storeService->getStoreShipmentDate($schedule->getReceiver(), $date);
+                    if(!$sender->isSupplier()){
+                        $shipmentDate->modify(sprintf('+%s days', $modifier));
+                    }*/
 
-                    $shipmentDate->modify(sprintf('+%s days', $modifier));
+                    /** Дата поставки на $receiver */
+                    $nextDelivery = $schedule->getNextDelivery($date);
 
-                    /**
-                     * Дата поставки на $receiver
-                     */
-                    $nextDelivery = $schedule->getNextDelivery($shipmentDate);
+                    /** Если расписания для магазина нет - берём график отгрузок */
+                    if (null === $nextDelivery && $schedule->getReceiver()->isShop()) {
+                        $nextDelivery = $this->storeService->getStoreShipmentDate($schedule->getReceiver(), $date);
+                    }
 
                     if (null === $nextDelivery) {
                         continue;
                     }
 
+                    /** Время на сборку товара после прихода на склад */
                     if ($sender->isSupplier()) {
                         $nextDelivery->modify(sprintf('+%s days', static::DC_PROCESSING_DATE_MODIFIER));
                     }
@@ -512,6 +560,7 @@ class ScheduleResultService implements LoggerAwareInterface
                 if (empty($nextDeliveries)) {
                     continue;
                 }
+
                 /**
                  * Найдена конечная точка
                  */
@@ -521,14 +570,22 @@ class ScheduleResultService implements LoggerAwareInterface
                     $res = (new ScheduleResult())
                         ->setSenderCode($route->first()->getXmlId())
                         ->setReceiverCode($schedule->getReceiverCode())
-                        ->setRouteCodes($route->getKeys());
-
+                        ->setRouteCodes($route->getKeys())
+                        ->setDateActive($dateActive->format(ScheduleResult::DATE_ACTIVE_FORMAT));
                     /**
                      * @var int       $hour
                      * @var \DateTime $date
                      */
                     foreach ($nextDeliveries as $hour => $date) {
                         $days = $date->diff($startDates[$hour])->days;
+
+                        if($days < 0){
+                            $this->log()->error(sprintf(
+                                'delivery date can not be in the past'
+                            ));
+                            continue;
+                        }
+
                         $setter = 'setDays' . $hour;
                         if (!method_exists($res, $setter)) {
                             $this->log()->error(sprintf(
@@ -551,6 +608,7 @@ class ScheduleResultService implements LoggerAwareInterface
                     $schedule->getReceiver(),
                     $receiver,
                     $nextDeliveries,
+                    $dateActive,
                     $maxTransitions,
                     $route
                 );

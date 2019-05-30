@@ -248,7 +248,7 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
                 /** @var Offer $activeOffer */
                 $activeOffer = $sortedOffers->first();
                 foreach ($sortedOffers as $offer) {
-                    if ($ratings[$activeOffer->getId()] <= $ratings[$offer->getId()]) {
+                    if ($ratings[$activeOffer->getId()] < $ratings[$offer->getId()]) {
                         $activeOffer = $offer;
                     }
                 }
@@ -511,7 +511,6 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
         $price = $offer->getCatalogPrice();
         $oldPrice = $offer->getOldPrice() ? $offer->getCatalogOldPrice() : $price;
         $isByRequest = $offer->isByRequest();
-        //$pickupOnly = $available && $product->isPickupAvailable() && !$product->isDeliveryAvailable();
         $pickupOnly = $available && !$offer->isDeliverable() && $product->isPickupAvailable() && $offer->isPickupAvailable();
 
         $responseItem = [

@@ -7,7 +7,6 @@
 namespace FourPaws\SapBundle\Consumer;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
-use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentTypeException;
@@ -20,7 +19,6 @@ use FourPaws\SapBundle\Dto\In\Offers\Materials;
 use FourPaws\SapBundle\Exception\NotFoundPropertyException;
 use FourPaws\SapBundle\Service\Materials\ProductService;
 use FourPaws\SapBundle\Subscriber\BitrixEvents;
-use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LogLevel;
 use RuntimeException;
 
@@ -29,10 +27,8 @@ use RuntimeException;
  *
  * @package FourPaws\SapBundle\Consumer
  */
-class MaterialsConsumer implements ConsumerInterface, LoggerAwareInterface
+class MaterialsConsumer extends SapConsumerBase
 {
-    use LazyLoggerAwareTrait;
-
     /**
      * @var MaterialConsumer
      */

@@ -14,6 +14,11 @@ class BrandService
     public const DEFAULT_BRAND_CODE = 'default';
 
     /**
+     * Процент начисляемых бонусов для заводчиков (группа Избранное)
+     */
+    public const BONUS_OPT_PERCENT = 5;
+
+    /**
      * @param string $brandCode
      *
      * @throws BrandNotFoundException
@@ -48,5 +53,14 @@ class BrandService
     {
         return Category::createRoot()
             ->withName(sprintf('Товары бренда %s', $brand->getName()));
+    }
+
+
+    /**
+     * @return int
+     */
+    public static function getBonusOptPercent(): int
+    {
+        return self::BONUS_OPT_PERCENT;
     }
 }

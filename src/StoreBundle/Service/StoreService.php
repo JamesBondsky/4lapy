@@ -11,11 +11,14 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Dadata\Response\Date;
+use Faker\Provider\DateTime;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\LocationBundle\Dto\Coordinates;
 use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Entity\DeliverySchedule;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Entity\StoreSearchResult;
 use FourPaws\StoreBundle\Enum\StoreLocationType;
@@ -57,6 +60,11 @@ class StoreService implements LoggerAwareInterface
      * Базовые магазины
      */
     public const TYPE_BASE_SHOP = 'TYPE_BASE_SHOP';
+
+    /**
+     * Ветаптека в сервисах
+     */
+    public const XML_ID_VET_APTEKA = 'vet-apteka';
 
     /**
      * @var LocationService
@@ -890,5 +898,24 @@ class StoreService implements LoggerAwareInterface
         }
 
         return $filter;
+    }
+
+    /**
+     * Проверяет наличие "Ветаптеки" в списках услуг
+     *
+     * @param Store $store
+     * @return bool
+     * @throws \Exception
+     */
+    public function hasLicense(Store $store): bool
+    {
+        $services = $this->getServicesInfo(['ID' => array_unique($store->getServices())]);
+        foreach ($services as $service){
+            if($service['UF_XML_ID'] == self::XML_ID_VET_APTEKA){
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -92,9 +92,9 @@ if ($genSubscribeControls) {
 
 $attr = '';
 if ($orderSubscribe) {
-    $attr .= ' data-first-subscribe="' . $orderSubscribe->getDateStart() . '"';
+    $attr .= ' data-first-subscribe="' . $orderSubscribe->getDateCreate() . '"';
     $attr .= ' data-interval="' . $orderSubscribe->getDeliveryTime() . '"';
-    $attr .= ' data-frequency="' . $orderSubscribe->getDeliveryFrequency() . '"';
+    $attr .= ' data-frequency="' . $orderSubscribe->getFrequency() . '"';
 }
 
 ?>
@@ -122,7 +122,17 @@ if ($orderSubscribe) {
                         </span>
                         <?php
                     } else {
-                        $orderNumber = $order->getManzanaId() ?: $order->getAccountNumber();?>
+                        $manzanaId = $order->getManzanaId();
+                        $accountNumber = $order->getAccountNumber();
+                        if ($manzanaId)
+                        {
+                        	$orderNumber = $manzanaId === $accountNumber . 'NEW' ? $accountNumber : $manzanaId;
+                        }
+                        else
+                        {
+                            $orderNumber = $accountNumber;
+                        }
+                        ?>
                         <span class="b-accordion-order-item__number-order">
                             <?= ('№ ' . $orderNumber . ' от ' . $order->getFormattedDateInsert()) ?>
                         </span>
@@ -156,7 +166,7 @@ if ($orderSubscribe) {
                         echo '<span>';
                         echo 'Следующая доставка ';
                         echo DateHelper::replaceRuMonth(
-                            $orderSubscribe->getNextDeliveryDate()
+                            $orderSubscribe->getNextDate()
                                 ->format('d #n# Y'),
                             DateHelper::GENITIVE,
                             true

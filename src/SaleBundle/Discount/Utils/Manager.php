@@ -83,8 +83,11 @@ class Manager
         if (self::isOrderNotEmpty($order) && !self::$extendCalculated) {
             self::disableExtendsDiscount();
             $container = Application::getInstance()->getContainer();
+            /** @var BasketService $basketService */
             $basketService = $container->get(BasketService::class);
+            /** @var Manzana $manzana */
             $manzana = $container->get(Manzana::class);
+            /** @var \FourPaws\SaleBundle\Repository\CouponStorage\CouponSessionStorage $couponStorage */
             $couponStorage = $container->get(CouponStorageInterface::class);
 
             // Удаляем подарки, акции которых не выполнились

@@ -13,6 +13,7 @@ use FourPaws\DeliveryBundle\Handler\InnerDeliveryHandler;
 use FourPaws\DeliveryBundle\Handler\InnerPickupHandler;
 use FourPaws\DeliveryBundle\InputTypes\DeliveryInterval;
 use FourPaws\DeliveryBundle\Restrictions\LocationExceptRestriction;
+use FourPaws\DeliveryBundle\Restrictions\LocationExceptRestrictionUserGroups;
 
 /**
  * Class Event
@@ -33,6 +34,7 @@ class Event extends BaseServiceHandler
         static::initHandler('onSaleDeliveryRestrictionsClassNamesBuildList', [self::class, 'addCustomRestrictions'],
             $module);
         static::initHandler('registerInputTypes', [self::class, 'addCustomTypes'], $module);
+        static::initHandler('onSaleDeliveryRestrictionsClassNamesBuildList', [self::class, 'addCustomRestrictionsUserGroups'], $module);
     }
 
     /**
@@ -76,6 +78,19 @@ class Event extends BaseServiceHandler
                     'NAME'  => 'Интервал доставки',
                     'CLASS' => DeliveryInterval::class,
                 ],
+            ]
+        );
+    }
+
+    /**
+     * @return EventResult
+     */
+    public static function addCustomRestrictionsUserGroups(): EventResult
+    {
+        return new EventResult(
+            EventResult::SUCCESS,
+            [
+                LocationExceptRestrictionUserGroups::class => __DIR__ . '/Restrictions/LocationExceptRestrictionUserGroups.php',
             ]
         );
     }

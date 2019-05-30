@@ -7,6 +7,7 @@
 namespace FourPaws\SapBundle\Dto\In\DeliverySchedule;
 
 use Doctrine\Common\Collections\Collection;
+use FourPaws\SapBundle\Dto\In\Orders\Order;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -112,6 +113,26 @@ class DeliverySchedule
      * @var Collection|WeekDayItem[]
      */
     protected $weekDays;
+
+    /**
+     * @Serializer\SerializedName("weeknums")
+     * @Serializer\XmlElement()
+     * @Serializer\Type("FourPaws\SapBundle\Dto\In\DeliverySchedule\WeekNums")
+     *
+     * @var WeekNums
+     */
+    protected $weekNums;
+
+    /**
+     * Дни недели.
+     * Данные о днях недели для типов графика поставки 1, 2.
+     *
+     * @Serializer\XmlList(inline=true, entry="orderdays")
+     * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\DeliverySchedule\OrderDayItem>")
+     *
+     * @var Collection|OrderDayItem[]
+     */
+    protected $orderDays;
 
     /**
      * Даты поставки.
@@ -271,6 +292,44 @@ class DeliverySchedule
     public function setWeekdays(Collection $weekDays): DeliverySchedule
     {
         $this->weekDays = $weekDays;
+
+        return $this;
+    }
+
+    /**
+     * @return WeekNums
+     */
+    public function getWeekNums(): ?WeekNums
+    {
+        return $this->weekNums;
+    }
+
+    /**
+     * @param WeekNums $weekNums
+     * @return DeliverySchedule
+     */
+    public function setWeekNums(WeekNums $weekNums): DeliverySchedule
+    {
+        $this->weekNums = $weekNums;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|OrderDayItem[]
+     */
+    public function getOrderDays()
+    {
+        return $this->orderDays;
+    }
+
+    /**
+     * @param Collection|OrderDayItem[] $orderDays
+     * @return DeliverySchedule
+     */
+    public function setOrderDays($orderDays): DeliverySchedule
+    {
+        $this->orderDays = $orderDays;
 
         return $this;
     }

@@ -8,7 +8,6 @@ namespace FourPaws\SapBundle\Consumer;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
-use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Catalog\StoreProductTable;
 use Bitrix\Catalog\StoreTable;
 use Bitrix\Main\ArgumentException;
@@ -21,7 +20,6 @@ use FourPaws\Enum\IblockType;
 use FourPaws\SapBundle\Dto\In\StoresStock\StockItem;
 use FourPaws\SapBundle\Dto\In\StoresStock\StoresStock;
 use FourPaws\SapBundle\Exception\InvalidArgumentException;
-use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 
 /**
@@ -29,10 +27,8 @@ use RuntimeException;
  *
  * @package FourPaws\SapBundle\Consumer
  */
-class StoresStockConsumer implements ConsumerInterface, LoggerAwareInterface
+class StoresStockConsumer extends SapConsumerBase
 {
-    use LazyLoggerAwareTrait;
-
     /** @var array $offersCache */
     private $offersCache = [];
 

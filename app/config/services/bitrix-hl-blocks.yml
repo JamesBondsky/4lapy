@@ -58,6 +58,10 @@ services:
     arguments: ['DeliverySchedule']
     parent: bx.hlblock.base
 
+  bx.hlblock.deliveryschedule.tpz:
+    arguments: ['DeliveryScheduleTpz']
+    parent: bx.hlblock.base
+
   bx.hlblock.deliveryscheduleresult:
     arguments: ['DeliveryScheduleResult']
     parent: bx.hlblock.base
@@ -76,6 +80,22 @@ services:
 
   bx.hlblock.clothingsizeselection:
     arguments: ['ClothingSizeSelection']
+    parent: bx.hlblock.base
+
+  bx.hlblock.coupon:
+    arguments: ['Coupon']
+    parent: bx.hlblock.base
+
+  bx.hlblock.personalcoupon:
+    arguments: ['PersonalCoupon']
+    parent: bx.hlblock.base
+
+  bx.hlblock.personalcouponusers:
+    arguments: ['PersonalCouponUsers']
+    parent: bx.hlblock.base
+
+  bx.hlblock.festivalusersdata:
+    arguments: ['FestivalUsersData']
     parent: bx.hlblock.base
 
   # Свойства продукта
@@ -236,4 +256,12 @@ services:
 
   bx.hlblock.orderfeedback:
     arguments: ['OrderInterviews']
+    parent: bx.hlblock.base
+
+  bx.hlblock.searchsuggestions:
+    arguments: ['SearchSuggestions']
+    parent: bx.hlblock.base
+
+  bx.hlblock.pushmessages:
+    arguments: ['PushMessages']
     parent: bx.hlblock.base

@@ -41,6 +41,7 @@ class CategoryQuery extends IblockSectionQuery
             'PICTURE',
             'UF_LANDING',
             'UF_LANDING_BANNER',
+            'UF_LANDING_BANNER2',
             'UF_FAQ_SECTION',
             'UF_FORM_TEMPLATE',
             'UF_DEF_FOR_LANDING',
@@ -49,6 +50,7 @@ class CategoryQuery extends IblockSectionQuery
             'UF_LANDING_ARTICLES',
             'UF_RECOMMENDED',
             'UF_SKIP_AUTOSORT',
+            'UF_SHOW_DEL_TEXT',
         ];
     }
 

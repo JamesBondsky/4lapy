@@ -21,6 +21,7 @@ use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\IntervalRuleCollection;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Factory\IntervalRuleFactory;
+use FourPaws\Helpers\BxCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 
 class InnerDeliveryHandler extends DeliveryHandlerBase
@@ -175,7 +176,23 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         $deliveryZone = $this->deliveryService->getDeliveryZoneForShipment($shipment, false);
         $data = [];
         if ($this->config['PRICES'][$deliveryZone]) {
-            $result->setDeliveryPrice($this->config['PRICES'][$deliveryZone]);
+            $propertyCollection = $shipment->getParentOrder()->getPropertyCollection();
+            $deliveryCost = BxCollection::getOrderPropertyByCode($propertyCollection, 'DELIVERY_COST');
+
+            if ($deliveryCost && null !== ($deliveryCostValue = $deliveryCost->getValue()))
+            {
+                /**
+                 * Хак для сохранения кастомной цены доставки, исправляющий баг при добавлении в заказ товаров
+                 * через метод \FourPaws\SaleBundle\Service\BasketService::addOfferToBasket
+                 * в обработчиках события OnSaleOrderBeforeSaved
+                 */
+
+                $result->setDeliveryPrice($deliveryCostValue);
+            }
+            else
+            {
+                $result->setDeliveryPrice($this->config['PRICES'][$deliveryZone]);
+            }
 
             if (!empty($this->config['FREE_FROM'][$deliveryZone])) {
                 $data['FREE_FROM'] = (int)$this->config['FREE_FROM'][$deliveryZone];

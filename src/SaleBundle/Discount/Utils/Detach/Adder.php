@@ -10,17 +10,23 @@
 
 namespace FourPaws\SaleBundle\Discount\Utils\Detach;
 
+use FourPaws\App\Application as App;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\BasketItem;
 use Exception;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Helpers\BxCollection;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\SaleBundle\Discount\Utils\AdderInterface;
 use FourPaws\SaleBundle\Discount\Utils\BaseDiscountPostHandler;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\RuntimeException;
 use FourPaws\SaleBundle\Helper\PriceHelper;
+use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\SaleBundle\Service\OrderStorageService;
 
 /**
  * Class Adder
@@ -29,8 +35,6 @@ use FourPaws\SaleBundle\Helper\PriceHelper;
 class Adder extends BaseDiscountPostHandler implements AdderInterface
 {
     public static $skippedDiscountsFakeIds = [];
-
-
     /**
      * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\ArgumentException
@@ -45,13 +49,17 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
     public function processOrder(): void
     {
         /**
-         * 1. количества и свойства
-         * 2. PRICE и DISCOUNT_PRICE
+         * 1. Региональные скидки
+         * 2. количества и свойства
+         * 3. PRICE и DISCOUNT_PRICE
          */
         //todo Вероятно стоит сначала целиком разобрать резалт, а потом действовать
         if (!$discountBase = $this->order->getDiscount()) {
             return;
         }
+
+        $this->applySimpleDiscounts();
+
         $applyResult = $discountBase->getApplyResult(true);
         $lowDiscounts = $this->getLowDiscounts($applyResult['RESULT']['BASKET']);
 
@@ -154,6 +162,8 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                 }
             }
         }
+
+        $this->applySubscribeDiscounts();
     }
 
     /**
@@ -266,5 +276,92 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
         self::$skippedDiscountsFakeIds = array_flip(array_flip(array_merge(
             $skippedDiscountsFakeIds, self::$skippedDiscountsFakeIds
         )));
+    }
+
+    /**
+     * Применение региональных простых скидок
+     *
+     * @throws ArgumentOutOfRangeException
+     */
+    private function applySimpleDiscounts()
+    {
+        /** @var BasketItem $basketItem */
+        foreach ($this->order->getBasket() as $basketItem){
+            if($percent = $this->basketService->getBasketItemPropertyValue($basketItem, Offer::SIMPLE_SHARE_DISCOUNT_CODE)) {
+                $price = $basketItem->getBasePrice() * ((100 - $percent)/100);
+            } else {
+                $price = $this->basketService->getBasketItemPropertyValue($basketItem, Offer::SIMPLE_SHARE_SALE_CODE);
+            }
+
+            if($price > 0 && $price != $basketItem->getPrice()){
+                $basketItem->setFieldsNoDemand([
+                    'PRICE' => $price,
+                    'DISCOUNT_PRICE' => $basketItem->getBasePrice() - $price,
+                    'CUSTOM_PRICE' => 'Y'
+                ]);
+            }
+            /*else if($basketItem->getBasePrice() != $basketItem->getPrice()){
+                $basketItem->setFieldsNoDemand([
+                    'DISCOUNT_PRICE' => null,
+                    'PRICE' => $basketItem->getBasePrice(),
+                    'CUSTOM_PRICE' => 'N'
+                ]);
+            }*/
+        }
+    }
+
+    /**
+     * Установка скидки по подписке на доставку
+     *
+     * @throws ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\SaleBundle\Exception\OrderStorageSaveException
+     */
+    private function applySubscribeDiscounts()
+    {
+        /** @var OrderStorageService $storageService */
+        $storageService = App::getInstance()->getContainer()->get(OrderStorageService::class);
+        /** @var OrderSubscribeService $orderSubscribeService */
+        $orderSubscribeService = App::getInstance()->getContainer()->get('order_subscribe.service');
+
+        $storage = $storageService->getStorage();
+        $offerCollection = $this->basketService->getOfferCollection();
+
+        /** @var BasketItem $basketItem */
+        foreach ($this->order->getBasket() as $basketItem){
+            /** @var Offer $offer */
+            $offer = $offerCollection->getById($basketItem->getProductId());
+            if(!$offer){
+                continue;
+            }
+
+            $percent = $offer->getSubscribeDiscount();
+            if($percent <= 0){
+                continue;
+            }
+
+            $priceSubscribe = $offer->getSubscribePrice() * $basketItem->getQuantity();
+            $priceDefault = $basketItem->getPrice() * $basketItem->getQuantity();
+            $isSubscribeActive = $this->basketService->getBasketItemPropertyValue($basketItem, "SUBSCRIBE_PRICE");
+
+            if($storage->isSubscribe() && !$isSubscribeActive && $priceSubscribe <= $priceDefault){
+                $basketItem->setFieldsNoDemand([
+                    'PRICE' => $offer->getSubscribePrice(),
+                    'DISCOUNT_PRICE' => $basketItem->getBasePrice() - $offer->getSubscribePrice(),
+                    'CUSTOM_PRICE' => 'Y'
+                ]);
+                $this->basketService->setBasketItemPropertyValue($basketItem, "SUBSCRIBE_PRICE", true);
+            }
+            else if(!$storage->isSubscribe() && $isSubscribeActive){
+                $price = $orderSubscribeService->countSubscribePrice($basketItem->getPrice(), $percent, true);
+                $basketItem->setFieldsNoDemand([
+                    'PRICE' => $price,
+                    'DISCOUNT_PRICE' => $basketItem->getBasePrice() - $price,
+                    'CUSTOM_PRICE' => 'Y'
+                ]);
+                $this->basketService->setBasketItemPropertyValue($basketItem, "SUBSCRIBE_PRICE", false);
+            }
+        }
     }
 }

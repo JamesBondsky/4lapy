@@ -17,8 +17,9 @@ class Order
 {
     public const DEFAULT_CONTRACTOR_CODE = '0000802070';
 
-    public const ORDER_SOURCE_MOBILE_APP = 'MOBI';
-    public const ORDER_SOURCE_SITE       = 'DFUE';
+    public const ORDER_SOURCE_MOBILE_APP_IOS     = 'MOBI';
+    public const ORDER_SOURCE_MOBILE_APP_ANDROID = 'MOB2';
+    public const ORDER_SOURCE_SITE               = 'DFUE';
 
     /**
      * Содержит номер заказа в Системе.
@@ -156,6 +157,7 @@ class Order
      * 06 – Курьерская доставка из магазина;
      * 07 – Доставка внешним подрядчиком (курьер или самовывоз из пункта выдачи заказов);
      * 08 – РЦ – магазин – домой.
+     * 09 – Достависта
      *
      * @Serializer\XmlAttribute()
      * @Serializer\SerializedName("DeliveryType")
@@ -376,6 +378,42 @@ class Order
      * @var null|DeliveryAddress
      */
     protected $deliveryAddress;
+
+    /**
+     * Номер купона
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\SerializedName("CouponNumber")
+     * @Serializer\Type("string")
+     *
+     * @var string
+     */
+    protected $couponNumber;
+
+    /**
+     * Долгота
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\SerializedName("Longitude")
+     * @Serializer\Type("string")
+     *
+     * @var string
+     */
+    protected $Longitude;
+
+    /**
+     * Широта
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\SerializedName("Latitude")
+     * @Serializer\Type("string")
+     *
+     * @var string
+     */
+    protected $Latitude;
 
     /**
      * @return string
@@ -913,6 +951,66 @@ class Order
     public function setAvatarDepartment(string $avatarDepartment): Order
     {
         $this->avatarDepartment = $avatarDepartment;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCouponNumber(): string
+    {
+        return $this->couponNumber;
+    }
+
+    /**
+     * @param string $couponNumber
+     *
+     * @return Order
+     */
+    public function setCouponNumber(string $couponNumber): Order
+    {
+        $this->couponNumber = $couponNumber;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLongitude(): string
+    {
+        return $this->Longitude;
+    }
+
+    /**
+     * @param string $Longitude
+     *
+     * @return Order
+     */
+    public function setLongitude(string $Longitude): Order
+    {
+        $this->Longitude = $Longitude;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLatitude(): string
+    {
+        return $this->Latitude;
+    }
+
+    /**
+     * @param string $Latitude
+     *
+     * @return Order
+     */
+    public function setLatitude(string $Latitude): Order
+    {
+        $this->Latitude = $Latitude;
 
         return $this;
     }

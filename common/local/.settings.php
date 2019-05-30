@@ -22,7 +22,10 @@ return [
 
     'cache' => [
         'value' => [
-            'type' => 'memcache',
+            'type' => [
+                'class_name' => 'CustomCacheEngineMemcache',
+                'required_remote_file' => realpath($_SERVER['DOCUMENT_ROOT']) . '/../src/Bitrix/Cache/CustomCacheEngineMemcache.php'
+            ],
             'memcache' => [
                 'host' => getenv('BX_MEMCACHE_HOST'),
                 'port' => getenv('BX_MEMCACHE_PORT'),

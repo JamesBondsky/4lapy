@@ -48,7 +48,7 @@ class DeliveryScheduleRepository extends BaseRepository
      */
     public function __construct(ArrayTransformerInterface $arrayTransformer, ValidatorInterface $validator)
     {
-        $this->dataManager = Application::getInstance()->getContainer()->get('bx.hlblock.deliveryschedule');
+        $this->dataManager = Application::getInstance()->getContainer()->get('bx.hlblock.deliveryschedule.tpz');
 
         parent::__construct($arrayTransformer, $validator);
     }
@@ -61,7 +61,7 @@ class DeliveryScheduleRepository extends BaseRepository
     public function findByXmlId(string $xmlId): DeliverySchedule
     {
         /** @noinspection PhpIncompatibleReturnTypeInspection */
-        $result = $this->findBy(['UF_XML_ID' => $xmlId], [], 1)->first();
+        $result = $this->findBy(['UF_TPZ_XML_ID' => $xmlId], [], 1)->first();
         if (!$result) {
             throw new NotFoundException(sprintf('Schedule with xmlId %s not found', $xmlId));
         }
@@ -77,12 +77,12 @@ class DeliveryScheduleRepository extends BaseRepository
         Store $receiver,
         StoreCollection $senders = null
     ): DeliveryScheduleCollection {
-        $filter = ['=UF_RECEIVER' => $receiver->getXmlId()];
+        $filter = ['=UF_TPZ_RECEIVER' => $receiver->getXmlId()];
         if ($senders && !$senders->isEmpty()) {
-            $filter['=UF_SENDER'] = [];
+            $filter['=UF_TPZ_RECEIVER'] = [];
             /** @var Store $sender */
             foreach ($senders as $sender) {
-                $filter['=UF_SENDER'][] = $sender->getXmlId();
+                $filter['=UF_TPZ_SENDER'][] = $sender->getXmlId();
             }
         }
 
@@ -99,14 +99,15 @@ class DeliveryScheduleRepository extends BaseRepository
         Store $sender,
         StoreCollection $receivers = null
     ): DeliveryScheduleCollection {
-        $filter = ['=UF_SENDER' => $sender->getXmlId()];
+        $filter = ['=UF_TPZ_SENDER' => $sender->getXmlId()];
         if ($receivers && !$receivers->isEmpty()) {
-            $filter['=UF_RECEIVER'] = [];
+            $filter['=UF_TPZ_RECEIVER'] = [];
             /** @var Store $sender */
             foreach ($receivers as $receiver) {
-                $filter['=UF_RECEIVER'][] = $receiver->getXmlId();
+                $filter['=UF_TPZ_RECEIVER'][] = $receiver->getXmlId();
             }
         }
+
         /** @noinspection PhpIncompatibleReturnTypeInspection */
         return $this->findBy($filter);
     }
@@ -149,7 +150,7 @@ class DeliveryScheduleRepository extends BaseRepository
     protected function getDefaultFilter(): array
     {
         return [
-            '!UF_TYPE' => false,
+            '!UF_TPZ_TYPE' => false,
             'SENDER_STORE.ACTIVE' => 'Y',
             'RECEIVER_STORE.ACTIVE' => 'Y'
         ];
@@ -168,13 +169,13 @@ class DeliveryScheduleRepository extends BaseRepository
             new ReferenceField(
                 'SENDER_STORE',
                 StoreTable::class,
-                ['=this.UF_SENDER' => 'ref.XML_ID'],
+                ['=this.UF_TPZ_SENDER' => 'ref.XML_ID'],
                 ['join_type' => 'INNER'])
         )->registerRuntimeField(
             new ReferenceField(
                 'RECEIVER_STORE',
                 StoreTable::class,
-                ['=this.UF_RECEIVER' => 'ref.XML_ID'],
+                ['=this.UF_TPZ_RECEIVER' => 'ref.XML_ID'],
                 ['join_type' => 'INNER'])
         );
 

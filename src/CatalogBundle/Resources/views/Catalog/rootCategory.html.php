@@ -32,7 +32,7 @@ $category = $APPLICATION->IncludeComponent(
     null,
     ['HIDE_ICONS' => 'Y']
 ); ?>
-    <div class="b-catalog">
+    <div class="b-catalog" data-pagetype="catalog">
         <div class="b-container b-container--catalog-main">
             <div class="b-catalog__wrapper-title">
                 <?php

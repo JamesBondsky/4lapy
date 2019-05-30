@@ -1,3 +1,8 @@
+<?php
+
+use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
+
+?>
 <div class="about__wrap-top">
 <div id="about_wrap">
 	<div class="about_body">
@@ -92,7 +97,7 @@
  <img src="/include/static/images/order01.png" alt="">
 					<h3>В магазине</h3>
 					<p>
-						 Выберите удобный для вас магазин Четыре Лапы. Заказ будет собран в течение часа и готов к выдачи без очереди
+						 Выберите удобный для вас магазин Четыре Лапы. Заказ будет собран <?=DeliveryTimeHelper::PACKING_TIME_TEXT?> и готов к выдачи без очереди
 					</p>
 				</div>
 				<div class="delivery_item">
@@ -171,7 +176,7 @@
 		</div>
 	</div>
 	<div class="links_block">
- <a class="b-common-item__add-to-cart" href="http://stage.4lapy.adv.ru/" target="_blank" title="" tabindex="0"> <span class="b-common-item__wrapper-link"> <span class="b-common-item__price js-price-block">В&nbsp;каталог&nbsp;&gt;&nbsp;&nbsp;</span> </span> </a>
+ <a class="b-common-item__add-to-cart" href="/catalog/" target="_blank" title="" tabindex="0"> <span class="b-common-item__wrapper-link"> <span class="b-common-item__price js-price-block">В&nbsp;каталог&nbsp;&gt;&nbsp;&nbsp;</span> </span> </a>
 	</div>
 </div>
  </div>

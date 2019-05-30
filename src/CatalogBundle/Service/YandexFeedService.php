@@ -40,6 +40,7 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundExcep
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -61,6 +62,8 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
+    const DEFAULT_LOCATION_CODE = '0000073738';
+
     const YAROSLAVL_STOCK = 47,
         VORONEZH_STOCK = 151,
         TULA_STOCK = 168,
@@ -70,19 +73,31 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         OBNINSK_STOCK = 65;
 
     private const MINIMAL_AVAILABLE_IN_RC = 2;
+    private const MINIMAL_AVAILABLE_IN_SUPPLIER = 1;
 
     private const PROMO_TYPE = 'n plus m';
 
     private $deliveryInfo;
+
     /**
      * @var StoreService
      */
     private $storeService;
+
     /**
      * @var Store
      */
     private $rcStock;
 
+    /**
+     * @var Store
+     */
+    private $curStock;
+
+    /** @var int $arStockDC01 */
+    private $arStockDC01 = 1;
+
+    /** @var array $arStocks */
     private $arStocks = [
         self::YAROSLAVL_STOCK => [
             'url' => 'yaroslavl.market.yandex.ru',
@@ -114,6 +129,9 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         ]
     ];
 
+    /** @var array $arSupplierStocks */
+    private $arSupplierStocks = [233, 234, 247, 250, 251, 252, 263, 267, 268, 270, 271, 272, 273, 274, 275, 287, 311, 315, 319];
+
     /**
      * YandexFeedService constructor.
      *
@@ -143,6 +161,8 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      */
     public function process(ConfigurationInterface $configuration, int $step, string $stockID = null): bool
     {
+        $this->tmpFileName = 'yandex_tmp_feed' . ((!empty($stockID)) ? ('_' . $stockID) : '') . '.xml';
+
         /**
          * @var Configuration $configuration
          */
@@ -155,7 +175,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 ->processFeed($feed, $configuration)
                 ->processCurrencies($feed, $configuration)
                 ->processDeliveryOptions($feed, $configuration, $stockID)
-                ->processCategories($feed, $configuration);
+                ->processCategories($feed, $configuration, false);
 
             $this->saveFeed($this->getStorageKey(), $feed);
         } else {
@@ -167,11 +187,8 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 $feed = $this->loadFeed($this->getStorageKey());
                 $feed->getShop()
                     ->setOffset(null);
-
-                if ($stockID == self::NN_STOCK) {
-                    $this->processPromos($feed, $configuration, $stockID);
-                }
-
+                $this->processCategories($feed, $configuration, true);
+                $this->processPromos($feed, $configuration, $stockID);
                 $this->publicFeed($feed, Application::getAbsolutePath($configuration->getExportFile()));
                 $this->clearFeed($this->getStorageKey());
 
@@ -243,8 +260,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         Feed $feed,
         Configuration $configuration,
         string $stockID = null
-    ): YandexFeedService
-    {
+    ): YandexFeedService {
         $limit = 500;
         $offers = $feed->getShop()
             ->getOffers();
@@ -256,7 +272,13 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         $filter = $this->buildOfferFilter($feed, $configuration);
 
         if (!empty($stockID)) {
-            $filter['>CATALOG_STORE_AMOUNT_' . $stockID] = '2';
+            $arSupplier = ['LOGIC' => 'OR'];
+            $arSupplier[]['>CATALOG_STORE_AMOUNT_' . $stockID] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
+            $arSupplier[]['>CATALOG_STORE_AMOUNT_' . $this->arStockDC01] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
+            foreach ($this->arSupplierStocks as $supplierStock) {
+                $arSupplier[]['>CATALOG_STORE_AMOUNT_' . $supplierStock] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
+            }
+            $filter = array_merge($filter, [$arSupplier]);
         }
 
         $offerCollection = $this->getOffers($filter, $offset, $limit);
@@ -296,35 +318,6 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
         }
 
         return $this;
-    }
-
-    /**
-     * @param array $filter
-     * @param int $offset
-     * @param int $limit
-     *
-     * @return OfferCollection
-     */
-    protected function getOffers(array $filter, int $offset = 0, $limit = 500): OfferCollection
-    {
-        /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return (new OfferQuery())->withFilter($filter)
-            ->withNav([
-                'nPageSize' => $limit,
-                'iNumPage' => $this->getPageNumber($offset, $limit),
-            ])
-            ->exec();
-    }
-
-    /**
-     * @param int $offset
-     * @param int $limit
-     *
-     * @return int
-     */
-    protected function getPageNumber(int $offset, int $limit): int
-    {
-        return (int)\ceil(($offset + 1) / $limit);
     }
 
     /**
@@ -369,6 +362,16 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
 
         $deliveryInfo = $this->getOfferDeliveryInfo($offer, $stockID);
 
+        $tpz = false;
+        if (!empty($stockID)) {
+            if (null === $this->curStock) {
+                $this->curStock = $this->storeService->getStoreById($stockID);
+            }
+            $tpz = $offer->getAllStocks()->filterByStore($this->curStock)->getTotalAmount() == 0;
+        }
+        $sectionId = $offer->getProduct()->getIblockSectionId();
+        $this->categoriesInProducts[$sectionId] = $sectionId;
+
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         /** @noinspection PassingByReferenceCorrectnessInspection */
         $yandexOffer =
@@ -380,8 +383,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                         ->getBrandName(),
                     $offer->getName()
                 ))
-                ->setCategoryId($offer->getProduct()
-                    ->getIblockSectionId())
+                ->setCategoryId($sectionId)
                 ->setDelivery(!$offer->getProduct()
                     ->isDeliveryForbidden())
                 ->setPickup(true)
@@ -390,7 +392,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                     ->getDetailText()
                     ->getText()), 0, 2990))
                 ->setManufacturerWarranty(true)
-                ->setAvailable($offer->isAvailable())
+                ->setAvailable((!empty($stockID) && $tpz) ? false : $offer->isAvailable())
                 ->setCurrencyId('RUB')
                 ->setPrice($offer->getPrice())
                 ->setPicture($currentImage)
@@ -425,7 +427,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
      */
     protected function isOfferExcluded(Offer $offer): bool
     {
-        $badWordsTemplate = '~новинка|подарка|хит|скидка|бесплатно|спеццена|специальная цена|новинка|заказ|аналог|акция|распродажа|новый|подарок|new|sale~iu';
+        $badWordsTemplate = '~ новинка | подарка | хит | скидка | бесплатно | спеццена | специальная цена | новинка | заказ | аналог | акция | распродажа | новый | подарок | new | sale ~iu';
 
         if (!$offer->getXmlId()) {
             return true;
@@ -482,27 +484,27 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             []
         );
 
+        $dbItems = \CIBlockElement::GetList(
+            [],
+            [
+                'IBLOCK_ID' => IblockUtils::getIblockId(
+                    IblockType::CATALOG,
+                    IblockCode::PRODUCTS
+                ),
+                'SECTION_ID' => $sectionIds,
+                'INCLUDE_SUBSECTIONS' => 'Y',
+                'ACTIVE' => 'Y'
+            ],
+            false,
+            false,
+            [
+                'ID',
+                'IBLOCK_ID'
+            ]
+        );
         $idList = [];
-
-        try {
-            $idList = \array_reduce(ElementTable::query()
-                //->setCacheTtl(3600)
-                ->setSelect(['ID'])
-                ->setFilter([
-                    'IBLOCK_ID' => IblockUtils::getIblockId(
-                        IblockType::CATALOG,
-                        IblockCode::PRODUCTS
-                    ),
-                    'IBLOCK_SECTION_ID' => $sectionIds,
-                    'ACTIVE' => 'Y'
-                ])
-                ->exec()
-                ->fetchAll() ?: [], function ($carry, $on) {
-                $carry[] = $on['ID'];
-
-                return $carry;
-            }, []);
-        } catch (Exception $e) {
+        while ($arItem = $dbItems->Fetch()) {
+            $idList[] = $arItem['ID'];
         }
 
         $idList = $idList ?: [-1];
@@ -512,61 +514,6 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
             '<XML_ID' => 2000000,
             'ACTIVE' => 'Y'
         ];
-    }
-
-    /**
-     * @param Feed $feed
-     * @param Configuration $configuration
-     *
-     * @return YandexFeedService
-     */
-    protected function processCategories(Feed $feed, Configuration $configuration): YandexFeedService
-    {
-        $categories = new ArrayCollection();
-
-        /**
-         * @var CategoryCollection $parentCategories
-         */
-        $parentCategories = (new CategoryQuery())
-            ->withFilter([
-                'ID' => $configuration->getSectionIds(),
-                'GLOBAL_ACTIVE' => 'Y'
-            ])
-            ->withOrder(['LEFT_MARGIN' => 'ASC'])
-            ->exec();
-
-        /**
-         * @var Category $parentCategory
-         */
-        foreach ($parentCategories as $parentCategory) {
-            if ($categories->get($parentCategory->getId())) {
-                continue;
-            }
-
-            $this->addCategory($parentCategory, $categories);
-
-            if ($parentCategory->getRightMargin() - $parentCategory->getLeftMargin() < 3) {
-                continue;
-            }
-
-            $childCategories = (new CategoryQuery())
-                ->withFilter([
-                    '>LEFT_MARGIN' => $parentCategory->getLeftMargin(),
-                    '<RIGHT_MARGIN' => $parentCategory->getRightMargin(),
-                    'GLOBAL_ACTIVE' => 'Y'
-                ])
-                ->withOrder(['LEFT_MARGIN' => 'ASC'])
-                ->exec();
-
-            foreach ($childCategories as $category) {
-                $this->addCategory($category, $categories);
-            }
-        }
-
-        $feed->getShop()
-            ->setCategories($categories);
-
-        return $this;
     }
 
     /**
@@ -615,17 +562,6 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     }
 
     /**
-     * @return string
-     */
-    private function getStorageKey(): string
-    {
-        return \sprintf(
-            '%s/yandex_tmp_feed.xml',
-            \sys_get_temp_dir()
-        );
-    }
-
-    /**
      * @param null $stockID
      * @return ArrayCollection|DeliveryOption[]
      */
@@ -641,7 +577,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 false,
                 ['HIDE_ICONS' => 'Y'])['DELIVERIES'];
         } else {
-            $locationCode = '0000073738';
+            $locationCode = static::DEFAULT_LOCATION_CODE;
             if (!empty($stockID)) {
                 $locationCode = $this->arStocks[$stockID]['location_code'];
             }
@@ -838,9 +774,13 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                 ];
 
                 if (!empty($stockID)) {
-                    $filter['>CATALOG_STORE_AMOUNT_' . $stockID] = '1';
-                } else {
-                    $filter['>CATALOG_STORE_AMOUNT_' . $this->getRcStock()->getId()] = '1';
+                    $arSupplier = ['LOGIC' => 'OR'];
+                    $arSupplier[]['>CATALOG_STORE_AMOUNT_' . $stockID] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
+                    $arSupplier[]['>CATALOG_STORE_AMOUNT_' . $this->arStockDC01] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
+                    foreach ($this->arSupplierStocks as $supplierStock) {
+                        $arSupplier[]['>CATALOG_STORE_AMOUNT_' . $supplierStock] = self::MINIMAL_AVAILABLE_IN_SUPPLIER;
+                    }
+                    $filter = array_merge($filter, [$arSupplier]);
                 }
 
                 $offerCollection = (new OfferQuery())

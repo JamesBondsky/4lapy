@@ -143,6 +143,30 @@ class BasketRulesRepository
 
     /**
      *
+     * @param array|string $xmlId
+     *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     *
+     * @return BasketRule|null
+     */
+    public function findByXmlId($xmlId): array
+    {
+        $result = [];
+        $res = DiscountTable::getList([
+            'filter' => ['=XML_ID' => $xmlId],
+            'select' => self::DEFAULT_SELECT,
+        ]);
+
+        foreach($this->fetchDiscountTableResult($res) as $item){
+            $result[] = $item;
+        }
+
+        return $result;
+    }
+
+    /**
+     *
      *
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException

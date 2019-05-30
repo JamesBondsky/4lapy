@@ -9,6 +9,7 @@ namespace FourPaws\Enum;
 class IblockProperty
 {
     public const BRANDS_POPULAR = 'POPULAR';
+    public const LICENSE = 'LICENSE';
 
     public const PRODUCTS_BRAND = 'BRAND';
 
@@ -21,4 +22,6 @@ class IblockProperty
     public const COMPARING_LINK = 'PRODUCT';
 
     public const SHARE_PRODUCTS = 'PRODUCTS';
+
+    public const BRAND_BONUS_OPT = 'BONUS_OPT';
 }

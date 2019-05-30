@@ -45,6 +45,7 @@ use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use OldSound\RabbitMqBundle\RabbitMq\Producer;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -61,6 +62,8 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     public const METHOD_AUTHENTICATE = 'Authenticate';
 
     public const METHOD_EXECUTE = 'Execute';
+
+    public const CONTRACT_CONTRACT_DESCRIPTIONS = 'contracts_descriptions';
 
     public const CONTRACT_ADVANCED_BALANCE = 'advanced_balance';
 
@@ -91,6 +94,16 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     protected $sessionId;
 
     protected $cards = [];
+
+	/**
+	 * Возвращает список доступных контрактов
+	 * @return string
+	 * @throws ExecuteException
+	 */
+	public function getContractsDescription(): string
+    {
+	    return $this->execute(self::CONTRACT_CONTRACT_DESCRIPTIONS);
+    }
 
     /**
      * Отправка телефона
@@ -747,6 +760,19 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     }
 
     /**
+     * Импорт заказов пользователя. Очередь в rabbit.
+     *
+     * @param User $user
+     */
+    public function importUserOrdersAsync(User $user)
+    {
+        /** @noinspection MissingService */
+        /** @var Producer $producer */
+        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_orders_import_producer');
+        $producer->publish($this->serializer->serialize($user, 'json'));
+    }
+
+    /**
      * @param Client $client
      * @throws TooManyUserFoundException
      * @throws UsernameNotFoundException
@@ -830,7 +856,11 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                 $result=end($result);
             }
             $res = preg_match("/.*успешно.*/isu", $result);
-            return $res !== false && $res > 0;
+            $isSuccess = $res !== false && $res > 0;
+            if (!$isSuccess) {
+                $this->logger->error(__METHOD__ . '. Не удалось изменить карту. Ответ Manzana: ' . $result);
+            }
+            return $isSuccess;
         } catch (Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }

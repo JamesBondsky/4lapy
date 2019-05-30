@@ -3,6 +3,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\Helpers\WordHelper;
@@ -29,7 +30,7 @@ $isInnerPickup = $pickup['CODE'] === DeliveryService::INNER_PICKUP_CODE;
     <div class="b-delivery__delivery-type-row__day">
         <p>Получение</p>
         <?php if ($isInnerPickup) { ?>
-            <span>Через 1 час после оформления заказа при наличии товара в магазине</span>
+            <span><?=DeliveryTimeHelper::PACKING_TIME_TEXT_C?> после оформления заказа при наличии товара в магазине</span>
         <?php } else { ?>
             <span>
                 Через <?= $pickup['PERIOD_FROM'] ?> <?= WordHelper::declension(

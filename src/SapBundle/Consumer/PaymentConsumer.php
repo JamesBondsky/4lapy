@@ -6,14 +6,12 @@
 
 namespace FourPaws\SapBundle\Consumer;
 
-use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\SapBundle\Dto\In\ConfirmPayment\Order;
 use FourPaws\SapBundle\Exception\Payment\InvalidOrderNumberException;
 use FourPaws\SapBundle\Exception\Payment\NotFoundInvoiceException;
 use FourPaws\SapBundle\Exception\Payment\NotFoundOrderException;
 use FourPaws\SapBundle\Exception\Payment\OrderZeroPriceException;
 use FourPaws\SapBundle\Service\Orders\PaymentService;
-use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 
 /**
@@ -21,10 +19,8 @@ use RuntimeException;
  *
  * @package FourPaws\SapBundle\Consumer
  */
-class PaymentConsumer implements ConsumerInterface, LoggerAwareInterface
+class PaymentConsumer extends SapConsumerBase
 {
-    use LazyLoggerAwareTrait;
-
     /**
      * @var PaymentService
      */

@@ -30,29 +30,11 @@ class OrderCalculate
 
     /**
      * Расшифровка движений по карте клиента на текущий заказ, список ОбъектДетализации[]
-     * @Serializer\SerializedName("price_details")
+     * @Serializer\SerializedName("card_details")
      * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Detailing>")
      * @var Detailing[]
      */
     protected $cardDetails = [];
-
-    /**
-     * Специальное поле для товаров, которые доступны для текущей конфигурации заказа
-     * (используется только при оформлении заказа. При получении корзины не нужен)
-     * @Serializer\SerializedName("available_goods")
-     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Basket\Product>")
-     * @var Product[]
-     */
-    protected $availableGoods = [];
-
-    /**
-     * Специальное поле для товаров, которые НЕ доступны для текущей конфигурации заказа
-     * (используется только при оформлении заказа. При получении корзины не нужен)
-     * @Serializer\SerializedName("not_available_goods")
-     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Basket\Product>")
-     * @var Product[]
-     */
-    protected $notAvailableGoods = [];
 
     /**
      * Используемый промокод
@@ -116,44 +98,6 @@ class OrderCalculate
     public function setCardDetails(array $cardDetails): OrderCalculate
     {
         $this->cardDetails = $cardDetails;
-        return $this;
-    }
-
-    /**
-     * @return Product[]
-     */
-    public function getAvailableGoods(): array
-    {
-        return $this->availableGoods;
-    }
-
-    /**
-     * @param Product[] $availableGoods
-     *
-     * @return OrderCalculate
-     */
-    public function setAvailableGoods(array $availableGoods): OrderCalculate
-    {
-        $this->availableGoods = $availableGoods;
-        return $this;
-    }
-
-    /**
-     * @return Product[]
-     */
-    public function getNotAvailableGoods(): array
-    {
-        return $this->notAvailableGoods;
-    }
-
-    /**
-     * @param Product[] $notAvailableGoods
-     *
-     * @return OrderCalculate
-     */
-    public function setNotAvailableGoods(array $notAvailableGoods): OrderCalculate
-    {
-        $this->notAvailableGoods = $notAvailableGoods;
         return $this;
     }
 

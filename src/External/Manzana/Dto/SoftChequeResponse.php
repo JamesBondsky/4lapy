@@ -276,6 +276,7 @@ class SoftChequeResponse
     }
 
     /**
+     * Сумма начисленного бонуса
      * @return float
      */
     public function getChargedBonus(): float

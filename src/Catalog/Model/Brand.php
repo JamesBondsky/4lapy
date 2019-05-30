@@ -142,6 +142,14 @@ class Brand extends IblockElement implements HitMetaInfoAwareInterface
     protected $PROPERTY_TRANSLITS = '';
 
     /**
+     * @var bool Бонус для заводчиков на товары этого бренда
+     * @Type("bool")
+     * @Accessor(getter="isBonusOpt")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_BONUS_OPT = false;
+
+    /**
      * @return bool
      */
     public function isPopular(): bool
@@ -220,4 +228,24 @@ class Brand extends IblockElement implements HitMetaInfoAwareInterface
         return $this;
     }
 
+    /**
+     * @return bool
+     */
+    public function isBonusOpt(): bool
+    {
+        return $this->PROPERTY_POPULAR;
+    }
+
+
+    /**
+     * @param $bonus
+     *
+     * @return $this
+     */
+    public function withBonusOpt($bonus)
+    {
+        $this->PROPERTY_CATALOG_UNDER_BANNER = $bonus;
+
+        return $this;
+    }
 }

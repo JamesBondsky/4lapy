@@ -46,6 +46,9 @@ interface CalculationResultInterface
      */
     public function getDeliveryDate(): \DateTime;
 
+
+    public function setDeliveryDate(\DateTime $date): CalculationResultInterface;
+
     /**
      * @return int
      */
@@ -250,7 +253,22 @@ interface CalculationResultInterface
      */
     public function setPeriodType($periodType);
 
+    /**
+     * @param $id
+     * @return $this
+     */
     public function setId($id);
+
+    /**
+     * @return string
+     */
+    public function getCurrency();
+
+    /**
+     * @param $currency
+     * @return CalculationResultInterface
+     */
+    public function setCurrency($currency): CalculationResultInterface;
 
     /**
      * @param Error[] $errors
