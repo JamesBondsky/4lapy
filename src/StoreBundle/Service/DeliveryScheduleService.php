@@ -29,9 +29,7 @@ class DeliveryScheduleService implements LoggerAwareInterface
 
     protected const TYPE_FIELD_CODE = 'UF_TPZ_TYPE';
 
-    /**
-     * @var array
-     */
+    /** @var array */
     protected $weekdays = [
         1 => 'monday',
         2 => 'tuesday',
@@ -42,11 +40,13 @@ class DeliveryScheduleService implements LoggerAwareInterface
         7 => 'sunday',
     ];
 
+    /**
+     * Регулярности
+     * @var array
+     */
     protected $regular;
 
-    /**
-     * @var DeliveryScheduleRepository
-     */
+    /** @var DeliveryScheduleRepository */
     protected $repository;
 
     public function __construct(DeliveryScheduleRepository $repository)
