@@ -139,3 +139,7 @@ services:
 
   kkm.service:
     class: FourPaws\KkmBundle\Service\KkmService
+
+  kiosk.service:
+    class: FourPaws\KioskBundle\Service\KioskService
+    public: true

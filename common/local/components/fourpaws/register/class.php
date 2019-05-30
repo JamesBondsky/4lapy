@@ -29,6 +29,7 @@ use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\Model\City;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 use FourPaws\Search\Table\FourPawsSmsProtectorTable;
@@ -139,6 +140,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     {
         try {
             $this->arResult['STEP'] = 'begin';
+            $this->arResult['KIOSK'] = KioskService::isKioskMode();
 
             $request = Application::getInstance()->getContext()->getRequest();
 
