@@ -132,7 +132,7 @@ $markup = PawsApplication::markup();
                 <div class="splash-screen-canin__title">
                     Путешествие на&nbsp;родину породы
                 </div>
-                <div class="splash-screen-canin__date">С 8 апреля по 19 мая 2019 года</div>
+                <div class="splash-screen-canin__date">С 8 апреля по 2 июня 2019 года</div>
 
                 <div class="splash-screen-canin__btn-wrap">
                     <div class="btn-canin" data-btn-scroll-landing="regulations">Узнать подробности</div>

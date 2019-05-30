@@ -290,6 +290,7 @@ class PushEventService
         return (new ApiPushEvent())
             ->setPlatform($session->getPlatform())
             ->setPushToken($session->getPushToken())
+            ->setUserId($session->getUserId() ?: 0)
             ->setMessageId($pushMessage->getId())
             ->setDateTimeExec($pushMessage->getStartSend());
     }

@@ -27,5 +27,8 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
     include __DIR__ . '/response-feedback-form-landing.php';
 
     include __DIR__ . '/modal_popup.php';
+
+    include __DIR__ . '/schedule-bloggershow.php';
+    include __DIR__ . '/schedule-gala.php';
     ?>
 </div>

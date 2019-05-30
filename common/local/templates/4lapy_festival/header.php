@@ -100,8 +100,6 @@ $markup = PawsApplication::markup();
 <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_body.php'; ?>
 <?php $APPLICATION->ShowPanel(); ?>
 
-<!-- data-spy="scroll" data-target=".header" -->
-
     <?php include __DIR__ . '/blocks/banner-top.php'; ?>
 
     <!--========== HEADER ==========-->
@@ -110,7 +108,7 @@ $markup = PawsApplication::markup();
         <nav class="navbar" role="navigation" data-header-navbar="true">
             <div class="container">
                 <!-- Brand and toggle get grouped for better mobile display -->
-                <div class="menu-container js_nav-item">
+                <div class="menu-container js_nav-item" data-header-menu-container-mobile="true">
                     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
                         <span class="sr-only">Переключить навигацию</span>
                         <span class="toggle-icon"></span>
@@ -140,7 +138,7 @@ $markup = PawsApplication::markup();
                             <!--<li class="js_nav-item nav-item"><a class="nav-item-child nav-item-hover" href="#interview">Я ПОЙДУ!</a></li>-->
                             <li class="js_nav-item nav-item"><a class="nav-item-child nav-item-hover" href="#partners">партнеры</a></li>
                             <li class="js_nav-item nav-item"><a class="nav-item-child nav-item-hover" href="#contacts">контакты</a></li>
-                            <li class="nav-item join-item"><a class="nav-item-child nav-item-hover js-open-popup" href="javascript:void(0);" onclick="ga('send', 'event', 'fest_go', 'click', 'btn_menu_fest')" data-popup-id="form-festival"><span>Я ПОЙДУ</span></a></li>
+                            <li class="nav-item join-item"><a class="nav-item-child nav-item-hover js-open-popup" href="javascript:void(0);" onclick="ga('send', 'event', 'fest_go_menu', 'click', 'btn_menu_fest')" data-popup-id="form-festival"><span>Я ПОЙДУ</span></a></li>
                         </ul>
                     </div>
                 </div>
@@ -279,6 +277,9 @@ $markup = PawsApplication::markup();
             <div class="container content-lg">
                 <div class="row text-center margin-b-40">
                     <div class="col-sm-8 col-sm-offset-2">
+                        <div class="schedule">
+                            <a href="javascript:void(0);" class="js-open-popup" data-popup-id="schedule-bloggershow">Расписание</a>
+                        </div>
                         <div class="bar"><h5>блогер-шоу</h5></div>
                         <h2>Общайся на Блогер-Шоу</h2>
                         <hr class="header_line" />
@@ -396,7 +397,7 @@ $markup = PawsApplication::markup();
                     </div>
                 </div>
             </div>
-            <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go', 'click', 'btn_guest_fest')" data-popup-id="form-festival">я пойду!</button>
+            <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go_guest', 'click', 'btn_guest_fest')" data-popup-id="form-festival">я пойду!</button>
         </div>
         <!-- End guest -->
         <div id="dog_fest">
@@ -410,7 +411,7 @@ $markup = PawsApplication::markup();
 
                         <div id="videoHolder"></div>
 
-                        <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go', 'click', 'btn_dog_fest')" data-popup-id="form-festival">я пойду!</button>
+                        <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go_dog', 'click', 'btn_dog_fest')" data-popup-id="form-festival">я пойду!</button>
                     </div>
                 </div>
                 <!--// end row -->
@@ -465,7 +466,7 @@ $markup = PawsApplication::markup();
                     </div>
                 </div>
             </div>
-            <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go', 'click', 'btn_activity_fest')" data-popup-id="form-festival">я пойду!</button>
+            <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go_activity', 'click', 'btn_activity_fest')" data-popup-id="form-festival">я пойду!</button>
         </div>
         <!-- End acitvity -->
 
@@ -474,6 +475,9 @@ $markup = PawsApplication::markup();
             <div class="content-md container">
                 <div class="row text-center margin-b-40">
                     <div class="col-sm-8 col-sm-offset-2">
+                        <div class="schedule">
+                            <a href="javascript:void(0);" class="js-open-popup" data-popup-id="schedule-gala">Расписание</a>
+                        </div>
                         <div class="bar"><h5>ГЛАВНАЯ СЦЕНА</h5></div>
                         <h2>зажигай на главной сцене</h2>
                         <hr class="header_line" />
@@ -687,7 +691,7 @@ $markup = PawsApplication::markup();
                     </div>
                 </div>
                 <!-- End Masonry Grid -->
-                <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go', 'click', 'btn_gala_fest')" data-popup-id="form-festival">я пойду!</button>
+                <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go_gala_fest', 'click', 'btn_gala_fest')" data-popup-id="form-festival">я пойду!</button>
             </div>
         </div>
         <!-- Work -->
@@ -762,7 +766,7 @@ $markup = PawsApplication::markup();
                     </div>
                 </div>
                 <!-- End Masonry Grid -->
-                <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go', 'click', 'btn_dobrolap_fest')" data-popup-id="form-festival">я пойду!</button>
+                <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go_dobrolap', 'click', 'btn_dobrolap_fest')" data-popup-id="form-festival">я пойду!</button>
             </div>
         </div>
         <div id="konkurs">
@@ -810,7 +814,7 @@ $markup = PawsApplication::markup();
                     </div>
                 </div>
             </div>
-            <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_fillform', 'click', 'btn_konkurs_fest')" data-popup-id="form-festival">я пойду!</button>
+            <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go_konkurs', 'click', 'btn_konkurs_fest')" data-popup-id="form-festival">я пойду!</button>
         </div>
         <!-- End Promo Banner -->
 
@@ -826,16 +830,16 @@ $markup = PawsApplication::markup();
                 </div>
                 <div class="partners_wrap">
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners01.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners01.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners02.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners02.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners03.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners03.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners04.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners04.jpg" alt="">
                     </div>
                 </div>
                 <div class="clear"></div>
@@ -849,27 +853,30 @@ $markup = PawsApplication::markup();
                         <!-- Latest Products -->
                     </div>
                 </div>
-                <div class="partners_wrap">
+                <div class="partners_wrap partners_wrap_line1">
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners06.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/elanco.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners07.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/msd.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners18.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/bayer.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners08.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/hills.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners09.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/acana.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners10.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/freshstep.png" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners11.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/everclean.png" alt="">
+                    </div>
+                    <div class="partner_item">
+                        <img class="partner_logo" src="img/partners/boehringeringelheim.jpg" alt="">
                     </div>
                 </div>
             </div>
@@ -883,22 +890,22 @@ $markup = PawsApplication::markup();
                 </div>
                 <div class="partners_wrap">
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners12.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners12.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners15.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners15.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners13.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners13.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners14.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners14.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners16.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners16.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners17.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners17.jpg" alt="">
                     </div>
                 </div>
             </div>

@@ -39,6 +39,7 @@ trait Pet
     /**
      * @Serializer\Type("int")
      * @Serializer\SerializedName("breed_id")
+     * @Serializer\SkipWhenEmpty()
      * @var int
      */
     protected $breedId;
@@ -134,18 +135,18 @@ trait Pet
     }
 
     /**
-     * @return int
+     * @return int|null
      */
-    public function getBreedId(): int
+    public function getBreedId(): ?int
     {
-        return $this->breedId;
+        return $this->breedId ?: null;
     }
 
     /**
-     * @param int $breedId
+     * @param int|null $breedId
      * @return $this
      */
-    public function setBreedId(int $breedId)
+    public function setBreedId(?int $breedId)
     {
         $this->breedId = $breedId;
         return $this;
