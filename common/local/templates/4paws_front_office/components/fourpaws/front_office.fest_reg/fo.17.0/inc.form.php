@@ -39,6 +39,21 @@ if ($showForm) {
                 200
             );
 	    </script><?
+    } elseif (array_filter($arResult['ERROR']['EXEC'], function($error) {
+    	return $error->getCode() === 'alreadyRegistered';
+    })) {
+        foreach ($arResult["PRINT_FIELDS"] as $fieldKey => $field) {
+            $arResult["PRINT_FIELDS"][$fieldKey]['VALUE'] = '';
+        }
+        ?><script>
+            var isResultSuccess = true;
+            $('html, body').animate(
+                {
+                    scrollTop: $(document).height()
+                },
+                200
+            );
+	    </script><?
     } elseif ($arResult['FIELD_VALUES']) { // т.е. если форма отправлена, но есть ошибки (общие ошибки и ошибки по полям лежат в разных ключах, но т.к. задача срочная - сделал такой костыль)
         ?><script>
             var isResultSuccess = true;

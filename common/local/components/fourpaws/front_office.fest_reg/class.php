@@ -154,11 +154,25 @@ class FourPawsFrontOfficeFestRegComponent extends \FourPaws\FrontOffice\Bitrix\C
             }
             $registeredUser = $festivalUsersDataManager::query()
                 ->setFilter($checkingFilter)
-                ->setSelect(['UF_FESTIVAL_USER_ID'])
-                ->setLimit(2)
+                ->setSelect([
+                    'UF_FESTIVAL_USER_ID',
+                    'UF_PASSPORT'
+                ])
+                ->setLimit(2) // зарегистрированных юзеров может два, если у одного совпадает телефон, а у другого email
                 ->fetchAll();
             if ($registeredUser) {
-                $this->setExecError('', 'Такой пользователь уже зарегистрирован. Номер участника: ' . implode(', ', array_column($registeredUser, 'UF_FESTIVAL_USER_ID')));
+                $alreadyRegisteredText = [];
+                foreach ($registeredUser as $user)
+                {
+                    $text = 'Номер участника: ' . $user['UF_FESTIVAL_USER_ID'];
+                    if ($user['UF_PASSPORT']) {
+                        $text .= ', номер паспорта: ' . $user['UF_PASSPORT'];
+                    }
+                    $alreadyRegisteredText[] = $text;
+                    unset($text);
+                }
+                $alreadyRegisteredText = implode('<br>', $alreadyRegisteredText);
+                $this->setExecError('', 'Пользователь с таким email/телефоном уже зарегистрирован.<br>' . $alreadyRegisteredText, 'alreadyRegistered');
                 return;
             }
 
