@@ -63,7 +63,7 @@ class FourPawsFrontOfficeFestSearchComponent extends \FourPaws\FrontOffice\Bitri
     {
         $action = 'initialLoad';
 
-        if ($this->request->get('formName') === 'festUserSearch' && $this->request->get('action') === 'userSearch') {
+        if (($this->request->get('formName') === 'festUserSearch' && $this->request->get('action') === 'userSearch') || (int)$this->request->getQuery('promoId')) {
             $action = 'userSearch';
         } elseif ($this->request->get('formName') === 'festUserUpdate' && $this->request->get('action') === 'userUpdate') {
             $action = 'userUpdate';
@@ -183,6 +183,9 @@ class FourPawsFrontOfficeFestSearchComponent extends \FourPaws\FrontOffice\Bitri
             }
         } else {
             $fieldName = 'promoId';
+            if ($promoId = (int)$this->request->getQuery($fieldName)) {
+                $this->setFormFieldValue($fieldName, $promoId);
+            }
             $promoId = $value = $this->trimValue($this->getFormFieldValue($fieldName));
             if ($value !== '' && !preg_match('/^\d+$/', $value)) {
                 $this->setFieldError($fieldName, 'Неверно указан ID', 'incorrect_value');

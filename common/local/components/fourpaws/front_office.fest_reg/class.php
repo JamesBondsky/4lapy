@@ -164,12 +164,16 @@ class FourPawsFrontOfficeFestRegComponent extends \FourPaws\FrontOffice\Bitrix\C
                 $alreadyRegisteredText = [];
                 foreach ($registeredUser as $user)
                 {
-                    $text = 'Номер участника: ' . $user['UF_FESTIVAL_USER_ID'];
-                    if ($user['UF_PASSPORT']) {
-                        $text .= ', номер паспорта: ' . $user['UF_PASSPORT'];
+                    if ($user['UF_FESTIVAL_USER_ID']) {
+                        $text = 'Номер участника: ' . $user['UF_FESTIVAL_USER_ID'];
+                        if ($user['UF_PASSPORT']) {
+                            $text .= ', номер паспорта: ' . $user['UF_PASSPORT'];
+                        } else {
+                            $text .= ', <a href="/fest-reg/search/?promoId=' . $user['UF_FESTIVAL_USER_ID'] . '">найти по номеру участника</a>';
+                        }
+                        $alreadyRegisteredText[] = $text;
+                        unset($text);
                     }
-                    $alreadyRegisteredText[] = $text;
-                    unset($text);
                 }
                 $alreadyRegisteredText = implode('<br>', $alreadyRegisteredText);
                 $this->setExecError('', 'Пользователь с таким email/телефоном уже зарегистрирован.<br>' . $alreadyRegisteredText, 'alreadyRegistered');
