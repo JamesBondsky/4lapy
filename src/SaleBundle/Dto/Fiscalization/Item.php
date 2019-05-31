@@ -73,6 +73,13 @@ class Item
     protected $tax;
 
     /**
+     * @var int
+     *
+     * @Serializer\Exclude()
+     */
+    protected $paymentMethod;
+
+    /**
      * @return int
      */
     public function getPositionId(): int
@@ -214,5 +221,23 @@ class Item
     {
         $this->tax = $tax;
         return $this;
+    }
+
+    /**
+     * @param int $type
+     * @return Item
+     */
+    public function setPaymentMethod(int $type): Item
+    {
+        $this->paymentMethod = $type;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPaymentMethod(): int
+    {
+        return $this->paymentMethod;
     }
 }

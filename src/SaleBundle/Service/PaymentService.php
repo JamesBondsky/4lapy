@@ -158,13 +158,13 @@ class PaymentService implements LoggerAwareInterface
         $dateCreate = $order->getField('DATE_INSERT');
 
         $orderBundle = new OrderBundle();
-        $fiscal = (new Fiscal())
-            ->setOrderBundle($orderBundle)
-            ->setTaxSystem($taxSystem);
         $orderBundle
             ->setCustomerDetails($this->getCustomerDetails($order))
             ->setDateCreate(DateHelper::convertToDateTime($dateCreate))
             ->setCartItems($this->getCartItems($order, $skipGifts));
+        $fiscal = (new Fiscal())
+            ->setOrderBundle($orderBundle)
+            ->setTaxSystem($taxSystem);
 
         return (new Fiscalization())->setFiscal($fiscal);
     }
@@ -628,7 +628,8 @@ class PaymentService implements LoggerAwareInterface
                 ->setPrice($itemPrice)
                 ->setTotal($itemPrice * (int)$basketItem->getQuantity())
                 ->setCode($basketItem->getProductId() . '_' . $position)
-                ->setTax($tax);
+                ->setTax($tax)
+                ->setPaymentMethod(1);
             $items->add($item);
         }
 
@@ -687,8 +688,9 @@ class PaymentService implements LoggerAwareInterface
                 ->setCode($order->getId() . '_DELIVERY')
                 ->setPrice($deliveryPrice)
                 ->setTax((new ItemTax())
-                    ->setType(0)
-                );
+                    ->setType(6)
+                )
+            ->setPaymentMethod(1);
 
             $items->add($delivery);
         }
