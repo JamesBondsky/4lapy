@@ -533,6 +533,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         $data = [
             'UF_PHONE_CONFIRMED' => true,
             'PERSONAL_PHONE'     => $phone,
+            'LOGIN'              => $phone,
         ];
         try {
             if ($userRepository->updateData(
