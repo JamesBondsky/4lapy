@@ -131,7 +131,8 @@ class BasketController extends FOSRestController
                 ];
             } else {
                 $productXmlId = ElementTable::getByPrimary($productQuantity->getProductId(), ['select' => ['XML_ID']])->fetch()['XML_ID'];
-                if (strpos($productXmlId, '200') !== 0 && strpos($productXmlId, '300') !== 0) { // не подарочные товары
+
+                if (!$this->appBasketService->isGiftProductByXmlId($productXmlId, true)) {
                     // regular product
                     $this->appBasketService->addOfferToBasket(
                         $productQuantity->getProductId(),
