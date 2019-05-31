@@ -146,13 +146,61 @@ class FourPawsFrontOfficeFestSearchComponent extends \FourPaws\FrontOffice\Bitri
             $this->arResult['UPDATE_ERROR'] = 'Не переданы обязательные поля';
             return;
         }
+
+
         /** @var DataManager $festivalUsersDataManager */
         $festivalUsersDataManager = Application::getInstance()->getContainer()->get('bx.hlblock.festivalusersdata');
-        $updateResult = $festivalUsersDataManager::update($values['id'], $fields);
-        if (!$updateResult->isSuccess()) {
-            $this->arResult['UPDATE_ERROR'] = implode('. ', $updateResult->getErrorMessages());
+
+        $checkingFilter = [
+            'LOGIC' => 'OR',
+        ];
+        if ($values['phone']) {
+            $checkingFilter['UF_PHONE'] = $values['phone'];
+        }
+        if ($values['email']) {
+            $checkingFilter['UF_EMAIL'] = $values['email'];
+        }
+        if ($values['passport']) {
+            $checkingFilter['UF_PASSPORT'] = $values['passport'];
+        }
+        $registeredUser = $festivalUsersDataManager::query()
+            ->setFilter([
+                '!ID' => $values['id'],
+                $checkingFilter,
+            ])
+            ->setSelect([
+                'UF_FESTIVAL_USER_ID',
+                'UF_PASSPORT'
+            ])
+            ->setLimit(3) // зарегистрированных юзеров может два, если у одного совпадает телефон, у другого email, у третьего - паспорт
+            ->fetchAll();
+        if ($registeredUser) {
+            $alreadyRegisteredText = [];
+            foreach ($registeredUser as $user)
+            {
+                if ($user['UF_FESTIVAL_USER_ID']) {
+                    $text = 'Номер участника: ' . $user['UF_FESTIVAL_USER_ID'];
+                    if ($user['UF_PASSPORT']) {
+                        $text .= ', номер паспорта: ' . $user['UF_PASSPORT'];
+                    } else {
+                        $text .= ', <a href="/fest-reg/search/?promoId=' . $user['UF_FESTIVAL_USER_ID'] . '">найти по номеру участника</a>';
+                    }
+                    $alreadyRegisteredText[] = $text;
+                    unset($text);
+                }
+            }
+            $alreadyRegisteredText = implode('<br>', $alreadyRegisteredText);
+            $errorMessage = 'Пользователь с таким email/телефоном/номером паспорта уже зарегистрирован.<br>' . $alreadyRegisteredText;
+            //$this->setExecError('', $errorMessage, 'alreadyRegistered');
+            $this->arResult['UPDATE_ERROR'] = $errorMessage;
         } else {
-            $this->arResult['IS_UPDATED'] = true;
+            $updateResult = $festivalUsersDataManager::update($values['id'], $fields);
+
+            if (!$updateResult->isSuccess()) {
+                $this->arResult['UPDATE_ERROR'] = implode('. ', $updateResult->getErrorMessages());
+            } else {
+                $this->arResult['IS_UPDATED'] = true;
+            }
         }
     }
 
