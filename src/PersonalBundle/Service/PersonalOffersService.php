@@ -48,158 +48,48 @@ class PersonalOffersService
 
     /**
      * @param int $userId
-     *
      * @return array
-     *
-     * @throws HLBlockNotFoundException
-     * @throws InvalidArgumentException
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\SystemException
-     */
-    public function getActiveUserCoupons(int $userId): array
-    {
-        if ($userId <= 0)
-        {
-            throw new InvalidArgumentException('can\'t get user\'s coupons. userId: ' . $userId);
-        }
-
-        $coupons = [];
-        $offersCollection = new ArrayCollection();
-
-        $activeOffersCollection = $this->getActiveOffers();
-
-        if (!$activeOffersCollection->isEmpty())
-        {
-            $coupons = $this->personalCouponManager::query()
-                ->setSelect([
-                    'ID',
-                    'UF_OFFER',
-                    'UF_PROMO_CODE',
-                    'USER_COUPONS',
-                ])
-                ->setFilter([
-                    '=UF_OFFER' => $activeOffersCollection->getKeys(),
-                ])
-                ->setOrder([
-                    'USER_COUPONS.UF_DATE_CREATED' => 'desc',
-                ])
-                ->registerRuntimeField(
-                    new ReferenceField(
-                        'USER_COUPONS', $this->personalCouponUsersManager::getEntity()->getDataClass(),
-                        Query\Join::on('this.ID', 'ref.UF_COUPON')
-                            ->where('ref.UF_USER_ID', '=', $userId)
-                            ->where(Query::filter()
-                                ->logic('or')
-                                ->where([
-                                    ['ref.UF_USED', null],
-                                    ['ref.UF_USED', false],
-                                ])),
-                        ['join_type' => 'INNER']
-                    )
-                )
-                ->exec()
-                ->fetchAll();
-
-            $userOffers = array_unique(array_map(function($coupon) { return $coupon['UF_OFFER']; }, $coupons));
-            $offersCollection = $activeOffersCollection->filter(static function($offer) use ($userOffers) { return in_array($offer['ID'], $userOffers, true); });
-
-            /*$activeOffers = $offersCollection->getValues();
-            $offersOrder = [];
-            foreach ($activeOffers as $key => $offer)
-            {
-                $offersOrder[$offer['ID']] = $key;
-            }
-            uasort($coupons, static function($a, $b) use($offersOrder) {
-                return $offersOrder[$a['UF_OFFER']] <=> $offersOrder[$b['UF_OFFER']];
-            });*/
-        }
-
-        $couponsCollection = new ArrayCollection($coupons);
-        $result = [
-            'coupons' => $couponsCollection,
-            'offers' => $offersCollection,
-        ];
-
-        return $result;
-    }
-
-
-    /**
-     * @param int $userId
-     *
-     * @return array
-     *
      * @throws InvalidArgumentException
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\LoaderException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
-     * @throws \Picqer\Barcode\Exceptions\BarcodeException
      */
-    public function getActiveUserCouponsEx(int $userId): array
+    public function getActiveUserCoupons(int $userId): array
     {
-        if ($userId <= 0)
-        {
+        if ($userId <= 0) {
             throw new InvalidArgumentException('can\'t get user\'s coupons. userId: ' . $userId);
         }
 
-        $coupons = [];
-        $offersCollection = new ArrayCollection();
+        list($offersCollection, $couponsCollection) = $this->getCoupons($userId);
+        $result = [
+            'coupons' => $couponsCollection,
+            'offers'  => $offersCollection,
+        ];
 
-        $activeOffersCollection = $this->getActiveOffers();
+        return $result;
+    }
 
-        if (!$activeOffersCollection->isEmpty())
-        {
-            $coupons = $this->personalCouponManager::query()
-                ->setSelect([
-                    'ID',
-                    'UF_OFFER',
-                    'UF_PROMO_CODE',
-                    'USER_COUPONS',
-                ])
-                ->setFilter([
-                    '=UF_OFFER' => $activeOffersCollection->getKeys(),
-                ])
-                ->setOrder([
-                    'USER_COUPONS.UF_DATE_CREATED' => 'desc',
-                ])
-                ->registerRuntimeField(
-                    new ReferenceField(
-                        'USER_COUPONS', $this->personalCouponUsersManager::getEntity()->getDataClass(),
-                        Query\Join::on('this.ID', 'ref.UF_COUPON')
-                            ->where('ref.UF_USER_ID', '=', $userId)
-                            ->where(Query::filter()
-                                ->logic('or')
-                                ->where([
-                                    ['ref.UF_USED', null],
-                                    ['ref.UF_USED', false],
-                                ])),
-                        ['join_type' => 'INNER']
-                    )
-                )
-                ->exec()
-                ->fetchAll();
-
-            $userOffers = array_unique(array_map(function($coupon) { return $coupon['UF_OFFER']; }, $coupons));
-            $offersCollection = $activeOffersCollection->filter(static function($offer) use ($userOffers) { return in_array($offer['ID'], $userOffers, true); });
-
-            /*$activeOffers = $offersCollection->getValues();
-            $offersOrder = [];
-            foreach ($activeOffers as $key => $offer)
-            {
-                $offersOrder[$offer['ID']] = $key;
-            }
-            uasort($coupons, static function($a, $b) use($offersOrder) {
-                return $offersOrder[$a['UF_OFFER']] <=> $offersOrder[$b['UF_OFFER']];
-            });*/
+    /**
+     * @param int $userId
+     * @return array
+     * @throws InvalidArgumentException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getActiveUserCouponsEx(int $userId): array
+    {
+        if ($userId <= 0) {
+            throw new InvalidArgumentException('can\'t get user\'s coupons. userId: ' . $userId);
         }
 
+        list($offersCollection, $couponsCollection) = $this->getCoupons($userId);
+
         $result = [];
-        /** @var ArrayCollection $couponsCollection */
-        $couponsCollection = new ArrayCollection($coupons);
         foreach ($couponsCollection as $coupon) {
             $offer = $offersCollection->get($coupon['UF_OFFER']);
 
@@ -608,5 +498,74 @@ class PersonalOffersService
         $festivalUserId = $idOffset + $rsFestivalUserId;
 
         return $festivalUserId;
+    }
+
+    /**
+     * @param int $userId
+     * @return array
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    protected function getCoupons(int $userId): array
+    {
+        $coupons = [];
+        $offersCollection = new ArrayCollection();
+
+        $activeOffersCollection = $this->getActiveOffers();
+
+        if (!$activeOffersCollection->isEmpty()) {
+            $coupons = $this->personalCouponManager::query()
+                ->setSelect([
+                    'ID',
+                    'UF_OFFER',
+                    'UF_PROMO_CODE',
+                    'USER_COUPONS',
+                ])
+                ->setFilter([
+                    '=UF_OFFER' => $activeOffersCollection->getKeys(),
+                ])
+                ->setOrder([
+                    'USER_COUPONS.UF_DATE_CREATED' => 'desc',
+                ])
+                ->registerRuntimeField(
+                    new ReferenceField(
+                        'USER_COUPONS', $this->personalCouponUsersManager::getEntity()->getDataClass(),
+                        Query\Join::on('this.ID', 'ref.UF_COUPON')
+                            ->where('ref.UF_USER_ID', '=', $userId)
+                            ->where(Query::filter()
+                                ->logic('or')
+                                ->where([
+                                    ['ref.UF_USED', null],
+                                    ['ref.UF_USED', false],
+                                ])),
+                        ['join_type' => 'INNER']
+                    )
+                )
+                ->exec()
+                ->fetchAll();
+
+            $userOffers = array_unique(array_map(function ($coupon) {
+                return $coupon['UF_OFFER'];
+            }, $coupons));
+            $offersCollection = $activeOffersCollection->filter(static function ($offer) use ($userOffers) {
+                return in_array($offer['ID'], $userOffers, true);
+            });
+
+            /*$activeOffers = $offersCollection->getValues();
+            $offersOrder = [];
+            foreach ($activeOffers as $key => $offer)
+            {
+                $offersOrder[$offer['ID']] = $key;
+            }
+            uasort($coupons, static function($a, $b) use($offersOrder) {
+                return $offersOrder[$a['UF_OFFER']] <=> $offersOrder[$b['UF_OFFER']];
+            });*/
+        }
+
+        $couponsCollection = new ArrayCollection($coupons);
+        return [$offersCollection, $couponsCollection];
     }
 }
