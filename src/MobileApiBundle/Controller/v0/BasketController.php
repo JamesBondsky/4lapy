@@ -6,6 +6,7 @@
 
 namespace FourPaws\MobileApiBundle\Controller\v0;
 
+use Bitrix\Iblock\ElementTable;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
@@ -129,11 +130,14 @@ class BasketController extends FOSRestController
                     'count' => $productQuantity->getQuantity(),
                 ];
             } else {
-                // regular product
-                $this->appBasketService->addOfferToBasket(
-                    $productQuantity->getProductId(),
-                    $productQuantity->getQuantity()
-                );
+                $productXmlId = ElementTable::getByPrimary($productQuantity->getProductId(), ['select' => ['XML_ID']])->fetch()['XML_ID'];
+                if (strpos($productXmlId, '200') !== 0 && strpos($productXmlId, '300') !== 0) { // не подарочные товары
+                    // regular product
+                    $this->appBasketService->addOfferToBasket(
+                        $productQuantity->getProductId(),
+                        $productQuantity->getQuantity()
+                    );
+                }
             }
         }
         if (!empty($gifts)) {
