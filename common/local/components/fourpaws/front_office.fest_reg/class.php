@@ -152,13 +152,34 @@ class FourPawsFrontOfficeFestRegComponent extends \FourPaws\FrontOffice\Bitrix\C
             if ($values['email']) {
                 $checkingFilter['UF_EMAIL'] = $values['email'];
             }
+            if ($values['passport']) {
+                $checkingFilter['UF_PASSPORT'] = $values['passport'];
+            }
             $registeredUser = $festivalUsersDataManager::query()
                 ->setFilter($checkingFilter)
-                ->setSelect(['UF_FESTIVAL_USER_ID'])
-                ->setLimit(2)
+                ->setSelect([
+                    'UF_FESTIVAL_USER_ID',
+                    'UF_PASSPORT'
+                ])
+                ->setLimit(3) // зарегистрированных юзеров может два, если у одного совпадает телефон, у другого email, у третьего - паспорт
                 ->fetchAll();
             if ($registeredUser) {
-                $this->setExecError('', 'Такой пользователь уже зарегистрирован. Номер участника: ' . implode(', ', array_column($registeredUser, 'UF_FESTIVAL_USER_ID')));
+                $alreadyRegisteredText = [];
+                foreach ($registeredUser as $user)
+                {
+                    if ($user['UF_FESTIVAL_USER_ID']) {
+                        $text = 'Номер участника: ' . $user['UF_FESTIVAL_USER_ID'];
+                        if ($user['UF_PASSPORT']) {
+                            $text .= ', номер паспорта: ' . $user['UF_PASSPORT'];
+                        } else {
+                            $text .= ', <a href="/fest-reg/search/?promoId=' . $user['UF_FESTIVAL_USER_ID'] . '">найти по номеру участника</a>';
+                        }
+                        $alreadyRegisteredText[] = $text;
+                        unset($text);
+                    }
+                }
+                $alreadyRegisteredText = implode('<br>', $alreadyRegisteredText);
+                $this->setExecError('', 'Пользователь с таким email/телефоном/номером паспорта уже зарегистрирован.<br>' . $alreadyRegisteredText, 'alreadyRegistered');
                 return;
             }
 
