@@ -42,6 +42,7 @@ use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use FourPaws\UserBundle\Service\UserService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use FourPaws\SaleBundle\Service\BasketService;
 
 /** @noinspection AutoloadingIssuesInspection */
 
@@ -250,6 +251,8 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
                 );
             }
         }
+
+        $this->arResult['NEED_SHOW_ROYAL_CANIN_BUNNER'] = $this->orderService->checkRoyalCaninAction($order);
     }
 
     /**

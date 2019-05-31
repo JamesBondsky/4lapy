@@ -29,6 +29,7 @@ use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\Model\City;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 use FourPaws\Search\Table\FourPawsSmsProtectorTable;
@@ -58,6 +59,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceExce
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use FourPaws\Helpers\ProtectorHelper;
+use FourPaws\AppBundle\AjaxController\LandingController;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsRegisterComponent extends \CBitrixComponent
@@ -138,6 +140,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     {
         try {
             $this->arResult['STEP'] = 'begin';
+            $this->arResult['KIOSK'] = KioskService::isKioskMode();
 
             $request = Application::getInstance()->getContext()->getRequest();
 
@@ -205,7 +208,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
 
 
                         /** [todo] Просто комшмарный костыль что бы на лендинге грандина после регистрации кидало на главную */
-                        if (SITE_ID == 's2') {
+                        if (in_array(SITE_ID, LandingController::$landingSites)) {
                             LocalRedirect('/#registr-check');
                         }
 
@@ -657,7 +660,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 '%s%s%s%s',
                 $this->renderDataLayerByType(DataLayer::REGISTER_TYPE_LOGIN),
                 'if ($(this).find("input[type=email]").val().indexOf("register.phone") == -1){',
-                $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val()'),
+                $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val(), {name: $(this).find("input[name=NAME]").val()}'),
                 '}'
             )
         );

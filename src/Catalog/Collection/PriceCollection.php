@@ -21,22 +21,34 @@ class PriceCollection extends D7CollectionBase
         }
     }
 
+    public function filterByCatalogGroupId($catalogGroupId)
+    {
+        if($this->isEmpty()){
+            return null;
+        }
+
+        return $this->collection->filter(function($item) use ($catalogGroupId){
+            /** @var Price $item */
+            return $item->getCatalogGroupId() == $catalogGroupId;
+        });
+    }
+
     /**
      * @param Collection $catalogPriceCollection
      *
      * @return PriceCollection
      */
-    public static function createIndexedByRegion(Collection $catalogPriceCollection)
-    {
-        $self = new self(new ArrayResult([]));
-
-        /** @var Price $price */
-        foreach ($catalogPriceCollection as $price) {
-            if ($price instanceof Price) {
-                $self->set($price->getRegionId(), $price);
-            }
-        }
-
-        return $self;
-    }
+//    public static function createIndexedByRegion(Collection $catalogPriceCollection)
+//    {
+//        $self = new self(new ArrayResult([]));
+//
+//        /** @var Price $price */
+//        foreach ($catalogPriceCollection as $price) {
+//            if ($price instanceof Price) {
+//                $self->set($price->getRegionId(), $price);
+//            }
+//        }
+//
+//        return $self;
+//    }
 }

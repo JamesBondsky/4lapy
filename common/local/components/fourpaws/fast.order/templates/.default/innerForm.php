@@ -183,7 +183,7 @@ $basketRows = $arResult['BASKET_ROWS'];
                     if ($useOffer) {
                         $maxQuantity = $offer->getQuantity();
                     } ?>
-                    <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--shopping js-plus-minus-cont js-no-valid">
+                    <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--shopping b-plus-minus--one-click js-plus-minus-cont js-no-valid">
                         <a class="b-plus-minus__minus js-minus" href="javascript:void(0);"
                            data-url="<?=$basketUpdateUrl?>"></a>
                         <input class="b-plus-minus__count js-plus-minus-count"

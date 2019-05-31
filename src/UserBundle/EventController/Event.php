@@ -8,7 +8,6 @@ use Bitrix\Main\EventManager;
 use Bitrix\Main\GroupTable;
 use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application as App;
-use FourPaws\App\Application;
 use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\MainTemplate;
@@ -18,6 +17,9 @@ use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\LocationBundle\LocationService;
+use FourPaws\PersonalBundle\Service\PersonalOffersService;
+use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -30,6 +32,7 @@ use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use FourPaws\UserBundle\Service\UserPasswordService;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use FourPaws\UserBundle\Service\UserSearchInterface;
+use FourPaws\UserBundle\Service\UserService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use WebArch\BitrixCache\BitrixCache;
@@ -90,6 +93,11 @@ class Event extends BaseServiceHandler
         /** обновление данных в манзане */
         static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'updateManzana'], 'main');
 
+        /** привязка купонов фестиваля после регистрации */
+        static::initHandlerCompatible('OnAfterUserRegister', [self::class, 'addFestivalCoupon'], 'main');
+        /** привязка купонов фестиваля после обновления */
+        static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'addFestivalCouponOnUpdate'], 'main');
+
         /** обновляем логин если он равняется телефону или email */
         static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'replaceLoginOnUpdate'], 'main');
 
@@ -129,6 +137,27 @@ class Event extends BaseServiceHandler
         /** проставление группы правила работы с корзиной */
         static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'updateBasketRuleGroup'], 'main');
 
+        /** при смене города */
+        static::initHandlerCompatible('OnCityChange', [self::class, 'updateBasketDiscountProperties'], 'main');
+
+        static::initHandler('OnUserLogin', [self::class,'updateSessionCounter'], 'main');
+    }
+
+    /**
+     * @param array $city
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     */
+    public static function updateBasketDiscountProperties(array $city)
+    {
+        /** @var LocationService $locationService */
+        $locationService = App::getInstance()->getContainer()->get('location.service');
+        $basketService = App::getInstance()->getContainer()->get(BasketService::class);
+
+        $regionCode = $locationService->getRegionCode($city['CODE']);
+        foreach ($basketService->getBasket() as $basketItem) {
+            $basketService->updateRegionDiscountForBasketItem($basketItem, $regionCode);
+        }
     }
 
     /**
@@ -277,12 +306,18 @@ class Event extends BaseServiceHandler
 
             unset($_SESSION['NOT_MANZANA_UPDATE']);
 
+            /**
+             * @var UserService $userService
+             */
             $userService = $container->get(CurrentUserProviderInterface::class);
             $user = $userService->getUserRepository()->find((int)$fields['ID']);
             if ($user === null) {
                 return false;
             }
 
+            /**
+             * @var ManzanaService $manzanaService
+             */
             $manzanaService = $container->get('manzana.service');
 
             $client = new Client();
@@ -296,6 +331,70 @@ class Event extends BaseServiceHandler
 
             $manzanaService->updateContactAsync($client);
         }
+        return true;
+    }
+
+    /**
+     * @param $fields
+     *
+     * @return bool
+     */
+    public function addFestivalCoupon($fields): bool
+    {
+        if (self::$isEventsDisable) {
+            return false;
+        }
+
+        try {
+            if ($userId = $fields['RESULT_MESSAGE']['ID']) {
+                $container = App::getInstance()->getContainer();
+                /** @var UserService $userService */
+                $userService = $container->get(UserSearchInterface::class);
+                $phone = $userService->findOne($userId)->getPersonalPhone();
+
+                if ($phone && PhoneHelper::isPhone($phone))
+                {
+                    /** @var PersonalOffersService $personalOffersService */
+                    $personalOffersService = $container->get('personal_offers.service');
+                    $personalOffersService->addFestivalCouponToUser($phone, $userId);
+                }
+            }
+        } catch (\Exception $e) {
+            $logger = LoggerFactory::create('FestivalCoupons');
+            $logger->error(sprintf('%s error. %s', __FUNCTION__, $e->getMessage()));
+        }
+
+        return true;
+    }
+
+    /**
+     * @param $fields
+     *
+     * @return bool
+     */
+    public function addFestivalCouponOnUpdate($fields): bool
+    {
+        if (self::$isEventsDisable) {
+            return false;
+        }
+
+        try {
+            $userId = $fields['ID'];
+            $phone = $fields['PERSONAL_PHONE'];
+
+            if ($userId && $phone && PhoneHelper::isPhone($phone))
+            {
+                $container = App::getInstance()->getContainer();
+
+                /** @var PersonalOffersService $personalOffersService */
+                $personalOffersService = $container->get('personal_offers.service');
+                $personalOffersService->addFestivalCouponToUser($phone, $userId);
+            }
+        } catch (\Exception $e) {
+            $logger = LoggerFactory::create('FestivalCoupons');
+            $logger->error(sprintf('%s error. %s', __FUNCTION__, $e->getMessage()));
+        }
+
         return true;
     }
 
@@ -411,6 +510,8 @@ class Event extends BaseServiceHandler
             $userService->refreshUserCard($userService->getCurrentUser());
             /** обновление группы оптовиков */
             $userService->refreshUserOpt($userService->getCurrentUser());
+            /** сброс счётка на разлогинивание при сбросе пароля */
+            $userService->refreshUserAuthActions($userService->getCurrentUser());
         } catch (NotAuthorizedException $e) {
             // обработка не требуется
         } catch (\Exception $e) {
@@ -566,7 +667,7 @@ class Event extends BaseServiceHandler
         $userImportTimeLimit = '2 hour'; // ограничение по частоте импорта заказов пользователя
 
         /** @var \FourPaws\UserBundle\Service\UserService $userService */
-        $userService = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+        $userService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
         if ($userService->isAuthorized())
         {
             try
@@ -579,7 +680,7 @@ class Event extends BaseServiceHandler
                     if (!$lastManzanaImportDateTime || $DB->CompareDates($lastManzanaImportDateTime, (new DateTime())->add('- ' . $userImportTimeLimit)) < 0)
                     {
                         /** @var ManzanaService $manzanaService */
-                        $manzanaService = Application::getInstance()->getContainer()->get('manzana.service');
+                        $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
                         $manzanaService->importUserOrdersAsync($user);
                     }
                 }
@@ -631,5 +732,20 @@ class Event extends BaseServiceHandler
         }
 
         return true;
+    }
+
+    /**
+     *
+     */
+    public static function updateSessionCounter(): void
+    {
+        $user_class = new \CUser;
+        $user_id = (int) $GLOBALS['USER']->GetID();
+        $total_sessions = $user_class::GetByID( $user_id )->Fetch()['UF_SESSION_CNTS'];
+
+        $user_class->Update($user_id, ['UF_SESSION_CNTS' => (int) $total_sessions+1]);
+
+        // TODO: выбрасывает 500, но БД обновляет - нужно думать почему.
+        // TODO: P.S при обновлении в битре полей также выкидывает эррор.
     }
 }

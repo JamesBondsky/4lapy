@@ -5,7 +5,7 @@
  * @global \CMain $APPLICATION
  */
 
-use Bitrix\Sale\Basket;use Bitrix\Sale\BasketItem;use Bitrix\Sale\Order;use Doctrine\Common\Collections\ArrayCollection;use FourPaws\Catalog\Collection\OfferCollection;use FourPaws\Catalog\Model\Offer;use FourPaws\Components\BasketComponent;use FourPaws\Decorators\SvgDecorator;use FourPaws\Helpers\WordHelper;use FourPaws\UserBundle\Entity\User;
+use Bitrix\Sale\Basket;use Bitrix\Sale\BasketItem;use Bitrix\Sale\Order;use Doctrine\Common\Collections\ArrayCollection;use FourPaws\Catalog\Collection\OfferCollection;use FourPaws\Catalog\Model\Offer;use FourPaws\Components\BasketComponent;use FourPaws\Decorators\SvgDecorator;use FourPaws\Helpers\WordHelper;use FourPaws\KioskBundle\Service\KioskService;use FourPaws\UserBundle\Entity\User;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -61,10 +61,24 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) { ?>
 
 if ($arParams['IS_AJAX']) {
     $userDiscount = $component->getCurrentUserService()->getDiscount();
-} ?>
+}
+
+// разница цены по подписке
+$subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
+
+?>
     <div class="b-container js-cart-wrapper">
         <h1 class="b-title b-title--h1 b-title--shopping-cart">Корзина</h1>
         <main class="b-shopping-cart__main" role="main">
+            <div class="b-panel-subscribe-cart">
+                <div class="b-panel-subscribe-cart__content">
+                    <div class="b-panel-subscribe-cart__info">
+                        Подпишитесь на&nbsp;доставку и&nbsp;получите скидку <?= ($subscribePriceDiff > 0) ? WordHelper::numberFormat($subscribePriceDiff, 2).' ₽' : ''?> на&nbsp;вашу корзину&nbsp;&mdash;
+                        <a href="javascript:void(0);" class="b-link" data-show-subscribe-delivery-cart="true">узнать подробнее</a>
+                    </div>
+                </div>
+            </div>
+
             <?php if ($arResult['POSSIBLE_GIFT_GROUPS']) {
                 ?>
                 <section class="b-stock b-stock--shopping-cart">
@@ -239,6 +253,102 @@ if ($arParams['IS_AJAX']) {
                     } ?>
                 </section>
             <?php } ?>
+
+            <? if($arResult['SUBSCRIBE_ALLOWED']){ ?>
+            <section class="b-subscribe-delivery-cart desktop">
+                <div class="b-subscribe-delivery-cart__anchor" data-subscribe-delivery-cart="true"></div>
+                <div class="b-subscribe-delivery-cart__content">
+                    <div class="b-subscribe-delivery-cart__info-list">
+                        <div class="item">
+                            <div class="item__icon">
+                                <?= new SvgDecorator('icon-retime', 24, 24) ?>
+                            </div>
+                            <div class="item__text">
+                                Регулярная доставка необходимых товаров в&nbsp;удобное для вас время.
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item__icon">
+                                <?= new SvgDecorator('icon-price', 24, 24) ?>
+                            </div>
+                            <div class="item__text">
+                                Получайте специальную цену на&nbsp;некоторые товары.
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item__icon">
+                                <?= new SvgDecorator('icon-calendar', 24, 24) ?>
+                            </div>
+                            <div class="item__text">
+                                Выберите нужную вам частоту доставки&nbsp;&mdash; от&nbsp;недели до&nbsp;двух месяцев.
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item__icon">
+                                <?= new SvgDecorator('icon-cancel', 24, 24) ?>
+                            </div>
+                            <div class="item__text">
+                                Вы&nbsp;можете отказаться от&nbsp;подписки в&nbsp;любое время.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="b-subscribe-delivery-cart__bottom">
+                        <ul class="b-price-subscribe-delivery-cart">
+                            <?/*<li class="b-price-subscribe-delivery-cart__item">
+                                <div class="b-price-subscribe-delivery-cart__text">
+                                    <div class="b-price-subscribe-delivery-cart__clipped-text">
+                                        <?= WordHelper::numberFormat($arResult['TOTAL_QUANTITY'],
+                                            0) ?> <?= WordHelper::declension($arResult['TOTAL_QUANTITY'],
+                                            ['товар', 'товара', 'товаров']) ?>
+                                        <?php if ($arResult['BASKET_WEIGHT'] > 0) { ?>(<?= WordHelper::showWeight($arResult['BASKET_WEIGHT'],
+                                            true) ?>)<?php } ?>
+                                    </div>
+                                </div>
+                                <div class="b-price-subscribe-delivery-cart__value">
+                                    <div class="b-price b-price--subscribe-cart">
+                                        <? if($arResult['TOTAL_PRICE'] != $arResult['SUBSCRIBE_PRICE']) { ?>
+                                            <span class="b-old-price b-old-price--crossed-out b-old-price--inline">
+                                                <span class="b-old-price__old"><?= WordHelper::numberFormat($arResult['TOTAL_PRICE']); ?></span>
+                                                <span class="b-ruble">₽</span>
+                                            </span>
+                                        <? } ?>
+                                        <span class="b-price__current b-price__current--light"><?= WordHelper::numberFormat($arResult['SUBSCRIBE_PRICE']); ?></span>
+                                        <span class="b-ruble">₽</span>
+                                    </div>
+                                </div>
+                            </li>*/?>
+                            <li class="b-price-subscribe-delivery-cart__item">
+                                <div class="b-price-subscribe-delivery-cart__text">
+                                    <div class="b-price-subscribe-delivery-cart__clipped-text">
+                                        Итого стоимость по подписке
+                                    </div>
+                                </div>
+                                <div class="b-price-subscribe-delivery-cart__value">
+                                    <div class="b-price b-price--subscribe-cart b-price--result-subscribe-cart">
+                                        <? if($arResult['TOTAL_PRICE'] != $arResult['SUBSCRIBE_PRICE']) { ?>
+                                            <span class="b-old-price b-old-price--crossed-out b-old-price--inline">
+                                                <span class="b-old-price__old"><?= WordHelper::numberFormat($arResult['TOTAL_PRICE']); ?></span>
+                                                <span class="b-ruble">₽</span>
+                                            </span>
+                                        <? } ?>
+                                        <span class="b-price__current"><?= WordHelper::numberFormat($arResult['SUBSCRIBE_PRICE']); ?></span>
+                                        <span class="b-ruble">₽</span>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+
+                        <form action="/sale/order/" method="post">
+                            <button class="b-button b-button--subscribe-delivery-cart"
+                               title="Подписка на доставку" <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
+                                Подписаться на доставку
+                            </button>
+                            <input type="hidden" name="subscribe" value="1">
+                        </form>
+                    </div>
+                </div>
+            </section>
+            <? } ?>
         </main>
 
         <aside class="b-shopping-cart__aside">
@@ -254,7 +364,7 @@ if ($arParams['IS_AJAX']) {
                     } else { ?>
                         <span class="b-information-order__pay-points b-information-order__pay-points--flex">
                             Уже покупали у нас?
-                            <a class="b-link-gift b-link-gift--shopping-aside js-open-popup" href="#!"
+                            <a class="b-link-gift b-link-gift--shopping-aside js-open-popup" href="javascript:void(0);"
                                data-popup-id="authorization">
                                 <span class="b-link-gift__text">Войти</span>
                             </a>
@@ -343,11 +453,13 @@ if ($arParams['IS_AJAX']) {
                             </span><span class="b-ruble">₽</span>
                         </div>
                     </div>
-                    <a class="b-button b-button--start-order <?= $sViewportCookie === null ? 'b-button--bottom-indent' : '' ?>"
-                       href="<?= (int)$arResult['TOTAL_PRICE'] === 0 ? 'javascript:void(0)' : '/sale/order/' ?>"
-                       title="Начать оформление" <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
-                        Начать оформление
-                    </a>
+                    <form action="/sale/order/" method="post">
+                        <button class="b-button b-button--start-order <?= $sViewportCookie === null ? 'b-button--bottom-indent' : '' ?>"
+                           title="Начать оформление" <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
+                            Начать оформление
+                        </button>
+                        <input type="hidden" name="default" value="1">
+                    </form>
                     <?php if ($arResult['SHOW_FAST_ORDER']) { ?>
                         <div class="b-information-order__one-click">
                             <a class="b-link b-link--one-click <?= (int)$arResult['TOTAL_PRICE'] === 0 ? '' : ' js-open-popup js-open-popup--one-click' ?>"
@@ -361,6 +473,100 @@ if ($arParams['IS_AJAX']) {
                 </div>
             </div>
         </aside>
+
+        <section class="b-subscribe-delivery-cart mobile">
+                <div class="b-subscribe-delivery-cart__anchor" data-subscribe-delivery-cart="true"></div>
+                <div class="b-subscribe-delivery-cart__content">
+                    <div class="b-subscribe-delivery-cart__info-list">
+                        <div class="item">
+                            <div class="item__icon">
+                                <?= new SvgDecorator('icon-retime', 24, 24) ?>
+                            </div>
+                            <div class="item__text">
+                                Регулярная доставка необходимых товаров в&nbsp;удобное для вас время.
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item__icon">
+                                <?= new SvgDecorator('icon-price', 24, 24) ?>
+                            </div>
+                            <div class="item__text">
+                                Получайте специальную цену на&nbsp;некоторые товары.
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item__icon">
+                                <?= new SvgDecorator('icon-calendar', 24, 24) ?>
+                            </div>
+                            <div class="item__text">
+                                Выберите нужную вам частоту доставки&nbsp;&mdash; от&nbsp;недели до&nbsp;двух месяцев.
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item__icon">
+                                <?= new SvgDecorator('icon-cancel', 24, 24) ?>
+                            </div>
+                            <div class="item__text">
+                                Вы&nbsp;можете отказаться от&nbsp;подписки в&nbsp;любое время.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="b-subscribe-delivery-cart__bottom">
+                        <ul class="b-price-subscribe-delivery-cart">
+                            <?/*<li class="b-price-subscribe-delivery-cart__item">
+                                <div class="b-price-subscribe-delivery-cart__text">
+                                    <div class="b-price-subscribe-delivery-cart__clipped-text">
+                                        <?= WordHelper::numberFormat($arResult['TOTAL_QUANTITY'],
+                                            0) ?> <?= WordHelper::declension($arResult['TOTAL_QUANTITY'],
+                                            ['товар', 'товара', 'товаров']) ?>
+                                        <?php if ($arResult['BASKET_WEIGHT'] > 0) { ?>(<?= WordHelper::showWeight($arResult['BASKET_WEIGHT'],
+                                            true) ?>)<?php } ?>
+                                    </div>
+                                </div>
+                                <div class="b-price-subscribe-delivery-cart__value">
+                                    <div class="b-price b-price--subscribe-cart">
+                                        <? if($arResult['TOTAL_PRICE'] != $arResult['SUBSCRIBE_PRICE']) { ?>
+                                            <span class="b-old-price b-old-price--crossed-out b-old-price--inline">
+                                                <span class="b-old-price__old"><?= WordHelper::numberFormat($arResult['TOTAL_BASE_PRICE']); ?></span>
+                                                <span class="b-ruble">₽</span>
+                                            </span>
+                                        <? } ?>
+                                        <span class="b-price__current b-price__current--light"><?= WordHelper::numberFormat($arResult['SUBSCRIBE_PRICE']); ?></span>
+                                        <span class="b-ruble">₽</span>
+                                    </div>
+                                </div>
+                            </li>*/?>
+                            <li class="b-price-subscribe-delivery-cart__item">
+                                <div class="b-price-subscribe-delivery-cart__text">
+                                    <div class="b-price-subscribe-delivery-cart__clipped-text">
+                                        Итого стоимость по подписке
+                                    </div>
+                                </div>
+                                <div class="b-price-subscribe-delivery-cart__value">
+                                    <div class="b-price b-price--subscribe-cart b-price--result-subscribe-cart">
+                                        <? if($arResult['TOTAL_PRICE'] != $arResult['SUBSCRIBE_PRICE']) { ?>
+                                            <span class="b-old-price b-old-price--crossed-out b-old-price--inline">
+                                                <span class="b-old-price__old"><?= WordHelper::numberFormat($arResult['TOTAL_BASE_PRICE']); ?></span>
+                                                <span class="b-ruble">₽</span>
+                                            </span>
+                                        <? } ?>
+                                        <span class="b-price__current"><?= WordHelper::numberFormat($arResult['SUBSCRIBE_PRICE']); ?></span>
+                                        <span class="b-ruble">₽</span>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+
+                        <form action="/sale/order/" method="post">
+                            <button class="b-button b-button--subscribe-delivery-cart"
+                               title="Подписка на доставку" <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
+                                Подписаться на доставку
+                            </button>
+                            <input type="hidden" name="subscribe" value="1">
+                        </form>
+                    </div>
+                </div>
+            </section>
         <script id="gtag-cart">
             let offers = [];
             $('a.b-common-item__description-wrap.b-common-item__description-wrap--shopping span.b-common-item__variant.b-common-item__variant--shopping-cart.b-common-item__variant--shopping span').each(function() {

@@ -41,6 +41,10 @@ $basket = $arResult['BASKET'];
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
 
+$subscribeIntervals = $component->getOrderSubscribeService()->getFrequencies();
+
+$daysOfWeek = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
+
 $selectedShopCode = '';
 $isPickup = false;
 if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode()) {
@@ -90,6 +94,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                     </header>
                     <form class="b-order-contacts__form b-order-contacts__form--choose-delivery js-form-validation"
                           data-url="<?= $arResult['URL']['DELIVERY_VALIDATION'] ?>"
+                          <?=($storage->isSubscribe()) ? 'data-form-step2-subscribe="true"' : ''?>
                           method="post"
                           id="order-step">
                         <input type="hidden" name="shopId" class="js-no-valid"
@@ -99,7 +104,17 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                value="<?= (!empty($arResult['SPLIT_RESULT']) && $storage->isSplit()) ? 'twoDeliveries' : 'oneDelivery' ?>"
                                class="js-no-valid">
                         <input type="hidden" name="deliveryTypeId"
-                               value="<?= ($delivery) ? $delivery->getDeliveryId() : $pickup->getDeliveryId(); ?>"
+                               value="<?
+                                   if($selectedDelivery){
+                                       echo $selectedDelivery->getDeliveryId();
+                                   }
+                                   else if($delivery){
+                                       echo $delivery->getDeliveryId();
+                                   }
+                                   else if($pickup){
+                                       echo $pickup->getDeliveryId();
+                                   }
+                               ?>"
                                class="js-no-valid">
                         <input type="hidden" name="deliveryCoords" value="">
                         <div class="b-choice-recovery b-choice-recovery--order-step">
@@ -190,17 +205,19 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                         </div>
                         <ul class="b-radio-tab js-myself-shop">
                             <?php if ($delivery) {
+                                $isHidden = $selectedDelivery->getDeliveryId() !== $delivery->getDeliveryId();
                                 ?>
                                 <li class="b-radio-tab__tab js-telephone-recovery"
-                                    <?= $selectedDelivery->getDeliveryId() !== $delivery->getDeliveryId() ? 'style="display:none"' : '' ?>>
+                                    <?= $isHidden ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/delivery.php' ?>
                                 </li>
                                 <?php
                             } ?>
                             <?php if ($pickup) {
+                                $isHidden = $selectedDelivery->getDeliveryId() !== $pickup->getDeliveryId();
                                 ?>
                                 <li class="b-radio-tab__tab js-email-recovery"
-                                    <?= $selectedDelivery->getDeliveryId() !== $pickup->getDeliveryId() ? 'style="display:none"' : '' ?>>
+                                    <?= $isHidden ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/pickup.php' ?>
                                 </li>
                                 <?php
@@ -263,7 +280,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                 </li>
             </ul>
         </div>
-        <button class="b-button b-button--social b-button--next b-button--fixed-bottom js-order-next js-valid-out-sub">
+        <button class="b-button b-button--social <?=($storage->isSubscribe()) ? 'b-button--next-subscribe-delivery' : 'b-button--next'?> b-button--fixed-bottom js-order-next js-valid-out-sub">
             Далее
         </button>
     </div>

@@ -16,6 +16,8 @@ use FourPaws\DeliveryBundle\FourPawsDeliveryBundle;
 use FourPaws\EcommerceBundle\EcommerceBundle;
 use FourPaws\FoodSelectionBundle\FourPawsFoodSelectionBundle;
 use FourPaws\FormBundle\FourPawsFormBundle;
+use FourPaws\KkmBundle\FourPawsKkmBundle;
+use FourPaws\KioskBundle\FourPawsKioskBundle;
 use FourPaws\LocationBundle\FourPawsLocationBundle;
 use FourPaws\MobileApiBundle\FourPawsMobileApiBundle;
 use FourPaws\PersonalBundle\FourPawsPersonalBundle;
@@ -106,7 +108,9 @@ class AppKernel extends Kernel
             new FourPawsReCaptchaBundle(),
             new FourPawsBitrixOrmBundle(),
             new FourPawsFormBundle(),
+            new FourPawsKioskBundle(),
             new EcommerceBundle(),
+            new FourPawsKkmBundle()
         ];
 
         if (\in_array($this->getEnvironment(), [

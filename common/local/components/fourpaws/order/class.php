@@ -9,6 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\LoaderException;
@@ -19,6 +20,7 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\Internals\BasketTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
@@ -35,9 +37,13 @@ use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\ManzanaService;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\PersonalBundle\Service\BonusService;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService;
+use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
@@ -145,6 +151,12 @@ class FourPawsOrderComponent extends \CBitrixComponent
      */
     private $retailRocketService;
 
+    /** @var OrderSubscribeService $orderSubscribeService */
+    private $orderSubscribeService;
+
+    /** @var KioskService $kioskService */
+    private $kioskService;
+
     /**
      * FourPawsOrderComponent constructor.
      *
@@ -158,22 +170,24 @@ class FourPawsOrderComponent extends \CBitrixComponent
     {
         $container = Application::getInstance()->getContainer();
         /** @noinspection PhpUndefinedMethodInspection */
-        $this->orderService        = $container->get(OrderService::class);
-        $this->orderSplitService   = $container->get(OrderSplitService::class);
-        $this->orderStorageService = $container->get(OrderStorageService::class);
-        $this->shopListService     = $container->get(ShopInfoService::class);
-        $this->deliveryService     = $container->get('delivery.service');
-        $this->storeService        = $container->get('store.service');
-        $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
-        $this->userCityProvider    = $container->get(UserCitySelectInterface::class);
-        $this->basketService       = $container->get(BasketService::class);
-        $this->userAccountService  = $container->get(UserAccountService::class);
-        $this->locationService     = $container->get('location.service');
-        $this->manzanaService      = $container->get('manzana.service');
-        $this->ecommerceService    = $container->get(GoogleEcommerceService::class);
-        $this->salePreset          = $container->get(SalePreset::class);
-        $this->retailRocketService = $container->get(RetailRocketService::class);
-        $this->logger              = LoggerFactory::create('component_order');
+        $this->orderService          = $container->get(OrderService::class);
+        $this->orderSplitService     = $container->get(OrderSplitService::class);
+        $this->orderStorageService   = $container->get(OrderStorageService::class);
+        $this->orderSubscribeService = $container->get('order_subscribe.service');
+        $this->shopListService       = $container->get(ShopInfoService::class);
+        $this->deliveryService       = $container->get('delivery.service');
+        $this->storeService          = $container->get('store.service');
+        $this->currentUserProvider   = $container->get(CurrentUserProviderInterface::class);
+        $this->userCityProvider      = $container->get(UserCitySelectInterface::class);
+        $this->basketService         = $container->get(BasketService::class);
+        $this->userAccountService    = $container->get(UserAccountService::class);
+        $this->locationService       = $container->get('location.service');
+        $this->manzanaService        = $container->get('manzana.service');
+        $this->ecommerceService      = $container->get(GoogleEcommerceService::class);
+        $this->salePreset            = $container->get(SalePreset::class);
+        $this->retailRocketService   = $container->get(RetailRocketService::class);
+        $this->logger                = LoggerFactory::create('component_order');
+        $this->kioskService          = $container->get('kiosk.service');
 
         parent::__construct($component);
     }
@@ -201,11 +215,16 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
             $this->currentStep = $componentPage;
 
-            if ($this->arParams['SET_TITLE'] === 'Y') {
-                $APPLICATION->SetTitle('Оформление заказа');
-            }
-
             $this->prepareResult();
+
+
+            if ($this->arParams['SET_TITLE'] === 'Y') {
+                if($this->orderStorageService->getStorage()->isSubscribe()){
+                    $APPLICATION->SetTitle('Оформление подписки на доставку');
+                } else {
+                    $APPLICATION->SetTitle('Оформление заказа');
+                }
+            }
 
             $this->includeComponentTemplate($componentPage);
         } catch (Exception $e) {
@@ -252,6 +271,59 @@ class FourPawsOrderComponent extends \CBitrixComponent
             throw new OrderCreateException('Failed to initialize storage');
         }
 
+
+        if ($this->currentStep === OrderStorageEnum::AUTH_STEP) {
+
+            // режим подписки на доставку
+            if ($_POST['subscribe'] && ($_POST['orderId'] > 0 || !$storage->isSubscribe())) {
+
+                // переход из истории заказов иммитирует добавление всех товаров из заказа
+                $orderId = (int)$_POST['orderId'];
+                if($orderId > 0){
+                    $basket = new CSaleBasket();
+                    $basket->DeleteAll(CSaleBasket::GetBasketUserID());
+
+                    $dbres = BasketTable::getList([
+                        'select' => ['PRODUCT_ID', 'QUANTITY'],
+                        'filter' => ['ORDER_ID' => $orderId]
+                    ]);
+
+                    /** @var PiggyBankService $piggyBankService */
+                    $piggyBankService = Application::getInstance()->getContainer()->get('piggy_bank.service');
+
+                    while($basketItem = $dbres->fetch()){
+                        if (in_array($basketItem['PRODUCT_ID'], $piggyBankService->getMarksIds(), false))
+                            continue;
+
+                        $this->basketService->addOfferToBasket($basketItem['PRODUCT_ID'], $basketItem['QUANTITY']);
+                    }
+
+                    // если ранее была создана подписка - удаляем
+                    if($storage->getSubscribeId() > 0){
+                        $this->getOrderSubscribeService()->delete($storage->getSubscribeId());
+                        $storage->setSubscribeId(null);
+                    }
+                }
+
+                $storage->setSubscribe(true);
+                $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+            }
+            elseif ($storage->isSubscribe() && $_POST['default']) {
+                if($storage->getSubscribeId() > 0){
+                    $this->getOrderSubscribeService()->delete($storage->getSubscribeId());
+                    $storage->setSubscribeId(null);
+                }
+                $storage->setSubscribe(false);
+                $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+            }
+
+            // капча в киоске не нужна
+            if (KioskService::isKioskMode() && !$storage->isCaptchaFilled()) {
+                $storage->setCaptchaFilled(true);
+                $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+            }
+        }
+
         $date = new \DateTime();
         if (($this->currentStep === OrderStorageEnum::DELIVERY_STEP) &&
             (abs(
@@ -275,6 +347,12 @@ class FourPawsOrderComponent extends \CBitrixComponent
             return;
         }
 
+        $user = null;
+        try {
+            $user = $this->currentUserProvider->getCurrentUser();
+        } catch (NotAuthorizedException $e) {
+        }
+
         /** @var Basket $basket */
         $basket                                  = $this->basketService->getBasket()->getOrderableItems();
         $this->arResult['ECOMMERCE_VIEW_SCRIPT'] = $this->getEcommerceViewScript($basket);
@@ -283,6 +361,13 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['ON_SUBMIT'] = \str_replace('"', '\'',
                 'if($(this).find("input[type=email]").val().indexOf("register.phone") == -1){' . $this->retailRocketService->renderSendEmail('$(this).find("input[type=email]").val()') . '}'
             );
+
+            if ($user)
+            {
+                /** @var BonusService $bonusService */
+                $bonusService = Application::getInstance()->getContainer()->get('bonus.service');
+                $bonusService->updateUserBonusInfo($user); //TODO need async here
+            }
         } else {
             $basket = $order->getBasket();
         }
@@ -326,12 +411,6 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
         $payments = null;
 
-        $user = null;
-        try {
-            $user = $this->currentUserProvider->getCurrentUser();
-        } catch (NotAuthorizedException $e) {
-        }
-
         $deliveries       = $this->orderStorageService->getDeliveries($storage);
         $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
         if ($this->currentStep === OrderStorageEnum::DELIVERY_STEP) {
@@ -358,11 +437,19 @@ class FourPawsOrderComponent extends \CBitrixComponent
             }
 
             try {
-                if (null !== $delivery) {
+                if (null !== $delivery && !$storage->isSubscribe()) {
                     $this->splitOrder($delivery, $storage);
                 }
             } catch (OrderSplitException $e) {
                 // проверяется на этапе валидации $storage
+            }
+
+            if($storage->getSubscribeId() > 0){ // для выбора дня первой доставки
+                try {
+                    $this->arResult['ORDER_SUBSCRIBE'] = $this->getOrderSubscribeService()->getById($storage->getSubscribeId());
+                } catch (\Exception $e) {
+
+                }
             }
 
             $this->arResult['PICKUP']               = $pickup;
@@ -416,7 +503,37 @@ class FourPawsOrderComponent extends \CBitrixComponent
             }
 
             if ($user) {
-                $this->arResult['MAX_BONUS_SUM'] = $this->basketService->getMaxBonusesForPayment($basket);
+                $this->arResult['MAX_BONUS_SUM'] = $this->basketService->getMaxBonusesForPayment($basket); // Получение из Manzana максимального количества бонусов для списания
+
+                /** @var BonusService $bonusService */
+                $bonusService = Application::getInstance()->getContainer()->get('bonus.service');
+                if ((!isset($bonus) || $bonus->isEmpty()) && !$bonusService->isUserBonusInfoUpdated()) {
+                    $bonus = $bonusService->updateUserBonusInfo();
+                }
+                if (isset($bonus))
+                {
+                    $maxTemporaryBonuses = $bonus->getTemporaryBonus();
+                } else {
+                    $maxTemporaryBonuses = $user->getTemporaryBonus();
+                }
+
+                $maxTemporaryBonuses = min($maxTemporaryBonuses, $this->arResult['MAX_BONUS_SUM']);
+                if (isset($maxTemporaryBonuses) && $maxTemporaryBonuses > 0)
+                {
+                    $this->arResult['MAX_TEMPORARY_BONUS_SUM'] = floor($maxTemporaryBonuses);
+                }
+            }
+
+            if($this->kioskService->isKioskMode()){
+                $curPage = BitrixApplication::getInstance()->getContext()->getRequest()->getRequestUri();
+                $url = $this->kioskService->addParamsToUrl($curPage, ['bindcard' => true]);
+                $this->arResult['BIND_CARD_URL'] = $url;
+                $this->arResult['KIOSK'] = true;
+                if ($this->kioskService->getCardNumber()) {
+                    $storage->setDiscountCardNumber($this->kioskService->getCardNumber());
+                    $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+                }
+
             }
 
             $payments = $this->orderStorageService->getAvailablePayments($storage, true, true, $basket->getPrice());
@@ -462,29 +579,33 @@ class FourPawsOrderComponent extends \CBitrixComponent
                     ['ID' => $pickup->getSelectedShop()->getMetro()]
                 );
             }
-            $storage->setSplit(true);
             $storage->setDeliveryId($pickup->getDeliveryId());
             $storage->setDeliveryPlaceCode($pickup->getSelectedShop()->getXmlId());
-            $splitStockResult = $this->orderSplitService->splitStockResult($pickup);
-            $available        = $splitStockResult->getAvailable();
-            $delayed          = $splitStockResult->getDelayed();
 
-            $canGetPartial = $this->orderSplitService->canGetPartial($pickup);
-
-            if ($canGetPartial) {
-                $available = $this->orderSplitService->recalculateStockResult($available);
-            }
-
-            $this->arResult['PARTIAL_PICKUP'] = $available->isEmpty()
-                ? null
-                : (clone $pickup)->setStockResult($available);
-
-            $this->arResult['PARTIAL_PICKUP_AVAILABLE']  = $canGetPartial;
-            $this->arResult['SPLIT_PICKUP_AVAILABLE']    = $this->orderSplitService->canSplitOrder($pickup);
-            $this->arResult['PICKUP_STOCKS_AVAILABLE']   = $available;
-            $this->arResult['PICKUP_STOCKS_DELAYED']     = $delayed;
             $this->arResult['PICKUP_AVAILABLE_PAYMENTS'] = $this->orderStorageService->getAvailablePayments($storage, false, true, $pickup->getStockResult()
-                                                                                                                                          ->getPrice());
+                ->getPrice());
+
+            if(!$storage->isSubscribe()){
+                $storage->setSplit(true);
+                $splitStockResult = $this->orderSplitService->splitStockResult($pickup);
+                $available        = $splitStockResult->getAvailable();
+                $delayed          = $splitStockResult->getDelayed();
+
+                $canGetPartial = $this->orderSplitService->canGetPartial($pickup);
+
+                if ($canGetPartial) {
+                    $available = $this->orderSplitService->recalculateStockResult($available);
+                }
+
+                $this->arResult['PARTIAL_PICKUP'] = $available->isEmpty()
+                    ? null
+                    : (clone $pickup)->setStockResult($available);
+
+                $this->arResult['PARTIAL_PICKUP_AVAILABLE']  = $canGetPartial;
+                $this->arResult['SPLIT_PICKUP_AVAILABLE']    = $this->orderSplitService->canSplitOrder($pickup);
+                $this->arResult['PICKUP_STOCKS_AVAILABLE']   = $available;
+                $this->arResult['PICKUP_STOCKS_DELAYED']     = $delayed;
+            }
         }
     }
 
@@ -618,5 +739,18 @@ class FourPawsOrderComponent extends \CBitrixComponent
         return $isPreset
             ? $this->ecommerceService->renderPreset($ecommerce, 'preset', true)
             : $this->ecommerceService->renderScript($ecommerce, true);
+    }
+
+    /**
+     * @return OrderSubscribeService|object
+     */
+    public function getOrderSubscribeService()
+    {
+        if (!$this->orderSubscribeService) {
+            $this->orderSubscribeService = Application::getInstance()->getContainer()->get(
+                'order_subscribe.service'
+            );
+        }
+        return $this->orderSubscribeService;
     }
 }

@@ -104,6 +104,9 @@ $APPLICATION->IncludeComponent('bitrix:news.list',
     false,
     ['HIDE_ICONS' => 'Y']);
 
+/**
+ * @todo: А зачем тут ещё один слайдер?
+ */
 if ($category->isLanding() || $catalogRequest->isLanding()) {
     echo $view->render('FourPawsCatalogBundle:Catalog:landing.slider.html.php', \compact('category'));
 }
@@ -111,10 +114,10 @@ if ($category->isLanding() || $catalogRequest->isLanding()) {
 if ($catalogRequest->isLanding()) {
     echo $view->render('FourPawsCatalogBundle:Catalog:landing.header.html.php', \compact('catalogRequest'));
 
-    echo '<div class="b-catalog js-preloader-fix"><div class="b-container b-container--catalog-filter">';
+    echo '<div class="b-catalog js-preloader-fix" data-pagetype="catalogFilter"><div class="b-container b-container--catalog-filter js-container-catalog-filter">';
 } else { ?>
-    <div class="b-catalog js-preloader-fix">
-    <div class="b-container b-container--catalog-filter">
+    <div class="b-catalog js-preloader-fix" data-pagetype="catalogFilter">
+    <div class="b-container b-container--catalog-filter js-container-catalog-filter">
 <?php }
 
 echo $view->render(

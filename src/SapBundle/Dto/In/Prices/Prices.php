@@ -31,7 +31,7 @@ class Prices
     /**
      * Код региона
      *
-     * @Serializer\Type("sap_bool")
+     * @Serializer\Type("string")
      * @Serializer\SerializedName("Plant")
      * @Serializer\XmlAttribute()
      *

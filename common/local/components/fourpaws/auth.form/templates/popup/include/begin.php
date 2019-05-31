@@ -4,7 +4,10 @@ use Bitrix\Main\Application;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\CatalogBundle\Service\CatalogLandingService;
+use FourPaws\Helpers\ProtectorHelper;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
+use FourPaws\Decorators\SvgDecorator;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -37,14 +40,16 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
             $backUrl = preg_replace('/anchor=([^&]*[&]?)/', '', $backUrl) . '&anchor=' . $arParams['BACK_URL_HASH']; //FIXME Сделано для быстроты реализации, нужно сделать более корректный метод установки параметра
         }
     }
+    if ($arResult['KIOSK']){
+        $backUrl = $arResult['BACK_URL'];
+    }
     ?>
     <div class="b-registration b-registration--popup-authorization js-auth-block js-ajax-replace-block">
         <header class="b-registration__header">
             <div class="b-title b-title--h1 b-title--registration">Авторизация</div>
         </header>
         <form class="b-registration__form js-form-validation js-auth-2way"
-              data-url="/ajax/user/auth/login/"
-              onsubmit="<?= $arResult['ON_SUBMIT'] ?>"
+              data-url="/ajax/user/auth/login-r/"
               method="post">
             <?= bitrix_sessid_post() ?>
             <input type="hidden" name="action" value="login" class="js-no-valid">
@@ -69,9 +74,11 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
             <div class="b-input-line b-input-line--popup-authorization">
                 <div class="b-input-line__label-wrapper">
                     <label class="b-input-line__label" for="password-authorization">Пароль</label>
-                    <a class="b-link-gray b-link-gray--label"
-                       href="/personal/forgot-password/?backurl=<?= $backUrl ?>"
-                       title="Забыли пароль?">Забыли пароль?</a>
+                    <? if(!$arResult['KIOSK']) { ?>
+                        <a class="b-link-gray b-link-gray--label"
+                           href="/personal/forgot-password/?backurl=<?= $backUrl ?>"
+                           title="Забыли пароль?">Забыли пароль?</a>
+                    <? } ?>
                 </div>
                 <div class="b-input b-input--registration-form">
                     <input class="b-input__input-field b-input__input-field--registration-form"
@@ -96,23 +103,35 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
                 Войти
             </button>
             <span class="b-registration__else b-registration__else--authorization">или</span>
-            <?php $APPLICATION->IncludeComponent(
-                'bitrix:socserv.auth.form',
-                'socserv_auth',
-                [
-                    'AUTH_SERVICES' => $arResult['AUTH_SERVICES'],
-                    'AUTH_URL'      => $arResult['AUTH_URL'],
-                    'POST'          => $arResult['POST'],
-                ],
-                $component,
-                ['HIDE_ICONS' => 'Y']
-            ); ?>
-            <div class="b-registration__new-user">Я новый покупатель.
-                <a class="b-link b-link--authorization b-link--authorization"
-                   href="/personal/register/?backurl=<?= $backUrl ?>"
-                   title="Зарегистрироваться"><span
-                            class="b-link__text b-link__text--authorization">Зарегистрироваться</span></a>
-            </div>
+            <? if(!$arResult['KIOSK']) { ?>
+                <?php $APPLICATION->IncludeComponent(
+                    'bitrix:socserv.auth.form',
+                    'socserv_auth',
+                    [
+                        'AUTH_SERVICES' => $arResult['AUTH_SERVICES'],
+                        'AUTH_URL'      => $arResult['AUTH_URL'],
+                        'POST'          => $arResult['POST'],
+                    ],
+                    $component,
+                    ['HIDE_ICONS' => 'Y']
+                ); ?>
+                <div class="b-registration__new-user">Я новый покупатель.
+                    <a class="b-link b-link--authorization b-link--authorization"
+                       href="/personal/register/?backurl=<?= $backUrl ?>"
+                       title="Зарегистрироваться"><span
+                                class="b-link__text b-link__text--authorization">Зарегистрироваться</span></a>
+                </div>
+            <? } else { ?>
+                <div class="b-authorize-by-card">
+                    <span class="b-icon">
+                        <?= new SvgDecorator('icon-barcode', 51, 37) ?>
+                    </span>
+                    <div class="b-authorize-by-card__text">Отсканировать карту</div>
+                </div>
+            <? } ?>
+
+            <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_AUTH); ?>
+	        <input type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
         </form>
     </div>
     <?php

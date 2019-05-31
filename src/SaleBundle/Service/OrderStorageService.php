@@ -2,14 +2,18 @@
 
 namespace FourPaws\SaleBundle\Service;
 
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\Error;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
@@ -22,6 +26,12 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Exception\TerminalNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\DeliveryBundle\Service\IntervalService;
+use FourPaws\PersonalBundle\Entity\OrderSubscribe;
+use FourPaws\PersonalBundle\Entity\OrderSubscribeItem;
+use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
@@ -39,6 +49,8 @@ use Symfony\Component\HttpFoundation\Request;
 
 class OrderStorageService
 {
+    use LazyLoggerAwareTrait;
+
     public const SESSION_EXPIRED_VIOLATION = 'session-expired';
 
     /**
@@ -82,6 +94,11 @@ class OrderStorageService
     protected $storeService;
 
     /**
+     * @var OrderSubscribeService
+     */
+    protected $orderSubscribeService;
+
+    /**
      * OrderStorageService constructor.
      *
      * @param BasketService                $basketService
@@ -95,7 +112,8 @@ class OrderStorageService
         CurrentUserProviderInterface $currentUserProvider,
         DatabaseStorageRepository $storageRepository,
         DeliveryService $deliveryService,
-        StoreService $storeService
+        StoreService $storeService,
+        OrderSubscribeService $orderSubscribeService
     )
     {
         $this->basketService = $basketService;
@@ -103,6 +121,7 @@ class OrderStorageService
         $this->storageRepository = $storageRepository;
         $this->deliveryService = $deliveryService;
         $this->storeService = $storeService;
+        $this->orderSubscribeService = $orderSubscribeService;
     }
 
     /**
@@ -140,18 +159,23 @@ class OrderStorageService
 
     /**
      * @param OrderStorage $storage
-     * @param Request      $request
-     * @param string       $step
+     * @param Request $request
+     * @param string $step
      *
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException
+     * @throws OrderSubscribeException
      * @return OrderStorage
      */
     public function setStorageValuesFromRequest(OrderStorage $storage, Request $request, string $step): OrderStorage
     {
         $data = $request->request->all();
+        return $this->setStorageValuesFromArray($storage, $data, $step);
+    }
 
+    public function setStorageValuesFromArray(OrderStorage $storage, array $data, string $step): OrderStorage
+    {
         $mapping = [
             'order-pick-time' => 'split',
             'shopId'          => 'deliveryPlaceCode',
@@ -170,8 +194,8 @@ class OrderStorageService
 
         if (isset($data['deliveryCoords'])) {
             $coords = explode(',', $data['deliveryCoords']);
-            $data['lng'] = $coords[0];
-            $data['lat'] = $coords[1];
+            $data['lat'] = $coords[0];
+            $data['lng'] = $coords[1];
         }
 
         /**
@@ -213,7 +237,7 @@ class OrderStorageService
                                 $data['secondDeliveryInterval'] = $data['deliveryInterval2'];
                                 $data['deliveryDate'] = $data['deliveryDate1'];
                                 $data['secondDeliveryDate'] = $data['deliveryDate2'];
-                                if($deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE){
+                                if ($deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
                                     $data['comment'] = $data['comment_dostavista'];
                                 } else {
                                     $data['comment'] = $data['comment1'];
@@ -425,6 +449,15 @@ class OrderStorageService
         }
 
         /**
+         * Для заказа по подписке доступна только оплата при получении
+         */
+        if($storage->isSubscribe()){
+            $payments = array_filter($payments, function($item){
+                return in_array($item['CODE'], [OrderPayment::PAYMENT_CASH, OrderPayment::PAYMENT_CASH_OR_CARD]);
+            });
+        }
+
+        /**
          * Если выбран самовывоз DPD и терминал, то оставляем только доступные в этом терминале способы оплаты
          */
         if ($storage->getDeliveryPlaceCode() && $storage->getDeliveryId()) {
@@ -464,16 +497,44 @@ class OrderStorageService
         }
 
         /**
-         * Если есть оплата "наличными или картой", удаляем оплату "наличными"
+         * Если есть оплата "наличными или картой", удаляем оплату "наличными" - если не достависта,
+         * Если достависта - "удаляем наличными или картой", оставляем "наличными"
          */
-        if ($filter
-            && !empty(\array_filter($payments, function ($item) {
-                return $item['CODE'] === OrderPayment::PAYMENT_CASH_OR_CARD;
-            }))) {
+        $deliveryCode = false;
+        if ($storage->getDeliveryId()) {
+            $deliveryCode = $this->deliveryService->getDeliveryCodeById($storage->getDeliveryId());
+        }
+        if ($deliveryCode === false || !$this->deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
+            if ($filter
+                && !empty(\array_filter($payments, function ($item) {
+                    return $item['CODE'] === OrderPayment::PAYMENT_CASH_OR_CARD;
+                }))) {
+                foreach ($payments as $id => $payment) {
+                    if ($payment['CODE'] === OrderPayment::PAYMENT_CASH) {
+                        unset($payments[$id]);
+                        break;
+                    }
+                }
+            }
+        } else {
+            if ($filter
+                && !empty(\array_filter($payments, function ($item) {
+                    return $item['CODE'] === OrderPayment::PAYMENT_CASH;
+                }))) {
+                foreach ($payments as $id => $payment) {
+                    if ($payment['CODE'] === OrderPayment::PAYMENT_CASH_OR_CARD) {
+                        unset($payments[$id]);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // в режиме киоска доступна только оплата при получении
+        if(KioskService::isKioskMode()){
             foreach ($payments as $id => $payment) {
-                if ($payment['CODE'] === OrderPayment::PAYMENT_CASH) {
+                if (!in_array($payment['CODE'], [OrderPayment::PAYMENT_CASH_OR_CARD, OrderPayment::PAYMENT_CASH])) {
                     unset($payments[$id]);
-                    break;
                 }
             }
         }
@@ -498,15 +559,21 @@ class OrderStorageService
     {
         if (null === $this->deliveries || $reload) {
             $basket = $this->basketService->getBasket();
+            $codes = [];
             if (null === $basket->getOrder()) {
                 $order = Order::create(SITE_ID, $storage->getUserId() ?: null);
                 $order->setBasket($basket);
             }
 
+            // для подписки оставляем всё, кроме достависты
+            if($storage->isSubscribe()){
+                $codes = array_merge(DeliveryService::PICKUP_CODES, DeliveryService::DELIVERY_CODES);
+            }
+
             $this->deliveries = $this->deliveryService->getByBasket(
                 $basket,
                 $storage->getCityCode(),
-                [],
+                $codes,
                 $storage->getCurrentDate()
             );
         }

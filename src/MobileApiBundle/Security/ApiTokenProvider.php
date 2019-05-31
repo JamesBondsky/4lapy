@@ -2,16 +2,12 @@
 
 namespace FourPaws\MobileApiBundle\Security;
 
-use Bitrix\Sale\Fuser;
 use FourPaws\MobileApiBundle\Entity\ApiUserSession;
-use FourPaws\MobileApiBundle\Exception\InvalidIdentifierException as MobileInvalidIdentifierException;
+use FourPaws\MobileApiBundle\Exception\InvalidTokenException;
 use FourPaws\MobileApiBundle\Repository\ApiUserSessionRepository;
-use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
-use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Security\BitrixUserProviderInterface;
 use Symfony\Component\Security\Core\Authentication\Provider\AuthenticationProviderInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
-use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\Role\Role;
 
 class ApiTokenProvider implements AuthenticationProviderInterface
@@ -43,36 +39,32 @@ class ApiTokenProvider implements AuthenticationProviderInterface
      *
      * @param PreAuthenticationApiToken|TokenInterface $token The TokenInterface instance to authenticate
      *
-     * @throws AuthenticationException if the authentication fails
-     * @return TokenInterface An authenticated TokenInterface instance, never null
-     *
+     * @return ApiToken An authenticated TokenInterface instance, never null
      */
     public function authenticate(TokenInterface $token): ApiToken
     {
-        $session = null;
-        try {
-            $session = $this->sessionRepository->findByToken($token->getToken());
-        } catch (MobileInvalidIdentifierException $exception) {
+        $session = $this->sessionRepository->findByToken($token->getToken());
+
+        if (!$session) {
+            throw new InvalidTokenException('Invalid token provided');
+        }
+
+        $user = null;
+        // if there is userID in the session - authorize this user,
+        // otherwise initialize user basket and return a token
+        if ($this->initBySession($session) && $session->getUserId()) {
+            $user = $this->bitrixUserProvider->loadUserById($session->getUserId());
+            $user->getRolesCollection()->add(new Role('ROLE_API'));
+        } else {
+            $this->initFUserIdByToken($session->getFUserId());
         }
 
 
-        if ($session && $this->initBySession($session)) {
-            $user = null;
-            if ($session->getUserId()) {
-                try {
-                    $user = $this->bitrixUserProvider->loadUserById($session->getUserId());
-                    $user->getRolesCollection()->add(new Role('ROLE_API'));
-                } catch (InvalidIdentifierException $exception) {
-                } catch (ConstraintDefinitionException $exception) {
-                }
-            }
-            return new ApiToken(
-                $user ? $user->getRoles() : ['ROLE_API'],
-                $session,
-                $user
-            );
-        }
-        throw new AuthenticationException('The Api Token authentication failed.');
+        return new ApiToken(
+            $user ? $user->getRoles() : ['ROLE_API'],
+            $session,
+            $user
+        );
     }
 
     /**
@@ -92,10 +84,18 @@ class ApiTokenProvider implements AuthenticationProviderInterface
         if ($session->getUserId()) {
             return $this->cUser->Authorize($session->getUserId());
         }
-        if (!$session->getFUserId()) {
-            return false;
-        }
-        $_SESSION['SALE_USER_ID'] = $session->getFUserId();
-        return Fuser::getId(true) === $session->getFUserId();
+        return false;
+    }
+
+    /**
+     * Для неавторизованных пользователей получаем ID корзины (FUSER_ID) по токену из таблички с сессиями
+     * И подсовываем полученный FUSER_ID в сессию, чтобы битрикс подтягивал нужную корзину
+     * @see \CAllSaleBasket::GetID()
+     *
+     * @param int $fUserId
+     */
+    protected function initFUserIdByToken(int $fUserId): void
+    {
+        $_SESSION['SALE_USER_ID'] = $fUserId;
     }
 }

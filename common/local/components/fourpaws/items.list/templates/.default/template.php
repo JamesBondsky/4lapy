@@ -38,7 +38,7 @@ use FourPaws\Decorators\SvgDecorator; ?>
     </div>
     <?php if (is_array($arResult['ITEMS']) && !empty($arResult['ITEMS'])) { ?>
         <div class="b-common-section__content b-common-section__content--latest-event b-common-section__content--wrap">
-            <div class="b-news-wrapper">
+            <div class="b-news-wrapper js-scroll-mobile-lazy">
                 <?php foreach ($arResult['ITEMS'] as $key => $item) {
                     $this->AddEditAction(
                         $item['ID'],

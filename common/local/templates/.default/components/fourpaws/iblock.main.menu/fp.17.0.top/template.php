@@ -55,8 +55,8 @@ $sArrowDownIcoBrand = '<span class="b-icon b-icon--brand-menu">' . $sArrowDownSw
                         $sAddClass1 = $arItem['IS_BRAND_MENU'] ? ' js-menu-brand-mobile' : ' js-show-dropdown';
                         $sAddClass2 = $arItem['IS_BRAND_MENU'] ? ' js-open-main-menu js-open-brand-mobile' : '';
                     } ?>
-                    <li class="b-menu__item b-menu__item--more<?= $sAddClass1 ?>">
-                        <a class="b-menu__link b-menu__link--more<?= $sAddClass2 ?>"<?= $arItem['_LINK_ATTR1_'] ?>
+                    <li class="b-menu__item b-menu__item--more js-item-more-menu<?= $sAddClass1 ?>">
+                        <a class="b-menu__link b-menu__link--more js-link-item-more-menu<?= $sAddClass2 ?>"<?= $arItem['_LINK_ATTR1_'] ?>
                            href="<?= $arItem['_URL_'] ?>">
                             <?php echo $arItem['_TEXT_'];
                             echo $sArrowDownIco; ?>
@@ -84,8 +84,8 @@ $sArrowDownIcoBrand = '<span class="b-icon b-icon--brand-menu">' . $sArrowDownSw
                         <?php } ?>
                     </li>
                 <?php } else { ?>
-                    <li class="b-menu__item">
-                        <a class="b-menu__link"<?= $arItem['_LINK_ATTR1_'] ?>
+                    <li class="b-menu__item<?= ($arItem['XML_ID'] == 'vetapteka') ? ' b-menu__item--vetapteka' : ''; ?>">
+                        <a class="b-menu__link<?= ($arItem['XML_ID'] == 'vetapteka') ? ' b-menu__link--blue' : ''; ?>"<?= $arItem['_LINK_ATTR1_'] ?>
                            href="<?= $arItem['_URL_'] ?>">
                             <?= $arItem['_TEXT_'] ?>
                         </a>

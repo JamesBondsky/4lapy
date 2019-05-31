@@ -14,7 +14,11 @@ class IblockCode
 
     public const BANNERS   = 'banners';
 
+    public const SLIDER_CONTROLLED   = 'slider-controlled';
+
     public const CITIES    = 'cities';
+
+    public const AREA_CITY = 'area-city';
 
     public const MAIN_MENU = 'main_menu';
 
@@ -32,7 +36,15 @@ class IblockCode
 
     public const FAQ  = 'faq';
 
+    public const SOCIALS  = 'socials';
+
     public const COMPARING  = 'comparing';
 
     public const GRANDIN_REQUEST = 'grandin_request';
+
+    public const PERSONAL_OFFERS  = 'personal_offers';
+
+    public const SUBSCRIBE_PRICES = 'subscribe_prices';
+
+    public const MOBILE_APP_CONTENT = 'mobile_app_content';
 }

@@ -6,6 +6,8 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Request;
 
+use FourPaws\MobileApiBundle\Dto\Request\Types\GetRequest;
+use FourPaws\MobileApiBundle\Dto\Request\Types\SimpleUnserializeRequest;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -53,6 +55,13 @@ class InfoRequest implements SimpleUnserializeRequest, GetRequest
     protected $fields = [];
 
     /**
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("offer-type-code")
+     * @var string
+     */
+    protected $offerTypeCode = '';
+
+    /**
      * @return string
      */
     public function getCityId(): string
@@ -82,5 +91,13 @@ class InfoRequest implements SimpleUnserializeRequest, GetRequest
     public function getFields(): array
     {
         return $this->fields;
+    }
+
+    /**
+     * @return string
+     */
+    public function getOfferTypeCode(): string
+    {
+        return $this->offerTypeCode;
     }
 }

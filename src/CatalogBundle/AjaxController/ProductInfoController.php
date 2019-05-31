@@ -248,7 +248,7 @@ class ProductInfoController extends Controller implements LoggerAwareInterface
                 /** @var Offer $activeOffer */
                 $activeOffer = $sortedOffers->first();
                 foreach ($sortedOffers as $offer) {
-                    if ($ratings[$activeOffer->getId()] <= $ratings[$offer->getId()]) {
+                    if ($ratings[$activeOffer->getId()] < $ratings[$offer->getId()]) {
                         $activeOffer = $offer;
                     }
                 }

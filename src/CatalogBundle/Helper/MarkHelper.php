@@ -13,10 +13,16 @@ use FourPaws\Catalog\Model\Offer;
  */
 final class MarkHelper
 {
+    public const MARK_SALE_IMAGE_SRC = '/upload/labels/s-proc.png';
+    public const MARK_GIFT_IMAGE_SRC = '/upload/labels/s-gift.png';
+    public const MARK_HIT_IMAGE_SRC = '/upload/labels/hot.png';
+    public const MARK_NEW_IMAGE_SRC = '/upload/labels/new.png';
+
     public const MARK_SALE_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/s-proc.svg" alt="" role="presentation"/>';
     public const MARK_GIFT_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/s-gift.svg" alt="" role="presentation"/>';
     public const MARK_HIT_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/s-fire.svg" alt="" role="presentation"/>';
     public const MARK_NEW_IMAGE = '<img class="b-common-item__sticker" src="/static/build/images/inhtml/new.svg" alt="" role="presentation"/>';
+    public const MARK_REGION_PRICE_IMAGE = '<img class="b-common-item__sticker" src="/upload/region_price/label.svg" alt="" role="presentation"/>';
 
     public const DEFAULT_TRANSPARENT_TEMPLATE = '<span class="b-common-item__sticker-wrap" style="background-color:transparent;data-background:transparent;">%s</span>';
     public const DEFAULT_TEMPLATE = '<span class="b-common-item__sticker-wrap" style="background-color:#da291c;data-background:#da291c;">%s</span>';
@@ -135,6 +141,10 @@ final class MarkHelper
 
         if ($offer->isNew()) {
             return self::MARK_NEW_IMAGE;
+        }
+
+        if ($offer->isRegionPrice()){
+            return self::MARK_REGION_PRICE_IMAGE;
         }
 
         return '';

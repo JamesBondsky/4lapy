@@ -24,6 +24,7 @@ foreach (array_values($childCategories) as $index => $childCategory) {
         <div class="b-common-section__title-box b-common-section__title-box--catalog" id="<?= $childCategory->getCode() ?>">
             <h2 class="b-title b-title--catalog">
                 <a href="<?= $childCategory->getSectionPageUrl() ?>"
+                   class="js-link-title-catalog"
                    title="<?= htmlspecialcharsbx($childCategory->getName()) ?>">
                     <?= $childCategory->getName() ?>
                 </a>
@@ -68,6 +69,12 @@ foreach (array_values($childCategories) as $index => $childCategory) {
             <?php $counterItem++; } ?>
         </div>
     </section>
+
+    <? if(!$delTextShown && $category->isShowDelText()){
+        echo '<div class="b-information-message b-information-message--green">', Category::DEL_TEXT, '</div>';
+        $delTextShown = true;
+    } ?>
+
     <?php
     if ($index + 1 < count($childCategories)) {
         ?>

@@ -30,7 +30,10 @@ use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\Helpers\ProtectorHelper;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\Model\City;
+use FourPaws\PersonalBundle\Service\PetService;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Service\BasketService;
@@ -46,6 +49,7 @@ use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
+use FourPaws\UserBundle\Service\UserSearchInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
@@ -56,6 +60,14 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     public const MODE_PROFILE   = 0;
     public const MODE_FORM      = 1;
     public const PHONE_HOT_LINE = '8 (800) 770-00-22';
+    public const PETS_TYPE = [
+        'koshki' => 'cat',
+        'sobaki' => 'dog',
+        'ryby' => 'fish',
+        'ptitsy' => 'bird',
+        '9' => 'reptile',
+        'gryzuny' => 'rodent'
+    ];
 
     /**
      * @var CurrentUserProviderInterface
@@ -65,6 +77,12 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @var UserAuthorizationInterface
      */
     private $userAuthorizationService;
+    /**
+     * @var UserSearchInterface
+     */
+    private $userSearchService;
+
+
     /** @var AjaxMess */
     private $ajaxMess;
     /**
@@ -75,6 +93,10 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @var DataLayerService
      */
     private $dataLayerService;
+    /**
+     * @var KioskService
+     */
+    private $kioskService;
 
     /**
      * FourPawsAuthFormComponent constructor.
@@ -92,7 +114,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
             $this->retailRocketService = $container->get(RetailRocketService::class);
             $this->userAuthorizationService = $container->get(UserAuthorizationInterface::class);
+            $this->userSearchService = $container->get(UserSearchInterface::class);
             $this->dataLayerService = $container->get(DataLayerService::class);
+            $this->kioskService = $container->get('kiosk.service');
             $this->ajaxMess = $container->get('ajax.mess');
         } catch (Exception $e) {
         }
@@ -103,15 +127,8 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     {
         try {
             $this->arResult['STEP'] = '';
+
             if ($this->getMode() === static::MODE_FORM) {
-                $this->arResult['ON_SUBMIT'] = \str_replace('"', '\'',
-                    \sprintf(
-                        '%s%s%s%s',
-                        $this->dataLayerService->renderAuth(DataLayer::AUTH_TYPE_LOGIN),
-                        'if (/^(([^<>()\[\]\\.,;:\s@]+(\.[^<>()\[\]\\.,;:\s@]+)*)|(.+))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(String($(this).find("input[name=login]").val()).toLowerCase())&&$(this).find("input[name=login]").val().indexOf("register.phone") == -1){',
-                        $this->retailRocketService->renderSendEmail('$(this).find("input[name=login]").val()'),
-                        '};'
-                    ));
                 $this->arResult['STEP'] = 'begin';
             }
 
@@ -120,9 +137,23 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 if (!empty($curUser->getExternalAuthId() && !$curUser->hasEmail())) {
                     $this->arResult['STEP'] = 'addPhone';
                 }
-
                 $this->arResult['NAME'] = $curUser->getName() ?? $curUser->getLogin();
             }
+
+            if (KioskService::isKioskMode() && !$this->userAuthorizationService->isAuthorized()) {
+                $this->arResult['KIOSK'] = true;
+                $this->arResult['AUTH_LINK'] = $this->kioskService->getAuthLink();
+                $this->arResult['REDIRECT_TO_BONUS'] = $this->kioskService->isRedirectToBonusAfterAuth();
+                if($this->arResult['REDIRECT_TO_BONUS']){
+                    $backUrl = $this->kioskService->getBonusPageUrl();
+                } else {
+                    $backUrl = $this->kioskService->removeParamFromUrl('showScan');
+                }
+                // при сканировании шк backurl надо хранить в сессии
+                $this->kioskService->setLastPageUrl($backUrl);
+                $this->arResult['BACK_URL'] = $backUrl;
+            }
+
             $this->setSocial();
             unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
             $this->includeComponentTemplate();
@@ -173,22 +204,44 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @param string $rawLogin
      * @param string $password
      * @param string $backUrl
+     * @param string|bool $token
      *
      * @return JsonResponse
+     * @throws ApplicationCreateException
+     * @throws SystemException
+     * @throws WrongPhoneNumberException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws Exception
      */
-    public function ajaxLogin(string $rawLogin, string $password, string $backUrl = ''): JsonResponse
+    public function ajaxLogin(string $rawLogin, string $password, string $backUrl = '', $token = false): JsonResponse
     {
+        // CSRF-защита
+        if (!ProtectorHelper::checkToken($token, ProtectorHelper::TYPE_AUTH))
+        {
+            $options = ['reload' => true];
+            if (!empty($backUrl)) {
+                $options = ['redirect' => $backUrl];
+            }
+            return JsonSuccessResponse::createWithData('Вы успешно авторизованы.', [], 200, $options); // на самом деле, нет
+        }
+
+        $newToken = ProtectorHelper::generateToken(ProtectorHelper::TYPE_AUTH);
+        $newToken['value'] = $newToken['token'];
+        unset($newToken['token']);
+        $newTokenResponse = ['token' => $newToken];
+
         try {
             $container = App::getInstance()->getContainer();
         } catch (ApplicationCreateException $e) {
-            return $this->ajaxMess->getSystemError();
+            return $this->ajaxMess->getSystemError()->extendData($newTokenResponse);
         }
         $needWritePhone = false;
         if (empty($rawLogin)) {
-            return $this->ajaxMess->getEmptyDataError();
+            return $this->ajaxMess->getEmptyDataError()->extendData($newTokenResponse);
         }
         if (empty($password)) {
-            return $this->ajaxMess->getEmptyPasswordError();
+            return $this->ajaxMess->getEmptyPasswordError()->extendData($newTokenResponse);
         }
 
         if (!isset($_SESSION['COUNT_AUTH_AUTHORIZE'])) {
@@ -201,19 +254,20 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             try {
                 $recaptchaService = $container->get(ReCaptchaInterface::class);
                 $checkedCaptcha = $recaptchaService->checkCaptcha();
+                $this->userAuthorizationService->clearLoginAttempts($rawLogin);
             } catch (Exception $e) {
-                return $this->ajaxMess->getSystemError();
+                return $this->ajaxMess->getSystemError()->extendData($newTokenResponse);
             }
         }
         if (!$checkedCaptcha) {
-            return $this->ajaxMess->getFailCaptchaCheckError();
+            return $this->ajaxMess->getFailCaptchaCheckError()->extendData($newTokenResponse);
         }
 
         $needConfirmBasket = false;
         try {
             $basketService = $container->get(BasketService::class);
         } catch (Exception $e) {
-            return $this->ajaxMess->getSystemError();
+            return $this->ajaxMess->getSystemError()->extendData($newTokenResponse);
         }
 
         $curBasket = $basketService->getBasket();
@@ -230,11 +284,11 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 $userId = $this->currentUserProvider->getUserRepository()->findIdentifierByRawLogin($rawLogin);
                 if ($userId > 0) {
                     $fUserId = (int)FuserTable::query()
-                                              ->setFilter(['USER_ID' => $userId])
-                                              ->setSelect(['ID'])
-                                              ->setCacheTtl(360000)
-                                              ->exec()
-                                              ->fetch()['ID'];
+                        ->setFilter(['USER_ID' => $userId])
+                        ->setSelect(['ID'])
+                        ->setCacheTtl(360000)
+                        ->exec()
+                        ->fetch()['ID'];
                     if ($fUserId > 0) {
                         $userBasket = $basketService->getBasket(true, $fUserId);
 
@@ -251,7 +305,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                             } catch (NotSupportedException|ObjectNotFoundException $e) {
                                 $logger = LoggerFactory::create('unionBasket');
                                 $logger->critical('Ошибка инициализации заказа при объединении корзин - '
-                                                  . $e->getMessage());
+                                    . $e->getMessage());
                             }
                         }
 
@@ -311,7 +365,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             $this->userAuthorizationService->login($rawLogin, $password);
             if ($this->userAuthorizationService->isAuthorized()
                 && !$this->currentUserProvider->getCurrentUser()
-                                              ->hasPhone()) {
+                    ->hasPhone()) {
                 $needWritePhone = true;
             }
         } catch (UsernameNotFoundException $e) {
@@ -323,18 +377,21 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                         '',
                         [
                             'isAjax'   => true,
-                            'backurl'  => $backUrl,
+                            'backUrl'  => $backUrl,
                             'arResult' => $this->arResult
                         ]
                     );
 
-                    return $this->ajaxMess->getWrongPasswordError(['html' => $html]);
+                    return $this->ajaxMess->getWrongPasswordError(array_merge(
+                        ['html' => $html],
+                        $newTokenResponse
+                    ));
                 } catch (Exception $e) {
-                    return $this->ajaxMess->getSystemError();
+                    return $this->ajaxMess->getSystemError()->extendData($newTokenResponse);
                 }
             }
 
-            return $this->ajaxMess->getWrongPasswordError();
+            return $this->ajaxMess->getWrongPasswordError($newTokenResponse);
         } catch (InvalidCredentialException $e) {
             if ($_SESSION['COUNT_AUTH_AUTHORIZE'] === 3) {
                 try {
@@ -344,18 +401,21 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                         '',
                         [
                             'isAjax'   => true,
-                            'backurl'  => $backUrl,
+                            'backUrl'  => $backUrl,
                             'arResult' => $this->arResult
                         ]
                     );
 
-                    return $this->ajaxMess->getWrongPasswordError(['html' => $html]);
+                    return $this->ajaxMess->getWrongPasswordError(array_merge(
+                        ['html' => $html],
+                        $newTokenResponse
+                    ));
                 } catch (Exception $e) {
-                    return $this->ajaxMess->getSystemError();
+                    return $this->ajaxMess->getSystemError()->extendData($newTokenResponse);
                 }
             }
 
-            return $this->ajaxMess->getWrongPasswordError();
+            return $this->ajaxMess->getWrongPasswordError($newTokenResponse);
         } catch (TooManyUserFoundException $e) {
             /** @noinspection PhpUnhandledExceptionInspection */
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
@@ -364,9 +424,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
             try {
                 return $this->ajaxMess->getTooManyUserFoundException($this->getSitePhone(), $rawLogin,
-                    'логином/email/телефоном');
+                    'логином/email/телефоном')->extendData($newTokenResponse);
             } catch (ApplicationCreateException $e) {
-                return $this->ajaxMess->getSystemError();
+                return $this->ajaxMess->getSystemError()->extendData($newTokenResponse);
             }
         }
 
@@ -376,7 +436,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 'unionBasket',
                 'Объединение корзины',
                 [
-                    'backurl'             => $backUrl,
+                    'backUrl'             => $backUrl,
                     'needAddPhone'        => $needWritePhone ? 'Y' : 'N',
                     'delBasketIds'        => $delBasketIds,
                     'delBasketKeys'       => $delBasketKeys,
@@ -389,7 +449,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
             return JsonSuccessResponse::createWithData('Объединение корзины', [
                 'html'    => $html,
-                'backurl' => $backUrl
+                'backUrl' => $backUrl
             ]);
         }
         if ($needWritePhone) {
@@ -398,7 +458,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             return JsonSuccessResponse::createWithData('Необходимо заполнить номер телефона',
                 [
                     'html'    => $html,
-                    'backurl' => $backUrl
+                    'backUrl' => $backUrl
                 ]);
         }
 
@@ -407,7 +467,15 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             $options = ['redirect' => $backUrl];
         }
 
-        return JsonSuccessResponse::create('Вы успешно авторизованы.', 200, [], $options);
+        $userID = $this->getCurrentUserProvider()->getCurrentUserId();
+        $data['email'] = $this->getCurrentUserProvider()->getCurrentUser()->getEmail();
+        $data['name'] = $this->getCurrentUserProvider()->getCurrentUser()->getName();
+        $data['pets'] = [];
+        /** @var PetService $petService */
+        $petService = App::getInstance()->getContainer()->get('pet.service');
+        $data['pets'] = $petService->getUserPetsTypesCodes($userID);
+
+        return JsonSuccessResponse::createWithData('Вы успешно авторизованы.', $data, 200, $options);
     }
 
     /**
@@ -494,7 +562,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                         'Подтверждение телефона',
                         [
                             'phone'   => $phone,
-                            'backurl' => $backUrl
+                            'backUrl' => $backUrl
                         ]
                     );
 
@@ -510,7 +578,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                     'Подтверждение телефона',
                     [
                         'phone'   => $phone,
-                        'backurl' => $backUrl
+                        'backUrl' => $backUrl
                     ]
                 );
 
@@ -525,7 +593,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                     'Подтверждение телефона',
                     [
                         'phone'   => $phone,
-                        'backurl' => $backUrl
+                        'backUrl' => $backUrl
                     ]
                 );
 
@@ -614,7 +682,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         $mess = '';
         $step = $request->get('step', '');
         $phone = $request->get('phone', '');
-        $backUrl = $request->get('backurl', '');
+        $backUrl = $request->get('backUrl', '');
         try {
             $phone = PhoneHelper::normalizePhone($phone);
         } catch (WrongPhoneNumberException $e) {
@@ -638,7 +706,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         $html = $this->getHtml($step, $title, [
             'phone'   => $phone,
             'step'    => $step,
-            'backurl' => $backUrl
+            'backUrl' => $backUrl
         ]);
 
         return JsonSuccessResponse::createWithData(
@@ -870,7 +938,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         if ($services) {
             foreach ($services as &$service) {
                 $service['ONCLICK'] = $this->renderDataLayerByType(DataLayer::SOCIAL_SERVICE_MAP[$service['ID']]
-                                                                   ?? '') . $service['ONCLICK'];
+                        ?? '') . $service['ONCLICK'];
             }
             unset($service);
 
@@ -920,7 +988,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
         /** @noinspection PhpIncludeInspection */
         require_once App::getDocumentRoot()
-                     . '/local/components/fourpaws/auth.form/templates/popup/include/' . $page . '.php';
+            . '/local/components/fourpaws/auth.form/templates/popup/include/' . $page . '.php';
 
         return ob_get_clean();
     }

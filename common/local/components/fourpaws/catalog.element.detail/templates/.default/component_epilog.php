@@ -11,9 +11,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 /**
- * @var array                         $arResult
- * @var Offer                         $currentOffer
- * @var Product                       $product
+ * @var array $arResult
+ * @var Offer $currentOffer
+ * @var Product $product
  * @var CatalogElementDetailComponent $this
  */
 $currentOffer = $arResult['CURRENT_OFFER'];
@@ -27,31 +27,56 @@ $basketService = $this->getBasketService();
  */
 $bonus = $currentOffer->getBonusFormattedText($userService->getDiscount());
 
-if (!empty($bonus)) { ?>
-    <script>
-        $(function () {
+?>
+    <script<?= ($arParams['IS_POPUP']) ? ' data-epilog-handlers="true"' : '' ?>>
+
+        if(epilogHandlers === undefined){
+            // класс для комплексного выполнения всех обработчиков
+            var epilogHandlers = {
+                handlers: [],
+                add: function (handler) {
+                    this.getInstance().handlers[this.handlers.length] = handler;
+                },
+                execute: function () {
+                    this.getInstance().handlers.forEach(function (handler) {
+                        if (typeof handler === 'function') {
+                            handler();
+                        }
+                    });
+                    this.getInstance().handlers = [];
+                },
+                getInstance: function() { return this }
+            };
+        }
+
+
+        <? if (!empty($bonus)) { ?>
+        epilogHandlers.add(function () {
             var $jsBonus = $('.js-bonus-<?=$currentOffer->getId()?>');
             if ($jsBonus.length > 0) {
                 $jsBonus.html('<?=$bonus?>');
             }
         });
-    </script>
-<?php } ?>
-    <script>
-        $(function () {
+        <?php } ?>
+
+        epilogHandlers.add(function () {
+            $('.js-current-offer-price-old').html('<?= $currentOffer->getCatalogOldPrice() ?>');
+            $('.js-current-offer-price').html('<?= $currentOffer->getCatalogPrice() ?>');
             $('.js-plus-minus-count')
                 .data('cont-max', '<?=$currentOffer->getQuantity()?>')
                 .data('one-price', '<?=$currentOffer->getPrice()?>');
+            <? if($currentOffer->getSubscribeDiscount() > 0){ ?>
+            $('.js-subscribe-price').html('<?= $currentOffer->getSubscribePrice() ?>');
+            $('.js-subscribe-price-block').show();
+            <? } ?>
         });
-    </script>
-<?php
-/** установка количества товаров в корзине для офферов */
-$basket = $basketService->getBasket();
+        <?php
+        /** установка количества товаров в корзине для офферов */
+        $basket = $basketService->getBasket();
 
-/** @var BasketItem $basketItem */
-foreach ($basket->getBasketItems() as $basketItem) { ?>
-    <script>
-        $(function () {
+        /** @var BasketItem $basketItem */
+        foreach ($basket->getBasketItems() as $basketItem) { ?>
+        epilogHandlers.add(function () {
             var $offerInCart = $('.js-offer-in-cart-<?=$basketItem->getProductId()?>');
 
             if ($offerInCart.length > 0) {
@@ -59,14 +84,11 @@ foreach ($basket->getBasketItems() as $basketItem) { ?>
                 $offerInCart.css('display', 'inline-block');
             }
         });
-    </script>
-<?php }
+        <?php }
 
-
-foreach ($product->getOffers() as $offer) {
-    /** установка цен, скидочных цен, акции, нет в наличии */ ?>
-    <script>
-        $(function () {
+        foreach ($product->getOffers() as $offer) {
+        /** установка цен, скидочных цен, акции, нет в наличии */ ?>
+        epilogHandlers.add(function () {
             var $offerLink = $('.js-offer-link-<?=$offer->getId()?>');
             if ($offerLink.length > 0) {
                 $offerLink.find('.b-weight-container__price').html('<?= WordHelper::numberFormat($offer->getCatalogPrice(),
@@ -80,15 +102,22 @@ foreach ($product->getOffers() as $offer) {
                 <?php }?>
             }
         });
-    </script>
-<?php }
+        <?php }
 
-if ($currentOffer->isAvailable()) { ?>
-    <script>
-        $('.js-product-controls').addClass('active');
-    </script>
-<?php }
+        if ($currentOffer->isAvailable()) { ?>
+        epilogHandlers.add(function () {
+            $('.js-product-controls').addClass('active')
+        });
+        <?php } ?>
 
+        <? if(!$arParams['IS_POPUP']) { ?>
+        $(function(){
+            //epilogHandlers.execute();
+        });
+        <? } ?>
+    </script>
+
+<?php
 /**
  * Offer microdata
  *
@@ -108,10 +137,10 @@ foreach ($product->getOffers() as $offer) {
     $packageLabel = $offer->getPackageLabel(false, 0);
     ?>
     <span itemscope itemtype="http://schema.org/Offer" style="display: none;">
-        <meta itemprop="itemOffered" content="<?=$packageLabel?>" >
-        <meta itemprop="price" content="<?=$offer->getCatalogPrice()?>" >
-        <meta itemprop="priceCurrency" content="<?=$offer->getCurrency()?>" >
-        <meta itemprop="availability" content="http://schema.org/<?=$availabilityValue?>">
+        <meta itemprop="itemOffered" content="<?= $packageLabel ?>">
+        <meta itemprop="price" content="<?= $offer->getCatalogPrice() ?>">
+        <meta itemprop="priceCurrency" content="<?= $offer->getCurrency() ?>">
+        <meta itemprop="availability" content="http://schema.org/<?= $availabilityValue ?>">
     </span>
     <?php
 }

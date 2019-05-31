@@ -2,6 +2,7 @@
 
 namespace FourPaws\SaleBundle\Payment;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Web\Json;
@@ -36,8 +37,12 @@ class Sberbank
      */
     private const prod_url = \API_PROD_URL;
 
+    private const prod_url_apple_android = 'https://securepayments.sberbank.ru/payment/';
+    private const test_url_apple_android = 'https://3dsec.sberbank.ru/payment/';
+
     private const TEST_MERCHANT = '4lapy';
     private const PROD_MERCHANT = 'sbersafe';
+    private const MOBILE_PROD_MERCHANT = '4lapy2';
 
     public const SUCCESS_CODE = 0;
 
@@ -113,13 +118,37 @@ class Sberbank
     }
 
     /**
+     * @return array
+     */
+    public function getSettingsArray(): array
+    {
+        return [
+            'user_name' => $this->user_name,
+            'password' => $this->password,
+            'two_stage' => $this->two_stage,
+            'test_mode' => $this->test_mode,
+            'logging' => $this->logging,
+        ];
+    }
+
+    /**
+     * @param bool $isMobilePayment
+     * @param string $mobilePaymentSystem
      * @return string
      */
-    public function getApiUrl(): string
+    public function getApiUrl($isMobilePayment = false, $mobilePaymentSystem = ''): string
     {
-        return $this->test_mode
-            ? self::test_url
-            : self::prod_url;
+        if ($isMobilePayment) {
+            $url = $this->test_mode
+                ? self::test_url_apple_android
+                : self::prod_url_apple_android;
+            return $url . $mobilePaymentSystem . '/';
+        } else {
+            return $this->test_mode
+                ? self::test_url
+                : self::prod_url;
+
+        }
     }
 
     /**
@@ -133,24 +162,45 @@ class Sberbank
     }
 
     /**
+     * @return string
+     */
+    public function getMobileMerchantName(): string
+    {
+        return $this->test_mode
+            ? self::TEST_MERCHANT // на самом деле тестового мерчанта для мобильных нет
+            : self::MOBILE_PROD_MERCHANT;
+    }
+
+    /**
      * ЗАПРОС В ПШ
      *
      * Формирование запроса в платежный шлюз и парсинг JSON-ответа
      *
      * @param string $method метод запроса в ПШ
      * @param mixed[] $data данные в запросе
+     * @param bool $isMobilePayment платеж через "applepay"|"android" ?
+     * @param string $mobilePaymentSystem "applepay"|"android"
      *
      * @return mixed[]
      *
      * @throws ArgumentException
      */
-    protected function gatewayQuery($method, $data): array
+    protected function gatewayQuery($method, $data, bool $isMobilePayment = false, $mobilePaymentSystem = ''): array
     {
-        $data['userName'] = $this->user_name;
-        $data['password'] = $this->password;
-        $data['CMS'] = 'Bitrix';
-        $data['Module-Version'] = RBS_VERSION;
-        $dataEncoded = \http_build_query($data);
+        if ($isMobilePayment) {
+            $data['merchant'] = $this->getMobileMerchantName();
+            $data['preAuth'] = true;
+            //$data['orderNumber'] = '3194383_2'; //для тестовых платежей
+            //$data["orderBundle"]["cartItems"]["items"][0]["itemAmount"] = 1; //для тестовых платежей (1 копейка)
+            //$data["orderBundle"]["cartItems"]["items"][0]["itemPrice"] = '1'; //для тестовых платежей (1 копейка)
+            $dataEncoded = \json_encode($data);
+        } else {
+            $data['CMS'] = 'Bitrix';
+            $data['Module-Version'] = RBS_VERSION;
+            $data['userName'] = $this->user_name;
+            $data['password'] = $this->password;
+            $dataEncoded = \http_build_query($data);
+        }
 
         if (\SITE_CHARSET !== 'UTF-8') {
             global $APPLICATION;
@@ -159,7 +209,15 @@ class Sberbank
             $data = $APPLICATION->ConvertCharsetArray($data, 'windows-1251', 'UTF-8');
         }
 
-        $url = $this->getApiUrl();
+        $url = $this->getApiUrl($isMobilePayment, $mobilePaymentSystem);
+
+        $headers = [
+            'CMS: Bitrix',
+            'Module-Version: ' . RBS_VERSION
+        ];
+        if ($mobilePaymentSystem) {
+            $headers[] = 'Content-Type: application/json';
+        }
 
         $curl = \curl_init();
         \curl_setopt_array($curl, [
@@ -167,10 +225,11 @@ class Sberbank
             \CURLOPT_RETURNTRANSFER => true,
             \CURLOPT_POST => true,
             \CURLOPT_POSTFIELDS => $dataEncoded,
-            \CURLOPT_HTTPHEADER => ['CMS: Bitrix', 'Module-Version: ' . RBS_VERSION],
+            \CURLOPT_HTTPHEADER => $headers,
             \CURLOPT_SSLVERSION => 6,
         ]);
         $response = \curl_exec($curl);
+        //$response = '{"success":true,"data":{"orderId":"e51f45c1-8411-7a83-aa2c-12b900151068"},"orderStatus":{"errorCode":"0","orderNumber":"999999__14","orderStatus":1,"actionCode":0,"actionCodeDescription":"","amount":100,"currency":"643","date":1558694938873,"ip":"31.173.55.17","merchantOrderParams":[],"attributes":[{"name":"mdOrder","value":"e51f45c1-8411-7a83-aa2c-12b900151068"}],"cardAuthInfo":{"expiration":"202202","cardholderName":"CARD HOLDER","approvalCode":"094923","paymentSystem":"MASTERCARD","secureAuthInfo":{"eci":7,"threeDSInfo":{"cavv":"AFFu8Y4XGZ+PAEUxNI3LAoABFA=="}},"pan":"544714XXXXXX5619"},"authDateTime":1558694939190,"authRefNum":"308203236946","paymentAmountInfo":{"paymentState":"APPROVED","approvedAmount":100,"depositedAmount":0,"refundedAmount":0},"bankInfo":{"bankName":"\"BANK \"SAINT PETERSBURG\" PUBLI","bankCountryCode":"RU","bankCountryName":""},"chargeback":false,"operations":[{"amount":100,"cardHolder":"CARD HOLDER","authCode":"094923"}]}}';
         \curl_close($curl);
 
         if (!$response) {
@@ -223,7 +282,42 @@ class Sberbank
             $url, $method, \json_encode($data), \json_encode($response)
         );
 
-        \AddMessage2Log($message);
+        $logger = LoggerFactory::create('Sberbank');
+        $logger->info(
+            __CLASS__ . ': ' . $message
+        );
+
+        //\AddMessage2Log($message);
+    }
+
+    /**
+     * ЗАПРОС ОПЛАТЫ ЗАКАЗА APPLEPAY
+     *
+     * Метод payment.do
+     *
+     * @param int $orderId Номер заказа в Bitrix
+     * @param string $paymentToken
+     * @param string $mobilePaymentSystem
+     * @param float $amount
+     * @param null|array $fiscal
+     * @return array|mixed[]
+     * @throws ArgumentException
+     */
+    public function paymentViaMobile(int $orderId, string $paymentToken, string $mobilePaymentSystem, float $amount = 0, ?array $fiscal = []) {
+        $data = array(
+            'merchant' => '4lapy',
+            'orderNumber' => $orderId,
+            'paymentToken' => $paymentToken,
+            'preAuth' => true
+        );
+        if ($fiscal) {
+            $data['orderBundle'] = $fiscal['orderBundle'];
+        }
+        if ($mobilePaymentSystem === 'android') {
+            $data['amount'] = $amount;
+        }
+        $response = $this->gatewayQuery('payment.do', $data, true, $mobilePaymentSystem);
+        return $response;
     }
 
     /**

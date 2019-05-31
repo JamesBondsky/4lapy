@@ -11,9 +11,30 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 $uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arParams['OBJECT_ID'];
 /** @var CCommentsComponent $component */
 $arResult['AUTH'] = $component->userAuthService->isAuthorized();
-if (!$arResult['AUTH']) {
+?>
+<script type="text/javascript" data-epilog-handlers="true">
+    if(epilogHandlers === undefined){
+        // класс для комплексного выполнения всех обработчиков
+        var epilogHandlers = {
+            handlers: [],
+            add: function (handler) {
+                this.getInstance().handlers[this.handlers.length] = handler;
+            },
+            execute: function () {
+                this.getInstance().handlers.forEach(function (handler) {
+                    if (typeof handler === 'function') {
+                        handler();
+                    }
+                });
+                this.getInstance().handlers = [];
+            },
+            getInstance: function() { return this }
+        };
+    }
+
+    <?if (!$arResult['AUTH']) {
     $recaptchaService = SymfoniApplication::getInstance()->getContainer()->get(ReCaptchaInterface::class); ?>
-    <script type="text/javascript">
+    epilogHandlers.add(function () {
         if ($('.js-comments-auth-block-<?=$uniqueCommentString?>').length > 0) {
             $('.js-comments-auth-block-<?=$uniqueCommentString?>').css('display', 'block');
         }
@@ -23,11 +44,16 @@ if (!$arResult['AUTH']) {
         if ($('.js-comments-captcha-block-<?=$uniqueCommentString?>').length > 0) {
             $('.js-comments-captcha-block-<?=$uniqueCommentString?>').html('<?=$recaptchaService->getCaptcha();?>').css('display', 'block');
         }
-    </script>
-<?php } else { ?>
-    <script type="text/javascript">
+    });
+    <?php } else { ?>
+    epilogHandlers.add(function () {
         if ($('.js-comments-auth-form-<?=$uniqueCommentString?>').length > 0) {
             $('.js-comments-auth-form-<?=$uniqueCommentString?>').remove();
         }
-    </script>
-<?php }
+    });
+    <?php } ?>
+
+    $(function() {
+        epilogHandlers.execute();
+    });
+</script>

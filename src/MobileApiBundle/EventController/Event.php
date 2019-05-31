@@ -32,10 +32,11 @@ class Event extends BaseServiceHandler
     {
         parent::initHandlers($eventManager);
 
-        $module = 'main';
-        static::initHandler('OnUserLogin', [self::class,'updateTokenAfterLogin'], $module);
-        static::initHandler('OnAfterUserLogout', [self::class,'updateTokenAfterLogout'], $module);
-        static::initHandler('onAfterUserUpdate', [self::class,'updateUser'], $module);
+        // toDo не понятный для чего легаси код
+        // $module = 'main';
+        // static::initHandler('OnUserLogin', [self::class,'updateTokenAfterLogin'], $module);
+        // static::initHandler('OnAfterUserLogout', [self::class,'updateTokenAfterLogout'], $module);
+        // static::initHandler('onAfterUserUpdate', [self::class,'updateUser'], $module);
     }
 
     /**
@@ -47,15 +48,6 @@ class Event extends BaseServiceHandler
     {
         $sessionHandler = Application::getInstance()->getContainer()->get(SessionHandlerInterface::class);
         $sessionHandler->login();
-
-        $user_class = new \CUser;
-        $user_id = (int) $GLOBALS['USER']->GetID();
-        $total_sessions = $user_class::GetByID( $user_id )->Fetch()['UF_SESSION_CNTS'];
-
-        $user_class->Update($user_id, ['UF_SESSION_CNTS' => (int) $total_sessions+1]);
-
-        // TODO: выбрасывает 500, но БД обновляет - нужно думать почему.
-        // TODO: P.S при обновлении в битре полей также выкидывает эррор.
     }
 
     /**

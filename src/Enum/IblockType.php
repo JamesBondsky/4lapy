@@ -16,5 +16,7 @@ class IblockType
 
     public const PUBLICATION = 'publications';
 
+    public const BANNERS = 'banners';
+
     public const GRANDIN = 'grandin';
 }

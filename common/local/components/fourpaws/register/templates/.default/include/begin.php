@@ -17,24 +17,26 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
     <a class="b-button b-button--social b-button--full-width js-reg-by-phone"
        href="javascript:void(0)"
        title="Регистрация по телефону"
-       data-url="/ajax/user/auth/register/"
+       data-url="/ajax/user/auth/register-r/"
        data-method="post"
        data-action="get"
        data-backurl="<?=$backUrl?>"
        data-step="step1">Регистрация по телефону</a>
-    <span class="b-registration__else">или</span>
     <?php
-    $APPLICATION->IncludeComponent(
-        'bitrix:socserv.auth.form',
-        'socserv_reg',
-        [
-            'AUTH_SERVICES' => $arResult['AUTH_SERVICES'],
-            'AUTH_URL'      => $arResult['AUTH_URL'],
-            'POST'          => $arResult['POST'],
-        ],
-        $component,
-        ['HIDE_ICONS' => 'Y']
-    );
+    if (!$arResult['KIOSK']) { ?>
+        <span class="b-registration__else">или</span>
+        <? $APPLICATION->IncludeComponent(
+            'bitrix:socserv.auth.form',
+            'socserv_reg',
+            [
+                'AUTH_SERVICES' => $arResult['AUTH_SERVICES'],
+                'AUTH_URL'      => $arResult['AUTH_URL'],
+                'POST'          => $arResult['POST'],
+            ],
+            $component,
+            ['HIDE_ICONS' => 'Y']
+        );
+    }
     ?>
 </div>
 <section class="b-registration__additional-info">

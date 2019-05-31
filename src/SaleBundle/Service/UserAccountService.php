@@ -75,7 +75,7 @@ class UserAccountService
 
         $bonus = null;
         if (null === $newBudget) {
-            $bonus = $this->bonusService->getUserBonusInfo($user);
+            $bonus = $this->bonusService->updateUserBonusInfo($user);
             if ($bonus->isEmpty()) {
                 return [false, $bonus];
             }

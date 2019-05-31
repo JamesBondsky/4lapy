@@ -5,6 +5,7 @@ namespace FourPaws\CatalogBundle\AjaxController;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Iblock\InheritedProperty\SectionValues;
 use Bitrix\Main\Type\DateTime;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
@@ -86,21 +87,30 @@ class SearchController extends Controller
 
             $converted = $result->getCollection()->toArray();
 
+            $brands = [];
             /** @var Product|Brand $product */
             foreach ($converted as $key => $arItems) {
                 foreach ($arItems as $item) {
                     if ($item instanceof Brand) {
-                        $res['brands'][] = [
+                        $brands[] = [
                             'DETAIL_PAGE_URL' => $item->getDetailPageUrl(),
                             'NAME' => $item->getName(),
                             'SCORE' => $item->getHitMetaInfo()->getScore(),
+                            'EXACT' => in_array(SearchService::BRAND_EXACT_MATCH_QUERY_NAME, $item->getHitMetaInfo()->getMatchedQueries(), true),
                         ];
                     } elseif ($item instanceof Product) {
-                        /**
-                         * @var Offer $offer
-                         */
-                        $offer = $item->getOffers()->first();
-
+                        //проверка, по точному совпадению с внешним кодом
+                        /*** @var ArrayCollection $offers */
+                        $offers = $item->getOffers()->filter(function ($offerCur) use ($searchString) {
+                            /** @var Offer $offerCur */
+                            return $offerCur->getXmlId() == $searchString;
+                        });
+                        /** @var Offer $offer */
+                        if (!$offers->isEmpty()) {
+                            $offer = $offers->first();
+                        } else {
+                            $offer = $item->getOffers()->first();
+                        }
                         if ($key == 'products') {
                             /**
                              * @var Image $image
@@ -172,6 +182,11 @@ class SearchController extends Controller
                     }
                 }
             }
+
+            $exactBrands = array_filter($brands, static function($brand) {
+                return $brand['EXACT'];
+            });
+            $res['brands'] = $exactBrands ?: $brands;
         }
 
         usort($res['suggests'], function ($a, $b) {
@@ -185,10 +200,24 @@ class SearchController extends Controller
             $res['products'] = [];
         } elseif (isset($res['products'][0])) {
             $res['products'] = [$res['products'][0]];
-            $res['suggests'] = [];
+            //$res['suggests'] = [];
             $res['brands'] = [];
         } else {
             $res['products'] = [];
+        }
+
+        if (isset($searchString) && $searchString != '')
+        {
+            $popularSuggestions = $searchService->getHLSearchSuggestions($searchString);
+            $popularSuggestions = array_map(function($suggestion) use($searchService) {
+                $suggestionText = $suggestion['UF_SUGGESTION'];
+                return [
+                    'DETAIL_PAGE_URL' => $searchService->getSearchUrl() . '?query=' . $suggestionText,
+                    'NAME' => $suggestionText,
+                ];
+            }, $popularSuggestions);
+
+            $res['popular_suggests'] = $popularSuggestions;
         }
 
         return JsonSuccessResponse::createWithData('', $res)->setEncodingOptions(JSON_UNESCAPED_UNICODE);
@@ -210,27 +239,30 @@ class SearchController extends Controller
      */
     public function writeStatisticAction(SearchRequest $searchRequest): JsonResponse
     {
-        $statisticDb = SearchRequestStatisticTable::GetList([
-            'filter' => [
-                'search_string' => $searchRequest->getSearchString()
-            ]
-        ]);
-
-        if ($statisticDb->getSelectedRowsCount() == 0) {
-            SearchRequestStatisticTable::Add([
-                'search_string' => $searchRequest->getSearchString(),
-                'quantity' => 1,
-                'last_date_search' => new DateTime()
-            ]);
-        } else {
-            $statisticRow = $statisticDb->fetch();
-            SearchRequestStatisticTable::Update(
-                $statisticRow['id'],
-                [
-                    'quantity' => $statisticRow['quantity'] + 1,
-                    'last_date_search' => new DateTime()
+        $searchString = mb_strtolower($searchRequest->getSearchString());
+        if ($searchString != '') {
+            $statisticDb = SearchRequestStatisticTable::GetList([
+                'filter' => [
+                    'search_string' => mb_strtolower($searchString)
                 ]
-            );
+            ]);
+
+            if ($statisticDb->getSelectedRowsCount() == 0) {
+                SearchRequestStatisticTable::Add([
+                    'search_string' => mb_strtolower($searchString),
+                    'quantity' => 1,
+                    'last_date_search' => new DateTime()
+                ]);
+            } else {
+                $statisticRow = $statisticDb->fetch();
+                SearchRequestStatisticTable::Update(
+                    $statisticRow['id'],
+                    [
+                        'quantity' => $statisticRow['quantity'] + 1,
+                        'last_date_search' => new DateTime()
+                    ]
+                );
+            }
         }
         return JsonSuccessResponse::createWithData('', []);
     }

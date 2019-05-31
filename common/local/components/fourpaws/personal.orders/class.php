@@ -233,8 +233,16 @@ class FourPawsPersonalCabinetOrdersComponent extends FourPawsComponent
                     $oldBasket = $oldOrder->getBasket();
                     $oldBasketItems = $oldBasket->getBasketItems();
 
+                    /** @var FourPaws\PersonalBundle\Service\PiggyBankService $piggyBankService */
+                    $piggyBankService = App::getInstance()->getContainer()->get('piggy_bank.service');
+
                     /** @var Sale\BasketItem $oldBasketItem */
                     foreach ($oldBasketItems as $oldBasketItem) {
+                        $productId = $oldBasketItem->getProductId();
+                        if (in_array($productId, $piggyBankService->getMarksIds(), false))
+                        {
+                            continue;
+                        }
                         if ($this->basketService->isGiftProduct($oldBasketItem)) {
                             continue;
                         }

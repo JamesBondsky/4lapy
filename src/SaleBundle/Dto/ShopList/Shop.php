@@ -52,6 +52,30 @@ class Shop
     protected $schedule = '';
 
     /**
+     * @var int
+     *
+     * @Serializer\SerializedName("metroId")
+     * @Serializer\Type("int")
+     */
+    protected $metroId = 0;
+
+    /**
+     * @var string
+     *
+     * @Serializer\SerializedName("metroName")
+     * @Serializer\Type("string")
+     */
+    protected $metroName = '';
+
+    /**
+     * @var string
+     *
+     * @Serializer\SerializedName("metroColor")
+     * @Serializer\Type("string")
+     */
+    protected $metroColor = '';
+
+    /**
      * @var string
      *
      * @Serializer\SerializedName("metroClass")
@@ -162,6 +186,14 @@ class Shop
      * @Serializer\Type("string")
      */
     protected $fullPickupDateShortFormat;
+
+    /**
+     * @var bool
+     *
+     * @Serializer\SerializedName("is_subscribe")
+     * @Serializer\Type("bool")
+     */
+    protected $isSubscribe = false;
 
     /**
      * @return int
@@ -279,6 +311,66 @@ class Shop
     public function setSchedule(string $schedule): Shop
     {
         $this->schedule = $schedule;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getMetroId(): int
+    {
+        return $this->metroId;
+    }
+
+    /**
+     * @param int $metroId
+     *
+     * @return Shop
+     */
+    public function setMetroId(int $metroId): Shop
+    {
+        $this->metroId = $metroId;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMetroName(): string
+    {
+        return $this->metroName;
+    }
+
+    /**
+     * @param string $metroName
+     *
+     * @return Shop
+     */
+    public function setMetroName(string $metroName): Shop
+    {
+        $this->metroName = $metroName;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMetroColor(): string
+    {
+        return $this->metroColor;
+    }
+
+    /**
+     * @param string $metroColor
+     *
+     * @return Shop
+     */
+    public function setMetroColor(string $metroColor): Shop
+    {
+        $this->metroColor = $metroColor;
 
         return $this;
     }
@@ -559,6 +651,24 @@ class Shop
     public function setFullPickupDateShortFormat(string $fullPickupDateShortFormat): Shop
     {
         $this->fullPickupDateShortFormat = $fullPickupDateShortFormat;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSubscribe(): bool
+    {
+        return $this->isSubscribe;
+    }
+
+    /**
+     * @param bool $isSubscribe
+     */
+    public function setIsSubscribe(bool $isSubscribe): Shop
+    {
+        $this->isSubscribe = $isSubscribe;
 
         return $this;
     }

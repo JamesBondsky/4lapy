@@ -23,6 +23,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\BasketItemCollection;
 use Bitrix\Sale\Delivery\DeliveryLocationTable;
 use Bitrix\Sale\Delivery\Services\Manager;
 use Bitrix\Sale\Delivery\Services\Table as DeliveryServiceTable;
@@ -31,12 +32,14 @@ use Bitrix\Sale\Order;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\PriceForAmountCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Dpd\TerminalTable;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\PriceForAmount;
 use FourPaws\DeliveryBundle\Entity\Terminal;
 use FourPaws\DeliveryBundle\Exception\DeliveryInitializeException;
@@ -45,12 +48,16 @@ use FourPaws\DeliveryBundle\Exception\TerminalNotFoundException;
 use FourPaws\DeliveryBundle\Exception\UnknownDeliveryException;
 use FourPaws\DeliveryBundle\Factory\CalculationResultFactory;
 use FourPaws\DeliveryBundle\Handler\DeliveryHandlerBase;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Discount\Utils\Manager as DiscountManager;
+use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use Psr\Log\LoggerAwareInterface;
 use WebArch\BitrixCache\BitrixCache;
+use FourPaws\App\Application;
 
 /**
  * Class DeliveryService
@@ -115,9 +122,14 @@ class DeliveryService implements LoggerAwareInterface
     public const ZONE_IVANOVO = 'ZONE_IVANOVO';
     public const ZONE_IVANOVO_REGION = 'ZONE_IVANOVO_REGION';
     /**
-     * Зона Москва
+     * Зона Москва для Достависты
      */
     public const ZONE_MOSCOW = 'ZONE_MOSCOW';
+
+    /**
+     * Новые зоны с префиксом, работают как зона 2
+     */
+    public const ADD_DELIVERY_ZONE_CODE_PATTERN = 'ADD_DELIVERY_ZONE_';
 
     public const PICKUP_CODES = [
         DeliveryService::INNER_PICKUP_CODE,
@@ -139,7 +151,11 @@ class DeliveryService implements LoggerAwareInterface
 
     /** @var string */
     protected $currentDeliveryZone;
+    
+    protected $allZones;
 
+    protected $deliveryByZoneMap;
+    
     /**
      * DeliveryService public constructor.
      *
@@ -195,6 +211,170 @@ class DeliveryService implements LoggerAwareInterface
 
         return $this->getByBasket($basket, $locationCode, $codes, $from);
     }/** @noinspection MoreThanThreeArgumentsInspection */
+
+    /**
+     * @param OfferCollection $offers
+     * @param array $quantities
+     * @param string $locationCode
+     * @param array $codes
+     * @param \DateTime|null $from
+     * @return array
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     * @throws UserMessageException
+     */
+    public function getByOfferCollection(OfferCollection $offers, array $quantities, string $locationCode = '', array $codes = [], ?\DateTime $from = null): array
+    {
+        $basket = Basket::createFromRequest([]);
+        /** @var Offer $offer */
+        foreach ($offers as $offer) {
+            $basketItem = BasketItem::create($basket, 'sale', $offer->getId());
+            $basketItem->setFieldNoDemand('CAN_BUY', 'Y');
+            $basketItem->setFieldNoDemand('PRICE', $offer->getPrice());
+            $basketItem->setFieldNoDemand('QUANTITY', $quantities[$offer->getXmlId()]);
+            $basket->addItem($basketItem);
+        }
+
+        if (!$locationCode) {
+            $locationCode = $this->locationService->getCurrentLocation();
+        }
+
+        $shipment = $this->generateShipment($locationCode, $basket);
+
+        $isToEnableExtendDiscount = DiscountManager::isExtendDiscountEnabled();
+
+        if ($isToEnableExtendDiscount) {
+            DiscountManager::disableExtendsDiscount();
+            $isToEnableExtendDiscount = true;
+        }
+
+        $availableServices = Manager::getRestrictedObjectsList($shipment);
+
+        $result = [];
+        $errors = [];
+        $location = $this->getDeliveryLocation($shipment);
+        foreach ($availableServices as $service) {
+            if ($codes && !\in_array($service->getCode(), $codes, true)) {
+                continue;
+            }
+
+            if ($service::isProfile()) {
+                $name = $service->getNameWithParent();
+            } else {
+                $name = $service->getName();
+            }
+
+            try {
+                $shipment->setFieldsNoDemand(
+                    [
+                        'DELIVERY_ID'   => $service->getId(),
+                        'DELIVERY_NAME' => $name,
+                    ]
+                );
+            } catch (\Exception $e) {
+                $this->log()->error(sprintf('Cannot set shipment fields: %s', $e->getMessage()), [
+                    'location' => $location,
+                    'service'  => $service->getCode(),
+                ]);
+                continue;
+            }
+
+            $calculationResult = $shipment->calculateDelivery();
+            if (!$calculationResult->isSuccess()) {
+                $errors[$service->getCode()] = $calculationResult->getErrorMessages();
+                continue;
+            }
+
+            try {
+                $calculationResult = CalculationResultFactory::fromBitrixResult($calculationResult, $service, $shipment);
+            } catch (UnknownDeliveryException|DeliveryInitializeException $e) {
+                $this->log()->critical($e->getMessage(), [
+                    'service'  => $service->getCode(),
+                    'location' => $location,
+                    'trace' => $e->getTrace()
+                ]);
+                continue;
+            }
+            $deliveryZone = $this->getDeliveryZoneForShipment($shipment);
+            $calculationResult->setDeliveryZone($deliveryZone);
+            $calculationResult->setDeliveryId($service->getId());
+            $calculationResult->setDeliveryName($name);
+            $calculationResult->setDeliveryCode($service->getCode());
+            $calculationResult->setCurrentDate($from ?? new \DateTime());
+
+            //проверка, что достависта работает еще в течение 3ех часов
+            if ($calculationResult->getDeliveryCode() == DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
+                $deliveryDate = clone $calculationResult->getDeliveryDate();
+                $deliveryDateOfMonth = clone $calculationResult->getDeliveryDate(); //клонируем для проверки, что следующие сутки не наступили
+                $deliveryStartTime = clone $calculationResult->getDeliveryDate(); //клонируем для проверки, что курьерская доставка сейчас работает
+                $deliveryEndTime = clone $calculationResult->getDeliveryDate(); //клонируем для проверки, что курьерская доставка еще будет работать с учетом времени доставки
+                //проверяем размеры товаров
+                /** @var OrderService $orderService */
+                $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+                $parentOrder = $shipment->getParentOrder();
+                if ($parentOrder->getBasket()->isEmpty())
+                {
+                    /** @var BasketService $basketService */
+                    $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
+                    $offers = $basketService->getBasketOffers();
+                }
+                else
+                {
+                    /** @var OfferCollection $offers */
+                    $offers = $orderService->getOrderProducts($parentOrder);
+                }
+
+                if (!$offers->isEmpty()) {
+                    foreach ($offers as $offer) {
+                        $length = WordHelper::showLengthNumber($offer->getCatalogProduct()->getLength());
+                        $width = WordHelper::showLengthNumber($offer->getCatalogProduct()->getWidth());
+                        $height = WordHelper::showLengthNumber($offer->getCatalogProduct()->getHeight());
+                        if ($length > 150 || $width > 150 || $height > 150) {
+                            $calculationResult->setPeriodTo(300);
+                            break;
+                        }
+                    }
+                }
+                $deliveryDateOfMonth->modify(sprintf('+%s minutes', $calculationResult->getPeriodTo())); //прибавляем максимальное время доставки
+                $startTime = $calculationResult->getData()['DELIVERY_START_TIME']; //когда доставка открывается
+                $arStartTime = explode(':', $startTime);
+                $deliveryStartTime->setTime($arStartTime[0], $arStartTime[1]); //получаем сегодня, когда доставка открывается
+                $endTime = $calculationResult->getData()['DELIVERY_END_TIME']; //когда доставка закрывается
+                $arEndTime = explode(':', $endTime);
+                $deliveryEndTime->setTime($arEndTime[0], $arEndTime[1]); //получаем сегодня, когда доставка закроется
+                $oldDayOfMonth = $calculationResult->getDeliveryDate()->format('d'); //получаем номер старого дня в месяце
+                $newDayOfMonth = $deliveryDateOfMonth->format('d'); //получаем номер нового дня в месяце с учетом времени доставки
+                if ($oldDayOfMonth != $newDayOfMonth || $deliveryDateOfMonth > $deliveryEndTime || $deliveryDate < $deliveryStartTime) {
+                    continue;
+                }
+            }
+
+            //тут рассчет времени доставки
+            if ($calculationResult->isSuccess()) {
+                $result[] = $calculationResult;
+            } else {
+                $errors[$calculationResult->getDeliveryCode()] = $calculationResult->getErrorMessages();
+            }
+        }
+
+        if (empty($codes) && empty($result)) {
+            $this->log()->info('No available deliveries', [
+                'location' => $location,
+                'errors' => $errors
+            ]);
+        }
+
+        if ($isToEnableExtendDiscount) {
+            DiscountManager::enableExtendsDiscount();
+        }
+
+        return $result;
+    }
 
     /**
      * Получение доставок для корзины
@@ -287,43 +467,45 @@ class DeliveryService implements LoggerAwareInterface
         if (!$zone) {
             $zone = $this->getCurrentDeliveryZone();
         }
-
-        $getServiceCodes = function () use ($zone) {
-            $zoneData = $this->getAllZones(true)[$zone];
-            $result = [];
-            if (!empty($zoneData['LOCATIONS'])) {
-                $location = current($zoneData['LOCATIONS']);
-                if(!empty($location)) {
-                    $shipment = $this->generateShipment($location);
-                    $availableServices = Manager::getRestrictedObjectsList($shipment);
-
-                    foreach ($availableServices as $service) {
-                        $result[] = $service->getCode();
+        if($this->deliveryByZoneMap[$zone] == null) {
+            $getServiceCodes = function () use ($zone) {
+                $zoneData = $this->getAllZones(true)[$zone];
+                $result = [];
+                if (!empty($zoneData['LOCATIONS'])) {
+                    $location = current($zoneData['LOCATIONS']);
+                    if (!empty($location)) {
+                        $shipment = $this->generateShipment($location);
+                        $availableServices = Manager::getRestrictedObjectsList($shipment);
+                
+                        foreach ($availableServices as $service) {
+                            $result[] = $service->getCode();
+                        }
                     }
                 }
+        
+                return ['result' => $result];
+            };
+    
+            $result = [];
+            try {
+                $result = (new BitrixCache())
+                    ->withId(__METHOD__ . $zone)
+                    ->withTag('location:groups')
+                    ->resultOf($getServiceCodes)['result'];
+            } catch (\Exception $e) {
+                $this->log()->error(
+                    sprintf(
+                        'failed to get deliveries by zone: %s: %s',
+                        \get_class($e),
+                        $e->getMessage()
+                    ),
+                    ['zone' => $zone]
+                );
             }
-
-            return ['result' => $result];
-        };
-
-        $result = [];
-        try {
-            $result = (new BitrixCache())
-                ->withId(__METHOD__ . $zone)
-                ->withTag('location:groups')
-                ->resultOf($getServiceCodes)['result'];
-        } catch (\Exception $e) {
-            $this->log()->error(
-                sprintf(
-                    'failed to get deliveries by zone: %s: %s',
-                    \get_class($e),
-                    $e->getMessage()
-                ),
-                ['zone' => $zone]
-            );
+            $this->deliveryByZoneMap[$zone] = $result;
         }
 
-        return $result;
+        return $this->deliveryByZoneMap[$zone];
     }
 
     /**
@@ -411,6 +593,47 @@ class DeliveryService implements LoggerAwareInterface
                 $deliveryDateOfMonth = clone $calculationResult->getDeliveryDate(); //клонируем для проверки, что следующие сутки не наступили
                 $deliveryStartTime = clone $calculationResult->getDeliveryDate(); //клонируем для проверки, что курьерская доставка сейчас работает
                 $deliveryEndTime = clone $calculationResult->getDeliveryDate(); //клонируем для проверки, что курьерская доставка еще будет работать с учетом времени доставки
+                //проверяем размеры товаров
+                /** @var OrderService $orderService */
+                $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+                $parentOrder = $shipment->getParentOrder();
+                $dostavistaContinue = false;
+                if ($parentOrder->getBasket()->isEmpty()) {
+                    /** @var BasketService $basketService */
+                    $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
+                    $offers = $basketService->getBasketOffers();
+                    /** @var BasketItemCollection $basketItems */
+                    $basketItems = $basketService->getBasket()->getBasketItems();
+                } else {
+                    /** @var OfferCollection $offers */
+                    $offers = $orderService->getOrderProducts($parentOrder);
+                    /** @var BasketItemCollection $basketItems */
+                    $basketItems = $parentOrder->getBasket()->getBasketItems();
+                }
+
+                //если вес > 50 то Достависта недоступна
+                $weightSumm = 0;
+                /** @var BasketItem $basketItem */
+                foreach($basketItems as $basketItem){
+                    $weightSumm += $basketItem->getQuantity() * WordHelper::showWeightNumber($basketItem->getWeight());
+                }
+
+                if ($weightSumm > 50) {
+                    $dostavistaContinue = true;
+                }
+
+                if (!$offers->isEmpty()) {
+                    /** @var Offer $offer */
+                    foreach ($offers as $offer) {
+                        $length = WordHelper::showLengthNumber($offer->getCatalogProduct()->getLength());
+                        $width = WordHelper::showLengthNumber($offer->getCatalogProduct()->getWidth());
+                        $height = WordHelper::showLengthNumber($offer->getCatalogProduct()->getHeight());
+                        if ($length > 150 || $width > 150 || $height > 150) {
+                            $calculationResult->setPeriodTo(300);
+                            break;
+                        }
+                    }
+                }
                 $deliveryDateOfMonth->modify(sprintf('+%s minutes', $calculationResult->getPeriodTo())); //прибавляем максимальное время доставки
                 $startTime = $calculationResult->getData()['DELIVERY_START_TIME']; //когда доставка открывается
                 $arStartTime = explode(':', $startTime);
@@ -420,7 +643,7 @@ class DeliveryService implements LoggerAwareInterface
                 $deliveryEndTime->setTime($arEndTime[0], $arEndTime[1]); //получаем сегодня, когда доставка закроется
                 $oldDayOfMonth = $calculationResult->getDeliveryDate()->format('d'); //получаем номер старого дня в месяце
                 $newDayOfMonth = $deliveryDateOfMonth->format('d'); //получаем номер нового дня в месяце с учетом времени доставки
-                if ($oldDayOfMonth != $newDayOfMonth || $deliveryDateOfMonth > $deliveryEndTime || $deliveryDate < $deliveryStartTime) {
+                if ($dostavistaContinue || $oldDayOfMonth != $newDayOfMonth || $deliveryDateOfMonth > $deliveryEndTime || $deliveryDate < $deliveryStartTime) {
                     continue;
                 }
             }
@@ -455,7 +678,10 @@ class DeliveryService implements LoggerAwareInterface
      */
     public function getAllZones($withLocations = true): array
     {
-        return $this->locationService->getLocationGroups($withLocations);
+        if($this->allZones[intval($withLocations)] === null) {
+            $this->allZones[intval($withLocations)] = $this->locationService->getLocationGroups($withLocations);
+        }
+        return $this->allZones[intval($withLocations)];
     }
 
     /**
@@ -787,6 +1013,25 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
+     * @param string $id
+     *
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @return array
+     */
+    public function getDeliveryById($id): array
+    {
+        $delivery = DeliveryServiceTable::getList(['filter' => ['ID' => $id]])->fetch();
+        if (!$delivery) {
+            throw new NotFoundException('Delivery service not found');
+        }
+
+        return $delivery;
+    }
+
+    /**
      * @param int $id
      *
      * @throws ArgumentException
@@ -891,7 +1136,7 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
-     * @param DeliveryResultInterface $delivery
+     * @param CalculationResultInterface $delivery
      * @param int                        $count
      *
      * @return DeliveryResultInterface[]
@@ -900,25 +1145,41 @@ class DeliveryService implements LoggerAwareInterface
      * @throws NotFoundException
      * @throws StoreNotFoundException
      */
-    public function getNextDeliveries(DeliveryResultInterface $delivery, int $count = 1): array
+    public function getNextDeliveries(CalculationResultInterface $delivery, int $count = 1): array
     {
-        /** @var \DateTime $lastDate */
-        $lastDate = null;
-        $dateOffset = 0;
         /** @var DeliveryResultInterface[] $result */
         $result = [];
-        do {
-            $currentDelivery = clone $delivery;
-            $currentDeliveryDate = $currentDelivery->setDateOffset($dateOffset)->getDeliveryDate();
-            if ((null === $lastDate) ||
-                ($lastDate->getTimestamp() < $currentDeliveryDate->getTimestamp())
-            ) {
-                $result[] = $currentDelivery;
-            }
+        $dateOffset = 0;
 
-            $lastDate = $currentDeliveryDate;
-            $dateOffset++;
-        } while (\count($result) < $count);
+        if($this->isDelivery($delivery)){
+            /** @var \DateTime $lastDate */
+            $lastDate = null;
+
+            do {
+                /** @var DeliveryResultInterface $currentDelivery */
+                $currentDelivery = clone $delivery;
+                $currentDeliveryDate = $currentDelivery->setDateOffset($dateOffset)->getDeliveryDate();
+                if ((null === $lastDate) ||
+                    ($lastDate->getTimestamp() < $currentDeliveryDate->getTimestamp())
+                ) {
+                    $result[] = $currentDelivery;
+                }
+
+                $lastDate = $currentDeliveryDate;
+                $dateOffset++;
+            } while (\count($result) < $count);
+        } else {
+            while(\count($result) < $count){
+                $deliveryDate = clone $delivery->getDeliveryDate();
+                $deliveryDate->modify(sprintf('+%s days', $dateOffset));
+
+                /** @var PickupResult $tmpPickup */
+                $tmpPickup = clone $delivery;
+                $tmpPickup->setDeliveryDate($deliveryDate);
+                $result[] = $tmpPickup;
+                $dateOffset++;
+            }
+        }
 
         return $result;
     }

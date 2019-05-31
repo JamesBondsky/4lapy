@@ -11,6 +11,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\External\Exception\YandexMarketException;
@@ -254,11 +255,54 @@ class PriceConsumer extends SapConsumerBase
             }
 
             $setPropsList = [];
-            $setPropsList['PRICE_ACTION'] = $priceItem->getActionPrice();
-            $setPropsList['PRICE_ACTION'] = $setPropsList['PRICE_ACTION'] > 0 ? $setPropsList['PRICE_ACTION'] : '';
-            $setPropsList['COND_FOR_ACTION'] = trim($priceItem->getPriceType());
-            $setPropsList['COND_VALUE'] = $priceItem->getDiscountValue();
-            $setPropsList['COND_VALUE'] = $setPropsList['COND_VALUE'] == 0 ? '' : $setPropsList['COND_VALUE'];
+            if ($regionCode == static::BASE_PRICE_REGION_CODE) {
+                $setPropsList['PRICE_ACTION'] = $priceItem->getActionPrice();
+                $setPropsList['PRICE_ACTION'] = $setPropsList['PRICE_ACTION'] > 0 ? $setPropsList['PRICE_ACTION'] : '';
+                $setPropsList['COND_FOR_ACTION'] = trim($priceItem->getPriceType());
+                $setPropsList['COND_VALUE'] = $priceItem->getDiscountValue();
+                $setPropsList['COND_VALUE'] = $setPropsList['COND_VALUE'] == 0 ? '' : $setPropsList['COND_VALUE'];
+            } else {
+                $arRegionDiscounts = \CIBlockElement::GetProperty(
+                    $offerElementData['IBLOCK_ID'],
+                    $offerElementData['ID'],
+                    'sort',
+                    'asc',
+                    [
+                        'CODE' => 'REGION_DISCOUNTS'
+                    ]
+                )->Fetch();
+                $arRegionDiscounts = $arRegionDiscounts['VALUE'];
+                if ($tmpPriceTypeId) {
+                    switch ($priceItem->getPriceType()) {
+                        case Offer::SIMPLE_SHARE_SALE_CODE:
+                            $arRegionDiscounts[$tmpPriceTypeId] = [
+                                'id' => (int)$tmpPriceTypeId,
+                                'cond_for_action' => $priceItem->getPriceType(),
+                                'price_action' => $priceItem->getActionPrice(),
+                                'cond_value' => ''
+                            ];
+                            break;
+                        case Offer::SIMPLE_SHARE_DISCOUNT_CODE:
+                            $arRegionDiscounts[$tmpPriceTypeId] = [
+                                'id' => (int)$tmpPriceTypeId,
+                                'cond_for_action' => $priceItem->getPriceType(),
+                                'price_action' => '',
+                                'cond_value' => $priceItem->getDiscountValue()
+                            ];
+                            break;
+                        default:
+                            $arRegionDiscounts[$tmpPriceTypeId] = [
+                                'id' => (int)$tmpPriceTypeId,
+                                'cond_for_action' => '',
+                                'price_action' => '',
+                                'cond_value' => ''
+                            ];
+                    }
+                    $setPropsList['REGION_DISCOUNTS']['VALUE'] = json_encode($arRegionDiscounts);
+                } else {
+                    $this->logger->error('Цена для региона ' . $regionCode . ' не найдена!', (array)$priceItem);
+                }
+            }
 
             if ($setPricesList) {
                 // обновление существующих цен

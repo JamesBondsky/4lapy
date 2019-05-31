@@ -28,8 +28,9 @@ class CPersonalCabinetComponent extends CBitrixComponent
             'referral'           => 'referral/',
             'subscribe'          => 'subscribe/',
             'top'                => 'top/',
-            'piggy-bank'         => 'kopi-marki/',
-            'piggy-bank-upgrade' => 'kopi-marki/upgrade/',
+            //'piggy-bank'         => 'kopi-marki/',
+            //'piggy-bank-upgrade' => 'kopi-marki/upgrade/',
+            'personal-offers'    => 'personal-offers/',
         ];
 
         $arComponentVariables = [

@@ -22,9 +22,11 @@ use FourPaws\App\Application;
 use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Category;
+use FourPaws\Catalog\Model\Price;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\CatalogBundle\Exception\NoSectionsForProductException;
 use FourPaws\CatalogBundle\Service\CategoriesService;
+use FourPaws\CatalogBundle\Service\PriceService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\TaggedCacheHelper;
@@ -78,6 +80,12 @@ class Event extends BaseServiceHandler
         static::initHandlerCompatible('OnProductAdd', [
             self::class,
             'clearProductCache',
+        ], $module);
+
+        /** Получение региональных цен */
+        static::initHandler('OnGetOptimalPrice', [
+            self::class,
+            'getOptimalPrice',
         ], $module);
 
         $module = 'iblock';
@@ -299,5 +307,64 @@ class Event extends BaseServiceHandler
                 ), $buffer
             );
         }
+    }
+
+    /**
+     * @param $productId
+     * @param $quantity
+     * @param $arUserGroups
+     * @param $renewal
+     * @param $priceList
+     * @param $siteID
+     * @param $needCoupons
+     * @throws ApplicationCreateException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws IblockNotFoundException
+     */
+    public static function getOptimalPrice($productId, $quantity, $arUserGroups, $renewal, $priceList, $siteID, $needCoupons)
+    {
+        /** @var PriceService $priceService */
+        $priceService = Application::getInstance()->getContainer()->get('price.service');
+
+        /** @var Price $price */
+        $price = $priceService->getProductPriceByRegion($productId);
+        if($price->getPrice() > 0){
+            $arResult = array(
+                'PRICE' => [
+                    "ID" => $price->getId(),
+                    "CATALOG_GROUP_ID" => $price->getCatalogGroupId(),
+                    "PRICE" => $price->getPrice(),
+                    "CURRENCY" => $price->getCurrency(),
+                    "ELEMENT_IBLOCK_ID" => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
+                    //"VAT_INCLUDED" - включен ли НДС в цену (Y/N),
+                    //"VAT_RATE" - величина ставки НДС в процентах,
+                ],
+                'RESULT_PRICE' => [
+                    'PRICE_TYPE_ID' => $price->getCatalogGroupId(),
+                    'BASE_PRICE' => $price->getPrice(),
+                    'DISCOUNT_PRICE' => $price->getPrice(),
+                    'CURRENCY' => $price->getCurrency(),
+//                    'DISCOUNT' => $discountValue,
+//                    'PERCENT' => (
+//                    $minimalPrice['BASE_PRICE'] > 0 && $discountValue > 0
+//                        ? roundEx((100*$discountValue)/$minimalPrice['BASE_PRICE'], 0)
+//                        : 0
+//                    ),
+//                    'VAT_RATE' => $minimalPrice['RAW_PRICE']['VAT_RATE'],
+//                    'VAT_INCLUDED' => ($resultWithVat ? 'Y' : 'N'),
+//                    'UNROUND_BASE_PRICE' => $minimalPrice['UNROUND_BASE_PRICE'],
+//                    'UNROUND_DISCOUNT_PRICE' => $minimalPrice['UNROUND_PRICE']
+                ],
+                'DISCOUNT_PRICE' => $price->getPrice(),
+                'DISCOUNT' => [],
+                'DISCOUNT_LIST' => [],
+                'PRODUCT_ID' => $productId
+            );
+
+            return $arResult;
+        }
+
+        return true;
     }
 }

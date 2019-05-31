@@ -48,7 +48,7 @@ $isInnerDelivery = $delivery['CODE'] === DeliveryService::INNER_DELIVERY_CODE;
                 if ($intervalResult->getDays() === 0) {
                     $result .= 'в день оформления заказа';
                 } elseif ($intervalResult->getDays() === 1) {
-                    $result .= 'на следующий день';
+                    $result .= 'на следующий день доставки';
                 } else {
                     $result .= \sprintf(
                         'через %s %s',
@@ -105,4 +105,7 @@ $isInnerDelivery = $delivery['CODE'] === DeliveryService::INNER_DELIVERY_CODE;
             <?php
         } ?>
     </div>
+</div>
+<div class="b-delivery__delivery-type-row">
+    <p>При доставке на&nbsp;закрытую территорию, необходимо заранее оформить пропуск, разрешающий въезд транспортного средства. При отсутствии пропуска для&nbsp;въезда на&nbsp;закрытую территорию&nbsp;&mdash; доставка будет осуществляться до&nbsp;КПП/шлагбаума (или иного ограничителя). При этом доставка товара курьером не&nbsp;допускается на&nbsp;расстоянии более чем 200&nbsp;м.</p>
 </div>
