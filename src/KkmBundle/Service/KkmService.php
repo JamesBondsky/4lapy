@@ -215,23 +215,26 @@ class KkmService implements LoggerAwareInterface
                     switch ($level) {
                         case 'city':
                             $suggestion = [
-                                'address'  => $suggestion['data']['settlement_with_type'] ?: $suggestion['data']['city_with_type'],
-                                'kladr_id' => $suggestion['data']['kladr_id'],
-                                'hint'     => $suggestion['unrestricted_value']
+                                'address'       => $suggestion['data']['settlement_with_type'] ?: $suggestion['data']['city_with_type'],
+                                'city_kladr_id' => $suggestion['data']['kladr_id'],
+                                'hint'          => $suggestion['unrestricted_value']
                             ];
                             break;
                         case 'street':
                             $suggestion = [
-                                'address'  => $suggestion['data']['street'],
-                                'kladr_id' => $suggestion['data']['kladr_id'],
-                                'hint'     => $suggestion['unrestricted_value']
+                                'address'         => $suggestion['data']['street'],
+                                'city_kladr_id'   => $suggestion['data']['settlement_kladr_id'] ?: $suggestion['data']['city_kladr_id'],
+                                'street_kladr_id' => $suggestion['data']['kladr_id'],
+                                'hint'            => $suggestion['unrestricted_value']
                             ];
                             break;
                         case 'house':
                             $suggestion = [
-                                'address'  => $suggestion['data']['house'],
-                                'kladr_id' => $suggestion['data']['kladr_id'],
-                                'hint'     => $suggestion['unrestricted_value']
+                                'address'         => $suggestion['data']['house'],
+                                'city_kladr_id'   => $suggestion['data']['settlement_kladr_id'] ?: $suggestion['data']['city_kladr_id'],
+                                'street_kladr_id' => $suggestion['data']['street_kladr_id'],
+                                'house_kladr_id'  => $suggestion['data']['kladr_id'],
+                                'hint'            => $suggestion['unrestricted_value']
                             ];
                             break;
                     }
