@@ -41,10 +41,6 @@
                 <span class="event"><b>Виталий Орлов</b> «Хочешь воспитать питомца – начни с&nbsp;себя»</span>
             </li>
             <li>
-                <span class="time">15.15 – 15.45</span>
-                <span class="event"><b>Кирилл Скачков</b> «Истории доброго доктора»</span>
-            </li>
-            <li>
                 <span class="time">15.45 – 16.15</span>
                 <span class="event"><b>Кот Гуччи</b> «Активная жизнь домашнего кота»</span>
             </li>
