@@ -30,6 +30,7 @@ use FourPaws\KkmBundle\Exception\KkmException;
  * Class KkmService
  *
  * @package FourPaws\KkmBundle\Service
+ * @bxnolanginspection
  */
 class KkmService implements LoggerAwareInterface
 {
@@ -79,6 +80,12 @@ class KkmService implements LoggerAwareInterface
         ]
     ];
 
+    const BOUNDS = [
+        'city',       //Город
+        'street',     //Улица
+        'house'       //Дом
+    ];
+
     /**
      * @var DaDataService $daDataService
      */
@@ -95,6 +102,16 @@ class KkmService implements LoggerAwareInterface
     private $deliveryService;
 
     /**
+     * @var string $basicUser
+     */
+    private $basicUser;
+
+    /**
+     * @var string $basicPassword
+     */
+    private $basicPassword;
+
+    /**
      * KkmService constructor.
      * @param DaDataService $daDataService
      * @param LocationService $locationService
@@ -105,62 +122,31 @@ class KkmService implements LoggerAwareInterface
         $this->daDataService = $daDataService;
         $this->locationService = $locationService;
         $this->deliveryService = $deliveryService;
+        $this->basicUser = getenv('BASIC_AUTH_LOGIN');
+        $this->basicPassword = getenv('BASIC_AUTH_PASSWORD');
     }
 
     /**
-     * @param string $token
+     * @param $user
+     * @param $password
      * @return array
      */
-    public function validateToken($token): array
+    public function validateAuth($user, $password): array
     {
-        if (strlen($token) != static::TOKEN_LENGTH) {
+        if ($user === $this->basicUser && $password === $this->basicPassword) {
             $res = [
-                'success' => false,
-                'error'   => static::RESPONSE_STATUSES['syntax_error']['message'] . ': поле токена слишком короткое или пустое!',
-                'code'    => static::RESPONSE_STATUSES['syntax_error']['code']
+                'success' => true
             ];
         } else {
-            try {
-                $dbResult = KkmTokenTable::query()
-                    ->setSelect(['id', 'token', 'store_code'])
-                    ->setFilter(['token' => $token])
-                    ->exec();
-                $tokensCnt = $dbResult->getSelectedRowsCount();
-                switch ($tokensCnt) {
-                    case 0:
-                        $res = [
-                            'success' => false,
-                            'error'   => static::RESPONSE_STATUSES['unauthorized']['message'] . ': данный токен не найден в системе!',
-                            'code'    => static::RESPONSE_STATUSES['unauthorized']['code']
-                        ];
-                        break;
-                    case 1:
-                        $tokenData = $dbResult->fetch();
-                        $res = [
-                            'success'    => true,
-                            'id'         => $tokenData['id'],
-                            'token'      => $tokenData['token'],
-                            'store_code' => $tokenData['store_code']
-                        ];
-                        break;
-                    default:
-                        $res = [
-                            'success' => false,
-                            'error'   => static::RESPONSE_STATUSES['unauthorized']['message'] . ': по данному токену найдено несколько записей в таблице!',
-                            'code'    => static::RESPONSE_STATUSES['unauthorized']['code']
-                        ];
-                }
-            } catch (ObjectPropertyException|ArgumentException|SystemException $e) {
-                $res = [
-                    'success' => false,
-                    'error'   => $e->getMessage(),
-                    'code'    => $e->getCode()
-                ];
-            }
+            $res = [
+                'success' => false,
+                'error'   => static::RESPONSE_STATUSES['unauthorized']['message'] . ': неверная пара логин/пароль в BasicAuth!',
+                'code'    => static::RESPONSE_STATUSES['unauthorized']['code']
+            ];
         }
 
         if (!$res['success']) {
-            $this->log()->error($res['code'] . ' ' . $res['error'], ['token' => $token]);
+            $this->log()->error($res['code'] . ' ' . $res['error'], ['user' => $user, 'password' => $password]);
         }
 
         return $res;
@@ -180,55 +166,42 @@ class KkmService implements LoggerAwareInterface
     }
 
     /**
-     * @param string $id
+     * @param $query
+     * @param $level
+     * @param $cityKladrId
+     * @param $streetKladrId
      * @return array
      */
-    /*public function updateToken(string $id): array
-    {
-        try {
-            $token = $this->generateToken();
-            KkmTokenTable::update(
-                $id,
-                [
-                    'token' => $token
-                ]
-            );
-            $res = [
-                'success' => true,
-                'token'   => $token
-            ];
-        } catch (Exception $e) {
-            $res = [
-                'success' => false,
-                'error'   => $e->getMessage()
-            ];
-        }
-
-        if (!$res['success']) {
-            $this->log()->error($res['error']);
-        } else {
-            $this->log()->notice('kkm change token to ' . $token);
-        }
-
-        return $res;
-    }*/
-
-    /**
-     * @param string $query
-     * @return array
-     */
-    public function getSuggestions($query): array
+    public function getSuggestions($query, $level, $cityKladrId, $streetKladrId): array
     {
         //check text length
         try {
-            if (mb_strlen($query) < 5) {
+            if ($level != 'house') {
+                if (mb_strlen($query) < 3) {
+                    throw new KkmException(
+                        static::RESPONSE_STATUSES['syntax_error']['message'] . ': текст слишком короткий',
+                        static::RESPONSE_STATUSES['syntax_error']['code']
+                    );
+                }
+            } else {
+                //для домов 1 символ
+                if (mb_strlen($query) < 1) {
+                    throw new KkmException(
+                        static::RESPONSE_STATUSES['syntax_error']['message'] . ': текст слишком короткий',
+                        static::RESPONSE_STATUSES['syntax_error']['code']
+                    );
+                }
+            }
+
+
+            if (!in_array($level, static::BOUNDS)) {
                 throw new KkmException(
-                    static::RESPONSE_STATUSES['syntax_error']['message'] . ': текст слишком короткий',
+                    static::RESPONSE_STATUSES['syntax_error']['message'] . ': ограничения поиска заданы неверно',
                     static::RESPONSE_STATUSES['syntax_error']['code']
                 );
             }
 
-            $suggestions = $this->daDataService->getKkmSuggestions($query);
+            $suggestions = $this->daDataService->getKkmSuggestions($query, $level, $cityKladrId, $streetKladrId);
 
             if (count($suggestions) == 0) {
                 throw new KkmException(
@@ -238,11 +211,30 @@ class KkmService implements LoggerAwareInterface
             }
 
             foreach ($suggestions as $key => &$suggestion) {
-                if ($suggestion['value'] && $suggestion['data']['city_kladr_id']) {
-                    $suggestion = [
-                        'address'  => $suggestion['value'],
-                        'kladr_id' => $suggestion['data']['city_kladr_id']
-                    ];
+                if ($suggestion['value'] && $suggestion['data']['kladr_id']) {
+                    switch ($level) {
+                        case 'city':
+                            $suggestion = [
+                                'address'  => $suggestion['data']['settlement_with_type'] ?: $suggestion['data']['city_with_type'],
+                                'kladr_id' => $suggestion['data']['kladr_id'],
+                                'hint'     => $suggestion['unrestricted_value']
+                            ];
+                            break;
+                        case 'street':
+                            $suggestion = [
+                                'address'  => $suggestion['data']['street'],
+                                'kladr_id' => $suggestion['data']['kladr_id'],
+                                'hint'     => $suggestion['unrestricted_value']
+                            ];
+                            break;
+                        case 'house':
+                            $suggestion = [
+                                'address'  => $suggestion['data']['house'],
+                                'kladr_id' => $suggestion['data']['kladr_id'],
+                                'hint'     => $suggestion['unrestricted_value']
+                            ];
+                            break;
+                    }
                 } else {
                     unset($suggestions[$key]);
                 }
@@ -356,10 +348,9 @@ class KkmService implements LoggerAwareInterface
     /**
      * @param string $kladrId
      * @param array $products
-     * @param $storeCode
      * @return array
      */
-    public function getDeliveryRules(string $kladrId, array $products, $storeCode): array
+    public function getDeliveryRules(string $kladrId, array $products): array
     {
         try {
             if (!$kladrId) {

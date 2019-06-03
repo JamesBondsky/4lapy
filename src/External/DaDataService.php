@@ -274,13 +274,46 @@ class DaDataService
 
     /**
      * @param $query
+     * @param $level
+     * @param $cityKladrId
+     * @param $streetKladrId
      * @return array
      */
-    public function getKkmSuggestions($query): array
+    public function getKkmSuggestions($query, $level, $cityKladrId, $streetKladrId): array
     {
-        $params = [
-            'query' => $query
-        ];
+        if ($level != 'city') {
+            $params = [
+                'query'      => $query,
+                'from_bound' => [
+                    'value' => $level
+                ],
+                'to_bound'   => [
+                    'value' => $level
+                ]
+            ];
+        } else {
+            //для городов и деревень
+            $params = [
+                'query'      => $query,
+                'from_bound' => [
+                    'value' => $level
+                ],
+                'to_bound'   => [
+                    'value' => 'settlement'
+                ]
+            ];
+        }
+
+        if ($streetKladrId) {
+            $params['locations'] = [
+                'kladr_id' => $streetKladrId
+            ];
+        } elseif ($cityKladrId) {
+            $params['locations'] = [
+                'kladr_id' => $cityKladrId
+            ];
+        }
+
         return $this->client->getAddresses($params);
     }
 }
