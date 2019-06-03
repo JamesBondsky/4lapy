@@ -3,6 +3,7 @@
 namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
+use Adv\Bitrixtools\Tools\HLBlock\HLBlockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
@@ -27,6 +28,7 @@ use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Entity\Terminal;
+use FourPaws\Enum\PaymentMethod;
 use FourPaws\Helpers\BusinessValueHelper;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\DateHelper;
@@ -688,9 +690,9 @@ class PaymentService implements LoggerAwareInterface
                 ->setCode($order->getId() . '_DELIVERY')
                 ->setPrice($deliveryPrice)
                 ->setTax((new ItemTax())
-                    ->setType(6)
+                    ->setType($vatGateway[20])
                 )
-            ->setPaymentMethod(1);
+            ->setPaymentMethod(PaymentMethod::FULL_PAYMENT);
 
             $items->add($delivery);
         }
