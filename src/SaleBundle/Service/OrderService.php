@@ -2089,8 +2089,25 @@ class OrderService implements LoggerAwareInterface
                 break;
         }
 
-        $arSectionsNames = [];
-        //проверка высоты товаров в корзине
+        $whatDeliverySet = \COption::GetOptionString('articul.dostavista.delivery', 'what_deliver_set') == BaseEntity::BITRIX_TRUE;
+        $whatDeliveryText = \COption::GetOptionString('articul.dostavista.delivery', 'what_deliver_text');
+        if($whatDeliverySet  && $whatDeliveryText){
+            $matter = $whatDeliveryText;
+        } else {
+            $arSectionsNames = [];
+            /** @var Offer $offer */
+            foreach ($offers as $offer) {
+                $section = $offer->getProduct()->getSection();
+                if ($section != null) {
+                    $arSectionsNames[$section->getId()] = $section->getName();
+                }
+            }
+
+            /** @var string $matter Что везем - названия всех разделов через запятую */
+            $matter = implode(', ', $arSectionsNames);
+            unset($arSectionsNames);
+        }
+
         /** @var int $loadersCount требуемое число грузчиков */
         $loadersCount = 0;
         /** @var Offer $offer */
@@ -2115,15 +2132,7 @@ class OrderService implements LoggerAwareInterface
                     $loadersCount = 2;
                 }
             }
-            $section = $offer->getProduct()->getSection();
-            if ($section != null) {
-                $arSectionsNames[$section->getId()] = $section->getName(); //TODO исключить ветаптеку
-            }
         }
-
-        /** @var string $matter Что везем - названия всех разделов через запятую */
-        $matter = implode(', ', $arSectionsNames);
-        unset($arSectionsNames);
 
         $data = [
             'bitrix_order_id' => $order->getId(),

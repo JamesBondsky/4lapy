@@ -313,8 +313,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                                   name="comment_dostavista"
                                   placeholder="Укажите здесь ваши комментарии.
 Например, если для доставки необходим въезд на закрытую территорию. Курьер свяжется с Вами для оформления пропуска.
-При отсутствии пропуска – доставка будет осуществляться до КПП/шлагбаума.
-Доставка силами курьера осуществляется на расстояние не более 200м от КПП/шлагбаума."><?= $storage->getComment() ?></textarea>
+При отсутствии пропуска – доставка будет осуществляться до КПП/шлагбаума."><?= $storage->getComment() ?></textarea>
                             <div class="b-error">
                                 <span class="js-message"></span>
                             </div>
@@ -359,8 +358,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                               name="comment"
                               placeholder="Укажите здесь ваши комментарии.
 Например, если для доставки необходим въезд на закрытую территорию. Курьер свяжется с Вами для оформления пропуска.
-При отсутствии пропуска – доставка будет осуществляться до КПП/шлагбаума.
-Доставка силами курьера осуществляется на расстояние не более 200м от КПП/шлагбаума."><?= $storage->getComment() ?></textarea>
+При отсутствии пропуска – доставка будет осуществляться до КПП/шлагбаума."><?= $storage->getComment() ?></textarea>
                             <div class="b-error">
                                 <span class="js-message"></span>
                             </div>
