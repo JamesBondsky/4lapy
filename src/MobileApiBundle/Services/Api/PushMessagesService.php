@@ -93,7 +93,21 @@ class PushMessagesService
             $filter['=PUSH_TOKEN'] = $pushToken;
         }
 
-        $pushEvents = $this->apiPushEventRepository->findBy($filter);
+        $pushEvents = $this->apiPushEventRepository->findBy($filter, [
+            'DATE_TIME_EXEC' => 'DESC',
+        ]);
+
+        $uniqueMessageIds = [];
+        /** @var ApiPushEvent $pushEvent */
+        foreach ($pushEvents as $pushEventKey => $pushEvent)
+        {
+            $messageId = $pushEvent->getMessageId();
+            if (!in_array($messageId, $uniqueMessageIds, true)) {
+                $uniqueMessageIds[] = $messageId;
+            } else {
+                unset($pushEvents[$pushEventKey]);
+            }
+        }
         return (new ArrayCollection($pushEvents))
             ->map(function (ApiPushEvent $pushEvent) {
                 return $this->pushEventToApiFormat($pushEvent);
