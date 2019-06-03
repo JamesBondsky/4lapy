@@ -395,11 +395,7 @@ class ShopInfoService
                 $result = 0;
                 switch ($sortField) {
                     case 'address':
-                        $result = (int)(in_array($sortBy, $store1->getRegion()) || in_array($sortBy, $store2->getRegion()));
-
-                        if($result == 0) {
-                            $result = -1;
-                        }
+                        $result = (int)($store1->getLocation() == $sortBy) ?? -1;
 
                         break;
                     case 'metro':
@@ -410,6 +406,21 @@ class ShopInfoService
                 return $result;
             });
             $stores = new StoreCollection(iterator_to_array($iterator));
+
+            if ($sortField == 'address') { //uasort не корреткно сортирует
+                $needStores = [];
+                $outStores = [];
+
+                foreach ($stores as $store) {
+                    if ($store->getLocation() == $sortBy) {
+                        $needStores[$store->getId()] = $store;
+                    } else {
+                        $outStores[$store->getId()] = $store;
+                    }
+                }
+
+                $stores = new StoreCollection(array_merge($needStores, $outStores));
+            }
         }
 
         return $stores;
