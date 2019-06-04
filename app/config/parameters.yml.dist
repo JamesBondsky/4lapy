@@ -92,3 +92,5 @@ parameters:
   yandex_market.oauth_token: ''
   yandex_market.feed_id: 0
   yandex_market.campaign_id: ''
+
+  env(LOG_MOBILE_API): '0'
