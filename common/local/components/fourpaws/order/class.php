@@ -665,6 +665,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $itemData[$offerId]['quantity'] += $item->getAmount();
             $itemData[$offerId]['price']    += $item->getPrice();
             $itemData[$offerId]['weight']   += $weight;
+            $itemData[$offerId]['brand']    = $item->getOffer()->getProduct()->getBrandName();
 
             $totalWeight += $weight;
         }
