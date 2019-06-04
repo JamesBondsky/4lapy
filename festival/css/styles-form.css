@@ -20,6 +20,26 @@ body {
     display: none;
 }
 
+.popwrap__link {
+	max-width: 500px;
+	margin: 50px auto 0;
+}
+.popwrap__link a{
+	font-weight: bold;
+	font-size: 14px;
+	line-height: 1.2;
+	color: #ff4e00;
+}
+.popwrap .info-popup p,
+.popwrap .info-popup ul li{
+	font-size: 13px;
+	line-height: 17px;
+	color: #000;
+}
+.popwrap .info-popup ul li {
+	margin: 0 0 10px 0;
+	list-style: disc outside;
+}
 .popwrap2 {
     background: url(../img/thnks_desk.png);
     width: 490px;
