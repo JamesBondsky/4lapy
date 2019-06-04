@@ -6,6 +6,7 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\MobileApiBundle\Dto\Object\PushEventOptions;
@@ -13,11 +14,15 @@ use FourPaws\MobileApiBundle\Dto\Request\PostPushTokenRequest;
 use FourPaws\MobileApiBundle\Entity\ApiPushEvent;
 use FourPaws\MobileApiBundle\Repository\ApiPushEventRepository;
 use FourPaws\MobileApiBundle\Repository\ApiUserSessionRepository;
+use FourPaws\MobileApiBundle\Traits\MobileApiLoggerAwareTrait;
+use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use FourPaws\MobileApiBundle\Dto\Object\PushEvent as PushEventForApi;
 
-class PushMessagesService
+class PushMessagesService implements LoggerAwareInterface
 {
+    use MobileApiLoggerAwareTrait;
+
     /**
      * @var ApiUserSessionRepository
      */
@@ -42,6 +47,7 @@ class PushMessagesService
         $this->apiUserSessionRepository = $apiUserSessionRepository;
         $this->tokenStorage = $tokenStorage;
         $this->apiPushEventRepository = $apiPushEventRepository;
+        $this->setLogger(LoggerFactory::create('PushMessagesService', 'mobileApi'));
     }
 
     /**
@@ -211,6 +217,16 @@ class PushMessagesService
     {
         $token = $this->tokenStorage->getToken()->getCredentials();
         $userSession = $this->apiUserSessionRepository->findByToken($token);
+        try {
+            if ($userSession) {
+                $this->mobileApiLog()->info(__METHOD__ . '. $pushToken: ' . $pushToken . '. $platform: ' . $platform . '. userId: ' . $userSession->getUserId());
+            } else {
+                $this->mobileApiLog()->info(__METHOD__ . '. $pushToken: ' . $pushToken . '. $platform: ' . $platform . '. userSession: null');
+            }
+        } catch (\Exception $e) {
+            $this->mobileApiLog()->info(__METHOD__ . '. $pushToken: ' . $pushToken . '. $platform: ' . $platform . '. Exception: ' . $e->getMessage());
+        }
+
         return $platform !== $userSession->getPlatform() || $pushToken !== $userSession->getPushToken();
     }
 
@@ -243,5 +259,4 @@ class PushMessagesService
                     ->setType($pushEvent->getMessageTypeEntity()->getXmlId())
             );
     }
-
 }
