@@ -16,11 +16,13 @@ $(document).ready(function(){
 
         var selected = $(this).data('interactive-map-pavilion-point'),
             title = $(this).data('point-title'),
-            description = $(this).data('point-description');
+            description = $(this).data('point-description'),
+            btn = $(this).data('point-btn');
 
         $('[data-interactive-map-pavilion-title]').html(title);
         $('[data-interactive-map-pavilion-description]').html(description);
         //$('[data-interactive-map-pavilion-image]').removeAttr('style');
+        btn ? $('[data-interactive-map-pavilion-btn]').addClass('active').html(btn) : $('[data-interactive-map-pavilion-btn]').removeClass('active').html('');
 
         $('[data-interactive-map-pavilion-brand]').removeClass('selected');
         $('[data-interactive-map-pavilion]').removeClass('is_open_brands');
@@ -38,10 +40,12 @@ $(document).ready(function(){
             title = $(this).data('point-title'),
             description = $(this).data('point-description'),
             image = $(this).data('point-image'),
-            images = $(this).data('point-images');
+            images = $(this).data('point-images'),
+            btn = $(this).data('point-btn');
 
         $('[data-interactive-map-pavilion-title]').html(title);
         $('[data-interactive-map-pavilion-description]').html(description);
+        btn ? $('[data-interactive-map-pavilion-btn]').addClass('active').html(btn) : $('[data-interactive-map-pavilion-btn]').removeClass('active').html('');
 
         $('[data-interactive-map-pavilion-point]').removeClass('active');
         $(this).addClass('active');
@@ -108,19 +112,15 @@ $(document).ready(function(){
             $('[data-point-image-left]').html('');
             $('[data-point-image-right]').html('');
         }
-
-
-
-
-    })
+    });
 
 
     $('[data-interactive-map-current="pavilion"]').on('mouseenter', function(){
         $('[data-interactive-map]').addClass('hover_pavilion');
-    })
+    });
 
     $('[data-interactive-map-current="pavilion"]').on('mouseleave', function(){
         $('[data-interactive-map]').removeClass('hover_pavilion');
-    })
+    });
 
 });

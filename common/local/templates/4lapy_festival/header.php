@@ -404,6 +404,9 @@ $markup = PawsApplication::markup();
             <div class="container content-lg">
                 <div class="row text-center margin-b-40" >
                     <div class="col-sm-8 col-sm-offset-2">
+                        <div class="schedule">
+                            <a href="javascript:void(0);" class="js-open-popup" data-popup-id="schedule-dog-fest">Расписание</a>
+                        </div>
                         <div class="bar"><h5>DOG FEST</h5></div>
                         <h2>ИГРАЙ И ПОБЕЖДАЙ</h2>
                         <hr class="header_line" />

@@ -67,4 +67,7 @@ if ($isAuthorized)
             </form>
         </div>
     </div>
+    <div class="popwrap__link">
+        <a href="javascript:void(0);" data-open-next-popup="true" data-popup-id="forgot-passport-number">Уже регистрировался, но забыл номер паспорта?</a>
+    </div>
 </section>

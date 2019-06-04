@@ -1635,6 +1635,30 @@ body.is_open_banner_top .header.navbar-fixed-top{
             transition-timing-function: cubic-bezier(.7,1,.7,1)
         }
 
+#dog_fest .schedule a{
+    padding: 5px 20px;
+    background: #fff;
+    color: #515769;
+}
+#dog_fest .schedule a:hover{
+    background: #ff4e00;
+    color: #fff;
+}
+#map .work .work-popup-content .schedule {
+    position: relative;
+    left: auto;
+    top: auto;
+    margin-top: 50px;
+}
+#map .work .work-popup-content .schedule a{
+    padding: 5px 20px;
+    background: #c1c6d3;
+}
+#map .work .work-popup-content .schedule a:hover{
+    background: #ff4e00;
+    color: #fff;
+}
+
 /* desktop */
 @media screen and (max-width: 1439px) {
     .header {}
@@ -2265,6 +2289,10 @@ body.is_open_banner_top .header.navbar-fixed-top{
         width: 100%;
     }
 
+    #map .work .work-popup-content .schedule {
+        margin-top: 20px;
+    }
+
     #permanent_popup {
         bottom: auto;
         margin-top: 35px;
@@ -2366,7 +2394,6 @@ body.is_open_banner_top .header.navbar-fixed-top{
     color: #fff;
 }
 
-
 .popup-schedule{}
 .popup-schedule__subtitle{
     margin-bottom: 10px;
@@ -2382,6 +2409,10 @@ body.is_open_banner_top .header.navbar-fixed-top{
     font-family: 'Open Sans',sans-serif;
     text-transform: uppercase;
     text-align: center;
+}
+
+.popup-schedule__title.popup-schedule__title--small{
+    font-size: 20px;
 }
 .popup-schedule__list{
     margin: 0;
@@ -2470,5 +2501,8 @@ body.is_open_banner_top .header.navbar-fixed-top{
     }
     .popup-schedule__title{
         font-size: 24px;
+    }
+    .popup-schedule__title.popup-schedule__title--small{
+        font-size: 16px;
     }
 }
