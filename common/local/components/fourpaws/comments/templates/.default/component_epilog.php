@@ -13,25 +13,6 @@ $uniqueCommentString = $arParams['TYPE'] . '_' . $arParams['HL_ID'] . '_' . $arP
 $arResult['AUTH'] = $component->userAuthService->isAuthorized();
 ?>
 <script type="text/javascript" data-epilog-handlers="true">
-    if(epilogHandlers === undefined){
-        // класс для комплексного выполнения всех обработчиков
-        var epilogHandlers = {
-            handlers: [],
-            add: function (handler) {
-                this.getInstance().handlers[this.handlers.length] = handler;
-            },
-            execute: function () {
-                this.getInstance().handlers.forEach(function (handler) {
-                    if (typeof handler === 'function') {
-                        handler();
-                    }
-                });
-                this.getInstance().handlers = [];
-            },
-            getInstance: function() { return this }
-        };
-    }
-
     <?if (!$arResult['AUTH']) {
     $recaptchaService = SymfoniApplication::getInstance()->getContainer()->get(ReCaptchaInterface::class); ?>
     epilogHandlers.add(function () {
