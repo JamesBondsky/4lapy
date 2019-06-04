@@ -253,7 +253,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         $_SESSION['COUNT_AUTH_AUTHORIZE']++;
 
         $checkedCaptcha = true;
-        if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > 3) {
+        //if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > 3) {
             try {
                 if ($this->isShowCapthca()) {
                     $recaptchaService = $container->get(ReCaptchaInterface::class);
@@ -263,7 +263,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             } catch (Exception $e) {
                 return $this->ajaxMess->getSystemError()->extendData($newTokenResponse);
             }
-        }
+        //}
         if (!$checkedCaptcha) {
             return $this->ajaxMess->getFailCaptchaCheckError()->extendData($newTokenResponse);
         }
