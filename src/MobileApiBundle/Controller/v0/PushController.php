@@ -6,12 +6,15 @@
 
 namespace FourPaws\MobileApiBundle\Controller\v0;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Request\PostPushTokenRequest;
 use FourPaws\MobileApiBundle\Dto\Request\PushMessageRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Services\Api\PushMessagesService as ApiPushMessagesService;
+use FourPaws\MobileApiBundle\Traits\MobileApiLoggerAwareTrait;
+use Psr\Log\LoggerAwareInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Swagger\Annotations\Parameter;
 
@@ -20,8 +23,10 @@ use Swagger\Annotations\Parameter;
  * @package FourPaws\MobileApiBundle\Controller
  * @Security("has_role('REGISTERED_USERS')")
  */
-class PushController extends FOSRestController
+class PushController extends FOSRestController implements LoggerAwareInterface
 {
+    use MobileApiLoggerAwareTrait;
+
     /**
      * @var ApiPushMessagesService
      */
@@ -32,6 +37,7 @@ class PushController extends FOSRestController
     )
     {
         $this->apiPushMessagesService = $apiPushMessagesService;
+        $this->setLogger(LoggerFactory::create('PushController', 'mobileApi'));
     }
 
     /**
@@ -88,9 +94,12 @@ class PushController extends FOSRestController
      */
     public function setPushTokenAction(PostPushTokenRequest $postPushTokenRequest)
     {
+        $this->mobileApiLog()->info('Request: POST setPushTokenAction. token: ' . $postPushTokenRequest->getPushToken() . '. platform: ' . $postPushTokenRequest->getPlatform());
         $result = $this->apiPushMessagesService->actualizeUserPushParams($postPushTokenRequest);
 
-        return (new Response())
+        $response = (new Response())
             ->setData(['result' => $result]);
+        $this->mobileApiLog()->info('Response: POST setPushTokenAction. token: ' . $postPushTokenRequest->getPushToken() . '. platform: ' . $postPushTokenRequest->getPlatform() . '. Response: ' . print_r($response->getData(), true));
+        return $response;
     }
 }
