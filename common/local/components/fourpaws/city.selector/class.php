@@ -8,6 +8,7 @@ use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\Routing\RouteCollection;
@@ -15,6 +16,11 @@ use Symfony\Component\Routing\RouteCollection;
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsCitySelectorComponent extends \CBitrixComponent
 {
+    /**
+     * @var OrderStorageService
+     */
+    protected $orderStorageService;
+
     /** @noinspection PhpMissingParentCallCommonInspection
      *
      * {@inheritdoc}
@@ -37,6 +43,8 @@ class FourPawsCitySelectorComponent extends \CBitrixComponent
     public function executeComponent()
     {
         try {
+            $serviceContainer = Application::getInstance()->getContainer();
+            $this->orderStorageService = $serviceContainer->get(OrderStorageService::class);
             $this->prepareResult();
 
             $this->includeComponentTemplate();
@@ -93,6 +101,31 @@ class FourPawsCitySelectorComponent extends \CBitrixComponent
         $this->arResult['SELECTED_CITY'] = $this->arParams['LOCATION_CODE']
             ? $locationService->findLocationByCode($this->arParams['LOCATION_CODE'])
             : $userService->getSelectedCity();
+
+        $storage = $this->orderStorageService->getStorage();
+        $userId = $storage->getUserId();
+
+        if ($userId) {
+            /** @var \FourPaws\StoreBundle\Service\StoreService $storeService */
+            $storeService = Application::getInstance()->getContainer()->get('store.service');
+            $addressService = Application::getInstance()->getContainer()->get('address.service');
+            $addresses = $addressService->getAddressesByUser($userId);
+            $addressesOriginal = [];
+            $addresses = $addresses->filter(function ($address) use (&$addressesOriginal, $storeService) {
+
+                if (!in_array($address->getCity(), $addressesOriginal)) {
+                    $addressesOriginal[] = $address->getCity();
+                    $stores = $storeService->getStoresByLocation(
+                        $address->getLocation(),
+                        \FourPaws\StoreBundle\Service\StoreService::TYPE_SHOP
+                    )->getStores();
+                    $address->setHaveShop(count($stores) > 0);
+                    return true;
+                }
+            });
+
+            $this->arResult['PERSONAL_ADDRESSES'] = $addresses;
+        }
 
         return $this;
     }
