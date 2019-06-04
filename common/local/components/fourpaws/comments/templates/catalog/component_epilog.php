@@ -40,7 +40,7 @@ $request = Application::getInstance()->getContext()->getRequest();
             $('.js-comments-auth-form-<?=$uniqueCommentString?>').css('display', 'block');
         }
         if ($('.js-comments-captcha-block-<?=$uniqueCommentString?>').length > 0) {
-            $('.js-comments-captcha-block-<?=$uniqueCommentString?>').html('<?=$recaptchaService->getCaptcha();?>').css('display', 'block');
+            $('.js-comments-captcha-block-<?=$uniqueCommentString?>').html('<?=$recaptchaService->getCaptcha('', false, '', 'commentsCatalog');?>').css('display', 'block');
         }
     });
 
