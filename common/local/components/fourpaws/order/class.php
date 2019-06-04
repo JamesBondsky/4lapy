@@ -528,12 +528,12 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 $curPage = BitrixApplication::getInstance()->getContext()->getRequest()->getRequestUri();
                 $url = $this->kioskService->addParamsToUrl($curPage, ['bindcard' => true]);
                 $this->arResult['BIND_CARD_URL'] = $url;
+                $this->arResult['IS_BIND_CARD_URL'] = ($url == $curPage);
                 $this->arResult['KIOSK'] = true;
                 if ($this->kioskService->getCardNumber()) {
                     $storage->setDiscountCardNumber($this->kioskService->getCardNumber());
                     $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
                 }
-
             }
 
             $payments = $this->orderStorageService->getAvailablePayments($storage, true, true, $basket->getPrice());
