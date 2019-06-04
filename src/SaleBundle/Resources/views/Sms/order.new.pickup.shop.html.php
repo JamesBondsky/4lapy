@@ -12,4 +12,4 @@
  */
 
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper; ?>
-Спасибо. Ваш заказ № <?= $accountNumber ?> на сумму <?= $price - $bonusSum ?> руб. оформлен! И будет собран в течение <?=DeliveryTimeHelper::PACKING_TIME_TEXT?> в магазине: <?= $shop['address'] ?>. Режим работы: <?= $shop['schedule'] ?>
+Спасибо. Ваш заказ № <?= $accountNumber ?> на сумму <?= $price - $bonusSum ?> руб. оформлен!
