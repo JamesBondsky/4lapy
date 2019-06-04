@@ -35,9 +35,9 @@ if ($showForm) {
 				// Поле: Номер паспорта
 	            $fieldName = 'passport';
 	            $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
-                if (empty($arResult['USER_INFO']) || !empty($arResult['ERROR']['EXEC']) || $fieldMeta['ERROR']) {
+                /*if (empty($arResult['USER_INFO']) || !empty($arResult['ERROR']['EXEC']) || $fieldMeta['ERROR']) {
 	                $value     = $fieldMeta['VALUE'];
-                }
+                }*/
 	            $attr      = '';
 	            $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
 	            $attr      .= ' maxlength="5"';
@@ -81,7 +81,7 @@ if ($showForm) {
 	            // Поле: ID
 	            $fieldName = 'promoId';
 	            $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
-	            $value     = $fieldMeta['VALUE'];
+	            //$value     = $fieldMeta['VALUE'];
 	            $attr      = '';
 	            $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
 	            $attr      .= ' maxlength="5"';
@@ -123,7 +123,7 @@ if ($showForm) {
 	            // Поле: Мобильный телефон (10 знаков без 7 или 8 в формате 9ХХХХХХХХХ)
 	            $fieldName = 'phone';
 	            $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
-	            $value     = $fieldMeta['VALUE'];
+	            //$value     = $fieldMeta['VALUE'];
 	            $attr      = '';
 	            $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
 	            $attr      .= ' maxlength="10"';
@@ -165,7 +165,7 @@ if ($showForm) {
 	            // Поле: Номер карты
 	            $fieldName = 'cardNumber';
 	            $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
-	            $value     = $fieldMeta['VALUE'];
+	            //$value     = $fieldMeta['VALUE'];
 	            $attr      = '';
 	            $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
 	            $attr      .= ' maxlength="13"';
