@@ -9,9 +9,9 @@
                 </div>
                 <div class="popup-registr-check-landing__descr">
                     Проверяйте результаты розыгрыша на&nbsp;сайте <span class="bold">Grandin.4lapy.ru!</span><br />
-                    Запас сухого корма Grandin на&nbsp;2&nbsp;месяца разыгрывается каждую пятницу&nbsp;&mdash; 8,&nbsp;15,&nbsp;22&nbsp;февраля и&nbsp;1&nbsp;марта.<br />
-                    Главный приз&nbsp;&mdash; годовой запас сухого корма Grandin*.<br />
-                    Разыгрывается 1&nbsp;марта.
+                    Электронные мерные ложки&nbsp;&mdash; всего 150 призов&nbsp;&mdash; разыгрываются&nbsp;&mdash; 7, 13, 19, 25 июня и&nbsp;1 июля.<br />
+                    Главный приз&nbsp;&mdash; Путешествие в&nbsp;Прагу на&nbsp;двоих.<br />
+                    Разыгрывается 1 июля.
                 </div>
                 <div class="popup-registr-check-landing__primary">Удачи!</div>
                 <div class="popup-registr-check-landing__btn">

@@ -143,3 +143,7 @@ services:
   kiosk.service:
     class: FourPaws\KioskBundle\Service\KioskService
     public: true
+
+  mobile_api.logger.service:
+    class: FourPaws\MobileApiBundle\Services\LoggerService
+    arguments: ['%env(LOG_MOBILE_API)%']

@@ -204,4 +204,14 @@ $(window).load(function(){
         $popupFestival.addClass('opened').fadeIn(150);
     }
   }
+
+  $('.js-popup-wrapper').on('click', '[data-open-next-popup]', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      var popupId = $(this).data('popup-id');
+
+      $('.b-popup-wrapper section[data-popup].opened').removeClass('opened').fadeOut(0);
+      $('.b-popup-wrapper section[data-popup=\'' + popupId + '\']').addClass('opened').fadeIn(150);
+  });
 });

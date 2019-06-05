@@ -8,5 +8,7 @@ $articul_dostavista_delivery_default_option = [
     'minute_delivery_from' => '',
     'minute_delivery_to' => '',
     'text_express_delivery' => '',
-    'text_express_delivery_time' => ''
+    'text_express_delivery_time' => '',
+    'what_deliver_set' => 'Y',
+    'what_deliver_text' => 'Товары из магазина «Четыре Лапы»'
 ];

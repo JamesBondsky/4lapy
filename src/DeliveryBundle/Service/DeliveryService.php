@@ -23,6 +23,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\BasketItemCollection;
 use Bitrix\Sale\Delivery\DeliveryLocationTable;
 use Bitrix\Sale\Delivery\Services\Manager;
 use Bitrix\Sale\Delivery\Services\Table as DeliveryServiceTable;
@@ -596,19 +597,33 @@ class DeliveryService implements LoggerAwareInterface
                 /** @var OrderService $orderService */
                 $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
                 $parentOrder = $shipment->getParentOrder();
-                if ($parentOrder->getBasket()->isEmpty())
-                {
+                $dostavistaContinue = false;
+                if ($parentOrder->getBasket()->isEmpty()) {
                     /** @var BasketService $basketService */
                     $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
                     $offers = $basketService->getBasketOffers();
-                }
-                else
-                {
+                    /** @var BasketItemCollection $basketItems */
+                    $basketItems = $basketService->getBasket()->getBasketItems();
+                } else {
                     /** @var OfferCollection $offers */
                     $offers = $orderService->getOrderProducts($parentOrder);
+                    /** @var BasketItemCollection $basketItems */
+                    $basketItems = $parentOrder->getBasket()->getBasketItems();
+                }
+
+                //если вес > 50 то Достависта недоступна
+                $weightSumm = 0;
+                /** @var BasketItem $basketItem */
+                foreach($basketItems as $basketItem){
+                    $weightSumm += $basketItem->getQuantity() * WordHelper::showWeightNumber($basketItem->getWeight(), true);
+                }
+
+                if ($weightSumm > 50) {
+                    $dostavistaContinue = true;
                 }
 
                 if (!$offers->isEmpty()) {
+                    /** @var Offer $offer */
                     foreach ($offers as $offer) {
                         $length = WordHelper::showLengthNumber($offer->getCatalogProduct()->getLength());
                         $width = WordHelper::showLengthNumber($offer->getCatalogProduct()->getWidth());
@@ -628,7 +643,7 @@ class DeliveryService implements LoggerAwareInterface
                 $deliveryEndTime->setTime($arEndTime[0], $arEndTime[1]); //получаем сегодня, когда доставка закроется
                 $oldDayOfMonth = $calculationResult->getDeliveryDate()->format('d'); //получаем номер старого дня в месяце
                 $newDayOfMonth = $deliveryDateOfMonth->format('d'); //получаем номер нового дня в месяце с учетом времени доставки
-                if ($oldDayOfMonth != $newDayOfMonth || $deliveryDateOfMonth > $deliveryEndTime || $deliveryDate < $deliveryStartTime) {
+                if ($dostavistaContinue || $oldDayOfMonth != $newDayOfMonth || $deliveryDateOfMonth > $deliveryEndTime || $deliveryDate < $deliveryStartTime) {
                     continue;
                 }
             }
