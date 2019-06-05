@@ -908,9 +908,6 @@ $markup = PawsApplication::markup();
                         <img class="partner_logo" src="img/partners/partners14.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners/partners16.jpg" alt="">
-                    </div>
-                    <div class="partner_item">
                         <img class="partner_logo" src="img/partners/partners17.jpg" alt="">
                     </div>
                     <div class="partner_item">
