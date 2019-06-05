@@ -23,7 +23,6 @@ use FourPaws\External\DaDataService;
 use Bitrix\Main\ObjectPropertyException;
 use FourPaws\LocationBundle\LocationService;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use FourPaws\KkmBundle\Repository\Table\KkmTokenTable;
 use FourPaws\KkmBundle\Exception\KkmException;
 
 /**
@@ -40,7 +39,18 @@ class KkmService implements LoggerAwareInterface
 
     const CHARACTERS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-    const YANDEX_GEOCODE_URL = 'http://geocode-maps.yandex.ru/1.x/?geocode=';
+    const YANDEX_GEOCODE_URL = 'https://geocode-maps.yandex.ru/1.x/?format=xml&geocode=';
+
+    const YANDEX_REQUEST_PARAMS = [
+        CURLOPT_RETURNTRANSFER => true,  //return web page
+        CURLOPT_HEADER         => false, //don't return headers
+        CURLOPT_FOLLOWLOCATION => true,  //follow redirects
+        CURLOPT_MAXREDIRS      => 10,    //stop after 10 redirects
+        CURLOPT_ENCODING       => '',    //handle compressed
+        CURLOPT_AUTOREFERER    => true,  //set referrer on redirect
+        CURLOPT_CONNECTTIMEOUT => 60,    //time-out on connect
+        CURLOPT_TIMEOUT        => 60,    //time-out on response
+    ];
 
     const YANDEX_API_KEY = 'ad666cd3-80be-4111-af2d-209dddf2c55e';
 
@@ -113,7 +123,8 @@ class KkmService implements LoggerAwareInterface
 
     /**
      * KkmService constructor.
-     * @param DaDataService $daDataService
+     *
+     * @param DaDataService   $daDataService
      * @param LocationService $locationService
      * @param DeliveryService $deliveryService
      */
@@ -129,6 +140,7 @@ class KkmService implements LoggerAwareInterface
     /**
      * @param $user
      * @param $password
+     *
      * @return array
      */
     public function validateAuth($user, $password): array
@@ -170,6 +182,7 @@ class KkmService implements LoggerAwareInterface
      * @param $level
      * @param $cityKladrId
      * @param $streetKladrId
+     *
      * @return array
      */
     public function getSuggestions($query, $level, $cityKladrId, $streetKladrId): array
@@ -267,6 +280,7 @@ class KkmService implements LoggerAwareInterface
 
     /**
      * @param string $query
+     *
      * @return array
      */
     public function geocode($query): array
@@ -279,7 +293,18 @@ class KkmService implements LoggerAwareInterface
                 );
             }
 
-            $xmlResponse = simplexml_load_file(static::YANDEX_GEOCODE_URL . urlencode($query) . '&key=' . urlencode(static::YANDEX_API_KEY) . '&results=1');
+            try {
+                $ch = curl_init(static::YANDEX_GEOCODE_URL . urlencode($query) . '&key=' . urlencode(static::YANDEX_API_KEY) . '&results=1');
+                curl_setopt_array($ch, static::YANDEX_REQUEST_PARAMS);
+                $content = curl_exec($ch);
+                curl_close($ch);
+                $xmlResponse = simplexml_load_string($content);
+            } catch (Exception $e) {
+                throw new KkmException(
+                    static::RESPONSE_STATUSES['internal_error']['message'] . ': не удалось отправить запрос в Яндекс',
+                    static::RESPONSE_STATUSES['internal_error']['code']
+                );
+            }
 
             if (!$xmlResponse instanceof SimpleXMLElement) {
                 throw new KkmException(
@@ -350,7 +375,8 @@ class KkmService implements LoggerAwareInterface
 
     /**
      * @param string $kladrId
-     * @param array $products
+     * @param array  $products
+     *
      * @return array
      */
     public function getDeliveryRules(string $kladrId, array $products): array
