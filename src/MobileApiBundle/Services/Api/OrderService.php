@@ -745,7 +745,7 @@ class OrderService
                     $dates[] = (new DeliveryTime())
                         ->setTitle($day . ' ' . $interval)
                         ->setDeliveryDateIndex($deliveryDateIndex)
-                        ->setDeliveryIntervalIndex($interval->getKey())
+                        ->setDeliveryIntervalIndex($interval->getKey() + 1) // прибавление магической единички, которая вычитается из getDeliveryInterval в \FourPaws\SaleBundle\Service\OrderService::initOrder
                     ;
                 }
             } else {
