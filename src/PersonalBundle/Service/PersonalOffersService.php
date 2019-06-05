@@ -77,7 +77,7 @@ class PersonalOffersService
             throw new InvalidArgumentException('can\'t get user\'s coupons. userId: ' . $userId);
         }
 
-        list($offersCollection, $couponsCollection) = $this->getCoupons($userId);
+        list($offersCollection, $couponsCollection) = $this->getActiveCoupons($userId);
         $result = [
             'coupons' => $couponsCollection,
             'offers'  => $offersCollection,
@@ -102,7 +102,7 @@ class PersonalOffersService
             throw new InvalidArgumentException('can\'t get user\'s coupons. userId: ' . $userId);
         }
 
-        list($offersCollection, $couponsCollection) = $this->getCoupons($userId);
+        list($offersCollection, $couponsCollection) = $this->getActiveCoupons($userId);
 
         $result = [];
         foreach ($couponsCollection as $coupon) {
@@ -777,7 +777,7 @@ class PersonalOffersService
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      */
-    protected function getCoupons(int $userId): array
+    protected function getActiveCoupons(int $userId): array
     {
         $coupons = [];
         $offersCollection = new ArrayCollection();
