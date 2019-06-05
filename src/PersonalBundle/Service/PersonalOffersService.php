@@ -108,7 +108,7 @@ class PersonalOffersService
                 $item['date_active'] = 'Действует до ' . $offer['PROPERTY_ACTIVE_TO_VALUE'];
             }
 
-            $item['text'] = HTMLToTxt($offer['PREVIEW_TEXT']);
+            $item['text'] = strip_tags(html_entity_decode($offer['PREVIEW_TEXT']));
             $result[] = $item;
         }
         return $result;
