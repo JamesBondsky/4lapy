@@ -524,7 +524,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 }
             }
 
-            if($this->kioskService->isKioskMode()){
+            if(KioskService::isKioskMode()){
                 $curPage = BitrixApplication::getInstance()->getContext()->getRequest()->getRequestUri();
                 $url = $this->kioskService->addParamsToUrl($curPage, ['bindcard' => true]);
                 $this->arResult['BIND_CARD_URL'] = $url;
@@ -568,6 +568,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $storage          = clone $storage;
             $selectedShopCode = $storage->getDeliveryPlaceCode();
             $shops            = $pickup->getStockResult()->getStores();
+
             if ($selectedShopCode && isset($shops[$selectedShopCode])) {
                 $pickup->setSelectedShop($shops[$selectedShopCode]);
             }
