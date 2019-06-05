@@ -14,7 +14,7 @@ use Symfony\Component\Routing\Annotation\Route;
  *
  * @package FourPaws\KkmBundle\Controller
  *
- * @Route("api_kkm/v1/")
+ * @Route("kkm/v1/")
  */
 class KkmController extends Controller
 {
