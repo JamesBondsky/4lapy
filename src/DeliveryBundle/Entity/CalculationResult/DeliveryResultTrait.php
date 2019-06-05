@@ -148,7 +148,7 @@ trait DeliveryResultTrait
         $days = $deliveryDate->diff($this->deliveryDate)->days;
         $tmpDelivery = clone $this;
         /** @var Interval $interval */
-        foreach ($this->getIntervals() as $interval) {
+        foreach ($this->getIntervals() as $key => $interval) {
             $intervalDays = $tmpDelivery->setSelectedInterval($interval)->getIntervalOffset();
 
             if ($intervalDays <= $days) {
