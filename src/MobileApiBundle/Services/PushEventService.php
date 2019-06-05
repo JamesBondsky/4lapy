@@ -211,11 +211,12 @@ class PushEventService
                 );
 
                 foreach ($this->applePushNotificationService->getLogMessages() as $logMessage) {
-                    $this->log()->info($logMessage);
+                    $this->log()->info(__METHOD__ . '. PushToken: ' . $pushEvent->getPushToken() . '. LogMessage: ' . $logMessage);
                 }
 
             }
             catch (\Exception $e) {
+                $this->log()->error(__METHOD__ . '. PushToken: ' . $pushEvent->getPushToken() . '. Exception: ' . $e->getMessage());
                 $pushEvent->setServiceResponseError($e->getMessage());
             }
             $pushEvent->setSuccessExec(ApiPushEvent::EXEC_SUCCESS_CODE);

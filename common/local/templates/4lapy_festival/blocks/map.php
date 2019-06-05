@@ -703,6 +703,9 @@
                                         <div class="margin-t-10 sm-margin-t-0">
                                             <h2>лекторий</h2>
                                             <p>Прокачай себя в модном лектории – узнаешь много интересного о питомцах и познакомишься с ведущими зоо-экспертами. </p>
+                                            <div class="schedule">
+                                                <a href="javascript:void(0);" class="js-open-popup" data-popup-id="schedule-map-lecturehall">Расписание</a>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="col-sm-4 col-lg-3">
@@ -817,7 +820,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_lecturehall" data-interactive-map-pavilion-point="lecturehall" data-point-title="Лекторий" data-point-description="За знаниями отправляемся в&nbsp;лекторий, чтобы узнать много интересного и&nbsp;познакомиться с&nbsp;ведущими зоо-экспертами" data-point-image="/img/img07_3.jpg" data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/lecturehall/1.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/lecturehall/2.jpg&quot;,&quot;position&quot;:&quot;top&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/lecturehall/3.jpg&quot;,&quot;position&quot;:&quot;top&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/lecturehall/4.jpg&quot;}]'>
+                                        <div class="point point_small point_lecturehall" data-interactive-map-pavilion-point="lecturehall" data-point-title="Лекторий" data-point-description="За знаниями отправляемся в&nbsp;лекторий, чтобы узнать много интересного и&nbsp;познакомиться с&nbsp;ведущими зоо-экспертами" data-point-btn="<a href='javascript:void(0);' class='js-open-popup' data-popup-id='schedule-map-lecturehall'>Расписание</a>" data-point-image="/img/img07_3.jpg" data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/lecturehall/1.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/lecturehall/2.jpg&quot;,&quot;position&quot;:&quot;top&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/lecturehall/3.jpg&quot;,&quot;position&quot;:&quot;top&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/lecturehall/4.jpg&quot;}]'>
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -873,7 +876,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="point point_small point_hills" data-interactive-map-pavilion-point="hills" data-point-title="Hill’s" data-point-description="С&nbsp;1939 года компания Hill&rsquo;s&trade; производит высококачественные рационы для&nbsp;питомцев любого возраста и&nbsp;с&nbsp;учетом их&nbsp;индивидуальных потребностей. Наш долг&nbsp;&mdash; обеспечить каждому питомцу лучшую заботу, на&nbsp;которую только способен человек.">
+                                        <div class="point point_small point_hills" data-interactive-map-pavilion-point="hills" data-point-title="Hill’s" data-point-description="С&nbsp;1939 года компания Hill&rsquo;s&trade; производит высококачественные рационы для&nbsp;питомцев любого возраста и&nbsp;с&nbsp;учетом их&nbsp;индивидуальных потребностей. Наш долг&nbsp;&mdash; обеспечить каждому питомцу лучшую заботу, на&nbsp;которую только способен человек." data-point-images='[{&quot;image&quot;:&quot;/img/interactive_map/brands/images/hills/1.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/hills/2.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/hills/3.jpg&quot;},{&quot;image&quot;:&quot;/img/interactive_map/brands/images/hills/4.jpg&quot;}]'>
                                             <div class="point__bg"></div>
                                             <div class="point__icon">
                                                 <div class="icon">
@@ -982,6 +985,7 @@
                                         <div class="interactive_map_pavilion__description" data-interactive-map-pavilion-description="true">
                                             Выбери площадку на&nbsp;карте павильона и&nbsp;кликни на&nbsp;иконку, чтобы&nbsp;узнать&nbsp;больше.
                                         </div>
+                                        <div class="interactive_map_pavilion__btn-wrap" data-interactive-map-pavilion-btn="true"></div>
                                     </div>
                                 </div>
                                 <div class="interactive_map_pavilion__image-list list_right" data-point-image-right="true"></div>
