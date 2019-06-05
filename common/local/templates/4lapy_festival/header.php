@@ -891,7 +891,10 @@ $markup = PawsApplication::markup();
                         <!-- Latest Products -->
                     </div>
                 </div>
-                <div class="partners_wrap">
+                <div class="partners_wrap partners_wrap--special-partners">
+                    <div class="partner_item">
+                        <img class="partner_logo" src="img/partners/partners20.jpg" alt="">
+                    </div>
                     <div class="partner_item">
                         <img class="partner_logo" src="img/partners/partners12.jpg" alt="">
                     </div>
@@ -912,6 +915,9 @@ $markup = PawsApplication::markup();
                     </div>
                     <div class="partner_item">
                         <img class="partner_logo" src="img/partners/partners19.jpg" alt="">
+                    </div>
+                    <div class="partner_item">
+                        <img class="partner_logo" src="img/partners/partners21.jpg" alt="">
                     </div>
                 </div>
             </div>

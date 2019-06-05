@@ -1525,6 +1525,10 @@ body.is_open_banner_top .header.navbar-fixed-top{
             margin-bottom: 20px;
             padding: 0 10px;
         }
+        #partners .partners_wrap.partners_wrap--special-partners .partner_item {
+            width: 20%;
+            text-align: center;
+        }
     #partners .partners_wrap_line1 {
         -webkit-align-items: center;
         -ms-flex-align: center;
@@ -1741,7 +1745,9 @@ body.is_open_banner_top .header.navbar-fixed-top{
             #partners .partners_wrap .partner_item {
                 padding: 0 15px;
             }
-
+            #partners .partners_wrap.partners_wrap--special-partners .partner_item {
+                width: auto;
+            }
 }
 
 /* desktop-min */
