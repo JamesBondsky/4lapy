@@ -28,6 +28,7 @@ use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
+use FourPaws\UserBundle\Service\UserService;
 use JMS\Serializer\ArrayTransformerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -50,7 +51,7 @@ class ProfileController extends Controller
 
     /** @var AjaxMess */
     private $ajaxMess;
-    /** @var UserAuthorizationInterface */
+    /** @var UserAuthorizationInterface|UserService */
     private $userAuthorization;
     /** @var ArrayTransformerInterface */
     private $arrayTransformer;
@@ -224,10 +225,9 @@ class ProfileController extends Controller
 
         $total_modals = $request->request->get('modals');
 
-        $user_class = new \CUser;
         $user_id = (int) $GLOBALS['USER']->GetID();
-        $write = (int)$total_modals[0]." ".(int)$total_modals[1]." ".(int)$total_modals[2];
-        $user_class->Update($user_id, ['UF_MODALS_CNTS' => $write]);
+        $write = (int)$total_modals[0]." ".(int)$total_modals[1]." ".(int)$total_modals[2]." ".(int)$total_modals[3];
+        $this->userAuthorization->setModalsCounters($user_id, $write);
 
         return JsonSuccessResponse::createWithData('All fine!');
     }

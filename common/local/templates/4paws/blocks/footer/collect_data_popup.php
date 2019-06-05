@@ -8,7 +8,9 @@ global $USER;
 $modal_number = NULL;
 $user_class = new \CUser;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
+use FourPaws\PersonalBundle\Service\PersonalOffersService;
 
 if($USER->IsAuthorized()) {
     // срезаем пути - любой шаг заказа + баскет.
@@ -16,42 +18,62 @@ if($USER->IsAuthorized()) {
     {
         $modal_counts_txt = CUser::GetByID( $USER->GetID() )->Fetch()['UF_MODALS_CNTS'];
         $modal_counts = explode(' ', $modal_counts_txt);
-        if($modal_counts != '3 3 3') // модалки не по 3 штуки
+        if($modal_counts != '3 3 3 3') // модалки не по 3 штуки //сравнение массива и строки - равносильно if (true)
         {
-            if($USER->GetParam('data_collect') !== 'Y') // модалку в сессии еще не показали
-            {
-                $user_data = CUser::GetByID( $USER->GetID() )->Fetch();
-                if($user_data['UF_SESSION_CNTS'] % 3 == 1) // Каждая 3-я сессия
-                {
-                    if($user_data['NAME'] && $user_data['PERSONAL_PHONE'] || $modal_counts[0] > 2)
-                    {
-                        if($user_data['LAST_NAME'] && $user_data['EMAIL'] || $modal_counts[1] > 2)
-                        {
-                            $container = App::getInstance()->getContainer();
-                            $pets = $container->get('pet.service');
+            /** @var PersonalOffersService $personalOffersService */
+            $personalOffersService = App::getInstance()->getContainer()->get('personal_offers.service');
+            $userId = $USER->GetID();
+            $userPersonalOffers = $personalOffersService->getActiveUserCoupons($userId);
 
-                            if(count($pets->getCurUserPets()) || $modal_counts[2] > 2) {
-                                $user_class->Update($USER->GetID(), ['UF_MODALS_CNTS' => '3 3 3']);
-                            }
+            /** @var ArrayCollection $coupons */
+            $coupons = $userPersonalOffers['coupons'];
 
-                            else{
-                                $modal_number = 3;
-                            }
-                        }
-                        else {
-                            $modal_number = 2;
-                        }
-                    }
-                    else {
-                        $modal_number = 1;
-                    }
+            if ($coupons->isEmpty() || $modal_counts[3] > 2) {
+	            if($USER->GetParam('data_collect') !== 'Y') // модалку в сессии еще не показали
+	            {
+	                $user_data = CUser::GetByID($userId)->Fetch();
+	                if($user_data['UF_SESSION_CNTS'] % 3 == 1) // Каждая 3-я сессия
+	                {
+	                    if($user_data['NAME'] && $user_data['PERSONAL_PHONE'] || $modal_counts[0] > 2)
+	                    {
+	                        if($user_data['LAST_NAME'] && $user_data['EMAIL'] || $modal_counts[1] > 2)
+	                        {
+	                            $container = App::getInstance()->getContainer();
+	                            $pets = $container->get('pet.service');
+
+	                            if(count($pets->getCurUserPets()) || $modal_counts[2] > 2) {
+	                                $user_class->Update($USER->GetID(), ['UF_MODALS_CNTS' => '3 3 3 3']);
+	                            }
+
+	                            else{
+	                                $modal_number = 3;
+	                            }
+	                        }
+	                        else {
+	                            $modal_number = 2;
+	                        }
+	                    }
+	                    else {
+	                        $modal_number = 1;
+	                    }
+	                }
                 }
+            }
+            else {
+                $modal_number = 4;
             }
         }
     }
 } ?>
-
-<? if($modal_number == 1) { ?>
+<? if($modal_number == 4) { ?>
+    <?
+	/*
+	TODO окно с купоном.
+	При клике на это окно нужно переходить на страницу "Персональные предложения" и устанавливать в 4-е число в поле UF_MODALS_CNTS юзера значение 3 (чтобы окно больше не показывалось)
+	(установить значение можно через \FourPaws\UserBundle\Service\UserService::setModalsCounters)
+	 */
+	?>
+<? } elseif($modal_number == 1) { ?>
     <? $APPLICATION->IncludeComponent('fourpaws:personal.profile', 'popupCollectorName', [], null, ['HIDE_ICONS' => 'Y']); ?>
     <a class="js-add-query js-open-popup js-open-popup--account-tab" style="display: none;" id="data_collect" data-popup-id="collector-name"></a>
 <? } ?>
@@ -67,7 +89,7 @@ if($USER->IsAuthorized()) {
     <script>
         // заглушка для вызова формы - вынесено во одно место, чтобы было удобнее исправлять и не менять шаблоны.
         $(document).ready(function () {
-            if(parseInt(getCookie('modal_timer'), 10) >= 9) document.cookie = "modal_timer=0; path=/;";
+            if(parseInt(getCookie('modal_timer'), 10) >= <?= $modal_number === 4 ? 2 : 9?>) document.cookie = "modal_timer=0; path=/;";
             function getCookie(name) {
                 var matches = document.cookie.match(new RegExp(
                     "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
@@ -82,7 +104,7 @@ if($USER->IsAuthorized()) {
                     if($(this).val().length > 2) $(this).attr('readonly', "");
                 });
 
-                let modals_counter = [<?=$modal_counts[0]?>, <?=$modal_counts[1]?>, <?=$modal_counts[2]?>];
+                let modals_counter = [<?=$modal_counts[0]?>, <?=$modal_counts[1]?>, <?=$modal_counts[2]?>, <?=$modal_counts[3]?>];
                 modals_counter[<?=$modal_number-1?>]++;
 
                 // отправим новые счетчики модалок, только после показа.
@@ -96,7 +118,7 @@ if($USER->IsAuthorized()) {
                 let time = parseInt(getCookie('modal_timer'));
                 if($('.b-popup-wrapper').hasClass('active') !== true) time++;
                 document.cookie = "modal_timer="+time+"; path=/;";
-                if(parseInt(getCookie('modal_timer'), 10) === 9) serveModal(timer);
+                if(parseInt(getCookie('modal_timer'), 10) === <?= $modal_number === 4 ? 2 : 9?>) serveModal(timer);
             }, 5000);
         });
     </script>
