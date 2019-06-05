@@ -120,7 +120,6 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
                     (new Interval())->setFrom($interval['FROM'])
                         ->setTo($interval['TO'])
                         ->setRules($ruleCollection)
-                        ->setKey($intervalIndex)
                 );
             }
         }
