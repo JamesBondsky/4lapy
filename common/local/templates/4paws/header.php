@@ -8,7 +8,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var \CMain $APPLICATION
  */
 
-use Bitrix\Main\Application;use Bitrix\Main\Page\Asset;use FourPaws\App\Application as PawsApplication;use FourPaws\App\MainTemplate;use FourPaws\Decorators\SvgDecorator;use FourPaws\Enum\IblockCode;use FourPaws\Enum\IblockType;use FourPaws\SaleBundle\Service\BasketViewService;use FourPaws\UserBundle\Enum\UserLocationEnum;
+use Bitrix\Main\Application;use Bitrix\Main\Page\Asset;use FourPaws\App\Application as PawsApplication;use FourPaws\App\MainTemplate;use FourPaws\Decorators\SvgDecorator;use FourPaws\Enum\IblockCode;use FourPaws\Enum\IblockType;
+use FourPaws\KioskBundle\Service\KioskService;
+use FourPaws\SaleBundle\Service\BasketViewService;use FourPaws\UserBundle\Enum\UserLocationEnum;
 
 /** @var MainTemplate $template */
 $template = MainTemplate::getInstance(Application::getInstance()
@@ -19,6 +21,10 @@ $markup = PawsApplication::markup();
  * @var $sViewportCookie - Значение куки отвечающе за переключение вьпорта с мобильного на десктоп.
  */
 $sViewportCookie = $_COOKIE['viewport'] ?? null;
+
+$bodyClass = '';
+if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
+
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -85,12 +91,16 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
 
     <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_header.php'; ?>
 </head>
-<body>
+<body <? if($bodyClass != ''){ ?>class="<?= $bodyClass ?>"<? } ?>>
 <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_body.php'; ?>
 <?php $APPLICATION->ShowPanel(); ?>
 
 <header class="b-header <?= $template->getHeaderClass() ?> js-header">
-    <?php require_once __DIR__ . '/blocks/header/promo_top_festival.php' ?>
+    <?php
+    if(!KioskService::isKioskMode()) {
+        require_once __DIR__ . '/blocks/header/promo_top_festival.php';
+    }
+    ?>
     <?php
     $APPLICATION->IncludeComponent('articul:header.mobile.bunner',
         '',
@@ -116,9 +126,11 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
                             false,
                             ['HIDE_ICONS' => 'Y']) ?>
                     </span>
-                <div class="b-header-info b-header-info--short-header js-hide-open-menu">
-                    <?php require_once __DIR__ . '/blocks/header/phone_block.php' ?>
-                </div>
+                <? if (!KioskService::isKioskMode()) { ?>
+                    <div class="b-header-info b-header-info--short-header js-hide-open-menu">
+                        <?php require_once __DIR__ . '/blocks/header/phone_block.php' ?>
+                    </div>
+                <? } ?>
             </div>
         <?php } else { ?>
             <div class="b-header__info">
@@ -143,7 +155,9 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
                     ['HIDE_ICONS' => 'Y']);
                 ?>
                 <div class="b-header-info">
-                    <?php require_once __DIR__ . '/blocks/header/phone_block.php' ?>
+                    <? if (!KioskService::isKioskMode()) {
+                      require_once __DIR__ . '/blocks/header/phone_block.php';
+                    } ?>
                     <?php $APPLICATION->IncludeComponent('fourpaws:auth.form',
                         '',
                         [],
@@ -180,6 +194,8 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
                         'BRANDS_POPULAR_LIMIT'      => '6',
                         // количество популярных брендов в пункте меню "По бренду"
                         'BRANDS_MENU_POPULAR_LIMIT' => '8',
+                        // режим киоска
+                        'IS_KIOSK'                  => KioskService::isKioskMode(),
                     ],
                     null,
                     [
@@ -187,11 +203,15 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
                     ]
                 );
                 ?>
-                <?php $APPLICATION->IncludeComponent('fourpaws:city.selector',
-                    '',
-                    ['GET_STORES' => false],
-                    false,
-                    ['HIDE_ICONS' => 'Y']) ?>
+                <?php
+                if(!KioskService::isKioskMode()){
+                    $APPLICATION->IncludeComponent('fourpaws:city.selector',
+                        '',
+                        ['GET_STORES' => false],
+                        false,
+                        ['HIDE_ICONS' => 'Y']);
+                }
+                ?>
                 <?php $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
                     'template.header',
                     ['CACHE_TIME' => 3600 * 24],
@@ -207,7 +227,11 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
  */
 $APPLICATION->ShowViewContent('header_dropdown_menu'); ?>
 <div class="b-page-wrapper <?= $template->getWrapperClass() ?> js-this-scroll">
-    <?php require_once __DIR__ . '/blocks/header/social_bar.php' ?>
+    <?php
+    if (!KioskService::isKioskMode()) {
+        require_once __DIR__ . '/blocks/header/social_bar.php';
+    }
+    ?>
 
     <?php if ($template->hasMainWrapper()) { ?>
     <main class="b-wrapper<?= $template->getIndexMainClass() ?>" role="main">

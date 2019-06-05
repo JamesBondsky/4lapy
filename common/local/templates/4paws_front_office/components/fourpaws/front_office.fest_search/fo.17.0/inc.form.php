@@ -1,5 +1,6 @@
 <?php
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Bitrix\Main\Error;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
@@ -29,127 +30,179 @@ if ($showForm) {
             <input type="hidden" name="action" value="userSearch">
             <input type="hidden" name="sessid" value="<?= bitrix_sessid() ?>"><?php
 
-            echo '<p class="text-h3 mb-l">Заполните любое из полей для поиска пользователя:</p>';
-
-
-            // Поле: ID
-            $fieldName = 'promoId';
-            $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
-            $value     = $fieldMeta['VALUE'];
-            $attr      = '';
-            $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
-            $attr      .= ' maxlength="13"';
-            $errMess   = '';
-            /** @var Bitrix\Main\Error $error */
-            $error = $fieldMeta['ERROR'];
-            if ($error) {
-                switch ($error->getCode()) {
-                    case 'empty':
-                        $errMess = 'Пожалуйста, укажите ID';
-                        break;
-                    case 'not_valid':
-                    case 'incorrect_value':
-                        $errMess = 'ID задан в неверном формате';
-                        break;
-                    case 'runtime':
-                        $errMess = $error->getMessage();
-                        break;
-                    default:
-                        $errMess = '[' . $error->getCode() . '] ' . $error->getMessage();
-                        break;
+			if ($arParams['BY_PASSPORT'] === BitrixUtils::BX_BOOL_TRUE) {
+				?><input type="hidden" name="search_by_passport" value="1"><?
+				// Поле: Номер паспорта
+	            $fieldName = 'passport';
+	            $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
+                if (empty($arResult['USER_INFO']) || !empty($arResult['ERROR']['EXEC']) || $fieldMeta['ERROR']) {
+	                $value     = $fieldMeta['VALUE'];
                 }
-            }
-            ?>
-            <div class="form-page__field-wrap">
-                <label for="<?= $fieldName ?>" class="form-page__label">ID</label>
-                <input id="<?= $fieldName ?>"
-                       name="<?= $fieldName ?>"
-                       value="<?= $value ?>"<?= $attr ?>
-                       class="form-page__field mb-l"
-                       type="text">
-                <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
-            </div>
-            <?php
+	            $attr      = '';
+	            $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
+	            $attr      .= ' maxlength="5"';
+	            $errMess   = '';
+	            /** @var Bitrix\Main\Error $error */
+	            $error = $fieldMeta['ERROR'];
+	            if ($error) {
+	                switch ($error->getCode()) {
+	                    case 'empty':
+	                        $errMess = 'Пожалуйста, укажите номер паспорта';
+	                        break;
+	                    case 'not_valid':
+	                    case 'incorrect_value':
+	                        $errMess = 'Номер паспорта задан в неверном формате';
+	                        break;
+	                    case 'runtime':
+	                        $errMess = $error->getMessage();
+	                        break;
+	                    default:
+	                        $errMess = '[' . $error->getCode() . '] ' . $error->getMessage();
+	                        break;
+	                }
+	            }
+	            ?>
+	            <div class="form-page__field-wrap">
+	                <label for="<?= $fieldName ?>" class="form-page__label">Номер паспорта</label>
+	                <input id="<?= $fieldName ?>"
+	                       name="<?= $fieldName ?>"
+	                       value="<?= $value ?>"<?= $attr ?>
+	                       class="form-page__field mb-l"
+	                       type="number"
+	                       pattern="\d{0,5}"
+	                >
+	                <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
+	            </div>
+	            <?php
+			} else {
+	            echo '<p class="text-h3 mb-l">Заполните любое из полей для поиска пользователя:</p>';
 
 
-            // Поле: Мобильный телефон (10 знаков без 7 или 8 в формате 9ХХХХХХХХХ)
-            $fieldName = 'phone';
-            $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
-            $value     = $fieldMeta['VALUE'];
-            $attr      = '';
-            $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
-            $attr      .= ' maxlength="10"';
-            $errMess   = '';
-            /** @var Bitrix\Main\Error $error */
-            $error = $fieldMeta['ERROR'];
-            if ($error) {
-                switch ($error->getCode()) {
-                    case 'empty':
-                        $errMess = 'Пожалуйста, укажите номер телефона';
-                        break;
-                    case 'not_valid':
-                        $errMess = 'Телефон задан в неверном формате';
-                        break;
-                    case 'runtime':
-                        $errMess = $error->getMessage();
-                        break;
-                    default:
-                        $errMess = '[' . $error->getCode() . '] ' . $error->getMessage();
-                        break;
-                }
-            }
-            ?>
-            <div class="form-page__field-wrap">
-                <label for="<?= $fieldName ?>" class="form-page__label">Мобильный телефон (10 знаков без 7 или 8 в
-                                                                        формате 9ХХХХХХХХХ)</label>
-                <input id="<?= $fieldName ?>"
-                       name="<?= $fieldName ?>"
-                       value="<?= $value ?>"<?= $attr ?>
-                       class="form-page__field mb-l"
-                       type="text">
-                <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
-            </div>
-            <?
+	            // Поле: ID
+	            $fieldName = 'promoId';
+	            $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
+	            $value     = $fieldMeta['VALUE'];
+	            $attr      = '';
+	            $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
+	            $attr      .= ' maxlength="5"';
+	            $errMess   = '';
+	            /** @var Bitrix\Main\Error $error */
+	            $error = $fieldMeta['ERROR'];
+	            if ($error) {
+	                switch ($error->getCode()) {
+	                    case 'empty':
+	                        $errMess = 'Пожалуйста, укажите ID';
+	                        break;
+	                    case 'not_valid':
+	                    case 'incorrect_value':
+	                        $errMess = 'ID задан в неверном формате';
+	                        break;
+	                    case 'runtime':
+	                        $errMess = $error->getMessage();
+	                        break;
+	                    default:
+	                        $errMess = '[' . $error->getCode() . '] ' . $error->getMessage();
+	                        break;
+	                }
+	            }
+	            ?>
+	            <div class="form-page__field-wrap">
+	                <label for="<?= $fieldName ?>" class="form-page__label">ID</label>
+	                <input id="<?= $fieldName ?>"
+	                       name="<?= $fieldName ?>"
+	                       value="<?= $value ?>"<?= $attr ?>
+	                       class="form-page__field mb-l"
+	                       type="number"
+	                       pattern="\d{0,5}"
+	                >
+	                <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
+	            </div>
+	            <?php
 
 
-            // Поле: Номер карты
-            $fieldName = 'cardNumber';
-            $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
-            $value     = $fieldMeta['VALUE'];
-            $attr      = '';
-            $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
-            $attr      .= ' maxlength="13"';
-            $errMess   = '';
-            /** @var Bitrix\Main\Error $error */
-            $error = $fieldMeta['ERROR'];
-            if ($error) {
-                switch ($error->getCode()) {
-                    case 'empty':
-                        $errMess = 'Пожалуйста, укажите номер карты';
-                        break;
-                    case 'not_valid':
-                    case 'incorrect_value':
-                        $errMess = 'Номер карты задан в неверном формате';
-                        break;
-                    case 'runtime':
-                        $errMess = $error->getMessage();
-                        break;
-                    default:
-                        $errMess = '[' . $error->getCode() . '] ' . $error->getMessage();
-                        break;
-                }
-            }
-            ?>
-            <div class="form-page__field-wrap">
-                <label for="<?= $fieldName ?>" class="form-page__label">Номер карты</label>
-                <input id="<?= $fieldName ?>"
-                       name="<?= $fieldName ?>"
-                       value="<?= $value ?>"<?= $attr ?>
-                       class="form-page__field mb-l"
-                       type="text">
-                <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
-            </div>
-	        <?
+	            // Поле: Мобильный телефон (10 знаков без 7 или 8 в формате 9ХХХХХХХХХ)
+	            $fieldName = 'phone';
+	            $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
+	            $value     = $fieldMeta['VALUE'];
+	            $attr      = '';
+	            $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
+	            $attr      .= ' maxlength="10"';
+	            $errMess   = '';
+	            /** @var Bitrix\Main\Error $error */
+	            $error = $fieldMeta['ERROR'];
+	            if ($error) {
+	                switch ($error->getCode()) {
+	                    case 'empty':
+	                        $errMess = 'Пожалуйста, укажите номер телефона';
+	                        break;
+	                    case 'not_valid':
+	                        $errMess = 'Телефон задан в неверном формате';
+	                        break;
+	                    case 'runtime':
+	                        $errMess = $error->getMessage();
+	                        break;
+	                    default:
+	                        $errMess = '[' . $error->getCode() . '] ' . $error->getMessage();
+	                        break;
+	                }
+	            }
+	            ?>
+	            <div class="form-page__field-wrap">
+	                <label for="<?= $fieldName ?>" class="form-page__label">Мобильный телефон (10 знаков без 7 или 8 в
+	                                                                        формате 9ХХХХХХХХХ)</label>
+	                <input id="<?= $fieldName ?>"
+	                       name="<?= $fieldName ?>"
+	                       value="<?= $value ?>"<?= $attr ?>
+	                       class="form-page__field mb-l"
+	                       type="number"
+	                       pattern="\d{0,10}"
+	                >
+	                <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
+	            </div>
+	            <?
+
+
+	            // Поле: Номер карты
+	            $fieldName = 'cardNumber';
+	            $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
+	            $value     = $fieldMeta['VALUE'];
+	            $attr      = '';
+	            $attr      .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
+	            $attr      .= ' maxlength="13"';
+	            $errMess   = '';
+	            /** @var Bitrix\Main\Error $error */
+	            $error = $fieldMeta['ERROR'];
+	            if ($error) {
+	                switch ($error->getCode()) {
+	                    case 'empty':
+	                        $errMess = 'Пожалуйста, укажите номер карты';
+	                        break;
+	                    case 'not_valid':
+	                    case 'incorrect_value':
+	                        $errMess = 'Номер карты задан в неверном формате';
+	                        break;
+	                    case 'runtime':
+	                        $errMess = $error->getMessage();
+	                        break;
+	                    default:
+	                        $errMess = '[' . $error->getCode() . '] ' . $error->getMessage();
+	                        break;
+	                }
+	            }
+	            ?>
+	            <div class="form-page__field-wrap">
+	                <label for="<?= $fieldName ?>" class="form-page__label">Номер карты</label>
+	                <input id="<?= $fieldName ?>"
+	                       name="<?= $fieldName ?>"
+	                       value="<?= $value ?>"<?= $attr ?>
+	                       class="form-page__field mb-l"
+	                       type="number"
+	                       pattern="\d{0,13}"
+	                >
+	                <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
+	            </div>
+		        <?
+			}
 
 
             // вывод общих ошибок, если есть

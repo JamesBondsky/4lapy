@@ -22,10 +22,16 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
     $APPLICATION->IncludeComponent('fourpaws:information.popup', '', [], false, ['HIDE_ICONS' => 'Y']);
 
     include __DIR__ . '/form-festival.php';
+    include __DIR__ . '/forgot-passport-number.php';
     include __DIR__ . '/response-form-festival.php';
 
     include __DIR__ . '/response-feedback-form-landing.php';
 
     include __DIR__ . '/modal_popup.php';
+
+    include __DIR__ . '/schedule-bloggershow.php';
+    include __DIR__ . '/schedule-gala.php';
+    include __DIR__ . '/schedule-dog-fest.php';
+    include __DIR__ . '/schedule-map-lecturehall.php';
     ?>
 </div>

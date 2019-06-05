@@ -1,6 +1,9 @@
 <?if (!defined('B_PROLOG_INCLUDED')||B_PROLOG_INCLUDED!==true) {
     die();
 }
+
+use FourPaws\Decorators\SvgDecorator;
+
 /**
  * Бренды в меню (алфавитный указатель, сгруппированный список, популярные бренды)
  *
@@ -23,9 +26,16 @@ $sPopBrandsTitle = \Bitrix\Main\Localization\Loc::getMessage('MENU_BRANDS.POP_BR
     //
     // Алфавитный указатель
     //
-    ?><div class="b-menu-brands__nav"><?php
-        ?><div class="b-link-list b-link-list--menu js-scroll-x-menu">
-            <div class="b-link-list__wrapper"><?php
+    ?><div class="b-menu-brands__nav b-menu-brands__nav--scroll-arrows js-wrap-arrows-scroll-x"><?php
+        ?>
+        <span class="b-icon b-icon--orange b-icon--brand-menu-scroll-prev js-prev-brand-scroll">
+            <?= new SvgDecorator('icon-arrow-down', 10, 10) ?>
+        </span>
+        <span class="b-icon b-icon--orange b-icon--brand-menu-scroll-next js-next-brand-scroll">
+            <?= new SvgDecorator('icon-arrow-down', 10, 10) ?>
+        </span>
+        <div class="b-link-list b-link-list--menu js-scroll-x-menu js-arrows-scroll-x">
+            <div class="b-link-list__wrapper js-content-arrows-scroll-x"><?php
                 $bWasActive = false;
                 foreach ($arCharsList as $sChar) {
                     if (!empty($arResult['GROUPING'][$sChar])) {

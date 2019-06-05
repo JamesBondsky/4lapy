@@ -40,6 +40,7 @@ use FourPaws\External\Dostavista\Model\CancelOrder;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Enum\OrderPayment;
@@ -246,6 +247,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
          *
          * DFUE – заказ создан на Сайте;
          * MOBI – заказ создан в мобильном приложении;
+         * KIOS – заказ создан через киоск;
          */
         $orderSource = OrderDtoOut::ORDER_SOURCE_SITE;
         if ($this->getPropertyValueByCode($order, 'FROM_APP') === 'Y') {
@@ -257,6 +259,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     $orderSource = OrderDtoOut::ORDER_SOURCE_MOBILE_APP_IOS;
                     break;
             }
+        }
+        if(KioskService::isKioskMode()){
+            $orderSource = OrderDtoOut::ORDER_SOURCE_KIOSK;
         }
 
         $description = \trim(\implode("\n",

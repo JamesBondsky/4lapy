@@ -596,14 +596,18 @@ class Event extends BaseServiceHandler
                             'trim',
                             explode(',', fgets($fileHandler))
                         );
-                        $coupons[$couponInfo[1]] = [];
-                        if (PhoneHelper::isPhone($couponInfo[0]))
-                        {
-                            $couponInfo[0] = PhoneHelper::formatPhone($couponInfo[0], PhoneHelper::FORMAT_SHORT);
-                            if ($couponInfo[0])
+                        if ($couponInfo[1]) {
+                            if (!array_key_exists($couponInfo[1], $coupons)) {
+                                $coupons[$couponInfo[1]] = [];
+                            }
+                            if (PhoneHelper::isPhone($couponInfo[0]))
                             {
-                                $phonesArray[] = $couponInfo[0];
-                                $coupons[$couponInfo[1]][$couponInfo[0]] = '';
+                                $couponInfo[0] = PhoneHelper::formatPhone($couponInfo[0], PhoneHelper::FORMAT_SHORT);
+                                if ($couponInfo[0])
+                                {
+                                    $phonesArray[] = $couponInfo[0];
+                                    $coupons[$couponInfo[1]][$couponInfo[0]] = '';
+                                }
                             }
                         }
                         unset($couponInfo);

@@ -232,13 +232,31 @@ class LandingController extends Controller
             $container = App::getInstance()->getContainer();
             /** @var DataManager $festivalUsersDataManager */
             $festivalUsersDataManager = $container->get('bx.hlblock.festivalusersdata');
-            $isUserAlreadyRegistered = (bool)$festivalUsersDataManager::getCount([
-                'LOGIC' => 'OR',
-                'UF_PHONE' => $phone,
-                'UF_EMAIL' => $email,
-            ]);
-            if ($isUserAlreadyRegistered) {
-                throw new JsonResponseException(JsonErrorResponse::createWithData('Такой пользователь уже зарегистрирован'));
+            $alreadyRegisteredUsers = $festivalUsersDataManager::query()
+                ->setFilter([
+                    'LOGIC' => 'OR',
+                    'UF_PHONE' => $phone,
+                    'UF_EMAIL' => $email,
+                ])
+                ->setSelect([
+                    'UF_PHONE',
+                    'UF_EMAIL',
+                    'UF_FESTIVAL_USER_ID',
+                ])
+                ->setLimit(2)
+                ->exec()
+                ->fetchAll();
+            if ($alreadyRegisteredUsers) {
+                foreach ($alreadyRegisteredUsers as $user)
+                {
+                    if ($phone === $user['UF_PHONE']) {
+                        $phoneDuplicateUserFestivalCode = $user['UF_FESTIVAL_USER_ID'];
+                    } elseif ($email === $user['UF_EMAIL']) {
+                        $emailDuplicateUserFestivalCode = $user['UF_FESTIVAL_USER_ID'];
+                    }
+                }
+                $registeredUserId = $phoneDuplicateUserFestivalCode ?? ($emailDuplicateUserFestivalCode ?? null);
+                throw new JsonResponseException(JsonErrorResponse::createWithData('Такой пользователь уже зарегистрирован' . ($registeredUserId ? '.<br><b>ID участника: ' . $registeredUserId . '</b>' : '')));
             }
 
             /** @var PersonalOffersService $personalOffersService */

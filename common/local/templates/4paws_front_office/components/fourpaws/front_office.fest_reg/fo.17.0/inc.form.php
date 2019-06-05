@@ -1,5 +1,6 @@
 <?php
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Bitrix\Main\Error;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
@@ -25,6 +26,45 @@ $successBlock =
 
 $showForm = true;
 if ($showForm) {
+    if ($arResult['IS_REGISTERED'] === BitrixUtils::BX_BOOL_TRUE) {
+        foreach ($arResult["PRINT_FIELDS"] as $fieldKey => $field) {
+            $arResult["PRINT_FIELDS"][$fieldKey]['VALUE'] = '';
+        }
+        ?><script>
+		    var isResultSuccess = true;
+            $('html, body').animate(
+                {
+                    scrollTop: 0
+                },
+                200
+            );
+	    </script><?
+    } elseif (array_filter($arResult['ERROR']['EXEC'], function($error) {
+    	return $error->getCode() === 'alreadyRegistered';
+    })) {
+        foreach ($arResult["PRINT_FIELDS"] as $fieldKey => $field) {
+            $arResult["PRINT_FIELDS"][$fieldKey]['VALUE'] = '';
+        }
+        ?><script>
+            var isResultSuccess = true;
+            $('html, body').animate(
+                {
+                    scrollTop: $(document).height()
+                },
+                200
+            );
+	    </script><?
+    } elseif ($arResult['FIELD_VALUES']) { // т.е. если форма отправлена, но есть ошибки (общие ошибки и ошибки по полям лежат в разных ключах, но т.к. задача срочная - сделал такой костыль)
+        ?><script>
+            var isResultSuccess = true;
+            $('html, body').animate(
+                {
+                    scrollTop: $(document).height()
+                },
+                200
+            );
+	    </script><?
+    }
     ?>
     <form class="form-page mb-l" action="" method="post">
         <div>
@@ -32,6 +72,11 @@ if ($showForm) {
             <input type="hidden" name="action" value="userReg">
             <input type="hidden" name="sessid" value="<?= bitrix_sessid() ?>"><?php
 
+            if ($arResult['IS_REGISTERED'] === BitrixUtils::BX_BOOL_TRUE) {
+                echo '<div class="form-page__field-wrap">';
+                echo sprintf($successBlock, 'Участник успешно зарегистрирован, номер: ' . $arResult['PARTICIPANT_ID']);
+                echo '</div>';
+            }
 
 	        // Поле: Имя
             $fieldName = 'firstName';
@@ -160,7 +205,9 @@ if ($showForm) {
                        name="<?= $fieldName ?>"
                        value="<?= $value ?>"<?= $attr ?>
                        class="form-page__field mb-l"
-                       type="text">
+                       type="number"
+                       pattern="\d{0,10}"
+                >
                 <?php
                 if ($errMess) {
                     echo sprintf($errBlock, $errMess);
@@ -219,7 +266,7 @@ if ($showForm) {
             $value = $fieldMeta['VALUE'];
             $attr = '';
             $attr .= $fieldMeta['READONLY'] ? ' readonly="readonly"' : '';
-            $attr .= ' maxlength="100"';
+            $attr .= ' maxlength="5"';
             $errMess = '';
             /** @var Bitrix\Main\Error $error */
             $error = $fieldMeta['ERROR'];
@@ -249,7 +296,9 @@ if ($showForm) {
                        name="<?= $fieldName ?>"
                        value="<?= $value ?>"<?= $attr ?>
                        class="form-page__field mb-l"
-                       type="text">
+                       type="number"
+                       pattern="\d{0,5}"
+                >
                 <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
             </div>
 	        <?
@@ -268,11 +317,6 @@ if ($showForm) {
                 echo '</div>';
             }
 
-            if ($arResult['IS_REGISTERED'] === \Adv\Bitrixtools\Tools\BitrixUtils::BX_BOOL_TRUE) {
-                echo '<div class="form-page__field-wrap">';
-                echo sprintf($successBlock, 'Участник успешно зарегистрирован, номер: ' . $arResult['PARTICIPANT_ID']);
-                echo '</div>';
-            }
 
             $btnText = 'Зарегистрировать';
             ?>

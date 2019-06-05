@@ -29,6 +29,7 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils\Detach\Adder;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
@@ -207,7 +208,7 @@ class BasketComponent extends CBitrixComponent
         $this->calcTemplateFields();
         $this->calcSubscribeFields();
         $this->checkSelectedGifts();
-        $this->arResult['SHOW_FAST_ORDER'] = $this->deliveryService->getCurrentDeliveryZone() !== $this->deliveryService::ZONE_4;
+        $this->arResult['SHOW_FAST_ORDER'] = $this->deliveryService->getCurrentDeliveryZone() !== $this->deliveryService::ZONE_4 && !KioskService::isKioskMode();
         $this->arResult['ECOMMERCE_VIEW_BASKET'] = $this->ecommerceService->renderScript(
             $this->ecommerceSalePreset->createEcommerceToCheckoutFromBasket($basket, 1, 'Просмотр корзины'),
             true
