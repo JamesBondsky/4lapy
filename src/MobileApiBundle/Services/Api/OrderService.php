@@ -12,6 +12,7 @@ use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\UserMessageException;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
@@ -23,6 +24,7 @@ use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Object\City;
@@ -734,18 +736,20 @@ class OrderService
     protected function getDeliveryRanges(array $deliveries)
     {
         $dates = [];
+        /** @var IntervalService $intervalService */
+        $intervalService = Application::getInstance()->getContainer()->get(IntervalService::class);
         foreach ($deliveries as $deliveryDateIndex => $delivery) {
             /** @var DeliveryResult $delivery */
             $deliveryDate = $delivery->getDeliveryDate();
             $intervals = $delivery->getAvailableIntervals();
             $day = FormatDate('d.m.Y l', $delivery->getDeliveryDate()->getTimestamp());
             if (!empty($intervals) && count($intervals)) {
-                foreach ($intervals as $deliveryIntervalIndex => $interval) {
+                foreach ($intervals as $interval) {
                     /** @var Interval $interval */
                     $dates[] = (new DeliveryTime())
                         ->setTitle($day . ' ' . $interval)
                         ->setDeliveryDateIndex($deliveryDateIndex)
-                        ->setDeliveryIntervalIndex($deliveryIntervalIndex)
+                        ->setDeliveryIntervalIndex($intervalService->getIntervalCode(str_replace(' ', '', $interval)))
                     ;
                 }
             } else {
