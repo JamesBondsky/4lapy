@@ -209,7 +209,7 @@ class Order
     protected $deliveryDate;
 
     /**
-     * Интервал доставки. Указанные ниже интервалы неактуальны. Правильный список в \FourPaws\DeliveryBundle\Service\IntervalService::DELIVERY_INTERVALS
+     * Интервал доставки
      * 1    (09:00 – 18:00);
      * 2    (18:00 – 24:00);
      * 3    (08:00 – 12:00);
