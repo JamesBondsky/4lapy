@@ -22,6 +22,7 @@ $markup = PawsApplication::markup();
                 <div class="row">
                     <div class="col-sm-12">
                         <h5>ФЕСТИВАЛЬ «ЧЕТЫРЕ ЛАПЫ» 2019</h5>
+                        <h5>Организатор:&nbsp;ООО&nbsp;ЗУМ+; ОГРН:&nbsp;1095040007370; ИНН:&nbsp;5040096080; Возрастное&nbsp;ограничение&nbsp;0+</h5>
                     </div>
                 </div>
                 <!--// end row -->
