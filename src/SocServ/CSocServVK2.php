@@ -126,7 +126,7 @@ class CSocServVK2 extends \CSocServVKontakte {
         $GLOBALS["APPLICATION"]->RestartBuffer();
         $bSuccess = SOCSERV_AUTHORISATION_ERROR;
 
-        if ((isset($_REQUEST["code"]) && $_REQUEST["code"] <> '') && CSocServAuthManager::CheckUniqueKey())
+        if ((isset($_REQUEST["code"]) && $_REQUEST["code"] <> '') && \CSocServAuthManager::CheckUniqueKey())
         {
             if (IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
                 $redirect_uri = self::CONTROLLER_URL . "/redirect.php";
@@ -189,7 +189,7 @@ class CSocServVK2 extends \CSocServVKontakte {
 <script type="text/javascript">
 if(window.opener)
 {
-	window.opener.location = \'' . CUtil::JSEscape($url) . '\';
+	window.opener.location = \'' . \CUtil::JSEscape($url) . '\';
 }
 window.close();
 </script>

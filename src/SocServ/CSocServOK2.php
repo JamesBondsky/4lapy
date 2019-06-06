@@ -4,6 +4,7 @@ namespace FourPaws\SocServ;
 
 class CSocServOK2 extends \CSocServOdnoklassniki
 {
+    const ID = 'OK2';
     public function Authorize()
     {
         global $APPLICATION;

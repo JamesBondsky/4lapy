@@ -3,9 +3,11 @@
 namespace FourPaws\SocServ;
 
 use Bitrix\Main\Web\HttpClient;
+use CFacebookInterface;
 
 class CSocServFB2 extends \CSocServFacebook
 {
+    const ID = 'FB2';
     public function prepareUser($arFBUser, $short = false)
     {
         $arFields = array(
@@ -64,5 +66,91 @@ class CSocServFB2 extends \CSocServFacebook
         }
 
         return $arFields;
+    }
+
+    public function getFriendsList($limit, &$next)
+    {
+        if(IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
+        {
+            $redirect_uri = self::CONTROLLER_URL."/redirect.php?redirect_to=".urlencode(\CSocServUtil::GetCurUrl('auth_service_id='.self::ID, array("code")));
+        }
+        else
+        {
+            $redirect_uri = \CSocServUtil::GetCurUrl('auth_service_id='.self::ID, array("code"));
+        }
+
+        $fb = $this->getEntityOAuth();
+        if($fb->GetAccessToken($redirect_uri) !== false)
+        {
+            $res = $fb->GetCurrentUserFriends($limit, $next);
+            if(is_array($res))
+            {
+                foreach($res['data'] as $key => $value)
+                {
+                    $res['data'][$key]['uid'] = $value['id'];
+                    $res['data'][$key]['url'] = $this->getProfileUrl($value['id']);
+
+                    if(is_array($value['picture']))
+                    {
+                        if(!$value['picture']['data']['is_silhouette'])
+                        {
+                            $res['data'][$key]['picture'] = CFacebookInterface::GRAPH_URL.'/'.$value['id'].'/picture?type=large';
+                        }
+                        else
+                        {
+                            $res['data'][$key]['picture'] = '';
+                        }
+                        //$res['data'][$key]['picture'] = $value['picture']['data']['url'];
+                    }
+                }
+
+                return $res['data'];
+            }
+        }
+
+        return false;
+    }
+
+    public function sendMessage($uid, $message)
+    {
+        $fb = new CFacebookInterface();
+
+        if(IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
+        {
+            $redirect_uri = self::CONTROLLER_URL."/redirect.php?redirect_to=".urlencode(\CSocServUtil::GetCurUrl('auth_service_id='.self::ID, array("code")));
+        }
+        else
+        {
+            $redirect_uri = \CSocServUtil::GetCurUrl('auth_service_id='.self::ID, array("code"));
+        }
+
+        if($fb->GetAccessToken($redirect_uri) !== false)
+        {
+            $res = $fb->sendMessage($uid, $message);
+        }
+
+
+        return $res;
+    }
+
+    public function getMessages($uid)
+    {
+        $fb = new CFacebookInterface();
+
+        if(IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
+        {
+            $redirect_uri = self::CONTROLLER_URL."/redirect.php?redirect_to=".urlencode(\CSocServUtil::GetCurUrl('auth_service_id='.self::ID, array("code")));
+        }
+        else
+        {
+            $redirect_uri = \CSocServUtil::GetCurUrl('auth_service_id='.self::ID, array("code"));
+        }
+
+        if($fb->GetAccessToken($redirect_uri) !== false)
+        {
+            $res = $fb->getMessages($uid);
+        }
+
+        return $res;
     }
 }
