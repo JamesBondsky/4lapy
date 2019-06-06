@@ -740,12 +740,12 @@ class OrderService
             $intervals = $delivery->getAvailableIntervals();
             $day = FormatDate('d.m.Y l', $delivery->getDeliveryDate()->getTimestamp());
             if (!empty($intervals) && count($intervals)) {
-                foreach ($intervals as $interval) {
+                foreach ($intervals as $deliveryIntervalIndex => $interval) {
                     /** @var Interval $interval */
                     $dates[] = (new DeliveryTime())
                         ->setTitle($day . ' ' . $interval)
                         ->setDeliveryDateIndex($deliveryDateIndex)
-                        ->setDeliveryIntervalIndex($interval->getKey() + 1) // прибавление магической единички, которая вычитается из getDeliveryInterval в \FourPaws\SaleBundle\Service\OrderService::initOrder
+                        ->setDeliveryIntervalIndex($deliveryIntervalIndex)
                     ;
                 }
             } else {
