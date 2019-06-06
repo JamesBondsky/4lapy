@@ -59,7 +59,9 @@ class CatalogDetailBundle extends CBitrixComponent
         $currentOffer = $this->arParams['OFFER'];
         try {
             $this->arResult['BUNDLE'] = $currentOffer->getBundle();
-            $this->getBrands();
+            if ($this->arResult['BUNDLE']) {
+                $this->getBrands();
+            }
         } catch (\Exception $e) {
             $logger = LoggerFactory::create('productDetail');
             $logger->error($e->getMessage());
