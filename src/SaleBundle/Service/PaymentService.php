@@ -631,7 +631,7 @@ class PaymentService implements LoggerAwareInterface
                 ->setTotal($itemPrice * (int)$basketItem->getQuantity())
                 ->setCode($basketItem->getProductId() . '_' . $position)
                 ->setTax($tax)
-                ->setPaymentMethod(1);
+                ->setPaymentMethod(PaymentMethod::FULL_PAYMENT);
             $items->add($item);
         }
 
@@ -692,7 +692,7 @@ class PaymentService implements LoggerAwareInterface
                 ->setTax((new ItemTax())
                     ->setType($vatGateway[20])
                 )
-            ->setPaymentMethod(PaymentMethod::FULL_PAYMENT);
+                ->setPaymentMethod(PaymentMethod::FULL_PAYMENT);
 
             $items->add($delivery);
         }
