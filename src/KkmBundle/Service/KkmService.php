@@ -23,13 +23,13 @@ use FourPaws\External\DaDataService;
 use Bitrix\Main\ObjectPropertyException;
 use FourPaws\LocationBundle\LocationService;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use FourPaws\KkmBundle\Repository\Table\KkmTokenTable;
 use FourPaws\KkmBundle\Exception\KkmException;
 
 /**
  * Class KkmService
  *
  * @package FourPaws\KkmBundle\Service
+ * @bxnolanginspection
  */
 class KkmService implements LoggerAwareInterface
 {
@@ -39,7 +39,18 @@ class KkmService implements LoggerAwareInterface
 
     const CHARACTERS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-    const YANDEX_GEOCODE_URL = 'http://geocode-maps.yandex.ru/1.x/?geocode=';
+    const YANDEX_GEOCODE_URL = 'https://geocode-maps.yandex.ru/1.x/?format=xml&geocode=';
+
+    const YANDEX_REQUEST_PARAMS = [
+        CURLOPT_RETURNTRANSFER => true,  //return web page
+        CURLOPT_HEADER         => false, //don't return headers
+        CURLOPT_FOLLOWLOCATION => true,  //follow redirects
+        CURLOPT_MAXREDIRS      => 10,    //stop after 10 redirects
+        CURLOPT_ENCODING       => '',    //handle compressed
+        CURLOPT_AUTOREFERER    => true,  //set referrer on redirect
+        CURLOPT_CONNECTTIMEOUT => 60,    //time-out on connect
+        CURLOPT_TIMEOUT        => 60,    //time-out on response
+    ];
 
     const YANDEX_API_KEY = 'ad666cd3-80be-4111-af2d-209dddf2c55e';
 
@@ -79,6 +90,12 @@ class KkmService implements LoggerAwareInterface
         ]
     ];
 
+    const BOUNDS = [
+        'city',       //Город
+        'street',     //Улица
+        'house'       //Дом
+    ];
+
     /**
      * @var DaDataService $daDataService
      */
@@ -95,8 +112,19 @@ class KkmService implements LoggerAwareInterface
     private $deliveryService;
 
     /**
+     * @var string $basicUser
+     */
+    private $basicUser;
+
+    /**
+     * @var string $basicPassword
+     */
+    private $basicPassword;
+
+    /**
      * KkmService constructor.
-     * @param DaDataService $daDataService
+     *
+     * @param DaDataService   $daDataService
      * @param LocationService $locationService
      * @param DeliveryService $deliveryService
      */
@@ -105,62 +133,32 @@ class KkmService implements LoggerAwareInterface
         $this->daDataService = $daDataService;
         $this->locationService = $locationService;
         $this->deliveryService = $deliveryService;
+        $this->basicUser = getenv('BASIC_AUTH_LOGIN');
+        $this->basicPassword = getenv('BASIC_AUTH_PASSWORD');
     }
 
     /**
-     * @param string $token
+     * @param $user
+     * @param $password
+     *
      * @return array
      */
-    public function validateToken($token): array
+    public function validateAuth($user, $password): array
     {
-        if (strlen($token) != static::TOKEN_LENGTH) {
+        if ($user === $this->basicUser && $password === $this->basicPassword) {
             $res = [
-                'success' => false,
-                'error'   => static::RESPONSE_STATUSES['syntax_error']['message'] . ': поле токена слишком короткое или пустое!',
-                'code'    => static::RESPONSE_STATUSES['syntax_error']['code']
+                'success' => true
             ];
         } else {
-            try {
-                $dbResult = KkmTokenTable::query()
-                    ->setSelect(['id', 'token', 'store_code'])
-                    ->setFilter(['token' => $token])
-                    ->exec();
-                $tokensCnt = $dbResult->getSelectedRowsCount();
-                switch ($tokensCnt) {
-                    case 0:
-                        $res = [
-                            'success' => false,
-                            'error'   => static::RESPONSE_STATUSES['unauthorized']['message'] . ': данный токен не найден в системе!',
-                            'code'    => static::RESPONSE_STATUSES['unauthorized']['code']
-                        ];
-                        break;
-                    case 1:
-                        $tokenData = $dbResult->fetch();
-                        $res = [
-                            'success'    => true,
-                            'id'         => $tokenData['id'],
-                            'token'      => $tokenData['token'],
-                            'store_code' => $tokenData['store_code']
-                        ];
-                        break;
-                    default:
-                        $res = [
-                            'success' => false,
-                            'error'   => static::RESPONSE_STATUSES['unauthorized']['message'] . ': по данному токену найдено несколько записей в таблице!',
-                            'code'    => static::RESPONSE_STATUSES['unauthorized']['code']
-                        ];
-                }
-            } catch (ObjectPropertyException|ArgumentException|SystemException $e) {
-                $res = [
-                    'success' => false,
-                    'error'   => $e->getMessage(),
-                    'code'    => $e->getCode()
-                ];
-            }
+            $res = [
+                'success' => false,
+                'error'   => static::RESPONSE_STATUSES['unauthorized']['message'] . ': неверная пара логин/пароль в BasicAuth!',
+                'code'    => static::RESPONSE_STATUSES['unauthorized']['code']
+            ];
         }
 
         if (!$res['success']) {
-            $this->log()->error($res['code'] . ' ' . $res['error'], ['token' => $token]);
+            $this->log()->error($res['code'] . ' ' . $res['error'], ['user' => $user, 'password' => $password]);
         }
 
         return $res;
@@ -180,55 +178,43 @@ class KkmService implements LoggerAwareInterface
     }
 
     /**
-     * @param string $id
+     * @param $query
+     * @param $level
+     * @param $cityKladrId
+     * @param $streetKladrId
+     *
      * @return array
      */
-    /*public function updateToken(string $id): array
-    {
-        try {
-            $token = $this->generateToken();
-            KkmTokenTable::update(
-                $id,
-                [
-                    'token' => $token
-                ]
-            );
-            $res = [
-                'success' => true,
-                'token'   => $token
-            ];
-        } catch (Exception $e) {
-            $res = [
-                'success' => false,
-                'error'   => $e->getMessage()
-            ];
-        }
-
-        if (!$res['success']) {
-            $this->log()->error($res['error']);
-        } else {
-            $this->log()->notice('kkm change token to ' . $token);
-        }
-
-        return $res;
-    }*/
-
-    /**
-     * @param string $query
-     * @return array
-     */
-    public function getSuggestions($query): array
+    public function getSuggestions($query, $level, $cityKladrId, $streetKladrId): array
     {
         //check text length
         try {
-            if (mb_strlen($query) < 5) {
+            if ($level != 'house') {
+                if (mb_strlen($query) < 3) {
+                    throw new KkmException(
+                        static::RESPONSE_STATUSES['syntax_error']['message'] . ': текст слишком короткий',
+                        static::RESPONSE_STATUSES['syntax_error']['code']
+                    );
+                }
+            } else {
+                //для домов 1 символ
+                if (mb_strlen($query) < 1) {
+                    throw new KkmException(
+                        static::RESPONSE_STATUSES['syntax_error']['message'] . ': текст слишком короткий',
+                        static::RESPONSE_STATUSES['syntax_error']['code']
+                    );
+                }
+            }
+
+
+            if (!in_array($level, static::BOUNDS)) {
                 throw new KkmException(
-                    static::RESPONSE_STATUSES['syntax_error']['message'] . ': текст слишком короткий',
+                    static::RESPONSE_STATUSES['syntax_error']['message'] . ': ограничения поиска заданы неверно',
                     static::RESPONSE_STATUSES['syntax_error']['code']
                 );
             }
 
-            $suggestions = $this->daDataService->getKkmSuggestions($query);
+            $suggestions = $this->daDataService->getKkmSuggestions($query, $level, $cityKladrId, $streetKladrId);
 
             if (count($suggestions) == 0) {
                 throw new KkmException(
@@ -238,11 +224,33 @@ class KkmService implements LoggerAwareInterface
             }
 
             foreach ($suggestions as $key => &$suggestion) {
-                if ($suggestion['value'] && $suggestion['data']['city_kladr_id']) {
-                    $suggestion = [
-                        'address'  => $suggestion['value'],
-                        'kladr_id' => $suggestion['data']['city_kladr_id']
-                    ];
+                if ($suggestion['value'] && $suggestion['data']['kladr_id']) {
+                    switch ($level) {
+                        case 'city':
+                            $suggestion = [
+                                'address'       => $suggestion['data']['settlement_with_type'] ?: $suggestion['data']['city_with_type'],
+                                'city_kladr_id' => $suggestion['data']['kladr_id'],
+                                'hint'          => $suggestion['unrestricted_value']
+                            ];
+                            break;
+                        case 'street':
+                            $suggestion = [
+                                'address'         => $suggestion['data']['street'],
+                                'city_kladr_id'   => $suggestion['data']['settlement_kladr_id'] ?: $suggestion['data']['city_kladr_id'],
+                                'street_kladr_id' => $suggestion['data']['kladr_id'],
+                                'hint'            => $suggestion['unrestricted_value']
+                            ];
+                            break;
+                        case 'house':
+                            $suggestion = [
+                                'address'         => $suggestion['data']['house'],
+                                'city_kladr_id'   => $suggestion['data']['settlement_kladr_id'] ?: $suggestion['data']['city_kladr_id'],
+                                'street_kladr_id' => $suggestion['data']['street_kladr_id'],
+                                'house_kladr_id'  => $suggestion['data']['kladr_id'],
+                                'hint'            => $suggestion['unrestricted_value']
+                            ];
+                            break;
+                    }
                 } else {
                     unset($suggestions[$key]);
                 }
@@ -272,6 +280,7 @@ class KkmService implements LoggerAwareInterface
 
     /**
      * @param string $query
+     *
      * @return array
      */
     public function geocode($query): array
@@ -284,7 +293,18 @@ class KkmService implements LoggerAwareInterface
                 );
             }
 
-            $xmlResponse = simplexml_load_file(static::YANDEX_GEOCODE_URL . urlencode($query) . '&key=' . urlencode(static::YANDEX_API_KEY) . '&results=1');
+            try {
+                $ch = curl_init(static::YANDEX_GEOCODE_URL . urlencode($query) . '&key=' . urlencode(static::YANDEX_API_KEY) . '&results=1');
+                curl_setopt_array($ch, static::YANDEX_REQUEST_PARAMS);
+                $content = curl_exec($ch);
+                curl_close($ch);
+                $xmlResponse = simplexml_load_string($content);
+            } catch (Exception $e) {
+                throw new KkmException(
+                    static::RESPONSE_STATUSES['internal_error']['message'] . ': не удалось отправить запрос в Яндекс',
+                    static::RESPONSE_STATUSES['internal_error']['code']
+                );
+            }
 
             if (!$xmlResponse instanceof SimpleXMLElement) {
                 throw new KkmException(
@@ -355,11 +375,11 @@ class KkmService implements LoggerAwareInterface
 
     /**
      * @param string $kladrId
-     * @param array $products
-     * @param $storeCode
+     * @param array  $products
+     *
      * @return array
      */
-    public function getDeliveryRules(string $kladrId, array $products, $storeCode): array
+    public function getDeliveryRules(string $kladrId, array $products): array
     {
         try {
             if (!$kladrId) {
