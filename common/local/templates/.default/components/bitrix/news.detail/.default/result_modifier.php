@@ -83,7 +83,7 @@ if (!empty($arResult['ACTIVE_FROM']) && !empty($arResult['ACTIVE_TO'])) {
     $arResult['DISPLAY_ACTIVE_FROM'] .= \CIBlockFormatProperties::DateFormat($arParams['ACTIVE_DATE_FORMAT'], MakeTimeStamp($arResult['ACTIVE_TO'], \CSite::GetDateFormat()));
     $arResult['DISPLAY_ACTIVE_FROM'] = ToLower($arResult['DISPLAY_ACTIVE_FROM']);
 }
-$arResult['ACTIVE'] = $arResult['IBLOCK']['ACTIVE'];
+
 /**  DETAIL_PICTURE и PREVIEW_TEXT для отправки в соц сети */
 $this->__component->setResultCacheKeys(
     [
