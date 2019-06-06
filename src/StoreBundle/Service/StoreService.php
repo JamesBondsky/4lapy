@@ -300,10 +300,11 @@ class StoreService implements LoggerAwareInterface
 
     /**
      * @param string $type
+     * @param string $locationCode
      *
      * @return StoreSearchResult
      */
-    public function getAllStores(string $type = self::TYPE_ALL): StoreSearchResult
+    public function getAllStores(string $type = self::TYPE_ALL, $locationCode): StoreSearchResult
     {
         $getStores = function () use ($type) {
             $storeCollection = $this->getStores($type);
@@ -329,10 +330,12 @@ class StoreService implements LoggerAwareInterface
             $stores = new StoreCollection();
         }
 
+        $location = $this->locationService->findLocationByCode($locationCode);
+
         return (new StoreSearchResult())
             ->setType(StoreLocationType::ALL)
             ->setStores($stores)
-            ->setLocationName('Все города');
+            ->setLocationName($location['NAME'] ?? 'Все города');
     }
 
     /**
