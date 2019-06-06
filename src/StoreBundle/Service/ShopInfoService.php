@@ -410,14 +410,13 @@ class ShopInfoService
             $stores = new StoreCollection(iterator_to_array($iterator));
 
             if ($sortField == 'address') { //uasort не корреткно сортирует
-                $needStores = array_filter($stores, function ($store) use ($sortBy) {
-                    return $store->getLocation() == $sortBy;
-                });
-
-                $outStores = array_filter($stores, function ($store) use ($sortBy) {
-                    return $store->getLocation() != $sortBy;
-                });
-
+                foreach ($stores as $store) {
+                    if ($store->getLocation() == $sortBy) {
+                        $needStores[$store->getId()] = $store;
+                    } else {
+                        $outStores[$store->getId()] = $store;
+                    }
+                }
                 $stores = new StoreCollection(array_merge($needStores, $outStores));
             }
         }
