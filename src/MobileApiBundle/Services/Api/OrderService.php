@@ -740,12 +740,12 @@ class OrderService
             $intervals = $delivery->getAvailableIntervals();
             $day = FormatDate('d.m.Y l', $delivery->getDeliveryDate()->getTimestamp());
             if (!empty($intervals) && count($intervals)) {
-                foreach ($intervals as $deliveryIntervalIndex => $interval) {
+                foreach ($intervals as $interval) {
                     /** @var Interval $interval */
                     $dates[] = (new DeliveryTime())
                         ->setTitle($day . ' ' . $interval)
                         ->setDeliveryDateIndex($deliveryDateIndex)
-                        ->setDeliveryIntervalIndex($deliveryIntervalIndex)
+                        ->setDeliveryIntervalIndex($interval->getKey())
                     ;
                 }
             } else {

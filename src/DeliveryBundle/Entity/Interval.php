@@ -26,6 +26,11 @@ class Interval
     protected $rules;
 
     /**
+     * @var int
+     */
+    protected $key;
+
+    /**
      * @return int
      */
     public function getFrom(): int
@@ -96,5 +101,23 @@ class Interval
     {
         return date('H:00', mktime($this->getFrom())) .
             ' - ' . date('H:00', mktime($this->getTo()));
+    }
+
+    /**
+     * @param int $key
+     * @return Interval
+     */
+    public function setKey(int $key): Interval
+    {
+        $this->key = $key;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getKey(): int
+    {
+        return $this->key;
     }
 }
