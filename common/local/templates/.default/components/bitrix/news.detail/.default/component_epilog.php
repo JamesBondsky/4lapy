@@ -25,3 +25,22 @@ $APPLICATION->AddViewContent(
     'social-share-image',
     !empty($arResult['DETAIL_PICTURE']['SRC']) ? new FullHrefDecorator($arResult['DETAIL_PICTURE']['SRC']) : ''
 );
+
+$activeTo = $arResult['ACTIVE_TO'] ? new DateTime($arResult['ACTIVE_TO']) : false;
+$currentDate = new DateTime();
+
+
+if ($activeTo && $activeTo < $currentDate) {
+    if (isset($arParams['URL_REDIRECT_404'])) {
+        LocalRedirect($arParams['URL_REDIRECT_404']);
+        return;
+    }
+} else {
+    Bitrix\Iblock\Component\Tools::process404(
+        trim($arParams["MESSAGE_404"]) ?: GetMessage("T_NEWS_DETAIL_NF")
+        , true
+        , true
+        , true
+        , $arParams["FILE_404"]
+    );
+}
