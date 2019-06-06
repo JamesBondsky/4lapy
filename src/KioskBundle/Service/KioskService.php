@@ -197,6 +197,13 @@ class KioskService
         return false;
     }
 
+    public static function getLogoutUrl()
+    {
+        return '/kiosk/logout/';
+    }
+
+
+
     private function findStore(string $storeCode)
     {
         /** @var StoreService $storeService */
