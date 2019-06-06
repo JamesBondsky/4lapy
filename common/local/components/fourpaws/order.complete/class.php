@@ -25,7 +25,6 @@ use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\External\ManzanaPosService;
-use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\ValidationException;
@@ -251,11 +250,6 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
                     $this->arResult['ORDER_PROPERTIES']['DELIVERY_PLACE_CODE']
                 );
             }
-        }
-
-        if(KioskService::isKioskMode()){
-            $this->arResult['KIOSK_MODE'] = true;
-            $this->arResult['KIOSK_LOGOUT_URL'] = KioskService::getLogoutUrl();
         }
 
         $this->arResult['NEED_SHOW_ROYAL_CANIN_BUNNER'] = $this->orderService->checkRoyalCaninAction($order);

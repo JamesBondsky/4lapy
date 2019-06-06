@@ -191,7 +191,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                         <?php } ?>
                     <?php } else { ?>
                         <div class="b-new-bonus-card_block">
-                            <div class="b-new-bonus-card--step1<?= ($storage->getDiscountCardNumber() || $arResult['IS_BIND_CARD_URL']) ? ' hidden' : '' ?>">
+                            <div class="b-new-bonus-card--step1<?= $storage->getDiscountCardNumber() ? ' hidden' : '' ?>">
                                 <div class="b-new-bonus-card">
                                     <? if ($arResult['KIOSK'] && !$user) { ?>
                                         <a href="<?=$arResult['BIND_CARD_URL']?>"><p>Укажите бонусную карту</p></a>
@@ -202,7 +202,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                     <span>Для зачисления баллов</span>
                                 </div>
                             </div>
-                            <div class="b-new-bonus-card--step2 <?=(!$arResult['IS_BIND_CARD_URL']) ? 'hidden' : ''?>">
+                            <div class="b-new-bonus-card--step2 hidden">
                                 <span class="title">Номер бонусной карты</span>
                                 <span class="js-new-card-cancel"></span>
                                 <form class="b-account-bonus-card__form js-form-validation js-offers-query success-valid"
@@ -210,7 +210,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                     <div class="b-order-contacts__link b-order-contacts__link--hidden js-number-input">
                                         <div class="b-input b-input--account-bonus js-offers">
                                             <input class="b-input__input-field b-input__input-field--account-bonus js-offers ok"
-                                                   value="<?= ($arResult['KISOK'] && $arResult['KIOSK_CARD_NUMBER']) ? $arResult['KIOSK_CARD_NUMBER'] : $storage->getDiscountCardNumber() ?>"
+                                                   value="<?= ($arResult['KISOK'] &&  $arResult['KIOSK_CARD_NUMBER']) ? $arResult['KIOSK_CARD_NUMBER'] : $storage->getDiscountCardNumber() ?>"
                                                    type="text" id="bonus" placeholder="" name="text" data-url="">
                                             <div class="b-error b-error--ok">
                                                 <span class="js-message">Поле верно заполнено</span>

@@ -20,7 +20,6 @@ use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Collection\DeliveryScheduleResultCollection;
 use FourPaws\DeliveryBundle\Service\DeliveryScheduleResultService;
-use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\StoreBundle\Collection\ScheduleResultCollection;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -717,21 +716,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             $result1 = $storeData1['RESULT'];
             /** @var PickupResult $result2 */
             $result2 = $storeData2['RESULT'];
-
-            /** в киоске первым идёт магазин, в котором он стоит */
-            if (KioskService::isKioskMode()) {
-                /** @var KioskService $kioskService */
-                $kioskService = Application::getInstance()->getContainer()->get('kiosk.service');
-                $store = $kioskService->getStore();
-                if ($store) {
-                    if($store1->getXmlId() == $store->getXmlId()){
-                        return -1;
-                    }
-                    if($store2->getXmlId() == $store->getXmlId()){
-                        return 1;
-                    }
-                }
-            }
 
             /** в начало переносим склады с доступной доставкой/самовывозом */
             if ($result1->isSuccess() !== $result2->isSuccess()) {

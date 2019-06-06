@@ -629,7 +629,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 /** csrf custom sms send protection */
                 if ((true)
                     && ProtectorHelper::checkToken($request->get(ProtectorHelper::getField(ProtectorHelper::TYPE_REGISTER_SMS_SEND)), ProtectorHelper::TYPE_REGISTER_SMS_SEND)
-                    && ($recaptchaService->checkCaptcha($request->get('g-recaptcha-response')) || KioskService::isKioskMode())
+                    && $recaptchaService->checkCaptcha($request->get('g-recaptcha-response'))
                 ) {
                     $res = $this->ajaxGetSendSmsCode($phone);
                 } else {
