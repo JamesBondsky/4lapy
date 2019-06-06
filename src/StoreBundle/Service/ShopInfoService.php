@@ -344,7 +344,17 @@ class ShopInfoService
             }
         }
 
-        $storeSearchResult = $this->storeService->getAllStores(StoreService::TYPE_SHOP, $locationCode);
+        if ($locationCode) {
+            $storeSearchResult = $this->storeService->getStoresByLocation($locationCode, StoreService::TYPE_SHOP);
+        }
+
+        /**
+         * если не задано местоположение или не нашлось ни одного магазина в городе/районе/регионе
+         * возвращаем все магазины
+         */
+        if (!$locationCode || $storeSearchResult->getStores()->isEmpty()) {
+            $storeSearchResult = $this->storeService->getAllStores(StoreService::TYPE_SHOP);
+        }
 
         return $storeSearchResult;
     }
@@ -391,18 +401,12 @@ class ShopInfoService
     protected function sortByRequest(StoreCollection $stores, Request $request, array $metroList = []): StoreCollection
     {
         if ($sortField = $request->get('sort', '')) {
-            $sortBy = $request->get('code', '');
             $iterator = $stores->getIterator();
-            $iterator->uasort(function (Store $store1, Store $store2) use ($sortField, $metroList, $sortBy) {
+            $iterator->uasort(function (Store $store1, Store $store2) use ($sortField, $metroList) {
                 $result = 0;
                 switch ($sortField) {
                     case 'address':
-                        $result = (int)(in_array($sortBy, $store1->getRegion()) || in_array($sortBy, $store2->getRegion()));
-
-                        if($result == 0) {
-                            $result = -1;
-                        }
-
+                        $result = $store1->getAddress() <=> $store2->getAddress();
                         break;
                     case 'metro':
                         $result = $metroList[$store1->getMetro()] <=> $store2->getMetro();
