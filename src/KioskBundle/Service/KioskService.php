@@ -149,7 +149,7 @@ class KioskService
     public function setStore(string $storeCode)
     {
         if ($store = $this->findStore($storeCode)){
-            $_SESSION['STORE'] = $store->getXmlId();
+            $_SESSION['KIOSK_STORE'] = $store->getXmlId();
 
             if (!empty($store->getLocation())) {
                 /** @var LocationService $locationService */
@@ -191,8 +191,8 @@ class KioskService
 
     public function getStore()
     {
-        if($_SESSION['STORE']){
-            return $this->findStore($_SESSION['STORE']);
+        if($_SESSION['KIOSK_STORE']){
+            return $this->findStore($_SESSION['KIOSK_STORE']);
         }
         return false;
     }
