@@ -38,12 +38,12 @@ class KioskController extends Controller
     const ERROR_MORE_THAN_ONE_USER = 2; // более 1 юзера
 
     /**
-     * Авторизация по ШК
-     *
-     * @param $card
-     * @Route("/auth/", methods={"GET", "POST"})
-     * @throws \Exception
-     */
+ * Авторизация по ШК
+ *
+ * @param $card
+ * @Route("/auth/", methods={"GET", "POST"})
+ * @throws \Exception
+ */
     public function authByCard(Request $request)
     {
         global $USER;
@@ -54,7 +54,6 @@ class KioskController extends Controller
 
         try {
             $card = $request->get('card');
-            $card = $this->transformCard($card);
             if(empty($card)){
                 throw new \Exception(self::ERROR_BAD_CARD);
             }
@@ -99,16 +98,32 @@ class KioskController extends Controller
                 $USER->Logout();
             }
 
-            unset($_SESSION);
+            $responce = JsonSuccessResponse::create(
+                sprintf("Пользователь успешно разавторизован"),
+                200,
+                [],
+                [
+                    'reload' => true,
+                    'redirect' => '',
+                ]
+            );
 
         } catch (\Exception $e) {
-            // такого не должно быть
+            $responce = JsonSuccessResponse::create(
+                sprintf("Не удалось разавторизоваться: %s", $e->getMessage()),
+                200,
+                [],
+                [
+                    'reload' => true,
+                    'redirect' => '',
+                ]
+            );
         }
-        return $this->redirect("/");
+        return $responce;
     }
 
     /**
-     * Привязка карты к заказу
+     * Авторизация по ШК
      *
      * @param $card
      * @Route("/bindcard/", methods={"GET", "POST"})
@@ -125,7 +140,6 @@ class KioskController extends Controller
 
         try {
             $card = $request->get('card');
-            $card = $this->transformCard($card);
             if(empty($card)){
                 throw new \Exception(self::ERROR_BAD_CARD);
             }
@@ -135,16 +149,5 @@ class KioskController extends Controller
         }
 
         return $this->redirect('/sale/order/payment/');
-    }
-
-    /**
-     * Удаляет цифры из кода карты
-     *
-     * @param string $card
-     * @return string|string[]|null
-     */
-    private function transformCard(string $card)
-    {
-        return preg_replace('/[^0-9]/', '', $card);
     }
 }

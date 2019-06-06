@@ -13,7 +13,6 @@ use Bitrix\Sale\UserMessageException;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Adapter\DaDataLocationAdapter;
 use FourPaws\Adapter\Model\Output\BitrixLocation;
-use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
@@ -24,7 +23,6 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundExcep
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
-use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Enum\OrderAvailability;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -670,38 +668,6 @@ class ShopInfoService
             }
         }
     }
-
-    public function shopCompareByKiosk($a, $b): int
-    {
-        /** @var KioskService $kioskService */
-        $kioskService = Application::getInstance()->getContainer()->get('kiosk.service');
-        $store = $kioskService->getStore();
-        if (!$store) {
-            return 0;
-        }
-
-        if ($a instanceof \FourPaws\MobileApiBundle\Dto\Object\Store\Store && $b instanceof \FourPaws\MobileApiBundle\Dto\Object\Store\Store)
-        {
-            /** @var \FourPaws\MobileApiBundle\Dto\Object\Store\Store $a */
-            /** @var \FourPaws\MobileApiBundle\Dto\Object\Store\Store $b */
-            if ($a->getCode() === $store->getCode()) {
-                return 1;
-            } elseif ($b->getCode() === $store->getCode()) {
-                return -1;
-            } else {
-                return 0;
-            }
-        } else {
-            if ($a['id'] == $store->getXmlId()){
-                return -1;
-            } elseif ($b['id'] == $store->getCode()) {
-                return 1;
-            } else {
-                return 0;
-            }
-        }
-    }
-
 
     /**
      * @param \FourPaws\MobileApiBundle\Dto\Object\Store\Store|array $item
