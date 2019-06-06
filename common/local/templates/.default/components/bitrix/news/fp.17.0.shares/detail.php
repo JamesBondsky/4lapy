@@ -60,7 +60,6 @@ $elementId = $APPLICATION->IncludeComponent(
         'USE_SHARE'                 => $arParams['USE_SHARE'],
         'ADD_ELEMENT_CHAIN'         => $arParams['ADD_ELEMENT_CHAIN'],
         'STRICT_SECTION_CHECK'      => $arParams['STRICT_SECTION_CHECK'],
-        'URL_REDIRECT_404'          => $arParams['URL_REDIRECT_404'],
     ],
     $component,
     [
