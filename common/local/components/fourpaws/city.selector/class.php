@@ -57,7 +57,7 @@ class FourPawsCitySelectorComponent extends \CBitrixComponent
      */
     protected function prepareResult()
     {
-        /** @var Router */
+        /** @var Router $router */
         $router = Application::getInstance()->getContainer()->get('router');
         /** @var RouteCollection $routes */
         $routes = $router->getRouteCollection();
