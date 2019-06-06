@@ -9,7 +9,15 @@
 namespace FourPaws\KioskBundle\Service;
 
 use Bitrix\Main\Application;
-use Symfony\Component\HttpFoundation\Request;
+use Bitrix\Main\Web\Cookie;
+use FourPaws\App\Application as SymfonyApplication;
+use FourPaws\LocationBundle\LocationService;
+use FourPaws\StoreBundle\Exception\NotFoundException;
+use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\UserBundle\Enum\UserLocationEnum;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserCitySelectInterface;
+use FourPaws\UserBundle\Service\UserService;
 
 class KioskService
 {
@@ -120,7 +128,6 @@ class KioskService
     }
 
 
-
     /**
      * @param string $card
      * @return string
@@ -137,6 +144,72 @@ class KioskService
     public function getCardNumber()
     {
         return $_SESSION['KIOSK_CARD'];
+    }
+
+    public function setStore(string $storeCode)
+    {
+        if ($store = $this->findStore($storeCode)){
+            $_SESSION['KIOSK_STORE'] = $store->getXmlId();
+
+            if (!empty($store->getLocation())) {
+                /** @var LocationService $locationService */
+                $locationService = SymfonyApplication::getInstance()->getContainer()->get('location.service');
+                /** @var UserService $userService */
+                $userService = SymfonyApplication::getInstance()->getContainer()->get(UserCitySelectInterface::class);
+
+                $cityStore = $locationService->findLocationCityByCode($store->getLocation());
+                $cityCurrent = $userService->getSelectedCity();
+                if($cityStore['ID'] != $cityCurrent['ID']) {
+                    $userService->setSelectedCity($cityStore['CODE']);
+
+                    // при смене города куки меняются на фронте, поэтому делаем это вручную
+                    // иначе будет отображаться старый город
+                    $application = Application::getInstance();
+                    $context = $application->getContext();
+
+                    // на фронте есть чудесная проверка на тестовую среду, где добавляется точка к домену
+                    $domain = $context->getServer()->getHttpHost();
+                    if(strstr($domain, 'local')){
+                        $domain = '.'.$domain;
+                    }
+
+                    $cookie = new Cookie(UserLocationEnum::DEFAULT_LOCATION_COOKIE_CODE, $cityStore['CODE'], time() + 60*60*24*60, false);
+                    $cookie->setDomain($domain);
+                    $cookie->setHttpOnly(false);
+
+                    $context->getResponse()->addCookie($cookie);
+                    $context->getResponse()->flush("");
+
+                    $_COOKIE[UserLocationEnum::DEFAULT_LOCATION_COOKIE_CODE] = $cityStore['CODE'];
+                }
+            }
+
+            return $store;
+        }
+        return false;
+    }
+
+    public function getStore()
+    {
+        if($_SESSION['KIOSK_STORE']){
+            return $this->findStore($_SESSION['KIOSK_STORE']);
+        }
+        return false;
+    }
+
+    public static function getLogoutUrl()
+    {
+        return '/kiosk/logout/';
+    }
+
+
+
+    private function findStore(string $storeCode)
+    {
+        /** @var StoreService $storeService */
+        $storeService = $addressService = SymfonyApplication::getInstance()->getContainer()->get('store.service');
+        $store = $storeService->getStoreByXmlId($storeCode);
+        return $store;
     }
 
 

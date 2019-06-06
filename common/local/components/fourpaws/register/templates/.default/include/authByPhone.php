@@ -3,6 +3,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 use FourPaws\Helpers\ProtectorHelper;
+use FourPaws\KioskBundle\Service\KioskService;
 
 /** @var string $phone */ ?>
 <div class="b-registration__content b-registration__content--moiety b-registration__content--step">
@@ -29,9 +30,9 @@ use FourPaws\Helpers\ProtectorHelper;
                 <div class="b-error"><span class="js-message"></span></div>
             </div>
             <div class="b-input-line__warning">
-                <p class="b-input-line__text-warning">Пользователь с этим номером телефона уже зарегистрирован в нашем
+                <p class="b-input-line__text-warning <? if(KioskService::isKioskMode()) { ?>b-input-line__text-warning--red<? } ?>">Пользователь с этим номером телефона уже зарегистрирован в нашем
                                                       магазине.</p>
-                <p class="b-input-line__text-warning">Попробуйте ввести пароль для входа в систему.</p>
+                <p class="b-input-line__text-warning <? if(KioskService::isKioskMode()) { ?>b-input-line__text-warning--red<? } ?>">Попробуйте ввести пароль для входа в систему.</p>
             </div>
         </div>
         <div class="b-input-line b-input-line--phone-two js-pass-forget">
