@@ -4,6 +4,7 @@ use Bitrix\Main\Application;
 use FourPaws\CatalogBundle\Service\CatalogLandingService;
 use FourPaws\Helpers\ProtectorHelper;
 use FourPaws\App\Application as App;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 
 
@@ -15,6 +16,8 @@ $request = Application::getInstance()
     ->getContext()
     ->getRequest();
 $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
+
+$isKioskMode = $arResult['KIOSK'] || KioskService::isKioskMode();
 
 /** @var string $phone */ ?>
 <div class="b-registration__content b-registration__content--moiety b-registration__content--step">
@@ -45,9 +48,12 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
         </div>
 
         <?
+        if (!$isKioskMode) {
             /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
             $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
             echo $recaptchaService->getCaptcha(' b-input-line', true, '', 'registerStep1');
+            echo $recaptchaService->getCaptcha(' b-input-line', true);
+        }
         ?>
 
         <button class="b-button b-button--social b-button--full-width">Отправить код</button>

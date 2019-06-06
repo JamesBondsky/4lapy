@@ -28,6 +28,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaService;
@@ -156,6 +157,9 @@ class OrderController extends Controller implements LoggerAwareInterface
         );
         array_walk($shopInfo['items'], [$this->storeShopInfoService, 'locationTypeSortDecorate']);
         usort($shopInfo['items'], [$this->storeShopInfoService, 'shopCompareByLocationType']);
+        if (KioskService::isKioskMode()){
+            usort($shopInfo['items'], [$this->storeShopInfoService, 'shopCompareByKiosk']);
+        }
         array_walk($shopInfo['items'], [$this->storeShopInfoService, 'locationTypeSortUndecorate']);
 
         return JsonSuccessResponse::createWithData(

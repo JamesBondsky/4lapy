@@ -148,6 +148,7 @@ if ($template->hasMainWrapper()) {
 </footer>
 <div class="b-shadow js-shadow"></div>
 <div class="b-shadow b-shadow--popover js-open-shadow"></div>
+<? if(KioskService::isKioskMode()) { ?><div class="back-kiosk js-back-kiosk">Назад</div><? } ?>
 </div>
 <?php require_once __DIR__ . '/blocks/footer/popups.php' ?>
 <script src="<?= $markup->getJsFile() ?>"></script>

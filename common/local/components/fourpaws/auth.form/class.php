@@ -154,8 +154,11 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 $this->arResult['BACK_URL'] = $backUrl;
             }
 
+            $this->arResult['IS_SHOW_CAPTCHA'] = $this->isShowCapthca();
             $this->setSocial();
+
             unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
+
             $this->includeComponentTemplate();
         } catch (Exception $e) {
             try {
@@ -252,8 +255,10 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         $checkedCaptcha = true;
         //if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > 3) {
             try {
-                $recaptchaService = $container->get(ReCaptchaInterface::class);
-                $checkedCaptcha = $recaptchaService->checkCaptcha();
+                if ($this->isShowCapthca()) {
+                    $recaptchaService = $container->get(ReCaptchaInterface::class);
+                    $checkedCaptcha = $recaptchaService->checkCaptcha();
+                }
                 $this->userAuthorizationService->clearLoginAttempts($rawLogin);
             } catch (Exception $e) {
                 return $this->ajaxMess->getSystemError()->extendData($newTokenResponse);
@@ -369,7 +374,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 $needWritePhone = true;
             }
         } catch (UsernameNotFoundException $e) {
-            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] === 3) {
+            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] === 3 && $this->isShowCapthca()) {
                 try {
                     $this->setSocial();
                     $html = $this->getHtml(
@@ -393,7 +398,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
             return $this->ajaxMess->getWrongPasswordError($newTokenResponse);
         } catch (InvalidCredentialException $e) {
-            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] === 3) {
+            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] === 3 && $this->isShowCapthca()) {
                 try {
                     $this->setSocial();
                     $html = $this->getHtml(
@@ -536,7 +541,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         $_SESSION['COUNT_AUTH_CONFIRM_CODE']++;
 
         $checkedCaptcha = true;
-        if ($_SESSION['COUNT_AUTH_CONFIRM_CODE'] > 3) {
+        if ($_SESSION['COUNT_AUTH_CONFIRM_CODE'] > 3 && $this->isShowCapthca()) {
             try {
                 $recaptchaService = $container->get(ReCaptchaInterface::class);
                 $checkedCaptcha = $recaptchaService->checkCaptcha();
@@ -1044,5 +1049,10 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
 
         return $mess;
+    }
+
+    protected function isShowCapthca()
+    {
+        return !KioskService::isKioskMode();
     }
 }
