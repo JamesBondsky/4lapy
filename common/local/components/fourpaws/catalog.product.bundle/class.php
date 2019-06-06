@@ -10,6 +10,7 @@
 namespace FourPaws\Components;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Catalog\Model\Product;
 use CBitrixComponent;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -58,6 +59,7 @@ class CatalogDetailBundle extends CBitrixComponent
         $currentOffer = $this->arParams['OFFER'];
         try {
             $this->arResult['BUNDLE'] = $currentOffer->getBundle();
+            $this->getBrands();
         } catch (\Exception $e) {
             $logger = LoggerFactory::create('productDetail');
             $logger->error($e->getMessage());
@@ -128,5 +130,27 @@ class CatalogDetailBundle extends CBitrixComponent
                 'бонусов',
             ])
         );
+    }
+
+    protected function getBrands(): void
+    {
+        $offersIds = [];
+        foreach ($this->arResult['BUNDLE']->getProducts() as $product) {
+            array_push($offersIds, $product->getOfferId());
+        }
+        $products = \CCatalogSKU::getProductList(array_values($offersIds));
+        $productsIds = [];
+        foreach ($products as $offerId => $productItem) {
+            $productsIds[$productItem['ID']] = $offerId;
+        }
+        $brands = [];
+        if (array_keys($productsIds)) {
+            $productsDb = \CIBlockElement::GetList([], ['ID' => array_keys($productsIds)], false, false, ['ID', 'PROPERTY_BRAND.NAME']);
+            while ($productData = $productsDb->Fetch()) {
+                $brands[$productsIds[$productData['ID']]] = $productData['PROPERTY_BRAND_NAME'];
+            }
+        }
+
+        $this->arResult['BRANDS'] = $brands;
     }
 }
