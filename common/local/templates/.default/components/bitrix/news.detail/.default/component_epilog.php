@@ -26,11 +26,11 @@ $APPLICATION->AddViewContent(
     !empty($arResult['DETAIL_PICTURE']['SRC']) ? new FullHrefDecorator($arResult['DETAIL_PICTURE']['SRC']) : ''
 );
 
-$activeTo = $arResult['ACTIVE_TO'] ? new DateTime($arResult['ACTIVE_TO']) : false;
+$activeTo = new DateTime($arResult['ACTIVE_TO']);
 $currentDate = new DateTime();
 
 
-if ($activeTo && $activeTo < $currentDate) {
+if (($activeTo && $activeTo < $currentDate && $arResult['ACTIVE_TO']) || $arResult['ACTIVE'] != 'Y') {
     if (isset($arParams['URL_REDIRECT_404'])) {
         LocalRedirect($arParams['URL_REDIRECT_404']);
         return;

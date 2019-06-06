@@ -91,5 +91,6 @@ $this->__component->setResultCacheKeys(
         'DETAIL_PICTURE',
         'PREVIEW_TEXT',
         'ACTIVE_TO',
+        'ACTIVE',
     ]
 );
