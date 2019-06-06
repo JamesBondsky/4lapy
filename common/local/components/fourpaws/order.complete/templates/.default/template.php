@@ -227,7 +227,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                     <?php }
                 } ?>
                 <? if ($arResult['KIOSK_MODE']) { ?>
-                    <a href="<?=$arResult['KIOSK_LOGOUT_URL']?>" class="b-counter-basket__basket-link">Завершить покупки</a>
+                    <a href="<?=$arResult['KIOSK_LOGOUT_URL']?>" class="b-button b-button--complete-kiosk">Завершить покупки</a>
                 <? } ?>
                 <hr class="b-hr b-hr--order"/>
                 <div class="b-order__text-block">
