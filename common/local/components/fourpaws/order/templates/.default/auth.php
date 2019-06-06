@@ -256,7 +256,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                         </div>
                         <?php if (!$storage->isCaptchaFilled()) { ?>
                             <div class="b-input-line">
-                                <?= $recaptchaService->getCaptcha('', false, '', 'orderAuth') ?>
+                                <?= $recaptchaService->getCaptcha() ?>
                             </div>
                         <?php } ?>
                     </form>
