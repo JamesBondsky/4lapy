@@ -144,9 +144,11 @@ class CatalogDetailBundle extends CBitrixComponent
             $productsIds[$productItem['ID']] = $offerId;
         }
         $brands = [];
-        $productsDb = \CIBlockElement::GetList([], ['ID' => array_keys($productsIds)], false, false, ['ID', 'PROPERTY_BRAND.NAME']);
-        while ($productData = $productsDb->Fetch()) {
-            $brands[$productsIds[$productData['ID']]] = $productData['PROPERTY_BRAND_NAME'];
+        if (array_keys($productsIds)) {
+            $productsDb = \CIBlockElement::GetList([], ['ID' => array_keys($productsIds)], false, false, ['ID', 'PROPERTY_BRAND.NAME']);
+            while ($productData = $productsDb->Fetch()) {
+                $brands[$productsIds[$productData['ID']]] = $productData['PROPERTY_BRAND_NAME'];
+            }
         }
 
         $this->arResult['BRANDS'] = $brands;

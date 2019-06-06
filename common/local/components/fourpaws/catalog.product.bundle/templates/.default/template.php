@@ -50,7 +50,7 @@ $bundle = $arResult['BUNDLE']; ?>
                             <div class="product-link">
                                 <span class="b-clipped-text b-clipped-text--advice">
                                     <span>
-                                        <?= isset($arResult['BRANDS'][$product->getOfferId()]) ? $arResult['BRANDS'][$product->getOfferId()] : '' ?> <?= $offer->getName(); ?>
+                                        <?= isset($arResult['BRANDS'][$product->getOfferId()]) ?? $arResult['BRANDS'][$product->getOfferId()] ?> <?= $offer->getName(); ?>
                                     </span>
                                 </span>
                             </div>
