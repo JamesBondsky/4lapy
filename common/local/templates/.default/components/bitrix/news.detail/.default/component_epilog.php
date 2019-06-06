@@ -36,11 +36,13 @@ if (($activeTo && $activeTo < $currentDate && $arResult['ACTIVE_TO']) || $arResu
         return;
     }
 } else {
-    Bitrix\Iblock\Component\Tools::process404(
-        trim($arParams["MESSAGE_404"]) ?: GetMessage("T_NEWS_DETAIL_NF")
-        , true
-        , true
-        , true
-        , $arParams["FILE_404"]
-    );
+    if ($arResult['ACTIVE'] != 'Y') {
+        Bitrix\Iblock\Component\Tools::process404(
+            trim($arParams["MESSAGE_404"]) ?: GetMessage("T_NEWS_DETAIL_NF")
+            , true
+            , true
+            , true
+            , $arParams["FILE_404"]
+        );
+    }
 }
