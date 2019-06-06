@@ -90,7 +90,7 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
                 </div>
             </div>
             <?php
-            if ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3) {
+            if ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3 && $arResult['IS_SHOW_CAPTCHA']) {
                 try {
                     $recaptchaService = App::getInstance()
                         ->getContainer()
