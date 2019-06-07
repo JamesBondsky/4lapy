@@ -455,6 +455,13 @@ class UserService
         $user = $this->userRepository->find($session->getUserId());
         $bonusInfo = $this->appBonusService->getManzanaBonusInfo($user);
 
+        try {
+            $this->userBundleService->refreshUserBonusPercent($user, $bonusInfo);
+        } catch (\Exception $e) {
+            $logger = LoggerFactory::create('getPersonalBonus');
+            $logger->error(sprintf('%s exception: %s', __METHOD__, $e->getMessage()));
+        }
+
         return (new PersonalBonus())
             ->setAmount($user->getDiscount() ?? 0)
             ->setTotalIncome($bonusInfo->getDebit() ?? 0)
