@@ -128,7 +128,7 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
                 </div>
             <? } else { ?>
                 <div class="b-authorize-by-card">
-                    <div class="b-authorize-by-card__text">Поднесите карту к сканеру</div>
+                    <div class="b-authorize-by-card__text">Поднесите карту к сканеру штрих-кодом</div>
                     <span class="b-icon b-icon--barcode-kiosk">
                         <?= new SvgDecorator('icon-barcode', 51, 37) ?>
                     </span>
