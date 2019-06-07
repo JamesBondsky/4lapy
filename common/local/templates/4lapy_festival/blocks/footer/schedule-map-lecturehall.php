@@ -1,4 +1,4 @@
-<section class="popwrap popwrap_content js-popup-section" data-popup="schedule-map-lecturehall">
+<section class="popwrap popwrap--lecturehall popwrap_content js-popup-section" data-popup="schedule-map-lecturehall">
     <div class="btn-close btn-close--form js-close-popup"></div>
     <div class="popwrap__content popup-schedule">
         <div class="popup-schedule__subtitle">Все активности ждут гостей <nobr>с 11:00 до 18:00</nobr></div>
