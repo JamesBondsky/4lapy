@@ -254,16 +254,16 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                     <?php
                     if (!KioskService::isKioskMode()){
                         $APPLICATION->IncludeFile(
-                            'blocks/components/social_share.php',
-                            [
-                                'shareTitle' => 'Расскажите о нас друзьям',
-                                'shareUrl' => '/',
-                            ],
-                            [
-                                'SHOW_BORDER' => false,
-                                'NAME' => 'Блок Рассказать в соцсетях',
-                                'MODE' => 'php',
-                            ]
+                        'blocks/components/social_share.php',
+                        [
+                            'shareTitle' => 'Расскажите о нас друзьям',
+                            'shareUrl' => '/',
+                        ],
+                        [
+                            'SHOW_BORDER' => false,
+                            'NAME' => 'Блок Рассказать в соцсетях',
+                            'MODE' => 'php',
+                        ]
                         );
                     }
                     ?>
