@@ -397,7 +397,7 @@ class StoreService implements LoggerAwareInterface
 
         if ($locationCode = $location['CODE']) {
             $getStores = function () use ($locationCode, $type) {
-                $storeCollection = $this->getStores($type, ['UF_LOCATION' => $locationCode]);
+                $storeCollection = $this->getStores($type, ['UF_REGION' => $locationCode]);
 
                 return ['result' => $storeCollection];
             };
