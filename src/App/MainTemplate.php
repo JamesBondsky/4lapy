@@ -475,7 +475,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function hasUserAuth(): bool
     {
-        return $this->isDir('/ajax/user/auth/login-r') || $this->isPartitionDirByFilePath('/personal') || $this->isPartitionDirByFilePath('/sale');
+        return $this->isDir('/ajax/user/auth/login-r') || $this->isDir('/api/user_login') || $this->isPartitionDirByFilePath('/personal') || $this->isPartitionDirByFilePath('/sale');
     }
 
     /**
