@@ -1368,6 +1368,7 @@ body.is_open_banner_top .header.navbar-fixed-top{
         z-index: 2;
         margin-left: 360px;
         font-size: 18px;
+        line-height: 1.1;
         color: #fff;
     }
     #konkurs .video_wrapper {
@@ -2236,9 +2237,6 @@ body.is_open_banner_top .header.navbar-fixed-top{
         }
 
     #konkurs_scheme {}
-        #konkurs .join_btn {
-            margin-top: -100px;
-        }
         #konkurs .konkurs__link-rules {
             display: block;
             right: auto;
@@ -2247,7 +2245,7 @@ body.is_open_banner_top .header.navbar-fixed-top{
             text-align: center;
         }
         #konkurs .promo-banner .content-lg {
-            padding-bottom: 120px;
+            padding-bottom: 140px;
         }
         .konkurs_scheme {
             left: 0%;
