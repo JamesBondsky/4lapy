@@ -89,11 +89,16 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
                     </div>
                 </div>
             </div>
-            <?
-            /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
-            $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
-            echo $recaptchaService->getCaptcha('', true, '', 'captchaAuthorize');
-            ?>
+            <?php
+            if ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3 && $arResult['IS_SHOW_CAPTCHA']) {
+                try {
+                    $recaptchaService = App::getInstance()
+                        ->getContainer()
+                        ->get(ReCaptchaInterface::class);
+                    echo $recaptchaService->getCaptcha('', true);
+                } catch (ApplicationCreateException $e) {
+                }
+            } ?>
             <div>
                 <span class="b-registration__auth-error">
                     <?= (int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3 ? 'Неверный логин или пароль' : '' ?>
@@ -123,10 +128,13 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
                 </div>
             <? } else { ?>
                 <div class="b-authorize-by-card">
-                    <span class="b-icon">
+                    <div class="b-authorize-by-card__text">Поднесите карту к сканеру</div>
+                    <span class="b-icon b-icon--barcode-kiosk">
                         <?= new SvgDecorator('icon-barcode', 51, 37) ?>
                     </span>
-                    <div class="b-authorize-by-card__text">Отсканировать карту</div>
+                    <span class="b-icon b-icon--arr-barcode-kiosk">
+                        <?= new SvgDecorator('icon-arr-barcode', 15, 9) ?>
+                    </span>
                 </div>
             <? } ?>
 

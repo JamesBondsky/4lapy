@@ -22,6 +22,8 @@ use FourPaws\UserBundle\Service\UserService;
 class KioskService
 {
 
+    const DEFAULT_STORE = 'R238';
+
     protected static $menu = [
         'https://www.dobrolap.ru/',
         'https://breeders.4lapy.ru/catalog/?owners=clubs',
@@ -202,6 +204,10 @@ class KioskService
         return '/kiosk/logout/';
     }
 
+    public function getDefaultStoreXmlId()
+    {
+        return self::DEFAULT_STORE;
+    }
 
 
     private function findStore(string $storeCode)
@@ -211,6 +217,4 @@ class KioskService
         $store = $storeService->getStoreByXmlId($storeCode);
         return $store;
     }
-
-
 }

@@ -210,7 +210,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
                               maxlength="1000"></textarea>
                     <div class="b-error"><span class="js-message"></span></div>
                 </div>
-                <? if (!KioskService::isKioskMode()) { ?>
+                <? if (KioskService::isKioskMode()) { ?>
                     <div class="js-comments-captcha-block-<?= $uniqueCommentString ?>" style="display: none"></div>
                 <? } ?>
                 <button class="b-button b-button--form-review" type="submit">Отправить</button>
