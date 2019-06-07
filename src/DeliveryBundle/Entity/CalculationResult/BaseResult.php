@@ -675,7 +675,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
      */
     protected function doGetBestStores(): StoreCollection
     {
-        $stores = $this->fullstockResult->getStores();
+        $stores = $this->getFullStockResult()->getStores();
         $storeData = [];
         /** @var Store $store */
         foreach ($stores as $store) {
