@@ -819,6 +819,7 @@ $markup = PawsApplication::markup();
                 </div>
             </div>
             <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go_konkurs', 'click', 'btn_konkurs_fest')" data-popup-id="form-festival">я пойду!</button>
+            <a href="/rules_quest.pdf" target="_blank" class="konkurs__link-rules">Правила акции "Квест лечу в Париж"</a>
         </div>
         <!-- End Promo Banner -->
 
