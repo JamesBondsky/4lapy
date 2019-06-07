@@ -50,6 +50,7 @@ $markup = PawsApplication::markup();
 <script src="vendor/jquery.min.js" type="text/javascript"></script>
 <script src="vendor/jquery-migrate.min.js" type="text/javascript"></script>
 <script src="vendor/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
+<script src="vendor/slick/slick.min.js" type="text/javascript"></script>
 
 <!-- PAGE LEVEL PLUGINS -->
 <script src="vendor/jquery.easing.js" type="text/javascript"></script>
@@ -80,6 +81,7 @@ $markup = PawsApplication::markup();
 <script src="js/components/forms.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/js/components/forms.js') ?>" type="text/javascript"></script>
 
 <script src="js/interactive_map.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/js/interactive_map.js') ?>" type="text/javascript"></script>
+<script src="js/faq.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/js/faq.js') ?>" type="text/javascript"></script>
 
 <script>
     var tag = document.createElement('script');
