@@ -35,13 +35,9 @@ class FourPawsOrderShopListComponent extends CBitrixComponent
         }
 
         if (!$share) {
-            Bitrix\Iblock\Component\Tools::process404(
-                trim($this->arParams["MESSAGE_404"]) ?: GetMessage("T_NEWS_DETAIL_NF")
-                , true
-                , true
-                , true
-                , $this->arParams["FILE_404"]
-            );
+            $share['ERROR'] = true;
+            $this->arParams['arParams']['SHOW_PRODUCTS_SALE'] = 'N';
+            $this->arParams['arParams']['USE_SHARE'] = 'N';
         }
 
         $activeTo = new DateTime($share['ACTIVE_TO']);
