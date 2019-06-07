@@ -59,12 +59,14 @@ $markup = PawsApplication::markup();
     <link href="css/animate.css" rel="stylesheet">
     <link href="vendor/swiper/css/swiper.min.css" rel="stylesheet" type="text/css"/>
     <link href="vendor/magnific-popup/magnific-popup.css" rel="stylesheet" type="text/css"/>
+    <link href="vendor/slick/slick.css" rel="stylesheet" type="text/css"/>
 
     <!-- THEME STYLES -->
     <link href="css/elements.css?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/css/elements.css') ?>" rel="stylesheet" type="text/css"/>
     <link href="css/layout.min.css?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/css/layout.min.css') ?>" rel="stylesheet" type="text/css"/>
     <link href="css/interactive_map.css?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/css/interactive_map.css') ?>" rel="stylesheet" type="text/css"/>
     <link href="css/banner-top.css?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/css/banner-top.css') ?>" rel="stylesheet" type="text/css"/>
+    <link href="css/faq.css?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/css/faq.css') ?>" rel="stylesheet" type="text/css"/>
 
     <!-- Favicon -->
     <link rel="shortcut icon" href="favicon.ico"/>
@@ -180,6 +182,7 @@ $markup = PawsApplication::markup();
 
             </div>
         </div>*/?>
+
         <div class="promo-block" data-promo-block="true">
             <div class="desktop_hat">
                 <img src="img/slide01.jpg" alt="" />
@@ -193,8 +196,6 @@ $markup = PawsApplication::markup();
         <!--========== PAGE LAYOUT ==========-->
         <!-- Products -->
         <div id="about">
-
-
 
             <div class="container content-lg">
                 <div class="[ c-shapes c-shapes--dynamic ]" data-shapes-dynamic="" data-shapes-set="home" id="scene-home">
@@ -820,6 +821,8 @@ $markup = PawsApplication::markup();
             <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go_konkurs', 'click', 'btn_konkurs_fest')" data-popup-id="form-festival">я пойду!</button>
         </div>
         <!-- End Promo Banner -->
+
+        <?php include __DIR__ . '/blocks/faq.php'; ?>
 
         <!-- partners -->
         <div id="partners">

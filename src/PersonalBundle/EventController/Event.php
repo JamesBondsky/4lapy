@@ -22,6 +22,8 @@ use FourPaws\Enum\IblockType;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\KioskBundle\Service\KioskService;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\Referral;
 use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -30,6 +32,7 @@ use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class Event
@@ -122,6 +125,13 @@ class Event extends BaseServiceHandler
         static::initHandler('OnBeforeIBlockElementUpdate', [self::class, 'checkIfNewCoupons'], 'iblock');
         static::initHandler('OnAfterIBlockElementAdd', [self::class, 'importPersonalOffersCoupons'], 'iblock');
         static::initHandler('OnAfterIBlockElementUpdate', [self::class, 'importPersonalOffersCoupons'], 'iblock');
+
+        if(KioskService::isKioskMode()) {
+            static::initHandler('OnEpilog', [
+                self::class,
+                'setKioskStore',
+            ], 'main');
+        }
     }
 
     /**
@@ -642,6 +652,21 @@ class Event extends BaseServiceHandler
                     $personalOffersService->importOffers($arFields['ID'], $coupons);
                 }
             }
+        }
+    }
+
+
+    public static function setKioskStore(): void
+    {
+        $request = Request::createFromGlobals();
+        $storeCode = $request->request->get('store');
+        /** @var KioskService $kioskService */
+        $kioskService = Application::getInstance()->getContainer()->get('kiosk.service');
+
+        if(!empty($storeCode) && (!$kioskService->getStore() || $storeCode != $kioskService->getStore()->getXmlId())){
+            $kioskService->setStore($storeCode);
+        } elseif (!$kioskService->getStore()) {
+            $kioskService->setStore($kioskService->getDefaultStoreXmlId());
         }
     }
 }
