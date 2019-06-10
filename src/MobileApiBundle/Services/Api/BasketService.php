@@ -83,7 +83,8 @@ class BasketService
             }
         }
 
-        $basket = $this->appBasketService->getBasket(true);
+        $fUserId = $this->appUserService->getCurrentFUserId() ?: 0;
+        $basket = $this->appBasketService->getBasket(true, $fUserId);
 
         /**
          * Непонятный код для того чтобы корреткно работали подарки (бесплатные товары) в рамках акций "берешь n товаров, 1 бесплатно"
