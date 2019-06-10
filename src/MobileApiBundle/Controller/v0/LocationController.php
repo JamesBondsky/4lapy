@@ -77,7 +77,7 @@ class LocationController extends FOSRestController
      */
     public function defaultCityListAction(): Response
     {
-        return new Response($this->apiCityService->getDefaultCity());
+        return new Response($this->apiCityService->getDefaultCities());
     }
 
     /**
