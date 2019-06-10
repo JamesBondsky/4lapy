@@ -568,4 +568,22 @@ class PersonalOffersService
         $couponsCollection = new ArrayCollection($coupons);
         return [$offersCollection, $couponsCollection];
     }
+
+    /**
+     * @param array $couponsIds
+     * @throws InvalidArgumentException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
+     */
+    public function setCouponShownStatus(array $couponsIds): void
+    {
+        if (!$couponsIds) {
+            throw new InvalidArgumentException(__METHOD__ . '. Невозможно установить статус просмотренности купоновю Пустой массив $couponsIds');
+        }
+        $updateResult = $this->personalCouponUsersManager::updateMulti($couponsIds, ['UF_SHOWN' => '1'], true);
+        if (!$updateResult->isSuccess()) {
+            throw new \Exception(__METHOD__ . '. update error(s): ' . implode('. ', $updateResult->getErrorMessages()));
+        }
+    }
 }

@@ -67,11 +67,7 @@ if($USER->IsAuthorized()) {
 } ?>
 <? if($modal_number == 4) { ?>
     <?
-	/*
-	TODO окно с купоном.
-	При клике на это окно нужно переходить на страницу "Персональные предложения" и устанавливать в 4-е число в поле UF_MODALS_CNTS юзера значение 3 (чтобы окно больше не показывалось)
-	(установить значение можно через \FourPaws\UserBundle\Service\UserService::setModalsCounters)
-	 */
+	//TODO окно с купоном. При клике на это окно нужно переходить на страницу "Персональные предложения"
 	?>
 <? } elseif($modal_number == 1) { ?>
     <? $APPLICATION->IncludeComponent('fourpaws:personal.profile', 'popupCollectorName', [], null, ['HIDE_ICONS' => 'Y']); ?>
@@ -104,7 +100,7 @@ if($USER->IsAuthorized()) {
                     if($(this).val().length > 2) $(this).attr('readonly', "");
                 });
 
-                let modals_counter = [<?=$modal_counts[0]?>, <?=$modal_counts[1]?>, <?=$modal_counts[2]?>, <?=$modal_counts[3]?>];
+                let modals_counter = [<?=$modal_counts[0]?>, <?=$modal_counts[1]?>, <?=$modal_counts[2]?>, <?=$modal_counts[3] ?? 0 ?>];
                 modals_counter[<?=$modal_number-1?>]++;
 
                 // отправим новые счетчики модалок, только после показа.
