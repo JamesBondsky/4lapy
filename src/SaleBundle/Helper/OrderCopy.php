@@ -80,7 +80,7 @@ class OrderCopy
 
         /** Исключаемые свойства заказа (по умолчанию) */
         'orderExcludeProps' => [
-            'IS_EXPORTED',
+            'IS_EXPORTED', 'MANZANA_NUMBER'
         ],
 
         /** Рассчитываемые группы свойств заказа */

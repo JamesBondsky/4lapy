@@ -211,11 +211,12 @@ class PushEventService
                 );
 
                 foreach ($this->applePushNotificationService->getLogMessages() as $logMessage) {
-                    $this->log()->info($logMessage);
+                    $this->log()->info(__METHOD__ . '. PushToken: ' . $pushEvent->getPushToken() . '. LogMessage: ' . $logMessage);
                 }
 
             }
             catch (\Exception $e) {
+                $this->log()->error(__METHOD__ . '. PushToken: ' . $pushEvent->getPushToken() . '. Exception: ' . $e->getMessage());
                 $pushEvent->setServiceResponseError($e->getMessage());
             }
             $pushEvent->setSuccessExec(ApiPushEvent::EXEC_SUCCESS_CODE);
@@ -290,6 +291,7 @@ class PushEventService
         return (new ApiPushEvent())
             ->setPlatform($session->getPlatform())
             ->setPushToken($session->getPushToken())
+            ->setUserId($session->getUserId() ?: 0)
             ->setMessageId($pushMessage->getId())
             ->setDateTimeExec($pushMessage->getStartSend());
     }

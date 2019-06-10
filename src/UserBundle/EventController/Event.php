@@ -140,6 +140,7 @@ class Event extends BaseServiceHandler
         /** при смене города */
         static::initHandlerCompatible('OnCityChange', [self::class, 'updateBasketDiscountProperties'], 'main');
 
+        static::initHandler('OnUserLogin', [self::class,'updateSessionCounter'], 'main');
     }
 
     /**
@@ -731,5 +732,20 @@ class Event extends BaseServiceHandler
         }
 
         return true;
+    }
+
+    /**
+     *
+     */
+    public static function updateSessionCounter(): void
+    {
+        $user_class = new \CUser;
+        $user_id = (int) $GLOBALS['USER']->GetID();
+        $total_sessions = $user_class::GetByID( $user_id )->Fetch()['UF_SESSION_CNTS'];
+
+        $user_class->Update($user_id, ['UF_SESSION_CNTS' => (int) $total_sessions+1]);
+
+        // TODO: выбрасывает 500, но БД обновляет - нужно думать почему.
+        // TODO: P.S при обновлении в битре полей также выкидывает эррор.
     }
 }

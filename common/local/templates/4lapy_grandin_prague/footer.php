@@ -40,7 +40,7 @@ if ($template->hasMainWrapper()) { ?>
                     <div class="item-card item-card--bg-brown">
                         <div  class="item-card__img" style="background-image: url('/img/prizes-grandin-prague1.png')"></div>
                         <div class="item-card__info">
-                            100&nbsp;бонусов каждому<br class="hidden-mobile" /> после регистрации покупки.
+                            100 бонусов каждому<br class="hidden-mobile" /> после покупки.
                         </div>
                     </div>
                 </div>
@@ -145,11 +145,11 @@ if ($template->hasMainWrapper()) { ?>
                     Рассказать о нас
                 </div>
                 <div class="footer-landing__share-content">
-                    <div class="ya-share2" 
-                        data-services="vkontakte,facebook,odnoklassniki" 
-                        data-title="Как выиграть запас корма Grandin на год вперед?"
-                        data-description="Для участия в акции купите любой корм Grandin на сумму от 1800 рублей и зарегистрируйте покупку  на сайте акции grandin.4lapy.ru."
-                        data-image="<?='https://'.$_SERVER['SERVER_NAME'].'/static/build/images/content/landing-grandin-share.png'?>"></div>
+                    <div class="ya-share2"
+                         data-services="vkontakte,facebook,odnoklassniki"
+                         data-title="Выиграй путешествие в Прагу на двоих!"
+                         data-description="Для участия в акции купите любой корм Grandin на сумму от 1800 рублей и зарегистрируйте покупку на сайте акции grandin.4lapy.ru."
+                         data-image="<?='https://'.$_SERVER['SERVER_NAME'].'/img/grandin-prague-share.png'?>"></div>
                 </div>
             </div>
             <div class="footer-landing__copyright">

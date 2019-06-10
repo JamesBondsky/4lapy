@@ -236,6 +236,7 @@ class LocationService
     public function getAvailableCities(): array
     {
         $getAvailableCities = function () {
+            $this->log()->notice('Кэшируется список городов!');
             $iblockId = IblockUtils::getIblockId(IblockType::REFERENCE_BOOKS, IblockCode::CITIES);
 
             /** @var StoreService $storeService */
@@ -306,6 +307,7 @@ class LocationService
         return (new BitrixCache())
             ->withId(__METHOD__)
             ->withIblockTag(IblockUtils::getIblockId(IblockType::REFERENCE_BOOKS, IblockCode::CITIES))
+            ->withTime(36000000)
             ->resultOf($getAvailableCities);
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
@@ -367,6 +369,7 @@ class LocationService
         return (new BitrixCache())
             ->withId(__METHOD__)
             ->withIblockTag(IblockUtils::getIblockId(IblockType::REFERENCE_BOOKS, IblockCode::CITIES))
+            ->withTime(36000000)
             ->resultOf($getAvailableCities);
     }/** @noinspection MoreThanThreeArgumentsInspection */
 

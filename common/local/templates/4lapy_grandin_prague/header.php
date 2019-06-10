@@ -33,9 +33,9 @@ $markup = PawsApplication::markup();
     <meta name="format-detection" content="telephone=no">
     <meta name="yandex-verification" content="6266e34669b85ed6">
 
-    <meta property="og:title" content="Как выиграть запас корма Grandin на год вперед?"/>
-    <meta property="og:description" content="Для участия в акции купите любой корм Grandin на сумму от 1800 рублей и зарегистрируйте покупку  на сайте акции grandin.4lapy.ru."/>
-    <meta property="og:image" content="<?='https://'.$_SERVER['SERVER_NAME'].'/static/build/images/content/landing-grandin-share.png'?>"/>
+    <meta property="og:title" content="Выиграй путешествие в Прагу на двоих!"/>
+    <meta property="og:description" content="Для участия в акции купите любой корм Grandin на сумму от 1800 рублей и зарегистрируйте покупку на сайте акции grandin.4lapy.ru."/>
+    <meta property="og:image" content="<?='https://'.$_SERVER['SERVER_NAME'].'/img/grandin-prague-share.png'?>"/>
 
     <?php /** @todo Mobe onto right place  */ ?>
     <script src="/static/build/js/jquery/jquery.min.js"></script>
@@ -102,7 +102,7 @@ $markup = PawsApplication::markup();
             <div class="header-landing-menu" data-mobile-menu-landing="true">
                 <ul class="header-landing-menu__list" data-list-mobile-menu-landing="true">
                     <li  class="header-landing-menu__item">
-                        <a href="/grandin_rules.pdf?v=2" class="header-landing-menu__link" target="_blank">Правила акции</a>
+                        <a href="/grandin_rules.pdf?v=3" class="header-landing-menu__link" target="_blank">Правила акции</a>
                     </li>
 
                     <li class="header-landing-menu__item">
@@ -166,8 +166,8 @@ $markup = PawsApplication::markup();
         <div class="container-landing">
             <div class="landing-title">Как принять участие в&nbsp;акции</div>
             <ol class="regulations-landing__list regulations-landing__list--grandin-prague">
-                <li>Купите любые корма Grandin на&nbsp;сумму от&nbsp;1800&nbsp;рублей.</li>
-                <li>Зарегистрируйте покупку и&nbsp;получите 100&nbsp;бонусов на&nbsp;карту.</li>
+                <li>Купите любые корма Grandin на&nbsp;сумму от&nbsp;1800&nbsp;рублей и&nbsp;получите 100 бонусов на&nbsp;карту.</li>
+                <li>Зарегистрируйте покупку и&nbsp;примите участие в&nbsp;розыгрыше призов.</li>
                 <li>Проверяйте результаты розыгрыша 7, 13, 19, 25 июня и&nbsp;1&nbsp;июля.</li>
             </ol>
 

@@ -190,7 +190,6 @@ class LandingController extends Controller
         global $USER;
         $userId = $USER->GetID();
 
-        $idOffset = 9999;
         $phone = $request->get('phone');
 
         try {
@@ -233,32 +232,38 @@ class LandingController extends Controller
             $container = App::getInstance()->getContainer();
             /** @var DataManager $festivalUsersDataManager */
             $festivalUsersDataManager = $container->get('bx.hlblock.festivalusersdata');
-            $isUserAlreadyRegistered = (bool)$festivalUsersDataManager::getCount([
-                'LOGIC' => 'OR',
-                'UF_PHONE' => $phone,
-                'UF_EMAIL' => $email,
-            ]);
-            if ($isUserAlreadyRegistered) {
-                throw new JsonResponseException(JsonErrorResponse::createWithData('Такой пользователь уже зарегистрирован'));
+            $alreadyRegisteredUsers = $festivalUsersDataManager::query()
+                ->setFilter([
+                    'LOGIC' => 'OR',
+                    'UF_PHONE' => $phone,
+                    'UF_EMAIL' => $email,
+                ])
+                ->setSelect([
+                    'UF_PHONE',
+                    'UF_EMAIL',
+                    'UF_FESTIVAL_USER_ID',
+                ])
+                ->setLimit(2)
+                ->exec()
+                ->fetchAll();
+            if ($alreadyRegisteredUsers) {
+                foreach ($alreadyRegisteredUsers as $user)
+                {
+                    if ($phone === $user['UF_PHONE']) {
+                        $phoneDuplicateUserFestivalCode = $user['UF_FESTIVAL_USER_ID'];
+                    } elseif ($email === $user['UF_EMAIL']) {
+                        $emailDuplicateUserFestivalCode = $user['UF_FESTIVAL_USER_ID'];
+                    }
+                }
+                $registeredUserId = $phoneDuplicateUserFestivalCode ?? ($emailDuplicateUserFestivalCode ?? null);
+                throw new JsonResponseException(JsonErrorResponse::createWithData('Такой пользователь уже зарегистрирован' . ($registeredUserId ? '.<br><b>ID участника: ' . $registeredUserId . '</b>' : '')));
             }
 
-            $rsFestivalUserId = 0;
-            try {
-                $rsFestivalUserId = FestivalUsersTable::addCustomized(md5(implode(',', $arFields)));
-            } catch (\Exception $e) {
-                $exceptionMessage = $e->getMessage();
-            }
-            if ($rsFestivalUserId <= 0) {
-                $logger = LoggerFactory::create('Festival');
-                $logger->critical(sprintf(
-                    'Не удалось создать ID регистрации на фестиваль. %s method. %s',
-                    __METHOD__,
-                    $exceptionMessage ?? ''
-                ));
-                throw new JsonResponseException($this->ajaxMess->getSystemError());
-            }
+            /** @var PersonalOffersService $personalOffersService */
+            $personalOffersService = $container->get('personal_offers.service');
+
             $iblockElement = new \CIBlockElement();
-            $festivalUserId = $idOffset + $rsFestivalUserId;
+            $festivalUserId = $personalOffersService->generateFestivalUserId();
             if (!$userId) {
                 try {
                     /** @var UserService $userService */
@@ -269,8 +274,6 @@ class LandingController extends Controller
             }
             if ($userId) {
                 $festivalPersonalOfferLinked = false;
-                /** @var PersonalOffersService $personalOffersService */
-                $personalOffersService = $container->get('personal_offers.service');
                 $festivalOffer = $personalOffersService->getActiveOffers(['CODE' => 'festival']);
                 if (!$festivalOffer->isEmpty()
                     && ($festivalOfferId = (int)$festivalOffer->first()['ID'])

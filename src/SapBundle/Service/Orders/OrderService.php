@@ -40,6 +40,7 @@ use FourPaws\External\Dostavista\Model\CancelOrder;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Enum\OrderPayment;
@@ -246,6 +247,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
          *
          * DFUE – заказ создан на Сайте;
          * MOBI – заказ создан в мобильном приложении;
+         * KIOS – заказ создан через киоск;
          */
         $orderSource = OrderDtoOut::ORDER_SOURCE_SITE;
         if ($this->getPropertyValueByCode($order, 'FROM_APP') === 'Y') {
@@ -257,6 +259,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     $orderSource = OrderDtoOut::ORDER_SOURCE_MOBILE_APP_IOS;
                     break;
             }
+        }
+        if(KioskService::isKioskMode()){
+            $orderSource = OrderDtoOut::ORDER_SOURCE_KIOSK;
         }
 
         $description = \trim(\implode("\n",
@@ -967,9 +972,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      * @param Order      $order
      * @param OrderDtoIn $orderDto
      *
-     * @throws NotFoundProductException
+     * @throws ArgumentOutOfRangeException
      * @throws SystemException
-     * @throws RuntimeException
      */
     private function setBasketFromDto(Order $order, OrderDtoIn $orderDto): void
     {
@@ -1034,8 +1038,17 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         }
 
         foreach ($externalItems as $items) {
+            /** @var OrderOfferIn $item */
             foreach ($items as $item) {
-                $this->addBasketItem($order->getBasket(), $item);
+                try {
+                    $this->addBasketItem($order->getBasket(), $item);
+                } catch (NotFoundProductException|RuntimeException|SystemException $e) {
+                    $this->log()->error('[' . $e->getCode() . '] ' . $e->getMessage());
+                    //Если товар с внешним кодом не из спец категории, то кидаем исключение
+                    if ((int)$item->getOfferXmlId() < 2000000) {
+                        throw $e;
+                    }
+                }
             }
         }
 

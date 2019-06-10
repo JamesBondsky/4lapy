@@ -2,6 +2,7 @@
 
 namespace FourPaws\SaleBundle\Payment;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Web\Json;
@@ -41,6 +42,7 @@ class Sberbank
 
     private const TEST_MERCHANT = '4lapy';
     private const PROD_MERCHANT = 'sbersafe';
+    private const MOBILE_PROD_MERCHANT = '4lapy2';
 
     public const SUCCESS_CODE = 0;
 
@@ -160,6 +162,16 @@ class Sberbank
     }
 
     /**
+     * @return string
+     */
+    public function getMobileMerchantName(): string
+    {
+        return $this->test_mode
+            ? self::TEST_MERCHANT // на самом деле тестового мерчанта для мобильных нет
+            : self::MOBILE_PROD_MERCHANT;
+    }
+
+    /**
      * ЗАПРОС В ПШ
      *
      * Формирование запроса в платежный шлюз и парсинг JSON-ответа
@@ -176,8 +188,11 @@ class Sberbank
     protected function gatewayQuery($method, $data, bool $isMobilePayment = false, $mobilePaymentSystem = ''): array
     {
         if ($isMobilePayment) {
-            $data['merchant'] = $this->getMerchantName();
+            $data['merchant'] = $this->getMobileMerchantName();
             $data['preAuth'] = true;
+            //$data['orderNumber'] = '3194383_2'; //для тестовых платежей
+            //$data["orderBundle"]["cartItems"]["items"][0]["itemAmount"] = 1; //для тестовых платежей (1 копейка)
+            //$data["orderBundle"]["cartItems"]["items"][0]["itemPrice"] = '1'; //для тестовых платежей (1 копейка)
             $dataEncoded = \json_encode($data);
         } else {
             $data['CMS'] = 'Bitrix';
@@ -214,6 +229,7 @@ class Sberbank
             \CURLOPT_SSLVERSION => 6,
         ]);
         $response = \curl_exec($curl);
+        //$response = '{"success":true,"data":{"orderId":"e51f45c1-8411-7a83-aa2c-12b900151068"},"orderStatus":{"errorCode":"0","orderNumber":"999999__14","orderStatus":1,"actionCode":0,"actionCodeDescription":"","amount":100,"currency":"643","date":1558694938873,"ip":"31.173.55.17","merchantOrderParams":[],"attributes":[{"name":"mdOrder","value":"e51f45c1-8411-7a83-aa2c-12b900151068"}],"cardAuthInfo":{"expiration":"202202","cardholderName":"CARD HOLDER","approvalCode":"094923","paymentSystem":"MASTERCARD","secureAuthInfo":{"eci":7,"threeDSInfo":{"cavv":"AFFu8Y4XGZ+PAEUxNI3LAoABFA=="}},"pan":"544714XXXXXX5619"},"authDateTime":1558694939190,"authRefNum":"308203236946","paymentAmountInfo":{"paymentState":"APPROVED","approvedAmount":100,"depositedAmount":0,"refundedAmount":0},"bankInfo":{"bankName":"\"BANK \"SAINT PETERSBURG\" PUBLI","bankCountryCode":"RU","bankCountryName":""},"chargeback":false,"operations":[{"amount":100,"cardHolder":"CARD HOLDER","authCode":"094923"}]}}';
         \curl_close($curl);
 
         if (!$response) {
@@ -266,7 +282,12 @@ class Sberbank
             $url, $method, \json_encode($data), \json_encode($response)
         );
 
-        \AddMessage2Log($message);
+        $logger = LoggerFactory::create('Sberbank');
+        $logger->info(
+            __CLASS__ . ': ' . $message
+        );
+
+        //\AddMessage2Log($message);
     }
 
     /**
@@ -278,16 +299,20 @@ class Sberbank
      * @param string $paymentToken
      * @param string $mobilePaymentSystem
      * @param float $amount
+     * @param null|array $fiscal
      * @return array|mixed[]
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      */
-    public function paymentViaMobile(int $orderId, string $paymentToken, string $mobilePaymentSystem, float $amount = 0) {
+    public function paymentViaMobile(int $orderId, string $paymentToken, string $mobilePaymentSystem, float $amount = 0, ?array $fiscal = []) {
         $data = array(
             'merchant' => '4lapy',
             'orderNumber' => $orderId,
             'paymentToken' => $paymentToken,
             'preAuth' => true
         );
+        if ($fiscal) {
+            $data['orderBundle'] = $fiscal['orderBundle'];
+        }
         if ($mobilePaymentSystem === 'android') {
             $data['amount'] = $amount;
         }
