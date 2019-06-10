@@ -21,7 +21,6 @@ class SendSubscribedOrders extends Command
     use LazyLoggerAwareTrait;
 
     const ARG_LIMIT = 'limit';
-    const ARG_INTERVAL = 'interval';
 
     public function __construct($name = null)
     {
@@ -39,13 +38,6 @@ class SendSubscribedOrders extends Command
             'Лимит обхода подписок. Все по умолчанию.',
             0
         );
-
-        $this->addArgument(
-            static::ARG_INTERVAL,
-            InputArgument::OPTIONAL,
-            'Время в часах, вычитаемое от текущей даты, для запроса подписок. По умолчанию 3 часа.',
-            3
-        );
     }
 
     /**
@@ -56,10 +48,7 @@ class SendSubscribedOrders extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $limit = (int)$input->getArgument(self::ARG_LIMIT);
-        $limit = $limit > 0 ? $limit : 0;
-
-        $checkIntervalHours = (int)$input->getArgument(self::ARG_INTERVAL);
-        $checkIntervalHours = $checkIntervalHours > 0 ? $checkIntervalHours : 3;
+        $limit = $limit > 0 ? $limit : 100;
 
         $output->writeln('Обход подписок начат: '.date('Y-m-d H:i:s'));
         try {
@@ -67,7 +56,7 @@ class SendSubscribedOrders extends Command
             $service = Application::getInstance()->getContainer()->get(
                 'order_subscribe.service'
             );
-            $service->sendOrders($limit, $checkIntervalHours);
+            $service->sendOrders($limit);
         } catch (\Exception $exception) {
             $output->writeln('Произошла ошибка: '.$exception->getMessage());
 
