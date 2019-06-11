@@ -43,8 +43,11 @@ class HLBlockOrderSubscribeUpdateDateCheck20190611113445 extends \Adv\Bitrixtool
                 new \DateTime($orderSubscribe->getNextDate()->toString())
             );
 
-            if($isOrderCreated){
+            if($isOrderCreated || $orderSubscribe->getNextDate()->getTimestamp() < time()){
                 $orderSubscriveService->countNextDate($orderSubscribe);
+                while($orderSubscribe->getNextDate()->getTimestamp() < time()){
+                    $orderSubscriveService->countNextDate($orderSubscribe);
+                }
             }
 
             $orderSubscribe->countDateCheck();
