@@ -973,7 +973,7 @@ class OrderSubscribeService implements LoggerAwareInterface
             }
 
             foreach($items as $item){
-                $basketItem = BasketItem::create($basket, 'sale', $item['OFFER_ID']);
+                $basketItem = BasketItem::create($basket, 'catalog', $item['OFFER_ID']);
                 $basketItem->setFields([
                     'PRICE'                  => $item['PRICE'],
                     'BASE_PRICE'             => $item['BASE_PRICE'],
@@ -987,7 +987,6 @@ class OrderSubscribeService implements LoggerAwareInterface
                     'CATALOG_XML_ID'         => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
                     'PRODUCT_XML_ID'         => $item['PRODUCT_XML_ID'],
                     'CAN_BUY'                => "Y",
-                    'MODULE'                 => "catalog",
                 ]);
 
                 /** @noinspection PhpInternalEntityUsedInspection */
