@@ -14,6 +14,7 @@ use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Bitrix\FourPawsComponent;
+use FourPaws\PersonalBundle\Entity\CardBonus;
 use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -75,6 +76,21 @@ class FourPawsPersonalCabinetBonusComponent extends FourPawsComponent
             }
             $bonus = $this->bonusService->updateUserBonusInfo($user);
             $this->currentUserProvider->refreshUserBonusPercent($user, $bonus);
+
+            if($bonus->isEmpty()) {
+                //FIXME Это временное решение. Нужно сделать автоматическое сохранение на сайте всех полей $bonus и их использование, если манзана не работает
+                if ($discountCardNumber = $user->getDiscountCardNumber()) {
+                    $cardBonus = new CardBonus();
+                    $cardBonus->setCardNumber($discountCardNumber);
+                    $bonus->setCard($cardBonus);
+                }
+                if ($realDiscount = $user->getDiscount()) {
+                    $bonus->setRealDiscount($realDiscount);
+                }
+                if ($temporaryBonus = $user->getTemporaryBonus()) {
+                    $bonus->setTemporaryBonus($temporaryBonus);
+                }
+            }
 
             $this->arResult['BONUS'] = $bonus;
         } catch (NotAuthorizedException $e) {
