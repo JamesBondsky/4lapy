@@ -23,7 +23,7 @@ $component = $this->getComponent(); ?>
            title="Войти">
     <? } else { ?>
         <a class="<?= ($component->getMode()
-            === FourPawsAuthFormComponent::MODE_FORM) ? 'b-link js-open-popup' : 'b-header-info__link js-open-popover' ?> js-toggle-popover-mobile-header"
+            === FourPawsAuthFormComponent::MODE_FORM) ? 'b-link js-open-popup' : 'b-header-info__link js-open-popover' ?> js-toggle-popover-mobile-header js-link-person-header-info"
            href="javascript:void(0);"
            title="<?= $component->getMode()
            === FourPawsAuthFormComponent::MODE_FORM ? 'Войти' : $arResult['NAME'] ?>"<?= ($component->getMode() === FourPawsAuthFormComponent::MODE_FORM) ? ' data-popup-id="authorization"' : '' ?>>

@@ -22,8 +22,10 @@ $drawMenuLevel1 = function ($menu = [], $title = '') use ($oMenu) {
         $outString .= '<span class="b-icon">';
         $outString .= new SvgDecorator($item['PARAMS']['icon'], 16, 16);
         $outString .= '</span>';
-        $outString .= '<a href="' . $item['LINK'] . '" class="b-link-block__link" title="' . $item['TEXT'] . '">';
+        //$outString .= '<a href="' . $item['LINK'] . '" class="b-link-block__link" title="' . $item['TEXT'] . '">';
+        $outString .= '<a href="' . $item['LINK'] . '" class="b-link-block__link b-link-block__link--count" title="' . $item['TEXT'] . '">';
         $outString .= $item['TEXT'];
+        $outString .= '<span class="b-link-block__count">1</span>';
         $outString .= '</a>';
         $outString .= '</li>';
     }

@@ -166,9 +166,9 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
                         ->get(BasketViewService::class)
                         ->getMiniBasketHtml(); ?>
 
-                    <div class="b-person-coupon js-popover js-content-popover-mobile-header">
+                    <div class="b-person-coupon js-coupon-person-popup">
                         <div class="b-person-coupon__inner">
-                            <div class="b-person-coupon__close"></div>
+                            <div class="b-person-coupon__close js-close-person-coupon-popup"></div>
                             <div class="b-person-coupon__persent">-15%</div>
                             <div class="b-person-coupon__descr">Персональное предложение со&nbsp;скидкой ждет вас</div>
                             <a href="#" class="b-person-coupon__btn">Подробнее</a>
