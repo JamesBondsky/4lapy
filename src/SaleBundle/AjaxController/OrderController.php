@@ -534,21 +534,22 @@ class OrderController extends Controller implements LoggerAwareInterface
             $errors[] = $e->getMessage();
         }
 
-        if(empty($errors)){
+        if (empty($errors)) {
             try {
                 $this->orderStorageService->updateStorage($storage, $step);
 
-                if($storage->isSubscribe()){
-                    if($step == OrderStorageEnum::DELIVERY_STEP){ // создание подписки на доставку
+                // создание подписки на доставку и установка свойства "Списывать все баллы по подписке"
+                if ($storage->isSubscribe()) {
+                    if ($step == OrderStorageEnum::DELIVERY_STEP) {
                         $result = $this->orderSubscribeService->createSubscriptionByRequest($storage, $request);
-                        if(!$result->isSuccess()){
+                        if (!$result->isSuccess()) {
                             $this->log()->error(implode(";\r\n", $result->getErrorMessages()));
                             throw new OrderSubscribeException("Произошла ошибка оформления подписки на доставку, пожалуйста, обратитесь к администратору");
                         }
                         $storage->setSubscribeId($result->getData()['subscribeId']);
                         $this->orderStorageService->updateStorage($storage, $step);
-                    } else if($step == OrderStorageEnum::PAYMENT_STEP){ // установка свойства "Списывать все баллы по подписке"
-                        if($storage->isSubscribe() && $request->get('subscribeBonus')){
+                    } else if ($step == OrderStorageEnum::PAYMENT_STEP) {
+                        if ($storage->isSubscribe() && $request->get('subscribeBonus')) {
                             $subscribe = $this->orderSubscribeService->getById($storage->getSubscribeId());
                             $subscribe->setPayWithbonus(true);
                             $this->orderSubscribeService->update($subscribe);
