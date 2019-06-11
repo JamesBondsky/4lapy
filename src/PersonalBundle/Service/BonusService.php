@@ -189,6 +189,7 @@ class BonusService
             /** @var CardByContractCards $card */
             $cardBonus = new CardBonus();
             $cardBonus->setEmpty(true);
+            $isActiveCardGettingNeeded = true;
             if (!empty($user->getDiscountCardNumber())) {
                 $card = $manzanaService->getCardInfo($user->getDiscountCardNumber(), $contact->contactId);
                 if ($card !== null && $card->isActive()) {
@@ -203,8 +204,10 @@ class BonusService
                     $cardBonus->setDiscount((float)$card->discount);
                     $cardBonus->setReal((int)substr($card->cardNumber, 0, 2) === 26);
                     $cardBonus->setEmpty(false);
+                    $isActiveCardGettingNeeded = false;
                 }
-            } else {
+            }
+            if ($isActiveCardGettingNeeded) {
                 /** @var ArrayCollection $cards */
                 $cards = $contact->cards;
                 if (!$cards->isEmpty()) {
