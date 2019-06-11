@@ -1594,7 +1594,7 @@ class OrderSubscribeService implements LoggerAwareInterface
         $params['filter']['=UF_ACTIVE'] = 1;
         $params['filter']['<=UF_DATE_CHECK'] = new DateTime();
         // TODO: временное решение, т.к. возникает непонятный баг с определнием зоны доставки DPD
-        $params['filter']['!=UF_DEL_TYPE'] = 16;
+        $params['filter']['!=UF_DEL_TYPE'] = [16, 17];
         $params['order'] = [
             'UF_LAST_CHECK' => 'ASC',
             'ID' => 'ASC',
