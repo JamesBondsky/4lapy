@@ -382,11 +382,10 @@ class UserService
         } catch (\FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException $exception) {
             return null;
         } catch (\FourPaws\External\Exception\ManzanaServiceException $exception) {
-            return null;
         }
         return (new ClientCard())
             ->setTitle('Карта клиента')
-            ->setBalance($bonusInfo->getActiveBonus())
+            ->setBalance(isset($bonusInfo) ? $bonusInfo->getActiveBonus() : $user->getActiveBonus())
             ->setNumber($user->getDiscountCardNumber())
             ->setSaleAmount($user->getDiscount());
     }
