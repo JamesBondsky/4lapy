@@ -33,7 +33,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
 } ?>
 <div class="b-container">
     <h1 class="b-title b-title--h1 b-title--order">
-        <strong><?= $arResult['ORDER_PROPERTIES']['NAME'] ?></strong>, спасибо за заказ!
+        Для получения информации по текущему заказу, пожалуйста, заполните почту
     </h1>
     <div class="b-order">
         <?php /*
@@ -69,23 +69,17 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                     Заказ № <strong><?= $order->getField('ACCOUNT_NUMBER') ?></strong> оформлен
                 </h2>
                 <div class="b-order__text-block">
-                    <?php if ($arResult['ORDER_PROPERTIES']['COM_WAY'] === OrderPropertyService::COMMUNICATION_SMS) { ?>
-                        <p>
-                            Вся информация о заказе будет отправлена на ваш
-                            номер <?= PhoneHelper::formatPhone($arResult['ORDER_PROPERTIES']['PHONE']) ?>
-                        </p>
-                    <?php } else { ?>
-                        <p>
-                            В самое ближайшее время с вами свяжется менеджер для уточнения деталей заказа
-                        </p>
-                    <?php }
 
-                    if ($arResult['ORDER_PROPERTIES']['EMAIL']) { ?>
+                    <?
+                    if ($arResult['ORDER_PROPERTIES']['EMAIL']) {
+                        ?>
                         <p>
-                            Вся информация о доставке также отправлена на вашу
-                            почту: <?= $arResult['ORDER_PROPERTIES']['EMAIL'] ?>
+                            <?= $arResult['ORDER_PROPERTIES']['NAME'] ?>, мы отправили письмо на адрес
+                            <strong><?= $arResult['ORDER_PROPERTIES']['EMAIL'] ?></strong> со всеми подробностями заказа.
                         </p>
-                    <?php } ?>
+                        <?
+                    }
+                    ?>
                 </div>
                 <?php if ($arResult['isAvatarAuthorized']) { ?>
                     <div class="timer-block js-start-timer" data-url="/front-office/avatar/logout.php">
@@ -229,6 +223,16 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                 <? if ($arResult['KIOSK_MODE']) { ?>
                     <a href="<?=$arResult['KIOSK_LOGOUT_URL']?>" class="b-button b-button--complete-kiosk">Завершить покупки</a>
                 <? } ?>
+                <hr class="b-hr b-hr--order"/>
+                <?
+                $APPLICATION->IncludeComponent(
+                    'fourpaws:expertsender.form',
+                    'order.complete',
+                    [],
+                    false,
+                    ['HIDE_ICONS' => 'Y']
+                );
+                ?>
                 <hr class="b-hr b-hr--order"/>
                 <div class="b-order__text-block">
                     <?php if ($arResult['ORDER_REGISTERED']) { ?>
