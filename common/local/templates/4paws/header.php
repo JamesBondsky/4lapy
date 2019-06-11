@@ -191,7 +191,7 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
                     <?php $APPLICATION->IncludeComponent('fourpaws:auth.form',
                         '',
                         [
-                            'NOT_SEEN_COUPONS' => $coupons ?? $coupons->count(),
+                            'NOT_SEEN_COUPONS' => isset($coupons) ? $coupons->count() : '',
                         ],
                         false,
                         ['HIDE_ICONS' => 'Y']);
