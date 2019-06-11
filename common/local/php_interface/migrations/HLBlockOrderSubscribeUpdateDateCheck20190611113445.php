@@ -30,10 +30,12 @@ class HLBlockOrderSubscribeUpdateDateCheck20190611113445 extends \Adv\Bitrixtool
             'filter' => [
                 '!=UF_NEXT_DEL' => false,
                 '!=UF_CHECK_DAYS' => false,
+                '!=UF_DEL_PLACE' => false,
                 '>UF_ORDER_ID' => 0,
                 'UF_DATE_CHECK' => null,
+                'UF_ACTIVE' => 1,
             ],
-            'limit' => 5
+            'limit' => 100
         ]);
 
         while($row = $rs->fetch()){
