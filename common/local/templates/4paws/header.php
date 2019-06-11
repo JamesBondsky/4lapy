@@ -159,6 +159,7 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
 
 	                if (!$coupons->isEmpty() && $modal_counts[3] <= 2) {
 	                    $modal_number = 4;
+                        $lastCouponOffer = $userPersonalOffers['offers']->get($coupons->get(0)['UF_OFFER']);
 	                }
                 }
             }
@@ -191,6 +192,7 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
                     <?php $APPLICATION->IncludeComponent('fourpaws:auth.form',
                         '',
                         [
+                            'SHOW_COUPON_EDGE' => isset($lastCouponOffer) ? true : false,
                             'NOT_SEEN_COUPONS' => isset($coupons) ? $coupons->count() : '',
                         ],
                         false,
@@ -203,7 +205,6 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
 
 	                <? if ($modal_number === 4) { ?>
 		                <?
-		                $lastCouponOffer = $userPersonalOffers['offers']->get($coupons->get(0)['UF_OFFER']);
 		                if ($lastCouponOffer) {
 			                $offerDiscountText = ($lastCouponOffer['PROPERTY_DISCOUNT_VALUE'] ? $lastCouponOffer['PROPERTY_DISCOUNT_VALUE'] . '%' :
 				                ($lastCouponOffer['PROPERTY_DISCOUNT_CURRENCY_VALUE'] ? $lastCouponOffer['PROPERTY_DISCOUNT_CURRENCY_VALUE'] . ' ₽' : '')
