@@ -90,6 +90,9 @@ class FourPawsPersonalCabinetBonusComponent extends FourPawsComponent
                 if ($temporaryBonus = $user->getTemporaryBonus()) {
                     $bonus->setTemporaryBonus($temporaryBonus);
                 }
+                if ($activeBonus = $user->getActiveBonus()) {
+                    $bonus->setActiveBonus($activeBonus);
+                }
             }
 
             $this->arResult['BONUS'] = $bonus;
