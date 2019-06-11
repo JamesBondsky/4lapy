@@ -30,29 +30,35 @@ class HLBlockOrderSubscribeUpdateDateCheck20190611113445 extends \Adv\Bitrixtool
             'filter' => [
                 '!=UF_NEXT_DEL' => false,
                 '!=UF_CHECK_DAYS' => false,
+                '>UF_ORDER_ID' => 0,
             ],
             'limit' => 5
         ]);
 
         while($row = $rs->fetch()){
-            $subscribeId = $row['ID'];
-            $orderSubscribe = $orderSubscriveService->getById($subscribeId);
+            try {
+                $subscribeId = $row['ID'];
+                $orderSubscribe = $orderSubscriveService->getById($subscribeId);
 
-            $isOrderCreated = $orderSubscribeHistoryService->wasOrderCreated(
-                $orderSubscribe->getOrderId(),
-                new \DateTime($orderSubscribe->getNextDate()->toString())
-            );
+                $isOrderCreated = $orderSubscribeHistoryService->wasOrderCreated(
+                    $orderSubscribe->getOrderId(),
+                    new \DateTime($orderSubscribe->getNextDate()->toString())
+                );
 
-            if($isOrderCreated || $orderSubscribe->getNextDate()->getTimestamp() < time()){
-                $orderSubscriveService->countNextDate($orderSubscribe);
-                while($orderSubscribe->getNextDate()->getTimestamp() < time()){
+                if($isOrderCreated || $orderSubscribe->getNextDate()->getTimestamp() < time()){
                     $orderSubscriveService->countNextDate($orderSubscribe);
+                    while($orderSubscribe->getNextDate()->getTimestamp() < time()){
+                        $orderSubscriveService->countNextDate($orderSubscribe);
+                    }
                 }
+
+                $orderSubscribe->countDateCheck();
+                $orderSubscriveService->update($orderSubscribe);
+            } catch (\Exception $e) {
+                print(sprintf('\r\n<span style="color: red">Не удалось обновить: %s. Ошибка: %s</span>', $orderSubscribe->getId(), $e->getMessage()));
             }
 
-            $orderSubscribe->countDateCheck();
-            $orderSubscriveService->update($orderSubscribe);
-            print(sprintf('Обновлено: %s. Дата: %s', $orderSubscribe->getId(), $orderSubscribe->getDateCheck()));
+            print(sprintf('\r\nОбновлено: %s. Дата: %s', $orderSubscribe->getId(), $orderSubscribe->getDateCheck()));
         }
 
         return true;
