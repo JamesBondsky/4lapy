@@ -166,7 +166,7 @@ $markup = PawsApplication::markup();
                 </li>
             </ol>
 
-            <?if ($USER->IsAuthorized()) {?>
+            <?/*if ($USER->IsAuthorized()) {?>
                 <div class="regulations-canin__btn">
                     <div class="btn-canin" data-btn-scroll-landing="registr-check">Загрузите чек</div>
                 </div>
@@ -174,7 +174,7 @@ $markup = PawsApplication::markup();
                 <div class="regulations-canin__btn">
                     <div class="btn-canin js-open-popup" data-popup-id="authorization">Принять участие</div>
                 </div>
-            <?}?>
+            <?}*/?>
         </div>
     </section>
 </div>
