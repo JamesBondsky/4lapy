@@ -31,6 +31,7 @@ class HLBlockOrderSubscribeUpdateDateCheck20190611113445 extends \Adv\Bitrixtool
                 '!=UF_NEXT_DEL' => false,
                 '!=UF_CHECK_DAYS' => false,
                 '>UF_ORDER_ID' => 0,
+                'UF_DATE_CHECK' => null,
             ],
             'limit' => 5
         ]);
@@ -55,10 +56,10 @@ class HLBlockOrderSubscribeUpdateDateCheck20190611113445 extends \Adv\Bitrixtool
                 $orderSubscribe->countDateCheck();
                 $orderSubscriveService->update($orderSubscribe);
             } catch (\Exception $e) {
-                print(sprintf('\r\n<span style="color: red">Не удалось обновить: %s. Ошибка: %s</span>', $orderSubscribe->getId(), $e->getMessage()));
+                print_r(sprintf('<br><span style="color: red">Не удалось обновить: %s. Ошибка: %s</span>', $orderSubscribe->getId(), $e->getMessage()));
             }
 
-            print(sprintf('\r\nОбновлено: %s. Дата: %s', $orderSubscribe->getId(), $orderSubscribe->getDateCheck()));
+            print(sprintf('<br>Обновлено: %s. Дата: %s', $orderSubscribe->getId(), $orderSubscribe->getDateCheck()));
         }
 
         return true;
