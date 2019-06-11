@@ -216,7 +216,11 @@ class OrderSubscribeService implements LoggerAwareInterface
         return $result;
     }
 
-
+    /**
+     * @param OrderSubscribe $subscribe
+     * @return UpdateResult
+     * @throws \Bitrix\Main\ObjectException
+     */
     public function update(OrderSubscribe $subscribe): UpdateResult
     {
         $result = new UpdateResult();
@@ -224,14 +228,9 @@ class OrderSubscribeService implements LoggerAwareInterface
         /** @var OrderSubscribe $updateEntity */
         try{
             $updateEntity = $this->orderSubscribeRepository->findById($subscribe->getId());
-            // Обход подписок запускается из консоли и здесь возникает ошибка, когда юзер не авторизован
-            // if ($updateEntity->getUserId() !== $this->currentUser->getCurrentUserId()) {
-            //     throw new SecurityException('не хватает прав доступа для совершения данной операции');
-            // }
         } catch (\Exception $e) {
             $result->addError(new Error($e->getMessage(), $e->getCode()));
         }
-
 
         if ($subscribe->getUserId() === 0) {
             $subscribe->setUserId($updateEntity->getUserId());
@@ -1049,7 +1048,7 @@ class OrderSubscribeService implements LoggerAwareInterface
         // значение свойтсва COM_WAY заказа (SAP: Communic)
         $comWayValue = OrderPropertyService::COMMUNICATION_SUBSCRIBE;
         // id заказа, копия которого будет создаваться
-        $copyOrderId = $params->getCopyOrderId();
+        $copyOrderId = $orderSubscribe->getOrderId();
         // флаг необходимости выполнения деактивации подписки
         $deactivateSubscription = false;
         // текущая дата без времени
@@ -1286,30 +1285,6 @@ class OrderSubscribeService implements LoggerAwareInterface
             }
         }
 
-        // В заказах по подписке только оплата наличными может быть
-//        if ($result->isSuccess()) {
-//            $cashPaySystemService = $this->getPayments();
-//            if ($cashPaySystemService) {
-//                try {
-//                    $params->getOrderCopyHelper()->setPayment($cashPaySystemService);
-//                } catch (\Exception $exception) {
-//                    $result->addError(
-//                        new Error(
-//                            $exception->getMessage(),
-//                            'orderSetPaymentException'
-//                        )
-//                    );
-//                }
-//            } else {
-//                $result->addError(
-//                    new Error(
-//                        'Не удалось получить платежную систему "Оплата наличными"',
-//                        'orderCashPaymentNotFound'
-//                    )
-//                );
-//            }
-//        }
-
         // Финальные операции
         if ($result->isSuccess()) {
             $connection = \Bitrix\Main\Application::getConnection();
@@ -1384,6 +1359,7 @@ class OrderSubscribeService implements LoggerAwareInterface
             if ($result->isSuccess()) {
                 try {
                     $this->countNextDate($orderSubscribe);
+                    $orderSubscribe->countDateCheck();
                     $this->update($orderSubscribe);
                 } catch (\Exception $exception) {
                     $result->addError(
@@ -1581,26 +1557,15 @@ class OrderSubscribeService implements LoggerAwareInterface
      * @throws \Exception
      * @throws \FourPaws\PersonalBundle\Exception\RuntimeException
      */
-    public function sendOrders(int $limit = 50, int $checkIntervalHours = 3, $currentDate = '', bool $extResult = false): Result
+    public function sendOrders(int $limit = 200, $currentDate = '', bool $extResult = false): Result
     {
         $result = new Result();
         $resultData = [];
 
-        // запрашиваем подписки с последней датой проверки меньше $checkIntervalHours часов назад
-        $lastCheckDateTime = (new \DateTime())->sub((new \DateInterval('PT'.$checkIntervalHours.'H')));
-
         $params = [];
         $params['limit'] = $limit;
         $params['filter']['=UF_ACTIVE'] = 1;
-        $params['filter'][] = [
-            'LOGIC' => 'OR',
-            [
-                'UF_LAST_CHECK' => false
-            ],
-            [
-                '<UF_LAST_CHECK' => new DateTime($lastCheckDateTime->format('d.m.Y H:i:s'), 'd.m.Y H:i:s')
-            ]
-        ];
+        $params['filter']['<=UF_DATE_CHECK'] = new DateTime();
         $params['order'] = [
             'UF_LAST_CHECK' => 'ASC',
             'ID' => 'ASC',
@@ -1744,20 +1709,20 @@ class OrderSubscribeService implements LoggerAwareInterface
 
             $deliveryId = $storage->getDeliveryId();
 
-            if(!$storage->getSubscribeId()) {
+            if (!$storage->getSubscribeId()) {
                 $subscribe = (new OrderSubscribe());
-            }
-            else{
+            } else {
                 $subscribe = $this->getById($storage->getSubscribeId());
             }
 
             $selectedDelivery = $this->getDeliveryService()->getNextDeliveries($orderStorageService->getSelectedDelivery($storage), 10)[$storage->getDeliveryDate()];
             $deliveryDate = new DateTime($selectedDelivery->getDeliveryDate()->format('d.m.Y H:i:s'));
-            if(!$deliveryDate){
+            if (!$deliveryDate) {
                 throw new OrderSubscribeException("Некорректная дата первой доставки");
             }
+
             $subscribe->setNextDate($deliveryDate)
-                ->setCheckDays((new \DateTime($deliveryDate->toString())));
+                ->setCheckDays(new \DateTime($deliveryDate->toString()));
 
             if ($this->getDeliveryService()->isDelivery($selectedDelivery) && ($intervalIndex = $storage->getDeliveryInterval() - 1) >= 0) {
                 /** @var Interval $interval */
@@ -1769,8 +1734,8 @@ class OrderSubscribeService implements LoggerAwareInterface
                 ->setDeliveryTime((string)$interval)
                 ->setActive(false);
 
-            if($this->getDeliveryService()->isDelivery($orderStorageService->getSelectedDelivery($storage))){
-                if(!empty($storage->getAddressId())){
+            if ($this->getDeliveryService()->isDelivery($orderStorageService->getSelectedDelivery($storage))) {
+                if (!empty($storage->getAddressId())) {
                     $addressService = Application::getInstance()->getContainer()->get('address.service');
                     $personalAddress = $addressService->getById($storage->getAddressId());
                     $deliveryPlace = $personalAddress->getFullAddress();
@@ -1788,33 +1753,31 @@ class OrderSubscribeService implements LoggerAwareInterface
                 }
 
                 $subscribe->setDeliveryPlace($deliveryPlace);
-            }
-            elseif($this->getDeliveryService()->isPickup($orderStorageService->getSelectedDelivery($storage))){
-                if(!$data['deliveryPlaceCode'] && !$data['shopId']){
+            } elseif ($this->getDeliveryService()->isPickup($orderStorageService->getSelectedDelivery($storage))) {
+                if (!$data['deliveryPlaceCode'] && !$data['shopId']) {
                     throw new OrderSubscribeException("Не выбран магазин для самовывоза");
                 }
                 $subscribe->setDeliveryPlace($data['deliveryPlaceCode'] ?: $data['shopId']);
             }
 
-            if($subscribe->getId() > 0){
+            if ($subscribe->getId() > 0) {
                 $this->update($subscribe);
-            }
-            else{
+            } else {
                 $result = $this->add($subscribe);
 
-                if(!$result->isSuccess()){
-                    throw new OrderSubscribeException(sprintf('Failed to create order subscribe: %s', print_r($result->getErrorMessages(),true)));
+                if (!$result->isSuccess()) {
+                    throw new OrderSubscribeException(sprintf('Failed to create order subscribe: %s', print_r($result->getErrorMessages(), true)));
                 }
 
                 $items = $this->basketService->getBasket()->getOrderableItems();
                 /** @var BasketItem $basketItem */
-                foreach($items as $basketItem){
+                foreach ($items as $basketItem) {
                     $subscribeItem = (new OrderSubscribeItem())
                         ->setOfferId($basketItem->getProductId())
                         ->setQuantity($basketItem->getQuantity());
 
-                    if(!$this->addSubscribeItem($subscribe, $subscribeItem)){
-                        throw new OrderSubscribeException(sprintf('Failed to create order subscribe item: %s', print_r($data,true)));
+                    if (!$this->addSubscribeItem($subscribe, $subscribeItem)) {
+                        throw new OrderSubscribeException(sprintf('Failed to create order subscribe item: %s', print_r($data, true)));
                     }
                 }
             }

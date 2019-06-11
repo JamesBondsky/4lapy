@@ -34,17 +34,16 @@ class OrderSubscribeAgent
 
     /**
      * @param int $limit
-     * @param int $checkIntervalHours
      * @return string
      */
-    public static function sendOrders(int $limit = 50, int $checkIntervalHours = 3): string
+    public static function sendOrders(int $limit = 100): string
     {
         try {
             /** @var OrderSubscribeService $service */
             $service = Application::getInstance()->getContainer()->get(
                 'order_subscribe.service'
             );
-            $service->sendOrders($limit, $checkIntervalHours);
+            $service->sendOrders($limit);
         } catch (\Exception $exception) {
             $instance = static::getInstance();
             $instance->log()->critical(
@@ -56,6 +55,6 @@ class OrderSubscribeAgent
             );
         }
 
-        return '\\' . __METHOD__ . '('.$limit.', '.$checkIntervalHours.');';
+        return '\\' . __METHOD__ . '('.$limit.');';
     }
 }

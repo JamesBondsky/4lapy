@@ -1269,12 +1269,9 @@ class OrderService implements LoggerAwareInterface
                     throw new OrderSubscribeException('Susbcribe not found');
                 }
                 $subscribe = $this->orderSubscribeService->getById($storage->getSubscribeId());
-                $subscribe->setActive(true)->setOrderId($order->getId());
-
-                // привяжем созданный адрес
-                if($subscribe->getDeliveryPlace() === '0' && $storage->getAddressId() > 0){
-                    $subscribe->setDeliveryPlace($storage->getAddressId());
-                }
+                $subscribe->setActive(true)
+                    ->setOrderId($order->getId())
+                    ->countDateCheck();
 
                 // привяжем пользователя
                 if(!$subscribe->getUserId()){
