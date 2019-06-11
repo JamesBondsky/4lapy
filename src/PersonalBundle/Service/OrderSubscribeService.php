@@ -1048,7 +1048,7 @@ class OrderSubscribeService implements LoggerAwareInterface
         // значение свойтсва COM_WAY заказа (SAP: Communic)
         $comWayValue = OrderPropertyService::COMMUNICATION_SUBSCRIBE;
         // id заказа, копия которого будет создаваться
-        $copyOrderId = $params->getCopyOrderId();
+        $copyOrderId = $orderSubscribe->getOrderId();
         // флаг необходимости выполнения деактивации подписки
         $deactivateSubscription = false;
         // текущая дата без времени
@@ -1284,30 +1284,6 @@ class OrderSubscribeService implements LoggerAwareInterface
                 );
             }
         }
-
-        // В заказах по подписке только оплата наличными может быть
-//        if ($result->isSuccess()) {
-//            $cashPaySystemService = $this->getPayments();
-//            if ($cashPaySystemService) {
-//                try {
-//                    $params->getOrderCopyHelper()->setPayment($cashPaySystemService);
-//                } catch (\Exception $exception) {
-//                    $result->addError(
-//                        new Error(
-//                            $exception->getMessage(),
-//                            'orderSetPaymentException'
-//                        )
-//                    );
-//                }
-//            } else {
-//                $result->addError(
-//                    new Error(
-//                        'Не удалось получить платежную систему "Оплата наличными"',
-//                        'orderCashPaymentNotFound'
-//                    )
-//                );
-//            }
-//        }
 
         // Финальные операции
         if ($result->isSuccess()) {
@@ -1581,7 +1557,7 @@ class OrderSubscribeService implements LoggerAwareInterface
      * @throws \Exception
      * @throws \FourPaws\PersonalBundle\Exception\RuntimeException
      */
-    public function sendOrders(int $limit = 100, $currentDate = '', bool $extResult = false): Result
+    public function sendOrders(int $limit = 200, $currentDate = '', bool $extResult = false): Result
     {
         $result = new Result();
         $resultData = [];
