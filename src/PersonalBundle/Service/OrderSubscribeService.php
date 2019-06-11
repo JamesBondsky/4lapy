@@ -805,6 +805,10 @@ class OrderSubscribeService implements LoggerAwareInterface
             $arCalculationResult = $deliveryService->getByBasket($basket, $subscribe->getLocationId(), [$deliveryCode]);
             $calculationResult = reset($arCalculationResult);
 
+            if(!$calculationResult){
+                throw new NotFoundException(sprintf("Не удалось получить службу доставки для подписки: %s [%s]", $subscribe->getId(), __METHOD__));
+            }
+
             if($deliveryService->isPickup($calculationResult)){
                 try {
                     $store = $storeService->getStoreByXmlId($subscribe->getDeliveryPlace());
