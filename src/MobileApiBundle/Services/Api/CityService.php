@@ -21,7 +21,8 @@ use FourPaws\MobileApiBundle\Exception\SystemException;
 
 class CityService implements LoggerAwareInterface
 {
-    use LazyLoggerAwareTrait;
+    use /** @noinspection PhpDeprecationInspection */
+        LazyLoggerAwareTrait;
 
     /**
      * @var LocationService
@@ -150,7 +151,7 @@ class CityService implements LoggerAwareInterface
      * @return City[]|Collection
      * @throws IblockNotFoundException
      */
-    private function getDefaultCity()
+    public function getDefaultCity()
     {
         $availableCities = $this->locationService->getAvailableCitiesEx();
         $locations = [];
