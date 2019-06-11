@@ -16,17 +16,17 @@ if($USER->IsAuthorized()) {
     // срезаем пути - любой шаг заказа + баскет.
     if(!$template->isOrderPage() && !$template->isOrderInterviewPage() &&  !$template->isOrderDeliveryPage() && !$template->isPaymentPage() && !$template->isBasket())
     {
-        $modal_counts_txt = CUser::GetByID( $USER->GetID() )->Fetch()['UF_MODALS_CNTS'];
-        $modal_counts = explode(' ', $modal_counts_txt);
+        $modal_counts_txt = $modal_counts_txt ?? CUser::GetByID( $USER->GetID() )->Fetch()['UF_MODALS_CNTS'];
+        $modal_counts = $modal_counts ?? explode(' ', $modal_counts_txt);
         if($modal_counts != '3 3 3 3') // модалки не по 3 штуки //сравнение массива и строки - равносильно if (true)
         {
             /** @var PersonalOffersService $personalOffersService */
-            $personalOffersService = App::getInstance()->getContainer()->get('personal_offers.service');
-            $userId = $USER->GetID();
-            $userPersonalOffers = $personalOffersService->getActiveUserCoupons($userId);
+            $personalOffersService = $personalOffersService ?? App::getInstance()->getContainer()->get('personal_offers.service');
+            $userId = $userId ?? $USER->GetID();
+            $userPersonalOffers = $userPersonalOffers ?? $personalOffersService->getActiveUserCoupons($userId, true);
 
             /** @var ArrayCollection $coupons */
-            $coupons = $userPersonalOffers['coupons'];
+            $coupons = $coupons ?? $userPersonalOffers['coupons'];
 
             if ($coupons->isEmpty() || $modal_counts[3] > 2) {
 	            if($USER->GetParam('data_collect') !== 'Y') // модалку в сессии еще не показали
@@ -65,11 +65,7 @@ if($USER->IsAuthorized()) {
         }
     }
 } ?>
-<? if($modal_number == 4) { ?>
-    <?
-	//TODO окно с купоном. При клике на это окно нужно переходить на страницу "Персональные предложения"
-	?>
-<? } elseif($modal_number == 1) { ?>
+<? if($modal_number == 1) { ?>
     <? $APPLICATION->IncludeComponent('fourpaws:personal.profile', 'popupCollectorName', [], null, ['HIDE_ICONS' => 'Y']); ?>
     <a class="js-add-query js-open-popup js-open-popup--account-tab" style="display: none;" id="data_collect" data-popup-id="collector-name"></a>
 <? } ?>
