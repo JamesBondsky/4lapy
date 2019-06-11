@@ -33,7 +33,9 @@ $component = $this->getComponent(); ?>
             </span>
         <span class="b-header-info__inner"><?= $component->getMode()
             === FourPawsAuthFormComponent::MODE_FORM ? 'Войти' : $arResult['NAME'] ?></span>
-        <span class="b-header-info__number b-header-info__number--personal-coupons js-count-personal-coupons">1</span>
+        <? if ($arParams['NOT_SEEN_COUPONS']) { ?>
+            <span class="b-header-info__number b-header-info__number--personal-coupons js-count-personal-coupons"><?= $arParams['NOT_SEEN_COUPONS'] ?></span>
+        <? } ?>
         <span class="b-icon b-icon--header b-icon--left-3">
                 <?= new SvgDecorator('icon-arrow-down', 10, 12) ?>
             </span>
