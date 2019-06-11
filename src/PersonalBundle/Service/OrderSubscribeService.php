@@ -1498,6 +1498,19 @@ class OrderSubscribeService implements LoggerAwareInterface
             try {
                 // проверим, не создавался ли уже заказ для этой даты
                 $data['alreadyCreated'] = $copyParams->isCurrentDeliveryDateOrderAlreadyCreated();
+
+                if($data['alreadyCreated']) {
+                    $dateDeliverySubscribe = $orderSubscribe->getNextDate()->format('d.m.y');
+                    $dateDeliveryLastOrder = $this->getOrderSubscribeHistoryService()->getLastOrderDeliveryDate($orderSubscribe)->format('d.m.y');
+
+                    // обновим дату доставки, если она совпала с последним заказом
+                    if($dateDeliverySubscribe == $dateDeliveryLastOrder){
+                        $this->countNextDate($orderSubscribe);
+                        $orderSubscribe->countDateCheck();
+                        $this->update($orderSubscribe);
+                        $this->log()->info(sprintf('Обнволена дата следующей доставки для подписки %s: %s', $orderSubscribe->getId(), $orderSubscribe->getNextDate()->format('d.m.y')));
+                    }
+                }
             } catch (\Exception $exception) {
                 $result->addError(
                     new Error(
