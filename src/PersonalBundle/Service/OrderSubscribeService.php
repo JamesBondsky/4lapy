@@ -806,7 +806,17 @@ class OrderSubscribeService implements LoggerAwareInterface
             $calculationResult = reset($arCalculationResult);
 
             if($deliveryService->isPickup($calculationResult)){
-                $calculationResult->setSelectedStore($storeService->getStoreByXmlId($subscribe->getDeliveryPlace()));
+                try {
+                    $store = $storeService->getStoreByXmlId($subscribe->getDeliveryPlace());
+                } catch (\Exception $e) {
+                    // если склад не найден - попробуем найти его в DPD
+                    $terminals = $deliveryService->getDpdTerminalsByLocation($subscribe->getLocationId());
+                    $store = $terminals[$subscribe->getDeliveryPlace()];
+                    if(!$store){
+                        throw new NotFoundException(sprintf("Склад с XML_ID=%s не найден в DPD", $subscribe->getDeliveryPlace()));
+                    }
+                }
+                $calculationResult->setSelectedStore($store);
             }
         } catch (\Exception $e) {
             throw new NotFoundException($e->getMessage());
