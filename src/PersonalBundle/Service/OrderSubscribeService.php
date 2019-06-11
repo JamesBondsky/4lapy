@@ -987,6 +987,7 @@ class OrderSubscribeService implements LoggerAwareInterface
                     'CATALOG_XML_ID'         => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
                     'PRODUCT_XML_ID'         => $item['PRODUCT_XML_ID'],
                     'CAN_BUY'                => "Y",
+                    'MODULE'                 => "catalog",
                 ]);
 
                 /** @noinspection PhpInternalEntityUsedInspection */
