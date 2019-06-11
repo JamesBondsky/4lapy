@@ -382,11 +382,10 @@ class UserService
         } catch (\FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException $exception) {
             return null;
         } catch (\FourPaws\External\Exception\ManzanaServiceException $exception) {
-            return null;
         }
         return (new ClientCard())
             ->setTitle('Карта клиента')
-            ->setBalance($bonusInfo->getActiveBonus())
+            ->setBalance(isset($bonusInfo) ? $bonusInfo->getActiveBonus() : $user->getActiveBonus())
             ->setNumber($user->getDiscountCardNumber())
             ->setSaleAmount($user->getDiscount());
     }
@@ -443,6 +442,8 @@ class UserService
      */
     public function getPersonalBonus()
     {
+        $logger = LoggerFactory::create('getPersonalBonus');
+
         /**
          * @var ApiToken $token | null
          */
@@ -453,19 +454,30 @@ class UserService
             throw new SessionUnavailableException();
         }
         $user = $this->userRepository->find($session->getUserId());
-        $bonusInfo = $this->appBonusService->getManzanaBonusInfo($user);
+        try {
+            $bonusInfo = $this->appBonusService->getManzanaBonusInfo($user);
+        } catch (\FourPaws\External\Exception\ManzanaServiceContactSearchNullException $exception) {
+            $logger->error(sprintf('%s exception: %s', __METHOD__, $exception->getMessage()));
+            return new PersonalBonus();
+        } catch (\FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException $exception) {
+            $logger->error(sprintf('%s exception: %s', __METHOD__, $exception->getMessage()));
+            return new PersonalBonus();
+        } catch (\FourPaws\External\Exception\ManzanaServiceException $exception) {
+            $logger->error(sprintf('%s exception: %s', __METHOD__, $exception->getMessage()));
+        }
 
         try {
-            $this->userBundleService->refreshUserBonusPercent($user, $bonusInfo);
+            if (isset($bonusInfo)) {
+                $this->userBundleService->refreshUserBonusPercent($user, $bonusInfo);
+            }
         } catch (\Exception $e) {
-            $logger = LoggerFactory::create('getPersonalBonus');
             $logger->error(sprintf('%s exception: %s', __METHOD__, $e->getMessage()));
         }
 
         return (new PersonalBonus())
             ->setAmount($user->getDiscount() ?? 0)
-            ->setTotalIncome($bonusInfo->getDebit() ?? 0)
-            ->setTotalOutgo($bonusInfo->getCredit() ?? 0)
-            ->setNextStage($bonusInfo->getSumToNext());
+            ->setTotalIncome(isset($bonusInfo) ? ($bonusInfo->getDebit() ?? 0) : 0)
+            ->setTotalOutgo(isset($bonusInfo) ? ($bonusInfo->getCredit() ?? 0) : 0)
+            ->setNextStage(isset($bonusInfo) ? $bonusInfo->getSumToNext() : 0); //FIXME Это временное решение. Нужно сохранять все поля $bonusInfo на сайте и в случае, если манзана не отвечает, возвращать сохраненные значения
     }
 }

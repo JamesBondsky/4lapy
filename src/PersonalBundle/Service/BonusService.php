@@ -103,6 +103,7 @@ class BonusService
             $bonus = static::getManzanaBonusInfo($user, $this->manzanaService);
 
             $user->setTemporaryBonus($bonus->getTemporaryBonus());
+            $user->setActiveBonus($bonus->getActiveBonus());
             $user->setBonusUpdateDate(new DateTime());
             App::getInstance()->getContainer()->get(UserRepository::class)->update($user);
         } catch (ManzanaServiceContactSearchMoreOneException $e) {
