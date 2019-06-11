@@ -13,7 +13,7 @@ use FourPaws\Helpers\WordHelper;
 $itemCount = count($arResult['BASKET']);
 
 if (true !== $arParams['IS_AJAX']) {
-    echo '<div class="b-header-info__item b-header-info__item--cart">';
+    echo '<div class="b-header-info__item b-header-info__item--cart js-item-header-info">';
 } ?>
     <a class="b-header-info__link js-link-header-basket-mini<?= $itemCount ? ' js-open-popover ' : '' ?> js-toggle-popover-mobile-header"
        href="<?= $arParams['PATH_TO_BASKET'] ?>" title="Корзина">
