@@ -209,9 +209,9 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
 				                ($lastCouponOffer['PROPERTY_DISCOUNT_CURRENCY_VALUE'] ? $lastCouponOffer['PROPERTY_DISCOUNT_CURRENCY_VALUE'] . ' ₽' : '')
 			                );
 			                ?>
-		                    <div class="b-person-coupon js-popover js-content-popover-mobile-header">
+		                    <div class="b-person-coupon js-coupon-person-popup">
 		                        <div class="b-person-coupon__inner">
-		                            <div class="b-person-coupon__close"></div>
+		                            <div class="b-person-coupon__close js-close-person-coupon-popup"></div>
 			                        <? if ($offerDiscountText) { ?>
 		                                <div class="b-person-coupon__persent">-<?= $offerDiscountText ?></div>
 									<? } ?>
