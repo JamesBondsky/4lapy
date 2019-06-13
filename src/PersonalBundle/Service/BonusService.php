@@ -239,7 +239,7 @@ class BonusService
                 //$temporaryBonus = (float)$currentCard->balanceExtraNoLimit; // на тестовой Manzana
                 $temporaryBonus = (float)$currentCard->balanceExtraLimit; // на боевой Manzana
                 $activeBonus = (float)$contact->plActiveBalance;
-                $discount = (float)$contact->plDiscount;
+                $discount = $cardBonus->getDiscount();
 
                 $bonus->setActiveBonus($activeBonus);
                 $bonus->setTemporaryBonus($temporaryBonus);
