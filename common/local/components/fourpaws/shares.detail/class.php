@@ -45,7 +45,7 @@ class FourPawsOrderShopListComponent extends CBitrixComponent
 
 
         if (($activeTo && $activeTo < $currentDate && $share['ACTIVE_TO']) || $share['ACTIVE'] != 'Y') {
-            if (isset($arParams['URL_REDIRECT_404'])) {
+            if (isset($this->arParams['URL_REDIRECT_404'])) {
                 LocalRedirect($this->arParams['URL_REDIRECT_404']);
                 return;
             }

@@ -30,19 +30,19 @@ $activeTo = new DateTime($arResult['ACTIVE_TO']);
 $currentDate = new DateTime();
 
 
-if (($activeTo && $activeTo < $currentDate && $arResult['ACTIVE_TO']) || $arResult['ACTIVE'] != 'Y') {
-    if (isset($arParams['URL_REDIRECT_404'])) {
-        LocalRedirect($arParams['URL_REDIRECT_404']);
-        return;
-    }
-} else {
-    if ($arResult['ACTIVE'] != 'Y') {
-        Bitrix\Iblock\Component\Tools::process404(
-            trim($arParams["MESSAGE_404"]) ?: GetMessage("T_NEWS_DETAIL_NF")
-            , true
-            , true
-            , true
-            , $arParams["FILE_404"]
-        );
-    }
-}
+//if (($activeTo && $activeTo < $currentDate && $arResult['ACTIVE_TO']) || $arResult['ACTIVE'] != 'Y') {
+//    if (isset($arParams['URL_REDIRECT_404'])) {
+//        LocalRedirect($arParams['URL_REDIRECT_404']);
+//        return;
+//    }
+//} else {
+//    if ($arResult['ACTIVE'] != 'Y') {
+//        Bitrix\Iblock\Component\Tools::process404(
+//            trim($arParams["MESSAGE_404"]) ?: GetMessage("T_NEWS_DETAIL_NF")
+//            , true
+//            , true
+//            , true
+//            , $arParams["FILE_404"]
+//        );
+//    }
+//}
