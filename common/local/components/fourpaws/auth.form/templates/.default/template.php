@@ -16,7 +16,7 @@ use FourPaws\Decorators\SvgDecorator;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 
 $component = $this->getComponent(); ?>
-<div class="b-header-info__item b-header-info__item--person">
+<div class="b-header-info__item b-header-info__item--person js-item-header-info">
     <? if ($arResult['KIOSK']) { ?>
         <a class="b-link js-toggle-popover-mobile-header"
            href="<?=$arResult['AUTH_LINK']?>"
@@ -34,7 +34,10 @@ $component = $this->getComponent(); ?>
         <span class="b-header-info__inner"><?= $component->getMode()
             === FourPawsAuthFormComponent::MODE_FORM ? 'Войти' : $arResult['NAME'] ?></span>
         <? if ($arParams['NOT_SEEN_COUPONS']) { ?>
-            <span class="b-header-info__number b-header-info__number--personal-coupons js-count-personal-coupons"><?= $arParams['NOT_SEEN_COUPONS'] ?></span>
+            <span class="b-header-info__number b-header-info__number--personal-coupons js-count-personal-coupons">
+                <?= $arParams['NOT_SEEN_COUPONS'] ?>
+                <span class="arr-person-coupon js-arr-person-coupon-popup"></span>
+            </span>
         <? } ?>
         <span class="b-icon b-icon--header b-icon--left-3">
                 <?= new SvgDecorator('icon-arrow-down', 10, 12) ?>

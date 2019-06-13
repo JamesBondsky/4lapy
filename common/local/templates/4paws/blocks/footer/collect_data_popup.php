@@ -92,6 +92,10 @@ if($USER->IsAuthorized()) {
                 clearInterval(timer);
                 $('#data_collect').trigger('click');
 
+                if(<?= $modal_number === 4 ?>) {
+                    Coupon.showPersonPopup();
+                }
+
                 $('form.collector-form input').each(function () {
                     if($(this).val().length > 2) $(this).attr('readonly', "");
                 });
