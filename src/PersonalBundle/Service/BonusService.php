@@ -236,21 +236,30 @@ class BonusService
                 $currentCard = $contact->getCards()->filter(function(\FourPaws\External\Manzana\Model\Card $card) use($cardBonusNumber) {
                     return $card->cardNumber == $cardBonusNumber;
                 })->first();
-                //$temporaryBonus = $currentCard->balanceExtraNoLimit; // на тестовой Manzana
-                $temporaryBonus = $currentCard->balanceExtraLimit; // на боевой Manzana
+                //$temporaryBonus = (float)$currentCard->balanceExtraNoLimit; // на тестовой Manzana
+                $temporaryBonus = (float)$currentCard->balanceExtraLimit; // на боевой Manzana
+                $activeBonus = (float)$contact->plActiveBalance;
+                $discount = (float)$contact->plDiscount;
 
-                $bonus->setActiveBonus((float)$contact->plActiveBalance);
-                $bonus->setTemporaryBonus((float)$temporaryBonus);
+                $bonus->setActiveBonus($activeBonus);
+                $bonus->setTemporaryBonus($temporaryBonus);
                 $bonus->setAllBonus((float)$contact->plBalance);
                 $bonus->setCredit((float)$contact->plCredit);
                 $bonus->setDebit((float)$contact->plDebet);
                 $bonus->setSum((float)$contact->plSumm);
                 $bonus->setSumDiscounted((float)$contact->plSummDiscounted);
-                $bonus->setDiscount((float)$contact->plDiscount);
+                $bonus->setDiscount($discount);
 
                 $bonus->setCard($cardBonus);
 
                 $bonus->setEmpty(false);
+
+                $user->setDiscountCardNumber($cardBonusNumber)
+                    ->setActiveBonus($activeBonus)
+                    ->setTemporaryBonus($temporaryBonus)
+                    ->setDiscount($discount)
+                ;
+                App::getInstance()->getContainer()->get(UserRepository::class)->update($user);
             }
         }
         return $bonus;
