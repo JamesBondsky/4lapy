@@ -28,9 +28,9 @@ if($USER->IsAuthorized()) {
             /** @var ArrayCollection $coupons */
             $coupons = $coupons ?? $userPersonalOffers['coupons'];
 
-            if ($coupons->isEmpty() || $modal_counts[3] > 2) {
-	            if($USER->GetParam('data_collect') !== 'Y') // модалку в сессии еще не показали
-	            {
+            if($USER->GetParam('data_collect') !== 'Y') // модалку в сессии еще не показали
+            {
+                if ($coupons->isEmpty() || $modal_counts[3] > 2) {
 	                $user_data = CUser::GetByID($userId)->Fetch();
 	                if($user_data['UF_SESSION_CNTS'] % 3 == 1) // Каждая 3-я сессия
 	                {

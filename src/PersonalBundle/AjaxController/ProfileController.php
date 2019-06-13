@@ -9,6 +9,7 @@ namespace FourPaws\PersonalBundle\AjaxController;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
+use CUser;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
@@ -17,6 +18,7 @@ use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\Helpers\DateHelper;
+use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\EventController\Event;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -228,6 +230,38 @@ class ProfileController extends Controller
         $user_id = (int) $GLOBALS['USER']->GetID();
         $write = (int)$total_modals[0]." ".(int)$total_modals[1]." ".(int)$total_modals[2]." ".(int)$total_modals[3];
         $this->userAuthorization->setModalsCounters($user_id, $write);
+
+        return JsonSuccessResponse::createWithData('All fine!');
+    }
+
+    /**
+     * @Route("/doNotShowCoupon/", methods={"POST"})
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws ApplicationCreateException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
+     */
+    public function doNotShowCoupon(Request $request): JsonResponse
+    {
+        $couponId = (int)$request->get('id');
+        if ($couponId > 0) {
+            /** @var PersonalOffersService $personalOffersService */
+            $personalOffersService = App::getInstance()->getContainer()->get('personal_offers.service');
+            $personalOffersService->setCouponShownStatus([$couponId]);
+        }
+
+        $userId = (int) $GLOBALS['USER']->GetID();
+        $modalCounters = CUser::GetByID($userId)->Fetch()['UF_MODALS_CNTS'];
+        $newValue = explode(' ', $modalCounters);
+        $newValue[0] = $newValue[0] ?: 0;
+        $newValue[1] = $newValue[1] ?: 0;
+        $newValue[2] = $newValue[2] ?: 0;
+        $newValue[3] = 3; // прекращение показа всплывающего окна с купоном
+        $newValue = implode(' ', $newValue);
+        $this->userAuthorization->setModalsCounters($userId, $newValue);
 
         return JsonSuccessResponse::createWithData('All fine!');
     }

@@ -140,7 +140,7 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
             </div>
         <?php } else { ?>
 	        <?
-            if($USER->IsAuthorized()) {
+            if(!$template->isPersonalOffers() && $USER->IsAuthorized()) {
                 $modal_counts_txt = CUser::GetByID( $USER->GetID() )->Fetch()['UF_MODALS_CNTS'];
                 $modal_counts = explode(' ', $modal_counts_txt);
 
@@ -192,7 +192,6 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
                     <?php $APPLICATION->IncludeComponent('fourpaws:auth.form',
                         '',
                         [
-                            'SHOW_COUPON_EDGE' => isset($lastCouponOffer) ? true : false,
                             'NOT_SEEN_COUPONS' => isset($coupons) ? $coupons->count() : '',
                         ],
                         false,
@@ -203,26 +202,30 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
                         ->get(BasketViewService::class)
                         ->getMiniBasketHtml(); ?>
 
-	                <? if ($modal_number === 4) { ?>
-		                <?
-		                if ($lastCouponOffer) {
-			                $offerDiscountText = ($lastCouponOffer['PROPERTY_DISCOUNT_VALUE'] ? $lastCouponOffer['PROPERTY_DISCOUNT_VALUE'] . '%' :
-				                ($lastCouponOffer['PROPERTY_DISCOUNT_CURRENCY_VALUE'] ? $lastCouponOffer['PROPERTY_DISCOUNT_CURRENCY_VALUE'] . ' ₽' : '')
-			                );
-			                ?>
-		                    <div class="b-person-coupon js-coupon-person-popup">
-		                        <div class="b-person-coupon__inner">
-		                            <div class="b-person-coupon__close js-close-person-coupon-popup"></div>
-			                        <? if ($offerDiscountText) { ?>
-		                                <div class="b-person-coupon__persent">-<?= $offerDiscountText ?></div>
-									<? } ?>
-		                            <div class="b-person-coupon__descr"><?= $lastCouponOffer['~PREVIEW_TEXT'] ?></div>
-		                            <a href="/personal/personal-offers/" class="b-person-coupon__btn">Подробнее</a>
-		                        </div>
-		                    </div>
-						<?
+	                <?
+				    if($USER->GetParam('data_collect') !== 'Y') // модалку в сессии еще не показали
+				    {
+		                if ($modal_number === 4) { ?>
+			                <?
+			                if ($lastCouponOffer) {
+				                $offerDiscountText = ($lastCouponOffer['PROPERTY_DISCOUNT_VALUE'] ? $lastCouponOffer['PROPERTY_DISCOUNT_VALUE'] . '%' :
+					                ($lastCouponOffer['PROPERTY_DISCOUNT_CURRENCY_VALUE'] ? $lastCouponOffer['PROPERTY_DISCOUNT_CURRENCY_VALUE'] . ' ₽' : '')
+				                );
+				                ?>
+			                    <div class="b-person-coupon js-coupon-person-popup" data-id="<?= $coupons->get(0)['PERSONAL_COUPON_USER_COUPONS_ID'] ?>">
+			                        <div class="b-person-coupon__inner">
+			                            <div class="b-person-coupon__close js-close-person-coupon-popup"></div>
+				                        <? if ($offerDiscountText) { ?>
+			                                <div class="b-person-coupon__persent">-<?= $offerDiscountText ?></div>
+										<? } ?>
+			                            <div class="b-person-coupon__descr"><?= $lastCouponOffer['~PREVIEW_TEXT'] ?></div>
+			                            <a href="/personal/personal-offers/" class="b-person-coupon__btn">Подробнее</a>
+			                        </div>
+			                    </div>
+							<?
+			                }
 		                }
-	                }
+				    }
 	                ?>
                 </div>
             </div>

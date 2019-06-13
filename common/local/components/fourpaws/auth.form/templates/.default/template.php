@@ -23,7 +23,7 @@ $component = $this->getComponent(); ?>
            title="Войти">
     <? } else { ?>
         <a class="<?= ($component->getMode()
-            === FourPawsAuthFormComponent::MODE_FORM) ? 'b-link js-open-popup' : 'b-header-info__link js-open-popover' ?> <?= $arParams['SHOW_COUPON_EDGE'] ? '' : 'hidden-coupon' ?> js-toggle-popover-mobile-header"
+            === FourPawsAuthFormComponent::MODE_FORM) ? 'b-link js-open-popup' : 'b-header-info__link js-open-popover' ?> js-toggle-popover-mobile-header"
            href="javascript:void(0);"
            title="<?= $component->getMode()
            === FourPawsAuthFormComponent::MODE_FORM ? 'Войти' : $arResult['NAME'] ?>"<?= ($component->getMode() === FourPawsAuthFormComponent::MODE_FORM) ? ' data-popup-id="authorization"' : '' ?>>
@@ -71,6 +71,7 @@ $component = $this->getComponent(); ?>
                 'USE_EXT' => 'N',
                 'DELAY' => 'N',
                 'ALLOW_MULTI_SELECT' => 'N',
+                'NOT_SEEN_COUPONS' => $arParams['NOT_SEEN_COUPONS'] ?? '',
             ],
             false,
             ['HIDE_ICONS' => 'Y']
