@@ -57,10 +57,10 @@ if($USER->IsAuthorized()) {
 	                        $modal_number = 1;
 	                    }
 	                }
-                }
-            }
-            else {
-                $modal_number = 4;
+	            }
+	            else {
+	                $modal_number = 4;
+	            }
             }
         }
     }

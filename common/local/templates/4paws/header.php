@@ -157,7 +157,9 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
 	                /** @var ArrayCollection $coupons */
 	                $coupons = $userPersonalOffers['coupons'];
 
-	                if (!$coupons->isEmpty() && $modal_counts[3] <= 2) {
+	                if (!$coupons->isEmpty() && $modal_counts[3] <= 2
+		                && $USER->GetParam('data_collect') !== 'Y' // модалку в сессии еще не показали
+	                ) {
 	                    $modal_number = 4;
                         $lastCouponOffer = $userPersonalOffers['offers']->get($coupons->get(0)['UF_OFFER']);
 	                }
