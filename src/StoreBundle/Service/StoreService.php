@@ -267,6 +267,8 @@ class StoreService implements LoggerAwareInterface
     {
         $storeSearchResult = $this->getLocalStores($locationCode, $type);
 
+        $origName = $storeSearchResult->getLocationName();
+
         /**
          * Ищем склады района и региона
          */
@@ -274,6 +276,7 @@ class StoreService implements LoggerAwareInterface
             $storeSearchResult = $this->getSubRegionalStores($locationCode, $type);
             if ($storeSearchResult->getStores()->isEmpty()) {
                 $storeSearchResult = $this->getRegionalStores($locationCode, $type);
+                $storeSearchResult->setLocationName($origName);
             }
         }
 
@@ -397,7 +400,7 @@ class StoreService implements LoggerAwareInterface
 
         if ($locationCode = $location['CODE']) {
             $getStores = function () use ($locationCode, $type) {
-                $storeCollection = $this->getStores($type, ['UF_LOCATION' => $locationCode]);
+                $storeCollection = $this->getStores($type, ['UF_REGION' => $locationCode]);
 
                 return ['result' => $storeCollection];
             };
