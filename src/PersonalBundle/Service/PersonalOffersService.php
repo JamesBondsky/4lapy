@@ -528,7 +528,12 @@ class PersonalOffersService
                         ['ref.UF_USED', false],
                     ]));
             if ($isNotShown) {
-                $personalCouponUsersQuery = $personalCouponUsersQuery->where('ref.UF_SHOWN', '!=', '1');
+                $personalCouponUsersQuery = $personalCouponUsersQuery->where(Query::filter()
+                    ->logic('or')
+                    ->where([
+                        ['ref.UF_SHOWN', null],
+                        ['ref.UF_SHOWN', false],
+                    ]));
             }
             $coupons = $this->personalCouponManager::query()
                 ->setSelect([
