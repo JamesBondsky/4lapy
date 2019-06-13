@@ -14,11 +14,13 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserTable;
+use CUser;
 use FourPaws\App\Application;
 use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\Enum\UserGroup;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
@@ -29,6 +31,7 @@ use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Service\UserSearchInterface;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -125,6 +128,7 @@ class Event extends BaseServiceHandler
         static::initHandler('OnBeforeIBlockElementUpdate', [self::class, 'checkIfNewCoupons'], 'iblock');
         static::initHandler('OnAfterIBlockElementAdd', [self::class, 'importPersonalOffersCoupons'], 'iblock');
         static::initHandler('OnAfterIBlockElementUpdate', [self::class, 'importPersonalOffersCoupons'], 'iblock');
+        static::initHandler('\PersonalCouponUsers::OnAfterAdd', [self::class, 'resetCouponWindowCounter']);
 
         if(KioskService::isKioskMode()) {
             static::initHandler('OnEpilog', [
@@ -668,5 +672,32 @@ class Event extends BaseServiceHandler
         } elseif (!$kioskService->getStore()) {
             $kioskService->setStore($kioskService->getDefaultStoreXmlId());
         }
+    }
+
+    /**
+     * @param BitrixEvent $event
+     */
+    public static function resetCouponWindowCounter(BitrixEvent $event)
+    {
+        if (static::isDisabledHandler(__FUNCTION__)) {
+            return;
+        }
+
+        $fields = $event->getParameter('fields');
+        $userId = (int)$fields['UF_USER_ID'];
+        if ($userId <= 0) {
+            return;
+        }
+
+        $modalCounters = CUser::GetByID($userId)->Fetch()['UF_MODALS_CNTS'];
+        $newValue = explode(' ', $modalCounters);
+        $newValue[0] = $newValue[0] ?: 0;
+        $newValue[1] = $newValue[1] ?: 0;
+        $newValue[2] = $newValue[2] ?: 0;
+        $newValue[3] = 0;
+        $newValue = implode(' ', $newValue);
+
+        $userService = Application::getInstance()->getContainer()->get(UserSearchInterface::class);
+        $userService->setModalsCounters($userId, $newValue);
     }
 }
