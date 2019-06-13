@@ -433,6 +433,9 @@ class ProductService
         $shortProduct->setBonusAll($offer->getBonusCount(3, $quantity));
         $shortProduct->setBonusUser($offer->getBonusCount($this->userService->getDiscount(), $quantity));
 
+        //Округлить до упаковки
+        $shortProduct->setInPack(intval($offer->getMultiplicity()));
+
         return $shortProduct;
     }
 
@@ -470,7 +473,8 @@ class ProductService
             ->setBonusUser($shortProduct->getBonusUser())
             ->setIsByRequest($shortProduct->getIsByRequest())
             ->setIsAvailable($shortProduct->getIsAvailable())
-            ->setPickupOnly($shortProduct->getPickupOnly());
+            ->setPickupOnly($shortProduct->getPickupOnly())
+            ->setInPack($shortProduct->getInPack());
 
         if ($needPackingVariants) {
             $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct));   // фасовки
