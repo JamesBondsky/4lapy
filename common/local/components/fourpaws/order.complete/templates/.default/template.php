@@ -223,15 +223,19 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                 <? if ($arResult['KIOSK_MODE']) { ?>
                     <a href="<?=$arResult['KIOSK_LOGOUT_URL']?>" class="b-button b-button--complete-kiosk">Завершить покупки</a>
                 <? } ?>
-                <hr class="b-hr b-hr--order"/>
                 <?
-                $APPLICATION->IncludeComponent(
-                    'fourpaws:expertsender.form',
-                    'order.complete',
-                    [],
-                    false,
-                    ['HIDE_ICONS' => 'Y']
-                );
+                if (!isset($arResult['ORDER_PROPERTIES']['EMAIL'])) {
+                    ?>
+                    <hr class="b-hr b-hr--order"/>
+                    <?
+                    $APPLICATION->IncludeComponent(
+                        'fourpaws:expertsender.form',
+                        'order.complete',
+                        [],
+                        false,
+                        ['HIDE_ICONS' => 'Y']
+                    );
+                }
                 ?>
                 <hr class="b-hr b-hr--order"/>
                 <div class="b-order__text-block">
