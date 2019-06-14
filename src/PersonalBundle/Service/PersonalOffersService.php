@@ -11,6 +11,7 @@ use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Fields\ExpressionField;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Internals\DiscountCouponTable;
 use CSaleDiscount;
@@ -78,7 +79,7 @@ class PersonalOffersService
             throw new InvalidArgumentException('can\'t get user\'s coupons. userId: ' . $userId);
         }
 
-        list($offersCollection, $couponsCollection) = $this->getActiveCoupons($userId, $isNotShown);
+        list($offersCollection, $couponsCollection) = $this->getActiveCoupons($userId, $isNotShown, $withUnrestrictedCoupons);
         $result = [
             'coupons' => $couponsCollection,
             'offers'  => $offersCollection,
@@ -772,6 +773,7 @@ class PersonalOffersService
     /**
      * @param int $userId
      * @param bool|null $isNotShown
+     * @param bool|null $withUnrestrictedCoupons
      * @return array
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
@@ -779,12 +781,12 @@ class PersonalOffersService
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      */
-    protected function getActiveCoupons(int $userId, ?bool $isNotShown = false): array
+    protected function getActiveCoupons(int $userId, ?bool $isNotShown = false, ?bool $withUnrestrictedCoupons = false): array
     {
         $coupons = [];
         $offersCollection = new ArrayCollection();
 
-        $activeOffersCollection = $this->getActiveOffers();
+        $activeOffersCollection = $this->getActiveOffers([], $withUnrestrictedCoupons);
 
         if (!$activeOffersCollection->isEmpty()) {
             $personalCouponUsersQuery = Query\Join::on('this.ID', 'ref.UF_COUPON')

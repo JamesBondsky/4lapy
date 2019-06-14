@@ -71,7 +71,7 @@ class FourPawsPersonalCabinetOffersComponent extends FourPawsComponent
         }
 
         //$this->arResult['TOTAL_ORDER_COUNT'] = $orderCount;
-        $offersCoupons = $this->personalOffersService->getActiveUserCoupons($userId, true);
+        $offersCoupons = $this->personalOffersService->getActiveUserCoupons($userId, false, true);
 
         /** @var ArrayCollection $coupons */
         $coupons = $offersCoupons['coupons'];

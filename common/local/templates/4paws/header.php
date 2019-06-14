@@ -148,7 +148,7 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
                 $personalOffersService = PawsApplication::getInstance()->getContainer()->get('personal_offers.service');
                 $userId = $USER->GetID();
                 try {
-                    $userPersonalOffers = $personalOffersService->getActiveUserCoupons($userId, true);
+                    $userPersonalOffers = $personalOffersService->getActiveUserCoupons($userId, true, true);
                 } catch (\Exception $e) {
                     $userPersonalOffers = [];
                 }
