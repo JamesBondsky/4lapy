@@ -126,7 +126,7 @@ class PushController extends FOSRestController implements LoggerAwareInterface
         $existingPushTokens = $this->apiPushMessagesService->getExistingPushTokens($pushTokens);
 
         $response = (new Response())
-            ->setData(['result' => $existingPushTokens]);
+            ->setData(['pushTokens' => $existingPushTokens]);
 
         $this->mobileApiLog()->info('Request: GET checkPushTokensAction. pushTokens count: ' . count($checkPushTokensRequest->getPushTokens()) . '. In base count: ' . count($existingPushTokens));
         /*$this->mobileApiLog()->info('Request: GET checkPushTokensAction. pushTokens: ' . print_r($checkPushTokensRequest->getPushTokens(), true)
