@@ -210,7 +210,7 @@ class ProductService
         if (!$currentOffer) {
             return null;
         }
-        $fullProduct = $this->convertToFullProduct($product, $currentOffer, true);
+        $fullProduct = $this->convertToFullProduct($product, $currentOffer, true, false);
 
         // товары всегда доступны в каталоге (недоступные просто не должны быть в выдаче)
         $fullProduct->setIsAvailable(true);
@@ -443,11 +443,12 @@ class ProductService
      * @param Product $product
      * @param Offer $offer
      * @param bool $needPackingVariants
+     * @param bool|null $showVariantsIfOneVariant
      * @return FullProduct
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \Bitrix\Main\ArgumentException
      */
-    public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = false): FullProduct
+    public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = false, ?bool $showVariantsIfOneVariant = true): FullProduct
     {
         $shortProduct = $this->convertToShortProduct($product, $offer);
         $detailText = $product->getDetailText()->getText();
@@ -477,7 +478,7 @@ class ProductService
             ->setInPack($shortProduct->getInPack());
 
         if ($needPackingVariants) {
-            $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct));   // фасовки
+            $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant));   // фасовки
         }
 
         return $fullProduct;
@@ -561,20 +562,21 @@ class ProductService
      *
      * @param Product     $product
      * @param FullProduct $currentFullProduct
+     * @param bool|null   $showVariantsIfOneVariant
      *
      * @return array
      * @throws ApplicationCreateException
      * @throws ArgumentException
      */
-    public function getPackingVariants(Product $product, FullProduct $currentFullProduct): array
+    public function getPackingVariants(Product $product, FullProduct $currentFullProduct, ?bool $showVariantsIfOneVariant = true): array
     {
         $offers = $product->getOffersSorted();
         // если в предложениях только текущий продукт
         $hasOnlyCurrentOffer = (count($offers) === 1 && $offers->current()->getId() === $currentFullProduct->getId());
-        if ($hasOnlyCurrentOffer) {
+        if ($hasOnlyCurrentOffer && $showVariantsIfOneVariant) {
             return [$fullProduct = $this->convertToFullProduct($product, $offers->current())];
         }
-        if (empty($offers)) {
+        if (empty($offers) || ($hasOnlyCurrentOffer && !$showVariantsIfOneVariant)) {
             return [];
         }
 
