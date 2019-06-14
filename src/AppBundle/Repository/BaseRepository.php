@@ -301,7 +301,7 @@ class BaseRepository
     {
         $result = $this->findBy(['filter' => ['ID' => $id]]);
         if ($result->isEmpty()) {
-            throw new NotFoundException('Entity not found');
+            throw new NotFoundException(sprintf('Entity not found: %s', $id));
         }
 
         return $result->first();

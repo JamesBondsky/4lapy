@@ -28,6 +28,8 @@ use FourPaws\Enum\UserGroup;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\KioskBundle\Service\KioskService;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\Referral;
 use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -37,6 +39,7 @@ use FourPaws\UserBundle\Service\UserSearchInterface;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class Event
@@ -134,6 +137,13 @@ class Event extends BaseServiceHandler
         /** уникальные акции */
         static::initHandler('OnAfterIBlockElementAdd', [self::class, 'createDiscountFromPersonalOffer'], 'iblock');
         static::initHandler('OnAfterIBlockElementUpdate', [self::class, 'createDiscountFromPersonalOffer'], 'iblock');
+
+        if(KioskService::isKioskMode()) {
+            static::initHandler('OnEpilog', [
+                self::class,
+                'setKioskStore',
+            ], 'main');
+        }
     }
 
     /**
@@ -657,6 +667,48 @@ class Event extends BaseServiceHandler
         }
     }
 
+
+    public static function setKioskStore(): void
+    {
+        $request = Request::createFromGlobals();
+        $storeCode = $request->request->get('store');
+        /** @var KioskService $kioskService */
+        $kioskService = Application::getInstance()->getContainer()->get('kiosk.service');
+
+        if(!empty($storeCode) && (!$kioskService->getStore() || $storeCode != $kioskService->getStore()->getXmlId())){
+            $kioskService->setStore($storeCode);
+        } elseif (!$kioskService->getStore()) {
+            $kioskService->setStore($kioskService->getDefaultStoreXmlId());
+        }
+    }
+
+    /**
+     * @param BitrixEvent $event
+     */
+    public static function resetCouponWindowCounter(BitrixEvent $event)
+    {
+        if (static::isDisabledHandler(__FUNCTION__)) {
+            return;
+        }
+
+        $fields = $event->getParameter('fields');
+        $userId = (int)$fields['UF_USER_ID'];
+        if ($userId <= 0) {
+            return;
+        }
+
+        $modalCounters = CUser::GetByID($userId)->Fetch()['UF_MODALS_CNTS'];
+        $newValue = explode(' ', $modalCounters);
+        $newValue[0] = $newValue[0] ?: 0;
+        $newValue[1] = $newValue[1] ?: 0;
+        $newValue[2] = $newValue[2] ?: 0;
+        $newValue[3] = 0;
+        $newValue = implode(' ', $newValue);
+
+        $userService = Application::getInstance()->getContainer()->get(UserSearchInterface::class);
+        $userService->setModalsCounters($userId, $newValue);
+    }
+
     /**
      * @param $arFields
      * @throws ArgumentException
@@ -756,32 +808,5 @@ class Event extends BaseServiceHandler
                 //DiscountGroupTable::updateByDiscount($discountId, $groupsIds, 'Y', true);
             }
         }
-    }
-
-    /**
-     * @param BitrixEvent $event
-     */
-    public static function resetCouponWindowCounter(BitrixEvent $event)
-    {
-        if (static::isDisabledHandler(__FUNCTION__)) {
-            return;
-        }
-
-        $fields = $event->getParameter('fields');
-        $userId = (int)$fields['UF_USER_ID'];
-        if ($userId <= 0) {
-            return;
-        }
-
-        $modalCounters = CUser::GetByID($userId)->Fetch()['UF_MODALS_CNTS'];
-        $newValue = explode(' ', $modalCounters);
-        $newValue[0] = $newValue[0] ?: 0;
-        $newValue[1] = $newValue[1] ?: 0;
-        $newValue[2] = $newValue[2] ?: 0;
-        $newValue[3] = 0;
-        $newValue = implode(' ', $newValue);
-
-        $userService = Application::getInstance()->getContainer()->get(UserSearchInterface::class);
-        $userService->setModalsCounters($userId, $newValue);
     }
 }

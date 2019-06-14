@@ -57,7 +57,7 @@ use FourPaws\Decorators\SvgDecorator; ?>
         <a class="b-popup-pick-city__close js-close-popup" href="javascript:void(0)" title="закрыть"></a>
     </header>
     <main class="b-popup-pick-city__main" role="main">
-        <div class="b-popup-pick-city__category-list">
+        <div class="b-popup-pick-city__category-list js-header-pick-city-scroll">
             <a class="b-popup-pick-city__category active js-tab-city"
                href="javascript:void(0)"
                title="Москва и МО"
@@ -66,6 +66,12 @@ use FourPaws\Decorators\SvgDecorator; ?>
                href="javascript:void(0)"
                title="Крупные города"
                data-tab-city="other">Крупные города</a>
+            <? if (isset($arResult['PERSONAL_ADDRESSES'])) { ?>
+                <a class="b-popup-pick-city__category js-tab-city"
+                   href="javascript:void(0)"
+                   title="Из моих адресов"
+                   data-tab-city="personal">Из моих адресов</a>
+            <? } ?>
         </div>
         <ul class="b-popup-pick-city__list-general active js-tab-content-city" data-content-city="capital">
             <?php foreach ($arResult['MOSCOW_CITIES'] as $letter => $cities) { ?>
@@ -116,6 +122,23 @@ use FourPaws\Decorators\SvgDecorator; ?>
                 </li>
             <?php } ?>
         </ul>
+        <? if (isset($arResult['PERSONAL_ADDRESSES'])) { ?>
+            <ul class="b-popup-pick-city__list-general b-popup-pick-city__list-general--personal js-tab-content-city" data-content-city="personal">
+                <? foreach ($arResult['PERSONAL_ADDRESSES'] as $address) { ?>
+                    <li class="b-popup-pick-city__item-personal">
+                        <a class="b-popup-pick-city__city-link js-my-city" href="javascript:void(0)" title="<?= $address->getCity() ?>" data-url="<?= $arResult['CITY_SET_URL'] ?>" data-code="<?= $address->getLocation() ?>">
+                            <?= $address->getCity() ?>
+
+                            <? if ($address->getHaveShop()) { ?>
+                                <span class="b-icon b-icon--market">
+                                    <?= new SvgDecorator('icon-pin', 13, 16) ?>
+                                </span>
+                            <? } ?>
+                        </a>
+                    </li>
+                <? } ?>
+            </ul>
+        <? } ?>
     </main>
     <footer class="b-popup-pick-city__footer">
         <div class="b-popup-pick-city__note-line">

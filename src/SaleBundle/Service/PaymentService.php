@@ -3,6 +3,7 @@
 namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
+use Adv\Bitrixtools\Tools\HLBlock\HLBlockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
@@ -27,6 +28,7 @@ use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Entity\Terminal;
+use FourPaws\Enum\PaymentMethod;
 use FourPaws\Helpers\BusinessValueHelper;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\DateHelper;
@@ -158,13 +160,13 @@ class PaymentService implements LoggerAwareInterface
         $dateCreate = $order->getField('DATE_INSERT');
 
         $orderBundle = new OrderBundle();
-        $fiscal = (new Fiscal())
-            ->setOrderBundle($orderBundle)
-            ->setTaxSystem($taxSystem);
         $orderBundle
             ->setCustomerDetails($this->getCustomerDetails($order))
             ->setDateCreate(DateHelper::convertToDateTime($dateCreate))
             ->setCartItems($this->getCartItems($order, $skipGifts));
+        $fiscal = (new Fiscal())
+            ->setOrderBundle($orderBundle)
+            ->setTaxSystem($taxSystem);
 
         return (new Fiscalization())->setFiscal($fiscal);
     }
@@ -628,7 +630,8 @@ class PaymentService implements LoggerAwareInterface
                 ->setPrice($itemPrice)
                 ->setTotal($itemPrice * (int)$basketItem->getQuantity())
                 ->setCode($basketItem->getProductId() . '_' . $position)
-                ->setTax($tax);
+                ->setTax($tax)
+                ->setPaymentMethod(PaymentMethod::FULL_PAYMENT);
             $items->add($item);
         }
 
@@ -687,8 +690,9 @@ class PaymentService implements LoggerAwareInterface
                 ->setCode($order->getId() . '_DELIVERY')
                 ->setPrice($deliveryPrice)
                 ->setTax((new ItemTax())
-                    ->setType(0)
-                );
+                    ->setType($vatGateway[20])
+                )
+                ->setPaymentMethod(PaymentMethod::FULL_PAYMENT);
 
             $items->add($delivery);
         }

@@ -28,6 +28,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaService;
@@ -156,6 +157,9 @@ class OrderController extends Controller implements LoggerAwareInterface
         );
         array_walk($shopInfo['items'], [$this->storeShopInfoService, 'locationTypeSortDecorate']);
         usort($shopInfo['items'], [$this->storeShopInfoService, 'shopCompareByLocationType']);
+        if (KioskService::isKioskMode()){
+            usort($shopInfo['items'], [$this->storeShopInfoService, 'shopCompareByKiosk']);
+        }
         array_walk($shopInfo['items'], [$this->storeShopInfoService, 'locationTypeSortUndecorate']);
 
         return JsonSuccessResponse::createWithData(
@@ -530,21 +534,22 @@ class OrderController extends Controller implements LoggerAwareInterface
             $errors[] = $e->getMessage();
         }
 
-        if(empty($errors)){
+        if (empty($errors)) {
             try {
                 $this->orderStorageService->updateStorage($storage, $step);
 
-                if($storage->isSubscribe()){
-                    if($step == OrderStorageEnum::DELIVERY_STEP){ // создание подписки на доставку
+                // создание подписки на доставку и установка свойства "Списывать все баллы по подписке"
+                if ($storage->isSubscribe()) {
+                    if ($step == OrderStorageEnum::DELIVERY_STEP) {
                         $result = $this->orderSubscribeService->createSubscriptionByRequest($storage, $request);
-                        if(!$result->isSuccess()){
+                        if (!$result->isSuccess()) {
                             $this->log()->error(implode(";\r\n", $result->getErrorMessages()));
                             throw new OrderSubscribeException("Произошла ошибка оформления подписки на доставку, пожалуйста, обратитесь к администратору");
                         }
                         $storage->setSubscribeId($result->getData()['subscribeId']);
                         $this->orderStorageService->updateStorage($storage, $step);
-                    } else if($step == OrderStorageEnum::PAYMENT_STEP){ // установка свойства "Списывать все баллы по подписке"
-                        if($storage->isSubscribe() && $request->get('subscribeBonus')){
+                    } else if ($step == OrderStorageEnum::PAYMENT_STEP) {
+                        if ($storage->isSubscribe() && $request->get('subscribeBonus')) {
                             $subscribe = $this->orderSubscribeService->getById($storage->getSubscribeId());
                             $subscribe->setPayWithbonus(true);
                             $this->orderSubscribeService->update($subscribe);

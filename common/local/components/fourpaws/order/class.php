@@ -524,16 +524,16 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 }
             }
 
-            if($this->kioskService->isKioskMode()){
+            if(KioskService::isKioskMode()){
                 $curPage = BitrixApplication::getInstance()->getContext()->getRequest()->getRequestUri();
                 $url = $this->kioskService->addParamsToUrl($curPage, ['bindcard' => true]);
                 $this->arResult['BIND_CARD_URL'] = $url;
+                $this->arResult['IS_BIND_CARD_URL'] = ($url == $curPage);
                 $this->arResult['KIOSK'] = true;
                 if ($this->kioskService->getCardNumber()) {
                     $storage->setDiscountCardNumber($this->kioskService->getCardNumber());
                     $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
                 }
-
             }
 
             $payments = $this->orderStorageService->getAvailablePayments($storage, true, true, $basket->getPrice());
@@ -568,6 +568,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $storage          = clone $storage;
             $selectedShopCode = $storage->getDeliveryPlaceCode();
             $shops            = $pickup->getStockResult()->getStores();
+
             if ($selectedShopCode && isset($shops[$selectedShopCode])) {
                 $pickup->setSelectedShop($shops[$selectedShopCode]);
             }
@@ -665,6 +666,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $itemData[$offerId]['quantity'] += $item->getAmount();
             $itemData[$offerId]['price']    += $item->getPrice();
             $itemData[$offerId]['weight']   += $weight;
+            $itemData[$offerId]['brand']    = $item->getOffer()->getProduct()->getBrandName();
 
             $totalWeight += $weight;
         }

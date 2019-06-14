@@ -16,21 +16,21 @@ if($USER->IsAuthorized()) {
     // срезаем пути - любой шаг заказа + баскет.
     if(!$template->isOrderPage() && !$template->isOrderInterviewPage() &&  !$template->isOrderDeliveryPage() && !$template->isPaymentPage() && !$template->isBasket())
     {
-        $modal_counts_txt = CUser::GetByID( $USER->GetID() )->Fetch()['UF_MODALS_CNTS'];
-        $modal_counts = explode(' ', $modal_counts_txt);
+        $modal_counts_txt = $modal_counts_txt ?? CUser::GetByID( $USER->GetID() )->Fetch()['UF_MODALS_CNTS'];
+        $modal_counts = $modal_counts ?? explode(' ', $modal_counts_txt);
         if($modal_counts != '3 3 3 3') // модалки не по 3 штуки //сравнение массива и строки - равносильно if (true)
         {
             /** @var PersonalOffersService $personalOffersService */
-            $personalOffersService = App::getInstance()->getContainer()->get('personal_offers.service');
-            $userId = $USER->GetID();
-            $userPersonalOffers = $personalOffersService->getActiveUserCoupons($userId);
+            $personalOffersService = $personalOffersService ?? App::getInstance()->getContainer()->get('personal_offers.service');
+            $userId = $userId ?? $USER->GetID();
+            $userPersonalOffers = $userPersonalOffers ?? $personalOffersService->getActiveUserCoupons($userId, true);
 
             /** @var ArrayCollection $coupons */
-            $coupons = $userPersonalOffers['coupons'];
+            $coupons = $coupons ?? $userPersonalOffers['coupons'];
 
-            if ($coupons->isEmpty() || $modal_counts[3] > 2) {
-	            if($USER->GetParam('data_collect') !== 'Y') // модалку в сессии еще не показали
-	            {
+            if($USER->GetParam('data_collect') !== 'Y') // модалку в сессии еще не показали
+            {
+                if ($coupons->isEmpty() || $modal_counts[3] > 2) {
 	                $user_data = CUser::GetByID($userId)->Fetch();
 	                if($user_data['UF_SESSION_CNTS'] % 3 == 1) // Каждая 3-я сессия
 	                {
@@ -57,23 +57,15 @@ if($USER->IsAuthorized()) {
 	                        $modal_number = 1;
 	                    }
 	                }
-                }
-            }
-            else {
-                $modal_number = 4;
+	            }
+	            else {
+	                $modal_number = 4;
+	            }
             }
         }
     }
 } ?>
-<? if($modal_number == 4) { ?>
-    <?
-	/*
-	TODO окно с купоном.
-	При клике на это окно нужно переходить на страницу "Персональные предложения" и устанавливать в 4-е число в поле UF_MODALS_CNTS юзера значение 3 (чтобы окно больше не показывалось)
-	(установить значение можно через \FourPaws\UserBundle\Service\UserService::setModalsCounters)
-	 */
-	?>
-<? } elseif($modal_number == 1) { ?>
+<? if($modal_number == 1) { ?>
     <? $APPLICATION->IncludeComponent('fourpaws:personal.profile', 'popupCollectorName', [], null, ['HIDE_ICONS' => 'Y']); ?>
     <a class="js-add-query js-open-popup js-open-popup--account-tab" style="display: none;" id="data_collect" data-popup-id="collector-name"></a>
 <? } ?>
@@ -100,11 +92,15 @@ if($USER->IsAuthorized()) {
                 clearInterval(timer);
                 $('#data_collect').trigger('click');
 
+                if(<?= $modal_number === 4 ?>) {
+                    Coupon.showPersonPopup();
+                }
+
                 $('form.collector-form input').each(function () {
                     if($(this).val().length > 2) $(this).attr('readonly', "");
                 });
 
-                let modals_counter = [<?=$modal_counts[0]?>, <?=$modal_counts[1]?>, <?=$modal_counts[2]?>, <?=$modal_counts[3]?>];
+                let modals_counter = [<?=$modal_counts[0]?>, <?=$modal_counts[1]?>, <?=$modal_counts[2]?>, <?=$modal_counts[3] ?? 0 ?>];
                 modals_counter[<?=$modal_number-1?>]++;
 
                 // отправим новые счетчики модалок, только после показа.

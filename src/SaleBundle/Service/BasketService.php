@@ -1003,11 +1003,11 @@ class BasketService implements LoggerAwareInterface
     }
 
     /**
-     * @param string $xmlId
+     * @param string|null $xmlId
      * @param bool|null $extendedCheck
      * @return bool
      */
-    public function isGiftProductByXmlId(string $xmlId, ?bool $extendedCheck = false): bool
+    public function isGiftProductByXmlId(?string $xmlId, ?bool $extendedCheck = false): bool
     {
         /**
          * @todo выпилить 1 октября 2018 года (коммент перенесен из метода isGiftProduct)

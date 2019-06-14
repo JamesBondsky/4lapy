@@ -118,7 +118,7 @@ foreach ($arResult['MENU_TREE'] as $arFirstLevelItem) {
                         </a>
                     </li>
                     <?php foreach ($arFirstLevelItem['NESTED'] as $arSecondLevelItem) { ?>
-                        <li class="b-menu-main__item">
+                        <li class="b-menu-main__item js-item-main-menu">
                             <a class="b-menu-main__link js-active-submenu <?=$arSecondLevelItem['NESTED'] ? ' js-open-step-mobile' : ''?>"<?= $arSecondLevelItem['_LINK_ATTR2_'] ?>
                                href="<?= $arSecondLevelItem['_URL_'] ?>">
                                <!--noindex-->

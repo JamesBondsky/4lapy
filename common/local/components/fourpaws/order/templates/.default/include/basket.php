@@ -154,7 +154,7 @@ $deliveryIsSplit &= !($isPickup && !($pickupIsPartial || $pickupIsSplit));
                         <div class="b-order-list__order-text b-order-list__order-text--aside js-full-list">
                             <div class="b-order-list__clipped-text">
                                 <div class="b-order-list__text-backed">
-                                    <?= $item['name'] ?>
+                                    <?= $item['brand'] ?> <?= $item['name'] ?>
                                     <?php if ($item['quantity'] > 1) { ?>
                                         (<?= $item['quantity'] ?> шт)
                                     <?php } ?>
@@ -188,7 +188,7 @@ $deliveryIsSplit &= !($isPickup && !($pickupIsPartial || $pickupIsSplit));
                         <div class="b-order-list__order-text b-order-list__order-text--aside">
                             <div class="b-order-list__clipped-text">
                                 <div class="b-order-list__text-backed">
-                                    <?= $item['name'] ?>
+                                    <?= $item['brand'] ?> <?= $item['name'] ?>
                                     <?php if ($item['quantity'] > 1) { ?>
                                         (<?= $item['quantity'] ?> шт)
                                     <?php } ?>
@@ -231,7 +231,7 @@ $deliveryIsSplit &= !($isPickup && !($pickupIsPartial || $pickupIsSplit));
                             <div class="b-order-list__order-text b-order-list__order-text--aside">
                                 <div class="b-order-list__clipped-text">
                                     <div class="b-order-list__text-backed">
-                                        <?= $item['name'] ?>
+                                        <?= $item['brand'] ?> <?= $item['name'] ?>
                                         <?php if ($item['quantity'] > 1) { ?>
                                             (<?= $item['quantity'] ?> шт)
                                         <?php } ?>
@@ -260,7 +260,7 @@ $deliveryIsSplit &= !($isPickup && !($pickupIsPartial || $pickupIsSplit));
                             <div class="b-order-list__order-text b-order-list__order-text--aside">
                                 <div class="b-order-list__clipped-text">
                                     <div class="b-order-list__text-backed">
-                                        <?= $item['name'] ?>
+                                        <?= $item['brand'] ?> <?= $item['name'] ?>
                                         <?php if ($item['quantity'] > 1) { ?>
                                             (<?= $item['quantity'] ?> шт)
                                         <?php } ?>
@@ -294,7 +294,7 @@ $deliveryIsSplit &= !($isPickup && !($pickupIsPartial || $pickupIsSplit));
                             <div class="b-order-list__order-text b-order-list__order-text--aside">
                                 <div class="b-order-list__clipped-text">
                                     <div class="b-order-list__text-backed">
-                                        <?= $item['name'] ?>
+                                        <?= $item['brand'] ?> <?= $item['name'] ?>
                                         <?php if ($item['quantity'] > 1) { ?>
                                             (<?= $item['quantity'] ?> шт)
                                         <?php } ?>
@@ -343,7 +343,7 @@ $deliveryIsSplit &= !($isPickup && !($pickupIsPartial || $pickupIsSplit));
                     <div class="b-order-list__order-text">
                         <div class="b-order-list__clipped-text">
                             <div class="b-order-list__text-backed">
-                                <?= $item['name'] ?>
+                                <?= $item['brand'] ?> <?= $item['name'] ?>
                                 <?php if ($item['quantity'] > 1) { ?>
                                     (<?= $item['quantity'] ?> шт)
                                 <?php } ?>
@@ -377,7 +377,7 @@ $deliveryIsSplit &= !($isPickup && !($pickupIsPartial || $pickupIsSplit));
                     <div class="b-order-list__order-text b-order-list__order-text--aside">
                         <div class="b-order-list__clipped-text">
                             <div class="b-order-list__text-backed">
-                                <?= $item['name'] ?>
+                                <?= $item['brand'] ?> <?= $item['name'] ?>
                                 <?php if ($item['quantity'] > 1) { ?>
                                     (<?= $item['quantity'] ?> шт)
                                 <?php } ?>

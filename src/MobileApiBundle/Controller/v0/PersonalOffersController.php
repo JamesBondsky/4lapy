@@ -41,7 +41,7 @@ class PersonalOffersController extends FOSRestController
             $response->setData($data['data']);
         } else {
             $response->setData([]);
-            $response->addError(new Error($data['error']['code'], $data['error']['message']));
+            $response->addError(new Error((int)$data['error']['code'], $data['error']['message']));
         }
 
         return $response;

@@ -11,6 +11,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\Uri;
+use FourPaws\KioskBundle\Service\KioskService;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use Psr\Log\LoggerAwareInterface;
@@ -53,6 +54,10 @@ class ReCaptchaService implements LoggerAwareInterface, ReCaptchaInterface
      */
     public function getCaptcha(string $additionalClass = '', bool $isAjax = false, string $callback = '', string $id = ''): string
     {
+        // для киоска отключаем
+        if(KioskService::isKioskMode()){
+            return "";
+        }
         if (!$isAjax) {
             $script = '';
             $this->addJs();
@@ -93,6 +98,9 @@ class ReCaptchaService implements LoggerAwareInterface, ReCaptchaInterface
      */
     public function checkCaptcha(?string $recaptcha = ''): bool
     {
+        if(KioskService::isKioskMode()){
+            return true;
+        }
         /** @noinspection PhpUnhandledExceptionInspection */
         $context = Application::getInstance()->getContext();
         if (empty($recaptcha)) {

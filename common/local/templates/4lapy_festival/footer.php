@@ -22,6 +22,7 @@ $markup = PawsApplication::markup();
                 <div class="row">
                     <div class="col-sm-12">
                         <h5>ФЕСТИВАЛЬ «ЧЕТЫРЕ ЛАПЫ» 2019</h5>
+                        <h5>Организатор:&nbsp;ООО&nbsp;ЗУМ+; ОГРН:&nbsp;1095040007370; ИНН:&nbsp;5040096080; Возрастное&nbsp;ограничение&nbsp;0+</h5>
                     </div>
                 </div>
                 <!--// end row -->
@@ -49,6 +50,7 @@ $markup = PawsApplication::markup();
 <script src="vendor/jquery.min.js" type="text/javascript"></script>
 <script src="vendor/jquery-migrate.min.js" type="text/javascript"></script>
 <script src="vendor/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
+<script src="vendor/slick/slick.min.js" type="text/javascript"></script>
 
 <!-- PAGE LEVEL PLUGINS -->
 <script src="vendor/jquery.easing.js" type="text/javascript"></script>
@@ -79,6 +81,7 @@ $markup = PawsApplication::markup();
 <script src="js/components/forms.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/js/components/forms.js') ?>" type="text/javascript"></script>
 
 <script src="js/interactive_map.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/js/interactive_map.js') ?>" type="text/javascript"></script>
+<script src="js/faq.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/js/faq.js') ?>" type="text/javascript"></script>
 
 <script>
     var tag = document.createElement('script');

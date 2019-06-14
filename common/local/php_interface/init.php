@@ -68,3 +68,33 @@ ini_set('session.cookie_domain', $cookieDomain);
  * IblockElementLinkType::init();
  * HyperLinkType::init();
  */
+
+
+AddEventHandler('socialservices', 'OnAuthServicesBuildList', array('CSocServHandlers', 'GetDescription'));
+
+class CSocServHandlers
+{
+    public function GetDescription()
+    {
+        return [
+            [
+                'ID' => 'VK2',
+                'CLASS' => 'FourPaws\SocServ\CSocServVK2',
+                'NAME' => 'VK',
+                'ICON' => 'vkontakte',
+            ],
+            [
+                'ID' => 'FB2',
+                'CLASS' => 'FourPaws\SocServ\CSocServFB2',
+                'NAME' => 'FB',
+                'ICON' => 'facebook',
+            ],
+            [
+                'ID' => 'OK2',
+                'CLASS' => 'FourPaws\SocServ\CSocServOK2',
+                'NAME' => 'OK',
+                'ICON' => 'odnoklassniki',
+            ],
+        ];
+    }
+}
