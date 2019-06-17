@@ -745,7 +745,7 @@ class OrderService
                     $dates[] = (new DeliveryTime())
                         ->setTitle($day . ' ' . $interval)
                         ->setDeliveryDateIndex($deliveryDateIndex)
-                        ->setDeliveryIntervalIndex($deliveryIntervalIndex)
+                        ->setDeliveryIntervalIndex($deliveryIntervalIndex + 1)
                     ;
                 }
             } else {

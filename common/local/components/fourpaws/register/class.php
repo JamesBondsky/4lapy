@@ -336,13 +336,20 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 'EMAIL'          => $data['EMAIL'],
             ]
         );
-        if ($haveUsers['email']) {
+
+        $userId = false;
+
+        try {
+            $userId = $this->currentUserProvider->getCurrentUserId();
+        } catch (Exception $e) {}
+
+        if ($haveUsers['email'] && !$userId) {
             return $this->ajaxMess->getHaveEmailError();
         }
-        if ($haveUsers['phone']) {
+        if ($haveUsers['phone'] && !$userId) {
             return $this->ajaxMess->getHavePhoneError();
         }
-        if ($haveUsers['login']) {
+        if ($haveUsers['login'] && !$userId) {
             return $this->ajaxMess->getHaveLoginError();
         }
 
@@ -366,7 +373,24 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             if ($isBasketBackUrl) {
                 $_SESSION['FROM_BASKET'] = true;
             }
-            $regUser = $this->userRegistrationService->register($userEntity, true);
+            if ($userId) {
+                $userEntity->setId($userId);
+                $userRepository->updateData(
+                    $userId,
+                    [
+                        'EMAIL' => $userEntity->getEmail(),
+                        'PASSWORD' => $userEntity->getPassword(),
+                        'CONFIRM_PASSWORD' => $userEntity->getPassword(),
+                        'NAME' => $userEntity->getName(),
+                        'LAST_NAME' => $userEntity->getLastName(),
+                        'SECOND_NAME' => $userEntity->getSecondName(),
+                        'EXTERNAL_AUTH_ID' => '',
+                    ]
+                );
+                $regUser = $userEntity;
+            } else {
+                $regUser = $this->userRegistrationService->register($userEntity, true);
+            }
             if ($regUser instanceof User && $regUser->getId() > 0) {
                 $this->userAuthorizationService->authorize($regUser->getId());
 
@@ -535,6 +559,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         $data = [
             'UF_PHONE_CONFIRMED' => true,
             'PERSONAL_PHONE'     => $phone,
+            'LOGIN'              => $phone,
         ];
         try {
             if ($userRepository->updateData(
@@ -583,6 +608,27 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             return $this->ajaxMess->getSystemError();
         }
 
+        $title = 'Регистрация';
+
+        $manzanaItem = $client;
+
+        ob_start(); ?>
+        <header class="b-registration__header">
+            <div class="b-title b-title--h1 b-title--registration"><?= $title ?></div>
+        </header>
+        <?php
+        /** @noinspection PhpIncludeInspection */
+        include_once App::getDocumentRoot() . '/local/components/fourpaws/register/templates/.default/include/step2.php';
+        $html = ob_get_clean();
+
+        return JsonSuccessResponse::createWithData(
+            'Телефон сохранен',
+            [
+                'html'  => $html,
+                'step'  => 'step2',
+            ]
+        );
+
         return JsonSuccessResponse::create('Телефон сохранен', 200, [], ['reload' => true]);
     }
 
@@ -629,7 +675,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 /** csrf custom sms send protection */
                 if ((true)
                     && ProtectorHelper::checkToken($request->get(ProtectorHelper::getField(ProtectorHelper::TYPE_REGISTER_SMS_SEND)), ProtectorHelper::TYPE_REGISTER_SMS_SEND)
-                    && $recaptchaService->checkCaptcha($request->get('g-recaptcha-response'))
+                    && ($recaptchaService->checkCaptcha($request->get('g-recaptcha-response')) || KioskService::isKioskMode())
                 ) {
                     $res = $this->ajaxGetSendSmsCode($phone);
                 } else {

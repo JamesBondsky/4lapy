@@ -7,6 +7,7 @@ use Bitrix\Main\Grid\Declension;
 use Bitrix\Sale\Order;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\StoreBundle\Entity\Store;
 
@@ -225,6 +226,9 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                         </div>
                     <?php }
                 } ?>
+                <? if ($arResult['KIOSK_MODE']) { ?>
+                    <a href="<?=$arResult['KIOSK_LOGOUT_URL']?>" class="b-button b-button--complete-kiosk">Завершить покупки</a>
+                <? } ?>
                 <hr class="b-hr b-hr--order"/>
                 <div class="b-order__text-block">
                     <?php if ($arResult['ORDER_REGISTERED']) { ?>
@@ -247,7 +251,9 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                         <a class="b-link b-link--inherit b-link--orange" href="/" title="">продолжить покупки</a>.
                     </p>
                     <p>Если у вас остались вопросы, свяжитесь с нами по номеру <?= tplvar('phone_main') ?></p>
-                    <?php $APPLICATION->IncludeFile(
+                    <?php
+                    if (!KioskService::isKioskMode()){
+                        $APPLICATION->IncludeFile(
                         'blocks/components/social_share.php',
                         [
                             'shareTitle' => 'Расскажите о нас друзьям',
@@ -258,7 +264,9 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                             'NAME' => 'Блок Рассказать в соцсетях',
                             'MODE' => 'php',
                         ]
-                    ); ?>
+                        );
+                    }
+                    ?>
                 </div>
             </div>
         </div>

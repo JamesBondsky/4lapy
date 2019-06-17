@@ -11,7 +11,7 @@ use FourPaws\Enum\Form;
 use FourPaws\Helpers\FormHelper;
 
 ?>
-<div class="b-header-info__item b-header-info__item--phone">
+<div class="b-header-info__item b-header-info__item--phone js-item-header-info">
     <?php $APPLICATION->IncludeComponent(
         'fourpaws:city.phone',
         'template.header.popover',
