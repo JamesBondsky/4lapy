@@ -7,6 +7,7 @@
 namespace FourPaws\SapBundle\Command;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\Data\Cache;
 use FourPaws\AppBundle\Service\LockerInterface;
 use FourPaws\SaleBundle\Service\PaymentService;
 use FourPaws\SapBundle\Pipeline\PipelineRegistry;
@@ -119,6 +120,7 @@ class ImportCommand extends Command implements LoggerAwareInterface
      */
     public function execute(InputInterface $input, OutputInterface $output): void
     {
+        Cache::clearCache(true);
         $available = $this->pipelineRegistry->getCollection()->getKeys();
         $pipeline = $input->getArgument(self::ARGUMENT_PIPELINE);
         $force = $input->getOption(self::OPTION_FORCE);
