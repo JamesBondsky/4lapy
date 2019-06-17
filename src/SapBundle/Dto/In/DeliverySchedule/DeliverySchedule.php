@@ -147,14 +147,16 @@ class DeliverySchedule
 
     /**
      * Регулярность расписания
-     * 1 - регулярное
-     * 2 - нерегулярное
+     * Z1 - регулярное
+     * Z2 - нерегулярное
+     * Z3 - ТПЗ
+     * Z9 - Исключения
      *
      * @Serializer\XmlAttribute()
-     * @Serializer\Type("int")
-     * @Serializer\SerializedName("slReg")
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("ShedType")
      *
-     * @var int
+     * @var string
      */
     protected $regular;
 
@@ -367,19 +369,19 @@ class DeliverySchedule
     }
 
     /**
-     * @param int $regular
+     * @param string $regular
      * @return DeliverySchedule
      */
-    public function setRegular(int $regular): DeliverySchedule
+    public function setRegular(string $regular): DeliverySchedule
     {
         $this->regular = $regular;
         return $this;
     }
 
     /**
-     * @return int
+     * @return string
      */
-    public function getRegular(): int
+    public function getRegular(): string
     {
         return $this->regular;
     }
