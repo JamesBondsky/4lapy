@@ -263,7 +263,7 @@ class DeliveryScheduleService implements LoggerAwareInterface
         /** Дата изменения */
         $entity->setDateUpdate();
 
-        /** Дата изменения */
+        /** Регулярность */
         $regular = $this->getRegularByXmlId($schedule->getRegular());
         $entity->setRegular($regular->getId());
 

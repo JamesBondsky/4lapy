@@ -95,8 +95,8 @@ class ScheduleResult
     protected $dateActive;
 
     /**
-     * @var int
-     * @Serializer\Type("int")
+     * @var string
+     * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_REGULAR")
      * @Serializer\Groups(groups={"create", "read","update","delete"})
      * @Assert\NotBlank(groups={"create", "read","update","delete"})
@@ -314,19 +314,19 @@ class ScheduleResult
     }
 
     /**
-     * @param int $regularity
+     * @param string $regularity
      * @return ScheduleResult
      */
-    public function setRegularity(int $regularity): ScheduleResult
+    public function setRegularity(string $regularity): ScheduleResult
     {
         $this->regularity = $regularity;
         return $this;
     }
 
     /**
-     * @return int
+     * @return string
      */
-    public function getRegularity(): int
+    public function getRegularity(): ?string
     {
         return $this->regularity;
     }
