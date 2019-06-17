@@ -42,6 +42,7 @@ use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\EmptyPhoneException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
+use FourPaws\UserBundle\Exception\InvalidArgumentException;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -1122,5 +1123,23 @@ class UserService implements
         } catch (\Exception $e) {
             return false;
         }
+    }
+
+
+    /**
+     * @todo log update errors
+     * @param int $userId
+     * @param string $newValue
+     * @return bool
+     */
+    public function setModalsCounters(int $userId, string $newValue): bool
+    {
+        if ($userId <= 0) {
+            throw new InvalidArgumentException(__METHOD__ . '. userId: ' . $userId);
+        }
+        $user_class = new \CUser;
+        $updateResult = $user_class->Update($userId, ['UF_MODALS_CNTS' => $newValue]);
+
+        return $updateResult;
     }
 }

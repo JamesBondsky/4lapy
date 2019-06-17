@@ -31,6 +31,7 @@ use FourPaws\MobileApiBundle\Exception\TokenNotFoundException;
 use FourPaws\MobileApiBundle\Security\ApiToken;
 use FourPaws\MobileApiBundle\Services\Session\SessionHandler;
 use FourPaws\UserBundle\Entity\User as AppUser;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Exception\UserException;
@@ -144,6 +145,12 @@ class UserService
                 }
             }
             $userId = $this->userRepository->findIdentifierByRawLogin($loginRequest->getLogin());
+            try {
+                if ($this->userBundleService->getCurrentUserId() === $userId) {
+                    return new UserLoginResponse($this->getCurrentApiUser());
+                }
+            } catch (NotAuthorizedException $e) {
+            }
             $this->userBundleService->authorize($userId);
         } catch (UsernameNotFoundException $exception) {
             $user = new AppUser();
