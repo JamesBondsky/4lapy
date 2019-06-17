@@ -433,6 +433,9 @@ class ProductService
         $shortProduct->setBonusAll($offer->getBonusCount(3, $quantity));
         $shortProduct->setBonusUser($offer->getBonusCount($this->userService->getDiscount(), $quantity));
 
+        //Округлить до упаковки
+        $shortProduct->setInPack(intval($offer->getMultiplicity()));
+
         return $shortProduct;
     }
 
@@ -470,7 +473,8 @@ class ProductService
             ->setBonusUser($shortProduct->getBonusUser())
             ->setIsByRequest($shortProduct->getIsByRequest())
             ->setIsAvailable($shortProduct->getIsAvailable())
-            ->setPickupOnly($shortProduct->getPickupOnly());
+            ->setPickupOnly($shortProduct->getPickupOnly())
+            ->setInPack($shortProduct->getInPack());
 
         if ($needPackingVariants) {
             $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct));   // фасовки
@@ -554,17 +558,23 @@ class ProductService
 
     /**
      * Фасовки товара
-     * @param Product $product
+     *
+     * @param Product     $product
      * @param FullProduct $currentFullProduct
-     * @return FullProduct[]
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     *
+     * @return array
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
      */
     public function getPackingVariants(Product $product, FullProduct $currentFullProduct): array
     {
         $offers = $product->getOffersSorted();
         // если в предложениях только текущий продукт
         $hasOnlyCurrentOffer = (count($offers) === 1 && $offers->current()->getId() === $currentFullProduct->getId());
-        if (empty($offers) ||  $hasOnlyCurrentOffer) {
+        if ($hasOnlyCurrentOffer) {
+            return [$fullProduct = $this->convertToFullProduct($product, $offers->current())];
+        }
+        if (empty($offers)) {
             return [];
         }
 

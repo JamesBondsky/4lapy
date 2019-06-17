@@ -615,7 +615,7 @@ class DeliveryService implements LoggerAwareInterface
                 $weightSumm = 0;
                 /** @var BasketItem $basketItem */
                 foreach($basketItems as $basketItem){
-                    $weightSumm += $basketItem->getQuantity() * WordHelper::showWeightNumber($basketItem->getWeight(), true);
+                    $weightSumm += $basketItem->getQuantity() * WordHelper::showWeightNumber((float)$basketItem->getWeight(), true);
                 }
 
                 if ($weightSumm > 50) {

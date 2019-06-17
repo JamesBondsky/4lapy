@@ -2380,4 +2380,15 @@ class Offer extends IblockElement
         return $priceSubscribe;
     }
 
+    public function getOriginalName()
+    {
+        return $this->NAME;
+    }
+
+    public function setName(string $newName): Offer
+    {
+        $this->NAME = $newName;
+        return $this;
+    }
+
 }

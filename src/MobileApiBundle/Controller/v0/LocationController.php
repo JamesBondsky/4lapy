@@ -6,15 +6,20 @@
 
 namespace FourPaws\MobileApiBundle\Controller\v0;
 
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\MobileApiBundle\Dto\Request\CityNearestRequest;
 use FourPaws\MobileApiBundle\Dto\Request\CitySearchRequest;
 use FourPaws\MobileApiBundle\Dto\Request\MetroStationsRequest;
 use FourPaws\MobileApiBundle\Dto\Request\StreetsListRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Dto\Response\MetroStationsResponse;
-use FourPaws\MobileApiBundle\Exception\SystemException;
+use FourPaws\MobileApiBundle\Exception\NoneMetroInCityException;
 use FourPaws\MobileApiBundle\Services\Api\CityService as ApiCityService;
 use FourPaws\MobileApiBundle\Services\Api\LocationService as ApiLocationService;
 
@@ -29,8 +34,7 @@ class LocationController extends FOSRestController
     public function __construct(
         ApiLocationService $apiLocationService,
         ApiCityService $apiCityService
-    )
-    {
+    ) {
         $this->apiLocationService = $apiLocationService;
         $this->apiCityService = $apiCityService;
     }
@@ -40,8 +44,9 @@ class LocationController extends FOSRestController
      * @Rest\View()
      *
      * @param MetroStationsRequest $metroStationsRequest
-     * @throws \FourPaws\MobileApiBundle\Exception\NoneMetroInCityException
+     *
      * @return MetroStationsResponse
+     * @throws NoneMetroInCityException
      */
     public function getMetroStationsAction(MetroStationsRequest $metroStationsRequest): MetroStationsResponse
     {
@@ -53,8 +58,11 @@ class LocationController extends FOSRestController
      * @Rest\View()
      *
      * @param CitySearchRequest $request
-     * @throws SystemException
+     *
      * @return Response
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
     public function citySearchAction(CitySearchRequest $request): Response
     {
@@ -72,8 +80,7 @@ class LocationController extends FOSRestController
      * @Rest\View()
      *
      * @return Response
-     * @throws \FourPaws\MobileApiBundle\Exception\SystemException
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws IblockNotFoundException
      */
     public function defaultCityListAction(): Response
     {
@@ -81,15 +88,29 @@ class LocationController extends FOSRestController
     }
 
     /**
+     * @Rest\Get("/city_list_users/")
+     * @Rest\View()
+     *
+     * @return Response
+     * @throws IblockNotFoundException
+     * @throws ObjectPropertyException
+     */
+    public function defaultCityListUsersAction(): Response
+    {
+        return new Response($this->apiCityService->getDefaultCities());
+    }
+
+    /**
      * @Rest\Get("/city_nearest/")
      * @Rest\View()
      *
      * @param CityNearestRequest $cityNearestRequest
+     *
      * @return Response
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\AppBundle\Exception\NotFoundException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws NotFoundException
      */
     public function cityNearestAction(CityNearestRequest $cityNearestRequest): Response
     {
@@ -105,6 +126,7 @@ class LocationController extends FOSRestController
      * @Rest\View()
      *
      * @param StreetsListRequest $streetsListRequest
+     *
      * @return Response
      */
     public function getStreetListAction(StreetsListRequest $streetsListRequest)
