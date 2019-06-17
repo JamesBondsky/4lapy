@@ -991,18 +991,29 @@ class BasketService implements LoggerAwareInterface
 
     /**
      * @param BasketItem $basketItem
+     * @param bool|null $extendedCheck
      *
      * @return bool
      */
-    public function isGiftProduct(BasketItem $basketItem): bool
+    public function isGiftProduct(BasketItem $basketItem, ?bool $extendedCheck = false): bool
     {
         $xmlId = $this->getBasketItemXmlId($basketItem);
 
+        return $this->isGiftProductByXmlId($xmlId, $extendedCheck);
+    }
+
+    /**
+     * @param string|null $xmlId
+     * @param bool|null $extendedCheck
+     * @return bool
+     */
+    public function isGiftProductByXmlId(?string $xmlId, ?bool $extendedCheck = false): bool
+    {
         /**
-         * @todo выпилить 1 октября 2018 года
+         * @todo выпилить 1 октября 2018 года (коммент перенесен из метода isGiftProduct)
          */
-        return !\in_array($xmlId, ['3005425', '3005437', '3005424', '3005436'], true) && // @todo костыль для акции "добролап"
-            ($xmlId[0] === '3');
+        return (!\in_array($xmlId, ['3005425', '3005437', '3005424', '3005436'], true) && // @todo костыль для акции "добролап" (коммент перенесен из метода isGiftProduct)
+            ($xmlId[0] === '3')) || ($extendedCheck && $xmlId[0] === '2');
     }
 
     /**

@@ -342,9 +342,37 @@ class ScheduleResult
     /**
      * @return string
      */
-    public function getRegularityName(): ?string
+//    public function getRegularityName(): ?string
+//    {
+//        $id = $this->getRegularity();
+//        $regularities = $this->getRegularitiesAll();
+//        if($regularity = $regularities->get($id)){
+//            return $regularity->getName();
+//        }
+//        return '';
+//    }
+
+
+    /**
+     * @return string|null
+     * @throws \Exception
+     */
+    public function getRegularityXmlId(): ?string
     {
         $id = $this->getRegularity();
+        $regularities = $this->getRegularitiesAll();
+        if($regularity = $regularities->get($id)){
+            return $regularity->getXmlId();
+        }
+        return '';
+    }
+
+    /**
+     * @return UserFieldEnumCollection
+     * @throws \Exception
+     */
+    private function getRegularitiesAll()
+    {
         $getRegularities  = function() {
             /** @var UserFieldEnumService $userFieldEnumService */
             $userFieldEnumService = Application::getInstance()->getContainer()->get('userfield_enum.service');
@@ -359,13 +387,11 @@ class ScheduleResult
         };
         /** @var UserFieldEnumCollection $regularities */
         $regularities = (new BitrixCache())
-                         ->withId(__METHOD__)
-                         ->withTag('delivery_schedule_regularity')
-                         ->withTime(86400*356)
-                         ->resultOf($getRegularities)['result'];
+                            ->withId(__METHOD__)
+                            ->withTag('delivery_schedule_regularity')
+                            ->withTime(86400*356)
+                            ->resultOf($getRegularities)['result'];
 
-        $regularity = $regularities->get($id);
-
-        return $regularity->getValue() ?: '';
+        return $regularities;
     }
 }

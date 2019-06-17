@@ -16,17 +16,29 @@ use FourPaws\Decorators\SvgDecorator;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 
 $component = $this->getComponent(); ?>
-<div class="b-header-info__item b-header-info__item--person">
-    <a class="<?= ($component->getMode()
-        === FourPawsAuthFormComponent::MODE_FORM) ? 'b-link js-open-popup' : 'b-header-info__link js-open-popover' ?> js-toggle-popover-mobile-header"
-       href="javascript:void(0);"
-       title="<?= $component->getMode()
-       === FourPawsAuthFormComponent::MODE_FORM ? 'Войти' : $arResult['NAME'] ?>"<?= ($component->getMode() === FourPawsAuthFormComponent::MODE_FORM) ? ' data-popup-id="authorization"' : '' ?>>
+<div class="b-header-info__item b-header-info__item--person js-item-header-info">
+    <? if ($arResult['KIOSK']) { ?>
+        <a class="b-link js-toggle-popover-mobile-header"
+           href="<?=$arResult['AUTH_LINK']?>"
+           title="Войти">
+    <? } else { ?>
+        <a class="<?= ($component->getMode()
+            === FourPawsAuthFormComponent::MODE_FORM) ? 'b-link js-open-popup' : 'b-header-info__link js-open-popover' ?> js-toggle-popover-mobile-header"
+           href="javascript:void(0);"
+           title="<?= $component->getMode()
+           === FourPawsAuthFormComponent::MODE_FORM ? 'Войти' : $arResult['NAME'] ?>"<?= ($component->getMode() === FourPawsAuthFormComponent::MODE_FORM) ? ' data-popup-id="authorization"' : '' ?>>
+    <? } ?>
                 <span class="b-icon">
                 <?= new SvgDecorator('icon-person', 16, 16) ?>
             </span>
         <span class="b-header-info__inner"><?= $component->getMode()
             === FourPawsAuthFormComponent::MODE_FORM ? 'Войти' : $arResult['NAME'] ?></span>
+        <? if ($arParams['NOT_SEEN_COUPONS']) { ?>
+            <span class="b-header-info__number b-header-info__number--personal-coupons js-count-personal-coupons">
+                <?= $arParams['NOT_SEEN_COUPONS'] ?>
+                <span class="arr-person-coupon js-arr-person-coupon-popup"></span>
+            </span>
+        <? } ?>
         <span class="b-icon b-icon--header b-icon--left-3">
                 <?= new SvgDecorator('icon-arrow-down', 10, 12) ?>
             </span>
@@ -59,6 +71,7 @@ $component = $this->getComponent(); ?>
                 'USE_EXT' => 'N',
                 'DELAY' => 'N',
                 'ALLOW_MULTI_SELECT' => 'N',
+                'NOT_SEEN_COUPONS' => $arParams['NOT_SEEN_COUPONS'] ?? '',
             ],
             false,
             ['HIDE_ICONS' => 'Y']

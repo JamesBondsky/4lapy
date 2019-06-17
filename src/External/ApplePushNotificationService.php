@@ -10,7 +10,7 @@ use FourPaws\App\Application;
 
 class ApplePushNotificationService
 {
-    const CERT_PATH = '/app/config/apple-push-notification-cert-old.pem';
+    const CERT_PATH = '/app/config/apple-push-notification-cert-new.pem';
     const PROCESSES_AMOUNT = 5; // количество потоков для отправки push'ей
 
     /** @var \ApnsPHP_Push_Server $server */
@@ -50,6 +50,22 @@ class ApplePushNotificationService
         $message->setCustomProperty('id', $messageId);
 
         $this->server->add($message);
+    }
+
+    /**
+     * @return array|mixed
+     */
+    public function getErrors()
+    {
+        return $this->server->getErrors(false);
+    }
+
+    /**
+     * @return array
+     */
+    public function getQueue(): array
+    {
+        return $this->server->getQueue(false);
     }
 
     /**

@@ -289,7 +289,7 @@ class PetService
             ->setId($pet->getId())
             ->setName($pet->getName())
             ->setCategoryId($pet->getType())
-            ->setBreedId(intval($pet->getBreedId()))
+            ->setBreedId($pet->getBreedId())
             ->setBreedOther($pet->getBreed())
             ->setBirthday($birthday)
             ->setBirthdayString($pet->getAgeString())

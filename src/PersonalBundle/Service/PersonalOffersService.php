@@ -2,25 +2,23 @@
 
 namespace FourPaws\PersonalBundle\Service;
 
-use Adv\Bitrixtools\Exception\HLBlockNotFoundException;
-use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Highloadblock\DataManager;
-use Bitrix\Highloadblock\HighloadBlockTable;
-use Bitrix\Main\Entity\Query;
-use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Loader;
-use Bitrix\Main\Type\DateTime;
-use Doctrine\Common\Collections\ArrayCollection;
-use FourPaws\App\Application as App;
-use FourPaws\AppBundle\Exception\JsonResponseException;
-use FourPaws\Enum\HlblockCode;
+use Bitrix\Main\Entity\Query;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
-use FourPaws\PersonalBundle\Exception\CouponIsNotAvailableForUseException;
-use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
-use FourPaws\UserBundle\Repository\FestivalUsersTable;
 use Psr\Log\LoggerAwareTrait;
+use Bitrix\Main\Type\DateTime;
+use FourPaws\App\Application as App;
+use Bitrix\Highloadblock\DataManager;
+use Bitrix\Main\Entity\ReferenceField;
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\UserBundle\Repository\FestivalUsersTable;
+use Adv\Bitrixtools\Exception\HLBlockNotFoundException;
+use FourPaws\AppBundle\Exception\JsonResponseException;
+use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
+use FourPaws\PersonalBundle\Exception\CouponIsNotAvailableForUseException;
 
 /**
  * Class PersonalOffersService
@@ -50,77 +48,70 @@ class PersonalOffersService
 
     /**
      * @param int $userId
-     *
+     * @param bool|null $isNotShown
      * @return array
-     *
-     * @throws HLBlockNotFoundException
      * @throws InvalidArgumentException
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      */
-    public function getActiveUserCoupons(int $userId): array
+    public function getActiveUserCoupons(int $userId, ?bool $isNotShown = false): array
     {
-        if ($userId <= 0)
-        {
+        if ($userId <= 0) {
             throw new InvalidArgumentException('can\'t get user\'s coupons. userId: ' . $userId);
         }
 
-        $coupons = [];
-        $offersCollection = new ArrayCollection();
-
-        $activeOffersCollection = $this->getActiveOffers();
-
-        if (!$activeOffersCollection->isEmpty())
-        {
-            $coupons = $this->personalCouponManager::query()
-                ->setSelect([
-                    'ID',
-                    'UF_OFFER',
-                    'UF_PROMO_CODE',
-                    'USER_COUPONS*',
-                ])
-                ->setFilter([
-                    '=UF_OFFER' => $activeOffersCollection->getKeys(),
-                ])
-                ->registerRuntimeField(
-                    new ReferenceField(
-                        'USER_COUPONS', $this->personalCouponUsersManager::getEntity()->getDataClass(),
-                        Query\Join::on('this.ID', 'ref.UF_COUPON')
-                            ->where('ref.UF_USER_ID', '=', $userId)
-                            ->where(Query::filter()
-                                ->logic('or')
-                                ->where([
-                                    ['ref.UF_USED', null],
-                                    ['ref.UF_USED', false],
-                                ])),
-                        ['join_type' => 'INNER']
-                    )
-                )
-                ->exec()
-                ->fetchAll();
-
-            $userOffers = array_unique(array_map(function($coupon) { return $coupon['UF_OFFER']; }, $coupons));
-            $offersCollection = $activeOffersCollection->filter(static function($offer) use ($userOffers) { return in_array($offer['ID'], $userOffers, true); });
-
-            $activeOffers = $offersCollection->getValues();
-            $offersOrder = [];
-            foreach ($activeOffers as $key => $offer)
-            {
-                $offersOrder[$offer['ID']] = $key;
-            }
-            uasort($coupons, static function($a, $b) use($offersOrder) {
-                return $offersOrder[$a['UF_OFFER']] <=> $offersOrder[$b['UF_OFFER']];
-            });
-        }
-
-        $couponsCollection = new ArrayCollection($coupons);
+        list($offersCollection, $couponsCollection) = $this->getActiveCoupons($userId, $isNotShown);
         $result = [
             'coupons' => $couponsCollection,
-            'offers' => $offersCollection,
+            'offers'  => $offersCollection,
         ];
 
+        return $result;
+    }
+
+    /**
+     * @param int $userId
+     * @return array
+     * @throws InvalidArgumentException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getActiveUserCouponsEx(int $userId): array
+    {
+        if ($userId <= 0) {
+            throw new InvalidArgumentException('can\'t get user\'s coupons. userId: ' . $userId);
+        }
+
+        list($offersCollection, $couponsCollection) = $this->getActiveCoupons($userId);
+
+        $result = [];
+        foreach ($couponsCollection as $coupon) {
+            $offer = $offersCollection->get($coupon['UF_OFFER']);
+
+            $item = [
+                'id'        => $coupon['ID'],
+                'promocode' => $coupon['UF_PROMO_CODE']
+            ];
+
+            if ($offer['PROPERTY_DISCOUNT_VALUE']) {
+                $item['discount'] = $offer['PROPERTY_DISCOUNT_VALUE'] . '%';
+            } elseif ($offer['PROPERTY_DISCOUNT_CURRENCY_VALUE']) {
+                $item['discount'] = $offer['PROPERTY_DISCOUNT_CURRENCY_VALUE'] . ' ₽';
+            }
+
+            if ($offer['PROPERTY_ACTIVE_TO_VALUE']) {
+                $item['date_active'] = 'Действует до ' . $offer['PROPERTY_ACTIVE_TO_VALUE'];
+            }
+
+            $item['text'] = strip_tags(html_entity_decode($offer['PREVIEW_TEXT']));
+            $result[] = $item;
+        }
         return $result;
     }
 
@@ -157,8 +148,10 @@ class PersonalOffersService
             [
                 'ID',
                 'PROPERTY_DISCOUNT',
+                'PROPERTY_DISCOUNT_CURRENCY',
                 'PREVIEW_TEXT',
                 'DATE_ACTIVE_TO',
+                'PROPERTY_ACTIVE_TO'
             ]
         );
         while ($res = $rsOffers->GetNext())
@@ -506,5 +499,102 @@ class PersonalOffersService
         $festivalUserId = $idOffset + $rsFestivalUserId;
 
         return $festivalUserId;
+    }
+
+    /**
+     * @param int $userId
+     * @param bool|null $isNotShown
+     * @return array
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    protected function getActiveCoupons(int $userId, ?bool $isNotShown = false): array
+    {
+        $coupons = [];
+        $offersCollection = new ArrayCollection();
+
+        $activeOffersCollection = $this->getActiveOffers();
+
+        if (!$activeOffersCollection->isEmpty()) {
+            $personalCouponUsersQuery = Query\Join::on('this.ID', 'ref.UF_COUPON')
+                ->where('ref.UF_USER_ID', '=', $userId)
+                ->where(Query::filter()
+                    ->logic('or')
+                    ->where([
+                        ['ref.UF_USED', null],
+                        ['ref.UF_USED', false],
+                    ]));
+            if ($isNotShown) {
+                $personalCouponUsersQuery = $personalCouponUsersQuery->where(Query::filter()
+                    ->logic('or')
+                    ->where([
+                        ['ref.UF_SHOWN', null],
+                        ['ref.UF_SHOWN', false],
+                    ]));
+            }
+            $coupons = $this->personalCouponManager::query()
+                ->setSelect([
+                    'ID',
+                    'UF_OFFER',
+                    'UF_PROMO_CODE',
+                    'USER_COUPONS',
+                ])
+                ->setFilter([
+                    '=UF_OFFER' => $activeOffersCollection->getKeys(),
+                ])
+                ->setOrder([
+                    'USER_COUPONS.UF_DATE_CREATED' => 'desc',
+                ])
+                ->registerRuntimeField(
+                    new ReferenceField(
+                        'USER_COUPONS', $this->personalCouponUsersManager::getEntity()->getDataClass(),
+                        $personalCouponUsersQuery,
+                        ['join_type' => 'INNER']
+                    )
+                )
+                ->exec()
+                ->fetchAll();
+
+            $userOffers = array_unique(array_map(function ($coupon) {
+                return $coupon['UF_OFFER'];
+            }, $coupons));
+            $offersCollection = $activeOffersCollection->filter(static function ($offer) use ($userOffers) {
+                return in_array($offer['ID'], $userOffers, true);
+            });
+
+            /*$activeOffers = $offersCollection->getValues();
+            $offersOrder = [];
+            foreach ($activeOffers as $key => $offer)
+            {
+                $offersOrder[$offer['ID']] = $key;
+            }
+            uasort($coupons, static function($a, $b) use($offersOrder) {
+                return $offersOrder[$a['UF_OFFER']] <=> $offersOrder[$b['UF_OFFER']];
+            });*/
+        }
+
+        $couponsCollection = new ArrayCollection($coupons);
+        return [$offersCollection, $couponsCollection];
+    }
+
+    /**
+     * @param array $couponsIds
+     * @throws InvalidArgumentException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
+     */
+    public function setCouponShownStatus(array $couponsIds): void
+    {
+        if (!$couponsIds) {
+            throw new InvalidArgumentException(__METHOD__ . '. Невозможно установить статус просмотренности купонов. Пустой массив $couponsIds');
+        }
+        $updateResult = $this->personalCouponUsersManager::updateMulti($couponsIds, ['UF_SHOWN' => '1'], true);
+        if (!$updateResult->isSuccess()) {
+            throw new \Exception(__METHOD__ . '. update error(s): ' . implode('. ', $updateResult->getErrorMessages()));
+        }
     }
 }

@@ -636,7 +636,7 @@ class OrderService implements LoggerAwareInterface
                     $scheduleResult = $deliveryResult->getScheduleResult();
                     $shipmentPlaceCode = $scheduleResult->getSenderCode() ?: $shipmentPlaceCode;
                     $days = $scheduleResult->getDays($selectedDelivery->getCurrentDate());
-                    $schedTypeCurrent = $scheduleResult->getRegularityName();
+                    $schedTypeCurrent = $scheduleResult->getRegularityXmlId();
 
                     if (!isset($shipmentDays[$shipmentPlaceCode]) || $shipmentDays[$shipmentPlaceCode] < $days) {
                         $shipmentDays[$shipmentPlaceCode] = $days;
@@ -649,7 +649,6 @@ class OrderService implements LoggerAwareInterface
                             throw new OrderCreateException('Два типа расписания сразу');
                         }
                     }
-
                 }
 
                 $this->basketService->setBasketItemPropertyValue(
@@ -1285,12 +1284,9 @@ class OrderService implements LoggerAwareInterface
                     throw new OrderSubscribeException('Susbcribe not found');
                 }
                 $subscribe = $this->orderSubscribeService->getById($storage->getSubscribeId());
-                $subscribe->setActive(true)->setOrderId($order->getId());
-
-                // привяжем созданный адрес
-                if($subscribe->getDeliveryPlace() === '0' && $storage->getAddressId() > 0){
-                    $subscribe->setDeliveryPlace($storage->getAddressId());
-                }
+                $subscribe->setActive(true)
+                    ->setOrderId($order->getId())
+                    ->countDateCheck();
 
                 // привяжем пользователя
                 if(!$subscribe->getUserId()){
@@ -2105,8 +2101,25 @@ class OrderService implements LoggerAwareInterface
                 break;
         }
 
-        $arSectionsNames = [];
-        //проверка высоты товаров в корзине
+        $whatDeliverySet = \COption::GetOptionString('articul.dostavista.delivery', 'what_deliver_set') == BaseEntity::BITRIX_TRUE;
+        $whatDeliveryText = \COption::GetOptionString('articul.dostavista.delivery', 'what_deliver_text');
+        if($whatDeliverySet  && $whatDeliveryText){
+            $matter = $whatDeliveryText;
+        } else {
+            $arSectionsNames = [];
+            /** @var Offer $offer */
+            foreach ($offers as $offer) {
+                $section = $offer->getProduct()->getSection();
+                if ($section != null) {
+                    $arSectionsNames[$section->getId()] = $section->getName();
+                }
+            }
+
+            /** @var string $matter Что везем - названия всех разделов через запятую */
+            $matter = implode(', ', $arSectionsNames);
+            unset($arSectionsNames);
+        }
+
         /** @var int $loadersCount требуемое число грузчиков */
         $loadersCount = 0;
         /** @var Offer $offer */
@@ -2131,15 +2144,7 @@ class OrderService implements LoggerAwareInterface
                     $loadersCount = 2;
                 }
             }
-            $section = $offer->getProduct()->getSection();
-            if ($section != null) {
-                $arSectionsNames[$section->getId()] = $section->getName();
-            }
         }
-
-        /** @var string $matter Что везем - названия всех разделов через запятую */
-        $matter = implode(', ', $arSectionsNames);
-        unset($arSectionsNames);
 
         $data = [
             'bitrix_order_id' => $order->getId(),

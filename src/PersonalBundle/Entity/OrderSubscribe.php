@@ -23,6 +23,7 @@ use FourPaws\AppBundle\Traits\UserFieldEnumTrait;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Exception\NotFoundException;
+use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\StoreBundle\Exception\NotFoundException as NotFoundStoreException;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService;
@@ -175,6 +176,14 @@ class OrderSubscribe extends BaseEntity
      */
     protected $checkDays;
 
+    /**
+     * @var DateTime
+     * @Serializer\Type("bitrix_date_time_ex")
+     * @Serializer\SerializedName("UF_DATE_CHECK")
+     * @Serializer\Groups(groups={"create","read","update"})
+     */
+    protected $dateCheck;
+
 
     /**
      * @var UserFieldEnumService $userFieldEnumService
@@ -282,11 +291,21 @@ class OrderSubscribe extends BaseEntity
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function getDeliveryPlace(): ?string
     {
+        // в старых подписках хранился ID адреса
+        if($this->deliveryPlace > 0 && strcasecmp(intval($this->deliveryPlace), $this->deliveryPlace) === 0){
+            try {
+                /** @var AddressService $addressService */
+                $addressService = Application::getInstance()->getContainer()->get('address.service');
+                $personalAddress = $addressService->getById($this->deliveryPlace);
+                $this->deliveryPlace = $personalAddress->getFullAddress();
+            } catch (\Exception $e) {
+                // если адреса уже нет, принудительно установим 0, чтобы деактивировать подписку
+                $this->deliveryPlace = '0';
+            }
+
+        }
         return $this->deliveryPlace;
     }
 
@@ -600,6 +619,45 @@ class OrderSubscribe extends BaseEntity
     }
 
     /**
+     * @param DateTime $dateCheck
+     * @return OrderSubscribe
+     */
+    public function setDateCheck(DateTime $dateCheck): OrderSubscribe
+    {
+        $this->dateCheck = $dateCheck;
+        return $this;
+    }
+
+    /**
+     * @return DateTime
+     */
+    public function getDateCheck(): ?DateTime
+    {
+        return $this->dateCheck;
+    }
+
+    /**
+     * @return bool
+     * @throws OrderSubscribeException
+     */
+    public function countDateCheck(): bool
+    {
+        $deliveryDate = $this->getNextDate();
+        $checkDays = $this->getCheckDays();
+
+        if(!$deliveryDate){
+            throw new OrderSubscribeException(sprintf("Не установлена дата следущей доставки [id:%s, user_id: %s]", $this->getId(), $this->getUserId()));
+        }
+        if(!$checkDays || $checkDays <= 0){
+            throw new OrderSubscribeException(sprintf("Не установлено поле \"Кол-во дней до заказа\" [id:%s, user_id: %s]", $this->getId(), $this->getUserId()));
+        }
+
+        $dateCheck = (clone $deliveryDate)->setTime(9,0,0)->add(sprintf("-%s days", $checkDays));
+        $this->setDateCheck($dateCheck);
+        return true;
+    }
+
+    /**
      * @param $value
      * @return Date|null|string
      */
@@ -728,16 +786,16 @@ class OrderSubscribe extends BaseEntity
 
         /** @var OrderSubscribeService $orderSubscribeService */
         $orderSubscribeService = $this->getOrderSubscribeService();
-        /** @var AddressService $addressService */
-        $addressService = Application::getInstance()->getContainer()->get('address.service');
         /** @var StoreService $storeService */
         $storeService = Application::getInstance()->getContainer()->get('store.service');
         /** @var DeliveryService $deliveryService */
         $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
 
         if($orderSubscribeService->isDelivery($this)){
-            $address = $addressService->getById($this->getDeliveryPlace());
-            $result = $address->getFullAddress();
+            $result = $this->getDeliveryPlace();
+            if($result === "0"){
+                $result = "Не удалось определить адрес";
+            }
         } else {
             try {
                 $store = $storeService->getStoreByXmlId($this->getDeliveryPlace());
@@ -748,7 +806,12 @@ class OrderSubscribe extends BaseEntity
                 $store = $terminals[$this->getDeliveryPlace()];
             }
 
-            $result = $store->getAddress();
+            try {
+                $result = $store->getAddress();
+            } catch (\Exception $e) {
+                // ну давай хотя бы код магазина отбразим
+                $result = $this->getDeliveryPlace();
+            }
         }
 
         return $result;

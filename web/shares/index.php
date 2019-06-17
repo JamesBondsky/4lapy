@@ -105,6 +105,7 @@ $APPLICATION->IncludeComponent(
         'DISPLAY_PREVIEW_TEXT' => 'N',
         'SHOW_PRODUCTS_SALE' => 'Y',
         'RESIZE_TYPE' => 'BX_RESIZE_IMAGE_PROPORTIONAL',
+        'URL_REDIRECT_404' => '/shares/',
     ],
     null,
     [

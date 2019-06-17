@@ -31,6 +31,7 @@ use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\ProtectorHelper;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\Model\City;
 use FourPaws\PersonalBundle\Service\PetService;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
@@ -92,6 +93,10 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @var DataLayerService
      */
     private $dataLayerService;
+    /**
+     * @var KioskService
+     */
+    private $kioskService;
 
     /**
      * FourPawsAuthFormComponent constructor.
@@ -111,6 +116,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             $this->userAuthorizationService = $container->get(UserAuthorizationInterface::class);
             $this->userSearchService = $container->get(UserSearchInterface::class);
             $this->dataLayerService = $container->get(DataLayerService::class);
+            $this->kioskService = $container->get('kiosk.service');
             $this->ajaxMess = $container->get('ajax.mess');
         } catch (Exception $e) {
         }
@@ -121,6 +127,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     {
         try {
             $this->arResult['STEP'] = '';
+
             if ($this->getMode() === static::MODE_FORM) {
                 $this->arResult['STEP'] = 'begin';
             }
@@ -130,11 +137,28 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 if (!empty($curUser->getExternalAuthId() && !$curUser->hasEmail())) {
                     $this->arResult['STEP'] = 'addPhone';
                 }
-
                 $this->arResult['NAME'] = $curUser->getName() ?? $curUser->getLogin();
             }
+
+            if (KioskService::isKioskMode() && !$this->userAuthorizationService->isAuthorized()) {
+                $this->arResult['KIOSK'] = true;
+                $this->arResult['AUTH_LINK'] = $this->kioskService->getAuthLink();
+                $this->arResult['REDIRECT_TO_BONUS'] = $this->kioskService->isRedirectToBonusAfterAuth();
+                if($this->arResult['REDIRECT_TO_BONUS']){
+                    $backUrl = $this->kioskService->getBonusPageUrl();
+                } else {
+                    $backUrl = $this->kioskService->removeParamFromUrl('showScan');
+                }
+                // при сканировании шк backurl надо хранить в сессии
+                $this->kioskService->setLastPageUrl($backUrl);
+                $this->arResult['BACK_URL'] = $backUrl;
+            }
+
+            $this->arResult['IS_SHOW_CAPTCHA'] = $this->isShowCapthca();
             $this->setSocial();
+
             unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
+
             $this->includeComponentTemplate();
         } catch (Exception $e) {
             try {
@@ -195,15 +219,15 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      */
     public function ajaxLogin(string $rawLogin, string $password, string $backUrl = '', $token = false): JsonResponse
     {
-    	// CSRF-защита
-    	if (!ProtectorHelper::checkToken($token, ProtectorHelper::TYPE_AUTH))
-	    {
-	        $options = ['reload' => true];
-	        if (!empty($backUrl)) {
-	            $options = ['redirect' => $backUrl];
-	        }
-	        return JsonSuccessResponse::createWithData('Вы успешно авторизованы.', [], 200, $options); // на самом деле, нет
-	    }
+        // CSRF-защита
+        if (!ProtectorHelper::checkToken($token, ProtectorHelper::TYPE_AUTH))
+        {
+            $options = ['reload' => true];
+            if (!empty($backUrl)) {
+                $options = ['redirect' => $backUrl];
+            }
+            return JsonSuccessResponse::createWithData('Вы успешно авторизованы.', [], 200, $options); // на самом деле, нет
+        }
 
         $newToken = ProtectorHelper::generateToken(ProtectorHelper::TYPE_AUTH);
         $newToken['value'] = $newToken['token'];
@@ -231,8 +255,10 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         $checkedCaptcha = true;
         if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > 3) {
             try {
-                $recaptchaService = $container->get(ReCaptchaInterface::class);
-                $checkedCaptcha = $recaptchaService->checkCaptcha();
+                if ($this->isShowCapthca()) {
+                    $recaptchaService = $container->get(ReCaptchaInterface::class);
+                    $checkedCaptcha = $recaptchaService->checkCaptcha();
+                }
                 $this->userAuthorizationService->clearLoginAttempts($rawLogin);
             } catch (Exception $e) {
                 return $this->ajaxMess->getSystemError()->extendData($newTokenResponse);
@@ -263,11 +289,11 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 $userId = $this->currentUserProvider->getUserRepository()->findIdentifierByRawLogin($rawLogin);
                 if ($userId > 0) {
                     $fUserId = (int)FuserTable::query()
-                                              ->setFilter(['USER_ID' => $userId])
-                                              ->setSelect(['ID'])
-                                              ->setCacheTtl(360000)
-                                              ->exec()
-                                              ->fetch()['ID'];
+                        ->setFilter(['USER_ID' => $userId])
+                        ->setSelect(['ID'])
+                        ->setCacheTtl(360000)
+                        ->exec()
+                        ->fetch()['ID'];
                     if ($fUserId > 0) {
                         $userBasket = $basketService->getBasket(true, $fUserId);
 
@@ -284,7 +310,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                             } catch (NotSupportedException|ObjectNotFoundException $e) {
                                 $logger = LoggerFactory::create('unionBasket');
                                 $logger->critical('Ошибка инициализации заказа при объединении корзин - '
-                                                  . $e->getMessage());
+                                    . $e->getMessage());
                             }
                         }
 
@@ -344,11 +370,11 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             $this->userAuthorizationService->login($rawLogin, $password);
             if ($this->userAuthorizationService->isAuthorized()
                 && !$this->currentUserProvider->getCurrentUser()
-                                              ->hasPhone()) {
+                    ->hasPhone()) {
                 $needWritePhone = true;
             }
         } catch (UsernameNotFoundException $e) {
-            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] === 3) {
+            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] === 3 && $this->isShowCapthca()) {
                 try {
                     $this->setSocial();
                     $html = $this->getHtml(
@@ -372,7 +398,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
             return $this->ajaxMess->getWrongPasswordError($newTokenResponse);
         } catch (InvalidCredentialException $e) {
-            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] === 3) {
+            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] === 3 && $this->isShowCapthca()) {
                 try {
                     $this->setSocial();
                     $html = $this->getHtml(
@@ -515,7 +541,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         $_SESSION['COUNT_AUTH_CONFIRM_CODE']++;
 
         $checkedCaptcha = true;
-        if ($_SESSION['COUNT_AUTH_CONFIRM_CODE'] > 3) {
+        if ($_SESSION['COUNT_AUTH_CONFIRM_CODE'] > 3 && $this->isShowCapthca()) {
             try {
                 $recaptchaService = $container->get(ReCaptchaInterface::class);
                 $checkedCaptcha = $recaptchaService->checkCaptcha();
@@ -917,7 +943,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         if ($services) {
             foreach ($services as &$service) {
                 $service['ONCLICK'] = $this->renderDataLayerByType(DataLayer::SOCIAL_SERVICE_MAP[$service['ID']]
-                                                                   ?? '') . $service['ONCLICK'];
+                        ?? '') . $service['ONCLICK'];
             }
             unset($service);
 
@@ -967,7 +993,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
         /** @noinspection PhpIncludeInspection */
         require_once App::getDocumentRoot()
-                     . '/local/components/fourpaws/auth.form/templates/popup/include/' . $page . '.php';
+            . '/local/components/fourpaws/auth.form/templates/popup/include/' . $page . '.php';
 
         return ob_get_clean();
     }
@@ -1023,5 +1049,10 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
 
         return $mess;
+    }
+
+    protected function isShowCapthca()
+    {
+        return !KioskService::isKioskMode();
     }
 }

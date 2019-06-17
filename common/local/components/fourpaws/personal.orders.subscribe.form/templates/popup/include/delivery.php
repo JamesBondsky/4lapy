@@ -14,30 +14,19 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
-use FourPaws\PersonalBundle\Entity\Address;
+use FourPaws\LocationBundle\Entity\Address;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 
 /** @var ArrayCollection $addresses */
-$addresses = $arResult['ADDRESSES'];
+//$addresses = $arResult['ADDRESSES'];
+/** @var Address $address */
+$address = $arResult['ADDRESS'];
+if(!$address){
+    $address = new Address();
+}
 $selectedAddressId = 0;
-$showNewAddressForm = false;
+$showNewAddressForm = true;
 $showNewAddressFormHeader = false;
-
-// проверка на существование адреса
-$orderSubscribe = $component->getOrderSubscribe();
-if($orderSubscribe){
-    $deliveryService = $component->getDeliveryService();
-    $deliveryCode = $deliveryService->getDeliveryCodeById($orderSubscribe->getDeliveryId());
-    $hasDeliveryAddress = $deliveryService->isDeliveryCode($deliveryCode);
-}
-if ($hasDeliveryAddress){
-    $selectedAddressId = (int)$orderSubscribe->getDeliveryPlace();
-} else if ($addresses && !$addresses->isEmpty()) {
-    $selectedAddressId = $addresses->first()->getId();
-    $showNewAddressFormHeader = true;
-} else {
-    $address = (new Address());
-}
 ?>
 <script>
     window.dadataConstraintsLocations = <?= $arResult['DADATA_CONSTRAINTS'] ?>;
@@ -110,7 +99,7 @@ if ($hasDeliveryAddress){
                    placeholder=""
                    name="street"
                    data-url=""
-                   value=""/>
+                   value="<?= $address->getStreet() ?>"/>
             <div class="b-error"><span class="js-message"></span>
             </div>
         </div>
@@ -128,7 +117,7 @@ if ($hasDeliveryAddress){
                        placeholder=""
                        name="house"
                        data-url=""
-                       value=""/>
+                       value="<?= $address->getHouse() ?>"/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
@@ -143,7 +132,7 @@ if ($hasDeliveryAddress){
                        id="order-address-part"
                        name="building"
                        type="text"
-                       value=""/>
+                       value="<?= $address->getHousing() ?>"/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
@@ -157,7 +146,7 @@ if ($hasDeliveryAddress){
                 <input class="b-input__input-field b-input__input-field--registration-form js-regular-field js-only-number js-entrance js-no-valid"
                        id="order-address-entrance"
                        name="porch"
-                       value=""/>
+                       value="<?= $address->getEntrance() ?>"/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
@@ -172,7 +161,7 @@ if ($hasDeliveryAddress){
                        id="order-address-floor"
                        name="floor"
                        type="text"
-                       value=""/>
+                       value="<?= $address->getFloor() ?>"/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
@@ -188,7 +177,7 @@ if ($hasDeliveryAddress){
                        id="order-address-apart"
                        name="apartment"
                        type="text"
-                       value=""/>
+                       value="<?= $address->getFlat() ?>"/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>

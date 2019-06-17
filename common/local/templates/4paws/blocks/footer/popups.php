@@ -2,6 +2,7 @@
 
 use Bitrix\Main\Application;
 use FourPaws\App\MainTemplate;
+use FourPaws\KioskBundle\Service\KioskService;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -44,6 +45,11 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
     if ($template->hasFastOrder()) {
         $APPLICATION->IncludeComponent('fourpaws:fast.order', '', [], null, ['HIDE_ICONS' => 'Y']);
     }
+
+    if(KioskService::isKioskMode() && $template->isIndex()) {
+        include __DIR__ . '/start_kiosk.php';
+    }
+
 
     if ($template->hasPiggyBank()) {
         include __DIR__ . '/popup_email_kopilka.php';
