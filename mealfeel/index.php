@@ -11,8 +11,8 @@ $APPLICATION->SetPageProperty('description', 'Регистрируйте чек�
 $APPLICATION->SetTitle('Выиграй отдых в Сочи для гурманов');
 ?>
 
-<section id="registr-check" data-id-section-landing="registr-check" class="registr-check-landing">
-    <div class="container-landing">
+<section id="registr-check" data-id-section-landing="registr-check" class="registr-check-landing registr-check-landing_mealfeel">
+    <div class="registr-check-landing__container">
 
         <div class="registr-check-landing__important-information <?if ($USER->IsAuthorized()) {?>registr-check-landing__important-information--indent<? } ?>">
             <p>Личные данные, вводимые при регистрации в&nbsp;акции, должны совпадать с&nbsp;личными данными, к&nbsp;которым привязана бонусная карта четыре лапы, также используемая для регистрации в&nbsp;акции.</p>
@@ -34,13 +34,13 @@ $APPLICATION->SetTitle('Выиграй отдых в Сочи для гурма�
                     <input class="js-no-valid" type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
                     <input class="js-no-valid" type="hidden" name="landingType" value="<?= LandingController::$grandinLanding ?>">
                     <div class="form-group">
-                        <input type="dateDatepicker" id="DATE_REG_CHECK_MEALFEEL" name="date" value="" placeholder="Дата чека" autocomplete="off" data-min-date="2019-06-01" data-max-date="2019-06-30" data-datepicker-landing="true" >
+                        <input type="dateDatepicker" id="DATE_REG_CHECK_MEALFEEL" name="date" value="" placeholder="Дата чека" autocomplete="off" data-min-date="2019-07-05" data-max-date="2019-08-01" data-datepicker-landing="true" >
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
                     </div>
                     <div class="form-group">
-                        <input data-price-check-landing="true" type="minPriceLanding" data-min-price-landing="1800" id="SUM_REG_CHECK_MEALFEEL" name="sum" value="" placeholder="Сумма чека (не менее 1800р)" >
+                        <input data-price-check-landing="true" type="minPriceLanding" data-min-price-landing="1500" id="SUM_REG_CHECK_MEALFEEL" name="sum" value="" placeholder="Сумма чека (не менее 1500р)" >
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
@@ -95,7 +95,7 @@ $APPLICATION->SetTitle('Выиграй отдых в Сочи для гурма�
                     </div>
 
                     <div class="registr-check-landing__btn-form">
-                        <button type="submit" class="landing-btn landing-btn_dark" >Отправить</button>
+                        <button type="submit" class="landing-btn landing-btn_mealfeel" >Отправить</button>
                     </div>
                 </form>
 
