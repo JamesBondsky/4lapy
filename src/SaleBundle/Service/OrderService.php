@@ -629,6 +629,7 @@ class OrderService implements LoggerAwareInterface
              */
             $shipmentResults = $selectedDelivery->getShipmentResults();
             $shipmentDays = [];
+            $schedType = null;
             /** @var BasketItem $item */
             foreach ($order->getBasket() as $item) {
                 $selectedShop = $selectedDelivery->getSelectedStore();
@@ -644,13 +645,20 @@ class OrderService implements LoggerAwareInterface
                     $scheduleResult = $deliveryResult->getScheduleResult();
                     $shipmentPlaceCode = $scheduleResult->getSenderCode() ?: $shipmentPlaceCode;
                     $days = $scheduleResult->getDays($selectedDelivery->getCurrentDate());
-                    $schedType = $scheduleResult->getRegularity();
+                    $schedTypeCurrent = $scheduleResult->getRegularityName();
+
                     if (!isset($shipmentDays[$shipmentPlaceCode]) || $shipmentDays[$shipmentPlaceCode] < $days) {
                         $shipmentDays[$shipmentPlaceCode] = $days;
                     }
-                    if($schedType){
-                        $schedTypes[$schedType][] = $item->getProductId();
+                    if(!empty($schedTypeCurrent)){
+                        if(!isset($schedType)){
+                            $schedType = $schedTypeCurrent;
+                        } else if ($schedType != $schedTypeCurrent) {
+                            // TODO: продумать что делать в случае, если два разных расписания подтянулось
+                            throw new OrderCreateException('Два типа расписания сразу');
+                        }
                     }
+
                 }
                 if ($shipmentPlaceCode === self::STORE) {
                     break;
@@ -666,6 +674,9 @@ class OrderService implements LoggerAwareInterface
             if (!empty($shipmentDays)) {
                 arsort($shipmentDays);
                 $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', key($shipmentDays));
+            }
+            if (!empty($schedType)) {
+                $this->setOrderPropertyByCode($order, 'SCHEDULE_REGULARITY', $schedType);
             }
         }
 
