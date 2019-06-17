@@ -16,4 +16,5 @@ security:
   access_control:
     - { path: ^/api/start, roles: ROLE_NO_TOKEN }
     - { path: ^/api/fake, roles: ROLE_NO_TOKEN }
-    - { path: ^/api(?!/start|?!/fake), roles: ROLE_API }
+    - { path: ^/api/check_push_tokens, roles: ROLE_NO_TOKEN }
+    - { path: ^/api(?!/start|?!/fake|?!/check_push_tokens), roles: ROLE_API }
