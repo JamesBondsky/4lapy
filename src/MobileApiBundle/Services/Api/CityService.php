@@ -4,6 +4,7 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Closure;
 use Exception;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use Psr\Log\LoggerAwareInterface;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Sale\Location\LocationTable;
@@ -174,8 +175,11 @@ class CityService implements LoggerAwareInterface
     private function getDefaultUserCity()
     {
         $locations = [];
-        $userId = $this->appUserService->getCurrentUserId();
-        if (!$userId) {
+        try {
+            $userId = $this->appUserService->getCurrentUserId();
+        } catch (NotAuthorizedException $e) {
+        }
+        if (!isset($userId) || !$userId) {
             return new ArrayCollection();
         }
         /** @var Address[]|ArrayCollection $addresses */
