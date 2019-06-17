@@ -147,6 +147,14 @@ class FullProduct extends ShortProduct
     protected $hasSpecialOffer = false;
 
     /**
+     * Цена по подписке на доставку
+     * @var float
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("subscribePrice")
+     */
+    protected $subscribePrice;
+
+    /**
      * @return CatalogCategory
      */
     public function getCategory(): CatalogCategory
@@ -426,5 +434,23 @@ class FullProduct extends ShortProduct
     {
         $this->hasSpecialOffer = $hasSpecialOffer;
         return $this;
+    }
+
+    /**
+     * @param float $subscribePrice
+     * @return FullProduct
+     */
+    public function setSubscribePrice(float $subscribePrice): FullProduct
+    {
+        $this->subscribePrice = $subscribePrice;
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getSubscribePrice(): float
+    {
+        return $this->subscribePrice;
     }
 }
