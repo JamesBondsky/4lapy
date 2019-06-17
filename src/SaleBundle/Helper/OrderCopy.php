@@ -1439,6 +1439,13 @@ class OrderCopy
 
         $order->setField('DELIVERY_LOCATION', $subscribe->getLocationId());
 
+        // проверка заполненности свойства местоположения
+        $newLocationProp = $order->getPropertyCollection()->getDeliveryLocation();
+        if (!$newLocationProp->getValue()) {
+            $oldLocationProp = $subscribe->getLocationId();
+            $newLocationProp->setValue($oldLocationProp);
+        }
+
         $shipmentCollection = $order->getShipmentCollection();
         $shipment = $shipmentCollection->createItem();
         $shipmentItemCollection = $shipment->getShipmentItemCollection();
