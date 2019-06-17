@@ -805,6 +805,10 @@ class OrderSubscribeService implements LoggerAwareInterface
             $arCalculationResult = $deliveryService->getByBasket($basket, $subscribe->getLocationId(), [$deliveryCode]);
             $calculationResult = reset($arCalculationResult);
 
+            if(!$calculationResult){
+                throw new NotFoundException(sprintf("Не удалось получить службу доставки для подписки: %s [%s]", $subscribe->getId(), __METHOD__));
+            }
+
             if($deliveryService->isPickup($calculationResult)){
                 try {
                     $store = $storeService->getStoreByXmlId($subscribe->getDeliveryPlace());
@@ -973,7 +977,7 @@ class OrderSubscribeService implements LoggerAwareInterface
             }
 
             foreach($items as $item){
-                $basketItem = BasketItem::create($basket, 'sale', $item['OFFER_ID']);
+                $basketItem = BasketItem::create($basket, 'catalog', $item['OFFER_ID']);
                 $basketItem->setFields([
                     'PRICE'                  => $item['PRICE'],
                     'BASE_PRICE'             => $item['BASE_PRICE'],
@@ -1498,6 +1502,19 @@ class OrderSubscribeService implements LoggerAwareInterface
             try {
                 // проверим, не создавался ли уже заказ для этой даты
                 $data['alreadyCreated'] = $copyParams->isCurrentDeliveryDateOrderAlreadyCreated();
+
+                if($data['alreadyCreated']) {
+                    $dateDeliverySubscribe = $orderSubscribe->getNextDate()->format('d.m.y');
+                    $dateDeliveryLastOrder = $this->getOrderSubscribeHistoryService()->getLastOrderDeliveryDate($orderSubscribe)->format('d.m.y');
+
+                    // обновим дату доставки, если она совпала с последним заказом
+                    if($dateDeliverySubscribe == $dateDeliveryLastOrder){
+                        $this->countNextDate($orderSubscribe);
+                        $orderSubscribe->countDateCheck();
+                        $this->update($orderSubscribe);
+                        $this->log()->info(sprintf('Обнволена дата следующей доставки для подписки %s: %s', $orderSubscribe->getId(), $orderSubscribe->getNextDate()->format('d.m.y')));
+                    }
+                }
             } catch (\Exception $exception) {
                 $result->addError(
                     new Error(
@@ -1576,6 +1593,8 @@ class OrderSubscribeService implements LoggerAwareInterface
         $params['limit'] = $limit;
         $params['filter']['=UF_ACTIVE'] = 1;
         $params['filter']['<=UF_DATE_CHECK'] = new DateTime();
+        // TODO: временное решение, т.к. возникает непонятный баг с определнием зоны доставки DPD
+        $params['filter']['!=UF_DEL_TYPE'] = [16, 17];
         $params['order'] = [
             'UF_LAST_CHECK' => 'ASC',
             'ID' => 'ASC',

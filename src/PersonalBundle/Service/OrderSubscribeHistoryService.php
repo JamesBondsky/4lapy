@@ -4,6 +4,7 @@ namespace FourPaws\PersonalBundle\Service;
 
 use Bitrix\Highloadblock\DataManager;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\Result;
 use Bitrix\Main\Entity\AddResult;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\SystemException;
@@ -298,16 +299,7 @@ class OrderSubscribeHistoryService
         ];
         $dbres = $this->findBy($params);
 
-        // [костыль] здесь сравнивается id подписки,
-        // т.к. из ожного заказа можно сформировать несколько подписок
-        while ($row = $dbres->fetch()) {
-            $subData = unserialize($row['UF_SUBS_DATA']);
-            if($subData['ID'] != $orderSubscribe->getId()){
-                continue;
-            }
-            $orderIds[] = $row['UF_NEW_ORDER_ID'];
-        }
-
+        $orderIds = $this->fetchAllBySubscribeId($dbres, $orderSubscribe->getId());
         return $orderIds;
     }
 
@@ -363,15 +355,43 @@ class OrderSubscribeHistoryService
             ]
         );
 
-        // [костыль] см. метод getNotDeliveredOrderIds
-        while ($row = $dbres->fetch()) {
+        $orders = $this->fetchAllBySubscribeId($dbres, $orderSubscribe->getId());
+        return $orders[0] ? $orders[0]['UF_DELIVERY_DATE'] : $orderSubscribe->getNextDate();
+    }
+
+    public function getLastOrderDeliveryDate(OrderSubscribe $orderSubscribe)
+    {
+        $dbres = $this->findBy(
+            [
+                'select' => [
+                    'ID',
+                    'UF_DELIVERY_DATE',
+                ],
+                'filter' => [
+                    '=UF_ORIGIN_ORDER_ID' => (int)$orderSubscribe->getOrderId()
+                ],
+                'order' => [
+                    'ID' => 'DESC',
+                ],
+            ]
+        );
+
+        $orders = $this->fetchAllBySubscribeId($dbres, $orderSubscribe->getId());
+        return $orders[0] ? $orders[0]['UF_DELIVERY_DATE'] : $orderSubscribe->getNextDate();
+    }
+
+    // [костыль] здесь сравнивается id подписки,
+    // т.к. из ожного заказа можно сформировать несколько подписок
+    protected function fetchAllBySubscribeId(Result $result, int $orderSubscribeId)
+    {
+        $results = [];
+        while ($row = $result->fetch()) {
             $subData = unserialize($row['UF_SUBS_DATA']);
-            if($subData['ID'] != $orderSubscribe->getId()){
+            if($subData['ID'] != $orderSubscribeId){
                 continue;
             }
-            $order = $row;
+            $results[] = $row;
         }
-
-        return $order ? $order['UF_DELIVERY_DATE'] : $orderSubscribe->getNextDate();
+        return $results;
     }
 }

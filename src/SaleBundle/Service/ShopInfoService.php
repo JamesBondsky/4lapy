@@ -439,7 +439,7 @@ class ShopInfoService
         $result = new ArrayCollection();
         /** @var Offer $offer */
         foreach ($stockResultCollection->getOffers(false) as $offer) {
-            $result[$offer->getId()] = (new OfferInfo())->setName($offer->getName())
+            $result[$offer->getId()] = (new OfferInfo())->setName($offer->getProduct()->getBrandName() . ' ' . $offer->getName())
                                                         ->setWeight($offer->getCatalogProduct()
                                                                           ->getWeight()
                                                         );

@@ -135,7 +135,9 @@ class ShopInfoService
 
         $stores = $this->sortByRequest(
             $this->filterByRequest($storeSearchResult->getStores(), $request, $metroList),
-            $request
+            $request,
+            [],
+            $request->get('code', '')
         );
 
         $shopList = $this->getShopList($stores, $this->getLocationByRequest($request), $selectedServices);
@@ -395,10 +397,11 @@ class ShopInfoService
      * @param StoreCollection $stores
      * @param Request         $request
      * @param array           $metroList
+     * @param string          $locationName
      *
      * @return StoreCollection
      */
-    protected function sortByRequest(StoreCollection $stores, Request $request, array $metroList = []): StoreCollection
+    protected function sortByRequest(StoreCollection $stores, Request $request, array $metroList = [], string $locationName = ''): StoreCollection
     {
         if ($sortField = $request->get('sort', '')) {
             $iterator = $stores->getIterator();
@@ -416,6 +419,23 @@ class ShopInfoService
                 return $result;
             });
             $stores = new StoreCollection(iterator_to_array($iterator));
+
+            if ($sortField == 'address') {
+                $needAddress = [];
+                $outAddress = [];
+
+                foreach ((array)$iterator as $iteratorItem) {
+                    if ($iteratorItem->getLocation() == $locationName) {
+                        $needAddress[$iteratorItem->getId()] = $iteratorItem;
+                    } else {
+                        $outAddress[$iteratorItem->getId()] = $iteratorItem;
+                    }
+                }
+
+                if ($needAddress && $outAddress) {
+                    $stores = new StoreCollection(array_merge($needAddress, $outAddress));
+                }
+            }
         }
 
         return $stores;

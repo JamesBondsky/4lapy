@@ -12,8 +12,10 @@ use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\MobileApiBundle\Dto\Object\PushEventOptions;
 use FourPaws\MobileApiBundle\Dto\Request\PostPushTokenRequest;
 use FourPaws\MobileApiBundle\Entity\ApiPushEvent;
+use FourPaws\MobileApiBundle\Exception\InvalidArgumentException;
 use FourPaws\MobileApiBundle\Repository\ApiPushEventRepository;
 use FourPaws\MobileApiBundle\Repository\ApiUserSessionRepository;
+use FourPaws\MobileApiBundle\Tables\ApiUserSessionTable;
 use FourPaws\MobileApiBundle\Traits\MobileApiLoggerAwareTrait;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
@@ -258,5 +260,34 @@ class PushMessagesService implements LoggerAwareInterface
                     ->setId($pushEvent->getEventId())
                     ->setType($pushEvent->getMessageTypeEntity()->getXmlId())
             );
+    }
+
+    /**
+     * Отфильтровывает $pushTokens, возвращая только существующие в новой базе токены
+     * @param array $pushTokens
+     * @return array
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getExistingPushTokens(array $pushTokens)
+    {
+        if (!$pushTokens) {
+            throw new InvalidArgumentException(__METHOD__ . '. Пустой массив токенов');
+        }
+
+        $rsExistingPushTokens = ApiUserSessionTable::query()
+            ->setFilter([
+                '=PUSH_TOKEN' => $pushTokens,
+                '!USER_ID' => '',
+            ])
+            ->setSelect([
+                'PUSH_TOKEN',
+            ])
+            ->exec()
+            ->fetchAll();
+        $existingPushTokens = array_values(array_unique(array_column($rsExistingPushTokens, 'PUSH_TOKEN')));
+
+        return $existingPushTokens;
     }
 }
