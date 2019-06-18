@@ -234,7 +234,7 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      */
     public static function checkCode(string $confirmCode, string $type = 'sms'): bool
     {
-        $generatedCode = static::getGeneratedCode($type);
+        $generatedCode = static::getGeneratedCode($confirmCode, $type);
         if (!empty($generatedCode)) {
             $confirmed = $confirmCode === $generatedCode;
             if ($confirmed) {
@@ -248,17 +248,26 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
 
     /**
      * @param string $type
+     * @param string $hash
      *
      * @return string
      * @throws ExpiredConfirmCodeException
      * @throws NotFoundConfirmedCodeException
      * @throws Exception
      */
-    public static function getGeneratedCode(string $type = 'sms'): string
+    public static function getGeneratedCode(string $hash = null, string $type = 'sms'): string
     {
         $ConfirmCodeQuery = new ConfirmCodeQuery(ConfirmCodeTable::query());
+        $filter = [];
+
+        if ($hash) {
+            $filter['CODE'] = $hash;
+        } else {
+            $filter['ID'] = $_COOKIE[self::getCookieName($type)];
+        }
+
         /** @var ConfirmCode $confirmCode */
-        $confirmCode = $ConfirmCodeQuery->withFilter(['ID' => $_COOKIE[self::getCookieName($type)]])->exec()->first();
+        $confirmCode = $ConfirmCodeQuery->withFilter($filter)->exec()->first();
 
         if (!($confirmCode instanceof ConfirmCode)) {
             throw new NotFoundConfirmedCodeException('не найден код');
