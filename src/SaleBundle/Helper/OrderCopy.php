@@ -1540,7 +1540,7 @@ class OrderCopy
                 /** @todo костыль. У этого магазина адрес не распознается дадатой */
                 $address = (new Address())
                     ->setValid(true)
-                    ->setCity($locationService->getCurrentCity())
+                    ->setCity($locationService->getCurrentCity()->getName())
                     ->setLocation($locationService->getCurrentLocation())
                     ->setHouse(1)
                     ->setStreetPrefix('пос')
