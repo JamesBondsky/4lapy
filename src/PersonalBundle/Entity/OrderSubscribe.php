@@ -637,6 +637,16 @@ class OrderSubscribe extends BaseEntity
     }
 
     /**
+     * @return OrderSubscribe
+     * @throws \Bitrix\Main\ObjectException
+     */
+    public function countNextDate(): OrderSubscribe
+    {
+        $this->getOrderSubscribeService()->countNextDate($this);
+        return $this;
+    }
+
+    /**
      * @return bool
      * @throws OrderSubscribeException
      */

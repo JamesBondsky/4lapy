@@ -2143,8 +2143,7 @@ class OrderService implements LoggerAwareInterface
             'loaders_count' => $loadersCount
         ];
 
-        $nearAddressString = $this->storeService->getStoreAddress($nearShop) . ', ' . $nearShop->getAddress();
-        $nearAddress = $this->locationService->splitAddress($nearAddressString, $nearShop->getLocation())->toStringExt();
+        $nearAddress = $this->locationService->splitAddress($nearShop->getAddress(), $nearShop->getLocation())->toStringExt();
         $secondAddress = $this->getOrderDeliveryAddress($order);
 
         $pointZeroDate = clone $curDate;
