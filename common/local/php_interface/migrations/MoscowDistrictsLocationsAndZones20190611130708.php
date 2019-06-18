@@ -158,7 +158,7 @@ class MoscowDistrictsLocationsAndZones20190611130708 extends SprintMigrationBase
                 [
                     'NAME' => [
                         'ru' => [
-                            'NAME' => $location['NAME_RU']
+                            'NAME' => str_replace('Район ', 'Район Москвы ', $location['NAME_RU'])
                         ]
                     ],
                     'SORT' => $i,

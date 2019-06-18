@@ -425,6 +425,16 @@ class OrderStorage
     protected $promoCode = '';
 
     /**
+     * Район Москвы (код зоны)
+     *
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("MOSCOW_DISTRICT_CODE")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     * @var string
+     */
+    protected $moscowDistrictCode = '';
+
+    /**
      * @return int
      */
     public function getFuserId(): int
@@ -1211,6 +1221,26 @@ class OrderStorage
     public function setPromoCode(string $promoCode): OrderStorage
     {
         $this->promoCode = $promoCode;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMoscowDistrictCode(): string
+    {
+        return $this->moscowDistrictCode;
+    }
+
+    /**
+     * @param string $moscowDistrict
+     *
+     * @return OrderStorage
+     */
+    public function setMoscowDistrictCode(string $moscowDistrict): OrderStorage
+    {
+        $this->moscowDistrictCode = $moscowDistrict;
+
         return $this;
     }
 }
