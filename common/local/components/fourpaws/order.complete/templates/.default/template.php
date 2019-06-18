@@ -224,7 +224,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                     <a href="<?=$arResult['KIOSK_LOGOUT_URL']?>" class="b-button b-button--complete-kiosk">Завершить покупки</a>
                 <? } ?>
                 <?
-                if (!isset($arResult['ORDER_PROPERTIES']['EMAIL'])) {
+                if (empty($arResult['ORDER_PROPERTIES']['EMAIL'])) {
                     ?>
                     <hr class="b-hr b-hr--order"/>
                     <?
