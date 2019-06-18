@@ -263,6 +263,12 @@ if (!$currentOffer->getImagesIds()) {
         //
         ?>
         <div class="b-common-item__additional-information">
+            <div class="b-common-item__price-subscribe">
+                <span class="logo-subscr"><?= new SvgDecorator('icon-logo-subscription', 20, 18) ?></span>
+                <span class="b-common-item__price js-price-subscribe-block">3 189</span>
+                <span class="b-ruble">₽</span>
+                <span class="title-subscr">Подписка</span>
+            </div>
             <div class="b-common-item__benefin js-sale-block">
                 <span class="b-common-item__prev-price js-sale-origin">
                     <span class="b-ruble b-ruble--prev-price"></span>

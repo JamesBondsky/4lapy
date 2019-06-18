@@ -73,8 +73,11 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
             <div class="b-panel-subscribe-cart">
                 <div class="b-panel-subscribe-cart__content">
                     <div class="b-panel-subscribe-cart__info">
-                        Подпишитесь на&nbsp;доставку и&nbsp;получите скидку <?= ($subscribePriceDiff > 0) ? WordHelper::numberFormat($subscribePriceDiff, 2).' ₽' : ''?> на&nbsp;вашу корзину&nbsp;&mdash;
-                        <a href="javascript:void(0);" class="b-link" data-show-subscribe-delivery-cart="true">узнать подробнее</a>
+                        Получите <span class="orange">скидку <?= ($subscribePriceDiff > 0) ? WordHelper::numberFormat($subscribePriceDiff, 2).' ₽' : ''?></span> на&nbsp;вашу корзину&nbsp;&mdash; используйте
+                        <nobr><a href="javascript:void(0);" class="b-link" data-show-subscribe-delivery-cart="true">
+                            <span class="logo-subscr"><?= new SvgDecorator('icon-logo-subscription', 20, 18) ?></span>
+                            Подписку
+                        </a></nobr> на доставку
                     </div>
                 </div>
             </div>
@@ -256,31 +259,15 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
 
             <? if($arResult['SUBSCRIBE_ALLOWED']){ ?>
             <section class="b-subscribe-delivery-cart desktop">
-                <div class="b-subscribe-delivery-cart__anchor" data-subscribe-delivery-cart="true"></div>
+                <div class="b-subscribe-delivery-cart__anchor" data-subscribe-delivery-cart="desktop"></div>
                 <div class="b-subscribe-delivery-cart__content">
                     <div class="b-subscribe-delivery-cart__info-list">
-                        <div class="item">
-                            <div class="item__icon">
-                                <?= new SvgDecorator('icon-retime', 24, 24) ?>
-                            </div>
-                            <div class="item__text">
-                                Регулярная доставка необходимых товаров в&nbsp;удобное для вас время.
-                            </div>
-                        </div>
-                        <div class="item">
-                            <div class="item__icon">
-                                <?= new SvgDecorator('icon-price', 24, 24) ?>
-                            </div>
-                            <div class="item__text">
-                                Получайте специальную цену на&nbsp;некоторые товары.
-                            </div>
-                        </div>
                         <div class="item">
                             <div class="item__icon">
                                 <?= new SvgDecorator('icon-calendar', 24, 24) ?>
                             </div>
                             <div class="item__text">
-                                Выберите нужную вам частоту доставки&nbsp;&mdash; от&nbsp;недели до&nbsp;двух месяцев.
+                                Установите удобное расписание доставок
                             </div>
                         </div>
                         <div class="item">
@@ -288,7 +275,15 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                                 <?= new SvgDecorator('icon-cancel', 24, 24) ?>
                             </div>
                             <div class="item__text">
-                                Вы&nbsp;можете отказаться от&nbsp;подписки в&nbsp;любое время.
+                                Переносите или&nbsp;отменяйте доставку в&nbsp;любое время
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item__icon">
+                                <?= new SvgDecorator('icon-price', 24, 24) ?>
+                            </div>
+                            <div class="item__text">
+                                Наслаждайтесь экономией денег и&nbsp;времени
                             </div>
                         </div>
                     </div>
@@ -332,6 +327,19 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                                             </span>
                                         <? } ?>
                                         <span class="b-price__current"><?= WordHelper::numberFormat($arResult['SUBSCRIBE_PRICE']); ?></span>
+                                        <span class="b-ruble">₽</span>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="b-price-subscribe-delivery-cart__item b-price-subscribe-delivery-cart__item--discount">
+                                <div class="b-price-subscribe-delivery-cart__text">
+                                    <div class="b-price-subscribe-delivery-cart__clipped-text">
+                                       Уже на первой Подписке вы экономите
+                                    </div>
+                                </div>
+                                <div class="b-price-subscribe-delivery-cart__value">
+                                    <div class="b-price b-price--subscribe-cart b-price--result-subscribe-cart">
+                                        <span class="b-price__current">87,00</span>
                                         <span class="b-ruble">₽</span>
                                     </div>
                                 </div>
@@ -475,31 +483,15 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
         </aside>
 
         <section class="b-subscribe-delivery-cart mobile">
-                <div class="b-subscribe-delivery-cart__anchor" data-subscribe-delivery-cart="true"></div>
+                <div class="b-subscribe-delivery-cart__anchor" data-subscribe-delivery-cart="mobile"></div>
                 <div class="b-subscribe-delivery-cart__content">
                     <div class="b-subscribe-delivery-cart__info-list">
-                        <div class="item">
-                            <div class="item__icon">
-                                <?= new SvgDecorator('icon-retime', 24, 24) ?>
-                            </div>
-                            <div class="item__text">
-                                Регулярная доставка необходимых товаров в&nbsp;удобное для вас время.
-                            </div>
-                        </div>
-                        <div class="item">
-                            <div class="item__icon">
-                                <?= new SvgDecorator('icon-price', 24, 24) ?>
-                            </div>
-                            <div class="item__text">
-                                Получайте специальную цену на&nbsp;некоторые товары.
-                            </div>
-                        </div>
                         <div class="item">
                             <div class="item__icon">
                                 <?= new SvgDecorator('icon-calendar', 24, 24) ?>
                             </div>
                             <div class="item__text">
-                                Выберите нужную вам частоту доставки&nbsp;&mdash; от&nbsp;недели до&nbsp;двух месяцев.
+                                Установите удобное расписание доставок
                             </div>
                         </div>
                         <div class="item">
@@ -507,7 +499,15 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                                 <?= new SvgDecorator('icon-cancel', 24, 24) ?>
                             </div>
                             <div class="item__text">
-                                Вы&nbsp;можете отказаться от&nbsp;подписки в&nbsp;любое время.
+                                Переносите или&nbsp;отменяйте доставку в&nbsp;любое время
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item__icon">
+                                <?= new SvgDecorator('icon-price', 24, 24) ?>
+                            </div>
+                            <div class="item__text">
+                                Наслаждайтесь экономией денег и&nbsp;времени
                             </div>
                         </div>
                     </div>
@@ -551,6 +551,19 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                                             </span>
                                         <? } ?>
                                         <span class="b-price__current"><?= WordHelper::numberFormat($arResult['SUBSCRIBE_PRICE']); ?></span>
+                                        <span class="b-ruble">₽</span>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="b-price-subscribe-delivery-cart__item b-price-subscribe-delivery-cart__item--discount">
+                                <div class="b-price-subscribe-delivery-cart__text">
+                                    <div class="b-price-subscribe-delivery-cart__clipped-text">
+                                       Уже на первой Подписке вы экономите
+                                    </div>
+                                </div>
+                                <div class="b-price-subscribe-delivery-cart__value">
+                                    <div class="b-price b-price--subscribe-cart b-price--result-subscribe-cart">
+                                        <span class="b-price__current">87,00</span>
                                         <span class="b-ruble">₽</span>
                                     </div>
                                 </div>
