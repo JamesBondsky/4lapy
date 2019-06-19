@@ -17,7 +17,7 @@ use FourPaws\UserBundle\Enum\UserLocationEnum;
 /** @var MainTemplate $template */
 $template = MainTemplate::getInstance(Application::getInstance()
     ->getContext());
-$markup = PawsApplication::markup(); 
+$markup = PawsApplication::markup();
 
 ?>
 <!DOCTYPE html>
@@ -199,6 +199,15 @@ $markup = PawsApplication::markup();
                     </div>
                 </div>
             </div>
+            <?if ($USER->IsAuthorized()) {?>
+                <div class="regulations-landing__btn">
+                    <div class="landing-btn" data-btn-scroll-landing="registr-check">Зарегистрировать чек</div>
+                </div>
+            <?} else {?>
+                <div class="regulations-landing__btn">
+                    <div class="landing-btn js-open-popup" data-popup-id="authorization">Принять участие</div>
+                </div>
+            <?}?>
         </div>
     </section>
 </div>
