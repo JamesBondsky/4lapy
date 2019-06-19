@@ -94,7 +94,7 @@ if ($template->hasMainWrapper()) { ?>
         <div class="container-landing">
             <?php
             $APPLICATION->IncludeComponent('articul:action.winners', '', [
-                "SECTION_CODE" => 'GRANDIN'
+                "SECTION_CODE" => 'MEALFEEL'
             ]);
             ?>
         </div>
