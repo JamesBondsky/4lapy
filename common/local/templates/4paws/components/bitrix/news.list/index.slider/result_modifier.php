@@ -53,7 +53,8 @@ foreach ($arResult['ITEMS'] as &$item) {
         $image = CropImageDecorator::createFromPrimary($item['~PREVIEW_PICTURE']);
     }
     if ($image instanceof CropImageDecorator) {
-        $image->setCropWidth(414)->setCropHeight(207);
+//        $image->setCropWidth(414)->setCropHeight(207);
+        $image->setCropWidth(500)->setCropHeight(250);
         $item['MOBILE_PICTURE'] = $image;
     }
 
