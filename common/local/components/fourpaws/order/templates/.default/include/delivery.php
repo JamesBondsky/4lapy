@@ -138,7 +138,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                            placeholder=""
                            name="house"
                            data-url=""
-                           value="<?= $storage->getHouse() ?>"/>
+                           value="<?= $storage->getHouse() ?>" disabled="disabled"/>
                     <div class="b-error"><span class="js-message"></span>
                     </div>
                 </div>
@@ -153,7 +153,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                            id="order-address-part"
                            name="building"
                            type="text"
-                           value="<?= $storage->getBuilding() ?>"/>
+                           value="<?= $storage->getBuilding() ?>" disabled="disabled"/>
                     <div class="b-error"><span class="js-message"></span>
                     </div>
                 </div>

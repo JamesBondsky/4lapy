@@ -42,14 +42,12 @@ use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
-use FourPaws\SaleBundle\Repository\OrderStorage\DatabaseStorageRepository;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\ShopInfoService;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\ShopInfoService as StoreShopInfoService;
-use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Protobuf\Exception;
 use Psr\Log\LoggerAwareInterface;
@@ -109,16 +107,6 @@ class OrderController extends Controller implements LoggerAwareInterface
     private $deliveryService;
 
     /**
-     * @var CurrentUserProviderInterface
-     */
-    protected $currentUserProvider;
-
-    /**
-     * @var DatabaseStorageRepository
-     */
-    protected $storageRepository;
-
-    /**
      * @var ReCaptchaService
      */
     private $recaptcha;
@@ -126,17 +114,15 @@ class OrderController extends Controller implements LoggerAwareInterface
     /**
      * OrderController constructor.
      *
-     * @param OrderService                 $orderService
-     * @param DeliveryService              $deliveryService
-     * @param OrderStorageService          $orderStorageService
-     * @param OrderSubscribeService        $orderSubscribeService
-     * @param UserAuthorizationInterface   $userAuthProvider
-     * @param ShopInfoService              $shopInfoService
-     * @param StoreShopInfoService         $storeShopInfoService
-     * @param LocationService              $locationService
-     * @param CurrentUserProviderInterface $currentUserProvider
-     * @param DatabaseStorageRepository    $storageRepository
-     * @param ReCaptchaService             $recaptcha
+     * @param OrderService               $orderService
+     * @param DeliveryService            $deliveryService
+     * @param OrderStorageService        $orderStorageService
+     * @param OrderSubscribeService      $orderSubscribeService
+     * @param UserAuthorizationInterface $userAuthProvider
+     * @param ShopInfoService            $shopInfoService
+     * @param StoreShopInfoService       $storeShopInfoService
+     * @param LocationService            $locationService
+     * @param ReCaptchaService           $recaptcha
      */
     public function __construct(
         OrderService $orderService,
@@ -147,8 +133,6 @@ class OrderController extends Controller implements LoggerAwareInterface
         ShopInfoService $shopInfoService,
         StoreShopInfoService $storeShopInfoService,
         LocationService $locationService,
-        CurrentUserProviderInterface $currentUserProvider,
-        DatabaseStorageRepository $storageRepository,
         ReCaptchaService $recaptcha
     )
     {
@@ -160,8 +144,6 @@ class OrderController extends Controller implements LoggerAwareInterface
         $this->shopInfoService = $shopInfoService;
         $this->storeShopInfoService = $storeShopInfoService;
         $this->locationService = $locationService;
-        $this->currentUserProvider = $currentUserProvider;
-        $this->storageRepository = $storageRepository;
         $this->recaptcha = $recaptcha;
     }
 
@@ -642,26 +624,13 @@ class OrderController extends Controller implements LoggerAwareInterface
             );
         }
 
-        $location = current($locations);
-        $fuserId = $this->currentUserProvider->getCurrentFUserId();
-        $storage = $this->storageRepository->findByFuserEx($fuserId);
-        $defaultCity = $storage->getCity();
-        $defaultCityCode = $storage->getCityCode();
-        /**
-         * Если тот же самый район, то отправляем сообщение об этом
-         */
-        if ($defaultCityCode == $location['CODE']) {
-            return JsonSuccessResponse::createWithData(
-                'same moscow district',
-                [
-                    'same_district' => true
-                ]
-            );
-        }
-
         /**
          * Обновляем storage, записываем зону
          */
+        $location = current($locations);
+        $storage = $this->orderStorageService->getStorage();
+        $defaultCity = $storage->getCity();
+        $defaultCityCode = $storage->getCityCode();
         $storage->setCity($location['NAME']);
         $storage->setCityCode($location['CODE']);
         $res = $this->orderStorageService->updateStorage($storage, $currentStep);
@@ -696,7 +665,6 @@ class OrderController extends Controller implements LoggerAwareInterface
         return JsonSuccessResponse::createWithData(
             '',
             [
-                'same_district' => false,
                 'delivery_price'     => $deliveryPrice,
                 'price_full'         => $basketPrice,
                 'price_total'        => $basketPrice + $deliveryPrice,
