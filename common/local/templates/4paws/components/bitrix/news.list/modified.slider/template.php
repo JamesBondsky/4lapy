@@ -22,6 +22,7 @@ if (!\is_array($arResult['ITEMS']) || empty($arResult['ITEMS'])) {
     <div class="b-container">
         <div class="b-promo-banner__list js-promo-banner">
 	        <? foreach ($arResult['ITEMS'] as $key => $item) { ?>
+                <?/* Если не нужно выводить на мобилке лого, надо добавить в строку ниже модификатор b-promo-banner-item--no-mobile-logo*/?>
 		        <div class="b-promo-banner-item<?= $item['MOD']['ADDITIONAL_CLASSES'] ?> <? if ($item['EXTERNAL_ID'] == 'festival') { ?>b-promo-banner-item--festival<? } ?>">
 	                <div class="b-promo-banner-item__content">
 	                    <div class="b-promo-banner-item__left">
