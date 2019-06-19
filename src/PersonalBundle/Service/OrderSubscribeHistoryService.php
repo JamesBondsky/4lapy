@@ -301,7 +301,7 @@ class OrderSubscribeHistoryService
 
         $orders = $this->fetchAllBySubscribeId($dbres, $orderSubscribe->getId());
         foreach($orders as $order){
-            $orderIds[] = $order['ID'];
+            $orderIds[] = $order['UF_NEW_ORDER_ID'];
         }
         return $orderIds;
     }
