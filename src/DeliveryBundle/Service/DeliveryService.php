@@ -86,6 +86,9 @@ class DeliveryService implements LoggerAwareInterface
     public const ZONE_5 = 'ZONE_5';
     public const ZONE_6 = 'ZONE_6';
 
+    public const MOSCOW_LOCATION_CODE = '0000073738';
+    public const MOSCOW_LOCATION_NAME = 'Москва';
+
     /**
      * Нижний Новгород и Нижегородская область
      */

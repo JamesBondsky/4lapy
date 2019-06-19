@@ -620,69 +620,61 @@ class OrderController extends Controller implements LoggerAwareInterface
         $okato = $data['data']['okato'];
         if (!$okato) {
             $storage->setMoscowDistrictCode('');
+            $storage->setCity(DeliveryService::MOSCOW_LOCATION_NAME);
+            $storage->setCityCode(DeliveryService::MOSCOW_LOCATION_CODE);
             $this->orderStorageService->updateStorage($storage, $currentStep);
-            return JsonErrorResponse::createWithData('okato empty in data');
-        }
-        /**
-         * Ищем зону по ОКАТО
-         */
-        $okato = substr($okato, 0, 8);
-        $locations = $this->locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $okato);
+        } else {
+            /**
+             * Ищем зону по ОКАТО
+             */
+            $okato = substr($okato, 0, 8);
+            $locations = $this->locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $okato);
+            if (!count($locations)) {
+                $storage->setMoscowDistrictCode('');
+                $storage->setCity(DeliveryService::MOSCOW_LOCATION_NAME);
+                $storage->setCityCode(DeliveryService::MOSCOW_LOCATION_CODE);
+                $this->orderStorageService->updateStorage($storage, $currentStep);
+            } else {
+                /**
+                 * Обновляем storage, записываем зону
+                 */
+                $location = current($locations);
+                $defaultCity = $storage->getCity();
+                $defaultCityCode = $storage->getCityCode();
+                $storage->setCity($location['NAME']);
+                $storage->setCityCode($location['CODE']);
+                $storage->setMoscowDistrictCode($location['CODE']);
+                $this->orderStorageService->updateStorage($storage, $currentStep);
 
-        if (!count($locations)) {
-            $storage->setMoscowDistrictCode('');
-            $this->orderStorageService->updateStorage($storage, $currentStep);
-            return JsonErrorResponse::createWithData(
-                'zone not found for this address',
-                ['data' => $okato]
-            );
-        }
+                /**
+                 * Получаем цену доставки в этой зоне
+                 */
+                $innerDelivery = $this->orderStorageService->getInnerDelivery($storage);
 
-        /**
-         * Обновляем storage, записываем зону
-         */
-        $location = current($locations);
-        $defaultCity = $storage->getCity();
-        $defaultCityCode = $storage->getCityCode();
-        $storage->setCity($location['NAME']);
-        $storage->setCityCode($location['CODE']);
-        $storage->setMoscowDistrictCode($location['CODE']);
-        $res = $this->orderStorageService->updateStorage($storage, $currentStep);
-        if (!$res) {
-            return JsonErrorResponse::createWithData(
-                'storage can`t update',
-                ['data' => $okato]
-            );
+                if (!$innerDelivery) {
+                    $storage->setCity($defaultCity);
+                    $storage->setCityCode($defaultCityCode);
+                    $this->orderStorageService->updateStorage($storage, $currentStep);
+                }
+            }
         }
-
-        /**
-         * Получаем цену доставки в этой зоне
-         */
-        $innerDelivery = $this->orderStorageService->getInnerDelivery($storage);
 
         if (!$innerDelivery) {
-            $storage->setCity($defaultCity);
-            $storage->setCityCode($defaultCityCode);
-            $this->orderStorageService->updateStorage($storage, $currentStep);
-            return JsonErrorResponse::createWithData(
-                'inner delivery not found for this location',
-                ['data' => $okato]
-            );
+            $innerDelivery = $this->orderStorageService->getInnerDelivery($storage);
         }
 
-        $deliveryPrice = intval(CurrencyHelper::formatPrice($innerDelivery->getPrice(), false));
-
+        $deliveryPrice = floatval(CurrencyHelper::formatPrice($innerDelivery->getPrice(), false));
         /** @var BasketService $basketService */
         $basketService = App::getInstance()->getContainer()->get(BasketService::class);
         $basket = $basketService->getBasket();
-        $basketPrice = $basket->getPrice();
+        $basketPrice = floatval(CurrencyHelper::formatPrice($basket->getPrice(), false));
         /**
          * интервалы
          */
         $intervals = [];
-        foreach($innerDelivery->getAvailableIntervals() as $i => $interval){
+        foreach ($innerDelivery->getAvailableIntervals() as $i => $interval) {
             $intervals[$i + 1] = [
-                'text' => (string)$interval,
+                'text'     => (string)$interval,
                 'selected' => ($i + 1 === 1) ? 'selected' : ''
             ];
         }
@@ -691,21 +683,22 @@ class OrderController extends Controller implements LoggerAwareInterface
          */
         $nextDeliveries = $this->deliveryService->getNextDeliveries($innerDelivery, 10);
         $deliveryDates = [];
-        foreach($nextDeliveries as $i => $nextDelivery){
+        foreach ($nextDeliveries as $i => $nextDelivery) {
             $deliveryDates[$i] = [
-                'text' => FormatDate('l, d.m.Y', $nextDelivery->getDeliveryDate()->getTimestamp()),
+                'text'     => FormatDate('l, d.m.Y', $nextDelivery->getDeliveryDate()->getTimestamp()),
                 'selected' => ($i === 0) ? 'selected' : ''
             ];
         }
+
         return JsonSuccessResponse::createWithData(
             '',
             [
                 'delivery_price'     => $deliveryPrice,
                 'price_full'         => $basketPrice,
                 'price_total'        => $basketPrice + $deliveryPrice,
-                'deliver_date_price' => DeliveryTimeHelper::showTime($innerDelivery) .', <span class="js-delivery--price">' . $deliveryPrice .'</span>',
-                'intervals' => $intervals,
-                'delivery_dates' => $deliveryDates
+                'deliver_date_price' => DeliveryTimeHelper::showTime($innerDelivery) . ', <span class="js-delivery--price">' . $deliveryPrice . '</span>',
+                'intervals'          => $intervals,
+                'delivery_dates'     => $deliveryDates
             ]
         );
     }
