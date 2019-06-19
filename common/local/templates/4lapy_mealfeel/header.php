@@ -35,7 +35,7 @@ $markup = PawsApplication::markup();
 
     <meta property="og:title" content="Выиграйте SPA-weekend, Роза Хутор Сочи"/>
     <meta property="og:description" content="Купите Mealfeel, регистрируйтесь и проверяйте результаты розыгрыша каждую пятницу июля. В розыгрыше 50 призов для правильного питания. Главный приз разыгрывается 1 августа. Удачи!"/>
-    <meta property="og:image" content="<?='https://'.$_SERVER['SERVER_NAME'].'/img/mealfeel-prague-share.png'?>">
+    <meta property="og:image" content="<?='https://'.$_SERVER['SERVER_NAME'].'/img/mealfeel-share.png'?>">
 
     <link href="https://fonts.googleapis.com/css?family=PT+Sans+Narrow|Roboto+Condensed&display=swap" rel="stylesheet">
 
