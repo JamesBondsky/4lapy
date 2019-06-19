@@ -32,7 +32,7 @@ $APPLICATION->SetTitle('Выиграйте SPA-weekend, Роза Хутор Со
                 <form data-form-registr-check-landing="true" class="form-landing registr-check-landing__form js-form-validation" method="post" action="/ajax/landing/request/add/" name="" enctype="multipart/form-data">
                     <? $token = ProtectorHelper::generateToken(ProtectorHelper::TYPE_GRANDIN_REQUEST_ADD); ?>
                     <input class="js-no-valid" type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
-                    <input class="js-no-valid" type="hidden" name="landingType" value="<?= LandingController::$grandinLanding ?>">
+                    <input class="js-no-valid" type="hidden" name="landingType" value="<?= LandingController::$mealfeelLanding ?>">
                     <div class="form-group">
                         <input type="dateDatepicker" id="DATE_REG_CHECK_MEALFEEL" name="date" value="" placeholder="Дата чека" autocomplete="off" data-min-date="2019-07-01" data-max-date="2019-07-31" data-datepicker-landing="true" >
                         <div class="b-error">
