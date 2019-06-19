@@ -953,6 +953,10 @@ class OrderSubscribeService implements LoggerAwareInterface
             }
 
             $subscribeItems = $this->orderSubscribeItemRepository->findBySubscribe($id);
+            if($subscribeItems->isEmpty()){
+                throw new OrderSubscribeException('Не найдено ни одного товара в подписке');
+            }
+
             $basket = Basket::create(self::SITE_ID);
             $items = [];
             /** @var OrderSubscribeItem $item */
