@@ -662,13 +662,36 @@ class OrderController extends Controller implements LoggerAwareInterface
         $basketService = App::getInstance()->getContainer()->get(BasketService::class);
         $basket = $basketService->getBasket();
         $basketPrice = $basket->getPrice();
+        /**
+         * интервалы
+         */
+        $intervals = [];
+        foreach($innerDelivery->getAvailableIntervals() as $i => $interval){
+            $intervals[$i + 1] = [
+                'text' => (string)$interval,
+                'selected' => $i + 1 === 1
+            ];
+        }
+        /**
+         * даты доставки
+         */
+        $nextDeliveries = $this->deliveryService->getNextDeliveries($innerDelivery, 10);
+        $deliveryDates = [];
+        foreach($nextDeliveries as $i => $nextDelivery){
+            $deliveryDates[$i] = [
+                'text' => FormatDate('l, d.m.Y', $nextDelivery->getDeliveryDate()->getTimestamp()),
+                'selected' => $i === 0
+            ];
+        }
         return JsonSuccessResponse::createWithData(
             '',
             [
                 'delivery_price'     => $deliveryPrice,
                 'price_full'         => $basketPrice,
                 'price_total'        => $basketPrice + $deliveryPrice,
-                'deliver_date_price' => DeliveryTimeHelper::showTime($innerDelivery) .', <span class="js-delivery--price">' . $deliveryPrice .'</span>'
+                'deliver_date_price' => DeliveryTimeHelper::showTime($innerDelivery) .', <span class="js-delivery--price">' . $deliveryPrice .'</span>',
+                'intervals' => $intervals,
+                'delivery_dates' => $deliveryDates
             ]
         );
     }
