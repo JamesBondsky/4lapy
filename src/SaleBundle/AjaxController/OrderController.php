@@ -682,7 +682,7 @@ class OrderController extends Controller implements LoggerAwareInterface
         foreach($innerDelivery->getAvailableIntervals() as $i => $interval){
             $intervals[$i + 1] = [
                 'text' => (string)$interval,
-                'selected' => $i + 1 === 1
+                'selected' => ($i + 1 === 1) ? 'selected' : ''
             ];
         }
         /**
@@ -693,7 +693,7 @@ class OrderController extends Controller implements LoggerAwareInterface
         foreach($nextDeliveries as $i => $nextDelivery){
             $deliveryDates[$i] = [
                 'text' => FormatDate('l, d.m.Y', $nextDelivery->getDeliveryDate()->getTimestamp()),
-                'selected' => $i === 0
+                'selected' => ($i === 0) ? 'selected' : ''
             ];
         }
         return JsonSuccessResponse::createWithData(
