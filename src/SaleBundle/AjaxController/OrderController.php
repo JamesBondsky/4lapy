@@ -27,6 +27,7 @@ use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\LocationService;
@@ -41,12 +42,14 @@ use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
+use FourPaws\SaleBundle\Repository\OrderStorage\DatabaseStorageRepository;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\ShopInfoService;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\ShopInfoService as StoreShopInfoService;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Protobuf\Exception;
 use Psr\Log\LoggerAwareInterface;
@@ -106,6 +109,16 @@ class OrderController extends Controller implements LoggerAwareInterface
     private $deliveryService;
 
     /**
+     * @var CurrentUserProviderInterface
+     */
+    protected $currentUserProvider;
+
+    /**
+     * @var DatabaseStorageRepository
+     */
+    protected $storageRepository;
+
+    /**
      * @var ReCaptchaService
      */
     private $recaptcha;
@@ -113,15 +126,17 @@ class OrderController extends Controller implements LoggerAwareInterface
     /**
      * OrderController constructor.
      *
-     * @param OrderService               $orderService
-     * @param DeliveryService            $deliveryService
-     * @param OrderStorageService        $orderStorageService
-     * @param OrderSubscribeService      $orderSubscribeService
-     * @param UserAuthorizationInterface $userAuthProvider
-     * @param ShopInfoService            $shopInfoService
-     * @param StoreShopInfoService       $storeShopInfoService
-     * @param LocationService            $locationService
-     * @param ReCaptchaService           $recaptcha
+     * @param OrderService                 $orderService
+     * @param DeliveryService              $deliveryService
+     * @param OrderStorageService          $orderStorageService
+     * @param OrderSubscribeService        $orderSubscribeService
+     * @param UserAuthorizationInterface   $userAuthProvider
+     * @param ShopInfoService              $shopInfoService
+     * @param StoreShopInfoService         $storeShopInfoService
+     * @param LocationService              $locationService
+     * @param CurrentUserProviderInterface $currentUserProvider
+     * @param DatabaseStorageRepository    $storageRepository
+     * @param ReCaptchaService             $recaptcha
      */
     public function __construct(
         OrderService $orderService,
@@ -132,6 +147,8 @@ class OrderController extends Controller implements LoggerAwareInterface
         ShopInfoService $shopInfoService,
         StoreShopInfoService $storeShopInfoService,
         LocationService $locationService,
+        CurrentUserProviderInterface $currentUserProvider,
+        DatabaseStorageRepository $storageRepository,
         ReCaptchaService $recaptcha
     )
     {
@@ -143,6 +160,8 @@ class OrderController extends Controller implements LoggerAwareInterface
         $this->shopInfoService = $shopInfoService;
         $this->storeShopInfoService = $storeShopInfoService;
         $this->locationService = $locationService;
+        $this->currentUserProvider = $currentUserProvider;
+        $this->storageRepository = $storageRepository;
         $this->recaptcha = $recaptcha;
     }
 
@@ -592,10 +611,15 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @return JsonResponse
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      * @throws ObjectPropertyException
      * @throws OrderStorageSaveException
-     * @throws SystemException
      * @throws OrderStorageValidationException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     * @throws UserMessageException
      */
     public function setDeliveryZoneByAddressAction(Request $request): JsonResponse
     {
@@ -611,21 +635,38 @@ class OrderController extends Controller implements LoggerAwareInterface
         $okato = substr($okato, 0, 8);
         $locations = $this->locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $okato);
 
-        if(!count($locations)){
-            return JsonSuccessResponse::createWithData(
-                'zone not found for this street',
+        if (!count($locations)) {
+            return JsonErrorResponse::createWithData(
+                'zone not found for this address',
                 ['data' => $okato]
+            );
+        }
+
+        $location = current($locations);
+        $fuserId = $this->currentUserProvider->getCurrentFUserId();
+        $storage = $this->storageRepository->findByFuserEx($fuserId);
+        $defaultCity = $storage->getCity();
+        $defaultCityCode = $storage->getCityCode();
+        /**
+         * Если тот же самый район, то отправляем сообщение об этом
+         */
+        if ($defaultCityCode == $location['CODE']) {
+            return JsonSuccessResponse::createWithData(
+                'same moscow district',
+                [
+                    'same_district' => true
+                ]
             );
         }
 
         /**
          * Обновляем storage, записываем зону
          */
-        $storage = $this->orderStorageService->getStorage();
-        $storage->setMoscowDistrictCode(current($locations)['CODE']);
+        $storage->setCity($location['NAME']);
+        $storage->setCityCode($location['CODE']);
         $res = $this->orderStorageService->updateStorage($storage, $currentStep);
-        if(!$res){
-            return JsonSuccessResponse::createWithData(
+        if (!$res) {
+            return JsonErrorResponse::createWithData(
                 'storage can`t update',
                 ['data' => $okato]
             );
@@ -634,12 +675,33 @@ class OrderController extends Controller implements LoggerAwareInterface
         /**
          * Получаем цену доставки в этой зоне
          */
-        $deliveryZone = $this->deliveryService->getCurrentDeliveryZone();
+        $innerDelivery = $this->orderStorageService->getInnerDelivery($storage);
 
+        if (!$innerDelivery) {
+            $storage->setCity($defaultCity);
+            $storage->setCityCode($defaultCityCode);
+            $this->orderStorageService->updateStorage($storage, $currentStep);
+            return JsonErrorResponse::createWithData(
+                'inner delivery not found for this location',
+                ['data' => $okato]
+            );
+        }
 
+        $deliveryPrice = $innerDelivery->getDeliveryPrice();
+
+        /** @var BasketService $basketService */
+        $basketService = App::getInstance()->getContainer()->get(BasketService::class);
+        $basket = $basketService->getBasket();
+        $basketPrice = $basket->getPrice();
         return JsonSuccessResponse::createWithData(
             '',
-            ['data' => $okato]
+            [
+                'same_district' => false,
+                'delivery_price'     => $deliveryPrice,
+                'price_full'         => $basketPrice,
+                'price_total'        => $basketPrice + $deliveryPrice,
+                'deliver_date_price' => DeliveryTimeHelper::showTime($innerDelivery) .', <span class="js-delivery--price">' . $deliveryPrice .'</span>'
+            ]
         );
     }
 }

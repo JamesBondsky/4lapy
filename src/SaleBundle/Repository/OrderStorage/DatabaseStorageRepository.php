@@ -94,6 +94,33 @@ class DatabaseStorageRepository extends StorageBaseRepository
     }
 
     /**
+     * Получает временный заказ по fuserID без установки начальных значений
+     *
+     * @param int $fuserId
+     *
+     * @return OrderStorage
+     * @throws OrderStorageSaveException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function findByFuserEx(int $fuserId): OrderStorage
+    {
+        if ($data = Table::getByPrimary($fuserId)->fetch()) {
+            $data = array_merge($data, (array)$data['UF_DATA']);
+            unset($data['UF_DATA']);
+        } else {
+            $this->create($data);
+        }
+
+        return $this->arrayTransformer->fromArray(
+            $data,
+            OrderStorage::class,
+            DeserializationContext::create()->setGroups(['read'])
+        );
+    }
+
+    /**
      * Чтобы не делать много столбцов в таблице, было решено большинство полей
      * хранить в одном serialized-поле, потому здесь и появился этот метод
      *
