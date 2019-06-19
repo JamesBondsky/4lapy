@@ -365,6 +365,24 @@ class OrderStorageService
     }
 
     /**
+     * @param OrderStorage $storage
+     * @param string       $step
+     *
+     * @return bool
+     * @throws OrderStorageSaveException
+     * @throws OrderStorageValidationException
+     */
+    public function updateStorageMoscowZone(OrderStorage $storage, string $step = OrderStorageEnum::AUTH_STEP): bool
+    {
+        $storage->setCityCode($storage->getMoscowDistrictCode());
+        try {
+            return $this->storageRepository->save($storage, $step);
+        } catch (NotFoundException $e) {
+            return false;
+        }
+    }
+
+    /**
      * @param $storage
      *
      * @return bool

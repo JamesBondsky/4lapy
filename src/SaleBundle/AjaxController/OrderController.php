@@ -472,6 +472,14 @@ class OrderController extends Controller implements LoggerAwareInterface
             );
         }
 
+        /**
+         * Moscow Districts
+         */
+        if ($storage->getMoscowDistrictCode() != '') {
+            $this->orderStorageService->updateStorageMoscowZone($storage, OrderStorageEnum::NOVALIDATE_STEP);
+        }
+
+
         try {
             $order = $this->orderService->createOrder($storage);
         } catch (OrderCreateException|OrderSplitException $e) {
@@ -605,10 +613,13 @@ class OrderController extends Controller implements LoggerAwareInterface
      */
     public function setDeliveryZoneByAddressAction(Request $request): JsonResponse
     {
-        $currentStep = OrderStorageEnum::AUTH_STEP;
+        $storage = $this->orderStorageService->getStorage();
+        $currentStep = OrderStorageEnum::NOVALIDATE_STEP;
         $data = json_decode($request->get('data'), true);
         $okato = $data['data']['okato'];
         if (!$okato) {
+            $storage->setMoscowDistrictCode('');
+            $this->orderStorageService->updateStorage($storage, $currentStep);
             return JsonErrorResponse::createWithData('okato empty in data');
         }
         /**
@@ -618,6 +629,8 @@ class OrderController extends Controller implements LoggerAwareInterface
         $locations = $this->locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $okato);
 
         if (!count($locations)) {
+            $storage->setMoscowDistrictCode('');
+            $this->orderStorageService->updateStorage($storage, $currentStep);
             return JsonErrorResponse::createWithData(
                 'zone not found for this address',
                 ['data' => $okato]
@@ -628,11 +641,11 @@ class OrderController extends Controller implements LoggerAwareInterface
          * Обновляем storage, записываем зону
          */
         $location = current($locations);
-        $storage = $this->orderStorageService->getStorage();
         $defaultCity = $storage->getCity();
         $defaultCityCode = $storage->getCityCode();
         $storage->setCity($location['NAME']);
         $storage->setCityCode($location['CODE']);
+        $storage->setMoscowDistrictCode($location['CODE']);
         $res = $this->orderStorageService->updateStorage($storage, $currentStep);
         if (!$res) {
             return JsonErrorResponse::createWithData(
