@@ -29,6 +29,7 @@ use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
@@ -669,7 +670,7 @@ class OrderController extends Controller implements LoggerAwareInterface
             );
         }
 
-        $deliveryPrice = $innerDelivery->getDeliveryPrice();
+        $deliveryPrice = intval(CurrencyHelper::formatPrice($innerDelivery->getPrice(), false));
 
         /** @var BasketService $basketService */
         $basketService = App::getInstance()->getContainer()->get(BasketService::class);
