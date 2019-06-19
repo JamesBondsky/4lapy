@@ -201,11 +201,11 @@ $markup = PawsApplication::markup();
             </div>
             <?if ($USER->IsAuthorized()) {?>
                 <div class="regulations-landing__btn">
-                    <div class="landing-btn" data-btn-scroll-landing="registr-check">Зарегистрировать чек</div>
+                    <div class="landing-btn landing-btn_mealfeel" data-btn-scroll-landing="registr-check">Зарегистрировать чек</div>
                 </div>
             <?} else {?>
                 <div class="regulations-landing__btn">
-                    <div class="landing-btn js-open-popup" data-popup-id="authorization">Принять участие</div>
+                    <div class="landing-btn landing-btn_mealfeel js-open-popup" data-popup-id="authorization">Принять участие</div>
                 </div>
             <?}?>
         </div>
