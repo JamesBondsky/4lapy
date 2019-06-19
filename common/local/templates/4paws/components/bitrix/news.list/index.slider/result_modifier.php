@@ -54,7 +54,7 @@ foreach ($arResult['ITEMS'] as &$item) {
     }
     if ($image instanceof CropImageDecorator) {
 //        $image->setCropWidth(414)->setCropHeight(207);
-        $image->setCropWidth(500)->setCropHeight(250);
+        $image->setCropWidth(767)->setCropHeight(300);
         $item['MOBILE_PICTURE'] = $image;
     }
 
