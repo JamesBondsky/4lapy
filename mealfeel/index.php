@@ -6,9 +6,9 @@ use FourPaws\AppBundle\AjaxController\LandingController;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
-$APPLICATION->SetPageProperty('title', 'Выиграй отдых в Сочи для гурманов');
-$APPLICATION->SetPageProperty('description', 'Регистрируйте чеки и выигрывайте! Новые подарки каждую неделю! 50 победителей + 1 главный приз!');
-$APPLICATION->SetTitle('Выиграй отдых в Сочи для гурманов');
+$APPLICATION->SetPageProperty('title', 'Выиграйте SPA-weekend, Роза Хутор Сочи');
+$APPLICATION->SetPageProperty('description', 'Купите Mealfeel, регистрируйтесь и проверяйте результаты розыгрыша каждую пятницу июля. В розыгрыше 50 призов для правильного питания. Главный приз разыгрывается 1 августа. Удачи!');
+$APPLICATION->SetTitle('Выиграйте SPA-weekend, Роза Хутор Сочи');
 ?>
 
 <section id="registr-check" data-id-section-landing="registr-check" class="registr-check-landing registr-check-landing_mealfeel">
@@ -34,7 +34,7 @@ $APPLICATION->SetTitle('Выиграй отдых в Сочи для гурма�
                     <input class="js-no-valid" type="hidden" name="<?=$token['field']?>" value="<?=$token['token']?>">
                     <input class="js-no-valid" type="hidden" name="landingType" value="<?= LandingController::$grandinLanding ?>">
                     <div class="form-group">
-                        <input type="dateDatepicker" id="DATE_REG_CHECK_MEALFEEL" name="date" value="" placeholder="Дата чека" autocomplete="off" data-min-date="2019-07-05" data-max-date="2019-08-01" data-datepicker-landing="true" >
+                        <input type="dateDatepicker" id="DATE_REG_CHECK_MEALFEEL" name="date" value="" placeholder="Дата чека" autocomplete="off" data-min-date="2019-07-01" data-max-date="2019-07-31" data-datepicker-landing="true" >
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>

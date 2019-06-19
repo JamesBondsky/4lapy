@@ -33,9 +33,9 @@ $markup = PawsApplication::markup();
     <meta name="format-detection" content="telephone=no">
     <meta name="yandex-verification" content="6266e34669b85ed6">
 
-    <meta property="og:title" content="Выиграй отдых в Сочи для гурманов"/>
-    <meta property="og:description" content="Регистрируйте чеки и выигрывайте! Новые подарки каждую неделю! 50 победителей + 1 главный приз!"/>
-    <?/*meta property="og:image" content="<?='https://'.$_SERVER['SERVER_NAME'].'/img/'?>"*/ ?>
+    <meta property="og:title" content="Выиграйте SPA-weekend, Роза Хутор Сочи"/>
+    <meta property="og:description" content="Купите Mealfeel, регистрируйтесь и проверяйте результаты розыгрыша каждую пятницу июля. В розыгрыше 50 призов для правильного питания. Главный приз разыгрывается 1 августа. Удачи!"/>
+    <meta property="og:image" content="<?='https://'.$_SERVER['SERVER_NAME'].'/img/mealfeel-prague-share.png'?>">
 
     <link href="https://fonts.googleapis.com/css?family=PT+Sans+Narrow|Roboto+Condensed&display=swap" rel="stylesheet">
 
