@@ -168,14 +168,6 @@ class ShortProduct
     protected $freeGoodsAmount = 0;
 
     /**
-     * Цена по подписке на доставку
-     * @var float
-     * @Serializer\Type("float")
-     * @Serializer\SerializedName("subscribePrice")
-     */
-    protected $subscribePrice;
-
-    /**
      * @return int
      */
     public function getId(): int
@@ -490,23 +482,5 @@ class ShortProduct
     {
         $this->freeGoodsAmount = $freeGoodsAmount;
         return $this;
-    }
-
-    /**
-     * @param float $subscribePrice
-     * @return ShortProduct
-     */
-    public function setSubscribePrice(float $subscribePrice): ShortProduct
-    {
-        $this->subscribePrice = $subscribePrice;
-        return $this;
-    }
-
-    /**
-     * @return float
-     */
-    public function getSubscribePrice(): float
-    {
-        return $this->subscribePrice;
     }
 }

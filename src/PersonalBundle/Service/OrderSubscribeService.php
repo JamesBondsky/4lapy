@@ -2005,7 +2005,7 @@ class OrderSubscribeService implements LoggerAwareInterface
      * @param bool $reverse
      * @return int
      */
-    public function countSubscribePrice($price, $percent, $reverse = false): float
+    public function countSubscribePrice($price, $percent = false, $reverse = false): float
     {
         // такое мудрёное округление цены нужно для того,
         // чтобы после перерасчёта корзины манзаной не было расхождения
@@ -2016,7 +2016,35 @@ class OrderSubscribeService implements LoggerAwareInterface
             $price = PriceHelper::roundPrice($price) * ((100 - $percent) / 100);
         }
 
-        return $price = PriceHelper::roundPrice($price);;
+        return $price = PriceHelper::roundPrice($price);
+    }
+
+    /**
+     * @param BasketItem $basketItem
+     * @return float
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     */
+    public function getSubscribePriceByBasketItem(BasketItem $basketItem): float
+    {
+        $price = $basketItem->getPrice();
+
+        /** @var Offer $offer */
+        $offer = (new OfferQuery())->withFilter(['ID' => $basketItem->getProductId()])->exec()->first();
+        if(!$offer){
+            return $price;
+        }
+
+        $percent = $offer->getSubscribeDiscount();
+        if($percent <= 0){
+            return $price;
+        }
+
+        return $this->countSubscribePrice($price, $percent);
     }
 
 }

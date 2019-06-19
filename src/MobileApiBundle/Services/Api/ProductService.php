@@ -396,7 +396,6 @@ class ProductService
             ->setXmlId($offer->getXmlId())
             ->setBrandName($product->getBrandName())
             ->setWebPage($offer->getCanonicalPageUrl())
-            ->setSubscribePrice($offer->getSubscribePrice())
             ;
 
         // большая картинка
@@ -416,7 +415,8 @@ class ProductService
         // цена
         $price = (new Price())
             ->setActual($offer->getPrice())
-            ->setOld($offer->getOldPrice());
+            ->setOld($offer->getOldPrice())
+            ->setSubscribe($offer->getSubscribePrice());
         $shortProduct->setPrice($price);
 
 
@@ -483,8 +483,7 @@ class ProductService
             ->setIsByRequest($shortProduct->getIsByRequest())
             ->setIsAvailable($shortProduct->getIsAvailable())
             ->setPickupOnly($shortProduct->getPickupOnly())
-            ->setInPack($shortProduct->getInPack())
-            ->setSubscribePrice($shortProduct->getSubscribePrice());
+            ->setInPack($shortProduct->getInPack());
 
         if ($needPackingVariants) {
             $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant));   // фасовки
