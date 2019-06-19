@@ -33,6 +33,14 @@ class Price
     protected $old = 0.0;
 
     /**
+     * Цена по подписке на доставку
+     * @var float
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("subscribe")
+     */
+    protected $subscribe = 0.0;
+
+    /**
      * @return float
      */
     public function getActual(): float
@@ -70,5 +78,23 @@ class Price
             $this->old = $old;
         }
         return $this;
+    }
+
+    /**
+     * @param float $subscribe
+     * @return Price
+     */
+    public function setSubscribe(float $subscribe): Price
+    {
+        $this->subscribe = $subscribe;
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getSubscribe(): float
+    {
+        return $this->subscribe;
     }
 }
