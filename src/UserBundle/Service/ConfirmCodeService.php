@@ -234,7 +234,7 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      */
     public static function checkCode(string $confirmCode, string $type = 'sms'): bool
     {
-        $generatedCode = static::getGeneratedCode($confirmCode, $type);
+        $generatedCode = static::getGeneratedCode($type, $confirmCode);
         if (!empty($generatedCode)) {
             $confirmed = $confirmCode === $generatedCode;
             if ($confirmed) {
@@ -247,15 +247,15 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
     }
 
     /**
-     * @param string $type
      * @param string $hash
+     * @param string $type
      *
      * @return string
      * @throws ExpiredConfirmCodeException
      * @throws NotFoundConfirmedCodeException
      * @throws Exception
      */
-    public static function getGeneratedCode(string $hash = null, string $type = 'sms'): string
+    public static function getGeneratedCode(string $type = 'sms', string $hash = null): string
     {
         $ConfirmCodeQuery = new ConfirmCodeQuery(ConfirmCodeTable::query());
         $filter = [];
