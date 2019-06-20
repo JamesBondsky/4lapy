@@ -213,14 +213,14 @@ class Event extends BaseServiceHandler
             'setCouponUsed'
         ], $module);
 
-        static::initHandler('OnSaleOrderSaved', [
+        /*static::initHandler('OnSaleOrderSaved', [
             self::class,
             'addCouponForSecondOrder'
         ], $module);
         static::initHandler('OnSaleOrderEntitySaved', [
             self::class,
             'addCouponForSecondOrder'
-        ], $module);
+        ], $module);*/
 
         /**
          * Сохранение имени пользователя
