@@ -81,6 +81,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceExce
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Intl\Exception\NotImplementedException;
+use Bitrix\Sale\Order as SaleOrder;
 
 class OrderSubscribeService implements LoggerAwareInterface
 {
@@ -1720,6 +1721,12 @@ class OrderSubscribeService implements LoggerAwareInterface
         $notificationService->sendOrderSubscribeOrderNewMessage($order);
     }
 
+    public function createSubscriptionByRequest(OrderStorage $storage, Request $request): Result
+    {
+        $data = $request->request->all();
+        return $this->createSubscription($storage, $data);
+    }
+
     /**
      * Создание подписки
      *
@@ -1727,10 +1734,9 @@ class OrderSubscribeService implements LoggerAwareInterface
      * @param $data
      * @return Result
      */
-    public function createSubscriptionByRequest(OrderStorage $storage, Request $request): Result
+    public function createSubscription(OrderStorage $storage, array $data): Result
     {
         $result = new Result();
-        $data = $request->request->all();
 
         try {
             /** @var OrderStorageService $orderStorageService */
@@ -1762,6 +1768,11 @@ class OrderSubscribeService implements LoggerAwareInterface
                 ->setFrequency($data['subscribeFrequency'])
                 ->setDeliveryTime((string)$interval)
                 ->setActive(false);
+
+            if(isset($data['payWithBonus'])){
+                $payWithBonus = $data['payWithBonus'] ? true : false;
+                $subscribe->setPayWithbonus($payWithBonus);
+            }
 
             if ($this->getDeliveryService()->isDelivery($orderStorageService->getSelectedDelivery($storage))) {
                 if (!empty($storage->getAddressId())) {
@@ -1814,6 +1825,54 @@ class OrderSubscribeService implements LoggerAwareInterface
             $result->setData(['subscribeId' => $subscribe->getId()]);
         } catch (\Exception $e) {
             $result->addError(new Error($e->getMessage(), 'createSubscription'));
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param OrderStorage $storage
+     * @param SaleOrder $order
+     * @return UpdateResult
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws OrderSubscribeException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \FourPaws\AppBundle\Exception\NotFoundException
+     * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
+     */
+    public function activateSubscription(OrderStorage $storage, SaleOrder $order): UpdateResult
+    {
+        if(null === $storage->getSubscribeId()){
+            throw new OrderSubscribeException('Susbcribe not found');
+        }
+        $subscribe = $this->getById($storage->getSubscribeId());
+        $subscribe->setActive(true)
+            ->setOrderId($order->getId())
+            ->countDateCheck();
+
+        // привяжем пользователя
+        if(!$subscribe->getUserId()){
+            $subscribe->setUserId($order->getUserId());
+        }
+
+        $result = $this->update($subscribe);
+
+        // добавим заказ в историю закзаов по подписке
+        if($result->isSuccess()){
+            /** @var OrderSubscribeHistoryService $orderSubscribeHistoryService */
+            $orderSubscribeHistoryService = Application::getInstance()->getContainer()->get('order_subscribe_history.service');
+            $historyAddResult = $orderSubscribeHistoryService->add(
+                $subscribe,
+                $order->getId(),
+                (new \DateTime($this->getOrderService()->getOrderPropertyByCode($order, 'DELIVERY_DATE')->getValue()))
+            );
+            if (!$historyAddResult->isSuccess()) {
+                throw new \Exception('Ошибка сохранения записи в истории');
+            }
+            $this->sendOrderSubscribedNotification($subscribe);
         }
 
         return $result;
@@ -1965,13 +2024,9 @@ class OrderSubscribeService implements LoggerAwareInterface
         if(!$offer){
             return $price;
         }
+        $price = $offer->getSubscribePrice();
 
-        $percent = $offer->getSubscribeDiscount();
-        if($percent <= 0){
-            return $price;
-        }
-
-        return $this->countSubscribePrice($price, $percent);
+        return $price;
     }
 
 }
