@@ -243,7 +243,7 @@ class KkmService implements LoggerAwareInterface
                             break;
                         case 'house':
                             $suggestion = [
-                                'address'         => $suggestion['data']['house'],
+                                'address'         => $suggestion['data']['house'] . (($suggestion['data']['block_type'] . $suggestion['data']['block']) ? ' ' . $suggestion['data']['block_type'] . $suggestion['data']['block'] : ''),
                                 'city_kladr_id'   => $suggestion['data']['settlement_kladr_id'] ?: $suggestion['data']['city_kladr_id'],
                                 'street_kladr_id' => $suggestion['data']['street_kladr_id'],
                                 'house_kladr_id'  => $suggestion['data']['kladr_id'],
