@@ -56,6 +56,7 @@ use FourPaws\UserBundle\Exception\RuntimeException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
+use FourPaws\UserBundle\Repository\ManzanaOrdersImportUserRepository;
 use FourPaws\UserBundle\Repository\UserRepository;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -88,6 +89,10 @@ class UserService implements
      */
     private $userRepository;
     /**
+     * @var ManzanaOrdersImportUserRepository
+     */
+    private $manzanaOrdersImportUserRepository;
+    /**
      * @var LocationService
      */
     private $locationService;
@@ -99,12 +104,14 @@ class UserService implements
     /**
      * UserService constructor.
      *
-     * @param UserRepository  $userRepository
+     * @param UserRepository $userRepository
      * @param LocationService $locationService
+     * @param ManzanaOrdersImportUserRepository $manzanaOrdersImportUserRepository
      */
     public function __construct(
         UserRepository $userRepository,
-        LocationService $locationService
+        LocationService $locationService,
+        ManzanaOrdersImportUserRepository $manzanaOrdersImportUserRepository
     )
     {
         /**
@@ -124,6 +131,7 @@ class UserService implements
         }
 
         $this->userRepository = $userRepository;
+        $this->manzanaOrdersImportUserRepository = $manzanaOrdersImportUserRepository;
         $this->locationService = $locationService;
         $this->userCollection = new ArrayCollection();
     }
@@ -426,6 +434,14 @@ class UserService implements
     public function getUserRepository(): UserRepository
     {
         return $this->userRepository;
+    }
+
+    /**
+     * @return ManzanaOrdersImportUserRepository
+     */
+    public function getManzanaOrdersImportUserRepository(): ManzanaOrdersImportUserRepository
+    {
+        return $this->manzanaOrdersImportUserRepository;
     }
 
     /**

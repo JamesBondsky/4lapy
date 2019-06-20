@@ -51,7 +51,8 @@ class ApiTokenListener implements ListenerInterface
     {
         $request = $event->getRequest();
 
-        if ($request->getPathInfo() !== '/api/start/') { // toDo refactor this quick & ugly solution to skip sign check on specific route
+        $pathInfo = $request->getPathInfo();
+        if ($pathInfo !== '/api/start/' && $pathInfo !== '/api/check_push_tokens/') { // toDo refactor this quick & ugly solution to skip sign check on specific route
             if (!$this->signChecker->handle($request)) {
                 throw new InvalidSignRequestException('Invalid sign provided');
             }

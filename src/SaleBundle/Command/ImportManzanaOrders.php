@@ -5,13 +5,12 @@ namespace FourPaws\SaleBundle\Command;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application;
+use FourPaws\External\ManzanaService;
 use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemNotActiveException;
 use FourPaws\PersonalBundle\Exception\ManzanaCheque\ChequeItemNotExistsException;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\UserBundle\EventController\Event;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
-use JMS\Serializer\SerializerInterface;
-use OldSound\RabbitMqBundle\RabbitMq\Producer;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
@@ -101,13 +100,6 @@ class ImportManzanaOrders extends Command implements LoggerAwareInterface
 
         /** @var \FourPaws\UserBundle\Service\UserService $userService */
         $userService = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
-        if ($useMQ)
-        {
-            /** @var Producer $producer */
-            $producer = Application::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_orders_import_producer');
-            /** @var SerializerInterface $serializer */
-            $serializer = Application::getInstance()->getContainer()->get(SerializerInterface::class);
-        }
 
         $periodStartDateTime = new DateTime();
         $periodStartDateTime->add('- ' . $period);
@@ -130,13 +122,19 @@ class ImportManzanaOrders extends Command implements LoggerAwareInterface
             /** @var OrderService $orderService */
             $orderService = Application::getInstance()->getContainer()->get('order.service');
 
+            if ($useMQ)
+            {
+                /** @var ManzanaService $manzanaService */
+                $manzanaService = Application::getInstance()->getContainer()->get('manzana.service');
+            }
+
             foreach ($users as $user)
             {
                 if ($useMQ)
                 {
                     try {
                         $userId = $user->getId();
-                        $producer->publish($serializer->serialize($user, 'json'));
+                        $manzanaService->importUserOrdersAsync($user);
                     } catch (\Exception $e) {
                         $this->log()->error(
                             \sprintf(
@@ -177,7 +175,7 @@ class ImportManzanaOrders extends Command implements LoggerAwareInterface
 
         if ($useMQ)
         {
-            $this->log()->info(\sprintf('Queued orders for %s users', count($users)));
+            $this->log()->info(\sprintf('Queued orders import for %s users (part of them might be already in the queue)', count($users)));
         }
         else
         {
