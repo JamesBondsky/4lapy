@@ -881,7 +881,12 @@ class OrderService implements LoggerAwareInterface
                                         mb_strpos($selectedDelivery->getDeliveryZone(), DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
                                     ) {
                                         if ($this->deliveryService->isDelivery($selectedDelivery)) {
-                                            $value = $selectedDelivery->getSelectedStore()->getXmlId();
+                                            $baseShops = $selectedDelivery->getBestShops()->getBaseShops();
+                                            if($baseShops->count() > 0){
+                                                $value = $baseShops->first()->getXmlId();
+                                            } else {
+                                                $value = $selectedDelivery->getSelectedStore()->getXmlId();
+                                            }
                                         } elseif ($baseShop = $selectedDelivery->getBestShops()->getBaseShops()->first()) {
                                             $value = $baseShop->getXmlId();
                                         } else {
