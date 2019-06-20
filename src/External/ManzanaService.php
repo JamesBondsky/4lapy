@@ -45,6 +45,7 @@ use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserSearchInterface;
 use OldSound\RabbitMqBundle\RabbitMq\Producer;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -763,13 +764,28 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * Импорт заказов пользователя. Очередь в rabbit.
      *
      * @param User $user
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
     public function importUserOrdersAsync(User $user)
     {
-        /** @noinspection MissingService */
-        /** @var Producer $producer */
-        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_orders_import_producer');
-        $producer->publish($this->serializer->serialize($user, 'json'));
+        $userService = App::getInstance()->getContainer()->get(UserSearchInterface::class);
+        $manzanaOrdersImportUserRepository = $userService->getManzanaOrdersImportUserRepository();
+        $userId = $user->getId();
+        if (!$manzanaOrdersImportUserRepository->hasUserId($userId)) {
+            /** @noinspection MissingService */
+            /** @var Producer $producer */
+            $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_orders_import_producer');
+            $producer->publish($this->serializer->serialize($user, 'json'));
+
+            try
+            {
+                $manzanaOrdersImportUserRepository->addUser($userId);
+            } catch (Exception $e)
+            {
+                $this->logger->critical(__METHOD__ . '. Не удалось добавить пользователя в manzanaOrdersImportUserRepository. userId: ' . $userId . '. Exception: ' . $e->getMessage());
+            }
+        };
     }
 
     /**
