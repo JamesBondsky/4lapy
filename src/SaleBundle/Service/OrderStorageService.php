@@ -365,6 +365,8 @@ class OrderStorageService
     }
 
     /**
+     * Устанавливает код района в код города (только для Москвы)
+     *
      * @param OrderStorage $storage
      * @param string       $step
      *
@@ -374,11 +376,15 @@ class OrderStorageService
      */
     public function updateStorageMoscowZone(OrderStorage $storage, string $step = OrderStorageEnum::AUTH_STEP): bool
     {
-        $storage->setCityCode($storage->getMoscowDistrictCode());
-        try {
-            return $this->storageRepository->save($storage, $step);
-        } catch (NotFoundException $e) {
-            return false;
+        if ($storage->getCityCode() == DeliveryService::MOSCOW_LOCATION_CODE) {
+            $storage->setCityCode($storage->getMoscowDistrictCode());
+            try {
+                return $this->storageRepository->save($storage, $step);
+            } catch (NotFoundException $e) {
+                return false;
+            }
+        } else {
+            return true;
         }
     }
 
