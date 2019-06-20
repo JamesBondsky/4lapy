@@ -334,6 +334,13 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
         }
 
+        /**
+         * Moscow Districts
+         */
+        if (($this->currentStep === OrderStorageEnum::PAYMENT_STEP) && $storage->getMoscowDistrictCode() != '') {
+            $this->orderStorageService->updateStorageMoscowZone($storage, OrderStorageEnum::NOVALIDATE_STEP);
+        }
+
         try {
             $order = $this->orderService->initOrder($storage);
         } catch (OrderCreateException $e) {

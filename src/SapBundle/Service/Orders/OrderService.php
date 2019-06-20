@@ -661,7 +661,11 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $deliveryZone = $this->getDeliveryZone($order);
 
         if (
-            (in_array($deliveryZone, DeliveryService::getZonesTwo()) || mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false)
+            (
+                in_array($deliveryZone, DeliveryService::getZonesTwo()) ||
+                mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false ||
+                mb_strpos($deliveryZone, DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
+            )
             && $this->getPropertyValueByCode($order, 'REGION_COURIER_FROM_DC') === 'Y'
         ) {
             return SapOrder::DELIVERY_TYPE_ROUTE;
@@ -696,7 +700,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     case DeliveryService::ZONE_IVANOVO_REGION:
                         return SapOrder::DELIVERY_TYPE_COURIER_SHOP;
                     default:
-                        if (mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false) {
+                        if (
+                            mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false ||
+                            mb_strpos($deliveryZone, DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
+                        ) {
                             return SapOrder::DELIVERY_TYPE_COURIER_SHOP;
                         }
                 }
@@ -741,7 +748,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     case DeliveryService::ZONE_3:
                         return SapOrder::DELIVERY_TYPE_PICKUP;
                     default:
-                        if (mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false) {
+                        if (
+                            mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false ||
+                            mb_strpos($deliveryZone, DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
+                        ) {
                             return SapOrder::DELIVERY_TYPE_COURIER_SHOP;
                         }
                 }
@@ -1279,7 +1289,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     $xmlId = SapOrder::DELIVERY_ZONE_4_ARTICLE;
                     break;
                 default:
-                    if (mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false) {
+                    if (
+                        mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false ||
+                        mb_strpos($deliveryZone, DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
+                    ) {
                         $xmlId = SapOrder::DELIVERY_ZONE_2_ARTICLE;
                     } else {
                         $xmlId = SapOrder::DELIVERY_ZONE_4_ARTICLE;
