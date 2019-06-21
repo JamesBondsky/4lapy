@@ -191,13 +191,22 @@ class OrderSubscribe extends BaseEntity
      */
     private $userFieldEnumService;
 
-    /** @var null|Order $order */
+    /**
+     * @var null|Order $order
+     * @Serializer\Exclude()
+     */
     private $order;
 
-    /** @var UserFieldEnumValue $deliveryFrequencyEntity */
+    /**
+     * @var UserFieldEnumValue $deliveryFrequencyEntity
+     * @Serializer\Exclude()
+     */
     private $deliveryFrequencyEntity;
 
-    /** @var User $user */
+    /**
+     * @var User $user
+     * @Serializer\Exclude()
+     */
     private $user;
 
     /**
