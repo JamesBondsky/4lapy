@@ -137,7 +137,7 @@ if (!$currentOffer->getImagesIds()) {
                 <?php
             }
             ?>
-            <div class="b-weight-container b-weight-container--list">
+            <div class="b-weight-container b-weight-container--list b-weight-container--color">
                 <?php
                 switch ($packageLabelType) {
                     case Offer::PACKAGE_LABEL_TYPE_COLOUR:
@@ -172,7 +172,7 @@ if (!$currentOffer->getImagesIds()) {
                             ? $offer->getResizeImages(240, 240)->first()
                             : $offerWithImages->getResizeImages(240, 240)->first();
                         ?>
-                        <li class="b-weight-container__item">
+                        <li class="b-weight-container__item <? if($image){ ?>b-weight-container__item--color-list<? } ?>">
                             <a href="javascript:void(0)"
                                class="b-weight-container__link <? if ($image) { ?>b-weight-container__link--color-list<? } ?> js-price<?= $currentOffer->getId()
                                                                            === $offer->getId() ? ' active-link' : '' ?>"
