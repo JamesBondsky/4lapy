@@ -79,6 +79,8 @@ class LocationService
 
     public const KLADR_SERVICE_CODE = 'KLADR';
 
+    public const OKATO_SERVICE_CODE = 'OKATO';
+
     /**
      * @var DaDataService
      */

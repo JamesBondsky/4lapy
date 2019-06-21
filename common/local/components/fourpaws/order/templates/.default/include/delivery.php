@@ -114,13 +114,14 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                 </label><span class="b-input-line__require">(обязательно)</span>
             </div>
             <div class="b-input b-input--registration-form">
-                <input class="b-input__input-field b-input__input-field--registration-form"
+                <input class="b-input__input-field b-input__input-field--registration-form<? if ($storage->getStreet()){ ?> ok suggestions-input<? } ?>"
                        type="text"
                        id="order-address-street"
                        placeholder=""
                        name="street"
                        data-url=""
-                       value="<?= $storage->getStreet() ?>"/>
+                       value="<?= $storage->getStreet() ?>"
+                       <? if ($storage->getStreet()){ ?>data-street="<?= str_replace(['ул ', 'пер ', 'пр-кт ', 'кв-л ', 'б-р ', ' наб', 'наб '], '', $storage->getStreet()) ?>"<? } ?>/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
@@ -138,7 +139,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                            placeholder=""
                            name="house"
                            data-url=""
-                           value="<?= $storage->getHouse() ?>"/>
+                           value="<?= $storage->getHouse() ?>" <? if($storage->getHouse()== ''){ ?>disabled="disabled"<?}?>/>
                     <div class="b-error"><span class="js-message"></span>
                     </div>
                 </div>
@@ -153,7 +154,7 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                            id="order-address-part"
                            name="building"
                            type="text"
-                           value="<?= $storage->getBuilding() ?>"/>
+                           value="<?= $storage->getBuilding() ?>" <? if($storage->getHouse()== ''){ ?>disabled="disabled"<?}?>/>
                     <div class="b-error"><span class="js-message"></span>
                     </div>
                 </div>

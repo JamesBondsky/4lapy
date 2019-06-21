@@ -876,7 +876,10 @@ class OrderService implements LoggerAwareInterface
                                     }
                                     break;
                                 default:
-                                    if (mb_strpos($selectedDelivery->getDeliveryZone(), DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false) {
+                                    if (
+                                        mb_strpos($selectedDelivery->getDeliveryZone(), DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false ||
+                                        mb_strpos($selectedDelivery->getDeliveryZone(), DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
+                                    ) {
                                         if ($this->deliveryService->isDelivery($selectedDelivery)) {
                                             $value = $selectedDelivery->getSelectedStore()->getXmlId();
                                         } elseif ($baseShop = $selectedDelivery->getBestShops()->getBaseShops()->first()) {
@@ -2143,8 +2146,7 @@ class OrderService implements LoggerAwareInterface
             'loaders_count' => $loadersCount
         ];
 
-        $nearAddressString = $this->storeService->getStoreAddress($nearShop) . ', ' . $nearShop->getAddress();
-        $nearAddress = $this->locationService->splitAddress($nearAddressString, $nearShop->getLocation())->toStringExt();
+        $nearAddress = $this->locationService->splitAddress($nearShop->getAddress(), $nearShop->getLocation())->toStringExt();
         $secondAddress = $this->getOrderDeliveryAddress($order);
 
         $pointZeroDate = clone $curDate;

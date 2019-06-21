@@ -35,7 +35,9 @@ class DeliveryInterval extends StringInput
     {
         global $APPLICATION;
         foreach ($input['ZONES'] as $code => $zone) {
-            if (!(\in_array(
+            if (
+            !(
+                \in_array(
                     $code,
                     [
                         DeliveryService::ZONE_1,
@@ -60,7 +62,11 @@ class DeliveryInterval extends StringInput
                         DeliveryService::ZONE_IVANOVO_REGION,
                     ],
                     true
-                ) || mb_strpos($code, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false)) {
+                )
+                || mb_strpos($code, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false
+                || mb_strpos($code, DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
+            )
+            ) {
                 unset($input['ZONES'][$code]);
             }
         }
