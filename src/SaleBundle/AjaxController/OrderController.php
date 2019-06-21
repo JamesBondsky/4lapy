@@ -663,11 +663,19 @@ class OrderController extends Controller implements LoggerAwareInterface
             $innerDelivery = $this->orderStorageService->getInnerDelivery($storage);
         }
 
-        $deliveryPrice = floatval(CurrencyHelper::formatPrice($innerDelivery->getPrice(), false));
+        if ($innerDelivery == null) {
+            $storage->setMoscowDistrictCode('');
+            $storage->setCity(DeliveryService::MOSCOW_LOCATION_NAME);
+            $storage->setCityCode(DeliveryService::MOSCOW_LOCATION_CODE);
+            $this->orderStorageService->updateStorage($storage, $currentStep);
+            return JsonErrorResponse::createWithData();
+        }
+
+        $deliveryPrice = $innerDelivery->getPrice();
         /** @var BasketService $basketService */
         $basketService = App::getInstance()->getContainer()->get(BasketService::class);
         $basket = $basketService->getBasket();
-        $basketPrice = floatval(CurrencyHelper::formatPrice($basket->getPrice(), false));
+        $basketPrice = $basket->getPrice();
         /**
          * интервалы
          */
@@ -693,10 +701,10 @@ class OrderController extends Controller implements LoggerAwareInterface
         return JsonSuccessResponse::createWithData(
             '',
             [
-                'delivery_price'     => $deliveryPrice,
-                'price_full'         => $basketPrice,
-                'price_total'        => $basketPrice + $deliveryPrice,
-                'deliver_date_price' => DeliveryTimeHelper::showTime($innerDelivery) . ', <span class="js-delivery--price">' . $deliveryPrice . '</span>',
+                'delivery_price'     => CurrencyHelper::formatPrice($deliveryPrice, false),
+                'price_full'         => CurrencyHelper::formatPrice($basketPrice, false),
+                'price_total'        => CurrencyHelper::formatPrice($basketPrice + $deliveryPrice, false),
+                'deliver_date_price' => DeliveryTimeHelper::showTime($innerDelivery) . ', <span class="js-delivery--price">' . CurrencyHelper::formatPrice($deliveryPrice, false) . '</span>',
                 'intervals'          => $intervals,
                 'delivery_dates'     => $deliveryDates
             ]
