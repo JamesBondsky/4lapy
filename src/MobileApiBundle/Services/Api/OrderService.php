@@ -664,6 +664,8 @@ class OrderService
                 ));
         }
         if ($dostavista) {
+            $avaliable = $this->checkDostavistaAvaliability($dostavista);
+
             $dostavistaDelivery
                 ->setAvailable(true)
                 ->setDate(DeliveryTimeHelper::showTime($dostavista));
@@ -671,6 +673,14 @@ class OrderService
 
         return [$courierDelivery, $pickupDelivery, $dostavistaDelivery];
     }
+
+    public function checkDostavistaAvaliability($dostavista)
+    {
+        $avaliable = false;
+        $storage = $this->orderStorageService->getStorage();
+        return $avaliable;
+    }
+
 
     /**
      * @return array
