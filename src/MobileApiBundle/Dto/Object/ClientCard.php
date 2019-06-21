@@ -28,6 +28,13 @@ class ClientCard
     protected $balance = 0;
 
     /**
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("temp_balance")
+     * @var float
+     */
+    protected $tempBalance = 0;
+
+    /**
      * @Serializer\Type("string")
      * @Serializer\SerializedName("number")
      * @var string
@@ -76,6 +83,25 @@ class ClientCard
     public function setBalance(string $balance): ClientCard
     {
         $this->balance = $balance;
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getTempBalance(): float
+    {
+        return $this->tempBalance;
+    }
+
+    /**
+     * @param string $tempBalance
+     *
+     * @return ClientCard
+     */
+    public function setTempBalance(string $tempBalance): ClientCard
+    {
+        $this->tempBalance = $tempBalance;
         return $this;
     }
 
