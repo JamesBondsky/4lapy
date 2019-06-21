@@ -67,6 +67,20 @@ foreach ($basket as $item) {
     $basketItems[$item->getProductId()]['name'] = $item->getField('NAME');
     $basketItems[$item->getProductId()]['quantity'] += $item->getQuantity();
     $basketItems[$item->getProductId()]['totalPrice'] += $item->getQuantity() * $item->getPrice();
+    $productsIds[$item->getProductId()] = $item->getProductId();
+}
+
+$products = \CCatalogSKU::getProductList(array_values($productsIds));
+$productsIds = [];
+foreach ($products as $offerId => $productItem) {
+    $productsIds[$productItem['ID']] = $offerId;
+}
+
+if (array_keys($productsIds)) {
+    $productsDb = \CIBlockElement::GetList([], ['ID' => array_keys($productsIds)], false, false, ['ID', 'PROPERTY_BRAND.NAME']);
+    while ($productData = $productsDb->Fetch()) {
+        $brands[$productsIds[$productData['ID']]] = $productData['PROPERTY_BRAND_NAME'];
+    }
 }
 
 if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
@@ -282,12 +296,12 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                         заказе</a>
                     <ul class="b-order-list__list js-order-list-block">
                         <?php /** @var array $item */ ?>
-                        <?php foreach ($basketItems as $item) { ?>
+                        <?php foreach ($basketItems as $id => $item) { ?>
                             <li class="b-order-list__item b-order-list__item--aside js-full-list">
                                 <div class="b-order-list__order-text b-order-list__order-text--aside js-full-list">
                                     <div class="b-order-list__clipped-text">
                                         <div class="b-order-list__text-backed">
-                                            <?= $item['name'] ?>
+                                            <?= $brands[$id] ?? '' ?> <?= $item['name'] ?>
                                             <?php if ($item['quantity'] > 1) { ?>
                                                 (<?= $item['quantity'] ?> шт)
                                             <?php } ?>

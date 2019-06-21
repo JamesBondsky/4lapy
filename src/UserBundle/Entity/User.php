@@ -360,6 +360,15 @@ class User implements UserInterface
      */
     protected $temporaryBonus = 0;
 
+    /**
+     * @var float
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("UF_ACTIVE_BONUS")
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $activeBonus = 0;
+
     /** @var bool
      * @Serializer\Type("boolean")
      * @Serializer\SerializedName("UF_ES_SUBSCRIBED")
@@ -1413,6 +1422,25 @@ class User implements UserInterface
     public function setTemporaryBonus(float $temporaryBonus): User
     {
         $this->temporaryBonus = $temporaryBonus;
+
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getActiveBonus(): float
+    {
+        return $this->activeBonus ?? 0;
+    }
+
+    /**
+     * @param float $activeBonus
+     * @return User
+     */
+    public function setActiveBonus(float $activeBonus): User
+    {
+        $this->activeBonus = $activeBonus;
 
         return $this;
     }

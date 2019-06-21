@@ -8,7 +8,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var \CMain $APPLICATION
  */
 
-use Bitrix\Main\Application;use Bitrix\Main\Page\Asset;use FourPaws\App\Application as PawsApplication;use FourPaws\App\MainTemplate;use FourPaws\Decorators\SvgDecorator;use FourPaws\Enum\IblockCode;use FourPaws\Enum\IblockType;use FourPaws\SaleBundle\Service\BasketViewService;use FourPaws\UserBundle\Enum\UserLocationEnum;
+use Bitrix\Main\Application;
+use Bitrix\Main\Page\Asset;
+use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\App\Application as PawsApplication;
+use FourPaws\App\MainTemplate;
+use FourPaws\Decorators\SvgDecorator;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
+use FourPaws\KioskBundle\Service\KioskService;
+use FourPaws\PersonalBundle\Service\PersonalOffersService;
+use FourPaws\SaleBundle\Service\BasketViewService;
+use FourPaws\UserBundle\Enum\UserLocationEnum;
 
 /** @var MainTemplate $template */
 $template = MainTemplate::getInstance(Application::getInstance()
@@ -19,6 +30,10 @@ $markup = PawsApplication::markup();
  * @var $sViewportCookie - Значение куки отвечающе за переключение вьпорта с мобильного на десктоп.
  */
 $sViewportCookie = $_COOKIE['viewport'] ?? null;
+
+$bodyClass = '';
+if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
+
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -85,12 +100,13 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
 
     <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_header.php'; ?>
 </head>
-<body>
+<body <? if($bodyClass != ''){ ?>class="<?= $bodyClass ?>"<? } ?>>
 <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_body.php'; ?>
-<?php $APPLICATION->ShowPanel(); ?>
+<?php if (!KioskService::isKioskMode()) {
+    $APPLICATION->ShowPanel();
+} ?>
 
 <header class="b-header <?= $template->getHeaderClass() ?> js-header">
-    <?php require_once __DIR__ . '/blocks/header/promo_top_festival.php' ?>
     <?php
     $APPLICATION->IncludeComponent('articul:header.mobile.bunner',
         '',
@@ -116,11 +132,40 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
                             false,
                             ['HIDE_ICONS' => 'Y']) ?>
                     </span>
-                <div class="b-header-info b-header-info--short-header js-hide-open-menu">
-                    <?php require_once __DIR__ . '/blocks/header/phone_block.php' ?>
-                </div>
+                <? if (!KioskService::isKioskMode()) { ?>
+                    <div class="b-header-info b-header-info--short-header js-hide-open-menu">
+                        <?php require_once __DIR__ . '/blocks/header/phone_block.php' ?>
+                    </div>
+                <? } ?>
             </div>
         <?php } else { ?>
+	        <?
+            if(!$template->isPersonalOffers() && $USER->IsAuthorized()) {
+                $modal_counts_txt = CUser::GetByID( $USER->GetID() )->Fetch()['UF_MODALS_CNTS'];
+                $modal_counts = explode(' ', $modal_counts_txt);
+
+                /** @var PersonalOffersService $personalOffersService */
+                $personalOffersService = PawsApplication::getInstance()->getContainer()->get('personal_offers.service');
+                $userId = $USER->GetID();
+                try {
+                    $userPersonalOffers = $personalOffersService->getActiveUserCoupons($userId, true);
+                } catch (\Exception $e) {
+                    $userPersonalOffers = [];
+                }
+
+                if ($userPersonalOffers) {
+	                /** @var ArrayCollection $coupons */
+	                $coupons = $userPersonalOffers['coupons'];
+
+	                if (!$coupons->isEmpty() && $modal_counts[3] <= 2
+		                && $USER->GetParam('data_collect') !== 'Y' // модалку в сессии еще не показали
+	                ) {
+	                    $modal_number = 4;
+                        $lastCouponOffer = $userPersonalOffers['offers']->get($coupons->get(0)['UF_OFFER']);
+	                }
+                }
+            }
+	        ?>
             <div class="b-header__info">
                 <a class="b-hamburger b-hamburger--mobile-menu js-hamburger-menu-mobile"
                    href="javascript:void(0);"
@@ -143,10 +188,14 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
                     ['HIDE_ICONS' => 'Y']);
                 ?>
                 <div class="b-header-info">
-                    <?php require_once __DIR__ . '/blocks/header/phone_block.php' ?>
+                    <? if (!KioskService::isKioskMode()) {
+                      require_once __DIR__ . '/blocks/header/phone_block.php';
+                    } ?>
                     <?php $APPLICATION->IncludeComponent('fourpaws:auth.form',
                         '',
-                        [],
+                        [
+                            'NOT_SEEN_COUPONS' => isset($coupons) ? $coupons->count() : '',
+                        ],
                         false,
                         ['HIDE_ICONS' => 'Y']);
 
@@ -154,6 +203,32 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
                         ->getContainer()
                         ->get(BasketViewService::class)
                         ->getMiniBasketHtml(); ?>
+
+	                <?
+				    if($USER->GetParam('data_collect') !== 'Y') // модалку в сессии еще не показали
+				    {
+		                if ($modal_number === 4) { ?>
+			                <?
+			                if ($lastCouponOffer) {
+				                $offerDiscountText = ($lastCouponOffer['PROPERTY_DISCOUNT_VALUE'] ? $lastCouponOffer['PROPERTY_DISCOUNT_VALUE'] . '%' :
+					                ($lastCouponOffer['PROPERTY_DISCOUNT_CURRENCY_VALUE'] ? $lastCouponOffer['PROPERTY_DISCOUNT_CURRENCY_VALUE'] . ' ₽' : '')
+				                );
+				                ?>
+			                    <div class="b-person-coupon js-coupon-person-popup" data-id="<?= $coupons->get(0)['PERSONAL_COUPON_USER_COUPONS_ID'] ?>">
+			                        <div class="b-person-coupon__inner">
+			                            <div class="b-person-coupon__close js-close-person-coupon-popup"></div>
+				                        <? if ($offerDiscountText) { ?>
+			                                <div class="b-person-coupon__persent">-<?= $offerDiscountText ?></div>
+										<? } ?>
+			                            <div class="b-person-coupon__descr"><?= $lastCouponOffer['~PREVIEW_TEXT'] ?></div>
+			                            <a href="/personal/personal-offers/" class="b-person-coupon__btn">Подробнее</a>
+			                        </div>
+			                    </div>
+							<?
+			                }
+		                }
+				    }
+	                ?>
                 </div>
             </div>
             <div class="b-header__menu js-minimal-menu js-nav-first-desktop">
@@ -180,6 +255,8 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
                         'BRANDS_POPULAR_LIMIT'      => '6',
                         // количество популярных брендов в пункте меню "По бренду"
                         'BRANDS_MENU_POPULAR_LIMIT' => '8',
+                        // режим киоска
+                        'IS_KIOSK'                  => KioskService::isKioskMode(),
                     ],
                     null,
                     [
@@ -187,11 +264,15 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
                     ]
                 );
                 ?>
-                <?php $APPLICATION->IncludeComponent('fourpaws:city.selector',
-                    '',
-                    ['GET_STORES' => false],
-                    false,
-                    ['HIDE_ICONS' => 'Y']) ?>
+                <?php
+                if(!KioskService::isKioskMode()){
+                    $APPLICATION->IncludeComponent('fourpaws:city.selector',
+                        '',
+                        ['GET_STORES' => false],
+                        false,
+                        ['HIDE_ICONS' => 'Y']);
+                }
+                ?>
                 <?php $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
                     'template.header',
                     ['CACHE_TIME' => 3600 * 24],
@@ -207,7 +288,11 @@ $sViewportCookie = $_COOKIE['viewport'] ?? null;
  */
 $APPLICATION->ShowViewContent('header_dropdown_menu'); ?>
 <div class="b-page-wrapper <?= $template->getWrapperClass() ?> js-this-scroll">
-    <?php require_once __DIR__ . '/blocks/header/social_bar.php' ?>
+    <?php
+    if (!KioskService::isKioskMode()) {
+        require_once __DIR__ . '/blocks/header/social_bar.php';
+    }
+    ?>
 
     <?php if ($template->hasMainWrapper()) { ?>
     <main class="b-wrapper<?= $template->getIndexMainClass() ?>" role="main">

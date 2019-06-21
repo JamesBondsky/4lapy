@@ -63,7 +63,7 @@ class FourPawsFrontOfficeFestSearchComponent extends \FourPaws\FrontOffice\Bitri
     {
         $action = 'initialLoad';
 
-        if ($this->request->get('formName') === 'festUserSearch' && $this->request->get('action') === 'userSearch') {
+        if (($this->request->get('formName') === 'festUserSearch' && $this->request->get('action') === 'userSearch') || (int)$this->request->getQuery('promoId')) {
             $action = 'userSearch';
         } elseif ($this->request->get('formName') === 'festUserUpdate' && $this->request->get('action') === 'userUpdate') {
             $action = 'userUpdate';
@@ -146,13 +146,61 @@ class FourPawsFrontOfficeFestSearchComponent extends \FourPaws\FrontOffice\Bitri
             $this->arResult['UPDATE_ERROR'] = 'Не переданы обязательные поля';
             return;
         }
+
+
         /** @var DataManager $festivalUsersDataManager */
         $festivalUsersDataManager = Application::getInstance()->getContainer()->get('bx.hlblock.festivalusersdata');
-        $updateResult = $festivalUsersDataManager::update($values['id'], $fields);
-        if (!$updateResult->isSuccess()) {
-            $this->arResult['UPDATE_ERROR'] = implode('. ', $updateResult->getErrorMessages());
+
+        $checkingFilter = [
+            'LOGIC' => 'OR',
+        ];
+        if ($values['phone']) {
+            $checkingFilter['UF_PHONE'] = $values['phone'];
+        }
+        if ($values['email']) {
+            $checkingFilter['UF_EMAIL'] = $values['email'];
+        }
+        if ($values['passport']) {
+            $checkingFilter['UF_PASSPORT'] = $values['passport'];
+        }
+        $registeredUser = $festivalUsersDataManager::query()
+            ->setFilter([
+                '!ID' => $values['id'],
+                $checkingFilter,
+            ])
+            ->setSelect([
+                'UF_FESTIVAL_USER_ID',
+                'UF_PASSPORT'
+            ])
+            ->setLimit(3) // зарегистрированных юзеров может два, если у одного совпадает телефон, у другого email, у третьего - паспорт
+            ->fetchAll();
+        if ($registeredUser) {
+            $alreadyRegisteredText = [];
+            foreach ($registeredUser as $user)
+            {
+                if ($user['UF_FESTIVAL_USER_ID']) {
+                    $text = 'Номер участника: ' . $user['UF_FESTIVAL_USER_ID'];
+                    if ($user['UF_PASSPORT']) {
+                        $text .= ', номер паспорта: ' . $user['UF_PASSPORT'];
+                    } else {
+                        $text .= ', <a href="/fest-reg/search/?promoId=' . $user['UF_FESTIVAL_USER_ID'] . '">найти по номеру участника</a>';
+                    }
+                    $alreadyRegisteredText[] = $text;
+                    unset($text);
+                }
+            }
+            $alreadyRegisteredText = implode('<br>', $alreadyRegisteredText);
+            $errorMessage = 'Пользователь с таким email/телефоном/номером паспорта уже зарегистрирован.<br>' . $alreadyRegisteredText;
+            //$this->setExecError('', $errorMessage, 'alreadyRegistered');
+            $this->arResult['UPDATE_ERROR'] = $errorMessage;
         } else {
-            $this->arResult['IS_UPDATED'] = true;
+            $updateResult = $festivalUsersDataManager::update($values['id'], $fields);
+
+            if (!$updateResult->isSuccess()) {
+                $this->arResult['UPDATE_ERROR'] = implode('. ', $updateResult->getErrorMessages());
+            } else {
+                $this->arResult['IS_UPDATED'] = true;
+            }
         }
     }
 
@@ -174,30 +222,42 @@ class FourPawsFrontOfficeFestSearchComponent extends \FourPaws\FrontOffice\Bitri
      */
     protected function processSearchFormFields()
     {
-        $fieldName = 'promoId';
-        $promoId = $value = $this->trimValue($this->getFormFieldValue($fieldName));
-        if ($value !== '' && !preg_match('/^\d+$/', $value)) {
-            $this->setFieldError($fieldName, 'Неверно указан ID', 'incorrect_value');
-        }
-
-        $fieldName = 'phone';
-        $phone = $value = $this->trimValue($this->getFormFieldValue($fieldName));
-        if ($value !== '') {
-            $phone = $this->cleanPhoneNumberValue($value);
-            if ($phone === '') {
-                $this->setFieldError($fieldName, 'Номер телефона задан некорректно', 'not_valid');
+        $isSearchByPassport = (bool)$this->trimValue($this->getFormFieldValue('search_by_passport'));
+        if ($isSearchByPassport) {
+            $fieldName = 'passport';
+            $value = $this->trimValue($this->getFormFieldValue($fieldName));
+            if ($value !== '' && !preg_match('/^\d{1,5}$/', $value)) {
+                $this->setFieldError($fieldName, 'Неверно указан номер паспорта', 'incorrect_value');
             }
-        }
+        } else {
+            $fieldName = 'promoId';
+            if ($promoId = (int)$this->request->getQuery($fieldName)) {
+                $this->setFormFieldValue($fieldName, $promoId);
+            }
+            $promoId = $value = $this->trimValue($this->getFormFieldValue($fieldName));
+            if ($value !== '' && !preg_match('/^\d+$/', $value)) {
+                $this->setFieldError($fieldName, 'Неверно указан ID', 'incorrect_value');
+            }
 
-        $fieldName = 'cardNumber';
-        $cardNumber = $value = $this->trimValue($this->getFormFieldValue($fieldName));
-        if ($value !== '' && !preg_match('/^\d+$/', $value)) {
-            $this->setFieldError($fieldName, 'Номер карты задан некорректно', 'not_valid');
-        }
+            $fieldName = 'phone';
+            $phone = $value = $this->trimValue($this->getFormFieldValue($fieldName));
+            if ($value !== '') {
+                $phone = $this->cleanPhoneNumberValue($value);
+                if ($phone === '') {
+                    $this->setFieldError($fieldName, 'Номер телефона задан некорректно', 'not_valid');
+                }
+            }
 
-        if (!$promoId && !$phone && !$cardNumber)
-        {
-            $this->setExecError('', 'Не заполнено ни одно из полей');
+            $fieldName = 'cardNumber';
+            $cardNumber = $value = $this->trimValue($this->getFormFieldValue($fieldName));
+            if ($value !== '' && !preg_match('/^\d+$/', $value)) {
+                $this->setFieldError($fieldName, 'Номер карты задан некорректно', 'not_valid');
+            }
+
+            if (!$promoId && !$phone && !$cardNumber)
+            {
+                $this->setExecError('', 'Не заполнено ни одно из полей');
+            }
         }
     }
 
@@ -247,11 +307,18 @@ class FourPawsFrontOfficeFestSearchComponent extends \FourPaws\FrontOffice\Bitri
     {
         $result = new Result();
 
-        $fieldsList = [
-            'promoId',
-            'cardNumber',
-            'phone',
-        ];
+        $isSearchByPassport = (bool)$this->trimValue($this->getFormFieldValue('search_by_passport'));
+        if ($isSearchByPassport) {
+            $fieldsList = [
+                'passport',
+            ];
+        } else {
+            $fieldsList = [
+                'promoId',
+                'cardNumber',
+                'phone',
+            ];
+        }
         $filter = $this->getFilterByFormFields($fieldsList);
         if (empty($filter)) {
             $result->addError(
@@ -282,33 +349,38 @@ class FourPawsFrontOfficeFestSearchComponent extends \FourPaws\FrontOffice\Bitri
      */
     protected function getParticipantInfoByFilter($filter): array
     {
-        if (!$filter['promoId'] && !$filter['phone'] && !$filter['cardNumber']) {
-            return [];
-        }
-
-        if ($filter['cardNumber']) {
-            $user = $this->searchUserByCardNumber($filter['cardNumber']);
-            if (!$user) {
+        if ($filter['passport']) {
+            $ormFilter = [];
+            $ormFilter['UF_PASSPORT'] = $filter['passport'];
+        } else {
+            if (!$filter['promoId'] && !$filter['phone'] && !$filter['cardNumber']) {
                 return [];
             }
 
-            $personalPhone = $user->getPersonalPhone();
-            if ($filter['phone'] && $filter['phone'] != $personalPhone) {
-                return [];
+            if ($filter['cardNumber']) {
+                $user = $this->searchUserByCardNumber($filter['cardNumber']);
+                if (!$user) {
+                    return [];
+                }
+
+                $personalPhone = $user->getPersonalPhone();
+                if ($filter['phone'] && $filter['phone'] != $personalPhone) {
+                    return [];
+                }
+
+                $filter['phone'] = $personalPhone;
             }
 
-            $filter['phone'] = $personalPhone;
+            $ormFilter = [];
+            if ($filter['promoId']) {
+                $ormFilter['UF_FESTIVAL_USER_ID'] = $filter['promoId'];
+            }
+            if ($filter['phone']) {
+                $ormFilter['UF_PHONE'] = $filter['phone'];
+            }
         }
 
-        $ormFilter = [];
-        if ($filter['promoId']) {
-            $ormFilter['UF_FESTIVAL_USER_ID'] = $filter['promoId'];
-        }
-        if ($filter['phone']) {
-            $ormFilter['UF_PHONE'] = $filter['phone'];
-        }
-
-        if ($filter['promoId'] || $filter['phone']) {
+        if ($ormFilter) {
             /** @var DataManager $festivalUsersDataManager */
             $festivalUsersDataManager = Application::getInstance()->getContainer()->get('bx.hlblock.festivalusersdata');
             $searchResult = $festivalUsersDataManager::query()
@@ -319,5 +391,7 @@ class FourPawsFrontOfficeFestSearchComponent extends \FourPaws\FrontOffice\Bitri
                 ->fetch();
             return $searchResult ?: [];
         }
+
+        return [];
     }
 }

@@ -46,7 +46,6 @@ class UserController extends FOSRestController
      * @Response(
      *     response="200"
      * )
-     * @Security("!has_role('REGISTERED_USERS')", message="Вы уже авторизованы")
      *
      * @param LoginRequest $loginRequest
      * @return ApiResponse

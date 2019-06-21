@@ -876,7 +876,10 @@ class OrderService implements LoggerAwareInterface
                                     }
                                     break;
                                 default:
-                                    if (mb_strpos($selectedDelivery->getDeliveryZone(), DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false) {
+                                    if (
+                                        mb_strpos($selectedDelivery->getDeliveryZone(), DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false ||
+                                        mb_strpos($selectedDelivery->getDeliveryZone(), DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
+                                    ) {
                                         if ($this->deliveryService->isDelivery($selectedDelivery)) {
                                             $value = $selectedDelivery->getSelectedStore()->getXmlId();
                                         } elseif ($baseShop = $selectedDelivery->getBestShops()->getBaseShops()->first()) {
@@ -1269,12 +1272,9 @@ class OrderService implements LoggerAwareInterface
                     throw new OrderSubscribeException('Susbcribe not found');
                 }
                 $subscribe = $this->orderSubscribeService->getById($storage->getSubscribeId());
-                $subscribe->setActive(true)->setOrderId($order->getId());
-
-                // привяжем созданный адрес
-                if($subscribe->getDeliveryPlace() === '0' && $storage->getAddressId() > 0){
-                    $subscribe->setDeliveryPlace($storage->getAddressId());
-                }
+                $subscribe->setActive(true)
+                    ->setOrderId($order->getId())
+                    ->countDateCheck();
 
                 // привяжем пользователя
                 if(!$subscribe->getUserId()){
@@ -2089,8 +2089,25 @@ class OrderService implements LoggerAwareInterface
                 break;
         }
 
-        $arSectionsNames = [];
-        //проверка высоты товаров в корзине
+        $whatDeliverySet = \COption::GetOptionString('articul.dostavista.delivery', 'what_deliver_set') == BaseEntity::BITRIX_TRUE;
+        $whatDeliveryText = \COption::GetOptionString('articul.dostavista.delivery', 'what_deliver_text');
+        if($whatDeliverySet  && $whatDeliveryText){
+            $matter = $whatDeliveryText;
+        } else {
+            $arSectionsNames = [];
+            /** @var Offer $offer */
+            foreach ($offers as $offer) {
+                $section = $offer->getProduct()->getSection();
+                if ($section != null) {
+                    $arSectionsNames[$section->getId()] = $section->getName();
+                }
+            }
+
+            /** @var string $matter Что везем - названия всех разделов через запятую */
+            $matter = implode(', ', $arSectionsNames);
+            unset($arSectionsNames);
+        }
+
         /** @var int $loadersCount требуемое число грузчиков */
         $loadersCount = 0;
         /** @var Offer $offer */
@@ -2115,15 +2132,7 @@ class OrderService implements LoggerAwareInterface
                     $loadersCount = 2;
                 }
             }
-            $section = $offer->getProduct()->getSection();
-            if ($section != null) {
-                $arSectionsNames[$section->getId()] = $section->getName();
-            }
         }
-
-        /** @var string $matter Что везем - названия всех разделов через запятую */
-        $matter = implode(', ', $arSectionsNames);
-        unset($arSectionsNames);
 
         $data = [
             'bitrix_order_id' => $order->getId(),
@@ -2137,8 +2146,7 @@ class OrderService implements LoggerAwareInterface
             'loaders_count' => $loadersCount
         ];
 
-        $nearAddressString = $this->storeService->getStoreAddress($nearShop) . ', ' . $nearShop->getAddress();
-        $nearAddress = $this->locationService->splitAddress($nearAddressString, $nearShop->getLocation())->toStringExt();
+        $nearAddress = $this->locationService->splitAddress($nearShop->getAddress(), $nearShop->getLocation())->toStringExt();
         $secondAddress = $this->getOrderDeliveryAddress($order);
 
         $pointZeroDate = clone $curDate;

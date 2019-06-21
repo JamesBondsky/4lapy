@@ -136,3 +136,14 @@ services:
   order_subscribe.service:
     class: FourPaws\PersonalBundle\Service\OrderSubscribeService
     public: true
+
+  kkm.service:
+    class: FourPaws\KkmBundle\Service\KkmService
+
+  kiosk.service:
+    class: FourPaws\KioskBundle\Service\KioskService
+    public: true
+
+  mobile_api.logger.service:
+    class: FourPaws\MobileApiBundle\Services\LoggerService
+    arguments: ['%env(LOG_MOBILE_API)%']

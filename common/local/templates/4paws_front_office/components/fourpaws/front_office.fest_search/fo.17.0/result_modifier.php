@@ -1,5 +1,7 @@
 <?php
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -48,11 +50,17 @@ if ($arResult['WAS_POSTED'] === 'Y') {
     $arResult['POSTED_STEP'] = 1;
 }
 
-$firstStepFields = [
-    'promoId',
-    'phone',
-    'cardNumber',
-];
+if ($arParams['BY_PASSPORT'] === BitrixUtils::BX_BOOL_TRUE) {
+    $firstStepFields = [
+        'passport',
+    ];
+} else {
+    $firstStepFields = [
+        'promoId',
+        'phone',
+        'cardNumber',
+    ];
+}
 
 $printFields = $firstStepFields;
 

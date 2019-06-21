@@ -14,7 +14,7 @@ $APPLICATION->SetTitle('Главный приз: путешествие на р�
 <section id="registr-check" data-id-section-landing="registr-check" class="registr-check-landing registr-check-landing_white registr-check-landing_canin">
     <div class="container-landing">
 
-        <?if ($USER->IsAuthorized()) {?>
+        <?/*if ($USER->IsAuthorized()) {?>
             <? $arUser = \CUser::GetById($USER->GetID())->Fetch(); ?>
 
             <div class="registr-check-landing__form-wrap" data-wrap-form-registr-chek-landing="true">
@@ -89,7 +89,13 @@ $APPLICATION->SetTitle('Главный приз: путешествие на р�
                 </div>
             </div>
 
-        <?}?>
+        <?}*/?>
+
+        <div class="registr-check-landing__message">
+            <div class="landing-title landing-title_gray">
+                Регистрация чеков завершена
+            </div>
+        </div>
     </div>
 </section>
 

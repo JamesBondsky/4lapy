@@ -20,6 +20,7 @@ class Order
     public const ORDER_SOURCE_MOBILE_APP_IOS     = 'MOBI';
     public const ORDER_SOURCE_MOBILE_APP_ANDROID = 'MOB2';
     public const ORDER_SOURCE_SITE               = 'DFUE';
+    public const ORDER_SOURCE_KIOSK              = 'KIOS';
 
     /**
      * Содержит номер заказа в Системе.
@@ -115,6 +116,7 @@ class Order
      * Место создания заказа
      * DFUE – заказ создан на Сайте;
      * MOBI – заказ создан в мобильном приложении;
+     * KIOS – заказ создан через киоск;
      *
      * @Serializer\XmlAttribute()
      * @Serializer\SerializedName("BSARK")
