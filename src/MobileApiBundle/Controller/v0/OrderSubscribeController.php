@@ -10,7 +10,9 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\MobileApiBundle\Dto\Request\OrderSubscribeRequest;
 use FourPaws\MobileApiBundle\Dto\Response\OrderSubscribeListResponce;
+use FourPaws\MobileApiBundle\Dto\Response\OrderSubscribeResponce;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService as ApiOrderSubscribeService;
 
@@ -24,13 +26,13 @@ class OrderSubscribeController extends FOSRestController
     /**
      * @var ApiOrderSubscribeService
      */
-    private $apiOrderSubcribeService;
+    private $apiOrderSubscribeService;
 
     public function __construct(
-        ApiOrderSubscribeService $apiOrderSubcribeService
+        ApiOrderSubscribeService $apiOrderSubscribeService
     )
     {
-        $this->apiOrderSubcribeService = $apiOrderSubcribeService;
+        $this->apiOrderSubscribeService = $apiOrderSubscribeService;
     }
 
     /**
@@ -42,10 +44,20 @@ class OrderSubscribeController extends FOSRestController
     public function getOrderSubscribeListAction()
     {
         global $USER;
-        $orderSubscribeCollection = $this->apiOrderSubcribeService->getSubscriptionsByUser($USER->GetId());
+        $orderSubscribeCollection = $this->apiOrderSubscribeService->getSubscriptionsByUser($USER->GetId());
         return new OrderSubscribeListResponce($orderSubscribeCollection);
     }
 
-
-
+    /**
+     * @Rest\Get(path="/order_subscribe/")
+     * @Rest\View()
+     * @return OrderSubscribeResponce
+     * @throws \Exception
+     */
+    public function getOrderSubscribeAction(OrderSubscribeRequest $request)
+    {
+        $orderSubscribe = $this->apiOrderSubscribeService->getById($request->getOrderSubscribeId());
+        $responce = new OrderSubscribeResponce($orderSubscribe);
+        return $responce;
+    }
 }

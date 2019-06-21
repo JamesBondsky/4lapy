@@ -150,15 +150,6 @@ class OrderSubscribe extends BaseEntity
     protected $lastCheck;
 
     /**
-     * @var int
-     * @Serializer\Type("int")
-     * @Serializer\SerializedName("UF_DEL_DAY")
-     * @Serializer\Groups(groups={"create","read","update"})
-     * @Serializer\SkipWhenEmpty()
-     */
-    protected $deliveryDay;
-
-    /**
      * @var bool
      * @Serializer\Type("bool")
      * @Serializer\SerializedName("UF_BONUS")
@@ -433,24 +424,6 @@ class OrderSubscribe extends BaseEntity
     public function setDateUpdate(DateTime $dateUpdate): OrderSubscribe
     {
         $this->dateUpdate = $dateUpdate;
-        return $this;
-    }
-
-    /**
-     * @return int
-     */
-    public function getDeliveryDay(): ?int
-    {
-        return $this->deliveryDay;
-    }
-
-    /**
-     * @param $deliveryDay
-     * @return OrderSubscribe
-     */
-    public function setDeliveryDay($deliveryDay): OrderSubscribe
-    {
-        $this->deliveryDay = $deliveryDay;
         return $this;
     }
 
