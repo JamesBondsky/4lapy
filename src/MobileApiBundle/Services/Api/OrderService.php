@@ -631,18 +631,22 @@ class OrderService
     public function getDeliveryVariants()
     {
         $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
-        $delivery = null;
-        $pickup   = null;
+        $delivery   = null;
+        $pickup     = null;
+        $dostavista = null;
         foreach ($deliveries as $calculationResult) {
             // toDo убрать условие "&& !$calculationResult instanceof DpdPickupResult" после того как в мобильном приложении будет реализован вывод точек DPD на карте в чекауте
             if ($this->appDeliveryService->isInnerPickup($calculationResult) && !$calculationResult instanceof DpdPickupResult) {
                 $pickup = $calculationResult;
             } elseif ($this->appDeliveryService->isInnerDelivery($calculationResult)) {
                 $delivery = $calculationResult;
+            } elseif ($this->appDeliveryService->isDostavistaDelivery($calculationResult)) {
+                $dostavista = $calculationResult;
             }
         }
         $courierDelivery = (new DeliveryVariant());
         $pickupDelivery = (new DeliveryVariant());
+        $dostavistaDelivery = (new DeliveryVariant());
 
         if ($delivery) {
             $courierDelivery
@@ -659,8 +663,13 @@ class OrderService
                     ]
                 ));
         }
+        if ($dostavista) {
+            $dostavistaDelivery
+                ->setAvailable(true)
+                ->setDate(DeliveryTimeHelper::showTime($dostavista));
+        }
 
-        return [$courierDelivery, $pickupDelivery];
+        return [$courierDelivery, $pickupDelivery, $dostavistaDelivery];
     }
 
     /**
@@ -671,10 +680,11 @@ class OrderService
     {
         /** @var DeliveryVariant $courierDelivery */
         /** @var DeliveryVariant $pickupDelivery */
-        [$courierDelivery, $pickupDelivery] = $this->getDeliveryVariants();
+        [$courierDelivery, $pickupDelivery, $dostavistaDelivery] = $this->getDeliveryVariants();
         $result = [
             'pickup' => $pickupDelivery,
             'courier' => $courierDelivery,
+            'dostavista' => $dostavistaDelivery,
         ];
         if ($courierDelivery->getAvailable()) {
             $basketProducts = $this->apiBasketService->getBasketProducts(true);
