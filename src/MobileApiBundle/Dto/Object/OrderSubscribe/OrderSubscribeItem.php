@@ -2,26 +2,24 @@
 /**
  * Created by PhpStorm.
  * User: mmasterkov
- * Date: 25.03.2019
- * Time: 16:45
+ * Date: 21.06.2019
+ * Time: 14:08
  */
 
-namespace FourPaws\PersonalBundle\Entity;
+namespace FourPaws\MobileApiBundle\Dto\Object\OrderSubscribe;
 
 
-use FourPaws\AppBundle\Entity\BaseEntity;
-use FourPaws\Catalog\Model\Offer;
-use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\PersonalBundle\Exception\NotFoundException;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class OrderSubscribeItem extends BaseEntity
+class OrderSubscribeItem
 {
+    use PropertiesFillingTrait;
+
     /**
      * @var int
      * @Serializer\Type("integer")
-     * @Serializer\SerializedName("UF_SUBSCRIBE_ID")
+     * @Serializer\SerializedName("subscribeId")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
@@ -31,7 +29,7 @@ class OrderSubscribeItem extends BaseEntity
     /**
      * @var int
      * @Serializer\Type("integer")
-     * @Serializer\SerializedName("UF_OFFER_ID")
+     * @Serializer\SerializedName("offerId")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
@@ -41,7 +39,7 @@ class OrderSubscribeItem extends BaseEntity
     /**
      * @var int
      * @Serializer\Type("integer")
-     * @Serializer\SerializedName("UF_QUANTITY")
+     * @Serializer\SerializedName("quantity")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
@@ -49,9 +47,14 @@ class OrderSubscribeItem extends BaseEntity
     protected $quantity;
 
     /**
-     * @var Offer $offer
+     * OrderSubscribeItem constructor.
+     * @param $transferObject
+     * @throws \Exception
      */
-    protected $offer;
+    public function __construct($transferObject)
+    {
+        $this->fillProperties($transferObject);
+    }
 
 
     /**
@@ -103,21 +106,5 @@ class OrderSubscribeItem extends BaseEntity
     {
         $this->quantity = $quantity;
         return $this;
-    }
-
-    /**
-     * @return Offer
-     * @throws NotFoundException
-     */
-    public function getOffer(): Offer
-    {
-        if(null === $this->offer){
-            $offer = (new OfferQuery())->getById($this->getOfferId());
-            if(!$offer){
-                throw new NotFoundException(sprintf("Offer not found %s", $this->getOfferId()));
-            }
-            $this->offer = $offer;
-        }
-        return $this->offer;
     }
 }
