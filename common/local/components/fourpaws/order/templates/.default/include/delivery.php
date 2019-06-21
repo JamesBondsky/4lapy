@@ -273,12 +273,12 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                     <span class="b-choice-recovery__addition-text js-cur-pickup">
                     <?= /** @noinspection PhpUnhandledExceptionInspection */
                     DeliveryTimeHelper::showTime($delivery) ?>,
-                    <span class="js-delivery--price"><?= $delivery->getPrice() ?></span>₽
+                    <span class="js-delivery--price"><?= $delivery->getPrice() ?></span> ₽
                 </span>
                     <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-cur-pickup-mobile">
                     <?= /** @noinspection PhpUnhandledExceptionInspection */
                     DeliveryTimeHelper::showTime($delivery, ['SHORT' => true]) ?>,
-                    <span class="js-delivery--price"><?= $delivery->getPrice() ?></span>₽
+                    <span class="js-delivery--price"><?= $delivery->getPrice() ?></span> ₽
                 </span>
                 </label>
             </div>
