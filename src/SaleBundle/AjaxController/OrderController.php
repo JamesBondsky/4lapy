@@ -704,7 +704,7 @@ class OrderController extends Controller implements LoggerAwareInterface
                 'delivery_price'     => CurrencyHelper::formatPrice($deliveryPrice, false),
                 'price_full'         => CurrencyHelper::formatPrice($basketPrice, false),
                 'price_total'        => CurrencyHelper::formatPrice($basketPrice + $deliveryPrice, false),
-                'deliver_date_price' => DeliveryTimeHelper::showTime($innerDelivery) . ', <span class="js-delivery--price">' . CurrencyHelper::formatPrice($deliveryPrice, false) . '</span>',
+                'deliver_date_price' => DeliveryTimeHelper::showTime($innerDelivery) . ', <span class="js-delivery--price">' . $deliveryPrice . '</span> ₽',
                 'intervals'          => $intervals,
                 'delivery_dates'     => $deliveryDates
             ]
