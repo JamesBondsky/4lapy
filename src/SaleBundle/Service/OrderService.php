@@ -647,7 +647,11 @@ class OrderService implements LoggerAwareInterface
                         $shipmentDays[$shipmentPlaceCode] = $days;
                     }
                 }
-
+                if ($shipmentPlaceCode === self::STORE) {
+                    break;
+                }
+            }
+            foreach ($order->getBasket() as $item) {
                 $this->basketService->setBasketItemPropertyValue(
                     $item,
                     'SHIPMENT_PLACE_CODE',
