@@ -636,7 +636,6 @@ class OrderService implements LoggerAwareInterface
                     $shipmentPlaceCode = $selectedShop->getXmlId();
                 } else {
                     $shipmentPlaceCode = self::STORE;
-                    break;
                 }
                 /** @var DeliveryScheduleResult $deliveryResult */
                 if ($shipmentResults &&
@@ -647,6 +646,9 @@ class OrderService implements LoggerAwareInterface
                     if (!isset($shipmentDays[$shipmentPlaceCode]) || $shipmentDays[$shipmentPlaceCode] < $days) {
                         $shipmentDays[$shipmentPlaceCode] = $days;
                     }
+                }
+                if ($shipmentPlaceCode === self::STORE) {
+                    break;
                 }
             }
             foreach ($order->getBasket() as $item) {
