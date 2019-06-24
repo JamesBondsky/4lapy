@@ -102,7 +102,7 @@ $markup = PawsApplication::markup();
             <div class="header-landing-menu" data-mobile-menu-landing="true">
                 <ul class="header-landing-menu__list" data-list-mobile-menu-landing="true">
                     <li  class="header-landing-menu__item">
-                        <a href="/grandin_rules.pdf?v=2" class="header-landing-menu__link" target="_blank">Правила акции</a>
+                        <a href="/grandin_rules.pdf?v=3" class="header-landing-menu__link" target="_blank">Правила акции</a>
                     </li>
 
                     <li class="header-landing-menu__item">
@@ -166,8 +166,8 @@ $markup = PawsApplication::markup();
         <div class="container-landing">
             <div class="landing-title">Как принять участие в&nbsp;акции</div>
             <ol class="regulations-landing__list regulations-landing__list--grandin-prague">
-                <li>Купите любые корма Grandin на&nbsp;сумму от&nbsp;1800&nbsp;рублей.</li>
-                <li>Зарегистрируйте покупку и&nbsp;получите 100&nbsp;бонусов на&nbsp;карту.</li>
+                <li>Купите любые корма Grandin на&nbsp;сумму от&nbsp;1800&nbsp;рублей и&nbsp;получите 100 бонусов на&nbsp;карту.</li>
+                <li>Зарегистрируйте покупку и&nbsp;примите участие в&nbsp;розыгрыше призов.</li>
                 <li>Проверяйте результаты розыгрыша 7, 13, 19, 25 июня и&nbsp;1&nbsp;июля.</li>
             </ol>
 

@@ -18,8 +18,16 @@ app.catalog:
     resource: "@FourPawsCatalogBundle/Controller/"
     type: annotation
 
+app.kiosk:
+    resource: "@FourPawsKioskBundle/Controller"
+    type: annotation
+
 app.api:
     resource: "@FourPawsMobileApiBundle/Resources/config/routing.yml"
+
+app.kkm:
+    resource: "@FourPawsKkmBundle/Controller/"
+    type: annotation
 
 old_items.news:
     path: /actions_and_programs/news/{path}/

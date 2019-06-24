@@ -80,7 +80,7 @@ class OrderCopy
 
         /** Исключаемые свойства заказа (по умолчанию) */
         'orderExcludeProps' => [
-            'IS_EXPORTED',
+            'IS_EXPORTED', 'MANZANA_NUMBER'
         ],
 
         /** Рассчитываемые группы свойств заказа */
@@ -1439,6 +1439,13 @@ class OrderCopy
 
         $order->setField('DELIVERY_LOCATION', $subscribe->getLocationId());
 
+        // проверка заполненности свойства местоположения
+        $newLocationProp = $order->getPropertyCollection()->getDeliveryLocation();
+        if (!$newLocationProp->getValue()) {
+            $oldLocationProp = $subscribe->getLocationId();
+            $newLocationProp->setValue($oldLocationProp);
+        }
+
         $shipmentCollection = $order->getShipmentCollection();
         $shipment = $shipmentCollection->createItem();
         $shipmentItemCollection = $shipment->getShipmentItemCollection();
@@ -1523,8 +1530,8 @@ class OrderCopy
 
         // адрес доставки
         if($deliveryService->isDelivery($delivery)){
-            $personalAddress = $addressService->getById($subscribe->getDeliveryPlace());
-            $address = $locationService->splitAddress($personalAddress->__toString());
+            //$personalAddress = $addressService->getById($subscribe->getDeliveryPlace());
+            $address = $locationService->splitAddress($subscribe->getDeliveryPlace());
         } else {
             /** @var PickupResultInterface $delivery */
             $shop = $delivery->getSelectedShop();
@@ -1533,7 +1540,7 @@ class OrderCopy
                 /** @todo костыль. У этого магазина адрес не распознается дадатой */
                 $address = (new Address())
                     ->setValid(true)
-                    ->setCity($locationService->getCurrentCity())
+                    ->setCity($locationService->getCurrentCity()->getName())
                     ->setLocation($locationService->getCurrentLocation())
                     ->setHouse(1)
                     ->setStreetPrefix('пос')

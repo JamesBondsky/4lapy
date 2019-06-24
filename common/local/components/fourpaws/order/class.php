@@ -9,6 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\LoaderException;
@@ -36,6 +37,7 @@ use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\ManzanaService;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Service\AddressService;
@@ -152,6 +154,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
     /** @var OrderSubscribeService $orderSubscribeService */
     private $orderSubscribeService;
 
+    /** @var KioskService $kioskService */
+    private $kioskService;
+
     /**
      * FourPawsOrderComponent constructor.
      *
@@ -182,6 +187,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $this->salePreset            = $container->get(SalePreset::class);
         $this->retailRocketService   = $container->get(RetailRocketService::class);
         $this->logger                = LoggerFactory::create('component_order');
+        $this->kioskService          = $container->get('kiosk.service');
 
         parent::__construct($component);
     }
@@ -265,8 +271,10 @@ class FourPawsOrderComponent extends \CBitrixComponent
             throw new OrderCreateException('Failed to initialize storage');
         }
 
-        // режим подписки на доставку
+
         if ($this->currentStep === OrderStorageEnum::AUTH_STEP) {
+
+            // режим подписки на доставку
             if ($_POST['subscribe'] && ($_POST['orderId'] > 0 || !$storage->isSubscribe())) {
 
                 // переход из истории заказов иммитирует добавление всех товаров из заказа
@@ -308,6 +316,12 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 $storage->setSubscribe(false);
                 $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
             }
+
+            // капча в киоске не нужна
+            if (KioskService::isKioskMode() && !$storage->isCaptchaFilled()) {
+                $storage->setCaptchaFilled(true);
+                $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+            }
         }
 
         $date = new \DateTime();
@@ -318,6 +332,13 @@ class FourPawsOrderComponent extends \CBitrixComponent
         ) {
             $storage->setCurrentDate($date);
             $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+        }
+
+        /**
+         * Moscow Districts
+         */
+        if (($this->currentStep === OrderStorageEnum::PAYMENT_STEP) && $storage->getMoscowDistrictCode() != '') {
+            $this->orderStorageService->updateStorageMoscowZone($storage, OrderStorageEnum::NOVALIDATE_STEP);
         }
 
         try {
@@ -510,6 +531,18 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 }
             }
 
+            if(KioskService::isKioskMode()){
+                $curPage = BitrixApplication::getInstance()->getContext()->getRequest()->getRequestUri();
+                $url = $this->kioskService->addParamsToUrl($curPage, ['bindcard' => true]);
+                $this->arResult['BIND_CARD_URL'] = $url;
+                $this->arResult['IS_BIND_CARD_URL'] = ($url == $curPage);
+                $this->arResult['KIOSK'] = true;
+                if ($this->kioskService->getCardNumber()) {
+                    $storage->setDiscountCardNumber($this->kioskService->getCardNumber());
+                    $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+                }
+            }
+
             $payments = $this->orderStorageService->getAvailablePayments($storage, true, true, $basket->getPrice());
         }
 
@@ -542,6 +575,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $storage          = clone $storage;
             $selectedShopCode = $storage->getDeliveryPlaceCode();
             $shops            = $pickup->getStockResult()->getStores();
+
             if ($selectedShopCode && isset($shops[$selectedShopCode])) {
                 $pickup->setSelectedShop($shops[$selectedShopCode]);
             }
@@ -639,6 +673,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $itemData[$offerId]['quantity'] += $item->getAmount();
             $itemData[$offerId]['price']    += $item->getPrice();
             $itemData[$offerId]['weight']   += $weight;
+            $itemData[$offerId]['brand']    = $item->getOffer()->getProduct()->getBrandName();
 
             $totalWeight += $weight;
         }

@@ -65,6 +65,8 @@ class LocationService
 
     public const TYPE_DISTRICT = 'DISTRICT';
 
+    public const TYPE_DISTRICT_MOSCOW = 'DISTRICT_MOSCOW';
+
     public const TYPE_SUBREGION = 'SUBREGION';
 
     public const TYPE_REGION = 'REGION';
@@ -78,6 +80,8 @@ class LocationService
     public const REGION_SERVICE_CODE = 'REGION';
 
     public const KLADR_SERVICE_CODE = 'KLADR';
+
+    public const OKATO_SERVICE_CODE = 'OKATO';
 
     /**
      * @var DaDataService
@@ -236,6 +240,7 @@ class LocationService
     public function getAvailableCities(): array
     {
         $getAvailableCities = function () {
+            $this->log()->notice('Кэшируется список городов!');
             $iblockId = IblockUtils::getIblockId(IblockType::REFERENCE_BOOKS, IblockCode::CITIES);
 
             /** @var StoreService $storeService */
@@ -306,6 +311,7 @@ class LocationService
         return (new BitrixCache())
             ->withId(__METHOD__)
             ->withIblockTag(IblockUtils::getIblockId(IblockType::REFERENCE_BOOKS, IblockCode::CITIES))
+            ->withTime(36000000)
             ->resultOf($getAvailableCities);
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
@@ -367,6 +373,7 @@ class LocationService
         return (new BitrixCache())
             ->withId(__METHOD__)
             ->withIblockTag(IblockUtils::getIblockId(IblockType::REFERENCE_BOOKS, IblockCode::CITIES))
+            ->withTime(36000000)
             ->resultOf($getAvailableCities);
     }/** @noinspection MoreThanThreeArgumentsInspection */
 
@@ -704,6 +711,7 @@ class LocationService
                 static::TYPE_CITY,
                 static::TYPE_VILLAGE,
                 static::TYPE_DISTRICT,
+                static::TYPE_DISTRICT_MOSCOW,
             ],
         ];
         if ($parentName !== null && !empty($parentName)) {
@@ -749,7 +757,7 @@ class LocationService
             if (!isset($this->locationsByCode[$code])) {
                 $this->locationsByCode[$code] = reset($this->findLocationNew([
                     '=CODE'     => $code,
-                    'TYPE.CODE' => [static::TYPE_CITY, static::TYPE_VILLAGE, static::TYPE_DISTRICT],
+                    'TYPE.CODE' => [static::TYPE_CITY, static::TYPE_VILLAGE, static::TYPE_DISTRICT, static::TYPE_DISTRICT_MOSCOW],
                 ]));
             }
             if (!empty($this->locationsByCode[$code]) && !\is_bool($this->locationsByCode[$code])) {
@@ -1052,8 +1060,13 @@ class LocationService
                 $locationCode = (new DaDataLocationAdapter())->convert($dadataLocation)->getCode();
             }
 
-            $result = new Address();
+            preg_match('/подъезд (\d+),/i', $address, $matches);
+            $entrance = $matches[1] ?: '';
+            preg_match('/этаж (\d+),/i', $address, $matches);
+            $floor = $matches[1] ?: '';
+
             $city = $dadataLocation->getCity() ?: $dadataLocation->getSettlementWithType();
+            $result = new Address();
             $result->setLocation($locationCode)
                 ->setRegion($locationCode === static::LOCATION_CODE_MOSCOW ? '' : $dadataLocation->getRegionWithType())
                 ->setArea($dadataLocation->getAreaWithType())
@@ -1062,17 +1075,22 @@ class LocationService
                 ->setStreetPrefix($dadataLocation->getStreetType())
                 ->setStreet($dadataLocation->getStreet())
                 ->setHouse($dadataLocation->getHouse())
+                ->setHousing($dadataLocation->getBlock())
                 ->setFlat($dadataLocation->getFlat())
-                ->setZipCode($dadataLocation->getPostalCode());
+                ->setZipCode($dadataLocation->getPostalCode())
+                ->setEntrance($entrance)
+                ->setFloor($floor);
 
             return ['result' => $result];
         };
 
         try {
-            $result = (new BitrixCache())
-                ->withId($address . '_' . $locationCode)
-                ->withTime(360000)
-                ->resultOf($splitAddress)['result'];
+//            $result = (new BitrixCache())
+//                ->withId($address . '_' . $locationCode)
+//                ->withTime(360000)
+//                ->resultOf($splitAddress)['result'];
+
+            $result = $splitAddress()['result'];
         } catch (\Exception $e) {
             $this->log()->error(
                 sprintf('failed to split address: %s: %s', \get_class($e), $e->getMessage()),

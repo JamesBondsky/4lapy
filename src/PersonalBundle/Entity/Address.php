@@ -131,6 +131,15 @@ class Address extends BaseEntity
     protected $main = false;
 
     /**
+     * @var bool
+     * @Serializer\Type("bitrix_bool_d7")
+     * @Serializer\SerializedName("UF_MAIN")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $haveShops = false;
+
+    /**
      * @return string
      */
     public function getName(): string
@@ -453,5 +462,24 @@ class Address extends BaseEntity
         }, $map));
 
         return implode(', ', $result);
+    }
+
+    /**
+     * @param bool $have
+     *
+     * @return Address
+     */
+    public function setHaveShop(bool $have): Address
+    {
+        $this->haveShops = $have;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getHaveShop(): bool
+    {
+        return $this->haveShops;
     }
 }

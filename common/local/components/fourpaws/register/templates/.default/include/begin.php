@@ -22,19 +22,21 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
        data-action="get"
        data-backurl="<?=$backUrl?>"
        data-step="step1">Регистрация по телефону</a>
-    <span class="b-registration__else">или</span>
     <?php
-    $APPLICATION->IncludeComponent(
-        'bitrix:socserv.auth.form',
-        'socserv_reg',
-        [
-            'AUTH_SERVICES' => $arResult['AUTH_SERVICES'],
-            'AUTH_URL'      => $arResult['AUTH_URL'],
-            'POST'          => $arResult['POST'],
-        ],
-        $component,
-        ['HIDE_ICONS' => 'Y']
-    );
+    if (!$arResult['KIOSK']) { ?>
+        <span class="b-registration__else">или</span>
+        <? $APPLICATION->IncludeComponent(
+            'bitrix:socserv.auth.form',
+            'socserv_reg',
+            [
+                'AUTH_SERVICES' => $arResult['AUTH_SERVICES'],
+                'AUTH_URL'      => $arResult['AUTH_URL'],
+                'POST'          => $arResult['POST'],
+            ],
+            $component,
+            ['HIDE_ICONS' => 'Y']
+        );
+    }
     ?>
 </div>
 <section class="b-registration__additional-info">

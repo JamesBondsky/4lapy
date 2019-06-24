@@ -600,44 +600,38 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     $deliveryService = $this->getDeliveryService();
                     $deliveryCode = $deliveryService->getDeliveryCodeById($deliveryId);
 
+                    // место доставки
                     if($deliveryService->isDeliveryCode($deliveryCode)){
-                        if(!empty($this->arResult['FIELD_VALUES']['addressId'])){
-                            $deliveryPlace = $this->arResult['FIELD_VALUES']['addressId'];
-                        } else {
-                            // создание адреса
-                            /** @var AddressService $addressService */
-                            $addressService = Application::getInstance()->getContainer()->get('address.service');
-                            $locationService = $this->getLocationService();
-                            $userService = $this->getUserService();
+                        $locationService = $this->getLocationService();
+                        $userService = $this->getUserService();
 
-                            $personalAddress = (new Address())->setCity($userService->getSelectedCity()['NAME'])
-                                ->setLocation($locationService->getCurrentLocation())
-                                ->setStreet($this->arResult['FIELD_VALUES']['street'])
-                                ->setHouse($this->arResult['FIELD_VALUES']['house'])
-                                ->setHousing($this->arResult['FIELD_VALUES']['building'])
-                                ->setEntrance($this->arResult['FIELD_VALUES']['porch'])
-                                ->setFloor($this->arResult['FIELD_VALUES']['floor'])
-                                ->setFlat($this->arResult['FIELD_VALUES']['apartment'])
-                                ->setUserId($order->getUserId());
+                        $personalAddress = (new Address())->setCity($userService->getSelectedCity()['NAME'])
+                            ->setLocation($locationService->getCurrentLocation())
+                            ->setStreet($this->arResult['FIELD_VALUES']['street'])
+                            ->setHouse($this->arResult['FIELD_VALUES']['house'])
+                            ->setHousing($this->arResult['FIELD_VALUES']['building'])
+                            ->setEntrance($this->arResult['FIELD_VALUES']['porch'])
+                            ->setFloor($this->arResult['FIELD_VALUES']['floor'])
+                            ->setFlat($this->arResult['FIELD_VALUES']['apartment'])
+                            ->setUserId($order->getUserId());
 
-                            try {
-                                $addressService->add($personalAddress);
-                                $deliveryPlace = $personalAddress->getId();
-                            } catch (\Exception $e) {
-                                $this->log()->error(sprintf('failed to save address: %s', $e->getMessage()), [
-                                    'city' => $personalAddress->getCity(),
-                                    'location' => $personalAddress->getLocation(),
-                                    'userId' => $personalAddress->getUserId(),
-                                    'street' => $personalAddress->getStreet(),
-                                    'house' => $personalAddress->getHouse(),
-                                    'housing' => $personalAddress->getHousing(),
-                                    'entrance' => $personalAddress->getEntrance(),
-                                    'floor' => $personalAddress->getFloor(),
-                                    'flat' => $personalAddress->getFlat(),
-                                ]);
+                        try {
+                            //$addressService->add($personalAddress);
+                            $deliveryPlace = $personalAddress->getFullAddress();
+                        } catch (\Exception $e) {
+                            $this->log()->error(sprintf('failed to save address: %s', $e->getMessage()), [
+                                'city' => $personalAddress->getCity(),
+                                'location' => $personalAddress->getLocation(),
+                                'userId' => $personalAddress->getUserId(),
+                                'street' => $personalAddress->getStreet(),
+                                'house' => $personalAddress->getHouse(),
+                                'housing' => $personalAddress->getHousing(),
+                                'entrance' => $personalAddress->getEntrance(),
+                                'floor' => $personalAddress->getFloor(),
+                                'flat' => $personalAddress->getFlat(),
+                            ]);
 
-                                $this->setExecError('personalAddress', 'Не удалось сохранить новый адрес');
-                            }
+                            $this->setExecError('personalAddress', 'Не удалось сохранить новый адрес');
                         }
                     } else {
                         $deliveryPlace = $this->arResult['FIELD_VALUES']['shopId'];
@@ -660,7 +654,8 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
                 BitrixApplication::getConnection()->startTransaction();
 
-                if ($orderSubscribe->getId() > 0) { // подписка уже есть, обновляем
+                // создание или обновление подписки
+                if ($orderSubscribe->getId() > 0) {
                     $this->arResult['SUBSCRIBE_ACTION']['SUBSCRIPTION_ID'] = $orderSubscribe->getId();
                     $this->arResult['SUBSCRIBE_ACTION']['TYPE'] = 'UPDATE';
                     try {
@@ -690,7 +685,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     } catch (\Exception $exception) {
                         $this->setExecError('subscribeAction', $exception->getMessage(), 'subscriptionUpdateException');
                     }
-                } else { // создание новой подписки
+                } else {
                     $orderSubscribe->setActive(true);
                     $this->arResult['SUBSCRIBE_ACTION']['TYPE'] = 'CREATE';
                     $addResult = $orderSubscribeService->add($orderSubscribe);
@@ -724,12 +719,12 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                         }
                     }
 
+                    // создание нового заказа по подписке
                     if($orderSubscribe->isActive()){
-                        // создание нового заказа по подписке
                         if($this->arResult['SUBSCRIBE_ACTION']['TYPE'] == 'UPDATE' && $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] == 'Y'){
                             $result = $orderSubscribeService->processOrderSubscribe($orderSubscribe);
                             if(!$result->isSuccess()){
-                                throw new Exception('Не удалось создать заказ по новой подписке');
+                                throw new Exception(sprintf('Не удалось создать заказ по новой подписке: %s', implode("; ", $result->getErrorMessages())));
                             }
                         }
 
@@ -997,12 +992,12 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
                 $this->getPickupData($deliveries);
 
-                $addresses = null;
-                if ($this->getUserService()->getCurrentUserId()) {
-                    /** @var AddressService $addressService */
-                    $addressService = Application::getInstance()->getContainer()->get('address.service');
-                    $addresses      = $addressService->getAddressesByUser($this->getUserService()->getCurrentUserId(), $selectedCity['CODE']);
-                }
+//                $addresses = null;
+//                if ($this->getUserService()->getCurrentUserId()) {
+//                    /** @var AddressService $addressService */
+//                    $addressService = Application::getInstance()->getContainer()->get('address.service');
+//                    $addresses      = $addressService->getAddressesByUser($this->getUserService()->getCurrentUserId(), $selectedCity['CODE']);
+//                }
 
                 $delivery = null;
                 $pickup   = null;
@@ -1014,9 +1009,13 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     }
                 }
 
+                if($this->deliveryService->isDelivery($selectedDelivery)){
+                    $this->arResult['ADDRESS'] = $this->getLocationService()->splitAddress($this->getOrderSubscribe()->getDeliveryPlace());
+                }
+
                 $this->arResult['PICKUP']               = $pickup;
                 $this->arResult['DELIVERY']             = $delivery;
-                $this->arResult['ADDRESSES']            = $addresses;
+                //$this->arResult['ADDRESSES']            = $addresses;
                 $this->arResult['SELECTED_DELIVERY']    = $selectedDelivery;
                 $this->arResult['PICKUP_AVAILABLE_PAYMENTS'] = $this->getAvailablePayments();
 

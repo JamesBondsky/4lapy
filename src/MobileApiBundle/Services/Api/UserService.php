@@ -12,9 +12,11 @@ use Bitrix\Main\Type\Date;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\Enum\UserGroup as UserGroupEnum;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\ExpertsenderService;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\MobileApiBundle\Dto\Object\City;
 use FourPaws\MobileApiBundle\Dto\Object\ClientCard;
 use FourPaws\MobileApiBundle\Dto\Object\User;
@@ -29,6 +31,7 @@ use FourPaws\MobileApiBundle\Exception\TokenNotFoundException;
 use FourPaws\MobileApiBundle\Security\ApiToken;
 use FourPaws\MobileApiBundle\Services\Session\SessionHandler;
 use FourPaws\UserBundle\Entity\User as AppUser;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Exception\UserException;
@@ -142,6 +145,12 @@ class UserService
                 }
             }
             $userId = $this->userRepository->findIdentifierByRawLogin($loginRequest->getLogin());
+            try {
+                if ($this->userBundleService->getCurrentUserId() === $userId) {
+                    return new UserLoginResponse($this->getCurrentApiUser());
+                }
+            } catch (NotAuthorizedException $e) {
+            }
             $this->userBundleService->authorize($userId);
         } catch (UsernameNotFoundException $exception) {
             $user = new AppUser();
@@ -157,8 +166,6 @@ class UserService
 
             /** @var ManzanaService $manzanaService */
             $manzanaService = $container->get('manzana.service');
-            /** @noinspection PhpUnusedLocalVariableInspection */
-            //$manzanaItem = $manzanaService->getContactByPhone(PhoneHelper::getManzanaPhone($user->getPersonalPhone()));
 
             /**
              * @var UserService $userService
@@ -176,6 +183,18 @@ class UserService
             if ($_SESSION['MANZANA_CONTACT_ID']) {
                 $client->contactId = $_SESSION['MANZANA_CONTACT_ID'];
                 unset($_SESSION['MANZANA_CONTACT_ID']);
+            }
+
+            if (!$client->contactId) {
+                try {
+                    $manzanaContact = $manzanaService->getContactByPhone(PhoneHelper::getManzanaPhone($user->getPersonalPhone()));
+                    $client->contactId = $manzanaContact->contactId;
+                } catch (ManzanaServiceContactSearchNullException $e) {
+                    // Значит, новый пользователь
+                } catch (Exception $e) {
+                    $logger = LoggerFactory::create('loginOrRegister');
+                    $logger->error(sprintf('%s getContactByPhone exception: %s', __METHOD__, $e->getMessage()));
+                }
             }
 
             $userService->setClientPersonalDataByCurUser($client, $user);
@@ -370,13 +389,12 @@ class UserService
         } catch (\FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException $exception) {
             return null;
         } catch (\FourPaws\External\Exception\ManzanaServiceException $exception) {
-            return null;
         }
         return (new ClientCard())
             ->setTitle('Карта клиента')
-            ->setBalance($bonusInfo->getActiveBonus())
+            ->setBalance(isset($bonusInfo) ? $bonusInfo->getActiveBonus() : $user->getActiveBonus())
             ->setNumber($user->getDiscountCardNumber())
-            ->setSaleAmount($bonusInfo->getGeneratedRealDiscount());
+            ->setSaleAmount($user->getDiscount());
     }
 
     /**
@@ -431,6 +449,8 @@ class UserService
      */
     public function getPersonalBonus()
     {
+        $logger = LoggerFactory::create('getPersonalBonus');
+
         /**
          * @var ApiToken $token | null
          */
@@ -441,12 +461,30 @@ class UserService
             throw new SessionUnavailableException();
         }
         $user = $this->userRepository->find($session->getUserId());
-        $bonusInfo = $this->appBonusService->getManzanaBonusInfo($user);
+        try {
+            $bonusInfo = $this->appBonusService->getManzanaBonusInfo($user);
+        } catch (\FourPaws\External\Exception\ManzanaServiceContactSearchNullException $exception) {
+            $logger->error(sprintf('%s exception: %s', __METHOD__, $exception->getMessage()));
+            return new PersonalBonus();
+        } catch (\FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException $exception) {
+            $logger->error(sprintf('%s exception: %s', __METHOD__, $exception->getMessage()));
+            return new PersonalBonus();
+        } catch (\FourPaws\External\Exception\ManzanaServiceException $exception) {
+            $logger->error(sprintf('%s exception: %s', __METHOD__, $exception->getMessage()));
+        }
+
+        try {
+            if (isset($bonusInfo)) {
+                $this->userBundleService->refreshUserBonusPercent($user, $bonusInfo);
+            }
+        } catch (\Exception $e) {
+            $logger->error(sprintf('%s exception: %s', __METHOD__, $e->getMessage()));
+        }
 
         return (new PersonalBonus())
-            ->setAmount($bonusInfo->getGeneratedRealDiscount() ?? 0)
-            ->setTotalIncome($bonusInfo->getDebit() ?? 0)
-            ->setTotalOutgo($bonusInfo->getCredit() ?? 0)
-            ->setNextStage($bonusInfo->getSumToNext());
+            ->setAmount($user->getDiscount() ?? 0)
+            ->setTotalIncome(isset($bonusInfo) ? ($bonusInfo->getDebit() ?? 0) : 0)
+            ->setTotalOutgo(isset($bonusInfo) ? ($bonusInfo->getCredit() ?? 0) : 0)
+            ->setNextStage(isset($bonusInfo) ? $bonusInfo->getSumToNext() : 0); //FIXME Это временное решение. Нужно сохранять все поля $bonusInfo на сайте и в случае, если манзана не отвечает, возвращать сохраненные значения
     }
 }

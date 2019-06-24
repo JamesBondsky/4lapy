@@ -267,6 +267,8 @@ class StoreService implements LoggerAwareInterface
     {
         $storeSearchResult = $this->getLocalStores($locationCode, $type);
 
+        $origName = $storeSearchResult->getLocationName();
+
         /**
          * Ищем склады района и региона
          */
@@ -274,6 +276,7 @@ class StoreService implements LoggerAwareInterface
             $storeSearchResult = $this->getSubRegionalStores($locationCode, $type);
             if ($storeSearchResult->getStores()->isEmpty()) {
                 $storeSearchResult = $this->getRegionalStores($locationCode, $type);
+                $storeSearchResult->setLocationName($origName);
             }
         }
 
@@ -341,35 +344,13 @@ class StoreService implements LoggerAwareInterface
      */
     public function getBaseShops(string $locationCode): StoreCollection
     {
-        $getStores = function () use ($locationCode) {
-            return [
-                'result' => $this->getStores(
-                    static::TYPE_BASE_SHOP,
-                    [
-                        'UF_BASE_SHOP_LOC' => $this->locationService->getLocationPathCodes($locationCode),
-                    ]),
-            ];
-        };
+        $result = $this->getStores(
+            static::TYPE_BASE_SHOP,
+            [
+                'UF_BASE_SHOP_LOC' => $this->locationService->getLocationPathCodes($locationCode),
+            ]);
 
-        try {
-            $result = (new BitrixCache())
-                ->withId(__METHOD__ . $locationCode)
-                ->withTag('catalog:store')
-                ->resultOf($getStores);
-
-            /** @var StoreCollection $stores */
-            $stores = $result['result'];
-        } catch (\Exception $e) {
-            $this->logger->error(
-                sprintf(
-                    'failed to get base shops for location: %s',
-                    $e->getMessage()
-                ),
-                ['location' => $locationCode]
-            );
-        }
-
-        return $stores ?? new StoreCollection();
+        return $result ?? new StoreCollection();
     }
 
     /**
@@ -397,7 +378,7 @@ class StoreService implements LoggerAwareInterface
 
         if ($locationCode = $location['CODE']) {
             $getStores = function () use ($locationCode, $type) {
-                $storeCollection = $this->getStores($type, ['UF_LOCATION' => $locationCode]);
+                $storeCollection = $this->getStores($type, ['UF_REGION' => $locationCode]);
 
                 return ['result' => $storeCollection];
             };

@@ -27,6 +27,7 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\HighloadHelper;
+use FourPaws\KioskBundle\Service\KioskService;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use FourPaws\Helpers\WordHelper;
@@ -48,7 +49,7 @@ $product = $APPLICATION->IncludeComponent(
         'CODE' => $productDetailRequest->getProductSlug(),
         'OFFER_ID' => $offerId,
         'SET_TITLE' => 'Y',
-        'SHOW_FAST_ORDER' => $productDetailRequest->getZone() !== DeliveryService::ZONE_4 && !$isPopup,
+        'SHOW_FAST_ORDER' => $productDetailRequest->getZone() !== DeliveryService::ZONE_4 && !KioskService::isKioskMode() && !$isPopup,
         'IS_POPUP' => $isPopup,
     ],
     false,

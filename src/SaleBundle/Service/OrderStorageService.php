@@ -22,6 +22,8 @@ use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Exception\TerminalNotFoundException;
@@ -31,6 +33,7 @@ use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\OrderSubscribeItem;
 use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
+use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
@@ -363,6 +366,30 @@ class OrderStorageService
     }
 
     /**
+     * Устанавливает код района в код города (только для Москвы)
+     *
+     * @param OrderStorage $storage
+     * @param string       $step
+     *
+     * @return bool
+     * @throws OrderStorageSaveException
+     * @throws OrderStorageValidationException
+     */
+    public function updateStorageMoscowZone(OrderStorage $storage, string $step = OrderStorageEnum::AUTH_STEP): bool
+    {
+        if ($storage->getCityCode() == DeliveryService::MOSCOW_LOCATION_CODE) {
+            $storage->setCityCode($storage->getMoscowDistrictCode());
+            try {
+                return $this->storageRepository->save($storage, $step);
+            } catch (NotFoundException $e) {
+                return false;
+            }
+        } else {
+            return true;
+        }
+    }
+
+    /**
      * @param $storage
      *
      * @return bool
@@ -529,6 +556,15 @@ class OrderStorageService
             }
         }
 
+        // в режиме киоска доступна только оплата при получении
+        if(KioskService::isKioskMode()){
+            foreach ($payments as $id => $payment) {
+                if (!in_array($payment['CODE'], [OrderPayment::PAYMENT_CASH_OR_CARD, OrderPayment::PAYMENT_CASH])) {
+                    unset($payments[$id]);
+                }
+            }
+        }
+
         return $payments;
     }
 
@@ -588,6 +624,31 @@ class OrderStorageService
         $result = null;
         foreach ($this->getDeliveries($storage) as $delivery) {
             if ($delivery instanceof PickupResultInterface) {
+                $result = $delivery;
+                break;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param OrderStorage $storage
+     *
+     * @return DeliveryResultInterface|null
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws DeliveryNotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws StoreNotFoundException
+     * @throws UserMessageException
+     */
+    public function getInnerDelivery(OrderStorage $storage): ?DeliveryResultInterface
+    {
+        $result = null;
+        foreach ($this->getDeliveries($storage, true) as $delivery) {
+            if ($delivery instanceof DeliveryResult) {
                 $result = $delivery;
                 break;
             }

@@ -59,12 +59,14 @@ $markup = PawsApplication::markup();
     <link href="css/animate.css" rel="stylesheet">
     <link href="vendor/swiper/css/swiper.min.css" rel="stylesheet" type="text/css"/>
     <link href="vendor/magnific-popup/magnific-popup.css" rel="stylesheet" type="text/css"/>
+    <link href="vendor/slick/slick.css" rel="stylesheet" type="text/css"/>
 
     <!-- THEME STYLES -->
     <link href="css/elements.css?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/css/elements.css') ?>" rel="stylesheet" type="text/css"/>
     <link href="css/layout.min.css?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/css/layout.min.css') ?>" rel="stylesheet" type="text/css"/>
     <link href="css/interactive_map.css?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/css/interactive_map.css') ?>" rel="stylesheet" type="text/css"/>
     <link href="css/banner-top.css?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/css/banner-top.css') ?>" rel="stylesheet" type="text/css"/>
+    <link href="css/faq.css?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/css/faq.css') ?>" rel="stylesheet" type="text/css"/>
 
     <!-- Favicon -->
     <link rel="shortcut icon" href="favicon.ico"/>
@@ -180,6 +182,7 @@ $markup = PawsApplication::markup();
 
             </div>
         </div>*/?>
+
         <div class="promo-block" data-promo-block="true">
             <div class="desktop_hat">
                 <img src="img/slide01.jpg" alt="" />
@@ -193,8 +196,6 @@ $markup = PawsApplication::markup();
         <!--========== PAGE LAYOUT ==========-->
         <!-- Products -->
         <div id="about">
-
-
 
             <div class="container content-lg">
                 <div class="[ c-shapes c-shapes--dynamic ]" data-shapes-dynamic="" data-shapes-set="home" id="scene-home">
@@ -277,6 +278,9 @@ $markup = PawsApplication::markup();
             <div class="container content-lg">
                 <div class="row text-center margin-b-40">
                     <div class="col-sm-8 col-sm-offset-2">
+                        <div class="schedule">
+                            <a href="javascript:void(0);" class="js-open-popup" data-popup-id="schedule-bloggershow">Расписание</a>
+                        </div>
                         <div class="bar"><h5>блогер-шоу</h5></div>
                         <h2>Общайся на Блогер-Шоу</h2>
                         <hr class="header_line" />
@@ -401,6 +405,9 @@ $markup = PawsApplication::markup();
             <div class="container content-lg">
                 <div class="row text-center margin-b-40" >
                     <div class="col-sm-8 col-sm-offset-2">
+                        <div class="schedule">
+                            <a href="javascript:void(0);" class="js-open-popup" data-popup-id="schedule-dog-fest">Расписание</a>
+                        </div>
                         <div class="bar"><h5>DOG FEST</h5></div>
                         <h2>ИГРАЙ И ПОБЕЖДАЙ</h2>
                         <hr class="header_line" />
@@ -472,6 +479,9 @@ $markup = PawsApplication::markup();
             <div class="content-md container">
                 <div class="row text-center margin-b-40">
                     <div class="col-sm-8 col-sm-offset-2">
+                        <div class="schedule">
+                            <a href="javascript:void(0);" class="js-open-popup" data-popup-id="schedule-gala">Расписание</a>
+                        </div>
                         <div class="bar"><h5>ГЛАВНАЯ СЦЕНА</h5></div>
                         <h2>зажигай на главной сцене</h2>
                         <hr class="header_line" />
@@ -809,8 +819,11 @@ $markup = PawsApplication::markup();
                 </div>
             </div>
             <button class="join_btn js-open-popup" onclick="ga('send', 'event', 'fest_go_konkurs', 'click', 'btn_konkurs_fest')" data-popup-id="form-festival">я пойду!</button>
+            <a href="/rules_quest.pdf" target="_blank" class="konkurs__link-rules">Правила акции "Квест лечу в Париж"</a>
         </div>
         <!-- End Promo Banner -->
+
+        <?php include __DIR__ . '/blocks/faq.php'; ?>
 
         <!-- partners -->
         <div id="partners">
@@ -824,16 +837,16 @@ $markup = PawsApplication::markup();
                 </div>
                 <div class="partners_wrap">
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners01.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners01.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners02.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners02.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners03.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners03.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners04.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners04.jpg" alt="">
                     </div>
                 </div>
                 <div class="clear"></div>
@@ -847,27 +860,30 @@ $markup = PawsApplication::markup();
                         <!-- Latest Products -->
                     </div>
                 </div>
-                <div class="partners_wrap">
+                <div class="partners_wrap partners_wrap_line1">
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners06.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/elanco.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners07.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/msd.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners18.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/bayer.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners08.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/hills.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners09.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/acana.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners10.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/freshstep.png" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners11.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/everclean.png" alt="">
+                    </div>
+                    <div class="partner_item">
+                        <img class="partner_logo" src="img/partners/boehringeringelheim.jpg" alt="">
                     </div>
                 </div>
             </div>
@@ -879,24 +895,30 @@ $markup = PawsApplication::markup();
                         <!-- Latest Products -->
                     </div>
                 </div>
-                <div class="partners_wrap">
+                <div class="partners_wrap partners_wrap--special-partners">
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners12.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners20.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners15.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners12.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners13.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners15.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners14.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners13.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners16.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners14.jpg" alt="">
                     </div>
                     <div class="partner_item">
-                        <img class="partner_logo" src="img/partners17.jpg" alt="">
+                        <img class="partner_logo" src="img/partners/partners17.jpg" alt="">
+                    </div>
+                    <div class="partner_item">
+                        <img class="partner_logo" src="img/partners/partners19.jpg" alt="">
+                    </div>
+                    <div class="partner_item">
+                        <img class="partner_logo" src="img/partners/partners21.jpg" alt="">
                     </div>
                 </div>
             </div>

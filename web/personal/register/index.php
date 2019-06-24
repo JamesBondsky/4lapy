@@ -1,6 +1,10 @@
 <?php
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
-$APPLICATION->SetTitle('Регистрация');
+$title = 'Регистрация';
+if(\FourPaws\KioskBundle\Service\KioskService::isKioskMode()){
+    $title = 'Мы Вас не узнали! Зарегистрируйтесь?';
+}
+$APPLICATION->SetTitle($title);
 
 echo '<div class="b-registration b-registration--two-parts js-registration-content">
     <header class="b-registration__header">
