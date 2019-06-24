@@ -7,8 +7,12 @@
  */
 
 namespace FourPaws\MobileApiBundle\Dto\Object\OrderSubscribe;
+
 use FourPaws\App\Application;
+use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct;
+use FourPaws\MobileApiBundle\Services\Api\ProductService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
+use FourPaws\PersonalBundle\Entity\OrderSubscribeItem as PersonalOrderSubscribeItem;
 use JMS\Serializer\Annotation as Serializer;
 
 class OrderSubscribe
@@ -140,12 +144,12 @@ class OrderSubscribe
     protected $dateCheck;
 
     /**
-     * @var OrderSubscribeItem[]
+     * @var ShortProduct[]
      * @Serializer\Type("array")
-     * @Serializer\SerializedName("items")
+     * @Serializer\SerializedName("goods")
      * @Serializer\Groups(groups={"create","read","update"})
      */
-    protected $items;
+    protected $goods;
 
     /**
      * OrderSubscribe constructor.
@@ -158,7 +162,7 @@ class OrderSubscribe
     public function __construct($transferObjectType)
     {
         $this->fillProperties($transferObjectType);
-        $this->fillItems();
+        $this->fillGoods();
     }
 
     /**
@@ -456,12 +460,12 @@ class OrderSubscribe
      * @throws \Bitrix\Main\SystemException
      * @throws \Exception
      */
-    public function getItems(): array
+    public function getGoods(): array
     {
-        if(null === $this->items){
-            $this->fillItems();
+        if(null === $this->goods){
+            $this->fillGoods();
         }
-        return $this->items;
+        return $this->goods;
     }
 
     /**
@@ -470,15 +474,17 @@ class OrderSubscribe
      * @throws \Bitrix\Main\SystemException
      * @throws \Exception
      */
-    public function fillItems()
+    public function fillGoods()
     {
         /** @var OrderSubscribeService $orderSubscribeService */
         $orderSubscribeService = Application::getInstance()->getContainer()->get('order_subscribe.service');
+
         $items = $orderSubscribeService->getItemsBySubscribeId($this->getId());
+
+        /** @var PersonalOrderSubscribeItem $item */
         foreach($items as $item){
-            $this->items[] = new OrderSubscribeItem($item);
+            $orderSubscribeItem = new OrderSubscribeItem($item);
+            $this->goods[] = $orderSubscribeItem;
         }
     }
-
-
 }
