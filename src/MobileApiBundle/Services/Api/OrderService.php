@@ -801,7 +801,7 @@ class OrderService
         return $dates;
     }
 
-    protected function getDeliveryRanges(array $deliveries)
+    public function getDeliveryRanges(array $deliveries)
     {
         $dates = [];
         foreach ($deliveries as $deliveryDateIndex => $delivery) {

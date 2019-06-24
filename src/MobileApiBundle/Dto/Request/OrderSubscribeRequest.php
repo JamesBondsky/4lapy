@@ -34,7 +34,7 @@ class OrderSubscribeRequest implements SimpleUnserializeRequest, GetRequest
     }
 
     /**
-     * @param int $orderNumber
+     * @param int $orderSubscribeId
      * @return OrderStatusHistoryRequest
      */
     public function setOrderSubscribeId(int $orderSubscribeId): OrderSubscribeRequest

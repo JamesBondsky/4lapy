@@ -1724,7 +1724,7 @@ class OrderSubscribeService implements LoggerAwareInterface
      * @throws \Exception
      * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      */
-    public function deactivateSubscription(OrderSubscribe $orderSubscribe, bool $sendNotifications = true)
+    public function deactivateSubscription(OrderSubscribe $orderSubscribe, bool $sendNotifications = true): UpdateResult
     {
         $updateResult = $this->update($orderSubscribe->setActive(false));
         if ($updateResult->isSuccess()) {
