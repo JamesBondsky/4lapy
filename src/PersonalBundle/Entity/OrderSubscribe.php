@@ -818,7 +818,7 @@ class OrderSubscribe extends BaseEntity
 
             try {
                 $result = $store->getAddress();
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 // ну давай хотя бы код магазина отбразим
                 $result = $this->getDeliveryPlace();
             }
