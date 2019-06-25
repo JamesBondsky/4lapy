@@ -953,6 +953,10 @@ class OrderSubscribeService implements LoggerAwareInterface
             }
 
             $subscribeItems = $this->orderSubscribeItemRepository->findBySubscribe($id);
+            if($subscribeItems->isEmpty()){
+                throw new OrderSubscribeException('Не найдено ни одного товара в подписке');
+            }
+
             $basket = Basket::create(self::SITE_ID);
             $items = [];
             /** @var OrderSubscribeItem $item */
@@ -1656,11 +1660,11 @@ class OrderSubscribeService implements LoggerAwareInterface
     public function isExpiredSubscription(OrderSubscribe $orderSubscribe, $currentDate = '')
     {
         $currentDate = $currentDate ?? new \DateTimeImmutable();
-        $orderSubscribeDate = new \DateTimeImmutable($orderSubscribe->getNextDate()->toString());
+        $orderSubscribeDate = new \DateTimeImmutable($orderSubscribe->getDateCheck()->toString());
 
         $currentDate->setTime(0,0,0);
         $orderSubscribeDate->setTime(0,0,0);
-        return $currentDate <= $orderSubscribeDate;
+        return $currentDate >= $orderSubscribeDate;
     }
 
     /**

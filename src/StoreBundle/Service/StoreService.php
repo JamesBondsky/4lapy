@@ -344,35 +344,13 @@ class StoreService implements LoggerAwareInterface
      */
     public function getBaseShops(string $locationCode): StoreCollection
     {
-        $getStores = function () use ($locationCode) {
-            return [
-                'result' => $this->getStores(
-                    static::TYPE_BASE_SHOP,
-                    [
-                        'UF_BASE_SHOP_LOC' => $this->locationService->getLocationPathCodes($locationCode),
-                    ]),
-            ];
-        };
+        $result = $this->getStores(
+            static::TYPE_BASE_SHOP,
+            [
+                'UF_BASE_SHOP_LOC' => $this->locationService->getLocationPathCodes($locationCode),
+            ]);
 
-        try {
-            $result = (new BitrixCache())
-                ->withId(__METHOD__ . $locationCode)
-                ->withTag('catalog:store')
-                ->resultOf($getStores);
-
-            /** @var StoreCollection $stores */
-            $stores = $result['result'];
-        } catch (\Exception $e) {
-            $this->logger->error(
-                sprintf(
-                    'failed to get base shops for location: %s',
-                    $e->getMessage()
-                ),
-                ['location' => $locationCode]
-            );
-        }
-
-        return $stores ?? new StoreCollection();
+        return $result ?? new StoreCollection();
     }
 
     /**
