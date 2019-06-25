@@ -82,6 +82,12 @@ class ConfirmCodeTable extends DataManager
                     'default_value' => new DateTime(),
                 ]
             ),
+            'HASH' => new StringField(
+                'HASH',
+                [
+                    'validation' => array(__CLASS__, 'validateHash'),
+                ]
+            ),
         ];
     }
 
@@ -121,6 +127,19 @@ class ConfirmCodeTable extends DataManager
     {
         return [
             new Length(null, 50),
+        ];
+    }
+
+    /**
+     * Returns validators for HASH field.
+     *
+     * @return array
+     * @throws ArgumentTypeException
+     */
+    public static function validateHash(): array
+    {
+        return [
+            new Length(32, 32),
         ];
     }
 }
