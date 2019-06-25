@@ -28,6 +28,7 @@ use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
         <input type="hidden" name="backurl" value="<?= $backUrl?>">
         <input type="hidden" name="step" value="createNewPassword">
         <input type="hidden" name="phone" value="<?= $phone ?>">
+        <input type="hidden" name="cpToken" value="<?= $hash ?>">
         <div class="b-input-line b-input-line--create-password b-input-line--recovery">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-tel-recovery-code">SMS-код</label>
