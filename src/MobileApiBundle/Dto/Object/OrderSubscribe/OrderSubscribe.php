@@ -69,11 +69,11 @@ class OrderSubscribe
     protected $locationId;
 
     /**
-     * @var bool
-     * @Serializer\Type("bool")
+     * @var int
+     * @Serializer\Type("int")
      * @Serializer\SerializedName("active")
      */
-    protected $active = true;
+    protected $active = 1;
 
     /**
      * @var int
