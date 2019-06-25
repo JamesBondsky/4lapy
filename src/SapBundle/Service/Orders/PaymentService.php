@@ -280,41 +280,43 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
 
         $itemsOrder = [];
 
-        foreach ($xmlIdsItems as $xmlIdItem) {
-            /** @var Item $newItem */
-            $newItem = clone end($newItemArr[$xmlIdItem]);
-            $newItem->setQuantity(0);
-            $newItem->setSumPrice(0);
+        if (count($newItemArr) > 0) {
+            foreach ($xmlIdsItems as $xmlIdItem) {
+                /** @var Item $newItem */
+                $newItem = clone end($newItemArr[$xmlIdItem]);
+                $newItem->setQuantity(0);
+                $newItem->setSumPrice(0);
 
-            /** @var Item $newItemOriginal */
-            $newItemOriginal = clone $newItem;
+                /** @var Item $newItemOriginal */
+                $newItemOriginal = clone $newItem;
 
-            /** @var Item $item */
-            foreach ($newItemArr[$xmlIdItem] as $item) {
-                $newItem->setQuantity(floatval($newItem->getQuantity()) + floatval($item->getQuantity()));
-                $newItem->setSumPrice(floatval($newItem->getSumPrice()) + floatval($item->getSumPrice()));
-            }
+                /** @var Item $item */
+                foreach ($newItemArr[$xmlIdItem] as $item) {
+                    $newItem->setQuantity(floatval($newItem->getQuantity()) + floatval($item->getQuantity()));
+                    $newItem->setSumPrice(floatval($newItem->getSumPrice()) + floatval($item->getSumPrice()));
+                }
 
-            $averagePriceItem = $newItem->getSumPrice() / floatval($newItem->getQuantity());
-            $wholeCnt = $this->checkWholeNumber($averagePriceItem);
+                $averagePriceItem = $newItem->getSumPrice() / floatval($newItem->getQuantity());
+                $wholeCnt = $this->checkWholeNumber($averagePriceItem);
 
-            if ($wholeCnt > 2) {
-                $origSumAmount = $newItem->getSumPrice();
-                $newAveragePriceItem = $this->modifyNum($averagePriceItem, 2);
-                $newItem->setQuantity(floatval($newItem->getQuantity()) - 1);
-                $newItem->setSumPrice(floatval($newAveragePriceItem) * $newItem->getQuantity());
-                $newItem->setPrice($newAveragePriceItem);
+                if ($wholeCnt > 2) {
+                    $origSumAmount = $newItem->getSumPrice();
+                    $newAveragePriceItem = $this->modifyNum($averagePriceItem, 2);
+                    $newItem->setQuantity(floatval($newItem->getQuantity()) - 1);
+                    $newItem->setSumPrice(floatval($newAveragePriceItem) * $newItem->getQuantity());
+                    $newItem->setPrice($newAveragePriceItem);
 
-                $itemsOrder[$xmlIdItem][] = $newItem;
+                    $itemsOrder[$xmlIdItem][] = $newItem;
 
-                $newItemOriginal->setPrice($origSumAmount - $newItem->getSumPrice());
-                $newItemOriginal->setSumPrice($origSumAmount - $newItem->getSumPrice());
-                $newItemOriginal->setQuantity(1);
+                    $newItemOriginal->setPrice($origSumAmount - $newItem->getSumPrice());
+                    $newItemOriginal->setSumPrice($origSumAmount - $newItem->getSumPrice());
+                    $newItemOriginal->setQuantity(1);
 
-                $itemsOrder[$xmlIdItem][] = $newItemOriginal;
+                    $itemsOrder[$xmlIdItem][] = $newItemOriginal;
 
-            } else {
-                $itemsOrder[$xmlIdItem][] = $newItem;
+                } else {
+                    $itemsOrder[$xmlIdItem][] = $newItem;
+                }
             }
         }
 
@@ -323,39 +325,38 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         $itemsInCart = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
 
         $itemsFiscal = [];
-        $positionId = 1;
         foreach ($itemsOrder as $xmlId => $ptItems) {
             foreach ($ptItems as $ptItem) {
                 $tmpItem = new FiscalItem();
                 $newQuantity = $ptItem->getQuantity();
-                $tmpItem->setQuantity((new ItemQuantity())->setValue((int)$newQuantity));
-                $tmpItem->setTotal(round($ptItem->getPrice() * $newQuantity * 100));
-                $tmpItem->setPrice(round($ptItem->getPrice() * 100));
-                $tmpItem->setName($ptItem->getOfferName());
-                $tmpItem->setXmlId($ptItem->getOfferXmlId());
+                if ($newQuantity > 0) {
+                    $tmpItem->setQuantity((new ItemQuantity())->setValue((int)$newQuantity));
+                    $tmpItem->setTotal(round($ptItem->getPrice() * $newQuantity * 100));
+                    $tmpItem->setPrice(round($ptItem->getPrice() * 100));
+                    $tmpItem->setName($ptItem->getOfferName());
+                    $tmpItem->setXmlId($ptItem->getOfferXmlId());
 
-                $xmlId = $ptItem->getOfferXmlId();
+                    $xmlId = $ptItem->getOfferXmlId();
 
 
-                $tmpFindItem = array_map(function ($itemCart) use ($xmlId) {
-                    if ($itemCart->getXmlId() == $xmlId) {
-                        return $itemCart;
+                    $tmpFindItem = array_map(function ($itemCart) use ($xmlId) {
+                        if ($itemCart->getXmlId() == $xmlId) {
+                            return $itemCart;
+                        }
+                    }, $itemsInCart->toArray());
+
+                    if (isset($tmpFindItem[0]) && $tmpFindItem[0]) {
+
+                        $tmpFindItem = $tmpFindItem[0];
+
+                        $tmpItem->setPositionId($tmpFindItem->getPositionId());
+
+                        $tmpItem->setPaymentMethod($tmpFindItem->getPaymentMethod());
+                        $tmpItem->setTax($tmpFindItem->getTax());
+                        $tmpItem->setCode($tmpFindItem->getCode());
+
+                        $itemsFiscal[] = $tmpItem;
                     }
-                }, $itemsInCart->toArray());
-
-                if (isset($tmpFindItem[0]) && $tmpFindItem[0]) {
-
-                    $tmpFindItem = $tmpFindItem[0];
-
-                    $tmpItem->setPositionId($tmpFindItem->getPositionId());
-
-                    $tmpItem->setPaymentMethod($tmpFindItem->getPaymentMethod());
-                    $tmpItem->setTax($tmpFindItem->getTax());
-                    $tmpItem->setCode($tmpFindItem->getCode());
-
-                    ++$positionId;
-
-                    $itemsFiscal[] = $tmpItem;
                 }
             }
 
@@ -387,11 +388,6 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         }
 
         return floatval($averagePriceItemWhole . '.' . $averagePriceItemFractional);
-    }
-
-    private function extractItem(&$items)
-    {
-
     }
 
     /**
