@@ -88,7 +88,7 @@ $APPLICATION->SetTitle('Выиграйте SPA-weekend, Роза Хутор Со
 
                     <div class="read-rules">
                         <input type="checkbox" id="READ_RULES_REG_CHECK_MEALFEEL" name="rules" value="Y" checked>
-                        <label for="READ_RULES_REG_CHECK_MEALFEEL"><span></span> с <a href="/mealfeel_rules.pdf" target="_blank">правилами</a> акции ознакомлен</label>
+                        <label for="READ_RULES_REG_CHECK_MEALFEEL"><span></span> <a href="/mealfeel_rules.pdf" target="_blank">с правилами акции ознакомлен</a></label>
                         <div class="b-error">
                             <span class="js-message"></span>
                         </div>
