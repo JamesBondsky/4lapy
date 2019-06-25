@@ -137,13 +137,23 @@ if ($template->hasMainWrapper()) { ?>
 
 </div>
 
-<footer class="footer-landing footer-landing_mealfeel">
+<footer class="footer-landing-mealfeel">
     <div class="container-landing">
-        <div class="footer-landing__content">
-            <div class="footer-landing__logo">
+        <div class="footer-landing-mealfeel__content">
+            <div class="footer-landing-mealfeel__logo">
                 <img src="/img/mealfeel-logo.svg" alt="Mealfeel" title="Mealfeel"/>
             </div>
-            <div class="footer-landing__copyright">
+            <div class="footer-landing-mealfeel__copyright footer-landing-mealfeel__copyright_mobile">
+                &copy; 2019 Mealfeel, гармония&nbsp;питания&nbsp;как&nbsp;по&nbsp;нотам
+            </div>
+            <div class="footer-landing-mealfeel__share">
+                <div class="ya-share2"
+                     data-services="facebook,odnoklassniki,vkontakte"
+                     data-title="Выиграйте SPA-weekend, Роза Хутор Сочи"
+                     data-description="Купите Mealfeel, регистрируйтесь и проверяйте результаты розыгрыша каждую пятницу июля. В розыгрыше 50 призов для правильного питания. Главный приз разыгрывается 1 августа. Удачи!"
+                     data-image="<?='https://'.$_SERVER['SERVER_NAME'].'/img/mealfeel-share.png'?>"></div>
+            </div>
+            <div class="footer-landing-mealfeel__copyright footer-landing-mealfeel__copyright_desktop">
                 &copy; 2019 Mealfeel, гармония&nbsp;питания&nbsp;как&nbsp;по&nbsp;нотам
             </div>
         </div>
