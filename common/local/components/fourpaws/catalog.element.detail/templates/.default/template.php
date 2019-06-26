@@ -212,15 +212,20 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
 	                    }
                         $isCurrentOffer = !$isCurrentOffer && $currentOffer->getId() === $offer->getId();
                         /** @noinspection PhpUnhandledExceptionInspection */
+                        $colourCombination = false;
                         switch ($packageLabelType) {
                             case Offer::PACKAGE_LABEL_TYPE_COLOUR:
-                                $value = $offer->getColor()->getName();
-                                $image = $offer->getColor()->getFilePath();
-                                $colorHexCode = $offer->getColor()->getColourCode();
-                                $colourCombination = true;
+                                $color = $offer->getColor();
+                                if ($color) {
+                                    $value = $color->getName();
+                                    $image = $color->getFilePath();
+                                    $colorHexCode = $color->getColourCode();
+                                    $colourCombination = true;
+                                }
                                 break;
-                            default:
-                                $value = $offer->getPackageLabel(false, 0);
+                        }
+                        if ($colourCombination) {
+                            $value = $offer->getPackageLabel(false, 0);
                         }
                         ?>
                         <li class="b-weight-container__item b-weight-container__item--product <? if ($colourCombination) { ?>b-weight-container__item--color<? } ?> <?= $isCurrentOffer ? ' active' : '' ?>">

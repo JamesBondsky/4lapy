@@ -73,12 +73,16 @@ $packageLabelType = $currentOffer->getPackageLabelType();
 
 switch ($packageLabelType) {
     case Offer::PACKAGE_LABEL_TYPE_COLOUR:
-        $value = $currentOffer->getColor()->getName();
-        $image = $currentOffer->getColor()->getFilePath();
-        $colourCombination = true;
+        $color = $currentOffer->getColor();
+        if ($color) {
+            $value = $color->getName();
+            $image = $color->getFilePath();
+            $colourCombination = true;
+        }
         break;
-    default:
-        $value = $currentOffer->getPackageLabel(false, 999);
+}
+if (!$colourCombination) {
+    $value = $currentOffer->getPackageLabel(false, 999);
 }
 
 $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
@@ -126,6 +130,7 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
             </a>
             <?php if ($offers->count() > 0) {
                 $isOffersPrinted = false;
+                $colourCombination = false;
 
                 ob_start(); ?>
                 <div class="b-weight-container b-weight-container--list">
@@ -141,12 +146,16 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
                         foreach ($offers as $offer) {
                             switch ($packageLabelType) {
                                 case Offer::PACKAGE_LABEL_TYPE_COLOUR:
-                                    $value = $offer->getColor()->getName();
-                                    $image = $offer->getColor()->getFilePath();
-                                    $colourCombination = true;
+                                    $color = $offer->getColor();
+                                    if ($color) {
+                                        $value = $color->getName();
+                                        $image = $color->getFilePath();
+                                        $colourCombination = true;
+                                    }
                                     break;
-                                default:
-                                    $value = $offer->getPackageLabel(false, 0);
+                            }
+                            if (!$colourCombination) {
+                                $value = $offer->getPackageLabel(false, 0);
                             }
 
                             $countSizes++;
