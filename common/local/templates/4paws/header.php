@@ -108,11 +108,6 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
 
 <header class="b-header <?= $template->getHeaderClass() ?> js-header">
     <?php
-        if(!KioskService::isKioskMode()) {
-            require_once __DIR__ . '/blocks/header/promo_top_subscribe.php';
-        }
-    ?>
-    <?php
     $APPLICATION->IncludeComponent('articul:header.mobile.bunner',
         '',
         [],
