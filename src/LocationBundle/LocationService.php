@@ -65,6 +65,8 @@ class LocationService
 
     public const TYPE_DISTRICT = 'DISTRICT';
 
+    public const TYPE_DISTRICT_MOSCOW = 'DISTRICT_MOSCOW';
+
     public const TYPE_SUBREGION = 'SUBREGION';
 
     public const TYPE_REGION = 'REGION';
@@ -709,6 +711,7 @@ class LocationService
                 static::TYPE_CITY,
                 static::TYPE_VILLAGE,
                 static::TYPE_DISTRICT,
+                static::TYPE_DISTRICT_MOSCOW,
             ],
         ];
         if ($parentName !== null && !empty($parentName)) {
@@ -754,7 +757,7 @@ class LocationService
             if (!isset($this->locationsByCode[$code])) {
                 $this->locationsByCode[$code] = reset($this->findLocationNew([
                     '=CODE'     => $code,
-                    'TYPE.CODE' => [static::TYPE_CITY, static::TYPE_VILLAGE, static::TYPE_DISTRICT],
+                    'TYPE.CODE' => [static::TYPE_CITY, static::TYPE_VILLAGE, static::TYPE_DISTRICT, static::TYPE_DISTRICT_MOSCOW],
                 ]));
             }
             if (!empty($this->locationsByCode[$code]) && !\is_bool($this->locationsByCode[$code])) {

@@ -22,6 +22,7 @@ use Bitrix\Sale\UserMessageException;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
@@ -646,8 +647,8 @@ class OrderStorageService
     public function getInnerDelivery(OrderStorage $storage): ?DeliveryResultInterface
     {
         $result = null;
-        foreach ($this->getDeliveries($storage) as $delivery) {
-            if ($delivery instanceof DeliveryResultInterface) {
+        foreach ($this->getDeliveries($storage, true) as $delivery) {
+            if ($delivery instanceof DeliveryResult) {
                 $result = $delivery;
                 break;
             }
