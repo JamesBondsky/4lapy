@@ -1439,6 +1439,13 @@ class OrderCopy
 
         $order->setField('DELIVERY_LOCATION', $subscribe->getLocationId());
 
+        // проверка заполненности свойства местоположения
+        $newLocationProp = $order->getPropertyCollection()->getDeliveryLocation();
+        if (!$newLocationProp->getValue()) {
+            $oldLocationProp = $subscribe->getLocationId();
+            $newLocationProp->setValue($oldLocationProp);
+        }
+
         $shipmentCollection = $order->getShipmentCollection();
         $shipment = $shipmentCollection->createItem();
         $shipmentItemCollection = $shipment->getShipmentItemCollection();
@@ -1533,7 +1540,7 @@ class OrderCopy
                 /** @todo костыль. У этого магазина адрес не распознается дадатой */
                 $address = (new Address())
                     ->setValid(true)
-                    ->setCity($locationService->getCurrentCity())
+                    ->setCity($locationService->getCurrentCity()->getName())
                     ->setLocation($locationService->getCurrentLocation())
                     ->setHouse(1)
                     ->setStreetPrefix('пос')

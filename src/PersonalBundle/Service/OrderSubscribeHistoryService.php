@@ -299,7 +299,10 @@ class OrderSubscribeHistoryService
         ];
         $dbres = $this->findBy($params);
 
-        $orderIds = $this->fetchAllBySubscribeId($dbres, $orderSubscribe->getId());
+        $orders = $this->fetchAllBySubscribeId($dbres, $orderSubscribe->getId());
+        foreach($orders as $order){
+            $orderIds[] = $order['UF_NEW_ORDER_ID'];
+        }
         return $orderIds;
     }
 
