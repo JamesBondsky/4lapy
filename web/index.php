@@ -178,6 +178,8 @@ try {
 	            'BIG_TEXT',
 	            'LINK',
 	            'LOCATION',
+	            'BUTTON_TEXT',
+	            'BUTTON_COLOR',
 	        ],
 			"SET_BROWSER_TITLE" => "N",
 			"SET_LAST_MODIFIED" => "N",

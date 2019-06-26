@@ -33,8 +33,10 @@ if (!\is_array($arResult['ITEMS']) || empty($arResult['ITEMS'])) {
 	                    </div>
 	                    <div class="b-promo-banner-item__descr"><?= $item['PREVIEW_TEXT'] ?></div>
 	                    <div class="b-promo-banner-item__link-wrap">
-	                        <a class="b-promo-banner-item__link" href="<?= $item['DISPLAY_PROPERTIES']['LINK']['VALUE'] ?>">
-                                <? if ($item['EXTERNAL_ID'] == 'festival') { ?>
+	                        <a class="b-promo-banner-item__link" href="<?= $item['DISPLAY_PROPERTIES']['LINK']['VALUE'] ?>" <?=$item['DISPLAY_PROPERTIES']['BUTTON_COLOR']['VALUE'] ? sprintf('style="background-color: %s"', $item['DISPLAY_PROPERTIES']['BUTTON_COLOR']['VALUE']) : ''?>>
+                                <? if($item['DISPLAY_PROPERTIES']['BUTTON_TEXT']['VALUE']) { ?>
+                                    <?=$item['DISPLAY_PROPERTIES']['BUTTON_TEXT']['VALUE']?>
+                                <? } else if ($item['EXTERNAL_ID'] == 'festival') { ?>
                                     Я пойду
                                 <? }else { ?>
                                     Подробнее
