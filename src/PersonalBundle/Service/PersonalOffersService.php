@@ -48,6 +48,7 @@ class PersonalOffersService
 
     /**
      * @param int $userId
+     * @param bool|null $isNotShown
      * @return array
      * @throws InvalidArgumentException
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
@@ -56,13 +57,13 @@ class PersonalOffersService
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      */
-    public function getActiveUserCoupons(int $userId): array
+    public function getActiveUserCoupons(int $userId, ?bool $isNotShown = false): array
     {
         if ($userId <= 0) {
             throw new InvalidArgumentException('can\'t get user\'s coupons. userId: ' . $userId);
         }
 
-        list($offersCollection, $couponsCollection) = $this->getCoupons($userId);
+        list($offersCollection, $couponsCollection) = $this->getActiveCoupons($userId, $isNotShown);
         $result = [
             'coupons' => $couponsCollection,
             'offers'  => $offersCollection,
@@ -87,7 +88,7 @@ class PersonalOffersService
             throw new InvalidArgumentException('can\'t get user\'s coupons. userId: ' . $userId);
         }
 
-        list($offersCollection, $couponsCollection) = $this->getCoupons($userId);
+        list($offersCollection, $couponsCollection) = $this->getActiveCoupons($userId);
 
         $result = [];
         foreach ($couponsCollection as $coupon) {
@@ -502,6 +503,7 @@ class PersonalOffersService
 
     /**
      * @param int $userId
+     * @param bool|null $isNotShown
      * @return array
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
@@ -509,7 +511,7 @@ class PersonalOffersService
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      */
-    protected function getCoupons(int $userId): array
+    protected function getActiveCoupons(int $userId, ?bool $isNotShown = false): array
     {
         $coupons = [];
         $offersCollection = new ArrayCollection();
@@ -517,6 +519,22 @@ class PersonalOffersService
         $activeOffersCollection = $this->getActiveOffers();
 
         if (!$activeOffersCollection->isEmpty()) {
+            $personalCouponUsersQuery = Query\Join::on('this.ID', 'ref.UF_COUPON')
+                ->where('ref.UF_USER_ID', '=', $userId)
+                ->where(Query::filter()
+                    ->logic('or')
+                    ->where([
+                        ['ref.UF_USED', null],
+                        ['ref.UF_USED', false],
+                    ]));
+            if ($isNotShown) {
+                $personalCouponUsersQuery = $personalCouponUsersQuery->where(Query::filter()
+                    ->logic('or')
+                    ->where([
+                        ['ref.UF_SHOWN', null],
+                        ['ref.UF_SHOWN', false],
+                    ]));
+            }
             $coupons = $this->personalCouponManager::query()
                 ->setSelect([
                     'ID',
@@ -533,14 +551,7 @@ class PersonalOffersService
                 ->registerRuntimeField(
                     new ReferenceField(
                         'USER_COUPONS', $this->personalCouponUsersManager::getEntity()->getDataClass(),
-                        Query\Join::on('this.ID', 'ref.UF_COUPON')
-                            ->where('ref.UF_USER_ID', '=', $userId)
-                            ->where(Query::filter()
-                                ->logic('or')
-                                ->where([
-                                    ['ref.UF_USED', null],
-                                    ['ref.UF_USED', false],
-                                ])),
+                        $personalCouponUsersQuery,
                         ['join_type' => 'INNER']
                     )
                 )
@@ -567,5 +578,23 @@ class PersonalOffersService
 
         $couponsCollection = new ArrayCollection($coupons);
         return [$offersCollection, $couponsCollection];
+    }
+
+    /**
+     * @param array $couponsIds
+     * @throws InvalidArgumentException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
+     */
+    public function setCouponShownStatus(array $couponsIds): void
+    {
+        if (!$couponsIds) {
+            throw new InvalidArgumentException(__METHOD__ . '. Невозможно установить статус просмотренности купонов. Пустой массив $couponsIds');
+        }
+        $updateResult = $this->personalCouponUsersManager::updateMulti($couponsIds, ['UF_SHOWN' => '1'], true);
+        if (!$updateResult->isSuccess()) {
+            throw new \Exception(__METHOD__ . '. update error(s): ' . implode('. ', $updateResult->getErrorMessages()));
+        }
     }
 }

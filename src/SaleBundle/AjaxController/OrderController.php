@@ -27,8 +27,11 @@ use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\KioskBundle\Service\KioskService;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaService;
@@ -95,6 +98,11 @@ class OrderController extends Controller implements LoggerAwareInterface
     private $storeShopInfoService;
 
     /**
+     * @var LocationService
+     */
+    private $locationService;
+
+    /**
      * @var DeliveryService
      */
     private $deliveryService;
@@ -114,6 +122,7 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @param UserAuthorizationInterface $userAuthProvider
      * @param ShopInfoService            $shopInfoService
      * @param StoreShopInfoService       $storeShopInfoService
+     * @param LocationService            $locationService
      * @param ReCaptchaService           $recaptcha
      */
     public function __construct(
@@ -124,6 +133,7 @@ class OrderController extends Controller implements LoggerAwareInterface
         UserAuthorizationInterface $userAuthProvider,
         ShopInfoService $shopInfoService,
         StoreShopInfoService $storeShopInfoService,
+        LocationService $locationService,
         ReCaptchaService $recaptcha
     )
     {
@@ -134,6 +144,7 @@ class OrderController extends Controller implements LoggerAwareInterface
         $this->userAuthProvider = $userAuthProvider;
         $this->shopInfoService = $shopInfoService;
         $this->storeShopInfoService = $storeShopInfoService;
+        $this->locationService = $locationService;
         $this->recaptcha = $recaptcha;
     }
 
@@ -462,6 +473,14 @@ class OrderController extends Controller implements LoggerAwareInterface
             );
         }
 
+        /**
+         * Moscow Districts
+         */
+        if ($storage->getMoscowDistrictCode() != '') {
+            $this->orderStorageService->updateStorageMoscowZone($storage, OrderStorageEnum::NOVALIDATE_STEP);
+        }
+
+
         try {
             $order = $this->orderService->createOrder($storage);
         } catch (OrderCreateException|OrderSplitException $e) {
@@ -573,5 +592,122 @@ class OrderController extends Controller implements LoggerAwareInterface
             $errors,
             $step,
         ];
+    }
+
+    /**
+     * @Route("/set_delivery_zone_by_address/", methods={"POST"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws ObjectPropertyException
+     * @throws OrderStorageSaveException
+     * @throws OrderStorageValidationException
+     * @throws StoreNotFoundException
+     * @throws SystemException
+     * @throws UserMessageException
+     */
+    public function setDeliveryZoneByAddressAction(Request $request): JsonResponse
+    {
+        $storage = $this->orderStorageService->getStorage();
+        $currentStep = OrderStorageEnum::NOVALIDATE_STEP;
+        $data = json_decode($request->get('data'), true);
+        $okato = $data['data']['okato'];
+        if (!$okato) {
+            $storage->setMoscowDistrictCode('');
+            $storage->setCity(DeliveryService::MOSCOW_LOCATION_NAME);
+            $storage->setCityCode(DeliveryService::MOSCOW_LOCATION_CODE);
+            $this->orderStorageService->updateStorage($storage, $currentStep);
+        } else {
+            /**
+             * Ищем зону по ОКАТО
+             */
+            $okato = substr($okato, 0, 8);
+            $locations = $this->locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $okato);
+            if (!count($locations)) {
+                $storage->setMoscowDistrictCode('');
+                $storage->setCity(DeliveryService::MOSCOW_LOCATION_NAME);
+                $storage->setCityCode(DeliveryService::MOSCOW_LOCATION_CODE);
+                $this->orderStorageService->updateStorage($storage, $currentStep);
+            } else {
+                /**
+                 * Обновляем storage, записываем зону
+                 */
+                $location = current($locations);
+                $defaultCity = $storage->getCity();
+                $defaultCityCode = $storage->getCityCode();
+                $storage->setCity($location['NAME']);
+                $storage->setCityCode($location['CODE']);
+                $storage->setMoscowDistrictCode($location['CODE']);
+                $this->orderStorageService->updateStorage($storage, $currentStep);
+
+                /**
+                 * Получаем цену доставки в этой зоне
+                 */
+                $innerDelivery = $this->orderStorageService->getInnerDelivery($storage);
+
+                if (!$innerDelivery) {
+                    $storage->setCity($defaultCity);
+                    $storage->setCityCode($defaultCityCode);
+                    $this->orderStorageService->updateStorage($storage, $currentStep);
+                }
+            }
+        }
+
+        if (!$innerDelivery) {
+            $innerDelivery = $this->orderStorageService->getInnerDelivery($storage);
+        }
+
+        if ($innerDelivery == null) {
+            $storage->setMoscowDistrictCode('');
+            $storage->setCity(DeliveryService::MOSCOW_LOCATION_NAME);
+            $storage->setCityCode(DeliveryService::MOSCOW_LOCATION_CODE);
+            $this->orderStorageService->updateStorage($storage, $currentStep);
+            return JsonErrorResponse::createWithData();
+        }
+
+        $deliveryPrice = $innerDelivery->getPrice();
+        /** @var BasketService $basketService */
+        $basketService = App::getInstance()->getContainer()->get(BasketService::class);
+        $basket = $basketService->getBasket();
+        $basketPrice = $basket->getPrice();
+        /**
+         * интервалы
+         */
+        $intervals = [];
+        foreach ($innerDelivery->getAvailableIntervals() as $i => $interval) {
+            $intervals[$i + 1] = [
+                'text'     => (string)$interval,
+                'selected' => ($i + 1 === 1) ? 'selected' : ''
+            ];
+        }
+        /**
+         * даты доставки
+         */
+        $nextDeliveries = $this->deliveryService->getNextDeliveries($innerDelivery, 10);
+        $deliveryDates = [];
+        foreach ($nextDeliveries as $i => $nextDelivery) {
+            $deliveryDates[$i] = [
+                'text'     => FormatDate('l, d.m.Y', $nextDelivery->getDeliveryDate()->getTimestamp()),
+                'selected' => ($i === 0) ? 'selected' : ''
+            ];
+        }
+
+        return JsonSuccessResponse::createWithData(
+            '',
+            [
+                'delivery_price'     => CurrencyHelper::formatPrice($deliveryPrice, false),
+                'price_full'         => CurrencyHelper::formatPrice($basketPrice, false),
+                'price_total'        => CurrencyHelper::formatPrice($basketPrice + $deliveryPrice, false),
+                'deliver_date_price' => DeliveryTimeHelper::showTime($innerDelivery) . ', <span class="js-delivery--price">' . $deliveryPrice . '</span> ₽',
+                'intervals'          => $intervals,
+                'delivery_dates'     => $deliveryDates
+            ]
+        );
     }
 }

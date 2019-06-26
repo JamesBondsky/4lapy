@@ -86,6 +86,9 @@ class DeliveryService implements LoggerAwareInterface
     public const ZONE_5 = 'ZONE_5';
     public const ZONE_6 = 'ZONE_6';
 
+    public const MOSCOW_LOCATION_CODE = '0000073738';
+    public const MOSCOW_LOCATION_NAME = 'Москва';
+
     /**
      * Нижний Новгород и Нижегородская область
      */
@@ -130,6 +133,11 @@ class DeliveryService implements LoggerAwareInterface
      * Новые зоны с префиксом, работают как зона 2
      */
     public const ADD_DELIVERY_ZONE_CODE_PATTERN = 'ADD_DELIVERY_ZONE_';
+
+    /**
+     * Новые зоны - районы Москвы
+     */
+    public const ZONE_MOSCOW_DISTRICT_CODE_PATTERN = 'ZONE_MOSCOW_DISTRICT_';
 
     public const PICKUP_CODES = [
         DeliveryService::INNER_PICKUP_CODE,
@@ -615,7 +623,7 @@ class DeliveryService implements LoggerAwareInterface
                 $weightSumm = 0;
                 /** @var BasketItem $basketItem */
                 foreach($basketItems as $basketItem){
-                    $weightSumm += $basketItem->getQuantity() * WordHelper::showWeightNumber($basketItem->getWeight(), true);
+                    $weightSumm += $basketItem->getQuantity() * WordHelper::showWeightNumber((float)$basketItem->getWeight(), true);
                 }
 
                 if ($weightSumm > 50) {

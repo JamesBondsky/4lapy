@@ -189,6 +189,7 @@ class BonusService
             /** @var CardByContractCards $card */
             $cardBonus = new CardBonus();
             $cardBonus->setEmpty(true);
+            $isActiveCardGettingNeeded = true;
             if (!empty($user->getDiscountCardNumber())) {
                 $card = $manzanaService->getCardInfo($user->getDiscountCardNumber(), $contact->contactId);
                 if ($card !== null && $card->isActive()) {
@@ -203,8 +204,10 @@ class BonusService
                     $cardBonus->setDiscount((float)$card->discount);
                     $cardBonus->setReal((int)substr($card->cardNumber, 0, 2) === 26);
                     $cardBonus->setEmpty(false);
+                    $isActiveCardGettingNeeded = false;
                 }
-            } else {
+            }
+            if ($isActiveCardGettingNeeded) {
                 /** @var ArrayCollection $cards */
                 $cards = $contact->cards;
                 if (!$cards->isEmpty()) {
@@ -233,21 +236,30 @@ class BonusService
                 $currentCard = $contact->getCards()->filter(function(\FourPaws\External\Manzana\Model\Card $card) use($cardBonusNumber) {
                     return $card->cardNumber == $cardBonusNumber;
                 })->first();
-                //$temporaryBonus = $currentCard->balanceExtraNoLimit; // на тестовой Manzana
-                $temporaryBonus = $currentCard->balanceExtraLimit; // на боевой Manzana
+                //$temporaryBonus = (float)$currentCard->balanceExtraNoLimit; // на тестовой Manzana
+                $temporaryBonus = (float)$currentCard->balanceExtraLimit; // на боевой Manzana
+                $activeBonus = (float)$contact->plActiveBalance;
+                $discount = $cardBonus->getDiscount();
 
-                $bonus->setActiveBonus((float)$contact->plActiveBalance);
-                $bonus->setTemporaryBonus((float)$temporaryBonus);
+                $bonus->setActiveBonus($activeBonus);
+                $bonus->setTemporaryBonus($temporaryBonus);
                 $bonus->setAllBonus((float)$contact->plBalance);
                 $bonus->setCredit((float)$contact->plCredit);
                 $bonus->setDebit((float)$contact->plDebet);
                 $bonus->setSum((float)$contact->plSumm);
                 $bonus->setSumDiscounted((float)$contact->plSummDiscounted);
-                $bonus->setDiscount((float)$contact->plDiscount);
+                $bonus->setDiscount($discount);
 
                 $bonus->setCard($cardBonus);
 
                 $bonus->setEmpty(false);
+
+                $user->setDiscountCardNumber($cardBonusNumber)
+                    ->setActiveBonus($activeBonus)
+                    ->setTemporaryBonus($temporaryBonus)
+                    ->setDiscount($discount)
+                ;
+                App::getInstance()->getContainer()->get(UserRepository::class)->update($user);
             }
         }
         return $bonus;
