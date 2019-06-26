@@ -64,7 +64,6 @@ class SapService
         Manager::disableExtendsDiscount();
 
         foreach ($this->pipelineRegistry->generator($pipelineCode) as $sourceMessage) {
-            $this->clearCacheProduct($sourceMessage->getData()->getItems());
             if ($this->consumerRegistry->consume($sourceMessage->getData())) {
                 $this->sourceRegistry->ack($sourceMessage);
                 $this->clearCacheProduct($sourceMessage->getData()->getItems());
