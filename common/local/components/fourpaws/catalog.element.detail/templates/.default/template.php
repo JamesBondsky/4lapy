@@ -224,7 +224,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                                 }
                                 break;
                         }
-                        if ($colourCombination) {
+                        if (!$colourCombination) {
                             $value = $offer->getPackageLabel(false, 0);
                         }
                         ?>

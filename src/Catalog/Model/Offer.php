@@ -1845,7 +1845,7 @@ class Offer extends IblockElement
             return self::PACKAGE_LABEL_TYPE_VOLUME;
         }
 
-        if ($this->getColourCombination()) {
+        if ($this->getColourCombination() && $this->getColor()) {
             return self::PACKAGE_LABEL_TYPE_COLOUR;
         }
 
