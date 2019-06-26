@@ -120,7 +120,6 @@ class ImportCommand extends Command implements LoggerAwareInterface
      */
     public function execute(InputInterface $input, OutputInterface $output): void
     {
-        Cache::clearCache(true);
         $available = $this->pipelineRegistry->getCollection()->getKeys();
         $pipeline = $input->getArgument(self::ARGUMENT_PIPELINE);
         $force = $input->getOption(self::OPTION_FORCE);

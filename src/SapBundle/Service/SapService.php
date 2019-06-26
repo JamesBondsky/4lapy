@@ -7,6 +7,7 @@
 namespace FourPaws\SapBundle\Service;
 
 use FourPaws\AppBundle\Service\LockerInterface;
+use FourPaws\CatalogBundle\EventController\Event;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SapBundle\Consumer\ConsumerRegistryInterface;
 use FourPaws\SapBundle\Exception\NotFoundPipelineException;
@@ -63,13 +64,32 @@ class SapService
         Manager::disableExtendsDiscount();
 
         foreach ($this->pipelineRegistry->generator($pipelineCode) as $sourceMessage) {
+            $this->clearCacheProduct($sourceMessage->getData()->getItems());
             if ($this->consumerRegistry->consume($sourceMessage->getData())) {
                 $this->sourceRegistry->ack($sourceMessage);
+                $this->clearCacheProduct($sourceMessage->getData()->getItems());
 
                 continue;
             }
 
             $this->sourceRegistry->noAck($sourceMessage);
+            $this->clearCacheProduct($sourceMessage->getData()->getItems());
+        }
+    }
+
+    private function clearCacheProduct($sourceMessage)
+    {
+        $ids = [];
+        foreach ($sourceMessage as $itemId) {
+            $ids[] = $itemId->getOfferXmlId();
+        }
+
+        if (count($itemId->getOfferXmlId()) > 0) {
+            $itemDb = \CIBlockElement::GetList([], ['XML_ID' => $ids]);
+
+            while($item = $itemDb->Fetch()) {
+                Event::clearProductCache($item['ID']);
+            }
         }
     }
 }
