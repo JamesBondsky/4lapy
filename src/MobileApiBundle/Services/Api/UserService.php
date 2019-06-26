@@ -393,7 +393,7 @@ class UserService
         return (new ClientCard())
             ->setTitle('Карта клиента')
             ->setBalance(isset($bonusInfo) ? $bonusInfo->getActiveBonus() : $user->getActiveBonus())
-            ->setTempBalance(isset($bonusInfo) ? $bonusInfo->getTemporaryBonus() : $user->getTemporaryBonus())
+            ->setTempIncome(isset($bonusInfo) ? $bonusInfo->getTemporaryBonus() : $user->getTemporaryBonus())
             ->setNumber($user->getDiscountCardNumber())
             ->setSaleAmount($user->getDiscount());
     }

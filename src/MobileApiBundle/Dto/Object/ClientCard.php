@@ -29,10 +29,10 @@ class ClientCard
 
     /**
      * @Serializer\Type("float")
-     * @Serializer\SerializedName("temp_balance")
+     * @Serializer\SerializedName("temp_income")
      * @var float
      */
-    protected $tempBalance = 0;
+    protected $tempIncome = 0;
 
     /**
      * @Serializer\Type("string")
@@ -89,19 +89,19 @@ class ClientCard
     /**
      * @return float
      */
-    public function getTempBalance(): float
+    public function getTempIncome(): float
     {
-        return $this->tempBalance;
+        return $this->tempIncome;
     }
 
     /**
-     * @param string $tempBalance
+     * @param string $tempIncome
      *
      * @return ClientCard
      */
-    public function setTempBalance(string $tempBalance): ClientCard
+    public function setTempIncome(string $tempIncome): ClientCard
     {
-        $this->tempBalance = $tempBalance;
+        $this->tempIncome = $tempIncome;
         return $this;
     }
 
