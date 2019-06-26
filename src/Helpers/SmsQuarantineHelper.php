@@ -62,9 +62,9 @@ class SmsQuarantineHelper
 
     public static function getRanges() {
         return [
-            3 => (new \DateTime())->modify('+5 minute'),
-            5 => (new \DateTime())->modify('+1 hour'),
-            10 => (new \DateTime())->modify('+1 day'),
+            4 => (new \DateTime())->modify('+5 minute'),
+            10 => (new \DateTime())->modify('+1 hour'),
+            20 => (new \DateTime())->modify('+1 day'),
         ];
     }
 
