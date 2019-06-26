@@ -240,7 +240,7 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      */
     public static function checkCode(string $confirmCode, string $type = 'sms', ?bool $withoutDelete = false, ?string $hash = ''): bool
     {
-        $generatedCode = static::getGeneratedCode($type, $hash);
+        $generatedCode = static::getGeneratedCode($type, $hash, $confirmCode);
         if (!empty($generatedCode)) {
             $confirmed = $confirmCode === $generatedCode;
             if ($confirmed && !$withoutDelete) {
@@ -255,19 +255,22 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
     /**
      * @param string $type
      * @param string|null $hash
+     * @param string|null $confirmHash
      *
      * @return string
      * @throws ExpiredConfirmCodeException
      * @throws NotFoundConfirmedCodeException
      * @throws Exception
      */
-    public static function getGeneratedCode(string $type = 'sms', ?string $hash = ''): string
+    public static function getGeneratedCode(string $type = 'sms', ?string $hash = '', string $confirmHash = ''): string
     {
-        $filter = [
-            'ID' => $_COOKIE[self::getCookieName($type)]
-        ];
         if ($hash) {
             $filter['=HASH'] = $hash;
+        }
+        if ($confirmHash) {
+            $filter['CODE'] = $confirmHash;
+        } else {
+            $filter['ID'] = $_COOKIE[self::getCookieName($type)];
         }
 
         $ConfirmCodeQuery = new ConfirmCodeQuery(ConfirmCodeTable::query());
@@ -278,7 +281,7 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
             throw new NotFoundConfirmedCodeException('не найден код');
         }
         if (static::isExpire($confirmCode, $type)) {
-            static::delCurrentCode();
+//            static::delCurrentCode();
             throw new ExpiredConfirmCodeException('истек срок действия кода');
         }
 
