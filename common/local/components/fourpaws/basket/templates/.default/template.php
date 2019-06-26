@@ -339,7 +339,7 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                                 </div>
                                 <div class="b-price-subscribe-delivery-cart__value">
                                     <div class="b-price b-price--subscribe-cart b-price--result-subscribe-cart">
-                                        <span class="b-price__current">87,00</span>
+                                        <span class="b-price__current"><?=WordHelper::numberFormat($subscribePriceDiff)?></span>
                                         <span class="b-ruble">₽</span>
                                     </div>
                                 </div>
@@ -563,7 +563,7 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                                 </div>
                                 <div class="b-price-subscribe-delivery-cart__value">
                                     <div class="b-price b-price--subscribe-cart b-price--result-subscribe-cart">
-                                        <span class="b-price__current">87,00</span>
+                                        <span class="b-price__current"><?= WordHelper::numberFormat($subscribePriceDiff) ?></span>
                                         <span class="b-ruble">₽</span>
                                     </div>
                                 </div>

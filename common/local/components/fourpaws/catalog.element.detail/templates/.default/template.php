@@ -294,7 +294,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                                 </div>
                             </div>
                         </div>
-                        <span class="b-product-information__bonus b-product-information__bonus--subscribe js-bonus-<?= $currentOffer->getId() ?>"></span>
+                        <span class="b-product-information__bonus b-product-information__bonus--subscribe js-bonus-subscribe-<?= $currentOffer->getId() ?>"></span>
 
                     </div>
                 </li>
