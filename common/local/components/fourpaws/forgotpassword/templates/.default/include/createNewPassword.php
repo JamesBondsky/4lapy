@@ -4,6 +4,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 /** @var string $login
  * @var string $backUrl
+ * @var string $hash
+ * @var string $phone
+ * @var string $confirmCode
  */ ?>
 <div class="b-registration__content b-registration__content--create-password">
     <div class="b-registration__text-instruction b-registration__text-instruction--create-password">Введите и повторите
@@ -15,6 +18,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <input type="hidden" name="backurl" value="<?= $backUrl ?>">
         <input type="hidden" name="step" value="sendSmsCode">
         <input type="hidden" name="login" value="<?= $login ?? $arResult['EMAIL'] ?>">
+	    <input type="hidden" name="phone" value="<?= $phone ?>">
+	    <input type="hidden" name="cpToken" value="<?= $_GET['emailHash'] ?? $hash ?>"><? // костыль для восстановления по email (проверяем по наличию $_GET['emailHash']) ?>
+	    <input type="hidden" name="confirmCode" value="<?= $_GET['emailHash'] ? $_GET['hash'] : $confirmCode ?>"><? // костыль для восстановления по email (проверяем по наличию $_GET['emailHash']) ?>
         <div class="b-input-line b-input-line--create-password">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-password-first">Пароль</label>
