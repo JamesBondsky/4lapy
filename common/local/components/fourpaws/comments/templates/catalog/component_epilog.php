@@ -11,6 +11,25 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 $request = Application::getInstance()->getContext()->getRequest();
 ?>
 <script type="text/javascript" data-epilog-handlers="true">
+    if(epilogHandlers === undefined){
+        // класс для комплексного выполнения всех обработчиков
+        var epilogHandlers = {
+            handlers: [],
+            add: function (handler) {
+                this.getInstance().handlers[this.handlers.length] = handler;
+            },
+            execute: function () {
+                this.getInstance().handlers.forEach(function (handler) {
+                    if (typeof handler === 'function') {
+                        handler();
+                    }
+                });
+                this.getInstance().handlers = [];
+            },
+            getInstance: function() { return this }
+        };
+    }
+
     <? if ($request->get('new-review') === 'y') { ?>
     epilogHandlers.add(function () {
         if ($('ul.b-tab-title__list a[data-tab=reviews]').length > 0) {
