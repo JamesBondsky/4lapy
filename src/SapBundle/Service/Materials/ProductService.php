@@ -140,11 +140,16 @@ class ProductService
             )->first()
         );
 
-        $product = $product ?: $this->findByColour(
-            $material->getProperties()->getPropertyValues(
-                SapOfferProperty::COLOUR_COMBINATION
-            )->first()
-        );
+        if ($material->getMatType2() === '02') {
+            $product = $product ?: $this->findByColourCombination(
+                $material->getGeneralArticle()
+            );
+        }
+        if ($material->getMatType2() === '01') {
+            $product = $product ?: $this->findByColourCombination(
+                $material->getOfferXmlId()
+            );
+        }
 
         return $product ?: $this->findByOfferWithoutCombination($material->getOfferXmlId());
     }
@@ -166,14 +171,14 @@ class ProductService
     }
 
     /**
-     * @param string $colour
+     * @param string $colourCombination
      *
      * @return null|Product
      * @throws IblockNotFoundException
      */
-    protected function findByColour(string $colour): ?Product
+    protected function findByColourCombination(string $colourCombination): ?Product
     {
-        if (!$colour) {
+        if (!$colourCombination) {
             return null;
         }
 
@@ -184,7 +189,7 @@ class ProductService
             [
                 '!PROPERTY_CML2_LINK'         => false,
                 'IBLOCK_ID'                   => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
-                'PROPERTY_COLOUR_COMBINATION' => $colour,
+                'PROPERTY_COLOUR_COMBINATION' => $colourCombination,
             ],
             false,
             false,

@@ -1810,6 +1810,23 @@ class Offer extends IblockElement
     }
 
     /**
+     * @return string
+     * @throws ApplicationCreateException
+     */
+    public function getOfferWithColor(): string
+    {
+        $clothingSize = $this->getClothingSize();
+        $color = $this->getColor();
+        if (!isset($clothingSize) || !isset($color)) {
+            return '';
+        }
+
+        $offerName = $clothingSize->getName();
+
+        return \sprintf('%s, %s', $offerName, $color->getName());
+    }
+
+    /**
      * Возвращает тип подписи упаковки
      *
      * @return string Одна из констант \FourPaws\Catalog\Model\Offer::PACKAGE_LABEL_TYPE_*
@@ -1820,16 +1837,16 @@ class Offer extends IblockElement
      */
     public function getPackageLabelType(): string
     {
-        if ($this->getColourCombination()) {
-            return self::PACKAGE_LABEL_TYPE_COLOUR;
-        }
-
         if ($this->getClothingSize()) {
             return self::PACKAGE_LABEL_TYPE_SIZE;
         }
 
         if ($this->getVolumeReference()) {
             return self::PACKAGE_LABEL_TYPE_VOLUME;
+        }
+
+        if ($this->getColourCombination()) {
+            return self::PACKAGE_LABEL_TYPE_COLOUR;
         }
 
         return self::PACKAGE_LABEL_TYPE_WEIGHT;
