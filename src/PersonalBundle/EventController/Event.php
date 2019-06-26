@@ -16,6 +16,7 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserTable;
 use CUser;
 use FourPaws\App\Application;
+use FourPaws\App\Application as App;
 use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Enum\IblockCode;
@@ -131,8 +132,8 @@ class Event extends BaseServiceHandler
         static::initHandler('OnAfterIBlockElementUpdate', [self::class, 'importPersonalOffersCoupons'], 'iblock');
         static::initHandler('\PersonalCouponUsers::OnAfterAdd', [self::class, 'resetCouponWindowCounter']);
 
-        static::initHandler('OnBeforeIBlockElementAdd', [self::class, 'processShareFileProducts'], 'iblock');
-        static::initHandler('OnBeforeIBlockElementUpdate', [self::class, 'processShareFileProducts'], 'iblock');
+        static::initHandler('OnAfterIBlockElementUpdate', [self::class, 'processShareFileProducts'], 'iblock');
+        static::initHandler('OnAfterIBlockElementAdd', [self::class, 'processShareFileProducts'], 'iblock');
 
         if(KioskService::isKioskMode()) {
             static::initHandler('OnEpilog', [
@@ -772,14 +773,9 @@ class Event extends BaseServiceHandler
                     }
                 });
 
-//                $uniqArrProducts = array_map(function ($productItem) {
-//                    return $productItem;
-////                    return ['VALUE' => $productItem, 'DESCRIPTION' => ''];
-//                }, $uniqArrProducts);
 
-                $prop[$productPropId] = $uniqArrProducts;
-
-                $res = \CIBlockElement::SetPropertyValuesEx($arFields['ID'], false, $prop);
+                \CModule::IncludeModule("iblock");
+                \CIBlockElement::SetPropertyValuesEx($arFields['ID'], $arFields['IBLOCK_ID'], [IblockProperty::SHARES_PRODUCT_CODE => $uniqArrProducts]);
             }
         }
 
