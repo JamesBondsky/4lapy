@@ -180,6 +180,7 @@ try {
 	            'LOCATION',
 	            'BUTTON_TEXT',
 	            'BUTTON_COLOR',
+	            'HIDE_LOGO_MOBILE',
 	        ],
 			"SET_BROWSER_TITLE" => "N",
 			"SET_LAST_MODIFIED" => "N",
