@@ -82,6 +82,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceExce
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Intl\Exception\NotImplementedException;
+use FourPaws\SaleBundle\Service\OrderService as SaleOrderService;
 
 class OrderSubscribeService implements LoggerAwareInterface
 {
@@ -807,7 +808,22 @@ class OrderSubscribeService implements LoggerAwareInterface
             $calculationResult = reset($arCalculationResult);
 
             if(!$calculationResult){
-                throw new NotFoundException(sprintf("Не удалось получить службу доставки для подписки: %s [%s]", $subscribe->getId(), __METHOD__));
+                $arCalculationResult = $deliveryService->getByLocation($subscribe->getLocationId(), [$deliveryCode]);
+                $calculationResult = reset($arCalculationResult);
+                if($deliveryService->isDelivery($calculationResult)) {
+                    $store = $storeService->getStoreByXmlId(SaleOrderService::STORE);
+                    $calculationResult->setSelectedStore($store);
+                }
+            }
+
+            if(!$calculationResult){
+                throw new NotFoundException(
+                    sprintf("Не удалось получить службу доставки для подписки: %s %s [%s]",
+                        implode(" ", $calculationResult->getErrorMessages()),
+                        $subscribe->getId(),
+                        __METHOD__
+                    )
+                );
             }
 
             if($deliveryService->isPickup($calculationResult)){
