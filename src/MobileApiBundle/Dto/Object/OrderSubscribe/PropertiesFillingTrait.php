@@ -30,7 +30,8 @@ trait PropertiesFillingTrait
                     continue;
                 }
                 if($value instanceof BitrixDateTime){
-                    $value = new \DateTime($value->toString());
+                    //$value = new \DateTime($value->toString());
+                    $value = $value->toString();
                 }
                 $this->$setter($value);
             }

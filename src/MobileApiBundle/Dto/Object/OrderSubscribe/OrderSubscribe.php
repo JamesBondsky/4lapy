@@ -83,8 +83,8 @@ class OrderSubscribe
     protected $orderId;
 
     /**
-     * @var \DateTime
-     * @Serializer\Type("DateTime")
+     * @var string
+     * @Serializer\Type("string")
      * @Serializer\SerializedName("nextDate")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
@@ -92,8 +92,8 @@ class OrderSubscribe
     protected $nextDate;
 
     /**
-     * @var \DateTime
-     * @Serializer\Type("DateTime")
+     * @var string
+     * @Serializer\Type("string")
      * @Serializer\SerializedName("dateCreate")
      * @Serializer\Groups(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
@@ -101,8 +101,8 @@ class OrderSubscribe
     protected $dateCreate;
 
     /**
-     * @var \DateTime
-     * @Serializer\Type("DateTime")
+     * @var string
+     * @Serializer\Type("string")
      * @Serializer\SerializedName("dateUpdate")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
@@ -110,8 +110,8 @@ class OrderSubscribe
     protected $dateUpdate;
 
     /**
-     * @var \DateTime
-     * @Serializer\Type("DateTime")
+     * @var string
+     * @Serializer\Type("string")
      * @Serializer\SerializedName("lastCheck")
      * @Serializer\Groups(groups={"create","read","update"})
      */
@@ -136,8 +136,8 @@ class OrderSubscribe
     protected $checkDays;
 
     /**
-     * @var \DateTime
-     * @Serializer\Type("DateTime")
+     * @var string
+     * @Serializer\Type("string")
      * @Serializer\SerializedName("dateCheck")
      * @Serializer\Groups(groups={"create","read","update"})
      */
@@ -163,6 +163,24 @@ class OrderSubscribe
     {
         $this->fillProperties($transferObjectType);
         $this->fillGoods();
+    }
+
+    /**
+     * @return int
+     */
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    /**
+     * @param int $id
+     * @return OrderSubscribe
+     */
+    public function setId(int $id): OrderSubscribe
+    {
+        $this->id = $id;
+        return $this;
     }
 
     /**
@@ -274,18 +292,18 @@ class OrderSubscribe
     }
 
     /**
-     * @return bool
+     * @return int
      */
-    public function isActive(): bool
+    public function getActive(): int
     {
         return $this->active;
     }
 
     /**
-     * @param bool $active
+     * @param int $active
      * @return OrderSubscribe
      */
-    public function setActive(bool $active): OrderSubscribe
+    public function setActive(int $active): OrderSubscribe
     {
         $this->active = $active;
         return $this;
@@ -310,72 +328,72 @@ class OrderSubscribe
     }
 
     /**
-     * @return \DateTime
+     * @return string
      */
-    public function getNextDate(): \DateTime
+    public function getNextDate(): string
     {
         return $this->nextDate;
     }
 
     /**
-     * @param \DateTime $nextDate
+     * @param string $nextDate
      * @return OrderSubscribe
      */
-    public function setNextDate(\DateTime $nextDate): OrderSubscribe
+    public function setNextDate(string $nextDate): OrderSubscribe
     {
         $this->nextDate = $nextDate;
         return $this;
     }
 
     /**
-     * @return \DateTime
+     * @return string
      */
-    public function getDateCreate(): \DateTime
+    public function getDateCreate(): string
     {
         return $this->dateCreate;
     }
 
     /**
-     * @param \DateTime $dateCreate
+     * @param string $dateCreate
      * @return OrderSubscribe
      */
-    public function setDateCreate(\DateTime $dateCreate): OrderSubscribe
+    public function setDateCreate(string $dateCreate): OrderSubscribe
     {
         $this->dateCreate = $dateCreate;
         return $this;
     }
 
     /**
-     * @return \DateTime
+     * @return string
      */
-    public function getDateUpdate(): \DateTime
+    public function getDateUpdate(): string
     {
         return $this->dateUpdate;
     }
 
     /**
-     * @param \DateTime $dateUpdate
+     * @param string $dateUpdate
      * @return OrderSubscribe
      */
-    public function setDateUpdate(\DateTime $dateUpdate): OrderSubscribe
+    public function setDateUpdate(string $dateUpdate): OrderSubscribe
     {
         $this->dateUpdate = $dateUpdate;
         return $this;
     }
 
     /**
-     * @return \DateTime
+     * @return string
      */
-    public function getLastCheck(): \DateTime
+    public function getLastCheck(): string
     {
         return $this->lastCheck;
     }
 
     /**
-     * @param \DateTime $lastCheck
+     * @param string $lastCheck
      * @return OrderSubscribe
      */
-    public function setLastCheck(\DateTime $lastCheck): OrderSubscribe
+    public function setLastCheck(string $lastCheck): OrderSubscribe
     {
         $this->lastCheck = $lastCheck;
         return $this;
@@ -418,39 +436,21 @@ class OrderSubscribe
     }
 
     /**
-     * @return \DateTime
+     * @return string
      */
-    public function getDateCheck(): \DateTime
+    public function getDateCheck(): string
     {
         return $this->dateCheck;
     }
 
     /**
-     * @param \DateTime $dateCheck
+     * @param string $dateCheck
      * @return OrderSubscribe
      */
-    public function setDateCheck(\DateTime $dateCheck): OrderSubscribe
+    public function setDateCheck(string $dateCheck): OrderSubscribe
     {
         $this->dateCheck = $dateCheck;
         return $this;
-    }
-
-    /**
-     * @param int $id
-     * @return OrderSubscribe
-     */
-    public function setId(int $id): OrderSubscribe
-    {
-        $this->id = $id;
-        return $this;
-    }
-
-    /**
-     * @return int
-     */
-    public function getId(): int
-    {
-        return $this->id;
     }
 
     /**
