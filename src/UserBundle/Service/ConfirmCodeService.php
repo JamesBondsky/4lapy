@@ -281,7 +281,7 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
             throw new NotFoundConfirmedCodeException('не найден код');
         }
         if (static::isExpire($confirmCode, $type)) {
-//            static::delCurrentCode();
+            static::delCurrentCode();
             throw new ExpiredConfirmCodeException('истек срок действия кода');
         }
 
