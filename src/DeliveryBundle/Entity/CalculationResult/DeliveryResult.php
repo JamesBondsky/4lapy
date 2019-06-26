@@ -70,7 +70,8 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
                 if ((bool)$this->getShipmentResults() &&
                     !(
                         in_array($this->getDeliveryZone(), DeliveryService::getZonesTwo()) ||
-                        mb_strpos($this->getDeliveryZone(), DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false
+                        mb_strpos($this->getDeliveryZone(), DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false ||
+                        mb_strpos($this->getDeliveryZone(), DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
                     )
                 ) {
                     $defaultDate = clone $this->deliveryDate;

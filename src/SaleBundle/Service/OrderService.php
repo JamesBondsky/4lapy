@@ -621,13 +621,22 @@ class OrderService implements LoggerAwareInterface
             (
                 ($this->deliveryService->isInnerDelivery($selectedDelivery) && $selectedDelivery->getSelectedStore()->isShop()) ||
                 $this->deliveryService->isInnerPickup($selectedDelivery)
-            ))
+            )) ||
+            mb_strpos($selectedDelivery->getDeliveryZone(), DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
         ) {
+            /**
+             * Месье Костелье для районов Москвы (установка SHIPMENT_PLACE_CODE если есть базовый магазин для зоны)
+             */
             $shipmentResults = $selectedDelivery->getShipmentResults();
             $shipmentDays = [];
             /** @var BasketItem $item */
             foreach ($order->getBasket() as $item) {
-                $shipmentPlaceCode = self::STORE;
+                $selectedShop = $selectedDelivery->getSelectedStore();
+                if ($selectedShop instanceof Store) {
+                    $shipmentPlaceCode = $selectedShop->getXmlId();
+                } else {
+                    $shipmentPlaceCode = self::STORE;
+                }
                 /** @var DeliveryScheduleResult $deliveryResult */
                 if ($shipmentResults &&
                     ($deliveryResult = $shipmentResults->getByOfferId($item->getProductId()))
@@ -638,7 +647,11 @@ class OrderService implements LoggerAwareInterface
                         $shipmentDays[$shipmentPlaceCode] = $days;
                     }
                 }
-
+                if ($shipmentPlaceCode === self::STORE) {
+                    break;
+                }
+            }
+            foreach ($order->getBasket() as $item) {
                 $this->basketService->setBasketItemPropertyValue(
                     $item,
                     'SHIPMENT_PLACE_CODE',
@@ -876,9 +889,17 @@ class OrderService implements LoggerAwareInterface
                                     }
                                     break;
                                 default:
-                                    if (mb_strpos($selectedDelivery->getDeliveryZone(), DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false) {
+                                    if (
+                                        mb_strpos($selectedDelivery->getDeliveryZone(), DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false ||
+                                        mb_strpos($selectedDelivery->getDeliveryZone(), DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
+                                    ) {
                                         if ($this->deliveryService->isDelivery($selectedDelivery)) {
-                                            $value = $selectedDelivery->getSelectedStore()->getXmlId();
+                                            $baseShops = $selectedDelivery->getBestShops()->getBaseShops();
+                                            if($baseShops->count() > 0){
+                                                $value = $baseShops->first()->getXmlId();
+                                            } else {
+                                                $value = $selectedDelivery->getSelectedStore()->getXmlId();
+                                            }
                                         } elseif ($baseShop = $selectedDelivery->getBestShops()->getBaseShops()->first()) {
                                             $value = $baseShop->getXmlId();
                                         } else {
@@ -2143,8 +2164,7 @@ class OrderService implements LoggerAwareInterface
             'loaders_count' => $loadersCount
         ];
 
-        $nearAddressString = $this->storeService->getStoreAddress($nearShop) . ', ' . $nearShop->getAddress();
-        $nearAddress = $this->locationService->splitAddress($nearAddressString, $nearShop->getLocation())->toStringExt();
+        $nearAddress = $this->locationService->splitAddress($nearShop->getAddress(), $nearShop->getLocation())->toStringExt();
         $secondAddress = $this->getOrderDeliveryAddress($order);
 
         $pointZeroDate = clone $curDate;

@@ -17,6 +17,7 @@ use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\Entity\Base;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Entity\UpdateResult;
 use Bitrix\Main\Error;
@@ -81,6 +82,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceExce
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Intl\Exception\NotImplementedException;
+use FourPaws\SaleBundle\Service\OrderService as SaleOrderService;
 
 class OrderSubscribeService implements LoggerAwareInterface
 {
@@ -806,7 +808,22 @@ class OrderSubscribeService implements LoggerAwareInterface
             $calculationResult = reset($arCalculationResult);
 
             if(!$calculationResult){
-                throw new NotFoundException(sprintf("Не удалось получить службу доставки для подписки: %s [%s]", $subscribe->getId(), __METHOD__));
+                $arCalculationResult = $deliveryService->getByLocation($subscribe->getLocationId(), [$deliveryCode]);
+                $calculationResult = reset($arCalculationResult);
+                if($deliveryService->isDelivery($calculationResult)) {
+                    $store = $storeService->getStoreByXmlId(SaleOrderService::STORE);
+                    $calculationResult->setSelectedStore($store);
+                }
+            }
+
+            if(!$calculationResult){
+                throw new NotFoundException(
+                    sprintf("Не удалось получить службу доставки для подписки: %s %s [%s]",
+                        implode(" ", $calculationResult->getErrorMessages()),
+                        $subscribe->getId(),
+                        __METHOD__
+                    )
+                );
             }
 
             if($deliveryService->isPickup($calculationResult)){
@@ -952,6 +969,10 @@ class OrderSubscribeService implements LoggerAwareInterface
             }
 
             $subscribeItems = $this->orderSubscribeItemRepository->findBySubscribe($id);
+            if($subscribeItems->isEmpty()){
+                throw new OrderSubscribeException('Не найдено ни одного товара в подписке');
+            }
+
             $basket = Basket::create(self::SITE_ID);
             $items = [];
             /** @var OrderSubscribeItem $item */
@@ -1400,6 +1421,8 @@ class OrderSubscribeService implements LoggerAwareInterface
                     implode("\n", $result->getErrorMessagesEx())
                 ),
                 [
+                    'SUBSCRIBE_ID' => $orderSubscribe->getId(),
+                    'DATE_DELIVERY' => $orderSubscribe->getNextDate()->toString(),
                     'ORIGIN_ORDER_ID' => $params->getOriginOrderId(),
                     'COPY_ORDER_ID' => $params->getCopyOrderId(),
                 ]
@@ -1431,6 +1454,7 @@ class OrderSubscribeService implements LoggerAwareInterface
     ): Result
     {
         $result = new Result();
+        $currentDate = $currentDate ?: new \DateTimeImmutable();
 
         if (!$orderSubscribe->isActive()) {
             $result->addError(
@@ -1503,16 +1527,15 @@ class OrderSubscribeService implements LoggerAwareInterface
                 // проверим, не создавался ли уже заказ для этой даты
                 $data['alreadyCreated'] = $copyParams->isCurrentDeliveryDateOrderAlreadyCreated();
 
+                // бывает, что заказ создался, а дата следующей доставки не обновилась
                 if($data['alreadyCreated']) {
                     $dateDeliverySubscribe = $orderSubscribe->getNextDate()->format('d.m.y');
                     $dateDeliveryLastOrder = $this->getOrderSubscribeHistoryService()->getLastOrderDeliveryDate($orderSubscribe)->format('d.m.y');
-
-                    // обновим дату доставки, если она совпала с последним заказом
                     if($dateDeliverySubscribe == $dateDeliveryLastOrder){
                         $this->countNextDate($orderSubscribe);
                         $orderSubscribe->countDateCheck();
                         $this->update($orderSubscribe);
-                        $this->log()->info(sprintf('Обнволена дата следующей доставки для подписки %s: %s', $orderSubscribe->getId(), $orderSubscribe->getNextDate()->format('d.m.y')));
+                        $this->log()->info(sprintf('Обновлена дата следующей доставки для подписки %s: %s', $orderSubscribe->getId(), $orderSubscribe->getNextDate()->format('d.m.y')));
                     }
                 }
             } catch (\Exception $exception) {
@@ -1584,20 +1607,23 @@ class OrderSubscribeService implements LoggerAwareInterface
      * @throws \Exception
      * @throws \FourPaws\PersonalBundle\Exception\RuntimeException
      */
-    public function sendOrders(int $limit = 200, $currentDate = '', bool $extResult = false): Result
+    public function sendOrders(int $limit = 1000, $currentDate = '', bool $extResult = true): Result
     {
         $result = new Result();
+        $currentDate = $currentDate ?: new \DateTimeImmutable();
         $resultData = [];
 
         $params = [];
         $params['limit'] = $limit;
         $params['filter']['=UF_ACTIVE'] = 1;
-        $params['filter']['<=UF_DATE_CHECK'] = new DateTime();
-        // TODO: временное решение, т.к. возникает непонятный баг с определнием зоны доставки DPD
-        $params['filter']['!=UF_DEL_TYPE'] = [16, 17];
+        $params['filter'][] = [
+            'LOGIC' => 'OR',
+            ['<=UF_DATE_CHECK' => new DateTime()],
+            ['=UF_DATE_CHECK' => false],
+        ];
         $params['order'] = [
-            'UF_LAST_CHECK' => 'ASC',
-            'ID' => 'ASC',
+            'UF_NEXT_DEL' => 'ASC',
+            'UF_DELIVERY_TIME' => 'ASC',
         ];
 
         $checkOrdersList = $this->orderSubscribeRepository->findBy($params);
@@ -1620,7 +1646,12 @@ class OrderSubscribeService implements LoggerAwareInterface
                         $this->sendOrderSubscribeUpcomingDeliveryMessage($copyParams);
                     }
                 }
+            } else if($this->isExpiredSubscription($orderSubscribe, $currentDate)) {
+                $this->sendExpiredNotification($orderSubscribe);
+                $orderSubscribe->countNextDate()->countDateCheck();
+                $this->update($orderSubscribe);
             }
+
             if (!$curResult->isSuccess() && $result->isSuccess()) {
                 $result->addError(
                     new Error(
@@ -1635,6 +1666,48 @@ class OrderSubscribeService implements LoggerAwareInterface
 
         return $result;
     }
+
+    /**
+     * @param OrderSubscribe $orderSubscribe
+     * @param string $currentDate
+     * @return bool
+     * @throws \Exception
+     */
+    public function isExpiredSubscription(OrderSubscribe $orderSubscribe, $currentDate = '')
+    {
+        $currentDate = $currentDate ?? new \DateTimeImmutable();
+        $orderSubscribeDate = new \DateTimeImmutable($orderSubscribe->getDateCheck()->toString());
+
+        $currentDate->setTime(0,0,0);
+        $orderSubscribeDate->setTime(0,0,0);
+        return $currentDate >= $orderSubscribeDate;
+    }
+
+    /**
+     * @param OrderSubscribe $orderSubscribe
+     */
+    public function sendExpiredNotification(OrderSubscribe $orderSubscribe)
+    {
+        $userId = $orderSubscribe->getUserId();
+        $arUser = \CUser::GetById($userId)->Fetch();
+        $userName = implode(' ', array_filter([$arUser['LAST_NAME'], $arUser['NAME'], $arUser['SECOND_NAME']]));
+        $deliveryId = $orderSubscribe->getDeliveryId();
+        $rs = \Bitrix\Sale\Delivery\Services\Table::getById($deliveryId);
+        $delivery = $rs->fetch();
+        $deliveryName = $delivery ? $delivery['NAME'] : 'Не удалось определить';
+
+        $arFields = [
+            "ID" => $orderSubscribe->getId(),
+            "USER_LINK" => sprintf('/bitrix/admin/user_edit.php?lang=ru&ID=%s', $arUser['ID']),
+            "USER_NAME" => $userName,
+            "DATE_DELIVERY" => $orderSubscribe->getNextDate()->toString(),
+            "DELIVERY_TYPE" => $deliveryName,
+            "DELIVERY_PLACE" => $orderSubscribe->getDeliveryPlace(),
+        ];
+
+        \CEvent::SendImmediate('ORDER_SUBSCRIBE_EXPIRED', self::SITE_ID, $arFields);
+    }
+
 
     /**
      * @param OrderSubscribe $orderSubscribe

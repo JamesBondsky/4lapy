@@ -1,4 +1,6 @@
 <?php
+//FIXME move to Table instead of Repository
+
 namespace FourPaws\UserBundle\Repository;
 
 use Bitrix\Main;

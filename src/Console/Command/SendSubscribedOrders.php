@@ -48,7 +48,7 @@ class SendSubscribedOrders extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $limit = (int)$input->getArgument(self::ARG_LIMIT);
-        $limit = $limit > 0 ? $limit : 200;
+        $limit = $limit > 0 ? $limit : 1000;
 
         $output->writeln('Обход подписок начат: '.date('Y-m-d H:i:s'));
         try {

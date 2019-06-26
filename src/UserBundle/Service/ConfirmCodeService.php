@@ -74,6 +74,7 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
 
     /**
      * @param string $phone
+     * @param string|null $hash
      *
      * @return bool
      * @throws NotFoundConfirmedCodeException
@@ -83,11 +84,11 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      * @throws WrongPhoneNumberException
      * @throws Exception
      */
-    public static function sendConfirmSms(string $phone): bool
+    public static function sendConfirmSms(string $phone, ?string $hash = ''): bool
     {
         $phone = PhoneHelper::normalizePhone($phone);
         if (PhoneHelper::isPhone($phone)) {
-            static::setGeneratedCode($phone, 'sms');
+            static::setGeneratedCode($phone, 'sms', 0, $hash);
             $generatedCode = static::getGeneratedCode('sms');
 
             if (!empty($generatedCode)) {
@@ -152,15 +153,16 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      * @param string $type
      *
      * @param float  $time
+     * @param string|null $hash
      *
      * @throws \RuntimeException
      * @throws ArgumentException
      * @throws Exception
      */
-    public static function setGeneratedCode(string $text, string $type = 'sms', float $time = 0): void
+    public static function setGeneratedCode(string $text, string $type = 'sms', float $time = 0, ?string $hash = ''): void
     {
         if (!empty($text)) {
-            static::setCode(static::generateCode($text), $type, $time);
+            static::setCode(static::generateCode($text), $type, $time, $hash);
         }
     }
 
@@ -168,11 +170,12 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      * @param string $code
      * @param string $type
      * @param float  $time
+     * @param string|null $hash
      *
      * @throws ArgumentException
      * @throws Exception
      */
-    public static function setCode(string $code, string $type, float $time = 0): void
+    public static function setCode(string $code, string $type, float $time = 0, ?string $hash = ''): void
     {
         if (!empty($code)) {
             if (!$time) {
@@ -182,7 +185,7 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
             $id = static::setCookie($type, $time);
             static::prepareData($id, $code, $type);
 
-            static::writeGeneratedCode($id, $code, $type);
+            static::writeGeneratedCode($id, $code, $type, $hash);
         }
     }
 
@@ -204,6 +207,8 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
     /**
      * @param string $phone
      * @param string $confirmCode
+     * @param bool|null $withoutDelete
+     * @param string|null $hash
      *
      * @throws NotFoundConfirmedCodeException
      * @throws ServiceNotFoundException
@@ -212,11 +217,11 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      * @throws Exception
      * @return bool
      */
-    public static function checkConfirmSms(string $phone, string $confirmCode): bool
+    public static function checkConfirmSms(string $phone, string $confirmCode, ?bool $withoutDelete = false, ?string $hash = ''): bool
     {
         $phone = PhoneHelper::normalizePhone($phone);
         if (PhoneHelper::isPhone($phone)) {
-            return static::checkCode($confirmCode, 'sms');
+            return static::checkCode($confirmCode, 'sms', $withoutDelete, $hash);
         }
 
         return false;
@@ -224,20 +229,21 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
 
     /**
      * @param string $confirmCode
-     *
      * @param string $type
+     * @param bool|null $withoutDelete
+     * @param string|null $hash
      *
      * @return bool
      * @throws ExpiredConfirmCodeException
      * @throws NotFoundConfirmedCodeException
      * @throws Exception
      */
-    public static function checkCode(string $confirmCode, string $type = 'sms'): bool
+    public static function checkCode(string $confirmCode, string $type = 'sms', ?bool $withoutDelete = false, ?string $hash = ''): bool
     {
-        $generatedCode = static::getGeneratedCode($type, $confirmCode);
+        $generatedCode = static::getGeneratedCode($type, $hash);
         if (!empty($generatedCode)) {
             $confirmed = $confirmCode === $generatedCode;
-            if ($confirmed) {
+            if ($confirmed && !$withoutDelete) {
                 static::delCurrentCode($type);
             }
 
@@ -247,25 +253,24 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
     }
 
     /**
-     * @param string $hash
      * @param string $type
+     * @param string|null $hash
      *
      * @return string
      * @throws ExpiredConfirmCodeException
      * @throws NotFoundConfirmedCodeException
      * @throws Exception
      */
-    public static function getGeneratedCode(string $type = 'sms', string $hash = null): string
+    public static function getGeneratedCode(string $type = 'sms', ?string $hash = ''): string
     {
-        $ConfirmCodeQuery = new ConfirmCodeQuery(ConfirmCodeTable::query());
-        $filter = [];
-
+        $filter = [
+            'ID' => $_COOKIE[self::getCookieName($type)]
+        ];
         if ($hash) {
-            $filter['CODE'] = $hash;
-        } else {
-            $filter['ID'] = $_COOKIE[self::getCookieName($type)];
+            $filter['=HASH'] = $hash;
         }
 
+        $ConfirmCodeQuery = new ConfirmCodeQuery(ConfirmCodeTable::query());
         /** @var ConfirmCode $confirmCode */
         $confirmCode = $ConfirmCodeQuery->withFilter($filter)->exec()->first();
 
@@ -312,15 +317,32 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
 
     /**
      * @param string $confirmCode
+     * @param bool|null $withoutDelete
+     * @param string|null $hash
      *
      * @return bool
      * @throws ExpiredConfirmCodeException
      * @throws NotFoundConfirmedCodeException
      * @throws Exception
      */
-    public static function checkConfirmEmail(string $confirmCode): bool
+    public static function checkConfirmEmail(string $confirmCode, ?bool $withoutDelete = false, ?string $hash = ''): bool
     {
-        return static::checkCode($confirmCode, 'email');
+        return static::checkCode($confirmCode, 'email', $withoutDelete, $hash);
+    }
+
+    /**
+     * @param string $confirmCode
+     * @param bool|null $withoutDelete
+     * @param string|null $hash
+     *
+     * @return bool
+     * @throws ExpiredConfirmCodeException
+     * @throws NotFoundConfirmedCodeException
+     * @throws Exception
+     */
+    public static function checkConfirmEmailForgot(string $confirmCode, ?bool $withoutDelete = false, ?string $hash = ''): bool
+    {
+        return static::checkCode($confirmCode, 'email_forgot', $withoutDelete, $hash);
     }
 
     /**
@@ -328,18 +350,19 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      * @param string $type
      *
      * @param float  $time
+     * @param string|null $hash
      *
      * @throws \RuntimeException
      * @throws ArgumentException
      * @throws Exception
      */
-    public static function setGeneratedHash(string $text, string $type = 'sms', float $time = 0): void
+    public static function setGeneratedHash(string $text, string $type = 'sms', float $time = 0, ?string $hash = ''): void
     {
         if (!empty($text)) {
             if (!$time) {
                 $time = microtime(true);
             }
-            static::setCode(static::getConfirmHash($text, $time), $type, $time);
+            static::setCode(static::getConfirmHash($text, $time), $type, $time, $hash);
         }
     }
 
@@ -359,20 +382,23 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      * @param $id
      * @param $code
      * @param $type
+     * @param string|null $hash
      *
      * @return bool
      * @throws ArgumentException
      * @throws Exception
      */
-    public static function writeGeneratedCode($id, $code, $type): bool
+    public static function writeGeneratedCode($id, $code, $type, ?string $hash = ''): bool
     {
-        $res = ConfirmCodeTable::add(
-            [
-                'ID'   => substr($id, 0, 255),
-                'CODE' => substr($code, 0, 255),
-                'TYPE' => substr($type, 0, 50),
-            ]
-        );
+        $fields = [
+            'ID'   => substr($id, 0, 255),
+            'CODE' => substr($code, 0, 255),
+            'TYPE' => substr($type, 0, 50),
+        ];
+        if ($hash) {
+            $fields['HASH'] = $hash;
+        }
+        $res = ConfirmCodeTable::add($fields);
         if (!$res->isSuccess()) {
             throw new ArgumentException(implode(', ', $res->getErrorMessages()));
         }

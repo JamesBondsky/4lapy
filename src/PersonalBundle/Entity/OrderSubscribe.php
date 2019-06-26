@@ -637,6 +637,16 @@ class OrderSubscribe extends BaseEntity
     }
 
     /**
+     * @return OrderSubscribe
+     * @throws \Bitrix\Main\ObjectException
+     */
+    public function countNextDate(): OrderSubscribe
+    {
+        $this->getOrderSubscribeService()->countNextDate($this);
+        return $this;
+    }
+
+    /**
      * @return bool
      * @throws OrderSubscribeException
      */
@@ -808,7 +818,7 @@ class OrderSubscribe extends BaseEntity
 
             try {
                 $result = $store->getAddress();
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 // ну давай хотя бы код магазина отбразим
                 $result = $this->getDeliveryPlace();
             }
