@@ -35,11 +35,6 @@ class HlbReferenceItem extends HlbItemBase
     protected $UF_CODE = '';
 
     /**
-     * @var string
-     */
-    protected $UF_COLOUR_CODE = '';
-
-    /**
      * @var int
      */
     protected $UF_BASE_VALUE = '';
@@ -60,26 +55,6 @@ class HlbReferenceItem extends HlbItemBase
     public function withCode(string $code)
     {
         $this->UF_CODE = $code;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getColourCode(): string
-    {
-        return $this->UF_COLOUR_CODE;
-    }
-
-    /**
-     * @param string $code
-     *
-     * @return static
-     */
-    public function withColourCode(string $code)
-    {
-        $this->UF_COLOUR_CODE = $code;
 
         return $this;
     }
