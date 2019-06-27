@@ -468,10 +468,6 @@ class KkmService implements LoggerAwareInterface
                 }
             }
 
-            if (count($errorsOffers) > 0) {
-                throw new KkmException(static::RESPONSE_STATUSES['quantity_error']['message'] . ': ' . implode(', ', $errorsOffers), static::RESPONSE_STATUSES['quantity_error']['code']);
-            }
-
             try {
                 $deliveries = $this->deliveryService->getByOfferCollection($offers, $quantities, $location, static::DELIVERY_CODES);
             } catch (
@@ -519,6 +515,10 @@ class KkmService implements LoggerAwareInterface
                     static::RESPONSE_STATUSES['internal_error']['message'] . ': доставка не разрешена для заданного местоположения',
                     static::RESPONSE_STATUSES['internal_error']['code']
                 );
+            }
+
+            if (count($errorsOffers) > 0) {
+                $rc = false;
             }
 
             $deliveryRules = [
