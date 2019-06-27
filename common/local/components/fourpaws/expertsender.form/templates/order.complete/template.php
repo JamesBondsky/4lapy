@@ -19,6 +19,13 @@ use FourPaws\Decorators\SvgDecorator;
                   data-url="/ajax/user/subscribe/subscribe/"
                   onsubmit="<?= $arResult['ON_SUBMIT'] ?>"
                   method="post">
+                <?
+                if ($arParams['USER_ID']) {
+                    ?>
+                    <input type="hidden" name="user_id" value="<?= $arParams['USER_ID'] ?>">
+                    <?
+                }
+                ?>
                 <input type="hidden" name="type" value="all">
                 <div class="b-input">
                     <input class="b-input__input-field b-input__input-field-grey"

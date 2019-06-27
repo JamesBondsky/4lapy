@@ -78,13 +78,14 @@ class SubscribeController extends Controller implements LoggerAwareInterface
     {
         $type = $request->get('type', '');
         $email = $request->get('email', '');
+        $user_id = $request->get('user_id', '');
 
         if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
             return $this->ajaxMess->getWrongEmailError();
         }
 
         try {
-            $user = $this->getCurrentUser();
+            $user = $this->getCurrentUser($user_id);
 
             $oldEmail = $user->getEmail();
             $user->setEmail($email);
@@ -116,14 +117,19 @@ class SubscribeController extends Controller implements LoggerAwareInterface
     }
 
     /**
+     * @param int|null $userId
      * @return User
      */
-    protected function getCurrentUser(): User
+    protected function getCurrentUser(?int $userId = null): User
     {
         try {
             $user = $this->userService->getCurrentUser();
         } catch (NotAuthorizedException $e) {
             $user = new User();
+        }
+
+        if ($userId) {
+            $user = $this->userService->findOne($userId);
         }
 
         return $user;

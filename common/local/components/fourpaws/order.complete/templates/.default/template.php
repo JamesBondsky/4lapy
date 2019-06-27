@@ -37,12 +37,14 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
 }
 
 $emailCurrentUser = null;
+$userId = null;
 
 try {
     /** @var \FourPaws\UserBundle\Service\UserSearchInterface $userCurrentUserService */
     $userCurrentUserService = Application::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\UserSearchInterface::class);
     $currentUser = $userCurrentUserService->findOne($order->getUserId());
 
+    $userId = $order->getUserId();
     $emailCurrentUser = $currentUser->getEmail();
 } catch (Exception $e) {}
 
@@ -248,7 +250,9 @@ try {
                     $APPLICATION->IncludeComponent(
                         'fourpaws:expertsender.form',
                         'order.complete',
-                        [],
+                        [
+                            'USER_ID' => $userId,
+                        ],
                         false,
                         ['HIDE_ICONS' => 'Y']
                     );
