@@ -482,6 +482,7 @@ class KkmService implements LoggerAwareInterface
             $deliveryPrice = false;
             $deliveryDates = [];
             $intervals = [];
+            $intervalsAll = [];
             /** @var CalculationResultInterface $delivery */
             foreach ($deliveries as $delivery) {
                 if ($delivery->getDeliveryCode() == DeliveryService::INNER_DELIVERY_CODE) {
@@ -500,8 +501,12 @@ class KkmService implements LoggerAwareInterface
                             static::RESPONSE_STATUSES['internal_error']['code']
                         );
                     }
-                    foreach ($delivery->getIntervals() as $interval) {
+                    foreach ($delivery->getAvailableIntervals() as $interval) {
                         $intervals[] = str_replace(' ', '', (string)$interval);
+                    }
+
+                    foreach ($delivery->getIntervals() as $interval) {
+                        $intervalsAll[] = str_replace(' ', '', (string)$interval);
                     }
                 }
             }
@@ -522,7 +527,8 @@ class KkmService implements LoggerAwareInterface
                 'courier' => [
                     'price' => $deliveryPrice,
                     'date'  => $deliveryDates,
-                    'time'  => $intervals
+                    'time'  => $intervals,
+                    'timeAll'  => $intervalsAll,
                 ]
             ];
 
