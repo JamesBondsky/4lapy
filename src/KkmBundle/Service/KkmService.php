@@ -87,11 +87,7 @@ class KkmService implements LoggerAwareInterface
         'internal_error' => [
             'code'    => 500,
             'message' => 'Внутренняя ошибка сервера. Обратитесь к администратору сайта'
-        ],
-        'quantity_error'  => [
-            'code'    => 205,
-            'message' => 'Успешно, но указано неверное количество'
-        ],
+        ]
     ];
 
     const BOUNDS = [
@@ -504,7 +500,7 @@ class KkmService implements LoggerAwareInterface
                             static::RESPONSE_STATUSES['internal_error']['code']
                         );
                     }
-                    foreach ($delivery->getAvailableIntervals() as $interval) {
+                    foreach ($delivery->getIntervals() as $interval) {
                         $intervals[] = str_replace(' ', '', (string)$interval);
                     }
                 }
