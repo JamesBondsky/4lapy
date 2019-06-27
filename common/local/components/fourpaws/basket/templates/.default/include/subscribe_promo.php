@@ -94,7 +94,7 @@ use FourPaws\Helpers\WordHelper;
 
             <form action="/sale/order/" method="post" <?=(!$user) ? 'onsubmit="return false;"' : ''?>>
                 <button class="b-button b-button--subscribe-delivery-cart <?=(!$user) ? 'js-open-popup' : ''?>"
-                        <?=(!$user) ? 'data-popup-id="authorization"' : ''?>
+                        <?=(!$user) ? 'data-popup-id="authorization" data-btn-subscribe-delivery-cart="true"' : ''?>
                         title="Подписка на доставку" <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
                     Подписаться на доставку
                 </button>
