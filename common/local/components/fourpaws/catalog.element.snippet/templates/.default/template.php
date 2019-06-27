@@ -264,12 +264,12 @@ if (!$currentOffer->getImagesIds()) {
         ?>
         <div class="b-common-item__additional-information">
             <? if($currentOffer->getSubscribePrice() < $currentOffer->getPrice()): ?>
-                <div class="b-common-item__price-subscribe">
+                <a class="b-common-item__price-subscribe" href="<?= $currentOffer->getLink() ?>">
                     <span class="logo-subscr"><?= new SvgDecorator('icon-logo-subscription', 20, 18) ?></span>
                     <span class="b-common-item__price js-price-subscribe-block"><?= \round($currentOffer->getSubscribePrice()) ?></span>
                     <span class="b-ruble">₽</span>
                     <span class="title-subscr">Подписка</span>
-                </div>
+                </a>
             <? else: ?>
                 <div class="b-common-item__benefin js-sale-block">
                     <span class="b-common-item__prev-price js-sale-origin">

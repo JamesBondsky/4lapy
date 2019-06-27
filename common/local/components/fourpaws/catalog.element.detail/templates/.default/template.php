@@ -292,6 +292,8 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                                     </div>
                                     <div class="info-subscribe-product__text">Наслаждайтесь экономией денег и&nbsp;времени</div>
                                 </div>
+
+                                <div class="info-subscribe-product__primary">Перейдите в&nbsp;корзину для&nbsp;оформления подписки!</div>
                             </div>
                         </div>
                         <span class="b-product-information__bonus b-product-information__bonus--subscribe js-bonus-subscribe-<?= $currentOffer->getId() ?>"></span>
