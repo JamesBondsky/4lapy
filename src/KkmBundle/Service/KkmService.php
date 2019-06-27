@@ -463,7 +463,7 @@ class KkmService implements LoggerAwareInterface
             $errorsOffers = [];
 
             foreach ($offers->getValues() as $offerItem) {
-                if ($quantities[$offerItem->getXmlId()] > $offerItem->getQuantity()) {
+                if (($quantities[$offerItem->getXmlId()] + 3) > $offerItem->getQuantity()) {
                     $errorsOffers[] = $offerItem->getXmlId();
                 }
             }
