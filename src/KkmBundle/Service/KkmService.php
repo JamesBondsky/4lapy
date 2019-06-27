@@ -87,7 +87,11 @@ class KkmService implements LoggerAwareInterface
         'internal_error' => [
             'code'    => 500,
             'message' => 'Внутренняя ошибка сервера. Обратитесь к администратору сайта'
-        ]
+        ],
+        'quantity_error'  => [
+            'code'    => 205,
+            'message' => 'Успешно, но указано неверное количество'
+        ],
     ];
 
     const BOUNDS = [
@@ -454,6 +458,18 @@ class KkmService implements LoggerAwareInterface
                     static::RESPONSE_STATUSES['syntax_error']['message'] . ': товары ' . implode(', ', $missedOffers) . ' не найдены на сайте',
                     static::RESPONSE_STATUSES['syntax_error']['code']
                 );
+            }
+
+            $errorsOffers = [];
+
+            foreach ($offers->getValues() as $offerItem) {
+                if ($quantities[$offerItem->getXmlId()] > $offerItem->getQuantity()) {
+                    $errorsOffers[] = $offerItem->getXmlId();
+                }
+            }
+
+            if (count($errorsOffers) > 0) {
+                throw new KkmException(static::RESPONSE_STATUSES['quantity_error']['message'] . ': ' . implode(', ', $errorsOffers), static::RESPONSE_STATUSES['quantity_error']['code']);
             }
 
             try {
