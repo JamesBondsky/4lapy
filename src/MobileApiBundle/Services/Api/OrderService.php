@@ -888,7 +888,7 @@ class OrderService
     }
 
 
-    protected function isMKAD($lat, $lng): bool
+    public function isMKAD($lat, $lng): bool
     {
         $vertices_x = [
             0 => 37.842762,

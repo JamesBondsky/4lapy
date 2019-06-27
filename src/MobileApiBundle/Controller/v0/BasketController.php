@@ -9,6 +9,7 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 use Bitrix\Iblock\ElementTable;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\App\Application;
 use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
 use FourPaws\MobileApiBundle\Dto\Request\PostUserCartRequest;
 use FourPaws\MobileApiBundle\Dto\Request\PutUserCartRequest;
@@ -21,6 +22,7 @@ use FourPaws\MobileApiBundle\Dto\Response\UserCartResponse;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartRequest;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\MobileApiBundle\Services\Api\OrderService as ApiOrderService;
+use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 use FourPaws\SaleBundle\Discount\Manzana;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
@@ -233,5 +235,30 @@ class BasketController extends FOSRestController
         $cartOrder = $this->apiOrderService->createOrder($userCartOrderRequest);
         return (new UserCartOrderResponse())
             ->setCartOrder($cartOrder);
+    }
+
+    /**
+     * @Rest\Post(path="/delivery_dostavista/")
+     * @Rest\View()
+     * @return Response
+     * @throws \Exception
+     */
+    public function getDostavistaAction()
+    {
+
+        $lat = '55.771114';
+        $lng = '37.074996';
+
+//        55.785496, 37.495358
+
+        $lat = '55.785496';
+        $lng = '37.074996';
+
+//        $res = $this->apiOrderService->isMKAD($lat, $lng);
+
+//        $res = $this->apiOrderService->checkInPolygon($lng, $lat);
+
+        return new Response($res);
+        return new Response((object)[]);
     }
 }
