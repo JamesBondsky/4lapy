@@ -42,19 +42,6 @@ class KkmController extends Controller
      */
     public function suggestions(Request $request): JsonResponse
     {
-        $basicUser = $request->headers->get('php-auth-user');
-        $basicPassword = $request->headers->get('php-auth-pw');
-        $res = $this->kkmService->validateAuth($basicUser, $basicPassword);
-        if ($res['success'] == false) {
-            return new JsonResponse(
-                [
-                    'code'    => $res['code'],
-                    'message' => $res['error']
-                ],
-                $res['code']
-            );
-        }
-
         //get suggestions
         $text = $request->get('text');
         $level = $request->get('level');
@@ -91,19 +78,6 @@ class KkmController extends Controller
      */
     public function geocode(Request $request): JsonResponse
     {
-        $basicUser = $request->headers->get('php-auth-user');
-        $basicPassword = $request->headers->get('php-auth-pw');
-        $res = $this->kkmService->validateAuth($basicUser, $basicPassword);
-        if ($res['success'] == false) {
-            return new JsonResponse(
-                [
-                    'code'    => $res['code'],
-                    'message' => $res['error']
-                ],
-                $res['code']
-            );
-        }
-
         $text = $request->get('text');
         $res = $this->kkmService->geocode($text);
         if ($res['success'] == false) {
@@ -134,19 +108,6 @@ class KkmController extends Controller
      */
     public function getDeliveryRules(Request $request): JsonResponse
     {
-        $basicUser = $request->headers->get('php-auth-user');
-        $basicPassword = $request->headers->get('php-auth-pw');
-        $res = $this->kkmService->validateAuth($basicUser, $basicPassword);
-        if ($res['success'] == false) {
-            return new JsonResponse(
-                [
-                    'code'    => $res['code'],
-                    'message' => $res['error']
-                ],
-                $res['code']
-            );
-        }
-
         $content = json_decode($request->getContent(), true);
 
         $kladrId = $content['city_kladr_id'];
