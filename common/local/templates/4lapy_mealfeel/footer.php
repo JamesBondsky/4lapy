@@ -42,7 +42,7 @@ if ($template->hasMainWrapper()) { ?>
                             <div class="item-card__img item-card__img_tank" style="background-image: url('/img/prizes1.png')"></div>
                         </div>
                         <div class="item-card__title">Бак для корма</div>
-                        <div class="item-card__descr">Купите корм Mealfeel (сухой вместе с&nbsp;влажным) на&nbsp;сумму 1500 р. и&nbsp;получите гарантированный приз&nbsp;&mdash; бак для хранения корма.</div>
+                        <div class="item-card__descr">Выдается за&nbsp;покупку корма Mealfeel (сухого вместе с&nbsp;влажным) на&nbsp;сумму&nbsp;от&nbsp;1500&nbsp;р.<br /> Бак вмещает 3 кг&nbsp;корма.</div>
                     </div>
                 </div>
                 <div class="item">
@@ -50,15 +50,15 @@ if ($template->hasMainWrapper()) { ?>
                         <div class="item-card__img-wrap">
                             <div class="item-card__img item-card__img_devices" style="background-image: url('/img/prizes2.png')"></div>
                         </div>
-                        <div class="item-card__title">Девайсы для правильного питания</div>
+                        <div class="item-card__title">Девайсы для правильного&nbsp;питания</div>
                         <div class="item-card__descr">
                             В&nbsp;розыгрыше новые подарки каждую неделю:
                             <ul>
-                                <li><b>5 июля</b>&nbsp;&mdash; умный сад: свежая зелень круглый год</li>
-                                <li><b>12 июля</b>&nbsp;&mdash; фильтр для воды: чистая вода&nbsp;&mdash; основа здоровья</li>
-                                <li><b>19 июля</b>&nbsp;&mdash; соковыжималка: фреш каждый день</li>
-                                <li><b>26 июля</b>&nbsp;&mdash; мультиварка: готовит правильно и&nbsp;быстро</li>
-                                <li><b>1 августа</b>&nbsp;&mdash; блендер: смузи и&nbsp;коктейли каждый день</li>
+                                <li><b>5&nbsp;июля</b>&nbsp;&mdash; мультиварка: готовит правильно и&nbsp;быстро</li>
+                                <li><b>12&nbsp;июля</b>&nbsp;&mdash; соковыжималка: фреш каждый день</li>
+                                <li><b>19&nbsp;июля</b>&nbsp;&mdash; фильтр для воды: чистая вода&nbsp;&mdash; основа здоровья</li>
+                                <li><b>26&nbsp;июля</b>&nbsp;&mdash; блендер: смузи и&nbsp;коктейли каждый день</li>
+                                <li><b>1&nbsp;августа</b>&nbsp;&mdash; умный сад: свежая зелень круглый год</li>
                             </ul>
                         </div>
                     </div>
@@ -69,7 +69,7 @@ if ($template->hasMainWrapper()) { ?>
                             <div class="item-card__img item-card__img_spa" style="background-image: url('/img/prizes3.png')"></div>
                         </div>
                         <div class="item-card__title"><nobr>SPA-Weekend</nobr></div>
-                        <div class="item-card__descr"><nobr>SPA-weekend</nobr> на&nbsp;курорте Роза Хутор в&nbsp;Сочи на&nbsp;двоих. Срок поездки&nbsp;&mdash; 3 дня 2 ночи. Розыгрыш 1 августа.</div>
+                        <div class="item-card__descr"><nobr>SPA-weekend</nobr> на&nbsp;курорте Роза Хутор в&nbsp;Сочи на&nbsp;двоих. Срок поездки&nbsp;&mdash; 3 дня 2&nbsp;ночи. Розыгрыш 1&nbsp;августа.</div>
                     </div>
                 </div>
             </div>
