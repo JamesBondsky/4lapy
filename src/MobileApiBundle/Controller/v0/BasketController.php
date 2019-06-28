@@ -10,7 +10,12 @@ use Bitrix\Iblock\ElementTable;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\App\Application;
+use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
+use FourPaws\Helpers\DateHelper;
+use FourPaws\KkmBundle\Service\KkmService;
+use FourPaws\MobileApiBundle\Dto\Object\DeliveryVariant;
 use FourPaws\MobileApiBundle\Dto\Request\PostUserCartRequest;
 use FourPaws\MobileApiBundle\Dto\Request\PutUserCartRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartCalcRequest;
@@ -21,6 +26,7 @@ use FourPaws\MobileApiBundle\Dto\Response\UserCartOrderResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserCartResponse;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartRequest;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
+use FourPaws\MobileApiBundle\Services\Api\CityService;
 use FourPaws\MobileApiBundle\Services\Api\OrderService as ApiOrderService;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
@@ -29,6 +35,7 @@ use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\StoreBundle\Service\StoreService as AppStoreService;
 use FourPaws\DeliveryBundle\Service\DeliveryService as AppDeliveryService;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class BasketController
@@ -246,19 +253,63 @@ class BasketController extends FOSRestController
     public function getDostavistaAction()
     {
 
-        $lat = '55.771114';
-        $lng = '37.074996';
+        $lat = '55.762228'; //мск
+        $lng = '37.440427';
 
-//        55.785496, 37.495358
+//        $lat = '55.779955'; //за мкадом
+//        $lng = '37.974320';
 
-        $lat = '55.785496';
-        $lng = '37.074996';
+//        $lat = '56.005328'; //за мкадом
+//        $lng = '37.086918';
 
-//        $res = $this->apiOrderService->isMKAD($lat, $lng);
+        $request = Request::createFromGlobals();
 
-//        $res = $this->apiOrderService->checkInPolygon($lng, $lat);
+        $city = $request->get('city', '');
+        $street = $request->get('street', '');
+        $house = $request->get('house', '');
+        $building = $request->get('building', '');
 
-        return new Response($res);
-        return new Response((object)[]);
+        $container = Application::getInstance()->getContainer();
+        /** @var KkmService $kkmService */
+        $kkmService = $container->get('kkm.service');
+
+        $cityService = $container->get(CityService::class);
+
+        $cityInfo = $cityService->getCityByCode($city);
+
+        $query = implode(', ', array_filter([$cityInfo->getTitle(), $street, $house, $building], function ($item) {
+            if (!empty($item)) {
+                return $item;
+            }
+        }));
+
+        $address = $kkmService->geocode($query);
+
+        $pos = explode(' ', $address['address']['pos']);
+
+        $isMKAD = $this->apiOrderService->isMKAD($pos[1], $pos[0]);
+
+        if (!$isMKAD) {
+            return new Response(false);
+        }
+
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = $container->get('delivery.service');
+        $deliveries = $deliveryService->getByLocation($city);
+
+        $results = [];
+
+        $dostavistaCode = $deliveryService::DELIVERY_DOSTAVISTA_CODE;
+
+        foreach ($deliveries as $delivery) {
+            $deliveryVariant = new DeliveryVariant();
+            $deliveryVariant->setAvailable(true);
+            $deliveryVariant->setDate('через 3 часа');
+            $deliveryVariant->setPrice($delivery->getPrice());
+
+            $results[] = $deliveryVariant;
+        }
+
+        return new Response($results);
     }
 }
