@@ -115,7 +115,7 @@ $markup = PawsApplication::markup();
                         <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="prizes">Призы</a>
                     </li>
 
-                    <li  class="header-landing-menu__item">
+                    <li  class="header-landing-menu__item" style="<?$APPLICATION->ShowViewContent('empty-winners');?>">
                         <a href="javascript:void(0);"  class="header-landing-menu__link" data-btn-scroll-landing="winners">Победители</a>
                     </li>
 
