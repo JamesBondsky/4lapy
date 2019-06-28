@@ -77,19 +77,21 @@ use FourPaws\Helpers\WordHelper;
                         </div>
                     </div>
                 </li>
-                <li class="b-price-subscribe-delivery-cart__item b-price-subscribe-delivery-cart__item--discount">
-                    <div class="b-price-subscribe-delivery-cart__text">
-                        <div class="b-price-subscribe-delivery-cart__clipped-text">
-                            Уже на первой Подписке вы экономите
-                        </div>
-                    </div>
-                    <div class="b-price-subscribe-delivery-cart__value">
-                        <div class="b-price b-price--subscribe-cart b-price--result-subscribe-cart">
-                            <span class="b-price__current"><?= WordHelper::numberFormat($subscribePriceDiff) ?></span>
-                            <span class="b-ruble">₽</span>
-                        </div>
-                    </div>
-                </li>
+	            <? if ($subscribePriceDiff > 0) { ?>
+	                <li class="b-price-subscribe-delivery-cart__item b-price-subscribe-delivery-cart__item--discount">
+	                    <div class="b-price-subscribe-delivery-cart__text">
+	                        <div class="b-price-subscribe-delivery-cart__clipped-text">
+	                            Уже на первой Подписке вы экономите
+	                        </div>
+	                    </div>
+	                    <div class="b-price-subscribe-delivery-cart__value">
+	                        <div class="b-price b-price--subscribe-cart b-price--result-subscribe-cart">
+	                            <span class="b-price__current"><?= WordHelper::numberFormat($subscribePriceDiff) ?></span>
+	                            <span class="b-ruble">₽</span>
+	                        </div>
+	                    </div>
+	                </li>
+	            <? } ?>
             </ul>
 
             <form action="/sale/order/" method="post" <?=(!$user) ? 'onsubmit="return false;"' : ''?>>
