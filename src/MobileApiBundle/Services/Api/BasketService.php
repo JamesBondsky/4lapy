@@ -18,7 +18,6 @@ use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Dto\Object\PriceWithQuantity;
-use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -48,16 +47,12 @@ class BasketService
     /** @var AppUserService */
     private $appUserService;
 
-    /** @var OrderSubscribeService */
-    private $orderSubscribeService;
-
     public function __construct(
         AppBasketService $appBasketService,
         ApiProductService $apiProductService,
         TokenStorageInterface $tokenStorage,
         DeliveryService $deliveryService,
-        AppUserService $appUserService,
-        OrderSubscribeService $orderSubscribeService
+        AppUserService $appUserService
     )
     {
         $this->appBasketService = $appBasketService;
@@ -65,7 +60,6 @@ class BasketService
         $this->tokenStorage = $tokenStorage;
         $this->deliveryService = $deliveryService;
         $this->appUserService = $appUserService;
-        $this->orderSubscribeService = $orderSubscribeService;
     }
 
 
@@ -175,7 +169,6 @@ class BasketService
                             (new Price)
                                 ->setActual($basketItem->getPrice())
                                 ->setOld($basketItem->getBasePrice())
-                                ->setSubscribe($this->orderSubscribeService->getSubscribePriceByBasketItem($basketItem))
                         )
                         ->setQuantity($basketItem->getQuantity())
                     ;

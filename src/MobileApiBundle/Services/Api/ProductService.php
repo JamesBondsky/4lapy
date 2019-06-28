@@ -376,17 +376,13 @@ class ProductService
         return (new Tag())->setTitle($title);
     }
 
-
     /**
      * @param Product $product
      * @param Offer $offer
      * @param int $quantity
      * @return ShortProduct
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function convertToShortProduct(Product $product, Offer $offer, $quantity = 1): ShortProduct
     {
@@ -415,8 +411,7 @@ class ProductService
         // цена
         $price = (new Price())
             ->setActual($offer->getPrice())
-            ->setOld($offer->getOldPrice())
-            ->setSubscribe($offer->getSubscribePrice());
+            ->setOld($offer->getOldPrice());
         $shortProduct->setPrice($price);
 
 
@@ -450,11 +445,8 @@ class ProductService
      * @param bool $needPackingVariants
      * @param bool|null $showVariantsIfOneVariant
      * @return FullProduct
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = false, ?bool $showVariantsIfOneVariant = true): FullProduct
     {

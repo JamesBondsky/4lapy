@@ -7,11 +7,6 @@
 namespace FourPaws\StoreBundle\Service;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use Bitrix\Main\UserFieldTable;
-use FourPaws\App\Application;
-use FourPaws\AppBundle\Service\UserFieldEnumService;
-use FourPaws\Enum\HlblockCode;
-use FourPaws\Helpers\HighloadHelper;
 use FourPaws\StoreBundle\Collection\DeliveryScheduleCollection;
 use FourPaws\StoreBundle\Collection\OrderDayCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -29,7 +24,9 @@ class DeliveryScheduleService implements LoggerAwareInterface
 
     protected const TYPE_FIELD_CODE = 'UF_TPZ_TYPE';
 
-    /** @var array */
+    /**
+     * @var array
+     */
     protected $weekdays = [
         1 => 'monday',
         2 => 'tuesday',
@@ -41,12 +38,8 @@ class DeliveryScheduleService implements LoggerAwareInterface
     ];
 
     /**
-     * Регулярности
-     * @var array
+     * @var DeliveryScheduleRepository
      */
-    protected $regular;
-
-    /** @var DeliveryScheduleRepository */
     protected $repository;
 
     public function __construct(DeliveryScheduleRepository $repository)
@@ -94,41 +87,6 @@ class DeliveryScheduleService implements LoggerAwareInterface
         return $schedules;
     }
 
-
-    public function findByReceiverAndRegularity(Store $receiver, int $regularityId, StoreCollection $senders = null): DeliveryScheduleCollection
-    {
-        $getSchedules = function () use ($receiver, $regularityId) {
-            return ['result' => $this->repository->findByReceiverAndRegularity($receiver, $regularityId)];
-        };
-
-        try {
-            /** @var DeliveryScheduleCollection $schedules */
-            $schedules = (new BitrixCache())
-                ->withId(__METHOD__ . $receiver->getXmlId())
-                ->withTag('delivery_schedule')
-                ->resultOf($getSchedules)['result'];
-            if ($senders && !$senders->isEmpty()) {
-                $schedules = $schedules->filterBySenders($senders);
-                /** @var DeliverySchedule $item */
-                foreach ($schedules as $item) {
-                    $item->setReceiver($receiver);
-                    if (isset($senders[$item->getSenderCode()])) {
-                        $item->setSender($senders[$item->getSenderCode()]);
-                    }
-                }
-            }
-        } catch (\Exception $e) {
-            $this->log()->error(
-                sprintf('failed to get delivery schedules: %s', $e->getMessage()),
-                ['receiver' => $receiver->getXmlId()]
-            );
-
-            $schedules = new DeliveryScheduleCollection();
-        }
-
-        return $schedules;
-    }
-
     /**
      * @param Store $sender
      * @param null|StoreCollection $receivers
@@ -145,40 +103,6 @@ class DeliveryScheduleService implements LoggerAwareInterface
             /** @var DeliveryScheduleCollection $schedules */
             $schedules = (new BitrixCache())
                 ->withId(__METHOD__ . $sender->getXmlId())
-                ->withTag('delivery_schedule')
-                ->resultOf($getSchedules)['result'];
-            if ($receivers && !$receivers->isEmpty()) {
-                $schedules = $schedules->filterByReceivers($receivers);
-                /** @var DeliverySchedule $item */
-                foreach ($schedules as $item) {
-                    $item->setSender($sender);
-                    if (isset($receivers[$item->getReceiverCode()])) {
-                        $item->setReceiver($receivers[$item->getReceiverCode()]);
-                    }
-                }
-            }
-        } catch (\Exception $e) {
-            $this->log()->error(
-                sprintf('failed to get delivery schedules: %s', $e->getMessage()),
-                ['sender' => $sender->getXmlId()]
-            );
-
-            $schedules = new DeliveryScheduleCollection();
-        }
-
-        return $schedules;
-    }
-
-    public function findBySenderAndRegularity(Store $sender, int $regularityId, StoreCollection $receivers = null): DeliveryScheduleCollection
-    {
-        $getSchedules = function () use ($sender, $regularityId) {
-            return ['result' => $this->repository->findBySenderAndRegularity($sender, $regularityId)];
-        };
-
-        try {
-            /** @var DeliveryScheduleCollection $schedules */
-            $schedules = (new BitrixCache())
-                ->withId(__METHOD__ . $sender->getXmlId() . $regularityId)
                 ->withTag('delivery_schedule')
                 ->resultOf($getSchedules)['result'];
             if ($receivers && !$receivers->isEmpty()) {
@@ -347,28 +271,5 @@ class DeliveryScheduleService implements LoggerAwareInterface
         }
 
         return !$result->isEmpty() ? $result : null;
-    }
-
-    /**
-     * @return \FourPaws\AppBundle\Collection\UserFieldEnumCollection
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
-     */
-    public function getRegular()
-    {
-        if(null === $this->regular){
-            /** @var UserFieldEnumService $userFieldEnumService */
-            $userFieldEnumService = Application::getInstance()->getContainer()->get('userfield_enum.service');
-            $userFieldId = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
-                [
-                    'FIELD_NAME' => 'UF_REGULAR',
-                    'ENTITY_ID' => 'HLBLOCK_' . HighloadHelper::getIdByName(HlblockCode::DELIVERY_SCHEDULE),
-                ]
-            )->exec()->fetch()['ID'];
-            $this->regular = $userFieldEnumService->getEnumValueCollection($userFieldId);
-        }
-        return $this->regular;
     }
 }

@@ -2,14 +2,12 @@
 
 namespace FourPaws\StoreBundle\Repository;
 
-use Bitrix\Main\Db\SqlQueryException;
 use FourPaws\AppBundle\Exception\RuntimeException;
 use FourPaws\BitrixOrmBundle\Orm\D7Repository;
 use FourPaws\StoreBundle\Collection\ScheduleResultCollection;
 use FourPaws\StoreBundle\Entity\ScheduleResult;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use WebArch\BitrixCache\BitrixCache;
-use Bitrix\Main\Application as BitrixApplication;
 
 class ScheduleResultRepository extends D7Repository
 {
@@ -22,8 +20,6 @@ class ScheduleResultRepository extends D7Repository
      * @var ScheduleResultCollection[]
      */
     protected $byReceiver = [];
-
-    public const TABLE_NAME = 'b_hlbd_delivery_schedule_result';
 
     /**
      * @param int $id
@@ -99,18 +95,5 @@ class ScheduleResultRepository extends D7Repository
         }
 
         return $this->byReceiver[$receiverXmlId];
-    }
-
-    /**
-     * @return bool
-     */
-    public function clearTable()
-    {
-        try {
-            BitrixApplication::getConnection()->queryExecute(sprintf("TRUNCATE %s", self::TABLE_NAME));
-        } catch (SqlQueryException $e) {
-            return false;
-        }
-        return true;
     }
 }

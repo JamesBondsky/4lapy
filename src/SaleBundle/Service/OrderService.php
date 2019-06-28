@@ -629,7 +629,6 @@ class OrderService implements LoggerAwareInterface
              */
             $shipmentResults = $selectedDelivery->getShipmentResults();
             $shipmentDays = [];
-            $schedType = null;
             /** @var BasketItem $item */
             foreach ($order->getBasket() as $item) {
                 $selectedShop = $selectedDelivery->getSelectedStore();
@@ -642,21 +641,10 @@ class OrderService implements LoggerAwareInterface
                 if ($shipmentResults &&
                     ($deliveryResult = $shipmentResults->getByOfferId($item->getProductId()))
                 ) {
-                    $scheduleResult = $deliveryResult->getScheduleResult();
-                    $shipmentPlaceCode = $scheduleResult->getSenderCode() ?: $shipmentPlaceCode;
-                    $days = $scheduleResult->getDays($selectedDelivery->getCurrentDate());
-                    $schedTypeCurrent = $scheduleResult->getRegularityXmlId();
-
+                    $shipmentPlaceCode = $deliveryResult->getScheduleResult()->getSenderCode() ?: $shipmentPlaceCode;
+                    $days = $deliveryResult->getScheduleResult()->getDays($selectedDelivery->getCurrentDate());
                     if (!isset($shipmentDays[$shipmentPlaceCode]) || $shipmentDays[$shipmentPlaceCode] < $days) {
                         $shipmentDays[$shipmentPlaceCode] = $days;
-                    }
-                    if(!empty($schedTypeCurrent)){
-                        if(!isset($schedType)){
-                            $schedType = $schedTypeCurrent;
-                        } else if ($schedType != $schedTypeCurrent) {
-                            // TODO: продумать что делать в случае, если два разных расписания подтянулось
-                            throw new OrderCreateException('Два типа расписания сразу');
-                        }
                     }
                 }
                 if ($shipmentPlaceCode === self::STORE) {
@@ -673,9 +661,6 @@ class OrderService implements LoggerAwareInterface
             if (!empty($shipmentDays)) {
                 arsort($shipmentDays);
                 $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', key($shipmentDays));
-            }
-            if (!empty($schedType)) {
-                $this->setOrderPropertyByCode($order, 'SCHEDULE_REGULARITY', $schedType);
             }
         }
 
@@ -1301,7 +1286,34 @@ class OrderService implements LoggerAwareInterface
 
             // активация подписки на доставку
             if($storage->isSubscribe()){
-                $this->orderSubscribeService->activateSubscription($storage, $order);
+                if(null === $storage->getSubscribeId()){
+                    throw new OrderSubscribeException('Susbcribe not found');
+                }
+                $subscribe = $this->orderSubscribeService->getById($storage->getSubscribeId());
+                $subscribe->setActive(true)
+                    ->setOrderId($order->getId())
+                    ->countDateCheck();
+
+                // привяжем пользователя
+                if(!$subscribe->getUserId()){
+                    $subscribe->setUserId($order->getUserId());
+                }
+
+                // добавим заказ в историю закзаов по подписке
+                $result = $this->orderSubscribeService->update($subscribe);
+                if($result->isSuccess()){
+                    /** @var OrderSubscribeHistoryService $orderSubscribeHistoryService */
+                    $orderSubscribeHistoryService = Application::getInstance()->getContainer()->get('order_subscribe_history.service');
+                    $historyAddResult = $orderSubscribeHistoryService->add(
+                        $subscribe,
+                        $order->getId(),
+                        (new \DateTime($this->getOrderPropertyByCode($order, 'DELIVERY_DATE')->getValue()))
+                    );
+                    if (!$historyAddResult->isSuccess()) {
+                        throw new \Exception('Ошибка сохранения записи в истории');
+                    }
+                    $this->orderSubscribeService->sendOrderSubscribedNotification($subscribe);
+                }
             }
 
         } catch (\Exception $e) {

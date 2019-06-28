@@ -535,7 +535,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             /** @var ScheduleResult $scheduleResult */
             foreach ($scheduleResultService->findResultsBySenderAndReceiver($sender, $receiver)->filterByDateActiveEqual($date) as $scheduleResult) {
                 $key = implode(',', $scheduleResult->getRouteCodes());
-                $key .= $scheduleResult->getRegularity();
 
                 $days = $scheduleResult->getDays($this->getCurrentDate());
                 if ($days === ScheduleResult::RESULT_ERROR) {
