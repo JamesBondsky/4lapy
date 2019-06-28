@@ -262,6 +262,8 @@ class BasketController extends FOSRestController
 //        $lat = '56.005328'; //за мкадом
 //        $lng = '37.086918';
 
+        $res = $this->apiOrderService->getDeliveryDetails();
+
         $request = Request::createFromGlobals();
 
         $city = $request->get('city', '');
@@ -274,6 +276,8 @@ class BasketController extends FOSRestController
         $kkmService = $container->get('kkm.service');
 
         $cityService = $container->get(CityService::class);
+
+        [$courierDelivery, $pickupDelivery, $dostavistaDelivery] = $this->apiOrderService->getDeliveryVariants();
 
         $cityInfo = $cityService->getCityByCode($city);
 
