@@ -44,7 +44,6 @@ class BasketProductCollection extends ProductQuantityCollection
     {
         $actualPrice = 0;
         $oldPrice = 0;
-        $subscribePrice = 0;
         /** @var Product $product */
         foreach ($this->getValues() as $product) {
             /** @var $priceWithQuantity PriceWithQuantity */
@@ -53,13 +52,11 @@ class BasketProductCollection extends ProductQuantityCollection
                 $price = $priceWithQuantity->getPrice();
                 $oldPrice += $quantity * ($price->getOld() ? $price->getOld() : $price->getActual());
                 $actualPrice += $quantity * $price->getActual();
-                $subscribePrice += $quantity * $price->getSubscribe();
             }
         }
         return (new Price())
             ->setActual($actualPrice)
-            ->setOld($oldPrice === $actualPrice ? 0 : $oldPrice)
-            ->setSubscribe($subscribePrice);
+            ->setOld($oldPrice === $actualPrice ? 0 : $oldPrice);
     }
 
     /**

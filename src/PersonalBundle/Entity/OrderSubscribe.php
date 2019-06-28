@@ -150,6 +150,15 @@ class OrderSubscribe extends BaseEntity
     protected $lastCheck;
 
     /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("UF_DEL_DAY")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $deliveryDay;
+
+    /**
      * @var bool
      * @Serializer\Type("bool")
      * @Serializer\SerializedName("UF_BONUS")
@@ -182,22 +191,13 @@ class OrderSubscribe extends BaseEntity
      */
     private $userFieldEnumService;
 
-    /**
-     * @var null|Order $order
-     * @Serializer\Exclude()
-     */
+    /** @var null|Order $order */
     private $order;
 
-    /**
-     * @var UserFieldEnumValue $deliveryFrequencyEntity
-     * @Serializer\Exclude()
-     */
+    /** @var UserFieldEnumValue $deliveryFrequencyEntity */
     private $deliveryFrequencyEntity;
 
-    /**
-     * @var User $user
-     * @Serializer\Exclude()
-     */
+    /** @var User $user */
     private $user;
 
     /**
@@ -424,6 +424,24 @@ class OrderSubscribe extends BaseEntity
     public function setDateUpdate(DateTime $dateUpdate): OrderSubscribe
     {
         $this->dateUpdate = $dateUpdate;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDeliveryDay(): ?int
+    {
+        return $this->deliveryDay;
+    }
+
+    /**
+     * @param $deliveryDay
+     * @return OrderSubscribe
+     */
+    public function setDeliveryDay($deliveryDay): OrderSubscribe
+    {
+        $this->deliveryDay = $deliveryDay;
         return $this;
     }
 
