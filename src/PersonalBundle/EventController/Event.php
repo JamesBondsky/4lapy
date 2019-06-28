@@ -741,7 +741,7 @@ class Event extends BaseServiceHandler
 
                 $products = file_get_contents($fileImport['tmp_name']);
 
-                $productItems = explode(';', $products);
+                $productItems = explode("\n", $products);
 
                 $productItems = array_map(function($productItem) {
                     if (!empty($productItem)) {
@@ -778,7 +778,5 @@ class Event extends BaseServiceHandler
                 \CIBlockElement::SetPropertyValuesEx($arFields['ID'], $arFields['IBLOCK_ID'], [IblockProperty::SHARES_PRODUCT_CODE => $uniqArrProducts]);
             }
         }
-
-        md5('rferfer');
     }
 }
