@@ -94,9 +94,9 @@ class Event extends BaseServiceHandler
         static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'updateManzana'], 'main');
 
         /** привязка купонов фестиваля после регистрации */
-        static::initHandlerCompatible('OnAfterUserRegister', [self::class, 'addFestivalCoupon'], 'main');
+        //static::initHandlerCompatible('OnAfterUserRegister', [self::class, 'addFestivalCoupon'], 'main');
         /** привязка купонов фестиваля после обновления */
-        static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'addFestivalCouponOnUpdate'], 'main');
+        //static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'addFestivalCouponOnUpdate'], 'main');
 
         /** обновляем логин если он равняется телефону или email */
         static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'replaceLoginOnUpdate'], 'main');
