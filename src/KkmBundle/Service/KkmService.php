@@ -87,7 +87,11 @@ class KkmService implements LoggerAwareInterface
         'internal_error' => [
             'code'    => 500,
             'message' => 'Внутренняя ошибка сервера. Обратитесь к администратору сайта'
-        ]
+        ],
+        'quantity_error'  => [
+            'code'    => 205,
+            'message' => 'Успешно, но указано неверное количество'
+        ],
     ];
 
     const BOUNDS = [
@@ -456,6 +460,14 @@ class KkmService implements LoggerAwareInterface
                 );
             }
 
+            $errorsOffers = [];
+
+            foreach ($offers->getValues() as $offerItem) {
+                if (($quantities[$offerItem->getXmlId()] + 3) > $offerItem->getQuantity()) {
+                    $errorsOffers[] = $offerItem->getXmlId();
+                }
+            }
+
             try {
                 $deliveries = $this->deliveryService->getByOfferCollection($offers, $quantities, $location, static::DELIVERY_CODES);
             } catch (
@@ -503,6 +515,10 @@ class KkmService implements LoggerAwareInterface
                     static::RESPONSE_STATUSES['internal_error']['message'] . ': доставка не разрешена для заданного местоположения',
                     static::RESPONSE_STATUSES['internal_error']['code']
                 );
+            }
+
+            if (count($errorsOffers) > 0) {
+                $rc = false;
             }
 
             $deliveryRules = [
