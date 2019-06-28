@@ -15,6 +15,7 @@ $orderSubscribe = $arResult['ORDER_SUBSCRIBE'];
 if($orderSubscribe){
     // выбранные опции
     $selectedFrequency = $orderSubscribe->getFrequency();
+    $selectedDeliveryDay = $orderSubscribe->getDeliveryDay();
 }
 
 // если периодичность меньше месяца, то скрываем день доставки

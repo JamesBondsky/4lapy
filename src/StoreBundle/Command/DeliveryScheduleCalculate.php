@@ -11,8 +11,8 @@ use DateTime;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\StoreBundle\Entity\ScheduleResult;
 use FourPaws\StoreBundle\Entity\Store;
-use FourPaws\StoreBundle\Service\DeliveryScheduleService;
 use FourPaws\StoreBundle\Service\ScheduleResultService;
 use FourPaws\StoreBundle\Service\StoreService;
 use Psr\Log\LoggerAwareInterface;
@@ -32,13 +32,14 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
 
     protected const OPT_TRANSITION_COUNT = 'transition-count';
 
-    /** @var ScheduleResultService */
+    /**
+     * @var ScheduleResultService
+     */
     protected $scheduleResultService;
 
-    /** @var ScheduleResultService */
-    protected $deliveryScheduleService;
-
-    /** @var StoreService */
+    /**
+     * @var StoreService
+     */
     protected $storeService;
 
     /**
@@ -55,8 +56,6 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
             ->get(ScheduleResultService::class);
         $this->storeService = Application::getInstance()->getContainer()
             ->get('store.service');
-        $this->deliveryScheduleService = Application::getInstance()->getContainer()
-            ->get(DeliveryScheduleService::class);
     }
 
     /**
@@ -111,60 +110,69 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
 
         /** Расчёты не сгенерируются, если для первого отправителя не будет расписаний */
         $senders = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
-        //$senders = [$this->storeService->getStoreByXmlId('DC01')];
+        //$senders = [$this->storeService->getStoreByXmlId('0000100792')];
 
-        $regularities = $this->deliveryScheduleService->getRegular();
-        foreach ($regularities as $regularityId => $regularity) {
 
-            /** @var Store $sender */
-            foreach ($senders as $i => $sender) {
-                BitrixApplication::getConnection()->startTransaction();
+        /** @var Store $sender */
+        foreach ($senders as $i => $sender) {
+            BitrixApplication::getConnection()->startTransaction();
 
-                $start = microtime(true);
-                $isSuccess = false;
-                $totalCreated = 0;
-                $totalDeleted = 0;
+            $start = microtime(true);
+            $isSuccess = false;
+            $totalCreated = 0;
+            $totalDeleted = 0;
 
-                try {
-                    $totalDeleted += $this->scheduleResultService->deleteResultsForSender($sender, $dateDelete, $regularityId);
-                    $results = $this->scheduleResultService->calculateForSender($sender, $dateActive, $regularityId, $tc);
-                    [$created] = $this->scheduleResultService->updateResults($results, $dateDelete);
-                    $totalCreated += $created;
-                    $isSuccess = true;
-                } catch (\Exception $e) {
-                    $this->log()->error(
-                        sprintf('Failed to calculate schedule results: %s: %s', \get_class($e), $e->getMessage()),
-                        ['sender' => $sender->getXmlId()]
-                    );
-                }
+            try {
+                $totalDeleted += $this->scheduleResultService->deleteResultsForSender($sender, $dateDelete);
+                $results = $this->scheduleResultService->calculateForSender($sender, $dateActive, $tc);
+                [$created] = $this->scheduleResultService->updateResults($results, $dateDelete);
+                $totalCreated += $created;
+                $isSuccess = true;
+                //break;
+            } catch (\Exception $e) {
+                $this->log()->error(
+                    sprintf('Failed to calculate schedule results: %s: %s', \get_class($e), $e->getMessage()),
+                    ['sender' => $sender->getXmlId()]
+                );
 
-                if ($isSuccess) {
-                    BitrixApplication::getConnection()->commitTransaction();
-                    $this->log()->info(
-                        sprintf(
-                            'Task finished for %s, time: %ss. %s of %s Created: %s, deleted: %s',
-                            $sender->getXmlId(),
-                            round(microtime(true) - $start, 2),
-                            $i,
-                            count($senders),
-                            $totalCreated,
-                            $totalDeleted
-                        )
-                    );
-                } else {
-                    BitrixApplication::getConnection()->rollbackTransaction();
-                    $this->log()->info(
-                        sprintf(
-                            'Task failed for %s, time: %ss. %s of %s',
-                            $sender->getXmlId(),
-                            round(microtime(true) - $start, 2),
-                            $i,
-                            count($senders)
-                        )
-                    );
-                }
+                //$isSuccess = false;
+                //break;
+            }
+
+            if ($isSuccess) {
+                BitrixApplication::getConnection()->commitTransaction();
+
+                $this->log()->info(
+                    sprintf(
+                        'Task finished for %s, time: %ss. %s of %s Created: %s, deleted: %s',
+                        $sender->getXmlId(),
+                        round(microtime(true) - $start, 2),
+                        $i,
+                        count($senders),
+                        $totalCreated,
+                        $totalDeleted
+                    )
+                );
+            } else {
+                BitrixApplication::getConnection()->rollbackTransaction();
+
+                $this->log()->info(
+                    sprintf(
+                        'Task failed for %s, time: %ss. %s of %s',
+                        $sender->getXmlId(),
+                        round(microtime(true) - $start, 2),
+                        $i,
+                        count($senders)
+                    )
+                );
             }
         }
+
+        /*if ($isSuccess) {
+            BitrixApplication::getConnection()->commitTransaction();
+        } else {
+            BitrixApplication::getConnection()->rollbackTransaction();
+        }*/
 
         TaggedCacheHelper::clearManagedCache(['catalog:store:schedule:results']);
 
