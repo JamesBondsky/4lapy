@@ -66,16 +66,20 @@ class SapService
         foreach ($this->pipelineRegistry->generator($pipelineCode) as $sourceMessage) {
             if ($this->consumerRegistry->consume($sourceMessage->getData())) {
                 $this->sourceRegistry->ack($sourceMessage);
-                if ($pipelineCode == 'catalog') {
-                    $this->clearCacheProduct($sourceMessage->getData()->getItems());
+                if (strripos($sourceMessage->getName(), 'Stc') !== false) {
+                    if (method_exists($sourceMessage->getData(), 'getItems')) {
+                        $this->clearCacheProduct($sourceMessage->getData()->getItems());
+                    }
                 }
 
                 continue;
             }
 
             $this->sourceRegistry->noAck($sourceMessage);
-            if ($pipelineCode == 'catalog') {
-                $this->clearCacheProduct($sourceMessage->getData()->getItems());
+            if (strripos($sourceMessage->getName(), 'Stc')) {
+                if (method_exists($sourceMessage->getData(), 'getItems')) {
+                    $this->clearCacheProduct($sourceMessage->getData()->getItems());
+                }
             }
         }
     }
