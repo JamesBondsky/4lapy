@@ -12,6 +12,7 @@ class ProtectorHelper
     const TYPE_FESTIVAL_REQUEST_ADD = 'festivalRequestAdd';
     const TYPE_PIGGY_BANK_EMAIL_SEND = 'piggyBankEmailSend';
     const TYPE_PERSONAL_OFFERS_EMAIL_SEND = 'personalOffersEmailSend';
+    const TYPE_MEALFEEL_REQUEST_ADD = 'mealfeelRequestAdd';
     const TYPE_AUTH = 'auth';
 
     static $types = [
@@ -23,6 +24,7 @@ class ProtectorHelper
         self::TYPE_PIGGY_BANK_EMAIL_SEND,
         self::TYPE_PERSONAL_OFFERS_EMAIL_SEND,
         self::TYPE_AUTH,
+        self::TYPE_MEALFEEL_REQUEST_ADD,
     ];
 
     /**
