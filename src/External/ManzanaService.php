@@ -157,32 +157,65 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             ];
 
             $result = $this->client->call(self::METHOD_EXECUTE, ['request_options' => $arguments]);
-
-            $result = $result->ExecuteResult->Value;
         } catch (Exception $e) {
-            unset($this->sessionId);
-
             try {
                 /** @noinspection PhpUndefinedFieldInspection */
+                $detailCode = $e->detail->details->code;
                 $detail = $e->detail->details->description;
             } catch (\Throwable $e) {
                 $detail = 'none';
             }
 
-            $this->logger->error(
-                sprintf(
-                    'Manzana execute error with contract id %s: %s, detail: %s, parameters: %s',
-                    $contract,
-                    $e->getMessage(),
-                    $detail,
-                    var_export($parameters, true)
-                )
-            );
+            if (isset($detailCode) && in_array($detailCode, [100880, 100881, 100260], false)) { // сессия не найдена или истекла
+                unset($detailCode);
+                unset($detail);
+                try {
+                    unset($this->sessionId);
+                    \COption::SetOptionString('main', 'manzanaSessionId', '');
+                    $sessionId = $this->authenticate();
+                    $arguments['sessionId'] = $sessionId;
+                    $result = $this->client->call(self::METHOD_EXECUTE, ['request_options' => $arguments]);
+                } catch (Exception $e) {
+                    try {
+                        /** @noinspection PhpUndefinedFieldInspection */
+                        $detailCode = $e->detail->details->code;
+                        $detail = $e->detail->details->description;
+                    } catch (\Throwable $e) {
+                        $detail = 'none';
+                    }
 
-            throw new ExecuteException(
-                sprintf('Execute error: %s, detail: %s', $e->getMessage(), $detail), $e->getCode(), $e
-            );
+                    $this->logger->error(
+                        sprintf(
+                            'Manzana second execute error with contract id %s: %s, detail: %s, parameters: %s',
+                            $contract,
+                            $e->getMessage(),
+                            $detail,
+                            var_export($parameters, true)
+                        )
+                    );
+
+                    throw new ExecuteException(
+                        sprintf('Second execute error: %s, detail: %s', $e->getMessage(), $detail), $e->getCode(), $e
+                    );
+                }
+            } else {
+                $this->logger->error(
+                    sprintf(
+                        'Manzana execute error with contract id %s: %s, detail: %s, parameters: %s',
+                        $contract,
+                        $e->getMessage(),
+                        $detail,
+                        var_export($parameters, true)
+                    )
+                );
+
+                throw new ExecuteException(
+                    sprintf('Execute error: %s, detail: %s', $e->getMessage(), $detail), $e->getCode(), $e
+                );
+            }
         }
+
+        $result = $result->ExecuteResult->Value;
 
         return $result;
     }
@@ -198,6 +231,10 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         if ($this->sessionId) {
             return $this->sessionId;
         }
+        if ($manzanaSessionId = \COption::GetOptionString('main', 'manzanaSessionId', '')) {
+            $this->sessionId = $manzanaSessionId;
+            return $manzanaSessionId;
+        }
 
         $arguments = [
             'login' => $this->parameters['login'],
@@ -210,6 +247,8 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                 self::METHOD_AUTHENTICATE,
                 ['request_options' => $arguments]
             )->AuthenticateResult->SessionId;
+
+            \COption::SetOptionString('main', 'manzanaSessionId', $this->sessionId);
         } catch (Exception $e) {
             throw new AuthenticationException(sprintf('Auth error: %s', $e->getMessage()), $e->getCode(), $e);
         }
