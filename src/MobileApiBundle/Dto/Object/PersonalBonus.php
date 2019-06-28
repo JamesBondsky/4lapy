@@ -22,6 +22,13 @@ class PersonalBonus
 
     /**
      * @Serializer\Type("float")
+     * @Serializer\SerializedName("temp_income")
+     * @var float
+     */
+    protected $tempIncome;
+
+    /**
+     * @Serializer\Type("float")
      * @Serializer\SerializedName("total_outgo")
      * @var float
      */
@@ -67,6 +74,24 @@ class PersonalBonus
     public function setTotalIncome(float $totalIncome): PersonalBonus
     {
         $this->totalIncome = $totalIncome;
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getTempIncome(): float
+    {
+        return $this->tempIncome;
+    }
+
+    /**
+     * @param float $tempIncome
+     * @return PersonalBonus
+     */
+    public function setTempIncome(float $tempIncome): PersonalBonus
+    {
+        $this->tempIncome = $tempIncome;
         return $this;
     }
 
