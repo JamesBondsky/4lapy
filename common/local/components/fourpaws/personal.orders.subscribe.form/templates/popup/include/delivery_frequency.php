@@ -7,7 +7,6 @@ $orderSubscribe = $component->getOrderSubscribe();
 $orderSubscribeService = $component->getOrderSubscribeService();
 if($orderSubscribe){
     $selectedFrequency = $orderSubscribe->getFrequency();
-    $selectedDeliveryDay = $orderSubscribe->getDeliveryDay();
 }
 
 // периодичность

@@ -16,9 +16,11 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserTable;
 use CUser;
 use FourPaws\App\Application;
+use FourPaws\App\Application as App;
 use FourPaws\App\BaseServiceHandler;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockProperty;
 use FourPaws\Enum\IblockType;
 use FourPaws\Enum\UserGroup;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
@@ -129,6 +131,9 @@ class Event extends BaseServiceHandler
         static::initHandler('OnAfterIBlockElementAdd', [self::class, 'importPersonalOffersCoupons'], 'iblock');
         static::initHandler('OnAfterIBlockElementUpdate', [self::class, 'importPersonalOffersCoupons'], 'iblock');
         static::initHandler('\PersonalCouponUsers::OnAfterAdd', [self::class, 'resetCouponWindowCounter']);
+
+        static::initHandler('OnAfterIBlockElementUpdate', [self::class, 'processShareFileProducts'], 'iblock');
+        static::initHandler('OnAfterIBlockElementAdd', [self::class, 'processShareFileProducts'], 'iblock');
 
         if(KioskService::isKioskMode()) {
             static::initHandler('OnEpilog', [
@@ -699,5 +704,81 @@ class Event extends BaseServiceHandler
 
         $userService = Application::getInstance()->getContainer()->get(UserSearchInterface::class);
         $userService->setModalsCounters($userId, $newValue);
+    }
+
+    public static function processShareFileProducts($arFields): void
+    {
+        if (static::isDisabledHandler(__FUNCTION__)) {
+            return;
+        }
+
+        if ($arFields['IBLOCK_ID'] == IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES)) {
+            $arFilter = [
+                'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES),
+                [
+                    'LOGIC' => 'or',
+                    ['CODE' => IblockProperty::SHARES_FILE_IMPORT_CODE],
+                    ['CODE' => IblockProperty::SHARES_PRODUCT_CODE],
+                ]
+            ];
+            $props = \CIBlockProperty::GetList([], $arFilter);
+
+            $propId = null;
+            $productPropId = null;
+
+            while($propsItem = $props->GetNext()) {
+                if ($propsItem['CODE'] == IblockProperty::SHARES_FILE_IMPORT_CODE && is_null($propId)) {
+                    $propId = $propsItem['ID'];
+                }
+                if ($propsItem['CODE'] == IblockProperty::SHARES_PRODUCT_CODE && is_null($productPropId)) {
+                    $productPropId = $propsItem['ID'];
+                }
+            }
+
+            if (isset($arFields['PROPERTY_VALUES'][$propId])) {
+                $fileImport = array_shift($arFields['PROPERTY_VALUES'][$propId]);
+                $fileImport = $fileImport['VALUE'];
+
+                $products = file_get_contents($fileImport['tmp_name']);
+
+                $productItems = explode(';', $products);
+
+                $productItems = array_map(function($productItem) {
+                    if (!empty($productItem)) {
+                        return str_replace(["\r", "\n"], '', $productItem);
+                    }
+                }, $productItems);
+
+                $productItems = array_filter($productItems, function ($productItem) {
+                    if (!empty($productItem)) {
+                        return $productItem;
+                    }
+                });
+
+                $productAddedArr = [];
+
+                if (isset($arFields['PROPERTY_VALUES'][$productPropId])) {
+                    foreach ($arFields['PROPERTY_VALUES'][$productPropId] as $productAdded) {
+                        $productAddedArr[] = $productAdded['VALUE'];
+                    }
+                }
+
+                $productItems = ($productItems);
+
+                $uniqArrProducts = (array_merge($productItems, $productAddedArr));
+
+                $uniqArrProducts = array_filter($uniqArrProducts, function ($uniqArrProduct) {
+                    if (!empty($uniqArrProduct)) {
+                        return $uniqArrProduct;
+                    }
+                });
+
+
+                \CModule::IncludeModule("iblock");
+                \CIBlockElement::SetPropertyValuesEx($arFields['ID'], $arFields['IBLOCK_ID'], [IblockProperty::SHARES_PRODUCT_CODE => $uniqArrProducts]);
+            }
+        }
+
+        md5('rferfer');
     }
 }

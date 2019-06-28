@@ -87,11 +87,7 @@ class KkmService implements LoggerAwareInterface
         'internal_error' => [
             'code'    => 500,
             'message' => 'Внутренняя ошибка сервера. Обратитесь к администратору сайта'
-        ],
-        'quantity_error'  => [
-            'code'    => 205,
-            'message' => 'Успешно, но указано неверное количество'
-        ],
+        ]
     ];
 
     const BOUNDS = [
@@ -486,6 +482,7 @@ class KkmService implements LoggerAwareInterface
             $deliveryPrice = false;
             $deliveryDates = [];
             $intervals = [];
+            $intervalsAll = [];
             /** @var CalculationResultInterface $delivery */
             foreach ($deliveries as $delivery) {
                 if ($delivery->getDeliveryCode() == DeliveryService::INNER_DELIVERY_CODE) {
@@ -507,6 +504,10 @@ class KkmService implements LoggerAwareInterface
                     foreach ($delivery->getAvailableIntervals() as $interval) {
                         $intervals[] = str_replace(' ', '', (string)$interval);
                     }
+
+                    foreach ($delivery->getIntervals() as $interval) {
+                        $intervalsAll[] = str_replace(' ', '', (string)$interval);
+                    }
                 }
             }
 
@@ -526,7 +527,8 @@ class KkmService implements LoggerAwareInterface
                 'courier' => [
                     'price' => $deliveryPrice,
                     'date'  => $deliveryDates,
-                    'time'  => $intervals
+                    'time'  => $intervals,
+                    'timeAll'  => $intervalsAll,
                 ]
             ];
 
