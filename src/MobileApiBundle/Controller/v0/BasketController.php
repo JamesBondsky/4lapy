@@ -28,6 +28,8 @@ use FourPaws\MobileApiBundle\Dto\Request\UserCartRequest;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
 use FourPaws\MobileApiBundle\Services\Api\CityService;
 use FourPaws\MobileApiBundle\Services\Api\OrderService as ApiOrderService;
+use FourPaws\MobileApiBundle\Services\Api\UserDeliveryAddressService;
+use FourPaws\MobileApiBundle\Services\Api\UserDeliveryAddressService as ApiUserDeliveryAddressService;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 use FourPaws\SaleBundle\Discount\Manzana;
@@ -64,6 +66,11 @@ class BasketController extends FOSRestController
     /** @var OrderStorageService */
     private $orderStorageService;
 
+    /**
+     * @var ApiUserDeliveryAddressService
+     */
+    private $apiUserDeliveryAddressService;
+
     public function __construct(
         Manzana $manzana,
         AppBasketService $appBasketService,
@@ -71,7 +78,8 @@ class BasketController extends FOSRestController
         ApiOrderService $apiOrderService,
         AppStoreService $appStoreService,
         AppDeliveryService $appDeliveryService,
-        OrderStorageService $orderStorageService
+        OrderStorageService $orderStorageService,
+        ApiUserDeliveryAddressService $apiUserDeliveryAddressService
     )
     {
         $this->manzana = $manzana;
@@ -81,6 +89,7 @@ class BasketController extends FOSRestController
         $this->appStoreService = $appStoreService;
         $this->appDeliveryService = $appDeliveryService;
         $this->orderStorageService = $orderStorageService;
+        $this->apiUserDeliveryAddressService = $apiUserDeliveryAddressService;
     }
 
     /**
@@ -222,7 +231,9 @@ class BasketController extends FOSRestController
         $orderCalculate = $this->apiOrderService->getOrderCalculate(
             $basketProducts,
             $userCartCalcRequest->getDeliveryType() === 'courier',
-            $bonusSubtractAmount
+            $bonusSubtractAmount,
+            null,
+            $userCartCalcRequest->getDeliveryType()
         );
         return (new UserCartCalcResponse())
             ->setCartCalc($orderCalculate);
@@ -252,24 +263,17 @@ class BasketController extends FOSRestController
      */
     public function getDostavistaAction()
     {
-
-        $lat = '55.762228'; //мск
-        $lng = '37.440427';
-
-//        $lat = '55.779955'; //за мкадом
-//        $lng = '37.974320';
-
-//        $lat = '56.005328'; //за мкадом
-//        $lng = '37.086918';
-
-        $res = $this->apiOrderService->getDeliveryDetails();
-
         $request = Request::createFromGlobals();
 
         $city = $request->get('city', '');
         $street = $request->get('street', '');
         $house = $request->get('house', '');
         $building = $request->get('building', '');
+        $addressId = $request->get('addressId', '');
+
+        $queryAddress = null;
+
+        $results = [];
 
         $container = Application::getInstance()->getContainer();
         /** @var KkmService $kkmService */
@@ -277,42 +281,41 @@ class BasketController extends FOSRestController
 
         $cityService = $container->get(CityService::class);
 
-        [$courierDelivery, $pickupDelivery, $dostavistaDelivery] = $this->apiOrderService->getDeliveryVariants();
+        if ($addressId) {
+            $user = $this->getUser();
 
-        $cityInfo = $cityService->getCityByCode($city);
+            if ($user) {
+                $listDelivery = $this->apiUserDeliveryAddressService->getList($user->getId(), $city, $addressId)->first();
 
-        $query = implode(', ', array_filter([$cityInfo->getTitle(), $street, $house, $building], function ($item) {
-            if (!empty($item)) {
-                return $item;
+                if ($listDelivery) {
+                    $queryAddress = $listDelivery->getTitle();
+                }
             }
-        }));
+        }
 
-        $address = $kkmService->geocode($query);
+        if (!$queryAddress) {
+            $cityInfo = $cityService->getCityByCode($city);
+
+            $queryAddress = implode(', ', array_filter([$cityInfo->getTitle(), $street, $house, $building], function ($item) {
+                if (!empty($item)) {
+                    return $item;
+                }
+            }));
+        }
+
+        $address = $kkmService->geocode($queryAddress);
 
         $pos = explode(' ', $address['address']['pos']);
 
         $isMKAD = $this->apiOrderService->isMKAD($pos[1], $pos[0]);
 
         if (!$isMKAD) {
-            return new Response(false);
+            return new Response($results);
         }
 
-        /** @var DeliveryService $deliveryService */
-        $deliveryService = $container->get('delivery.service');
-        $deliveries = $deliveryService->getByLocation($city);
+        [$courierDelivery, $pickupDelivery, $dostavistaDelivery] = $this->apiOrderService->getDeliveryVariants();
 
-        $results = [];
-
-        $dostavistaCode = $deliveryService::DELIVERY_DOSTAVISTA_CODE;
-
-        foreach ($deliveries as $delivery) {
-            $deliveryVariant = new DeliveryVariant();
-            $deliveryVariant->setAvailable(true);
-            $deliveryVariant->setDate('через 3 часа');
-            $deliveryVariant->setPrice($delivery->getPrice());
-
-            $results[] = $deliveryVariant;
-        }
+        $results['dostavista'] = $dostavistaDelivery;
 
         return new Response($results);
     }

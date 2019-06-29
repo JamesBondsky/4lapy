@@ -480,6 +480,7 @@ class OrderService
      * @param bool $isCourierDelivery
      * @param float $bonusSubtractAmount
      * @param OrderEntity|null $order
+     * @param string $deliveryCode
      * @return OrderCalculate
      * @throws ApplicationCreateException
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
@@ -488,7 +489,8 @@ class OrderService
         BasketProductCollection $basketProducts,
         $isCourierDelivery = false,
         float $bonusSubtractAmount = 0,
-        OrderEntity $order = null
+        OrderEntity $order = null,
+        string $deliveryCode = ''
     )
     {
         $basketPrice = $basketProducts->getTotalPrice();
@@ -522,6 +524,20 @@ class OrderService
                         if ($this->appDeliveryService->isDelivery($calculationResult)) {
                             $delivery = $calculationResult;
                             $deliveryPrice = $delivery->getPrice();
+                        }
+                    }
+                }
+
+                if ($deliveryCode) {
+                    if (!$deliveries) {
+                        $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
+                    }
+
+                    foreach ($deliveries as $delivery) {
+                        if ($delivery->getDeliveryCode() == $deliveryCode && $this->appDeliveryService->isDelivery($delivery)) {
+                            $delivery = $calculationResult;
+                            $deliveryPrice = $delivery->getPrice();
+                            break;
                         }
                     }
                 }
@@ -651,7 +667,8 @@ class OrderService
         if ($delivery) {
             $courierDelivery
                 ->setAvailable(true)
-                ->setDate(DeliveryTimeHelper::showTime($delivery));
+                ->setDate(DeliveryTimeHelper::showTime($delivery))
+                ->setPrice($delivery->getDeliveryPrice());
         }
         if ($pickup) {
             $pickupDelivery
@@ -661,14 +678,16 @@ class OrderService
                     [
                         'SHOW_TIME' => !$this->appDeliveryService->isDpdPickup($pickup),
                     ]
-                ));
+                ))
+                ->setPrice($pickup->getDeliveryPrice());
         }
         if ($dostavista) {
             $avaliable = $this->checkDostavistaAvaliability($dostavista);
 
             $dostavistaDelivery
                 ->setAvailable(true)
-                ->setDate(DeliveryTimeHelper::showTime($dostavista));
+                ->setDate(DeliveryTimeHelper::showTime($dostavista))
+                ->setPrice($dostavista->getDeliveryPrice());
         }
 
         return [$courierDelivery, $pickupDelivery, $dostavistaDelivery];
