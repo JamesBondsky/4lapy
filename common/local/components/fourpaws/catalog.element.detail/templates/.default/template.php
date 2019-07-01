@@ -437,8 +437,33 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                             foreach ($unionOffers as $unionOffer) {
                                 $unionOffersSort[$unionOffer->getColorWithSize()] = $unionOffer;
                             }
-                            ksort($unionOffersSort); //TODO sort by colors names then by sizes SORT
+	                        usort($unionOffersSort, static function($a, $b) { // Сортировка по названию цвета, затем по полю SORT размера
+	                        	/** @var Offer $a */
+                                /** @var Offer $b */
+                                $aClothingSize = $a->getClothingSize();
+                                $bClothingSize = $b->getClothingSize();
+                                if ($aClothingSize && $bClothingSize) {
+                                	$clothingSizeComparisonResult = $aClothingSize->getSort() <=> $bClothingSize->getSort();
+                                }
 
+                                $aColor = $a->getColor();
+                                $bColor = $b->getColor();
+                                if ($aColor && $bColor) {
+		                            $colorComparisonResult = $aColor->getName() <=> $bColor->getName();
+                                }
+
+                                if (isset($colorComparisonResult)) {
+	                                if ($colorComparisonResult === 0 && isset($clothingSizeComparisonResult)) {
+	                                    return $clothingSizeComparisonResult;
+	                                } else {
+	                                    return $colorComparisonResult;
+			                        }
+                                } elseif (isset($clothingSizeComparisonResult)) {
+                                	return $clothingSizeComparisonResult;
+                                }
+
+                                return 0;
+	                        });
                             ?>
                             <li class="b-product-information__item">
                                 <div class="b-product-information__title-info">Цвет
