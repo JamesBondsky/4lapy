@@ -16,6 +16,7 @@ use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\KkmBundle\Service\KkmService;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryVariant;
+use FourPaws\MobileApiBundle\Dto\Request\DostavistaRequest;
 use FourPaws\MobileApiBundle\Dto\Request\PostUserCartRequest;
 use FourPaws\MobileApiBundle\Dto\Request\PutUserCartRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartCalcRequest;
@@ -258,18 +259,17 @@ class BasketController extends FOSRestController
     /**
      * @Rest\Post(path="/delivery_dostavista/")
      * @Rest\View()
+     * @param DostavistaRequest $dostavistaRequest
      * @return Response
      * @throws \Exception
      */
-    public function getDostavistaAction()
+    public function getDostavistaAction(DostavistaRequest $dostavistaRequest)
     {
-        $request = Request::createFromGlobals();
-
-        $city = $request->get('city', '');
-        $street = $request->get('street', '');
-        $house = $request->get('house', '');
-        $building = $request->get('building', '');
-        $addressId = $request->get('addressId', '');
+        $city = $dostavistaRequest->getCity();
+        $street = $dostavistaRequest->getStreet();
+        $house = $dostavistaRequest->getHouse();
+        $building = $dostavistaRequest->getBuilding();
+        $addressId = $dostavistaRequest->getAddressId();
 
         $queryAddress = null;
 
