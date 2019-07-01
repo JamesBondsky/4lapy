@@ -30,6 +30,7 @@ use FourPaws\BitrixOrm\Collection\ImageCollection;
 use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Collection\ShareCollection;
 use FourPaws\BitrixOrm\Model\CatalogProduct;
+use FourPaws\BitrixOrm\Model\ColorReferenceItem;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Model\Image;
@@ -37,6 +38,7 @@ use FourPaws\BitrixOrm\Model\Interfaces\ResizeImageInterface;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
+use FourPaws\BitrixOrm\Query\HlbColorQuery;
 use FourPaws\BitrixOrm\Query\ShareQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Collection\PriceCollection;
@@ -176,7 +178,7 @@ class Offer extends IblockElement
     protected $PROPERTY_COLOUR = '';
 
     /**
-     * @var HlbReferenceItem
+     * @var ColorReferenceItem
      */
     protected $colour;
 
@@ -633,19 +635,25 @@ class Offer extends IblockElement
     }
 
     /**
-     * @throws ServiceNotFoundException
+     * @return null|ColorReferenceItem
      * @throws ApplicationCreateException
-     * @throws RuntimeException
-     * @throws ServiceCircularReferenceException
-     * @return null|HlbReferenceItem
+     * @throws ArgumentException
+     * @throws SystemException
      */
-    public function getColor(): ?HlbReferenceItem
+    public function getColor(): ?ColorReferenceItem
     {
         if ((null === $this->colour) && $this->PROPERTY_COLOUR) {
-            $this->colour = ReferenceUtils::getReference(
-                Application::getHlBlockDataManager('bx.hlblock.colour'),
-                $this->PROPERTY_COLOUR
-            );
+            $colourDataManager = Application::getHlBlockDataManager('bx.hlblock.colour');
+            $color = (new HlbColorQuery($colourDataManager::query()))
+                ->withFilter(['=UF_XML_ID' => $this->PROPERTY_COLOUR])
+                ->exec()
+                ->current();
+
+            if ($color instanceof ColorReferenceItem) {
+                $this->colour = $color;
+            } else {
+                $this->colour = new ColorReferenceItem();
+            }
         }
 
         return $this->colour;

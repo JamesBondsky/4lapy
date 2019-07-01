@@ -219,7 +219,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                                 if ($color) {
                                     $value = $color->getName();
                                     $image = $color->getFilePath();
-                                    $colorHexCode = $color->getColourCode(); //TODO get value in other way (wip)
+                                    $colorHexCode = $color->getColorCode();
                                     $colourCombination = true;
                                 }
                                 break;
