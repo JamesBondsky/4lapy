@@ -6,7 +6,6 @@ use Bitrix\Main\DB\ArrayResult;
 use Bitrix\Main\Entity\DataManager;
 use FourPaws\BitrixOrm\Collection\HlbReferenceItemCollection;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
-use FourPaws\BitrixOrm\Query\HlbColorQuery;
 use FourPaws\BitrixOrm\Query\HlbReferenceQuery;
 
 /**
@@ -30,7 +29,7 @@ abstract class ReferenceUtils
             return new HlbReferenceItem();
         }
 
-        $reference = (new HlbColorQuery($dataManager::query()))
+        $reference = (new HlbReferenceQuery($dataManager::query()))
             ->withFilter(['=UF_XML_ID' => $xmlId])
             ->exec()
             ->current();
