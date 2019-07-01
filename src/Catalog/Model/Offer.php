@@ -1827,6 +1827,29 @@ class Offer extends IblockElement
      * @return string
      * @throws ApplicationCreateException
      */
+    public function getColorWithSize(): string
+    {
+        $result = [];
+
+        $color = $this->getColor();
+        if ($color) {
+            $colorName = $color->getName();
+            $result[] = $colorName;
+        }
+
+        $clothingSize = $this->getClothingSize();
+        if ($clothingSize) {
+            $clothingSizeName = $clothingSize->getName();
+            $result[] = $clothingSizeName;
+        }
+
+        return implode(', ', $result);
+    }
+
+    /**
+     * @return string
+     * @throws ApplicationCreateException
+     */
     public function getOfferWithColor(): string
     {
         $clothingSize = $this->getClothingSize();

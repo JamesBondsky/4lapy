@@ -435,13 +435,9 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
 
                             $unionOffersSort = [];
                             foreach ($unionOffers as $unionOffer) {
-                                if ($currentOffer->getClothingSizeXmlId() !== $unionOffer->getClothingSizeXmlId()) {
-                                    continue;
-                                }
-                                $color = $unionOffer->getColor();
-                            	$unionOffersSort[$color ? $color->getName() : $unionOffer->getName()] = $unionOffer;
+                                $unionOffersSort[$unionOffer->getColorWithSize()] = $unionOffer;
                             }
-                            ksort($unionOffersSort);
+                            ksort($unionOffersSort); //TODO sort by colors names then by sizes SORT
 
                             ?>
                             <li class="b-product-information__item">
@@ -452,16 +448,9 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                                         <select class="b-select__block b-select__block--product js-select-link">
                                             <?php /** @var Offer $unionOffer */
                                             foreach ($unionOffersSort as $unionOffer) {
-                                            	$color = $unionOffer->getColor();
                                                 ?>
                                                 <option value="<?= $unionOffer->getDetailPageUrl() ?>" <?= $unionOffer->getId() === $currentOffer->getId() ? ' selected' : '' ?>>
-                                                    <?
-                                                    if (isset($color)) {
-                                                        echo $color->getName();
-                                                    } else {
-                                                        $unionOffer->getName();
-                                                    }
-                                                    ?>
+                                                    <?= $unionOffer->getColorWithSize() ?>
                                                 </option>
                                                 <?php
                                             } ?>
