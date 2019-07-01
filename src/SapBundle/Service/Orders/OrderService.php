@@ -1280,6 +1280,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 case DeliveryService::ZONE_KALUGA:
                 case DeliveryService::ZONE_KALUGA_REGION:
                 case DeliveryService::ZONE_IVANOVO_REGION:
+                case DeliveryService::ADD_DELIVERY_ZONE_10:
                     $xmlId = SapOrder::DELIVERY_ZONE_2_ARTICLE;
                     break;
                 case DeliveryService::ZONE_3:
