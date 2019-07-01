@@ -162,10 +162,15 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
 
         $orderInfo = $this->salePaymentService->getSberbankOrderStatusByOrderId($orderInvoiceId);
         if ($fiscalization = $this->getFiscalization($order, $paymentTask)) {
+            $bonus = 0;
+            if ($order->getPaymentCollection()->getInnerPayment()) {
+                $bonus = $order->getPaymentCollection()->getInnerPayment()->getSum();
+            }
             $this->salePaymentService->validateFiscalization(
                 $fiscalization,
                 $orderInfo,
-                $paymentTask->getSumPayed() * 100
+                $paymentTask->getSumPayed() * 100,
+                $bonus
             );
         }
 
