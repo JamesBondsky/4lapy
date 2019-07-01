@@ -126,6 +126,7 @@ class ExpertsenderService implements LoggerAwareInterface
     public const GRANDIN_NEW_CHECK_REG_LIST_ID = 8906;
     public const ROYAL_CANIN_NEW_CHECK_REG_LIST_ID = 9195;
     public const FESTIVAL_NEW_USER_REG_LIST_ID = 9233;
+    public const MEALFEEL_NEW_CHECK_REG_LIST_ID = 8919;
     /**
      * BirthDay mail ids
      */
@@ -1367,6 +1368,9 @@ class ExpertsenderService implements LoggerAwareInterface
                     break;
                 case LandingController::$royalCaninLanding:
                     $transactionId = self::ROYAL_CANIN_NEW_CHECK_REG_LIST_ID;
+                    break;
+                case LandingController::$mealfeelLanding:
+                    $transactionId = self::MEALFEEL_NEW_CHECK_REG_LIST_ID;
                     break;
                 default:
                     $transactionId = self::GRANDIN_NEW_CHECK_REG_LIST_ID;
