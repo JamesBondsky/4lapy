@@ -49,7 +49,7 @@ class CSocServOK2 extends \CSocServOdnoklassniki
                     }
 
                     $arFields = array(
-//						'EXTERNAL_AUTH_ID' => self::ID,
+						'EXTERNAL_AUTH_ID' => self::ID,
                         'XML_ID' => "OK".$uid,
                         'LOGIN' => "OKuser".$uid,
                         'NAME'=> $first_name,

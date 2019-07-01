@@ -1332,12 +1332,13 @@ class Offer extends IblockElement
      *
      * @param int $percent
      * @param int $quantity
+     * @param bool $orderSubscribePrice - кол-во бонусов по подписке на доставку
      *
      * @throws NotAuthorizedException
      *
      * @return float
      */
-    public function getBonusCount(int $percent, int $quantity = 1): float
+    public function getBonusCount(int $percent, int $quantity = 1, $orderSubscribePrice = false): float
     {
         $result = 0;
 
@@ -1367,7 +1368,12 @@ class Offer extends IblockElement
             && !$this->isShare()
             && !$this->isRegionPrice()
         ) {
-            $result = $this->getPrice() * $quantity * $percent / 100;
+            $price = $this->getPrice();
+            if($orderSubscribePrice){
+                $price = $this->getSubscribePrice();
+            }
+
+            $result = $price * $quantity * $percent / 100;
         }
 
         return $result;
@@ -1380,11 +1386,11 @@ class Offer extends IblockElement
      *
      * @return string
      */
-    public function getBonusFormattedText(int $percent = 3, int $quantity = 1, int $precision = 2): string
+    public function getBonusFormattedText(int $percent = 3, int $quantity = 1, $orderSubscribePrice = false): string
     {
         $bonusText = '';
 
-        $bonus = floor($this->getBonusCount($percent, $quantity));
+        $bonus = floor($this->getBonusCount($percent, $quantity, $orderSubscribePrice));
         if ($bonus > 0) {
             $bonusText = \sprintf(
                 '+ %s %s',

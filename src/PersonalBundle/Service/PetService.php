@@ -112,6 +112,7 @@ class PetService
      */
     public function add(array $data): bool
     {
+        $data['UF_NAME'] = strip_tags($data['UF_NAME']);
         if (empty($data['UF_USER_ID'])) {
             $data['UF_USER_ID'] = $this->currentUser->getCurrentUserId();
         }
