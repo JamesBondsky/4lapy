@@ -719,7 +719,6 @@ class OrderService
         $result = [
             'pickup' => $pickupDelivery,
             'courier' => $courierDelivery,
-            'dostavista' => $dostavistaDelivery,
         ];
         if ($courierDelivery->getAvailable()) {
             $basketProducts = $this->apiBasketService->getBasketProducts(true);
