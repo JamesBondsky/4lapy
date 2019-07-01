@@ -273,7 +273,9 @@ class BasketController extends FOSRestController
 
         $queryAddress = null;
 
-        $results = [];
+        $results = [
+            'dostavista' => new DeliveryVariant()
+        ];
 
         $container = Application::getInstance()->getContainer();
         /** @var KkmService $kkmService */
