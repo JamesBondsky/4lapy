@@ -135,6 +135,11 @@ class DeliveryService implements LoggerAwareInterface
     public const ADD_DELIVERY_ZONE_CODE_PATTERN = 'ADD_DELIVERY_ZONE_';
 
     /**
+     * Зоны Москвы
+     */
+    public const ADD_DELIVERY_ZONE_10 = 'ADD_DELIVERY_ZONE_10';
+
+    /**
      * Новые зоны - районы Москвы
      */
     public const ZONE_MOSCOW_DISTRICT_CODE_PATTERN = 'ZONE_MOSCOW_DISTRICT_';
