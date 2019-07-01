@@ -534,7 +534,7 @@ class OrderService
                     }
 
                     foreach ($deliveries as $delivery) {
-                        if ($delivery->getDeliveryCode() == $deliveryCode && $this->appDeliveryService->isDelivery($delivery)) {
+                        if ($delivery->getDeliveryCode() == $deliveryCode) {
                             $deliveryPrice = $delivery->getDeliveryPrice();
                             break;
                         }
