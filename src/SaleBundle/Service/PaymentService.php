@@ -188,7 +188,7 @@ class PaymentService implements LoggerAwareInterface
         Fiscalization $fiscalization,
         OrderInfo $orderInfo,
         int $sumPaid = null,
-        float $amountBonus = null
+        ?float $amountBonus = null
     ): void
     {
         $fiscalItems = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
