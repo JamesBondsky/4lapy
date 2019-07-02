@@ -333,16 +333,22 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
                     $newItem->setSumPrice(floatval($newAveragePriceItem) * $newItem->getQuantity());
                     $newItem->setPrice($newAveragePriceItem);
 
-                    $itemsOrder[$xmlIdItem][] = $newItem;
+                    if ($newItem->getPrice() > 0) {
+                        $itemsOrder[$xmlIdItem][] = $newItem;
+                    }
 
                     $newItemOriginal->setPrice($origSumAmount - $newItem->getSumPrice());
                     $newItemOriginal->setSumPrice($origSumAmount - $newItem->getSumPrice());
                     $newItemOriginal->setQuantity(1);
 
-                    $itemsOrder[$xmlIdItem][] = $newItemOriginal;
+                    if ($newItemOriginal->getPrice() > 0) {
+                        $itemsOrder[$xmlIdItem][] = $newItemOriginal;
+                    }
 
                 } else {
-                    $itemsOrder[$xmlIdItem][] = $newItem;
+                    if ($newItem->getPrice() > 0) {
+                        $itemsOrder[$xmlIdItem][] = $newItem;
+                    }
                 }
             }
         }
