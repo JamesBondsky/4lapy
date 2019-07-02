@@ -684,9 +684,10 @@ class OrderService
             $avaliable = $this->checkDostavistaAvaliability($dostavista);
 
             $dostavistaDelivery
-                ->setAvailable(true)
-                ->setDate(DeliveryTimeHelper::showTime($dostavista))
-                ->setPrice($dostavista->getDeliveryPrice());
+                ->setAvailable($avaliable)
+                ->setDate(DeliveryTimeHelper::showTime($dostavista) . ' - в течение 3 часов с момента заказа')
+                ->setPrice($dostavista->getDeliveryPrice())
+                ->setShortDate('В течение 3 часов');
         }
 
         return [$courierDelivery, $pickupDelivery, $dostavistaDelivery];

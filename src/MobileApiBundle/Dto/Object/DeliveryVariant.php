@@ -27,6 +27,13 @@ class DeliveryVariant
      */
     protected $price = 0.0;
 
+    /**
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("shortDate")
+     * @var string
+     */
+    protected $shortDate = '';
+
 
     /**
      * @return bool
@@ -79,6 +86,24 @@ class DeliveryVariant
     public function setPrice(float $price): DeliveryVariant
     {
         $this->price = $price;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getShortDate(): string
+    {
+        return $this->shortDate;
+    }
+
+    /**
+     * @param string $shortDate
+     * @return DeliveryVariant
+     */
+    public function setShortDate(string $shortDate): DeliveryVariant
+    {
+        $this->shortDate = $shortDate;
         return $this;
     }
 }
