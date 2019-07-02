@@ -164,15 +164,10 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
 
         $orderInfo = $this->salePaymentService->getSberbankOrderStatusByOrderId($orderInvoiceId);
         if ($fiscalization = $this->getFiscalization($order, $paymentTask)) {
-            $bonus = 0;
-            if ($order->getPaymentCollection()->getInnerPayment()) {
-                $bonus = $order->getPaymentCollection()->getInnerPayment()->getSum();
-            }
             $this->salePaymentService->validateFiscalization(
                 $fiscalization,
                 $orderInfo,
-                $paymentTask->getSumPayed() * 100,
-                $bonus
+                $paymentTask->getSumPayed() * 100
             );
         }
 
@@ -357,6 +352,8 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
 
         $itemsInCart = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
 
+        asort($itemsOrder);
+
         $itemsFiscal = [];
         foreach ($itemsOrder as $xmlId => $ptItems) {
             foreach ($ptItems as $ptItem) {
@@ -385,10 +382,15 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
                         }
                     }, $itemsInCart->toArray());
 
-                    if (isset($tmpFindItem[0]) && $tmpFindItem[0]) {
+                    $tmpFindItem = array_filter($tmpFindItem, function ($tmpFindItemItem) {
+                        if ($tmpFindItemItem) {
+                            return true;
+                        }
+                    });
 
-                        $tmpFindItem = $tmpFindItem[0];
+                    $tmpFindItem = array_shift($tmpFindItem);
 
+                    if ($tmpFindItem) {
                         $tmpItem->setPositionId($tmpFindItem->getPositionId());
 
                         $tmpItem->setPaymentMethod($tmpFindItem->getPaymentMethod());
