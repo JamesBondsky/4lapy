@@ -693,7 +693,7 @@ class OrderService
                 ->setShortDate('В течение 3 часов');
 
             if ($deliveryDate->format('d.m') == $currentDate->format('d.m')) {
-                $dostavistaDelivery->setDate(' - в течение 3 часов с момента заказа');
+                $dostavistaDelivery->setDate('Сегодня, ' . $deliveryDate->format('d.m.Y') . ' - в течение 3 часов с момента заказа');
             } else {
                 $dostavistaDelivery->setDate(DeliveryTimeHelper::showTime($dostavista) . ' - в течение 3 часов с момента заказа');
             }
