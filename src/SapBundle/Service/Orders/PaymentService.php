@@ -333,6 +333,7 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         asort($itemsOrder);
 
         $itemsFiscal = [];
+        $positionId = 1;
         foreach ($itemsOrder as $xmlId => $ptItems) {
             foreach ($ptItems as $ptItem) {
                 $tmpItem = new FiscalItem();
@@ -362,13 +363,15 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
                     $tmpFindItem = array_shift($tmpFindItem);
 
                     if ($tmpFindItem) {
-                        $tmpItem->setPositionId($tmpFindItem->getPositionId());
+                        $tmpItem->setPositionId($positionId);
+//                        $tmpItem->setPositionId($tmpFindItem->getPositionId());
 
                         $tmpItem->setPaymentMethod($tmpFindItem->getPaymentMethod());
                         $tmpItem->setTax($tmpFindItem->getTax());
                         $tmpItem->setCode($tmpFindItem->getCode());
 
                         $itemsFiscal[] = $tmpItem;
+                        ++$positionId;
                     }
                 }
             }
