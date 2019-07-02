@@ -1257,7 +1257,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
             switch ($deliveryZone) {
                 case DeliveryService::ZONE_1:
-                case DeliveryService::ZONE_IVANOVO:
                     $xmlId = SapOrder::DELIVERY_ZONE_1_ARTICLE;
                     break;
                 case DeliveryService::ZONE_5:
@@ -1279,6 +1278,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 case DeliveryService::ZONE_TULA_REGION:
                 case DeliveryService::ZONE_KALUGA:
                 case DeliveryService::ZONE_KALUGA_REGION:
+                case DeliveryService::ZONE_IVANOVO:
                 case DeliveryService::ZONE_IVANOVO_REGION:
                 case DeliveryService::ADD_DELIVERY_ZONE_10:
                     $xmlId = SapOrder::DELIVERY_ZONE_2_ARTICLE;
