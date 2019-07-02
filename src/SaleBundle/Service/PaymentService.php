@@ -219,15 +219,15 @@ class PaymentService implements LoggerAwareInterface
                     );
                 }
 
-                if ($matchingItem->getItemCode() !== $fiscalItem->getCode()) {
-                    throw new InvalidItemCodeException(
-                        \sprintf(
-                            'Item code %s for position %s doesn\'t, match existing item code',
-                            $fiscalItem->getCode(),
-                            $fiscalItem->getPositionId()
-                        )
-                    );
-                }
+//                if ($matchingItem->getItemCode() !== $fiscalItem->getCode()) {
+//                    throw new InvalidItemCodeException(
+//                        \sprintf(
+//                            'Item code %s for position %s doesn\'t, match existing item code',
+//                            $fiscalItem->getCode(),
+//                            $fiscalItem->getPositionId()
+//                        )
+//                    );
+//                }
             }
 
             if ($fiscalItem->getTotal() !== $fiscalItem->getQuantity()->getValue() * $fiscalItem->getPrice()) {

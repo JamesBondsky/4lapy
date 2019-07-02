@@ -335,6 +335,8 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
 
         $itemsInCart = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
 
+        asort($itemsOrder);
+
         $itemsFiscal = [];
         foreach ($itemsOrder as $xmlId => $ptItems) {
             foreach ($ptItems as $ptItem) {
@@ -356,10 +358,15 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
                         }
                     }, $itemsInCart->toArray());
 
-                    if (isset($tmpFindItem[0]) && $tmpFindItem[0]) {
+                    $tmpFindItem = array_filter($tmpFindItem, function ($tmpFindItemItem) {
+                        if ($tmpFindItemItem) {
+                            return true;
+                        }
+                    });
 
-                        $tmpFindItem = $tmpFindItem[0];
+                    $tmpFindItem = array_shift($tmpFindItem);
 
+                    if ($tmpFindItem) {
                         $tmpItem->setPositionId($tmpFindItem->getPositionId());
 
                         $tmpItem->setPaymentMethod($tmpFindItem->getPaymentMethod());
