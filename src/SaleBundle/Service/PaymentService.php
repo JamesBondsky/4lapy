@@ -258,9 +258,10 @@ class PaymentService implements LoggerAwareInterface
             if (($sumPaid - ($fiscalAmount-$amountBonus)) > ($sumPaid * 0.01)) {
                 throw new FiscalAmountException(
                     \sprintf(
-                        'Fiscal amount (%s) is lesser than paid amount (%s)',
+                        'Fiscal amount (%s) is lesser than paid amount (%s) bonus amount (%s)',
                         $fiscalAmount-$amountBonus,
-                        $sumPaid
+                        $sumPaid,
+                        $amountBonus
                     )
                 );
             }
