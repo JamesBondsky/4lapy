@@ -187,8 +187,7 @@ class PaymentService implements LoggerAwareInterface
     public function validateFiscalization(
         Fiscalization $fiscalization,
         OrderInfo $orderInfo,
-        int $sumPaid = null,
-        ?float $amountBonus = null
+        int $sumPaid = null
     ): void
     {
         $fiscalItems = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
@@ -258,7 +257,7 @@ class PaymentService implements LoggerAwareInterface
             if (($sumPaid - ($fiscalAmount)) > ($sumPaid * 0.01)) {
                 throw new FiscalAmountException(
                     \sprintf(
-                        'Fiscal amount (%s) is lesser than paid amount (%s) bonus amount',
+                        'Fiscal amount (%s) is lesser than paid amount (%s)',
                         $fiscalAmount,
                         $sumPaid
                     )
