@@ -192,10 +192,7 @@ class PaymentService implements LoggerAwareInterface
     {
         $fiscalItems = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
         $fiscalAmount = $this->getFiscalTotal($fiscalization);
-
-        if ($this->isCompareCartItemsOnValidateFiscalization()) {
-            $sberbankOrderItems = $orderInfo->getOrderBundle()->getCartItems()->getItems();
-        }
+        
         /** @var Item $fiscalItem */
         foreach ($fiscalItems as $fiscalItem) {
             if ($this->isCompareCartItemsOnValidateFiscalization()) {
