@@ -168,9 +168,10 @@ class DeliverySchedule
         if (null === $this->xmlId) {
             $this->xmlId = \md5(
                 \sprintf(
-                    '%s|%s',
+                    '%s|%s|%s',
                     $this->getSenderCode(),
-                    $this->getRecipientCode()
+                    $this->getRecipientCode(),
+                    $this->getRegular()
                 )
             );
         }

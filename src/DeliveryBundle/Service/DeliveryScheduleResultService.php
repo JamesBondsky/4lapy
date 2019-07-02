@@ -50,7 +50,7 @@ class DeliveryScheduleResultService
                 }
 
                 $date1 = $collection1->getDays($from);
-                $date2 = $collection1->getDays($from);
+                $date2 = $collection2->getDays($from);
 
                 return $date1 <=> $date2;
             }
@@ -99,6 +99,11 @@ class DeliveryScheduleResultService
                         $days = $resultByOffer->getScheduleResult()->getDays($from);
                         if ($days > $item->getScheduleResult()->getDays($from)) {
                             $result[$offerId] = $item;
+                        } else {
+                            $regularitySort = $resultByOffer->getScheduleResult()->getRegularitySort();
+                            if($regularitySort > $item->getScheduleResult()->getRegularitySort()) {
+                                $result[$offerId] = $item;
+                            }
                         }
                     }
                 }

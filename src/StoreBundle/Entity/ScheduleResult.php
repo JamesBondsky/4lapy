@@ -19,6 +19,8 @@ class ScheduleResult
 
     public const DATE_ACTIVE_FORMAT = 'd.m.Y';
 
+    public const DEFUALT_SCHED_TYPE = 'Z1';
+
     /**
      * @var int
      * @Serializer\Type("integer")
@@ -332,19 +334,60 @@ class ScheduleResult
     }
 
     /**
-     * @return string
+     * @return string|null
+     * @throws \Exception
      */
     public function getRegularity(): ?string
     {
+        if($this->regularity === null){
+            $this->setRegularity($this->getDefaultRegularity());
+        }
         return $this->regularity;
     }
 
     /**
-     * @return string
+     * @return string|null
+     * @throws \Exception
      */
     public function getRegularityName(): ?string
     {
         $id = $this->getRegularity();
+        $regularities = $this->getRegularityEnum();
+        $regularity = $regularities->get($id);
+        return $regularity->getValue() ?: '';
+    }
+
+    /**
+     * @return string|null
+     * @throws \Exception
+     */
+    public function getRegularitySort(): ?string
+    {
+        $id = $this->getRegularity();
+        $regularities = $this->getRegularityEnum();
+        $regularity = $regularities->get($id);
+        return $regularity->getSort() ?: 500;
+    }
+
+    /**
+     * @return mixed
+     * @throws \Exception
+     */
+    public function getDefaultRegularity()
+    {
+        $regularities = $this->getRegularityEnum();
+        $regularities = $regularities->filter(function($item){
+            return $item->getXmlId() == self::DEFUALT_SCHED_TYPE;
+        });
+        return $regularities->first()->getId();
+    }
+
+    /**
+     * @return UserFieldEnumCollection
+     * @throws \Exception
+     */
+    public function getRegularityEnum()
+    {
         $getRegularities  = function() {
             /** @var UserFieldEnumService $userFieldEnumService */
             $userFieldEnumService = Application::getInstance()->getContainer()->get('userfield_enum.service');
@@ -359,13 +402,12 @@ class ScheduleResult
         };
         /** @var UserFieldEnumCollection $regularities */
         $regularities = (new BitrixCache())
-                         ->withId(__METHOD__)
-                         ->withTag('delivery_schedule_regularity')
-                         ->withTime(86400*356)
-                         ->resultOf($getRegularities)['result'];
+                            ->withId(__METHOD__)
+                            ->withTag('delivery_schedule_regularity')
+                            ->withTime(86400*356)
+                            ->resultOf($getRegularities)['result'];
 
-        $regularity = $regularities->get($id);
-
-        return $regularity->getValue() ?: '';
+        return $regularities;
     }
+
 }
