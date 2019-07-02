@@ -683,11 +683,20 @@ class OrderService
         if ($dostavista) {
             $avaliable = $this->checkDostavistaAvaliability($dostavista);
 
+            $currentDate = new \DateTime();
+
+            $deliveryDate = $dostavista->getDeliveryDate();
+
             $dostavistaDelivery
                 ->setAvailable($avaliable)
-                ->setDate(DeliveryTimeHelper::showTime($dostavista) . ' - в течение 3 часов с момента заказа')
                 ->setPrice($dostavista->getDeliveryPrice())
                 ->setShortDate('В течение 3 часов');
+
+            if ($deliveryDate->format('d.m') == $currentDate->format('d.m')) {
+                $dostavistaDelivery->setDate(' - в течение 3 часов с момента заказа');
+            } else {
+                $dostavistaDelivery->setDate(DeliveryTimeHelper::showTime($dostavista) . ' - в течение 3 часов с момента заказа');
+            }
         }
 
         return [$courierDelivery, $pickupDelivery, $dostavistaDelivery];
