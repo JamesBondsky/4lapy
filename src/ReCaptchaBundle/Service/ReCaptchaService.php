@@ -65,8 +65,7 @@ class ReCaptchaService implements LoggerAwareInterface, ReCaptchaInterface
             $script = $this->getJs();
         }
 
-        //return $script . '<div id="'.$id.'" class="g-recaptcha ' . $additionalClass . '" data-sitekey="' . $this->parameters['key'] . '" data-callback="' . $callback . '"></div>';
-        return $script . '<div id="'.$id.'" class="' . $additionalClass . '" data-sitekey="' . $this->parameters['key'] . '" data-callback="' . $callback . '" data-captcha="true" data-size="invisible"></div>';
+        return $script . '<div id="'.$id.'" class="g-recaptcha ' . $additionalClass . '" data-sitekey="' . $this->parameters['key'] . '" data-callback="' . $callback . '"></div>';
     }
 
     /**
@@ -79,7 +78,7 @@ class ReCaptchaService implements LoggerAwareInterface, ReCaptchaInterface
 
     public function addJs()
     {
-        Asset::getInstance()->addJs('https://www.google.com/recaptcha/api.js?hl=ru&onload=initCaptcha');
+        Asset::getInstance()->addJs('https://www.google.com/recaptcha/api.js?hl=ru');
     }
 
     /**
@@ -87,7 +86,7 @@ class ReCaptchaService implements LoggerAwareInterface, ReCaptchaInterface
      */
     public function getJs(): string
     {
-        return '<script data-skip-moving=true async src="https://www.google.com/recaptcha/api.js?hl=ru&onload=initCaptcha"></script>';
+        return '<script data-skip-moving=true async src="https://www.google.com/recaptcha/api.js?hl=ru"></script>';
     }
 
     /**

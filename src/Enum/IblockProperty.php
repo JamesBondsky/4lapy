@@ -24,4 +24,8 @@ class IblockProperty
     public const SHARE_PRODUCTS = 'PRODUCTS';
 
     public const BRAND_BONUS_OPT = 'BONUS_OPT';
+
+    public const SHARES_FILE_IMPORT_CODE = 'FILE_IMPORT';
+
+    public const SHARES_PRODUCT_CODE = 'PRODUCTS';
 }

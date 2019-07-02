@@ -3,9 +3,86 @@ namespace FourPaws\SocServ;
 
 
 use CModule;
+use CSocServAuthManager;
+use CVKontakteOAuthInterface;
 
 class CSocServVK2 extends \CSocServVKontakte {
     const ID = "VK2";
+    const CONTROLLER_URL = "https://www.bitrix24.ru/controller";
+
+    protected $entityOAuth = NULL;
+
+    public function GetSettings()
+    {
+        return array(
+            array("vkontakte_appid", GetMessage("socserv_vk_id"), "", Array("text", 40)),
+            array("vkontakte_appsecret", GetMessage("socserv_vk_key"), "", Array("text", 40)),
+            array("note" => GetMessage("socserv_vk_sett_note")),
+        );
+    }
+
+    public function GetFormHtml($arParams)
+    {
+        $url = $this->getUrl($arParams);
+
+        $phrase = ($arParams["FOR_INTRANET"]) ? GetMessage("socserv_vk_note_intranet") : GetMessage("socserv_vk_note");
+        if ($arParams["FOR_INTRANET"])
+            return array("ON_CLICK" => 'onclick="BX.util.popup(\'' . htmlspecialcharsbx(\CUtil::JSEscape($url)) . '\', 660, 425)"');
+
+        return '<a href="javascript:void(0)" onclick="BX.util.popup(\'' . htmlspecialcharsbx(\CUtil::JSEscape($url)) . '\', 660, 425)" class="bx-ss-button vkontakte-button"></a><span class="bx-spacer"></span><span>' . $phrase . '</span>';
+    }
+
+    public function GetOnClickJs($arParams)
+    {
+        $url = $this->getUrl($arParams);
+
+        return "BX.util.popup('" . \CUtil::JSEscape($url) . "', 660, 425)";
+    }
+
+    public function getUrl($arParams)
+    {
+        global $APPLICATION;
+
+        $gAuth = $this->getEntityOAuth();
+
+        if (IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
+        {
+            $redirect_uri = self::CONTROLLER_URL . "/redirect.php";
+            // error, but this code is not working at all
+            $state = \CHTTP::URN2URI("/bitrix/tools/oauth/liveid.php") . "?state=";
+            $backurl = urlencode($APPLICATION->GetCurPageParam('check_key=' . $_SESSION["UNIQUE_KEY"], array("logout", "auth_service_error", "auth_service_id", "backurl")));
+            $state .= urlencode(urlencode("backurl=" . $backurl));
+        }
+        else
+        {
+            //$redirect_uri = CSocServUtil::GetCurUrl('auth_service_id='.self::ID);
+            $redirect_uri = \CHTTP::URN2URI($APPLICATION->GetCurPage()) . '?auth_service_id=' . self::ID;
+
+            $backurl = $APPLICATION->GetCurPageParam(
+                'check_key=' . $_SESSION["UNIQUE_KEY"],
+                array("logout", "auth_service_error", "auth_service_id", "backurl")
+            );
+
+            $state = 'site_id=' . SITE_ID . '&backurl=' . urlencode('/personal/register' . $backurl) . (isset($arParams['BACKURL']) ? '&redirect_url=/personal/register/' . urlencode($arParams['BACKURL']) : '');
+        }
+
+        return $gAuth->GetAuthUrl($redirect_uri, $state);
+    }
+
+    public function getEntityOAuth($code = false)
+    {
+        if (!$this->entityOAuth)
+        {
+            $this->entityOAuth = new CVKontakteOAuthInterface();
+        }
+
+        if ($code !== false)
+        {
+            $this->entityOAuth->setCode($code);
+        }
+
+        return $this->entityOAuth;
+    }
 
     public function prepareUser($arVkUser, $short = false)
     {
@@ -13,12 +90,12 @@ class CSocServVK2 extends \CSocServVKontakte {
 
         if ($arVkUser['response']['0']['first_name'] <> '')
         {
-            $first_name = preg_replace("/&[#a-z0-9]+;/", "", $arVkUser['response']['0']['first_name']);
+            $first_name = $arVkUser['response']['0']['first_name'];
         }
 
         if ($arVkUser['response']['0']['last_name'] <> '')
         {
-            $last_name = preg_replace("/&[#a-z0-9]+;/", "", $arVkUser['response']['0']['last_name']);
+            $last_name = $arVkUser['response']['0']['last_name'];
         }
 
         if (isset($arVkUser['response']['0']['sex']) && $arVkUser['response']['0']['sex'] != '')
@@ -29,26 +106,11 @@ class CSocServVK2 extends \CSocServVKontakte {
                 $gender = 'F';
         }
 
-        $phone = null;
-
-        if (isset($arVkUser['response']['0']['contacts'])) {
-            if (isset($arVkUser['response']['0']['contacts']['mobile_phone'])) {
-                try {
-                    $phone = \FourPaws\Helpers\PhoneHelper::normalizePhone($arVkUser['response']['0']['mobile_phone']);
-                } catch (\Exception $e) {}
-            }
-            if (isset($arVkUser['response']['0']['contacts']['home_phone'])) {
-                try {
-                    $phone = \FourPaws\Helpers\PhoneHelper::normalizePhone($arVkUser['response']['0']['home_phone']);
-                } catch (\Exception $e) {}
-            }
-        }
-
         $arFields = array(
-//			'EXTERNAL_AUTH_ID' => self::ID,
+			'EXTERNAL_AUTH_ID' => self::ID,
             'XML_ID' => $arVkUser['response']['0']['id'],
-//			'LOGIN' => "VKuser" . $arVkUser['response']['0']['id'],
-            'LOGIN' => $phone ?? "VKuser" . $arVkUser['response']['0']['id'],
+			'LOGIN' => "VKuser" . $arVkUser['response']['0']['id'],
+//            'LOGIN' => $phone ?? "VKuser" . $arVkUser['response']['0']['id'],
             'EMAIL' => $this->entityOAuth->GetCurrentUserEmail(),
             'NAME' => $first_name,
             'LAST_NAME' => $last_name,
@@ -56,10 +118,6 @@ class CSocServVK2 extends \CSocServVKontakte {
             'OATOKEN' => $this->entityOAuth->getToken(),
             'OATOKEN_EXPIRES' => $this->entityOAuth->getAccessTokenExpires(),
         );
-
-        if ($phone) {
-            $arFields['PERSONAL_PHONE'] = $phone;
-        }
 
         if (isset($arVkUser['response']['0']['photo_max_orig']) && self::CheckPhotoURI($arVkUser['response']['0']['photo_max_orig']))
         {
@@ -91,42 +149,12 @@ class CSocServVK2 extends \CSocServVKontakte {
         return $arFields;
     }
 
-    public function getUrl($arParams)
-    {
-        global $APPLICATION;
-
-        $gAuth = $this->getEntityOAuth();
-
-        if (IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
-        {
-            $redirect_uri = self::CONTROLLER_URL . "/redirect.php";
-            // error, but this code is not working at all
-            $state = \CHTTP::URN2URI("/bitrix/tools/oauth/liveid.php") . "?state=";
-            $backurl = urlencode($APPLICATION->GetCurPageParam('check_key=' . $_SESSION["UNIQUE_KEY"], array("logout", "auth_service_error", "auth_service_id", "backurl")));
-            $state .= urlencode(urlencode("backurl=" . $backurl));
-        }
-        else
-        {
-            //$redirect_uri = CSocServUtil::GetCurUrl('auth_service_id='.self::ID);
-            $redirect_uri = \CHTTP::URN2URI($APPLICATION->GetCurPage()) . '?auth_service_id=' . self::ID;
-
-            $backurl = $APPLICATION->GetCurPageParam(
-                'check_key=' . $_SESSION["UNIQUE_KEY"],
-                array("logout", "auth_service_error", "auth_service_id", "backurl")
-            );
-
-            $state = 'site_id=' . SITE_ID . '&backurl=' . urlencode($backurl) . (isset($arParams['BACKURL']) ? '&redirect_url=' . urlencode($arParams['BACKURL']) : '');
-        }
-
-        return $gAuth->GetAuthUrl($redirect_uri, $state);
-    }
-
     public function Authorize()
     {
         $GLOBALS["APPLICATION"]->RestartBuffer();
         $bSuccess = SOCSERV_AUTHORISATION_ERROR;
 
-        if ((isset($_REQUEST["code"]) && $_REQUEST["code"] <> '') && \CSocServAuthManager::CheckUniqueKey())
+        if ((isset($_REQUEST["code"]) && $_REQUEST["code"] <> '') && CSocServAuthManager::CheckUniqueKey())
         {
             if (IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
                 $redirect_uri = self::CONTROLLER_URL . "/redirect.php";
@@ -197,6 +225,11 @@ window.close();
         die();
     }
 
+    public function setUser($userId)
+    {
+        $this->getEntityOAuth()->setUser($userId);
+    }
+
     public function getFriendsList($limit, &$next)
     {
         if (IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
@@ -239,5 +272,10 @@ window.close();
         }
 
         return $res;
+    }
+
+    public function getProfileUrl($uid)
+    {
+        return "http://vk.com/id" . $uid;
     }
 }

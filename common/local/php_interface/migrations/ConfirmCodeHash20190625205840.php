@@ -31,7 +31,7 @@ class ConfirmCodeHash20190625205840 extends SprintMigrationBase
     {
         $connection = Application::getConnection();
         if ($connection->isTableExists('4lp_confirm_code')) {
-            $connection->queryExecute("ALTER TABLE `4lapy_db`.`4lp_confirm_code`   
+            $connection->queryExecute("ALTER TABLE `4lp_confirm_code`   
   ADD COLUMN `HASH` VARCHAR(32) NULL AFTER `TYPE`;");
         }
     }

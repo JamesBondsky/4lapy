@@ -272,12 +272,49 @@ class OrderController extends Controller implements LoggerAwareInterface
      * @throws ApplicationCreateException
      * @throws NotFoundException
      * @throws StoreNotFoundException
+     * @throws OrderStorageValidationException
+     * @throws SystemException
      */
     public function deliveryIntervalsAction(Request $request): JsonResponse
     {
         $result = [];
         $date = (int)$request->get('deliveryDate', 0);
-        $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
+        $currentStep = OrderStorageEnum::NOVALIDATE_STEP;
+        $okato = (int)$request->get('okato', 0);
+        $storage = $this->orderStorageService->getStorage();
+
+        if ($okato > 0) {
+            /**
+             * Ищем зону по ОКАТО
+             */
+            $okato = substr($okato, 0, 8);
+            $locations = $this->locationService->findLocationByExtService(LocationService::OKATO_SERVICE_CODE, $okato);
+            if (count($locations)) {
+                /**
+                 * Обновляем storage, записываем зону
+                 */
+                $location = current($locations);
+                $defaultCity = $storage->getCity();
+                $defaultCityCode = $storage->getCityCode();
+                $storage->setCity($location['NAME']);
+                $storage->setCityCode($location['CODE']);
+                $storage->setMoscowDistrictCode($location['CODE']);
+                $this->orderStorageService->updateStorage($storage, $currentStep);
+
+                /**
+                 * Получаем цену доставки в этой зоне
+                 */
+                $innerDelivery = $this->orderStorageService->getInnerDelivery($storage);
+
+                if (!$innerDelivery) {
+                    $storage->setCity($defaultCity);
+                    $storage->setCityCode($defaultCityCode);
+                    $this->orderStorageService->updateStorage($storage, $currentStep);
+                }
+            }
+        }
+
+        $deliveries = $this->orderStorageService->getDeliveries($storage);
         $delivery = null;
         foreach ($deliveries as $deliveryItem) {
             if (!$this->deliveryService->isDelivery($deliveryItem)) {
@@ -692,8 +729,10 @@ class OrderController extends Controller implements LoggerAwareInterface
         $nextDeliveries = $this->deliveryService->getNextDeliveries($innerDelivery, 10);
         $deliveryDates = [];
         foreach ($nextDeliveries as $i => $nextDelivery) {
+            $deliveryTimestamp = $nextDelivery->getDeliveryDate()->getTimestamp();
             $deliveryDates[$i] = [
-                'text'     => FormatDate('l, d.m.Y', $nextDelivery->getDeliveryDate()->getTimestamp()),
+                'value'     => FormatDate('l, Y-m-d', $deliveryTimestamp),
+                'text'     => FormatDate('l, d.m.Y', $deliveryTimestamp),
                 'selected' => ($i === 0) ? 'selected' : ''
             ];
         }

@@ -74,7 +74,7 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
     $asset->addCss($markup->getCssFile());
     $asset->addJs('//api-maps.yandex.ru/2.1/?apikey=ad666cd3-80be-4111-af2d-209dddf2c55e&lang=ru_RU&load=package.full');
     //$asset->addJs('/api-maps.yandex.ru.js');
-    $asset->addJs('/static/build/js/partials/captcha.js');
+    $asset->addJs('https://www.google.com/recaptcha/api.js?hl=ru');
 
     /** onesignal.com */
     if (getenv('ONESIGNAL_API_KEY')) {
@@ -107,6 +107,11 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
 } ?>
 
 <header class="b-header <?= $template->getHeaderClass() ?> js-header">
+    <?php
+        if(!KioskService::isKioskMode()) {
+            require_once __DIR__ . '/blocks/header/promo_top_acarid.php';
+        }
+    ?>
     <?php
     $APPLICATION->IncludeComponent('articul:header.mobile.bunner',
         '',

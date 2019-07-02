@@ -22,7 +22,7 @@ if (!\is_array($arResult['ITEMS']) || empty($arResult['ITEMS'])) {
     <div class="b-container">
         <div class="b-promo-banner__list js-promo-banner">
 	        <? foreach ($arResult['ITEMS'] as $key => $item) { ?>
-		        <div class="b-promo-banner-item<?= $item['MOD']['ADDITIONAL_CLASSES'] ?> <? if ($item['EXTERNAL_ID'] == 'festival') { ?>b-promo-banner-item--festival<? } ?>">
+		        <div class="b-promo-banner-item<?= $item['MOD']['ADDITIONAL_CLASSES'] ?> <? if ($item['EXTERNAL_ID'] == 'festival') { ?>b-promo-banner-item--festival<? } ?> <?= $item['DISPLAY_PROPERTIES']['LINK']['VALUE'] ?> <?=$item['DISPLAY_PROPERTIES']['HIDE_LOGO_MOBILE']['VALUE'] ? 'b-promo-banner-item--no-mobile-logo' : ''?>">
 	                <div class="b-promo-banner-item__content">
 	                    <div class="b-promo-banner-item__left">
 	                        <div class="b-promo-banner-item__logo"></div>
@@ -32,8 +32,10 @@ if (!\is_array($arResult['ITEMS']) || empty($arResult['ITEMS'])) {
 	                    </div>
 	                    <div class="b-promo-banner-item__descr"><?= $item['PREVIEW_TEXT'] ?></div>
 	                    <div class="b-promo-banner-item__link-wrap">
-	                        <a class="b-promo-banner-item__link" href="<?= $item['DISPLAY_PROPERTIES']['LINK']['VALUE'] ?>">
-                                <? if ($item['EXTERNAL_ID'] == 'festival') { ?>
+	                        <a class="b-promo-banner-item__link" href="<?= $item['DISPLAY_PROPERTIES']['LINK']['VALUE'] ?>" <?=$item['DISPLAY_PROPERTIES']['BUTTON_COLOR']['VALUE'] ? sprintf('style="background-color: %s"', $item['DISPLAY_PROPERTIES']['BUTTON_COLOR']['VALUE']) : ''?>>
+                                <? if($item['DISPLAY_PROPERTIES']['BUTTON_TEXT']['VALUE']) { ?>
+                                    <?=$item['DISPLAY_PROPERTIES']['BUTTON_TEXT']['VALUE']?>
+                                <? } else if ($item['EXTERNAL_ID'] == 'festival') { ?>
                                     Я пойду
                                 <? }else { ?>
                                     Подробнее

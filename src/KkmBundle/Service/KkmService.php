@@ -456,6 +456,14 @@ class KkmService implements LoggerAwareInterface
                 );
             }
 
+            $errorsOffers = [];
+
+            foreach ($offers->getValues() as $offerItem) {
+                if (($quantities[$offerItem->getXmlId()] + 3) > $offerItem->getQuantity()) {
+                    $errorsOffers[] = $offerItem->getXmlId();
+                }
+            }
+
             try {
                 $deliveries = $this->deliveryService->getByOfferCollection($offers, $quantities, $location, static::DELIVERY_CODES);
             } catch (
@@ -474,6 +482,7 @@ class KkmService implements LoggerAwareInterface
             $deliveryPrice = false;
             $deliveryDates = [];
             $intervals = [];
+            $intervalsAll = [];
             /** @var CalculationResultInterface $delivery */
             foreach ($deliveries as $delivery) {
                 if ($delivery->getDeliveryCode() == DeliveryService::INNER_DELIVERY_CODE) {
@@ -495,6 +504,10 @@ class KkmService implements LoggerAwareInterface
                     foreach ($delivery->getAvailableIntervals() as $interval) {
                         $intervals[] = str_replace(' ', '', (string)$interval);
                     }
+
+                    foreach ($delivery->getIntervals() as $interval) {
+                        $intervalsAll[] = str_replace(' ', '', (string)$interval);
+                    }
                 }
             }
 
@@ -505,12 +518,17 @@ class KkmService implements LoggerAwareInterface
                 );
             }
 
+            if (count($errorsOffers) > 0) {
+                $rc = false;
+            }
+
             $deliveryRules = [
                 'rc'      => $rc,
                 'courier' => [
                     'price' => $deliveryPrice,
                     'date'  => $deliveryDates,
-                    'time'  => $intervals
+                    'time'  => $intervals,
+                    'timeAll'  => $intervalsAll,
                 ]
             ];
 

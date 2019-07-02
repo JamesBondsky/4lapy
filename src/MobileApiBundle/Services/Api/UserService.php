@@ -393,6 +393,7 @@ class UserService
         return (new ClientCard())
             ->setTitle('Карта клиента')
             ->setBalance(isset($bonusInfo) ? $bonusInfo->getActiveBonus() : $user->getActiveBonus())
+            ->setTempIncome(isset($bonusInfo) ? $bonusInfo->getTemporaryBonus() : $user->getTemporaryBonus())
             ->setNumber($user->getDiscountCardNumber())
             ->setSaleAmount($user->getDiscount());
     }
@@ -484,6 +485,7 @@ class UserService
         return (new PersonalBonus())
             ->setAmount($user->getDiscount() ?? 0)
             ->setTotalIncome(isset($bonusInfo) ? ($bonusInfo->getDebit() ?? 0) : 0)
+            ->setTempIncome(isset($bonusInfo) ? ($bonusInfo->getTemporaryBonus() ?? 0) : 0)
             ->setTotalOutgo(isset($bonusInfo) ? ($bonusInfo->getCredit() ?? 0) : 0)
             ->setNextStage(isset($bonusInfo) ? $bonusInfo->getSumToNext() : 0); //FIXME Это временное решение. Нужно сохранять все поля $bonusInfo на сайте и в случае, если манзана не отвечает, возвращать сохраненные значения
     }

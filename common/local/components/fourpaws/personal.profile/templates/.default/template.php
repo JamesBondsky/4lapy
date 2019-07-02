@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Socialservices\UserTable;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -17,7 +19,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     </div>
     <div class="b-account-profile__other">
         <?php
-        if ($arResult['canEditSocial']) {
+
+        global $USER;
+        $dbSocUser = UserTable::getList(array(
+            'filter' => array(
+                '=USER_ID'=>$USER->GetId(),
+            ),
+            'select' => array("ID", "USER_ID", "ACTIVE" => "USER.ACTIVE"),
+        ));
+        $socservUser = $dbSocUser->fetch();
+
+        if ($arResult['canEditSocial'] && !$socservUser) {
             $APPLICATION->IncludeComponent(
                 'bitrix:socserv.auth.split',
                 'profile.socserv',

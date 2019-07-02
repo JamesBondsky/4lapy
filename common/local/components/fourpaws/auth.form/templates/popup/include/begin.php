@@ -44,13 +44,13 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
         $backUrl = $arResult['BACK_URL'];
     }
     ?>
-    <div class="b-registration b-registration--popup-authorization js-auth-block js-ajax-replace-block">
+    <div class="b-registration b-registration--popup-authorization js-auth-block js-ajax-replace-block" data-registration-popup-authorization="true">
         <header class="b-registration__header">
             <div class="b-title b-title--h1 b-title--registration">Авторизация</div>
+            <div class="b-title b-title--h1 b-title--registration-subscribe">Авторизуйтесь на&nbsp;сайте, чтобы оформить подписку</div>
         </header>
         <form class="b-registration__form js-form-validation js-auth-2way"
               data-url="/ajax/user/auth/login-r/"
-              onsubmit="<?= $arResult['ON_SUBMIT'] ?>"
               method="post">
             <?= bitrix_sessid_post() ?>
             <input type="hidden" name="action" value="login" class="js-no-valid">
@@ -90,11 +90,16 @@ if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormCom
                     </div>
                 </div>
             </div>
-            <?
-            /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
-            $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
-            echo $recaptchaService->getCaptcha('', true, '', 'captchaAuthorize');
-            ?>
+            <?php
+            if ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3 && $arResult['IS_SHOW_CAPTCHA']) {
+                try {
+                    $recaptchaService = App::getInstance()
+                        ->getContainer()
+                        ->get(ReCaptchaInterface::class);
+                    echo $recaptchaService->getCaptcha('', true);
+                } catch (ApplicationCreateException $e) {
+                }
+            } ?>
             <div>
                 <span class="b-registration__auth-error">
                     <?= (int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3 ? 'Неверный логин или пароль' : '' ?>
