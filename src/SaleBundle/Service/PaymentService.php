@@ -187,8 +187,7 @@ class PaymentService implements LoggerAwareInterface
     public function validateFiscalization(
         Fiscalization $fiscalization,
         OrderInfo $orderInfo,
-        int $sumPaid = null,
-        ?float $amountBonus = null
+        int $sumPaid = null
     ): void
     {
         $fiscalItems = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
@@ -219,15 +218,15 @@ class PaymentService implements LoggerAwareInterface
                     );
                 }
 
-                if ($matchingItem->getItemCode() !== $fiscalItem->getCode()) {
-                    throw new InvalidItemCodeException(
-                        \sprintf(
-                            'Item code %s for position %s doesn\'t, match existing item code',
-                            $fiscalItem->getCode(),
-                            $fiscalItem->getPositionId()
-                        )
-                    );
-                }
+//                if ($matchingItem->getItemCode() !== $fiscalItem->getCode()) {
+//                    throw new InvalidItemCodeException(
+//                        \sprintf(
+//                            'Item code %s for position %s doesn\'t, match existing item code',
+//                            $fiscalItem->getCode(),
+//                            $fiscalItem->getPositionId()
+//                        )
+//                    );
+//                }
             }
 
             if ($fiscalItem->getTotal() !== $fiscalItem->getQuantity()->getValue() * $fiscalItem->getPrice()) {
@@ -254,14 +253,13 @@ class PaymentService implements LoggerAwareInterface
             );
         }
 
-        if (null !== $sumPaid && ($fiscalAmount-$amountBonus) < $sumPaid) {
-            if (($sumPaid - ($fiscalAmount-$amountBonus)) > ($sumPaid * 0.01)) {
+        if (null !== $sumPaid && ($fiscalAmount) < $sumPaid) {
+            if (($sumPaid - ($fiscalAmount)) > ($sumPaid * 0.01)) {
                 throw new FiscalAmountException(
                     \sprintf(
-                        'Fiscal amount (%s) is lesser than paid amount (%s) bonus amount (%s)',
-                        $fiscalAmount-$amountBonus,
-                        $sumPaid,
-                        $amountBonus
+                        'Fiscal amount (%s) is lesser than paid amount (%s)',
+                        $fiscalAmount,
+                        $sumPaid
                     )
                 );
             }
