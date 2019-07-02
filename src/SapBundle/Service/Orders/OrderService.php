@@ -1294,7 +1294,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                         mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false ||
                         mb_strpos($deliveryZone, DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
                     ) {
-                        $xmlId = SapOrder::DELIVERY_ZONE_1_ARTICLE;
+                        $xmlId = SapOrder::DELIVERY_ZONE_2_ARTICLE;
                     } else {
                         $xmlId = SapOrder::DELIVERY_ZONE_4_ARTICLE;
                     }
