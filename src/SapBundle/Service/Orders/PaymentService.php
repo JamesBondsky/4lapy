@@ -21,6 +21,8 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Order as SaleOrder;
 use Bitrix\Sale\Payment;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\SaleBundle\Dto\Fiscalization\CartItems;
 use FourPaws\SaleBundle\Dto\Fiscalization\Fiscalization;
@@ -278,6 +280,26 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
 
         $xmlIdsItems = array_keys($newItemArr);
 
+        if ($xmlIdsItems) {
+            $offers = (new OfferQuery())
+                ->withFilter([
+                    '=XML_ID' => $xmlIdsItems
+                ])
+                ->withSelect(['ID', 'XML_ID'])
+                ->exec();
+            foreach ($offers as $offer) {
+                /** @var Offer $offer */
+                $productIds[$offer->getXmlId()] = $offer->getId();
+            }
+
+            if (isset($productIds)) {
+                $arMeasure = \Bitrix\Catalog\ProductTable::getCurrentRatioWithMeasure($productIds);
+                foreach ($arMeasure as $offerId => $offerUnit) {
+                    $measureUnits[$offerId] = $offerUnit['MEASURE']['SYMBOL_RUS'];
+                }
+            }
+        }
+
         $itemsOrder = [];
 
         if (count($newItemArr) > 0) {
@@ -330,7 +352,14 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
                 $tmpItem = new FiscalItem();
                 $newQuantity = $ptItem->getQuantity();
                 if ($newQuantity > 0) {
-                    $tmpItem->setQuantity((new ItemQuantity())->setValue((int)$newQuantity));
+                    $itemQuantity = (new ItemQuantity())
+                        ->setValue((int)$newQuantity);
+                    if ($unit = $measureUnits[$productIds[$ptItem->getOfferXmlId()]]) {
+                        $itemQuantity->setMeasure($unit);
+                    } else {
+                        $itemQuantity->setMeasure('шт');
+                    }
+                    $tmpItem->setQuantity($itemQuantity);
                     $tmpItem->setTotal(round($ptItem->getPrice() * $newQuantity * 100));
                     $tmpItem->setPrice(round($ptItem->getPrice() * 100));
                     $tmpItem->setName($ptItem->getOfferName());
