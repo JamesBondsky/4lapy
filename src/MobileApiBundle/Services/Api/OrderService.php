@@ -576,7 +576,7 @@ class OrderService
             ->setOld($totalPriceWithoutDiscount);
 
         if ($deliveryPrice) {
-            $totalPrice->setCourierPrice($deliveryPrice->getPrice());
+            $totalPrice->setCourierPrice($deliveryPrice);
         }
 
         return (new OrderCalculate())

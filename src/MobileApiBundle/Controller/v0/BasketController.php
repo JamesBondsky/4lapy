@@ -236,7 +236,8 @@ class BasketController extends FOSRestController
             $userCartCalcRequest->getDeliveryType() === 'courier',
             $bonusSubtractAmount,
             null,
-            $userCartCalcRequest->getDeliveryType()
+            $userCartCalcRequest->getDeliveryType(),
+            $dostavistaDelivery->getPrice()
         );
         return (new UserCartCalcResponse())
             ->setCartCalc($orderCalculate);
