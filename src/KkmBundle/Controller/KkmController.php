@@ -104,11 +104,14 @@ class KkmController extends Controller
      * @param Request $request
      *
      * @return JsonResponse
-     *
      */
     public function getDeliveryRules(Request $request): JsonResponse
     {
         $content = json_decode($request->getContent(), true);
+
+        if (!$content) {
+            parse_str($request->getContent(), $content);
+        }
 
         $kladrId = $content['city_kladr_id'];
         $products = $content['products'];
