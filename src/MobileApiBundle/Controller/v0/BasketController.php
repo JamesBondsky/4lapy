@@ -317,7 +317,7 @@ class BasketController extends FOSRestController
 
         [$courierDelivery, $pickupDelivery, $dostavistaDelivery] = $this->apiOrderService->getDeliveryVariants();
 
-        $dostavistaDelivery->setExpress($courierDelivery->getPrice());
+        $dostavistaDelivery->setDefaultPrice($courierDelivery->getPrice());
 
         $results['dostavista'] = $dostavistaDelivery;
 
