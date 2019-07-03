@@ -31,7 +31,7 @@ class FeedbackService
         $normPhone = $feedbackRequest->getReview()->getPhone();
 
         try {
-            $normPhone = '+7' . PhoneHelper::normalizePhone($feedbackRequest->getReview()->getPhone());
+            $normPhone = PhoneHelper::formatPhone($normPhone, PhoneHelper::FORMAT_FULL);
         } catch (\Exception $e) {}
 
         $form = [];
