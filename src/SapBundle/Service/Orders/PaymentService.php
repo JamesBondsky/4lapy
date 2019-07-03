@@ -368,7 +368,12 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
 
                         $tmpItem->setPaymentMethod($tmpFindItem->getPaymentMethod());
                         $tmpItem->setTax($tmpFindItem->getTax());
-                        $tmpItem->setCode($tmpFindItem->getCode());
+                        $itemCode = $tmpFindItem->getCode();
+                        $itemCode = explode('_', $itemCode);
+                        $itemCode[1] = $positionId;
+                        $tmpItem->setCode(implode('_', $itemCode));
+
+                        $tmpItem->getQuantity()->setMeasure($tmpFindItem->getQuantity()->getMeasure());
 
                         $itemsFiscal[] = $tmpItem;
                         ++$positionId;
