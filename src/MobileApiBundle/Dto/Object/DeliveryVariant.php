@@ -36,10 +36,10 @@ class DeliveryVariant
 
     /**
      * @Serializer\Type("float")
-     * @Serializer\SerializedName("express")
+     * @Serializer\SerializedName("courierPrice")
      * @var float
      */
-    protected $express = 0.0;
+    protected $courierPrice = 0.0;
 
 
     /**
@@ -118,9 +118,9 @@ class DeliveryVariant
      * @param float $price
      * @return DeliveryVariant
      */
-    public function setExpress(float $price): DeliveryVariant
+    public function setCourierPrice(float $price): DeliveryVariant
     {
-        $this->express = $price;
+        $this->courierPrice = $price;
         return $this;
     }
 }
