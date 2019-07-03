@@ -249,7 +249,7 @@ class OrderSubscribe extends BaseEntity
      * @param int $deliveryId
      * @return OrderSubscribe
      */
-    public function setDeliveryId(int $deliveryId): OrderSubscribe
+    public function setDeliveryId($deliveryId): OrderSubscribe
     {
         $this->deliveryId = $deliveryId;
         return $this;

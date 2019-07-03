@@ -33,7 +33,16 @@ class PostOrderSubscribeParamsRequest implements SimpleUnserializeRequest, PostR
      * @Assert\GreaterThan(0)
      * @var int
      */
-    protected $deliveryId;
+    //protected $deliveryId;
+
+    /**
+     * Код службы доставки (courier или pickup)
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("deliveryCode")
+     * @Assert\NotBlank()
+     * @var string
+     */
+    protected $deliveryCode;
 
     /**
      * Адрес места доставки (код магазина, если самовывоз)
@@ -56,7 +65,7 @@ class PostOrderSubscribeParamsRequest implements SimpleUnserializeRequest, PostR
     /**
      * Дата следующей доставки по подписке
      * @Serializer\Type("string")
-     * @Serializer\SerializedName("deliveryPlace")
+     * @Serializer\SerializedName("deliveryDate")
      * @Assert\NotBlank()
      * @var string
      */
@@ -87,7 +96,7 @@ class PostOrderSubscribeParamsRequest implements SimpleUnserializeRequest, PostR
      * @Assert\NotBlank()
      * @var int
      */
-    protected $active;
+    protected $active = 1;
 
     /**
      * @return int
@@ -110,20 +119,20 @@ class PostOrderSubscribeParamsRequest implements SimpleUnserializeRequest, PostR
     /**
      * @return int
      */
-    public function getDeliveryId(): int
-    {
-        return $this->deliveryId;
-    }
+//    public function getDeliveryId(): int
+//    {
+//        return $this->deliveryId;
+//    }
 
     /**
      * @param int $deliveryId
      * @return PostOrderSubscribeParamsRequest
      */
-    public function setDeliveryId(int $deliveryId): PostOrderSubscribeParamsRequest
-    {
-        $this->deliveryId = $deliveryId;
-        return $this;
-    }
+//    public function setDeliveryId(int $deliveryId): PostOrderSubscribeParamsRequest
+//    {
+//        $this->deliveryId = $deliveryId;
+//        return $this;
+//    }
 
     /**
      * @return string
@@ -231,6 +240,24 @@ class PostOrderSubscribeParamsRequest implements SimpleUnserializeRequest, PostR
     public function getActive(): int
     {
         return $this->active;
+    }
+
+    /**
+     * @param string $deliveryCode
+     * @return PostOrderSubscribeParamsRequest
+     */
+    public function setDeliveryCode(string $deliveryCode): PostOrderSubscribeParamsRequest
+    {
+        $this->deliveryCode = $deliveryCode;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDeliveryCode(): string
+    {
+        return $this->deliveryCode;
     }
 
 }

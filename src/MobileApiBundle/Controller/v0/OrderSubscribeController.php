@@ -14,6 +14,7 @@ use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\MobileApiBundle\Dto\Error;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryVariant;
 use FourPaws\MobileApiBundle\Dto\Request\OrderSubscribeRequest;
 use FourPaws\MobileApiBundle\Dto\Request\PostOrderSubscribeGoodsRequest;
@@ -49,6 +50,16 @@ class OrderSubscribeController extends FOSRestController
      */
     private $apiOrderService;
 
+    /**
+     * Mapping для служб доставки
+     * @var array
+     */
+    private $deliveryCodes = [
+        'courier' => DeliveryService::INNER_DELIVERY_CODE,
+        'pickup' => DeliveryService::INNER_PICKUP_CODE,
+    ];
+
+
     public function __construct(
         ApiOrderSubscribeService $apiOrderSubscribeService,
         DeliveryService $appDeliveryService,
@@ -81,8 +92,14 @@ class OrderSubscribeController extends FOSRestController
      */
     public function getOrderSubscribeAction(OrderSubscribeRequest $request)
     {
-        $orderSubscribe = $this->getOrderSubscribeById($request->getOrderSubscribeId());
-        $responce = new OrderSubscribeResponce($orderSubscribe);
+        try {
+            $orderSubscribe = $this->getOrderSubscribeById($request->getOrderSubscribeId());
+            $responce = new OrderSubscribeResponce($orderSubscribe);
+        } catch (\Exception $e) {
+            $responce = new Response([]);
+            $responce->addError(new Error(1, sprintf('Не удалось получить информацию о подписке на доставку [%s]', $e->getMessage())));
+        }
+
         return $responce;
     }
 
@@ -212,20 +229,27 @@ class OrderSubscribeController extends FOSRestController
      */
     public function orderSubscribeEditParamsAction(PostOrderSubscribeParamsRequest $request)
     {
-        $orderSubscribe = $this->getOrderSubscribeById($request->getOrderSubscribeId());
-        $deliveryTime = new BitrixDateTime($request->getDeliveryTime());
+        try {
+            $orderSubscribe = $this->getOrderSubscribeById($request->getOrderSubscribeId());
+            $deliveryDate = new BitrixDateTime($request->getDeliveryDate());
+            $deliveryId = $this->getDeliveryIdByCode($request->getDeliveryCode());
 
-        $orderSubscribe
-            ->setDeliveryId($request->getDeliveryId())
-            ->setDeliveryPlace($request->getDeliveryPlace())
-            ->setNextDate($deliveryTime)
-            ->setDeliveryTime($request->getDeliveryTime())
-            ->setFrequency($request->getFrequency())
-            ->setPayWithbonus($request->getPayWithBonus())
-        ;
+            $orderSubscribe
+                ->setDeliveryId($deliveryId)
+                ->setDeliveryPlace($request->getDeliveryPlace())
+                ->setNextDate($deliveryDate)
+                ->setDeliveryTime($request->getDeliveryTime())
+                ->setFrequency($request->getFrequency())
+                ->setPayWithbonus($request->getPayWithBonus())
+            ;
 
-        $this->apiOrderSubscribeService->update($orderSubscribe);
-        $responce = new OrderSubscribeResponce($this->apiOrderSubscribeService->getById($request->getOrderSubscribeId()));
+            $this->apiOrderSubscribeService->update($orderSubscribe);
+            $responce = new OrderSubscribeResponce($this->apiOrderSubscribeService->getById($request->getOrderSubscribeId()));
+        } catch (\Exception $e) {
+            $responce = new Response([]);
+            $responce->addError(new Error(1, sprintf('Не удалось обновить информацию о подписке на доставку [%s]', $e->getMessage())));
+        }
+
         return $responce;
     }
 
@@ -245,15 +269,17 @@ class OrderSubscribeController extends FOSRestController
     {
         $orderSubscribe = $this->getOrderSubscribeById($request->getOrderSubscribeId());
         $deliveryTime = new BitrixDateTime($request->getDeliveryTime());
+        $deliveryId = $this->getDeliveryIdByCode($request->getDeliveryCode());
 
         $orderSubscribe
-            ->setDeliveryId($request->getDeliveryId())
+            ->setDeliveryId($deliveryId)
             ->setDeliveryPlace($request->getDeliveryPlace())
             ->setNextDate($deliveryTime)
             ->setDeliveryTime($request->getDeliveryTime())
             ->setFrequency($request->getFrequency())
             ->setPayWithbonus($request->getPayWithBonus())
             ->setActive(true)
+            ->countDateCheck()
         ;
 
         $this->apiOrderSubscribeService->update($orderSubscribe);
@@ -300,6 +326,24 @@ class OrderSubscribeController extends FOSRestController
         }
 
         return $orderSubscribe;
+    }
+
+    /**
+     * @param int $deliveryId
+     * @return int
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \Exception
+     */
+    protected function getDeliveryIdByCode(string $deliveryId)
+    {
+        $deliveryCode = $this->deliveryCodes[$deliveryId];
+        if(!$deliveryCode){
+            throw new \Exception(sprintf('Указан неверный тип службы доставки: %s', $deliveryId));
+        }
+        return $this->appDeliveryService->getDeliveryIdByCode($deliveryCode);
     }
 
 

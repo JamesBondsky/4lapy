@@ -31,7 +31,7 @@ trait PropertiesFillingTrait
                 }
                 if($value instanceof BitrixDateTime){
                     //$value = new \DateTime($value->toString());
-                    $value = $value->toString();
+                    $value = $value->format('d.m.Y');
                 }
                 $this->$setter($value);
             }
