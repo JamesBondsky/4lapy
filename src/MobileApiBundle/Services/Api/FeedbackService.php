@@ -6,6 +6,8 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use DateTime;
+use FourPaws\App\Application;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\MobileApiBundle\Dto\Request\FeedbackRequest;
 use FourPaws\MobileApiBundle\Dto\Request\ReportRequest;
@@ -31,7 +33,7 @@ class FeedbackService
         $normPhone = $feedbackRequest->getReview()->getPhone();
 
         try {
-            $normPhone = '+7' . PhoneHelper::normalizePhone($feedbackRequest->getReview()->getPhone());
+            $normPhone = PhoneHelper::formatPhone($normPhone, '+7 (%s%s%s) %s%s%s-%s%s%s%s');
         } catch (\Exception $e) {}
 
         $form = [];
@@ -113,6 +115,16 @@ class FeedbackService
             //жесть конечно, но так отправляются письма при добавлении нового результата
             $formResult->setEvent($iResultId);
             $formResult->mail($iResultId);
+
+            $phone = PhoneHelper::formatPhone($normPhone, PhoneHelper::FORMAT_URL);
+
+            if ($phone) {
+                $callbackService = Application::getInstance()->getContainer()->get('callback.service');
+                $callbackService->send(
+                    $phone,
+                    (new DateTime())->format('Y-m-d H:i:s')
+                );
+            }
         } else {
             /** $strError - глобальная переменная @see \CAllFormResult::add */
             throw new RuntimeException('Ошибка отправки сообщения. ' . $GLOBALS['strError']);
