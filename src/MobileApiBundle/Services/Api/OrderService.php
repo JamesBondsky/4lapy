@@ -117,6 +117,7 @@ class OrderService
 
     const DELIVERY_TYPE_COURIER = 'courier';
     const DELIVERY_TYPE_PICKUP = 'pickup';
+    const DELIVERY_TYPE_DOSTAVISTA = 'dostavista';
 
     public function __construct(
         ApiBasketService $apiBasketService,
@@ -876,6 +877,10 @@ class OrderService
             case self::DELIVERY_TYPE_PICKUP:
                 $cartParamArray['deliveryTypeId'] = $this->appDeliveryService->getDeliveryIdByCode(DeliveryService::INNER_PICKUP_CODE);
                 //toDo доставка DPD должна определяться автоматически, в зависимости от зоны
+                break;
+            case self::DELIVERY_TYPE_DOSTAVISTA:
+                $cartParamArray['delyveryType'] = $cartParamArray['split'] ? 'twoDeliveries' : ''; // have no clue why this param used
+                $cartParamArray['deliveryTypeId'] = $this->appDeliveryService->getDeliveryIdByCode(DeliveryService::DELIVERY_DOSTAVISTA_CODE);
                 break;
         }
         $cartParamArray['deliveryId'] = $cartParamArray['deliveryTypeId'];
