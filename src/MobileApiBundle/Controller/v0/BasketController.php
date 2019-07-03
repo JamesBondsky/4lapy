@@ -229,6 +229,8 @@ class BasketController extends FOSRestController
         $bonusSubtractAmount = $userCartCalcRequest->getBonusSubtractAmount();
         $basketProducts = $this->apiBasketService->getBasketProducts(false);
 
+        [$courierDelivery, $pickupDelivery, $dostavistaDelivery] = $this->apiOrderService->getDeliveryVariants();
+
         $orderCalculate = $this->apiOrderService->getOrderCalculate(
             $basketProducts,
             $userCartCalcRequest->getDeliveryType() === 'courier',

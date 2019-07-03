@@ -482,6 +482,7 @@ class OrderService
      * @param float $bonusSubtractAmount
      * @param OrderEntity|null $order
      * @param string $deliveryCode
+     * @param float $deliveryPrice
      * @return OrderCalculate
      * @throws ApplicationCreateException
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
@@ -491,7 +492,8 @@ class OrderService
         $isCourierDelivery = false,
         float $bonusSubtractAmount = 0,
         OrderEntity $order = null,
-        string $deliveryCode = ''
+        string $deliveryCode = '',
+        ?float $deliveryPrice = 0.0
     )
     {
         $basketPrice = $basketProducts->getTotalPrice();
@@ -569,6 +571,14 @@ class OrderService
             }
         }
 
+        $totalPrice = (new Price())
+            ->setActual($totalPriceWithDiscount)
+            ->setOld($totalPriceWithoutDiscount);
+
+        if ($deliveryPrice) {
+            $totalPrice->setCourierPrice($deliveryPrice->getPrice());
+        }
+
         return (new OrderCalculate())
             ->setPriceDetails([
                 (new Detailing())
@@ -599,9 +609,7 @@ class OrderService
                     ->setValue($bonusSubtractAmount),
             ])
             ->setTotalPrice(
-                (new Price())
-                    ->setActual($totalPriceWithDiscount)
-                    ->setOld($totalPriceWithoutDiscount)
+                $totalPrice
             );
     }
 
