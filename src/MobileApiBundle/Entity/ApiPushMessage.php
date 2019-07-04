@@ -100,6 +100,14 @@ class ApiPushMessage
      */
     protected $platformId;
 
+    /**
+     * @var bool
+     * @Serializer\SerializedName("UF_ALL_USERS")
+     * @Serializer\Type("bool")
+     * @Serializer\Groups(groups={"read","update","create"})
+     */
+    protected $isSendingToAllUsers;
+
     /** @var UserFieldEnumValue $typeEntity */
     private $typeEntity;
 
@@ -360,4 +368,21 @@ class ApiPushMessage
         return $this->platformEntity;
     }
 
+    /**
+     * @return bool
+     */
+    public function getIsSendingToAllUsers(): bool
+    {
+        return (bool)$this->isSendingToAllUsers;
+    }
+
+    /**
+     * @param bool $isSendingToAllUsers
+     * @return ApiPushMessage
+     */
+    public function setIsSendingToAllUsers(bool $isSendingToAllUsers): ApiPushMessage
+    {
+        $this->isSendingToAllUsers = $isSendingToAllUsers;
+        return $this;
+    }
 }
