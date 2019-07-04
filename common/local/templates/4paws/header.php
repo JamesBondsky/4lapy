@@ -101,6 +101,8 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
     <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_header.php'; ?>
 </head>
 <body <? if($bodyClass != ''){ ?>class="<?= $bodyClass ?>"<? } ?>>
+<?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/pixel_vk.php'; ?>
+
 <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/counters_body.php'; ?>
 <?php if (!KioskService::isKioskMode()) {
     $APPLICATION->ShowPanel();
