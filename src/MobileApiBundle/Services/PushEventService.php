@@ -264,12 +264,18 @@ class PushEventService
             $userFilter[] = $userGroupFilter;
         }
 
-        if (empty($userFilter)) {
+        if (empty($userFilter) && !$pushMessage->getIsSendingToAllUsers()) {
             // если адресаты не указаны - ничего отправлять не нужно
             return [];
         }
 
         $userFilter['LOGIC'] = 'OR';
+
+        if ($pushMessage->getIsSendingToAllUsers()) { // если стоит галка "Отправить всем пользователям", то игнорируются указанные группы и отдельные пользователи
+            $userFilter = [
+                'LOGIC' => 'OR',
+            ];
+        }
 
         if ($pushMessage->getPlatformId()) {
             // если указана платформа - фильтруем пользователей еще и по платформе (ios / android)
