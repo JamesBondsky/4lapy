@@ -269,9 +269,7 @@ class PushEventService
             return [];
         }
 
-        $userFilter = [
-            'LOGIC' => 'OR',
-        ];
+        $userFilter['LOGIC'] = 'OR';
 
         if ($pushMessage->getPlatformId()) {
             // если указана платформа - фильтруем пользователей еще и по платформе (ios / android)
