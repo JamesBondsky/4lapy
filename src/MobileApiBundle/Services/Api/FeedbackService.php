@@ -6,6 +6,9 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use DateTime;
+use FourPaws\App\Application;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\MobileApiBundle\Dto\Request\FeedbackRequest;
 use FourPaws\MobileApiBundle\Dto\Request\ReportRequest;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
@@ -27,6 +30,12 @@ class FeedbackService
     {
         \CModule::IncludeModule("form");
 
+        $normPhone = $feedbackRequest->getReview()->getPhone();
+
+        try {
+            $normPhone = PhoneHelper::formatPhone($normPhone, '+7 (%s%s%s) %s%s%s-%s%s%s%s');
+        } catch (\Exception $e) {}
+
         $form = [];
         $formValues = [];
 
@@ -37,7 +46,7 @@ class FeedbackService
                 // $formValues['form_dropdown_theme'] = 24; // тема = другое
                 if (!(
                     $feedbackRequest->getReview()->getEmail()
-                    || $feedbackRequest->getReview()->getPhone()
+                    || $normPhone
                 )) {
                     throw new RuntimeException('Необходимо указать либо телефон, либо email');
                 }
@@ -45,7 +54,7 @@ class FeedbackService
             case 'callback':
                 //найдем id нужной нам формы обратного звонка, дабы не использовать волшебные числа
                 $form = (new \CForm())->getBySID('callback')->Fetch();
-                if (!$feedbackRequest->getReview()->getPhone()) {
+                if (!$normPhone) {
                     throw new RuntimeException('Необходимо указать либо телефон');
                 }
                 break;
@@ -90,7 +99,7 @@ class FeedbackService
                     $value = $feedbackRequest->getReview()->getEmail();
                     break;
                 case 'phone':
-                    $value = $feedbackRequest->getReview()->getPhone();
+                    $value = $normPhone;
                     break;
                 case 'message':
                     $value = $feedbackRequest->getReview()->getSummary();
@@ -106,6 +115,16 @@ class FeedbackService
             //жесть конечно, но так отправляются письма при добавлении нового результата
             $formResult->setEvent($iResultId);
             $formResult->mail($iResultId);
+
+            $phone = PhoneHelper::formatPhone($normPhone, PhoneHelper::FORMAT_URL);
+
+            if ($phone) {
+                $callbackService = Application::getInstance()->getContainer()->get('callback.service');
+                $callbackService->send(
+                    $phone,
+                    (new DateTime())->format('Y-m-d H:i:s')
+                );
+            }
         } else {
             /** $strError - глобальная переменная @see \CAllFormResult::add */
             throw new RuntimeException('Ошибка отправки сообщения. ' . $GLOBALS['strError']);
