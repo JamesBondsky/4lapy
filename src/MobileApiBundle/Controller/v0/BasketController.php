@@ -307,7 +307,7 @@ class BasketController extends FOSRestController
                 $cityInfo = $cityService->getCityByCode($city);
             }
 
-            $queryAddress = implode(', ', array_filter([$cityInfo->getTitle(), $street, $house, $building], function ($item) {
+            $queryAddress = implode(', ', array_filter([$cityInfo ? $cityInfo->getTitle() : '', $street, $house, $building], function ($item) {
                 if (!empty($item)) {
                     return $item;
                 }
