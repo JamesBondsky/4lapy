@@ -244,9 +244,9 @@ class PushEventService
         foreach ($pushMessage->getUsers() as $user) {
             $userIds[] = $user->getId();
         }
-        $userFilter = [
-            'LOGIC' => 'OR',
-        ];
+
+        $userFilter = [];
+
         if (!empty($userIds)) {
             $userFilter[] =[
                 '=USER_ID' => $userIds,
@@ -268,6 +268,10 @@ class PushEventService
             // если адресаты не указаны - ничего отправлять не нужно
             return [];
         }
+
+        $userFilter = [
+            'LOGIC' => 'OR',
+        ];
 
         if ($pushMessage->getPlatformId()) {
             // если указана платформа - фильтруем пользователей еще и по платформе (ios / android)
