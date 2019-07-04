@@ -15,6 +15,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\KkmBundle\Service\KkmService;
+use FourPaws\MobileApiBundle\Dto\Object\DeliveryAddress;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryVariant;
 use FourPaws\MobileApiBundle\Dto\Request\DostavistaRequest;
 use FourPaws\MobileApiBundle\Dto\Request\PostUserCartRequest;
@@ -290,16 +291,21 @@ class BasketController extends FOSRestController
             $user = $this->getUser();
 
             if ($user) {
+                /** @var DeliveryAddress $listDelivery */
                 $listDelivery = $this->apiUserDeliveryAddressService->getList($user->getId(), $city, $addressId)->first();
 
                 if ($listDelivery) {
-                    $queryAddress = $listDelivery->getTitle();
+                    $cityInfo = $listDelivery->getCity();
+                    $street = $listDelivery->getStreetName();
+                    $house = $listDelivery->getHouse();
                 }
             }
         }
 
         if (!$queryAddress) {
-            $cityInfo = $cityService->getCityByCode($city);
+            if (!$addressId) {
+                $cityInfo = $cityService->getCityByCode($city);
+            }
 
             $queryAddress = implode(', ', array_filter([$cityInfo->getTitle(), $street, $house, $building], function ($item) {
                 if (!empty($item)) {
