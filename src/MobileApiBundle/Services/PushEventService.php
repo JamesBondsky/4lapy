@@ -244,9 +244,9 @@ class PushEventService
         foreach ($pushMessage->getUsers() as $user) {
             $userIds[] = $user->getId();
         }
-        $userFilter = [
-            'LOGIC' => 'OR',
-        ];
+
+        $userFilter = [];
+
         if (!empty($userIds)) {
             $userFilter[] =[
                 '=USER_ID' => $userIds,
@@ -264,9 +264,17 @@ class PushEventService
             $userFilter[] = $userGroupFilter;
         }
 
-        if (empty($userFilter)) {
+        if (empty($userFilter) && !$pushMessage->getIsSendingToAllUsers()) {
             // если адресаты не указаны - ничего отправлять не нужно
             return [];
+        }
+
+        $userFilter['LOGIC'] = 'OR';
+
+        if ($pushMessage->getIsSendingToAllUsers()) { // если стоит галка "Отправить всем пользователям", то игнорируются указанные группы и отдельные пользователи
+            $userFilter = [
+                'LOGIC' => 'OR',
+            ];
         }
 
         if ($pushMessage->getPlatformId()) {
