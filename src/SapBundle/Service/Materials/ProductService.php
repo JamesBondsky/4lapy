@@ -45,6 +45,11 @@ class ProductService
     private $productRepository;
 
     /**
+     * @var array
+     */
+    private $productsToClearCache = [];
+
+    /**
      * ProductService constructor.
      *
      * @param ReferenceService $referenceService
@@ -425,5 +430,21 @@ class ProductService
             );
             $product->withCountryXmlId($country->getXmlId());
         }
+    }
+
+    /**
+     * @return array
+     */
+    public function getProductsToClearCache(): array
+    {
+        return array_unique($this->productsToClearCache);
+    }
+
+    /**
+     * @param array $productsIds
+     */
+    public function addProductsToClearCache(array $productsIds): void
+    {
+        $this->productsToClearCache = array_merge($this->productsToClearCache, $productsIds);
     }
 }
