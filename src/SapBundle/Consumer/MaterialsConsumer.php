@@ -7,7 +7,6 @@
 namespace FourPaws\SapBundle\Consumer;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
-use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentTypeException;
@@ -17,9 +16,6 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use CIBlock;
 use Exception;
-use FourPaws\CatalogBundle\EventController\Event;
-use FourPaws\Enum\IblockCode;
-use FourPaws\Enum\IblockType;
 use FourPaws\SapBundle\Dto\In\Offers\Materials;
 use FourPaws\SapBundle\Exception\NotFoundPropertyException;
 use FourPaws\SapBundle\Service\Materials\ProductService;
@@ -107,14 +103,6 @@ class MaterialsConsumer extends SapConsumerBase
         CIBlock::disableClearTagCache();
         $this->productService->deleteEmptyProducts();
         CIBlock::enableClearTagCache();
-
-        CIBlock::clearIblockTagCache(IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS));
-        CIBlock::clearIblockTagCache(IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS));
-        if ($productsToClearCache = $this->productService->getProductsToClearCache()) {
-            foreach ($productsToClearCache as $productId) {
-                Event::clearProductCache($productId);
-            }
-        }
 
         $this->log()->log(LogLevel::INFO, \sprintf('Импортировано %s товаров', $totalCount - $error));
         $this->log()->log(LogLevel::INFO, \sprintf('Ошибка импорта %s товаров', $error));

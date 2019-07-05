@@ -6,12 +6,19 @@
 
 namespace FourPaws\SapBundle\Service;
 
-use FourPaws\AppBundle\Service\LockerInterface;
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use CIBlock;
 use FourPaws\CatalogBundle\EventController\Event;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SapBundle\Consumer\ConsumerRegistryInterface;
+use FourPaws\SapBundle\Dto\In\DcStock\DcStock;
+use FourPaws\SapBundle\Dto\In\Offers\Materials;
 use FourPaws\SapBundle\Exception\NotFoundPipelineException;
 use FourPaws\SapBundle\Pipeline\PipelineRegistry;
+use FourPaws\SapBundle\Service\Materials\ProductService;
 use FourPaws\SapBundle\Source\SourceRegistryInterface;
 
 /**
@@ -37,65 +44,65 @@ class SapService
     private $pipelineRegistry;
 
     /**
+     * @var ProductService
+     */
+    private $productService;
+
+    /**
      * SapService constructor.
      *
      * @param ConsumerRegistryInterface $consumerRegistry
      * @param SourceRegistryInterface $sourceRegistry
      * @param PipelineRegistry $pipelineRegistry
-     * @param LockerInterface $locker
+     * @param ProductService $productService
      */
     public function __construct(
         ConsumerRegistryInterface $consumerRegistry,
         SourceRegistryInterface $sourceRegistry,
-        PipelineRegistry $pipelineRegistry
+        PipelineRegistry $pipelineRegistry,
+        ProductService $productService
     )
     {
         $this->consumerRegistry = $consumerRegistry;
         $this->sourceRegistry = $sourceRegistry;
         $this->pipelineRegistry = $pipelineRegistry;
+        $this->productService = $productService;
     }
 
     /**
      * @param string $pipelineCode
      * @throws NotFoundPipelineException
+     * @throws IblockNotFoundException
      */
     public function execute(string $pipelineCode): void
     {
         Manager::disableExtendsDiscount();
+        $needProductCacheClear = false;
+        $needIblockTagCacheClear = false;
 
         foreach ($this->pipelineRegistry->generator($pipelineCode) as $sourceMessage) {
             if ($this->consumerRegistry->consume($sourceMessage->getData())) {
                 $this->sourceRegistry->ack($sourceMessage);
-                if (strripos($sourceMessage->getName(), 'Stc') !== false) {
-                    if (method_exists($sourceMessage->getData(), 'getItems')) {
-                        $this->clearCacheProduct($sourceMessage->getData()->getItems());
-                    }
+                if ($sourceMessage->getType() === DcStock::class || $sourceMessage->getType() === Materials::class) {
+                    $needProductCacheClear = true;
+                }
+                if ($sourceMessage->getType() === Materials::class) {
+                    $needIblockTagCacheClear = true;
                 }
 
                 continue;
             }
 
             $this->sourceRegistry->noAck($sourceMessage);
-            if (strripos($sourceMessage->getName(), 'Stc')) {
-                if (method_exists($sourceMessage->getData(), 'getItems')) {
-                    $this->clearCacheProduct($sourceMessage->getData()->getItems());
-                }
-            }
-        }
-    }
-
-    private function clearCacheProduct($sourceMessage)
-    {
-        $ids = [];
-        foreach ($sourceMessage as $itemId) {
-            $ids[] = $itemId->getOfferXmlId();
         }
 
-        if (count($itemId->getOfferXmlId()) > 0) {
-            $itemDb = \CIBlockElement::GetList([], ['XML_ID' => $ids]);
-
-            while($item = $itemDb->Fetch()) {
-                Event::clearProductCache($item['ID']);
+        if ($needIblockTagCacheClear) {
+            CIBlock::clearIblockTagCache(IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS));
+            CIBlock::clearIblockTagCache(IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS));
+        }
+        if ($needProductCacheClear && ($productsToClearCache = $this->productService->getProductsToClearCache())) {
+            foreach ($productsToClearCache as $productId) {
+                Event::clearProductCache($productId);
             }
         }
     }
