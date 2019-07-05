@@ -616,8 +616,8 @@ class ProductService
         $specialOffer
             ->setId($specialOfferModel->getId())
             ->setName($specialOfferModel->getName())
-            ->setDescription($specialOfferModel->getPreviewText())
-            ->setImage($specialOfferModel->getPreviewPictureSrc());
+            ->setDescription($specialOfferModel->getPreviewText());
+        $specialOffer->setImage($specialOfferModel->getDetailPictureSrc());
 
         if ($specialOfferModel->getDateActiveFrom() && $specialOfferModel->getDateActiveTo()) {
             $dateFrom = DateHelper::replaceRuMonth($specialOfferModel->getDateActiveFrom()->format('d #n# Y'), DateHelper::GENITIVE);

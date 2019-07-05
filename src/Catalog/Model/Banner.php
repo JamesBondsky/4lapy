@@ -149,7 +149,7 @@ class Banner extends IblockElement
      */
     public function getPictureForMobile()
     {
-        return $this->DETAIL_PICTURE;
+        return $this->PREVIEW_PICTURE;
     }
 
 }
