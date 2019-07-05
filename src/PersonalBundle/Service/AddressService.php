@@ -168,7 +168,7 @@ class AddressService
         }
 
         $address->setLocation(
-            $this->getCityLocationCode($address->getCity())
+            $address->getLocation()
         );
         $res = $this->addressRepository->setEntity($address)->create();
         if ($res) {
