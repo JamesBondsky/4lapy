@@ -39,6 +39,7 @@ use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\StoreBundle\Service\StoreService as AppStoreService;
 use FourPaws\DeliveryBundle\Service\DeliveryService as AppDeliveryService;
+use FourPaws\UserBundle\Enum\UserLocationEnum;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -314,6 +315,8 @@ class BasketController extends FOSRestController
             }));
         }
 
+        $_COOKIE[UserLocationEnum::DEFAULT_LOCATION_COOKIE_CODE] = $city;
+
         $address = $kkmService->geocode($queryAddress);
 
         $pos = explode(' ', $address['address']['pos']);
@@ -324,9 +327,20 @@ class BasketController extends FOSRestController
             return new Response($results);
         }
 
+
+        $deliveryPrice = 0;
+        $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
+        foreach ($deliveries as $calculationResult) {
+            if (DeliveryService::INNER_DELIVERY_CODE == $calculationResult->getDeliveryCode()) {
+                if ($this->appDeliveryService->isDelivery($calculationResult)) {
+                    $deliveryPrice = $calculationResult->getPrice();
+                }
+            }
+        }
+
         [$courierDelivery, $pickupDelivery, $dostavistaDelivery] = $this->apiOrderService->getDeliveryVariants();
 
-        $dostavistaDelivery->setCourierPrice($courierDelivery->getPrice());
+        $dostavistaDelivery->setCourierPrice($deliveryPrice);
 
         $results['dostavista'] = $dostavistaDelivery;
 
