@@ -14,6 +14,7 @@ use DateTime;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Collection\UserFieldEnumCollection;
+use FourPaws\AppBundle\Entity\UserFieldEnumValue;
 use FourPaws\AppBundle\Service\UserFieldEnumService;
 use FourPaws\BitrixOrmBundle\Exception\NotFoundRepository;
 use FourPaws\BitrixOrmBundle\Orm\BitrixOrm;
@@ -45,6 +46,11 @@ class ScheduleResultService implements LoggerAwareInterface
      * Кол-во дней на обработку товара на РЦ
      */
     public const DC_PROCESSING_DATE_MODIFIER = 1;
+
+    /**
+     * Тип поставки "нерегулярный"
+     */
+    public const FAST_DELIV = 'Z2';
 
     /**
      * Файл для хранения результатов
@@ -336,7 +342,7 @@ class ScheduleResultService implements LoggerAwareInterface
      * Возвращает значения списка регулярность
      *
      * @param $xmlId
-     * @return mixed
+     * @return UserFieldEnumValue|null
      * @throws ArgumentException
      * @throws ObjectPropertyException
      * @throws SystemException

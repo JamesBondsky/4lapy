@@ -31,6 +31,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Env;
+use FourPaws\AppBundle\Entity\UserFieldEnumValue;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\IntervalService;
@@ -63,6 +64,7 @@ use FourPaws\SapBundle\Exception\NotFoundProductException;
 use FourPaws\SapBundle\Service\SapOutFile;
 use FourPaws\SapBundle\Service\SapOutInterface;
 use FourPaws\SapBundle\Source\SourceMessage;
+use FourPaws\StoreBundle\Service\ScheduleResultService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Repository\UserRepository;
@@ -289,7 +291,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ->setOrderSource($orderSource)
             ->setBonusCard($this->getPropertyValueByCode($order, 'DISCOUNT_CARD'))
             ->setAvatarEmail($this->getPropertyValueByCode($order, 'OPERATOR_EMAIL'))
-            ->setAvatarDepartment($this->getPropertyValueByCode($order, 'OPERATOR_SHOP'));
+            ->setAvatarDepartment($this->getPropertyValueByCode($order, 'OPERATOR_SHOP'))
+            ->setFastDeliv($this->isFastDelivery($this->getPropertyValueByCode($order, 'SCHEDULE_REGULARITY')));
 
         if (Env::isStage()) {
             $orderDto
@@ -1348,5 +1351,23 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $deliveryId = $shipment->getDeliveryId();
 
         return $this->deliveryService->getDeliveryZoneByDelivery($location, $deliveryId) ?? '';
+    }
+
+
+    /**
+     * @param string $regularityName
+     * @return bool
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws SystemException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     */
+    public function isFastDelivery(string $regularityName)
+    {
+        /** @var ScheduleResultService $scheduleResultService */
+        $scheduleResultService = Application::getInstance()->getContainer()->get(ScheduleResultService::class);
+        /** @var UserFieldEnumValue $regularityFastDeliv */
+        $regularityFastDeliv = $scheduleResultService->getRegularityEnumByXmlId(ScheduleResultService::FAST_DELIV);
+        return $regularityName == $regularityFastDeliv->getValue();
     }
 }

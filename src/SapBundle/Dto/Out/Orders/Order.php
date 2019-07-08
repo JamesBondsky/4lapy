@@ -418,6 +418,17 @@ class Order
     protected $Latitude;
 
     /**
+     * Признак нерегулярной поставки
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\Type("sap_bool")
+     * @Serializer\SerializedName("FastDeliv")
+     *
+     * @var bool
+     */
+    protected $FastDeliv = false;
+
+    /**
      * @return string
      */
     public function getId(): string
@@ -1015,5 +1026,23 @@ class Order
         $this->Latitude = $Latitude;
 
         return $this;
+    }
+
+    /**
+     * @param bool $FastDeliv
+     * @return Order
+     */
+    public function setFastDeliv(bool $FastDeliv): Order
+    {
+        $this->FastDeliv = $FastDeliv;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isFastDeliv(): bool
+    {
+        return $this->FastDeliv;
     }
 }
