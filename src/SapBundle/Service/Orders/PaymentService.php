@@ -328,16 +328,22 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
                     $newItem->setSumPrice(floatval($newAveragePriceItem) * $newItem->getQuantity());
                     $newItem->setPrice($newAveragePriceItem);
 
-                    $itemsOrder[$xmlIdItem][] = $newItem;
+                    if ($newItem->getPrice() > 0) {
+                        $itemsOrder[$xmlIdItem][] = $newItem;
+                    }
 
                     $newItemOriginal->setPrice($origSumAmount - $newItem->getSumPrice());
                     $newItemOriginal->setSumPrice($origSumAmount - $newItem->getSumPrice());
                     $newItemOriginal->setQuantity(1);
 
-                    $itemsOrder[$xmlIdItem][] = $newItemOriginal;
+                    if ($newItemOriginal->getPrice() > 0) {
+                        $itemsOrder[$xmlIdItem][] = $newItemOriginal;
+                    }
 
                 } else {
-                    $itemsOrder[$xmlIdItem][] = $newItem;
+                    if ($newItem->getPrice() > 0) {
+                        $itemsOrder[$xmlIdItem][] = $newItem;
+                    }
                 }
             }
         }
@@ -346,7 +352,10 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
 
         $itemsInCart = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
 
+        asort($itemsOrder);
+
         $itemsFiscal = [];
+        $positionId = 1;
         foreach ($itemsOrder as $xmlId => $ptItems) {
             foreach ($ptItems as $ptItem) {
                 $tmpItem = new FiscalItem();
@@ -374,17 +383,29 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
                         }
                     }, $itemsInCart->toArray());
 
-                    if (isset($tmpFindItem[0]) && $tmpFindItem[0]) {
+                    $tmpFindItem = array_filter($tmpFindItem, function ($tmpFindItemItem) {
+                        if ($tmpFindItemItem) {
+                            return true;
+                        }
+                    });
 
-                        $tmpFindItem = $tmpFindItem[0];
+                    $tmpFindItem = array_shift($tmpFindItem);
 
-                        $tmpItem->setPositionId($tmpFindItem->getPositionId());
+                    if ($tmpFindItem) {
+                        $tmpItem->setPositionId($positionId);
+//                        $tmpItem->setPositionId($tmpFindItem->getPositionId());
 
                         $tmpItem->setPaymentMethod($tmpFindItem->getPaymentMethod());
                         $tmpItem->setTax($tmpFindItem->getTax());
-                        $tmpItem->setCode($tmpFindItem->getCode());
+                        $itemCode = $tmpFindItem->getCode();
+                        $itemCode = explode('_', $itemCode);
+                        $itemCode[1] = $positionId;
+                        $tmpItem->setCode(implode('_', $itemCode));
+
+                        $tmpItem->getQuantity()->setMeasure($tmpFindItem->getQuantity()->getMeasure());
 
                         $itemsFiscal[] = $tmpItem;
+                        ++$positionId;
                     }
                 }
             }

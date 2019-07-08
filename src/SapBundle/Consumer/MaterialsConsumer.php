@@ -14,6 +14,7 @@ use Bitrix\Main\Config\ConfigurationException;
 use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use CIBlock;
 use Exception;
 use FourPaws\SapBundle\Dto\In\Offers\Materials;
 use FourPaws\SapBundle\Exception\NotFoundPropertyException;
@@ -99,7 +100,9 @@ class MaterialsConsumer extends SapConsumerBase
         }
 
         $this->log()->log(LogLevel::INFO, 'Удаление товаров, не имеющих торговые предложения...');
+        CIBlock::disableClearTagCache();
         $this->productService->deleteEmptyProducts();
+        CIBlock::enableClearTagCache();
 
         $this->log()->log(LogLevel::INFO, \sprintf('Импортировано %s товаров', $totalCount - $error));
         $this->log()->log(LogLevel::INFO, \sprintf('Ошибка импорта %s товаров', $error));
