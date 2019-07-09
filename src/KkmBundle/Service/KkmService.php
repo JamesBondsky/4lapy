@@ -457,11 +457,13 @@ class KkmService implements LoggerAwareInterface
             }
 
             $errorsOffers = [];
+            $sumOffers = 0;
 
             foreach ($offers->getValues() as $offerItem) {
                 if (($quantities[$offerItem->getXmlId()] + 3) > $offerItem->getQuantity()) {
                     $errorsOffers[] = $offerItem->getXmlId();
                 }
+                $sumOffers += $quantities[$offerItem->getXmlId()] * $offerItem->getPrice();
             }
 
             try {
@@ -489,7 +491,7 @@ class KkmService implements LoggerAwareInterface
                     /** @var DeliveryResultInterface $delivery */
                     $innerDeliveryAvailable = true;
                     $rc = true;
-                    $deliveryPrice = $delivery->getDeliveryPrice();
+                    $deliveryPrice = $delivery->getPriceBySum($sumOffers);
                     try {
                         $nextDeliveries = $this->deliveryService->getNextDeliveries($delivery, 10);
                         foreach ($nextDeliveries as $nextDelivery) {
