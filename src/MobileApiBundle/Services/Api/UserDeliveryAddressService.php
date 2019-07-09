@@ -128,13 +128,17 @@ class UserDeliveryAddressService implements LoggerAwareInterface
     /**
      * @param int $userId
      * @param string $cityCode
-     * @return Collection|DeliveryAddress[]
+     * @param int $id
+     * @return Collection
      */
-    public function getList(int $userId, string $cityCode = '')
+    public function getList(int $userId, string $cityCode = '', int $id = null)
     {
         $filter = [
             '=UF_USER_ID' => $userId,
         ];
+        if ($id) {
+            $filter['=ID'] = $id;
+        }
         if ($cityCode) {
             $filter['=UF_CITY_LOCATION'] = $cityCode;
         }

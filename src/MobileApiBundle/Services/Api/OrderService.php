@@ -43,6 +43,7 @@ use FourPaws\MobileApiBundle\Exception\OrderNotFoundException;
 use FourPaws\MobileApiBundle\Exception\ProductsAmountUnavailableException;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
+use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\PersonalBundle\Service\BonusService as AppBonusService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
@@ -54,6 +55,7 @@ use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\OrderService as AppOrderService;
+use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\PersonalBundle\Service\OrderService as PersonalOrderService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\UserService as AppUserService;
@@ -67,6 +69,7 @@ use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use FourPaws\MobileApiBundle\Security\ApiToken;
 use JMS\Serializer\Serializer;
+
 
 class OrderService
 {
@@ -117,6 +120,7 @@ class OrderService
 
     const DELIVERY_TYPE_COURIER = 'courier';
     const DELIVERY_TYPE_PICKUP = 'pickup';
+    const DELIVERY_TYPE_DOSTAVISTA = 'dostavista';
 
     public function __construct(
         ApiBasketService $apiBasketService,
@@ -344,6 +348,7 @@ class OrderService
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
      * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
+     * @throws \FourPaws\AppBundle\Exception\NotFoundException
      */
     public function getOrderParameter(BasketProductCollection $basketProducts, $order = null)
     {
@@ -401,6 +406,17 @@ class OrderService
                 /** значение может меняться автоматически, @see \FourPaws\SaleBundle\Service\OrderService::updateCommWayProperty  */
                 // ->setCommunicationWay($order->getPropValue('COM_WAY'))
             ;
+
+            if($order->getPropValue('SUBSCRIBE_ID') > 0){
+                $subscribeId = (int)$order->getPropValue('SUBSCRIBE_ID');
+                $orderSubscribe = $this->appOrderSubscribeService->getById($subscribeId);
+
+                $orderParameter
+                    ->setSubscribe(true)
+                    ->setSubscribeFrequency($orderSubscribe->getFrequency())
+                    ->setPayWithBonus($orderSubscribe->isPayWithbonus() ? 1 : 0)
+                ;
+            }
 
             try {
                 $deliveryCode = $this->appDeliveryService->getDeliveryCodeById($order->getDeliveryId());
@@ -480,6 +496,8 @@ class OrderService
      * @param bool $isCourierDelivery
      * @param float $bonusSubtractAmount
      * @param OrderEntity|null $order
+     * @param string $deliveryCode
+     * @param float $deliveryPrice
      * @return OrderCalculate
      * @throws ApplicationCreateException
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
@@ -488,12 +506,15 @@ class OrderService
         BasketProductCollection $basketProducts,
         $isCourierDelivery = false,
         float $bonusSubtractAmount = 0,
-        OrderEntity $order = null
+        OrderEntity $order = null,
+        string $deliveryCode = '',
+        ?float $deliveryPrice = 0.0
     )
     {
         $basketPrice = $basketProducts->getTotalPrice();
         $basketPriceWithDiscount = $basketPrice->getActual();
         $basketPriceWithoutDiscount = $basketPrice->getOld();
+        $basketPriceSubscribe = $basketPrice->getSubscribe();
         $deliveryPrice = 0;
         $bonusAddAmount = 0;
 
@@ -501,6 +522,7 @@ class OrderService
             // if there is an order
             $deliveryPrice = $order->getDelivery()->getPriceDelivery();
             $priceWithoutDiscount = $basketPriceWithDiscount;
+            $priceSubscribe = $basketPriceSubscribe;
             try {
                 $priceWithDiscount = $order->getItemsSum();
                 $bonusSubtractAmount = $order->getBonusPay();
@@ -511,9 +533,11 @@ class OrderService
 
             $totalPriceWithDiscount = $order->getPrice() - $bonusSubtractAmount;
             $totalPriceWithoutDiscount = $basketPriceWithDiscount + $deliveryPrice;
+            $totalPriceSubscribe = $basketPriceSubscribe + $deliveryPrice;
         } else {
             $priceWithDiscount = $basketPriceWithDiscount;
             $priceWithoutDiscount = $basketPriceWithoutDiscount;
+            $priceSubscribe = $basketPriceSubscribe;
             $discount = $basketProducts->getDiscount();
             try {
                 if ($isCourierDelivery) {
@@ -525,6 +549,19 @@ class OrderService
                         }
                     }
                 }
+
+                if ($deliveryCode) {
+                    if (!$deliveries) {
+                        $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
+                    }
+
+                    foreach ($deliveries as $delivery) {
+                        if ($delivery->getDeliveryCode() == $deliveryCode) {
+                            $deliveryPrice = $delivery->getDeliveryPrice();
+                            break;
+                        }
+                    }
+                }
             } catch (\Exception $e) {
                 // do nothing
             }
@@ -532,6 +569,7 @@ class OrderService
 
             $totalPriceWithDiscount = $priceWithDiscount + $deliveryPrice;
             $totalPriceWithoutDiscount = $priceWithoutDiscount + $deliveryPrice;
+            $totalPriceSubscribe = $priceSubscribe + $deliveryPrice;
             $bonusAddAmount = $basketProducts->getTotalBonuses();
 
             if ($bonusSubtractAmount > 0) {
@@ -545,12 +583,22 @@ class OrderService
                     $storage->setBonus($bonusSubtractAmount);
                     $this->orderStorageService->updateStorage($storage);
                     $totalPriceWithDiscount -= $bonusSubtractAmount;
+                    $totalPriceSubscribe -= $bonusSubtractAmount;
                 } catch (BonusSubtractionException $e) {
                     throw new BonusSubtractionException($e->getMessage());
                 } catch (\Exception $e) {
                     // do nothing
                 }
             }
+        }
+
+        $totalPrice = (new Price())
+            ->setActual($totalPriceWithDiscount)
+            ->setOld($totalPriceWithoutDiscount)
+            ->setSubscribe($totalPriceSubscribe);
+
+        if ($deliveryPrice) {
+            $totalPrice->setCourierPrice($deliveryPrice);
         }
 
         return (new OrderCalculate())
@@ -570,7 +618,11 @@ class OrderService
                 (new Detailing())
                     ->setId('delivery')
                     ->setTitle('Стоимость доставки')
-                    ->setValue($deliveryPrice)
+                    ->setValue($deliveryPrice),
+                (new Detailing())
+                    ->setId('cart_price_subscribe')
+                    ->setTitle('Стоимость товаров по подписке на доставку')
+                    ->setValue($priceSubscribe)
             ])
             ->setCardDetails([
                 (new Detailing())
@@ -583,9 +635,7 @@ class OrderService
                     ->setValue($bonusSubtractAmount),
             ])
             ->setTotalPrice(
-                (new Price())
-                    ->setActual($totalPriceWithDiscount)
-                    ->setOld($totalPriceWithoutDiscount)
+                $totalPrice
             );
     }
 
@@ -631,23 +681,28 @@ class OrderService
     public function getDeliveryVariants()
     {
         $deliveries = $this->orderStorageService->getDeliveries($this->orderStorageService->getStorage());
-        $delivery = null;
-        $pickup   = null;
+        $delivery   = null;
+        $pickup     = null;
+        $dostavista = null;
         foreach ($deliveries as $calculationResult) {
             // toDo убрать условие "&& !$calculationResult instanceof DpdPickupResult" после того как в мобильном приложении будет реализован вывод точек DPD на карте в чекауте
             if ($this->appDeliveryService->isInnerPickup($calculationResult) && !$calculationResult instanceof DpdPickupResult) {
                 $pickup = $calculationResult;
             } elseif ($this->appDeliveryService->isInnerDelivery($calculationResult)) {
                 $delivery = $calculationResult;
+            } elseif ($this->appDeliveryService->isDostavistaDelivery($calculationResult)) {
+                $dostavista = $calculationResult;
             }
         }
         $courierDelivery = (new DeliveryVariant());
         $pickupDelivery = (new DeliveryVariant());
+        $dostavistaDelivery = (new DeliveryVariant());
 
         if ($delivery) {
             $courierDelivery
                 ->setAvailable(true)
-                ->setDate(DeliveryTimeHelper::showTime($delivery));
+                ->setDate(DeliveryTimeHelper::showTime($delivery))
+                ->setPrice($delivery->getDeliveryPrice());
         }
         if ($pickup) {
             $pickupDelivery
@@ -657,11 +712,44 @@ class OrderService
                     [
                         'SHOW_TIME' => !$this->appDeliveryService->isDpdPickup($pickup),
                     ]
-                ));
+                ))
+                ->setPrice($pickup->getDeliveryPrice());
+        }
+        if ($dostavista) {
+            $avaliable = $this->checkDostavistaAvaliability($dostavista);
+
+            $currentDate = new \DateTime();
+
+            $deliveryDate = $dostavista->getDeliveryDate();
+
+            $dostavistaDelivery
+                ->setAvailable($avaliable)
+                ->setPrice($dostavista->getDeliveryPrice())
+                ->setShortDate('В течение 3 часов');
+
+            if ($deliveryDate->format('d.m') == $currentDate->format('d.m')) {
+                $dostavistaDelivery->setDate('Сегодня, ' . $deliveryDate->format('d.m.Y') . ' - в течение 3 часов с момента заказа');
+            } else {
+                $dostavistaDelivery->setDate(DeliveryTimeHelper::showTime($dostavista) . ' - в течение 3 часов с момента заказа');
+            }
         }
 
-        return [$courierDelivery, $pickupDelivery];
+        return [$courierDelivery, $pickupDelivery, $dostavistaDelivery];
     }
+
+    public function checkDostavistaAvaliability($dostavista)
+    {
+        $avaliable = true;
+
+        // TODO: Доделать определение доступности после доработки апптеки
+        /*$storage = $this->orderStorageService->getStorage();
+        $lng = $storage->getLng();
+        $lat = $storage->getLat();
+        $avaliable = $this->isMKAD($lat, $lng);*/
+
+        return $avaliable;
+    }
+
 
     /**
      * @return array
@@ -671,7 +759,7 @@ class OrderService
     {
         /** @var DeliveryVariant $courierDelivery */
         /** @var DeliveryVariant $pickupDelivery */
-        [$courierDelivery, $pickupDelivery] = $this->getDeliveryVariants();
+        [$courierDelivery, $pickupDelivery, $dostavistaDelivery] = $this->getDeliveryVariants();
         $result = [
             'pickup' => $pickupDelivery,
             'courier' => $courierDelivery,
@@ -681,9 +769,13 @@ class OrderService
             $orderStorage = $this->orderStorageService->getStorage();
             $deliveries = $this->orderStorageService->getDeliveries($orderStorage);
             $delivery = null;
+            $pickup = null;
             foreach ($deliveries as $calculationResult) {
                 if ($this->appDeliveryService->isDelivery($calculationResult)) {
                     $delivery = $calculationResult;
+                }
+                if ($this->appDeliveryService->isPickup($calculationResult)) {
+                    $pickup = $calculationResult;
                 }
             }
             $selectedDelivery = $delivery;
@@ -701,10 +793,37 @@ class OrderService
                 $result['splitOrder'][] = $this->getDeliveryCourierDetails($splitResult2->getDelivery(), $basketProducts);
             }
             $orderStorage->setDeliveryId($selectedDelivery->getDeliveryId());
+
+            // подписка на доставку
+            $result['subscribeFrequencies'] = $this->getSubscribeFrequencies();
+            $result['pickupRanges'] = $this->getPickupRanges($pickup, $basketProducts);
         }
         return [
             'cartDelivery' => $result
         ];
+    }
+
+    public function getSubscribeFrequencies()
+    {
+        $result = [];
+        $frequencies = $this->appOrderSubscribeService->getFrequencies();
+        $mapping = [
+            'ID'     => 'id',
+            'VALUE'  => 'title',
+            'XML_ID' => 'code',
+        ];
+
+        foreach($frequencies as $frequency){
+            $item = [];
+            foreach($frequency as $fieldCode => $fieldValue){
+                if(isset($mapping[$fieldCode])){
+                    $item[$mapping[$fieldCode]] = $fieldValue;
+                }
+            }
+            $result[] = $item;
+        }
+
+        return $result;
     }
 
     protected function getDeliveryCourierDetails(CalculationResultInterface $delivery, BasketProductCollection $basketProducts)
@@ -731,7 +850,20 @@ class OrderService
         return $result;
     }
 
-    protected function getDeliveryRanges(array $deliveries)
+    protected function getPickupRanges(CalculationResultInterface $pickup)
+    {
+        $dates = [];
+        $deliveries = $this->appDeliveryService->getNextDeliveries($pickup, 10);
+        foreach ($deliveries as $deliveryDateIndex => $delivery) {
+            $day = FormatDate('d.m.Y l', $delivery->getDeliveryDate()->getTimestamp());
+            $dates[] = (new DeliveryTime())
+                ->setTitle($day)
+                ->setDeliveryDateIndex($deliveryDateIndex);
+        }
+        return $dates;
+    }
+
+    public function getDeliveryRanges(array $deliveries)
     {
         $dates = [];
         foreach ($deliveries as $deliveryDateIndex => $delivery) {
@@ -806,6 +938,7 @@ class OrderService
      * @throws \FourPaws\SaleBundle\Exception\OrderSplitException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws OrderSubscribeException
      */
     public function createOrder(UserCartOrderRequest $userCartOrderRequest)
     {
@@ -824,6 +957,10 @@ class OrderService
                 $cartParamArray['deliveryTypeId'] = $this->appDeliveryService->getDeliveryIdByCode(DeliveryService::INNER_PICKUP_CODE);
                 //toDo доставка DPD должна определяться автоматически, в зависимости от зоны
                 break;
+            case self::DELIVERY_TYPE_DOSTAVISTA:
+                $cartParamArray['delyveryType'] = $cartParamArray['split'] ? 'twoDeliveries' : ''; // have no clue why this param used
+                $cartParamArray['deliveryTypeId'] = $this->appDeliveryService->getDeliveryIdByCode(DeliveryService::DELIVERY_DOSTAVISTA_CODE);
+                break;
         }
         $cartParamArray['deliveryId'] = $cartParamArray['deliveryTypeId'];
         $cartParamArray['comment1'] = $cartParamArray['comment'];
@@ -832,6 +969,17 @@ class OrderService
         $this->couponStorage->save($storage->getPromoCode()); // because we can't use sessions we get promo code from the database, save it into session for current hit and creating order
         foreach (\FourPaws\SaleBundle\Enum\OrderStorage::STEP_ORDER as $step) {
             $this->orderStorageService->setStorageValuesFromArray($storage, $cartParamArray, $step);
+        }
+
+        // создание подписки на доставку
+        if($cartParam->isSubscribe()){
+            $storage->setSubscribe(true);
+            $result = $this->appOrderSubscribeService->createSubscription($storage, $cartParamArray);
+            if(!$result->isSuccess()){
+                throw new OrderSubscribeException(implode("; ", $result->getErrorMessages()));
+            }
+            $storage->setSubscribeId($result->getData()['subscribeId']);
+            $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
         }
 
         /**
@@ -852,6 +1000,12 @@ class OrderService
             }
         }
         $firstOrder = $this->personalOrderService->getOrderByNumber($order->getField('ACCOUNT_NUMBER'));
+
+        // активация подписки на доставку
+        if($cartParam->isSubscribe()){
+            $this->appOrderSubscribeService->activateSubscription($storage, $order);
+        }
+
         $response = [
             $this->toApiFormat($firstOrder)
         ];
@@ -859,5 +1013,250 @@ class OrderService
             $response[] = $this->getOneById($relatedOrderId->getValue());
         }
         return $response;
+    }
+
+
+    public function isMKAD($lat, $lng): bool
+    {
+        $vertices_x = array(
+            37.842762,
+            37.842789,
+            37.842627,
+            37.841828,
+            37.841217,
+            37.840175,
+            37.83916,
+            37.837121,
+            37.83262,
+            37.829512,
+            37.831353,
+            37.834605,
+            37.837597,
+            37.839348,
+            37.833842,
+            37.824787,
+            37.814564,
+            37.802473,
+            37.794235,
+            37.781928,
+            37.771139,
+            37.758725,
+            37.747945,
+            37.734785,
+            37.723062,
+            37.709425,
+            37.696256,
+            37.683167,
+            37.668911,
+            37.647765,
+            37.633419,
+            37.616719,
+            37.60107,
+            37.586536,
+            37.571938,
+            37.555732,
+            37.545132,
+            37.526366,
+            37.516108,
+            37.502274,
+            37.49391,
+            37.484846,
+            37.474668,
+            37.469925,
+            37.456864,
+            37.448195,
+            37.441125,
+            37.434424,
+            37.42598,
+            37.418712,
+            37.414868,
+            37.407528,
+            37.397952,
+            37.388969,
+            37.383283,
+            37.378369,
+            37.374991,
+            37.370248,
+            37.369188,
+            37.369053,
+            37.369619,
+            37.369853,
+            37.372943,
+            37.379824,
+            37.386876,
+            37.390397,
+            37.393236,
+            37.395275,
+            37.394709,
+            37.393056,
+            37.397314,
+            37.405588,
+            37.416601,
+            37.429429,
+            37.443596,
+            37.459065,
+            37.473096,
+            37.48861,
+            37.5016,
+            37.513206,
+            37.527597,
+            37.543443,
+            37.559577,
+            37.575531,
+            37.590344,
+            37.604637,
+            37.619603,
+            37.635961,
+            37.647648,
+            37.667878,
+            37.681721,
+            37.698807,
+            37.712363,
+            37.723636,
+            37.735791,
+            37.741261,
+            37.764519,
+            37.765992,
+            37.788216,
+            37.788522,
+            37.800586,
+            37.822819,
+            37.829754,
+            37.837148,
+            37.838926,
+            37.840004,
+            37.840965,
+            37.841576,
+        );
+
+
+        $vertices_y = array(
+            55.774558,
+            55.76522,
+            55.755723,
+            55.747399,
+            55.739103,
+            55.730482,
+            55.721939,
+            55.712203,
+            55.703048,
+            55.694287,
+            55.68529,
+            55.675945,
+            55.667752,
+            55.658667,
+            55.650053,
+            55.643713,
+            55.637347,
+            55.62913,
+            55.623758,
+            55.617713,
+            55.611755,
+            55.604956,
+            55.599677,
+            55.594143,
+            55.589234,
+            55.583983,
+            55.578834,
+            55.574019,
+            55.571999,
+            55.573093,
+            55.573928,
+            55.574732,
+            55.575816,
+            55.5778,
+            55.581271,
+            55.585143,
+            55.587509,
+            55.5922,
+            55.594728,
+            55.60249,
+            55.609685,
+            55.617424,
+            55.625801,
+            55.630207,
+            55.641041,
+            55.648794,
+            55.654675,
+            55.660424,
+            55.670701,
+            55.67994,
+            55.686873,
+            55.695697,
+            55.702805,
+            55.709657,
+            55.718273,
+            55.728581,
+            55.735201,
+            55.744789,
+            55.75435,
+            55.762936,
+            55.771444,
+            55.779722,
+            55.789542,
+            55.79723,
+            55.805796,
+            55.814629,
+            55.823606,
+            55.83251,
+            55.840376,
+            55.850141,
+            55.858801,
+            55.867051,
+            55.872703,
+            55.877041,
+            55.881091,
+            55.882828,
+            55.884625,
+            55.888897,
+            55.894232,
+            55.899578,
+            55.90526,
+            55.907687,
+            55.909388,
+            55.910907,
+            55.909257,
+            55.905472,
+            55.901637,
+            55.898533,
+            55.896973,
+            55.895449,
+            55.894868,
+            55.893884,
+            55.889094,
+            55.883555,
+            55.877501,
+            55.874698,
+            55.862464,
+            55.861979,
+            55.850257,
+            55.850383,
+            55.844167,
+            55.832707,
+            55.828789,
+            55.821072,
+            55.811599,
+            55.802781,
+            55.793991,
+            55.785017,
+        );
+
+        $res = $this->is_in_polygon(count($vertices_x), $vertices_y, $vertices_x, floatval($lat), floatval($lng));
+
+        return $res;
+    }
+
+    private function is_in_polygon($points_polygon, $vertices_x, $vertices_y, $longitude_x, $latitude_y)
+    {
+        $i = $j = $c = $point = 0;
+        for ($i = 0, $j = $points_polygon ; $i < $points_polygon; $j = $i++) {
+            $point = $i;
+            if( $point == $points_polygon )
+                $point = 0;
+            if ( (($vertices_y[$point]  >  $latitude_y != ($vertices_y[$j] > $latitude_y)) &&
+                ($longitude_x < ($vertices_x[$j] - $vertices_x[$point]) * ($latitude_y - $vertices_y[$point]) / ($vertices_y[$j] - $vertices_y[$point]) + $vertices_x[$point]) ) )
+                $c = !$c;
+        }
+        return $c;
     }
 }
