@@ -1302,34 +1302,7 @@ class OrderService implements LoggerAwareInterface
 
             // активация подписки на доставку
             if($storage->isSubscribe()){
-                if(null === $storage->getSubscribeId()){
-                    throw new OrderSubscribeException('Susbcribe not found');
-                }
-                $subscribe = $this->orderSubscribeService->getById($storage->getSubscribeId());
-                $subscribe->setActive(true)
-                    ->setOrderId($order->getId())
-                    ->countDateCheck();
-
-                // привяжем пользователя
-                if(!$subscribe->getUserId()){
-                    $subscribe->setUserId($order->getUserId());
-                }
-
-                // добавим заказ в историю закзаов по подписке
-                $result = $this->orderSubscribeService->update($subscribe);
-                if($result->isSuccess()){
-                    /** @var OrderSubscribeHistoryService $orderSubscribeHistoryService */
-                    $orderSubscribeHistoryService = Application::getInstance()->getContainer()->get('order_subscribe_history.service');
-                    $historyAddResult = $orderSubscribeHistoryService->add(
-                        $subscribe,
-                        $order->getId(),
-                        (new \DateTime($this->getOrderPropertyByCode($order, 'DELIVERY_DATE')->getValue()))
-                    );
-                    if (!$historyAddResult->isSuccess()) {
-                        throw new \Exception('Ошибка сохранения записи в истории');
-                    }
-                    $this->orderSubscribeService->sendOrderSubscribedNotification($subscribe);
-                }
+                $this->orderSubscribeService->activateSubscription($storage, $order);
             }
 
         } catch (\Exception $e) {
