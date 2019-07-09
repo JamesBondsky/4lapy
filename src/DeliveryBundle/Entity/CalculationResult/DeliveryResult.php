@@ -155,6 +155,20 @@ class DeliveryResult extends BaseResult implements DeliveryResultInterface
         return $text;
     }
 
+    /**
+     * Возвращает стоимость доставки для переданной стоимости
+     * @param float $offerPrice
+     * @return float
+     */
+    public function getPriceBySum(float $offerPrice): float
+    {
+        if ($this->freeFrom > $offerPrice) {
+            return $this->getDeliveryPrice();
+        } else {
+            return 0;
+        }
+    }
+
     protected function resetResult(): void
     {
         parent::resetResult();
