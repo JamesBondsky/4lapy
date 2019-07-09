@@ -624,7 +624,7 @@ class ProductService
         $specialOffer
             ->setId($specialOfferModel->getId())
             ->setName($specialOfferModel->getName())
-            ->setDescription($specialOfferModel->getPreviewText());
+            ->setDescription(strip_tags(html_entity_decode($specialOfferModel->getPreviewText())));
         $specialOffer->setImage($specialOfferModel->getDetailPictureSrc());
 
         if ($specialOfferModel->getDateActiveFrom() && $specialOfferModel->getDateActiveTo()) {
