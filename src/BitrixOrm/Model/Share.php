@@ -48,6 +48,12 @@ class Share extends IblockElement
     protected $PREVIEW_PICTURE;
 
     /**
+     * @var int
+     * @Type("string")
+     */
+    protected $DETAIL_PICTURE;
+
+    /**
      * @var string
      * @Type("string")
      */
@@ -524,5 +530,13 @@ class Share extends IblockElement
     public function getPreviewPictureSrc(): string
     {
         return \CFile::getPath($this->PREVIEW_PICTURE);
+    }
+
+    /**
+     * @return string
+     */
+    public function getDetailPictureSrc(): string
+    {
+        return \CFile::getPath($this->DETAIL_PICTURE);
     }
 }
