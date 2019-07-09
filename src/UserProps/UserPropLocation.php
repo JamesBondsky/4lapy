@@ -397,10 +397,10 @@ class UserPropLocation extends TypeBase
                     function setPropLocationRealVals(el, realName){
                         if(!!el){
                             var firstVal = el.getAttribute("value");
+                            var div = el.closest("div");
                             if(firstVal.length > 0){
                                 var items = firstVal.split(":");
                                 var index, val;
-                                var div = el.closest("div");
                                 var delItems = div.querySelectorAll("input.real_inputs");
                                 if(delItems.length>0){
                                     for(index in delItems){
@@ -425,6 +425,14 @@ class UserPropLocation extends TypeBase
                                         }
                                     }
                                 }
+                            } else {
+                                var newInput = document.createElement("input");
+                                newInput.setAttribute("name", realName);
+                                newInput.setAttribute("value", "");
+                                newInput.setAttribute("type", "hidden");
+                                newInput.className = "real_inputs";
+                                
+                                div.appendChild(newInput);
                             }
                         }
                     }

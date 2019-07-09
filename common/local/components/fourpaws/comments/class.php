@@ -76,12 +76,12 @@ class CCommentsComponent extends \CBitrixComponent
         $class = new static();
         $class->setUserBundle();
         $class->arResult['AUTH'] = $class->userAuthService->isAuthorized();
-        /*if (!$class->arResult['AUTH']) {
+        if (!$class->arResult['AUTH']) {
             $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
             if (!$recaptchaService->checkCaptcha() && !KioskService::isKioskMode()) {
                 throw new CaptchaErrorException('Капча не валидна');
             }
-        }*/
+        }
         $data = $class->getData($addNotAuth);
         $class->arParams['HL_ID'] = $data['HL_ID'];
         $class->arParams['OBJECT_ID'] = $data['UF_OBJECT_ID'];

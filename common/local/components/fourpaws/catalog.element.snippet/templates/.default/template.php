@@ -166,6 +166,7 @@ if (!$currentOffer->getImagesIds()) {
                                                   !== $offer->getCatalogPrice() ? $offer->getCatalogOldPrice() : '' ?>"
                                data-discount="<?= ($offer->getDiscountPrice() ?: '') ?>"
                                data-price="<?= $offer->getCatalogPrice() ?>"
+                               data-subscribePrice="<?= \round($offer->getSubscribePrice()) ?>"
                                data-offerid="<?= $offer->getId() ?>"
                                data-onclick="<?= $getOnClick($offer) ?>"
                                data-onmousedown="<?= $getOnMouseDown($offer) ?>"
@@ -186,6 +187,7 @@ if (!$currentOffer->getImagesIds()) {
                            data-oldprice="<?= $currentOffer->getOldPrice()
                                               !== $currentOffer->getCatalogPrice() ? $currentOffer->getOldPrice() : '' ?>"
                            data-price="<?= $currentOffer->getCatalogPrice() ?>"
+                           data-subscribePrice="<?= \round($offer->getSubscribePrice()) ?>"
                            data-discount="<?= ($currentOffer->getDiscountPrice() ?: '') ?>"
                            data-offerid="<?= $currentOffer->getId() ?>"
                            data-image="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
@@ -263,17 +265,26 @@ if (!$currentOffer->getImagesIds()) {
         //
         ?>
         <div class="b-common-item__additional-information">
-            <div class="b-common-item__benefin js-sale-block">
-                <span class="b-common-item__prev-price js-sale-origin">
-                    <span class="b-ruble b-ruble--prev-price"></span>
-                </span>
-                <span class="b-common-item__discount">
-                    <span class="b-common-item__disc"></span>
-                    <span class="b-common-item__discount-price js-sale-sale"></span>
-                    <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount"></span>
+            <? if($currentOffer->getSubscribePrice() < $currentOffer->getPrice()): ?>
+                <a class="b-common-item__price-subscribe" href="<?= $currentOffer->getLink() ?>">
+                    <span class="logo-subscr"><?= new SvgDecorator('icon-logo-subscription', 20, 18) ?></span>
+                    <span class="b-common-item__price js-price-subscribe-block"><?= \round($currentOffer->getSubscribePrice()) ?></span>
+                    <span class="b-ruble">₽</span>
+                    <span class="title-subscr">Подписка</span>
+                </a>
+            <? else: ?>
+                <div class="b-common-item__benefin js-sale-block">
+                    <span class="b-common-item__prev-price js-sale-origin">
+                        <span class="b-ruble b-ruble--prev-price"></span>
                     </span>
-                </span>
-            </div>
+                    <span class="b-common-item__discount">
+                        <span class="b-common-item__disc"></span>
+                        <span class="b-common-item__discount-price js-sale-sale"></span>
+                        <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount"></span>
+                        </span>
+                    </span>
+                </div>
+            <? endif; ?>
         </div>
     </div>
 </div>

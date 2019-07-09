@@ -43,6 +43,7 @@ use FourPaws\MobileApiBundle\Exception\OrderNotFoundException;
 use FourPaws\MobileApiBundle\Exception\ProductsAmountUnavailableException;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
+use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\PersonalBundle\Service\BonusService as AppBonusService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
@@ -54,6 +55,7 @@ use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\OrderService as AppOrderService;
+use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
 use FourPaws\PersonalBundle\Service\OrderService as PersonalOrderService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\UserService as AppUserService;
@@ -67,6 +69,7 @@ use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use FourPaws\MobileApiBundle\Security\ApiToken;
 use JMS\Serializer\Serializer;
+
 
 class OrderService
 {
@@ -345,6 +348,7 @@ class OrderService
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
      * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
+     * @throws \FourPaws\AppBundle\Exception\NotFoundException
      */
     public function getOrderParameter(BasketProductCollection $basketProducts, $order = null)
     {
@@ -402,6 +406,17 @@ class OrderService
                 /** значение может меняться автоматически, @see \FourPaws\SaleBundle\Service\OrderService::updateCommWayProperty  */
                 // ->setCommunicationWay($order->getPropValue('COM_WAY'))
             ;
+
+            if($order->getPropValue('SUBSCRIBE_ID') > 0){
+                $subscribeId = (int)$order->getPropValue('SUBSCRIBE_ID');
+                $orderSubscribe = $this->appOrderSubscribeService->getById($subscribeId);
+
+                $orderParameter
+                    ->setSubscribe(true)
+                    ->setSubscribeFrequency($orderSubscribe->getFrequency())
+                    ->setPayWithBonus($orderSubscribe->isPayWithbonus() ? 1 : 0)
+                ;
+            }
 
             try {
                 $deliveryCode = $this->appDeliveryService->getDeliveryCodeById($order->getDeliveryId());
@@ -499,6 +514,7 @@ class OrderService
         $basketPrice = $basketProducts->getTotalPrice();
         $basketPriceWithDiscount = $basketPrice->getActual();
         $basketPriceWithoutDiscount = $basketPrice->getOld();
+        $basketPriceSubscribe = $basketPrice->getSubscribe();
         $deliveryPrice = 0;
         $bonusAddAmount = 0;
 
@@ -506,6 +522,7 @@ class OrderService
             // if there is an order
             $deliveryPrice = $order->getDelivery()->getPriceDelivery();
             $priceWithoutDiscount = $basketPriceWithDiscount;
+            $priceSubscribe = $basketPriceSubscribe;
             try {
                 $priceWithDiscount = $order->getItemsSum();
                 $bonusSubtractAmount = $order->getBonusPay();
@@ -516,9 +533,11 @@ class OrderService
 
             $totalPriceWithDiscount = $order->getPrice() - $bonusSubtractAmount;
             $totalPriceWithoutDiscount = $basketPriceWithDiscount + $deliveryPrice;
+            $totalPriceSubscribe = $basketPriceSubscribe + $deliveryPrice;
         } else {
             $priceWithDiscount = $basketPriceWithDiscount;
             $priceWithoutDiscount = $basketPriceWithoutDiscount;
+            $priceSubscribe = $basketPriceSubscribe;
             $discount = $basketProducts->getDiscount();
             try {
                 if ($isCourierDelivery) {
@@ -550,6 +569,7 @@ class OrderService
 
             $totalPriceWithDiscount = $priceWithDiscount + $deliveryPrice;
             $totalPriceWithoutDiscount = $priceWithoutDiscount + $deliveryPrice;
+            $totalPriceSubscribe = $priceSubscribe + $deliveryPrice;
             $bonusAddAmount = $basketProducts->getTotalBonuses();
 
             if ($bonusSubtractAmount > 0) {
@@ -563,6 +583,7 @@ class OrderService
                     $storage->setBonus($bonusSubtractAmount);
                     $this->orderStorageService->updateStorage($storage);
                     $totalPriceWithDiscount -= $bonusSubtractAmount;
+                    $totalPriceSubscribe -= $bonusSubtractAmount;
                 } catch (BonusSubtractionException $e) {
                     throw new BonusSubtractionException($e->getMessage());
                 } catch (\Exception $e) {
@@ -573,7 +594,8 @@ class OrderService
 
         $totalPrice = (new Price())
             ->setActual($totalPriceWithDiscount)
-            ->setOld($totalPriceWithoutDiscount);
+            ->setOld($totalPriceWithoutDiscount)
+            ->setSubscribe($totalPriceSubscribe);
 
         if ($deliveryPrice) {
             $totalPrice->setCourierPrice($deliveryPrice);
@@ -596,7 +618,11 @@ class OrderService
                 (new Detailing())
                     ->setId('delivery')
                     ->setTitle('Стоимость доставки')
-                    ->setValue($deliveryPrice)
+                    ->setValue($deliveryPrice),
+                (new Detailing())
+                    ->setId('cart_price_subscribe')
+                    ->setTitle('Стоимость товаров по подписке на доставку')
+                    ->setValue($priceSubscribe)
             ])
             ->setCardDetails([
                 (new Detailing())
@@ -743,9 +769,13 @@ class OrderService
             $orderStorage = $this->orderStorageService->getStorage();
             $deliveries = $this->orderStorageService->getDeliveries($orderStorage);
             $delivery = null;
+            $pickup = null;
             foreach ($deliveries as $calculationResult) {
                 if ($this->appDeliveryService->isDelivery($calculationResult)) {
                     $delivery = $calculationResult;
+                }
+                if ($this->appDeliveryService->isPickup($calculationResult)) {
+                    $pickup = $calculationResult;
                 }
             }
             $selectedDelivery = $delivery;
@@ -763,10 +793,37 @@ class OrderService
                 $result['splitOrder'][] = $this->getDeliveryCourierDetails($splitResult2->getDelivery(), $basketProducts);
             }
             $orderStorage->setDeliveryId($selectedDelivery->getDeliveryId());
+
+            // подписка на доставку
+            $result['subscribeFrequencies'] = $this->getSubscribeFrequencies();
+            $result['pickupRanges'] = $this->getPickupRanges($pickup, $basketProducts);
         }
         return [
             'cartDelivery' => $result
         ];
+    }
+
+    public function getSubscribeFrequencies()
+    {
+        $result = [];
+        $frequencies = $this->appOrderSubscribeService->getFrequencies();
+        $mapping = [
+            'ID'     => 'id',
+            'VALUE'  => 'title',
+            'XML_ID' => 'code',
+        ];
+
+        foreach($frequencies as $frequency){
+            $item = [];
+            foreach($frequency as $fieldCode => $fieldValue){
+                if(isset($mapping[$fieldCode])){
+                    $item[$mapping[$fieldCode]] = $fieldValue;
+                }
+            }
+            $result[] = $item;
+        }
+
+        return $result;
     }
 
     protected function getDeliveryCourierDetails(CalculationResultInterface $delivery, BasketProductCollection $basketProducts)
@@ -793,7 +850,20 @@ class OrderService
         return $result;
     }
 
-    protected function getDeliveryRanges(array $deliveries)
+    protected function getPickupRanges(CalculationResultInterface $pickup)
+    {
+        $dates = [];
+        $deliveries = $this->appDeliveryService->getNextDeliveries($pickup, 10);
+        foreach ($deliveries as $deliveryDateIndex => $delivery) {
+            $day = FormatDate('d.m.Y l', $delivery->getDeliveryDate()->getTimestamp());
+            $dates[] = (new DeliveryTime())
+                ->setTitle($day)
+                ->setDeliveryDateIndex($deliveryDateIndex);
+        }
+        return $dates;
+    }
+
+    public function getDeliveryRanges(array $deliveries)
     {
         $dates = [];
         foreach ($deliveries as $deliveryDateIndex => $delivery) {
@@ -868,6 +938,7 @@ class OrderService
      * @throws \FourPaws\SaleBundle\Exception\OrderSplitException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws OrderSubscribeException
      */
     public function createOrder(UserCartOrderRequest $userCartOrderRequest)
     {
@@ -900,6 +971,17 @@ class OrderService
             $this->orderStorageService->setStorageValuesFromArray($storage, $cartParamArray, $step);
         }
 
+        // создание подписки на доставку
+        if($cartParam->isSubscribe()){
+            $storage->setSubscribe(true);
+            $result = $this->appOrderSubscribeService->createSubscription($storage, $cartParamArray);
+            if(!$result->isSuccess()){
+                throw new OrderSubscribeException(implode("; ", $result->getErrorMessages()));
+            }
+            $storage->setSubscribeId($result->getData()['subscribeId']);
+            $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
+        }
+
         /**
          * @var ApiToken $token | null
          */
@@ -918,6 +1000,12 @@ class OrderService
             }
         }
         $firstOrder = $this->personalOrderService->getOrderByNumber($order->getField('ACCOUNT_NUMBER'));
+
+        // активация подписки на доставку
+        if($cartParam->isSubscribe()){
+            $this->appOrderSubscribeService->activateSubscription($storage, $order);
+        }
+
         $response = [
             $this->toApiFormat($firstOrder)
         ];

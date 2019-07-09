@@ -175,6 +175,7 @@ class PaymentService implements LoggerAwareInterface
      * @param Fiscalization $fiscalization
      * @param OrderInfo     $orderInfo
      * @param int|null      $sumPaid
+     * @param float|null    $amountBonus
      *
      * @throws FiscalAmountExceededException
      * @throws FiscalAmountException
@@ -191,37 +192,17 @@ class PaymentService implements LoggerAwareInterface
     {
         $fiscalItems = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
         $fiscalAmount = $this->getFiscalTotal($fiscalization);
-
-        if ($this->isCompareCartItemsOnValidateFiscalization()) {
-            $sberbankOrderItems = $orderInfo->getOrderBundle()->getCartItems()->getItems();
-        }
+        
         /** @var Item $fiscalItem */
         foreach ($fiscalItems as $fiscalItem) {
             if ($this->isCompareCartItemsOnValidateFiscalization()) {
                 /** @var SberbankOrderItem $matchingItem */
-                $matchingItem = null;
-                /** @var SberbankOrderItem $orderItem */
-                foreach ($sberbankOrderItems as $orderItem) {
-                    if ((int)$orderItem->getPositionId() === $fiscalItem->getPositionId()) {
-                        $matchingItem = $orderItem;
-                        break;
-                    }
-                }
+                $matchingItem = $fiscalItem;
 
                 if (null === $matchingItem) {
                     throw new NoMatchingFiscalItemException(
                         \sprintf(
                             'No matching item found for position %s',
-                            $fiscalItem->getPositionId()
-                        )
-                    );
-                }
-
-                if ($matchingItem->getItemCode() !== $fiscalItem->getCode()) {
-                    throw new InvalidItemCodeException(
-                        \sprintf(
-                            'Item code %s for position %s doesn\'t, match existing item code',
-                            $fiscalItem->getCode(),
                             $fiscalItem->getPositionId()
                         )
                     );
@@ -252,8 +233,8 @@ class PaymentService implements LoggerAwareInterface
             );
         }
 
-        if (null !== $sumPaid && $fiscalAmount < $sumPaid) {
-            if (($sumPaid - $fiscalAmount) > ($sumPaid * 0.01)) {
+        if (null !== $sumPaid && ($fiscalAmount) < $sumPaid) {
+            if (($sumPaid - ($fiscalAmount)) > ($sumPaid * 0.01)) {
                 throw new FiscalAmountException(
                     \sprintf(
                         'Fiscal amount (%s) is lesser than paid amount (%s)',

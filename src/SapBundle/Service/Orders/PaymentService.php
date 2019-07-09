@@ -20,9 +20,14 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Order as SaleOrder;
 use Bitrix\Sale\Payment;
+use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Helpers\DateHelper;
+use FourPaws\SaleBundle\Dto\Fiscalization\CartItems;
 use FourPaws\SaleBundle\Dto\Fiscalization\Fiscalization;
 use FourPaws\SaleBundle\Dto\Fiscalization\Item as FiscalItem;
+use FourPaws\SaleBundle\Dto\Fiscalization\ItemQuantity;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Exception\FiscalValidation\FiscalAmountExceededException;
 use FourPaws\SaleBundle\Exception\FiscalValidation\FiscalAmountException;
@@ -267,91 +272,173 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
             return null;
         }
 
-        /** @var array[] $paymentTaskItems */
-        $paymentTaskItems = [];
-        $paymentTask->getItems()->map(function (Item $item) use (&$paymentTaskItems) {
-            if ($this->isDeliveryItem($item)) {
-                $item->setOfferXmlId(OrderPayment::GENERIC_DELIVERY_CODE);
-            }
-            $xmlId = $item->getOfferXmlId();
-            if (!isset($paymentTaskItems[$xmlId])) {
-                $paymentTaskItems[$xmlId] = [];
-            }
+        $newItemArr = [];
 
-            $found = false;
-            /** @var Item $pti */
-            foreach ($paymentTaskItems[$xmlId] as $pti) {
-                /**
-                 * Если в SAP позиции по заказу разделены, и цена отличается менее, чем на кол-во товаров в позициях,
-                 * то это одна позиция. Производим объединение
-                */
-                $newQuantity = (int)$pti->getQuantity() + (int)$item->getQuantity();
-                if (abs($pti->getPrice() - $item->getPrice()) <= $newQuantity) {
-                    $newPrice = floor(($pti->getSumPrice() + $item->getSumPrice()) / $newQuantity * 100) / 100;
-
-                    $pti->setQuantity($newQuantity);
-                    $pti->setPrice($newPrice);
-                    $pti->setSumPrice($pti->getPrice() * (int)$pti->getQuantity());
-                    $found = true;
-                }
-            }
-
-            if (!$found) {
-                $paymentTaskItems[$xmlId][] = clone $item;
-            }
+        $paymentTask->getItems()->map(function (Item $item) use (&$newItemArr) {
+            $newItemArr[$item->getOfferXmlId()][] = $item;
         });
 
-        /**
-         * Сортируем позиции по возрастанию цены, исходя из того,
-         * что в корзине позиция со скидкой всегда первая
-         */
-        foreach ($paymentTaskItems as $items) {
-            \usort($items, function (Item $item1, Item $item2) {
-                return $item1->getPrice() <=> $item2->getPrice();
-            });
+        $xmlIdsItems = array_keys($newItemArr);
+
+        if ($xmlIdsItems) {
+            $offers = (new OfferQuery())
+                ->withFilter([
+                    '=XML_ID' => $xmlIdsItems
+                ])
+                ->withSelect(['ID', 'XML_ID'])
+                ->exec();
+            foreach ($offers as $offer) {
+                /** @var Offer $offer */
+                $productIds[$offer->getXmlId()] = $offer->getId();
+            }
+
+            if (isset($productIds)) {
+                $arMeasure = \Bitrix\Catalog\ProductTable::getCurrentRatioWithMeasure($productIds);
+                foreach ($arMeasure as $offerId => $offerUnit) {
+                    $measureUnits[$offerId] = $offerUnit['MEASURE']['SYMBOL_RUS'];
+                }
+            }
+        }
+
+        $itemsOrder = [];
+
+        if (count($newItemArr) > 0) {
+            foreach ($xmlIdsItems as $xmlIdItem) {
+                /** @var Item $newItem */
+                $newItem = clone end($newItemArr[$xmlIdItem]);
+                $newItem->setQuantity(0);
+                $newItem->setSumPrice(0);
+
+                /** @var Item $newItemOriginal */
+                $newItemOriginal = clone $newItem;
+
+                /** @var Item $item */
+                foreach ($newItemArr[$xmlIdItem] as $item) {
+                    $newItem->setQuantity(floatval($newItem->getQuantity()) + floatval($item->getQuantity()));
+                    $newItem->setSumPrice(floatval($newItem->getSumPrice()) + floatval($item->getSumPrice()));
+                }
+
+                $averagePriceItem = $newItem->getSumPrice() / floatval($newItem->getQuantity());
+                $wholeCnt = $this->checkWholeNumber($averagePriceItem);
+
+                if ($wholeCnt > 2) {
+                    $origSumAmount = $newItem->getSumPrice();
+                    $newAveragePriceItem = $this->modifyNum($averagePriceItem, 2);
+                    $newItem->setQuantity(floatval($newItem->getQuantity()) - 1);
+                    $newItem->setSumPrice(floatval($newAveragePriceItem) * $newItem->getQuantity());
+                    $newItem->setPrice($newAveragePriceItem);
+
+                    if ($newItem->getPrice() > 0) {
+                        $itemsOrder[$xmlIdItem][] = $newItem;
+                    }
+
+                    $newItemOriginal->setPrice($origSumAmount - $newItem->getSumPrice());
+                    $newItemOriginal->setSumPrice($origSumAmount - $newItem->getSumPrice());
+                    $newItemOriginal->setQuantity(1);
+
+                    if ($newItemOriginal->getPrice() > 0) {
+                        $itemsOrder[$xmlIdItem][] = $newItemOriginal;
+                    }
+
+                } else {
+                    if ($newItem->getPrice() > 0) {
+                        $newItem->setPrice($averagePriceItem);
+                        $itemsOrder[$xmlIdItem][] = $newItem;
+                    }
+                }
+            }
         }
 
         $fiscalization = $this->salePaymentService->getFiscalization($order, (int)$config['TAX_SYSTEM']);
-        $items = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
 
-        $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->setItems(
-            $items->map(
-                function (FiscalItem $item) use (&$paymentTaskItems) {
-                    $xmlId = $item->getXmlId();
-                    if (!isset($paymentTaskItems[$xmlId])) {
-                        $item->getQuantity()->setValue(0);
+        $itemsInCart = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
+
+        asort($itemsOrder);
+
+        $itemsFiscal = [];
+        $positionId = 1;
+        foreach ($itemsOrder as $xmlId => $ptItems) {
+            foreach ($ptItems as $ptItem) {
+                $tmpItem = new FiscalItem();
+                $newQuantity = $ptItem->getQuantity();
+                if ($newQuantity > 0) {
+                    $itemQuantity = (new ItemQuantity())
+                        ->setValue((int)$newQuantity);
+                    if ($unit = $measureUnits[$productIds[$ptItem->getOfferXmlId()]]) {
+                        $itemQuantity->setMeasure($unit);
                     } else {
-                        /** @var Item $pti */
-                        foreach ($paymentTaskItems[$xmlId] as $i => $pti) {
-                            $price = $pti->getPrice() * 100;
-
-                            $newQuantity = $pti->getQuantity() > $item->getQuantity()->getValue()
-                                ? $item->getQuantity()->getValue()
-                                : $pti->getQuantity();
-                            $remainingQuantity = $pti->getQuantity() - $newQuantity;
-                            $item->getQuantity()->setValue((int)$newQuantity);
-                            $item->setTotal(round($pti->getPrice() * $newQuantity * 100));
-                            $item->setPrice(round($price));
-
-                            if ($remainingQuantity > 0) {
-                                $pti->setQuantity($remainingQuantity);
-                            } else {
-                                unset($paymentTaskItems[$xmlId][$i]);
-                            }
-                            break;
-                        }
+                        $itemQuantity->setMeasure('шт');
                     }
+                    $tmpItem->setQuantity($itemQuantity);
+                    $tmpItem->setTotal(round($ptItem->getPrice() * $newQuantity * 100));
+                    $tmpItem->setPrice(round($ptItem->getPrice() * 100));
+                    $tmpItem->setName($ptItem->getOfferName());
+                    $tmpItem->setXmlId($ptItem->getOfferXmlId());
 
-                    return $item;
+                    $xmlId = $ptItem->getOfferXmlId();
+
+
+                    $tmpFindItem = array_map(function ($itemCart) use ($xmlId) {
+                        if ($itemCart->getXmlId() == $xmlId) {
+                            return $itemCart;
+                        }
+                    }, $itemsInCart->toArray());
+
+                    $tmpFindItem = array_filter($tmpFindItem, function ($tmpFindItemItem) {
+                        if ($tmpFindItemItem) {
+                            return true;
+                        }
+                    });
+
+                    $tmpFindItem = array_shift($tmpFindItem);
+
+                    if ($tmpFindItem) {
+                        $tmpItem->setPositionId($positionId);
+//                        $tmpItem->setPositionId($tmpFindItem->getPositionId());
+
+                        $tmpItem->setPaymentMethod($tmpFindItem->getPaymentMethod());
+                        $tmpItem->setTax($tmpFindItem->getTax());
+                        $itemCode = $tmpFindItem->getCode();
+                        $itemCode = explode('_', $itemCode);
+                        $itemCode[1] = $positionId;
+                        $tmpItem->setCode(implode('_', $itemCode));
+
+                        $tmpItem->getQuantity()->setMeasure($tmpFindItem->getQuantity()->getMeasure());
+
+                        $itemsFiscal[] = $tmpItem;
+                        ++$positionId;
+                    }
                 }
-            )->filter(
-                function (FiscalItem $item) {
-                    return $item->getQuantity()->getValue() > 0;
-                }
-            )
-        );
+            }
+
+        }
+
+        $fiscalization->getFiscal()->getOrderBundle()->setCartItems((new CartItems())->setItems(new ArrayCollection($itemsFiscal)));
 
         return $fiscalization;
+    }
+
+    /**
+     * Получение количества знаков после запятой
+     * @param $number
+     * @return int
+     */
+    private function checkWholeNumber($number): int
+    {
+        list ($averagePriceItemWhole, $averagePriceItemFractional) = explode('.', $number);
+
+        return strlen($averagePriceItemFractional);
+    }
+
+    private function modifyNum($number, $count)
+    {
+        list ($averagePriceItemWhole, $averagePriceItemFractional) = explode('.', $number);
+
+        if (strlen($averagePriceItemFractional) > $count) {
+            $averagePriceItemFractional = substr($averagePriceItemFractional, 0, $count);
+        }
+
+        return floatval($averagePriceItemWhole . '.' . $averagePriceItemFractional);
     }
 
     /**

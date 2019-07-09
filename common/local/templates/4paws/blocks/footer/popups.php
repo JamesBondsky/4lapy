@@ -72,6 +72,7 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
         include __DIR__ . '/message-renew-subscribe-delivery.php';
     }
 
+    include __DIR__ . '/promo-subscribe.php';
 
     include __DIR__ . '/gifts_popup.php';
     include __DIR__ . '/modal_popup.php';

@@ -5,11 +5,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Bitrix\Main\Grid\Declension;
 use Bitrix\Sale\Order;
+use FourPaws\App\Application as App;
+use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserService;
 
 /**
  * @var CMain $APPLICATION
@@ -30,10 +34,25 @@ if ($bonusCount > 0) { // самое место
 
 if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
     echo $arResult['ECOMMERCE_VIEW_SCRIPT'];
-} ?>
+}
+
+$emailCurrentUser = null;
+$userId = null;
+
+try {
+    /** @var \FourPaws\UserBundle\Service\UserSearchInterface $userCurrentUserService */
+    $userCurrentUserService = Application::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\UserSearchInterface::class);
+    $currentUser = $userCurrentUserService->findOne($order->getUserId());
+
+    $userId = $order->getUserId();
+    $emailCurrentUser = $currentUser->getEmail();
+} catch (Exception $e) {}
+
+?>
 <div class="b-container">
     <h1 class="b-title b-title--h1 b-title--order">
         <strong><?= $arResult['ORDER_PROPERTIES']['NAME'] ?></strong>, спасибо за заказ!
+
     </h1>
     <div class="b-order">
         <?php /*
@@ -69,23 +88,17 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                     Заказ № <strong><?= $order->getField('ACCOUNT_NUMBER') ?></strong> оформлен
                 </h2>
                 <div class="b-order__text-block">
-                    <?php if ($arResult['ORDER_PROPERTIES']['COM_WAY'] === OrderPropertyService::COMMUNICATION_SMS) { ?>
-                        <p>
-                            Вся информация о заказе будет отправлена на ваш
-                            номер <?= PhoneHelper::formatPhone($arResult['ORDER_PROPERTIES']['PHONE']) ?>
-                        </p>
-                    <?php } else { ?>
-                        <p>
-                            В самое ближайшее время с вами свяжется менеджер для уточнения деталей заказа
-                        </p>
-                    <?php }
 
-                    if ($arResult['ORDER_PROPERTIES']['EMAIL']) { ?>
+                    <?
+                    if ($arResult['ORDER_PROPERTIES']['EMAIL']) {
+                        ?>
                         <p>
-                            Вся информация о доставке также отправлена на вашу
-                            почту: <?= $arResult['ORDER_PROPERTIES']['EMAIL'] ?>
+                            <?= $arResult['ORDER_PROPERTIES']['NAME'] ?>, мы отправили письмо на адрес
+                            <strong><?= $arResult['ORDER_PROPERTIES']['EMAIL'] ?></strong> со всеми подробностями заказа.
                         </p>
-                    <?php } ?>
+                        <?
+                    }
+                    ?>
                 </div>
                 <?php if ($arResult['isAvatarAuthorized']) { ?>
                     <div class="timer-block js-start-timer" data-url="/front-office/avatar/logout.php">
@@ -229,6 +242,22 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                 <? if ($arResult['KIOSK_MODE']) { ?>
                     <a href="<?=$arResult['KIOSK_LOGOUT_URL']?>" class="b-button b-button--complete-kiosk">Завершить покупки</a>
                 <? } ?>
+                <?
+                if (empty($emailCurrentUser)) {
+                    ?>
+                    <hr class="b-hr b-hr--order"/>
+                    <?
+                    $APPLICATION->IncludeComponent(
+                        'fourpaws:expertsender.form',
+                        'order.complete',
+                        [
+                            'USER_ID' => $userId,
+                        ],
+                        false,
+                        ['HIDE_ICONS' => 'Y']
+                    );
+                }
+                ?>
                 <hr class="b-hr b-hr--order"/>
                 <div class="b-order__text-block">
                     <?php if ($arResult['ORDER_REGISTERED']) { ?>

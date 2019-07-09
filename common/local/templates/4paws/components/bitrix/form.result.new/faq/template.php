@@ -3,7 +3,6 @@
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Decorators\SvgDecorator;
-use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaService;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
@@ -68,7 +67,7 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
             ?>
             <div class="b-feedback-page__capcha">
                 <?php try {
-                    echo Application::getInstance()->getContainer()->get(ReCaptchaInterface::class)->getCaptcha('', false, '', 'vetaptekaQuestion');
+                    echo Application::getInstance()->getContainer()->get(ReCaptchaService::class)->getCaptcha();
                 } catch (ApplicationCreateException $e) {
                     /** ошибка - капчу не вывести */
                 } ?>

@@ -210,7 +210,7 @@ class ProductService
         if (!$currentOffer) {
             return null;
         }
-        $fullProduct = $this->convertToFullProduct($product, $currentOffer, true);
+        $fullProduct = $this->convertToFullProduct($product, $currentOffer, true, false);
 
         // товары всегда доступны в каталоге (недоступные просто не должны быть в выдаче)
         $fullProduct->setIsAvailable(true);
@@ -376,13 +376,17 @@ class ProductService
         return (new Tag())->setTitle($title);
     }
 
+
     /**
      * @param Product $product
      * @param Offer $offer
      * @param int $quantity
      * @return ShortProduct
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
     public function convertToShortProduct(Product $product, Offer $offer, $quantity = 1): ShortProduct
     {
@@ -411,7 +415,8 @@ class ProductService
         // цена
         $price = (new Price())
             ->setActual($offer->getPrice())
-            ->setOld($offer->getOldPrice());
+            ->setOld($offer->getOldPrice())
+            ->setSubscribe($offer->getSubscribePrice());
         $shortProduct->setPrice($price);
 
 
@@ -443,11 +448,15 @@ class ProductService
      * @param Product $product
      * @param Offer $offer
      * @param bool $needPackingVariants
+     * @param bool|null $showVariantsIfOneVariant
      * @return FullProduct
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
-    public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = false): FullProduct
+    public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = false, ?bool $showVariantsIfOneVariant = true): FullProduct
     {
         $shortProduct = $this->convertToShortProduct($product, $offer);
         $detailText = $product->getDetailText()->getText();
@@ -477,7 +486,7 @@ class ProductService
             ->setInPack($shortProduct->getInPack());
 
         if ($needPackingVariants) {
-            $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct));   // фасовки
+            $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant));   // фасовки
         }
 
         return $fullProduct;
@@ -561,20 +570,21 @@ class ProductService
      *
      * @param Product     $product
      * @param FullProduct $currentFullProduct
+     * @param bool|null   $showVariantsIfOneVariant
      *
      * @return array
      * @throws ApplicationCreateException
      * @throws ArgumentException
      */
-    public function getPackingVariants(Product $product, FullProduct $currentFullProduct): array
+    public function getPackingVariants(Product $product, FullProduct $currentFullProduct, ?bool $showVariantsIfOneVariant = true): array
     {
         $offers = $product->getOffersSorted();
         // если в предложениях только текущий продукт
         $hasOnlyCurrentOffer = (count($offers) === 1 && $offers->current()->getId() === $currentFullProduct->getId());
-        if ($hasOnlyCurrentOffer) {
+        if ($hasOnlyCurrentOffer && $showVariantsIfOneVariant) {
             return [$fullProduct = $this->convertToFullProduct($product, $offers->current())];
         }
-        if (empty($offers)) {
+        if (empty($offers) || ($hasOnlyCurrentOffer && !$showVariantsIfOneVariant)) {
             return [];
         }
 
@@ -614,8 +624,8 @@ class ProductService
         $specialOffer
             ->setId($specialOfferModel->getId())
             ->setName($specialOfferModel->getName())
-            ->setDescription($specialOfferModel->getPreviewText())
-            ->setImage($specialOfferModel->getPreviewPictureSrc());
+            ->setDescription($specialOfferModel->getPreviewText());
+        $specialOffer->setImage($specialOfferModel->getDetailPictureSrc());
 
         if ($specialOfferModel->getDateActiveFrom() && $specialOfferModel->getDateActiveTo()) {
             $dateFrom = DateHelper::replaceRuMonth($specialOfferModel->getDateActiveFrom()->format('d #n# Y'), DateHelper::GENITIVE);

@@ -1257,7 +1257,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
             switch ($deliveryZone) {
                 case DeliveryService::ZONE_1:
-                case DeliveryService::ZONE_IVANOVO:
                     $xmlId = SapOrder::DELIVERY_ZONE_1_ARTICLE;
                     break;
                 case DeliveryService::ZONE_5:
@@ -1279,7 +1278,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 case DeliveryService::ZONE_TULA_REGION:
                 case DeliveryService::ZONE_KALUGA:
                 case DeliveryService::ZONE_KALUGA_REGION:
+                case DeliveryService::ZONE_IVANOVO:
                 case DeliveryService::ZONE_IVANOVO_REGION:
+                case DeliveryService::ADD_DELIVERY_ZONE_10:
                     $xmlId = SapOrder::DELIVERY_ZONE_2_ARTICLE;
                     break;
                 case DeliveryService::ZONE_3:
@@ -1293,7 +1294,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                         mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false ||
                         mb_strpos($deliveryZone, DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
                     ) {
-                        $xmlId = SapOrder::DELIVERY_ZONE_1_ARTICLE;
+                        $xmlId = SapOrder::DELIVERY_ZONE_2_ARTICLE;
                     } else {
                         $xmlId = SapOrder::DELIVERY_ZONE_4_ARTICLE;
                     }

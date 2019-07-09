@@ -126,6 +126,7 @@ class ExpertsenderService implements LoggerAwareInterface
     public const GRANDIN_NEW_CHECK_REG_LIST_ID = 8906;
     public const ROYAL_CANIN_NEW_CHECK_REG_LIST_ID = 9195;
     public const FESTIVAL_NEW_USER_REG_LIST_ID = 9233;
+    public const MEALFEEL_NEW_CHECK_REG_LIST_ID = 8919;
     /**
      * BirthDay mail ids
      */
@@ -242,6 +243,7 @@ class ExpertsenderService implements LoggerAwareInterface
     /**
      * @param User $user
      * @param string $backUrl
+     * @param string|null $hash
      *
      * @return bool
      * @throws ApplicationCreateException
@@ -253,7 +255,7 @@ class ExpertsenderService implements LoggerAwareInterface
      * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
      * @throws \FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException
      */
-    public function sendForgotPassword(User $user, string $backUrl = ''): bool
+    public function sendForgotPassword(User $user, string $backUrl = '', ?string $hash = ''): bool
     {
         if ($user->hasEmail()) {
             try {
@@ -264,12 +266,12 @@ class ExpertsenderService implements LoggerAwareInterface
                 $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
                 $email = $user->getEmail();
                 $userId = $user->getId();
-                $confirmService::setGeneratedHash($email, 'email_forgot');
+                $confirmService::setGeneratedHash($email, 'email_forgot', 0, $hash);
                 $backUrlText = !empty($backUrl) ? '&backurl=' . $backUrl . '&user_id=' . $userId : '';
                 $snippets = [
                     new Snippet('user_name', $user->getName() ?: $user->getFullName(), true),
                     new Snippet('link',
-                        (new FullHrefDecorator('/personal/forgot-password/?hash=' . $confirmService::getGeneratedCode('email_forgot') . '&email=' . $email . $backUrlText))->getFullPublicPath(),
+                        (new FullHrefDecorator('/personal/forgot-password/?hash=' . $confirmService::getGeneratedCode('email_forgot') . '&email=' . $email . $backUrlText . '&emailHash=' . $hash))->getFullPublicPath(),
                         true),
                 ];
 
@@ -1367,6 +1369,9 @@ class ExpertsenderService implements LoggerAwareInterface
                     break;
                 case LandingController::$royalCaninLanding:
                     $transactionId = self::ROYAL_CANIN_NEW_CHECK_REG_LIST_ID;
+                    break;
+                case LandingController::$mealfeelLanding:
+                    $transactionId = self::MEALFEEL_NEW_CHECK_REG_LIST_ID;
                     break;
                 default:
                     $transactionId = self::GRANDIN_NEW_CHECK_REG_LIST_ID;

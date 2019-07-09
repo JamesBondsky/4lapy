@@ -255,6 +255,27 @@ class OrderParameter
     protected $promoCode = '';
 
     /**
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("isSubscribe")
+     * @var int
+     */
+    protected $isSubscribe = false;
+
+    /**
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("subscribeFrequency")
+     * @var int
+     */
+    protected $subscribeFrequency;
+
+    /**
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("payWithBonus")
+     * @var int
+     */
+    protected $payWithBonus = false;
+
+    /**
      * @return Product[]
      */
     public function getProducts(): array
@@ -645,5 +666,59 @@ class OrderParameter
     {
         $this->goodsInfo = $goodsInfo;
         return $this;
+    }
+
+    /**
+     * @param bool $subscribe
+     * @return OrderParameter
+     */
+    public function setSubscribe(int $subscribe): OrderParameter
+    {
+        $this->isSubscribe = $subscribe;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSubscribe(): int
+    {
+        return $this->isSubscribe;
+    }
+
+    /**
+     * @param bool $payWithBonus
+     * @return OrderParameter
+     */
+    public function setPayWithBonus(int $payWithBonus): OrderParameter
+    {
+        $this->payWithBonus = $payWithBonus;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPayWithBonus(): int
+    {
+        return $this->payWithBonus;
+    }
+
+    /**
+     * @param int $subscribeFrequency
+     * @return OrderParameter
+     */
+    public function setSubscribeFrequency(int $subscribeFrequency): OrderParameter
+    {
+        $this->subscribeFrequency = $subscribeFrequency;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getSubscribeFrequency(): int
+    {
+        return $this->subscribeFrequency;
     }
 }
