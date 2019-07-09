@@ -632,7 +632,7 @@ class OrderService implements LoggerAwareInterface
             $isSetParam = [];
             $shipmentPlaceCodeDefault = '';
             /** @var BasketItem $item */
-            foreach ($order->getBasket() as $item) {
+            foreach ($order->getBasket() as $itemKey => $item) {
                 $offer = OfferQuery::getById($item->getProductId());
                 $selectedShop = $selectedDelivery->getSelectedStore();
                 if ($selectedShop instanceof Store) {
@@ -650,6 +650,7 @@ class OrderService implements LoggerAwareInterface
                         $shipmentDays[$shipmentPlaceCode] = $days;
                     }
                 }
+                $arShipmentPlaceCode[$itemKey] = $shipmentPlaceCode;
                 if ($offer->isAvailable() && $offer->isByRequest()) {
                     $isSetParam[] = $item->getProductId();
                     $this->basketService->setBasketItemPropertyValue(
@@ -664,12 +665,12 @@ class OrderService implements LoggerAwareInterface
                 }
 
             }
-            foreach ($order->getBasket() as $item) {
+            foreach ($order->getBasket() as $itemKey => $item) {
                 if (!in_array($item->getProductId(), $isSetParam)) {
                     $this->basketService->setBasketItemPropertyValue(
                         $item,
                         'SHIPMENT_PLACE_CODE',
-                        $shipmentPlaceCodeDefault
+                        $shipmentPlaceCodeDefault ?: $arShipmentPlaceCode[$itemKey]
                     );
                 }
             }
