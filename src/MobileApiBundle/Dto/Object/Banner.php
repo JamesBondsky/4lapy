@@ -75,7 +75,7 @@ class Banner
     protected $cityId = '';
 
     /**
-     * Bмеет или нет привязку к элементу/разделу
+     * Имеет или нет привязку к элементу/разделу
      * @Serializer\Exclude()
      * @var bool
      */
