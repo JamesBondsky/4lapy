@@ -629,8 +629,11 @@ class OrderService implements LoggerAwareInterface
              */
             $shipmentResults = $selectedDelivery->getShipmentResults();
             $shipmentDays = [];
+            $isSetParam = [];
+            $shipmentPlaceCodeDefault = '';
             /** @var BasketItem $item */
-            foreach ($order->getBasket() as $item) {
+            foreach ($order->getBasket() as $itemKey => $item) {
+                $offer = OfferQuery::getById($item->getProductId());
                 $selectedShop = $selectedDelivery->getSelectedStore();
                 if ($selectedShop instanceof Store) {
                     $shipmentPlaceCode = $selectedShop->getXmlId();
@@ -647,16 +650,29 @@ class OrderService implements LoggerAwareInterface
                         $shipmentDays[$shipmentPlaceCode] = $days;
                     }
                 }
-                if ($shipmentPlaceCode === self::STORE) {
-                    break;
+                $arShipmentPlaceCode[$itemKey] = $shipmentPlaceCode;
+                if ($offer->isAvailable() && $offer->isByRequest()) {
+                    $isSetParam[] = $item->getProductId();
+                    $this->basketService->setBasketItemPropertyValue(
+                        $item,
+                        'SHIPMENT_PLACE_CODE',
+                        $shipmentPlaceCode
+                    );
+                } else {
+                    if ($shipmentPlaceCode === self::STORE) {
+                        $shipmentPlaceCodeDefault = $shipmentPlaceCode;
+                    }
                 }
+
             }
-            foreach ($order->getBasket() as $item) {
-                $this->basketService->setBasketItemPropertyValue(
-                    $item,
-                    'SHIPMENT_PLACE_CODE',
-                    $shipmentPlaceCode
-                );
+            foreach ($order->getBasket() as $itemKey => $item) {
+                if (!in_array($item->getProductId(), $isSetParam)) {
+                    $this->basketService->setBasketItemPropertyValue(
+                        $item,
+                        'SHIPMENT_PLACE_CODE',
+                        $shipmentPlaceCodeDefault ?: $arShipmentPlaceCode[$itemKey]
+                    );
+                }
             }
             if (!empty($shipmentDays)) {
                 arsort($shipmentDays);
