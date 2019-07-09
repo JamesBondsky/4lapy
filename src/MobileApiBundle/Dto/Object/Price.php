@@ -33,6 +33,13 @@ class Price
     protected $old = 0.0;
 
     /**
+     * @var double
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("courierPrice")
+     */
+    protected $courierPrice = 0.0;
+
+    /**
      * Цена по подписке на доставку
      * @var float
      * @Serializer\Type("float")
@@ -77,6 +84,16 @@ class Price
         if ($this->actual != $old) {
             $this->old = $old;
         }
+        return $this;
+    }
+
+    /**
+     * @param float $price
+     * @return Price
+     */
+    public function setCourierPrice(float $price): Price
+    {
+        $this->courierPrice = $price;
         return $this;
     }
 
