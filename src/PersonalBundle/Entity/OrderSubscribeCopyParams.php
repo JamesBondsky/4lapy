@@ -424,7 +424,7 @@ class OrderSubscribeCopyParams
         if (!$this->newOrderDeliveryCalculationResult) {
             $orderSubscribeService = $this->getOrderSubscribeService();
             $calculationResult = $orderSubscribeService->getDeliveryCalculationResult($this->getOrderSubscribe());
-            if (!$calculationResult || !$calculationResult->isSuccess()) {
+            if (!$calculationResult) {
                 throw new RuntimeException('Не удалось получить расчет доставки нового заказа');
             }
 
