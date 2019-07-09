@@ -2182,7 +2182,8 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         return $this->isLowTemperatureRequired()
                || $this->isTransportOnlyRefrigerator()
-               || $this->isDeliveryAreaRestrict();
+               || $this->isDeliveryAreaRestrict()
+               || $this->isLicenseRequired();
     }
 
     /**
