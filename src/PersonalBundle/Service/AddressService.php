@@ -166,10 +166,7 @@ class AddressService
         if ($address->isMain()) {
             $this->disableMainItem();
         }
-
-        $address->setLocation(
-            $this->getCityLocationCode($address->getCity())
-        );
+        
         $res = $this->addressRepository->setEntity($address)->create();
         if ($res) {
             if ($address->isMain()

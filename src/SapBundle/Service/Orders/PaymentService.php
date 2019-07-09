@@ -342,6 +342,7 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
 
                 } else {
                     if ($newItem->getPrice() > 0) {
+                        $newItem->setPrice($averagePriceItem);
                         $itemsOrder[$xmlIdItem][] = $newItem;
                     }
                 }
@@ -355,6 +356,7 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         asort($itemsOrder);
 
         $itemsFiscal = [];
+        $positionId = 1;
         foreach ($itemsOrder as $xmlId => $ptItems) {
             foreach ($ptItems as $ptItem) {
                 $tmpItem = new FiscalItem();
@@ -391,13 +393,20 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
                     $tmpFindItem = array_shift($tmpFindItem);
 
                     if ($tmpFindItem) {
-                        $tmpItem->setPositionId($tmpFindItem->getPositionId());
+                        $tmpItem->setPositionId($positionId);
+//                        $tmpItem->setPositionId($tmpFindItem->getPositionId());
 
                         $tmpItem->setPaymentMethod($tmpFindItem->getPaymentMethod());
                         $tmpItem->setTax($tmpFindItem->getTax());
-                        $tmpItem->setCode($tmpFindItem->getCode());
+                        $itemCode = $tmpFindItem->getCode();
+                        $itemCode = explode('_', $itemCode);
+                        $itemCode[1] = $positionId;
+                        $tmpItem->setCode(implode('_', $itemCode));
+
+                        $tmpItem->getQuantity()->setMeasure($tmpFindItem->getQuantity()->getMeasure());
 
                         $itemsFiscal[] = $tmpItem;
+                        ++$positionId;
                     }
                 }
             }

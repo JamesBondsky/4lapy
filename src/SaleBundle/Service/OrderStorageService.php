@@ -334,7 +334,7 @@ class OrderStorageService
                         $storage->$setter($data['deliveryTypeId']);
                         break;
                     case 'comment':
-                        if($step == OrderStorageEnum::DELIVERY_STEP && $deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE){
+                        if($step == OrderStorageEnum::DELIVERY_STEP && $deliveryCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE && $data['comment_dostavista']){
                             $storage->$setter($data['comment_dostavista']);
                         } elseif(isset($data['comment'])) {
                             $storage->$setter($data['comment']);
