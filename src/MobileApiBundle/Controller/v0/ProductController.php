@@ -160,11 +160,12 @@ class ProductController extends FOSRestController
     public function getGoodsListAction(Request $request, GoodsListRequest $goodsListRequest)
     {
         $categoryId = $goodsListRequest->getCategoryId();
+        $stockId = $goodsListRequest->getStockId();
         $sort = $goodsListRequest->getSort();
         $page = $goodsListRequest->getPage();
         $count = $goodsListRequest->getCount();
 
-        $productsList = $this->apiProductService->getList($request, $categoryId, $sort, $count, $page);
+        $productsList = $this->apiProductService->getList($request, $categoryId, $stockId, $sort, $count, $page);
         /** @var \CIBlockResult $cdbResult */
         $cdbResult = $productsList->get('cdbResult');
         return (new Response\ProductListResponse())
