@@ -287,9 +287,9 @@ class DaDataService
                 'from_bound' => [
                     'value' => $level
                 ],
-                'to_bound'   => [
-                    'value' => $level
-                ]
+//                'to_bound'   => [
+//                    'value' => $level
+//                ]
             ];
         } else {
             //для городов и деревень
