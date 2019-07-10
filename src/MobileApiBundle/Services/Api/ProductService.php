@@ -382,13 +382,17 @@ class ProductService
         return (new Tag())->setTitle($title);
     }
 
+
     /**
      * @param Product $product
      * @param Offer $offer
      * @param int $quantity
      * @return ShortProduct
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
     public function convertToShortProduct(Product $product, Offer $offer, $quantity = 1): ShortProduct
     {
@@ -417,7 +421,8 @@ class ProductService
         // цена
         $price = (new Price())
             ->setActual($offer->getPrice())
-            ->setOld($offer->getOldPrice());
+            ->setOld($offer->getOldPrice())
+            ->setSubscribe($offer->getSubscribePrice());
         $shortProduct->setPrice($price);
 
 
@@ -451,8 +456,11 @@ class ProductService
      * @param bool $needPackingVariants
      * @param bool|null $showVariantsIfOneVariant
      * @return FullProduct
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
     public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = false, ?bool $showVariantsIfOneVariant = true): FullProduct
     {
@@ -622,8 +630,8 @@ class ProductService
         $specialOffer
             ->setId($specialOfferModel->getId())
             ->setName($specialOfferModel->getName())
-            ->setDescription($specialOfferModel->getPreviewText())
-            ->setImage($specialOfferModel->getPreviewPictureSrc());
+            ->setDescription(strip_tags(html_entity_decode($specialOfferModel->getPreviewText())));
+        $specialOffer->setImage($specialOfferModel->getDetailPictureSrc());
 
         if ($specialOfferModel->getDateActiveFrom() && $specialOfferModel->getDateActiveTo()) {
             $dateFrom = DateHelper::replaceRuMonth($specialOfferModel->getDateActiveFrom()->format('d #n# Y'), DateHelper::GENITIVE);
