@@ -631,9 +631,11 @@ class OrderService implements LoggerAwareInterface
              */
             $shipmentResults = $selectedDelivery->getShipmentResults();
             $shipmentDays = [];
-            $schedType = null;
+            $isSetParam = [];
+            $shipmentPlaceCodeDefault = '';
             /** @var BasketItem $item */
-            foreach ($order->getBasket() as $item) {
+            foreach ($order->getBasket() as $itemKey => $item) {
+                $offer = OfferQuery::getById($item->getProductId());
                 $selectedShop = $selectedDelivery->getSelectedStore();
                 if ($selectedShop instanceof Store) {
                     $shipmentPlaceCode = $selectedShop->getXmlId();
@@ -644,24 +646,35 @@ class OrderService implements LoggerAwareInterface
                 if ($shipmentResults &&
                     ($deliveryResult = $shipmentResults->getByOfferId($item->getProductId()))
                 ) {
-                    $scheduleResult = $deliveryResult->getScheduleResult();
-                    $shipmentPlaceCode = $scheduleResult->getSenderCode() ?: $shipmentPlaceCode;
-                    $days = $scheduleResult->getDays($selectedDelivery->getCurrentDate());
-
+                    $shipmentPlaceCode = $deliveryResult->getScheduleResult()->getSenderCode() ?: $shipmentPlaceCode;
+                    $days = $deliveryResult->getScheduleResult()->getDays($selectedDelivery->getCurrentDate());
                     if (!isset($shipmentDays[$shipmentPlaceCode]) || $shipmentDays[$shipmentPlaceCode] < $days) {
                         $shipmentDays[$shipmentPlaceCode] = $days;
                     }
                 }
-                if ($shipmentPlaceCode === self::STORE) {
-                    break;
+                $arShipmentPlaceCode[$itemKey] = $shipmentPlaceCode;
+                if ($offer->isAvailable() && $offer->isByRequest()) {
+                    $isSetParam[] = $item->getProductId();
+                    $this->basketService->setBasketItemPropertyValue(
+                        $item,
+                        'SHIPMENT_PLACE_CODE',
+                        $shipmentPlaceCode
+                    );
+                } else {
+                    if ($shipmentPlaceCode === self::STORE) {
+                        $shipmentPlaceCodeDefault = $shipmentPlaceCode;
+                    }
                 }
+
             }
-            foreach ($order->getBasket() as $item) {
-                $this->basketService->setBasketItemPropertyValue(
-                    $item,
-                    'SHIPMENT_PLACE_CODE',
-                    $shipmentPlaceCode
-                );
+            foreach ($order->getBasket() as $itemKey => $item) {
+                if (!in_array($item->getProductId(), $isSetParam)) {
+                    $this->basketService->setBasketItemPropertyValue(
+                        $item,
+                        'SHIPMENT_PLACE_CODE',
+                        $shipmentPlaceCodeDefault ?: $arShipmentPlaceCode[$itemKey]
+                    );
+                }
             }
             if (!empty($shipmentDays)) {
                 arsort($shipmentDays);
@@ -1303,34 +1316,7 @@ class OrderService implements LoggerAwareInterface
 
             // активация подписки на доставку
             if($storage->isSubscribe()){
-                if(null === $storage->getSubscribeId()){
-                    throw new OrderSubscribeException('Susbcribe not found');
-                }
-                $subscribe = $this->orderSubscribeService->getById($storage->getSubscribeId());
-                $subscribe->setActive(true)
-                    ->setOrderId($order->getId())
-                    ->countDateCheck();
-
-                // привяжем пользователя
-                if(!$subscribe->getUserId()){
-                    $subscribe->setUserId($order->getUserId());
-                }
-
-                // добавим заказ в историю закзаов по подписке
-                $result = $this->orderSubscribeService->update($subscribe);
-                if($result->isSuccess()){
-                    /** @var OrderSubscribeHistoryService $orderSubscribeHistoryService */
-                    $orderSubscribeHistoryService = Application::getInstance()->getContainer()->get('order_subscribe_history.service');
-                    $historyAddResult = $orderSubscribeHistoryService->add(
-                        $subscribe,
-                        $order->getId(),
-                        (new \DateTime($this->getOrderPropertyByCode($order, 'DELIVERY_DATE')->getValue()))
-                    );
-                    if (!$historyAddResult->isSuccess()) {
-                        throw new \Exception('Ошибка сохранения записи в истории');
-                    }
-                    $this->orderSubscribeService->sendOrderSubscribedNotification($subscribe);
-                }
+                $this->orderSubscribeService->activateSubscription($storage, $order);
             }
 
         } catch (\Exception $e) {
