@@ -174,7 +174,7 @@ class PaymentService implements LoggerAwareInterface
     /**
      * @param Fiscalization $fiscalization
      * @param OrderInfo     $orderInfo
-     * @param int|null      $sumPaid
+     * @param float|null      $sumPaid
      * @param float|null    $amountBonus
      *
      * @throws FiscalAmountExceededException
@@ -187,12 +187,12 @@ class PaymentService implements LoggerAwareInterface
     public function validateFiscalization(
         Fiscalization $fiscalization,
         OrderInfo $orderInfo,
-        int $sumPaid = null
+        float $sumPaid = null
     ): void
     {
         $fiscalItems = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
         $fiscalAmount = $this->getFiscalTotal($fiscalization);
-        
+
         /** @var Item $fiscalItem */
         foreach ($fiscalItems as $fiscalItem) {
             if ($this->isCompareCartItemsOnValidateFiscalization()) {
