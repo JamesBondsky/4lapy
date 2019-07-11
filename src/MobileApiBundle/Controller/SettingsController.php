@@ -15,7 +15,7 @@ use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Service\UserService as AppUserService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 
-class SettingsController extends FOSRestController
+class SettingsController extends BaseController
 {
     /**
      * @var AppUserService

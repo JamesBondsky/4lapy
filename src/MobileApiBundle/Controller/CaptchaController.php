@@ -10,7 +10,7 @@ use FourPaws\MobileApiBundle\Services\Api\CaptchaService as ApiCaptchaService;
 use FourPaws\MobileApiBundle\Dto\Response\CaptchaVerifyResponse;
 use FourPaws\MobileApiBundle\Dto\Response\CaptchaSendValidationResponse;
 
-class CaptchaController extends FOSRestController
+class CaptchaController extends BaseController
 {
     /**
      * @var ApiCaptchaService
