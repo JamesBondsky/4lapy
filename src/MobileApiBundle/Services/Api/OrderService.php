@@ -619,10 +619,10 @@ class OrderService
                     ->setId('delivery')
                     ->setTitle('Стоимость доставки')
                     ->setValue($deliveryPrice),
-                (new Detailing())
+                /*(new Detailing())
                     ->setId('cart_price_subscribe')
                     ->setTitle('Стоимость товаров по подписке на доставку')
-                    ->setValue($priceSubscribe)
+                    ->setValue($priceSubscribe)*/
             ])
             ->setCardDetails([
                 (new Detailing())
