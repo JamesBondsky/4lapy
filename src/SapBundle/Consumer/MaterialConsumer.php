@@ -113,7 +113,6 @@ class MaterialConsumer extends SapConsumerBase
              */
             Event::lockEvents();
 
-            $this->referenceService->fillFromMaterial($material);
             $this->connection->commitTransaction();
 
             $this->connection->startTransaction();

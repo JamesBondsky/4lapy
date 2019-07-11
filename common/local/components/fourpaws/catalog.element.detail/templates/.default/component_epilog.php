@@ -50,18 +50,24 @@ $bonusSubscribe = $currentOffer->getBonusFormattedText($userService->getDiscount
             };
         }
 
-        <? if (!empty($bonus)) { ?>
         epilogHandlers.add(function () {
             var $jsBonus = $('.js-bonus-<?=$currentOffer->getId()?>');
             var $jsBonusSubscribe = $('.js-bonus-subscribe-<?=$currentOffer->getId()?>');
+
             if ($jsBonus.length > 0) {
-                $jsBonus.html('<?=$bonus?>');
+                <? if (!empty($bonus)) { ?>
+                    $jsBonus.html('<?=$bonus?>');
+                <?php }else{ ?>
+                    $jsBonus.hide();
+                <? } ?>
             }
-            if ($jsBonusSubscribe.length > 0) {
-                $jsBonusSubscribe.html('<?=$bonusSubscribe?>');
-            }
+
+            <? if (!empty($bonus)) { ?>
+                if ($jsBonusSubscribe.length > 0) {
+                    $jsBonusSubscribe.html('<?=$bonusSubscribe?>');
+                }
+            <? } ?>
         });
-        <?php } ?>
 
         epilogHandlers.add(function () {
             $('.js-current-offer-price-old').html('<?= $currentOffer->getCatalogOldPrice() ?>');

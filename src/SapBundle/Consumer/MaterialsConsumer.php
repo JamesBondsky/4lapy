@@ -16,9 +16,11 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use CIBlock;
 use Exception;
+use FourPaws\CatalogBundle\EventController\Event;
 use FourPaws\SapBundle\Dto\In\Offers\Materials;
 use FourPaws\SapBundle\Exception\NotFoundPropertyException;
 use FourPaws\SapBundle\Service\Materials\ProductService;
+use FourPaws\SapBundle\Service\ReferenceService;
 use FourPaws\SapBundle\Subscriber\BitrixEvents;
 use Psr\Log\LogLevel;
 use RuntimeException;
@@ -39,17 +41,26 @@ class MaterialsConsumer extends SapConsumerBase
      * @var ProductService
      */
     private $productService;
+    /**
+     * @var ReferenceService
+     */
+    private $referenceService;
 
     /**
      * MaterialsConsumer constructor.
      *
      * @param MaterialConsumer $consumer
-     * @param ProductService   $productService
+     * @param ProductService $productService
+     * @param ReferenceService $referenceService
      */
-    public function __construct(MaterialConsumer $consumer, ProductService $productService)
-    {
+    public function __construct(
+        MaterialConsumer $consumer,
+        ProductService $productService,
+        ReferenceService $referenceService
+    ) {
         $this->consumer = $consumer;
         $this->productService = $productService;
+        $this->referenceService = $referenceService;
     }
 
     /**
@@ -85,14 +96,20 @@ class MaterialsConsumer extends SapConsumerBase
              */
         }
 
-        $totalCount = $materials->getMaterials()->count();
+        $materialsCollection = $materials->getMaterials();
+        $totalCount = $materialsCollection->count();
 
         $this->log()->info(\sprintf('Импортируется %s документ', $materials->getDocumentNumber()));
         $this->log()->info(\sprintf('Импортируется %s материалов', $totalCount));
 
+        // Лучше вообще переделать импорт так, чтобы referenceRepository апдейтился сразу для всех файлов Mat_, а не только по текущему
+        Event::lockEvents();
+        $this->referenceService->fillFromMaterials($materialsCollection);
+        Event::unlockEvents();
+
         $error = 0;
-        foreach ($materials->getMaterials() as $material) {
-            $materials->getMaterials()->removeElement($material);
+        foreach ($materialsCollection as $material) {
+            $materialsCollection->removeElement($material);
             if ($this->consumer->consume($material)) {
                 continue;
             }

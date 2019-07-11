@@ -11,6 +11,7 @@ use Bitrix\Main\Entity\AddResult;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Query\HlbReferenceQuery;
+use FourPaws\SapBundle\Exception\InvalidArgumentException;
 
 class ReferenceRepository
 {
@@ -32,6 +33,32 @@ class ReferenceRepository
     public function find(int $id)
     {
         return $this->findBy(['ID' => $id], [], 1)->first();
+    }
+
+    /**
+     * @param array $xmlIds
+     * @return array
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getExistingXmlIds(array $xmlIds): array
+    {
+        if (!$xmlIds) {
+            throw new InvalidArgumentException(__METHOD__ . '. Пустой массив $xmlIds');
+        }
+        // напрямую к dataManager, чтобы не выбирать без необходимости все поля
+        $result = $this->dataManager::query()
+            ->setFilter([
+                'UF_XML_ID' => $xmlIds,
+            ])
+            ->setSelect([
+                'UF_XML_ID',
+            ])
+            ->exec()
+            ->fetchAll();
+
+        return array_map(function($item) { return $item['UF_XML_ID']; }, $result);
     }
 
     /**

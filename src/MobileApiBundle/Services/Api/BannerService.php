@@ -64,15 +64,19 @@ class BannerService
      * @return Banner
      */
     protected function map(BannerModel $bannerModel) {
+        $elementLink = $bannerModel->getElementLink();
+        $sectionLink = $bannerModel->getSectionLink();
+        $hasElementOrSectionLink = (bool)($elementLink || $sectionLink);
         $banner = (new Banner())
             ->setId($bannerModel->getId())
             ->setTitle($bannerModel->getName())
             ->setPicture($bannerModel->getPictureForMobile())
+            ->setHasElementOrSectionLink($hasElementOrSectionLink)
             ->setLink($bannerModel->getLink(), $this->cityId);
 
-        if ($elementLink = $bannerModel->getElementLink()) {
+        if ($elementLink) {
             $banner->setLink($elementLink);
-        } elseif ($sectionLink = $bannerModel->getSectionLink()) {
+        } elseif ($sectionLink) {
             $banner->setLink($sectionLink);
         }
 

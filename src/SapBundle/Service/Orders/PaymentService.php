@@ -342,6 +342,7 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
 
                 } else {
                     if ($newItem->getPrice() > 0) {
+                        $newItem->setPrice($averagePriceItem);
                         $itemsOrder[$xmlIdItem][] = $newItem;
                     }
                 }

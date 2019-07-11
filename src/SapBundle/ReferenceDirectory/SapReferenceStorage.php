@@ -48,6 +48,27 @@ class SapReferenceStorage implements LoggerAwareInterface
         })->current() ?: null;
     }
 
+    /**
+     * @param string $propertyCode
+     * @param array $propertyValuesXmlIds
+     * @return array
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getNotExistingXmlIdList(string $propertyCode, array $propertyValuesXmlIds): array
+    {
+        $existingXmlIds = $this->referenceRepositoryRegistry->get($propertyCode)->getExistingXmlIds($propertyValuesXmlIds);
+        $notExistingXmlIds = [];
+        foreach ($propertyValuesXmlIds as $key => $xmlId) {
+            if (!in_array($xmlId, $existingXmlIds, false)) {
+                $notExistingXmlIds[] = $xmlId;
+            }
+        }
+
+        return $notExistingXmlIds;
+    }
+
     public function findByCode(string $propertyCode, string $code)
     {
         return $this->findByCallable($propertyCode, function (HlbReferenceItem $hlbReferenceItem) use ($code) {

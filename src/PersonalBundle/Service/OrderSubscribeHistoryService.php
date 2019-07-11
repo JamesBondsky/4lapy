@@ -313,7 +313,7 @@ class OrderSubscribeHistoryService
      * @throws SystemException
      * @throws \Bitrix\Main\ObjectPropertyException
      */
-    protected function findBy(array $params): \Bitrix\Main\DB\Result
+    public function findBy(array $params): \Bitrix\Main\DB\Result
     {
         $result = $this->dataManager::getList($params);
         return $result;

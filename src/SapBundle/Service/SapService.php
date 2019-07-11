@@ -99,6 +99,7 @@ class SapService
         if ($needIblockTagCacheClear) {
             CIBlock::clearIblockTagCache(IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS));
             CIBlock::clearIblockTagCache(IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS));
+            sleep(60); // Добавление интервала между сбросами кэша снижает нагрузку и время нагрузки, создаваемой импортом
         }
         if ($needProductCacheClear && ($productsToClearCache = $this->productService->getProductsToClearCache())) {
             foreach ($productsToClearCache as $productId) {
