@@ -76,8 +76,10 @@ use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Repository\OrderStatusRepository;
 use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Entity\ScheduleResult;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
+use FourPaws\StoreBundle\Service\ScheduleResultService;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -645,20 +647,10 @@ class OrderService implements LoggerAwareInterface
                     $scheduleResult = $deliveryResult->getScheduleResult();
                     $shipmentPlaceCode = $scheduleResult->getSenderCode() ?: $shipmentPlaceCode;
                     $days = $scheduleResult->getDays($selectedDelivery->getCurrentDate());
-                    $schedTypeCurrent = $scheduleResult->getRegularityName();
 
                     if (!isset($shipmentDays[$shipmentPlaceCode]) || $shipmentDays[$shipmentPlaceCode] < $days) {
                         $shipmentDays[$shipmentPlaceCode] = $days;
                     }
-                    if(!empty($schedTypeCurrent)){
-                        if(!isset($schedType)){
-                            $schedType = $schedTypeCurrent;
-                        } else if ($schedType != $schedTypeCurrent) {
-                            // TODO: продумать что делать в случае, если два разных расписания подтянулось
-                            throw new OrderCreateException('Два типа расписания сразу');
-                        }
-                    }
-
                 }
                 if ($shipmentPlaceCode === self::STORE) {
                     break;
@@ -674,9 +666,6 @@ class OrderService implements LoggerAwareInterface
             if (!empty($shipmentDays)) {
                 arsort($shipmentDays);
                 $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', key($shipmentDays));
-            }
-            if (!empty($schedType)) {
-                $this->setOrderPropertyByCode($order, 'SCHEDULE_REGULARITY', $schedType);
             }
         }
 
@@ -985,6 +974,9 @@ class OrderService implements LoggerAwareInterface
         if (null === $selectedDelivery) {
             $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
         }
+        if($storage->getDeliveryDate() > 0){
+            $selectedDelivery = $this->deliveryService->getNextDeliveries($selectedDelivery, ($storage->getDeliveryDate()+1))[$storage->getDeliveryDate()];
+        }
 
         /**
          * Три ситуации:
@@ -1128,6 +1120,15 @@ class OrderService implements LoggerAwareInterface
                 'SUBSCRIBE_ID',
                 $storage->getSubscribeId()
             );
+        }
+
+        $shipmentPlaceCode = $this->getOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE')->getValue();
+        $sender = $this->storeService->getStoreByXmlId($shipmentPlaceCode);
+        $receiver = $selectedDelivery->getSelectedStore();
+        $currentDate = $storage->getCurrentDate();
+        $scheduleResultOptimal = $this->getScheduleResultOptimal($sender, $receiver, $currentDate, $selectedDelivery->getDeliveryDate());
+        if (!empty($scheduleResultOptimal)) {
+            $this->setOrderPropertyByCode($order, 'SCHEDULE_REGULARITY', $scheduleResultOptimal->getRegularityName());
         }
 
         $address = null;
@@ -2310,5 +2311,47 @@ class OrderService implements LoggerAwareInterface
             $res = true;
         }
         return $res;
+    }
+
+    /**
+     * @param Store $sender
+     * @param Store $receiver
+     * @param \DateTime $currentDate
+     * @param \DateTime $deliveryDate
+     * @return mixed|null
+     */
+    protected function getScheduleResultOptimal(Store $sender, Store $receiver, \DateTime $currentDate, \DateTime $deliveryDate)
+    {
+        $scheduleResultOptimal = null;
+        try {
+            /** @var ScheduleResultService $scheduleResultService */
+            $scheduleResultService = Application::getInstance()->getContainer()->get(ScheduleResultService::class);
+            foreach ($scheduleResultService->findResultsBySenderAndReceiver($sender, $receiver)->filterByDateActiveEqual($currentDate) as $scheduleResult) {
+                if(!$scheduleResultOptimal){
+                    $scheduleResultOptimal = $scheduleResult;
+                    continue;
+                }
+
+                $days = $scheduleResult->getDays($currentDate);
+                if ($days === ScheduleResult::RESULT_ERROR) {
+                    continue;
+                }
+
+                $daysDiff = $deliveryDate->diff($currentDate)->days;
+
+                if ($days - $daysDiff <= 0) {
+                    $regularitySort = $scheduleResult->getRegularitySort();
+                    if($regularitySort < $scheduleResultOptimal->getRegularitySort()) {
+                        $scheduleResultOptimal = $scheduleResult;
+                    }
+                } else if($days < $scheduleResultOptimal->getDays($currentDate)) {
+                    $scheduleResultOptimal = $scheduleResult;
+                }
+            }
+        } catch (\Exception $e) {
+            // просто не проставится регулярность
+        }
+
+        return $scheduleResultOptimal;
     }
 }

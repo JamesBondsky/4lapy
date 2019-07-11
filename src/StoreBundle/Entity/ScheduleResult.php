@@ -107,7 +107,7 @@ class ScheduleResult
     /**
      * @var string
      * @Serializer\Type("string")
-     * @Serializer\SerializedName("UF_REGULAR")
+     * @Serializer\SerializedName("UF_REGULARITY")
      * @Serializer\Groups(groups={"create", "read","update","delete"})
      * @Assert\NotBlank(groups={"create", "read","update","delete"})
      */
@@ -393,7 +393,7 @@ class ScheduleResult
             $userFieldEnumService = Application::getInstance()->getContainer()->get('userfield_enum.service');
             $userFieldId = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
                 [
-                    'FIELD_NAME' => 'UF_REGULAR',
+                    'FIELD_NAME' => 'UF_REGULARITY',
                     'ENTITY_ID' => 'HLBLOCK_' . HighloadHelper::getIdByName(HlblockCode::DELIVERY_SCHEDULE_RESULT),
                 ]
             )->exec()->fetch()['ID'];

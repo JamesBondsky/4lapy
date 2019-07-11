@@ -523,6 +523,8 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         DateTime $date
     ): DeliveryScheduleResultCollection
     {
+        // TODO тут не работает кеш из-за того, что не знаем изначально какая регулярность у расписания
+
         /** @var Store $sender */
         $cacheKey = implode('_', [$sender->getXmlId(), $receiver->getXmlId()]);
         if (array_key_exists($cacheKey, static::$scheduleResults)) {

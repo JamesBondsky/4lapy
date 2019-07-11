@@ -97,13 +97,14 @@ class DeliveryScheduleResultService
                     } else {
                         /** @var DeliveryScheduleResult $resultByOffer */
                         $days = $resultByOffer->getScheduleResult()->getDays($from);
-                        if ($days > $item->getScheduleResult()->getDays($from)) {
-                            $result[$offerId] = $item;
-                        } else if($days == $item->getScheduleResult()->getDays($from)) {
+
+                        if ($days == $item->getScheduleResult()->getDays($from)) {
                             $regularitySort = $resultByOffer->getScheduleResult()->getRegularitySort();
                             if($regularitySort > $item->getScheduleResult()->getRegularitySort()) {
                                 $result[$offerId] = $item;
                             }
+                        } else if($days > $item->getScheduleResult()->getDays($from)) {
+                            $result[$offerId] = $item;
                         }
                     }
                 }
