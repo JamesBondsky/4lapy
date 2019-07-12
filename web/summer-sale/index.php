@@ -7,9 +7,9 @@
 
   global $APPLICATION;
 
-  $APPLICATION->SetPageProperty('title', 'Распродажа до -50% на 2000 зоотоваров');
+  $APPLICATION->SetPageProperty('title', 'Распродажа до -50% на 2000 товаров');
   $APPLICATION->SetPageProperty('description', '');
-  $APPLICATION->SetTitle("Распродажа до -50% на 2000 зоотоваров");
+  $APPLICATION->SetTitle("Распродажа до -50% на 2000 товаров");
 
   $offerData = [
     [
@@ -131,7 +131,7 @@
 <div class="b-container b-container--news">
   <div class="b-news">
     <h1 class="b-title b-title--h1">
-      Распродажа до -50% на 2000 зоотоваров
+      Распродажа до -50% на 2000 товаров
     </h1>
 
     <div class="b-container b-container--new-collection-bags">
@@ -154,7 +154,7 @@
           <div class="b-common-section__title-box">
             <h2 class="b-title b-title--sm"><?=$offerDatum['TITLE']?></h2>
 
-            <a class="b-link b-link--title b-link--title" href="<?=$offerDatum['DETAIL_LINK']?>" title="Показать все">
+            <a class="b-link b-link--title b-link--title" href="<?=$offerDatum['DETAIL_LINK']?>" title="Показать все" target="_blank">
               <span class="b-link__text b-link__text--title">Показать все</span>
               <span class="b-link__mobile b-link__mobile--title">Все</span>
 
@@ -170,13 +170,13 @@
             <div class="b-bags-banner__descr">&nbsp;</div>
 
             <div class="b-bags-banner__img-wrap b-bags-banner__img-wrap--desktop">
-              <a href="<?=$offerDatum['DETAIL_LINK']?>">
+              <a href="<?=$offerDatum['DETAIL_LINK']?>" target="_blank">
                 <img src="<?=$offerDatum['IMAGE']?>">
               </a>
             </div>
 
             <div class="b-bags-banner__img-wrap b-bags-banner__img-wrap--mobile">
-              <a href="<?=$offerDatum['DETAIL_LINK']?>">
+              <a href="<?=$offerDatum['DETAIL_LINK']?>" target="_blank">
                 <img src="<?=$offerDatum['IMAGE_MOBILE']?>">
               </a>
             </div>
