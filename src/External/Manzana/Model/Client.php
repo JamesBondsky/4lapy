@@ -469,6 +469,22 @@ class Client
     public $cards;
 
     /**
+     * Есть ли мобильное апи
+     *
+     * @Type("bool")
+     * @SerializedName("ff_mobile_app")
+     */
+    public $haveMobileApp;
+
+    /**
+     * Дата последнего использования апи
+     *
+     * @Type("datetime")
+     * @SerializedName("ff_mobile_app_date")
+     */
+    public $lastDateUseMobileApp;
+
+    /**
      * @return bool
      */
     public function isActualContact() : bool
