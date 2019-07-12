@@ -297,7 +297,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                     <ul class="b-order-list__list js-order-list-block">
                         <?php /** @var array $item */ ?>
                         <?php foreach ($basketItems as $id => $item) { ?>
-                            <li class="b-order-list__item b-order-list__item--aside js-full-list">
+                            <li class="b-order-list__item b-order-list__item--aside js-full-list" data-productid="<?=$id?>">
                                 <div class="b-order-list__order-text b-order-list__order-text--aside js-full-list">
                                     <div class="b-order-list__clipped-text">
                                         <div class="b-order-list__text-backed">

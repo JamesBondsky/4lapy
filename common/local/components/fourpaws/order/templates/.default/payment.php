@@ -61,6 +61,12 @@ if (!$selectedPayment) {
 
 $basketPrice = $basket->getOrderableItems()->getPrice();
 
+$basketItems = [];
+/** @var BasketItem $item */
+foreach ($basket as $item) {
+    $basketItems[$item->getProductId()]['totalPrice'] += $item->getQuantity() * $item->getPrice();
+}
+
 /** @var User $user */
 $user = $arResult['USER'];
 
@@ -158,13 +164,13 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                             ?>
                             <label class="b-order-contacts__label" for="point-pay">
                                 <b>Оплатить часть заказа бонусными баллами </b>
-	                            <?
+                                <?
                                 $temporaryBonusText = '';
-	                            if ($arResult['MAX_TEMPORARY_BONUS_SUM'])
-	                            {
-	                            	$temporaryBonusText = ', из них до ' . $arResult['MAX_TEMPORARY_BONUS_SUM'] . ' ' . (new Declension('временный', 'временных', 'временных'))->get($arResult['MAX_TEMPORARY_BONUS_SUM']);
-	                            }
-	                            ?>
+                                if ($arResult['MAX_TEMPORARY_BONUS_SUM'])
+                                {
+                                    $temporaryBonusText = ', из них до ' . $arResult['MAX_TEMPORARY_BONUS_SUM'] . ' ' . (new Declension('временный', 'временных', 'временных'))->get($arResult['MAX_TEMPORARY_BONUS_SUM']);
+                                }
+                                ?>
                                 (до <?= $arResult['MAX_BONUS_SUM'] ?><?= $temporaryBonusText ?>)
                             </label>
                             <div class="b-input b-input--order-line js-pointspay-input<?= $active ? ' active' : '' ?>">
@@ -198,7 +204,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                     <? } else { ?>
                                         <p class="js-new-bonus-card">Укажите бонусную карту</p>
                                     <? } ?>
-                                    
+
                                     <span>Для зачисления баллов</span>
                                 </div>
                             </div>
@@ -224,11 +230,11 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 <div class="b-new-bonus-card--info">
                                     <p>Бонусная карта для зачисления баллов:
                                         <span><?= $storage->getDiscountCardNumber() ?></span></p>
-                                        <? if ($arResult['KIOSK']) { ?>
-                                            <a href="<?=$arResult['BIND_CARD_URL']?>"><span>Указать другую карту</span></a>
-                                        <? } else { ?>
-                                            <span class="js-another-bonus-card">Указать другую карту</span>
-                                        <? } ?>
+                                    <? if ($arResult['KIOSK']) { ?>
+                                        <a href="<?=$arResult['BIND_CARD_URL']?>"><span>Указать другую карту</span></a>
+                                    <? } else { ?>
+                                        <span class="js-another-bonus-card">Указать другую карту</span>
+                                    <? } ?>
                                 </div>
                             </div>
                         </div>
@@ -304,7 +310,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                 </div>
             </div>
         </div>
-        <button class="b-button b-button--order-step-3 <?=($storage->isSubscribe()) ? 'b-button--next-subscribe-delivery' : 'b-button--next'?> b-button--fixed-bottom js-order-next js-order-step-3-submit">
+        <button class="b-button b-button--order-step-3 <?=($storage->isSubscribe()) ? 'b-button--next-subscribe-delivery' : 'b-button--next'?> b-button--fixed-bottom js-order-next js-order-step-3-submit" data-products='<?= json_encode($basketItems) ?>'>
             <?php if ($selectedPayment['CODE'] === OrderPayment::PAYMENT_ONLINE) { ?>
                 Перейти к оплате
             <?php } else { ?>
