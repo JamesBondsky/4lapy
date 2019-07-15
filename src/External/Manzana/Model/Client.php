@@ -479,7 +479,7 @@ class Client
     /**
      * Дата последнего использования апи
      *
-     * @Type("datetime")
+     * @Type("string")
      * @SerializedName("ff_mobile_app_date")
      */
     public $lastDateUseMobileApp;
