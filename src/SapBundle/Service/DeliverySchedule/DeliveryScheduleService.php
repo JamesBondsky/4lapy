@@ -295,10 +295,10 @@ class DeliveryScheduleService implements LoggerAwareInterface
             /** @var UserFieldEnumService $userFieldEnumService */
             $userFieldEnumService = Application::getInstance()->getContainer()->get('userfield_enum.service');
             $hlBlockEntityFields = $this->repository->getHlBlockEntityFields();
-            if (isset($hlBlockEntityFields['UF_REGULAR'])) {
-                if ($hlBlockEntityFields['UF_REGULAR']['USER_TYPE_ID'] === 'enumeration') {
+            if (isset($hlBlockEntityFields['UF_REGULARITY'])) {
+                if ($hlBlockEntityFields['UF_REGULARITY']['USER_TYPE_ID'] === 'enumeration') {
                     $this->regular = $userFieldEnumService->getEnumValueCollection(
-                        $hlBlockEntityFields['UF_REGULAR']['ID']
+                        $hlBlockEntityFields['UF_REGULARITY']['ID']
                     );
                 }
             }

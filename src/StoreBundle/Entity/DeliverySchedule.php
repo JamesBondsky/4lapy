@@ -174,7 +174,7 @@ class DeliverySchedule extends Base implements \Serializable
 
     /**
      * @var int
-     * @Serializer\SerializedName("UF_REGULAR")
+     * @Serializer\SerializedName("UF_REGULARITY")
      * @Serializer\Type("int")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */

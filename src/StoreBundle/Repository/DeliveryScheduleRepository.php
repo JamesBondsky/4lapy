@@ -108,7 +108,7 @@ class DeliveryScheduleRepository extends BaseRepository
         int $regularityId,
         StoreCollection $senders = null
     ): DeliveryScheduleCollection {
-        $filter = ['=UF_TPZ_RECEIVER' => $receiver->getXmlId(), '=UF_REGULAR' => $regularityId];
+        $filter = ['=UF_TPZ_RECEIVER' => $receiver->getXmlId(), '=UF_REGULARITY' => $regularityId];
         if ($senders && !$senders->isEmpty()) {
             $filter['=UF_TPZ_RECEIVER'] = [];
             /** @var Store $sender */
@@ -153,7 +153,7 @@ class DeliveryScheduleRepository extends BaseRepository
         int $regularityId,
         StoreCollection $receivers = null
     ): DeliveryScheduleCollection {
-        $filter = ['=UF_TPZ_SENDER' => $sender->getXmlId(), '=UF_REGULAR' => $regularityId];
+        $filter = ['=UF_TPZ_SENDER' => $sender->getXmlId(), '=UF_REGULARITY' => $regularityId];
         if ($receivers && !$receivers->isEmpty()) {
             $filter['=UF_TPZ_RECEIVER'] = [];
             /** @var Store $sender */
