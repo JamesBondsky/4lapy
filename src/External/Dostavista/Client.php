@@ -213,8 +213,7 @@ class Client
         //$data['points'][0]['required_start_datetime'] = $requireTimeStart;
         //$data['points'][1]['required_start_datetime'] = $requireTimeStart;
 
-        //фикс времени начала доставки для доставкисты
-        $timeDelivery = (new \DateTime())->modify('+30 minutes');
+        $timeDelivery = (new \DateTime());
 
         $data['points'][0]['required_start_datetime'] = $timeDelivery->format('c');
         $data['points'][0]['required_finish_datetime'] = $timeDelivery->add(new \DateInterval('PT2H'))->format('c');
