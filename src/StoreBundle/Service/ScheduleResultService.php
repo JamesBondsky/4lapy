@@ -240,7 +240,7 @@ class ScheduleResultService implements LoggerAwareInterface
             $scheduleResults = $this->repository->findBy([
                 'UF_SENDER' => $sender->getXmlId(),
                 '<=UF_DATE_ACTIVE' => $dateActive->setTime(23, 59, 59)->format('Y-m-d H:i:s'),
-                'UF_REGULAR' => $regular
+                'UF_REGULARITY' => $regular
             ]);
             $result = new ScheduleResultCollection($scheduleResults->toArray());
         } catch (\Exception $e) {
