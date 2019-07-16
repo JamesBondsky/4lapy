@@ -9,6 +9,7 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Request\CheckPushTokensRequest;
 use FourPaws\MobileApiBundle\Dto\Request\PostPushTokenRequest;
 use FourPaws\MobileApiBundle\Dto\Request\PushMessageRequest;
@@ -23,7 +24,7 @@ use Swagger\Annotations\Parameter;
  * Class PushController
  * @package FourPaws\MobileApiBundle\Controller
  */
-class PushController extends FOSRestController implements LoggerAwareInterface
+class PushController extends BaseController implements LoggerAwareInterface
 {
     use MobileApiLoggerAwareTrait;
 

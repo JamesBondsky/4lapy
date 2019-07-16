@@ -15,6 +15,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\KkmBundle\Service\KkmService;
+use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryAddress;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryVariant;
 use FourPaws\MobileApiBundle\Dto\Request\DostavistaRequest;
@@ -46,7 +47,7 @@ use Symfony\Component\HttpFoundation\Request;
  * Class BasketController
  * @package FourPaws\MobileApiBundle\Controller
  */
-class BasketController extends FOSRestController
+class BasketController extends BaseController
 {
     /** @var AppBasketService*/
     private $appBasketService;

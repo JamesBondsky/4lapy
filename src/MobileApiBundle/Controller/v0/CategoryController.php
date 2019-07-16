@@ -8,12 +8,13 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Request\CategoryRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Dto\Response\CategoriesResponse;
 use FourPaws\MobileApiBundle\Services\Api\CategoryService as ApiCategoryService;
 
-class CategoryController extends FOSRestController
+class CategoryController extends BaseController
 {
     /**
      * @var ApiCategoryService

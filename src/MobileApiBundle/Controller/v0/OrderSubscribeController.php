@@ -14,6 +14,7 @@ use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Error;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryVariant;
 use FourPaws\MobileApiBundle\Dto\Request\OrderSubscribeRequest;
@@ -33,7 +34,7 @@ use FourPaws\PersonalBundle\Service\OrderSubscribeService as ApiOrderSubscribeSe
  * @package FourPaws\MobileApiBundle\Controller
  * @Security("has_role('REGISTERED_USERS')")
  */
-class OrderSubscribeController extends FOSRestController
+class OrderSubscribeController extends BaseController
 {
     /**
      * @var ApiOrderSubscribeService

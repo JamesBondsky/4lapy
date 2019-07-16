@@ -9,6 +9,7 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Error;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Dto\Response\StartResponse;
@@ -16,7 +17,7 @@ use FourPaws\MobileApiBundle\Services\UserSessionService;
 use FourPaws\MobileApiBundle\Traits\MobileApiLoggerAwareTrait;
 use Psr\Log\LoggerAwareInterface;
 
-class UserSessionController extends FOSRestController implements LoggerAwareInterface
+class UserSessionController extends BaseController implements LoggerAwareInterface
 {
     use MobileApiLoggerAwareTrait;
 

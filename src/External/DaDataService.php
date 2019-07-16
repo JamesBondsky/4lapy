@@ -305,7 +305,12 @@ class DaDataService
         }
 
         if ($streetKladrId) {
-            $params['locations'] = [
+            $fias = array_shift($this->client->getFias(['query'=>$streetKladrId]));
+            $params['locations'][] = [
+                'city' => $fias['data']['city'],
+                'street' => $fias['data']['street']
+            ];
+            $params['locations'][] = [
                 'kladr_id' => $streetKladrId
             ];
         } elseif ($cityKladrId) {

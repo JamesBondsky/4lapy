@@ -8,6 +8,7 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\Controller\Annotations as Rest;
+use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Request\PayRequest;
 use FourPaws\MobileApiBundle\Dto\Response\PayResponse;
 use FourPaws\MobileApiBundle\Services\Api\PaymentService as ApiPaymentService;
@@ -16,7 +17,7 @@ use FourPaws\MobileApiBundle\Services\Api\PaymentService as ApiPaymentService;
  * Class PaymentController
  * @package FourPaws\MobileApiBundle\Controller
  */
-class PaymentController extends FOSRestController
+class PaymentController extends BaseController
 {
     /**
      * @var ApiPaymentService

@@ -11,6 +11,7 @@ use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\App\Application;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Request\ShopsForCheckoutRequest;
 use FourPaws\MobileApiBundle\Dto\Request\ShopsForProductCardRequest;
 use FourPaws\MobileApiBundle\Dto\Request\StoreListRequest;
@@ -21,7 +22,7 @@ use FourPaws\MobileApiBundle\Services\Api\UserService as ApiUserService;
 use FourPaws\MobileApiBundle\Services\Api\UserService;
 use FourPaws\StoreBundle\Service\ShopInfoService;
 
-class StoreController extends FOSRestController
+class StoreController extends BaseController
 {
     /**
      * @var ApiStoreService

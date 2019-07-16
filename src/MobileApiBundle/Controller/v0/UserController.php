@@ -9,6 +9,7 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 use CEvent;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Request\LoginExistRequest;
 use FourPaws\MobileApiBundle\Dto\Request\LoginRequest;
 use FourPaws\MobileApiBundle\Dto\Request\PostUserInfoRequest;
@@ -20,7 +21,7 @@ use Swagger\Annotations\Parameter;
 use Swagger\Annotations\Response;
 use FourPaws\MobileApiBundle\Dto\Response\PersonalBonusResponse;
 
-class UserController extends FOSRestController
+class UserController extends BaseController
 {
     /**
      * @var ApiUserService
