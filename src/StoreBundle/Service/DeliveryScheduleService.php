@@ -18,7 +18,11 @@ use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\DeliverySchedule;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Entity\OrderDay;
+use FourPaws\StoreBundle\Exception\BitrixRuntimeException;
+use FourPaws\StoreBundle\Exception\ConstraintDefinitionException;
+use FourPaws\StoreBundle\Exception\InvalidIdentifierException;
 use FourPaws\StoreBundle\Exception\NotFoundException;
+use FourPaws\StoreBundle\Exception\ValidationException;
 use FourPaws\StoreBundle\Repository\DeliveryScheduleRepository;
 use Psr\Log\LoggerAwareInterface;
 use WebArch\BitrixCache\BitrixCache;
@@ -55,7 +59,47 @@ class DeliveryScheduleService implements LoggerAwareInterface
     }
 
     /**
-     * @param Store $receiver
+     *
+     * @return DeliveryScheduleCollection
+     */
+    public function findAll(): DeliveryScheduleCollection
+    {
+        $getSchedules = function () {
+            return ['result' => $this->repository->findBy()];
+        };
+
+        try {
+            /** @var DeliveryScheduleCollection $schedules */
+            $schedules = (new BitrixCache())
+                ->withTag('delivery_schedule_all')
+                ->resultOf($getSchedules)['result'];
+        } catch (\Exception $e) {
+            $this->log()->error(
+                sprintf('failed to get delivery schedules: %s', $e->getMessage())
+            );
+
+            $schedules = new DeliveryScheduleCollection();
+        }
+
+        return $schedules;
+    }
+
+    /**
+     * @param DeliverySchedule $result
+     *
+     * @return bool
+     * @throws BitrixRuntimeException
+     * @throws ConstraintDefinitionException
+     * @throws InvalidIdentifierException
+     * @throws ValidationException
+     */
+    public function updateResult(DeliverySchedule $result): bool
+    {
+        return $this->repository->update($result);
+    }
+
+    /**
+     * @param Store           $receiver
      * @param StoreCollection $senders
      *
      * @return DeliveryScheduleCollection
