@@ -31,6 +31,7 @@ return [
                 'port' => getenv('BX_MEMCACHE_PORT'),
             ],
             'sid' => realpath($_SERVER['DOCUMENT_ROOT']) . '#01',
+            'use_lock' => true,
         ],
     ],
 
