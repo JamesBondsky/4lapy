@@ -117,6 +117,7 @@ class ScheduleResultService implements LoggerAwareInterface
         $senders = $this->getSenders($results);
         /** @var Store $sender */
         foreach ($senders as $sender) {
+            BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
             /** @var ScheduleResult $item */
             foreach ($this->findResultsBySender($sender)->filterByDateActive($dateDelete) as $item) {
                 $this->deleteResult($item);
@@ -125,6 +126,7 @@ class ScheduleResultService implements LoggerAwareInterface
 
             /** @var ScheduleResult $item */
             foreach ($results->filterBySender($sender) as $item) {
+                BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
                 $this->createResult($item);
                 $created++;
             }
@@ -145,6 +147,7 @@ class ScheduleResultService implements LoggerAwareInterface
     {
         $deleted = 0;
         foreach ($this->findResultsBySenderDateActiveAndRegular($sender, $dateDelete, $regularId) as $item) {
+            BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
             $this->deleteResult($item);
             $deleted++;
         }
