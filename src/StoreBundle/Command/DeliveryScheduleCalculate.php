@@ -118,17 +118,21 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
 
             /** @var Store $sender */
             foreach ($senders as $i => $sender) {
+                BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
                 BitrixApplication::getConnection()->startTransaction();
-
                 $start = microtime(true);
                 $isSuccess = false;
                 $totalCreated = 0;
                 $totalDeleted = 0;
 
                 try {
+                    BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
                     $totalDeleted += $this->scheduleResultService->deleteResultsForSender($sender, $dateDelete, $regularityId);
+                    BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
                     $results = $this->scheduleResultService->calculateForSender($sender, $dateActive, $regularityId, $tc);
+                    BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
                     [$created] = $this->scheduleResultService->updateResults($results, $dateDelete);
+                    BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
                     $totalCreated += $created;
                     $isSuccess = true;
                 } catch (\Exception $e) {
