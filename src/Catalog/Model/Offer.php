@@ -51,6 +51,7 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\MobileApiBundle\Dto\Object\Color;
 use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Helper\PriceHelper;
@@ -497,6 +498,15 @@ class Offer extends IblockElement
      * @var int
      */
     protected $catalogGroupId;
+
+
+    /**
+     * @var \FourPaws\MobileApiBundle\Dto\Object\Color
+     * @Type("FourPaws\MobileApiBundle\Dto\Object\Color")
+     * @Accessor(getter="getPrices")
+     * @Groups({"elastic"})
+     */
+    protected $color = null;
 
     /**
      * Offer constructor.
@@ -1459,6 +1469,22 @@ class Offer extends IblockElement
         }
 
         $this->product = $product;
+    }
+
+    public function setColor()
+    {
+        $this->getColor();
+        if ($this->color == null) {
+            $this->color = new Color();
+        }
+        $this->color->setName($this->colour->getName());
+        $this->color->setImageUrl($this->colour->getFilePath());
+        $this->color->setHexCode($this->colour->getColorCode());
+    }
+
+    public function getColorProp()
+    {
+        return $this->color;
     }
 
     /**
