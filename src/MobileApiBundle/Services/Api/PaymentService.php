@@ -84,7 +84,7 @@ class PaymentService
         switch ($payType) {
             case 'cash':
             case 'cashless':
-                $url = $this->appPaymentService->registerOrder($bitrixOrder, $amount);
+                $url = $this->appPaymentService->registerOrder($bitrixOrder, $amount, true);
                 break;
             case 'applepay':
                 $url = $this->appPaymentService->processApplePay($bitrixOrder, $payToken);

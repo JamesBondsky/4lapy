@@ -150,9 +150,9 @@ class PaymentService implements LoggerAwareInterface
 
     /**
      * @param Order $order
-     * @param int   $taxSystem
-     * @param bool  $skipGifts
-     *
+     * @param int $taxSystem
+     * @param bool $skipGifts
+     * @param bool $isMobile
      * @return Fiscalization
      * @throws ArgumentException
      * @throws ArgumentNullException
@@ -161,8 +161,29 @@ class PaymentService implements LoggerAwareInterface
      * @throws ObjectPropertyException
      * @throws SystemException
      */
-    public function getFiscalization(Order $order, int $taxSystem = 0, $skipGifts = true): Fiscalization
+    public function getFiscalization(Order $order, int $taxSystem = 0, $skipGifts = true, $isMobile = false): Fiscalization
     {
+        /** @var DateTime $dateCreate */
+        $dateCreate = $order->getField('DATE_INSERT');
+
+        if ($isMobile) {
+            $itemsCart = $this->getMobileFiscal($order);
+        }
+
+        $orderBundle = new OrderBundle();
+        $orderBundle
+            ->setCustomerDetails($this->getCustomerDetails($order))
+            ->setDateCreate(DateHelper::convertToDateTime($dateCreate));
+        if ($isMobile) {
+            $orderBundle->setCartItems((new CartItems())->setItems(new ArrayCollection($itemsCart)));
+        } else {
+            $orderBundle->setCartItems($this->getCartItems($order, $skipGifts));
+        }
+        $fiscal = (new Fiscal())
+            ->setOrderBundle($orderBundle)
+            ->setTaxSystem($taxSystem);
+
+        return (new Fiscalization())->setFiscal($fiscal);
 //        $fiscal = $this->paymentService->getMobileFiscalization($order);
 
         $itemsCart = $this->getMobileFiscal($order);
@@ -185,15 +206,11 @@ class PaymentService implements LoggerAwareInterface
 
     /**
      * @param Fiscalization $fiscalization
-     * @param OrderInfo     $orderInfo
-     * @param float|null      $sumPaid
-     * @param float|null    $amountBonus
-     *
+     * @param OrderInfo $orderInfo
+     * @param float|null $sumPaid
      * @throws FiscalAmountExceededException
      * @throws FiscalAmountException
-     * @throws InvalidItemCodeException
      * @throws NoMatchingFiscalItemException
-     * @throws PositionQuantityExceededException
      * @throws PositionWrongAmountException
      */
     public function validateFiscalization(
@@ -730,7 +747,7 @@ class PaymentService implements LoggerAwareInterface
      * @throws SberBankOrderNumberNotFoundException
      * @throws SystemException
      */
-    public function registerOrder(Order $order, $amount): string
+    public function registerOrder(Order $order, $amount, ?bool $isApi = false): string
     {
         $fiscalization = \COption::GetOptionString('sberbank.ecom', 'FISCALIZATION', serialize([]));
         /** @noinspection UnserializeExploitsInspection */
@@ -739,7 +756,7 @@ class PaymentService implements LoggerAwareInterface
         /* Фискализация */
         $fiscal = [];
         if ($fiscalization['ENABLE'] === 'Y') {
-            $fiscal = $this->getFiscalization($order, (int)$fiscalization['TAX_SYSTEM']);
+            $fiscal = $this->getFiscalization($order, (int)$fiscalization['TAX_SYSTEM'], true, $isApi);
             $amount = $this->getFiscalTotal($fiscal);
             $fiscal = $this->fiscalToArray($fiscal)['fiscal'];
         }
