@@ -379,17 +379,27 @@ class StoreService implements LoggerAwareInterface
         $location = $this->locationService->findLocationByCode($locationCode);
 
         if ($locationCode = $location['CODE']) {
-            $getStores = function () use ($locationCode, $type) {
+            $checkCacheId = __METHOD__ . '{getStoresClosure}' . $locationCode . $type;
+
+            /** @var CacheGeneratingLocker $cacheGeneratingLocker */
+            $cacheGeneratingLocker = new CacheGeneratingLocker($checkCacheId);
+
+            $getStores = function () use ($locationCode, $type, $cacheGeneratingLocker) {
+                $cacheGeneratingLocker->lock();
                 $storeCollection = $this->getStores($type, ['UF_REGION' => $locationCode]);
 
                 return ['result' => $storeCollection];
             };
 
             try {
+                $cacheGeneratingLocker->waitForNewCache();
+
                 $result = (new BitrixCache())
                     ->withId(__METHOD__ . $locationCode . $type)
                     ->withTag('catalog:store')
                     ->resultOf($getStores);
+
+                $cacheGeneratingLocker->unlock();
 
                 /** @var StoreCollection $stores */
                 $stores = $result['result'];
