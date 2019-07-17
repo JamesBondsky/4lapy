@@ -609,14 +609,17 @@ class OrderService implements LoggerAwareInterface
                 $nearShop = $selectedDelivery->getStockResult()->first();
             }
             $selectedDelivery->getStockResult();
-            $this->basketService->setBasketItemPropertyValue(
-                $item,
-                'SHIPMENT_PLACE_CODE',
-                $nearShop->getXmlId()
-            );
+            foreach ($order->getBasket() as $item) {
+                $this->basketService->setBasketItemPropertyValue(
+                    $item,
+                    'SHIPMENT_PLACE_CODE',
+                    $nearShop->getXmlId()
+                );
+            }
             $this->setOrderPropertiesByCode($order,
                 [
-                    'STORE_FOR_DOSTAVISTA' => $nearShop->getXmlId()
+                    'STORE_FOR_DOSTAVISTA' => $nearShop->getXmlId(),
+                    'SHIPMENT_PLACE_CODE' => $nearShop->getXmlId(),
                 ]
             );
         } elseif (!($selectedDelivery->getStockResult()->getDelayed()->isEmpty() &&
@@ -676,6 +679,7 @@ class OrderService implements LoggerAwareInterface
                     );
                 }
             }
+            $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', $shipmentPlaceCodeDefault);
             if (!empty($shipmentDays)) {
                 arsort($shipmentDays);
                 $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', key($shipmentDays));
@@ -1136,12 +1140,14 @@ class OrderService implements LoggerAwareInterface
         }
 
         $shipmentPlaceCode = $this->getOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE')->getValue();
-        $sender = $this->storeService->getStoreByXmlId($shipmentPlaceCode);
-        $receiver = $selectedDelivery->getSelectedStore();
-        $currentDate = $storage->getCurrentDate();
-        $scheduleResultOptimal = $this->getScheduleResultOptimal($sender, $receiver, $currentDate, $selectedDelivery->getDeliveryDate());
-        if (!empty($scheduleResultOptimal)) {
-            $this->setOrderPropertyByCode($order, 'SCHEDULE_REGULARITY', $scheduleResultOptimal->getRegularityName());
+        if ($shipmentPlaceCode) {
+            $sender = $this->storeService->getStoreByXmlId($shipmentPlaceCode);
+            $receiver = $selectedDelivery->getSelectedStore();
+            $currentDate = $storage->getCurrentDate();
+            $scheduleResultOptimal = $this->getScheduleResultOptimal($sender, $receiver, $currentDate, $selectedDelivery->getDeliveryDate());
+            if (!empty($scheduleResultOptimal)) {
+                $this->setOrderPropertyByCode($order, 'SCHEDULE_REGULARITY', $scheduleResultOptimal->getRegularityName());
+            }
         }
 
         $address = null;
