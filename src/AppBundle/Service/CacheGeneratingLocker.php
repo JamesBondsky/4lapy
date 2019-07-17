@@ -41,6 +41,9 @@ class CacheGeneratingLocker
     /** @var string */
     protected $checkCacheId;
 
+    /** @var bool */
+    protected $isLocked = false;
+
 
     public function __construct(string $checkCacheId)
     {
@@ -58,6 +61,7 @@ class CacheGeneratingLocker
         $cache->forceRewriting(true);
         if ($cache->startDataCache($this->cacheGeneratingTtl, $this->getCheckCacheId(), $this->cacheGeneratingInitDir)) {
             $cache->endDataCache([1]); // Установка флага, что кэш начал генерироваться
+            $this->setIsLocked(true);
         }
         if ($this->isDebugMode()) {
             $tempLogger = LoggerFactory::create('getRegionalStores', 'getRegionalStores');
@@ -74,9 +78,13 @@ class CacheGeneratingLocker
             $this->tempLogger->info($this->getLogPrefix() . ' -- ' . $this->getRandomizedCode() . ' --- отдан результат');
         }
 
-        // кэш закончил генерироваться, флаг снимается
-        $cache = Cache::createInstance();
-        $cache->clean($this->getCheckCacheId(), $this->getCacheGeneratingInitDir()); // Снятие флага означает, что кэш закончил генерироваться
+        if ($this->isLocked()) {
+            $this->setIsLocked(false);
+            // кэш закончил генерироваться, флаг снимается
+            $cache = Cache::createInstance();
+            $cache->clean($this->getCheckCacheId(), $this->getCacheGeneratingInitDir()); // Снятие флага означает, что кэш закончил генерироваться
+            $this->tempLogger->info($this->getLogPrefix() . ' -- ' . $this->getRandomizedCode() . ' --- снята блокировка генерирования кэша');
+        }
     }
 
     public function waitForNewCache(): void
@@ -247,6 +255,25 @@ class CacheGeneratingLocker
     public function setCheckCacheId(string $checkCacheId): CacheGeneratingLocker
     {
         $this->checkCacheId = $checkCacheId;
+        return $this;
+    }
+
+
+    /**
+     * @return bool
+     */
+    public function isLocked(): bool
+    {
+        return $this->isLocked;
+    }
+
+    /**
+     * @param bool $isLocked
+     * @return CacheGeneratingLocker
+     */
+    public function setIsLocked(bool $isLocked): CacheGeneratingLocker
+    {
+        $this->isLocked = $isLocked;
         return $this;
     }
 }
