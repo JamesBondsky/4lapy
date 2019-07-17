@@ -1477,9 +1477,11 @@ class Offer extends IblockElement
         if ($this->color == null) {
             $this->color = new Color();
         }
-        $this->color->setName($this->colour->getName());
-        $this->color->setImageUrl($this->colour->getFilePath());
-        $this->color->setHexCode($this->colour->getColorCode());
+        if ($this->colour) {
+            $this->color->setName($this->colour->getName());
+            $this->color->setImageUrl($this->colour->getFilePath());
+            $this->color->setHexCode($this->colour->getColorCode());
+        }
     }
 
     public function getColorProp()
