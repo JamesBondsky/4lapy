@@ -150,9 +150,9 @@ class PaymentService implements LoggerAwareInterface
 
     /**
      * @param Order $order
-     * @param int   $taxSystem
-     * @param bool  $skipGifts
-     *
+     * @param int $taxSystem
+     * @param bool $skipGifts
+     * @param bool $isMobile
      * @return Fiscalization
      * @throws ArgumentException
      * @throws ArgumentNullException
@@ -206,15 +206,11 @@ class PaymentService implements LoggerAwareInterface
 
     /**
      * @param Fiscalization $fiscalization
-     * @param OrderInfo     $orderInfo
-     * @param float|null      $sumPaid
-     * @param float|null    $amountBonus
-     *
+     * @param OrderInfo $orderInfo
+     * @param float|null $sumPaid
      * @throws FiscalAmountExceededException
      * @throws FiscalAmountException
-     * @throws InvalidItemCodeException
      * @throws NoMatchingFiscalItemException
-     * @throws PositionQuantityExceededException
      * @throws PositionWrongAmountException
      */
     public function validateFiscalization(
