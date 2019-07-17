@@ -5,6 +5,7 @@ namespace FourPaws\AppBundle\Service;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Data\Cache;
 use Exception;
+use FourPaws\AppBundle\Exception\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -37,15 +38,25 @@ class CacheGeneratingLocker
     /** @var string */
     protected $logPrefix = '';
 
+    /** @var string */
+    protected $checkCacheId;
 
-    /**
-     * @param string $checkCacheId
-     */
-    public function lock(string $checkCacheId): void
+
+    public function __construct(string $checkCacheId)
+    {
+        if (!trim($checkCacheId)) {
+            throw new InvalidArgumentException(__METHOD__ . '. Пустой $checkCacheId');
+        }
+
+        $this->setCheckCacheId($checkCacheId);
+    }
+
+
+    public function lock(): void
     {
         $cache = Cache::createInstance();
         $cache->forceRewriting(true);
-        if ($cache->startDataCache($this->cacheGeneratingTtl, $checkCacheId, $this->cacheGeneratingInitDir)) {
+        if ($cache->startDataCache($this->cacheGeneratingTtl, $this->getCheckCacheId(), $this->cacheGeneratingInitDir)) {
             $cache->endDataCache([1]); // Установка флага, что кэш начал генерироваться
         }
         if ($this->isDebugMode()) {
@@ -57,10 +68,7 @@ class CacheGeneratingLocker
         }
     }
 
-    /**
-     * @param string $checkCacheId
-     */
-    public function unlock(string $checkCacheId): void
+    public function unlock(): void
     {
         if ($this->isDebugMode()) {
             $this->tempLogger->info($this->getLogPrefix() . ' -- ' . $this->getRandomizedCode() . ' --- отдан результат');
@@ -68,13 +76,10 @@ class CacheGeneratingLocker
 
         // кэш закончил генерироваться, флаг снимается
         $cache = Cache::createInstance();
-        $cache->clean($checkCacheId, $this->getCacheGeneratingInitDir()); // Снятие флага означает, что кэш закончил генерироваться
+        $cache->clean($this->getCheckCacheId(), $this->getCacheGeneratingInitDir()); // Снятие флага означает, что кэш закончил генерироваться
     }
 
-    /**
-     * @param string $checkCacheId
-     */
-    public function waitForNewCache(string $checkCacheId): void
+    public function waitForNewCache(): void
     {
         if ($this->isDebugMode()) {
             $this->tempLogger->info($this->getLogPrefix() . ' -- ' . $this->getRandomizedCode());
@@ -84,7 +89,7 @@ class CacheGeneratingLocker
 
 
         $cache = Cache::createInstance();
-        while ($cache->initCache($this->getCacheGeneratingTtl(), $checkCacheId, $this->getCacheGeneratingInitDir())) // Если кэш catalog:store уже начал генерироваться в другом процессе
+        while ($cache->initCache($this->getCacheGeneratingTtl(), $this->getCheckCacheId(), $this->getCacheGeneratingInitDir())) // Если кэш catalog:store уже начал генерироваться в другом процессе
         {
             if ($this->isDebugMode()) {
                 $this->tempLogger = LoggerFactory::create('getRegionalStores', 'getRegionalStores');
@@ -223,6 +228,25 @@ class CacheGeneratingLocker
     public function setLogPrefix(string $logPrefix): CacheGeneratingLocker
     {
         $this->logPrefix = $logPrefix;
+        return $this;
+    }
+
+
+    /**
+     * @return string
+     */
+    public function getCheckCacheId(): string
+    {
+        return $this->checkCacheId;
+    }
+
+    /**
+     * @param string $checkCacheId
+     * @return CacheGeneratingLocker
+     */
+    public function setCheckCacheId(string $checkCacheId): CacheGeneratingLocker
+    {
+        $this->checkCacheId = $checkCacheId;
         return $this;
     }
 }

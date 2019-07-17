@@ -472,13 +472,13 @@ class StoreService implements LoggerAwareInterface
             $checkCacheId = __METHOD__ . '{getStoresClosure}' . $regionCode . $type;
 
             /** @var CacheGeneratingLocker $cacheGeneratingLocker */
-            $cacheGeneratingLocker = new CacheGeneratingLocker();
+            $cacheGeneratingLocker = new CacheGeneratingLocker($checkCacheId);
             /*$cacheGeneratingLocker
                 ->setIsDebugMode(true)
                 ->setLogPrefix($type . ' ' . print_r($regionCode, true));*/
 
-            $getStores = function () use ($type, $regionCode, $checkCacheId, $cacheGeneratingLocker) {
-                $cacheGeneratingLocker->lock($checkCacheId);
+            $getStores = function () use ($type, $regionCode, $cacheGeneratingLocker) {
+                $cacheGeneratingLocker->lock();
                 if (\in_array($regionCode, [LocationService::LOCATION_CODE_MOSCOW_REGION, LocationService::LOCATION_CODE_MOSCOW], true)) {
                     $regionCode = [LocationService::LOCATION_CODE_MOSCOW_REGION, LocationService::LOCATION_CODE_MOSCOW];
                 }
@@ -491,14 +491,14 @@ class StoreService implements LoggerAwareInterface
             };
 
             try {
-                $cacheGeneratingLocker->waitForNewCache($checkCacheId);
+                $cacheGeneratingLocker->waitForNewCache();
 
                 $result = (new BitrixCache())
                     ->withId(__METHOD__ . $regionCode . $type)
                     ->withTag('catalog:store')
                     ->resultOf($getStores);
 
-                $cacheGeneratingLocker->unlock($checkCacheId);
+                $cacheGeneratingLocker->unlock();
 
                 /** @var StoreCollection $stores */
                 $stores = $result['result'];
