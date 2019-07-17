@@ -45,13 +45,15 @@ class CacheGeneratingLocker
     protected $isLocked = false;
 
 
-    public function __construct(string $checkCacheId)
+    /**
+     * CacheGeneratingLocker constructor.
+     * @param string|null $checkCacheId
+     */
+    public function __construct(?string $checkCacheId = '')
     {
-        if (!trim($checkCacheId)) {
-            throw new InvalidArgumentException(__METHOD__ . '. Пустой $checkCacheId');
+        if (trim($checkCacheId)) {
+            $this->setCheckCacheId($checkCacheId);
         }
-
-        $this->setCheckCacheId($checkCacheId);
     }
 
 
