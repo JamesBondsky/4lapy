@@ -433,6 +433,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $delivery = null;
             $pickup   = null;
             $deliveryDostavista = null;
+            $deliveryDobrolap = null;
             foreach ($deliveries as $calculationResult) {
                 if ($this->deliveryService->isPickup($calculationResult)) {
                     $pickup = $calculationResult;
@@ -440,6 +441,8 @@ class FourPawsOrderComponent extends \CBitrixComponent
                     $delivery = $calculationResult;
                 } elseif($this->deliveryService->isDostavistaDelivery($calculationResult)){
                     $deliveryDostavista = $calculationResult;
+                } elseif($this->deliveryService->isDobrolapDelivery($calculationResult)){
+                    $deliveryDobrolap = $calculationResult;
                 }
             }
 
@@ -463,6 +466,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['DELIVERY']             = $delivery;
             if (isset($deliveryDostavista)) {
                 $this->arResult['DELIVERY_DOSTAVISTA'] = $deliveryDostavista;
+            }
+            if (isset($deliveryDobrolap)) {
+                $this->arResult['DELIVERY_DOBROLAP'] = $deliveryDobrolap;
             }
             $this->arResult['ADDRESSES']            = $addresses;
             $this->arResult['SELECTED_DELIVERY']    = $selectedDelivery;
