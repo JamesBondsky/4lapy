@@ -14,6 +14,7 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Dadata\Response\Date;
 use Faker\Provider\DateTime;
+use FourPaws\AppBundle\Service\CacheGeneratingLocker;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\LocationBundle\Dto\Coordinates;
 use FourPaws\LocationBundle\Entity\Address;
@@ -378,17 +379,32 @@ class StoreService implements LoggerAwareInterface
         $location = $this->locationService->findLocationByCode($locationCode);
 
         if ($locationCode = $location['CODE']) {
-            $getStores = function () use ($locationCode, $type) {
+            $checkCacheId = __METHOD__ . '{getStoresClosure}' . $locationCode . $type;
+
+            /** @var CacheGeneratingLocker $cacheGeneratingLocker */
+            $cacheGeneratingLocker = new CacheGeneratingLocker($checkCacheId);
+            /*$cacheGeneratingLocker
+                ->setIsDebugMode(true)
+                ->setLogPrefix($type . ' ' . print_r($locationCode, true));*/
+
+            $getStores = function () use ($locationCode, $type, $cacheGeneratingLocker) {
+                $cacheGeneratingLocker->lock();
                 $storeCollection = $this->getStores($type, ['UF_REGION' => $locationCode]);
+
+                //$cacheGeneratingLocker->cacheGeneratedLog();
 
                 return ['result' => $storeCollection];
             };
 
             try {
+                $cacheGeneratingLocker->waitForNewCache();
+
                 $result = (new BitrixCache())
                     ->withId(__METHOD__ . $locationCode . $type)
                     ->withTag('catalog:store')
                     ->resultOf($getStores);
+
+                $cacheGeneratingLocker->unlock();
 
                 /** @var StoreCollection $stores */
                 $stores = $result['result'];
@@ -466,75 +482,38 @@ class StoreService implements LoggerAwareInterface
      */
     public function getRegionalStores(string $locationCode, string $type = self::TYPE_ALL): StoreSearchResult
     {
-        $cacheGeneratingTtl = 30; // seconds
-        $cacheGeneratingCheckRate = 300; // Частота проверки, сгенерировался ли кэш, ms
-        $cacheGeneratingInitDir = '/';
-        $cacheGeneratingDebugMode = false; // Для отладки блокировки генерирования кэша метода (можно удалить код для дебага через некоторое время)
-
         $region = $this->locationService->findLocationRegion($locationCode);
         if ($regionCode = $region['CODE']) {
-            $currentMethod = __METHOD__;
-            $checkCacheId = $currentMethod . '{getStoresClosure}' . $regionCode . $type;
-            $randomCode = false;
-            if ($cacheGeneratingDebugMode) {
-                $randomCode = random_int(0, 1000);
-            }
+            $checkCacheId = __METHOD__ . '{getStoresClosure}' . $regionCode . $type;
 
-            $getStores = function () use ($type, $regionCode, $checkCacheId, $cacheGeneratingTtl, $cacheGeneratingInitDir, $randomCode, $cacheGeneratingDebugMode) {
-                $cache = Cache::createInstance();
-                $cache->forceRewriting(true);
-                if ($cache->startDataCache($cacheGeneratingTtl, $checkCacheId, $cacheGeneratingInitDir)) {
-                    $cache->endDataCache([1]); // Установка флага, что кэш начал генерироваться
-                }
-                if ($cacheGeneratingDebugMode) {
-                    sleep(10); // только для отладки
-                }
+            /** @var CacheGeneratingLocker $cacheGeneratingLocker */
+            $cacheGeneratingLocker = new CacheGeneratingLocker($checkCacheId);
+            /*$cacheGeneratingLocker
+                ->setIsDebugMode(true)
+                ->setLogPrefix($type . ' ' . print_r($regionCode, true));*/
+
+            $getStores = function () use ($type, $regionCode, $cacheGeneratingLocker) {
+                $cacheGeneratingLocker->lock();
                 if (\in_array($regionCode, [LocationService::LOCATION_CODE_MOSCOW_REGION, LocationService::LOCATION_CODE_MOSCOW], true)) {
                     $regionCode = [LocationService::LOCATION_CODE_MOSCOW_REGION, LocationService::LOCATION_CODE_MOSCOW];
                 }
 
-                if ($cacheGeneratingDebugMode) {
-                    $tempLogger = LoggerFactory::create('getRegionalStores', 'getRegionalStores');
-                    $tempLogger->info($type . ' ' . print_r($regionCode, true) . ' -- ' . $randomCode . ' ------ Генерируется кэш');
-                }
-
                 $result = ['result' => $this->getStores($type, ['UF_REGION' => $regionCode])];
 
-                if ($cacheGeneratingDebugMode) {
-                    $tempLogger->info($type . ' ' . print_r($regionCode, true) . ' -- ' . $randomCode . ' ------ кэш сгенерирован');
-                }
+                //$cacheGeneratingLocker->cacheGeneratedLog();
 
                 return $result;
             };
 
             try {
-                if ($cacheGeneratingDebugMode) {
-                    $tempLogger = LoggerFactory::create('getRegionalStores', 'getRegionalStores');
-                    $tempLogger->info($type . ' ' . print_r($regionCode, true) . ' -- ' . $randomCode);
+                $cacheGeneratingLocker->waitForNewCache();
 
-                    $tempLogger->info($type . ' ' . print_r($regionCode, true) . ' -- ' . $randomCode . ' --- до проверки генерирования кэша');
-                }
-                $cache = Cache::createInstance();
-                while ($cache->initCache($cacheGeneratingTtl, $checkCacheId, $cacheGeneratingInitDir)) // Если кэш catalog:store уже начал генерироваться в другом процессе
-                {
-                    if ($cacheGeneratingDebugMode) {
-                        $tempLogger->info($type . ' ' . print_r($regionCode, true) . ' -- ' . $randomCode . ' --- ждем');
-                    }
-                    usleep(1000 * $cacheGeneratingCheckRate); // Каждые $cacheGeneratingCheckRate мс проверка, не закончил ли кэш catalog:store генерироваться
-                } // когда закончил - продолжаем выполнение
-
-                if ($cacheGeneratingDebugMode) {
-                    $tempLogger->info($type . ' ' . print_r($regionCode, true) . ' -- ' . $randomCode . ' --- начинаем получать из кеша');
-                }
                 $result = (new BitrixCache())
                     ->withId(__METHOD__ . $regionCode . $type)
                     ->withTag('catalog:store')
                     ->resultOf($getStores);
 
-                if ($cacheGeneratingDebugMode) {
-                    $tempLogger->info($type . ' ' . print_r($regionCode, true) . ' -- ' . $randomCode . ' --- фиксируем, что кэш сгенерирован');
-                }
-                $cache->clean($checkCacheId, $cacheGeneratingInitDir); // Снятие флага означает, что кэш закончил генерироваться
+                $cacheGeneratingLocker->unlock();
 
                 /** @var StoreCollection $stores */
                 $stores = $result['result'];
