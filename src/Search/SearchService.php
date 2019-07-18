@@ -758,7 +758,7 @@ class SearchService implements LoggerAwareInterface
         $queryBuilder = new QueryBuilder();
         $boolQuery = $queryBuilder->query()->bool();
         $boolQuery->addMust(
-            $queryBuilder->query()->ids('XML_ID', $ids)
+            $queryBuilder->query()->ids('offers.XML_ID', $ids)
         );
         $searchQuery->setQuery($boolQuery);
 
