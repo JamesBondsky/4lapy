@@ -117,9 +117,10 @@ class SearchService implements LoggerAwareInterface
 
         // модификация для поиска сразу по id товаров
         if(is_array($queryTerm)){
-            foreach ($queryTerm as $queryTermId) {
-                $queryRule = $this->getFullQueryRule($filters, $queryTermId);
-            }
+            $queryRule = $this->getIdsQueryRule($filters, $queryTerm);
+//            foreach ($queryTerm as $queryTermId) {
+//                $queryRule = $this->getFullQueryRule($filters, $queryTermId);
+//            }
         } else {
             $queryRule = $this->getFullQueryRule($filters, $queryTerm);
             if ($queryTerm !== '') {
@@ -757,7 +758,7 @@ class SearchService implements LoggerAwareInterface
         $queryBuilder = new QueryBuilder();
         $boolQuery = $queryBuilder->query()->bool();
         $boolQuery->addMust(
-            $queryBuilder->query()->ids(null, $ids)
+            $queryBuilder->query()->ids('XML_ID', $ids)
         );
         $searchQuery->setQuery($boolQuery);
 
