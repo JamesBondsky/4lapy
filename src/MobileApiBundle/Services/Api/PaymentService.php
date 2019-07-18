@@ -69,7 +69,7 @@ class PaymentService
         }
 
         $bitrixOrder = $order->getBitrixOrder();
-        $amount = $order->getItemsSum() * 100;
+        $amount = $order->getBitrixOrder()->getPrice() * 100;
 
         if (!$bitrixOrder->getPaymentCollection()->count()) {
             throw new \Exception("У заказа $orderNumber не указана платежная система");

@@ -71,6 +71,7 @@ use FourPaws\SaleBundle\Exception\SberbankOrderPaymentDeclinedException;
 use FourPaws\SaleBundle\Exception\SberbankPaymentException;
 use FourPaws\SaleBundle\Payment\Sberbank;
 use FourPaws\SapBundle\Consumer\ConsumerRegistry;
+use FourPaws\SapBundle\Enum\SapOrder;
 use FourPaws\StoreBundle\Entity\Store;
 use JMS\Serializer\ArrayTransformerInterface;
 use Psr\Log\LoggerAwareInterface;
@@ -1602,5 +1603,19 @@ class PaymentService implements LoggerAwareInterface
         }
 
         return floatval($averagePriceItemWhole . '.' . $averagePriceItemFractional);
+    }
+
+    private function isDeliveryItem($xmlItem): bool {
+        $deliveryArticles = [
+            SapOrder::DELIVERY_ZONE_1_ARTICLE,
+            SapOrder::DELIVERY_ZONE_2_ARTICLE,
+            SapOrder::DELIVERY_ZONE_3_ARTICLE,
+            SapOrder::DELIVERY_ZONE_4_ARTICLE,
+            SapOrder::DELIVERY_ZONE_5_ARTICLE,
+            SapOrder::DELIVERY_ZONE_6_ARTICLE,
+            SapOrder::DELIVERY_ZONE_MOSCOW_ARTICLE,
+        ];
+
+        return \in_array((string)$xmlItem, $deliveryArticles, true);
     }
 }
