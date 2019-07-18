@@ -15,6 +15,8 @@ use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\StoreBundle\Entity\Store;
 
 /**
+ * @bxnolanginspection
+ *
  * @var array $arParams
  * @var array $arResult
  * @var CMain $APPLICATION
@@ -25,6 +27,8 @@ use FourPaws\StoreBundle\Entity\Store;
 $delivery = $arResult['DELIVERY'];
 /** @var CalculationResultInterface $deliveryDostavista */
 $deliveryDostavista = $arResult['DELIVERY_DOSTAVISTA'];
+/** @var CalculationResultInterface $deliveryDobrolap */
+$deliveryDobrolap = $arResult['DELIVERY_DOBROLAP'];
 /** @var PickupResultInterface $pickup */
 $pickup = $arResult['PICKUP'];
 /** @var CalculationResultInterface $selectedDelivery */
@@ -113,6 +117,8 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                    }
                                    else if($pickup){
                                        echo $pickup->getDeliveryId();
+                                   } else if($deliveryDobrolap){
+                                       echo $deliveryDobrolap->getDeliveryId();
                                    }
                                ?>"
                                class="js-no-valid">
@@ -203,17 +209,18 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 </label>
 
                                 <?php
-                            } ?>
-
+                            }
+                            if ($deliveryDobrolap) {
+                            ?>
                             <input
                                 class="b-choice-recovery__input js-recovery-email js-myself-shop js-delivery"
-                                data-set-delivery-type="<?= $pickup->getDeliveryId()?>"
+                                data-set-delivery-type="<?= $deliveryDobrolap->getDeliveryId() ?>"
                                 id="order-delivery-dobrolap"
                                 type="radio"
                                 name="deliveryId"
                                 data-text="Самовывоз"
-                                value=""
-                                data-delivery=""
+                                value="<?= $deliveryDobrolap->getDeliveryId() ?>"
+                                data-delivery="<?= $deliveryDobrolap->getPrice() ?>"
                                 data-full=""
                                 data-check="js-list-orders-cont"
                             />
@@ -255,6 +262,9 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                     После оплаты заказа вы получите сюрприз и&nbsp;памятный магнит.
                                 </div>
                             </div>
+                                <?php
+                            }
+                            ?>
                         </div>
 
                         <ul class="b-radio-tab js-myself-shop">
