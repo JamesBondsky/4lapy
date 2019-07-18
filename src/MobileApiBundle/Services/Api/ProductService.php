@@ -850,11 +850,25 @@ class ProductService
             ->exec()
             ->first();
 
-        if (!$share) {
-            return [];
+        $xmlIds = [];
+
+        if ($share) {
+            $xmlIds = $share->getPropertyProducts();
         }
 
-        return $share->getPropertyProducts();
+        return $xmlIds;
+
+        $query = new ProductQuery();
+        $query->withFilter([
+            '=XML_ID'          => $xmlIds,
+            'IBLOCK_ID' => [IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS), IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS)],
+        ])->withSelect(['ID']);
+        $productCollection = $query->exec();
+        $productIds = [];
+        foreach ($productCollection as $product) {
+            $productIds[] = $product->getId();
+        }
+        return $productIds;
 
         $res = \CIBlockElement::GetProperty(IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES), $stockId, '', '',
             ['CODE' => 'PRODUCTS']);
