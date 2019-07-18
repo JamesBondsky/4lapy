@@ -773,6 +773,21 @@ class SearchService implements LoggerAwareInterface
                         )
                     )
             );
+            $boolQuery->addShould(
+                $queryBuilder->query()->nested()
+                    ->setPath('offers')
+                    ->setQuery(
+                        $queryBuilder->query()->term(
+                            [
+                                'offers.PROPERTY_BARCODE' => [
+                                    'value' => $id,
+                                    'boost' => 200.0,
+                                    '_name' => 'barcode',
+                                ],
+                            ]
+                        )
+                    )
+            );
         }
         $searchQuery->setQuery($boolQuery);
 
