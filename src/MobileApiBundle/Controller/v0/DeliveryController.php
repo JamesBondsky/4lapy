@@ -11,6 +11,7 @@ use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Service\DeliveryService as AppDeliveryService;
+use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryTime;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryTimeAvailable;
 use FourPaws\MobileApiBundle\Dto\Request\DeliveryRangeRequest;
@@ -20,7 +21,7 @@ use FourPaws\MobileApiBundle\Dto\Response\DeliveryRangeResponse;
  * Class DeliveryController
  * @package FourPaws\MobileApiBundle\Controller\v0
  */
-class DeliveryController extends FOSRestController
+class DeliveryController extends BaseController
 {
     /**
      * @var AppDeliveryService

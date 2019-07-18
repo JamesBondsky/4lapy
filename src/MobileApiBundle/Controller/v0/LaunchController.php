@@ -8,10 +8,11 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Services\Api\LaunchService as ApiLaunchService;
 
-class LaunchController extends FOSRestController
+class LaunchController extends BaseController
 {
     /** @var ApiLaunchService */
     private $apiLaunchService;

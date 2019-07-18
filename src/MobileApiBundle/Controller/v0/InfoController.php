@@ -10,11 +10,12 @@ use Bitrix\Main\Application;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Request\InfoRequest;
 use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
 use FourPaws\MobileApiBundle\Services\Api\InfoService as ApiInfoService;
 
-class InfoController extends FOSRestController
+class InfoController extends BaseController
 {
     /**
      * @var ApiInfoService

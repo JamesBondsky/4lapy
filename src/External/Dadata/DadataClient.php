@@ -30,4 +30,17 @@ class DadataClient extends Client
 
         return $suggestions;
     }
+
+    public function getFias(array $params): array
+    {
+        $result = [];
+
+        $response = $this->query($this->baseSuggestionsUrl . 'findById/address', $params);
+
+        if (\is_array($response) && 0 < \count($response)) {
+            $result = $response;
+        }
+
+        return $result;
+    }
 }

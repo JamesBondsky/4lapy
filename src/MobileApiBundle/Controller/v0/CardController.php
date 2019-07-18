@@ -8,6 +8,7 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Request\CardActivatedRequest;
 use FourPaws\MobileApiBundle\Dto\Request\ChangeCardConfirmPersonalRequest;
 use FourPaws\MobileApiBundle\Dto\Request\ChangeCardConfirmPinRequest;
@@ -25,7 +26,7 @@ use FourPaws\MobileApiBundle\Services\Api\UserService as ApiUserService;
 use FourPaws\MobileApiBundle\Dto\Response\CardActivatedResponse;
 
 
-class CardController extends FOSRestController
+class CardController extends BaseController
 {
     /**
      * @var ApiCardService

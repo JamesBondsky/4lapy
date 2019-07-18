@@ -69,7 +69,7 @@ class PaymentService
         }
 
         $bitrixOrder = $order->getBitrixOrder();
-        $amount = $order->getItemsSum() * 100;
+        $amount = $order->getBitrixOrder()->getPrice() * 100;
 
         if (!$bitrixOrder->getPaymentCollection()->count()) {
             throw new \Exception("У заказа $orderNumber не указана платежная система");
@@ -84,7 +84,7 @@ class PaymentService
         switch ($payType) {
             case 'cash':
             case 'cashless':
-                $url = $this->appPaymentService->registerOrder($bitrixOrder, $amount);
+                $url = $this->appPaymentService->registerOrder($bitrixOrder, $amount, true);
                 break;
             case 'applepay':
                 $url = $this->appPaymentService->processApplePay($bitrixOrder, $payToken);
