@@ -19,7 +19,6 @@ use FourPaws\App\MainTemplate;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
-use FourPaws\SaleBundle\Repository\Table\AnimalShelterTable;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use Symfony\Component\Config\Exception\FileLoaderLoadException;
@@ -106,8 +105,6 @@ class FourPawsOrderShelterListComponent extends FourPawsShopListComponent
             $storeListUrlRoute = $routeCollection->get('fourpaws_sale_ajax_order_sheltersearch');
         }
         $this->arResult['STORE_LIST_URL'] = $storeListUrlRoute ? $storeListUrlRoute->getPath() : '';
-//        $shelters = AnimalShelterTable::getList()->fetchAll();
-        $this->arResult['SHELTERS'] = [];
         return true;
     }
 }
