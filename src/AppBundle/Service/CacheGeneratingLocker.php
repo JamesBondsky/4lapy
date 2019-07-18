@@ -101,12 +101,12 @@ class CacheGeneratingLocker
 
 
         $cache = Cache::createInstance();
-        while ($cache->initCache($this->getCacheGeneratingTtl(), $this->getCheckCacheId(), $this->getCacheGeneratingInitDir())) // Если кэш catalog:store уже начал генерироваться в другом процессе
+        while ($cache->initCache($this->getCacheGeneratingTtl(), $this->getCheckCacheId(), $this->getCacheGeneratingInitDir())) // Если кэш уже начал генерироваться в другом процессе
         {
             if ($this->isDebugMode()) {
                 $this->tempLogger->info($this->getLogPrefix() . ' -- ' . $this->getRandomizedCode() . ' --- ожидание окончания генерирования кэша');
             }
-            usleep(1000 * $this->getCacheGeneratingCheckRate()); // Каждые $cacheGeneratingCheckRate мс проверка, не закончил ли кэш catalog:store генерироваться
+            usleep(1000 * $this->getCacheGeneratingCheckRate()); // Каждые $cacheGeneratingCheckRate мс проверка, не закончил ли кэш генерироваться
         } // когда закончил - продолжаем выполнение
 
 

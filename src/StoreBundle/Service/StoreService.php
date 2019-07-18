@@ -153,6 +153,7 @@ class StoreService implements LoggerAwareInterface
                 $store = (new BitrixCache())
                              ->withId(__METHOD__ . $id)
                              ->withTag('catalog:store')
+                             ->withPath('/custom/catalog.store')
                              ->resultOf($getStore)['result'];
             } catch (\Exception $e) {
                 $this->logger->error(
@@ -200,6 +201,7 @@ class StoreService implements LoggerAwareInterface
                 $store = (new BitrixCache())
                              ->withId(__METHOD__ . $xmlId)
                              ->withTag('catalog:store')
+                             ->withPath('/custom/catalog.store')
                              ->resultOf($getStore)['result'];
             } catch (\Exception $e) {
                 $this->logger->error(
@@ -320,6 +322,7 @@ class StoreService implements LoggerAwareInterface
             $result = (new BitrixCache())
                 ->withId(__METHOD__ . $type)
                 ->withTag('catalog:store')
+                ->withPath('/custom/catalog.store')
                 ->resultOf($getStores);
 
             /** @var StoreCollection $stores */
@@ -402,6 +405,7 @@ class StoreService implements LoggerAwareInterface
                 $result = (new BitrixCache())
                     ->withId(__METHOD__ . $locationCode . $type)
                     ->withTag('catalog:store')
+                    ->withPath('/custom/catalog.store')
                     ->resultOf($getStores);
 
                 $cacheGeneratingLocker->unlock();
@@ -449,6 +453,7 @@ class StoreService implements LoggerAwareInterface
                 $result = (new BitrixCache())
                     ->withId(__METHOD__ . $subregionCode . $type)
                     ->withTag('catalog:store')
+                    ->withPath('/custom/catalog.store')
                     ->resultOf($getStores);
 
                 /** @var StoreCollection $stores */
@@ -511,6 +516,7 @@ class StoreService implements LoggerAwareInterface
                 $result = (new BitrixCache())
                     ->withId(__METHOD__ . $regionCode . $type)
                     ->withTag('catalog:store')
+                    ->withPath('/custom/catalog.store')
                     ->resultOf($getStores);
 
                 $cacheGeneratingLocker->unlock();
@@ -555,6 +561,7 @@ class StoreService implements LoggerAwareInterface
                 $result = (new BitrixCache())
                               ->withId(__METHOD__)
                               ->withTag('catalog:store')
+                              ->withPath('/custom/catalog.store')
                               ->resultOf($getStores)['result'];
             } catch (\Exception $e) {
                 $this->logger->error(
