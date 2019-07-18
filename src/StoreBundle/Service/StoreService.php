@@ -383,10 +383,15 @@ class StoreService implements LoggerAwareInterface
 
             /** @var CacheGeneratingLocker $cacheGeneratingLocker */
             $cacheGeneratingLocker = new CacheGeneratingLocker($checkCacheId);
+            /*$cacheGeneratingLocker
+                ->setIsDebugMode(true)
+                ->setLogPrefix($type . ' ' . print_r($locationCode, true));*/
 
             $getStores = function () use ($locationCode, $type, $cacheGeneratingLocker) {
                 $cacheGeneratingLocker->lock();
                 $storeCollection = $this->getStores($type, ['UF_REGION' => $locationCode]);
+
+                //$cacheGeneratingLocker->cacheGeneratedLog();
 
                 return ['result' => $storeCollection];
             };

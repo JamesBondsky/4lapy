@@ -64,12 +64,12 @@ class CacheGeneratingLocker
         if ($cache->startDataCache($this->cacheGeneratingTtl, $this->getCheckCacheId(), $this->cacheGeneratingInitDir)) {
             $cache->endDataCache([1]); // Установка флага, что кэш начал генерироваться
             $this->setIsLocked(true);
+            if ($this->isDebugMode()) {
+                $this->tempLogger->info($this->getLogPrefix() . ' -- ' . $this->getRandomizedCode() . ' --- ' . $this->getCheckCacheId() . ' заблокирован');
+            }
         }
         if ($this->isDebugMode()) {
-            $tempLogger = LoggerFactory::create('getRegionalStores', 'getRegionalStores');
-            $tempLogger->info($this->getLogPrefix() . ' -- ' . $this->getRandomizedCode() . ' ------ Генерируется кэш');
-        }
-        if ($this->isDebugMode()) {
+            $this->tempLogger->info($this->getLogPrefix() . ' -- ' . $this->getRandomizedCode() . ' --- генерируется кэш');
             sleep(10); // только для отладки
         }
     }
@@ -85,7 +85,9 @@ class CacheGeneratingLocker
             // кэш закончил генерироваться, флаг снимается
             $cache = Cache::createInstance();
             $cache->clean($this->getCheckCacheId(), $this->getCacheGeneratingInitDir()); // Снятие флага означает, что кэш закончил генерироваться
-            $this->tempLogger->info($this->getLogPrefix() . ' -- ' . $this->getRandomizedCode() . ' --- снята блокировка генерирования кэша');
+            if ($this->isDebugMode()) {
+                $this->tempLogger->info($this->getLogPrefix() . ' -- ' . $this->getRandomizedCode() . ' --- ' . $this->getCheckCacheId() . ' разблокирован');
+            }
         }
     }
 
@@ -102,15 +104,14 @@ class CacheGeneratingLocker
         while ($cache->initCache($this->getCacheGeneratingTtl(), $this->getCheckCacheId(), $this->getCacheGeneratingInitDir())) // Если кэш catalog:store уже начал генерироваться в другом процессе
         {
             if ($this->isDebugMode()) {
-                $this->tempLogger = LoggerFactory::create('getRegionalStores', 'getRegionalStores');
-                $this->tempLogger->info($this->getLogPrefix() . ' -- ' . $this->getRandomizedCode() . ' --- ждем');
+                $this->tempLogger->info($this->getLogPrefix() . ' -- ' . $this->getRandomizedCode() . ' --- ожидание окончания генерирования кэша');
             }
             usleep(1000 * $this->getCacheGeneratingCheckRate()); // Каждые $cacheGeneratingCheckRate мс проверка, не закончил ли кэш catalog:store генерироваться
         } // когда закончил - продолжаем выполнение
 
 
         if ($this->isDebugMode()) {
-            $this->tempLogger->info($this->getLogPrefix() . ' -- ' . $this->getRandomizedCode() . ' --- начинаем получать из кеша');
+            $this->tempLogger->info($this->getLogPrefix() . ' -- ' . $this->getRandomizedCode() . ' --- блокировки нет, продолжение');
         }
     }
 
@@ -158,7 +159,7 @@ class CacheGeneratingLocker
 
         try {
             $this->setRandomizedCode(random_int(0, 1000));
-            $this->tempLogger = LoggerFactory::create('getRegionalStores', 'getRegionalStores');
+            $this->tempLogger = LoggerFactory::create('CacheGeneratingLocker', 'CacheGeneratingLocker');
         } catch (Exception $e) {
         }
 
