@@ -275,6 +275,9 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         $newItemArr = [];
 
         $paymentTask->getItems()->map(function (Item $item) use (&$newItemArr) {
+            if ($this->isDeliveryItem($item)) {
+                $item->setOfferXmlId(OrderPayment::GENERIC_DELIVERY_CODE);
+            }
             $newItemArr[$item->getOfferXmlId()][] = $item;
         });
 

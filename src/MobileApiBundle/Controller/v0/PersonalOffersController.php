@@ -6,6 +6,7 @@
 
 namespace FourPaws\MobileApiBundle\Controller\v0;
 
+use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Error;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FOS\RestBundle\Controller\Annotations;
@@ -13,7 +14,7 @@ use Symfony\Component\HttpFoundation\Request;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Services\Api\PersonalOffersService as ApiPersonalOffersService;
 
-class PersonalOffersController extends FOSRestController
+class PersonalOffersController extends BaseController
 {
 
     /**

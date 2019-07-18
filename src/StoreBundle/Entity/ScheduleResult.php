@@ -2,14 +2,24 @@
 
 namespace FourPaws\StoreBundle\Entity;
 
+use Bitrix\Main\UserFieldTable;
+use FourPaws\App\Application;
+use FourPaws\AppBundle\Collection\UserFieldEnumCollection;
+use FourPaws\AppBundle\Entity\UserFieldEnumValue;
+use FourPaws\AppBundle\Service\UserFieldEnumService;
+use FourPaws\Enum\HlblockCode;
+use FourPaws\Helpers\HighloadHelper;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
+use WebArch\BitrixCache\BitrixCache;
 
 class ScheduleResult
 {
     public const RESULT_ERROR = -1;
 
     public const DATE_ACTIVE_FORMAT = 'd.m.Y';
+
+    public const DEFUALT_SCHED_TYPE = 'Z1';
 
     /**
      * @var int
@@ -93,6 +103,15 @@ class ScheduleResult
      * @Assert\NotBlank(groups={"create", "read","update","delete"})
      */
     protected $dateActive;
+
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_REGULARITY")
+     * @Serializer\Groups(groups={"create", "read","update","delete"})
+     * @Assert\NotBlank(groups={"create", "read","update","delete"})
+     */
+    protected $regularity;
 
     /**
      * @return int
@@ -303,4 +322,92 @@ class ScheduleResult
         $this->dateActive = $dateActive;
         return $this;
     }
+
+    /**
+     * @param string $regularity
+     * @return ScheduleResult
+     */
+    public function setRegularity(string $regularity): ScheduleResult
+    {
+        $this->regularity = $regularity;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     * @throws \Exception
+     */
+    public function getRegularity(): ?string
+    {
+        if($this->regularity === null){
+            $this->setRegularity($this->getDefaultRegularity());
+        }
+        return $this->regularity;
+    }
+
+    /**
+     * @return string|null
+     * @throws \Exception
+     */
+    public function getRegularityName(): ?string
+    {
+        $id = $this->getRegularity();
+        $regularities = $this->getRegularityEnum();
+        $regularity = $regularities->get($id);
+        return $regularity->getValue() ?: '';
+    }
+
+    /**
+     * @return string|null
+     * @throws \Exception
+     */
+    public function getRegularitySort(): ?string
+    {
+        $id = $this->getRegularity();
+        $regularities = $this->getRegularityEnum();
+        $regularity = $regularities->get($id);
+        return $regularity->getSort() ?: 500;
+    }
+
+    /**
+     * @return mixed
+     * @throws \Exception
+     */
+    public function getDefaultRegularity()
+    {
+        $regularities = $this->getRegularityEnum();
+        $regularities = $regularities->filter(function($item){
+            return $item->getXmlId() == self::DEFUALT_SCHED_TYPE;
+        });
+        return $regularities->first()->getId();
+    }
+
+    /**
+     * @return UserFieldEnumCollection
+     * @throws \Exception
+     */
+    public function getRegularityEnum()
+    {
+        $getRegularities  = function() {
+            /** @var UserFieldEnumService $userFieldEnumService */
+            $userFieldEnumService = Application::getInstance()->getContainer()->get('userfield_enum.service');
+            $userFieldId = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
+                [
+                    'FIELD_NAME' => 'UF_REGULARITY',
+                    'ENTITY_ID' => 'HLBLOCK_' . HighloadHelper::getIdByName(HlblockCode::DELIVERY_SCHEDULE_RESULT),
+                ]
+            )->exec()->fetch()['ID'];
+            $regularities = $userFieldEnumService->getEnumValueCollection($userFieldId);
+            return $regularities;
+        };
+        /** @var UserFieldEnumCollection $regularities */
+        $regularities = (new BitrixCache())
+                            ->withId(__METHOD__)
+                            ->withTag('delivery_schedule_regularity')
+                            ->withTime(86400*356)
+                            ->resultOf($getRegularities)['result'];
+
+        return $regularities;
+    }
+
 }

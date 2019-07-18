@@ -8,12 +8,13 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Request\FeedbackRequest;
 use FourPaws\MobileApiBundle\Dto\Request\ReportRequest;
 use FourPaws\MobileApiBundle\Dto\Response\FeedbackResponse;
 use FourPaws\MobileApiBundle\Services\Api\FeedbackService as ApiFeedbackService;
 
-class FeedbackController extends FOSRestController
+class FeedbackController extends BaseController
 {
     /** @var ApiFeedbackService */
     private $apiFeedbackService;

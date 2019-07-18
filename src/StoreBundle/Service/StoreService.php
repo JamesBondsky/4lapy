@@ -9,10 +9,12 @@ namespace FourPaws\StoreBundle\Service;
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Data\Cache;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Dadata\Response\Date;
 use Faker\Provider\DateTime;
+use FourPaws\AppBundle\Service\CacheGeneratingLocker;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\LocationBundle\Dto\Coordinates;
 use FourPaws\LocationBundle\Entity\Address;
@@ -377,17 +379,32 @@ class StoreService implements LoggerAwareInterface
         $location = $this->locationService->findLocationByCode($locationCode);
 
         if ($locationCode = $location['CODE']) {
-            $getStores = function () use ($locationCode, $type) {
+            $checkCacheId = __METHOD__ . '{getStoresClosure}' . $locationCode . $type;
+
+            /** @var CacheGeneratingLocker $cacheGeneratingLocker */
+            $cacheGeneratingLocker = new CacheGeneratingLocker($checkCacheId);
+            /*$cacheGeneratingLocker
+                ->setIsDebugMode(true)
+                ->setLogPrefix($type . ' ' . print_r($locationCode, true));*/
+
+            $getStores = function () use ($locationCode, $type, $cacheGeneratingLocker) {
+                $cacheGeneratingLocker->lock();
                 $storeCollection = $this->getStores($type, ['UF_REGION' => $locationCode]);
+
+                //$cacheGeneratingLocker->cacheGeneratedLog();
 
                 return ['result' => $storeCollection];
             };
 
             try {
+                $cacheGeneratingLocker->waitForNewCache();
+
                 $result = (new BitrixCache())
                     ->withId(__METHOD__ . $locationCode . $type)
                     ->withTag('catalog:store')
                     ->resultOf($getStores);
+
+                $cacheGeneratingLocker->unlock();
 
                 /** @var StoreCollection $stores */
                 $stores = $result['result'];
@@ -461,27 +478,42 @@ class StoreService implements LoggerAwareInterface
      * @param string $type
      *
      * @return StoreSearchResult
-     * @throws ArgumentException
-     * @throws ObjectPropertyException
-     * @throws SystemException
+     * @throws \Exception
      */
     public function getRegionalStores(string $locationCode, string $type = self::TYPE_ALL): StoreSearchResult
     {
         $region = $this->locationService->findLocationRegion($locationCode);
         if ($regionCode = $region['CODE']) {
-            $getStores = function () use ($type, $regionCode) {
+            $checkCacheId = __METHOD__ . '{getStoresClosure}' . $regionCode . $type;
+
+            /** @var CacheGeneratingLocker $cacheGeneratingLocker */
+            $cacheGeneratingLocker = new CacheGeneratingLocker($checkCacheId);
+            /*$cacheGeneratingLocker
+                ->setIsDebugMode(true)
+                ->setLogPrefix($type . ' ' . print_r($regionCode, true));*/
+
+            $getStores = function () use ($type, $regionCode, $cacheGeneratingLocker) {
+                $cacheGeneratingLocker->lock();
                 if (\in_array($regionCode, [LocationService::LOCATION_CODE_MOSCOW_REGION, LocationService::LOCATION_CODE_MOSCOW], true)) {
                     $regionCode = [LocationService::LOCATION_CODE_MOSCOW_REGION, LocationService::LOCATION_CODE_MOSCOW];
                 }
 
-                return ['result' => $this->getStores($type, ['UF_REGION' => $regionCode])];
+                $result = ['result' => $this->getStores($type, ['UF_REGION' => $regionCode])];
+
+                //$cacheGeneratingLocker->cacheGeneratedLog();
+
+                return $result;
             };
 
             try {
+                $cacheGeneratingLocker->waitForNewCache();
+
                 $result = (new BitrixCache())
                     ->withId(__METHOD__ . $regionCode . $type)
                     ->withTag('catalog:store')
                     ->resultOf($getStores);
+
+                $cacheGeneratingLocker->unlock();
 
                 /** @var StoreCollection $stores */
                 $stores = $result['result'];
