@@ -559,8 +559,8 @@ class IndexHelper implements LoggerAwareInterface
         if ($flushBaseFilter) {
             $brandQuery->withFilter([]);
         }
-        $allBrands = $brandQuery->exec();
-        $this->__indexAll(Brand::class, $allBrands, $batchSize);
+//        $allBrands = $brandQuery->exec();
+//        $this->__indexAll(Brand::class, $allBrands, $batchSize);
 
         $query = (new ProductQuery())
             ->withOrder(['ID' => 'DESC']);
@@ -569,6 +569,7 @@ class IndexHelper implements LoggerAwareInterface
             $query->withFilter([]);
         }
 
+        $query->withFilter(['ID' => 81626]);
         $allProducts = $query->exec();
         $this->__indexAll(Product::class, $allProducts, $batchSize);
 //        $indexOk = 0;
