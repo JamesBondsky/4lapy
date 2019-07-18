@@ -6,6 +6,7 @@ use Adv\Bitrixtools\Migration\SprintMigrationBase;
 use Bitrix\Sale\Delivery\Services\Configurable;
 use Bitrix\Sale\Delivery\Services\Manager;
 use Bitrix\Sale\Delivery\Services\Table as ServicesTable;
+use FourPaws\DeliveryBundle\Handler\DobrolapDeliveryHandler;
 
 class Dobrolap_delivery_20190717114111 extends SprintMigrationBase
 {
@@ -30,7 +31,7 @@ class Dobrolap_delivery_20190717114111 extends SprintMigrationBase
     protected $dobrolapDelivery = [
         'NAME'        => 'Доставка в приют',
         'DESCRIPTION' => 'Ваш заказ будет доставлен в выбранный Вами приют для бездомных животных. После оплаты заказа вы получите сюрприз и памятный магнит.',
-        'CLASS_NAME'  => Configurable::class,
+        'CLASS_NAME'  => DobrolapDeliveryHandler::class,
         'CONFIG'      => [
             'MAIN' => [
                 'CURRENCY' => 'RUB',

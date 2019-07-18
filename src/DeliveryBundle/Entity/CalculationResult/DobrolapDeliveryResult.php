@@ -6,10 +6,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\DeliveryBundle\Entity\IntervalRule\TimeRuleInterface;
-use FourPaws\DeliveryBundle\Exception\NotFoundException;
-use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
-use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 
 
@@ -42,5 +39,16 @@ class DobrolapDeliveryResult extends BaseResult implements CalculationResultInte
     protected function resetResult(): void
     {
         parent::resetResult();
+    }
+
+    /**
+     * @return Store
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws StoreNotFoundException
+     */
+    public function getSelectedShop(): Store
+    {
+        return $this->getSelectedStore();
     }
 }

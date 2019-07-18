@@ -317,6 +317,14 @@ class CalculationResultFactory
             $result->addWarnings($bitrixResult->getWarnings());
         }
 
+        foreach ($bitrixResult->getData() as $key => $value) {
+            switch ($key) {
+                case 'STOCK_RESULT':
+                    $result->setStockResult($value);
+                    break;
+            }
+        }
+
         return $result;
     }
 }

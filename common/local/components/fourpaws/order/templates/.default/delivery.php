@@ -283,6 +283,15 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                 </li>
                                 <?php
                             } ?>
+                            <?php if ($deliveryDobrolap) {
+                                $isHidden = $selectedDelivery->getDeliveryId() !== $deliveryDobrolap->getDeliveryId();
+                                ?>
+                                <li class="b-radio-tab__tab js-email-recovery"
+                                    <?= $isHidden ? 'style="display:none"' : '' ?>>
+                                    <?php include 'include/dobrolap.php' ?>
+                                </li>
+                                <?php
+                            } ?>
                         </ul>
                     </form>
                 </article>
