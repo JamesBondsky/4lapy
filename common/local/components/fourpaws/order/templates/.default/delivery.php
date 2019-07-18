@@ -153,6 +153,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                     </span>
                                 </label>
                             <?php }
+
                             if ($pickup) {
                                 $available = $arResult['PICKUP_STOCKS_AVAILABLE'];
                                 if ($arResult['PARTIAL_PICKUP_AVAILABLE'] && $storage->isSplit()) {
@@ -200,9 +201,62 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                         ) ?>, <?= CurrencyHelper::formatPrice($pickup->getPrice(), false) ?>
                                     </span>
                                 </label>
+
                                 <?php
                             } ?>
+
+                            <input
+                                class="b-choice-recovery__input js-recovery-email js-myself-shop js-delivery"
+                                data-set-delivery-type="<?= $pickup->getDeliveryId()?>"
+                                id="order-delivery-dobrolap"
+                                type="radio"
+                                name="deliveryId"
+                                data-text="Самовывоз"
+                                value=""
+                                data-delivery=""
+                                data-full=""
+                                data-check="js-list-orders-cont"
+                            />
+
+                            <div class="b-choice-recovery__tooltip" data-b-choice-recovery-tooltip>
+                                <label
+                                    class="
+                                        b-choice-recovery__label
+                                        b-choice-recovery__label--right
+                                        b-choice-recovery__label--order-step
+                                        b-choice-recovery__label--with-icon
+                                        b-choice-recovery__label--mt
+                                        js-open-popup
+                                    "
+                                    for="order-delivery-dobrolap"
+                                    data-popup-id="popup-order-shelters"
+                                >
+                                    <img src="/static/build/images/content/dobrolap/dobrolap-logo.png" alt="" srcset="/static/build/images/content/dobrolap/dobrolap-logo@2x.png 2x, /static/build/images/content/dobrolap/dobrolap-logo@3x.png 3x" class="b-choice-recovery__label-icon" />
+
+                                    <div>
+                                        <span class="b-choice-recovery__main-text">Доставка в приют</span>
+
+                                        <span class="b-choice-recovery__addition-text js-my-pickup js-pickup-tab">
+                                            бесплатно
+                                        </span>
+
+                                        <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-my-pickup js-pickup-tab">
+                                            бесплатно
+                                        </span>
+                                    </div>
+                                </label>
+
+                                <button type="button" class="b-choice-recovery__tooltip-trigger" data-b-choice-recovery-tooltip="trigger">
+                                    Информация
+                                </button>
+
+                                <div class="b-choice-recovery__tooltip-content" data-b-choice-recovery-tooltip="content">
+                                    Ваш заказ будет доставлен в&nbsp;выбранный Вами приют для&nbsp;бездомных животных.
+                                    После оплаты заказа вы получите сюрприз и&nbsp;памятный магнит.
+                                </div>
+                            </div>
                         </div>
+
                         <ul class="b-radio-tab js-myself-shop">
                             <?php if ($delivery) {
                                 $isHidden = $selectedDelivery->getDeliveryId() !== $delivery->getDeliveryId();
