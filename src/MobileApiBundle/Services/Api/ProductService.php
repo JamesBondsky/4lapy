@@ -456,6 +456,7 @@ class ProductService
      */
     public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = false, ?bool $showVariantsIfOneVariant = true): FullProduct
     {
+        $offer->setColor();
         $shortProduct = $this->convertToShortProduct($product, $offer);
         $detailText = $product->getDetailText()->getText();
         $detailText = ImageHelper::appendDomainToSrc($detailText);
