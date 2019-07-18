@@ -218,7 +218,51 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
 
             if ($hasNormalItems) { ?>
                 <section class="b-stock b-stock--shopping-cart b-stock--shopping-product js-section-remove-stock">
-                    <h3 class="b-title b-title--h2-cart b-title--shopping-product">Ваш заказ</h3>
+
+                    <div class="b-stock__header">
+                        <h3 class="b-stock__header-title">Ваш заказ</h3>
+
+                        <div class="b-stock__coupons" data-basket-coupons>
+                            <button type="button" class="b-stock__coupons-btn" data-basket-coupons-toogle>Мои купоны</button>
+                            <div class="b-stock__coupons-popup loading" data-basket-coupons-popup>
+                                <div class="b-stock__coupons-list">
+                                    <div class="b-stock__coupons-item">
+                                        <div class="b-stock__coupon">
+                                            <div class="b-stock__coupon-caption">
+                                                Скидка 50% на Maelfeal
+                                            </div>
+                                            <button type="button" class="b-stock__coupon-btn" data-basket-coupon-toogle="id_coupon1">Применить</button>
+                                        </div>
+                                    </div>
+                                    <div class="b-stock__coupons-item">
+                                        <div class="b-stock__coupon">
+                                            <div class="b-stock__coupon-caption">
+                                                Скидка 20% на Royal Canine
+                                            </div>
+                                            <button type="button" class="b-stock__coupon-btn" data-basket-coupon-toogle="id_coupon2">Применить</button>
+                                        </div>
+                                    </div>
+                                    <div class="b-stock__coupons-item">
+                                        <div class="b-stock__coupon">
+                                            <div class="b-stock__coupon-caption">
+                                                Скидка 35% на Euikanuba
+                                            </div>
+                                            <button type="button" class="b-stock__coupon-btn" data-basket-coupon-toogle="id_coupon3">Применить</button>
+                                        </div>
+                                    </div>
+                                    <div class="b-stock__coupons-item">
+                                        <div class="b-stock__coupon">
+                                            <div class="b-stock__coupon-caption">
+                                                Скидка 12% на все сумки
+                                            </div>
+                                            <button type="button" class="b-stock__coupon-btn" data-basket-coupon-toogle="id_coupon4">Применить</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <?php
                     /** @var BasketItem $basketItem */
                     foreach ($orderableItems as $basketItem) {
@@ -309,7 +353,7 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                                 true) ?>)<?php } ?>
                         </div>
                         <div class="b-price b-price--information-order">
-                            <span class="b-price__current">
+                            <span class="b-price__current" data-basket-total-base-price>
                                 <?= WordHelper::numberFormat($arResult['TOTAL_BASE_PRICE']); ?>
                             </span><span class="b-ruble">₽</span>
                         </div>
@@ -356,10 +400,23 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                             <button class="b-button b-button--form-promo">Применить</button>
                         </form>
                     <?php } ?>
+
+                    <div class="b-information-order__order-basediscount hidden" data-basket-base-discount>
+                        <div class="b-information-order__order">
+                            <div class="b-information-order__order-price">Общая скидка</div>
+                            <div class="b-price b-price--information-order">
+                                <span class="b-price__current" data-basket-base-discount-summ></span>
+                                <span class="b-ruble">₽</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="b-information-order__order-discounts" data-basket-coupons-discount-list></div>
+
                     <div class="b-information-order__order b-information-order__order--total">
                         <div class="b-information-order__order-price">Итого без учета доставки</div>
                         <div class="b-price b-price--information-order b-price--total-price">
-                            <span class="b-price__current">
+                            <span class="b-price__current" data-basket-total-price>
                                 <?= WordHelper::numberFormat($arResult['TOTAL_PRICE']); ?>
                             </span><span class="b-ruble">₽</span>
                         </div>
