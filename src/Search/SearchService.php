@@ -757,7 +757,6 @@ class SearchService implements LoggerAwareInterface
         $boolQuery->addMust(
             $queryBuilder->query()->ids(null, $ids)
         );
-
         $searchQuery->setQuery($boolQuery);
 
         /** @var AbstractQuery[] $filterSet */

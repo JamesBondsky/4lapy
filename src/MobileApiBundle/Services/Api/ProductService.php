@@ -17,6 +17,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\BitrixOrm\Model\Share;
+use FourPaws\BitrixOrm\Query\ShareQuery;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Collection\ProductCollection;
@@ -134,11 +135,11 @@ class ProductService
     ): ArrayCollection
     {
         $filters = new FilterCollection();
-        //if ($categoryId > 0) {
+        if ($categoryId > 0) {
             $category = $this->categoriesService->getById($categoryId);
             $this->filterHelper->initCategoryFilters($category, $request);
             $filters = $category->getFilters();
-        //}
+        }
 
         if($stockId > 0){
             $searchQuery = $this->getProductIdsByShareId($stockId);
@@ -844,6 +845,17 @@ class ProductService
      */
     public function getProductIdsByShareId(int $stockId)
     {
+        $share = (new ShareQuery())
+            ->withFilter(['ID' => $stockId])
+            ->exec()
+            ->first();
+
+        if (!$share) {
+            return [];
+        }
+
+        return $share->getPropertyProducts();
+
         $res = \CIBlockElement::GetProperty(IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES), $stockId, '', '',
             ['CODE' => 'PRODUCTS']);
         $xmlIds = [];
