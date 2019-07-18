@@ -757,9 +757,23 @@ class SearchService implements LoggerAwareInterface
 
         $queryBuilder = new QueryBuilder();
         $boolQuery = $queryBuilder->query()->bool();
-        $boolQuery->addMust(
-            $queryBuilder->query()->ids('offers.XML_ID', $ids)
-        );
+        foreach ($ids as $id) {
+            $boolQuery->addShould(
+                $queryBuilder->query()->nested()
+                    ->setPath('offers')
+                    ->setQuery(
+                        $queryBuilder->query()->term(
+                            [
+                                'offers.XML_ID' => [
+                                    'value' => $id,
+                                    'boost' => 200.0,
+                                    '_name' => 'skuId',
+                                ],
+                            ]
+                        )
+                    )
+            );
+        }
         $searchQuery->setQuery($boolQuery);
 
         /** @var AbstractQuery[] $filterSet */
