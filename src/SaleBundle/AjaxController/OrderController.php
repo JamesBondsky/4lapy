@@ -43,6 +43,7 @@ use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
+use FourPaws\SaleBundle\Repository\Table\AnimalShelterTable;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
@@ -176,6 +177,24 @@ class OrderController extends Controller implements LoggerAwareInterface
         return JsonSuccessResponse::createWithData(
             'Подгрузка успешна',
             $shopInfo
+        );
+    }
+
+    /**
+     * @Route("/shelter-search/", methods={"GET"})
+     *
+     * @return JsonResponse
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function shelterSearchAction(): JsonResponse
+    {
+        $shelters = AnimalShelterTable::getList()->fetchAll();
+        return JsonSuccessResponse::createWithData(
+            'Подгрузка успешна',
+            $shelters
         );
     }
 

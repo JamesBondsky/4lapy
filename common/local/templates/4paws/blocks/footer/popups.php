@@ -42,6 +42,9 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
     if ($template->hasOrderDeliveryPage()) {
         $APPLICATION->IncludeComponent('fourpaws:order.shop.list', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
     }
+    if ($template->hasOrderDeliveryPage()) {
+        $APPLICATION->IncludeComponent('fourpaws:order.shelter.list', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
+    }
     if ($template->hasFastOrder()) {
         $APPLICATION->IncludeComponent('fourpaws:fast.order', '', [], null, ['HIDE_ICONS' => 'Y']);
     }
