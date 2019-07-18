@@ -185,24 +185,6 @@ class PaymentService implements LoggerAwareInterface
             ->setTaxSystem($taxSystem);
 
         return (new Fiscalization())->setFiscal($fiscal);
-//        $fiscal = $this->paymentService->getMobileFiscalization($order);
-
-        $itemsCart = $this->getMobileFiscal($order);
-
-        /** @var DateTime $dateCreate */
-        $dateCreate = $order->getField('DATE_INSERT');
-
-        $orderBundle = new OrderBundle();
-        $orderBundle
-            ->setCustomerDetails($this->getCustomerDetails($order))
-            ->setDateCreate(DateHelper::convertToDateTime($dateCreate));
-//        $orderBundle->setCartItems($this->getCartItems($order, $skipGifts));
-        $orderBundle->setCartItems((new CartItems())->setItems(new ArrayCollection($itemsCart)));
-        $fiscal = (new Fiscal())
-            ->setOrderBundle($orderBundle)
-            ->setTaxSystem($taxSystem);
-
-        return (new Fiscalization())->setFiscal($fiscal);
     }
 
     /**
@@ -1477,8 +1459,8 @@ class PaymentService implements LoggerAwareInterface
                     }
 
                 } else {
+                    $newItem->setPrice($averagePriceItem);
                     if ($newItem->getPrice() > 0) {
-                        $newItem->setPrice($averagePriceItem);
                         $itemsOrder[$xmlIdItem][] = clone $newItem;
                     }
                 }
@@ -1524,6 +1506,27 @@ class PaymentService implements LoggerAwareInterface
                     ++$positionId;
                 }
             }
+        }
+
+        if ($order->getDeliveryPrice() > 0) {
+            $deliveryPrice = floor($order->getDeliveryPrice() * 100);
+            $delivery = (new Item())
+                ->setPositionId($positionId)
+                ->setName(Loc::getMessage('RBS_PAYMENT_DELIVERY_TITLE') ?: 'Доставка')
+                ->setQuantity((new ItemQuantity())
+                    ->setValue(1)
+                    ->setMeasure(Loc::getMessage('RBS_PAYMENT_MEASURE_DEFAULT') ?: 'Штука')
+                )
+                ->setXmlId(OrderPayment::GENERIC_DELIVERY_CODE)
+                ->setTotal($deliveryPrice)
+                ->setCode($order->getId() . '_DELIVERY')
+                ->setPrice($deliveryPrice)
+                ->setTax((new ItemTax())
+                    ->setType(6)
+                )
+                ->setPaymentMethod(PaymentMethod::FULL_PAYMENT);
+
+            $itemsFiscal[] = $delivery;
         }
 
         return $itemsFiscal;
