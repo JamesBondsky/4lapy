@@ -210,20 +210,20 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                             <? } ?>
 
                             <? if ($deliveryDobrolap) { ?>
-                                <input
-                                        class="b-choice-recovery__input js-recovery-email js-myself-shop js-delivery"
-                                        data-set-delivery-type="<?= $deliveryDobrolap->getDeliveryId() ?>"
-                                        id="order-delivery-dobrolap"
-                                        type="radio"
-                                        name="deliveryId"
-                                        data-text="Самовывоз"
-                                        value="<?= $deliveryDobrolap->getDeliveryId() ?>"
-                                        data-delivery="<?= $deliveryDobrolap->getPrice() ?>"
-                                        data-full=""
-                                        data-check="js-list-orders-cont"
-                                />
-
                                 <div class="b-choice-recovery__tooltip" data-b-choice-recovery-tooltip>
+                                    <input
+                                            class="b-choice-recovery__input js-recovery-dobrolap js-myself-shop js-delivery"
+                                            data-set-delivery-type="<?= $deliveryDobrolap->getDeliveryId() ?>"
+                                            id="order-delivery-dobrolap"
+                                            type="radio"
+                                            name="deliveryId"
+                                            data-text="Самовывоз"
+                                            value="<?= $deliveryDobrolap->getDeliveryId() ?>"
+                                            data-delivery="<?= $deliveryDobrolap->getPrice() ?>"
+                                            data-full=""
+                                            data-check="js-list-orders-cont"
+                                    />
+
                                     <label
                                             class="
                                         b-choice-recovery__label
@@ -231,10 +231,8 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                         b-choice-recovery__label--order-step
                                         b-choice-recovery__label--with-icon
                                         b-choice-recovery__label--mt
-                                        js-open-popup
                                     "
                                             for="order-delivery-dobrolap"
-                                            data-popup-id="popup-order-shelters"
                                     >
                                         <img src="/static/build/images/content/dobrolap/dobrolap-logo.png" alt="" srcset="/static/build/images/content/dobrolap/dobrolap-logo@2x.png 2x, /static/build/images/content/dobrolap/dobrolap-logo@3x.png 3x" class="b-choice-recovery__label-icon"/>
 
@@ -286,7 +284,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                             <?php if ($deliveryDobrolap) {
                                 $isHidden = $selectedDelivery->getDeliveryId() !== $deliveryDobrolap->getDeliveryId();
                                 ?>
-                                <li class="b-radio-tab__tab js-email-recovery"
+                                <li class="b-radio-tab__tab js-dobrolap-recovery"
                                     <?= $isHidden ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/dobrolap.php' ?>
                                 </li>
