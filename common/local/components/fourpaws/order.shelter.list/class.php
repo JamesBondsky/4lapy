@@ -29,7 +29,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceExce
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Bitrix\Main\Application as BitrixApplication;
 
-CBitrixComponent::includeComponentClass('fourpaws:shelter.list');
+CBitrixComponent::includeComponentClass('fourpaws:shop.list');
 
 /** @noinspection AutoloadingIssuesInspection */
 
