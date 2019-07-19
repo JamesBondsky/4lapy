@@ -53,6 +53,7 @@ use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\DeliveryNotAvailableException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
+use FourPaws\SaleBundle\Repository\Table\AnimalShelterTable;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderSplitService;
@@ -446,7 +447,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
                     $deliveryDostavista = $calculationResult;
                 } elseif($this->deliveryService->isDobrolapDelivery($calculationResult)){
                     $deliveryDobrolap = $calculationResult;
-                    $this->getDobrolapData($deliveries, $storage);
+                    $this->getDobrolapData($deliveries, $storage, $selectedCity);
                 }
             }
 
@@ -643,8 +644,11 @@ class FourPawsOrderComponent extends \CBitrixComponent
      * @param CalculationResultInterface[] $deliveries
      * @param OrderStorage                 $storage
      *
+     * @param array                        $selectedCity
+     *
      * @throws ApplicationCreateException
      * @throws ArgumentException
+     * @throws ArgumentNullException
      * @throws ArgumentOutOfRangeException
      * @throws NotFoundException
      * @throws NotImplementedException
@@ -653,9 +657,8 @@ class FourPawsOrderComponent extends \CBitrixComponent
      * @throws ObjectPropertyException
      * @throws StoreNotFoundException
      * @throws SystemException
-     * @throws ArgumentNullException
      */
-    protected function getDobrolapData(array $deliveries, OrderStorage $storage): void
+    protected function getDobrolapData(array $deliveries, OrderStorage $storage, array $selectedCity): void
     {
         $dobrolap = null;
         foreach ($deliveries as $calculationResult) {
@@ -711,6 +714,33 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 $this->arResult['DOBROLAP_STOCKS_AVAILABLE'] = $available;
                 $this->arResult['DOBROLAP_STOCKS_DELAYED'] = $delayed;
             }
+            $shelters = AnimalShelterTable::getList([
+                'order' => [
+                    'name' => 'asc'
+                ]
+            ])->fetchAll();
+
+            $checkedShelter = $storage->getShelter();
+            $currentShelters = [];
+            $currentSheltersMO = [];
+            foreach ($shelters as $key => &$shelter) {
+                if($shelter['id'] == $checkedShelter){
+                    $shelter['checked'] = true;
+                }
+                if ($selectedCity['NAME'] == $shelter['city']) {
+                    $currentShelters[] = $shelter;
+                    unset($shelters[$key]);
+                } elseif(strpos($shelter['city'], $selectedCity['NAME']) !== false) {
+                    $currentShelters[] = $shelter;
+                    unset($shelters[$key]);
+                } elseif ($selectedCity['NAME'] == 'Москва' && strpos($shelter['city'], 'Московская область') !== false) {
+                    $currentSheltersMO[] = $shelter;
+                    unset($shelters[$key]);
+                }
+            }
+            $shelters = array_merge($currentShelters, $currentSheltersMO, $shelters);
+
+            $this->arResult['SHELTERS'] = $shelters;
         }
     }
 

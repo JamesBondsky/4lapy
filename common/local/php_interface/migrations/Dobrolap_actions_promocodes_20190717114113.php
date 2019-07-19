@@ -13,6 +13,8 @@ use FourPaws\Enum\IblockType;
 
 class Dobrolap_actions_promocodes_20190717114113 extends SprintMigrationBase
 {
+    protected $description = "Импорт промокодов для добролапа";
+
     private $enums = [
         'n1' => [
             'XML_ID' => 'default',

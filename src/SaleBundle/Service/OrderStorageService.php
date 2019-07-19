@@ -298,7 +298,8 @@ class OrderStorageService
                     'secondDeliveryInterval',
                     'secondComment',
                     'lng',
-                    'lat'
+                    'lat',
+                    'shelter'
                 ];
                 break;
             case OrderStorageEnum::PAYMENT_STEP:
@@ -480,6 +481,12 @@ class OrderStorageService
         if($storage->isSubscribe()){
             $payments = array_filter($payments, function($item){
                 return in_array($item['CODE'], [OrderPayment::PAYMENT_CASH, OrderPayment::PAYMENT_CASH_OR_CARD]);
+            });
+        }
+        $deliveryCode = $this->deliveryService->getDeliveryCodeById($storage->getDeliveryId());
+        if ($this->deliveryService->isDobrolapDeliveryCode($deliveryCode)){
+            $payments = array_filter($payments, function($item){
+                return $item['CODE'] == OrderPayment::PAYMENT_ONLINE;
             });
         }
 

@@ -16,6 +16,8 @@ use FourPaws\DeliveryBundle\Handler\InnerPickupHandler;
 
 class Dobrolap_animal_shelters_20190717114112 extends SprintMigrationBase
 {
+    protected $description = "Таблица с питомниками";
+
     private $sheltersTableName = '4lapy_animal_shelters';
 
     private $shelters = [
@@ -127,7 +129,7 @@ class Dobrolap_animal_shelters_20190717114112 extends SprintMigrationBase
             'NAME'        => 'БФ "Husky Help"',
             'DESCRIPTION' => '',
             'ADDRESS'     => '',
-            'CITY'        => 'МО',
+            'CITY'        => 'Московская область',
             'LONG'        => '',
             'LAT'         => ''
         ],
@@ -135,7 +137,7 @@ class Dobrolap_animal_shelters_20190717114112 extends SprintMigrationBase
             'NAME'        => 'Кинологический центр помощи незрячим людям Собаки-поводыри',
             'DESCRIPTION' => '',
             'ADDRESS'     => '',
-            'CITY'        => 'МО',
+            'CITY'        => 'Московская область',
             'LONG'        => '',
             'LAT'         => ''
         ],
@@ -143,7 +145,7 @@ class Dobrolap_animal_shelters_20190717114112 extends SprintMigrationBase
             'NAME'        => 'Приют "Лесной приют"',
             'DESCRIPTION' => '',
             'ADDRESS'     => '',
-            'CITY'        => 'МО',
+            'CITY'        => 'Московская область',
             'LONG'        => '',
             'LAT'         => ''
         ],
@@ -151,7 +153,7 @@ class Dobrolap_animal_shelters_20190717114112 extends SprintMigrationBase
             'NAME'        => 'Приют Шереметьевский',
             'DESCRIPTION' => '',
             'ADDRESS'     => '',
-            'CITY'        => 'МО',
+            'CITY'        => 'Московская область',
             'LONG'        => '',
             'LAT'         => ''
         ],
@@ -159,7 +161,7 @@ class Dobrolap_animal_shelters_20190717114112 extends SprintMigrationBase
             'NAME'        => 'Общественная организация "Умка" (Дмитров)',
             'DESCRIPTION' => '',
             'ADDRESS'     => '',
-            'CITY'        => 'МО, Дмитровский район',
+            'CITY'        => 'Московская область, Дмитровский район',
             'LONG'        => '',
             'LAT'         => ''
         ],
@@ -167,7 +169,7 @@ class Dobrolap_animal_shelters_20190717114112 extends SprintMigrationBase
             'NAME'        => 'Приют "Верный Друг"',
             'DESCRIPTION' => '',
             'ADDRESS'     => '',
-            'CITY'        => 'МО, Дубна',
+            'CITY'        => 'Московская область, Дубна',
             'LONG'        => '',
             'LAT'         => ''
         ],
@@ -175,7 +177,7 @@ class Dobrolap_animal_shelters_20190717114112 extends SprintMigrationBase
             'NAME'        => 'Приют "Территория добра"',
             'DESCRIPTION' => '',
             'ADDRESS'     => '',
-            'CITY'        => 'МО, Клин',
+            'CITY'        => 'Московская область, Клин',
             'LONG'        => '',
             'LAT'         => ''
         ],
@@ -183,7 +185,7 @@ class Dobrolap_animal_shelters_20190717114112 extends SprintMigrationBase
             'NAME'        => 'Приют "Зоодом"',
             'DESCRIPTION' => '',
             'ADDRESS'     => '',
-            'CITY'        => 'МО, Королев',
+            'CITY'        => 'Московская область, Королев',
             'LONG'        => '',
             'LAT'         => ''
         ],
@@ -191,7 +193,7 @@ class Dobrolap_animal_shelters_20190717114112 extends SprintMigrationBase
             'NAME'        => 'Муниципальный Ногинский приют для собак',
             'DESCRIPTION' => '',
             'ADDRESS'     => '',
-            'CITY'        => 'МО, Ногинск',
+            'CITY'        => 'Московская область, Ногинск',
             'LONG'        => '',
             'LAT'         => ''
         ],
@@ -199,7 +201,7 @@ class Dobrolap_animal_shelters_20190717114112 extends SprintMigrationBase
             'NAME'        => 'Приют "Умка"',
             'DESCRIPTION' => '',
             'ADDRESS'     => '',
-            'CITY'        => 'МО, Одинцово',
+            'CITY'        => 'Московская область, Одинцово',
             'LONG'        => '',
             'LAT'         => ''
         ],
@@ -207,7 +209,7 @@ class Dobrolap_animal_shelters_20190717114112 extends SprintMigrationBase
             'NAME'        => 'БФ "ЮНА"',
             'DESCRIPTION' => '',
             'ADDRESS'     => '',
-            'CITY'        => 'МО, Подольск',
+            'CITY'        => 'Московская область, Подольск',
             'LONG'        => '',
             'LAT'         => ''
         ],
@@ -215,7 +217,7 @@ class Dobrolap_animal_shelters_20190717114112 extends SprintMigrationBase
             'NAME'        => 'Приют "Джимми"',
             'DESCRIPTION' => '',
             'ADDRESS'     => '',
-            'CITY'        => 'МО, Подольский район',
+            'CITY'        => 'Московская область, Подольский район',
             'LONG'        => '',
             'LAT'         => ''
         ],
@@ -223,7 +225,7 @@ class Dobrolap_animal_shelters_20190717114112 extends SprintMigrationBase
             'NAME'        => 'Волонтерское движение "Потеряшки"',
             'DESCRIPTION' => '',
             'ADDRESS'     => '',
-            'CITY'        => 'МО, Сергиев-Посад',
+            'CITY'        => 'Московская область, Сергиев-Посад',
             'LONG'        => '',
             'LAT'         => ''
         ],
@@ -231,7 +233,7 @@ class Dobrolap_animal_shelters_20190717114112 extends SprintMigrationBase
             'NAME'        => 'Приют "Зоозащита+"',
             'DESCRIPTION' => '',
             'ADDRESS'     => '',
-            'CITY'        => 'МО, Серпухов',
+            'CITY'        => 'Московская область, Серпухов',
             'LONG'        => '',
             'LAT'         => ''
         ],
@@ -239,7 +241,7 @@ class Dobrolap_animal_shelters_20190717114112 extends SprintMigrationBase
             'NAME'        => 'БФ "Собаки, которые любят"',
             'DESCRIPTION' => '',
             'ADDRESS'     => '',
-            'CITY'        => 'МО, Щербинка',
+            'CITY'        => 'Московская область, Щербинка',
             'LONG'        => '',
             'LAT'         => ''
         ],
@@ -247,7 +249,7 @@ class Dobrolap_animal_shelters_20190717114112 extends SprintMigrationBase
             'NAME'        => 'Волонтерская организация "Зоощит"',
             'DESCRIPTION' => '',
             'ADDRESS'     => '',
-            'CITY'        => 'МО,Подольск',
+            'CITY'        => 'Московская область, Подольск',
             'LONG'        => '',
             'LAT'         => ''
         ],
@@ -255,7 +257,7 @@ class Dobrolap_animal_shelters_20190717114112 extends SprintMigrationBase
             'NAME'        => 'БФ "АЙКА"',
             'DESCRIPTION' => '',
             'ADDRESS'     => '',
-            'CITY'        => 'МО,Рузский район',
+            'CITY'        => 'Московская область, Рузский район',
             'LONG'        => '',
             'LAT'         => ''
         ],
