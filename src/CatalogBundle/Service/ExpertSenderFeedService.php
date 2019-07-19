@@ -110,7 +110,7 @@ class ExpertSenderFeedService extends FeedService implements LoggerAwareInterfac
      */
     public function process(ConfigurationInterface $configuration, int $step, string $stockID = null): bool
     {
-        $this->tpmFileName = 'expert_sender_tmp_feed.xml';
+        $this->tmpFileName = 'expert_sender_tmp_feed.xml';
 
         /**
          * @var Configuration $configuration
