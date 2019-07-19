@@ -211,7 +211,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
 
                             <? if ($deliveryDobrolap) { ?>
                                 <div class="b-choice-recovery__tooltip" data-b-choice-recovery-tooltip>
-                                    <input
+                                    <input  <?= $deliveryService->isDobrolapDelivery($selectedDelivery) ? 'checked="checked"' : '' ?>
                                             class="b-choice-recovery__input js-recovery-dobrolap js-myself-shop js-delivery"
                                             data-set-delivery-type="<?= $deliveryDobrolap->getDeliveryId() ?>"
                                             id="order-delivery-dobrolap"

@@ -19,8 +19,8 @@ use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\StoreBundle\Entity\Store;
 
 /**
- * @var array $arResult
- * @var array $arParams
+ * @var array                      $arResult
+ * @var array                      $arParams
  * @var CalculationResultInterface $deliveryDobrolap
  * @var
  */
@@ -45,22 +45,26 @@ $partialPickup = $arResult['DOBROLAP_PARTIAL'] ?? $deliveryDobrolap;
 
 <div class="b-input-line b-input-line--address b-input-line--myself">
     <div class="b-input-line__label-wrapper">
-        <span class="b-input-line__label">Адрес доставки</span>
+        <label class="b-input-line__label" for="shelter">Приют для доставки</label>
     </div>
 
     <div class="b-input">
-        <select name="" class="b-input__input-field b-input__input-field--with-border" required>
+        <select name="shelter" class="b-input__input-field b-input__input-field--with-border" required>
             <option value="">не выбрано</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
+            <?
+            foreach ($arResult['SHELTERS'] as $shelter) {
+                ?>
+                <option value="<?= $shelter['id'] ?>" <?= ($shelter['checked']) ? 'selected' : '' ?>><?= $shelter['name'] ?>, <?= $shelter['city'] ?></option>
+                <?
+            }
+            ?>
         </select>
     </div>
 </div>
 
-<?/*<a class="b-link b-link--another-point js-open-popup"
+<? /*<a class="b-link b-link--another-point js-open-popup"
    href="javascript:void(0);"
    data-popup-id="popup-order-stores"
    title="">
     Выбрать другой питомник
-</a>*/?>
+</a>*/ ?>
