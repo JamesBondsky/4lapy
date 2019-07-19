@@ -307,6 +307,9 @@ class ExpertSenderFeedService extends FeedService implements LoggerAwareInterfac
         $sectionId = $offer->getProduct()->getIblockSectionId();
         $this->categoriesInProducts[$sectionId] = $sectionId;
 
+        $price = $offer->getPrice();
+        $oldPrice = $offer->getOldPrice();
+
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         /** @noinspection PassingByReferenceCorrectnessInspection */
         $expertSenderOffer =
@@ -329,8 +332,7 @@ class ExpertSenderFeedService extends FeedService implements LoggerAwareInterfac
                 ->setManufacturerWarranty(true)
                 ->setAvailable($offer->isAvailable())
                 ->setCurrencyId('RUB')
-                ->setOldPrice($offer->getOldPrice())
-                ->setPrice($offer->getPrice())
+                ->setPrice($price)
                 ->setPicture($currentImage)
                 ->setUrl($detailPath)
                 ->setCpa(0)
@@ -338,6 +340,10 @@ class ExpertSenderFeedService extends FeedService implements LoggerAwareInterfac
                     ->getBrandName())
                 ->setDeliveryOptions($deliveryInfo)
                 ->setVendorCode(\array_shift($offer->getBarcodes()) ?: '');
+
+        if ($price != $oldPrice) {
+            $expertSenderOffer->setOldPrice($oldPrice);
+        }
 
         $country = $offer
             ->getProduct()

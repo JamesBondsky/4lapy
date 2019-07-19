@@ -44,6 +44,7 @@ class Offer
     /**
      * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("float")
+     * @Serializer\SkipWhenEmpty()
      *
      * @var float
      */
