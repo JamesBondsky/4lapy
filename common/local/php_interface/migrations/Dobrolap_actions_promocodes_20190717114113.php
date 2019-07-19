@@ -7198,7 +7198,7 @@ class Dobrolap_actions_promocodes_20190717114113 extends SprintMigrationBase
             unset($action['COUPONS']);
             $action['DATE_ACTIVE_TO'] = '30.09.2019';
             $action['PROPERTY_VALUES']['ACTIVE_TO'] = '30.09.2019';
-            $action['XML_ID'] = rand(100000, 199999);
+            $action['XML_ID'] = 'dobrolap_' . rand(100000, 199999);
             $action['SORT'] = $sort += 100;
             $actionID = $helper->Iblock()->addElement($iblockId, $action);
 
@@ -7210,7 +7210,25 @@ class Dobrolap_actions_promocodes_20190717114113 extends SprintMigrationBase
 
             /** Заполняем новое польз свойство значениями */
             $userFieldEnum = new CUserFieldEnum();
-            $userFieldEnum->SetEnumValues($fieldsID, $this->enums);
+            $enums = $this->enums;
+            $userFieldEnumDb = $userFieldEnum->GetList(
+                [
+                    'ID' => 'ASC'
+                ],
+                [
+                    'USER_FIELD_ID' => $fieldsID
+                ]
+            );
+
+            while ($availableEnum = $userFieldEnumDb->Fetch()) {
+                foreach ($enums as $key => $enum) {
+                    if ($availableEnum['XML_ID'] == $enum['XML_ID']) {
+                        unset($enums[$key]);
+                    }
+                }
+            }
+
+            $userFieldEnum->SetEnumValues($fieldsID, $enums);
             $userFieldEnumDb = $userFieldEnum->GetList(
                 [
                     'ID' => 'ASC'

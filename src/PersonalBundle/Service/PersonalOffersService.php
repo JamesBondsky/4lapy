@@ -2,10 +2,18 @@
 
 namespace FourPaws\PersonalBundle\Service;
 
+use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Entity\Query;
+use Bitrix\Main\NotImplementedException;
+use CUserFieldEnum;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\PersonalBundle\Service\OrderService as PersonalOrderService;
+use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\UserBundle\Entity\User;
 use Psr\Log\LoggerAwareTrait;
 use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application as App;
@@ -35,15 +43,29 @@ class PersonalOffersService
     protected $personalCouponUsersManager;
 
     /**
-     * PersonalOffersService constructor.
+     * @var PersonalOrderService
      */
-    public function __construct()
+    private $personalOrderService;
+
+    /**
+     * @var OrderService $orderService
+     */
+    private $orderService;
+
+    /**
+     * PersonalOffersService constructor.
+     *
+     * @param OrderService $orderService
+     */
+    public function __construct(OrderService $orderService, PersonalOrderService $personalOrderService)
     {
         $this->setLogger(LoggerFactory::create('PersonalOffers'));
 
         $container = App::getInstance()->getContainer();
         $this->personalCouponManager = $container->get('bx.hlblock.personalcoupon');
         $this->personalCouponUsersManager = $container->get('bx.hlblock.personalcouponusers');
+        $this->orderService = $orderService;
+        $this->personalOrderService = $personalOrderService;
     }
 
     /**
@@ -578,6 +600,101 @@ class PersonalOffersService
 
         $couponsCollection = new ArrayCollection($coupons);
         return [$offersCollection, $couponsCollection];
+    }
+
+    /**
+     * @param User   $user
+     * @param string $orderID
+     *
+     * @return array|null
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function bindDobrolapRandomCoupon(User $user, string $orderID): ?array
+    {
+        try {
+            $order = $this->personalOrderService->getOrderByNumber($orderID);
+            $bitrixOrder = $this->orderService->getOrderById($order->getId());
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Order not found!'
+            ];
+        }
+
+        if($bitrixOrder->getUserId() != $user->getId()){
+            return [
+                'success' => false,
+                'message' => 'different current user and user in order!'
+            ];
+        } elseif ($this->orderService->getOrderDeliveryCode($bitrixOrder) != DeliveryService::DOBROLAP_DELIVERY_CODE) {
+            return [
+                'success' => false,
+                'message' => 'delivery in order is not valid!'
+            ];
+        } elseif ($this->orderService->getOrderPropertyByCode($bitrixOrder, 'DOBROLAP_COUPON_ID')->getValue()) {
+            return [
+                'success' => false,
+                'message' => 'another coupon already attached to the order!'
+            ];
+        }
+
+        /** Получаем айди значения добролап */
+        $userFieldEnum = new CUserFieldEnum();
+        $dobrolapEnumID = null;
+        $userFieldEnumDb = $userFieldEnum->GetList(
+            [
+                'ID' => 'ASC'
+            ],
+            [
+                'USER_FIELD_ID' => $fieldsID
+            ]
+        );
+        while ($enum = $userFieldEnumDb->Fetch()) {
+            if ($enum['XML_ID'] == 'dobrolap') {
+                $dobrolapEnumID = $enum['ID'];
+                break;
+            }
+        }
+
+
+        $coupon = null;
+        $offersCollection = new ArrayCollection();
+
+        $activeOffersCollection = $this->getActiveOffers(['?XML_ID' => 'dobrolap_']);
+
+        $personalCouponUsersQuery = Query\Join::on('this.ID', 'ref.UF_COUPON')->where(['UF_USER_ID', null]);
+
+        $coupon = $this->personalCouponManager::query()
+            ->setSelect([
+                'ID',
+                'UF_OFFER',
+                'UF_PROMO_CODE',
+                'USER_COUPONS'
+            ])
+            ->setFilter([
+                '=UF_OFFER' => $activeOffersCollection->getKeys(),
+                '=UF_COUPON_TYPE' => $dobrolapEnumID
+            ])
+            ->addOrder("ID", "ASC")
+//            ->registerRuntimeField(
+//                'RAND', ['data_type' => 'float', 'expression' => ['RAND()']]
+//            )
+            ->registerRuntimeField(
+                new ReferenceField(
+                    'USER_COUPONS', $this->personalCouponUsersManager::getEntity(),
+                    $personalCouponUsersQuery,
+                    ['join_type' => 'INNER']
+                )
+            )
+//            ->setLimit(1)
+            ->exec()
+            ->fetchAll();
+
+        return [$coupon];
     }
 
     /**
