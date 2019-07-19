@@ -766,8 +766,6 @@ class SearchService implements LoggerAwareInterface
                             [
                                 'offers.XML_ID' => [
                                     'value' => $id,
-                                    'boost' => 200.0,
-                                    '_name' => 'skuId',
                                 ],
                             ]
                         )
@@ -779,10 +777,8 @@ class SearchService implements LoggerAwareInterface
                     ->setQuery(
                         $queryBuilder->query()->term(
                             [
-                                'offers.PROPERTY_BARCODE' => [
+                                'product.XML_ID' => [
                                     'value' => $id,
-                                    'boost' => 200.0,
-                                    '_name' => 'barcode',
                                 ],
                             ]
                         )
