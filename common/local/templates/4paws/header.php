@@ -385,3 +385,7 @@ if ($template->hasContent()) {
         ],
         false);
 }
+
+if ($template->isDobrolap()) {
+    include_once $_SERVER['DOCUMENT_ROOT'] . '/dobrolap/assets.php';
+}

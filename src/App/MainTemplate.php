@@ -495,4 +495,11 @@ class MainTemplate extends TemplateAbstract
         return $this->isPartitionDir('/ajax/catalog');
     }
 
+    /**
+     * @return bool
+     */
+    public function isDobrolap(): bool
+    {
+        return $this->isPartitionPage('/dobrolap/');
+    }
 }
