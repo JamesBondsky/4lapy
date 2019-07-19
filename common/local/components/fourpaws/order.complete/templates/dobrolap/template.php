@@ -30,8 +30,16 @@
 
                 <hr class="b-hr b-hr--order b-hr--top-line" />
 
-                <?php if (!array_key_exists('prize', $_POST)): ?>
-                    <div>
+                <div data-b-dobrolap-prizes data-order-id="<ORDERID>">
+                    <?/*
+                        1. Показываем choose-section, если пользователь не выбрал приз.
+
+                        После выбора приза, choose-section скрывается,
+                        а в coupon-section проставляется HTML из AJAX.
+
+                        2. Не показываем choose-section, если пользователь уже выбрал приз.
+                    */?>
+                    <div data-b-dobrolap-prizes="choose-section">
                         <div class="b-order__text-block">
                             <strong>Мы говорим спасибо</strong>
                             <br /><br />
@@ -48,7 +56,7 @@
                             <b>А сейчас выберите для себя один из шести сюрпризов, кликнув на любой из них</b>
                         </div>
 
-                        <form method="POST" action="<?=$APPLICATION->GetCurUri()?>" class="b-dobrolap-prizes">
+                        <div class="b-dobrolap-prizes">
                             <?php for ($i = 1; $i <= 6; $i++): ?>
                                 <input
                                         type="radio"
@@ -56,33 +64,38 @@
                                         value="<?=$i?>"
                                         class="b-dobrolap-prizes__radio"
                                         id="dobrolap-prize-<?=$i?>"
-                                        onchange="this.form.submit()"
                                 />
 
-                                <label for="dobrolap-prize-<?=$i?>" class="b-dobrolap-prizes__label">
+                                <label for="dobrolap-prize-<?=$i?>" class="b-dobrolap-prizes__label" data-b-dobrolap-prizes="choose-section-item">
                                     <img src="/static/build/images/content/dobrolap/dobrolap-logo@3x.png" alt="" class="b-dobrolap-prizes__label-img" />
                                 </label>
                             <?php endfor ?>
-                        </form>
+                        </div>
                     </div>
-                <?php else: ?>
-                    <div>
+
+                    <div data-b-dobrolap-prizes="coupon-section">
+                        <?/*
+                            1. Если пользователь не выбрал приз, то оставляем пустым div coupon-section.
+                            2. Если пользователь выбрал приз, то вставляем в coupon-section HTML c купоном.
+                        */?>
+
+<?/*
                         <div class="b-order__text-block">
                             <strong>А вот и сюрприз для Вас!</strong>
                             <br /><br />
 
-                            <div class="b-dobrolap-coupon">
+                            <div class="b-dobrolap-coupon" data-b-dobrolap-coupon data-coupon="ABC123DFE4567">
                                 <div class="b-dobrolap-coupon__item b-dobrolap-coupon__item--info">
                                     <div class="b-dobrolap-coupon__discount">
                                         <span class="b-dobrolap-coupon__discount-big">15%</span>
 
                                         <span class="b-dobrolap-coupon__discount-text b-dobrolap-coupon__discount-text--desktop">
-                                    на лакомства для кошек&nbsp;и&nbsp;собак
-                                </span>
+                                            на лакомства для кошек&nbsp;и&nbsp;собак
+                                        </span>
 
                                         <span class="b-dobrolap-coupon__discount-text b-dobrolap-coupon__discount-text--mobile">
-                                    Лакомства
-                                </span>
+                                            Лакомства
+                                        </span>
                                     </div>
 
                                     <div class="b-dobrolap-coupon__deadline">
@@ -95,14 +108,14 @@
                                         <span class="b-dobrolap-coupon__code-text">Промо-код</span>
                                         <strong>ABC123DFE4567</strong>
 
-                                        <button class="b-button b-button--outline-white b-dobrolap-coupon__code-copy">Скопировать</button>
+                                        <button class="b-button b-button--outline-white b-dobrolap-coupon__code-copy" data-b-dobrolap-coupon="copy-btn">Скопировать</button>
                                     </div>
 
                                     <div class="b-dobrolap-coupon__barcode">
                                         <img src="https://placehold.it/192x68" alt="" class="b-dobrolap-coupon__barcode-image" />
                                     </div>
 
-                                    <button class="b-button b-button--outline-grey b-button--full-width b-dobrolap-coupon__email-me">
+                                    <button class="b-button b-button--outline-grey b-button--full-width b-dobrolap-coupon__email-me" data-b-dobrolap-coupon="email-btn">
                                         Отправить мне на email
                                     </button>
                                 </div>
@@ -125,8 +138,9 @@
                             <br />
                             3. Промо-код можно использовать 1 раз до окончанчания его срока действия.
                         </div>
+*/?>
                     </div>
-                <?php endif ?>
+                </div>
             </div>
         </div>
     </div>
