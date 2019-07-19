@@ -9,6 +9,7 @@ use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\App\Application as App;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
+use FourPaws\MobileApiBundle\Tables\UserApiLastUsing;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
@@ -28,6 +29,12 @@ class BaseController extends FOSRestController
             /** @var UserService $userCurrentUserService*/
             $userCurrentUserService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
             $currentUser = $userCurrentUserService->getCurrentUser();
+            $currentDate = new \DateTime();
+            $fields = [
+                'USER_ID' => $currentUser->getId(),
+            ];
+//            $res = UserApiLastUsing::add($fields);
+
 
             $client->phone = $currentUser->getPersonalPhone();
             $client->haveMobileApp = true;
