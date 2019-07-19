@@ -23,355 +23,223 @@ class Dobrolap_animal_shelters_20190717114112 extends SprintMigrationBase
     private $shelters = [
         [
             'NAME'        => 'Приют Последний шанс',
-            'DESCRIPTION' => 'гг',
-            'ADDRESS'     => 'вп',
-            'CITY'        => 'Владимир',
-            'LONG'        => '1223.123123',
-            'LAT'         => '3214.456456'
+            'DESCRIPTION' => '',
+            'CITY'        => 'Владимир'
         ],
         [
             'NAME'        => 'БФ "Дино"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Волгоград',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Волгоград'
         ],
         [
             'NAME'        => 'БФ "Право на жизнь"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Воронеж',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Воронеж'
         ],
         [
             'NAME'        => 'Ветгоспиталь Друзья',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Воронеж',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Воронеж'
         ],
         [
             'NAME'        => 'БФ "Буду Рядом"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Долгопрудный',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Долгопрудный'
         ],
         [
             'NAME'        => 'Приют "Егорка"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Егорьевск',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Егорьевск'
         ],
         [
             'NAME'        => 'БФ "Просто Живи"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Жуковский',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Жуковский'
         ],
         [
             'NAME'        => 'Приют "Проект Майский день"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Иваново',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Иваново'
         ],
         [
             'NAME'        => 'Приют Zoo 37',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Иваново',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Иваново'
         ],
         [
             'NAME'        => 'Приют "Верные друзья"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Калуга',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Калуга'
         ],
         [
             'NAME'        => 'Приют Душа Бродяги',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Калуга',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Калуга'
         ],
         [
             'NAME'        => 'Приют Право на жизнь',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Кострома',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Кострома'
         ],
         [
             'NAME'        => 'Приют "Территория спасения"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Липецк',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Липецк'
         ],
         [
             'NAME'        => 'БФ "Husky Help"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Московская область',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Московская область'
         ],
         [
             'NAME'        => 'Кинологический центр помощи незрячим людям Собаки-поводыри',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Московская область',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Московская область'
         ],
         [
             'NAME'        => 'Приют "Лесной приют"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Московская область',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Московская область'
         ],
         [
             'NAME'        => 'Приют Шереметьевский',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Московская область',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Московская область'
         ],
         [
             'NAME'        => 'Общественная организация "Умка" (Дмитров)',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Московская область, Дмитровский район',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Московская область, Дмитровский район'
         ],
         [
             'NAME'        => 'Приют "Верный Друг"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Московская область, Дубна',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Московская область, Дубна'
         ],
         [
             'NAME'        => 'Приют "Территория добра"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Московская область, Клин',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Московская область, Клин'
         ],
         [
             'NAME'        => 'Приют "Зоодом"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Московская область, Королев',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Московская область, Королев'
         ],
         [
             'NAME'        => 'Муниципальный Ногинский приют для собак',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Московская область, Ногинск',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Московская область, Ногинск'
         ],
         [
             'NAME'        => 'Приют "Умка"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Московская область, Одинцово',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Московская область, Одинцово'
         ],
         [
             'NAME'        => 'БФ "ЮНА"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Московская область, Подольск',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Московская область, Подольск'
         ],
         [
             'NAME'        => 'Приют "Джимми"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Московская область, Подольский район',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Московская область, Подольский район'
         ],
         [
             'NAME'        => 'Волонтерское движение "Потеряшки"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Московская область, Сергиев-Посад',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Московская область, Сергиев-Посад'
         ],
         [
             'NAME'        => 'Приют "Зоозащита+"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Московская область, Серпухов',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Московская область, Серпухов'
         ],
         [
             'NAME'        => 'БФ "Собаки, которые любят"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Московская область, Щербинка',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Московская область, Щербинка'
         ],
         [
             'NAME'        => 'Волонтерская организация "Зоощит"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Московская область, Подольск',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Московская область, Подольск'
         ],
         [
             'NAME'        => 'БФ "АЙКА"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Московская область, Рузский район',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Московская область, Рузский район'
         ],
         [
             'NAME'        => 'Волонтерская группа "КОТтедж КОТлетка"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Москва',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Москва'
         ],
         [
             'NAME'        => 'Волонтерское движение "Преданный друг"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Москва',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Москва'
         ],
         [
             'NAME'        => 'Приют "Искра"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Москва',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Москва'
         ],
         [
             'NAME'        => 'Приют "Муркоша"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Москва',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Москва'
         ],
         [
             'NAME'        => 'Приют "Мурлыка"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Москва',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Москва'
         ],
         [
             'NAME'        => 'Приют "Домашний"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Москва',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Москва'
         ],
         [
             'NAME'        => 'Приют "Бескудниково"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Москва, Лианозово',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Москва, Лианозово'
         ],
         [
             'NAME'        => 'Приют "Преданное сердце"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Нижний Новгород',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Нижний Новгород'
         ],
         [
             'NAME'        => 'Волонтерская группа "Добрые руки"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Новомосковск',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Новомосковск'
         ],
         [
             'NAME'        => 'Приют "Новый ковчег"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Обнинск',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Обнинск'
         ],
         [
             'NAME'        => 'МБУ "Городская служба по контролю за безнадзорными животными"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Рязань',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Рязань'
         ],
         [
             'NAME'        => 'Приют "Континент +"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Тула',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Тула'
         ],
         [
             'NAME'        => 'БФ "Жизнь дана на добрые дела"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Ярославль',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Ярославль'
         ],
         [
             'NAME'        => 'БФ "Зоо Забота"',
             'DESCRIPTION' => '',
-            'ADDRESS'     => '',
-            'CITY'        => 'Ярославль',
-            'LONG'        => '',
-            'LAT'         => ''
+            'CITY'        => 'Ярославль'
         ],
     ];
 
@@ -384,16 +252,13 @@ class Dobrolap_animal_shelters_20190717114112 extends SprintMigrationBase
                     `id` INT NOT NULL AUTO_INCREMENT,
                     `name` VARCHAR (255) NOT NULL,
                     `description` VARCHAR (255) NOT NULL,
-                    `address` VARCHAR (255) NOT NULL,
                     `city` VARCHAR (255) NOT NULL,
-                    `latitude` FLOAT NOT NULL,
-                    `longitude` FLOAT NOT NULL,
                     PRIMARY KEY (`id`)
                 );'
             );
 
             foreach ($this->shelters as $shelter) {
-                Application::getConnection()->query('INSERT INTO `' . $this->sheltersTableName . '` (name, description, address, city, latitude, longitude) VALUES (\'' . implode('\',\'', $shelter) . '\');');
+                Application::getConnection()->query('INSERT INTO `' . $this->sheltersTableName . '` (name, description, city) VALUES (\'' . implode('\',\'', $shelter) . '\');');
             }
         } catch (SqlQueryException $e) {
             echo $e->getMessage();

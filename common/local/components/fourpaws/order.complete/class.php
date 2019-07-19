@@ -18,6 +18,7 @@ use Bitrix\Sale\Order;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 use FourPaws\App\Application;
+use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Bitrix\FourPawsComponent;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -25,10 +26,12 @@ use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\External\ManzanaPosService;
+use FourPaws\Helpers\BxCollection;
 use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\ValidationException;
+use FourPaws\SaleBundle\Repository\Table\AnimalShelterTable;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\UserAccountService;
 use FourPaws\StoreBundle\Entity\Store;
@@ -260,7 +263,28 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
 
         $this->arResult['NEED_SHOW_ROYAL_CANIN_BUNNER'] = $this->orderService->checkRoyalCaninAction($order);
 
-        if($this->deliveryService->isDobrolapDeliveryCode($this->orderService->getOrderDeliveryCode($order)) && new DateTime() <= new DateTime('2019-09-30 23:59:59') ){
+        if ($this->deliveryService->isDobrolapDeliveryCode($this->orderService->getOrderDeliveryCode($order)) && new DateTime() <= new DateTime('2019-09-30 23:59:59')) {
+            /* Проверяем не привязан ли купон */
+            $this->arResult['EXIST_COUPON'] == false;
+            $couponProp = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'DOBROLAP_COUPON_ID');
+            $dobrolapCouponID = $couponProp ? $couponProp->getValue() : null;
+            if ($dobrolapCouponID) {
+                $this->arResult['EXIST_COUPON'] == true;
+                /** @var \Symfony\Bundle\FrameworkBundle\Routing\Router */
+                $router = App::getInstance()->getContainer()->get('router');
+                /** @var Symfony\Component\Routing\RouteCollection $routes */
+                $routes = $router->getRouteCollection();
+                $route = $routes->get('fourpaws_personal_ajax_personaloffers_bindunreserveddobrolapcoupon');
+                $this->arResult['GET_COUPON_URL'] = $route->getPath();
+                /**
+                 * TODO получить данные купона
+                 */
+            }
+
+            /* Получаем питомник */
+            $shelterID = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'DOBROLAP_SHELTER')->getValue();
+            $shelter = AnimalShelterTable::getById($shelterID)->fetch();
+            $this->arResult['SHELTER'] = $shelter['name'] . ', ' . $shelter['city'];
             $this->setTemplateName('dobrolap');
         }
     }
