@@ -33,16 +33,7 @@ class AnimalShelterTable extends DataManager
             new StringField('description', [
                 'required' => true,
             ]),
-            new StringField('address', [
-                'required' => true,
-            ]),
             new StringField('city', [
-                'required' => true,
-            ]),
-            new FloatField('latitude', [
-                'required' => true,
-            ]),
-            new FloatField('longitude', [
                 'required' => true,
             ])
         ];

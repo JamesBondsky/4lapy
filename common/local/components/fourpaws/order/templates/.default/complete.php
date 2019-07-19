@@ -10,8 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 $APPLICATION->IncludeComponent(
     'fourpaws:order.complete',
-//    '',
-    'dobrolap',
+    '',
     [
         'ORDER_ID'  => $arParams['ORDER_ID'],
         'HASH'      => $arParams['HASH'],
