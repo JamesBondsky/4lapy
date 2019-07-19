@@ -2,6 +2,7 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\Catalog\Exception\CategoryNotFoundException;
@@ -9,7 +10,12 @@ use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Filter\RangeFilterInterface;
 use FourPaws\Catalog\Model\Sorting;
 use FourPaws\Catalog\Model\Variant;
+use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\CatalogBundle\Service\CategoriesService;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
+use FourPaws\Helpers\IblockHelper;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\Filter;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\FilterVariant;
 use FourPaws\MobileApiBundle\Exception\CategoryNotFoundException as MobileCategoryNotFoundException;
@@ -29,13 +35,20 @@ class CatalogService
      */
     private $searchService;
 
+    /**
+     * @var ProductService
+     */
+    private $productService;
+
     public function __construct(
         CategoriesService $categoriesService,
-        SearchService $searchService
+        SearchService $searchService,
+        ProductService $productService
     )
     {
         $this->categoriesService = $categoriesService;
         $this->searchService = $searchService;
+        $this->productService = $productService;
     }
 
     /**
@@ -43,9 +56,10 @@ class CatalogService
      *
      * @throws \FourPaws\MobileApiBundle\Exception\SystemException
      * @throws MobileCategoryNotFoundException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @return Collection|Filter[]
      */
-    public function getFilters(int $categoryId)
+    public function getFilters(int $categoryId = 0, int $stockId = 0)
     {
         try {
             $category = $this->categoriesService->getById($categoryId);
@@ -56,11 +70,17 @@ class CatalogService
             throw new SystemException($exception->getMessage());
         }
 
+        $productIds = '';
+        if($stockId > 0){
+            $productIds = $this->productService->getProductIdsByShareId($stockId);
+        }
+
         /** we have to search for products to calculate amount of products per each filter  */
         $this->searchService->searchProducts(
             $category->getFilters(),
             new Sorting(),
-            new Navigation()
+            new Navigation(),
+            $productIds
         );
 
         $filters = $category
