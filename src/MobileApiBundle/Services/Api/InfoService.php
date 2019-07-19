@@ -38,6 +38,9 @@ class InfoService implements LoggerAwareInterface
     /** @var ProductService */
     private $productService;
 
+    /** @var bool $isNeedLoad */
+    private $isNeedLoad = false;
+
     /** @var ShortProduct[]  */
     private static $cache = [];
 
@@ -409,6 +412,7 @@ class InfoService implements LoggerAwareInterface
 
                 if ($item['IBLOCK_CODE'] === IblockCode::SHARES && $withId) {
                     $apiView->setGoods($this->getGoods($item['ID']));
+                    $apiView->setIsNeedLoad($this->isNeedLoad);
                 }
 
                 return $apiView;
@@ -423,12 +427,17 @@ class InfoService implements LoggerAwareInterface
      * @throws \Bitrix\Main\ArgumentException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    private function getGoods(int $specialOfferId)
+    private function getGoods(int $specialOfferId, ?int $limit = 20)
     {
+        $this->isNeedLoad = false;
         $products = new ArrayCollection();
         $iblockId = IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES);
         $rs = CIBlockElement::GetProperty($iblockId, $specialOfferId, [], ['CODE' => 'PRODUCTS', 'EMPTY' => 'N']);
         while ($property = $rs->fetch()) {
+            if ($products->count() == $limit) {
+                $this->isNeedLoad = true;
+                break;
+            }
             $offerId = $property['VALUE'];
 
             if (!array_key_exists($property['VALUE'], self::$cache)) {
