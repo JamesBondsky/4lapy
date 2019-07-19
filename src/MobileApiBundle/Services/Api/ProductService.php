@@ -22,6 +22,7 @@ use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Collection\ProductCollection;
 use FourPaws\Catalog\Model\BundleItem;
+use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\OfferQuery;
@@ -143,6 +144,23 @@ class ProductService
 
         if($stockId > 0){
             $searchQuery = $this->getProductIdsByShareId($stockId);
+
+            $category = new \FourPaws\Catalog\Model\Category();
+            $this->filterHelper->initCategoryFilters($category, $request);
+            $filters = $category->getFilters();
+
+            $resetFilter = true;
+            foreach ($filters as $filter) {
+                $filterCode = $filter->getFilterCode();
+                $requestParam = $request->get($filterCode);
+                if ($requestParam) {
+                    $resetFilter = false;
+                }
+            }
+
+            if ($resetFilter) {
+                $filters = new FilterCollection();
+            }
         } else if ($searchQuery) {
             /** @see CatalogController::searchAction */
             $searchQuery = mb_strtolower($searchQuery);
