@@ -39,7 +39,7 @@ class CatalogController extends BaseController
     public function getFilterListAction(FilterListRequest $filterListRequest): FilterListResponse
     {
         return new FilterListResponse(
-            $this->apiCatalogService->getFilters($filterListRequest->getId())
+            $this->apiCatalogService->getFilters($filterListRequest->getId(), $filterListRequest->getStockId())
         );
     }
 }

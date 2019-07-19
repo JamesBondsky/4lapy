@@ -14,7 +14,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 class FilterListRequest implements GetRequest, SimpleUnserializeRequest
 {
     /**
-     * @Assert\GreaterThan("0")
      * @Assert\Type("integer")
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("id")
@@ -23,11 +22,19 @@ class FilterListRequest implements GetRequest, SimpleUnserializeRequest
     protected $id;
 
     /**
+     * @Assert\Type("integer")
+     * @Serializer\Type("integer")
+     * @Serializer\SerializedName("stock_id")
+     * @var int
+     */
+    protected $stockId;
+
+    /**
      * @return int
      */
     public function getId(): int
     {
-        return $this->id;
+        return $this->id ?: 0;
     }
 
     /**
@@ -39,5 +46,23 @@ class FilterListRequest implements GetRequest, SimpleUnserializeRequest
     {
         $this->id = $id;
         return $this;
+    }
+
+    /**
+     * @param int $stockId
+     * @return FilterListRequest
+     */
+    public function setStockId(int $stockId): FilterListRequest
+    {
+        $this->stockId = $stockId;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getStockId(): int
+    {
+        return $this->stockId ?: 0;
     }
 }
