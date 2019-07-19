@@ -220,7 +220,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                             data-text="Самовывоз"
                                             value="<?= $deliveryDobrolap->getDeliveryId() ?>"
                                             data-delivery="<?= $deliveryDobrolap->getPrice() ?>"
-                                            data-full=""
+                                            data-full="<?= $deliveryDobrolap->getStockResult()->getOrderable()->getPrice() ?>"
                                             data-check="js-list-orders-cont"
                                     />
 

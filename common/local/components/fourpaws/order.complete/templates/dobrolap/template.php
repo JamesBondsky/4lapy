@@ -1,14 +1,19 @@
 <?php
 
 use Bitrix\Sale\Order;
+use Picqer\Barcode\BarcodeGeneratorPNG;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+$barcodeGenerator = new BarcodeGeneratorPNG();
+
 /** @var Order $order */
 $order = $arResult['ORDER'];
-
+$offer = $arResult['OFFER'];
+$coupon = $arResult['COUPON'];
+$promocode = $coupon['UF_PROMO_CODE'];
 ?>
 
 <div class="b-container">
@@ -22,42 +27,35 @@ $order = $arResult['ORDER'];
                 </h2>
                 <div class="b-order__text-block">и&nbsp;будет&nbsp;доставлен&nbsp;в <b><?= $arResult['SHELTER'] ?></b></div>
                 <hr class="b-hr b-hr--order b-hr--top-line"/>
-                <div data-b-dobrolap-prizes data-order-id="<?= $order->getField('ACCOUNT_NUMBER') ?>" data-url="<?=$arResult['GET_COUPON_URL']?>">
+                <div data-b-dobrolap-prizes data-order-id="<?= $order->getField('ACCOUNT_NUMBER') ?>" data-url="<?= $arResult['GET_COUPON_URL'] ?>">
                     <? if ($arResult['EXIST_COUPON']) { ?>
                         <div data-b-dobrolap-prizes="coupon-section">
                             <div class="b-order__text-block">
                                 <strong>А вот и сюрприз для Вас!</strong>
                                 <br/><br/>
-
-                                <div class="b-dobrolap-coupon" data-b-dobrolap-coupon data-coupon="ABC123DFE4567">
+                                <div class="b-dobrolap-coupon" data-b-dobrolap-coupon data-coupon="<?= $promocode ?>">
                                     <div class="b-dobrolap-coupon__item b-dobrolap-coupon__item--info">
                                         <div class="b-dobrolap-coupon__discount">
-                                            <span class="b-dobrolap-coupon__discount-big">15%</span>
-
-                                            <span class="b-dobrolap-coupon__discount-text b-dobrolap-coupon__discount-text--desktop">
-                                            на лакомства для кошек&nbsp;и&nbsp;собак
-                                        </span>
-
-                                            <span class="b-dobrolap-coupon__discount-text b-dobrolap-coupon__discount-text--mobile">
-                                            Лакомства
-                                        </span>
+                                            <span class="b-dobrolap-coupon__discount-big"><?= ($offer["PROPERTY_DISCOUNT_VALUE"] ? $offer["PROPERTY_DISCOUNT_VALUE"] . "%" : $offer["PROPERTY_DISCOUNT_CURRENCY_VALUE"] . " ₽") ?></span>
+                                            <span class="b-dobrolap-coupon__discount-text b-dobrolap-coupon__discount-text--desktop"><?= $offer["PREVIEW_TEXT"] ?></span>
+                                            <span class="b-dobrolap-coupon__discount-text b-dobrolap-coupon__discount-text--mobile"><?= $offer["PREVIEW_TEXT"] ?></span>
                                         </div>
-
                                         <div class="b-dobrolap-coupon__deadline">
-                                            скидка действует по&nbsp;промо-коду до&nbsp;31.09.2019
+                                            скидка действует по&nbsp;промо-коду до&nbsp;<?= $offer["PROPERTY_ACTIVE_TO_VALUE"] ?>
                                         </div>
                                     </div>
 
                                     <div class="b-dobrolap-coupon__item b-dobrolap-coupon__item--promo">
                                         <div class="b-dobrolap-coupon__code">
                                             <span class="b-dobrolap-coupon__code-text">Промо-код</span>
-                                            <strong>ABC123DFE4567</strong>
+                                            <strong><?= $promocode ?></strong>
 
                                             <button class="b-button b-button--outline-white b-dobrolap-coupon__code-copy" data-b-dobrolap-coupon="copy-btn">Скопировать</button>
                                         </div>
 
                                         <div class="b-dobrolap-coupon__barcode">
-                                            <img src="https://placehold.it/192x68" alt="" class="b-dobrolap-coupon__barcode-image"/>
+                                            <img src="data:image/png;base64,<?= base64_encode($barcodeGenerator->getBarcode($coupon["UF_PROMO_CODE"], \Picqer\Barcode\BarcodeGenerator::TYPE_CODE_128, 2.132310384278889,
+                                                127)) ?>" alt="" class="b-dobrolap-coupon__barcode-image"/>
                                         </div>
 
                                         <button class="b-button b-button--outline-grey b-button--full-width b-dobrolap-coupon__email-me" data-b-dobrolap-coupon="email-btn">
@@ -89,10 +87,8 @@ $order = $arResult['ORDER'];
                             <div class="b-order__text-block">
                                 <strong>Мы говорим спасибо</strong>
                                 <br/><br/>
-
                                 В знак благодарности мы приготовили небольшой сюрприз — <br/> фанты «Добролап» с приятными презентами.
                                 <br/><br/>
-
                                 Также мы вложим в ваш следующий заказ подарок — памятный магнит.
                             </div>
 

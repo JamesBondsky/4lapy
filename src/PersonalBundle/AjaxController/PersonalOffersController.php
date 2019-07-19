@@ -44,15 +44,15 @@ class PersonalOffersController extends Controller
         $curUser = $this->currentUserProvider->getCurrentUser();
         $coupon = $this->personalOffersService->bindDobrolapRandomCoupon($curUser, $orderID);
 
-        if ($coupon) {
+        if ($coupon['success']) {
             return JsonSuccessResponse::createWithData(
                 '',
                 [
-                    'coupon' => $coupon
+                    'html' => $coupon['html']
                 ]
             );
         } else {
-            return JsonErrorResponse::create('Свободных купонов не осталось!');
+            return JsonErrorResponse::create($coupon['message']);
         }
     }
 

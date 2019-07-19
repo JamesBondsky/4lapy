@@ -4,6 +4,8 @@ namespace Sprint\Migration;
 
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
 use Bitrix\Highloadblock\DataManager;
+use Bitrix\Main\Application;
+use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\Type\DateTime;
 use CUserFieldEnum;
 use FourPaws\App\Application as App;

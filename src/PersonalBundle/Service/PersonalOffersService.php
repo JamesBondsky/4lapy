@@ -6,6 +6,7 @@ use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\NotImplementedException;
+use Bitrix\Main\ORM\Fields\ExpressionField;
 use CUserFieldEnum;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
@@ -14,6 +15,7 @@ use FourPaws\PersonalBundle\Service\OrderService as PersonalOrderService;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\UserBundle\Entity\User;
+use Picqer\Barcode\BarcodeGeneratorPNG as BarcodeGeneratorPNG;
 use Psr\Log\LoggerAwareTrait;
 use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application as App;
@@ -625,7 +627,8 @@ class PersonalOffersService
             ];
         }
 
-        if($bitrixOrder->getUserId() != $user->getId()){
+        $userID = $user->getId();
+        if ($bitrixOrder->getUserId() != $userID) {
             return [
                 'success' => false,
                 'message' => 'different current user and user in order!'
@@ -660,13 +663,12 @@ class PersonalOffersService
             }
         }
 
-
         $coupon = null;
         $offersCollection = new ArrayCollection();
 
         $activeOffersCollection = $this->getActiveOffers(['?XML_ID' => 'dobrolap_']);
 
-        $personalCouponUsersQuery = Query\Join::on('this.ID', 'ref.UF_COUPON')->where(['UF_USER_ID', null]);
+        $personalCouponUsersQuery = Query\Join::on('this.ID', 'ref.UF_COUPON');
 
         $coupon = $this->personalCouponManager::query()
             ->setSelect([
@@ -676,25 +678,161 @@ class PersonalOffersService
                 'USER_COUPONS'
             ])
             ->setFilter([
-                '=UF_OFFER' => $activeOffersCollection->getKeys(),
-                '=UF_COUPON_TYPE' => $dobrolapEnumID
+                '=UF_OFFER'                       => $activeOffersCollection->getKeys(),
+                '=UF_COUPON_TYPE'                 => $dobrolapEnumID,
+                'PERSONAL_COUPON_USER_COUPONS_ID' => null
             ])
-            ->addOrder("ID", "ASC")
-//            ->registerRuntimeField(
-//                'RAND', ['data_type' => 'float', 'expression' => ['RAND()']]
-//            )
+            ->addOrder("RAND", "ASC")
+            ->registerRuntimeField(
+                'RAND', ['data_type' => 'float', 'expression' => ['RAND()']]
+            )
             ->registerRuntimeField(
                 new ReferenceField(
                     'USER_COUPONS', $this->personalCouponUsersManager::getEntity(),
                     $personalCouponUsersQuery,
-                    ['join_type' => 'INNER']
+                    ['join_type' => 'LEFT']
                 )
             )
-//            ->setLimit(1)
+            ->setLimit(1)
             ->exec()
-            ->fetchAll();
+            ->fetch();
 
-        return [$coupon];
+        if (!$coupon) {
+            return [
+                'success' => false,
+                'message' => 'All coupons used!'
+            ];
+        }
+
+        $couponID = $coupon['ID'];
+
+        $data = [
+            'UF_COUPON'       => $couponID,
+            'UF_USER_ID'      => $userID,
+            'UF_DATE_CREATED' => new DateTime(),
+            'UF_DATE_CHANGED' => new DateTime(),
+            'UF_USED'         => false,
+            'UF_SHOWN'        => false
+        ];
+
+        $res = $this->personalCouponUsersManager::add($data);
+
+        if(!$res->isSuccess()){
+            return [
+                'success' => false,
+                'message' => 'Something went wrong!'
+            ];
+        }
+
+        $freeCouponsCnt = $this->personalCouponManager::query()
+            ->setSelect([
+                'ID',
+                'USER_COUPONS',
+                new ExpressionField('CNT', 'COUNT(1)')
+            ])
+            ->setFilter([
+                '=UF_OFFER'                       => $activeOffersCollection->getKeys(),
+                '=UF_COUPON_TYPE'                 => $dobrolapEnumID,
+                'PERSONAL_COUPON_USER_COUPONS_ID' => null
+            ])
+            ->registerRuntimeField(
+                new ReferenceField(
+                    'USER_COUPONS', $this->personalCouponUsersManager::getEntity(),
+                    $personalCouponUsersQuery,
+                    ['join_type' => 'LEFT']
+                )
+            )
+            ->exec()->getSelectedRowsCount();
+
+        $this->logger->notice('Количество оставшихся купонов Добролап: ' . $freeCouponsCnt);
+
+        //Записываем айди купона в заказ
+        $this->orderService->setOrderPropertyByCode($bitrixOrder, 'DOBROLAP_COUPON_ID', $couponID);
+        $bitrixOrder->save();
+
+        $html = $this->getHtmlCoupon($coupon);
+        if(!$html){
+            return [
+                'success' => false,
+                'message' => 'Something went wrong with html generator!'
+            ];
+        }
+
+        return [
+            'success' => true,
+            'html' => $html
+        ];
+    }
+
+    private function getHtmlCoupon($coupon)
+    {
+        $html = null;
+        $barcodeGenerator = new BarcodeGeneratorPNG();
+        $offer = $this->getOfferByCoupon($coupon);
+
+        if($offer) {
+            $html = '<div data-b-dobrolap-prizes="coupon-section">
+                        <div class="b-order__text-block">
+                            <strong>А вот и сюрприз для Вас!</strong>
+                            <br/><br/>
+                            <div class="b-dobrolap-coupon" data-b-dobrolap-coupon data-coupon="' . $coupon["UF_PROMO_CODE"] . '">
+                                <div class="b-dobrolap-coupon__item b-dobrolap-coupon__item--info">
+                                    <div class="b-dobrolap-coupon__discount">
+                                        <span class="b-dobrolap-coupon__discount-big">' . ($offer["PROPERTY_DISCOUNT_VALUE"] ? $offer["PROPERTY_DISCOUNT_VALUE"] . "%" : $offer["PROPERTY_DISCOUNT_CURRENCY_VALUE"] . " ₽") . '</span>
+    
+                                        <span class="b-dobrolap-coupon__discount-text b-dobrolap-coupon__discount-text--desktop">
+                                        ' . $offer["PREVIEW_TEXT"] . '
+                                    </span>
+    
+                                        <span class="b-dobrolap-coupon__discount-text b-dobrolap-coupon__discount-text--mobile">
+                                        ' . $offer["PREVIEW_TEXT"] . '
+                                    </span>
+                                    </div>
+    
+                                    <div class="b-dobrolap-coupon__deadline">
+                                        скидка действует по&nbsp;промо-коду до&nbsp;' . $offer["PROPERTY_ACTIVE_TO_VALUE"] . '
+                                    </div>
+                                </div>
+    
+                                <div class="b-dobrolap-coupon__item b-dobrolap-coupon__item--promo">
+                                    <div class="b-dobrolap-coupon__code">
+                                        <span class="b-dobrolap-coupon__code-text">Промо-код</span>
+                                        <strong>' . $coupon["UF_PROMO_CODE"] . '</strong>
+    
+                                        <button class="b-button b-button--outline-white b-dobrolap-coupon__code-copy" data-b-dobrolap-coupon="copy-btn">Скопировать</button>
+                                    </div>
+    
+                                    <div class="b-dobrolap-coupon__barcode">
+                                        <img src="data:image/png;base64,' . base64_encode($barcodeGenerator->getBarcode($coupon["UF_PROMO_CODE"], \Picqer\Barcode\BarcodeGenerator::TYPE_CODE_128, 2.132310384278889, 127)) . '" alt="" class="b-dobrolap-coupon__barcode-image"/>
+                                    </div>
+    
+                                    <button class="b-button b-button--outline-grey b-button--full-width b-dobrolap-coupon__email-me" data-b-dobrolap-coupon="email-btn">
+                                        Отправить мне на email
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+    
+                        <div class="b-order__text-block">
+                            Это ваш подарок за участие в акции. <br/>
+                            Он доступен в разделе <a href="/personal/personal-offers/" class="b-link">Персональные предложения</a>.
+                        </div>
+    
+                        <hr class="b-hr b-hr--order b-hr--top-line"/>
+    
+                        <div class="b-order__text-block">
+                            <strong>Как использовать промо-код:</strong><br/><br/>
+    
+                            1. На сайте или в мобильном приложении положите акционный товар в корзину и введите промо-код в специальное поле в корзине.
+                            <br/>
+                            2. В магазине на кассе перед оплатой акционного товара покажите промо-код кассиру.
+                            <br/>
+                            3. Промо-код можно использовать 1 раз до окончанчания его срока действия.
+                        </div>
+                    </div>';
+        }
+
+        return $html;
     }
 
     /**
@@ -713,5 +851,45 @@ class PersonalOffersService
         if (!$updateResult->isSuccess()) {
             throw new \Exception(__METHOD__ . '. update error(s): ' . implode('. ', $updateResult->getErrorMessages()));
         }
+    }
+
+    /**
+     * @param $offerID
+     *
+     * @return array|null
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     */
+    public function getOfferByCoupon($coupon): ?array
+    {
+        $promocode = $coupon['UF_PROMO_CODE'];
+        $offerID = $coupon['UF_OFFER'];
+        $offer = null;
+        $arFilter = [
+            '=IBLOCK_ID'   => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::PERSONAL_OFFERS),
+            '=ACTIVE'      => 'Y',
+            '=ACTIVE_DATE' => 'Y',
+            'ID'           => $offerID
+        ];
+
+        $rsOffers = \CIBlockElement::GetList(
+            [],
+            $arFilter,
+            false,
+            false,
+            [
+                'ID',
+                'PROPERTY_DISCOUNT',
+                'PROPERTY_DISCOUNT_CURRENCY',
+                'PREVIEW_TEXT',
+                'DATE_ACTIVE_TO',
+                'PROPERTY_ACTIVE_TO'
+            ]
+        );
+
+        if ($res = $rsOffers->GetNext()) {
+            $offer = $res;
+        }
+
+        return $offer;
     }
 }

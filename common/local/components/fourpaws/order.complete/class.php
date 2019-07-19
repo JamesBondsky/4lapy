@@ -8,6 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use Bitrix\Highloadblock\DataManager;
 use Bitrix\Iblock\Component\Tools;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
@@ -28,6 +29,7 @@ use FourPaws\EcommerceBundle\Service\RetailRocketService;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\KioskBundle\Service\KioskService;
+use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use FourPaws\SaleBundle\Enum\OrderStatus;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\ValidationException;
@@ -46,7 +48,6 @@ use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use FourPaws\UserBundle\Service\UserService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
-use FourPaws\SaleBundle\Service\BasketService;
 
 /** @noinspection AutoloadingIssuesInspection */
 
@@ -265,20 +266,23 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
 
         if ($this->deliveryService->isDobrolapDeliveryCode($this->orderService->getOrderDeliveryCode($order)) && new DateTime() <= new DateTime('2019-09-30 23:59:59')) {
             /* Проверяем не привязан ли купон */
-            $this->arResult['EXIST_COUPON'] == false;
-            $couponProp = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'DOBROLAP_COUPON_ID');
-            $dobrolapCouponID = $couponProp ? $couponProp->getValue() : null;
+            $this->arResult['EXIST_COUPON'] = false;
+            $dobrolapCouponID = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'DOBROLAP_COUPON_ID')->getValue();
             if ($dobrolapCouponID) {
-                $this->arResult['EXIST_COUPON'] == true;
+                $this->arResult['EXIST_COUPON'] = true;
                 /** @var \Symfony\Bundle\FrameworkBundle\Routing\Router */
                 $router = App::getInstance()->getContainer()->get('router');
                 /** @var Symfony\Component\Routing\RouteCollection $routes */
                 $routes = $router->getRouteCollection();
                 $route = $routes->get('fourpaws_personal_ajax_personaloffers_bindunreserveddobrolapcoupon');
                 $this->arResult['GET_COUPON_URL'] = $route->getPath();
-                /**
-                 * TODO получить данные купона
-                 */
+                /** @var PersonalOffersService $personalOffersService */
+                $personalOffersService = App::getInstance()->getContainer()->get('personal_offers.service');
+                /** @var DataManager $personalCouponManager */
+                $personalCouponManager = App::getInstance()->getContainer()->get('bx.hlblock.personalcoupon');
+                $coupon = $personalCouponManager::getById($dobrolapCouponID)->fetch();
+                $this->arResult['COUPON'] = $coupon;
+                $this->arResult['OFFER'] = $personalOffersService->getOfferByCoupon($coupon);
             }
 
             /* Получаем питомник */
