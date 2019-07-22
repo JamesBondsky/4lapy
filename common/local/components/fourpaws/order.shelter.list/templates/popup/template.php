@@ -4,128 +4,64 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use FourPaws\Decorators\SvgDecorator;
-use FourPaws\DeliveryBundle\Collection\StockResultCollection;
-
-/**
- * @var array $arResult
- * @var array $arParams
- * @var StockResultCollection $resultByShop
- */
 
 ?>
-<section class="b-popup-wrapper__wrapper-modal b-popup-wrapper__wrapper-modal--order js-popup-section"
-         data-popup="popup-order-shelters">
-    <section class="b-popup-pick-city b-popup-pick-city--order-stores js-popup-section" data-popup="popup-order-shelters">
-        <a class="b-popup-pick-city__close b-popup-pick-city__close--order js-close-popup"
-           href="javascript:void(0);"
-           title="Закрыть"></a>
-        <div class="b-availability b-availability--order">
-            <div class="b-availability__content b-availability__content--order js-availability-content">
-                <div class="b-availability__info-block">
-                    <a class="b-link b-link--popup-back b-link--popup-choose-shop js-close-popup"
-                       href="javascript:void(0);">Выберите пункт самовывоза</a>
-                    <h4 class="b-availability__header b-availability__header--desktop">
-                        <?php if ($arResult['IS_DPD']) { ?>
-                            Пункты выдачи
-                        <?php } else { ?>
-                            Наши питомники
-                        <?php } ?>
-                        <span class="b-availability__header-amount js-orders-shop-count">(всего 0)</span>
-                    </h4>
-                    <h4 class="b-availability__header b-availability__header--tablet active">
-                        Выберите <?= $arResult['IS_DPD'] ? 'пункт самовывоза' : 'магазин' ?>
-                    </h4>
-                    <h4 class="b-availability__header b-availability__header--tablet b-availability__header--popuped">
-                        <?= $arResult['IS_DPD'] ? 'Пункт самовывоза' : 'Магазин' ?>
-                    </h4>
-                    <ul class="b-availability-tab-list b-availability-tab-list--order js-availability-list">
-                        <li class="b-availability-tab-list__item active">
-                            <a class="b-availability-tab-list__link js-product-list"
-                               href="javascript:void(0)"
-                               aria-controls="shipping-list"
-                               title="Списком">Списком</a>
-                        </li>
-                        <li class="b-availability-tab-list__item">
-                            <a class="b-availability-tab-list__link js-product-map"
-                               href="javascript:void(0)"
-                               aria-controls="on-map"
-                               title="На карте">На карте</a>
-                        </li>
-                    </ul>
-                    <?php if (!$arResult['IS_DPD']) { ?>
-                        <div class="b-stores-sort b-stores-sort--order b-stores-sort--balloon">
-                            <div class="b-stores-sort__checkbox-block b-stores-sort__checkbox-block--balloon">
-                                <?php /*
-                                <div class="b-checkbox b-checkbox--stores b-checkbox--order">
-                                    <input class="b-checkbox__input"
-                                           type="checkbox"
-                                           name="stores-sort-time"
-                                           id="stores-sort-1"/>
-                                    <label class="b-checkbox__name b-checkbox__name--stores b-checkbox__name--order"
-                                           for="stores-sort-1">
-                                    <span class="b-checkbox__text">работают
-                                        <span class="b-checkbox__text-desktop">круглосуточно</span>
-                                        <span class="b-checkbox__text-mobile">24 часа</span>
-                                    </span>
-                                    </label>
-                                </div>
-                                */ ?>
-                                <div class="b-checkbox b-checkbox--stores b-checkbox--order">
-                                    <input class="b-checkbox__input"
-                                           type="checkbox"
-                                           name="stores-sort-avlbl"
-                                           id="stores-sort-2"
-                                           value="в наличии сегодня"/>
-                                    <label class="b-checkbox__name b-checkbox__name--stores b-checkbox__name--order"
-                                           for="stores-sort-2">
-                                        <span class="b-checkbox__text">в наличии сегодня</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    <?php } ?>
-                    <div class="b-form-inline b-form-inline--order-search">
-                        <form class="b-form-inline__form">
-                            <div class="b-input b-input--stores-search b-input--order-search">
-                                <input class="b-input__input-field b-input__input-field--stores-search b-input__input-field--order-search"
-                                       type="text"
-                                       id="stores-search"
-                                       placeholder="Поиск по адресу, метро и названию ТЦ"
-                                       name="text"
-                                       data-url="<?= $arResult['STORE_LIST_URL'] ?>"/>
-                                <div class="b-error">
-                                    <span class="js-message"></span>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="b-tab-delivery b-tab-delivery--order js-content-list js-map-list-scroll js-fix-scroll">
-                        <ul class="b-delivery-list b-delivery-list--order js-delivery-list">
-                            <?php include 'include/shop.php' ?>
-                        </ul>
-                        <h4 class="b-tab-delivery__addition-header js-header-part-list">
-                            Заказ будет доступен позже в магазинах
-                        </h4>
-                        <ul class="b-delivery-list b-delivery-list--order js-delivery-part-list">
-                            <?php include 'include/shop_partial.php' ?>
-                        </ul>
-                        <ul class="b-delivery-list b-delivery-list--order js-delivery-delay-list">
-                            <?php include 'include/shop_delayed.php' ?>
-                        </ul>
-                    </div>
+
+<section class="b-popup-pick-shelter js-popup-section" data-popup="popup-order-shelters" data-b-popup-pick-shelter>
+    <div class="b-popup-pick-shelter__inner">
+        <div class="b-popup-pick-shelter__header">
+            <div class="b-popup-pick-shelter__title">
+                <span class="b-popup-pick-shelter__title-desktop">Все приюты</span>
+                <span class="b-popup-pick-shelter__title-mobile">Выберите приют</span>
+                <span data-b-popup-pick-shelter="shelters-count">(всего 20)</span>
+            </div>
+
+            <a href="javascript:;" class="b-popup-shelter__close-popup js-close-popup">
+                <?= new SvgDecorator('icon-close-baloon', 28, 28) ?>
+            </a>
+        </div>
+
+        <div class="b-popup-pick-shelter__actions">
+            <input class="b-popup-pick-shelter__actions-search b-input__input-field b-input__input-field--stores-search" placeholder="Поиск по адресу или названию" data-b-popup-pick-shelter="search-input">
+
+            <button class="b-button b-popup-pick-shelter__actions-button" data-b-popup-pick-shelter="pick-random">
+                Выбрать на усмотрение организатора
+            </button>
+        </div>
+
+        <div class="b-popup-pick-shelter__content">
+            <div class="b-popup-pick-shelter__content-shelters">
+                <? for ($i = 1; $i <= 20; $i++):  ?>
+                    <button
+                        class="b-popup-pick-shelter__shelter"
+                        data-b-popup-pick-shelter="shelter"
+                        data-shelter='<?=json_encode(['id' => $i, 'title' => "Приют $i",  'location' => 'Москва', 'text' => 'Главная помощь, если Вы решите взять животное домой. Больше всего они нуждаются в доме, любви  и заботе.'], JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES)?>'
+                    >
+                        <div class="b-popup-pick-shelter__shelter-title">Приют <?= $i ?></div>
+                        <div class="b-popup-pick-shelter__shelter-location">Москва</div>
+                    </button>
+                <? endfor ?>
+            </div>
+
+            <div class="b-popup-pick-shelter__content-info" data-b-popup-pick-shelter="content-info">
+                <div style="margin: 0 15px;">
+                    <a class="b-link b-link--popup-back b-link--order b-link--desktop" href="javascript:void(0);" data-b-popup-pick-shelter="content-info-close">
+                        <span class="b-icon b-icon--back-long b-icon--balloon">
+                            <?= new SvgDecorator('icon-back-form', 13, 11) ?>
+                        </span>
+
+                        Вернуться к списку
+                    </a>
                 </div>
-                <div class="b-availability__show-block">
-                    <div class="b-tab-delivery-map b-tab-delivery-map--order js-content-map <?=$arResult['IS_SUBSCRIBE_MAP'] ? 'js-ajax-init-order-map' : ''?> ">
-                        <div class="b-tab-delivery-map__map" id="map" data-url="<?= $arResult['STORE_LIST_URL'] ?>">
-                        </div>
-                        <a class="b-link b-link--close-baloon js-product-list" href="javascript:void(0);" title="">
-                            <span class="b-icon b-icon--close-baloon">
-                                <?= new SvgDecorator('icon-close-baloon', 18, 18) ?>
-                            </span>
-                        </a>
-                    </div>
+
+                <div class="b-popup-pick-shelter__shelter b-popup-pick-shelter__shelter--in-info">
+                    <div class="b-popup-pick-shelter__shelter-title" data-b-popup-pick-shelter="content-info-title"></div>
+                    <div class="b-popup-pick-shelter__shelter-location" data-b-popup-pick-shelter="content-info-location"></div>
+                    <div class="b-popup-pick-shelter__shelter-text" data-b-popup-pick-shelter="content-info-text"></div>
                 </div>
+
+                <button class="b-button b-popup-pick-shelter__content-pick-btn" data-b-popup-pick-shelter="pick">Выбрать этот приют</button>
             </div>
         </div>
-    </section>
+    </div>
 </section>

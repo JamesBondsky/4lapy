@@ -58,7 +58,7 @@ $promocode = $coupon['UF_PROMO_CODE'];
                                                 127)) ?>" alt="" class="b-dobrolap-coupon__barcode-image"/>
                                         </div>
 
-                                        <button class="b-button b-button--outline-grey b-button--full-width b-dobrolap-coupon__email-me" data-b-dobrolap-coupon="email-btn">
+                                        <button class="b-button b-button--outline-grey b-button--full-width b-dobrolap-coupon__email-me js-open-popup" data-popup-id="send-email-personal-offers" data-id-coupon-personal-offers="s079i2t0602" data-b-dobrolap-coupon="email-btn">
                                             Отправить мне на email
                                         </button>
                                     </div>
