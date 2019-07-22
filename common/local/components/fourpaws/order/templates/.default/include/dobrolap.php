@@ -41,26 +41,33 @@ $canGetPartial = $arResult['DOBROLAP_PARTIAL_AVAILABLE'];
 $canSplit = $arResult['DOBROLAP_SPLIT_AVAILABLE'];
 $partialGet = $canGetPartial || $canSplit;
 $partialPickup = $arResult['DOBROLAP_PARTIAL'] ?? $deliveryDobrolap;
+
+$chosen_shelter = null;
+
+if (count($arResult['SHELTERS'])) {
+    $chosen_shelter = $arResult['SHELTERS'][0];
+
+    foreach ($arResult['SHELTERS'] as $shelter) {
+        if ($shelter['checked']) {
+            $chosen_shelter = $shelter;
+        }
+    }
+}
 ?>
 
-<div class="b-input-line b-input-line--address b-input-line--myself">
-    <div class="b-input-line__label-wrapper">
-        <label class="b-input-line__label" for="shelter">Приют для доставки</label>
-    </div>
+<?php if ($chosen_shelter): ?>
+    <div class="b-input-line b-input-line--address b-input-line--myself">
+        <input type="hidden" name="shelter" class="js-shelter-delivery-id" <?= $deliveryService->isDobrolapDelivery($selectedDelivery) ? 'required' : '' ?> value="<?=$chosen_shelter['id']?>" />
 
-    <div class="b-input">
-        <select name="shelter" class="b-input__input-field b-input__input-field--with-border" <?= $deliveryService->isDobrolapDelivery($selectedDelivery) ? 'required' : '' ?>>
-            <option value="">не выбрано</option>
-            <?
-            foreach ($arResult['SHELTERS'] as $shelter) {
-                ?>
-                <option value="<?= $shelter['id'] ?>" <?= ($shelter['checked']) ? 'selected' : '' ?>><?= $shelter['name'] ?>, <?= $shelter['city'] ?></option>
-                <?
-            }
-            ?>
-        </select>
+        <div class="b-input-line__label-wrapper">
+            <span class="b-input-line__label">Приют для доставки</span>
+        </div>
+
+        <div class="b-input-line__text-line b-input-line__text-line--myself js-shelter-delivery-title">
+            <?=$chosen_shelter['name']?>, <?=$chosen_shelter['city']?>
+        </div>
     </div>
-</div>
+<?php endif ?>
 
 <? /*<a class="b-link b-link--another-point js-open-popup"
    href="javascript:void(0);"

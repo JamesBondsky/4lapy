@@ -225,27 +225,29 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                     />
 
                                     <label
-                                            class="
-                                        b-choice-recovery__label
-                                        b-choice-recovery__label--right
-                                        b-choice-recovery__label--order-step
-                                        b-choice-recovery__label--with-icon
-                                        b-choice-recovery__label--mt
-                                    "
-                                            for="order-delivery-dobrolap"
+                                        class="
+                                            b-choice-recovery__label
+                                            b-choice-recovery__label--right
+                                            b-choice-recovery__label--order-step
+                                            b-choice-recovery__label--with-icon
+                                            b-choice-recovery__label--mt
+                                            js-open-popup
+                                        "
+                                        for="order-delivery-dobrolap"
+                                        data-popup-id="popup-order-shelters"
                                     >
                                         <img src="/static/build/images/content/dobrolap/dobrolap-logo.png" alt="" srcset="/static/build/images/content/dobrolap/dobrolap-logo@2x.png 2x, /static/build/images/content/dobrolap/dobrolap-logo@3x.png 3x" class="b-choice-recovery__label-icon"/>
 
                                         <div>
                                             <span class="b-choice-recovery__main-text">Доставка в приют</span>
 
-                                            <span class="b-choice-recovery__addition-text js-my-dobrolap js-dobrolap-tab">
-                                            бесплатно
-                                        </span>
+                                            <span class="b-choice-recovery__addition-text">
+                                                бесплатно
+                                            </span>
 
-                                            <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-my-pickup js-pickup-tab">
-                                            бесплатно
-                                        </span>
+                                            <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
+                                                бесплатно
+                                            </span>
                                         </div>
                                     </label>
 
