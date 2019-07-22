@@ -1,4 +1,4 @@
- AOS.init({
+AOS.init({
  	duration: 800,
  	easing: 'slide'
  });
@@ -288,7 +288,23 @@
 		return false;
 	});
 
+$('[data-popup-id="shelter_popup"].js-open-popup').on('click', function () {
+      unlock = locky.lockyOn('.js-popup-wrapper');
+      $('html').css('overflow-y', 'hidden');
+    });
 
+$('[data-popup="shelter_popup"] .js-close-popup, [data-popup="response-shelter_popup"] .js-close-popup').on('click', function () {
+  unlock();
+  $('html').removeAttr('style');
+});
+
+$('.js-popup-wrapper').on('click', function () {
+  var $this = $(this);
+
+  if($this.find('[data-popup="shelter_popup"].opened') || $this.find('[data-popup="response-shelter_popup"].opened')) {
+    unlock();
+    $('html').removeAttr('style');
+  }
+});
 
 })(jQuery);
-

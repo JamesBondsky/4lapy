@@ -9778,10 +9778,6 @@ h5 {
   float: left;
 }
 
-#needs .star_wrap svg {
-  width:15px;
-}
-
 #about-section .pb-5 {
   padding-left: 16rem !important;
 }
@@ -10376,6 +10372,10 @@ video {
 
   #thanks .col-md-6-desktop {
     display: none;
+  }
+
+  #needs .star_wrap svg {
+    width:15px;
   }
 
 }

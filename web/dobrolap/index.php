@@ -1219,18 +1219,37 @@ $APPLICATION->SetTitle("Добролап");
 						<div class="col-md-3 animate-box">
 							<div class="shelter_wrap">
 								<div class="shelter_logo">
-									<img src="/dobrolap/images/shelter_logo/dino.png" alt="Дино" />
+									<img src="/dobrolap/images/shelter_logo/yuna.png" alt="Юна" />
+								</div>
+								<div class="shelter_tag">
+									<span>Центр реабилитации</span>
+								</div>
+								<div class="shelter_about">
+									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">ЮНА</a>
+								</div>
+								<div class="shelter_note">
+									<span>Подольск</span>&nbsp;|&nbsp;
+									<span>200 питомцев</span>&nbsp;|&nbsp;
+									<span>1 год</span>
+								</div>
+							</div>
+						</div>
+
+						<div class="col-md-3 animate-box">
+							<div class="shelter_wrap">
+								<div class="shelter_logo">
+									<img src="/dobrolap/images/shelter_logo/dogs.png" alt="Собаки, которые любят" />
 								</div>
 								<div class="shelter_tag">
 									<span>Благотворительный фонд</span>
 								</div>
 								<div class="shelter_about">
-									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">Дино</a>
+									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">Собаки, которые любят</a>
 								</div>
 								<div class="shelter_note">
-									<span>Волгоград</span>&nbsp;|&nbsp;
-									<span>300 питомцев</span>&nbsp;|&nbsp;
-									<span>8 лет</span>
+									<span>Щербинка</span>&nbsp;|&nbsp;
+									<span>6000 питомцев</span>&nbsp;|&nbsp;
+									<span>3 лет</span>
 								</div>
 							</div>
 						</div>
@@ -1257,86 +1276,6 @@ $APPLICATION->SetTitle("Добролап");
 						<div class="col-md-3 animate-box">
 							<div class="shelter_wrap">
 								<div class="shelter_logo">
-									<img src="/dobrolap/images/shelter_logo/pravo.png" alt="Право на жизнь" />
-								</div>
-								<div class="shelter_tag">
-									<span>Благотворительный фонд</span>
-								</div>
-								<div class="shelter_about">
-									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">Право на жизнь</a>
-								</div>
-								<div class="shelter_note">
-									<span>Воронеж</span>&nbsp;|&nbsp;
-									<span>265 питомцев</span>&nbsp;|&nbsp;
-									<span>7 лет</span>
-								</div>
-							</div>
-						</div>
-
-						<div class="col-md-3 animate-box">
-							<div class="shelter_wrap">
-								<div class="shelter_logo">
-									<img src="/dobrolap/images/shelter_logo/dogs.png" alt="Собаки, которые любят" />
-								</div>
-								<div class="shelter_tag">
-									<span>Благотворительный фонд</span>
-								</div>
-								<div class="shelter_about">
-									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">Собаки, которые любят</a>
-								</div>
-								<div class="shelter_note">
-									<span>Щербинка</span>&nbsp;|&nbsp;
-									<span>6000 питомцев</span>&nbsp;|&nbsp;
-									<span>3 лет</span>
-								</div>
-							</div>
-						</div>
-
-						
-					</div>
-
-					<div class="col-md-12 animate-box">
-						<div class="col-md-3 animate-box">
-							<div class="shelter_wrap">
-								<div class="shelter_logo">
-									<img src="/dobrolap/images/shelter_logo/yuna.png" alt="Юна" />
-								</div>
-								<div class="shelter_tag">
-									<span>Центр реабилитации</span>
-								</div>
-								<div class="shelter_about">
-									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">ЮНА</a>
-								</div>
-								<div class="shelter_note">
-									<span>Подольск</span>&nbsp;|&nbsp;
-									<span>200 питомцев</span>&nbsp;|&nbsp;
-									<span>1 год</span>
-								</div>
-							</div>
-						</div>
-
-						<div class="col-md-3 animate-box">
-							<div class="shelter_wrap">
-								<div class="shelter_logo">
-									<img src="/dobrolap/images/shelter_logo/husky.png" alt="Husky Help" />
-								</div>
-								<div class="shelter_tag">
-									<span>Благотворительный фонд</span>
-								</div>
-								<div class="shelter_about">
-									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">Husky Help</a>
-								</div>
-								<div class="shelter_note">
-									<span>Москва</span>&nbsp;|&nbsp;
-									<span>80 питомцев</span>&nbsp;|&nbsp;
-									<span>8 лет</span>
-								</div>
-							</div>
-						</div>
-
-						<div class="col-md-3 animate-box">
-							<div class="shelter_wrap">
-								<div class="shelter_logo">
 									<img src="/dobrolap/images/shelter_logo/budu.png" alt="Буду Рядом" />
 								</div>
 								<div class="shelter_tag">
@@ -1353,44 +1292,25 @@ $APPLICATION->SetTitle("Добролап");
 							</div>
 						</div>
 
-						<div class="col-md-3 animate-box">
-							<div class="shelter_wrap">
-								<div class="shelter_logo">
-									<img src="/dobrolap/images/shelter_logo/zabota.png" alt="Зоо Забота" />
-								</div>
-								<div class="shelter_tag">
-									<span>Благотворительный фонд</span>
-								</div>
-								<div class="shelter_about">
-									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">Зоо Забота</a>
-								</div>
-								<div class="shelter_note">
-									<span>Ярославль</span>&nbsp;|&nbsp;
-									<span>150 питомцев</span>&nbsp;|&nbsp;
-									<span>10 лет</span>
-								</div>
-							</div>
-						</div>
-
 						
 					</div>
-<div class="roll_block">
+
 					<div class="col-md-12 animate-box">
 						<div class="col-md-3 animate-box">
 							<div class="shelter_wrap">
 								<div class="shelter_logo">
-									<img src="/dobrolap/images/shelter_logo/just.png" alt="Просто Живи" />
+									<img src="/dobrolap/images/shelter_logo/husky.png" alt="Husky Help" />
 								</div>
 								<div class="shelter_tag">
 									<span>Благотворительный фонд</span>
 								</div>
 								<div class="shelter_about">
-									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">Просто Живи</a>
+									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">Husky Help</a>
 								</div>
 								<div class="shelter_note">
-									<span>Жуковский</span>&nbsp;|&nbsp;
-									<span>100 питомцев</span>&nbsp;|&nbsp;
-									<span>1 год</span>
+									<span>Москва</span>&nbsp;|&nbsp;
+									<span>80 питомцев</span>&nbsp;|&nbsp;
+									<span>8 лет</span>
 								</div>
 							</div>
 						</div>
@@ -1417,18 +1337,98 @@ $APPLICATION->SetTitle("Добролап");
 						<div class="col-md-3 animate-box">
 							<div class="shelter_wrap">
 								<div class="shelter_logo">
-									<img src="/dobrolap/images/shelter_logo/priyut.png" alt="Лесной приют" />
+									<img src="/dobrolap/images/shelter_logo/iskra.png" alt="Искра" />
 								</div>
 								<div class="shelter_tag">
-									<span>Благотворительный фонд</span>
+									<span>Приют</span>
 								</div>
 								<div class="shelter_about">
-									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">Лесной приют</a>
+									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">Искра</a>
 								</div>
 								<div class="shelter_note">
 									<span>Москва</span>&nbsp;|&nbsp;
-									<span>200 питомцев</span>&nbsp;|&nbsp;
-									<span>10 лет</span>
+									<span>105 питомцев</span>&nbsp;|&nbsp;
+									<span>5 лет</span>
+								</div>
+							</div>
+						</div>
+
+						<div class="col-md-3 animate-box">
+							<div class="shelter_wrap">
+								<div class="shelter_logo">
+									<img src="/dobrolap/images/shelter_logo/murlyka.png" alt="Мурлыка" />
+								</div>
+								<div class="shelter_tag">
+									<span>Приют</span>
+								</div>
+								<div class="shelter_about">
+									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">Мурлыка</a>
+								</div>
+								<div class="shelter_note">
+									<span>Москва</span>&nbsp;|&nbsp;
+									<span>50 питомцев</span>&nbsp;|&nbsp;
+									<span>3 года</span>
+								</div>
+							</div>
+						</div>
+
+						
+					</div>
+<div class="roll_block">
+					<div class="col-md-12 animate-box">
+						<div class="col-md-3 animate-box">
+							<div class="shelter_wrap">
+								<div class="shelter_logo">
+									<img src="/dobrolap/images/shelter_logo/povodyr.png" alt="Собаки-поводыри - помощники инвалидов" />
+								</div>
+								<div class="shelter_tag">
+									<span>Кинологический центр</span>
+								</div>
+								<div class="shelter_about">
+									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">Собаки-поводыри - помощники инвалидов</a>
+								</div>
+								<div class="shelter_note">
+									<span>Москва</span>&nbsp;|&nbsp;
+									<span>50 питомцев</span>&nbsp;|&nbsp;
+									<span>16 лет</span>
+								</div>
+							</div>
+						</div>
+
+						<div class="col-md-3 animate-box">
+							<div class="shelter_wrap">
+								<div class="shelter_logo">
+									<img src="/dobrolap/images/shelter_logo/murkosh.png" alt="Муркоша" />
+								</div>
+								<div class="shelter_tag">
+									<span>Приют</span>
+								</div>
+								<div class="shelter_about">
+									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">Муркоша</a>
+								</div>
+								<div class="shelter_note">
+									<span>Москва</span>&nbsp;|&nbsp;
+									<span>500 питомцев</span>&nbsp;|&nbsp;
+									<span>5 лет</span>
+								</div>
+							</div>
+						</div>
+
+						<div class="col-md-3 animate-box">
+							<div class="shelter_wrap">
+								<div class="shelter_logo">
+									<img src="/dobrolap/images/shelter_logo/domash.png" alt="Домашний" />
+								</div>
+								<div class="shelter_tag">
+									<span>Приют</span>
+								</div>
+								<div class="shelter_about">
+									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">Домашний</a>
+								</div>
+								<div class="shelter_note">
+									<span>Москва</span>&nbsp;|&nbsp;
+									<span>500 питомцев</span>&nbsp;|&nbsp;
+									<span>15 лет</span>
 								</div>
 							</div>
 						</div>
@@ -1538,18 +1538,18 @@ $APPLICATION->SetTitle("Добролап");
 						<div class="col-md-3 animate-box">
 							<div class="shelter_wrap">
 								<div class="shelter_logo">
-									<img src="/dobrolap/images/shelter_logo/domash.png" alt="Домашний" />
+									<img src="/dobrolap/images/shelter_logo/priyut.png" alt="Лесной приют" />
 								</div>
 								<div class="shelter_tag">
-									<span>Приют</span>
+									<span>Благотворительный фонд</span>
 								</div>
 								<div class="shelter_about">
-									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">Домашний</a>
+									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">Лесной приют</a>
 								</div>
 								<div class="shelter_note">
 									<span>Москва</span>&nbsp;|&nbsp;
-									<span>500 питомцев</span>&nbsp;|&nbsp;
-									<span>15 лет</span>
+									<span>200 питомцев</span>&nbsp;|&nbsp;
+									<span>10 лет</span>
 								</div>
 							</div>
 						</div>
@@ -1618,18 +1618,18 @@ $APPLICATION->SetTitle("Добролап");
 						<div class="col-md-3 animate-box">
 							<div class="shelter_wrap">
 								<div class="shelter_logo">
-									<img src="/dobrolap/images/shelter_logo/iskra.png" alt="Искра" />
+									<img src="/dobrolap/images/shelter_logo/pravo.png" alt="Право на жизнь" />
 								</div>
 								<div class="shelter_tag">
-									<span>Приют</span>
+									<span>Благотворительный фонд</span>
 								</div>
 								<div class="shelter_about">
-									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">Искра</a>
+									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">Право на жизнь</a>
 								</div>
 								<div class="shelter_note">
-									<span>Москва</span>&nbsp;|&nbsp;
-									<span>105 питомцев</span>&nbsp;|&nbsp;
-									<span>5 лет</span>
+									<span>Воронеж</span>&nbsp;|&nbsp;
+									<span>265 питомцев</span>&nbsp;|&nbsp;
+									<span>7 лет</span>
 								</div>
 							</div>
 						</div>
@@ -1637,18 +1637,18 @@ $APPLICATION->SetTitle("Добролап");
 						<div class="col-md-3 animate-box">
 							<div class="shelter_wrap">
 								<div class="shelter_logo">
-									<img src="/dobrolap/images/shelter_logo/murkosh.png" alt="Муркоша" />
+									<img src="/dobrolap/images/shelter_logo/dino.png" alt="Дино" />
 								</div>
 								<div class="shelter_tag">
-									<span>Приют</span>
+									<span>Благотворительный фонд</span>
 								</div>
 								<div class="shelter_about">
-									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">Муркоша</a>
+									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">Дино</a>
 								</div>
 								<div class="shelter_note">
-									<span>Москва</span>&nbsp;|&nbsp;
-									<span>500 питомцев</span>&nbsp;|&nbsp;
-									<span>5 лет</span>
+									<span>Волгоград</span>&nbsp;|&nbsp;
+									<span>300 питомцев</span>&nbsp;|&nbsp;
+									<span>8 лет</span>
 								</div>
 							</div>
 						</div>
@@ -1894,18 +1894,18 @@ $APPLICATION->SetTitle("Добролап");
 						<div class="col-md-3 animate-box">
 							<div class="shelter_wrap">
 								<div class="shelter_logo">
-									<img src="/dobrolap/images/shelter_logo/murlyka.png" alt="Мурлыка" />
+									<img src="/dobrolap/images/shelter_logo/zabota.png" alt="Зоо Забота" />
 								</div>
 								<div class="shelter_tag">
-									<span>Приют</span>
+									<span>Благотворительный фонд</span>
 								</div>
 								<div class="shelter_about">
-									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">Мурлыка</a>
+									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">Зоо Забота</a>
 								</div>
 								<div class="shelter_note">
-									<span>Москва</span>&nbsp;|&nbsp;
-									<span>50 питомцев</span>&nbsp;|&nbsp;
-									<span>3 года</span>
+									<span>Ярославль</span>&nbsp;|&nbsp;
+									<span>150 питомцев</span>&nbsp;|&nbsp;
+									<span>10 лет</span>
 								</div>
 							</div>
 						</div>
@@ -1990,18 +1990,18 @@ $APPLICATION->SetTitle("Добролап");
 						<div class="col-md-3 animate-box">
 							<div class="shelter_wrap">
 								<div class="shelter_logo">
-									<img src="/dobrolap/images/shelter_logo/povodyr.png" alt="Собаки-поводыри - помощники инвалидов" />
+									<img src="/dobrolap/images/shelter_logo/just.png" alt="Просто Живи" />
 								</div>
 								<div class="shelter_tag">
-									<span>Кинологический центр</span>
+									<span>Благотворительный фонд</span>
 								</div>
 								<div class="shelter_about">
-									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">Собаки-поводыри - помощники инвалидов</a>
+									<a href="javascript:void(0);" data-popup-id="shelter_popup" class="js-open-popup">Просто Живи</a>
 								</div>
 								<div class="shelter_note">
-									<span>Москва</span>&nbsp;|&nbsp;
-									<span>50 питомцев</span>&nbsp;|&nbsp;
-									<span>16 лет</span>
+									<span>Жуковский</span>&nbsp;|&nbsp;
+									<span>100 питомцев</span>&nbsp;|&nbsp;
+									<span>1 год</span>
 								</div>
 							</div>
 						</div>
@@ -2482,4 +2482,4 @@ $APPLICATION->SetTitle("Добролап");
 		        </div>
 		    </section>
 		</div>
-    </section>
+    </section><?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
