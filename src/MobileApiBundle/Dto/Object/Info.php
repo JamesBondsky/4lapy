@@ -148,6 +148,9 @@ class Info
      */
     protected $subItems;
 
+    /** @var bool $isNeedLoad */
+    protected $isNeedLoad = false;
+
     /**
      * @return string
      */
@@ -409,5 +412,23 @@ class Info
     {
         $this->subItems = $subItems;
         return $this;
+    }
+
+    /**
+     * @param bool $need
+     * @return Info
+     */
+    public function setIsNeedLoad($need)
+    {
+        $this->isNeedLoad = $need;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getIsNeedLoad()
+    {
+        return $this->isNeedLoad;
     }
 }
