@@ -771,19 +771,6 @@ class SearchService implements LoggerAwareInterface
                         )
                     )
             );
-            $boolQuery->addShould(
-                $queryBuilder->query()->nested()
-                    ->setPath('offers')
-                    ->setQuery(
-                        $queryBuilder->query()->term(
-                            [
-                                'product.XML_ID' => [
-                                    'value' => $id,
-                                ],
-                            ]
-                        )
-                    )
-            );
         }
         $searchQuery->setQuery($boolQuery);
 
