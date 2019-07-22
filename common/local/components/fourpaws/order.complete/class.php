@@ -267,7 +267,10 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
         if ($this->deliveryService->isDobrolapDeliveryCode($this->orderService->getOrderDeliveryCode($order)) && new DateTime() <= new DateTime('2019-09-30 23:59:59')) {
             /* Проверяем не привязан ли купон */
             $this->arResult['EXIST_COUPON'] = false;
+            $this->arResult['AVAILABLE_COUPONS'] = false;
             $dobrolapCouponID = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'DOBROLAP_COUPON_ID')->getValue();
+            /** @var PersonalOffersService $personalOffersService */
+            $personalOffersService = App::getInstance()->getContainer()->get('personal_offers.service');
             if ($dobrolapCouponID) {
                 $this->arResult['EXIST_COUPON'] = true;
                 /** @var \Symfony\Bundle\FrameworkBundle\Routing\Router */
@@ -276,13 +279,16 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
                 $routes = $router->getRouteCollection();
                 $route = $routes->get('fourpaws_personal_ajax_personaloffers_bindunreserveddobrolapcoupon');
                 $this->arResult['GET_COUPON_URL'] = $route->getPath();
-                /** @var PersonalOffersService $personalOffersService */
-                $personalOffersService = App::getInstance()->getContainer()->get('personal_offers.service');
                 /** @var DataManager $personalCouponManager */
                 $personalCouponManager = App::getInstance()->getContainer()->get('bx.hlblock.personalcoupon');
                 $coupon = $personalCouponManager::getById($dobrolapCouponID)->fetch();
                 $this->arResult['COUPON'] = $coupon;
                 $this->arResult['OFFER'] = $personalOffersService->getOfferByCoupon($coupon);
+            } else {
+                $cnt = $personalOffersService->getDobrolapCouponCnt();
+                if($cnt > 0){
+                    $this->arResult['AVAILABLE_COUPONS'] = true;
+                }
             }
 
             /* Получаем питомник */

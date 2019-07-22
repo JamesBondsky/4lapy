@@ -605,6 +605,66 @@ class PersonalOffersService
     }
 
     /**
+     * @return int
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getDobrolapCouponCnt(): int
+    {
+        /** Получаем айди значения добролап */
+        $userFieldEnum = new CUserFieldEnum();
+        $dobrolapEnumID = null;
+        $userFieldEnumDb = $userFieldEnum->GetList(
+            [
+                'ID' => 'ASC'
+            ],
+            [
+                'USER_FIELD_NAME' => 'UF_COUPON_TYPE'
+            ]
+        );
+        while ($enum = $userFieldEnumDb->Fetch()) {
+            if ($enum['XML_ID'] == 'dobrolap') {
+                $dobrolapEnumID = $enum['ID'];
+                break;
+            }
+        }
+
+        $coupons = null;
+        $offersCollection = new ArrayCollection();
+
+        $activeOffersCollection = $this->getActiveOffers(['?XML_ID' => 'dobrolap_']);
+
+        $personalCouponUsersQuery = Query\Join::on('this.ID', 'ref.UF_COUPON');
+
+        $coupons = $this->personalCouponManager::query()
+            ->setSelect([
+                'ID',
+                'UF_OFFER',
+                'UF_PROMO_CODE',
+                'USER_COUPONS'
+            ])
+            ->setFilter([
+                '=UF_OFFER'                       => $activeOffersCollection->getKeys(),
+                '=UF_COUPON_TYPE'                 => $dobrolapEnumID,
+                'PERSONAL_COUPON_USER_COUPONS_ID' => null
+            ])
+            ->registerRuntimeField(
+                new ReferenceField(
+                    'USER_COUPONS', $this->personalCouponUsersManager::getEntity(),
+                    $personalCouponUsersQuery,
+                    ['join_type' => 'LEFT']
+                )
+            )
+            ->exec()
+            ->fetchAll();
+
+        return count($coupons);
+    }
+
+    /**
      * @param User   $user
      * @param string $orderID
      *
@@ -653,7 +713,7 @@ class PersonalOffersService
                 'ID' => 'ASC'
             ],
             [
-                'USER_FIELD_ID' => $fieldsID
+                'USER_FIELD_NAME' => 'UF_COUPON_TYPE'
             ]
         );
         while ($enum = $userFieldEnumDb->Fetch()) {

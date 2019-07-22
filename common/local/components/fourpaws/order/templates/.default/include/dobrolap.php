@@ -57,7 +57,7 @@ if (count($arResult['SHELTERS'])) {
 
 <?php if ($chosen_shelter): ?>
     <div class="b-input-line b-input-line--address b-input-line--myself">
-        <input type="hidden" name="shelter" class="js-shelter-delivery-id" required value="<?=$chosen_shelter['id']?>" />
+        <input type="hidden" name="shelter" class="js-shelter-delivery-id" <?= $deliveryService->isDobrolapDelivery($selectedDelivery) ? 'required' : '' ?> value="<?=$chosen_shelter['id']?>" />
 
         <div class="b-input-line__label-wrapper">
             <span class="b-input-line__label">Приют для доставки</span>
