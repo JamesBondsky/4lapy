@@ -180,6 +180,7 @@ if (!$currentOffer->getImagesIds()) {
                                                   !== $offer->getCatalogPrice() ? $offer->getCatalogOldPrice() : '' ?>"
                                data-discount="<?= ($offer->getDiscountPrice() ?: '') ?>"
                                data-price="<?= $offer->getCatalogPrice() ?>"
+                               data-subscribePrice="<?= \round($offer->getSubscribePrice()) ?>"
                                data-offerid="<?= $offer->getId() ?>"
                                data-onclick="<?= $getOnClick($offer) ?>"
                                data-onmousedown="<?= $getOnMouseDown($offer) ?>"
@@ -201,6 +202,7 @@ if (!$currentOffer->getImagesIds()) {
                            data-oldprice="<?= $currentOffer->getOldPrice()
                                               !== $currentOffer->getCatalogPrice() ? $currentOffer->getOldPrice() : '' ?>"
                            data-price="<?= $currentOffer->getCatalogPrice() ?>"
+                           data-subscribePrice="<?= \round($offer->getSubscribePrice()) ?>"
                            data-discount="<?= ($currentOffer->getDiscountPrice() ?: '') ?>"
                            data-offerid="<?= $currentOffer->getId() ?>"
                            data-image="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"

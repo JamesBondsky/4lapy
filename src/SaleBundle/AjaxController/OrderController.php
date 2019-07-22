@@ -729,8 +729,10 @@ class OrderController extends Controller implements LoggerAwareInterface
         $nextDeliveries = $this->deliveryService->getNextDeliveries($innerDelivery, 10);
         $deliveryDates = [];
         foreach ($nextDeliveries as $i => $nextDelivery) {
+            $deliveryTimestamp = $nextDelivery->getDeliveryDate()->getTimestamp();
             $deliveryDates[$i] = [
-                'text'     => FormatDate('l, d.m.Y', $nextDelivery->getDeliveryDate()->getTimestamp()),
+                'value'     => FormatDate('l, Y-m-d', $deliveryTimestamp),
+                'text'     => FormatDate('l, d.m.Y', $deliveryTimestamp),
                 'selected' => ($i === 0) ? 'selected' : ''
             ];
         }

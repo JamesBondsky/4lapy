@@ -20,7 +20,7 @@ class FilterListResponse
      */
     protected $filters = [];
 
-    public function __construct(?ArrayCollection $filters = null)
+    public function __construct(?Collection $filters = null)
     {
         $this->filters = $filters ?: new ArrayCollection();
     }

@@ -61,18 +61,18 @@ class PaymentAmountInfo
     }
 
     /**
-     * @return int
+     * @return float
      */
-    public function getApprovedAmount(): int
+    public function getApprovedAmount(): float
     {
         return $this->approvedAmount;
     }
 
     /**
-     * @param int $approvedAmount
+     * @param float $approvedAmount
      * @return PaymentAmountInfo
      */
-    public function setApprovedAmount(int $approvedAmount): PaymentAmountInfo
+    public function setApprovedAmount(float $approvedAmount): PaymentAmountInfo
     {
         $this->approvedAmount = $approvedAmount;
 

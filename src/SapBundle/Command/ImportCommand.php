@@ -7,7 +7,6 @@
 namespace FourPaws\SapBundle\Command;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use Bitrix\Main\Data\Cache;
 use FourPaws\AppBundle\Service\LockerInterface;
 use FourPaws\SaleBundle\Service\PaymentService;
 use FourPaws\SapBundle\Pipeline\PipelineRegistry;

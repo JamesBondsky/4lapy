@@ -76,8 +76,10 @@ use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
 use FourPaws\SaleBundle\Repository\OrderStatusRepository;
 use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Entity\ScheduleResult;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
+use FourPaws\StoreBundle\Service\ScheduleResultService;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -607,14 +609,17 @@ class OrderService implements LoggerAwareInterface
                 $nearShop = $selectedDelivery->getStockResult()->first();
             }
             $selectedDelivery->getStockResult();
-            $this->basketService->setBasketItemPropertyValue(
-                $item,
-                'SHIPMENT_PLACE_CODE',
-                $nearShop->getXmlId()
-            );
+            foreach ($order->getBasket() as $item) {
+                $this->basketService->setBasketItemPropertyValue(
+                    $item,
+                    'SHIPMENT_PLACE_CODE',
+                    $nearShop->getXmlId()
+                );
+            }
             $this->setOrderPropertiesByCode($order,
                 [
-                    'STORE_FOR_DOSTAVISTA' => $nearShop->getXmlId()
+                    'STORE_FOR_DOSTAVISTA' => $nearShop->getXmlId(),
+                    'SHIPMENT_PLACE_CODE' => $nearShop->getXmlId(),
                 ]
             );
         } elseif (!($selectedDelivery->getStockResult()->getDelayed()->isEmpty() &&
@@ -629,8 +634,11 @@ class OrderService implements LoggerAwareInterface
              */
             $shipmentResults = $selectedDelivery->getShipmentResults();
             $shipmentDays = [];
+            $isSetParam = [];
+            $shipmentPlaceCodeDefault = '';
             /** @var BasketItem $item */
-            foreach ($order->getBasket() as $item) {
+            foreach ($order->getBasket() as $itemKey => $item) {
+                $offer = OfferQuery::getById($item->getProductId());
                 $selectedShop = $selectedDelivery->getSelectedStore();
                 if ($selectedShop instanceof Store) {
                     $shipmentPlaceCode = $selectedShop->getXmlId();
@@ -647,17 +655,31 @@ class OrderService implements LoggerAwareInterface
                         $shipmentDays[$shipmentPlaceCode] = $days;
                     }
                 }
-                if ($shipmentPlaceCode === self::STORE) {
-                    break;
+                $arShipmentPlaceCode[$itemKey] = $shipmentPlaceCode;
+                if ($offer->isAvailable() && $offer->isByRequest()) {
+                    $isSetParam[] = $item->getProductId();
+                    $this->basketService->setBasketItemPropertyValue(
+                        $item,
+                        'SHIPMENT_PLACE_CODE',
+                        $shipmentPlaceCode
+                    );
+                } else {
+                    if ($shipmentPlaceCode === self::STORE) {
+                        $shipmentPlaceCodeDefault = $shipmentPlaceCode;
+                    }
+                }
+
+            }
+            foreach ($order->getBasket() as $itemKey => $item) {
+                if (!in_array($item->getProductId(), $isSetParam)) {
+                    $this->basketService->setBasketItemPropertyValue(
+                        $item,
+                        'SHIPMENT_PLACE_CODE',
+                        $shipmentPlaceCodeDefault ?: $arShipmentPlaceCode[$itemKey]
+                    );
                 }
             }
-            foreach ($order->getBasket() as $item) {
-                $this->basketService->setBasketItemPropertyValue(
-                    $item,
-                    'SHIPMENT_PLACE_CODE',
-                    $shipmentPlaceCode
-                );
-            }
+            $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', $shipmentPlaceCodeDefault);
             if (!empty($shipmentDays)) {
                 arsort($shipmentDays);
                 $this->setOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE', key($shipmentDays));
@@ -969,6 +991,9 @@ class OrderService implements LoggerAwareInterface
         if (null === $selectedDelivery) {
             $selectedDelivery = $this->orderStorageService->getSelectedDelivery($storage);
         }
+        if($storage->getDeliveryDate() > 0){
+            $selectedDelivery = $this->deliveryService->getNextDeliveries($selectedDelivery, ($storage->getDeliveryDate()+1))[$storage->getDeliveryDate()];
+        }
 
         /**
          * Три ситуации:
@@ -1112,6 +1137,17 @@ class OrderService implements LoggerAwareInterface
                 'SUBSCRIBE_ID',
                 $storage->getSubscribeId()
             );
+        }
+
+        $shipmentPlaceCode = $this->getOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE')->getValue();
+        if ($shipmentPlaceCode) {
+            $sender = $this->storeService->getStoreByXmlId($shipmentPlaceCode);
+            $receiver = $selectedDelivery->getSelectedStore();
+            $currentDate = $storage->getCurrentDate();
+            $scheduleResultOptimal = $this->getScheduleResultOptimal($sender, $receiver, $currentDate, $selectedDelivery->getDeliveryDate());
+            if (!empty($scheduleResultOptimal)) {
+                $this->setOrderPropertyByCode($order, 'SCHEDULE_REGULARITY', $scheduleResultOptimal->getRegularityName());
+            }
         }
 
         $address = null;
@@ -1286,34 +1322,7 @@ class OrderService implements LoggerAwareInterface
 
             // активация подписки на доставку
             if($storage->isSubscribe()){
-                if(null === $storage->getSubscribeId()){
-                    throw new OrderSubscribeException('Susbcribe not found');
-                }
-                $subscribe = $this->orderSubscribeService->getById($storage->getSubscribeId());
-                $subscribe->setActive(true)
-                    ->setOrderId($order->getId())
-                    ->countDateCheck();
-
-                // привяжем пользователя
-                if(!$subscribe->getUserId()){
-                    $subscribe->setUserId($order->getUserId());
-                }
-
-                // добавим заказ в историю закзаов по подписке
-                $result = $this->orderSubscribeService->update($subscribe);
-                if($result->isSuccess()){
-                    /** @var OrderSubscribeHistoryService $orderSubscribeHistoryService */
-                    $orderSubscribeHistoryService = Application::getInstance()->getContainer()->get('order_subscribe_history.service');
-                    $historyAddResult = $orderSubscribeHistoryService->add(
-                        $subscribe,
-                        $order->getId(),
-                        (new \DateTime($this->getOrderPropertyByCode($order, 'DELIVERY_DATE')->getValue()))
-                    );
-                    if (!$historyAddResult->isSuccess()) {
-                        throw new \Exception('Ошибка сохранения записи в истории');
-                    }
-                    $this->orderSubscribeService->sendOrderSubscribedNotification($subscribe);
-                }
+                $this->orderSubscribeService->activateSubscription($storage, $order);
             }
 
         } catch (\Exception $e) {
@@ -2294,5 +2303,47 @@ class OrderService implements LoggerAwareInterface
             $res = true;
         }
         return $res;
+    }
+
+    /**
+     * @param Store $sender
+     * @param Store $receiver
+     * @param \DateTime $currentDate
+     * @param \DateTime $deliveryDate
+     * @return mixed|null
+     */
+    protected function getScheduleResultOptimal(Store $sender, Store $receiver, \DateTime $currentDate, \DateTime $deliveryDate)
+    {
+        $scheduleResultOptimal = null;
+        try {
+            /** @var ScheduleResultService $scheduleResultService */
+            $scheduleResultService = Application::getInstance()->getContainer()->get(ScheduleResultService::class);
+            foreach ($scheduleResultService->findResultsBySenderAndReceiver($sender, $receiver)->filterByDateActiveEqual($currentDate) as $scheduleResult) {
+                if(!$scheduleResultOptimal){
+                    $scheduleResultOptimal = $scheduleResult;
+                    continue;
+                }
+
+                $days = $scheduleResult->getDays($currentDate);
+                if ($days === ScheduleResult::RESULT_ERROR) {
+                    continue;
+                }
+
+                $daysDiff = $deliveryDate->diff($currentDate)->days;
+
+                if ($days - $daysDiff <= 0) {
+                    $regularitySort = $scheduleResult->getRegularitySort();
+                    if($regularitySort < $scheduleResultOptimal->getRegularitySort()) {
+                        $scheduleResultOptimal = $scheduleResult;
+                    }
+                } else if($days < $scheduleResultOptimal->getDays($currentDate)) {
+                    $scheduleResultOptimal = $scheduleResult;
+                }
+            }
+        } catch (\Exception $e) {
+            // просто не проставится регулярность
+        }
+
+        return $scheduleResultOptimal;
     }
 }

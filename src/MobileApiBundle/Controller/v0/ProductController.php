@@ -17,6 +17,7 @@ use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct;
 use FourPaws\MobileApiBundle\Dto\Request\GoodsBySpecialOfferRequest;
 use FourPaws\MobileApiBundle\Dto\Request\GoodsListByRequestRequest;
@@ -37,7 +38,7 @@ use Symfony\Component\HttpFoundation\Request;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 
 
-class ProductController extends FOSRestController
+class ProductController extends BaseController
 {
     private $cacheTime = 3600;
     private $cachePath = '/api/banners';
@@ -160,11 +161,12 @@ class ProductController extends FOSRestController
     public function getGoodsListAction(Request $request, GoodsListRequest $goodsListRequest)
     {
         $categoryId = $goodsListRequest->getCategoryId();
+        $stockId = $goodsListRequest->getStockId();
         $sort = $goodsListRequest->getSort();
         $page = $goodsListRequest->getPage();
         $count = $goodsListRequest->getCount();
 
-        $productsList = $this->apiProductService->getList($request, $categoryId, $sort, $count, $page);
+        $productsList = $this->apiProductService->getList($request, $categoryId, $sort, $count, $page, '', $stockId);
         /** @var \CIBlockResult $cdbResult */
         $cdbResult = $productsList->get('cdbResult');
         return (new Response\ProductListResponse())

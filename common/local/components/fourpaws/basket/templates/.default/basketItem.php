@@ -37,7 +37,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
     // kek, самое место для сбора данных
     $templateData['OFFERS'][] = ['ID' => $offer->getId(), 'QUANTITY' => $basketItem->getQuantity()];
 } ?>
-<div class="b-item-shopping js-remove-shopping">
+<div class="b-item-shopping js-remove-shopping js-item-shopping" data-productid="<?= $basketItemId; ?>">
     <?php
     if (\is_iterable($promoLinks)) {
         foreach ($promoLinks as $oneLink) {

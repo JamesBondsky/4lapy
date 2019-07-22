@@ -120,6 +120,4 @@ class OrderSubscribeItem extends BaseEntity
         }
         return $this->offer;
     }
-
-
 }

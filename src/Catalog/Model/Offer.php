@@ -1736,6 +1736,7 @@ class Offer extends IblockElement
                     'NAME',
                     'IBLOCK_ID',
                     'PREVIEW_PICTURE',
+                    'DETAIL_PICTURE',
                     'PREVIEW_TEXT',
                     'DATE_ACTIVE_FROM',
                     'DATE_ACTIVE_TO',

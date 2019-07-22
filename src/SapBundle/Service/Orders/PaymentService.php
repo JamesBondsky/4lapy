@@ -21,6 +21,8 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Order as SaleOrder;
 use Bitrix\Sale\Payment;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\SaleBundle\Dto\Fiscalization\CartItems;
 use FourPaws\SaleBundle\Dto\Fiscalization\Fiscalization;
@@ -273,10 +275,33 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         $newItemArr = [];
 
         $paymentTask->getItems()->map(function (Item $item) use (&$newItemArr) {
+            if ($this->isDeliveryItem($item)) {
+                $item->setOfferXmlId(OrderPayment::GENERIC_DELIVERY_CODE);
+            }
             $newItemArr[$item->getOfferXmlId()][] = $item;
         });
 
         $xmlIdsItems = array_keys($newItemArr);
+
+        if ($xmlIdsItems) {
+            $offers = (new OfferQuery())
+                ->withFilter([
+                    '=XML_ID' => $xmlIdsItems
+                ])
+                ->withSelect(['ID', 'XML_ID'])
+                ->exec();
+            foreach ($offers as $offer) {
+                /** @var Offer $offer */
+                $productIds[$offer->getXmlId()] = $offer->getId();
+            }
+
+            if (isset($productIds)) {
+                $arMeasure = \Bitrix\Catalog\ProductTable::getCurrentRatioWithMeasure($productIds);
+                foreach ($arMeasure as $offerId => $offerUnit) {
+                    $measureUnits[$offerId] = $offerUnit['MEASURE']['SYMBOL_RUS'];
+                }
+            }
+        }
 
         $itemsOrder = [];
 
@@ -306,16 +331,23 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
                     $newItem->setSumPrice(floatval($newAveragePriceItem) * $newItem->getQuantity());
                     $newItem->setPrice($newAveragePriceItem);
 
-                    $itemsOrder[$xmlIdItem][] = $newItem;
+                    if ($newItem->getPrice() > 0) {
+                        $itemsOrder[$xmlIdItem][] = $newItem;
+                    }
 
                     $newItemOriginal->setPrice($origSumAmount - $newItem->getSumPrice());
                     $newItemOriginal->setSumPrice($origSumAmount - $newItem->getSumPrice());
                     $newItemOriginal->setQuantity(1);
 
-                    $itemsOrder[$xmlIdItem][] = $newItemOriginal;
+                    if ($newItemOriginal->getPrice() > 0) {
+                        $itemsOrder[$xmlIdItem][] = $newItemOriginal;
+                    }
 
                 } else {
-                    $itemsOrder[$xmlIdItem][] = $newItem;
+                    if ($newItem->getPrice() > 0) {
+                        $newItem->setPrice($averagePriceItem);
+                        $itemsOrder[$xmlIdItem][] = $newItem;
+                    }
                 }
             }
         }
@@ -324,13 +356,23 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
 
         $itemsInCart = $fiscalization->getFiscal()->getOrderBundle()->getCartItems()->getItems();
 
+        asort($itemsOrder);
+
         $itemsFiscal = [];
+        $positionId = 1;
         foreach ($itemsOrder as $xmlId => $ptItems) {
             foreach ($ptItems as $ptItem) {
                 $tmpItem = new FiscalItem();
                 $newQuantity = $ptItem->getQuantity();
                 if ($newQuantity > 0) {
-                    $tmpItem->setQuantity((new ItemQuantity())->setValue((int)$newQuantity));
+                    $itemQuantity = (new ItemQuantity())
+                        ->setValue((int)$newQuantity);
+                    if ($unit = $measureUnits[$productIds[$ptItem->getOfferXmlId()]]) {
+                        $itemQuantity->setMeasure($unit);
+                    } else {
+                        $itemQuantity->setMeasure('шт');
+                    }
+                    $tmpItem->setQuantity($itemQuantity);
                     $tmpItem->setTotal(round($ptItem->getPrice() * $newQuantity * 100));
                     $tmpItem->setPrice(round($ptItem->getPrice() * 100));
                     $tmpItem->setName($ptItem->getOfferName());
@@ -345,17 +387,29 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
                         }
                     }, $itemsInCart->toArray());
 
-                    if (isset($tmpFindItem[0]) && $tmpFindItem[0]) {
+                    $tmpFindItem = array_filter($tmpFindItem, function ($tmpFindItemItem) {
+                        if ($tmpFindItemItem) {
+                            return true;
+                        }
+                    });
 
-                        $tmpFindItem = $tmpFindItem[0];
+                    $tmpFindItem = array_shift($tmpFindItem);
 
-                        $tmpItem->setPositionId($tmpFindItem->getPositionId());
+                    if ($tmpFindItem) {
+                        $tmpItem->setPositionId($positionId);
+//                        $tmpItem->setPositionId($tmpFindItem->getPositionId());
 
                         $tmpItem->setPaymentMethod($tmpFindItem->getPaymentMethod());
                         $tmpItem->setTax($tmpFindItem->getTax());
-                        $tmpItem->setCode($tmpFindItem->getCode());
+                        $itemCode = $tmpFindItem->getCode();
+                        $itemCode = explode('_', $itemCode);
+                        $itemCode[1] = $positionId;
+                        $tmpItem->setCode(implode('_', $itemCode));
+
+                        $tmpItem->getQuantity()->setMeasure($tmpFindItem->getQuantity()->getMeasure());
 
                         $itemsFiscal[] = $tmpItem;
+                        ++$positionId;
                     }
                 }
             }

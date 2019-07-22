@@ -8,13 +8,14 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Request\BannersRequest;
 use FourPaws\MobileApiBundle\Dto\Response\BannerListResponse;
 use FourPaws\MobileApiBundle\Services\Api\BannerService as ApiBannerService;
 use FourPaws\Helpers\TaggedCacheHelper;
 use Bitrix\Main\Application;
 
-class BannerController extends FOSRestController
+class BannerController extends BaseController
 {
     /**
      * @var ApiBannerService

@@ -8,6 +8,7 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Request\DeliveryAddressCreateRequest;
 use FourPaws\MobileApiBundle\Dto\Request\DeliveryAddressDeleteRequest;
 use FourPaws\MobileApiBundle\Dto\Request\DeliveryAddressGetRequest;
@@ -23,7 +24,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
  * Class UserDeliveryController
  * @package FourPaws\MobileApiBundle\Controller\v0
  */
-class DeliveryAddressController extends FOSRestController
+class DeliveryAddressController extends BaseController
 {
     /**
      * @var ApiUserDeliveryAddressService
