@@ -76,6 +76,10 @@ class KkmService implements LoggerAwareInterface
             'code'    => 204,
             'message' => 'Успешно, но тело ответа пустое'
         ],
+        'success_no_items' => [
+            'code'    => 205,
+            'message' => 'Успешно, но товар закончился на складе'
+        ],
         'syntax_error'   => [
             'code'    => 400,
             'message' => 'В запросе синтаксическая ошибка'
@@ -460,7 +464,7 @@ class KkmService implements LoggerAwareInterface
             $sumOffers = 0;
 
             foreach ($offers->getValues() as $offerItem) {
-                if (($quantities[$offerItem->getXmlId()] + 3) > $offerItem->getQuantity()) {
+                if (($quantities[$offerItem->getXmlId()] + 3) > $offerItem->getQuantity() || $quantities[$offerItem->getXmlId()] == 0) {
                     $errorsOffers[] = $offerItem->getXmlId();
                 }
                 $sumOffers += $quantities[$offerItem->getXmlId()] * $offerItem->getPrice();
@@ -476,6 +480,13 @@ class KkmService implements LoggerAwareInterface
                 throw new KkmException(
                     static::RESPONSE_STATUSES['internal_error']['message'] . $e->getMessage(),
                     static::RESPONSE_STATUSES['internal_error']['code']
+                );
+            }
+
+            if (count($deliveries) == 0) {
+                throw new KkmException(
+                    static::RESPONSE_STATUSES['success_no_items']['message'],
+                    static::RESPONSE_STATUSES['success_no_items']['code']
                 );
             }
 
