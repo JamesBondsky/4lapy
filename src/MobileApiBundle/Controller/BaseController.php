@@ -18,7 +18,7 @@ class BaseController extends FOSRestController
 {
     public function __destruct()
     {
-        if (strripos($_SERVER['REQUEST_URI'], '/api/') !== false) {
+        if (strripos($_SERVER['REQUEST_URI'], '/api/') === 0) {
             $container = App::getInstance()->getContainer();
 
             /** @var ManzanaService $manzanaService */
