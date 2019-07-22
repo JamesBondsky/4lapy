@@ -49,7 +49,7 @@ $partialPickup = $arResult['DOBROLAP_PARTIAL'] ?? $deliveryDobrolap;
     </div>
 
     <div class="b-input">
-        <select name="shelter" class="b-input__input-field b-input__input-field--with-border" required>
+        <select name="shelter" class="b-input__input-field b-input__input-field--with-border" <?= $deliveryService->isDobrolapDelivery($selectedDelivery) ? 'required' : '' ?>>
             <option value="">не выбрано</option>
             <?
             foreach ($arResult['SHELTERS'] as $shelter) {

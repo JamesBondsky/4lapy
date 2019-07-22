@@ -26,7 +26,9 @@ $promocode = $coupon['UF_PROMO_CODE'];
                     Ваш заказ №<strong><?= $order->getField('ACCOUNT_NUMBER') ?></strong> оформлен
                 </h2>
                 <div class="b-order__text-block">и&nbsp;будет&nbsp;доставлен&nbsp;в <b><?= $arResult['SHELTER'] ?></b></div>
-                <hr class="b-hr b-hr--order b-hr--top-line"/>
+                <? if ($arResult['EXIST_COUPON'] || $arResult['AVAILABLE_COUPONS']) { ?>
+                    <hr class="b-hr b-hr--order b-hr--top-line"/>
+                <? } ?>
                 <div data-b-dobrolap-prizes data-order-id="<?= $order->getField('ACCOUNT_NUMBER') ?>" data-url="<?= $arResult['GET_COUPON_URL'] ?>">
                     <? if ($arResult['EXIST_COUPON']) { ?>
                         <div data-b-dobrolap-prizes="coupon-section">
@@ -82,7 +84,7 @@ $promocode = $coupon['UF_PROMO_CODE'];
                                 3. Промо-код можно использовать 1 раз до окончанчания его срока действия.
                             </div>
                         </div>
-                    <? } else { ?>
+                    <? } elseif($arResult['AVAILABLE_COUPONS']) { ?>
                         <div data-b-dobrolap-prizes="choose-section">
                             <div class="b-order__text-block">
                                 <strong>Мы говорим спасибо</strong>

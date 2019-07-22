@@ -220,7 +220,6 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                             data-text="Самовывоз"
                                             value="<?= $deliveryDobrolap->getDeliveryId() ?>"
                                             data-delivery="<?= $deliveryDobrolap->getPrice() ?>"
-                                            data-full="0"
                                             data-full="<?= $deliveryDobrolap->getStockResult()->getOrderable()->getPrice() ?>"
                                             data-check="js-list-orders-cont"
                                     />
@@ -240,7 +239,7 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
                                         <div>
                                             <span class="b-choice-recovery__main-text">Доставка в приют</span>
 
-                                            <span class="b-choice-recovery__addition-text js-my-pickup js-pickup-tab">
+                                            <span class="b-choice-recovery__addition-text js-my-dobrolap js-dobrolap-tab">
                                             бесплатно
                                         </span>
 
