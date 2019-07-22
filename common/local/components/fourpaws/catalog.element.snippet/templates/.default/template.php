@@ -163,6 +163,7 @@ if (!$currentOffer->getImagesIds()) {
                             case Offer::PACKAGE_LABEL_TYPE_COLOUR:
                                 $value = $offer->getColor()->getName();
                                 $image = $offer->getColor()->getFilePath();
+                                $hexColor = $offer->getColor()->getColorCode();
                                 $colourCombination = true;
                                 break;
                             default:
@@ -172,9 +173,9 @@ if (!$currentOffer->getImagesIds()) {
                             ? $offer->getResizeImages(240, 240)->first()
                             : $offerWithImages->getResizeImages(240, 240)->first();
                         ?>
-                        <li class="b-weight-container__item <? if($image){ ?>b-weight-container__item--color-list<? } ?>">
+                        <li class="b-weight-container__item <? if($image || $hexColor){ ?>b-weight-container__item--color-list<? } ?>">
                             <a href="javascript:void(0)"
-                               class="b-weight-container__link <? if ($image) { ?>b-weight-container__link--color-list<? } ?> js-price<?= $currentOffer->getId()
+                               class="b-weight-container__link <? if ($image || $hexColor) { ?>b-weight-container__link--color-list<? } ?> js-price<?= $currentOffer->getId()
                                                                            === $offer->getId() ? ' active-link' : '' ?>"
                                data-oldprice="<?= $offer->getCatalogOldPrice()
                                                   !== $offer->getCatalogPrice() ? $offer->getCatalogOldPrice() : '' ?>"
@@ -186,7 +187,7 @@ if (!$currentOffer->getImagesIds()) {
                                data-onmousedown="<?= $getOnMouseDown($offer) ?>"
                                data-image="<?= $offerImage ?>"
                                data-link="<?= $offer->getLink() ?>"
-                            style="background-image: url(<?=$image?>);"><?= $value ?></a>
+                            style="background-image: url(<?=$image?>); background-color: <?= $hexColor ? '#' . $hexColor : '' ?>;"><?= $hexColor ? '' : $value ?></a>
                         </li>
                         <?php
                     } ?>
