@@ -18,38 +18,40 @@ class BaseController extends FOSRestController
 {
     public function __destruct()
     {
-        $container = App::getInstance()->getContainer();
+        if (strripos($_SERVER['REQUEST_URI'], '/api/') !== false) {
+            $container = App::getInstance()->getContainer();
 
-        /** @var ManzanaService $manzanaService */
-        $manzanaService = $container->get('manzana.service');
-        $client = new Client();
-        try {
-            /** @var UserService $userCurrentUserService*/
-            $userCurrentUserService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
-            $currentUser = $userCurrentUserService->getCurrentUser();
-            $currentDate = new DateTime();
-            $fields = [
-                'USER_ID' => $currentUser->getId()
-            ];
-            $getLastUsing = UserApiLastUsingTable::query()->setSelect(['ID', 'DATE_INSERT'])->addFilter('=USER_ID', $fields['USER_ID'])->setOrder(['ID' => 'DESC'])->exec()->fetch();
-            if (!$getLastUsing || (isset($getLastUsing['DATE_INSERT']) && $getLastUsing['DATE_INSERT']->format('d.m.Y') != $currentDate->format('d.m.Y'))) {
-                if ($getLastUsing) {
-                    $fields['DATE_INSERT'] = $currentDate;
-                    UserApiLastUsingTable::update($getLastUsing['ID'], $fields);
-                } else {
-                    UserApiLastUsingTable::add($fields);
+            /** @var ManzanaService $manzanaService */
+            $manzanaService = $container->get('manzana.service');
+            $client = new Client();
+            try {
+                /** @var UserService $userCurrentUserService */
+                $userCurrentUserService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+                $currentUser = $userCurrentUserService->getCurrentUser();
+                $currentDate = new DateTime();
+                $fields = [
+                    'USER_ID' => $currentUser->getId()
+                ];
+                $getLastUsing = UserApiLastUsingTable::query()->setSelect(['ID', 'DATE_INSERT'])->addFilter('=USER_ID', $fields['USER_ID'])->setOrder(['ID' => 'DESC'])->exec()->fetch();
+                if (!$getLastUsing || (isset($getLastUsing['DATE_INSERT']) && $getLastUsing['DATE_INSERT']->format('d.m.Y') != $currentDate->format('d.m.Y'))) {
+                    if ($getLastUsing) {
+                        $fields['DATE_INSERT'] = $currentDate;
+                        UserApiLastUsingTable::update($getLastUsing['ID'], $fields);
+                    } else {
+                        UserApiLastUsingTable::add($fields);
+                    }
+
+
+                    $client->phone = $currentUser->getPersonalPhone();
+                    $client->haveMobileApp = true;
+                    $client->lastDateUseMobileApp = $currentDate->format(\DateTime::ATOM);
+
+                    if ($client instanceof Client) {
+                        $manzanaService->updateContactAsync($client);
+                    }
                 }
-
-
-                $client->phone = $currentUser->getPersonalPhone();
-                $client->haveMobileApp = true;
-                $client->lastDateUseMobileApp = $currentDate->format(\DateTime::ATOM);
-
-                if ($client instanceof Client) {
-                    $manzanaService->updateContactAsync($client);
-                }
+            } catch (NotAuthorizedException $e) {
             }
-        } catch(NotAuthorizedException $e){
         }
     }
 }
