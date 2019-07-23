@@ -121,8 +121,8 @@ password: guest
 
 ## Запуск переиндексации
 ```
-- ./bin/symfony_console f:i:r 
-- ./bin/symfony_console f:i:r -f # С пересозданием индекса 
+- ./bin/symfony_console fourpaws:indexer:reindex 
+- ./bin/symfony_console fourpaws:indexer:reindex -f # С пересозданием индекса 
 ```
 
 ## Сбросить пароль для пользователей группы FRONT_OFFICE_USERS
@@ -135,7 +135,7 @@ password: guest
 При первом запуске выполнить: 
 ```
 # Необходим поисковый индекс для тестового окружения
-- ./bin/symfony_console --env=test f:i:r
+- ./bin/symfony_console --env=test fourpaws:indexer:reindex
 
 # Билдим исходники для codeception 
 - .php vendor/bin/codecept build 
