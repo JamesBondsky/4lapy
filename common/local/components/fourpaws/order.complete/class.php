@@ -292,10 +292,12 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
             }
 
             /* Получаем питомник */
-            $shelterID = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'DOBROLAP_SHELTER')->getValue();
-            $shelter = AnimalShelterTable::getById($shelterID)->fetch();
-            $this->arResult['SHELTER'] = $shelter['name'] . ', ' . $shelter['city'];
-            $this->setTemplateName('dobrolap');
+            $shelterBarcode = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'DOBROLAP_SHELTER')->getValue();
+            $shelter = AnimalShelterTable::getByBarcode($shelterBarcode);
+            if ($shelter) {
+                $this->arResult['SHELTER'] = $shelter['name'] . ', ' . $shelter['city'];
+                $this->setTemplateName('dobrolap');
+            }
         }
     }
 

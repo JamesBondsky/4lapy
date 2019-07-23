@@ -45,6 +45,7 @@ use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Enum\OrderPayment;
+use FourPaws\SaleBundle\Repository\Table\AnimalShelterTable;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SapBundle\Dto\Base\Orders\DeliveryAddress;
 use FourPaws\SapBundle\Dto\In\Orders\Order as OrderDtoIn;
@@ -301,7 +302,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         if ($this->deliveryService->isDobrolapDeliveryCode($deliveryTypeCode)) {
             $orderDto->setFastDeliv('P');
         } else {
-            $orderDto->setFastDeliv($this->isFastDelivery($this->getPropertyValueByCode($order, 'SCHEDULE_REGULARITY')));
+            $isFastDeliv = $this->isFastDelivery($this->getPropertyValueByCode($order, 'SCHEDULE_REGULARITY'));
+            $orderDto->setFastDeliv($isFastDeliv ? 'X' : '');
         }
 
 
@@ -504,7 +506,17 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             $this->getPropertyValueByCode($order, 'DELIVERY_DATE')
         );
 
-        $deliveryAddress = $this->getDeliveryAddress($order);
+        if ($this->deliveryService->isDobrolapDeliveryCode($this->getDeliveryCode($order))) {
+            $deliveryAddress = new OutDeliveryAddress();
+            $shelterBarcode = $this->getPropertyValueByCode($order, 'DOBROLAP_SHELTER');
+            $shelter = AnimalShelterTable::getByBarcode($shelterBarcode);
+            if ($shelter) {
+                $deliveryAddress->setCityName($shelter['city']);
+                $deliveryAddress->setStreetName($shelter['name']);
+            }
+        } else {
+            $deliveryAddress = $this->getDeliveryAddress($order);
+        }
 
         $orderDto
             ->setCommunicationType($this->getPropertyValueByCode($order, 'COM_WAY'))
@@ -731,6 +743,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 break;
             case DeliveryService::DELIVERY_DOSTAVISTA_CODE:
                 return SapOrder::DELIVERY_TYPE_DOSTAVISTA;
+                break;
+            case DeliveryService::DOBROLAP_DELIVERY_CODE:
+                return SapOrder::DELIVERY_TYPE_COURIER_RC;
                 break;
             default:
                 switch ($deliveryZone) {

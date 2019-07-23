@@ -35,7 +35,7 @@ use FourPaws\Decorators\SvgDecorator;
                     <button
                             class="b-popup-pick-shelter__shelter"
                             data-b-popup-pick-shelter="shelter"
-                            data-shelter='<?= json_encode(['id' => $shelter['id'], 'title' => $shelter['name'], 'location' => $shelter['city'], 'text' => $shelter['description']],
+                            data-shelter='<?= json_encode(['id' => $shelter['barcode'], 'title' => $shelter['name'], 'location' => $shelter['city'], 'text' => $shelter['description']],
                                 JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES) ?>'>
                         <div class="b-popup-pick-shelter__shelter-title"><?=$shelter['name']?></div>
                         <div class="b-popup-pick-shelter__shelter-location"><?=$shelter['city']?></div>

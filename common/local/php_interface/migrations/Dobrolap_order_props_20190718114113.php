@@ -7,7 +7,7 @@ use Bitrix\Sale\Internals\OrderPropsTable;
 
 class Dobrolap_order_props_20190718114113 extends SprintMigrationBase
 {
-    protected $description = 'Создание свойств заказа "ID подарочного купона купона Добролап" и "ID питомника Добролап"';
+    protected $description = 'Создание свойств заказа "ID подарочного купона купона Добролап" и "Штрих-код питомника Добролап"';
 
     protected const PROP_CODES = [
         'DOBROLAP_COUPON_ID' => [
@@ -15,8 +15,8 @@ class Dobrolap_order_props_20190718114113 extends SprintMigrationBase
             'TYPE' => 'NUMBER'
         ],
         'DOBROLAP_SHELTER' => [
-            'NAME' => 'ID питомника Добролап',
-            'TYPE' => 'NUMBER'
+            'NAME' => 'Штрих-код питомника Добролап',
+            'TYPE' => 'STRING'
         ]
     ];
 
