@@ -128,11 +128,11 @@ class ProductService
     public function getList(
         Request $request,
         int $categoryId = 0,
-        int $stockId = 0,
         string $sort = 'popular',
         int $count = 10,
         int $page = 1,
-        string $searchQuery = ''
+        string $searchQuery = '',
+        int $stockId = 0
     ): ArrayCollection
     {
         $filters = new FilterCollection();
