@@ -171,7 +171,7 @@ $markup = PawsApplication::markup();
                 <li>Проверяйте результаты розыгрыша 7, 13, 19, 25 июня и&nbsp;1&nbsp;июля.</li>
             </ol>
 
-            <?if ($USER->IsAuthorized()) {?>
+            <?/*if ($USER->IsAuthorized()) {?>
                 <div class="regulations-landing__btn">
                     <div class="landing-btn" data-btn-scroll-landing="registr-check">Зарегистрировать чек</div>
                 </div>
@@ -179,7 +179,7 @@ $markup = PawsApplication::markup();
                 <div class="regulations-landing__btn">
                     <div class="landing-btn js-open-popup" data-popup-id="authorization">Принять участие</div>
                 </div>
-            <?}?>
+            <?}*/?>
         </div>
     </section>
 </div>
