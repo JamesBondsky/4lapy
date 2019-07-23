@@ -142,25 +142,23 @@ class ProductService
             $filters = $category->getFilters();
         }
 
-        if($stockId > 0){
+        if ($stockId > 0) {
             $searchQuery = $this->getProductIdsByShareId($stockId);
 
             $category = new \FourPaws\Catalog\Model\Category();
             $this->filterHelper->initCategoryFilters($category, $request);
             $filters = $category->getFilters();
 
-            $resetFilter = true;
+            $filterArr = [];
             foreach ($filters as $filter) {
                 $filterCode = $filter->getFilterCode();
                 $requestParam = $request->get($filterCode);
                 if ($requestParam) {
-                    $resetFilter = false;
+                    $filterArr[] = $filter;
                 }
             }
 
-            if ($resetFilter) {
-                $filters = new FilterCollection();
-            }
+            $filters = new FilterCollection($filterArr);
         } else if ($searchQuery) {
             /** @see CatalogController::searchAction */
             $searchQuery = mb_strtolower($searchQuery);
