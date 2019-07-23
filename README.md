@@ -105,7 +105,7 @@ https://api.esv2.com - валидный адрес
 ## Фабрика фидов
 
 ```
-- ./bin/symfony_console b:f:f %id% --type %type% # id - ид профиля выгрузки, type - тип фида (yandex-market; google-merchant; retail-rocket; expert-sender)
+- ./bin/symfony_console bitrix:feed:factory %id% --type %type% # id - ид профиля выгрузки, type - тип фида (yandex-market; google-merchant; retail-rocket; expert-sender)
 ```
 
 ## Сервисы вагранта
