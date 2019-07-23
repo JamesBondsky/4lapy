@@ -46,11 +46,11 @@ https://api.esv2.com - валидный адрес
 ## Запуск импорта из SAP 
 
 ```
-- ./bin/symfony_console f:s:i catalog #Каталог (товары -> цены (+ простые акции) -> остатки на складах -> остатки в магазинах)
-- ./bin/symfony_console f:s:i order_status #Статусы заказа (заказы из SAP)
-- ./bin/symfony_console f:s:i payment # Задания на списание оплаты
-- ./bin/symfony_console f:s:i delivery_schedule # Расписания поставок
-- ./bin/symfony_console f:s:i bonus_buy # Сложные скидки из SAPBB 
+- ./bin/symfony_console fourpaws:sap:import catalog #Каталог (товары -> цены (+ простые акции) -> остатки на складах -> остатки в магазинах)
+- ./bin/symfony_console fourpaws:sap:import order_status #Статусы заказа (заказы из SAP)
+- ./bin/symfony_console fourpaws:sap:import payment # Задания на списание оплаты
+- ./bin/symfony_console fourpaws:sap:import delivery_schedule # Расписания поставок
+- ./bin/symfony_console fourpaws:sap:import bonus_buy # Сложные скидки из SAPBB 
 ```
 ```
 -f|--force - для сброса блокировки
