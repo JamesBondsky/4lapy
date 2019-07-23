@@ -69,9 +69,18 @@ if (count($arResult['SHELTERS'])) {
     </div>
 <?php endif ?>
 
-<? /*<a class="b-link b-link--another-point js-open-popup"
-   href="javascript:void(0);"
-   data-popup-id="popup-order-stores"
-   title="">
-    Выбрать другой питомник
-</a>*/ ?>
+<?
+$this->SetViewTarget('shelter_popup');
+$APPLICATION->IncludeComponent(
+    'fourpaws:order.shelter.list',
+    'popup',
+    [
+        'SHELTERS' => $arResult['SHELTERS']
+    ],
+    null,
+    [
+        'HIDE_ICONS' => 'Y'
+    ]
+);
+$this->EndViewTarget();
+?>

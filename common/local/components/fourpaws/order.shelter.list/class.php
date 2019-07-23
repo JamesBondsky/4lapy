@@ -97,14 +97,7 @@ class FourPawsOrderShelterListComponent extends FourPawsShopListComponent
      */
     protected function prepareResult(array $city = [])
     {
-        /** @var \Symfony\Bundle\FrameworkBundle\Routing\Router $router */
-        $router = Application::getInstance()->getContainer()->get('router');
-        /** @var Symfony\Component\Routing\RouteCollection $routeCollection */
-        $storeListUrlRoute = null;
-        if ($routeCollection = $router->getRouteCollection()) {
-            $storeListUrlRoute = $routeCollection->get('fourpaws_sale_ajax_order_sheltersearch');
-        }
-        $this->arResult['STORE_LIST_URL'] = $storeListUrlRoute ? $storeListUrlRoute->getPath() : '';
+        $this->arResult['SHELTERS'] = $this->arParams['SHELTERS'];
         return true;
     }
 }

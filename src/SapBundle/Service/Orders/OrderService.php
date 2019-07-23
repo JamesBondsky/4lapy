@@ -273,6 +273,11 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ]
         )) ?: '';
 
+        $deliveryTypeCode = $this->getDeliveryCode($order);
+        if ($deliveryTypeCode == DeliveryService::INNER_DELIVERY_CODE || $deliveryTypeCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
+            $this->populateOrderDtoUserCoords($orderDto, $order);
+        }
+
         $orderDto
             ->setId($order->getField('ACCOUNT_NUMBER'))
             ->setDateInsert(DateHelper::convertToDateTime($order->getDateInsert()
@@ -291,8 +296,14 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ->setOrderSource($orderSource)
             ->setBonusCard($this->getPropertyValueByCode($order, 'DISCOUNT_CARD'))
             ->setAvatarEmail($this->getPropertyValueByCode($order, 'OPERATOR_EMAIL'))
-            ->setAvatarDepartment($this->getPropertyValueByCode($order, 'OPERATOR_SHOP'))
-            ->setFastDeliv($this->isFastDelivery($this->getPropertyValueByCode($order, 'SCHEDULE_REGULARITY')));
+            ->setAvatarDepartment($this->getPropertyValueByCode($order, 'OPERATOR_SHOP'));
+
+        if ($this->deliveryService->isDobrolapDeliveryCode($deliveryTypeCode)) {
+            $orderDto->setFastDeliv('P');
+        } else {
+            $orderDto->setFastDeliv($this->isFastDelivery($this->getPropertyValueByCode($order, 'SCHEDULE_REGULARITY')));
+        }
+
 
         if (Env::isStage()) {
             $orderDto
@@ -305,11 +316,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $this->populateOrderDtoDelivery($orderDto, $order);
         $this->populateOrderDtoProducts($orderDto, $order);
         $this->populateOrderDtoCouponNumber($orderDto, $order);
-
-        $deliveryTypeCode = $this->getDeliveryCode($order);
-        if ($deliveryTypeCode == DeliveryService::INNER_DELIVERY_CODE || $deliveryTypeCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
-            $this->populateOrderDtoUserCoords($orderDto, $order);
-        }
 
         $xml = $this->serializer->serialize($orderDto, 'xml');
 

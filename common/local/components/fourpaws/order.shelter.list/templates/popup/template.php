@@ -31,16 +31,16 @@ use FourPaws\Decorators\SvgDecorator;
 
         <div class="b-popup-pick-shelter__content">
             <div class="b-popup-pick-shelter__content-shelters">
-                <? for ($i = 1; $i <= 20; $i++):  ?>
+                <? foreach ($arResult['SHELTERS'] as $shelter){ ?>
                     <button
-                        class="b-popup-pick-shelter__shelter"
-                        data-b-popup-pick-shelter="shelter"
-                        data-shelter='<?=json_encode(['id' => $i, 'title' => "Приют $i",  'location' => 'Москва', 'text' => 'Главная помощь, если Вы решите взять животное домой. Больше всего они нуждаются в доме, любви  и заботе.'], JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES)?>'
-                    >
-                        <div class="b-popup-pick-shelter__shelter-title">Приют <?= $i ?></div>
-                        <div class="b-popup-pick-shelter__shelter-location">Москва</div>
+                            class="b-popup-pick-shelter__shelter"
+                            data-b-popup-pick-shelter="shelter"
+                            data-shelter='<?= json_encode(['id' => $shelter['id'], 'title' => $shelter['name'], 'location' => $shelter['city'], 'text' => $shelter['description']],
+                                JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES) ?>'>
+                        <div class="b-popup-pick-shelter__shelter-title"><?=$shelter['name']?></div>
+                        <div class="b-popup-pick-shelter__shelter-location"><?=$shelter['city']?></div>
                     </button>
-                <? endfor ?>
+                <? } ?>
             </div>
 
             <div class="b-popup-pick-shelter__content-info" data-b-popup-pick-shelter="content-info">

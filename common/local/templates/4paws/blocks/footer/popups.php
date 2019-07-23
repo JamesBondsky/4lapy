@@ -43,10 +43,14 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
         $APPLICATION->IncludeComponent('fourpaws:order.shop.list', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
     }
     if ($template->hasOrderDeliveryPage()) {
-        $APPLICATION->IncludeComponent('fourpaws:order.shelter.list', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
+        $APPLICATION->ShowViewContent('shelter_popup');
     }
     if ($template->hasFastOrder()) {
         $APPLICATION->IncludeComponent('fourpaws:fast.order', '', [], null, ['HIDE_ICONS' => 'Y']);
+    }
+
+    if ($template->isOrderCompletePage()) {
+        $APPLICATION->ShowViewContent('shelter_popup');
     }
 
     if(KioskService::isKioskMode() && $template->isIndex()) {
