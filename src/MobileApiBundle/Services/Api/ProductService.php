@@ -233,6 +233,11 @@ class ProductService
         if (!$currentOffer) {
             return null;
         }
+
+        foreach ($product->getOffers() as $itemOffer) {
+            $itemOffer->setColor();
+        }
+
         $fullProduct = $this->convertToFullProduct($product, $currentOffer, true, false);
 
         // товары всегда доступны в каталоге (недоступные просто не должны быть в выдаче)
@@ -419,6 +424,7 @@ class ProductService
             ->setXmlId($offer->getXmlId())
             ->setBrandName($product->getBrandName())
             ->setWebPage($offer->getCanonicalPageUrl())
+            ->setColor($offer->getColorProp())
             ;
 
         // большая картинка
@@ -481,6 +487,7 @@ class ProductService
      */
     public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = false, ?bool $showVariantsIfOneVariant = true): FullProduct
     {
+        $offer->setColor();
         $shortProduct = $this->convertToShortProduct($product, $offer);
         $detailText = $product->getDetailText()->getText();
         $detailText = ImageHelper::appendDomainToSrc($detailText);
@@ -507,6 +514,7 @@ class ProductService
             ->setIsAvailable($shortProduct->getIsAvailable())
             ->setPickupOnly($shortProduct->getPickupOnly())
             ->setInPack($shortProduct->getInPack());
+        $fullProduct->setColor($shortProduct->getColor());
 
         if ($needPackingVariants) {
             $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant));   // фасовки

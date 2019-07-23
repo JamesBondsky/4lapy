@@ -69,8 +69,22 @@ if (!$currentOffer->getImagesIds()) {
     }
 }
 
-/** @noinspection PhpUnhandledExceptionInspection */
-$value = $currentOffer->getPackageLabel(true, 999);
+$packageLabelType = $currentOffer->getPackageLabelType();
+
+switch ($packageLabelType) {
+    case Offer::PACKAGE_LABEL_TYPE_COLOUR:
+        $color = $currentOffer->getColor();
+        if ($color) {
+            $value = $color->getName();
+            $image = $color->getFilePath();
+            $colourCombination = true;
+        }
+        break;
+}
+if (!$colourCombination) {
+    $value = $currentOffer->getPackageLabel(false, 999);
+}
+
 $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
 ?>
     <div class="b-common-item js-product-item" id="<?= $arParams['ITEM_ATTR_ID'] ?>"
@@ -116,6 +130,7 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
             </a>
             <?php if ($offers->count() > 0) {
                 $isOffersPrinted = false;
+                $colourCombination = false;
 
                 ob_start(); ?>
                 <div class="b-weight-container b-weight-container--list">
@@ -129,9 +144,19 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
                         <?php
                         $countSizes = 0;
                         foreach ($offers as $offer) {
-
-                            /** @noinspection PhpUnhandledExceptionInspection */
-                            $value = $offer->getPackageLabel(false, 0);
+                            switch ($packageLabelType) {
+                                case Offer::PACKAGE_LABEL_TYPE_COLOUR:
+                                    $color = $offer->getColor();
+                                    if ($color) {
+                                        $value = $color->getName();
+                                        $image = $color->getFilePath();
+                                        $colourCombination = true;
+                                    }
+                                    break;
+                            }
+                            if (!$colourCombination) {
+                                $value = $offer->getPackageLabel(false, 0);
+                            }
 
                             $countSizes++;
                             $isOffersPrinted = true;
