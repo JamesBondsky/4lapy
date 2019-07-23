@@ -278,7 +278,7 @@ if (!$currentOffer->getImagesIds()) {
                     <span class="b-common-item__discount">
                         <span class="b-common-item__disc">Скидка</span>
                         <span class="b-common-item__discount-price js-sale-sale"><?= $currentOffer->getDiscountPrice() ?></span>
-                        <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount"></span>
+                        <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount">₽</span>
                         </span>
                     </span>
                 </div>
