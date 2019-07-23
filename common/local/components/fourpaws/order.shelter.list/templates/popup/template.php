@@ -13,7 +13,7 @@ use FourPaws\Decorators\SvgDecorator;
             <div class="b-popup-pick-shelter__title">
                 <span class="b-popup-pick-shelter__title-desktop">Все приюты</span>
                 <span class="b-popup-pick-shelter__title-mobile">Выберите приют</span>
-                <span data-b-popup-pick-shelter="shelters-count">(всего 20)</span>
+                <span data-b-popup-pick-shelter="shelters-count">(всего <?=count($arResult['SHELTERS'])?>)</span>
             </div>
 
             <a href="javascript:;" class="b-popup-shelter__close-popup js-close-popup">
