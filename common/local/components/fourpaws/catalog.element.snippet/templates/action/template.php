@@ -269,6 +269,19 @@ if (!$currentOffer->getImagesIds()) {
                     <span class="b-ruble">₽</span>
                     <span class="title-subscr">Подписка</span>
                 </a>
+            <? elseif($currentOffer->hasDiscount()): ?>
+                <div class="b-common-item__benefin js-sale-block">
+                    <span class="b-common-item__prev-price js-sale-origin">
+                        <?= $currentOffer->getOldPrice() ?>
+                        <span class="b-ruble b-ruble--prev-price">₽</span>
+                    </span>
+                    <span class="b-common-item__discount">
+                        <span class="b-common-item__disc">Скидка</span>
+                        <span class="b-common-item__discount-price js-sale-sale"><?= $currentOffer->getDiscountPrice() ?></span>
+                        <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount">₽</span>
+                        </span>
+                    </span>
+                </div>
             <? else: ?>
                 <div class="b-common-item__benefin js-sale-block">
                     <span class="b-common-item__prev-price js-sale-origin">
@@ -277,7 +290,7 @@ if (!$currentOffer->getImagesIds()) {
                     <span class="b-common-item__discount">
                         <span class="b-common-item__disc"></span>
                         <span class="b-common-item__discount-price js-sale-sale"></span>
-                        <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount"></span>
+                        <span class="b-common-item__currency"> <span class="b-ruble b-ruble--discount">₽</span>
                         </span>
                     </span>
                 </div>

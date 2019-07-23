@@ -147,6 +147,15 @@ class FullProduct extends ShortProduct
     protected $hasSpecialOffer = false;
 
     /**
+     * ОбъектЦвет
+     *
+     * @var \FourPaws\MobileApiBundle\Dto\Object\Color
+     * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\Color")
+     * @Serializer\SerializedName("color")
+     */
+    protected $color;
+
+    /**
      * @return CatalogCategory
      */
     public function getCategory(): CatalogCategory

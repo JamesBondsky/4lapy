@@ -74,7 +74,7 @@ if ($template->hasMainWrapper()) { ?>
         <div class="container-landing">
             <div class="info-prizes__message">
                 <div class="landing-title landing-title_white">
-                    Регистрируйте чеки<br class="hidden-mobile" /> и&nbsp;выигрывайте призы каждую неделю
+                    Регистрация чеков завершена
                 </div>
             </div>
         </div>

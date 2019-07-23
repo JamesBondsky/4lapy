@@ -53,6 +53,7 @@ $offers = $product->getOffersSorted();
 /** @var Offer $currentOffer */
 $currentOffer = $arResult['CURRENT_OFFER'];
 $offerWithImages = $currentOffer;
+$packageLabelType = $currentOffer->getPackageLabelType();
 if (!$currentOffer->getImagesIds()) {
     /** @var Offer $offer */
     foreach ($offers as $offer) {
@@ -136,10 +137,17 @@ if (!$currentOffer->getImagesIds()) {
                 <?php
             }
             ?>
-            <div class="b-weight-container b-weight-container--list">
+            <div class="b-weight-container b-weight-container--list b-weight-container--color">
                 <?php
-                /** @noinspection PhpUnhandledExceptionInspection */
-                $value = $currentOffer->getPackageLabel(true, 999);
+                switch ($packageLabelType) {
+                    case Offer::PACKAGE_LABEL_TYPE_COLOUR:
+                        $value = $currentOffer->getColor()->getName();
+                        $image = $currentOffer->getColor()->getFilePath();
+                        $colourCombination = true;
+                        break;
+                    default:
+                        $value = $currentOffer->getPackageLabel(false, 999);
+                }
                 ?>
                 <a class="b-weight-container__link <?= ($offers->count()
                                                         > 1) ? ' b-weight-container__link--mobile ' : '' ?> js-mobile-select js-select-mobile-package"
@@ -151,16 +159,23 @@ if (!$currentOffer->getImagesIds()) {
                 <ul class="b-weight-container__list">
                     <?php
                     foreach ($offers as $offer) {
-
-                        /** @noinspection PhpUnhandledExceptionInspection */
-                        $value = $offer->getPackageLabel(true, 999);
+                        switch ($packageLabelType) {
+                            case Offer::PACKAGE_LABEL_TYPE_COLOUR:
+                                $value = $offer->getColor()->getName();
+                                $image = $offer->getColor()->getFilePath();
+                                $hexColor = $offer->getColor()->getColorCode();
+                                $colourCombination = true;
+                                break;
+                            default:
+                                $value = $offer->getPackageLabel(true, 999);
+                        }
                         $offerImage = $offer->getImagesIds()
                             ? $offer->getResizeImages(240, 240)->first()
                             : $offerWithImages->getResizeImages(240, 240)->first();
                         ?>
-                        <li class="b-weight-container__item">
+                        <li class="b-weight-container__item <? if($image || $hexColor){ ?>b-weight-container__item--color-list<? } ?>">
                             <a href="javascript:void(0)"
-                               class="b-weight-container__link js-price<?= $currentOffer->getId()
+                               class="b-weight-container__link <? if ($image || $hexColor) { ?>b-weight-container__link--color-list<? } ?> js-price<?= $currentOffer->getId()
                                                                            === $offer->getId() ? ' active-link' : '' ?>"
                                data-oldprice="<?= $offer->getCatalogOldPrice()
                                                   !== $offer->getCatalogPrice() ? $offer->getCatalogOldPrice() : '' ?>"
@@ -171,7 +186,8 @@ if (!$currentOffer->getImagesIds()) {
                                data-onclick="<?= $getOnClick($offer) ?>"
                                data-onmousedown="<?= $getOnMouseDown($offer) ?>"
                                data-image="<?= $offerImage ?>"
-                               data-link="<?= $offer->getLink() ?>"><?= $value ?></a>
+                               data-link="<?= $offer->getLink() ?>"
+                            style="background-image: url(<?=$image?>); background-color: <?= $hexColor ? '#' . $hexColor : '' ?>;"><?= $hexColor ? '' : $value ?></a>
                         </li>
                         <?php
                     } ?>
