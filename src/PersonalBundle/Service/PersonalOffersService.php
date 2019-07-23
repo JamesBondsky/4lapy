@@ -665,7 +665,7 @@ class PersonalOffersService
     }
 
     /**
-     * @param User   $user
+     * @param string   $userID
      * @param string $orderID
      *
      * @return array|null
@@ -675,7 +675,7 @@ class PersonalOffersService
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      */
-    public function bindDobrolapRandomCoupon(User $user, string $orderID): ?array
+    public function bindDobrolapRandomCoupon(string $userID, string $orderID, bool $fuser = false): ?array
     {
         try {
             $order = $this->personalOrderService->getOrderByNumber($orderID);
@@ -686,9 +686,12 @@ class PersonalOffersService
                 'message' => 'Order not found!'
             ];
         }
-
-        $userID = $user->getId();
-        if ($bitrixOrder->getUserId() != $userID) {
+        if (!$fuser && $bitrixOrder->getUserId() != $userID) {
+            return [
+                'success' => false,
+                'message' => 'different current user and user in order!'
+            ];
+        } elseif ($fuser && $bitrixOrder->getField('BX_USER_ID') != $userID) {
             return [
                 'success' => false,
                 'message' => 'different current user and user in order!'
@@ -706,6 +709,7 @@ class PersonalOffersService
         }
 
         /** Получаем айди значения добролап */
+        $userID = $order->getUserId();
         $userFieldEnum = new CUserFieldEnum();
         $dobrolapEnumID = null;
         $userFieldEnumDb = $userFieldEnum->GetList(

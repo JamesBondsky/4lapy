@@ -50,7 +50,7 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
     }
 
     if ($template->isOrderCompletePage()) {
-        $APPLICATION->ShowViewContent('shelter_popup');
+        include __DIR__ . '/personal_offers_form.php';
     }
 
     if(KioskService::isKioskMode() && $template->isIndex()) {

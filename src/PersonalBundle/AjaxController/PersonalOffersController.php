@@ -7,6 +7,7 @@ use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\PersonalBundle\Service\PersonalOffersService;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -32,17 +33,30 @@ class PersonalOffersController extends Controller
     }
 
     /**
-     * @Route("/bind-unreserved-dobrolap-coupon/", methods={"POST", "GET"})
+     * @Route("/bind-unreserved-dobrolap-coupon/", methods={"POST"})
      * @param Request $request
      *
      * @return JsonResponse
      * @throws ApplicationCreateException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
     public function bindUnreservedDobrolapCouponAction(Request $request): JsonResponse
     {
         $orderID = $request->get('order_id');
-        $curUser = $this->currentUserProvider->getCurrentUser();
-        $coupon = $this->personalOffersService->bindDobrolapRandomCoupon($curUser, $orderID);
+        $fuser = false;
+        try {
+            $curUser = $this->currentUserProvider->getCurrentUser();
+            $userID = (string) $curUser->getId();
+        } catch (NotAuthorizedException $e) {
+            $fuser = true;
+            $userID = (string) $_COOKIE['BX_USER_ID'];
+        }
+
+        $coupon = $this->personalOffersService->bindDobrolapRandomCoupon($userID, $orderID, $fuser);
 
         if ($coupon['success']) {
             return JsonSuccessResponse::createWithData(
