@@ -111,6 +111,22 @@ class Offer
 
     /**
      * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("img_width")
+     * @var int
+     */
+    protected $imageWidth;
+
+    /**
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("img_height")
+     * @var int
+     */
+    protected $imageHeight;
+
+    /**
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("boolean")
      *
      * @var boolean
@@ -421,6 +437,42 @@ class Offer
     {
         $this->picture = $picture;
 
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getImageWidth(): int
+    {
+        return $this->imageWidth;
+    }
+
+    /**
+     * @param int $imageWidth
+     * @return Offer
+     */
+    public function setImageWidth(int $imageWidth): Offer
+    {
+        $this->imageWidth = $imageWidth;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getImageHeight(): int
+    {
+        return $this->imageHeight;
+    }
+
+    /**
+     * @param int $imageHeight
+     * @return Offer
+     */
+    public function setImageHeight(int $imageHeight): Offer
+    {
+        $this->imageHeight = $imageHeight;
         return $this;
     }
 
