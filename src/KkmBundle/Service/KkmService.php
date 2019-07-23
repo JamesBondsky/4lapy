@@ -483,11 +483,19 @@ class KkmService implements LoggerAwareInterface
                 );
             }
 
+
             if (count($deliveries) == 0) {
-                throw new KkmException(
-                    static::RESPONSE_STATUSES['success_no_items']['message'],
-                    static::RESPONSE_STATUSES['success_no_items']['code']
-                );
+                foreach ($quantities as $productId => &$quantity) {
+                    $quantity = 0;
+                }
+
+                $deliveries = $this->deliveryService->getByOfferCollection($offers, $quantities, $location, static::DELIVERY_CODES);
+                if (count($deliveries) == 0) {
+                    throw new KkmException(
+                        static::RESPONSE_STATUSES['success_no_items']['message'],
+                        static::RESPONSE_STATUSES['success_no_items']['code']
+                    );
+                }
             }
 
             $rc = false;
@@ -534,6 +542,9 @@ class KkmService implements LoggerAwareInterface
             if (count($errorsOffers) > 0) {
                 $rc = false;
             }
+
+            //временный костыль
+            $rc = false;
 
             $deliveryRules = [
                 'rc'      => $rc,
