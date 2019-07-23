@@ -44,15 +44,13 @@ use FourPaws\Decorators\SvgDecorator;
             </div>
 
             <div class="b-popup-pick-shelter__content-info" data-b-popup-pick-shelter="content-info">
-                <div style="margin: 0 15px;">
-                    <a class="b-link b-link--popup-back b-link--order b-link--desktop" href="javascript:void(0);" data-b-popup-pick-shelter="content-info-close">
-                        <span class="b-icon b-icon--back-long b-icon--balloon">
-                            <?= new SvgDecorator('icon-back-form', 13, 11) ?>
-                        </span>
+                <button class="b-popip-pick-shelter__content-info-close" data-b-popup-pick-shelter="content-info-close">
+                    <span class="b-icon b-icon--back-long b-icon--balloon">
+                        <?= new SvgDecorator('icon-back-form', 13, 11) ?>
+                    </span>
 
-                        Вернуться к списку
-                    </a>
-                </div>
+                    Вернуться к списку
+                </button>
 
                 <div class="b-popup-pick-shelter__shelter b-popup-pick-shelter__shelter--in-info">
                     <div class="b-popup-pick-shelter__shelter-title" data-b-popup-pick-shelter="content-info-title"></div>
