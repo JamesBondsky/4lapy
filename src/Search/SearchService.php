@@ -757,7 +757,7 @@ class SearchService implements LoggerAwareInterface
 
         $queryBuilder = new QueryBuilder();
         $boolQuery = $queryBuilder->query()->bool();
-        $boolQuery->addShould(
+        $boolQuery->addMust(
             $queryBuilder->query()->nested()
                 ->setPath('offers')
                 ->setQuery(
