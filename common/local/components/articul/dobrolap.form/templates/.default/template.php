@@ -18,18 +18,18 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="row justify-content-center">
-                    <div class="col-md-12 heading-section text-left ftco-animate">
-                        <form class="form-fan-register">
+                <form class="form-fan-register">
+                    <div class="row justify-content-center">
+                        <div class="col-md-12 heading-section text-left ftco-animate">
                             <p>введите номер чека в поле ниже</p>
                             <p>
-                                <input type="text" name="check_number" placeholder="s719d1f2972" max="11" />
+                                <input type="text" name="check_number" placeholder="s719d1f2972" max="11" required/>
                                 <a href="javascript:void(0);" class="btn btn-primary btn-primary-filled py-3 px-4 js-submit-form">ЗАРЕГИСТРИРОВАТЬ ФАН</a>
-                                <div class="response-messsage"></div>
                             </p>
-                        </form>
+                        </div>
                     </div>
-                </div>
+                    <div class="response-messsage" style="color: red"></div>
+                </form>
             </div>
         </div>
     </div>

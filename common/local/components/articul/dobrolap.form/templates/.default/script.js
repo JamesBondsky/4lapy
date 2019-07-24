@@ -9,7 +9,12 @@ $(function(){
     });
 
     $form.find('.js-submit-form').on('click', function(){
-        $form.find('.response-messsage').html('');
+        if($form.find('[name="check_number"]').val() === ''){
+            $form.find('.response-messsage').html('Введите номер чека');
+            return false;
+        }
+
+        $form.find('.response-messsage').html('<span style="color: #0f6198">Отправляем...</span>');
 
         $.ajax({
             type: "POST",
