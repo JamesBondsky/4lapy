@@ -435,7 +435,7 @@ class OrderStorage
     protected $moscowDistrictCode = '';
 
     /**
-     * Айди приюта для доставки Добролап
+     * Штрих-код приюта для доставки Добролап
      *
      * @Serializer\Type("string")
      * @Serializer\SerializedName("SHELTER")

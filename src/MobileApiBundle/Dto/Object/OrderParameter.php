@@ -276,6 +276,15 @@ class OrderParameter
     protected $payWithBonus = false;
 
     /**
+     * Штрих-код приюта для доставки Добролап
+     *
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("SHELTER")
+     * @var string
+     */
+    protected $shelter = '';
+
+    /**
      * @return Product[]
      */
     public function getProducts(): array
@@ -720,5 +729,24 @@ class OrderParameter
     public function getSubscribeFrequency(): int
     {
         return $this->subscribeFrequency;
+    }
+
+    /**
+     * @return string
+     */
+    public function getShelter(): string
+    {
+        return $this->shelter;
+    }
+
+    /**
+     * @param string $shelter
+     *
+     * @return OrderParameter
+     */
+    public function setShelter(string $shelter): OrderParameter
+    {
+        $this->shelter = $shelter;
+        return $this;
     }
 }

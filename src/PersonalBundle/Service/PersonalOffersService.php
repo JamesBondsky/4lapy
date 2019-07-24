@@ -11,6 +11,7 @@ use CUserFieldEnum;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\Helpers\BxCollection;
 use FourPaws\PersonalBundle\Service\OrderService as PersonalOrderService;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -29,6 +30,7 @@ use Adv\Bitrixtools\Exception\HLBlockNotFoundException;
 use FourPaws\AppBundle\Exception\JsonResponseException;
 use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
 use FourPaws\PersonalBundle\Exception\CouponIsNotAvailableForUseException;
+use Symfony\Component\Routing\RouteCollection;
 
 /**
  * Class PersonalOffersService
@@ -675,7 +677,7 @@ class PersonalOffersService
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      */
-    public function bindDobrolapRandomCoupon(string $userID, string $orderID, bool $fuser = false): ?array
+    public function bindDobrolapRandomCoupon(string $userID, string $orderID, bool $fuser = false, $htmlResponse = false): ?array
     {
         try {
             $order = $this->personalOrderService->getOrderByNumber($orderID);
@@ -683,28 +685,37 @@ class PersonalOffersService
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => 'Order not found!'
+                'message' => 'Заказ не найден!'
             ];
         }
         if (!$fuser && $bitrixOrder->getUserId() != $userID) {
             return [
                 'success' => false,
-                'message' => 'different current user and user in order!'
+                'message' => 'Получение купона для текущего пользователя невозможно, так как в заказе указан другой пользователь!'
             ];
         } elseif ($fuser && $bitrixOrder->getField('BX_USER_ID') != $userID) {
             return [
                 'success' => false,
-                'message' => 'different current user and user in order!'
+                'message' => 'Получение купона для текущего пользователя невозможно, так как в заказе указан другой пользователь!'
             ];
         } elseif ($this->orderService->getOrderDeliveryCode($bitrixOrder) != DeliveryService::DOBROLAP_DELIVERY_CODE) {
             return [
                 'success' => false,
-                'message' => 'delivery in order is not valid!'
+                'message' => 'Неверный тип доставки в заказе!'
             ];
         } elseif ($this->orderService->getOrderPropertyByCode($bitrixOrder, 'DOBROLAP_COUPON_ID')->getValue()) {
+            $dobrolapCouponID = $this->orderService->getOrderPropertyByCode($bitrixOrder, 'DOBROLAP_COUPON_ID')->getValue();
+            /** @var PersonalOffersService $personalOffersService */
+            $personalOffersService = App::getInstance()->getContainer()->get('personal_offers.service');
+            /** @var DataManager $personalCouponManager */
+            $personalCouponManager = App::getInstance()->getContainer()->get('bx.hlblock.personalcoupon');
+            $coupon = $personalCouponManager::getById($dobrolapCouponID)->fetch();
             return [
-                'success' => false,
-                'message' => 'another coupon already attached to the order!'
+                'success' => true,
+                'message' => 'Купон уже прикреплен к данному заказу!',
+                'data'    => [
+                    'promocode' => $coupon['UF_PROMO_CODE']
+                ]
             ];
         }
 
@@ -814,18 +825,27 @@ class PersonalOffersService
         $this->orderService->setOrderPropertyByCode($bitrixOrder, 'DOBROLAP_COUPON_ID', $couponID);
         $bitrixOrder->save();
 
-        $html = $this->getHtmlCoupon($coupon);
-        if(!$html){
+        if($htmlResponse){
+            $html = $this->getHtmlCoupon($coupon);
+            if(!$html){
+                return [
+                    'success' => false,
+                    'message' => 'Something went wrong with html generator!'
+                ];
+            }
+
             return [
-                'success' => false,
-                'message' => 'Something went wrong with html generator!'
+                'success' => true,
+                'data' => $html
+            ];
+        } else {
+            return [
+                'success' => true,
+                'data'    => [
+                    'promocode' => $coupon['UF_PROMO_CODE']
+                ]
             ];
         }
-
-        return [
-            'success' => true,
-            'html' => $html
-        ];
     }
 
     private function getHtmlCoupon($coupon)

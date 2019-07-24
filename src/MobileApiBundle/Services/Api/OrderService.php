@@ -121,6 +121,7 @@ class OrderService
     const DELIVERY_TYPE_COURIER = 'courier';
     const DELIVERY_TYPE_PICKUP = 'pickup';
     const DELIVERY_TYPE_DOSTAVISTA = 'dostavista';
+    const DELIVERY_TYPE_DOBROLAP = 'dobrolap';
 
     public function __construct(
         ApiBasketService $apiBasketService,
@@ -684,6 +685,7 @@ class OrderService
         $delivery   = null;
         $pickup     = null;
         $dostavista = null;
+        $dobrolap   = null;
         foreach ($deliveries as $calculationResult) {
             // toDo убрать условие "&& !$calculationResult instanceof DpdPickupResult" после того как в мобильном приложении будет реализован вывод точек DPD на карте в чекауте
             if ($this->appDeliveryService->isInnerPickup($calculationResult) && !$calculationResult instanceof DpdPickupResult) {
@@ -692,11 +694,14 @@ class OrderService
                 $delivery = $calculationResult;
             } elseif ($this->appDeliveryService->isDostavistaDelivery($calculationResult)) {
                 $dostavista = $calculationResult;
+            } elseif ($this->appDeliveryService->isDobrolapDelivery($calculationResult)) {
+                $dobrolap = $calculationResult;
             }
         }
         $courierDelivery = (new DeliveryVariant());
         $pickupDelivery = (new DeliveryVariant());
         $dostavistaDelivery = (new DeliveryVariant());
+        $dobrolapDelivery = (new DeliveryVariant());
 
         if ($delivery) {
             $courierDelivery
@@ -734,7 +739,13 @@ class OrderService
             }
         }
 
-        return [$courierDelivery, $pickupDelivery, $dostavistaDelivery];
+        if ($dobrolap) {
+            $dobrolapDelivery
+                ->setAvailable(true)
+                ->setPrice($dobrolap->getDeliveryPrice());
+        }
+
+        return [$courierDelivery, $pickupDelivery, $dostavistaDelivery, $dobrolapDelivery];
     }
 
     public function checkDostavistaAvaliability($dostavista)
@@ -759,11 +770,19 @@ class OrderService
     {
         /** @var DeliveryVariant $courierDelivery */
         /** @var DeliveryVariant $pickupDelivery */
-        [$courierDelivery, $pickupDelivery, $dostavistaDelivery] = $this->getDeliveryVariants();
+        [$courierDelivery, $pickupDelivery, $dostavistaDelivery, $dobrolapDelivery] = $this->getDeliveryVariants();
         $result = [
             'pickup' => $pickupDelivery,
             'courier' => $courierDelivery,
         ];
+
+        if ($dobrolapDelivery) {
+            $result['dobrolap'] = [
+                'available' => $dobrolapDelivery->getAvailable(),
+                'price'     => $dobrolapDelivery->getPrice()
+            ];
+        }
+
         if ($courierDelivery->getAvailable()) {
             $basketProducts = $this->apiBasketService->getBasketProducts(true);
             $orderStorage = $this->orderStorageService->getStorage();
@@ -960,6 +979,11 @@ class OrderService
             case self::DELIVERY_TYPE_DOSTAVISTA:
                 $cartParamArray['delyveryType'] = $cartParamArray['split'] ? 'twoDeliveries' : ''; // have no clue why this param used
                 $cartParamArray['deliveryTypeId'] = $this->appDeliveryService->getDeliveryIdByCode(DeliveryService::DELIVERY_DOSTAVISTA_CODE);
+                break;
+            case self::DELIVERY_TYPE_DOBROLAP:
+                $cartParamArray['delyveryType'] = $cartParamArray['split'] ? 'twoDeliveries' : ''; // have no clue why this param used
+                $cartParamArray['deliveryTypeId'] = $this->appDeliveryService->getDeliveryIdByCode(DeliveryService::DOBROLAP_DELIVERY_CODE);
+                $cartParamArray['shelter'] = $cartParam->getShelter();
                 break;
         }
         $cartParamArray['deliveryId'] = $cartParamArray['deliveryTypeId'];

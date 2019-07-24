@@ -6,16 +6,22 @@
 
 namespace FourPaws\MobileApiBundle\Controller\v0;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Service\DeliveryService as AppDeliveryService;
 use FourPaws\MobileApiBundle\Controller\BaseController;
+use FourPaws\MobileApiBundle\Dto\Error;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryTime;
 use FourPaws\MobileApiBundle\Dto\Object\DeliveryTimeAvailable;
 use FourPaws\MobileApiBundle\Dto\Request\DeliveryRangeRequest;
+use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Dto\Response\DeliveryRangeResponse;
+use FourPaws\SaleBundle\Repository\Table\AnimalShelterTable;
 
 /**
  * Class DeliveryController
@@ -39,11 +45,11 @@ class DeliveryController extends BaseController
      *
      * @param DeliveryRangeRequest $deliveryRangeRequest
      * @return DeliveryRangeResponse
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
-     * @throws \Bitrix\Main\SystemException
+     * @throws SystemException
      */
     public function getDeliveryRangeAction(DeliveryRangeRequest $deliveryRangeRequest): DeliveryRangeResponse
     {
@@ -68,5 +74,29 @@ class DeliveryController extends BaseController
         }
 
         return new DeliveryRangeResponse($ranges);
+    }
+
+    /**
+     * @Rest\Get("/shelters/")
+     * @Rest\View()
+     *
+     * @return Response
+     */
+    public function getSheltersAction(): Response
+    {
+        $response = new Response();
+        try {
+            $shelters = AnimalShelterTable::getList()->fetchAll();
+            if (count($shelters)) {
+                $response->setData(['shelters' => $shelters]);
+            } else {
+                $response->setData(['shelters' => []]);
+            }
+        } catch (ObjectPropertyException|ArgumentException|SystemException $e) {
+            $response->setData([]);
+            $response->addError(new Error(0, $e->getMessage()));
+        }
+
+        return $response;
     }
 }

@@ -56,13 +56,13 @@ class PersonalOffersController extends Controller
             $userID = (string) $_COOKIE['BX_USER_ID'];
         }
 
-        $coupon = $this->personalOffersService->bindDobrolapRandomCoupon($userID, $orderID, $fuser);
+        $coupon = $this->personalOffersService->bindDobrolapRandomCoupon($userID, $orderID, $fuser, true);
 
         if ($coupon['success']) {
             return JsonSuccessResponse::createWithData(
                 '',
                 [
-                    'html' => $coupon['html']
+                    'html' => $coupon['data']
                 ]
             );
         } else {
