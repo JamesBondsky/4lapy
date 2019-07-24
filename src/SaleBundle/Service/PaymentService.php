@@ -70,6 +70,7 @@ use FourPaws\SaleBundle\Exception\SberBankOrderNumberNotFoundException;
 use FourPaws\SaleBundle\Exception\SberbankOrderPaymentDeclinedException;
 use FourPaws\SaleBundle\Exception\SberbankPaymentException;
 use FourPaws\SaleBundle\Payment\Sberbank;
+use FourPaws\SaleBundle\Service\PaymentService as SalePaymentService;
 use FourPaws\SapBundle\Consumer\ConsumerRegistry;
 use FourPaws\SapBundle\Enum\SapOrder;
 use FourPaws\StoreBundle\Entity\Store;
@@ -77,6 +78,8 @@ use JMS\Serializer\ArrayTransformerInterface;
 use Psr\Log\LoggerAwareInterface;
 use Bitrix\Sale\Delivery\Services\Table as ServicesTable;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use Bitrix\Sale\Order as SaleOrder;
+
 /**
  * Class PaymentService
  *
@@ -167,19 +170,13 @@ class PaymentService implements LoggerAwareInterface
         /** @var DateTime $dateCreate */
         $dateCreate = $order->getField('DATE_INSERT');
 
-        if ($isMobile) {
-            $itemsCart = $this->getMobileFiscal($order);
-        }
+        $itemsCart = $this->getMobileFiscal($order);
 
         $orderBundle = new OrderBundle();
         $orderBundle
             ->setCustomerDetails($this->getCustomerDetails($order))
             ->setDateCreate(DateHelper::convertToDateTime($dateCreate));
-        if ($isMobile) {
-            $orderBundle->setCartItems((new CartItems())->setItems(new ArrayCollection($itemsCart)));
-        } else {
-            $orderBundle->setCartItems($this->getCartItems($order, $skipGifts));
-        }
+        $orderBundle->setCartItems((new CartItems())->setItems(new ArrayCollection($itemsCart)));
         $fiscal = (new Fiscal())
             ->setOrderBundle($orderBundle)
             ->setTaxSystem($taxSystem);
@@ -695,9 +692,9 @@ class PaymentService implements LoggerAwareInterface
 
     /**
      * @param Fiscalization $fiscal
-     * @return int
+     * @return float
      */
-    public function getFiscalTotal(Fiscalization $fiscal): int
+    public function getFiscalTotal(Fiscalization $fiscal): float
     {
         return \array_reduce(
             $fiscal->getFiscal()->getOrderBundle()->getCartItems()->getItems()->toArray(),
@@ -714,7 +711,26 @@ class PaymentService implements LoggerAwareInterface
      */
     public function fiscalToArray(Fiscalization $fiscal): array
     {
-        return $this->arrayTransformer->toArray($fiscal);
+        $cartItems = [];
+        foreach ($fiscal->getFiscal()->getOrderBundle()->getCartItems()->getItems() as $cartItem) {
+            $cartItems[] = [
+                'positionId' => (string)$cartItem->getPositionId(),
+                'name' => $cartItem->getName(),
+                'quantity' => [
+                    'value' => $cartItem->getQuantity()->getValue(),
+                    'measure' => $cartItem->getQuantity()->getMeasure(),
+                ],
+                'itemAmount' => (string)$cartItem->getTotal(),
+                'itemCode' => $cartItem->getCode(),
+                'itemPrice' => (string)$cartItem->getPrice(),
+                'tax' => [
+                    'taxType' => $cartItem->getTax()->getType()
+                ],
+            ];
+        }
+        $fiscalArr = $this->arrayTransformer->toArray($fiscal);
+        $fiscalArr['fiscal']['orderBundle']['cartItems']['items'] = $cartItems;
+        return $fiscalArr;
     }
 
     /**
@@ -1415,9 +1431,29 @@ class PaymentService implements LoggerAwareInterface
 
         $itemsOrder = [];
 
+        $productItemsPrices = [];
+
         if (count($newItemArr) > 0) {
+            $itemPosition = 0;
+            if ($bonusAmount) {
+                foreach ($xmlIdsItems as $xmlIdItem) {
+                    foreach ($newItemArr[$xmlIdItem] as $productItem) {
+                        $sumItem = $productItem->getPrice()*$productItem->getQuantity();
+
+                        if ($sumItem > $bonusAmount) {
+                            $sumItem -= $bonusAmount;
+                            $productItemsPrices[$productItem->getId()] = $sumItem/$productItem->getQuantity();
+                            $bonusAmount = 0;
+                            break;
+                        }
+
+                        ++$itemPosition;
+                    }
+                }
+            }
+
+
             foreach ($xmlIdsItems as $xmlIdItem) {
-                $origItem = end($newItemArr[$xmlIdItem]);
                 /** @var \FourPaws\SapBundle\Dto\In\ConfirmPayment\Item $newItem */
                 $newItem = new \FourPaws\SapBundle\Dto\In\ConfirmPayment\Item();
                 $newItem->setQuantity(0);
@@ -1428,8 +1464,12 @@ class PaymentService implements LoggerAwareInterface
 
                 /** @var BasketItem $item */
                 foreach ($newItemArr[$xmlIdItem] as $item) {
+                    $itemPrice = $item->getPrice();
+                    if (isset($productItemsPrices[$item->getId()])) {
+                        $itemPrice = $productItemsPrices[$item->getId()];
+                    }
                     $newItem->setQuantity(floatval($newItem->getQuantity()) + floatval($item->getQuantity()));
-                    $newItem->setSumPrice(floatval($newItem->getSumPrice()) + floatval($item->getQuantity() * $item->getPrice()));
+                    $newItem->setSumPrice(floatval($newItem->getSumPrice()) + floatval($item->getQuantity() * $itemPrice));
                     $newItem->setOfferName($item->getField('NAME'));
                     if ($productIdsAg[$item->getProductId()]) {
                         $newItem->setOfferXmlId($productIdsAg[$item->getProductId()]);
@@ -1467,8 +1507,6 @@ class PaymentService implements LoggerAwareInterface
             }
         }
 
-        $this->reCalcWithCorrection($itemsOrder, $bonusAmount);
-
         asort($itemsOrder);
 
         $itemsFiscal = [];
@@ -1486,8 +1524,8 @@ class PaymentService implements LoggerAwareInterface
                         $itemQuantity->setMeasure('шт');
                     }
                     $tmpItem->setQuantity($itemQuantity);
-                    $tmpItem->setTotal(round($ptItem->getPrice() * $newQuantity * 100));
-                    $tmpItem->setPrice(round($ptItem->getPrice() * 100));
+                    $tmpItem->setTotal(($ptItem->getPrice() * $newQuantity * 100));
+                    $tmpItem->setPrice(($ptItem->getPrice() * 100));
                     $tmpItem->setName($ptItem->getOfferName());
                     $tmpItem->setXmlId($ptItem->getOfferXmlId());
 
@@ -1530,44 +1568,6 @@ class PaymentService implements LoggerAwareInterface
         }
 
         return $itemsFiscal;
-    }
-
-    private function reCalcWithCorrection(&$itemsOrder, $bonusAmount)
-    {
-        $cntItems = 0;
-        foreach ($itemsOrder as $itemsOrderArr) {
-            /** @var \FourPaws\SapBundle\Dto\In\ConfirmPayment\Item $itemOrder */
-            foreach ($itemsOrderArr as $itemOrder) {
-                if ($itemOrder->getSumPrice() > $bonusAmount && $bonusAmount != 0) {
-                    $this->reCalc($itemOrder, $bonusAmount);
-                    $bonusAmount = 0;
-                }
-                ++$cntItems;
-            }
-        }
-
-
-        if ($bonusAmount > 0) {
-            $correction = $bonusAmount / $cntItems;
-            $cntItemCorrection = 0;
-            foreach ($itemsOrder as $itemsOrderArr) {
-                foreach ($itemsOrderArr as $itemOrder) {
-                    if ($itemOrder->getSumPrice() > $correction) {
-                        ++$cntItemCorrection;
-                    }
-                }
-            }
-
-            if ($cntItems == $cntItemCorrection) {
-                foreach ($itemsOrder as $itemsOrderArr) {
-                    foreach ($itemsOrderArr as $itemOrder) {
-                        if ($itemOrder->getSumPrice() > $correction) {
-                            $this->reCalc($itemOrder, $correction);
-                        }
-                    }
-                }
-            }
-        }
     }
 
     /**
