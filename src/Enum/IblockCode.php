@@ -50,4 +50,5 @@ class IblockCode
 
     public const DOBROLAP_FORM = 'dobrolap_fans';
     public const DOBROLAP_NECESSARY = 'dobrolap_necessary';
+    public const DOBROLAP_SHELTERS = 'dobrolap_shelters';
 }

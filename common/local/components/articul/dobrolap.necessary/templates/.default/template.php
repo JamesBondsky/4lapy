@@ -149,16 +149,16 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
             </div>
             <div class="harvest_icon">
                 <? if($element['FULL']) { ?>
-                    <img src="<?=$element['PROPERTIES']['IMG_100']['SRC'] ?: '/dobrolap/images/thanks_ic.png'?> " alt="спасибо за заботу"  />
+                    <img src="<?=$element['PROPERTIES']['IMG_100']['VALUE'] ? \CFile::GetPath($element['PROPERTIES']['IMG_100']['VALUE']) : '/dobrolap/images/thanks_ic.png'?> " alt="спасибо за заботу"  />
                 <? } else { ?>
-                    <img src="<?=$element['PROPERTIES']['IMG']['SRC'] ?: '/dobrolap/images/more_ic.png'?>" alt="нужно еще"  />
+                    <img src="<?=$element['PROPERTIES']['IMG']['VALUE'] ? \CFile::GetPath($element['PROPERTIES']['IMG']['VALUE']) : '/dobrolap/images/more_ic.png'?>" alt="нужно еще"  />
                 <? } ?>
             </div>
         </div>
 
 <? } ?>
 
-<? if($i+1 % 4 == 0) echo '</div>'; ?>
+</div> <!-- col-md-12 -->
 
 
 

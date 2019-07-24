@@ -27,41 +27,37 @@ class CDobrolapNecessaryComponent extends \CBitrixComponent
 
     public function executeComponent()
     {
-        global $USER, $APPLICATION;
+        if($this->startResultCache()){
+            $dbres = \CIBlockElement::GetList([], ['IBLOCK_ID' => $this->iblockId, 'ACTIVE' => 'Y']);
+            while($row = $dbres->GetNextElement()){
+                $element = $row->GetFields();
+                $element['PROPERTIES'] = $row->GetProperties();
 
-        $dbres = \CIBlockElement::GetList([], ['IBLOCK_ID' => $this->iblockId, 'ACTIVE' => 'Y']);
-        while($row = $dbres->GetNextElement()){
-            $element = $row->GetFields();
-            $element['PROPERTIES'] = $row->GetProperties();
+                $arProgress = [0,0,0];
+                $progressValue = $element['PROPERTIES']['PROGRESS']['VALUE'] * 3;
 
-            $arProgress = [0,0,0];
-            $progressValue = $element['PROPERTIES']['PROGRESS']['VALUE'] * 3;
+                for($i = 0; $i < 4; $i++){
+                    $arProgress[$i] = $progressValue;
+                    $progressValue -= 100;
 
-            for($i = 0; $i < 4; $i++){
-                $arProgress[$i] = $progressValue;
-                $progressValue -= 100;
-
-                if($progressValue > 0) {
-                    $arProgress[$i] = 100;
-                } else {
-                    $arProgress[$i] = 100 - abs($progressValue);
-                    break;
+                    if($progressValue > 0) {
+                        $arProgress[$i] = 100;
+                    } else {
+                        $arProgress[$i] = 100 - abs($progressValue);
+                        break;
+                    }
                 }
+
+                if($arProgress[2] == 100){
+                    $element['FULL'] = true;
+                }
+
+                $element["PROGRESS"] = $arProgress;
+
+                $this->arResult['ELEMENTS'][] = $element;
             }
 
-            if($arProgress[2] == 100){
-                $element['FULL'] = true;
-            }
-
-            $element["PROGRESS"] = $arProgress;
-
-            $this->arResult['ELEMENTS'][] = $element;
+            $this->includeComponentTemplate();
         }
-
-
-        $this->includeComponentTemplate();
     }
-
-
-
 }
