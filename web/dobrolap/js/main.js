@@ -292,7 +292,7 @@
 	});
 
 	//-- показываем блок регистрации фана
-	$("#about-section .btn-primary-filled, #thanks .btn-primary-filled").click(function(){
+	$(".js-show-fan-form").click(function(){
 		$("#fanreg").slideToggle("slow");
 		return false;
 	});
@@ -335,12 +335,6 @@
 	    unlock();
 	    $('html').removeAttr('style');
 	  }
-	});
-
-	//--замена содержимого блока регистрации на благодарность по нажатию кнопки
-	$('#fanreg .btn-primary-filled').click(function(){
-		$('#fanreg .row').addClass('justify-content-center');
-		$('#fanreg .row').html('<div class="col-md-12"><h2 class="">Спасибо за регистрацию ФАНА!</h2><h5 class="mb-4">ваши данные отправлены</h5><hr /></div>');
 	});
 
 })(jQuery);

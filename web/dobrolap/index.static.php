@@ -40,10 +40,7 @@ $APPLICATION->SetTitle("Добролап");
 		          <div class="col-md-12 heading-section ftco-animate">
 		          	<span class="subheading">IV ЕЖЕГОДНАЯ  Благотворительная акция «Добролап»</span>
 			            <h1 class="mb-4 mt-3">ТВОРИМ ДОБРО ВМЕСТЕ</span></h1>
-			            <p>
-                            <a href="https://4lapy.ru/shares/blagotvoritelnaya-aktsiya-dobrolap-dlya-zhivotnykh-ikh-priyutov2.html" class="btn btn-primary py-3 px-4">ХОЧУ ПОМОЧЬ</a>
-                            <a href="javascript:void(0);" class="btn btn-primary btn-primary-filled py-3 px-4 <?=($USER->IsAuthorized()) ? 'js-show-fan-form' : 'js-open-popup'?>" data-popup-id="authorization">ЗАРЕГИСТРИРОВАТЬ ФАН</a>
-                        </p>
+			            <p><a href="https://4lapy.ru/shares/blagotvoritelnaya-aktsiya-dobrolap-dlya-zhivotnykh-ikh-priyutov2.html" class="btn btn-primary py-3 px-4">ХОЧУ ПОМОЧЬ</a> <a href="#" class="btn btn-primary btn-primary-filled py-3 px-4">ЗАРЕГИСТРИРОВАТЬ ФАН</a></p>
 		          </div>
 		        </div>
 	        </div>
@@ -51,25 +48,1146 @@ $APPLICATION->SetTitle("Добролап");
     	</div>
     </section>
 
-    <? $APPLICATION->IncludeComponent('articul:dobrolap.form', '', []); ?>
+    <section class="ftco-section" id="fanreg">
+    	<div class="container">
+    		<div class="row">
+    			<div class="col-md-6">
+    				<div class="row justify-content-center">
+			          <div class="col-md-12 heading-section text-center ftco-animate">
+			            <h2 class="">ЗАРЕГИСТРИРОВАТЬ ФАН</h2>
+			            <hr />
+			            <h5 class="mb-4">для того, чтобы у вас появился шанс выиграть, введите номер вашего чека:</h5>
+			          </div>
+			        </div>
+    			</div>
+    			<div class="col-md-6">
+    				<div class="row justify-content-center">
+			          <div class="col-md-12 heading-section text-left ftco-animate">
+			            <p>введите номер чека в поле ниже</p>
+			            <p><input type="text" placeholder="s719d1f2972" max="11" />
+			            <a href="javascript:void(0);" class="btn btn-primary btn-primary-filled py-3 px-4">ЗАРЕГИСТРИРОВАТЬ ФАН</a></p>
+			          </div>
+			        </div>
+				</div>
+    		</div>
+    	</div>
+    </section>
 
     <section class="ftco-section" id="needs">
 			<div class="container">
 				<div class="row justify-content-center pb-5">
-                    <div class="col-md-12 heading-section text-center ftco-animate">
-                        <h2 class="">Собираем необходимое</h2>
-                        <h5 class="mb-4">ДЛЯ ПИТОМЦЕВ ИЗ 44 ПРИЮТОВ РОССИИ</h5>
-                        <hr />
-                    </div>
-                </div>
-                <div class="row">
-                    <? $APPLICATION->IncludeComponent('articul:dobrolap.necessary', '', []); ?>
-                    <div class="harvest_icon">
-                            <a href="https://4lapy.ru/shares/blagotvoritelnaya-aktsiya-dobrolap-dlya-zhivotnykh-ikh-priyutov2.html" class="btn btn-primary-filled py-3 px-4">ХОЧУ ПОМОЧЬ</a>
-                    </div>
-                </div>
+          <div class="col-md-12 heading-section text-center ftco-animate">
+            <h2 class="">Собираем необходимое</h2>
+            <h5 class="mb-4">ДЛЯ ПИТОМЦЕВ ИЗ 44 ПРИЮТОВ РОССИИ</h5>
+            <hr />
+          </div>
+        </div>
+				<div class="row">
+					<div class="col-md-12 animate-box">
+						<div class="col-md-3 animate-box">
+							<div class="col-md-12 animate-box">
+								<h3>Сухой корм</h3>
+								<h5>Мы собрали 90%</h5>
+								<div class="star_wrap">
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_2_1 {
+									        fill: #2f803f;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_2_1" data-name="fig_2_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_2_2" data-name="fig_2_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_2_3" data-name="fig_2_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_3_1 {
+									        fill: #4ca142;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_3_1" data-name="fig_3_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_3_2" data-name="fig_3_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_3_3" data-name="fig_3_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_4_1 {
+									        fill: #e62435;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_4_1" data-name="fig_4_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_4_2" data-name="fig_4_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_4_3" data-name="fig_4_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_5_1 {
+									        fill: #4180c1;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_5_1" data-name="fig_5_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_5_2" data-name="fig_5_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_5_3" data-name="fig_5_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_6_1 {
+									        fill: #50b6e8;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_6_1" data-name="fig_6_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_6_2" data-name="fig_6_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_6_3" data-name="fig_6_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+								</div>
+								<div class="progress-wrap ftco-animate">
+									<div class="progress">
+									 	<div class="progress-bar color-1" role="progressbar" aria-valuenow="90"
+									  	aria-valuemin="0" aria-valuemax="100" style="width:90%">
+									  	</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 animate-box">
+								<div class="progress-wrap ftco-animate">
+									<div class="progress">
+									 	<div class="progress-bar color-2" role="progressbar" aria-valuenow="0"
+									  	aria-valuemin="0" aria-valuemax="100" style="width:0">
+									  	</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 animate-box">
+								<div class="progress-wrap ftco-animate">
+									<div class="progress">
+									 	<div class="progress-bar color-3" role="progressbar" aria-valuenow="0"
+									  	aria-valuemin="0" aria-valuemax="100" style="width:0">
+									  	</div>
+									</div>
+								</div>
+							</div>
+							<div class="harvest_icon">
+								<img src="/dobrolap/images/more_ic.png" alt="нужно еще"  />
+							</div>
+						</div>
+
+						<div class="col-md-3 animate-box">
+							<div class="col-md-12 animate-box">
+								<h3>Влажный корм</h3>
+								<h5>Мы собрали 90%</h5>
+								<div class="star_wrap">
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_2_1 {
+									        fill: #2f803f;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_2_1" data-name="fig_2_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_2_2" data-name="fig_2_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_2_3" data-name="fig_2_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_3_1 {
+									        fill: #4ca142;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_3_1" data-name="fig_3_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_3_2" data-name="fig_3_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_3_3" data-name="fig_3_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_4_1 {
+									        fill: #e62435;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_4_1" data-name="fig_4_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_4_2" data-name="fig_4_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_4_3" data-name="fig_4_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_5_1 {
+									        fill: #4180c1;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_5_1" data-name="fig_5_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_5_2" data-name="fig_5_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_5_3" data-name="fig_5_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_6_1 {
+									        fill: #50b6e8;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_6_1" data-name="fig_6_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_6_2" data-name="fig_6_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_6_3" data-name="fig_6_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+								</div>
+								<div class="progress-wrap ftco-animate">
+									<div class="progress">
+									 	<div class="progress-bar color-1" role="progressbar" aria-valuenow="90"
+									  	aria-valuemin="0" aria-valuemax="100" style="width:90%">
+									  	</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 animate-box">
+								<div class="progress-wrap ftco-animate">
+									<div class="progress">
+									 	<div class="progress-bar color-2" role="progressbar" aria-valuenow="0"
+									  	aria-valuemin="0" aria-valuemax="100" style="width:0">
+									  	</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 animate-box">
+								<div class="progress-wrap ftco-animate">
+									<div class="progress">
+									 	<div class="progress-bar color-3" role="progressbar" aria-valuenow="0"
+									  	aria-valuemin="0" aria-valuemax="100" style="width:0">
+									  	</div>
+									</div>
+								</div>
+							</div>
+							<div class="harvest_icon">
+								<img src="/dobrolap/images/thanks_ic.png" alt="спасибо за заботу"  />
+							</div>
+						</div>
+
+						<div class="col-md-3 animate-box">
+							<div class="col-md-12 animate-box">
+								<h3>Лакомства</h3>
+								<h5>Мы собрали 90%</h5>
+								<div class="star_wrap">
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_2_1 {
+									        fill: #2f803f;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_2_1" data-name="fig_2_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_2_2" data-name="fig_2_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_2_3" data-name="fig_2_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_3_1 {
+									        fill: #4ca142;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_3_1" data-name="fig_3_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_3_2" data-name="fig_3_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_3_3" data-name="fig_3_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_4_1 {
+									        fill: #e62435;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_4_1" data-name="fig_4_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_4_2" data-name="fig_4_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_4_3" data-name="fig_4_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_5_1 {
+									        fill: #4180c1;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_5_1" data-name="fig_5_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_5_2" data-name="fig_5_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_5_3" data-name="fig_5_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_6_1 {
+									        fill: #50b6e8;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_6_1" data-name="fig_6_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_6_2" data-name="fig_6_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_6_3" data-name="fig_6_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+								</div>
+								<div class="progress-wrap ftco-animate">
+									<div class="progress">
+									 	<div class="progress-bar color-1" role="progressbar" aria-valuenow="90"
+									  	aria-valuemin="0" aria-valuemax="100" style="width:90%">
+									  	</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 animate-box">
+								<div class="progress-wrap ftco-animate">
+									<div class="progress">
+									 	<div class="progress-bar color-2" role="progressbar" aria-valuenow="0"
+									  	aria-valuemin="0" aria-valuemax="100" style="width:0">
+									  	</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 animate-box">
+								<div class="progress-wrap ftco-animate">
+									<div class="progress">
+									 	<div class="progress-bar color-3" role="progressbar" aria-valuenow="0"
+									  	aria-valuemin="0" aria-valuemax="100" style="width:0">
+									  	</div>
+									</div>
+								</div>
+							</div>
+							<div class="harvest_icon">
+								<img src="/dobrolap/images/more_ic.png" alt="нужно еще"  />
+							</div>
+						</div>
+
+						<div class="col-md-3 animate-box">
+							<div class="col-md-12 animate-box">
+								<h3>Вет.препараты</h3>
+								<h5>Мы собрали 90%</h5>
+								<div class="star_wrap">
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_2_1 {
+									        fill: #2f803f;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_2_1" data-name="fig_2_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_2_2" data-name="fig_2_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_2_3" data-name="fig_2_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_3_1 {
+									        fill: #4ca142;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_3_1" data-name="fig_3_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_3_2" data-name="fig_3_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_3_3" data-name="fig_3_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_4_1 {
+									        fill: #e62435;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_4_1" data-name="fig_4_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_4_2" data-name="fig_4_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_4_3" data-name="fig_4_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_5_1 {
+									        fill: #4180c1;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_5_1" data-name="fig_5_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_5_2" data-name="fig_5_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_5_3" data-name="fig_5_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_6_1 {
+									        fill: #50b6e8;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_6_1" data-name="fig_6_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_6_2" data-name="fig_6_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_6_3" data-name="fig_6_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+								</div>
+								<div class="progress-wrap ftco-animate">
+									<div class="progress">
+									 	<div class="progress-bar color-1" role="progressbar" aria-valuenow="90"
+									  	aria-valuemin="0" aria-valuemax="100" style="width:90%">
+									  	</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 animate-box">
+								<div class="progress-wrap ftco-animate">
+									<div class="progress">
+									 	<div class="progress-bar color-2" role="progressbar" aria-valuenow="0"
+									  	aria-valuemin="0" aria-valuemax="100" style="width:0">
+									  	</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 animate-box">
+								<div class="progress-wrap ftco-animate">
+									<div class="progress">
+									 	<div class="progress-bar color-3" role="progressbar" aria-valuenow="0"
+									  	aria-valuemin="0" aria-valuemax="100" style="width:0">
+									  	</div>
+									</div>
+								</div>
+							</div>
+							<div class="harvest_icon">
+								<img src="/dobrolap/images/thanks_ic.png" alt="спасибо за заботу"  />
+							</div>
+						</div>
+					</div>
+
+					<div class="col-md-12 animate-box">
+						<div class="col-md-3 animate-box">
+							<div class="col-md-12 animate-box">
+								<h3>Пеленки</h3>
+								<h5>Мы собрали 90%</h5>
+								<div class="star_wrap">
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_2_1 {
+									        fill: #2f803f;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_2_1" data-name="fig_2_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_2_2" data-name="fig_2_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_2_3" data-name="fig_2_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_3_1 {
+									        fill: #4ca142;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_3_1" data-name="fig_3_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_3_2" data-name="fig_3_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_3_3" data-name="fig_3_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_4_1 {
+									        fill: #e62435;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_4_1" data-name="fig_4_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_4_2" data-name="fig_4_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_4_3" data-name="fig_4_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_5_1 {
+									        fill: #4180c1;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_5_1" data-name="fig_5_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_5_2" data-name="fig_5_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_5_3" data-name="fig_5_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_6_1 {
+									        fill: #50b6e8;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_6_1" data-name="fig_6_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_6_2" data-name="fig_6_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_6_3" data-name="fig_6_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+								</div>
+								<div class="progress-wrap ftco-animate">
+									<div class="progress">
+									 	<div class="progress-bar color-1" role="progressbar" aria-valuenow="90"
+									  	aria-valuemin="0" aria-valuemax="100" style="width:90%">
+									  	</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 animate-box">
+								<div class="progress-wrap ftco-animate">
+									<div class="progress">
+									 	<div class="progress-bar color-2" role="progressbar" aria-valuenow="0"
+									  	aria-valuemin="0" aria-valuemax="100" style="width:0">
+									  	</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 animate-box">
+								<div class="progress-wrap ftco-animate">
+									<div class="progress">
+									 	<div class="progress-bar color-3" role="progressbar" aria-valuenow="0"
+									  	aria-valuemin="0" aria-valuemax="100" style="width:0">
+									  	</div>
+									</div>
+								</div>
+							</div>
+							<div class="harvest_icon">
+								<img src="/dobrolap/images/more_ic.png" alt="нужно еще"  />
+							</div>
+						</div>
+
+						<div class="col-md-3 animate-box">
+							<div class="col-md-12 animate-box">
+								<h3>Наполнители</h3>
+								<h5>Мы собрали 90%</h5>
+								<div class="star_wrap">
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_2_1 {
+									        fill: #2f803f;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_2_1" data-name="fig_2_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_2_2" data-name="fig_2_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_2_3" data-name="fig_2_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_3_1 {
+									        fill: #4ca142;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_3_1" data-name="fig_3_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_3_2" data-name="fig_3_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_3_3" data-name="fig_3_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_4_1 {
+									        fill: #e62435;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_4_1" data-name="fig_4_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_4_2" data-name="fig_4_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_4_3" data-name="fig_4_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_5_1 {
+									        fill: #4180c1;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_5_1" data-name="fig_5_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_5_2" data-name="fig_5_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_5_3" data-name="fig_5_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_6_1 {
+									        fill: #50b6e8;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_6_1" data-name="fig_6_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_6_2" data-name="fig_6_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_6_3" data-name="fig_6_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+								</div>
+								<div class="progress-wrap ftco-animate">
+									<div class="progress">
+									 	<div class="progress-bar color-1" role="progressbar" aria-valuenow="90"
+									  	aria-valuemin="0" aria-valuemax="100" style="width:90%">
+									  	</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 animate-box">
+								<div class="progress-wrap ftco-animate">
+									<div class="progress">
+									 	<div class="progress-bar color-2" role="progressbar" aria-valuenow="0"
+									  	aria-valuemin="0" aria-valuemax="100" style="width:0">
+									  	</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 animate-box">
+								<div class="progress-wrap ftco-animate">
+									<div class="progress">
+									 	<div class="progress-bar color-3" role="progressbar" aria-valuenow="0"
+									  	aria-valuemin="0" aria-valuemax="100" style="width:0">
+									  	</div>
+									</div>
+								</div>
+							</div>
+							<div class="harvest_icon">
+								<img src="/dobrolap/images/thanks_ic.png" alt="спасибо за заботу"  />
+							</div>
+						</div>
+
+						<div class="col-md-3 animate-box">
+							<div class="col-md-12 animate-box">
+								<h3>Ошейники</h3>
+								<h5>Мы собрали 90%</h5>
+								<div class="star_wrap">
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_2_1 {
+									        fill: #2f803f;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_2_1" data-name="fig_2_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_2_2" data-name="fig_2_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_2_3" data-name="fig_2_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_3_1 {
+									        fill: #4ca142;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_3_1" data-name="fig_3_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_3_2" data-name="fig_3_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_3_3" data-name="fig_3_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_4_1 {
+									        fill: #e62435;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_4_1" data-name="fig_4_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_4_2" data-name="fig_4_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_4_3" data-name="fig_4_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_5_1 {
+									        fill: #4180c1;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_5_1" data-name="fig_5_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_5_2" data-name="fig_5_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_5_3" data-name="fig_5_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_6_1 {
+									        fill: #50b6e8;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_6_1" data-name="fig_6_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_6_2" data-name="fig_6_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_6_3" data-name="fig_6_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+								</div>
+								<div class="progress-wrap ftco-animate">
+									<div class="progress">
+									 	<div class="progress-bar color-1" role="progressbar" aria-valuenow="90"
+									  	aria-valuemin="0" aria-valuemax="100" style="width:90%">
+									  	</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 animate-box">
+								<div class="progress-wrap ftco-animate">
+									<div class="progress">
+									 	<div class="progress-bar color-2" role="progressbar" aria-valuenow="0"
+									  	aria-valuemin="0" aria-valuemax="100" style="width:0">
+									  	</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 animate-box">
+								<div class="progress-wrap ftco-animate">
+									<div class="progress">
+									 	<div class="progress-bar color-3" role="progressbar" aria-valuenow="0"
+									  	aria-valuemin="0" aria-valuemax="100" style="width:0">
+									  	</div>
+									</div>
+								</div>
+							</div>
+							<div class="harvest_icon">
+								<img src="/dobrolap/images/more_ic.png" alt="нужно еще"  />
+							</div>
+						</div>
+
+						<div class="col-md-3 animate-box">
+							<div class="col-md-12 animate-box">
+								<h3>Поводки</h3>
+								<h5>Мы собрали 90%</h5>
+								<div class="star_wrap">
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_2_1 {
+									        fill: #2f803f;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_2_1" data-name="fig_2_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_2_2" data-name="fig_2_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_2_3" data-name="fig_2_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_3_1 {
+									        fill: #4ca142;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_3_1" data-name="fig_3_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_3_2" data-name="fig_3_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_3_3" data-name="fig_3_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_4_1 {
+									        fill: #e62435;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_4_1" data-name="fig_4_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_4_2" data-name="fig_4_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_4_3" data-name="fig_4_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_5_1 {
+									        fill: #4180c1;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_5_1" data-name="fig_5_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_5_2" data-name="fig_5_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_5_3" data-name="fig_5_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="21" viewBox="0 0 22 21">
+									<defs>
+									    <style>
+									      #fig_6_1 {
+									        fill: #50b6e8;
+									      }
+
+									      .cls-1, .cls-2 {
+									        fill-rule: evenodd;
+									      }
+
+									      .cls-2 {
+									        fill: #fff;
+									      }
+									    </style>
+									  </defs>
+									  <path id="fig_6_1" data-name="fig_6_1" class="cls-1" d="M11.709,1.191l2.718,5.223,6.078,0.838a1.031,1.031,0,0,1,.611,1.782l-4.4,4.065,1.038,5.74a1.091,1.091,0,0,1-1.6,1.1l-5.437-2.71-5.437,2.71a1.091,1.091,0,0,1-1.6-1.1L4.724,13.1l-4.4-4.065A1.031,1.031,0,0,1,.936,7.251l6.078-.838L9.733,1.191A1.129,1.129,0,0,1,11.709,1.191Z"/>
+									  <path id="fig_6_2" data-name="fig_6_2" class="cls-2" d="M10.983,1.855l2.355,4.989S10.119,6.955,10.983,1.855Z"/>
+									  <path id="fig_6_3" data-name="fig_6_3" class="cls-2" d="M14.5,7.606l5.712,0.518S18.721,10.846,14.5,7.606Z"/>
+									</svg>
+								</div>
+								<div class="progress-wrap ftco-animate">
+									<div class="progress">
+									 	<div class="progress-bar color-1" role="progressbar" aria-valuenow="90"
+									  	aria-valuemin="0" aria-valuemax="100" style="width:90%">
+									  	</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 animate-box">
+								<div class="progress-wrap ftco-animate">
+									<div class="progress">
+									 	<div class="progress-bar color-2" role="progressbar" aria-valuenow="0"
+									  	aria-valuemin="0" aria-valuemax="100" style="width:0">
+									  	</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 animate-box">
+								<div class="progress-wrap ftco-animate">
+									<div class="progress">
+									 	<div class="progress-bar color-3" role="progressbar" aria-valuenow="0"
+									  	aria-valuemin="0" aria-valuemax="100" style="width:0">
+									  	</div>
+									</div>
+								</div>
+							</div>
+							<div class="harvest_icon">
+								<img src="/dobrolap/images/thanks_ic.png" alt="спасибо за заботу"  />
+							</div>
+						</div>
+					</div>
+					<div class="harvest_icon">
+							<a href="https://4lapy.ru/shares/blagotvoritelnaya-aktsiya-dobrolap-dlya-zhivotnykh-ikh-priyutov2.html" class="btn btn-primary-filled py-3 px-4">ХОЧУ ПОМОЧЬ</a>
+						</div>
+				</div>
 			</div>
-    </section>
+		</section>
 
 		<section class="ftco-section ftco-counter img" id="helps">
     	<div class="container">
@@ -1152,10 +2270,7 @@ $APPLICATION->SetTitle("Добролап");
 			            <h2 class="">Мы говорим<br />спасибо</h2>
 			            <hr />
 			            <h5 class="mb-4">В знак благодарности мы приготовили<br />небольшой сюрприз – фанты «Добролап»<br />с приятными презентами. И конечно,<br />по традиции вы получите на кассе<br />памятный магнит.</h5>
-			            <p>
-                            <a href="javascript:void(0);" class="btn btn-primary-filled py-3 px-4 <?=($USER->IsAuthorized()) ? 'js-show-fan-form' : 'js-open-popup'?>" data-popup-id="authorization">ЗАРЕГИСТРИРОВАТЬ ФАН</a>
-                            <a href="#" class="btn btn-primary py-3 px-4">ПОДРОБНЫЕ СВЕДЕНИЯ</a>
-                        </p>
+			            <p><a href="#" class="btn btn-primary-filled py-3 px-4">ЗАРЕГИСТРИРОВАТЬ ФАН</a> <a href="#" class="btn btn-primary py-3 px-4">ПОДРОБНЫЕ СВЕДЕНИЯ</a></p>
 			          </div>
 			        </div>
     			</div>
@@ -1202,10 +2317,7 @@ $APPLICATION->SetTitle("Добролап");
 			            <h2 class="">Мы говорим<br />спасибо</h2>
 			            <hr />
 			            <h5 class="mb-4">В знак благодарности мы приготовили<br />небольшой сюрприз – фанты «Добролап»<br />с приятными презентами. И конечно,<br />по традиции вы получите на кассе<br />памятный магнит.</h5>
-			            <p>
-                            <a href="javascript:void(0);" class="btn btn-primary-filled py-3 px-4 <?=($USER->IsAuthorized()) ? 'js-show-fan-form' : 'js-open-popup'?>" data-popup-id="authorization">ЗАРЕГИСТРИРОВАТЬ ФАН</a>
-                            <a href="#" class="btn btn-primary py-3 px-4">ПОДРОБНЫЕ СВЕДЕНИЯ</a>
-                        </p>
+			            <p><a href="#" class="btn btn-primary-filled py-3 px-4">ЗАРЕГИСТРИРОВАТЬ ФАН</a> <a href="#" class="btn btn-primary py-3 px-4">ПОДРОБНЫЕ СВЕДЕНИЯ</a></p>
 			          </div>
 			        </div>
     			</div>
