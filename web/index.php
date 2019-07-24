@@ -16,6 +16,24 @@ $APPLICATION->SetPageProperty('keywords', '');
 $APPLICATION->SetPageProperty('NOT_SHOW_NAV_CHAIN', 'Y');
 $APPLICATION->SetTitle('Интернет-зоомагазин Четыре Лапы – продажа и доставка зоотоваров по Москве, Московской области и всей России');
 
+$selectedCityCode = null;
+
+try {
+	/** @var \FourPaws\UserBundle\Service\UserService $userService */
+	$userService = App::getInstance()
+		->getContainer()
+		->get(UserCitySelectInterface::class);
+	$selectedCity = $userService->getSelectedCity(); //FIXME убрать повторные запросы внутри метода, если он уже выполнялся ранее
+	$selectedCityCode = $selectedCity['CODE'];
+} catch (Exception $e) {}
+
+
+global $filterSlider;
+
+$filterSlider = [
+	'PROPERTY_LOCATION' => [$selectedCityCode, false]
+];
+
 $APPLICATION->IncludeComponent('bitrix:news.list',
     'index.slider',
     [
@@ -27,7 +45,7 @@ $APPLICATION->IncludeComponent('bitrix:news.list',
         'SORT_ORDER1'                     => BannerService::BANNER_LIST_SORT_ORDER1,
         'SORT_BY2'                        => BannerService::BANNER_LIST_SORT_BY2,
         'SORT_ORDER2'                     => BannerService::BANNER_LIST_SORT_ORDER2,
-        'FILTER_NAME'                     => '',
+        'FILTER_NAME'                     => 'filterSlider',
         'FIELD_CODE'                      => [
             0 => 'NAME',
             1 => 'PREVIEW_PICTURE',
@@ -38,6 +56,7 @@ $APPLICATION->IncludeComponent('bitrix:news.list',
             0 => 'LINK',
             1 => 'IMG_TABLET',
             2 => 'BACKGROUND',
+            3 => 'LOCATION',
         ],
         'CHECK_DATES'                     => 'Y',
         'DETAIL_URL'                      => '',
@@ -125,12 +144,6 @@ $APPLICATION->IncludeComponent(
 <?
 
 try {
-	/** @var \FourPaws\UserBundle\Service\UserService $userService */
-	$userService = App::getInstance()
-		->getContainer()
-		->get(UserCitySelectInterface::class);
-	$selectedCity = $userService->getSelectedCity(); //FIXME убрать повторные запросы внутри метода, если он уже выполнялся ранее
-	$selectedCityCode = $selectedCity['CODE'];
 	$modifiedSliderFilter = [
 		'PROPERTY_LOCATION' => [$selectedCityCode, false],
 	];

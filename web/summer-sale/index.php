@@ -47,8 +47,8 @@ $offerData = [
     [
         'TITLE'        => 'Когтеточки для кошек',
         'DETAIL_LINK'  => '/catalog/koshki/kogtetochki/',
-        'IMAGE'        => '/upload/summer-sale/sun-beds.jpg',
-        'IMAGE_MOBILE' => '/upload/summer-sale/sun-beds--small.jpg',
+        'IMAGE'        => '/upload/summer-sale/scrapers.jpg',
+        'IMAGE_MOBILE' => '/upload/summer-sale/scrapers--small.jpg',
         'OFFERS'       => [
             1024102,
             1026910,

@@ -168,6 +168,14 @@ class ShortProduct
     protected $freeGoodsAmount = 0;
 
     /**
+     * ОбъектЦвет
+     *
+     * @var \FourPaws\MobileApiBundle\Dto\Object\Color
+     * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\Color")
+     */
+    protected $color;
+
+    /**
      * @return int
      */
     public function getId(): int
@@ -482,5 +490,16 @@ class ShortProduct
     {
         $this->freeGoodsAmount = $freeGoodsAmount;
         return $this;
+    }
+
+    public function setColor($color)
+    {
+        $this->color = $color;
+        return $this;
+    }
+
+    public function getColor()
+    {
+        return $this->color;
     }
 }
