@@ -8274,7 +8274,7 @@ h1, h2, h3, h4, h5,
       text-decoration: none;
       color: #ec6606;
       outline: none !important; }
-  .ftco-navbar-light.scrolled {
+  /*.ftco-navbar-light.scrolled {
     position: fixed;
     right: 0;
     left: 0;
@@ -8283,7 +8283,7 @@ h1, h2, h3, h4, h5,
     background: #000000 !important;
     -webkit-box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
     box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
-    padding: 0 15px; }
+    padding: 0 15px; }*/
     .ftco-navbar-light.scrolled .nav-item > .nav-link {
       color: #fff !important; }
       @media (max-width: 991.98px) {
@@ -9791,7 +9791,8 @@ h5 {
 }
 
 #helps {
-  background: #f5f5f5 url('/dobrolap/images/help_bg.png') center center no-repeat / contain;
+  background: #f5f5f5 url('/dobrolap/images/help_bg.png') center center no-repeat;
+  background-size: contain;
 }
 
 #helps .text {
@@ -10002,11 +10003,11 @@ h4.subheader {
     text-transform: uppercase;
 }
 
-#thanks h2, #thanks h5, #little h2, #little h5 {
+#thanks h2, #thanks h5, #little h2, #little h5, #fanreg h2, #fanreg h5 {
   text-align: left;
 }
 
-#thanks hr, #little hr {
+#thanks hr, #little hr, #fanreg hr {
     margin: 20px 0;
 }
 
@@ -10033,7 +10034,7 @@ h4.subheader {
   text-align: left;
 }
 
-#little, #raise {
+#little, #raise, #fanreg {
   background: #f5f5f5;
 }
 
@@ -10094,6 +10095,56 @@ video {
 
 .js-popup-section {
   display: none;
+}
+
+html {
+  height: 100%;
+  /*overflow-x: hidden; */
+}
+
+body {
+  height: auto;
+}
+
+body .b-page-wrapper.no-scroll {
+  overflow: visible;
+  height: auto;
+}
+
+.b-page-wrapper.no-scroll {
+  position: relative;
+  overflow: auto;
+  width:100%;
+  pointer-events: auto;
+}
+
+#fanreg .col-md-6:nth-child(2) input {
+    float: left;
+    width: 250px;
+    max-width: 250px;
+    padding: 5px 10px;
+}
+
+#fanreg .col-md-6:nth-child(2) a {
+    float: left;
+    margin-left: 10px;
+}
+
+#fanreg {
+  display: none;
+}
+
+#fanreg .justify-content-center h2, #fanreg .justify-content-center h5 {
+  text-align: center !important;
+}
+
+#fanreg .justify-content-center hr {
+  margin: 0 auto;
+}
+
+#fanreg input::placeholder {
+  color: #ccc;
+  font-style: italic;
 }
 
 @media (max-width: 400px) {
@@ -10378,4 +10429,106 @@ video {
     width:15px;
   }
 
+}
+
+@media (min-width: 414px) and (max-width: 768px) {
+  #about-section {
+    margin-top: 0px;
+  }
+
+  #about-section .pb-5 {
+    padding-left: 0rem !important;
+  }
+
+  .slider-item, #about-section {
+    background: url(/dobrolap/images/mainpage_bg.jpg) -668px center no-repeat;
+    background-size: cover;
+  }
+
+  #about-section .align-items-center {
+    display: none !important;
+  }
+
+  #needs .col-md-12>.col-md-3 {
+    max-width: 48%;
+  }
+
+  #helps .row {
+    padding: 0 1%;
+  }
+
+  #helps .cat_dog img {
+    display: none;
+  }
+
+  #helps {
+    background: #f5f5f5 url(/dobrolap/images/help_bg.png) center center no-repeat / cover;
+  }
+
+  #shelter .col-md-3 {
+    max-width: 50%;
+    margin-bottom: 30px;
+  }
+
+  #shelter .col-md-12 {
+    margin-bottom: 0;
+  }
+
+  #little .col-md-6:nth-child(2) {
+      display: none;
+  }
+
+  #little .col-md-6 {
+      width: 100%;
+      max-width: 100%;
+      flex: 0 0 100%
+  }
+
+  #thanks p .btn {
+    margin-bottom: 20px;
+  }
+
+  #thanks {
+    padding: 4em 0 0 0;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .ftco-navbar-light .navbar-nav > .nav-item > .nav-link {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .slider-item, #about-section {
+    background: url(/dobrolap/images/mainpage_bg.jpg) -557px center no-repeat;
+    background-size: cover;
+  }
+
+  #about-section .pb-5 {
+    padding-left: 4rem !important;
+  }
+
+  #about-section .img-about .img {
+    left: -84px;
+  }
+
+  #needs .col-md-12>.col-md-3 {
+    margin: 4px;
+  }
+
+  #needs h3 {
+    font-size: 1.20rem;
+  }
+
+  #helps {
+    background: #f5f5f5 url(/dobrolap/images/help_bg.png) center center no-repeat / cover;
+  }
+
+  #helps .cat_dog {
+    margin-top: -5px;
+  }
+
+  .ftco-counter .text strong.number {
+    font-size: 73px;
+  }
 }

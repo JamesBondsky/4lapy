@@ -48,12 +48,37 @@ $APPLICATION->SetTitle("Добролап");
     	</div>
     </section>
 
+    <section class="ftco-section" id="fanreg">
+    	<div class="container">
+    		<div class="row">
+    			<div class="col-md-6">
+    				<div class="row justify-content-center">
+			          <div class="col-md-12 heading-section text-center ftco-animate">
+			            <h2 class="">ЗАРЕГИСТРИРОВАТЬ ФАН</h2>
+			            <hr />
+			            <h5 class="mb-4">для того, чтобы у вас появился шанс выиграть, введите номер вашего чека:</h5>
+			          </div>
+			        </div>
+    			</div>
+    			<div class="col-md-6">
+    				<div class="row justify-content-center">
+			          <div class="col-md-12 heading-section text-left ftco-animate">
+			            <p>введите номер чека в поле ниже</p>
+			            <p><input type="text" placeholder="s719d1f2972" max="11" />
+			            <a href="javascript:void(0);" class="btn btn-primary btn-primary-filled py-3 px-4">ЗАРЕГИСТРИРОВАТЬ ФАН</a></p>
+			          </div>
+			        </div>
+				</div>
+    		</div>
+    	</div>
+    </section>
+
     <section class="ftco-section" id="needs">
 			<div class="container">
 				<div class="row justify-content-center pb-5">
           <div class="col-md-12 heading-section text-center ftco-animate">
             <h2 class="">Собираем необходимое</h2>
-            <h5 class="mb-4">ДЛЯ ПИТОМЦЕВ ИЗ 40 ПРИЮТОВ РОССИИ</h5>
+            <h5 class="mb-4">ДЛЯ ПИТОМЦЕВ ИЗ 44 ПРИЮТОВ РОССИИ</h5>
             <hr />
           </div>
         </div>
@@ -2388,15 +2413,6 @@ $APPLICATION->SetTitle("Добролап");
 			          </div>
 			        </div>
     	</div>
-    	<script>
-    	$(document).ready(function() {
-              var owl = $('.owl-carousel');
-              owl.owlCarousel({
-                nav: true,
-              
-              })
-            })
-    	</script>
     	<div class="home-slider  owl-carousel">
 	      <div class="slider-item ">
 	      	<div class="overlay"></div>

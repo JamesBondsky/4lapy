@@ -1,7 +1,9 @@
-AOS.init({
+ AOS.init({
  	duration: 800,
  	easing: 'slide'
  });
+
+ var unlock;
 
 (function($) {
 
@@ -95,7 +97,7 @@ AOS.init({
 	    video:true,
 	    autoplayHoverPause: true,
 	    items: 1,
-	    navText : ["<span class='ion-ios-arrow-back'></span>","<span class='ion-ios-arrow-forward'></span>"],
+	    navText : ["<span class='ion-ios-arrow-left'></span>","<span class='ion-ios-arrow-right'></span>"],
 	    responsive:{
 	      0:{
 	        items:1
@@ -283,28 +285,62 @@ AOS.init({
     fixedContentPos: false
   });
 
+  	//--  разворачиваем/сворачиваем полный список приютов
 	$(".read_more a").click(function(){
 		$(".roll_block").slideToggle("slow");
 		return false;
 	});
 
-$('[data-popup-id="shelter_popup"].js-open-popup').on('click', function () {
+	//-- показываем блок регистрации фана
+	$("#about-section .btn-primary-filled, #thanks .btn-primary-filled").click(function(){
+		$("#fanreg").slideToggle("slow");
+		return false;
+	});
+
+
+	$(document).ready(function() {
+      var owl = $('.owl-carousel');
+      owl.owlCarousel({
+        nav: true,
+      
+      })
+    });
+
+	//--закидываем пользователя наверх, если он нажал кнопку внизу
+
+    var scrollTop = $('#fanreg').offset().top;
+	
+	$('#thanks .btn-primary-filled').click(function(){
+		$(document).scrollTop(scrollTop);	
+	})
+
+	
+	//--работа со всплывающим окном приютов
+	$('[data-popup-id="shelter_popup"].js-open-popup').on('click', function () {
       unlock = locky.lockyOn('.js-popup-wrapper');
       $('html').css('overflow-y', 'hidden');
     });
 
-$('[data-popup="shelter_popup"] .js-close-popup, [data-popup="response-shelter_popup"] .js-close-popup').on('click', function () {
-  unlock();
-  $('html').removeAttr('style');
-});
+	$('[data-popup="shelter_popup"] .js-close-popup').on('click', function () {
+	  unlock();
+	  $('html').removeAttr('style');
+	});
 
-$('.js-popup-wrapper').on('click', function () {
-  var $this = $(this);
 
-  if($this.find('[data-popup="shelter_popup"].opened') || $this.find('[data-popup="response-shelter_popup"].opened')) {
-    unlock();
-    $('html').removeAttr('style');
-  }
-});
+
+	$('.js-popup-wrapper').on('click', function () {
+	  var $this = $(this);
+
+	  if($this.find('[data-popup="shelter_popup"].opened')) {
+	    unlock();
+	    $('html').removeAttr('style');
+	  }
+	});
+
+	//--замена содержимого блока регистрации на благодарность по нажатию кнопки
+	$('#fanreg .btn-primary-filled').click(function(){
+		$('#fanreg .row').addClass('justify-content-center');
+		$('#fanreg .row').html('<div class="col-md-12"><h2 class="">Спасибо за регистрацию ФАНА!</h2><h5 class="mb-4">ваши данные отправлены</h5><hr /></div>');
+	});
 
 })(jQuery);
