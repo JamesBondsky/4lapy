@@ -170,7 +170,7 @@ class PaymentService implements LoggerAwareInterface
         /** @var DateTime $dateCreate */
         $dateCreate = $order->getField('DATE_INSERT');
 
-        $itemsCart = $this->getMobileFiscal($order);
+        $itemsCart = $this->getMobileFiscal($order, $skipGifts);
 
         $orderBundle = new OrderBundle();
         $orderBundle
@@ -1379,7 +1379,7 @@ class PaymentService implements LoggerAwareInterface
         $this->compareCartItemsOnValidateFiscalization = $compareCartItemsOnValidateFiscalization;
     }
 
-    private function getMobileFiscal(Order $order)
+    private function getMobileFiscal(Order $order, $skipGifts)
     {
         $config = Option::get(self::MODULE_PROVIDER_CODE, self::OPTION_FISCALIZATION_CODE, []);
         /** @noinspection UnserializeExploitsInspection */
@@ -1400,9 +1400,17 @@ class PaymentService implements LoggerAwareInterface
 
         $tmpOrder = new ArrayCollection($order->getBasket()->getBasketItems());
 
-        $tmpOrder->map(function (BasketItem $item) use (&$newItemArr) {
+        $tmpOrder->map(function (BasketItem $item) use (&$newItemArr, $skipGifts) {
             if ($item->getProductId()) {
-                $newItemArr[$item->getProductId()][] = $item;
+                $add = true;
+                if ($skipGifts) {
+                    if ($this->basketService->isGiftProduct($item)) {
+                        $add = false;
+                    }
+                }
+                if ($add) {
+                    $newItemArr[$item->getProductId()][] = $item;
+                }
             }
         });
 
