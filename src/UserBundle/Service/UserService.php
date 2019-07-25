@@ -1188,6 +1188,7 @@ class UserService implements
      * @param string $promocode
      * @param \DateTime $startDate
      * @param \DateTime $lastDate
+     * @param bool|null $isOnlyEmail
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ObjectPropertyException
@@ -1195,9 +1196,8 @@ class UserService implements
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\LoaderException
      * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
-     * @throws \Picqer\Barcode\Exceptions\BarcodeException
      */
-    public function sendNotifications(array $userIds, int $idEvents, int $emailId, string $promocode, \DateTime $startDate, \DateTime $lastDate)
+    public function sendNotifications(array $userIds, int $idEvents, int $emailId, string $promocode, \DateTime $startDate, \DateTime $lastDate, ?bool $isOnlyEmail = false)
     {
         $container = App::getInstance()->getContainer();
         $renderer = $container->get('templating');
@@ -1210,7 +1210,7 @@ class UserService implements
             $userIds[] = $user->getId();
         }
 
-        $filter = ['=USER_LOGIN' => $userIds];
+        $filter = ['=USER_ID' => $userIds];
         $query = ApiUserSessionTable::query()->addSelect('USER_ID')->setFilter($filter);
 
         $dbResult = $query->exec();
