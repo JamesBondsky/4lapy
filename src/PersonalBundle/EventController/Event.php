@@ -6,6 +6,7 @@ use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\Exception;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\Mail\Event as EventMail;
@@ -659,6 +660,14 @@ class Event extends BaseServiceHandler
                     /** @var PersonalOffersService $personalOffersService */
                     $personalOffersService = $container->get('personal_offers.service');
                     $personalOffersService->importOffers($arFields['ID'], $coupons);
+
+                    $userService = $container->get(UserSearchInterface::class);
+
+                    foreach ($coupons as $couponKey => $couponValue) {
+                        try {
+                            $userService->sendNotifications(array_values($couponValue), $arFields['ID'], 9234, $couponKey, new \DateTime($arFields['ACTIVE_FROM']), new \DateTime($arFields['ACTIVE_TO']));
+                        } catch (Exception $e) {}
+                    }
                 }
             }
         }

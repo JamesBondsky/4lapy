@@ -1484,23 +1484,28 @@ class ExpertsenderService implements LoggerAwareInterface
     }
 
     /**
-     * @param int $userId
-     * @param string $name
-     * @param string $email
-     * @param string $coupon
-     * @param string $base64
-     * @param string $couponDescription
-     * @param string $couponDateActiveTo
-     * @param string $discountValue
+     * @param $userId
+     * @param $name
+     * @param $email
+     * @param $coupon
+     * @param $base64
+     * @param $couponDescription
+     * @param $couponDateActiveTo
+     * @param $discountValue
+     * @param int|null $customTransactionId
      * @return bool
      * @throws ExpertSenderException
      * @throws ExpertsenderServiceApiException
      * @throws ExpertsenderServiceException
      */
-    public function sendPersonalOfferCouponEmail($userId, $name, $email, $coupon, $base64, $couponDescription, $couponDateActiveTo, $discountValue): bool
+    public function sendPersonalOfferCouponEmail($userId, $name, $email, $coupon, $base64, $couponDescription, $couponDateActiveTo, $discountValue, ?int $customTransactionId = 0): bool
     {
         if ($email) {
-            $transactionId = self::PERSONAL_OFFER_COUPON_SEND_EMAIL;
+            if ($customTransactionId) {
+                $transactionId = $customTransactionId;
+            } else {
+                $transactionId = self::PERSONAL_OFFER_COUPON_SEND_EMAIL;
+            }
 
             $this->log()->info(
                 __FUNCTION__,
