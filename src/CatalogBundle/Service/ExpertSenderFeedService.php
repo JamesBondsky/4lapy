@@ -10,6 +10,7 @@ use Bitrix\Main\ArgumentException as BitrixArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use CFile;
 use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
@@ -110,7 +111,7 @@ class ExpertSenderFeedService extends FeedService implements LoggerAwareInterfac
      */
     public function process(ConfigurationInterface $configuration, int $step, string $stockID = null): bool
     {
-        $this->tpmFileName = 'expert_sender_tmp_feed.xml';
+        $this->tmpFileName = 'expert_sender_tmp_feed.xml';
 
         /**
          * @var Configuration $configuration
@@ -287,14 +288,28 @@ class ExpertSenderFeedService extends FeedService implements LoggerAwareInterfac
         }
 
         $images = $offer->getResizeImages(250, 250);
+        $currentImageSrc = '';
         if (null !== $currentImageObj = $images->first()) {
-            $currentImageObj = (string)$currentImageObj;
-        } else {
-            $currentImageObj = '';
+            $currentImageObj = CFile::ResizeImageGet(
+                $currentImageObj->getId(),
+                [
+                    'width' => $currentImageObj->getResizeWidth(),
+                    'height' => $currentImageObj->getResizeHeight(),
+                ],
+                BX_RESIZE_IMAGE_PROPORTIONAL,
+                true,
+                [
+                    'name'      => 'sharpen',
+                    'precision' => 15,
+                ]
+            );
+            if ($currentImageObj) {
+                $currentImageSrc = (new FullHrefDecorator($currentImageObj['src']))->setHost($host)->__toString();
+                $currentImageWidth = $currentImageObj['width'];
+                $currentImageHeight = $currentImageObj['height'];
+            }
         }
-        $currentImage = (new FullHrefDecorator($currentImageObj))
-            ->setHost($host)
-            ->__toString();
+
 
         $detailPath = (new FullHrefDecorator(\sprintf(
             '%s',
@@ -306,6 +321,9 @@ class ExpertSenderFeedService extends FeedService implements LoggerAwareInterfac
 
         $sectionId = $offer->getProduct()->getIblockSectionId();
         $this->categoriesInProducts[$sectionId] = $sectionId;
+
+        $price = $offer->getPrice();
+        $oldPrice = $offer->getOldPrice();
 
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         /** @noinspection PassingByReferenceCorrectnessInspection */
@@ -329,15 +347,23 @@ class ExpertSenderFeedService extends FeedService implements LoggerAwareInterfac
                 ->setManufacturerWarranty(true)
                 ->setAvailable($offer->isAvailable())
                 ->setCurrencyId('RUB')
-                ->setOldPrice($offer->getOldPrice())
-                ->setPrice($offer->getPrice())
-                ->setPicture($currentImage)
+                ->setPrice($price)
+                ->setPicture($currentImageSrc)
                 ->setUrl($detailPath)
                 ->setCpa(0)
                 ->setVendor($offer->getProduct()
                     ->getBrandName())
                 ->setDeliveryOptions($deliveryInfo)
                 ->setVendorCode(\array_shift($offer->getBarcodes()) ?: '');
+        if (isset($currentImageWidth, $currentImageHeight)) {
+            $expertSenderOffer
+                ->setImageWidth($currentImageWidth)
+                ->setImageHeight($currentImageHeight);
+        }
+
+        if ($price != $oldPrice) {
+            $expertSenderOffer->setOldPrice($oldPrice);
+        }
 
         $country = $offer
             ->getProduct()

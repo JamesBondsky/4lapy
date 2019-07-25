@@ -77,6 +77,18 @@ class BasketProductCollection extends ProductQuantityCollection
     }
 
     /**
+     * @return int
+     */
+    public function getAmountBonus(): int
+    {
+        $totalBonuses = 0;
+        array_map(function ($productItem) use (&$totalBonuses) {
+            $totalBonuses += $productItem->getShortProduct()->getBonusUser();
+        }, $this->getValues());
+        return $totalBonuses;
+    }
+
+    /**
      * @return float
      */
     public function getDiscount(): float

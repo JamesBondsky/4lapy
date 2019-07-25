@@ -46,11 +46,11 @@ https://api.esv2.com - валидный адрес
 ## Запуск импорта из SAP 
 
 ```
-- ./bin/symfony_console f:s:i catalog #Каталог (товары -> цены (+ простые акции) -> остатки на складах -> остатки в магазинах)
-- ./bin/symfony_console f:s:i order_status #Статусы заказа (заказы из SAP)
-- ./bin/symfony_console f:s:i payment # Задания на списание оплаты
-- ./bin/symfony_console f:s:i delivery_schedule # Расписания поставок
-- ./bin/symfony_console f:s:i bonus_buy # Сложные скидки из SAPBB 
+- ./bin/symfony_console fourpaws:sap:import catalog #Каталог (товары -> цены (+ простые акции) -> остатки на складах -> остатки в магазинах)
+- ./bin/symfony_console fourpaws:sap:import order_status #Статусы заказа (заказы из SAP)
+- ./bin/symfony_console fourpaws:sap:import payment # Задания на списание оплаты
+- ./bin/symfony_console fourpaws:sap:import delivery_schedule # Расписания поставок
+- ./bin/symfony_console fourpaws:sap:import bonus_buy # Сложные скидки из SAPBB 
 ```
 ```
 -f|--force - для сброса блокировки
@@ -105,7 +105,7 @@ https://api.esv2.com - валидный адрес
 ## Фабрика фидов
 
 ```
-- ./bin/symfony_console b:f:f %id% --type %type% # id - ид профиля выгрузки, type - тип фида (yandex-market; google-merchant; retail-rocket; expert-sender)
+- ./bin/symfony_console bitrix:feed:factory %id% --type %type% # id - ид профиля выгрузки, type - тип фида (yandex-market; google-merchant; retail-rocket; expert-sender)
 ```
 
 ## Сервисы вагранта
@@ -121,8 +121,8 @@ password: guest
 
 ## Запуск переиндексации
 ```
-- ./bin/symfony_console f:i:r 
-- ./bin/symfony_console f:i:r -f # С пересозданием индекса 
+- ./bin/symfony_console fourpaws:indexer:reindex 
+- ./bin/symfony_console fourpaws:indexer:reindex -f # С пересозданием индекса 
 ```
 
 ## Сбросить пароль для пользователей группы FRONT_OFFICE_USERS
@@ -135,7 +135,7 @@ password: guest
 При первом запуске выполнить: 
 ```
 # Необходим поисковый индекс для тестового окружения
-- ./bin/symfony_console --env=test f:i:r
+- ./bin/symfony_console --env=test fourpaws:indexer:reindex
 
 # Билдим исходники для codeception 
 - .php vendor/bin/codecept build 
