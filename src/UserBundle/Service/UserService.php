@@ -150,9 +150,6 @@ class UserService implements
         $this->locationService = $locationService;
         $this->userCollection = new ArrayCollection();
         $this->transformer = $transformer;
-
-        $container = App::getInstance()->getContainer();
-        $this->personalOffersService = $container->get('personal_offers.service');
     }
 
     /**
@@ -1202,6 +1199,7 @@ class UserService implements
     {
         $container = App::getInstance()->getContainer();
         $renderer = $container->get('templating');
+        $this->personalOffersService = $container->get('personal_offers.service');
 
         $users = $this->userRepository->findBy(['LOGIN' => $userIds]);
 
