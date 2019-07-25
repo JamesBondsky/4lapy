@@ -811,6 +811,7 @@ class PaymentService implements LoggerAwareInterface
                     $response['errorCode']
                 );
         }
+        $this->log()->error('form url ' . $formUrl);
         return $formUrl;
     }
 
