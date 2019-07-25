@@ -1,3 +1,0 @@
-<?
-$sSectionName="shelter_logo";
-?>

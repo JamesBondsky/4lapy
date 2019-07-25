@@ -13,18 +13,17 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
         <div class="col-md-12 animate-box">
     <? } ?>
 
-    <? if($i == 8) { ?>
-        <div class="roll_block">
-    <? } ?>
 
     <? if($i != 0 && $i % 4 == 0) { ?>
         </div>
+
+        <? if($i == 8) { ?>
+            <div class="roll_block">
+        <? } ?>
+
         <div class="col-md-12 animate-box">
     <? } ?>
 
-    <? if($i == 8) { ?>
-    </div>
-    <? } ?>
 
     <div class="col-md-3 animate-box">
         <div class="shelter_wrap">
@@ -82,8 +81,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
 <? } ?>
 
 </div> <!--col-md-12-->
-<? if($i > 7) { ?>
 </div> <!--roll_block-->
-<? } ?>
+
 
 

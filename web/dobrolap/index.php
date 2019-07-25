@@ -280,7 +280,7 @@ $APPLICATION->SetTitle("Добролап");
 			            <h5 class="mb-4">В знак благодарности мы приготовили<br />небольшой сюрприз – фанты «Добролап»<br />с приятными презентами. И конечно,<br />по традиции вы получите на кассе<br />памятный магнит.</h5>
 			            <p>
                             <a href="javascript:void(0);" class="btn btn-primary-filled py-3 px-4 <?=($USER->IsAuthorized()) ? 'js-show-fan-form' : 'js-open-popup'?>" data-popup-id="authorization">ЗАРЕГИСТРИРОВАТЬ ФАН</a>
-                            <a href="/shares/blagotvoritelnaya-aktsiya-dobrolap-dlya-zhivotnykh-ikh-priyutov2.html" class="btn btn-primary py-3 px-4">ПОДРОБНЫЕ СВЕДЕНИЯ</a>
+                            <a href="javascript:void(0);" class="btn btn-primary py-3 px-4 js-open-popup" data-popup-id="dobrolap_more_info_popup">ПОДРОБНЫЕ СВЕДЕНИЯ</a>
                         </p>
 			          </div>
 			        </div>
@@ -330,7 +330,7 @@ $APPLICATION->SetTitle("Добролап");
 			            <h5 class="mb-4">В знак благодарности мы приготовили<br />небольшой сюрприз – фанты «Добролап»<br />с приятными презентами. И конечно,<br />по традиции вы получите на кассе<br />памятный магнит.</h5>
 			            <p>
                             <a href="javascript:void(0);" class="btn btn-primary-filled py-3 px-4 <?=($USER->IsAuthorized()) ? 'js-show-fan-form' : 'js-open-popup'?>" data-popup-id="authorization">ЗАРЕГИСТРИРОВАТЬ ФАН</a>
-                            <a href="#" class="btn btn-primary py-3 px-4">ПОДРОБНЫЕ СВЕДЕНИЯ</a>
+                            <a href="javascript:void(0);" class="btn btn-primary py-3 px-4 js-open-popup" data-popup-id="dobrolap_more_info_popup">ПОДРОБНЫЕ СВЕДЕНИЯ</a>
                         </p>
 			          </div>
 			        </div>

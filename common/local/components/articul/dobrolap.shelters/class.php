@@ -29,6 +29,7 @@ class CDobrolapSheltersComponent extends \CBitrixComponent
     {
         global $DB;
 
+        // TODO: ВКЛЮЧИТЬ КЕШ
         if(true) {
 
             // часть инф-ы по приютам хранится в отдельной таблице, связка по barcode
@@ -44,9 +45,14 @@ class CDobrolapSheltersComponent extends \CBitrixComponent
                 $element = $row->GetFields();
                 $element['PROPERTIES'] = $row->GetProperties();
 
-                $element['IMG'] = $element['PROPERTIES']['IMG']['VALUE'] ? \CFile::GetPath($element['PROPERTIES']['IMG']['VALUE']) : '/dobrolap/images/shelter_logo/blank_logo.png';
+                $img = sprintf('/dobrolap/images/shelter_logo/%s.png', $element['XML_ID']);
+                if(!file_exists($_SERVER['DOCUMENT_ROOT'].$img)){
+                    $img = $element['PROPERTIES']['IMG']['VALUE'] ? \CFile::GetPath($element['PROPERTIES']['IMG']['VALUE']) : '/dobrolap/images/shelter_logo/blank_logo.png';
+                }
+
+                $element['IMG'] = $img;
                 $element['CITY'] = $this->formatCity($arShelteres[$element['XML_ID']]['city']);
-                $element['DESCRIPTION'] = $arShelteres[$element['XML_ID']]['description'];
+                $element['DESCRIPTION'] = $element['DETAIL_TEXT'] ?: $arShelteres[$element['XML_ID']]['description'];
 
                 $this->arResult['ELEMENTS'][] = $element;
             }

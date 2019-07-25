@@ -316,12 +316,12 @@
 
 	
 	//--работа со всплывающим окном приютов
-	$('[data-popup-id="shelter_popup"].js-open-popup').on('click', function () {
+	$('[data-popup-id="shelter_popup"].js-open-popup, [data-popup="dobrolap_more_info_popup"] .js-close-popup').on('click', function () {
       unlock = locky.lockyOn('.js-popup-wrapper');
       $('html').css('overflow-y', 'hidden');
     });
 
-	$('[data-popup="shelter_popup"] .js-close-popup').on('click', function () {
+	$('[data-popup="shelter_popup"] .js-close-popup, [data-popup="dobrolap_more_info_popup"] .js-close-popup').on('click', function () {
 	  unlock();
 	  $('html').removeAttr('style');
 	});
