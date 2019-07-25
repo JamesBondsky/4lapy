@@ -1201,7 +1201,12 @@ class UserService implements
         $renderer = $container->get('templating');
         $this->personalOffersService = $container->get('personal_offers.service');
 
-        $users = $this->userRepository->findBy(['LOGIN' => $userIds]);
+        $field = 'LOGIN';
+        if ($isOnlyEmail) {
+            $field = 'ID';
+        }
+
+        $users = $this->userRepository->findBy([$field => $userIds]);
 
         $userIds = [];
 
@@ -1228,55 +1233,61 @@ class UserService implements
         $textStart = $renderer->render('FourPawsSaleBundle:Push:coupon.new.start.html.php');
         $textLast = $renderer->render('FourPawsSaleBundle:Push:coupon.last.start.html.php');
 
-        $hlblock = \Bitrix\HighloadBlock\HighloadBlockTable::getList([
-            'filter' => [
-                'TABLE_NAME' => 'api_push_messages'
-            ]
-        ])->fetch();
+        if (!$isOnlyEmail) {
+            $hlblock = \Bitrix\HighloadBlock\HighloadBlockTable::getList([
+                'filter' => [
+                    'TABLE_NAME' => 'api_push_messages'
+                ]
+            ])->fetch();
 
-        $userField = (new \CUserTypeEntity())->GetList([], [
-            'ENTITY_ID' => 'HLBLOCK_' . $hlblock,
-            'XML_ID' => 'UF_TYPE',
-        ])->fetch();
+            $userField = (new \CUserTypeEntity())->GetList([], [
+                'ENTITY_ID' => 'HLBLOCK_' . $hlblock,
+                'XML_ID' => 'UF_TYPE',
+            ])->fetch();
 
-        $type = (new \CUserFieldEnum())->GetList([], [
-            'USER_FIELD_ID' => $userField['ID'],
-            'XML_ID' => 'status',
-        ])->fetch();
+            $type = (new \CUserFieldEnum())->GetList([], [
+                'USER_FIELD_ID' => $userField['ID'],
+                'XML_ID' => 'status',
+            ])->fetch();
 
-        $startDateSend = $startDate;
+            $startDateSend = $startDate;
 
-        $pushMessage = (new ApiPushMessage())
-            ->setActive(true)
-            ->setMessage($textStart)
-            ->setUserIds([$userIdByPush])
-            ->setEventId($idEvents)
-            ->setStartSend($startDateSend)
-            ->setTypeId($type['ID']);
+            $pushMessage = (new ApiPushMessage())
+                ->setActive(true)
+                ->setMessage($textStart)
+                ->setUserIds([$userIdByPush])
+                ->setEventId($idEvents)
+                ->setStartSend($startDateSend)
+                ->setTypeId($type['ID']);
 
-        $pushMessageLast = clone $pushMessage;
+            $pushMessageLast = clone $pushMessage;
 
-        $pushMessageLast->setStartSend($lastDate->modify('-4 day'));
-        $pushMessageLast->setMessage($textLast);
+            $pushMessageLast->setStartSend($lastDate->modify('-4 day'));
+            $pushMessageLast->setMessage($textLast);
 
-        $data = $this->transformer->toArray(
-            $pushMessage,
-            SerializationContext::create()->setGroups([CrudGroups::CREATE])
-        );
+            $data = $this->transformer->toArray(
+                $pushMessage,
+                SerializationContext::create()->setGroups([CrudGroups::CREATE])
+            );
 
-        $dataLast = $this->transformer->toArray(
-            $pushMessageLast,
-            SerializationContext::create()->setGroups([CrudGroups::CREATE])
-        );
+            $dataLast = $this->transformer->toArray(
+                $pushMessageLast,
+                SerializationContext::create()->setGroups([CrudGroups::CREATE])
+            );
 
-        $hlBlockPushMessages = \FourPaws\App\Application::getHlBlockDataManager('bx.hlblock.pushmessages');
-        $hlBlockPushMessages->add($data);
-        $hlBlockPushMessages->add($dataLast);
+            $hlBlockPushMessages = \FourPaws\App\Application::getHlBlockDataManager('bx.hlblock.pushmessages');
+            $hlBlockPushMessages->add($data);
+            $hlBlockPushMessages->add($dataLast);
+        }
 
         $users = $this->userRepository->findBy(['ID' => $userIdByEmail]);
 
         $barcodeGenerator = new BarcodeGeneratorPNG();
-        $offerFields = $this->personalOffersService->getOfferFieldsByPromoCode($promocode);
+        if ($isOnlyEmail) {
+            $offerFields = $this->personalOffersService->getOfferFieldsByCouponId(intval($promocode));
+        } else {
+            $offerFields = $this->personalOffersService->getOfferFieldsByPromoCode($promocode);
+        }
 
         if ($offerFields->count() == 0) {
             throw new Exception('Купон по промокоду не найден');
@@ -1284,11 +1295,11 @@ class UserService implements
 
         $expertSender = $container->get('expertsender.service');
 
-        foreach ($users as $user) {
-            $couponDescription = $offerFields->get('PREVIEW_TEXT');
-            $couponDateActiveTo = $offerFields->get('DATE_ACTIVE_TO');
-            $discountValue = $offerFields->get('PROPERTY_DISCOUNT_VALUE');
+        $couponDescription = $offerFields->get('PREVIEW_TEXT');
+        $couponDateActiveTo = $offerFields->get('DATE_ACTIVE_TO');
+        $discountValue = $offerFields->get('PROPERTY_DISCOUNT_VALUE');
 
+        foreach ($users as $user) {
             try {
 //                $expertSender->sendPersonalOfferCouponEmail(
 //                    $user->getId(),
