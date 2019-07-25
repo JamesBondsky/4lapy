@@ -1,6 +1,6 @@
 <section class="b-popup-pick-city b-popup-pick-city--authorization b-popup-pick-city--shelter js-popup-section" data-popup="shelter_popup">
 </section>
-<section class="b-popup-pick-city b-popup-pick-city--authorization b-popup-pick-city--shelter" data-popup="dobrolap_more_info_popup" style="max-width: 740px;padding: 35px 90px 35px 40px;">
+<section class="b-popup-pick-city b-popup-pick-city--authorization b-popup-pick-city--shelter js-popup-section" data-popup="dobrolap_more_info_popup" style="max-width: 740px;padding: 35px 90px 35px 40px;">
     <a class="b-popup-pick-city__close b-popup-pick-city__close--authorization js-close-popup" href="javascript:void(0);" title="Закрыть"></a>
     <h5>
         <p>ВЫ ПРИНЯЛИ УЧАСТИЕ В АКЦИИ #ДОБРОЛАП  - МЫ ГОВОРИМ ВАМ СПАСИБО И ДАРИМ СЮРПРИЗ:</p>
