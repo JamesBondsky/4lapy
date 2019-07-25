@@ -88,6 +88,11 @@ class DeliveryController extends BaseController
         try {
             $shelters = AnimalShelterTable::getList()->fetchAll();
             if (count($shelters)) {
+                $shelters = array_map(function ($shelter) {
+                    $shelter['id'] = $shelter['barcode'];
+                    unset($shelter['barcode']);
+                    return $shelter;
+                }, $shelters);
                 $response->setData(['shelters' => $shelters]);
             } else {
                 $response->setData(['shelters' => []]);

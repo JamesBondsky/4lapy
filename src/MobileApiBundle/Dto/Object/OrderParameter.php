@@ -279,7 +279,7 @@ class OrderParameter
      * Штрих-код приюта для доставки Добролап
      *
      * @Serializer\Type("string")
-     * @Serializer\SerializedName("SHELTER")
+     * @Serializer\SerializedName("shelter")
      * @var string
      */
     protected $shelter = '';
