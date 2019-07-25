@@ -47,4 +47,6 @@ $paymentService = PawsApplication::getInstance()->getContainer()->get(PaymentSer
 /** @noinspection PhpUnhandledExceptionInspection */
 $formUrl = $paymentService->registerOrder($order, $amount);
 
-echo '<script>window.location.assign("' . $formUrl . '")</script>';
+LocalRedirect($formUrl);
+
+//echo '<script>window.location.assign("' . $formUrl . '")</script>';
