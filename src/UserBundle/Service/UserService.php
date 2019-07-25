@@ -1202,7 +1202,15 @@ class UserService implements
         $container = App::getInstance()->getContainer();
         $renderer = $container->get('templating');
 
-        $filter = ['=USER_ID' => $userIds];
+        $users = $this->userRepository->findBy(['LOGIN' => $userIds]);
+
+        $userIds = [];
+
+        foreach ($users as $user) {
+            $userIds[] = $user->getId();
+        }
+
+        $filter = ['=USER_LOGIN' => $userIds];
         $query = ApiUserSessionTable::query()->addSelect('USER_ID')->setFilter($filter);
 
         $dbResult = $query->exec();
