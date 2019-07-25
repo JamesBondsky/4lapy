@@ -44,7 +44,7 @@ class ShopList
      */
     public function getShops(): ArrayCollection
     {
-        return $this->shops;
+        return $this->shops ?: new ArrayCollection();
     }
 
     /**
