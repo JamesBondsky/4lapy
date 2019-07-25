@@ -32,6 +32,7 @@ class BannerService
     {
         $res = (new BannerQuery())
             ->withFilterParameter('ACTIVE', 'Y')
+            ->withFilterParameter('PROPERTY_LOCATION', [$this->cityId, false])
             ->withType($sectionCode)
             ->withOrder([
                 self::BANNER_LIST_SORT_BY1 => self::BANNER_LIST_SORT_ORDER1,

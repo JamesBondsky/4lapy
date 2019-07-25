@@ -14,12 +14,12 @@ $APPLICATION->SetTitle('Выиграй путешествие в Прагу на
 <section id="registr-check" data-id-section-landing="registr-check" class="registr-check-landing">
     <div class="container-landing">
 
-        <div class="registr-check-landing__important-information <?if ($USER->IsAuthorized()) {?>registr-check-landing__important-information--indent<? } ?>">
+        <?/*<div class="registr-check-landing__important-information <?if ($USER->IsAuthorized()) {?>registr-check-landing__important-information--indent<? } ?>">
             <p>Личные данные, вводимые при регистрации в&nbsp;акции, должны совпадать с&nbsp;личными данными,<br class="hidden-mobile" /> к&nbsp;которым привязана бонусная карта Четыре Лапы, также используемая для регистрации в&nbsp;акции.</p>
             <p>Участники, у&nbsp;которых указанная информация не&nbsp;совпадает, автоматически выбывают из&nbsp;общего списка зарегистрированных участников для начисления бонусов и&nbsp;розыгрыша призов.</p>
-        </div>
+        </div>*/?>
 
-        <?if ($USER->IsAuthorized()) {?>
+        <?/*if ($USER->IsAuthorized()) {?>
             <? $arUser = \CUser::GetById($USER->GetID())->Fetch(); ?>
 
             <div class="registr-check-landing__form-wrap" data-wrap-form-registr-chek-landing="true">
@@ -102,7 +102,13 @@ $APPLICATION->SetTitle('Выиграй путешествие в Прагу на
                 <div class="registr-check-landing__response" data-response-form-landing="true"></div>
             </div>
 
-        <? } ?>
+        <? } */?>
+
+        <div class="registr-check-landing__message">
+            <div class="landing-title landing-title_dark">
+                Регистрация чеков завершена
+            </div>
+        </div>
 
     </div>
 </section>

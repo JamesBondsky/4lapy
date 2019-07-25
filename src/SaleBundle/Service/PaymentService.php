@@ -71,6 +71,7 @@ use FourPaws\SaleBundle\Exception\SberbankOrderPaymentDeclinedException;
 use FourPaws\SaleBundle\Exception\SberbankPaymentException;
 use FourPaws\SaleBundle\Payment\Sberbank;
 use FourPaws\SapBundle\Consumer\ConsumerRegistry;
+use FourPaws\SapBundle\Enum\SapOrder;
 use FourPaws\StoreBundle\Entity\Store;
 use JMS\Serializer\ArrayTransformerInterface;
 use Psr\Log\LoggerAwareInterface;
@@ -150,9 +151,9 @@ class PaymentService implements LoggerAwareInterface
 
     /**
      * @param Order $order
-     * @param int   $taxSystem
-     * @param bool  $skipGifts
-     *
+     * @param int $taxSystem
+     * @param bool $skipGifts
+     * @param bool $isMobile
      * @return Fiscalization
      * @throws ArgumentException
      * @throws ArgumentNullException
@@ -161,21 +162,24 @@ class PaymentService implements LoggerAwareInterface
      * @throws ObjectPropertyException
      * @throws SystemException
      */
-    public function getFiscalization(Order $order, int $taxSystem = 0, $skipGifts = true): Fiscalization
+    public function getFiscalization(Order $order, int $taxSystem = 0, $skipGifts = true, $isMobile = false): Fiscalization
     {
-//        $fiscal = $this->paymentService->getMobileFiscalization($order);
-
-        $itemsCart = $this->getMobileFiscal($order);
-
         /** @var DateTime $dateCreate */
         $dateCreate = $order->getField('DATE_INSERT');
+
+        if ($isMobile) {
+            $itemsCart = $this->getMobileFiscal($order);
+        }
 
         $orderBundle = new OrderBundle();
         $orderBundle
             ->setCustomerDetails($this->getCustomerDetails($order))
             ->setDateCreate(DateHelper::convertToDateTime($dateCreate));
-//        $orderBundle->setCartItems($this->getCartItems($order, $skipGifts));
-        $orderBundle->setCartItems((new CartItems())->setItems(new ArrayCollection($itemsCart)));
+        if ($isMobile) {
+            $orderBundle->setCartItems((new CartItems())->setItems(new ArrayCollection($itemsCart)));
+        } else {
+            $orderBundle->setCartItems($this->getCartItems($order, $skipGifts));
+        }
         $fiscal = (new Fiscal())
             ->setOrderBundle($orderBundle)
             ->setTaxSystem($taxSystem);
@@ -185,15 +189,11 @@ class PaymentService implements LoggerAwareInterface
 
     /**
      * @param Fiscalization $fiscalization
-     * @param OrderInfo     $orderInfo
-     * @param float|null      $sumPaid
-     * @param float|null    $amountBonus
-     *
+     * @param OrderInfo $orderInfo
+     * @param float|null $sumPaid
      * @throws FiscalAmountExceededException
      * @throws FiscalAmountException
-     * @throws InvalidItemCodeException
      * @throws NoMatchingFiscalItemException
-     * @throws PositionQuantityExceededException
      * @throws PositionWrongAmountException
      */
     public function validateFiscalization(
@@ -730,7 +730,7 @@ class PaymentService implements LoggerAwareInterface
      * @throws SberBankOrderNumberNotFoundException
      * @throws SystemException
      */
-    public function registerOrder(Order $order, $amount): string
+    public function registerOrder(Order $order, $amount, ?bool $isApi = false): string
     {
         $fiscalization = \COption::GetOptionString('sberbank.ecom', 'FISCALIZATION', serialize([]));
         /** @noinspection UnserializeExploitsInspection */
@@ -739,7 +739,7 @@ class PaymentService implements LoggerAwareInterface
         /* Фискализация */
         $fiscal = [];
         if ($fiscalization['ENABLE'] === 'Y') {
-            $fiscal = $this->getFiscalization($order, (int)$fiscalization['TAX_SYSTEM']);
+            $fiscal = $this->getFiscalization($order, (int)$fiscalization['TAX_SYSTEM'], true, $isApi);
             $amount = $this->getFiscalTotal($fiscal);
             $fiscal = $this->fiscalToArray($fiscal)['fiscal'];
         }
@@ -1373,7 +1373,14 @@ class PaymentService implements LoggerAwareInterface
             return null;
         }
 
-        $bonusAmount = $order->getPaymentCollection()->getInnerPayment()->getSum();
+        $bonusAmount = 0.0;
+        $innerPaymentCollection = $order->getPaymentCollection();
+        if ($innerPaymentCollection) {
+            $innerPaymentObj = $innerPaymentCollection->getInnerPayment();
+            if ($innerPaymentObj) {
+                $bonusAmount = $innerPaymentObj->getSum();
+            }
+        }
 
         $tmpOrder = new ArrayCollection($order->getBasket()->getBasketItems());
 
@@ -1452,8 +1459,8 @@ class PaymentService implements LoggerAwareInterface
                     }
 
                 } else {
+                    $newItem->setPrice($averagePriceItem);
                     if ($newItem->getPrice() > 0) {
-                        $newItem->setPrice($averagePriceItem);
                         $itemsOrder[$xmlIdItem][] = clone $newItem;
                     }
                 }
@@ -1499,6 +1506,27 @@ class PaymentService implements LoggerAwareInterface
                     ++$positionId;
                 }
             }
+        }
+
+        if ($order->getDeliveryPrice() > 0) {
+            $deliveryPrice = floor($order->getDeliveryPrice() * 100);
+            $delivery = (new Item())
+                ->setPositionId($positionId)
+                ->setName(Loc::getMessage('RBS_PAYMENT_DELIVERY_TITLE') ?: 'Доставка')
+                ->setQuantity((new ItemQuantity())
+                    ->setValue(1)
+                    ->setMeasure(Loc::getMessage('RBS_PAYMENT_MEASURE_DEFAULT') ?: 'Штука')
+                )
+                ->setXmlId(OrderPayment::GENERIC_DELIVERY_CODE)
+                ->setTotal($deliveryPrice)
+                ->setCode($order->getId() . '_DELIVERY')
+                ->setPrice($deliveryPrice)
+                ->setTax((new ItemTax())
+                    ->setType(6)
+                )
+                ->setPaymentMethod(PaymentMethod::FULL_PAYMENT);
+
+            $itemsFiscal[] = $delivery;
         }
 
         return $itemsFiscal;
@@ -1578,5 +1606,19 @@ class PaymentService implements LoggerAwareInterface
         }
 
         return floatval($averagePriceItemWhole . '.' . $averagePriceItemFractional);
+    }
+
+    private function isDeliveryItem($xmlItem): bool {
+        $deliveryArticles = [
+            SapOrder::DELIVERY_ZONE_1_ARTICLE,
+            SapOrder::DELIVERY_ZONE_2_ARTICLE,
+            SapOrder::DELIVERY_ZONE_3_ARTICLE,
+            SapOrder::DELIVERY_ZONE_4_ARTICLE,
+            SapOrder::DELIVERY_ZONE_5_ARTICLE,
+            SapOrder::DELIVERY_ZONE_6_ARTICLE,
+            SapOrder::DELIVERY_ZONE_MOSCOW_ARTICLE,
+        ];
+
+        return \in_array((string)$xmlItem, $deliveryArticles, true);
     }
 }

@@ -24,6 +24,15 @@ class GoodsListRequest implements SimpleUnserializeRequest, GetRequest
     protected $categoryId = 0;
 
     /**
+     * id акции (если не задано category_id)
+     *
+     * @Serializer\SerializedName("stock_id")
+     * @Serializer\Type("integer")
+     * @var int
+     */
+    protected $stockId = 0;
+
+    /**
      * Идентификатор города
      *
      * @Serializer\SerializedName("city_id")
@@ -188,5 +197,23 @@ class GoodsListRequest implements SimpleUnserializeRequest, GetRequest
     {
         $this->count = $count;
         return $this;
+    }
+
+    /**
+     * @param int $stockId
+     * @return GoodsListRequest
+     */
+    public function setStockId(int $stockId): GoodsListRequest
+    {
+        $this->stockId = $stockId;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getStockId(): int
+    {
+        return $this->stockId;
     }
 }

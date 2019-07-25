@@ -30,6 +30,7 @@ use FourPaws\BitrixOrm\Collection\ImageCollection;
 use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Collection\ShareCollection;
 use FourPaws\BitrixOrm\Model\CatalogProduct;
+use FourPaws\BitrixOrm\Model\ColorReferenceItem;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Model\Image;
@@ -37,6 +38,7 @@ use FourPaws\BitrixOrm\Model\Interfaces\ResizeImageInterface;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
+use FourPaws\BitrixOrm\Query\HlbColorQuery;
 use FourPaws\BitrixOrm\Query\ShareQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Collection\PriceCollection;
@@ -49,6 +51,7 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\MobileApiBundle\Dto\Object\Color;
 use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Helper\PriceHelper;
@@ -89,6 +92,8 @@ class Offer extends IblockElement
     public const PACKAGE_LABEL_TYPE_SIZE = 'SIZE';
 
     public const PACKAGE_LABEL_TYPE_VOLUME = 'VOLUME';
+
+    public const PACKAGE_LABEL_TYPE_COLOUR = 'COLOUR';
 
     public const PACKAGE_LABEL_TYPE_WEIGHT = 'WEIGHT';
 
@@ -174,7 +179,7 @@ class Offer extends IblockElement
     protected $PROPERTY_COLOUR = '';
 
     /**
-     * @var HlbReferenceItem
+     * @var ColorReferenceItem
      */
     protected $colour;
 
@@ -268,8 +273,15 @@ class Offer extends IblockElement
 
     /**
      * @var string
+     * @Type("string")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_COLOUR_COMBINATION = '';
+
+    /**
+     * @var HlbReferenceItem
+     */
+    protected $colourCombination;
 
     /**
      * @var string
@@ -487,6 +499,15 @@ class Offer extends IblockElement
      */
     protected $catalogGroupId;
 
+
+    /**
+     * @var \FourPaws\MobileApiBundle\Dto\Object\Color
+     * @Type("FourPaws\MobileApiBundle\Dto\Object\Color")
+     * @Accessor(getter="getPrices")
+     * @Groups({"elastic"})
+     */
+    protected $color = null;
+
     /**
      * Offer constructor.
      *
@@ -624,19 +645,25 @@ class Offer extends IblockElement
     }
 
     /**
-     * @throws ServiceNotFoundException
+     * @return null|ColorReferenceItem
      * @throws ApplicationCreateException
-     * @throws RuntimeException
-     * @throws ServiceCircularReferenceException
-     * @return null|HlbReferenceItem
+     * @throws ArgumentException
+     * @throws SystemException
      */
-    public function getColor(): ?HlbReferenceItem
+    public function getColor(): ?ColorReferenceItem
     {
         if ((null === $this->colour) && $this->PROPERTY_COLOUR) {
-            $this->colour = ReferenceUtils::getReference(
-                Application::getHlBlockDataManager('bx.hlblock.colour'),
-                $this->PROPERTY_COLOUR
-            );
+            $colourDataManager = Application::getHlBlockDataManager('bx.hlblock.colour');
+            $color = (new HlbColorQuery($colourDataManager::query()))
+                ->withFilter(['=UF_XML_ID' => $this->PROPERTY_COLOUR])
+                ->exec()
+                ->current();
+
+            if ($color instanceof ColorReferenceItem) {
+                $this->colour = $color;
+            } else {
+                $this->colour = new ColorReferenceItem();
+            }
         }
 
         return $this->colour;
@@ -958,11 +985,42 @@ class Offer extends IblockElement
     }
 
     /**
+     * @return null|HlbReferenceItem
+     * @throws ApplicationCreateException
+     */
+    public function getColourCombination(): ?HlbReferenceItem
+    {
+        if ((null === $this->colourCombination) && $this->PROPERTY_COLOUR_COMBINATION) {
+            $this->colourCombination = ReferenceUtils::getReference(
+                Application::getHlBlockDataManager('bx.hlblock.colour'),
+                $this->PROPERTY_COLOUR_COMBINATION
+            );
+        }
+
+        return $this->colourCombination;
+    }
+
+    /**
      * @return string
      */
-    public function getColourCombination(): string
+    public function getColourCombinationXmlId(): string
     {
-        return (string)$this->PROPERTY_COLOUR_COMBINATION;
+        $this->PROPERTY_COLOUR_COMBINATION = $this->PROPERTY_COLOUR_COMBINATION ?: '';
+
+        return $this->PROPERTY_COLOUR_COMBINATION;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withColourCombinationXmlId(string $xmlId): self
+    {
+        $this->colourCombination = null;
+        $this->PROPERTY_COLOUR_COMBINATION = $xmlId;
+
+        return $this;
     }
 
     /**
@@ -1413,6 +1471,24 @@ class Offer extends IblockElement
         $this->product = $product;
     }
 
+    public function setColor()
+    {
+        $this->getColor();
+        if ($this->color == null) {
+            $this->color = new Color();
+        }
+        if ($this->colour) {
+            $this->color->setName($this->colour->getName());
+            $this->color->setImageUrl($this->colour->getFilePath());
+            $this->color->setHexCode($this->colour->getColorCode());
+        }
+    }
+
+    public function getColorProp()
+    {
+        return $this->color;
+    }
+
     /**
      * @return int
      */
@@ -1777,6 +1853,46 @@ class Offer extends IblockElement
     }
 
     /**
+     * @return string
+     * @throws ApplicationCreateException
+     */
+    public function getColorWithSize(): string
+    {
+        $result = [];
+
+        $color = $this->getColor();
+        if ($color) {
+            $colorName = $color->getName();
+            $result[] = $colorName;
+        }
+
+        $clothingSize = $this->getClothingSize();
+        if ($clothingSize) {
+            $clothingSizeName = $clothingSize->getName();
+            $result[] = $clothingSizeName;
+        }
+
+        return implode(', ', $result);
+    }
+
+    /**
+     * @return string
+     * @throws ApplicationCreateException
+     */
+    public function getOfferWithColor(): string
+    {
+        $clothingSize = $this->getClothingSize();
+        $color = $this->getColor();
+        if (!isset($clothingSize) || !isset($color)) {
+            return '';
+        }
+
+        $offerName = $clothingSize->getName();
+
+        return \sprintf('%s, %s', $offerName, $color->getName());
+    }
+
+    /**
      * Возвращает тип подписи упаковки
      *
      * @return string Одна из констант \FourPaws\Catalog\Model\Offer::PACKAGE_LABEL_TYPE_*
@@ -1792,8 +1908,11 @@ class Offer extends IblockElement
         }
 
         if ($this->getVolumeReference()) {
-
             return self::PACKAGE_LABEL_TYPE_VOLUME;
+        }
+
+        if ($this->getColourCombination() && $this->getColor()) {
+            return self::PACKAGE_LABEL_TYPE_COLOUR;
         }
 
         return self::PACKAGE_LABEL_TYPE_WEIGHT;

@@ -158,24 +158,103 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
     <div class="b-product-card__option-product js-weight-default">
         <?php //&& $product->isFood()
         if ($offers->count() > 0) {
-            /** @noinspection PhpUnhandledExceptionInspection */
-            if ($currentOffer->getPackageLabelType() === Offer::PACKAGE_LABEL_TYPE_SIZE) { ?>
-                <div class="b-product-card__weight">Размеры</div>
-            <?php } else { ?>
-                <div class="b-product-card__weight">Варианты фасовки</div>
-            <?php } ?>
+            $packageLabelType = $currentOffer->getPackageLabelType();
+            // Плашки с цветами вместо выпадающего списка поля "Цвет", если у товара только один размер
+            if ($packageLabelType === Offer::PACKAGE_LABEL_TYPE_SIZE && !empty($currentOffer->getColourCombination())) {
+	            $offersSizes = [];
+	            foreach ($offers as $offer) {
+		            if ($clothingSize = $offer->getClothingSize()) {
+	                    $offersSizes[$clothingSize->getId()] = $clothingSize->getId();
+		            }
+		            unset($clothingSize);
+	            }
+		        if (count($offersSizes) <= 1) {
+                    $packageLabelType = Offer::PACKAGE_LABEL_TYPE_COLOUR;
+		        }
+	            unset($offersSizes);
+            }
+            switch ($packageLabelType) {
+                case Offer::PACKAGE_LABEL_TYPE_SIZE:
+                    echo '<div class="b-product-card__weight">Размеры</div>';
+                    break;
+                case Offer::PACKAGE_LABEL_TYPE_COLOUR:
+                    echo '<div class="b-product-card__weight">Варианты цветов</div>';
+                    break;
+                default:
+                    echo '<div class="b-product-card__weight">Варианты фасовки</div>';
+            }
+            ?>
             <div class="b-weight-container b-weight-container--product">
                 <ul class="b-weight-container__list b-weight-container__list--product">
                     <?php
-                    $isCurrentOffer = false;
+                    /*$isCurrentOffer = false;
+                    if ($packageLabelType === Offer::PACKAGE_LABEL_TYPE_SIZE) {
+                        $sizeOffersToShow = [];
+                        foreach ($offers as $offer) {
+                            $isCurrentOffer = !$isCurrentOffer && $currentOffer->getId() === $offer->getId();
 
+                            $clothingSize = $offer->getClothingSize();
+
+                            if (isset($clothingSize)) {
+	                            if ($isCurrentOffer) {
+	                                $sizeOffersToShow[$clothingSize->getName()] = [
+                                        'id' => $offer->getId(),
+		                                'current' => true,
+                                        'available' => $offer->isAvailable()
+	                                ];
+	                            } else {
+		                            if (!array_key_exists($clothingSize->getName(), $sizeOffersToShow)
+			                            || (!$sizeOffersToShow[$clothingSize->getName()]['current'] && !$sizeOffersToShow[$clothingSize->getName()]['available'])
+		                            ) {
+                                        $sizeOffersToShow[$clothingSize->getName()] = [
+                                            'id' => $offer->getId(),
+	                                        'available' => $offer->isAvailable()
+                                        ];
+		                            }
+	                            }
+                            }
+                    	}
+                    }
+                    if ($sizeOffersToShow) {
+                        $sizeOffersToShowIds = array_column($sizeOffersToShow, 'id');
+                    }*/
+
+                    $isCurrentOffer = false;
                     foreach ($offers as $offer) {
+                        if ($packageLabelType === Offer::PACKAGE_LABEL_TYPE_SIZE) {
+	                        $currentColor = $currentOffer->getColor();
+	                        if ($currentColor) {
+	                            if ((!$offerColor = $offer->getColor())
+	                                || $offerColor->getId() !== $currentColor->getId()
+	                            ) {
+	                                continue;
+	                            }
+	                        }
+	                        unset ($currentColor);
+                        }
+                    	/*if ($sizeOffersToShowIds && !in_array($offer->getId(), $sizeOffersToShowIds)) {
+		                    continue;
+	                    }*/
                         $isCurrentOffer = !$isCurrentOffer && $currentOffer->getId() === $offer->getId();
                         /** @noinspection PhpUnhandledExceptionInspection */
-                        $value = $offer->getPackageLabel(false, 0);
+                        $colourCombination = false;
+                        switch ($packageLabelType) {
+                            case Offer::PACKAGE_LABEL_TYPE_COLOUR:
+                                $color = $offer->getColor();
+                                if ($color) {
+                                    $value = $color->getName();
+                                    $image = $color->getFilePath();
+                                    $colorHexCode = $color->getColorCode();
+                                    $colourCombination = true;
+                                }
+                                break;
+                        }
+                        if (!$colourCombination) {
+                            $value = $offer->getPackageLabel(false, 0);
+                        }
                         ?>
-                        <li class="b -weight-container__item b-weight-container__item--product<?= $isCurrentOffer ? ' active' : '' ?>">
-                            <a class="b-weight-container__link b-weight-container__link--product js-offer-link-<?= $offer->getId() ?> js-price-product<?= $isCurrentOffer ? ' active-link' : '' ?>"
+                        <li class="b-weight-container__item b-weight-container__item--product <? if ($colourCombination) { ?>b-weight-container__item--color<? } ?> <?= $isCurrentOffer ? ' active' : '' ?>">
+                            <a class="b-weight-container__link b-weight-container__link--product <? if ($colourCombination) { ?>b-weight-container__link--color<? } ?> js-offer-link-<?= $offer->getId() ?> js-price-product<?= $isCurrentOffer ? ' active-link' : '' ?>"
                                href="<?= $offer->getLink() ?>"
                                data-weight=" <?= $value ?>"
                                data-price=""
@@ -208,6 +287,9 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                                 <span class="b-weight-container__line" style="display: none" data-not-available>
                                     <span class="b-weight-container__not">Нет в наличии</span>
                                 </span>
+                                <? if ($colourCombination) { ?>
+                                    <div class="b-weight-container__color" style="background: <?= $image ? 'url(' . $image . ')' : '#' . $colorHexCode ?>;"></div>
+                                <? } ?>
                             </a>
                         </li>
                     <?php } ?>
@@ -225,6 +307,10 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
     <div class="b-product-card__info js-preloader-fix">
         <div class="b-product-information">
             <ul class="b-product-information__list">
+	            <?
+	            //$showClothingSizeSelect = $packageLabelType === Offer::PACKAGE_LABEL_TYPE_COLOUR && !empty($currentOffer->getClothingSize());
+	            $showColorSelect = $packageLabelType === Offer::PACKAGE_LABEL_TYPE_SIZE && !empty($currentOffer->getColourCombination());
+	            ?>
                 <?php if ($currentOffer->getClothingSize()) {
                     ?>
                     <li class="b-product-information__item">
@@ -250,6 +336,15 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                         </div>
                     </li>
                     <?php
+                }
+                if (!$showColorSelect && ($currentOfferColor = $currentOffer->getColor())) {
+                	?>
+	                <li class="b-product-information__item">
+		                <div class="b-product-information__title-info js-info-product">Цвет</div>
+		                <div class="b-product-information__value"><?= $currentOfferColor
+                                ->getName() ?></div>
+	                </li>
+	                <?
                 } ?>
                 <li class="b-product-information__item">
                     <div class="b-product-information__title-info b-product-information__title-info--price">Цена</div>
@@ -302,6 +397,37 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                 </li>
 
 
+	            <?/*php if ($showClothingSizeSelect) {
+                    //$unionOffers = $component->getOffersByUnion('colour', $currentOffer->getFlavourCombination());
+		            $unionOffers = $offers;
+                    if (!$unionOffers->isEmpty()) {
+
+                        $unionOffersSort = [];
+                        foreach ($unionOffers as $unionOffer) {
+                            $unionOffersSort[$unionOffer->getOfferWithColor()] = $unionOffer;
+                        }
+                        ksort($unionOffersSort);
+
+                        ?>
+                        <li class="b-product-information__item">
+                            <div class="b-product-information__title-info">Размер</div>
+                            <div class="b-product-information__value b-product-information__value--select">
+                                <div class="b-select b-select--product">
+                                    <select class="b-select__block b-select__block--product js-select-link">
+                                        <?php /** @var Offer $unionOffer */
+                                        /*foreach ($unionOffersSort as $unionOffer) {
+                                            ?>
+                                            <option value="<?= $unionOffer->getDetailPageUrl() ?>" <?= $unionOffer->getId() === $currentOffer->getId() ? ' selected' : '' ?>>
+                                                <?= $unionOffer->getOfferWithColor()?>
+                                            </option>
+                                            <?php
+                                        } ?>
+                                    </select>
+                                </div>
+                            </div>
+                        </li>
+                    <?php }
+                }*/ ?>
 
                 <?php if (!empty($currentOffer->getFlavourCombination())) {
                     $unionOffers = $component->getOffersByUnion('flavour', $currentOffer->getFlavourCombination());
@@ -333,21 +459,46 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                         </li>
                     <?php }
                 } ?>
-                <?php if (!empty($currentOffer->getColourCombination())) {
+                <?php if ($showColorSelect) {
                     $continue = true;
                     if (trim($currentOffer->getFlavourCombination()) === trim($currentOffer->getColourCombination())) {
                         $continue = false;
                     }
                     if ($continue) {
-                        $unionOffers = $component->getOffersByUnion('color', $currentOffer->getColourCombination());
+                        $unionOffers = $component->getOffersByUnion('color', $currentOffer->getColourCombinationXmlId());
                         if (!$unionOffers->isEmpty()) {
 
                             $unionOffersSort = [];
                             foreach ($unionOffers as $unionOffer) {
-                                $unionOffersSort[$unionOffer->getName()] = $unionOffer;
+                                $unionOffersSort[$unionOffer->getColorWithSize()] = $unionOffer;
                             }
-                            ksort($unionOffersSort);
+	                        usort($unionOffersSort, static function($a, $b) { // Сортировка по названию цвета, затем по полю SORT размера
+	                        	/** @var Offer $a */
+                                /** @var Offer $b */
+                                $aClothingSize = $a->getClothingSize();
+                                $bClothingSize = $b->getClothingSize();
+                                if ($aClothingSize && $bClothingSize) {
+                                	$clothingSizeComparisonResult = $aClothingSize->getSort() <=> $bClothingSize->getSort();
+                                }
 
+                                $aColor = $a->getColor();
+                                $bColor = $b->getColor();
+                                if ($aColor && $bColor) {
+		                            $colorComparisonResult = $aColor->getName() <=> $bColor->getName();
+                                }
+
+                                if (isset($colorComparisonResult)) {
+	                                if ($colorComparisonResult === 0 && isset($clothingSizeComparisonResult)) {
+	                                    return $clothingSizeComparisonResult;
+	                                } else {
+	                                    return $colorComparisonResult;
+			                        }
+                                } elseif (isset($clothingSizeComparisonResult)) {
+                                	return $clothingSizeComparisonResult;
+                                }
+
+                                return 0;
+	                        });
                             ?>
                             <li class="b-product-information__item">
                                 <div class="b-product-information__title-info">Цвет
@@ -359,7 +510,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                                             foreach ($unionOffersSort as $unionOffer) {
                                                 ?>
                                                 <option value="<?= $unionOffer->getDetailPageUrl() ?>" <?= $unionOffer->getId() === $currentOffer->getId() ? ' selected' : '' ?>>
-                                                    <?= $unionOffer->getName() ?>
+                                                    <?= $unionOffer->getColorWithSize() ?>
                                                 </option>
                                                 <?php
                                             } ?>

@@ -570,7 +570,7 @@ class OrderService
             $totalPriceWithDiscount = $priceWithDiscount + $deliveryPrice;
             $totalPriceWithoutDiscount = $priceWithoutDiscount + $deliveryPrice;
             $totalPriceSubscribe = $priceSubscribe + $deliveryPrice;
-            $bonusAddAmount = $basketProducts->getTotalBonuses();
+            $bonusAddAmount = $basketProducts->getAmountBonus();
 
             if ($bonusSubtractAmount > 0) {
                 try {

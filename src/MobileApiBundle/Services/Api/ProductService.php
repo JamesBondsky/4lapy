@@ -6,6 +6,7 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotSupportedException;
@@ -16,13 +17,16 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\BitrixOrm\Model\Share;
+use FourPaws\BitrixOrm\Query\ShareQuery;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Collection\ProductCollection;
 use FourPaws\Catalog\Model\BundleItem;
+use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\CatalogBundle\Controller\CatalogController;
 use FourPaws\CatalogBundle\Service\CategoriesService;
 use FourPaws\CatalogBundle\Service\FilterHelper;
@@ -33,6 +37,8 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\ImageHelper;
@@ -125,7 +131,8 @@ class ProductService
         string $sort = 'popular',
         int $count = 10,
         int $page = 1,
-        string $searchQuery = ''
+        string $searchQuery = '',
+        int $stockId = 0
     ): ArrayCollection
     {
         $filters = new FilterCollection();
@@ -135,8 +142,24 @@ class ProductService
             $filters = $category->getFilters();
         }
 
+        if ($stockId > 0) {
+            $searchQuery = $this->getProductIdsByShareId($stockId);
 
-        if ($searchQuery) {
+            $category = new \FourPaws\Catalog\Model\Category();
+            $this->filterHelper->initCategoryFilters($category, $request);
+            $filters = $category->getFilters();
+
+            $filterArr = [];
+            foreach ($filters as $filter) {
+                $filterCode = $filter->getFilterCode();
+                $requestParam = $request->get($filterCode);
+                if ($requestParam) {
+                    $filterArr[] = $filter;
+                }
+            }
+
+            $filters = new FilterCollection($filterArr);
+        } else if ($searchQuery) {
             /** @see CatalogController::searchAction */
             $searchQuery = mb_strtolower($searchQuery);
             $searchQuery = IndexHelper::getAlias($searchQuery);
@@ -210,6 +233,11 @@ class ProductService
         if (!$currentOffer) {
             return null;
         }
+
+        foreach ($product->getOffers() as $itemOffer) {
+            $itemOffer->setColor();
+        }
+
         $fullProduct = $this->convertToFullProduct($product, $currentOffer, true, false);
 
         // товары всегда доступны в каталоге (недоступные просто не должны быть в выдаче)
@@ -396,6 +424,7 @@ class ProductService
             ->setXmlId($offer->getXmlId())
             ->setBrandName($product->getBrandName())
             ->setWebPage($offer->getCanonicalPageUrl())
+            ->setColor($offer->getColorProp())
             ;
 
         // большая картинка
@@ -458,6 +487,7 @@ class ProductService
      */
     public function convertToFullProduct(Product $product, Offer $offer, $needPackingVariants = false, ?bool $showVariantsIfOneVariant = true): FullProduct
     {
+        $offer->setColor();
         $shortProduct = $this->convertToShortProduct($product, $offer);
         $detailText = $product->getDetailText()->getText();
         $detailText = ImageHelper::appendDomainToSrc($detailText);
@@ -484,6 +514,7 @@ class ProductService
             ->setIsAvailable($shortProduct->getIsAvailable())
             ->setPickupOnly($shortProduct->getPickupOnly())
             ->setInPack($shortProduct->getInPack());
+        $fullProduct->setColor($shortProduct->getColor());
 
         if ($needPackingVariants) {
             $fullProduct->setPackingVariants($this->getPackingVariants($product, $fullProduct, $showVariantsIfOneVariant));   // фасовки
@@ -829,6 +860,60 @@ class ProductService
             }
         }
         return array_unique($images);
+    }
+
+    /**
+     * @param int $stockId
+     * @return array
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     */
+    public function getProductIdsByShareId(int $stockId)
+    {
+        $share = (new ShareQuery())
+            ->withFilter(['ID' => $stockId])
+            ->exec()
+            ->first();
+
+        $xmlIds = [];
+
+        if ($share) {
+            $xmlIds = $share->getPropertyProducts();
+        }
+
+        return $xmlIds;
+
+        $query = new ProductQuery();
+        $query->withFilter([
+            '=XML_ID'          => $xmlIds,
+            'IBLOCK_ID' => [IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS), IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS)],
+        ])->withSelect(['ID']);
+        $productCollection = $query->exec();
+        $productIds = [];
+        foreach ($productCollection as $product) {
+            $productIds[] = $product->getId();
+        }
+        return $productIds;
+
+        $res = \CIBlockElement::GetProperty(IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES), $stockId, '', '',
+            ['CODE' => 'PRODUCTS']);
+        $xmlIds = [];
+        while ($item = $res->Fetch()) {
+            if (!empty($item['VALUE']) && !\in_array($item['VALUE'], $xmlIds, true)) {
+                $xmlIds[] = $item['VALUE'];
+            }
+        }
+
+        $query = new ProductQuery();
+        $productCollection = $query->withFilter([
+            '=XML_ID'          => $xmlIds,
+            'ACTIVE'           => 'Y',
+            '>CATALOG_PRICE_2' => 0,
+        ])->withSelect(['ID'])->exec();
+        $productIds = [];
+        foreach ($productCollection as $product) {
+            $productIds[] = $product->getId();
+        }
+        return $productIds;
     }
 
 }

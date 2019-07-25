@@ -128,6 +128,14 @@ class HlbReferenceItem extends HlbItemBase
     }
 
     /**
+     * @return string|null
+     */
+    public function getFilePath(): ?string
+    {
+        return ($this->UF_FILE) ? \CFile::GetPath($this->UF_FILE) : null;
+    }
+
+    /**
      * @param int $file
      *
      * @return $this
