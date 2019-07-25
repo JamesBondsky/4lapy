@@ -786,6 +786,7 @@ class PaymentService implements LoggerAwareInterface
             $order->getField('USER_DESCRIPTION'),
             $fiscal
         );
+        $this->log()->error('form url1 ' . print_r($response, true));
 
         switch ((int)$response['errorCode']) {
             case 0:
