@@ -29,8 +29,7 @@ class CDobrolapSheltersComponent extends \CBitrixComponent
     {
         global $DB;
 
-        // TODO: ВКЛЮЧИТЬ КЕШ
-        if(true) {
+        if($this->startResultCache()) {
 
             // часть инф-ы по приютам хранится в отдельной таблице, связка по barcode
             $query = "SELECT * FROM 4lapy_animal_shelters";
