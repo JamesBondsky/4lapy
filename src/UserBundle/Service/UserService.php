@@ -126,8 +126,7 @@ class UserService implements
         UserRepository $userRepository,
         LocationService $locationService,
         ManzanaOrdersImportUserRepository $manzanaOrdersImportUserRepository,
-        ArrayTransformerInterface $transformer,
-        PersonalBundlePersonalOffersService $personalOffersService
+        ArrayTransformerInterface $transformer
     )
     {
         /**
@@ -151,7 +150,9 @@ class UserService implements
         $this->locationService = $locationService;
         $this->userCollection = new ArrayCollection();
         $this->transformer = $transformer;
-        $this->personalOffersService = $personalOffersService;
+
+        $container = App::getInstance()->getContainer();
+        $this->personalOffersService = $container->get('personal_offers.service');
     }
 
     /**
