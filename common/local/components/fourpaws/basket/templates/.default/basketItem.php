@@ -143,23 +143,25 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
         }
 
         if (!$basketItem->isDelay() && $offer->getQuantity() > 0) { ?>
-            <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--shopping js-plus-minus-cont">
-                <a class="b-plus-minus__minus js-minus" data-url="<?= $basketUpdateUrl ?>"
-                   href="javascript:void(0);"></a>
-                <?php
-                /** @todo data-one-price */
-                ?>
-                <input title="" class="b-plus-minus__count js-plus-minus-count"
-                       value="<?= WordHelper::numberFormat($arResult['PRODUCT_QUANTITIES'][$basketItem->getProductId()] ?? $basketItem->getQuantity(),
-                           0) ?>"
-                       data-one-price="<?= $basketItem->getPrice() ?>"
-                       data-cont-max="<?= $maxQuantity ?>"
-                       data-basketid="<?= $basketItemId; ?>"
-                       data-url="<?= $basketUpdateUrl ?>"
-                       type="text"/>
+            <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--shopping js-plus-minus-cont" <? if ($offer->getXmlId() == $component::GIFT_DOBROLAP_XML_ID) { ?>style="background:transparent;"<?}?>>
+                <? if ($offer->getXmlId() != $component::GIFT_DOBROLAP_XML_ID) { ?>
+                    <a class="b-plus-minus__minus js-minus" data-url="<?= $basketUpdateUrl ?>"
+                       href="javascript:void(0);"></a>
+                    <?php
+                    /** @todo data-one-price */
+                    ?>
+                    <input title="" class="b-plus-minus__count js-plus-minus-count"
+                           value="<?= WordHelper::numberFormat($arResult['PRODUCT_QUANTITIES'][$basketItem->getProductId()] ?? $basketItem->getQuantity(),
+                               0) ?>"
+                           data-one-price="<?= $basketItem->getPrice() ?>"
+                           data-cont-max="<?= $maxQuantity ?>"
+                           data-basketid="<?= $basketItemId; ?>"
+                           data-url="<?= $basketUpdateUrl ?>"
+                           type="text"/>
 
-                <a class="b-plus-minus__plus js-plus" data-url="<?= $basketUpdateUrl ?>"
-                   href="javascript:void(0);"></a>
+                    <a class="b-plus-minus__plus js-plus" data-url="<?= $basketUpdateUrl ?>"
+                       href="javascript:void(0);"></a>
+                <? } ?>
             </div>
             <div class="b-select b-select--shopping-cart">
                 <?php $maxMobileQuantity = 100;
@@ -202,12 +204,14 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                 }
                 ?>
             </div>
-            <a class="b-item-shopping__delete js-cart-delete-item" href="javascript:void(0);" title=""
-               data-url="<?= $basketDeleteUrl ?>" data-basketId="<?= $basketItemId; ?>">
-                <span class="b-icon b-icon--delete b-icon--shopping">
-                    <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
-                </span>
-            </a>
+            <? if ($offer->getXmlId() != $component::GIFT_DOBROLAP_XML_ID) { ?>
+                <a class="b-item-shopping__delete js-cart-delete-item" href="javascript:void(0);" title=""
+                   data-url="<?= $basketDeleteUrl ?>" data-basketId="<?= $basketItemId; ?>">
+                    <span class="b-icon b-icon--delete b-icon--shopping">
+                        <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
+                    </span>
+                </a>
+            <? } ?>
             <?php if (in_array($offer->getId(), $arResult['ONLY_PICKUP'], true)) { ?>
                 <div class="b-item-shopping__sale-info b-item-shopping__sale-info--width b-item-shopping__sale-info--not-available">
                     Только самовывоз
@@ -218,14 +222,16 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                 Нет в наличии
             </div>
         <?php } ?>
-        <?php if (!(!$basketItem->isDelay() && $offer->getQuantity() > 0)) { ?>
-            <a class="b-item-shopping__delete js-cart-delete-item" href="javascript:void(0);" title=""
-               data-url="<?= $basketDeleteUrl ?>" data-basketId="<?= $basketItemId; ?>">
-                <span class="b-icon b-icon--delete b-icon--shopping">
-                    <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
-                </span>
-            </a>
-        <?php } ?>
+        <? if ($offer->getXmlId() != $component::GIFT_DOBROLAP_XML_ID) { ?>
+            <?php if (!(!$basketItem->isDelay() && $offer->getQuantity() > 0)) { ?>
+                <a class="b-item-shopping__delete js-cart-delete-item" href="javascript:void(0);" title=""
+                   data-url="<?= $basketDeleteUrl ?>" data-basketId="<?= $basketItemId; ?>">
+                    <span class="b-icon b-icon--delete b-icon--shopping">
+                        <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
+                    </span>
+                </a>
+            <?php } ?>
+        <? } ?>
         <?php
         $basketCodes = [];
         if ($isDiscounted || $basketItem->getQuantity() > 1 || $arResult['PRODUCT_QUANTITIES'][$basketItem->getProductId()] > 1) {

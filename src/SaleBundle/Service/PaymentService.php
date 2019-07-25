@@ -1155,11 +1155,26 @@ class PaymentService implements LoggerAwareInterface
             $onlinePayment->setField('PS_STATUS_CODE', 'Y');
             $onlinePayment->setField('PS_STATUS_MESSAGE', $response->getPaymentAmountInfo()->getPaymentState());
             $onlinePayment->save();
+
+            /** получаем код доставки */
+            $deliveryId = $order->getField('DELIVERY_ID');
+            $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
+
+            /** Добролап - помечает после успешной оплаты заказа, что нужно к следующему прикрепить магнит */
+            if ($this->deliveryService->isDobrolapDeliveryCode($deliveryCode)) {
+                $userID = $order->getUserId();
+                if ($userID) {
+                    $user = new \CUser;
+                    $fields = [
+                        'UF_GIFT_DOBROLAP' => 'Y'
+                    ];
+                    $user->Update($userID, $fields);
+                }
+            }
+
             $orderSaveResult = $order->save();
 
             /** Отправка данных в достависту если доставка Достависта */
-            $deliveryId = $order->getField('DELIVERY_ID');
-            $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
             $deliveryData = ServicesTable::getById($deliveryId)->fetch();
             //проверяем способ доставки, если достависта, то отправляем заказ в достависту
             if ($this->deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
