@@ -218,20 +218,7 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
 
             if ($hasNormalItems) { ?>
                 <section class="b-stock b-stock--shopping-cart b-stock--shopping-product js-section-remove-stock">
-                    <div class="b-stock__header">
-                        <h3 class="b-stock__header-title">Ваш заказ</h3>
-                        <?
-                        $APPLICATION->IncludeComponent(
-                                'fourpaws:order.coupon.list',
-                                '',
-                                [
-                                    'BASKET_ITEMS' => $orderableItems
-                                ],
-                                null,
-                                ['HIDE_ICONS' => 'Y']
-                        );
-                        ?>
-                    </div>
+                    <h3 class="b-title b-title--h2-cart b-title--shopping-product">Ваш заказ</h3>
                     <?php
                     /** @var BasketItem $basketItem */
                     foreach ($orderableItems as $basketItem) {
