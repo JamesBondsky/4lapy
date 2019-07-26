@@ -67,7 +67,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
         </span>
         <div class="b-common-item__info-center-block b-common-item__info-center-block--shopping-cart b-common-item__info-center-block--shopping">
             <a class="b-common-item__description-wrap b-common-item__description-wrap--shopping"
-               href="<?= $basketItem->getField('DETAIL_PAGE_URL'); ?>" title="">
+               href="<? if ($offer->getXmlId() != $component::GIFT_DOBROLAP_XML_ID) { ?><?= $basketItem->getField('DETAIL_PAGE_URL'); ?><? } ?>" title="">
             <span class="b-clipped-text b-clipped-text--shopping-cart">
                 <span>
                     <?php if ($useOffer) { ?>
