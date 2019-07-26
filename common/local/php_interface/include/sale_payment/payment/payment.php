@@ -47,6 +47,4 @@ $paymentService = PawsApplication::getInstance()->getContainer()->get(PaymentSer
 /** @noinspection PhpUnhandledExceptionInspection */
 $formUrl = $paymentService->registerOrder($order, $amount);
 
-echo '<script>location.href="' . $formUrl . '"</script>';
-
-//echo '<script>window.location.assign("' . $formUrl . '")</script>';
+echo '<script>window.location.assign("' . $formUrl . '")</script>';
