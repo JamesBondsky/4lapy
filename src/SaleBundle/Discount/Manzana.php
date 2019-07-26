@@ -174,6 +174,73 @@ class Manzana implements LoggerAwareInterface
     }
 
     /**
+     * @param array      $promocodes
+     * @param Order|null $order
+     *
+     * @return array
+     *
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function getAllowPromocodes(array $promocodes, ?Order $order = null): array
+    {
+        if ($order) {
+            $basket = $order->getBasket();
+        } else {
+            $basket = $this->basketService->getBasket();
+        }
+        /** @var Basket $basket */
+        $basket = $basket->getOrderableItems();
+
+        if (!$basket->count()) {
+            /**
+             * Empty basket
+             */
+            return [];
+        }
+
+        try {
+            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+            $user = $this->userService->getCurrentUser();
+            $card = $user->getDiscountCardNumber();
+        } catch (NotAuthorizedException $e) {
+            $card = '';
+        }
+
+        $request = $this->manzanaPosService->buildRequestFromBasket($basket, $card, $this->basketService);
+
+        foreach ($promocodes as $key => $promocode) {
+            try {
+                if ($promocode) {
+                    $promocode = \htmlspecialchars($promocode);
+                    $personalOfferService = $this->getPersonalOffersService();
+                    $personalOfferService->checkCoupon($promocode);
+                    $this->setPromocode($promocode);
+                    $request->addCoupon($promocode);
+                    $response = $this->manzanaPosService->execute($request, true);
+                    $apply = false;
+                    foreach ($response->getCoupons() as $coupon) {
+                        if ($coupon->isApplied()) {
+                            $apply = true;
+                            break;
+                        }
+                    }
+                    if (!$apply) {
+                        unset($promocodes[$key]);
+                    }
+                } else {
+                    unset($promocodes[$key]);
+                }
+            } catch (ExecuteException|CouponIsNotAvailableForUseException|ManzanaPromocodeUnavailableException $e) {
+                unset($promocodes[$key]);
+            }
+        }
+
+        return $promocodes;
+    }
+
+    /**
      * @param Basket             $basket
      * @param SoftChequeResponse $response
      *
