@@ -1301,17 +1301,17 @@ class UserService implements
 
         foreach ($users as $user) {
             try {
-//                $expertSender->sendPersonalOfferCouponEmail(
-//                    $user->getId(),
-//                    $user->getName(),
-//                    $user->getEmail(),
-//                    $promocode,
-//                    'data:image/png;base64,' . base64_encode($barcodeGenerator->getBarcode($promocode, BarcodeGenerator::TYPE_CODE_128, 2.132310384278889, 127)),
-//                    $couponDescription,
-//                    $couponDateActiveTo,
-//                    $discountValue,
-//                    $emailId
-//                );
+                $resSend = $expertSender->sendPersonalOfferCouponEmail(
+                    $user->getId(),
+                    $user->getName(),
+                    $user->getEmail(),
+                    $promocode,
+                    'data:image/png;base64,' . base64_encode($barcodeGenerator->getBarcode($promocode, BarcodeGenerator::TYPE_CODE_128, 2.132310384278889, 127)),
+                    $couponDescription,
+                    $couponDateActiveTo,
+                    $discountValue,
+                    $emailId
+                );
             } catch (Exception $e) {}
         }
     }

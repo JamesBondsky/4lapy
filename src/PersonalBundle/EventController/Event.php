@@ -24,6 +24,7 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockProperty;
 use FourPaws\Enum\IblockType;
 use FourPaws\Enum\UserGroup;
+use FourPaws\External\ExpertsenderService;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
@@ -665,7 +666,7 @@ class Event extends BaseServiceHandler
 
                     foreach ($coupons as $couponKey => $couponValue) {
                         try {
-                            $userService->sendNotifications(array_keys($couponValue), $arFields['ID'], 9234, $couponKey, new \DateTime($arFields['ACTIVE_FROM']), new \DateTime($arFields['ACTIVE_TO']));
+                            $userService->sendNotifications(array_keys($couponValue), $arFields['ID'], ExpertsenderService::PERSONAL_OFFER_COUPON_START_SEND_EMAIL, $couponKey, new \DateTime($arFields['ACTIVE_FROM']), new \DateTime($arFields['ACTIVE_TO']));
                         } catch (Exception $e) {}
                     }
                 }

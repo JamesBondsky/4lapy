@@ -3,6 +3,7 @@
 namespace FourPaws\AppBundle\Command;
 
 use FourPaws\App\Application;
+use FourPaws\External\ExpertsenderService;
 use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\UserSearchInterface;
@@ -98,7 +99,7 @@ class PopupNotification extends Command
                     'UF_SHOWN' => false,
                 ]);
 
-                $this->userService->sendNotifications([$userItem['UF_USER_ID']], $userItem['ID'], 0, $userItem['UF_COUPON'], new \DateTime(), new \DateTime(), true);
+                $this->userService->sendNotifications([$userItem['UF_USER_ID']], $userItem['ID'], ExpertsenderService::PERSONAL_OFFER_COUPON_END_SEND_EMAIL, $userItem['UF_COUPON'], new \DateTime(), new \DateTime(), true);
             }
         }
     }

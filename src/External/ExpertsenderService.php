@@ -127,6 +127,8 @@ class ExpertsenderService implements LoggerAwareInterface
     public const ROYAL_CANIN_NEW_CHECK_REG_LIST_ID = 9195;
     public const FESTIVAL_NEW_USER_REG_LIST_ID = 9233;
     public const MEALFEEL_NEW_CHECK_REG_LIST_ID = 8919;
+    public const PERSONAL_OFFER_COUPON_START_SEND_EMAIL = 9607;
+    public const PERSONAL_OFFER_COUPON_END_SEND_EMAIL = 9608;
     /**
      * BirthDay mail ids
      */
