@@ -1,4 +1,4 @@
- AOS.init({
+AOS.init({
  	duration: 800,
  	easing: 'slide'
  });
@@ -68,7 +68,7 @@
 	var onePageClick = function() {
 
 
-		$(document).on('click', '#ftco-nav a[href^="#"]', function (event) {
+		$('#ftco-nav').on('click', 'a[href^="#"]', function (event) {
 	    event.preventDefault();
 
 	    var href = $.attr(this, 'href');
@@ -97,7 +97,7 @@
 	    video:true,
 	    autoplayHoverPause: true,
 	    items: 1,
-	    navText : ["<span class='ion-ios-arrow-left'></span>","<span class='ion-ios-arrow-right'></span>"],
+	    navText : ["<ion-icon ios='ios-arrow-back' md='md-arrow-back'></ion-icon>","<span class='ion-ios-arrow-right'>1</span>"],
 	    responsive:{
 	      0:{
 	        items:1
@@ -288,6 +288,12 @@
   	//--  разворачиваем/сворачиваем полный список приютов
 	$(".read_more a").click(function(){
 		$(".roll_block").slideToggle("slow");
+		return false;
+	});
+
+	//--  разворачиваем/сворачиваем текст приютов
+	$(".read_more_btn").click(function(){
+		$(".needs_note").slideToggle("slow");
 		return false;
 	});
 

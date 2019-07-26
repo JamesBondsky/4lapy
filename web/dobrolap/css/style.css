@@ -10147,7 +10147,26 @@ body .b-page-wrapper.no-scroll {
   font-style: italic;
 }
 
-@media (max-width: 400px) {
+#little .col-md-6:nth-child(2) .col-md-12 {
+  position: absolute;
+  bottom: 0;
+}
+
+.ftco-section .col-md-12 .mb-4 {
+  width: 70%;
+  margin: 0 auto;
+}
+
+#thanks .col-md-12 .mb-4, #little .col-md-12 .mb-4, #about-section .col-md-12 .mb-4 {
+  width: 100%;
+  margin: 0 auto;
+}
+
+.needs_note {
+  display: none;
+}
+
+@media (max-width: 768px) {
   h5 {
     font-size: 0.8rem;
   }
@@ -10346,7 +10365,7 @@ body .b-page-wrapper.no-scroll {
   }
 
   #how_get .col-md-12 {
-    width: 50%;
+    width: 49%;
     float: left;
   }
 
@@ -10431,67 +10450,7 @@ body .b-page-wrapper.no-scroll {
 
 }
 
-@media (min-width: 414px) and (max-width: 768px) {
-  #about-section {
-    margin-top: 0px;
-  }
 
-  #about-section .pb-5 {
-    padding-left: 0rem !important;
-  }
-
-  .slider-item, #about-section {
-    background: url(/dobrolap/images/mainpage_bg.jpg) -668px center no-repeat;
-    background-size: cover;
-  }
-
-  #about-section .align-items-center {
-    display: none !important;
-  }
-
-  #needs .col-md-12>.col-md-3 {
-    max-width: 48%;
-  }
-
-  #helps .row {
-    padding: 0 1%;
-  }
-
-  #helps .cat_dog img {
-    display: none;
-  }
-
-  #helps {
-    background: #f5f5f5 url(/dobrolap/images/help_bg.png) center center no-repeat / cover;
-  }
-
-  #shelter .col-md-3 {
-    max-width: 50%;
-    margin-bottom: 30px;
-  }
-
-  #shelter .col-md-12 {
-    margin-bottom: 0;
-  }
-
-  #little .col-md-6:nth-child(2) {
-      display: none;
-  }
-
-  #little .col-md-6 {
-      width: 100%;
-      max-width: 100%;
-      flex: 0 0 100%
-  }
-
-  #thanks p .btn {
-    margin-bottom: 20px;
-  }
-
-  #thanks {
-    padding: 4em 0 0 0;
-  }
-}
 
 @media (min-width: 769px) and (max-width: 1024px) {
   .ftco-navbar-light .navbar-nav > .nav-item > .nav-link {

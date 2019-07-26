@@ -10,12 +10,11 @@ $APPLICATION->SetTitle("Добролап");
 
 	      <div class="collapse navbar-collapse" id="ftco-nav">
 	        <ul class="navbar-nav nav ml-auto">
-	          <li class="nav-item"><a href="#needs" class="nav-link"><span>Необходимо</span></a></li>
-	          <li class="nav-item"><a href="#helps" class="nav-link"><span>Мы помогаем</span></a></li>
+	          <li class="nav-item"><a href="#needs" class="nav-link"><span>Помогаем вместе</span></a></li>
 	          <li class="nav-item"><a href="#shelter" class="nav-link"><span>Приюты-участники</span></a></li>
 	          <li class="nav-item"><a href="#how_get" class="nav-link"><span>Принять участие</span></a></li>
-	          <li class="nav-item"><a href="#thanks" class="nav-link"><span>Спасибо</span></a></li>
-	          <li class="nav-item"><a href="#little" class="nav-link"><span>Помощь</span></a></li>
+	          <li class="nav-item"><a href="#thanks" class="nav-link"><span>Добрые сюрпризы</span></a></li>
+	          <li class="nav-item"><a href="#little" class="nav-link"><span>Маленькие друзья</span></a></li>
 	          <li class="nav-item"><a href="#challenge" class="nav-link"><span>Челлендж</span></a></li>
 	          <li class="nav-item"><a href="#raise" class="nav-link"><span>Едем помогать</span></a></li>
 	          <li class="nav-item"><a href="#photos" class="nav-link"><span>Фотоотчеты</span></a></li>
@@ -60,6 +59,12 @@ $APPLICATION->SetTitle("Добролап");
                         <h2 class="">Собираем необходимое</h2>
                         <h5 class="mb-4">ДЛЯ ПИТОМЦЕВ ИЗ 44 ПРИЮТОВ РОССИИ</h5>
                         <hr />
+                        <div class="harvest_icon read_more_btn">
+                            <a href="javascript:void(0);" class="btn btn-primary-filled py-3 px-4">ПОДРОБНЕЕ</a>
+                    	</div>
+                    	<div class="needs_note">
+                        <h5 class="mb-4">С 1 августа  в компании «Четыре Лапы» стартует благотворительная инициатива ДОБРОЛАП. «Творим добро вместе!» -  под таким лозунгом уже 4 года вместе с 44 благотворительными организациями мы объединяем всех, кто не равнодушен к временно бездомным питомцам, чтобы помочь животным найти друзей и поддержать самым нужным. Принять участие можно на сайте «Добролап», нажав кнопку «Хочу помочь», или в любом зоомагазине «Четыре Лапы». Присоединяйтесь к команде «Добролап», узнавайте подробности на сайте, принимайте участие в челлендже #ЯДОБРОЛАП и следите за новостями в социальных сетях.</h5>
+                    	</div>
                     </div>
                 </div>
                 <div class="row">
@@ -118,7 +123,8 @@ $APPLICATION->SetTitle("Добролап");
           <div class="col-md-12 heading-section text-center ftco-animate">
             <h2 class="">Приюты участники</h2>
             <hr />
-            <h5 class="mb-4">Блок, отражающий суть третьего этапа «Едем помогать»: каждую пятницу команда<br />волонтеров и победителей челленджа едут вместе в приют + видео</h5>
+            <h5 class="mb-4">Каждый год «Добролап» помогает найти семью и друзей тысячам домашних животных. Ни одна из благотворительных организаций не остается без внимания и поддержки. Более 40 фондов, приютов, волонтерских групп и центров реабилитации ждут команду Добролап, более 200 000 неравнодушных участников уже с нами. Присоединяйся!
+</h5>
           </div>
         </div>
 				<div class="row">
@@ -275,9 +281,9 @@ $APPLICATION->SetTitle("Добролап");
     			<div class="col-md-6 col-md-6-mobile">
     				<div class="row justify-content-center">
 			          <div class="col-md-12 heading-section text-center ftco-animate">
-			            <h2 class="">Мы говорим<br />спасибо</h2>
+			            <h2 class="">ДОБРЫЕ<br />СЮРПРИЗЫ</h2>
 			            <hr />
-			            <h5 class="mb-4">В знак благодарности мы приготовили<br />небольшой сюрприз – фанты «Добролап»<br />с приятными презентами. И конечно,<br />по традиции вы получите на кассе<br />памятный магнит.</h5>
+                        <h5 class="mb-4">Каждому человеку под силу совершить доброе дело и сделать счастливым маленького пушистого друга. Тем более, что для этого надо совсем немного. На память о добром поступке каждый участник «Добролап» получит памятный магнит и один из приятных сюрпризов. Весь август в магазинах «Четыре лапы» и на сайте «Добролап».</h5>
 			            <p>
                             <a href="javascript:void(0);" class="btn btn-primary-filled py-3 px-4 <?=($USER->IsAuthorized()) ? 'js-show-fan-form' : 'js-open-popup'?>" data-popup-id="authorization">ЗАРЕГИСТРИРОВАТЬ ФАН</a>
                             <a href="javascript:void(0);" class="btn btn-primary py-3 px-4 js-open-popup" data-popup-id="dobrolap_more_info_popup">ПОДРОБНЫЕ СВЕДЕНИЯ</a>
@@ -325,9 +331,9 @@ $APPLICATION->SetTitle("Добролап");
     			<div class="col-md-6 col-md-6-desktop">
     				<div class="row justify-content-center">
 			          <div class="col-md-12 heading-section text-center ftco-animate">
-			            <h2 class="">Мы говорим<br />спасибо</h2>
+			            <h2 class="">ДОБРЫЕ<br />СЮРПРИЗЫ</h2>
 			            <hr />
-			            <h5 class="mb-4">В знак благодарности мы приготовили<br />небольшой сюрприз – фанты «Добролап»<br />с приятными презентами. И конечно,<br />по традиции вы получите на кассе<br />памятный магнит.</h5>
+                        <h5 class="mb-4">Каждому человеку под силу совершить доброе дело и сделать счастливым маленького пушистого друга. Тем более, что для этого надо совсем немного. На память о добром поступке каждый участник «Добролап» получит памятный магнит и один из приятных сюрпризов. Весь август в магазинах «Четыре лапы» и на сайте «Добролап».</h5>
 			            <p>
                             <a href="javascript:void(0);" class="btn btn-primary-filled py-3 px-4 <?=($USER->IsAuthorized()) ? 'js-show-fan-form' : 'js-open-popup'?>" data-popup-id="authorization">ЗАРЕГИСТРИРОВАТЬ ФАН</a>
                             <a href="javascript:void(0);" class="btn btn-primary py-3 px-4 js-open-popup" data-popup-id="dobrolap_more_info_popup">ПОДРОБНЫЕ СВЕДЕНИЯ</a>
@@ -347,7 +353,7 @@ $APPLICATION->SetTitle("Добролап");
 			          <div class="col-md-12 heading-section text-center ftco-animate">
 			            <h2 class="">большая помощь<br />для маленького друга</h2>
 			            <hr />
-			            <h5 class="mb-4">дети собирают свои подарки для питомцев<br />из приютов в специальные коробки,<br />подписывают и мы отправляем.<br />Родители фотографируют этот</h5>
+			            <h5 class="mb-4">Для самых маленьких «Четыре лапы» подготовили удобные подарочные коробочки, в которые малыши могут положить подарок для питомца из приюта прямо в магазине и подписать адресата, чтобы потом увидеть на сайте счастливые мордочки питомцев в рубрике «Фотоотчет». Обязательно присоединяйтесь вместе с детьми: помощь маленького друга - это большое доброе сердце и счастье научится делать чудеса своими руками</h5>
 			          </div>
 			        </div>
     			</div>
@@ -370,7 +376,7 @@ $APPLICATION->SetTitle("Добролап");
 			          <div class="col-md-12 heading-section text-center ftco-animate">
 			            <h2 class="">Челлендж #я-добролап</h2>
 			            <hr />
-			            <h5 class="mb-4">текст, который описывает механику челленджа (2 предложения)</h5>
+			            <h5 class="mb-4">Стань частью команды ДОБРОЛАП – включайся в челлендж : расскажи своим подписчикам о том, как помочь питомцам, у которых пока нет дома. Запиши видео или прикрепи фотографию. Обязательно поставь хештег #ядобролап. Делись и собирай «лайки»: авторы 10 самых популярных историй смогут превратить свои лайки «лайки» в бонусные баллы! Присоединяйтесь к команде и следите за новостями в социальных сетях.</h5>
 			          </div>
 			        </div>
     	</div>
@@ -423,7 +429,7 @@ $APPLICATION->SetTitle("Добролап");
 			          <div class="col-md-12 heading-section text-center ftco-animate">
 			            <h2 class="">едем помогать и везем паллету корма</h2>
 			            <hr />
-			            <h5 class="mb-4">Блок, отражающий суть третьего этапа «Едем помогать»: каждую пятницу команда<br />волонтеров и победителей челленджа едут вместе в приют + видео</h5>
+			            <h5 class="mb-4">Каждую неделю мы отправляемся по «добрым маршрутам», чтобы отвезти нужные и долгожданные подарки четверолапым друзьям из приютов. Примите участие в челлендже, расскажите друзьям и присоединяйтесь к нам. Вместе мы сможем больше!</h5>
 			          </div>
 			        </div>
     	</div>
@@ -455,6 +461,8 @@ $APPLICATION->SetTitle("Добролап");
 	          		<video controls poster="/dobrolap/images/1012398863-preview.jpg">
 					  <source src="/dobrolap/video/1012398863-preview.mp4" type="video/mp4">
 					</video>
+
+					<span class='ion-ios-arrow-left'></span>
 	        	</div>
 	        </div>
 	      </div>
@@ -467,7 +475,7 @@ $APPLICATION->SetTitle("Добролап");
 			          <div class="col-md-12 heading-section text-center ftco-animate">
 			            <h2 class="">фотоотчеты</h2>
 			            <hr />
-			            <h5 class="mb-4">Блок , отражающий итоги проведенной работы</h5>
+			            <h5 class="mb-4">Каждую неделю мы рассказываем о добрых событиях недели, делимся новостями и вместе радуемся счастливым историям питомцев, у которых появились друзья. Добро объединяет и делает нас лучше!</h5>
 			          </div>
 			        </div>
     	</div>
