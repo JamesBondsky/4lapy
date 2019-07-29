@@ -1260,7 +1260,7 @@ class UserService implements
 
             $type = (new \CUserFieldEnum())->GetList([], [
                 'USER_FIELD_ID' => $userField['ID'],
-                'XML_ID' => 'action',
+                'XML_ID' => 'message',
             ])->fetch();
 
             $startDateSend = $startDate;
