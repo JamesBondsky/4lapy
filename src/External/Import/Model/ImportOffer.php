@@ -36,13 +36,13 @@ class ImportOffer
     public $users;
 
     /**
-     * @Type("Bitrix\Main\Type\DateTime")
+     * @Type("string")
      * @SerializedName("dateCreate")
      */
     public $dateCreate;
 
     /**
-     * @Type("Bitrix\Main\Type\DateTime")
+     * @Type("string")
      * @SerializedName("dateChanged")
      */
     public $dateChanged;

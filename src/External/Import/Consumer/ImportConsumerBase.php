@@ -13,6 +13,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
+use Bitrix\Highloadblock\DataManager;
 
 abstract class ImportConsumerBase implements ConsumerInterface, LoggerAwareInterface
 {
@@ -26,12 +27,21 @@ abstract class ImportConsumerBase implements ConsumerInterface, LoggerAwareInter
     /** @var ImportService $importService */
     protected $importService;
 
+    /** @var DataManager */
+    protected $personalCouponUsersManager;
+    /** @var DataManager */
+    protected $personalCouponManager;
+
     public function __construct(Serializer $serializer, ImportService $importService)
     {
         Application::includeBitrix();
 
         $this->serializer = $serializer;
         $this->importService = $importService;
+
+        $container = Application::getInstance()->getContainer();
+        $this->personalCouponUsersManager = $container->get('bx.hlblock.personalcouponusers');
+        $this->personalCouponManager = $container->get('bx.hlblock.personalcoupon');
         $this->setLogger(LoggerFactory::create('ImportConsumerBase', 'import'));
     }
 
