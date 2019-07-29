@@ -1,4 +1,4 @@
-# 4 лапы
+﻿# 4 лапы
 
 ## Отключение почты:
 
@@ -106,6 +106,12 @@ https://api.esv2.com - валидный адрес
 
 ```
 - ./bin/symfony_console bitrix:feed:factory %id% --type %type% # id - ид профиля выгрузки, type - тип фида (yandex-market; google-merchant; retail-rocket; expert-sender)
+```
+
+## Рассылка уведомлений пользователям по промокодам
+
+```
+- ./bin/symfony_console fourpaws:popup:notification  принимает параметр -type Возможные значения start и last(по умолчанию)
 ```
 
 ## Сервисы вагранта

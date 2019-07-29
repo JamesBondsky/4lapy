@@ -8,6 +8,7 @@ use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\Exception;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\Mail\Event as EventMail;
@@ -25,6 +26,7 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockProperty;
 use FourPaws\Enum\IblockType;
 use FourPaws\Enum\UserGroup;
+use FourPaws\External\ExpertsenderService;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
@@ -661,6 +663,14 @@ class Event extends BaseServiceHandler
                     /** @var PersonalOffersService $personalOffersService */
                     $personalOffersService = $container->get('personal_offers.service');
                     $personalOffersService->importOffers($arFields['ID'], $coupons);
+
+                    $userService = $container->get(UserSearchInterface::class);
+
+                    foreach ($coupons as $couponKey => $couponValue) {
+                        try {
+                            $userService->sendNotifications(array_keys($couponValue), $arFields['ID'], null, $couponKey, new \DateTime($arFields['ACTIVE_FROM']), $arFields['ACTIVE_TO'] ? new \DateTime($arFields['ACTIVE_TO']) : null);
+                        } catch (Exception $e) {}
+                    }
                 }
             }
         }

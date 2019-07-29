@@ -127,6 +127,8 @@ class ExpertsenderService implements LoggerAwareInterface
     public const ROYAL_CANIN_NEW_CHECK_REG_LIST_ID = 9195;
     public const FESTIVAL_NEW_USER_REG_LIST_ID = 9233;
     public const MEALFEEL_NEW_CHECK_REG_LIST_ID = 8919;
+    public const PERSONAL_OFFER_COUPON_START_SEND_EMAIL = 9607;
+    public const PERSONAL_OFFER_COUPON_END_SEND_EMAIL = 9608;
     /**
      * BirthDay mail ids
      */
@@ -1484,23 +1486,28 @@ class ExpertsenderService implements LoggerAwareInterface
     }
 
     /**
-     * @param int $userId
-     * @param string $name
-     * @param string $email
-     * @param string $coupon
-     * @param string $base64
-     * @param string $couponDescription
-     * @param string $couponDateActiveTo
-     * @param string $discountValue
+     * @param $userId
+     * @param $name
+     * @param $email
+     * @param $coupon
+     * @param $base64
+     * @param $couponDescription
+     * @param $couponDateActiveTo
+     * @param $discountValue
+     * @param int|null $customTransactionId
      * @return bool
      * @throws ExpertSenderException
      * @throws ExpertsenderServiceApiException
      * @throws ExpertsenderServiceException
      */
-    public function sendPersonalOfferCouponEmail($userId, $name, $email, $coupon, $base64, $couponDescription, $couponDateActiveTo, $discountValue): bool
+    public function sendPersonalOfferCouponEmail($userId, $name, $email, $coupon, $base64, $couponDescription, $couponDateActiveTo, $discountValue, ?int $customTransactionId = 0): bool
     {
         if ($email) {
-            $transactionId = self::PERSONAL_OFFER_COUPON_SEND_EMAIL;
+            if ($customTransactionId) {
+                $transactionId = $customTransactionId;
+            } else {
+                $transactionId = self::PERSONAL_OFFER_COUPON_SEND_EMAIL;
+            }
 
             $this->log()->info(
                 __FUNCTION__,
