@@ -111,7 +111,7 @@ https://api.esv2.com - валидный адрес
 ## Рассылка уведомлений пользователям по промокодам
 
 ```
-- ./bin/symfony_console fourpaws:popup:notification  
+- ./bin/symfony_console fourpaws:popup:notification  принимает параметр -type Возможные значения start и last(по умолчанию)
 ```
 
 ## Сервисы вагранта

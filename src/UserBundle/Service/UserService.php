@@ -1195,7 +1195,7 @@ class UserService implements
      * @throws \Bitrix\Main\LoaderException
      * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
      */
-    public function sendNotifications(array $userIds, int $idEvents, int $emailId, string $promocode, \DateTime $startDate, \DateTime $lastDate, ?bool $isOnlyEmail = false)
+    public function sendNotifications(array $userIds, int $idEvents, ?int $emailId, string $promocode, \DateTime $startDate, ?\DateTime $lastDate, ?bool $isOnlyEmail = false)
     {
         $container = App::getInstance()->getContainer();
         $renderer = $container->get('templating');
@@ -1262,7 +1262,9 @@ class UserService implements
 
             $pushMessageLast = clone $pushMessage;
 
-            $pushMessageLast->setStartSend($lastDate->modify('-4 day'));
+            if ($lastDate instanceof \DateTime) {
+                $pushMessageLast->setStartSend($lastDate->modify('-4 day'));
+            }
             $pushMessageLast->setMessage($textLast);
 
             $data = $this->transformer->toArray(
@@ -1277,42 +1279,47 @@ class UserService implements
 
             $hlBlockPushMessages = \FourPaws\App\Application::getHlBlockDataManager('bx.hlblock.pushmessages');
             $hlBlockPushMessages->add($data);
-            $hlBlockPushMessages->add($dataLast);
+            if ($lastDate instanceof \DateTime) {
+                $hlBlockPushMessages->add($dataLast);
+            }
         }
 
-        $users = $this->userRepository->findBy(['ID' => $userIdByEmail]);
+        if ($emailId) {
+            $users = $this->userRepository->findBy(['ID' => $userIdByEmail]);
 
-        $barcodeGenerator = new BarcodeGeneratorPNG();
-        if ($isOnlyEmail) {
-            $offerFields = $this->personalOffersService->getOfferFieldsByCouponId(intval($promocode));
-        } else {
-            $offerFields = $this->personalOffersService->getOfferFieldsByPromoCode($promocode);
-        }
+            $barcodeGenerator = new BarcodeGeneratorPNG();
+            if ($isOnlyEmail) {
+                $offerFields = $this->personalOffersService->getOfferFieldsByCouponId(intval($promocode));
+            } else {
+                $offerFields = $this->personalOffersService->getOfferFieldsByPromoCode($promocode);
+            }
 
-        if ($offerFields->count() == 0) {
-            throw new Exception('Купон по промокоду не найден');
-        }
+            if ($offerFields->count() == 0) {
+                throw new Exception('Купон по промокоду не найден');
+            }
 
-        $expertSender = $container->get('expertsender.service');
+            $expertSender = $container->get('expertsender.service');
 
-        $couponDescription = $offerFields->get('PREVIEW_TEXT');
-        $couponDateActiveTo = $offerFields->get('DATE_ACTIVE_TO');
-        $discountValue = $offerFields->get('PROPERTY_DISCOUNT_VALUE');
+            $couponDescription = $offerFields->get('PREVIEW_TEXT');
+            $couponDateActiveTo = $offerFields->get('DATE_ACTIVE_TO');
+            $discountValue = $offerFields->get('PROPERTY_DISCOUNT_VALUE');
 
-        foreach ($users as $user) {
-            try {
-                $resSend = $expertSender->sendPersonalOfferCouponEmail(
-                    $user->getId(),
-                    $user->getName(),
-                    $user->getEmail(),
-                    $promocode,
-                    'data:image/png;base64,' . base64_encode($barcodeGenerator->getBarcode($promocode, BarcodeGenerator::TYPE_CODE_128, 2.132310384278889, 127)),
-                    $couponDescription,
-                    $couponDateActiveTo,
-                    $discountValue,
-                    $emailId
-                );
-            } catch (Exception $e) {}
+            foreach ($users as $user) {
+                try {
+                    $resSend = $expertSender->sendPersonalOfferCouponEmail(
+                        $user->getId(),
+                        $user->getName(),
+                        $user->getEmail(),
+                        $promocode,
+                        'data:image/png;base64,' . base64_encode($barcodeGenerator->getBarcode($promocode, BarcodeGenerator::TYPE_CODE_128, 2.132310384278889, 127)),
+                        $couponDescription,
+                        $couponDateActiveTo,
+                        $discountValue,
+                        $emailId
+                    );
+                } catch (Exception $e) {
+                }
+            }
         }
     }
 }

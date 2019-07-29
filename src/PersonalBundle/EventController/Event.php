@@ -666,7 +666,7 @@ class Event extends BaseServiceHandler
 
                     foreach ($coupons as $couponKey => $couponValue) {
                         try {
-                            $userService->sendNotifications(array_keys($couponValue), $arFields['ID'], ExpertsenderService::PERSONAL_OFFER_COUPON_START_SEND_EMAIL, $couponKey, new \DateTime($arFields['ACTIVE_FROM']), new \DateTime($arFields['ACTIVE_TO']));
+                            $userService->sendNotifications(array_keys($couponValue), $arFields['ID'], null, $couponKey, new \DateTime($arFields['ACTIVE_FROM']), $arFields['ACTIVE_TO'] ? new \DateTime($arFields['ACTIVE_TO']) : null);
                         } catch (Exception $e) {}
                     }
                 }

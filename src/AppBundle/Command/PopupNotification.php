@@ -9,6 +9,7 @@ use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\UserSearchInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Bitrix\Highloadblock\DataManager;
 use Bitrix\Main\Entity\ReferenceField;
@@ -25,6 +26,10 @@ class PopupNotification extends Command
     protected $personalCouponUsersManager;
     /** @var UserSearchInterface $userService */
     protected $userService;
+
+    protected const TYPE = 'type';
+
+    protected const DEFAULT_TYPE = 'last';
 
     public function __construct(string $name = null)
     {
@@ -45,7 +50,13 @@ class PopupNotification extends Command
     {
         $this
             ->setName('fourpaws:popup:notification')
-            ->setDescription('Reindex all catalog in Elasticsearch. Also could create index if it doesn\'t exist.');
+            ->setDescription('Reindex all catalog in Elasticsearch. Also could create index if it doesn\'t exist.')
+            ->addOption(
+                self::TYPE,
+                't',
+                InputOption::VALUE_OPTIONAL,
+                'Режим работы - рассылка о старте или окончании срока действия. Принимает значения start и last'
+            );
     }
 
     /**
@@ -53,11 +64,21 @@ class PopupNotification extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $type = $input->getOption(self::TYPE) ?: static::DEFAULT_TYPE;
+
         $currentDateTime = new \DateTime();
-        $currentDateTime->modify('+4 day');
-        $filter = [
-            'DATE_ACTIVE_TO' => $currentDateTime->format('d.m.Y'),
-        ];
+
+        if ($type == static::DEFAULT_TYPE) {
+            $currentDateTime->modify('+4 day');
+
+            $filter = [
+                'DATE_ACTIVE_TO' => $currentDateTime->format('d.m.Y'),
+            ];
+        } else {
+            $filter = [
+                'DATE_ACTIVE_FROM' => $currentDateTime->format('d.m.Y'),
+            ];
+        }
         $offers = $this->personalOffersService->getActiveOffers($filter);
 
         $usersIds = [];
@@ -99,7 +120,7 @@ class PopupNotification extends Command
                     'UF_SHOWN' => false,
                 ]);
 
-                $this->userService->sendNotifications([$userItem['UF_USER_ID']], $userItem['ID'], ExpertsenderService::PERSONAL_OFFER_COUPON_END_SEND_EMAIL, $userItem['UF_COUPON'], new \DateTime(), new \DateTime(), true);
+                $this->userService->sendNotifications([$userItem['UF_USER_ID']], $userItem['ID'], $type == static::DEFAULT_TYPE ? ExpertsenderService::PERSONAL_OFFER_COUPON_START_SEND_EMAIL : ExpertsenderService::PERSONAL_OFFER_COUPON_END_SEND_EMAIL, $userItem['UF_COUPON'], new \DateTime(), new \DateTime(), true);
             }
         }
     }
