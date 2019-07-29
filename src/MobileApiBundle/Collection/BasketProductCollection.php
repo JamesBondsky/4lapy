@@ -58,7 +58,7 @@ class BasketProductCollection extends ProductQuantityCollection
         }
         return (new Price())
             ->setActual($actualPrice)
-            ->setOld($oldPrice === $actualPrice ? 0 : $oldPrice)
+            ->setOld($oldPrice)
             ->setSubscribe($subscribePrice);
     }
 
