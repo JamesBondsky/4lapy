@@ -57,6 +57,10 @@ old_sound_rabbit_mq:
             connection: default
             exchange_options: { name: 'main_queue_dead', type: direct }
 
+        import_offers:
+            connection: default
+            exchange_options: {name: 'import_offers', type: direct }
+
     consumers:
         callback_set:
             connection:       default
@@ -105,3 +109,9 @@ old_sound_rabbit_mq:
             exchange_options: {name: 'manzana_orders_import', type: direct}
             queue_options: {name: 'manzana_orders_import'}
             callback: manzana.orders_import_consumer
+
+        import_offers:
+            connection: default
+            exchange_options: {name: 'import_offers', type: direct }
+            queue_options: {name: 'import_offers'}
+            callback: import.offers

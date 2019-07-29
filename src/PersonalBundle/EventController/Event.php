@@ -2,6 +2,8 @@
 
 namespace FourPaws\PersonalBundle\EventController;
 
+set_time_limit(0);
+
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;

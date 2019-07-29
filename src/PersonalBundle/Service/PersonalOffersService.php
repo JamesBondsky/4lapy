@@ -6,6 +6,8 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Entity\Query;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use JMS\Serializer\Serializer;
+use JMS\Serializer\SerializerInterface;
 use Psr\Log\LoggerAwareTrait;
 use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application as App;
@@ -33,6 +35,7 @@ class PersonalOffersService
     protected $personalCouponManager;
     /** @var DataManager */
     protected $personalCouponUsersManager;
+    protected $serializer;
 
     /**
      * PersonalOffersService constructor.
@@ -44,6 +47,7 @@ class PersonalOffersService
         $container = App::getInstance()->getContainer();
         $this->personalCouponManager = $container->get('bx.hlblock.personalcoupon');
         $this->personalCouponUsersManager = $container->get('bx.hlblock.personalcouponusers');
+        $this->serializer = $container->get(SerializerInterface::class);
     }
 
     /**
@@ -199,6 +203,14 @@ class PersonalOffersService
 
         $promoCodes = array_keys($coupons);
         $promoCodes = array_filter(array_map('trim', $promoCodes));
+
+        $std = new \stdClass();
+
+        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.import_offers');
+        $producer->publish($this->serializer->serialize($std, 'json'));
+
+        \Bitrix\Main\Application::getConnection()->startTransaction();
+
         foreach ($promoCodes as $promoCode)
         {
             $couponId = $this->personalCouponManager::add([
@@ -220,6 +232,7 @@ class PersonalOffersService
             }
             unset($couponId);
         }
+        \Bitrix\Main\Application::getConnection()->commitTransaction();
     }
 
     /**
