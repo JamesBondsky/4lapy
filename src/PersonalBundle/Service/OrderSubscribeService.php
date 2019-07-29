@@ -1001,6 +1001,7 @@ class OrderSubscribeService implements LoggerAwareInterface
             foreach($items as $item){
                 $basketItem = BasketItem::create($basket, 'catalog', $item['OFFER_ID']);
                 $basketItem->setFields([
+                    'PRODUCT_ID'             => $item['OFFER_ID'],
                     'PRICE'                  => $item['PRICE'],
                     'BASE_PRICE'             => $item['BASE_PRICE'],
                     'CUSTOM_PRICE'           => BitrixUtils::BX_BOOL_TRUE,
