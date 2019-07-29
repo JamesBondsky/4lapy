@@ -21,6 +21,8 @@ $show = $arResult['SHOW'];
 $coupons = $arResult['COUPONS'];
 /** @var ArrayCollection $offers */
 $offers = $arResult['OFFERS'];
+/** @var array $usablePromoCodes */
+$usablePromoCodes = $arResult['USABLE_PROMO_CODES'];
 
 ?>
 
@@ -50,7 +52,11 @@ $offers = $arResult['OFFERS'];
                                     </span>
                                 </a>
                             <? } elseif(!$arResult['COUPON_USED']) { ?>
-                                <button type="button" class="b-stock__coupon-btn" data-basket-coupon-toogle="<?= $coupon['UF_PROMO_CODE'] ?>">Применить</button>
+	                            <? if (in_array($coupon['UF_PROMO_CODE'], $usablePromoCodes, false)) { ?>
+                                    <button type="button" class="b-stock__coupon-btn" data-basket-coupon-toogle="<?= $coupon['UF_PROMO_CODE'] ?>">Применить</button>
+								<? } else { ?>
+		                            <button type="button" class="b-stock__coupon-btn disabled" data-basket-coupon-toogle="<?= $coupon['UF_PROMO_CODE'] ?>">Не применим</button>
+								<? } ?>
                             <? } ?>
                         </div>
                     </div>
