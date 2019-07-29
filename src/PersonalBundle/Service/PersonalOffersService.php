@@ -6,6 +6,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Entity\Query;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\External\Import\Model\ImportOffer;
 use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializerInterface;
 use Psr\Log\LoggerAwareTrait;
@@ -204,35 +205,43 @@ class PersonalOffersService
         $promoCodes = array_keys($coupons);
         $promoCodes = array_filter(array_map('trim', $promoCodes));
 
-        $std = new \stdClass();
+        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.import_offers_producer');
 
-        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.import_offers');
-        $producer->publish($this->serializer->serialize($std, 'json'));
+        foreach ($coupons as $coupon => $couponUsers) {
+            $importOffer = new ImportOffer();
+            $importOffer->dateChanged = new DateTime();
+            $importOffer->dateCreate = new DateTime();
+            $importOffer->offerId = $offerId;
+            $importOffer->promoCode = $coupon;
+            $importOffer->users  = array_values($couponUsers);
 
-        \Bitrix\Main\Application::getConnection()->startTransaction();
-
-        foreach ($promoCodes as $promoCode)
-        {
-            $couponId = $this->personalCouponManager::add([
-                'UF_PROMO_CODE' => $promoCode,
-                'UF_OFFER' => $offerId,
-                'UF_DATE_CREATED' => new DateTime(),
-                'UF_DATE_CHANGED' => new DateTime(),
-            ])->getId();
-
-            $userIds = $coupons[$promoCode];
-            foreach ($userIds as $userId)
-            {
-                $this->personalCouponUsersManager::add([
-                    'UF_USER_ID' => $userId,
-                    'UF_COUPON' => $couponId,
-                    'UF_DATE_CREATED' => new DateTime(),
-                    'UF_DATE_CHANGED' => new DateTime(),
-                ]);
-            }
-            unset($couponId);
+            $producer->publish($this->serializer->serialize($importOffer, 'json'));
         }
-        \Bitrix\Main\Application::getConnection()->commitTransaction();
+
+//        \Bitrix\Main\Application::getConnection()->startTransaction();
+//
+//        foreach ($promoCodes as $promoCode)
+//        {
+//            $couponId = $this->personalCouponManager::add([
+//                'UF_PROMO_CODE' => $promoCode,
+//                'UF_OFFER' => $offerId,
+//                'UF_DATE_CREATED' => new DateTime(),
+//                'UF_DATE_CHANGED' => new DateTime(),
+//            ])->getId();
+//
+//            $userIds = $coupons[$promoCode];
+//            foreach ($userIds as $userId)
+//            {
+//                $this->personalCouponUsersManager::add([
+//                    'UF_USER_ID' => $userId,
+//                    'UF_COUPON' => $couponId,
+//                    'UF_DATE_CREATED' => new DateTime(),
+//                    'UF_DATE_CHANGED' => new DateTime(),
+//                ]);
+//            }
+//            unset($couponId);
+//        }
+//        \Bitrix\Main\Application::getConnection()->commitTransaction();
     }
 
     /**
