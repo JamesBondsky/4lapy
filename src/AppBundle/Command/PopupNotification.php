@@ -50,7 +50,7 @@ class PopupNotification extends Command
     {
         $this
             ->setName('fourpaws:popup:notification')
-            ->setDescription('Reindex all catalog in Elasticsearch. Also could create index if it doesn\'t exist.')
+            ->setDescription('Рассылка уведомлений пользователям по промокодам')
             ->addOption(
                 self::TYPE,
                 't',
