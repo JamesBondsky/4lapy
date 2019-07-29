@@ -311,7 +311,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
      * @return SoftChequeResponse
      * @throws ExecuteException
      */
-    protected function execute(SoftChequeRequest $chequeRequest, bool $noCache = false): SoftChequeResponse
+    public function execute(SoftChequeRequest $chequeRequest, bool $noCache = false): SoftChequeResponse
     {
         $items = [];
         /** @var ChequePosition $item */

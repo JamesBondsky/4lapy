@@ -81,9 +81,9 @@ class Price
      */
     public function setOld(float $old): Price
     {
-        if ($this->actual != $old) {
-            $this->old = $old;
-        }
+        //if ($this->actual != $old) {
+        $this->old = $old;
+        //}
         return $this;
     }
 

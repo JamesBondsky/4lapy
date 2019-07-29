@@ -283,9 +283,9 @@ class ExpertSenderFeedService extends FeedService implements LoggerAwareInterfac
     public function addOffer(Offer $offer, ArrayCollection $collection, string $host, string $stockID = null): void
     {
         //isOfferExcluded - проверка наличия в складе DC01 и на акционные товары/новинки и прочее
-        if (empty($stockID) && $this->isOfferExcluded($offer)) {
+        /*if (empty($stockID) && $this->isOfferExcluded($offer)) {
             return;
-        }
+        }*/
 
         $images = $offer->getResizeImages(250, 250);
         $currentImageSrc = '';
