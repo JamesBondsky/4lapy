@@ -46,4 +46,16 @@ class ImportOffer
      * @SerializedName("dateChanged")
      */
     public $dateChanged;
+
+    /**
+     * @Type("string")
+     * @SerializedName("activeFrom")
+     */
+    public $activeFrom;
+
+    /**
+     * @Type("string")
+     * @SerializedName("activeTo")
+     */
+    public $activeTo;
 }

@@ -191,11 +191,12 @@ class PersonalOffersService
     /**
      * @param int $offerId
      * @param array $coupons
-     *
+     * @param string|null $activeFrom
+     * @param string|null $activeTo
      * @throws InvalidArgumentException
      * @throws \Bitrix\Main\ObjectException
      */
-    public function importOffers(int $offerId, array $coupons): void
+    public function importOffers(int $offerId, array $coupons, ?string $activeFrom = '', ?string $activeTo = ''): void
     {
         if ($offerId <= 0)
         {
@@ -213,7 +214,9 @@ class PersonalOffersService
             $importOffer->dateCreate = new DateTime();
             $importOffer->offerId = $offerId;
             $importOffer->promoCode = $coupon;
-            $importOffer->users  = array_values($couponUsers);
+            $importOffer->users = array_values($couponUsers);
+            $importOffer->activeFrom = $activeFrom;
+            $importOffer->activeTo = $activeTo;
 
             $producer->publish($this->serializer->serialize($importOffer, 'json'));
         }

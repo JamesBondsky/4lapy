@@ -7,6 +7,8 @@ namespace FourPaws\External\Import\Consumer;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\App\Application;
 use FourPaws\External\ImportService;
+use FourPaws\UserBundle\Service\UserSearchInterface;
+use FourPaws\UserBundle\Service\UserService;
 use JMS\Serializer\Serializer;
 use OldSound\RabbitMqBundle\RabbitMq\ConsumerInterface;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -31,13 +33,16 @@ abstract class ImportConsumerBase implements ConsumerInterface, LoggerAwareInter
     protected $personalCouponUsersManager;
     /** @var DataManager */
     protected $personalCouponManager;
+    /** @var UserService */
+    protected $userService;
 
-    public function __construct(Serializer $serializer, ImportService $importService)
+    public function __construct(Serializer $serializer, ImportService $importService, UserSearchInterface $userService)
     {
         Application::includeBitrix();
 
         $this->serializer = $serializer;
         $this->importService = $importService;
+        $this->userService = $userService;
 
         $container = Application::getInstance()->getContainer();
         $this->personalCouponUsersManager = $container->get('bx.hlblock.personalcouponusers');
