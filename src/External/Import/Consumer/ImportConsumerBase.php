@@ -14,7 +14,7 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 
-class ImportConsumerBase implements ConsumerInterface, LoggerAwareInterface
+abstract class ImportConsumerBase implements ConsumerInterface, LoggerAwareInterface
 {
     use LoggerAwareTrait;
 

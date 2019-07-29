@@ -11,7 +11,7 @@ class ImportOffersConsumer extends ImportConsumerBase
 {
     /**
      * @inheritdoc
-     * @param AMQPMessage $message
+     *
      * @return bool
      */
     public function execute(AMQPMessage $message): bool
