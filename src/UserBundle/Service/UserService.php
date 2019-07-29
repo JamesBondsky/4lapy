@@ -1228,6 +1228,12 @@ class UserService implements
             $userIdByPush[] = $resultItem['USER_ID'];
         }
 
+        if (!is_array($userIdByPush)) {
+            $userIdByPush = [$userIdByPush];
+        }
+
+        $userIdByPush = array_unique($userIdByPush);
+
         $userIdByEmail = array_diff($userIds, $userIdByPush);
 
         $textStart = $renderer->render('FourPawsSaleBundle:Push:coupon.new.start.html.php');
@@ -1241,13 +1247,13 @@ class UserService implements
             ])->fetch();
 
             $userField = (new \CUserTypeEntity())->GetList([], [
-                'ENTITY_ID' => 'HLBLOCK_' . $hlblock,
+                'ENTITY_ID' => 'HLBLOCK_' . $hlblock['ID'],
                 'XML_ID' => 'UF_TYPE',
             ])->fetch();
 
             $type = (new \CUserFieldEnum())->GetList([], [
                 'USER_FIELD_ID' => $userField['ID'],
-                'XML_ID' => 'status',
+                'XML_ID' => 'action',
             ])->fetch();
 
             $startDateSend = $startDate;
@@ -1255,7 +1261,7 @@ class UserService implements
             $pushMessage = (new ApiPushMessage())
                 ->setActive(true)
                 ->setMessage($textStart)
-                ->setUserIds([$userIdByPush])
+                ->setUserIds($userIdByPush)
                 ->setEventId($idEvents)
                 ->setStartSend($startDateSend)
                 ->setTypeId($type['ID']);
