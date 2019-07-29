@@ -127,6 +127,7 @@ class ExpertsenderService implements LoggerAwareInterface
     public const ROYAL_CANIN_NEW_CHECK_REG_LIST_ID = 9195;
     public const FESTIVAL_NEW_USER_REG_LIST_ID = 9233;
     public const MEALFEEL_NEW_CHECK_REG_LIST_ID = 8919;
+    public const COMPLETE_ORDER_DOBROLAP_LIST_ID = 9409;
     /**
      * BirthDay mail ids
      */
@@ -742,6 +743,17 @@ class ExpertsenderService implements LoggerAwareInterface
 
         $transactionId = self::COMPLETE_ORDER_LIST_ID;
 
+        if ($orderService->getOrderDeliveryCode($order) == 'dobrolap_delivery') {
+            $transactionId = self::COMPLETE_ORDER_DOBROLAP_LIST_ID;
+
+            if (!$items = $this->getAltProductsItemsByBasket($order->getBasket())) {
+                throw new ExpertsenderBasketEmptyException('basket is empty');
+            }
+
+            $items = '<Products>' . implode('', $items) . '</Products>';
+            $snippets[] = new Snippet('alt_products', $items, true);
+        }
+
         $this->log()->info(
             __FUNCTION__,
             [
@@ -882,7 +894,7 @@ class ExpertsenderService implements LoggerAwareInterface
      * @throws \InvalidArgumentException
      * @throws ExpertSenderOfferNotFoundException
      */
-    protected function getAltProductsItemsByBasket(Basket $basket): array
+    protected function getAltProductsItemsByBasket(?Basket $basket): array
     {
         $items = [];
         /** @var BasketItem $basketItem */
