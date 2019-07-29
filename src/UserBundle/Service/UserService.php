@@ -1283,10 +1283,12 @@ class UserService implements
                 SerializationContext::create()->setGroups([CrudGroups::CREATE])
             );
 
-            $hlBlockPushMessages = \FourPaws\App\Application::getHlBlockDataManager('bx.hlblock.pushmessages');
-            $hlBlockPushMessages->add($data);
-            if ($lastDate instanceof \DateTime) {
-                $hlBlockPushMessages->add($dataLast);
+            if (count($userIdByPush) > 0) {
+                $hlBlockPushMessages = \FourPaws\App\Application::getHlBlockDataManager('bx.hlblock.pushmessages');
+                $hlBlockPushMessages->add($data);
+                if ($lastDate instanceof \DateTime) {
+                    $hlBlockPushMessages->add($dataLast);
+                }
             }
         }
 
