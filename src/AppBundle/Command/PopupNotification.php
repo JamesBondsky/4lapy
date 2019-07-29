@@ -88,39 +88,41 @@ class PopupNotification extends Command
             $offersIds[] = $offer['ID'];
         }
 
-        $promoCodeUserLinkId = $this->personalCouponUsersManager::query()
-            ->setSelect(['*'])
-            ->registerRuntimeField(
-                new ReferenceField(
-                    'USER_COUPONS', $this->personalCouponManager::getEntity()->getDataClass(),
-                    Query\Join::on('this.UF_COUPON', 'ref.ID')
-                        ->whereIn('ref.UF_OFFER', $offersIds),
-                    ['join_type' => 'INNER']
+        if (count($offersIds)) {
+            $promoCodeUserLinkId = $this->personalCouponUsersManager::query()
+                ->setSelect(['*'])
+                ->registerRuntimeField(
+                    new ReferenceField(
+                        'USER_COUPONS', $this->personalCouponManager::getEntity()->getDataClass(),
+                        Query\Join::on('this.UF_COUPON', 'ref.ID')
+                            ->whereIn('ref.UF_OFFER', $offersIds),
+                        ['join_type' => 'INNER']
+                    )
                 )
-            )
-            ->exec()
-            ->fetchAll();
+                ->exec()
+                ->fetchAll();
 
-        foreach ($promoCodeUserLinkId as $promoCodeUserLinkIdItem) {
-            $usersIds[$promoCodeUserLinkIdItem['UF_USER_ID']][] = $promoCodeUserLinkIdItem;
-        }
+            foreach ($promoCodeUserLinkId as $promoCodeUserLinkIdItem) {
+                $usersIds[$promoCodeUserLinkIdItem['UF_USER_ID']][] = $promoCodeUserLinkIdItem;
+            }
 
-        $usersIdsReset = [];
+            $usersIdsReset = [];
 
-        $newValue = implode(' ', array_fill(0, 4, 0));
+            $newValue = implode(' ', array_fill(0, 4, 0));
 
-        foreach ($usersIds as $users) {
-            foreach ($users as $userItem) {
-                if (!in_array($userItem['UF_USER_ID'], $usersIdsReset)) {
-                    $this->userService->setModalsCounters($userItem['UF_USER_ID'], $newValue);
-                    $usersIdsReset[] = $userItem['UF_USER_ID'];
+            foreach ($usersIds as $users) {
+                foreach ($users as $userItem) {
+                    if (!in_array($userItem['UF_USER_ID'], $usersIdsReset)) {
+                        $this->userService->setModalsCounters($userItem['UF_USER_ID'], $newValue);
+                        $usersIdsReset[] = $userItem['UF_USER_ID'];
+                    }
+
+                    $this->personalCouponUsersManager::update($userItem['ID'], [
+                        'UF_SHOWN' => false,
+                    ]);
+
+                    $this->userService->sendNotifications([$userItem['UF_USER_ID']], $userItem['ID'], $type == static::DEFAULT_TYPE ? ExpertsenderService::PERSONAL_OFFER_COUPON_START_SEND_EMAIL : ExpertsenderService::PERSONAL_OFFER_COUPON_END_SEND_EMAIL, $userItem['UF_COUPON'], new \DateTime(), new \DateTime(), true);
                 }
-
-                $this->personalCouponUsersManager::update($userItem['ID'], [
-                    'UF_SHOWN' => false,
-                ]);
-
-                $this->userService->sendNotifications([$userItem['UF_USER_ID']], $userItem['ID'], $type == static::DEFAULT_TYPE ? ExpertsenderService::PERSONAL_OFFER_COUPON_START_SEND_EMAIL : ExpertsenderService::PERSONAL_OFFER_COUPON_END_SEND_EMAIL, $userItem['UF_COUPON'], new \DateTime(), new \DateTime(), true);
             }
         }
     }
