@@ -11,6 +11,7 @@ use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\External\Exception\ManzanaPromocodeUnavailableException;
 use FourPaws\External\Manzana\Dto\ChequePosition;
@@ -217,7 +218,7 @@ class Manzana implements LoggerAwareInterface
                     $personalOfferService = $this->getPersonalOffersService();
                     $personalOfferService->checkCoupon($promocode);
                     $this->setPromocode($promocode);
-                    $request->addCoupon($promocode);
+                    $request->setCoupons(new ArrayCollection([(new Coupon())->setNumber($promocode)]));
                     $response = $this->manzanaPosService->execute($request, true);
                     $apply = false;
                     foreach ($response->getCoupons() as $coupon) {
