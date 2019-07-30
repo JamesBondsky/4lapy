@@ -10133,10 +10133,6 @@ body .b-page-wrapper.no-scroll {
     margin-left: 10px;
 }
 
-#fanreg {
-  display: none;
-}
-
 #fanreg .justify-content-center h2, #fanreg .justify-content-center h5 {
   text-align: center !important;
 }

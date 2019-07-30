@@ -312,9 +312,13 @@ AOS.init({
 	});
 
 	//-- показываем блок регистрации фана
-	$(".js-show-fan-form").click(function(){
-		$("#fanreg").slideToggle("slow");
-		return false;
+	// $(".js-show-fan-form").click(function(){
+	// 	$("#fanreg").slideToggle("slow");
+	// 	return false;
+	// });
+
+	$(".js-add-scroll-cookie").on('click', function(){
+		$.cookie('cancel_mobile_app', 1, { path: '/', expires: 365 });
 	});
 
 
