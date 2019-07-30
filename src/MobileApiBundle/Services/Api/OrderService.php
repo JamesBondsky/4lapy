@@ -118,6 +118,9 @@ class OrderService
     /** @var TokenStorageInterface */
     private $tokenStorage;
 
+    /** @var PersonalOffersService */
+    private $personalOffersService;
+
     const DELIVERY_TYPE_COURIER = 'courier';
     const DELIVERY_TYPE_PICKUP = 'pickup';
     const DELIVERY_TYPE_DOSTAVISTA = 'dostavista';
@@ -139,7 +142,8 @@ class OrderService
         Serializer $serializer,
         CouponStorageInterface $couponStorage,
         TokenStorageInterface $tokenStorage,
-        AppBonusService $appBonusService
+        AppBonusService $appBonusService,
+        PersonalOffersService $personalOffersService
     )
     {
         $this->apiBasketService = $apiBasketService;
@@ -158,6 +162,7 @@ class OrderService
         $this->couponStorage = $couponStorage;
         $this->appBonusService = $appBonusService;
         $this->tokenStorage = $tokenStorage;
+        $this->personalOffersService = $personalOffersService;
     }
 
     /**
@@ -779,7 +784,7 @@ class OrderService
         if ($dobrolapDelivery) {
             $result['dobrolap'] = [
                 'available' => $dobrolapDelivery->getAvailable(),
-                'price'     => $dobrolapDelivery->getPrice()
+                'description' => 'Ваш заказ будет доставлен в&nbsp;выбранный Вами приют для&nbsp;бездомных животных. После оплаты заказа вы получите сюрприз и памятный магнит.',
             ];
         }
 
@@ -984,6 +989,16 @@ class OrderService
                 $cartParamArray['delyveryType'] = $cartParamArray['split'] ? 'twoDeliveries' : ''; // have no clue why this param used
                 $cartParamArray['deliveryTypeId'] = $this->appDeliveryService->getDeliveryIdByCode(DeliveryService::DOBROLAP_DELIVERY_CODE);
                 $cartParamArray['shelter'] = $cartParam->getShelter();
+                $cartParamArray['text'] = [
+                    'title' => 'СПАСИБО ЧТО ВЫ ТВОРИТЕ ДОБРО ВМЕСТЕ С НАМИ!',
+                    'titleOrder' => 'Ваш заказ №#NUM# оформлен',
+                    'description' => 'И будет доставлен в Приют' . $cartParam->getShelter(),
+                    'titleThank' => 'МЫ ГОВОРИМ ВАМ СПАСИБО!',
+                    'descriptionFirstThank' => 'В знак благодарности мы подготовили небольшой сюрприз фанты "Добролап" с приятными презентами',
+                    'descriptionSecondThank' => 'Также мы вложим в Ваш следующий заказ подарок - памятный магнит.',
+                    'titleNow' => 'А СЕЙЧАС',
+                    'descriptionNow' => 'Выберите для себя один из шести сюрпризов, тапнув на любой из них.',
+                ];
                 break;
         }
         $cartParamArray['deliveryId'] = $cartParamArray['deliveryTypeId'];

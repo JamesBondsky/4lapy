@@ -839,10 +839,21 @@ class PersonalOffersService
                 'data' => $html
             ];
         } else {
+            $offer = $this->getOfferByCoupon($coupon);
             return [
                 'success' => true,
                 'data'    => [
-                    'promocode' => $coupon['UF_PROMO_CODE']
+                    'promocode' => $coupon['UF_PROMO_CODE'],
+                    'text' => [
+                        'title' => 'А вот и сюрприз для Вас!',
+                        'value' => ($offer["PROPERTY_DISCOUNT_VALUE"] ? $offer["PROPERTY_DISCOUNT_VALUE"] . "%" : $offer["PROPERTY_DISCOUNT_CURRENCY_VALUE"] . " ₽"),
+                        'valueDescription' => $offer["PREVIEW_TEXT"],
+                        'description' => 'Это ваш подарок за участие в акции. Он доступен в разделе Персональные предложения.',
+                        'titleUse' => 'Как использовать промо-код:',
+                        'descriptionUse' => '1. На сайте или в мобильном приложении положите акционный товар в корзину и введите промо-код в специальное поле в корзине.
+                        2. В магазине на кассе перед оплатой акционного товара покажите промо-код кассиру.
+                        3. Промо-код можно использовать 1 раз до окончанчания его срока действия.',
+                    ],
                 ]
             ];
         }
