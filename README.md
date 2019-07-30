@@ -33,6 +33,7 @@ https://api.esv2.com - валидный адрес
 - ./bin/symfony_console r:c callback_set   # обработка очереди отправки сообщений о запросе обратного звонка на АТС
 - ./bin/symfony_console r:c manzana_referral_add   # обработка очереди передачи рефералов в ML
 - ./bin/symfony_console r:c manzana_orders_import # обработка очереди запроса заказов пользователей в ML
+- ./bin/symfony_console r:c import_offers # обработка очереди импорта промокодов
 ```
 
 ## Перезапуск консьюмеров манзаны по расписанию
@@ -106,12 +107,6 @@ https://api.esv2.com - валидный адрес
 
 ```
 - ./bin/symfony_console bitrix:feed:factory %id% --type %type% # id - ид профиля выгрузки, type - тип фида (yandex-market; google-merchant; retail-rocket; expert-sender)
-```
-
-## Рассылка уведомлений пользователям по промокодам
-
-```
-- ./bin/symfony_console fourpaws:popup:notification  принимает параметр -type Возможные значения start и last(по умолчанию)
 ```
 
 ## Сервисы вагранта

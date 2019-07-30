@@ -152,6 +152,7 @@ class PersonalOffersService
             false,
             [
                 'ID',
+                'NAME',
                 'PROPERTY_DISCOUNT',
                 'PROPERTY_DISCOUNT_CURRENCY',
                 'PREVIEW_TEXT',

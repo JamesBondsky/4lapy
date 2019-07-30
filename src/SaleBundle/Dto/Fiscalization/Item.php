@@ -152,18 +152,18 @@ class Item
     }
 
     /**
-     * @return int
+     * @return float
      */
-    public function getTotal(): int
+    public function getTotal(): float
     {
         return $this->total;
     }
 
     /**
-     * @param int $total
+     * @param float $total
      * @return Item
      */
-    public function setTotal(int $total): Item
+    public function setTotal(float $total): Item
     {
         $this->total = $total;
         return $this;
@@ -188,18 +188,18 @@ class Item
     }
 
     /**
-     * @return int
+     * @return float
      */
-    public function getPrice(): int
+    public function getPrice(): float
     {
         return $this->price;
     }
 
     /**
-     * @param int $price
+     * @param float $price
      * @return Item
      */
-    public function setPrice(int $price): Item
+    public function setPrice(float $price): Item
     {
         $this->price = $price;
         return $this;
