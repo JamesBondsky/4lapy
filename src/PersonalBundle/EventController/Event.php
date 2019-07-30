@@ -591,6 +591,7 @@ class Event extends BaseServiceHandler
      */
     public static function importPersonalOffersCoupons($arFields): void
     {
+        set_time_limit(0);
         if ($arFields['RESULT'] && $arFields['IBLOCK_ID'] == IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::PERSONAL_OFFERS))
         {
             $fileFieldId = IblockUtils::getPropertyId($arFields['IBLOCK_ID'], 'FILE');
@@ -661,14 +662,6 @@ class Event extends BaseServiceHandler
                     /** @var PersonalOffersService $personalOffersService */
                     $personalOffersService = $container->get('personal_offers.service');
                     $personalOffersService->importOffers($arFields['ID'], $coupons);
-
-                    $userService = $container->get(UserSearchInterface::class);
-
-                    foreach ($coupons as $couponKey => $couponValue) {
-                        try {
-                            $userService->sendNotifications(array_keys($couponValue), $arFields['ID'], null, $couponKey, new \DateTime($arFields['ACTIVE_FROM']), $arFields['ACTIVE_TO'] ? new \DateTime($arFields['ACTIVE_TO']) : null);
-                        } catch (Exception $e) {}
-                    }
                 }
             }
         }

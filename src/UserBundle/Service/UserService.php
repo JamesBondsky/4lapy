@@ -1182,11 +1182,12 @@ class UserService implements
     /**
      * @param array $userIds
      * @param int $idEvents
-     * @param int $emailId
+     * @param int|null $emailId
      * @param string $promocode
      * @param \DateTime $startDate
-     * @param \DateTime $lastDate
+     * @param \DateTime|null $lastDate
      * @param bool|null $isOnlyEmail
+     * @param string|null $field
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ObjectPropertyException
@@ -1195,13 +1196,12 @@ class UserService implements
      * @throws \Bitrix\Main\LoaderException
      * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
      */
-    public function sendNotifications(array $userIds, int $idEvents, ?int $emailId, string $promocode, \DateTime $startDate, ?\DateTime $lastDate, ?bool $isOnlyEmail = false)
+    public function sendNotifications(array $userIds, int $idEvents, ?int $emailId, string $promocode, \DateTime $startDate, ?\DateTime $lastDate, ?bool $isOnlyEmail = false, ?string $field = 'LOGIN')
     {
         $container = App::getInstance()->getContainer();
         $renderer = $container->get('templating');
         $this->personalOffersService = $container->get('personal_offers.service');
 
-        $field = 'LOGIN';
         if ($isOnlyEmail) {
             $field = 'ID';
         }
