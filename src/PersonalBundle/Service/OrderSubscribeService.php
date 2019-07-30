@@ -971,6 +971,7 @@ class OrderSubscribeService implements LoggerAwareInterface
 
             $subscribeItems = $this->orderSubscribeItemRepository->findBySubscribe($id);
             if($subscribeItems->isEmpty()){
+                $this->deactivateSubscription($subscribe, true);
                 throw new OrderSubscribeException('Не найдено ни одного товара в подписке');
             }
 
@@ -980,7 +981,8 @@ class OrderSubscribeService implements LoggerAwareInterface
             foreach($subscribeItems as $item){
                 $items[$item->getOfferId()] = [
                     'OFFER_ID' => $item->getOfferId(),
-                    'QUANTITY' => $item->getQuantity()
+                    'QUANTITY' => $item->getQuantity(),
+                    'SUBSCRIBE_ITEM_ID' => $item->getId()
                 ];
             }
 
@@ -990,12 +992,16 @@ class OrderSubscribeService implements LoggerAwareInterface
 
             /** @var Offer $offer */
             foreach($offers as $offer){
-                $items[$offer->getId()]['PRICE'] = $offer->getSubscribePrice();
-                $items[$offer->getId()]['BASE_PRICE'] = $offer->getPrice();
-                $items[$offer->getId()]['NAME'] = $offer->getName();
-                $items[$offer->getId()]['WEIGHT'] = $offer->getCatalogProduct()->getWeight();
-                $items[$offer->getId()]['DETAIL_PAGE_URL'] = $offer->getDetailPageUrl();
-                $items[$offer->getId()]['PRODUCT_XML_ID'] = $offer->getXmlId();
+                if($offer->getSubscribePrice() > 0){
+                    $items[$offer->getId()]['PRICE'] = $offer->getSubscribePrice();
+                    $items[$offer->getId()]['BASE_PRICE'] = $offer->getPrice();
+                    $items[$offer->getId()]['NAME'] = $offer->getName();
+                    $items[$offer->getId()]['WEIGHT'] = $offer->getCatalogProduct()->getWeight();
+                    $items[$offer->getId()]['DETAIL_PAGE_URL'] = $offer->getDetailPageUrl();
+                    $items[$offer->getId()]['PRODUCT_XML_ID'] = $offer->getXmlId();
+                } else {
+                    $this->deleteSubscribeItem($items[$offer->getId()]['SUBSCRIBE_ITEM_ID']);
+                }
             }
 
             foreach($items as $item){
@@ -1632,9 +1638,13 @@ class OrderSubscribeService implements LoggerAwareInterface
         foreach ($checkOrdersList as $orderSubscribe) {
             /** @var OrderSubscribe $orderSubscribe */
             $curResult = $this->processOrderSubscribe($orderSubscribe, true, $currentDate);
+            // после обработки обновляем данные о подписке, т.к. они могут изменится
+            $orderSubscribe = $this->getById($orderSubscribe->getId());
+
             if ($extResult) {
                 $resultData[] = $curResult;
             }
+
             if ($curResult->isSuccess()) {
                 // Отправка sms: "Через 3 дня Вам будет доставлен заказ по подписке..."
                 /** @var OrderSubscribeCopyParams $copyParams */
@@ -1729,22 +1739,8 @@ class OrderSubscribeService implements LoggerAwareInterface
     {
         $updateResult = $this->update($orderSubscribe->setActive(false));
         if ($updateResult->isSuccess()) {
-
-            $orderIdsForDelete = $this->getOrderSubscribeHistoryService()->getNotDeliveredOrderIds($orderSubscribe);
-            if(count($orderIdsForDelete) > 0){
-                foreach($orderIdsForDelete as $orderIdForDelete){
-                    $orderService = $this->getOrderService();
-                    $order = $orderService->getOrderById($orderIdForDelete);
-                    $order->setField('CANCELED', 'Y');
-                    $order->save();
-                }
-            }
-
-            TaggedCacheHelper::clearManagedCache(
-                [
-                    'order:item:'.$orderSubscribe->getOrderId()
-                ]
-            );
+            $this->deleteNotDeliveredOrders($orderSubscribe);
+            TaggedCacheHelper::clearManagedCache(['order:item:'.$orderSubscribe->getOrderId()]);
             if ($sendNotifications) {
                 $this->sendAutoUnsubscribeOrderNotification($orderSubscribe);
             }
@@ -2101,6 +2097,41 @@ class OrderSubscribeService implements LoggerAwareInterface
         $price = $offer->getSubscribePrice();
 
         return $price;
+    }
+
+    /**
+     * Удалить все недоставленные по подписке заказы
+     * @param OrderSubscribe $orderSubscribe
+     * @return Result|\Bitrix\Sale\Result
+     */
+    public function deleteNotDeliveredOrders(OrderSubscribe $orderSubscribe)
+    {
+        $result = new Result();
+        try {
+            $orderIdsForDelete = $this->getOrderSubscribeHistoryService()->getNotDeliveredOrderIds($orderSubscribe);
+            if(count($orderIdsForDelete) > 0){
+                foreach($orderIdsForDelete as $orderIdForDelete){
+                    $orderService = $this->getOrderService();
+                    $order = $orderService->getOrderById($orderIdForDelete);
+                    $order->setField('CANCELED', 'Y');
+                    if(!$order->save()->isSuccess()){
+                        throw new OrderSubscribeException("Не удалось удалить заказ недоставленный по подписке заказ");
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            $errorMessage = sprintf("Ошибка удаления заказа: %s", $e->getMessage());
+            $this->log()->error(
+                $errorMessage,
+                [
+                    'SUBSCRIBE_ID' => $orderSubscribe->getId(),
+                    'ORIGIN_ORDER_ID' => $orderSubscribe->getOrderId()
+                ]
+            );
+            $result->addError(new Error($errorMessage));
+        }
+
+        return $result;
     }
 
 }
