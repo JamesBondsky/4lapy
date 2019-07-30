@@ -591,6 +591,7 @@ class Event extends BaseServiceHandler
      */
     public static function importPersonalOffersCoupons($arFields): void
     {
+        set_time_limit(0);
         if ($arFields['RESULT'] && $arFields['IBLOCK_ID'] == IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::PERSONAL_OFFERS))
         {
             $fileFieldId = IblockUtils::getPropertyId($arFields['IBLOCK_ID'], 'FILE');
