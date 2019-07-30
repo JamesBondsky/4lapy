@@ -288,6 +288,20 @@ AOS.init({
   	//--  разворачиваем/сворачиваем полный список приютов
 	$(".read_more a").click(function(){
 		$(".roll_block").slideToggle("slow");
+		$(this).text($(this).text() == 'Свернуть ▲' ? 'Показать больше ▼' : 'Свернуть ▲');
+		if ($(this).hasClass('see_more')) {
+			$(this).removeClass('see_more');
+			$(this).addClass('see_less');
+		} else {
+			$(this).removeClass('see_less');
+			$(this).addClass('see_more');
+		}
+		var scrollTop = $('#shelter').offset().top;
+		console.log('position is' + scrollTop);
+		if ($(this).hasClass('see_more')) {
+			$(document).scrollTop(scrollTop);	
+			console.log('position is' + scrollTop);
+		}
 		return false;
 	});
 
