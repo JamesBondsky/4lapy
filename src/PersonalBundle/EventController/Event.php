@@ -6,6 +6,7 @@ use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\Exception;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\Mail\Event as EventMail;
@@ -23,6 +24,7 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockProperty;
 use FourPaws\Enum\IblockType;
 use FourPaws\Enum\UserGroup;
+use FourPaws\External\ExpertsenderService;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
@@ -589,6 +591,7 @@ class Event extends BaseServiceHandler
      */
     public static function importPersonalOffersCoupons($arFields): void
     {
+        set_time_limit(0);
         if ($arFields['RESULT'] && $arFields['IBLOCK_ID'] == IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::PERSONAL_OFFERS))
         {
             $fileFieldId = IblockUtils::getPropertyId($arFields['IBLOCK_ID'], 'FILE');
