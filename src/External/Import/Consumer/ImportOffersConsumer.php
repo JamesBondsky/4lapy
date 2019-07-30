@@ -39,7 +39,7 @@ class ImportOffersConsumer extends ImportConsumerBase
             ]);
         }
 
-//        $this->userService->sendNotifications($importOffer->users, $importOffer->offerId, null, $importOffer->promoCode, new \DateTime($importOffer->activeFrom), $importOffer->activeTo ? new \DateTime($importOffer->activeTo) : null, false,'ID');
+        $this->userService->sendNotifications($importOffer->users, $importOffer->offerId, null, $importOffer->promoCode, new \DateTime($importOffer->activeFrom), $importOffer->activeTo ? new \DateTime($importOffer->activeTo) : null, false,'ID');
 
         Event::enableEvents();
 
