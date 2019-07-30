@@ -514,6 +514,9 @@ class OrderService
         $basketPrice = $basketProducts->getTotalPrice();
         $basketPriceWithDiscount = $basketPrice->getActual();
         $basketPriceWithoutDiscount = $basketPrice->getOld();
+        if ($basketPriceWithoutDiscount == 0 && $basketPriceWithDiscount) {
+            $basketPriceWithoutDiscount = $basketPriceWithDiscount;
+        }
         $basketPriceSubscribe = $basketPrice->getSubscribe();
         $deliveryPrice = 0;
         $bonusAddAmount = 0;
