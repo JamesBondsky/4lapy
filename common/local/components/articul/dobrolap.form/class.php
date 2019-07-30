@@ -97,10 +97,10 @@ class CDobrolapFormComponent extends \CBitrixComponent
         $check = $DB->Query($query)->Fetch();
 
         if(empty($check)){
-            $result->addError(new \Bitrix\Main\Error('Чек не найден, проверьте правильность введённого номера'));
+            $result->addError(new \Bitrix\Main\Error('Промокод найден, проверьте правильность введённого номера'));
         }
         else if(!empty($check['UF_IS_USED'])){
-            $result->addError(new \Bitrix\Main\Error('Указанный чек уже был зарегистрирован ранее'));
+            $result->addError(new \Bitrix\Main\Error('Указанный промокод уже был зарегистрирован ранее'));
         }
 
         return $result;

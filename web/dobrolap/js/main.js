@@ -97,7 +97,7 @@ AOS.init({
 	    video:true,
 	    autoplayHoverPause: true,
 	    items: 1,
-	    navText : ["<ion-icon ios='ios-arrow-back' md='md-arrow-back'></ion-icon>","<span class='ion-ios-arrow-right'>1</span>"],
+	    navText : ["<span class='ion-ios-arrow-left'></span>","<span class='ion-ios-arrow-right'></span>"],
 	    responsive:{
 	      0:{
 	        items:1

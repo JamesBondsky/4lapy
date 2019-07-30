@@ -10,7 +10,7 @@ $(function(){
 
     $form.find('.js-submit-form').on('click', function(){
         if($form.find('[name="check_number"]').val() === ''){
-            $form.find('.response-messsage').html('Введите номер чека');
+            $form.find('.response-messsage').html('Введите промокод');
             return false;
         }
 

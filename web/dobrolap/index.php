@@ -16,8 +16,8 @@ $APPLICATION->SetTitle("Добролап");
 	          <li class="nav-item"><a href="#thanks" class="nav-link"><span>Добрые сюрпризы</span></a></li>
 	          <li class="nav-item"><a href="#little" class="nav-link"><span>Маленькие друзья</span></a></li>
 	          <li class="nav-item"><a href="#challenge" class="nav-link"><span>Челлендж</span></a></li>
-	          <li class="nav-item"><a href="#raise" class="nav-link"><span>Едем помогать</span></a></li>
 	          <li class="nav-item"><a href="#photos" class="nav-link"><span>Фотоотчеты</span></a></li>
+	          <li class="nav-item"><a href="#raise" class="nav-link"><span>Едем помогать</span></a></li>
 	        </ul>
 	      </div>
 	    </div>
@@ -40,7 +40,7 @@ $APPLICATION->SetTitle("Добролап");
 		          	<span class="subheading">IV ЕЖЕГОДНАЯ  Благотворительная акция «Добролап»</span>
 			            <h1 class="mb-4 mt-3">ТВОРИМ ДОБРО ВМЕСТЕ</span></h1>
 			            <p>
-                            <a href="https://4lapy.ru/shares/blagotvoritelnaya-aktsiya-dobrolap-dlya-zhivotnykh-ikh-priyutov2.html" class="btn btn-primary py-3 px-4">ХОЧУ ПОМОЧЬ</a>
+                            <a href="https://4lapy.ru/shares/blagotvoritelnaya-aktsiya-dobrolap-dlya-zhivotnykh-ikh-priyutov2.html" class="btn btn-primary py-3 px-4" target="_blank">ХОЧУ ПОМОЧЬ</a>
                             <a href="javascript:void(0);" class="btn btn-primary btn-primary-filled py-3 px-4 <?=($USER->IsAuthorized()) ? 'js-show-fan-form' : 'js-open-popup'?>" data-popup-id="authorization">ЗАРЕГИСТРИРОВАТЬ ФАН</a>
                         </p>
 		          </div>
@@ -56,7 +56,7 @@ $APPLICATION->SetTitle("Добролап");
 			<div class="container">
 				<div class="row justify-content-center pb-5">
                     <div class="col-md-12 heading-section text-center ftco-animate">
-                        <h2 class="">Собираем необходимое</h2>
+                        <h2 class="">ПОМОГАЕМ ВМЕСТЕ</h2>
                         <h5 class="mb-4">ДЛЯ ПИТОМЦЕВ ИЗ 44 ПРИЮТОВ РОССИИ</h5>
                         <hr />
                         <div class="harvest_icon read_more_btn">
@@ -70,7 +70,7 @@ $APPLICATION->SetTitle("Добролап");
                 <div class="row">
                     <? $APPLICATION->IncludeComponent('articul:dobrolap.necessary', '', []); ?>
                     <div class="harvest_icon">
-                            <a href="https://4lapy.ru/shares/blagotvoritelnaya-aktsiya-dobrolap-dlya-zhivotnykh-ikh-priyutov2.html" class="btn btn-primary-filled py-3 px-4">ХОЧУ ПОМОЧЬ</a>
+                            <a href="https://4lapy.ru/shares/blagotvoritelnaya-aktsiya-dobrolap-dlya-zhivotnykh-ikh-priyutov2.html" class="btn btn-primary-filled py-3 px-4" target="blank">ХОЧУ ПОМОЧЬ</a>
                     </div>
                 </div>
 			</div>
@@ -112,6 +112,9 @@ $APPLICATION->SetTitle("Добролап");
           </div>
           <div class="cat_dog">
           	<img src="/dobrolap/images/help_bg_2.png" alt="" />
+          </div>
+          <div class="harvest_icon">
+          	<a href="https://4lapy.ru/shares/blagotvoritelnaya-aktsiya-dobrolap-dlya-zhivotnykh-ikh-priyutov2.html" class="btn btn-primary-filled py-3 px-4" target="blank">ХОЧУ ПОМОЧЬ</a>
           </div>
         </div>
       </div>
@@ -270,7 +273,11 @@ $APPLICATION->SetTitle("Добролап");
 							</div>
 						</div>
     			</div>
+
     		</div>
+    		<div class="harvest_icon">
+            	<a href="https://4lapy.ru/shares/blagotvoritelnaya-aktsiya-dobrolap-dlya-zhivotnykh-ikh-priyutov2.html" class="btn btn-primary-filled py-3 px-4" target="blank">ХОЧУ ПОМОЧЬ</a>
+            </div>
     	</div>
     </section>
 
@@ -355,6 +362,9 @@ $APPLICATION->SetTitle("Добролап");
 			            <hr />
 			            <h5 class="mb-4">Для самых маленьких «Четыре лапы» подготовили удобные подарочные коробочки, в которые малыши могут положить подарок для питомца из приюта прямо в магазине и подписать адресата, чтобы потом увидеть на сайте счастливые мордочки питомцев в рубрике «Фотоотчет». Обязательно присоединяйтесь вместе с детьми: помощь маленького друга - это большое доброе сердце и счастье научится делать чудеса своими руками</h5>
 			          </div>
+			          <div class="harvest_icon">
+            			<a href="https://4lapy.ru/shares/blagotvoritelnaya-aktsiya-dobrolap-dlya-zhivotnykh-ikh-priyutov2.html" class="btn btn-primary-filled py-3 px-4" target="blank">ХОЧУ ПОМОЧЬ</a>
+            		  </div>
 			        </div>
     			</div>
     			<div class="col-md-6">
@@ -377,59 +387,6 @@ $APPLICATION->SetTitle("Добролап");
 			            <h2 class="">Челлендж #я-добролап</h2>
 			            <hr />
 			            <h5 class="mb-4">Стань частью команды ДОБРОЛАП – включайся в челлендж : расскажи своим подписчикам о том, как помочь питомцам, у которых пока нет дома. Запиши видео или прикрепи фотографию. Обязательно поставь хештег #ядобролап. Делись и собирай «лайки»: авторы 10 самых популярных историй смогут превратить свои лайки «лайки» в бонусные баллы! Присоединяйтесь к команде и следите за новостями в социальных сетях.</h5>
-			          </div>
-			        </div>
-    	</div>
-    	<div class="b-container">
-		    <section class="b-common-section">
-		        <div class="b-common-section__title-box b-common-section__title-box--sale">
-		            <h2 class="b-title b-title--sale">&nbsp;</h2>
-		        </div>
-		        <div class="b-common-section__content b-common-section__content--sale b-common-section__content--main-sale js-popular-product">
-		            <div class="b-common-item">
-		                <a href="/dobrolap/images/img01.jpg" data-lightbox="image-1" data-title="My caption"><img src="/dobrolap/images/img01.jpg" /></a>
-		                <div class="carousel-note"><p class="mb-4">Lorem Ipsum<br/ >ДЛЯ ПИТОМЦЕВ ИЗ<br/ >40 ПРИЮТОВ РОССИИ</p></div>
-		            </div>
-		            <div class="b-common-item">
-		                <a href="/dobrolap/images/img02.jpg" data-lightbox="image-2" data-title="My caption"><img src="/dobrolap/images/img02.jpg" /></a>
-		                <div class="carousel-note"><p class="mb-4">Lorem Ipsum<br/ >ДЛЯ ПИТОМЦЕВ ИЗ<br/ >40 ПРИЮТОВ РОССИИ</p></div>
-		            </div>
-		            <div class="b-common-item">
-		                <a href="/dobrolap/images/img03.jpg" data-lightbox="image-3" data-title="My caption"><img src="/dobrolap/images/img03.jpg" /></a>
-		                <div class="carousel-note"><p class="mb-4">Lorem Ipsum<br/ >ДЛЯ ПИТОМЦЕВ ИЗ<br/ >40 ПРИЮТОВ РОССИИ</p></div>
-		            </div>
-		            <div class="b-common-item">
-		                <a href="/dobrolap/images/img04.jpg" data-lightbox="image-3" data-title="My caption"><img src="/dobrolap/images/img04.jpg" /></a>
-		                <div class="carousel-note"><p class="mb-4">Lorem Ipsum<br/ >ДЛЯ ПИТОМЦЕВ ИЗ<br/ >40 ПРИЮТОВ РОССИИ</p></div>
-		            </div>
-		            <div class="b-common-item">
-		                <a href="/dobrolap/images/img05.jpg" data-lightbox="image-4" data-title="My caption"><img src="/dobrolap/images/img05.jpg" /></a>
-		                <div class="carousel-note"><p class="mb-4">Lorem Ipsum<br/ >ДЛЯ ПИТОМЦЕВ ИЗ<br/ >40 ПРИЮТОВ РОССИИ</p></div>
-		            </div>
-		            <div class="b-common-item">
-		                <a href="/dobrolap/images/img06.jpg" data-lightbox="image-5" data-title="My caption"><img src="/dobrolap/images/img06.jpg" /></a>
-		                <div class="carousel-note"><p class="mb-4">Lorem Ipsum<br/ >ДЛЯ ПИТОМЦЕВ ИЗ<br/ >40 ПРИЮТОВ РОССИИ</p></div>
-		            </div>
-		            <div class="b-common-item">
-		                <a href="/dobrolap/images/img07.jpg" data-lightbox="image-1" data-title="My caption"><img src="/dobrolap/images/img02.jpg" /></a>
-		                <div class="carousel-note"><p class="mb-4">Lorem Ipsum<br/ >ДЛЯ ПИТОМЦЕВ ИЗ<br/ >40 ПРИЮТОВ РОССИИ</p></div>
-		            </div>
-		            <div class="b-common-item">
-		                <a href="/dobrolap/images/img08.jpg" data-lightbox="image-1" data-title="My caption"><img src="/dobrolap/images/img03.jpg" /></a>
-		                <div class="carousel-note"><p class="mb-4">Lorem Ipsum<br/ >ДЛЯ ПИТОМЦЕВ ИЗ<br/ >40 ПРИЮТОВ РОССИИ</p></div>
-		            </div>
-		        </div>
-		    </section>
-		</div>
-    </section>
-
-    <section class="ftco-section" id="raise">
-    	<div class="col-md-12">
-    				<div class="row justify-content-center">
-			          <div class="col-md-12 heading-section text-center ftco-animate">
-			            <h2 class="">едем помогать и везем паллету корма</h2>
-			            <hr />
-			            <h5 class="mb-4">Каждую неделю мы отправляемся по «добрым маршрутам», чтобы отвезти нужные и долгожданные подарки четверолапым друзьям из приютов. Примите участие в челлендже, расскажите друзьям и присоединяйтесь к нам. Вместе мы сможем больше!</h5>
 			          </div>
 			        </div>
     	</div>
@@ -469,7 +426,7 @@ $APPLICATION->SetTitle("Добролап");
 	    </div>
     </section>
 
-    <section class="ftco-section" id="photos">
+<section class="ftco-section" id="photos">
     	<div class="col-md-12">
     				<div class="row justify-content-center">
 			          <div class="col-md-12 heading-section text-center ftco-animate">
@@ -520,4 +477,50 @@ $APPLICATION->SetTitle("Добролап");
 		        </div>
 		    </section>
 		</div>
+    </section>
+
+    <section class="ftco-section" id="raise">
+    	<div class="col-md-12">
+    				<div class="row justify-content-center">
+			          <div class="col-md-12 heading-section text-center ftco-animate">
+			            <h2 class="">едем помогать</h2>
+			            <hr />
+			            <h5 class="mb-4">Каждую неделю мы отправляемся по «добрым маршрутам», чтобы отвезти нужные и долгожданные подарки четверолапым друзьям из приютов. Примите участие в челлендже, расскажите друзьям и присоединяйтесь к нам. Вместе мы сможем больше!</h5>
+			          </div>
+			        </div>
+    	</div>
+    	<div class="home-slider  owl-carousel">
+	      <div class="slider-item ">
+	      	<div class="overlay"></div>
+	        <div class="container">
+	          <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end" data-scrollax-parent="true">
+	          		<video controls poster="/dobrolap/images/29184619-preview.jpg">
+					  <source src="/dobrolap/video/29184619-preview.mp4" type="video/mp4">
+					</video>
+	        	</div>
+	        </div>
+	      </div>
+	      <div class="slider-item ">
+	      	<div class="overlay"></div>
+	        <div class="container">
+	          <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end" data-scrollax-parent="true">
+	          		<video controls poster="/dobrolap/images/1014142868-preview.jpg">
+					  <source src="/dobrolap/video/1014142868-preview.mp4" type="video/mp4">
+					</video>
+	        	</div>
+	        </div>
+	      </div>
+	      <div class="slider-item ">
+	      	<div class="overlay"></div>
+	        <div class="container">
+	          <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end" data-scrollax-parent="true">
+	          		<video controls poster="/dobrolap/images/1012398863-preview.jpg">
+					  <source src="/dobrolap/video/1012398863-preview.mp4" type="video/mp4">
+					</video>
+
+					<span class='ion-ios-arrow-left'></span>
+	        	</div>
+	        </div>
+	      </div>
+	    </div>
     </section><?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
