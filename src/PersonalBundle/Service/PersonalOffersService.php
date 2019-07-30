@@ -6,6 +6,9 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Entity\Query;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\External\Import\Model\ImportOffer;
+use JMS\Serializer\Serializer;
+use JMS\Serializer\SerializerInterface;
 use Psr\Log\LoggerAwareTrait;
 use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application as App;
@@ -33,6 +36,7 @@ class PersonalOffersService
     protected $personalCouponManager;
     /** @var DataManager */
     protected $personalCouponUsersManager;
+    protected $serializer;
 
     /**
      * PersonalOffersService constructor.
@@ -44,6 +48,7 @@ class PersonalOffersService
         $container = App::getInstance()->getContainer();
         $this->personalCouponManager = $container->get('bx.hlblock.personalcoupon');
         $this->personalCouponUsersManager = $container->get('bx.hlblock.personalcouponusers');
+        $this->serializer = $container->get(SerializerInterface::class);
     }
 
     /**
@@ -187,11 +192,12 @@ class PersonalOffersService
     /**
      * @param int $offerId
      * @param array $coupons
-     *
+     * @param string|null $activeFrom
+     * @param string|null $activeTo
      * @throws InvalidArgumentException
      * @throws \Bitrix\Main\ObjectException
      */
-    public function importOffers(int $offerId, array $coupons): void
+    public function importOffers(int $offerId, array $coupons, ?string $activeFrom = '', ?string $activeTo = ''): void
     {
         if ($offerId <= 0)
         {
@@ -200,26 +206,20 @@ class PersonalOffersService
 
         $promoCodes = array_keys($coupons);
         $promoCodes = array_filter(array_map('trim', $promoCodes));
-        foreach ($promoCodes as $promoCode)
-        {
-            $couponId = $this->personalCouponManager::add([
-                'UF_PROMO_CODE' => $promoCode,
-                'UF_OFFER' => $offerId,
-                'UF_DATE_CREATED' => new DateTime(),
-                'UF_DATE_CHANGED' => new DateTime(),
-            ])->getId();
 
-            $userIds = $coupons[$promoCode];
-            foreach ($userIds as $userId)
-            {
-                $this->personalCouponUsersManager::add([
-                    'UF_USER_ID' => $userId,
-                    'UF_COUPON' => $couponId,
-                    'UF_DATE_CREATED' => new DateTime(),
-                    'UF_DATE_CHANGED' => new DateTime(),
-                ]);
-            }
-            unset($couponId);
+        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.import_offers_producer');
+
+        foreach ($coupons as $coupon => $couponUsers) {
+            $importOffer = new ImportOffer();
+            $importOffer->dateChanged = new DateTime();
+            $importOffer->dateCreate = new DateTime();
+            $importOffer->offerId = $offerId;
+            $importOffer->promoCode = $coupon;
+            $importOffer->users = array_values($couponUsers);
+            $importOffer->activeFrom = $activeFrom;
+            $importOffer->activeTo = $activeTo;
+
+            $producer->publish($this->serializer->serialize($importOffer, 'json'));
         }
     }
 
