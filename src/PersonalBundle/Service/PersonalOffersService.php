@@ -221,31 +221,6 @@ class PersonalOffersService
 
             $producer->publish($this->serializer->serialize($importOffer, 'json'));
         }
-
-//        \Bitrix\Main\Application::getConnection()->startTransaction();
-//
-//        foreach ($promoCodes as $promoCode)
-//        {
-//            $couponId = $this->personalCouponManager::add([
-//                'UF_PROMO_CODE' => $promoCode,
-//                'UF_OFFER' => $offerId,
-//                'UF_DATE_CREATED' => new DateTime(),
-//                'UF_DATE_CHANGED' => new DateTime(),
-//            ])->getId();
-//
-//            $userIds = $coupons[$promoCode];
-//            foreach ($userIds as $userId)
-//            {
-//                $this->personalCouponUsersManager::add([
-//                    'UF_USER_ID' => $userId,
-//                    'UF_COUPON' => $couponId,
-//                    'UF_DATE_CREATED' => new DateTime(),
-//                    'UF_DATE_CHANGED' => new DateTime(),
-//                ]);
-//            }
-//            unset($couponId);
-//        }
-//        \Bitrix\Main\Application::getConnection()->commitTransaction();
     }
 
     /**

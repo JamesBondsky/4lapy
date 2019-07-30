@@ -2,8 +2,6 @@
 
 namespace FourPaws\PersonalBundle\EventController;
 
-set_time_limit(0);
-
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
@@ -663,14 +661,6 @@ class Event extends BaseServiceHandler
                     /** @var PersonalOffersService $personalOffersService */
                     $personalOffersService = $container->get('personal_offers.service');
                     $personalOffersService->importOffers($arFields['ID'], $coupons);
-
-//                    $userService = $container->get(UserSearchInterface::class);
-//
-//                    foreach ($coupons as $couponKey => $couponValue) {
-//                        try {
-//                            $userService->sendNotifications(array_keys($couponValue), $arFields['ID'], null, $couponKey, new \DateTime($arFields['ACTIVE_FROM']), $arFields['ACTIVE_TO'] ? new \DateTime($arFields['ACTIVE_TO']) : null);
-//                        } catch (Exception $e) {}
-//                    }
                 }
             }
         }
