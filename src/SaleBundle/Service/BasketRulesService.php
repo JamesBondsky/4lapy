@@ -9,8 +9,12 @@
 
 namespace FourPaws\SaleBundle\Service;
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\SapBundle\Model\BasketRule;
 use FourPaws\SapBundle\Repository\BasketRulesRepository;
+use WebArch\BitrixCache\BitrixCache;
 
 
 /**
@@ -81,5 +85,27 @@ class BasketRulesService
     public function isPromoPriceDiscount(BasketRule $basketRule): bool
     {
         return $basketRule->getXmlId() == self::PROMO_PRICE_DISCOUNT_CODE;
+    }
+
+    /**
+     * @return array
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     */
+    public function getRegionalDiscounts()
+    {
+        $regionDiscounts = (new BitrixCache())
+            ->withIblockTag(IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES))
+            ->withTime(3600*24*356)
+            ->resultOf(function () {
+                $arDiscounts = [];
+                $dbres = \CIBlockElement::GetList([], ['IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES),  '!PROPERTY_REGION' => false], false, false, ['ID', 'XML_ID', 'NAME', 'PROPERTY_REGION', 'PROPERTY_BASKET_RULES']);
+                while($row = $dbres->fetch()){
+                    foreach ($row['PROPERTY_BASKET_RULES_VALUE'] as $discountId){
+                        $arDiscounts[$discountId] = $row['PROPERTY_REGION_VALUE'];
+                    }
+                }
+                return $arDiscounts;
+            });
+        return $regionDiscounts;
     }
 }
