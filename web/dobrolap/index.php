@@ -468,7 +468,7 @@ $APPLICATION->SetTitle("Добролап");
 		    </section>
 		</div>
     </section>
-
+<?/*?>
     <section class="ftco-section" id="raise">
     	<div class="col-md-12">
     				<div class="row justify-content-center">
@@ -514,4 +514,6 @@ $APPLICATION->SetTitle("Добролап");
 	        </div>
 	      </div>
 	    </div>
-    </section><?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
+    </section>
+<?*/?>
+<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
