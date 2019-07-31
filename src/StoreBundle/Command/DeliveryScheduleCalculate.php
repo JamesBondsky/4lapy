@@ -35,7 +35,7 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
     /** @var ScheduleResultService */
     protected $scheduleResultService;
 
-    /** @var ScheduleResultService */
+    /** @var DeliveryScheduleService */
     protected $deliveryScheduleService;
 
     /** @var StoreService */
@@ -110,15 +110,15 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
         $start_global = microtime(true);
 
         /** Расчёты не сгенерируются, если для первого отправителя не будет расписаний */
-        $senders = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
-        //$senders = [$this->storeService->getStoreByXmlId('DC01')];
+        //$senders = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
+        $senders = [$this->storeService->getStoreByXmlId('DC01')];
 
-        $regularities = $this->deliveryScheduleService->getRegular();
+        $regularities = $this->scheduleResultService->getRegularityEnumAll();
         foreach ($regularities as $regularityId => $regularity) {
 
             /** @var Store $sender */
             foreach ($senders as $i => $sender) {
-                BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
+                $this->sqlHeartBeat();
                 BitrixApplication::getConnection()->startTransaction();
                 $start = microtime(true);
                 $isSuccess = false;
@@ -126,13 +126,16 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
                 $totalDeleted = 0;
 
                 try {
-                    BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
+                    $this->sqlHeartBeat();
                     $totalDeleted += $this->scheduleResultService->deleteResultsForSender($sender, $dateDelete, $regularityId);
-                    BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
+
+                    $this->sqlHeartBeat();
                     $results = $this->scheduleResultService->calculateForSender($sender, $dateActive, $regularityId, $tc);
-                    BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
+
+                    $this->sqlHeartBeat();
                     [$created] = $this->scheduleResultService->updateResults($results, $dateDelete);
-                    BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
+
+                    $this->sqlHeartBeat();
                     $totalCreated += $created;
                     $isSuccess = true;
                 } catch (\Exception $e) {
@@ -170,6 +173,8 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
             }
         }
 
+        $this->scheduleResultService->clearOldResults();
+
         TaggedCacheHelper::clearManagedCache(['catalog:store:schedule:results']);
 
         $this->log()->info(
@@ -178,5 +183,10 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
                 round((microtime(true) - $start_global) / 60, 2)
             )
         );
+    }
+
+    private function sqlHeartBeat()
+    {
+        BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
     }
 }

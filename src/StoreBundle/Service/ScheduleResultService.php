@@ -10,6 +10,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\UserFieldTable;
+use Bitrix\Main\Type\DateTime as BitrixDateTime;
 use DateTime;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -242,7 +243,7 @@ class ScheduleResultService implements LoggerAwareInterface
         try {
             $scheduleResults = $this->repository->findBy([
                 'UF_SENDER' => $sender->getXmlId(),
-                '<=UF_DATE_ACTIVE' => $dateActive->setTime(23, 59, 59)->format('Y-m-d H:i:s'),
+                '<=UF_DATE_ACTIVE' => $dateActive->format('d.m.Y'),
                 'UF_REGULARITY' => $regular
             ]);
             $result = new ScheduleResultCollection($scheduleResults->toArray());
@@ -366,7 +367,7 @@ class ScheduleResultService implements LoggerAwareInterface
      * @throws SystemException
      * @throws \Bitrix\Main\LoaderException
      */
-    protected function getRegularityEnumAll()
+    public function getRegularityEnumAll()
     {
         if (null === $this->regular) {
             /** @var UserFieldEnumService $userFieldEnumService */
@@ -427,8 +428,8 @@ class ScheduleResultService implements LoggerAwareInterface
             $transitionCount = self::MAX_TRANSITION_COUNT;
         }
 
-        $receivers = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
-        //$receivers = [$this->storeService->getStoreByXmlId('R001')];
+        //$receivers = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
+        $receivers = [$this->storeService->getStoreByXmlId('R111')];
 
         $result = [];
         /** @var Store $receiver */
@@ -641,5 +642,11 @@ class ScheduleResultService implements LoggerAwareInterface
         }
 
         return $result;
+    }
+
+    public function clearOldResults()
+    {
+        $results = $this->repository->findBy(['<UF_DATE_ACTIVE' => new BitrixDateTime(date('d.m.y', strtotime('-3 days')))]);
+
     }
 }
