@@ -634,10 +634,10 @@ class ExpertsenderService implements LoggerAwareInterface
             // зарегистрированный пользователь
             if ($isOnlinePayment) {
                 // онлайн-оплата
-                if (!$royalCaninAction) {
-                    $transactionId = self::NEW_ORDER_PAY_LIST_ID;
-                } elseif ($orderService->getOrderDeliveryCode($order) === DeliveryService::DOBROLAP_DELIVERY_CODE) {
+                if ($orderService->getOrderDeliveryCode($order) === DeliveryService::DOBROLAP_DELIVERY_CODE) {
                     $transactionId = self::COMPLETE_ORDER_DOBROLAP_LIST_ID;
+                } elseif (!$royalCaninAction) {
+                    $transactionId = self::NEW_ORDER_PAY_LIST_ID;
                 } else {
                     $transactionId = self::NEW_ORDER_PAY_LIST_ID_ROYAL_CANIN;
                 }
