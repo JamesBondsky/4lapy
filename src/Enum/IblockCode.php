@@ -47,4 +47,8 @@ class IblockCode
     public const SUBSCRIBE_PRICES = 'subscribe_prices';
 
     public const MOBILE_APP_CONTENT = 'mobile_app_content';
+
+    public const DOBROLAP_FORM = 'dobrolap_fans';
+    public const DOBROLAP_NECESSARY = 'dobrolap_necessary';
+    public const DOBROLAP_SHELTERS = 'dobrolap_shelters';
 }

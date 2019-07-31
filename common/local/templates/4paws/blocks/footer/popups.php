@@ -79,6 +79,10 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
         include __DIR__ . '/message-renew-subscribe-delivery.php';
     }
 
+    if ($template->isDobrolap()) {
+        include __DIR__ . '/dobrolap-popup.php';
+    }
+
     include __DIR__ . '/promo-subscribe.php';
 
     include __DIR__ . '/gifts_popup.php';
