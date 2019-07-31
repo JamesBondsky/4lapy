@@ -7,9 +7,9 @@ use Bitrix\Highloadblock\HighloadBlockTable;
 use Bitrix\Main\Entity\Base;
 use CUserFieldEnum;
 
-class DobrolapFans20190725153705 extends \Adv\Bitrixtools\Migration\SprintMigrationBase {
+class DobrolapFans20190731214105 extends \Adv\Bitrixtools\Migration\SprintMigrationBase {
 
-    protected $description = "Создаёт HL-блок \"Добролап: фаны\" и наполняет его данными из csv по пути: /upload/dobrolap_fans";
+    protected $description = "Дополняет HL-блок \"Добролап: фаны\" недостающими онлайновыми промокодами из csv по пути: /upload/dobrolap_fans/5.csv";
 
     const HL_BLOCK_NAME = 'DobrolapFans';
 
@@ -207,9 +207,6 @@ class DobrolapFans20190725153705 extends \Adv\Bitrixtools\Migration\SprintMigrat
                 'n4' => [
                     'VALUE' => 'Лицо рекламы'
                 ],
-                'n5' => [
-                    'VALUE' => 'Онлайн'
-                ],
             ]
         ],
     ];
@@ -225,48 +222,7 @@ class DobrolapFans20190725153705 extends \Adv\Bitrixtools\Migration\SprintMigrat
         /** @var \Sprint\Migration\Helpers\UserTypeEntityHelper $userTypeEntityHelper */
         $userTypeEntityHelper = $this->getHelper()->UserTypeEntity();
 
-        if (!$hlBlockId = $hlBlockHelper->getHlblockId(static::HL_BLOCK_NAME)) {
-            if ($hlBlockId = $hlBlockHelper->addHlblock($this->hlBlockData)) {
-                $this->log()->info('Добавлен HL-блок ' . static::HL_BLOCK_NAME);
-            } else {
-                $this->log()->error('Ошибка при создании HL-блока ' . static::HL_BLOCK_NAME);
-
-                return false;
-            }
-        } else {
-            $this->log()->info('HL-блок ' . static::HL_BLOCK_NAME . ' уже существует');
-        }
-
-        $entityId  = 'HLBLOCK_' . $hlBlockId;
-
-        foreach ($this->fields as $field) {
-            if ($fieldId = $userTypeEntityHelper->addUserTypeEntityIfNotExists(
-                $entityId,
-                $field['FIELD_NAME'],
-                $field
-            )) {
-                $this->log()->info(
-                    'Добавлено поле ' . $field['FIELD_NAME'] . ' в HL-блок ' . self::HL_BLOCK_NAME
-                );
-            } else {
-                $this->log()->error(
-                    'Ошибка при добавлении поля ' . $field['FIELD_NAME'] . ' в HL-блок ' . self::HL_BLOCK_NAME
-                );
-
-                return false;
-            }
-
-            if ($field['ENUMS']) {
-                $enum = new \CUserFieldEnum();
-                if ($enum->SetEnumValues($fieldId, $field['ENUMS'])) {
-                    $this->log()->info('Добавлены значения для поля ' . $field['FIELD_NAME']);
-                } else {
-                    $this->log()->error('Не удалось добавить значения для поля ' . $field['FIELD_NAME']);
-                }
-            }
-        }
-
-
+        $hlBlockId = $hlBlockHelper->getHlblockId(static::HL_BLOCK_NAME);
         $hlblock = HighloadBlockTable::getById($hlBlockId)->fetch();
         $entity  = HighloadBlockTable::compileEntity( $hlblock ); //генерация класса
         $entityClass = $entity->getDataClass();
