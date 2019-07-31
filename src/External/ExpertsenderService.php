@@ -636,6 +636,7 @@ class ExpertsenderService implements LoggerAwareInterface
                 // онлайн-оплата
                 if ($orderService->getOrderDeliveryCode($order) === DeliveryService::DOBROLAP_DELIVERY_CODE) {
                     $transactionId = self::COMPLETE_ORDER_DOBROLAP_LIST_ID;
+                    $snippets[] = new Snippet('delivery_address', $orderService->getOrderDeliveryAddress($order));
                 } elseif (!$royalCaninAction) {
                     $transactionId = self::NEW_ORDER_PAY_LIST_ID;
                 } else {
