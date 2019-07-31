@@ -129,7 +129,7 @@ class ExpertsenderService implements LoggerAwareInterface
     public const MEALFEEL_NEW_CHECK_REG_LIST_ID = 8919;
     public const PERSONAL_OFFER_COUPON_START_SEND_EMAIL = 9607;
     public const PERSONAL_OFFER_COUPON_END_SEND_EMAIL = 9608;
-    public const COMPLETE_ORDER_DOBROLAP_LIST_ID = 9409;
+    public const COMPLETE_ORDER_DOBROLAP_LIST_ID = 9609;
     /**
      * BirthDay mail ids
      */
@@ -634,10 +634,10 @@ class ExpertsenderService implements LoggerAwareInterface
             // зарегистрированный пользователь
             if ($isOnlinePayment) {
                 // онлайн-оплата
-                if (!$royalCaninAction) {
-                    $transactionId = self::NEW_ORDER_PAY_LIST_ID;
-                } elseif ($orderService->getOrderDeliveryCode($order) === DeliveryService::DOBROLAP_DELIVERY_CODE) {
+                if ($orderService->getOrderDeliveryCode($order) === DeliveryService::DOBROLAP_DELIVERY_CODE) {
                     $transactionId = self::COMPLETE_ORDER_DOBROLAP_LIST_ID;
+                } elseif (!$royalCaninAction) {
+                    $transactionId = self::NEW_ORDER_PAY_LIST_ID;
                 } else {
                     $transactionId = self::NEW_ORDER_PAY_LIST_ID_ROYAL_CANIN;
                 }
