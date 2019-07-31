@@ -344,7 +344,7 @@ $APPLICATION->SetTitle("Добролап");
                     	<h5 class="mb-4">На память о добром поступке каждый участник «Добролап» получит памятный магнит и ОДИН ИЗ ДОБРЫХ СЮРПРИЗОВ: СКИДКУ НА АКСЕССУАРЫ ИЛИ ЛАКОМСТВА, БОНУСЫ НА ПОКУПКУ ПРАВИЛЬНОГО КОРМА ИЛИ ОДИН ИЗ 2000 ФАН-БОНУСОВ ДЛЯ УЧАСТИЯ В РОЗЫГРЫШЕ ПРИЗОВ. Весь август в магазинах «Четыре лапы» и на сайте «4lapy.ru».</h5>
 			            <p>
                             <a href="javascript:void(0);" class="btn btn-primary-filled py-3 px-4 <?=($USER->IsAuthorized()) ? 'js-show-fan-form' : 'js-open-popup'?>" data-popup-id="authorization">ЗАРЕГИСТРИРОВАТЬ ФАН-БОНУС</a>
-                            <a href="javascript:void(0);" class="btn btn-primary py-3 px-4 js-open-popup" data-popup-id="dobrolap_more_info_popup">ПОДРОБНЫЕ СВЕДЕНИЯ</a>
+                            <a href="javascript:void(0);" class="btn btn-primary py-3 px-4 js-open-popup" data-popup-id="dobrolap_more_info_popup">ПОДРОБНЕЕ</a>
                         </p>
 			          </div>
 			        </div>
