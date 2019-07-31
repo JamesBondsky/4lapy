@@ -1319,22 +1319,22 @@ class UserService implements
             $couponDateActiveTo = $offerFields->get('DATE_ACTIVE_TO');
             $discountValue = $offerFields->get('PROPERTY_DISCOUNT_VALUE');
 
-            foreach ($users as $user) {
-                try {
-                    $resSend = $expertSender->sendPersonalOfferCouponEmail(
-                        $user->getId(),
-                        $user->getName(),
-                        $user->getEmail(),
-                        $promocode,
-                        'data:image/png;base64,' . base64_encode($barcodeGenerator->getBarcode($promocode, BarcodeGenerator::TYPE_CODE_128, 2.132310384278889, 127)),
-                        $couponDescription,
-                        $couponDateActiveTo,
-                        $discountValue,
-                        $emailId
-                    );
-                } catch (Exception $e) {
-                }
-            }
+//            foreach ($users as $user) {
+//                try {
+//                    $resSend = $expertSender->sendPersonalOfferCouponEmail(
+//                        $user->getId(),
+//                        $user->getName(),
+//                        $user->getEmail(),
+//                        $promocode,
+//                        'data:image/png;base64,' . base64_encode($barcodeGenerator->getBarcode($promocode, BarcodeGenerator::TYPE_CODE_128, 2.132310384278889, 127)),
+//                        $couponDescription,
+//                        $couponDateActiveTo,
+//                        $discountValue,
+//                        $emailId
+//                    );
+//                } catch (Exception $e) {
+//                }
+//            }
         }
     }
 }
