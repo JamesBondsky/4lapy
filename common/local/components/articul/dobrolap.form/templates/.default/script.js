@@ -24,7 +24,18 @@ $(function(){
                 if(data.success !== undefined) {
                     //--замена содержимого блока регистрации на благодарность по нажатию кнопки
                     $('#fanreg .row').addClass('justify-content-center');
-                    $('#fanreg .row').html('<div class="col-md-12"><h2 class="">Спасибо за регистрацию ФАНА!</h2><h5 class="mb-4">ваши данные отправлены</h5><hr /></div>');
+                    var monthNames = ["января", "февраля", "марта", "апреля", "мая", "июня",
+                        "июля", "августа", "сентября", "октября", "ноября", "декабря"
+                    ];
+                    var resultDate = new Date();
+                    console.log(resultDate, resultDate.getDate(), resultDate.getDay(), 8 - resultDate.getDay());
+                    var daysToAdd = (8 - resultDate.getDay()) % 7;
+                    if (daysToAdd == 0) {
+                        daysToAdd = 7;
+                    }
+                    resultDate.setDate(resultDate.getDate() + daysToAdd);
+                    var resultDateFormatted = resultDate.getDate() + ' ' + monthNames[resultDate.getMonth()];
+                    $('#fanreg .row').html('<div class="col-md-12"><h2 class="">Спасибо за регистрацию ФАНА!</h2><h5 class="mb-4">ваши данные отправлены.</h5><h5 class="mb-4">Результаты розыгрыша будут известны ' + resultDateFormatted + '</h5><hr /></div>');
                 }
                 else if(data.error !== undefined){
                     $form.find('.response-messsage').html(data.error);
