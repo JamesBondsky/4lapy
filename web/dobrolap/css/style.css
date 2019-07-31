@@ -10019,7 +10019,7 @@ h4.subheader {
 }
 
 #thanks {
-  background: url(/dobrolap/images/thanks_bg.png) center center no-repeat;
+  background: url(/dobrolap/images/thanks_bg.png) center 40px no-repeat;
 }
 
 #thanks .col-md-3, #thanks .col-md-12 {
@@ -10123,23 +10123,25 @@ body .b-page-wrapper.no-scroll {
 
 #fanreg .col-md-6:nth-child(2) input {
     float: left;
-    width: 250px;
-    max-width: 250px;
+    width: 100%;
+    max-width: 100%;
     padding: 5px 10px;
+    font-size: 30px;
+    margin-bottom: 20px;
+    color: #000;
 }
 
 #fanreg .col-md-6:nth-child(2) a {
-    float: left;
-    margin-left: 10px;
+        float: left;
+    margin-left: 0;
+    padding: 20px !important;
+    font-size: 20px;
+    width: 100%;
 }
 
-#fanreg .justify-content-center h2, #fanreg .justify-content-center h5 {
+/*#fanreg .justify-content-center h2, #fanreg .justify-content-center h5 {
   text-align: center !important;
-}
-
-#fanreg .justify-content-center hr {
-  margin: 20px auto;
-}
+}*/
 
 #fanreg input::placeholder {
   color: #ccc;
@@ -10184,12 +10186,22 @@ body .b-page-wrapper.no-scroll {
 }
 
 #about-section .col-md-6:nth-child(1) .img {
-  margin-top: -40px;
+  margin-top: 0;
+}
+
+#fanreg .col-md-12 .mb-4 {
+    width: 100% !important;
+}
+
+#how_get .btn.btn-primary-filled {
+  padding: 20px 60px !important;
+  font-size: 18px; 
 }
 
 @media (max-width: 768px) {
   h5 {
     font-size: 0.8rem;
+    line-height: 20px;
   }
 
   .pb-5, .py-5 {
@@ -10469,23 +10481,52 @@ body .b-page-wrapper.no-scroll {
     width:15px;
   }
 
+  #fanreg .col-md-6:nth-child(2) a {
+      padding: 8px 16px !important;
+      font-size: 12px;
+      width: 100%;
+      margin-bottom: 30px;
+  }
+
+  #fanreg .col-md-6:nth-child(2) input {
+    font-size: 20px;
+  }
+  #fanreg .col-md-12 .mb-4 {
+      width: auto !important;
+  }
+
+  #how_get .btn.btn-primary-filled {
+    padding: 8px 16px !important;
+    font-size: 19px;
+    position: relative;
+    top: -28px;
+  }
+
+  #helps .harvest_icon {
+    top: -6px;
+  }
+
 }
 
 
 
-@media (min-width: 769px) and (max-width: 1024px) {
+@media (min-width: 768px) and (max-width: 1024px) {
   .ftco-navbar-light .navbar-nav > .nav-item > .nav-link {
     padding-left: 8px;
     padding-right: 8px;
   }
 
   #about-section {
-    background: url(/dobrolap/images/mainpage_bg.jpg) -557px center no-repeat;
+    background: url(/dobrolap/images/mainpage_bg.jpg) -467px center no-repeat;
     background-size: cover;
   }
 
   #about-section .pb-5 {
-    padding-left: 4rem !important;
+    padding-left: 0rem !important;
+  }
+
+  #about-section .pb-5 {
+    top: 25%;
   }
 
   #about-section .img-about .img {
@@ -10510,6 +10551,32 @@ body .b-page-wrapper.no-scroll {
 
   .ftco-counter .text strong.number {
     font-size: 73px;
+  }
+
+  #fanreg .col-md-6:nth-child(2) a {
+      padding: 5px !important;
+      font-size: 14px;
+      width: auto;
+  }
+  #fanreg .col-md-12 .mb-4 {
+      width: auto !important;
+  }
+
+  #how_get .btn.btn-primary-filled {
+    padding: 5px !important;
+    font-size: 14px; 
+  }
+
+  #thanks .col-md-6 {
+    -webkit-box-flex: 0;
+    -ms-flex: 0 0 49%;
+    flex: 0 0 49%;
+    max-width: 49%;
+  }
+
+  #thanks .col-md-3, #thanks .col-md-12 {
+    padding-left: 5px;
+    padding-right: 5px;
   }
 }
 

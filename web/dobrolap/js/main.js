@@ -305,18 +305,18 @@ AOS.init({
 		return false;
 	});
 
+	//-- показываем блок регистрации фана
+    $(".js-show-fan-form").click(function(){
+        var scrollTop = $("#fanreg").offset().top;
+        $(document).scrollTop(scrollTop);
+	 	return false;
+	 });
+
 	//--  разворачиваем/сворачиваем текст приютов
 	$(".read_more_btn").click(function(){
 		$(".needs_note").slideToggle("slow");
 		return false;
 	});
-
-	//-- показываем блок регистрации фана
-	// $(".js-show-fan-form").click(function(){
-	// 	$("#fanreg").slideToggle("slow");
-	// 	return false;
-	// });
-
 
 	$(document).ready(function() {
       var owl = $('.owl-carousel');
@@ -325,15 +325,6 @@ AOS.init({
       
       })
     });
-
-	//--закидываем пользователя наверх, если он нажал кнопку внизу
-
-    // var scrollTop = $('#fanreg').offset().top;
-	//
-	// $('#thanks .btn-primary-filled').click(function(){
-	// 	$(document).scrollTop(scrollTop);
-	// })
-
 	
 	//--работа со всплывающим окном приютов
 	$('[data-popup-id="shelter_popup"].js-open-popup, [data-popup="dobrolap_more_info_popup"] .js-close-popup').on('click', function () {
@@ -356,5 +347,13 @@ AOS.init({
 	    $('html').removeAttr('style');
 	  }
 	});
+
+	$(".btn-primary").click(function () {
+	    var elementClick = $(this).attr("href");
+	    var destination = $(elementClick).offset().top;
+	    $('html, body').animate({ scrollTop: destination }, 600);
+	    return false;
+	});
+
 
 })(jQuery);
