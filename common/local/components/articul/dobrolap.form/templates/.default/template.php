@@ -6,7 +6,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
 
 
 <? if($arResult['USER_ID'] > 0) { ?>
-<section class="ftco-section <?=$arResult['FORM_CLASS']?>" id="fanreg">
+<section class="ftco-section" id="fanreg">
     <div class="container">
         <div class="row">
             <div class="col-md-6">

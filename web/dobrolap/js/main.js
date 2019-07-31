@@ -317,10 +317,6 @@ AOS.init({
 	// 	return false;
 	// });
 
-	$(".js-add-scroll-cookie").on('click', function(){
-		$.cookie('cancel_mobile_app', 1, { path: '/', expires: 365 });
-	});
-
 
 	$(document).ready(function() {
       var owl = $('.owl-carousel');

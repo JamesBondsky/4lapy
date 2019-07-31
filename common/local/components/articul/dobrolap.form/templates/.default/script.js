@@ -42,26 +42,19 @@ $(function(){
     var setScrollCookie = function()
     {
         $.cookie('dobrolap_scroll_form', 1, { path: '/', expires: 365 });
-        console.log('dobrolap_scroll_form', 1);
     };
     var clearScrollCookie = function()
     {
         $.cookie('dobrolap_scroll_form', 0, { path: '/', expires: 365 });
-        console.log('dobrolap_scroll_form', 0);
     };
 
-    console.log('dobrolap_scroll_form initial', $.cookie('dobrolap_scroll_form'));
-    if($.cookie('dobrolap_scroll_form') === 1){
+    if($.cookie('dobrolap_scroll_form') === '1'){
         $('html, body').animate({
-            scrollTop: $('.js-scroll-to').offset().top - 70
-        }, 500, function() {
-            clearScrollCookie();
-        });
+            scrollTop: $('#fanreg').offset().top - 70
+        }, 500, clearScrollCookie);
     }
 
-    $('#thanks .js-open-popup').on('click', function(){
-        setScrollCookie();
-    });
+    $('#thanks .js-open-popup[data-popup-id="authorization"]').on('click', setScrollCookie);
 
     $(document).on('click','.js-close-popup', clearScrollCookie);
     $(document).on('click','.js-open-popup.js-toggle-popover-mobile-header', clearScrollCookie);
@@ -70,7 +63,5 @@ $(function(){
             clearScrollCookie();
         }
     });
-
-    $
 
 });

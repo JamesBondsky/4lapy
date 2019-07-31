@@ -76,16 +76,9 @@ class CDobrolapFormComponent extends \CBitrixComponent
             $APPLICATION->RestartBuffer();
             return $responce->send();
         } else {
-            if($this->isScrollToForm()){
-                $this->arResult['FORM_CLASS'] = ' js-scroll-to';
-            }
             $this->includeComponentTemplate();
         }
-    }
 
-    private function isScrollToForm()
-    {
-        return true || $GLOBALS['dobrolap']['isJustAuthorized'];
     }
 
     private function isFormSubmit()
