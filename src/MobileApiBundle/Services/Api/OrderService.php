@@ -1034,13 +1034,18 @@ class OrderService
         }
         $firstOrder = $this->personalOrderService->getOrderByNumber($order->getField('ACCOUNT_NUMBER'));
 
-        $href = new FullHrefDecorator('/static/build/images/content/dobrolap/dobrolap-logo.png');
-        $mainIcon = $href->getFullPublicPath();
-        $href->setPath('/static/build/images/content/dobrolap/dobrolap-logo@3x.png');
-        $fantIcon = $href->getFullPublicPath();
-
         $text = [];
         if ($deliveryType == self::DELIVERY_TYPE_DOBROLAP) {
+            $href = new FullHrefDecorator('/static/build/images/content/dobrolap/dobrolap-logo.png');
+            $mainIcon = $href->getFullPublicPath();
+
+            $fantIcons = [];
+
+            for ($i = 1; $i < 7; ++$i) {
+                $href->setPath('/static/build/images/content/dobrolap/icons/dobrolap-' . $i . '.png');
+                $fantIcons[] = $href->getFullPublicPath();
+            }
+
             $text = [
                 'title' => 'СПАСИБО ЧТО ВЫ ТВОРИТЕ ДОБРО ВМЕСТЕ С НАМИ!',
                 'titleOrder' => 'Ваш заказ №#' . $order->getField('ACCOUNT_NUMBER') . '# оформлен',
@@ -1051,7 +1056,7 @@ class OrderService
                 'titleNow' => 'А СЕЙЧАС',
                 'descriptionNow' => 'Выберите для себя один из шести сюрпризов, тапнув на любой из них.',
                 'mainIcon' => $mainIcon,
-                'fantIcon' => $fantIcon,
+                'fantIcons' => $fantIcons,
             ];
         }
 

@@ -111,7 +111,7 @@ $promocode = $coupon['UF_PROMO_CODE'];
                                     />
 
                                     <label for="dobrolap-prize-<?= $i ?>" class="b-dobrolap-prizes__label" data-b-dobrolap-prizes="choose-section-item">
-                                        <img src="/static/build/images/content/dobrolap/dobrolap-logo@3x.png" alt="" class="b-dobrolap-prizes__label-img"/>
+                                        <img src="/static/build/images/content/dobrolap/icons/dobrolap-<?= $i ?>.png" alt="" class="b-dobrolap-prizes__label-img"/>
                                     </label>
                                 <?php endfor ?>
                             </div>
