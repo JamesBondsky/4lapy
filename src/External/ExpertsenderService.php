@@ -129,7 +129,7 @@ class ExpertsenderService implements LoggerAwareInterface
     public const MEALFEEL_NEW_CHECK_REG_LIST_ID = 8919;
     public const PERSONAL_OFFER_COUPON_START_SEND_EMAIL = 9607;
     public const PERSONAL_OFFER_COUPON_END_SEND_EMAIL = 9608;
-    public const COMPLETE_ORDER_DOBROLAP_LIST_ID = 9409;
+    public const COMPLETE_ORDER_DOBROLAP_LIST_ID = 9609;
     /**
      * BirthDay mail ids
      */
