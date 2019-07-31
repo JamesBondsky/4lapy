@@ -33,9 +33,19 @@ $(function(){
                     if (daysToAdd == 0) {
                         daysToAdd = 7;
                     }
-                    resultDate.setDate(resultDate.getDate() + daysToAdd);
+                    resultDate.setDate(resultDate.getDate() + daysToAdd); //TODO if 5 августа, то плюс неделя
                     var resultDateFormatted = resultDate.getDate() + ' ' + monthNames[resultDate.getMonth()];
-                    $('#fanreg .row').html('<div class="col-md-12"><h2 class="">Спасибо за регистрацию ФАНА!</h2><h5 class="mb-4">ваши данные отправлены.</h5><h5 class="mb-4">Результаты розыгрыша будут известны ' + resultDateFormatted + '</h5><hr /></div>');
+                    $('#fanreg .row').html('<div class="col-md-12 heading-section text-center">' +
+                            '<h2 class="">Спасибо, что присоединились<br />к команде ДОБРОЛАП!</h2>' +
+                            '<hr />' +
+                            '<h5 class="mb-4">' + resultDateFormatted + ' на электронную почту Вы получите индивидуальное предложение или станете победителем в розыгрыше одного из фан-бонусов:' +
+                            '<ul>' +
+                                '<li>Стать участником фотосессии</li>' +
+                                '<li>Получить футболку с художественным изображением питомца</li>' +
+                                '<li>Стать автором рубрики/поста в социальных сетях компании «Четыре лапы»</li>' +
+                                '<li>Стать лицом рекламной кампании  «Твой питомец звезда».</h5></li>' +
+                            '</ul>\n' +
+                        '</div>');
                 }
                 else if(data.error !== undefined){
                     $form.find('.response-messsage').html(data.error);
