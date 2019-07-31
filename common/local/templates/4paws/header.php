@@ -110,8 +110,10 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
 
 <header class="b-header <?= $template->getHeaderClass() ?> js-header">
     <?php
-        if(!KioskService::isKioskMode()) {
-            require_once __DIR__ . '/blocks/header/promo_top_acarid.php';
+        if(!KioskService::isKioskMode()
+            && !$template->isBasket()
+            && !$template->isOrderPage()) {
+            require_once __DIR__ . '/blocks/header/promo_top_dobrolap.php';
         }
     ?>
     <?php

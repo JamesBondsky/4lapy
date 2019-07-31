@@ -84,8 +84,8 @@ $sArrowDownIcoBrand = '<span class="b-icon b-icon--brand-menu">' . $sArrowDownSw
                         <?php } ?>
                     </li>
                 <?php } else { ?>
-                    <li class="b-menu__item<?= ($arItem['XML_ID'] == 'vetapteka') ? ' b-menu__item--vetapteka' : ''; ?>">
-                        <a class="b-menu__link<?= ($arItem['XML_ID'] == 'vetapteka') ? ' b-menu__link--blue' : ''; ?>"<?= $arItem['_LINK_ATTR1_'] ?>
+                    <li class="b-menu__item<?= ($arItem['XML_ID'] == 'dobrolap') ? ' b-menu__item--dobrolap' : ''; ?>">
+                        <a class="b-menu__link<?= ($arItem['XML_ID'] == 'dobrolap') ? ' b-menu__link--dobrolap' : ''; ?>"<?= $arItem['_LINK_ATTR1_'] ?>
                            href="<?= $arItem['_URL_'] ?>">
                             <?= $arItem['_TEXT_'] ?>
                         </a>
