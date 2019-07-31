@@ -271,24 +271,24 @@ class OrderService
 
     /**
      * @param OrderEntity $order
-     * @param OrderSubscribe $subscription
+     * @param OrderSubscribe|null $subscription
+     * @param array $text
      * @return Order
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
-     * @throws OrderStorageSaveException
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
      * @throws \Bitrix\Main\NotImplementedException
      * @throws \Bitrix\Main\ObjectException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
-     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
+     * @throws \FourPaws\AppBundle\Exception\NotFoundException
      */
-    protected function toApiFormat(OrderEntity $order, OrderSubscribe $subscription = null)
+    protected function toApiFormat(OrderEntity $order, OrderSubscribe $subscription = null, $text = [])
     {
         if ($subscription) {
             // toDo подписка на заказ
@@ -318,7 +318,7 @@ class OrderService
                 ->setStatus($status)
                 ->setCompleted($isCompleted)
                 ->setPaid($order->isPayed())
-                ->setCartParam($this->getOrderParameter($basketProducts, $order))
+                ->setCartParam($this->getOrderParameter($basketProducts, $order, $text))
                 ->setCartCalc($this->getOrderCalculate($basketProducts, false, 0, $order));
         }
 
@@ -340,23 +340,23 @@ class OrderService
 
     /**
      * @param BasketProductCollection $basketProducts
-     * @param OrderEntity $order
+     * @param null $order
+     * @param array $text
      * @return OrderParameter
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
      * @throws \Bitrix\Main\NotImplementedException
      * @throws \Bitrix\Main\ObjectException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
-     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      * @throws \FourPaws\AppBundle\Exception\NotFoundException
      */
-    public function getOrderParameter(BasketProductCollection $basketProducts, $order = null)
+    public function getOrderParameter(BasketProductCollection $basketProducts, $order = null, $text = [])
     {
         $orderParameter = (new OrderParameter())
             ->setProducts($basketProducts->getValues());
@@ -409,6 +409,7 @@ class OrderService
                 ->setApartment($order->getPropValue('APARTMENT'))
                 ->setComment($order->getBitrixOrder()->getField('USER_DESCRIPTION') ?: '')
                 ->setDeliveryPlaceCode($order->getPropValue('DELIVERY_PLACE_CODE'))
+                ->setText($text)
                 /** значение может меняться автоматически, @see \FourPaws\SaleBundle\Service\OrderService::updateCommWayProperty  */
                 // ->setCommunicationWay($order->getPropValue('COM_WAY'))
             ;
@@ -991,16 +992,6 @@ class OrderService
                 $cartParamArray['delyveryType'] = $cartParamArray['split'] ? 'twoDeliveries' : ''; // have no clue why this param used
                 $cartParamArray['deliveryTypeId'] = $this->appDeliveryService->getDeliveryIdByCode(DeliveryService::DOBROLAP_DELIVERY_CODE);
                 $cartParamArray['shelter'] = $cartParam->getShelter();
-                $cartParamArray['text'] = [
-                    'title' => 'СПАСИБО ЧТО ВЫ ТВОРИТЕ ДОБРО ВМЕСТЕ С НАМИ!',
-                    'titleOrder' => 'Ваш заказ №#NUM# оформлен',
-                    'description' => 'И будет доставлен в Приют' . $cartParam->getShelter(),
-                    'titleThank' => 'МЫ ГОВОРИМ ВАМ СПАСИБО!',
-                    'descriptionFirstThank' => 'В знак благодарности мы подготовили небольшой сюрприз фанты "Добролап" с приятными презентами',
-                    'descriptionSecondThank' => 'Также мы вложим в Ваш следующий заказ подарок - памятный магнит.',
-                    'titleNow' => 'А СЕЙЧАС',
-                    'descriptionNow' => 'Выберите для себя один из шести сюрпризов, тапнув на любой из них.',
-                ];
                 break;
         }
         $cartParamArray['deliveryId'] = $cartParamArray['deliveryTypeId'];
@@ -1042,13 +1033,27 @@ class OrderService
         }
         $firstOrder = $this->personalOrderService->getOrderByNumber($order->getField('ACCOUNT_NUMBER'));
 
+        $text = [];
+        if ($deliveryType == self::DELIVERY_TYPE_DOBROLAP) {
+            $text = [
+                'title' => 'СПАСИБО ЧТО ВЫ ТВОРИТЕ ДОБРО ВМЕСТЕ С НАМИ!',
+                'titleOrder' => 'Ваш заказ №#' . $order->getField('ACCOUNT_NUMBER') . '# оформлен',
+                'description' => 'И будет доставлен в Приют' . $cartParam->getShelter(),
+                'titleThank' => 'МЫ ГОВОРИМ ВАМ СПАСИБО!',
+                'descriptionFirstThank' => 'В знак благодарности мы подготовили небольшой сюрприз фанты "Добролап" с приятными презентами',
+                'descriptionSecondThank' => 'Также мы вложим в Ваш следующий заказ подарок - памятный магнит.',
+                'titleNow' => 'А СЕЙЧАС',
+                'descriptionNow' => 'Выберите для себя один из шести сюрпризов, тапнув на любой из них.',
+            ];
+        }
+
         // активация подписки на доставку
         if($cartParam->isSubscribe()){
             $this->appOrderSubscribeService->activateSubscription($storage, $order);
         }
 
         $response = [
-            $this->toApiFormat($firstOrder)
+            $this->toApiFormat($firstOrder, null, $text)
         ];
         if ($relatedOrderId = $firstOrder->getProperty('RELATED_ORDER_ID')) {
             $response[] = $this->getOneById($relatedOrderId->getValue());

@@ -285,6 +285,15 @@ class OrderParameter
     protected $shelter = '';
 
     /**
+     * Текст для страницы спасибо
+     *
+     * @Serializer\Type("array")
+     * @Serializer\SerializedName("text")
+     * @var array
+     */
+    protected $text = [];
+
+    /**
      * @return Product[]
      */
     public function getProducts(): array
@@ -747,6 +756,24 @@ class OrderParameter
     public function setShelter(string $shelter): OrderParameter
     {
         $this->shelter = $shelter;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getText(): array
+    {
+        return $this->text;
+    }
+
+    /**
+     * @param array $text
+     * @return OrderParameter
+     */
+    public function setText(array $text): OrderParameter
+    {
+        $this->text = $text;
         return $this;
     }
 }
