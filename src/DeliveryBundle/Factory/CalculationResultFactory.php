@@ -14,6 +14,7 @@ use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DobrolapDeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DostavistaDeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdDeliveryResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdPickupResult;
@@ -64,14 +65,22 @@ class CalculationResultFactory
             case DeliveryService::DELIVERY_DOSTAVISTA_CODE:
                 $result = new DostavistaDeliveryResult();
                 break;
+            case DeliveryService::DOBROLAP_DELIVERY_CODE:
+                $result = new DobrolapDeliveryResult();
+                break;
             default:
                 throw new UnknownDeliveryException(sprintf('Unknown delivery service %s', $service->getCode()));
         }
 
-        if($service->getCode() != DeliveryService::DELIVERY_DOSTAVISTA_CODE){
-            static::fillDeliveryData($result, $bitrixResult);
-        } else {
-            static::fillDeliveryDostavistaData($result, $bitrixResult);
+        switch ($service->getCode()) {
+            case DeliveryService::DELIVERY_DOSTAVISTA_CODE:
+                static::fillDeliveryDostavistaData($result, $bitrixResult);
+                break;
+            case DeliveryService::DOBROLAP_DELIVERY_CODE:
+                static::fillDeliveryDobrolapData($result, $bitrixResult);
+                break;
+            default:
+                static::fillDeliveryData($result, $bitrixResult);
         }
 
         return $result;
@@ -224,7 +233,6 @@ class CalculationResultFactory
         return $result;
     }
 
-
     /**
      * @param CalculationResultInterface $result
      * @param CalculationResult          $bitrixResult
@@ -265,6 +273,52 @@ class CalculationResultFactory
                 case 'FREE_PRICE_FROM':
                     $result->setFreeFrom($value);
                     break;
+                case 'STOCK_RESULT':
+                    $result->setStockResult($value);
+                    break;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param CalculationResultInterface $result
+     * @param CalculationResult          $bitrixResult
+     *
+     * @return CalculationResultInterface
+     */
+    protected static function fillDeliveryDobrolapData(
+        CalculationResultInterface $result,
+        CalculationResult $bitrixResult
+    ): CalculationResultInterface
+    {
+        $result->setDeliveryPrice($bitrixResult->getDeliveryPrice());
+        $result->setDescription($bitrixResult->getDescription());
+        $result->setPacksCount($bitrixResult->getPacksCount());
+
+        if ($bitrixResult->isNextStep()) {
+            $result->setAsNextStep();
+        }
+
+        $result->setTmpData($bitrixResult->getTmpData());
+        $result->setData($bitrixResult->getData());
+
+        $result->setPeriodDescription($bitrixResult->getPeriodDescription());
+        $result->setPeriodFrom($bitrixResult->getPeriodFrom());
+        $result->setPeriodType($bitrixResult->getPeriodType());
+        $result->setPeriodTo($bitrixResult->getPeriodTo());
+
+        if ($bitrixResult->getErrors()) {
+            $result->addErrors($bitrixResult->getErrors());
+        }
+
+        if ($bitrixResult->getWarnings()) {
+            $result->addWarnings($bitrixResult->getWarnings());
+        }
+
+        foreach ($bitrixResult->getData() as $key => $value) {
+            switch ($key) {
                 case 'STOCK_RESULT':
                     $result->setStockResult($value);
                     break;

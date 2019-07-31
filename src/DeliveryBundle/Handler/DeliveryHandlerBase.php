@@ -392,6 +392,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                 $result = $storeService->getShopsByLocation($locationCode);
                 break;
             case DeliveryService::INNER_DELIVERY_CODE:
+            case DeliveryService::DOBROLAP_DELIVERY_CODE:
                 switch ($deliveryZone) {
                     case DeliveryService::ZONE_1:
                     case DeliveryService::ZONE_5:
@@ -430,7 +431,8 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                     default:
                         if (
                             mb_strpos($deliveryZone, DeliveryService::ADD_DELIVERY_ZONE_CODE_PATTERN) !== false ||
-                            mb_strpos($deliveryZone, DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false
+                            mb_strpos($deliveryZone, DeliveryService::ZONE_MOSCOW_DISTRICT_CODE_PATTERN) !== false ||
+                            mb_strpos($deliveryZone, DeliveryService::ZONE_4) !== false
                         ) {
                             $result = $storeService->getBaseShops($locationCode);
                             if ($result->isEmpty()) {

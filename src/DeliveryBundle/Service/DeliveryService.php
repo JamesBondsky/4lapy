@@ -70,6 +70,7 @@ class DeliveryService implements LoggerAwareInterface
 
     public const INNER_DELIVERY_CODE = '4lapy_delivery';
     public const DELIVERY_DOSTAVISTA_CODE = 'dostavista';
+    public const DOBROLAP_DELIVERY_CODE = 'dobrolap_delivery';
     public const INNER_PICKUP_CODE = '4lapy_pickup';
     public const DPD_DELIVERY_GROUP_CODE = 'ipolh_dpd';
     public const DPD_DELIVERY_CODE = self::DPD_DELIVERY_GROUP_CODE . ':COURIER';
@@ -897,6 +898,15 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
+     * @param string|null $deliveryCode
+     * @return bool
+     */
+    public function isDobrolapDeliveryCode($deliveryCode): bool
+    {
+        return $deliveryCode == static::DOBROLAP_DELIVERY_CODE;
+    }
+
+    /**
      * @param CalculationResultInterface $calculationResult
      *
      * @return bool
@@ -914,6 +924,16 @@ class DeliveryService implements LoggerAwareInterface
     public function isDostavistaDelivery(CalculationResultInterface $calculationResult): bool
     {
         return $this->isDostavistaDeliveryCode($calculationResult->getDeliveryCode());
+    }
+
+    /**
+     * @param CalculationResultInterface $calculationResult
+     *
+     * @return bool
+     */
+    public function isDobrolapDelivery(CalculationResultInterface $calculationResult): bool
+    {
+        return $this->isDobrolapDeliveryCode($calculationResult->getDeliveryCode());
     }
 
     /**

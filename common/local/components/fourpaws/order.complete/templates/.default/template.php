@@ -85,7 +85,7 @@ try {
         <div class="b-order__block b-order__block--no-border">
             <div class="b-order__content b-order__content--no-border b-order__content--step-five">
                 <h2 class="b-title b-title--order-heading b-title--block">
-                    Заказ № <strong><?= $order->getField('ACCOUNT_NUMBER') ?></strong> оформлен
+                    Заказ №<strong><?= $order->getField('ACCOUNT_NUMBER') ?></strong> оформлен
                 </h2>
                 <div class="b-order__text-block">
 
