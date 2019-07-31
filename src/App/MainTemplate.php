@@ -368,6 +368,14 @@ class MainTemplate extends TemplateAbstract
     /**
      * @return bool
      */
+    public function isOrderCompletePage(): bool
+    {
+        return $this->isDir('/sale/order/complete') || $this->isPartitionDir('/sale/order/complete');
+    }
+
+    /**
+     * @return bool
+     */
     public function isOrderInterviewPage(): bool
     {
         return $this->isPartitionDir('/sale/order/interview');

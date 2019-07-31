@@ -14,6 +14,7 @@ use Bitrix\Sale\UserMessageException;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
@@ -118,9 +119,13 @@ class OrderService
     /** @var TokenStorageInterface */
     private $tokenStorage;
 
+    /** @var PersonalOffersService */
+    private $personalOffersService;
+
     const DELIVERY_TYPE_COURIER = 'courier';
     const DELIVERY_TYPE_PICKUP = 'pickup';
     const DELIVERY_TYPE_DOSTAVISTA = 'dostavista';
+    const DELIVERY_TYPE_DOBROLAP = 'dobrolap';
 
     public function __construct(
         ApiBasketService $apiBasketService,
@@ -138,7 +143,8 @@ class OrderService
         Serializer $serializer,
         CouponStorageInterface $couponStorage,
         TokenStorageInterface $tokenStorage,
-        AppBonusService $appBonusService
+        AppBonusService $appBonusService,
+        PersonalOffersService $personalOffersService
     )
     {
         $this->apiBasketService = $apiBasketService;
@@ -157,6 +163,7 @@ class OrderService
         $this->couponStorage = $couponStorage;
         $this->appBonusService = $appBonusService;
         $this->tokenStorage = $tokenStorage;
+        $this->personalOffersService = $personalOffersService;
     }
 
     /**
@@ -265,24 +272,24 @@ class OrderService
 
     /**
      * @param OrderEntity $order
-     * @param OrderSubscribe $subscription
+     * @param OrderSubscribe|null $subscription
+     * @param array $text
      * @return Order
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
-     * @throws OrderStorageSaveException
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
      * @throws \Bitrix\Main\NotImplementedException
      * @throws \Bitrix\Main\ObjectException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
-     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
+     * @throws \FourPaws\AppBundle\Exception\NotFoundException
      */
-    protected function toApiFormat(OrderEntity $order, OrderSubscribe $subscription = null)
+    protected function toApiFormat(OrderEntity $order, OrderSubscribe $subscription = null, $text = [])
     {
         if ($subscription) {
             // toDo подписка на заказ
@@ -312,7 +319,7 @@ class OrderService
                 ->setStatus($status)
                 ->setCompleted($isCompleted)
                 ->setPaid($order->isPayed())
-                ->setCartParam($this->getOrderParameter($basketProducts, $order))
+                ->setCartParam($this->getOrderParameter($basketProducts, $order, $text))
                 ->setCartCalc($this->getOrderCalculate($basketProducts, false, 0, $order));
         }
 
@@ -334,23 +341,23 @@ class OrderService
 
     /**
      * @param BasketProductCollection $basketProducts
-     * @param OrderEntity $order
+     * @param null $order
+     * @param array $text
      * @return OrderParameter
      * @throws ApplicationCreateException
      * @throws ArgumentException
-     * @throws NotFoundException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
      * @throws \Bitrix\Main\NotImplementedException
      * @throws \Bitrix\Main\ObjectException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
-     * @throws \FourPaws\PersonalBundle\Exception\BitrixOrderNotFoundException
      * @throws \FourPaws\AppBundle\Exception\NotFoundException
      */
-    public function getOrderParameter(BasketProductCollection $basketProducts, $order = null)
+    public function getOrderParameter(BasketProductCollection $basketProducts, $order = null, $text = [])
     {
         $orderParameter = (new OrderParameter())
             ->setProducts($basketProducts->getValues());
@@ -403,6 +410,7 @@ class OrderService
                 ->setApartment($order->getPropValue('APARTMENT'))
                 ->setComment($order->getBitrixOrder()->getField('USER_DESCRIPTION') ?: '')
                 ->setDeliveryPlaceCode($order->getPropValue('DELIVERY_PLACE_CODE'))
+                ->setText($text)
                 /** значение может меняться автоматически, @see \FourPaws\SaleBundle\Service\OrderService::updateCommWayProperty  */
                 // ->setCommunicationWay($order->getPropValue('COM_WAY'))
             ;
@@ -684,6 +692,7 @@ class OrderService
         $delivery   = null;
         $pickup     = null;
         $dostavista = null;
+        $dobrolap   = null;
         foreach ($deliveries as $calculationResult) {
             // toDo убрать условие "&& !$calculationResult instanceof DpdPickupResult" после того как в мобильном приложении будет реализован вывод точек DPD на карте в чекауте
             if ($this->appDeliveryService->isInnerPickup($calculationResult) && !$calculationResult instanceof DpdPickupResult) {
@@ -692,11 +701,14 @@ class OrderService
                 $delivery = $calculationResult;
             } elseif ($this->appDeliveryService->isDostavistaDelivery($calculationResult)) {
                 $dostavista = $calculationResult;
+            } elseif ($this->appDeliveryService->isDobrolapDelivery($calculationResult)) {
+                $dobrolap = $calculationResult;
             }
         }
         $courierDelivery = (new DeliveryVariant());
         $pickupDelivery = (new DeliveryVariant());
         $dostavistaDelivery = (new DeliveryVariant());
+        $dobrolapDelivery = (new DeliveryVariant());
 
         if ($delivery) {
             $courierDelivery
@@ -734,7 +746,13 @@ class OrderService
             }
         }
 
-        return [$courierDelivery, $pickupDelivery, $dostavistaDelivery];
+        if ($dobrolap) {
+            $dobrolapDelivery
+                ->setAvailable(true)
+                ->setPrice($dobrolap->getDeliveryPrice());
+        }
+
+        return [$courierDelivery, $pickupDelivery, $dostavistaDelivery, $dobrolapDelivery];
     }
 
     public function checkDostavistaAvaliability($dostavista)
@@ -759,11 +777,19 @@ class OrderService
     {
         /** @var DeliveryVariant $courierDelivery */
         /** @var DeliveryVariant $pickupDelivery */
-        [$courierDelivery, $pickupDelivery, $dostavistaDelivery] = $this->getDeliveryVariants();
+        [$courierDelivery, $pickupDelivery, $dostavistaDelivery, $dobrolapDelivery] = $this->getDeliveryVariants();
         $result = [
             'pickup' => $pickupDelivery,
             'courier' => $courierDelivery,
         ];
+
+        if ($dobrolapDelivery) {
+            $result['dobrolap'] = [
+                'available' => $dobrolapDelivery->getAvailable(),
+                'description' => 'Ваш заказ будет доставлен в&nbsp;выбранный Вами приют для&nbsp;бездомных животных. После оплаты заказа вы получите сюрприз и памятный магнит.',
+            ];
+        }
+
         if ($courierDelivery->getAvailable()) {
             $basketProducts = $this->apiBasketService->getBasketProducts(true);
             $orderStorage = $this->orderStorageService->getStorage();
@@ -963,6 +989,11 @@ class OrderService
                 $cartParamArray['delyveryType'] = $cartParamArray['split'] ? 'twoDeliveries' : ''; // have no clue why this param used
                 $cartParamArray['deliveryTypeId'] = $this->appDeliveryService->getDeliveryIdByCode(DeliveryService::DELIVERY_DOSTAVISTA_CODE);
                 break;
+            case self::DELIVERY_TYPE_DOBROLAP:
+                $cartParamArray['delyveryType'] = $cartParamArray['split'] ? 'twoDeliveries' : ''; // have no clue why this param used
+                $cartParamArray['deliveryTypeId'] = $this->appDeliveryService->getDeliveryIdByCode(DeliveryService::DOBROLAP_DELIVERY_CODE);
+                $cartParamArray['shelter'] = $cartParam->getShelter();
+                break;
         }
         $cartParamArray['deliveryId'] = $cartParamArray['deliveryTypeId'];
         $cartParamArray['comment1'] = $cartParamArray['comment'];
@@ -1003,13 +1034,39 @@ class OrderService
         }
         $firstOrder = $this->personalOrderService->getOrderByNumber($order->getField('ACCOUNT_NUMBER'));
 
+        $text = [];
+        if ($deliveryType == self::DELIVERY_TYPE_DOBROLAP) {
+            $href = new FullHrefDecorator('/static/build/images/content/dobrolap/dobrolap-logo.png');
+            $mainIcon = $href->getFullPublicPath();
+
+            $fantIcons = [];
+
+            for ($i = 1; $i < 7; ++$i) {
+                $href->setPath('/static/build/images/content/dobrolap/icons/dobrolap-' . $i . '.png');
+                $fantIcons[] = $href->getFullPublicPath();
+            }
+
+            $text = [
+                'title' => 'СПАСИБО ЧТО ВЫ ТВОРИТЕ ДОБРО ВМЕСТЕ С НАМИ!',
+                'titleOrder' => 'Ваш заказ №#' . $order->getField('ACCOUNT_NUMBER') . '# оформлен',
+                'description' => 'И будет доставлен в Приют' . $cartParam->getShelter(),
+                'titleThank' => 'МЫ ГОВОРИМ ВАМ СПАСИБО!',
+                'descriptionFirstThank' => 'В знак благодарности мы подготовили небольшой сюрприз фанты "Добролап" с приятными презентами',
+                'descriptionSecondThank' => 'Также мы вложим в Ваш следующий заказ подарок - памятный магнит.',
+                'titleNow' => 'А СЕЙЧАС',
+                'descriptionNow' => 'Выберите для себя один из шести сюрпризов, тапнув на любой из них.',
+                'mainIcon' => $mainIcon,
+                'fantIcons' => $fantIcons,
+            ];
+        }
+
         // активация подписки на доставку
         if($cartParam->isSubscribe()){
             $this->appOrderSubscribeService->activateSubscription($storage, $order);
         }
 
         $response = [
-            $this->toApiFormat($firstOrder)
+            $this->toApiFormat($firstOrder, null, $text)
         ];
         if ($relatedOrderId = $firstOrder->getProperty('RELATED_ORDER_ID')) {
             $response[] = $this->getOneById($relatedOrderId->getValue());
