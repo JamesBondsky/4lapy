@@ -14,6 +14,7 @@ use Bitrix\Sale\UserMessageException;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
@@ -1033,6 +1034,11 @@ class OrderService
         }
         $firstOrder = $this->personalOrderService->getOrderByNumber($order->getField('ACCOUNT_NUMBER'));
 
+        $href = new FullHrefDecorator('/static/build/images/content/dobrolap/dobrolap-logo.png');
+        $mainIcon = $href->getFullPublicPath();
+        $href->setPath('/static/build/images/content/dobrolap/dobrolap-logo@3x.png');
+        $fantIcon = $href->getFullPublicPath();
+
         $text = [];
         if ($deliveryType == self::DELIVERY_TYPE_DOBROLAP) {
             $text = [
@@ -1044,6 +1050,8 @@ class OrderService
                 'descriptionSecondThank' => 'Также мы вложим в Ваш следующий заказ подарок - памятный магнит.',
                 'titleNow' => 'А СЕЙЧАС',
                 'descriptionNow' => 'Выберите для себя один из шести сюрпризов, тапнув на любой из них.',
+                'mainIcon' => $mainIcon,
+                'fantIcon' => $fantIcon,
             ];
         }
 
