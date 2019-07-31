@@ -820,7 +820,9 @@ class OrderService
 
             // подписка на доставку
             $result['subscribeFrequencies'] = $this->getSubscribeFrequencies();
-            $result['pickupRanges'] = $this->getPickupRanges($pickup, $basketProducts);
+            if($pickup){
+                $result['pickupRanges'] = $this->getPickupRanges($pickup, $basketProducts);
+            }
         }
         return [
             'cartDelivery' => $result

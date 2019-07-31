@@ -1,4 +1,4 @@
-# 4 лапы
+﻿# 4 лапы
 
 ## Отключение почты:
 
@@ -33,6 +33,7 @@ https://api.esv2.com - валидный адрес
 - ./bin/symfony_console r:c callback_set   # обработка очереди отправки сообщений о запросе обратного звонка на АТС
 - ./bin/symfony_console r:c manzana_referral_add   # обработка очереди передачи рефералов в ML
 - ./bin/symfony_console r:c manzana_orders_import # обработка очереди запроса заказов пользователей в ML
+- ./bin/symfony_console r:c import_offers # обработка очереди импорта промокодов
 ```
 
 ## Перезапуск консьюмеров манзаны по расписанию

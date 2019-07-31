@@ -11,6 +11,9 @@ use CUserFieldEnum;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\External\Import\Model\ImportOffer;
+use JMS\Serializer\Serializer;
+use JMS\Serializer\SerializerInterface;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\PersonalBundle\Service\OrderService as PersonalOrderService;
 use FourPaws\SaleBundle\Exception\NotFoundException;
@@ -45,6 +48,7 @@ class PersonalOffersService
     protected $personalCouponManager;
     /** @var DataManager */
     protected $personalCouponUsersManager;
+    protected $serializer;
 
     /**
      * @var PersonalOrderService
@@ -68,6 +72,7 @@ class PersonalOffersService
         $container = App::getInstance()->getContainer();
         $this->personalCouponManager = $container->get('bx.hlblock.personalcoupon');
         $this->personalCouponUsersManager = $container->get('bx.hlblock.personalcouponusers');
+        $this->serializer = $container->get(SerializerInterface::class);
         $this->orderService = $orderService;
         $this->personalOrderService = $personalOrderService;
     }
@@ -173,6 +178,7 @@ class PersonalOffersService
             false,
             [
                 'ID',
+                'NAME',
                 'PROPERTY_DISCOUNT',
                 'PROPERTY_DISCOUNT_CURRENCY',
                 'PREVIEW_TEXT',
@@ -212,11 +218,12 @@ class PersonalOffersService
     /**
      * @param int $offerId
      * @param array $coupons
-     *
+     * @param string|null $activeFrom
+     * @param string|null $activeTo
      * @throws InvalidArgumentException
      * @throws \Bitrix\Main\ObjectException
      */
-    public function importOffers(int $offerId, array $coupons): void
+    public function importOffers(int $offerId, array $coupons, ?string $activeFrom = '', ?string $activeTo = ''): void
     {
         if ($offerId <= 0)
         {
@@ -225,26 +232,20 @@ class PersonalOffersService
 
         $promoCodes = array_keys($coupons);
         $promoCodes = array_filter(array_map('trim', $promoCodes));
-        foreach ($promoCodes as $promoCode)
-        {
-            $couponId = $this->personalCouponManager::add([
-                'UF_PROMO_CODE' => $promoCode,
-                'UF_OFFER' => $offerId,
-                'UF_DATE_CREATED' => new DateTime(),
-                'UF_DATE_CHANGED' => new DateTime(),
-            ])->getId();
 
-            $userIds = $coupons[$promoCode];
-            foreach ($userIds as $userId)
-            {
-                $this->personalCouponUsersManager::add([
-                    'UF_USER_ID' => $userId,
-                    'UF_COUPON' => $couponId,
-                    'UF_DATE_CREATED' => new DateTime(),
-                    'UF_DATE_CHANGED' => new DateTime(),
-                ]);
-            }
-            unset($couponId);
+        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.import_offers_producer');
+
+        foreach ($coupons as $coupon => $couponUsers) {
+            $importOffer = new ImportOffer();
+            $importOffer->dateChanged = new DateTime();
+            $importOffer->dateCreate = new DateTime();
+            $importOffer->offerId = $offerId;
+            $importOffer->promoCode = $coupon;
+            $importOffer->users = array_values($couponUsers);
+            $importOffer->activeFrom = $activeFrom;
+            $importOffer->activeTo = $activeTo;
+
+            $producer->publish($this->serializer->serialize($importOffer, 'json'));
         }
     }
 
@@ -315,6 +316,59 @@ class PersonalOffersService
         }
 
         return false;
+    }
+
+    public function getOfferFieldsByCouponId(int $couponId): ArrayCollection
+    {
+        if (!$couponId)
+        {
+            throw new InvalidArgumentException('can\'t get offer by promo code. Got empty promo code');
+        }
+        if (!Loader::includeModule('iblock')) {
+            throw new SystemException('Module iblock is not installed');
+        }
+
+        $offerId = $this->personalCouponManager::query()
+            ->setSelect([
+                'ID',
+                'UF_OFFER',
+            ])
+            ->setFilter([
+                '=ID' => $couponId,
+            ])
+            ->exec()
+            ->fetch()['UF_OFFER'];
+        $offer = [];
+        if ($offerId)
+        {
+            $rsOffers = \CIBlockElement::GetList(
+                [
+                    'DATE_ACTIVE_TO' => 'asc,nulls'
+                ],
+                [
+                    '=IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::PERSONAL_OFFERS),
+                    '=ID' => $offerId,
+                ],
+                false,
+                ['nTopCount' => 1],
+                [
+                    'ID',
+                    'PREVIEW_TEXT',
+                    'DATE_ACTIVE_TO',
+                    'PROPERTY_DISCOUNT',
+                    'PROPERTY_NO_USED_STATUS',
+                ]
+            );
+            if ($res = $rsOffers->GetNext())
+            {
+                if (is_array($res))
+                {
+                    $offer = $res;
+                }
+            }
+        }
+
+        return new ArrayCollection($offer);
     }
 
     /**
