@@ -328,11 +328,11 @@ AOS.init({
 
 	//--закидываем пользователя наверх, если он нажал кнопку внизу
 
-    var scrollTop = $('#fanreg').offset().top;
-	
-	$('#thanks .btn-primary-filled').click(function(){
-		$(document).scrollTop(scrollTop);	
-	})
+    // var scrollTop = $('#fanreg').offset().top;
+	//
+	// $('#thanks .btn-primary-filled').click(function(){
+	// 	$(document).scrollTop(scrollTop);
+	// })
 
 	
 	//--работа со всплывающим окном приютов
