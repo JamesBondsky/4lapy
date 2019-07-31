@@ -636,6 +636,8 @@ class ExpertsenderService implements LoggerAwareInterface
                 // онлайн-оплата
                 if (!$royalCaninAction) {
                     $transactionId = self::NEW_ORDER_PAY_LIST_ID;
+                } elseif ($orderService->getOrderDeliveryCode($order) === DeliveryService::DOBROLAP_DELIVERY_CODE) {
+                    $transactionId = self::COMPLETE_ORDER_DOBROLAP_LIST_ID;
                 } else {
                     $transactionId = self::NEW_ORDER_PAY_LIST_ID_ROYAL_CANIN;
                 }
@@ -744,17 +746,6 @@ class ExpertsenderService implements LoggerAwareInterface
         ];
 
         $transactionId = self::COMPLETE_ORDER_LIST_ID;
-
-        if ($orderService->getOrderDeliveryCode($order) == 'dobrolap_delivery') {
-            $transactionId = self::COMPLETE_ORDER_DOBROLAP_LIST_ID;
-
-            if (!$items = $this->getAltProductsItemsByBasket($order->getBasket())) {
-                throw new ExpertsenderBasketEmptyException('basket is empty');
-            }
-
-            $items = '<Products>' . implode('', $items) . '</Products>';
-            $snippets[] = new Snippet('alt_products', $items, true);
-        }
 
         $this->log()->info(
             __FUNCTION__,
