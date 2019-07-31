@@ -28,12 +28,14 @@ $(function(){
                         "июля", "августа", "сентября", "октября", "ноября", "декабря"
                     ];
                     var resultDate = new Date();
-                    console.log(resultDate, resultDate.getDate(), resultDate.getDay(), 8 - resultDate.getDay());
                     var daysToAdd = (8 - resultDate.getDay()) % 7;
                     if (daysToAdd == 0) {
                         daysToAdd = 7;
                     }
-                    resultDate.setDate(resultDate.getDate() + daysToAdd); //TODO if 5 августа, то плюс неделя
+                    resultDate.setDate(resultDate.getDate() + daysToAdd);
+                    if (resultDate < new Date('2019-08-12')) {
+                        resultDate = new Date('2019-08-12');
+                    }
                     var resultDateFormatted = resultDate.getDate() + ' ' + monthNames[resultDate.getMonth()];
                     $('#fanreg .row').html('<div class="col-md-12 heading-section text-center">' +
                             '<h2 class="">Спасибо, что присоединились<br />к команде ДОБРОЛАП!</h2>' +
