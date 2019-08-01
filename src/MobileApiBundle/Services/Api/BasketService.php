@@ -33,7 +33,7 @@ use FourPaws\UserBundle\Service\UserService as AppUserService;
 
 class BasketService
 {
-    const GIFT_DOBROLAP_XML_ID = '3006635';
+    const GIFT_DOBROLAP_XML_ID = '3006635'; //FIXME вынести в SaleBundle
 
     /**
      * @var AppBasketService

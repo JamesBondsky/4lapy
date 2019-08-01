@@ -59,7 +59,7 @@ use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
  */
 class BasketComponent extends CBitrixComponent
 {
-    const GIFT_DOBROLAP_XML_ID = '3006635';
+    const GIFT_DOBROLAP_XML_ID = '3006635'; //FIXME вынести в SaleBundle
 
     /**
      * @var BasketService
