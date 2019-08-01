@@ -59,7 +59,7 @@ use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
  */
 class BasketComponent extends CBitrixComponent
 {
-    const GIFT_DOBROLAP_XML_ID = '3006635';
+    const GIFT_DOBROLAP_XML_ID = '3006635'; //FIXME вынести в SaleBundle
 
     /**
      * @var BasketService
@@ -193,8 +193,8 @@ class BasketComponent extends CBitrixComponent
             true
         );
 
-        /** если авторизирован добавляем магнит и товаров в корзине > 0*/
-        if ($user && count($basket->getOrderableItems()) > 0) {
+        /** если авторизирован добавляем магнит */
+        if ($user) { // костыль, если магнитик не добавился сразу после оплаты исходного заказа)
             $needAddDobrolapMagnet = $user->getGiftDobrolap();
             /** Если пользователю должны магнит */
             if ($needAddDobrolapMagnet == BaseEntity::BITRIX_TRUE || $needAddDobrolapMagnet == true || $needAddDobrolapMagnet == 1) {

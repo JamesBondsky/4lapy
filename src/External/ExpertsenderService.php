@@ -125,7 +125,7 @@ class ExpertsenderService implements LoggerAwareInterface
     public const NEW_CHECK_REG_LIST_ID = 8906;
     public const CHANGE_BONUS_CARD = 8026;
     public const PIGGY_BANK_SEND_EMAIL = 9006;
-    public const PERSONAL_OFFER_COUPON_SEND_EMAIL = 9234;
+    public const PERSONAL_OFFER_COUPON_SEND_EMAIL = 9607;
     public const GRANDIN_NEW_CHECK_REG_LIST_ID = 8906;
     public const ROYAL_CANIN_NEW_CHECK_REG_LIST_ID = 9195;
     public const FESTIVAL_NEW_USER_REG_LIST_ID = 9233;
