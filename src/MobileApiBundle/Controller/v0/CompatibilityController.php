@@ -42,6 +42,8 @@ class CompatibilityController extends BaseController
                     'blocked' => true,
                     'blockedTitle' => 'Версия не поддерживается!',
                     'blockedMessage' => 'К сожалению, эта версия приложения устарела и больше не поддерживается. Пожалуйста, установите последнюю версию приложения.',
+                    'updateUrliOS' => 'https://apps.apple.com/ru/app/id1222315361?mt=8',
+                    'updateUrlAndroid' => 'https://play.google.com/store/apps/details?id=com.appteka.lapy',
                 ]
             );
     }
