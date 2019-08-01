@@ -31,9 +31,9 @@ class ImportOffer
 
     /**
      * @Type("array")
-     * @SerializedName("users")
+     * @SerializedName("user")
      */
-    public $users;
+    public $user;
 
     /**
      * @Type("string")

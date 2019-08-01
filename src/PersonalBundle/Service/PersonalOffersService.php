@@ -197,7 +197,7 @@ class PersonalOffersService
      * @throws InvalidArgumentException
      * @throws \Bitrix\Main\ObjectException
      */
-    public function importOffers(int $offerId, array $coupons, ?string $activeFrom = '', ?string $activeTo = ''): void
+    public function importOffersAsync(int $offerId, array $coupons, ?string $activeFrom = '', ?string $activeTo = ''): void
     {
         if ($offerId <= 0)
         {
@@ -213,12 +213,51 @@ class PersonalOffersService
                 $importOffer->dateCreate = new DateTime();
                 $importOffer->offerId = $offerId;
                 $importOffer->promoCode = $coupon;
-                $importOffer->users = [$couponUser];
+                $importOffer->user = $couponUser;
                 $importOffer->activeFrom = $activeFrom;
                 $importOffer->activeTo = $activeTo;
 
                 $producer->publish($this->serializer->serialize($importOffer, 'json'));
             }
+        }
+    }
+
+    /**
+     * @param int $offerId
+     * @param array $coupons
+     *
+     * @throws InvalidArgumentException
+     * @throws \Bitrix\Main\ObjectException
+     */
+    public function importOffers(int $offerId, array $coupons): void
+    {
+        if ($offerId <= 0)
+        {
+            throw new InvalidArgumentException('can\'t import personal offer\'s coupons. offerId: ' . $offerId);
+        }
+
+        $promoCodes = array_keys($coupons);
+        $promoCodes = array_filter(array_map('trim', $promoCodes));
+        foreach ($promoCodes as $promoCode)
+        {
+            $couponId = $this->personalCouponManager::add([
+                'UF_PROMO_CODE' => $promoCode,
+                'UF_OFFER' => $offerId,
+                'UF_DATE_CREATED' => new DateTime(),
+                'UF_DATE_CHANGED' => new DateTime(),
+            ])->getId();
+
+            $userIds = $coupons[$promoCode];
+            foreach ($userIds as $userId)
+            {
+                $this->personalCouponUsersManager::add([
+                    'UF_USER_ID' => $userId,
+                    'UF_COUPON' => $couponId,
+                    'UF_DATE_CREATED' => new DateTime(),
+                    'UF_DATE_CHANGED' => new DateTime(),
+                ]);
+            }
+            unset($couponId);
         }
     }
 
