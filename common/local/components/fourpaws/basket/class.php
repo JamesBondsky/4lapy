@@ -194,7 +194,7 @@ class BasketComponent extends CBitrixComponent
         );
 
         /** если авторизирован добавляем магнит */
-        if ($user) {
+        if ($user) { // костыль, если магнитик не добавился сразу после оплаты исходного заказа)
             $needAddDobrolapMagnet = $user->getGiftDobrolap();
             /** Если пользователю должны магнит */
             if ($needAddDobrolapMagnet == BaseEntity::BITRIX_TRUE || $needAddDobrolapMagnet == true || $needAddDobrolapMagnet == 1) {
