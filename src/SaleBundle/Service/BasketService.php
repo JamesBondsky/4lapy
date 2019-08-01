@@ -197,6 +197,7 @@ class BasketService implements LoggerAwareInterface
 
     /**
      * @param int $basketId
+     * @param array|null $excludeXmlIds
      *
      * @throws ArgumentNullException
      * @throws ArgumentException
@@ -208,7 +209,7 @@ class BasketService implements LoggerAwareInterface
      *
      * @return bool
      */
-    public function deleteOfferFromBasket(int $basketId): bool
+    public function deleteOfferFromBasket(int $basketId, ?array $excludeXmlIds = []): bool
     {
         if ($basketId < 1) {
             throw new InvalidArgumentException('Wrong $basketId');
@@ -220,29 +221,35 @@ class BasketService implements LoggerAwareInterface
             throw new NotFoundException('Не найден элемент корзины');
         }
 
-        $result = $basketItem->delete();
+        if ($excludeXmlIds
+            && ($skuXmlId = explode('#', $basketItem->getField('PRODUCT_XML_ID'))[1])
+            && in_array($skuXmlId, $excludeXmlIds, true)) {
+            return true;
+        } else {
+            $result = $basketItem->delete();
 
-        if (!$result->isSuccess()) {
-            // проверяем не специально ли было запорото
-            $found = false;
-            foreach ($result->getErrors() as $error) {
-                if ($error->getCode() === 'SALE_EVENT_ON_BEFORE_SALEORDER_FINAL_ACTION_ERROR') {
-                    $found = true;
+            if (!$result->isSuccess()) {
+                // проверяем не специально ли было запорото
+                $found = false;
+                foreach ($result->getErrors() as $error) {
+                    if ($error->getCode() === 'SALE_EVENT_ON_BEFORE_SALEORDER_FINAL_ACTION_ERROR') {
+                        $found = true;
+                    }
+                }
+
+                if (!$found) {
+                    throw new BitrixProxyException($result);
                 }
             }
 
-            if (!$found) {
-                throw new BitrixProxyException($result);
+            $res = BasketTable::deleteWithItems($basketItem->getId())->isSuccess();
+            if ($res) {
+                //всегда перегружаем из-за подарков
+                $this->setBasketIds();
             }
-        }
 
-        $res = BasketTable::deleteWithItems($basketItem->getId())->isSuccess();
-        if ($res) {
-            //всегда перегружаем из-за подарков
-            $this->setBasketIds();
+            return $res;
         }
-
-        return $res;
     }
 
     /**
