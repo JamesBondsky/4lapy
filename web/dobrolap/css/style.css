@@ -9973,12 +9973,30 @@ h5 {
     padding: 4em 0 0 0 !important;
 }
 
-#how_get .rule_number, #how_get .rule_icon, #how_get .rule_note {
-  float: left;
+#how_get .rule_wrap {
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  -webkit-flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  flex-wrap: nowrap;
+  -webkit-justify-content: flex-start;
+  -ms-flex-pack: start;
+  justify-content: flex-start;
+  -webkit-align-content: flex-start;
+  -ms-flex-line-pack: start;
+  align-content: flex-start;
+  -webkit-align-items: flex-start;
+  -ms-flex-align: start;
+  align-items: flex-start;
+  clear: both;
 }
 
-#how_get .rule_wrap {
-  clear: both;
+#how_get .rule_icon {
+  width: 189px;
 }
 
 #how_get .rule_number {
@@ -9992,6 +10010,7 @@ h5 {
 }
 
 #how_get .rule_note {
+  flex: 1;
   color: #0f6198;
   padding: 50px 0px 0 20px;
   font-size: 12px;
@@ -10035,6 +10054,11 @@ h4.subheader {
 
 #thanks p {
   text-align: left;
+}
+
+#thanks .thanks__btns {
+  text-align: left;
+  margin-bottom: 1rem;
 }
 
 #little, #photos, #fanreg {
@@ -10198,7 +10222,7 @@ body .b-page-wrapper.no-scroll {
   font-size: 18px; 
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   h5 {
     font-size: 0.8rem;
     line-height: 20px;
@@ -10425,7 +10449,7 @@ body .b-page-wrapper.no-scroll {
 
   h4.subheader {
     text-align: center;
-  }.
+  }
 
   .white-col {
     padding: 30px 10px 0;
@@ -10441,11 +10465,6 @@ body .b-page-wrapper.no-scroll {
     left: 10px;
   }
 
-  #thanks .col-md-3:nth-child(2)>.col-md-12:nth-child(1) img {
-    position: relative;
-    top: 26px;
-  }
-
   #thanks .col-md-3, #thanks .col-md-12 {
     padding-left: 15px;
     padding-right: 15px;
@@ -10456,16 +10475,16 @@ body .b-page-wrapper.no-scroll {
   }
 
   #thanks .rule_icon img {
-    max-width: none;
-    width: 200px !important;
-    height: 200px;
+    width: 200px;
+    height: auto;
   }
 
   #thanks .rule_wrap {
     margin-left: -45px;
+    margin-right: -21px;
   }
 
-  #thanks .btn-primary-filled {
+  #thanks .thanks__btns .btn {
     margin-bottom: 20px;
   }
 
@@ -10506,11 +10525,16 @@ body .b-page-wrapper.no-scroll {
     top: -6px;
   }
 
+  #little .col-md-6:nth-child(2) .col-md-12 {
+    position: relative;
+    bottom: auto;
+  }
+  #little  .little__description {
+    margin-bottom: 2em;
+  }
 }
 
-
-
-@media (min-width: 768px) and (max-width: 1024px) {
+@media (min-width: 768px) and (max-width: 1023px) {
   .ftco-navbar-light .navbar-nav > .nav-item > .nav-link {
     padding-left: 8px;
     padding-right: 8px;
@@ -10577,6 +10601,20 @@ body .b-page-wrapper.no-scroll {
   #thanks .col-md-3, #thanks .col-md-12 {
     padding-left: 5px;
     padding-right: 5px;
+  }
+
+  #thanks .thanks__btns .btn{
+    margin-bottom: 1rem;
+  }
+
+  #how_get .rule_wrap {
+    -webkit-flex-wrap: wrap;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+  }
+
+  #how_get .rule_note {
+    width: 100%;
   }
 }
 
