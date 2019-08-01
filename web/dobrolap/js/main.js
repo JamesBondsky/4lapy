@@ -134,7 +134,7 @@ AOS.init({
 
 
 	$('#dropdown04').on('show.bs.dropdown', function () {
-	  console.log('show');
+	  //console.log('show');
 	});
 
 	// scroll
@@ -195,7 +195,7 @@ AOS.init({
 							$('.number').each(function(){
 								var $this = $(this),
 									num = $this.data('number');
-									console.log(num);
+									//console.log(num);
 								$this.animateNumber(
 								  {
 								    number: num,
@@ -297,10 +297,10 @@ AOS.init({
 			$(this).addClass('see_more');
 		}
 		var scrollTop = $('#shelter').offset().top;
-		console.log('position is' + scrollTop);
+		//console.log('position is' + scrollTop);
 		if ($(this).hasClass('see_more')) {
 			$(document).scrollTop(scrollTop);	
-			console.log('position is' + scrollTop);
+			//console.log('position is' + scrollTop);
 		}
 		return false;
 	});
