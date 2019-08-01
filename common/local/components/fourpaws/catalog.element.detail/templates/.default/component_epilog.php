@@ -58,8 +58,6 @@ if ($currentOffer->isShare()) {
         </p>
         <?php
         $shareContent = ob_get_contents();
-        //$shareContent = str_replace(chr(13),'',$shareContent);
-        //$shareContent = str_replace(chr(10),'',$shareContent);
         ob_end_clean();
     }
 }

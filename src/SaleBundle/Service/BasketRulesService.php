@@ -98,7 +98,17 @@ class BasketRulesService
             ->withTime(3600*24*356)
             ->resultOf(function () {
                 $arDiscounts = [];
-                $dbres = \CIBlockElement::GetList([], ['IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES),  '!PROPERTY_REGION' => false], false, false, ['ID', 'XML_ID', 'NAME', 'PROPERTY_REGION', 'PROPERTY_BASKET_RULES']);
+                $dbres = \CIBlockElement::GetList([],
+                    [
+                        'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::SHARES),
+                        'ACTIVE' => 'Y',
+                        'ACTIVE_DATE' => 'Y',
+                        '!PROPERTY_REGION' => false
+                    ],
+                    false,
+                    false,
+                    ['ID', 'XML_ID', 'NAME', 'PROPERTY_REGION', 'PROPERTY_BASKET_RULES']
+                );
                 while($row = $dbres->fetch()){
                     foreach ($row['PROPERTY_BASKET_RULES_VALUE'] as $discountId){
                         $arDiscounts[$discountId] = $row['PROPERTY_REGION_VALUE'];
