@@ -1,8 +1,8 @@
 <div class="b-promo-top-full b-promo-top-full--dobrolap js-promo-top-full hide">
     <div class="b-promo-top-full__container">
         <img src="/static/build/images/inhtml/logo-banner-dobrolap.png" class="b-promo-top-full__img">
-        <div class="b-promo-top-full__hashtag">#<span>добро</span>лап</div>
-        <div class="b-promo-top-full__title">давайте творить добро вместе</div>
+        <div class="b-promo-top-full__hashtag"></div>
+        <div class="b-promo-top-full__title"></div>
         <a href="" class="b-promo-top-full__btn">хочу помочь</a>
         <div class="b-promo-top-full__close js-close-promo-top-full"></div>
         <div class="b-promo-top-full__butterfly-left"></div>
