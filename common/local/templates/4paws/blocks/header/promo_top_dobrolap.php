@@ -5,7 +5,7 @@
             <div class="b-promo-top-full__hashtag"></div>
             <div class="b-promo-top-full__descr"></div>
         </div>
-        <a href="" class="b-promo-top-full__btn">хочу помочь</a>
+        <a href="/dobrolap/" class="b-promo-top-full__btn">хочу помочь</a>
         <div class="b-promo-top-full__close js-close-promo-top-full"></div>
         <div class="b-promo-top-full__circle-left"></div>
         <div class="b-promo-top-full__circle-right"></div>
