@@ -193,8 +193,8 @@ class BasketComponent extends CBitrixComponent
             true
         );
 
-        /** если авторизирован добавляем магнит и товаров в корзине > 0*/
-        if ($user && count($basket->getOrderableItems()) > 0) {
+        /** если авторизирован добавляем магнит */
+        if ($user) {
             $needAddDobrolapMagnet = $user->getGiftDobrolap();
             /** Если пользователю должны магнит */
             if ($needAddDobrolapMagnet == BaseEntity::BITRIX_TRUE || $needAddDobrolapMagnet == true || $needAddDobrolapMagnet == 1) {
