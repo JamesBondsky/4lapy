@@ -421,10 +421,10 @@ class Order
      * Признак нерегулярной поставки
      *
      * @Serializer\XmlAttribute()
-     * @Serializer\Type("sap_bool")
+     * @Serializer\Type("string")
      * @Serializer\SerializedName("FastDeliv")
      *
-     * @var bool
+     * @var string
      */
     protected $FastDeliv = false;
 
@@ -1029,19 +1029,19 @@ class Order
     }
 
     /**
-     * @param bool $FastDeliv
+     * @param string $FastDeliv
      * @return Order
      */
-    public function setFastDeliv(bool $FastDeliv): Order
+    public function setFastDeliv(string $FastDeliv): Order
     {
         $this->FastDeliv = $FastDeliv;
         return $this;
     }
 
     /**
-     * @return bool
+     * @return string
      */
-    public function isFastDeliv(): bool
+    public function getFastDeliv(): string
     {
         return $this->FastDeliv;
     }

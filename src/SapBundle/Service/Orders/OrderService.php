@@ -45,6 +45,7 @@ use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Enum\OrderPayment;
+use FourPaws\SaleBundle\Repository\Table\AnimalShelterTable;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SapBundle\Dto\Base\Orders\DeliveryAddress;
 use FourPaws\SapBundle\Dto\In\Orders\Order as OrderDtoIn;
@@ -273,6 +274,11 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ]
         )) ?: '';
 
+        $deliveryTypeCode = $this->getDeliveryCode($order);
+        if ($deliveryTypeCode == DeliveryService::INNER_DELIVERY_CODE || $deliveryTypeCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
+            $this->populateOrderDtoUserCoords($orderDto, $order);
+        }
+
         $orderDto
             ->setId($order->getField('ACCOUNT_NUMBER'))
             ->setDateInsert(DateHelper::convertToDateTime($order->getDateInsert()
@@ -291,8 +297,15 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             ->setOrderSource($orderSource)
             ->setBonusCard($this->getPropertyValueByCode($order, 'DISCOUNT_CARD'))
             ->setAvatarEmail($this->getPropertyValueByCode($order, 'OPERATOR_EMAIL'))
-            ->setAvatarDepartment($this->getPropertyValueByCode($order, 'OPERATOR_SHOP'))
-            ->setFastDeliv($this->isFastDelivery($this->getPropertyValueByCode($order, 'SCHEDULE_REGULARITY')));
+            ->setAvatarDepartment($this->getPropertyValueByCode($order, 'OPERATOR_SHOP'));
+
+        if ($this->deliveryService->isDobrolapDeliveryCode($deliveryTypeCode)) {
+            $orderDto->setFastDeliv('P');
+        } else {
+            $isFastDeliv = $this->isFastDelivery($this->getPropertyValueByCode($order, 'SCHEDULE_REGULARITY'));
+            $orderDto->setFastDeliv($isFastDeliv ? 'X' : '');
+        }
+
 
         if (Env::isStage()) {
             $orderDto
@@ -305,11 +318,6 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $this->populateOrderDtoDelivery($orderDto, $order);
         $this->populateOrderDtoProducts($orderDto, $order);
         $this->populateOrderDtoCouponNumber($orderDto, $order);
-
-        $deliveryTypeCode = $this->getDeliveryCode($order);
-        if ($deliveryTypeCode == DeliveryService::INNER_DELIVERY_CODE || $deliveryTypeCode == DeliveryService::DELIVERY_DOSTAVISTA_CODE) {
-            $this->populateOrderDtoUserCoords($orderDto, $order);
-        }
 
         $xml = $this->serializer->serialize($orderDto, 'xml');
 
@@ -498,7 +506,17 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             $this->getPropertyValueByCode($order, 'DELIVERY_DATE')
         );
 
-        $deliveryAddress = $this->getDeliveryAddress($order);
+        if ($this->deliveryService->isDobrolapDeliveryCode($this->getDeliveryCode($order))) {
+            $deliveryAddress = new OutDeliveryAddress();
+            $shelterBarcode = $this->getPropertyValueByCode($order, 'DOBROLAP_SHELTER');
+            $shelter = AnimalShelterTable::getByBarcode($shelterBarcode);
+            if ($shelter) {
+                $deliveryAddress->setCityName($shelter['city']);
+                $deliveryAddress->setStreetName($shelter['name']);
+            }
+        } else {
+            $deliveryAddress = $this->getDeliveryAddress($order);
+        }
 
         $orderDto
             ->setCommunicationType($this->getPropertyValueByCode($order, 'COM_WAY'))
@@ -725,6 +743,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 break;
             case DeliveryService::DELIVERY_DOSTAVISTA_CODE:
                 return SapOrder::DELIVERY_TYPE_DOSTAVISTA;
+                break;
+            case DeliveryService::DOBROLAP_DELIVERY_CODE:
+                return SapOrder::DELIVERY_TYPE_COURIER_RC;
                 break;
             default:
                 switch ($deliveryZone) {

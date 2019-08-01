@@ -72,4 +72,30 @@ class PersonalOffersController extends BaseController
 
         return $response;
     }
+
+    /**
+     * @Annotations\Post("/bind_unreserved_dobrolap_coupon/")
+     * @Annotations\View()
+     * @param Request $request
+     *
+     * @return Response
+     */
+    public function bindUnreservedDobrolapCouponAction(Request $request): Response
+    {
+        $orderID = $request->get('order_id');
+        $response = new Response();
+
+        $data = $this->apiPersonalOffersService->bindUnreservedDobrolapCoupon($orderID ?: '');
+        if ($data['success']) {
+            $response->setData($data['data']);
+            if($data['message']){
+                $response->addError(new Error(0, $data['message']));
+            }
+        } else {
+            $response->setData([]);
+            $response->addError(new Error(0, $data['message']));
+        }
+
+        return $response;
+    }
 }

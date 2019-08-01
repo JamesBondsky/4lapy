@@ -7,6 +7,7 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
@@ -29,6 +30,7 @@ use FourPaws\External\Exception\ExpertsenderServiceBlackListException;
 use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\ExpertSender\Dto\ForgotBasket;
 use FourPaws\External\ExpertSender\Dto\PetBirthDay;
+use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Entity\Pet;
@@ -37,6 +39,7 @@ use FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Dto\Fiscalization\Item;
+use FourPaws\SaleBundle\Repository\Table\AnimalShelterTable;
 use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\PaymentService;
@@ -129,6 +132,7 @@ class ExpertsenderService implements LoggerAwareInterface
     public const MEALFEEL_NEW_CHECK_REG_LIST_ID = 8919;
     public const PERSONAL_OFFER_COUPON_START_SEND_EMAIL = 9607;
     public const PERSONAL_OFFER_COUPON_END_SEND_EMAIL = 9608;
+    public const COMPLETE_ORDER_DOBROLAP_LIST_ID = 9609;
     /**
      * BirthDay mail ids
      */
@@ -633,7 +637,14 @@ class ExpertsenderService implements LoggerAwareInterface
             // зарегистрированный пользователь
             if ($isOnlinePayment) {
                 // онлайн-оплата
-                if (!$royalCaninAction) {
+                if ($orderService->getOrderDeliveryCode($order) === DeliveryService::DOBROLAP_DELIVERY_CODE) {
+                    $transactionId = self::COMPLETE_ORDER_DOBROLAP_LIST_ID;
+                    $shelterBarcode = $this->getPropertyValueByCode($order, 'DOBROLAP_SHELTER');
+                    $shelter = AnimalShelterTable::getByBarcode($shelterBarcode);
+                    if ($shelter) {
+                        $snippets[] = new Snippet('delivery_address', $shelter['name'] . ', ' . $shelter['city']);
+                    }
+                } elseif (!$royalCaninAction) {
                     $transactionId = self::NEW_ORDER_PAY_LIST_ID;
                 } else {
                     $transactionId = self::NEW_ORDER_PAY_LIST_ID_ROYAL_CANIN;
@@ -884,7 +895,7 @@ class ExpertsenderService implements LoggerAwareInterface
      * @throws \InvalidArgumentException
      * @throws ExpertSenderOfferNotFoundException
      */
-    protected function getAltProductsItemsByBasket(Basket $basket): array
+    protected function getAltProductsItemsByBasket(?Basket $basket): array
     {
         $items = [];
         /** @var BasketItem $basketItem */
@@ -1536,5 +1547,22 @@ class ExpertsenderService implements LoggerAwareInterface
         }
 
         return false;
+    }
+
+    /**
+     * @param Order  $order
+     * @param string $code
+     *
+     * @return string
+     */
+    public function getPropertyValueByCode(Order $order, string $code): string
+    {
+        try {
+            $propertyValue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), $code);
+        } catch (ArgumentException $e) {
+        } catch (NotImplementedException $e) {
+        }
+
+        return (isset($propertyValue) && $propertyValue) ? ($propertyValue->getValue() ?? '') : '';
     }
 }

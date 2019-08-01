@@ -35,13 +35,13 @@ class CompatibilityController extends BaseController
      */
     public function checkCompatibilityAction(CompatibilityRequest $compatibilityRequest): ApiResponse
     {
+        // Метод вызывается только в старом приложении, поэтому теперь всегда возвращаем blocked
         return (new ApiResponse())
             ->setData(
                 [
-                    'blocked' => $this->apiCompatibilityService->isBlocked(
-                        $compatibilityRequest->getOsType(),
-                        $compatibilityRequest->getBuildVersion()
-                    )
+                    'blocked' => true,
+                    'blockedTitle' => 'Версия не поддерживается!',
+                    'blockedMessage' => 'К сожалению, эта версия приложения устарела и больше не поддерживается. Пожалуйста, установите последнюю версию приложения.',
                 ]
             );
     }
