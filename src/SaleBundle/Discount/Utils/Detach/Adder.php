@@ -10,6 +10,7 @@
 
 namespace FourPaws\SaleBundle\Discount\Utils\Detach;
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use FourPaws\App\Application as App;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\LoaderException;
@@ -17,7 +18,10 @@ use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\BasketItem;
 use Exception;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\BxCollection;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\SaleBundle\Discount\Utils\AdderInterface;
 use FourPaws\SaleBundle\Discount\Utils\BaseDiscountPostHandler;
@@ -25,8 +29,10 @@ use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\RuntimeException;
 use FourPaws\SaleBundle\Helper\PriceHelper;
+use FourPaws\SaleBundle\Service\BasketRulesService;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
+use WebArch\BitrixCache\BitrixCache;
 
 /**
  * Class Adder
@@ -35,6 +41,9 @@ use FourPaws\SaleBundle\Service\OrderStorageService;
 class Adder extends BaseDiscountPostHandler implements AdderInterface
 {
     public static $skippedDiscountsFakeIds = [];
+
+    public static $regionalDiscounts = [];
+
     /**
      * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\ArgumentException
@@ -61,7 +70,9 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
         $this->applySimpleDiscounts();
 
         $applyResult = $discountBase->getApplyResult(true);
-        $lowDiscounts = $this->getLowDiscounts($applyResult['RESULT']['BASKET']);
+        $skippedDiscounts = $this->getLowDiscounts($applyResult['RESULT']['BASKET']);
+
+        $this->addRegionSkippedDiscounts($applyResult['DISCOUNT_LIST'], $skippedDiscounts);
 
         if (is_iterable($applyResult['RESULT']['BASKET'])) {
             foreach ($applyResult['RESULT']['BASKET'] as $basketCode => $discounts) {
@@ -73,7 +84,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                             && isset($params['discountType'])
                             && $params['discountType'] === 'DETACH'
                         ) {
-                            if (\in_array((int)$discount['DISCOUNT_ID'], $lowDiscounts, true)) {
+                            if (\in_array((int)$discount['DISCOUNT_ID'], $skippedDiscounts, true)) {
                                 continue;
                             }
 
@@ -258,6 +269,28 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
         }
         self::setSkippedDiscountsFakeIds($result);
         return $result;
+    }
+
+    /**
+     * @param array $discountList
+     * @param array $skippedDiscounts
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    protected function addRegionSkippedDiscounts(array $discountList, array &$skippedDiscounts)
+    {
+        /** @var LocationService $locationService */
+        $locationService = App::getInstance()->getContainer()->get('location.service');
+        $regionCode = $locationService->getCurrentRegionCode();
+        /** @var BasketRulesService $BasketRulesService */
+        $basketRulesService = App::getInstance()->getContainer()->get(BasketRulesService::class);
+        $regionalDiscounts = $basketRulesService->getRegionalDiscounts();
+
+        foreach($discountList as $discount){
+            if(!empty($regionalDiscounts[$discount['REAL_DISCOUNT_ID']]) && !in_array($regionCode, $regionalDiscounts[$discount['REAL_DISCOUNT_ID']])){
+                $skippedDiscounts[] = $discount['ID'];
+            }
+        }
     }
 
     /**

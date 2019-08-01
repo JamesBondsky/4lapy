@@ -499,6 +499,11 @@ class Offer extends IblockElement
      */
     protected $catalogGroupId;
 
+    /**
+     * @var string
+     */
+    protected $regionCode;
+
 
     /**
      * @var \FourPaws\MobileApiBundle\Dto\Object\Color
@@ -1745,6 +1750,7 @@ class Offer extends IblockElement
 
     /**
      * @return ShareCollection
+     * @throws ApplicationCreateException
      */
     public function getShare(): ShareCollection
     {
@@ -1758,6 +1764,12 @@ class Offer extends IblockElement
                     'ACTIVE'            => 'Y',
                     'ACTIVE_DATE'       => 'Y',
                     'PROPERTY_PRODUCTS' => $this->getXmlId(),
+                    "LOGIC" => "AND",
+                    [
+                        "LOGIC" => "OR",
+                        ['PROPERTY_REGION' => false],
+                        ['PROPERTY_REGION' => $this->getRegionCode()],
+                    ]
                 ])
                 ->withSelect([
                     'ID',
@@ -2045,6 +2057,29 @@ class Offer extends IblockElement
     {
         $this->prices = $prices;
         return $this;
+    }
+
+    /**
+     * @param string $regionCode
+     * @return Offer
+     */
+    public function setRegionCode(string $regionCode): Offer
+    {
+        $this->regionCode = $regionCode;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRegionCode(): string
+    {
+        if(null === $this->regionCode){
+            /** @var LocationService $locationService */
+            $locationService = Application::getInstance()->getContainer()->get('location.service');
+            $this->regionCode = $locationService->getCurrentRegionCode();
+        }
+        return $this->regionCode;
     }
 
     /**
