@@ -204,22 +204,21 @@ class PersonalOffersService
             throw new InvalidArgumentException('can\'t import personal offer\'s coupons. offerId: ' . $offerId);
         }
 
-        $promoCodes = array_keys($coupons);
-        $promoCodes = array_filter(array_map('trim', $promoCodes));
-
         $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.import_offers_producer');
 
         foreach ($coupons as $coupon => $couponUsers) {
-            $importOffer = new ImportOffer();
-            $importOffer->dateChanged = new DateTime();
-            $importOffer->dateCreate = new DateTime();
-            $importOffer->offerId = $offerId;
-            $importOffer->promoCode = $coupon;
-            $importOffer->users = array_values($couponUsers);
-            $importOffer->activeFrom = $activeFrom;
-            $importOffer->activeTo = $activeTo;
+            foreach ($couponUsers as $couponUser) {
+                $importOffer = new ImportOffer();
+                $importOffer->dateChanged = new DateTime();
+                $importOffer->dateCreate = new DateTime();
+                $importOffer->offerId = $offerId;
+                $importOffer->promoCode = $coupon;
+                $importOffer->users = [$couponUser];
+                $importOffer->activeFrom = $activeFrom;
+                $importOffer->activeTo = $activeTo;
 
-            $producer->publish($this->serializer->serialize($importOffer, 'json'));
+                $producer->publish($this->serializer->serialize($importOffer, 'json'));
+            }
         }
     }
 

@@ -103,6 +103,12 @@ https://api.esv2.com - валидный адрес
 - ./bin/symfony_console bitrix:mobileApi:push:queue
 ```
 
+## Рассылка персональных предложений на почту
+
+```
+- ./bin/symfony_console fourpaws:popup:notification
+```
+
 ## Фабрика фидов
 
 ```
