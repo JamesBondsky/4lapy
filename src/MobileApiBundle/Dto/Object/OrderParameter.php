@@ -294,6 +294,15 @@ class OrderParameter
     protected $text = [];
 
     /**
+     * Иконки
+     *
+     * @Serializer\Type("array")
+     * @Serializer\SerializedName("icons")
+     * @var array
+     */
+    protected $icons = [];
+
+    /**
      * @return Product[]
      */
     public function getProducts(): array
@@ -774,6 +783,24 @@ class OrderParameter
     public function setText(array $text): OrderParameter
     {
         $this->text = $text;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getIcons(): array
+    {
+        return $this->icons;
+    }
+
+    /**
+     * @param array $icons
+     * @return OrderParameter
+     */
+    public function setIcons(array $icons): OrderParameter
+    {
+        $this->icons = $icons;
         return $this;
     }
 }

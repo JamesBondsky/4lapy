@@ -274,6 +274,7 @@ class OrderService
      * @param OrderEntity $order
      * @param OrderSubscribe|null $subscription
      * @param array $text
+     * @param array $icons
      * @return Order
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -289,7 +290,7 @@ class OrderService
      * @throws \FourPaws\AppBundle\Exception\EmptyEntityClass
      * @throws \FourPaws\AppBundle\Exception\NotFoundException
      */
-    protected function toApiFormat(OrderEntity $order, OrderSubscribe $subscription = null, $text = [])
+    protected function toApiFormat(OrderEntity $order, OrderSubscribe $subscription = null, $text = [], $icons = [])
     {
         if ($subscription) {
             // toDo подписка на заказ
@@ -319,7 +320,7 @@ class OrderService
                 ->setStatus($status)
                 ->setCompleted($isCompleted)
                 ->setPaid($order->isPayed())
-                ->setCartParam($this->getOrderParameter($basketProducts, $order, $text))
+                ->setCartParam($this->getOrderParameter($basketProducts, $order, $text, $icons))
                 ->setCartCalc($this->getOrderCalculate($basketProducts, false, 0, $order));
         }
 
@@ -343,6 +344,7 @@ class OrderService
      * @param BasketProductCollection $basketProducts
      * @param null $order
      * @param array $text
+     * @param array $icons
      * @return OrderParameter
      * @throws ApplicationCreateException
      * @throws ArgumentException
@@ -357,7 +359,7 @@ class OrderService
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\AppBundle\Exception\NotFoundException
      */
-    public function getOrderParameter(BasketProductCollection $basketProducts, $order = null, $text = [])
+    public function getOrderParameter(BasketProductCollection $basketProducts, $order = null, $text = [], $icons = [])
     {
         $orderParameter = (new OrderParameter())
             ->setProducts($basketProducts->getValues());
@@ -411,6 +413,7 @@ class OrderService
                 ->setComment($order->getBitrixOrder()->getField('USER_DESCRIPTION') ?: '')
                 ->setDeliveryPlaceCode($order->getPropValue('DELIVERY_PLACE_CODE'))
                 ->setText($text)
+                ->setIcons($icons)
                 /** значение может меняться автоматически, @see \FourPaws\SaleBundle\Service\OrderService::updateCommWayProperty  */
                 // ->setCommunicationWay($order->getPropValue('COM_WAY'))
             ;
@@ -1055,6 +1058,8 @@ class OrderService
                 'descriptionSecondThank' => 'Также мы вложим в Ваш следующий заказ подарок - памятный магнит.',
                 'titleNow' => 'А СЕЙЧАС',
                 'descriptionNow' => 'Выберите для себя один из шести сюрпризов, тапнув на любой из них.',
+            ];
+            $icons = [
                 'mainIcon' => $mainIcon,
                 'fantIcons' => $fantIcons,
             ];
@@ -1066,7 +1071,7 @@ class OrderService
         }
 
         $response = [
-            $this->toApiFormat($firstOrder, null, $text)
+            $this->toApiFormat($firstOrder, null, $text, $icons)
         ];
         if ($relatedOrderId = $firstOrder->getProperty('RELATED_ORDER_ID')) {
             $response[] = $this->getOneById($relatedOrderId->getValue());
