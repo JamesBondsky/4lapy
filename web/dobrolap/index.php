@@ -154,7 +154,7 @@ $APPLICATION->SetTitle("Добролап");
             </div>
         </div>
         <div class="read_more">
-            <a href="javascript:void(0);" class="btn btn-primary py-3 px-4 see_more">Показать больше ▼</a>
+            <div class="btn btn-primary py-3 px-4 see_more" data-read-more-shelter="true">Показать больше ▼</div>
         </div>
     </section>
 
@@ -169,62 +169,65 @@ $APPLICATION->SetTitle("Добролап");
             <div class="row">
                 <div class="col-md-6">
                     <h4 class="subheader">в магазине «Четыре лапы»</h4>
-                    <div class="col-md-12 animate-box">
-                        <div class="rule_wrap">
 
-                            <div class="rule_number">
-                                <img src="/dobrolap/images/01.png" alt="01"/>
-                            </div>
-                            <div class="rule_icon">
-                                <img src="/dobrolap/images/icon_1.png" alt="купи подарок"/>
-                            </div>
-                            <div class="rule_note">
-                                <span><strong>купи подарок</strong><br/>для питомцев из приюта</span>
+                    <div class="how-get__shop">
+                        <div class="col-md-12 animate-box">
+                            <div class="rule_wrap">
+
+                                <div class="rule_number">
+                                    <img src="/dobrolap/images/01.png" alt="01"/>
+                                </div>
+                                <div class="rule_icon">
+                                    <img src="/dobrolap/images/icon_1.png" alt="купи подарок"/>
+                                </div>
+                                <div class="rule_note">
+                                    <span><strong>купи подарок</strong><br/>для питомцев из приюта</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="col-md-12 animate-box">
-                        <div class="rule_wrap">
+                        <div class="col-md-12 animate-box">
+                            <div class="rule_wrap">
 
-                            <div class="rule_number">
-                                <img src="/dobrolap/images/02.png" alt="02"/>
-                            </div>
-                            <div class="rule_icon">
-                                <img src="/dobrolap/images/icon_2.png" alt="положи в корзину"/>
-                            </div>
-                            <div class="rule_note">
-                                <span><strong>положи его</strong><br/>в корзину #добролап</span>
+                                <div class="rule_number">
+                                    <img src="/dobrolap/images/02.png" alt="02"/>
+                                </div>
+                                <div class="rule_icon">
+                                    <img src="/dobrolap/images/icon_2.png" alt="положи в корзину"/>
+                                </div>
+                                <div class="rule_note">
+                                    <span><strong>положи его</strong><br/>в корзину #добролап</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="col-md-12 animate-box">
-                        <div class="rule_wrap">
+                        <div class="col-md-12 animate-box">
+                            <div class="rule_wrap">
 
-                            <div class="rule_number">
-                                <img src="/dobrolap/images/03.png" alt="03"/>
-                            </div>
-                            <div class="rule_icon">
-                                <img src="/dobrolap/images/icon_3.png" alt="получи сюрприз"/>
-                            </div>
-                            <div class="rule_note">
-                                <span><strong>ПОЛУЧИ СЮРПРИЗ</strong><br/>И МАГНИТ #ДОБРОЛАП НА КАССЕ</span>
+                                <div class="rule_number">
+                                    <img src="/dobrolap/images/03.png" alt="03"/>
+                                </div>
+                                <div class="rule_icon">
+                                    <img src="/dobrolap/images/icon_3.png" alt="получи сюрприз"/>
+                                </div>
+                                <div class="rule_note">
+                                    <span><strong>ПОЛУЧИ СЮРПРИЗ</strong><br/>И МАГНИТ #ДОБРОЛАП НА КАССЕ</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="col-md-12 animate-box">
-                        <div class="rule_wrap">
+                        <div class="col-md-12 animate-box">
+                            <div class="rule_wrap">
 
-                            <div class="rule_number">
-                                <img src="/dobrolap/images/04.png" alt="04"/>
-                            </div>
-                            <div class="rule_icon">
-                                <img src="/dobrolap/images/icon_4.png" alt="следи за итогами"/>
-                            </div>
-                            <div class="rule_note">
-                                <span><strong>СЛЕДИ</strong><br/>ЗА ИТОГАМИ И ОТЧЕТАМИ</span>
+                                <div class="rule_number">
+                                    <img src="/dobrolap/images/04.png" alt="04"/>
+                                </div>
+                                <div class="rule_icon">
+                                    <img src="/dobrolap/images/icon_4.png" alt="следи за итогами"/>
+                                </div>
+                                <div class="rule_note">
+                                    <span><strong>СЛЕДИ</strong><br/>ЗА ИТОГАМИ И ОТЧЕТАМИ</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -233,62 +236,65 @@ $APPLICATION->SetTitle("Добролап");
                 <div class="col-md-6 white-col">
                     <h4 class="subheader">на сайте&nbsp;&nbsp;<a href="https://4lapy.ru/" target="_blank"><img
                                     src="/dobrolap/images/4lapy.png" alt=""/></a></h4>
-                    <div class="col-md-12 animate-box">
-                        <div class="rule_wrap">
 
-                            <div class="rule_number">
-                                <img src="/dobrolap/images/01.png" alt="01"/>
-                            </div>
-                            <div class="rule_icon">
-                                <img src="/dobrolap/images/icon_5.png" alt="выбери товары"/>
-                            </div>
-                            <div class="rule_note">
-                                <span><strong>ВЫБЕРИ ТОВАРЫ</strong><br/>И ПОЛОЖИ В КОРЗИНУ</span>
+                    <div class="how-get__site">
+                        <div class="col-md-12 animate-box">
+                            <div class="rule_wrap">
+
+                                <div class="rule_number">
+                                    <img src="/dobrolap/images/01.png" alt="01"/>
+                                </div>
+                                <div class="rule_icon">
+                                    <img src="/dobrolap/images/icon_5.png" alt="выбери товары"/>
+                                </div>
+                                <div class="rule_note">
+                                    <span><strong>ВЫБЕРИ ТОВАРЫ</strong><br/>И ПОЛОЖИ В КОРЗИНУ</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="col-md-12 animate-box">
-                        <div class="rule_wrap">
+                        <div class="col-md-12 animate-box">
+                            <div class="rule_wrap">
 
-                            <div class="rule_number">
-                                <img src="/dobrolap/images/02.png" alt="02"/>
-                            </div>
-                            <div class="rule_icon">
-                                <img src="/dobrolap/images/icon_6.png" alt="ВЫБЕРИ ПРИЮТ"/>
-                            </div>
-                            <div class="rule_note">
-                                <span><strong>ВЫБЕРИ ПРИЮТ</strong><br/>ПРИ ОФОРМЛЕНИИ ЗАКАЗА</span>
+                                <div class="rule_number">
+                                    <img src="/dobrolap/images/02.png" alt="02"/>
+                                </div>
+                                <div class="rule_icon">
+                                    <img src="/dobrolap/images/icon_6.png" alt="ВЫБЕРИ ПРИЮТ"/>
+                                </div>
+                                <div class="rule_note">
+                                    <span><strong>ВЫБЕРИ ПРИЮТ</strong><br/>ПРИ ОФОРМЛЕНИИ ЗАКАЗА</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="col-md-12 animate-box">
-                        <div class="rule_wrap">
+                        <div class="col-md-12 animate-box">
+                            <div class="rule_wrap">
 
-                            <div class="rule_number">
-                                <img src="/dobrolap/images/03.png" alt="03"/>
-                            </div>
-                            <div class="rule_icon">
-                                <img src="/dobrolap/images/icon_3.png" alt="получи сюрприз"/>
-                            </div>
-                            <div class="rule_note">
-                                <span>ОПЛАТИ ЗАКАЗ,<br/><strong>ПОЛУЧИ СЮРПРИЗ</strong><br/>И МАГНИТ #ДОБРОЛАП</span>
+                                <div class="rule_number">
+                                    <img src="/dobrolap/images/03.png" alt="03"/>
+                                </div>
+                                <div class="rule_icon">
+                                    <img src="/dobrolap/images/icon_3.png" alt="получи сюрприз"/>
+                                </div>
+                                <div class="rule_note">
+                                    <span>ОПЛАТИ ЗАКАЗ,<br/><strong>ПОЛУЧИ СЮРПРИЗ</strong><br/>И МАГНИТ #ДОБРОЛАП</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="col-md-12 animate-box">
-                        <div class="rule_wrap">
+                        <div class="col-md-12 animate-box">
+                            <div class="rule_wrap">
 
-                            <div class="rule_number">
-                                <img src="/dobrolap/images/04.png" alt="04"/>
-                            </div>
-                            <div class="rule_icon">
-                                <img src="/dobrolap/images/icon_4.png" alt="следи за итогами"/>
-                            </div>
-                            <div class="rule_note">
-                                <span><strong>СЛЕДИ</strong><br/>ЗА ИТОГАМИ И ОТЧЕТАМИ</span>
+                                <div class="rule_number">
+                                    <img src="/dobrolap/images/04.png" alt="04"/>
+                                </div>
+                                <div class="rule_icon">
+                                    <img src="/dobrolap/images/icon_4.png" alt="следи за итогами"/>
+                                </div>
+                                <div class="rule_note">
+                                    <span><strong>СЛЕДИ</strong><br/>ЗА ИТОГАМИ И ОТЧЕТАМИ</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -317,13 +323,13 @@ $APPLICATION->SetTitle("Добролап");
                                 магнит и ОДИН ИЗ ДОБРЫХ СЮРПРИЗОВ: СКИДКУ НА АКСЕССУАРЫ ИЛИ ЛАКОМСТВА, БОНУСЫ НА ПОКУПКУ
                                 ПРАВИЛЬНОГО КОРМА ИЛИ ОДИН ИЗ 2000 ФАН-БОНУСОВ ДЛЯ УЧАСТИЯ В РОЗЫГРЫШЕ ПРИЗОВ. Весь
                                 август в магазинах «Четыре лапы» и на сайте «4lapy.ru».</h5>
-                            <p>
+                            <div class="thanks__btns">
                                 <a href="javascript:void(0);"
                                    class="btn btn-primary-filled py-3 px-4 <?= ($USER->IsAuthorized()) ? 'js-show-fan-form' : 'js-open-popup' ?>"
                                    data-popup-id="authorization">ЗАРЕГИСТРИРОВАТЬ ФАН</a>
                                 <a href="javascript:void(0);" class="btn btn-primary py-3 px-4 js-open-popup"
                                    data-popup-id="dobrolap_more_info_popup">ПОДРОБНЕЕ</a>
-                            </p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -375,13 +381,13 @@ $APPLICATION->SetTitle("Добролап");
                                 магнит и ОДИН ИЗ ДОБРЫХ СЮРПРИЗОВ: СКИДКУ НА АКСЕССУАРЫ ИЛИ ЛАКОМСТВА, БОНУСЫ НА ПОКУПКУ
                                 ПРАВИЛЬНОГО КОРМА ИЛИ ОДИН ИЗ 2000 ФАН-БОНУСОВ ДЛЯ УЧАСТИЯ В РОЗЫГРЫШЕ ПРИЗОВ. Весь
                                 август в магазинах «Четыре лапы» и на сайте «4lapy.ru».</h5>
-                            <p>
+                            <div class="thanks__btns">
                                 <a href="javascript:void(0);"
                                    class="btn btn-primary-filled py-3 px-4 <?= ($USER->IsAuthorized()) ? 'js-show-fan-form' : 'js-open-popup' ?>"
                                    data-popup-id="authorization">ЗАРЕГИСТРИРОВАТЬ ФАН-БОНУС</a>
                                 <a href="javascript:void(0);" class="btn btn-primary py-3 px-4 js-open-popup"
                                    data-popup-id="dobrolap_more_info_popup">ПОДРОБНЕЕ</a>
-                            </p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -393,7 +399,7 @@ $APPLICATION->SetTitle("Добролап");
         <div class="container">
             <div class="row">
                 <div class="col-md-6">
-                    <div class="row justify-content-center">
+                    <div class="row justify-content-center little__description">
                         <div class="col-md-12 heading-section text-center ftco-animate">
                             <h2 class="">большая помощь<br/>для маленького друга</h2>
                             <hr/>
