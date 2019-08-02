@@ -21,8 +21,6 @@ $show = $arResult['SHOW'];
 $coupons = $arResult['COUPONS'];
 /** @var ArrayCollection $offers */
 $offers = $arResult['OFFERS'];
-/** @var array $usablePromoCodes */
-$usablePromoCodes = $arResult['USABLE_PROMO_CODES'];
 
 ?>
 
@@ -43,20 +41,9 @@ $usablePromoCodes = $arResult['USABLE_PROMO_CODES'];
                             <div class="b-stock__coupon-caption"><?= $offer['~NAME'] ?></div>
 
                             <? if ($arResult['APPLY_COUPON'] == $coupon['UF_PROMO_CODE']) { ?>
-                                <a class="b-information-order__delete-promocode js-promo-code-del"
-                                   href="javascript:void(0)" title="Сбросить промокод"
-                                   data-url="/ajax/sale/basket/promo/delete/"
-                                   data-promocode-id="<?= $coupon['UF_PROMO_CODE'] ?>">
-                                    <span class="b-icon b-icon--delete-promocode">
-                                        <?= new SvgDecorator('filter-change', 8, 8) ?>
-                                    </span>
-                                </a>
-                            <? } elseif(!$arResult['COUPON_USED']) { ?>
-	                            <? if (in_array($coupon['UF_PROMO_CODE'], $usablePromoCodes, false)) { ?>
-                                    <button type="button" class="b-stock__coupon-btn" data-basket-coupon-toogle="<?= $coupon['UF_PROMO_CODE'] ?>">Применить</button>
-								<? } else { ?>
-		                            <button type="button" class="b-stock__coupon-btn disabled" data-basket-coupon-toogle="<?= $coupon['UF_PROMO_CODE'] ?>">Не применим</button>
-								<? } ?>
+	                            <button type="button" class="b-stock__coupon-btn active" data-basket-coupon-toogle="<?= $coupon['UF_PROMO_CODE'] ?>">Отменить</button>
+                            <? } else { ?>
+                                <button type="button" class="b-stock__coupon-btn" data-basket-coupon-toogle="<?= $coupon['UF_PROMO_CODE'] ?>">Применить</button>
                             <? } ?>
                         </div>
                     </div>
