@@ -1188,6 +1188,7 @@ class UserService implements
      * @param \DateTime|null $lastDate
      * @param bool|null $isOnlyEmail
      * @param string|null $field
+     * @param int|null $promocodeId
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ObjectPropertyException
@@ -1196,7 +1197,7 @@ class UserService implements
      * @throws \Bitrix\Main\LoaderException
      * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
      */
-    public function sendNotifications(array $userIds, int $idEvents, ?int $emailId, string $promocode, \DateTime $startDate, ?\DateTime $lastDate, ?bool $isOnlyEmail = false, ?string $field = 'LOGIN')
+    public function sendNotifications(array $userIds, int $idEvents, ?int $emailId, string $promocode, \DateTime $startDate, ?\DateTime $lastDate, ?bool $isOnlyEmail = false, ?string $field = 'LOGIN', ?int $promocodeId = null)
     {
         $container = App::getInstance()->getContainer();
         $renderer = $container->get('templating');
@@ -1304,7 +1305,7 @@ class UserService implements
 
             $barcodeGenerator = new BarcodeGeneratorPNG();
             if ($isOnlyEmail) {
-                $offerFields = $this->personalOffersService->getOfferFieldsByCouponId(intval($promocode));
+                $offerFields = $this->personalOffersService->getOfferFieldsByCouponId(is_int($promocode) ? intval($promocode) : $promocodeId);
             } else {
                 $offerFields = $this->personalOffersService->getOfferFieldsByPromoCode($promocode);
             }
