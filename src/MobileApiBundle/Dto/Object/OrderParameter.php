@@ -293,6 +293,13 @@ class OrderParameter
      */
     protected $text = [];
 
+    /**
+     * Флаг отвечает за активность акции добролап
+     *
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("activeDobrolap")
+     * @var bool
+     */
     protected $activeDobrolap = false;
 
     /**
