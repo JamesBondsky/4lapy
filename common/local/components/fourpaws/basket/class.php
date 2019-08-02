@@ -200,11 +200,14 @@ class BasketComponent extends CBitrixComponent
     }
 
     /**
-     *
      * @param BasketItem $basketItem
      * @param bool $onlyApplied
-     *
      * @return array
+     * @throws ApplicationCreateException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\NotImplementedException
      */
     public function getPromoLink(BasketItem $basketItem, bool $onlyApplied = false): array
     {

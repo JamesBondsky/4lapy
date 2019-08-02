@@ -142,6 +142,7 @@ class Manzana implements LoggerAwareInterface
                 $response = $this->manzanaPosService->processCheque($request);
             }
 
+
             $this->recalculateBasketFromResponse($basket, $response);
             $this->discount = $price - $basket->getPrice();
         } catch (ExecuteException|CouponIsNotAvailableForUseException $e) {
