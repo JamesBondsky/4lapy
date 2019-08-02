@@ -227,6 +227,9 @@ class BasketComponent extends CBitrixComponent
         if ($basketDiscounts) {
             /** @noinspection ForeachSourceInspection */
             foreach (\array_column($basketDiscounts, 'DISCOUNT_ID') as $fakeId) {
+                if (\in_array($fakeId, Adder::getExcludedDiscountsFakeIds(), true)) {
+                    continue;
+                }
                 if ($onlyApplied && \in_array($fakeId, Adder::getSkippedDiscountsFakeIds(), true)) {
                     continue;
                 }

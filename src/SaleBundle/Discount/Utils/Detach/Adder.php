@@ -42,6 +42,8 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
 {
     public static $skippedDiscountsFakeIds = [];
 
+    public static $excludedDiscountsFakeIds = [];
+
     public static $regionalDiscounts = [];
 
     /**
@@ -291,7 +293,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                 $skippedDiscounts[] = $discount['ID'];
             }
         }
-        self::setSkippedDiscountsFakeIds($skippedDiscounts);
+        self::setExcludedDiscountsFakeIds($skippedDiscounts);
     }
 
     /**
@@ -309,6 +311,24 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
     {
         self::$skippedDiscountsFakeIds = array_flip(array_flip(array_merge(
             $skippedDiscountsFakeIds, self::$skippedDiscountsFakeIds
+        )));
+    }
+
+    /**
+     * @return array
+     */
+    public static function getExcludedDiscountsFakeIds(): array
+    {
+        return self::$excludedDiscountsFakeIds;
+    }
+
+    /**
+     * @param array $skippedDiscountsFakeIds
+     */
+    public static function setExcludedDiscountsFakeIds(array $skippedDiscountsFakeIds): void
+    {
+        self::$excludedDiscountsFakeIds = array_flip(array_flip(array_merge(
+            $skippedDiscountsFakeIds, self::$excludedDiscountsFakeIds
         )));
     }
 
