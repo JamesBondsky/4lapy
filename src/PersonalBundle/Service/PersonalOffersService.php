@@ -11,7 +11,10 @@ use CUserFieldEnum;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\External\ExpertsenderService;
 use FourPaws\External\Import\Model\ImportOffer;
+use FourPaws\UserBundle\Service\UserSearchInterface;
+use FourPaws\UserBundle\Service\UserService;
 use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializerInterface;
 use FourPaws\Helpers\BxCollection;
@@ -60,12 +63,15 @@ class PersonalOffersService
      */
     private $orderService;
 
+    /** @var UserService */
+    protected $userService;
+
     /**
      * PersonalOffersService constructor.
      *
      * @param OrderService $orderService
      */
-    public function __construct(OrderService $orderService, PersonalOrderService $personalOrderService)
+    public function __construct(OrderService $orderService, PersonalOrderService $personalOrderService, UserSearchInterface $userService)
     {
         $this->setLogger(LoggerFactory::create('PersonalOffers'));
 
@@ -75,6 +81,7 @@ class PersonalOffersService
         $this->serializer = $container->get(SerializerInterface::class);
         $this->orderService = $orderService;
         $this->personalOrderService = $personalOrderService;
+        $this->userService = $userService;
     }
 
     /**
@@ -890,6 +897,9 @@ class PersonalOffersService
                 'message' => 'Something went wrong!'
             ];
         }
+
+        $this->userService->sendNotifications([$userID], $couponID, null, $coupon['UF_PROMO_CODE'], new \DateTime(), null, false,'ID');
+        $this->userService->sendNotifications([$userID], $couponID, ExpertsenderService::PERSONAL_OFFER_COUPON_START_SEND_EMAIL, $coupon['UF_PROMO_CODE'], new \DateTime(), null, true,'ID', $couponID);
 
         $freeCouponsCnt = $this->personalCouponManager::query()
             ->setSelect([
