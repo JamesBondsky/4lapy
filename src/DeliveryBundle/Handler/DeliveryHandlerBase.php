@@ -452,6 +452,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                 break;
             case DeliveryService::DOBROLAP_DELIVERY_CODE:
                 $result = $storeService->getStores(StoreService::TYPE_ALL, ['XML_ID' => OrderService::STORE]);
+                break;
         }
 
         return $result;
