@@ -1246,7 +1246,7 @@ class UserService implements
         $textStart = $renderer->render('FourPawsSaleBundle:Push:coupon.new.start.html.php');
         $textLast = $renderer->render('FourPawsSaleBundle:Push:coupon.last.start.html.php');
 
-        if (!$isOnlyEmail) {
+        if (!$isOnlyEmail && count($userIdByPush) > 0) {
             $hlblock = \Bitrix\HighloadBlock\HighloadBlockTable::getList([
                 'filter' => [
                     'TABLE_NAME' => 'api_push_messages'
@@ -1299,7 +1299,7 @@ class UserService implements
             }
         }
 
-        if ($emailId) {
+        if ($emailId && count($userIdByEmail) > 0) {
             $users = $this->userRepository->findBy(['ID' => $userIdByEmail]);
 
             $barcodeGenerator = new BarcodeGeneratorPNG();
