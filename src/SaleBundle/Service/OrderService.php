@@ -1277,6 +1277,10 @@ class OrderService implements LoggerAwareInterface
             }
         }
 
+        if ($this->deliveryService->isDobrolapDelivery($selectedDelivery)) {
+            $this->setOrderPropertiesByCode($order, ['DOBROLAP_SHELTER' => $storage->getShelter()]);
+        }
+
         $this->updateCommWayProperty($order, $selectedDelivery, $fastOrder, $address);
 
         try {

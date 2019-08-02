@@ -4,7 +4,9 @@ namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockUtils;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -31,12 +33,15 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Entity\Terminal;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\Enum\PaymentMethod;
 use FourPaws\Helpers\BusinessValueHelper;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\LocationBundle\Exception\AddressSplitException;
+use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Dto\Fiscalization\CartItems;
@@ -1171,15 +1176,61 @@ class PaymentService implements LoggerAwareInterface
             $onlinePayment->setField('PS_STATUS_CODE', 'Y');
             $onlinePayment->setField('PS_STATUS_MESSAGE', $response->getPaymentAmountInfo()->getPaymentState());
             $onlinePayment->save();
+
+            /** получаем код доставки */
+            $deliveryId = $order->getField('DELIVERY_ID');
+            $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
+
+            /** Добролап - добавление магнитика в новую корзину за заказ в приют */
+            $needAddingMagnetToBasket = false;
+            if ($this->deliveryService->isDobrolapDeliveryCode($deliveryCode)) {
+                $userID = $order->getUserId();
+                if ($userID) {
+                    $user = new \CUser;
+                    $fields = [
+                        'UF_GIFT_DOBROLAP' => 'Y'
+                    ];
+                    $user->Update($userID, $fields);
+
+                    $magnetID = ElementTable::getList([
+                        'select' => ['ID', 'XML_ID'],
+                        'filter' => ['XML_ID' => ApiBasketService::GIFT_DOBROLAP_XML_ID, 'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS)],
+                        'limit'  => 1,
+                    ])->fetch()['ID'];
+                    /** если магнит найден как оффер */
+                    if ($magnetID) {
+                        $needAddingMagnetToBasket = true;
+                    }
+                }
+            }
+
             $orderSaveResult = $order->save();
 
             /** Отправка данных в достависту если доставка Достависта */
-            $deliveryId = $order->getField('DELIVERY_ID');
-            $deliveryCode = $this->deliveryService->getDeliveryCodeById($deliveryId);
             $deliveryData = ServicesTable::getById($deliveryId)->fetch();
             //проверяем способ доставки, если достависта, то отправляем заказ в достависту
             if ($this->deliveryService->isDostavistaDeliveryCode($deliveryCode)) {
                 $this->sendOnlinePaymentDostavistaOrder($order, $deliveryCode, $deliveryData, true);
+            }
+
+            if ($needAddingMagnetToBasket && isset($magnetID, $userID)) {
+                /** @var BasketService $basketService */
+                $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
+                $basketItem = $basketService->addOfferToBasket(
+                    (int)$magnetID,
+                    1,
+                    [],
+                    true,
+                    $basketService->getBasket()
+                );
+                /** если магнит успешно добавлен в корзину */
+                if ($basketItem->getId()) {
+                    $userDB = new \CUser;
+                    $fields = [
+                        'UF_GIFT_DOBROLAP' => false
+                    ];
+                    $userDB->Update($userID, $fields);
+                }
             }
 
             return $orderSaveResult->getId();

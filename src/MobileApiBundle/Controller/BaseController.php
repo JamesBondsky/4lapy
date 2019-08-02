@@ -28,9 +28,10 @@ class BaseController extends FOSRestController
                 /** @var UserService $userCurrentUserService */
                 $userCurrentUserService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
                 $currentUser = $userCurrentUserService->getCurrentUser();
+                $userId = $currentUser->getId();
                 $currentDate = new DateTime();
                 $fields = [
-                    'USER_ID' => $currentUser->getId()
+                    'USER_ID' => $userId
                 ];
                 $getLastUsing = UserApiLastUsingTable::query()->setSelect(['ID', 'DATE_INSERT'])->addFilter('=USER_ID', $fields['USER_ID'])->setOrder(['ID' => 'DESC'])->exec()->fetch();
                 if (!$getLastUsing || (isset($getLastUsing['DATE_INSERT']) && $getLastUsing['DATE_INSERT']->format('d.m.Y') != $currentDate->format('d.m.Y'))) {
@@ -47,7 +48,8 @@ class BaseController extends FOSRestController
                     $client->lastDateUseMobileApp = $currentDate->format(\DateTime::ATOM);
 
                     if ($client instanceof Client) {
-                        $manzanaService->updateContactAsync($client);
+                        $manzanaService->updateContact($client);
+//                        $manzanaService->updateContactAsync($client);
                     }
                 }
             } catch (NotAuthorizedException $e) {

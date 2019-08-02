@@ -43,12 +43,14 @@ use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderSplitException;
 use FourPaws\SaleBundle\Exception\OrderStorageSaveException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
+use FourPaws\SaleBundle\Repository\Table\AnimalShelterTable;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\ShopInfoService;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\ShopInfoService as StoreShopInfoService;
+use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Protobuf\Exception;
 use Psr\Log\LoggerAwareInterface;
@@ -176,6 +178,24 @@ class OrderController extends Controller implements LoggerAwareInterface
         return JsonSuccessResponse::createWithData(
             'Подгрузка успешна',
             $shopInfo
+        );
+    }
+
+    /**
+     * @Route("/shelter-search/", methods={"GET"})
+     *
+     * @return JsonResponse
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function shelterSearchAction(): JsonResponse
+    {
+        $shelters = AnimalShelterTable::getList()->fetchAll();
+        return JsonSuccessResponse::createWithData(
+            'Подгрузка успешна',
+            $shelters
         );
     }
 
@@ -526,6 +546,13 @@ class OrderController extends Controller implements LoggerAwareInterface
             ]);
 
             return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Ошибка при создании заказа']]);
+        } catch (BitrixRuntimeException $e) {
+            if (strpos($e->getMessage(), 'Пользователь с таким e-mail') !== false) {
+                return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Пользователь с таким e-mail уже существует']]);
+            } else {
+                $this->log()->error(__METHOD__ . '. Не удалось создать заказ. ', $e->getMessage());
+                throw new BitrixRuntimeException($e->getMessage(), $e->getCode());
+            }
         }
 
         $url = new Uri('/sale/order/' . $this->getNextStep($currentStep) . '/' . $order->getId() . '/');

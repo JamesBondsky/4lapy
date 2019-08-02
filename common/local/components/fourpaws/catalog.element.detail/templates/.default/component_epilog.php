@@ -1,9 +1,11 @@
 <?php
 
 use Bitrix\Sale\BasketItem;
+use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Components\CatalogElementDetailComponent;
+use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\WordHelper;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
@@ -27,6 +29,38 @@ $basketService = $this->getBasketService();
  */
 $bonus = $currentOffer->getBonusFormattedText($userService->getDiscount());
 $bonusSubscribe = $currentOffer->getBonusFormattedText($userService->getDiscount(), 1, true);
+
+$shareContent = null;
+if ($currentOffer->isShare()) {
+    /** @var IblockElement $share */
+    foreach ($currentOffer->getShare() as $share) {
+        $activeFrom = $share->getDateActiveFrom();
+        $activeTo = $share->getDateActiveTo();
+        ob_start()?>
+        <a href="<?= $share->getDetailPageUrl() ?>" title="<?= $share->getName() ?>" <?= $arParams['IS_POPUP'] ? 'target="_blank"' : ''?>>
+            <p class="b-counter-basket__text b-counter-basket__text--red">
+                <?= $share->getName() ?>
+            </p>
+        </a>
+        <?php if (!empty($share->getPreviewText()->getText())) { ?>
+            <p class="b-counter-basket__text"><?= $share->getPreviewText()->getText() ?></p>
+        <?php } ?>
+        <p class="b-counter-basket__text">
+            <?php if ($activeFrom && $activeTo) { ?>
+                <?= DateHelper::replaceRuMonth($activeFrom->format('d #n#')) ?>
+                —
+                <?= DateHelper::replaceRuMonth($activeTo->format('d #n# Y')) ?>
+            <?php } elseif ($activeFrom) { ?>
+                С <?= DateHelper::replaceRuMonth($activeFrom->format('d #n#')) ?>
+            <?php } elseif ($activeTo) { ?>
+                По <?= DateHelper::replaceRuMonth($activeTo->format('d #n# Y')) ?>
+            <?php } ?>
+        </p>
+        <?php
+        $shareContent = ob_get_contents();
+        ob_end_clean();
+    }
+}
 
 ?>
     <script<?= ($arParams['IS_POPUP']) ? ' data-epilog-handlers="true"' : '' ?>>
@@ -118,6 +152,12 @@ $bonusSubscribe = $currentOffer->getBonusFormattedText($userService->getDiscount
         if ($currentOffer->isAvailable()) { ?>
             epilogHandlers.add(function () {
                 $('.js-product-controls').addClass('active')
+            });
+        <?php } ?>
+
+        <? if ($shareContent) { ?>
+            epilogHandlers.add(function () {
+                $('.js-dynaminc-content[data-id="shares"]').html(`<?=$shareContent?>`);
             });
         <?php } ?>
 

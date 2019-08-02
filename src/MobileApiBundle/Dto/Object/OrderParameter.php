@@ -75,7 +75,7 @@ class OrderParameter
      * Тип доставки
      * @Serializer\SerializedName("deliveryType")
      * @Serializer\Type("string")
-     * @Assert\Choice({"courier", "pickup", "dostavista"})
+     * @Assert\Choice({"courier", "pickup", "dostavista", "dobrolap"})
      * @var string
      */
     protected $deliveryType = '';
@@ -274,6 +274,24 @@ class OrderParameter
      * @var int
      */
     protected $payWithBonus = false;
+
+    /**
+     * Штрих-код приюта для доставки Добролап
+     *
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("shelter")
+     * @var string
+     */
+    protected $shelter = '';
+
+    /**
+     * Текст для страницы спасибо
+     *
+     * @Serializer\Type("array")
+     * @Serializer\SerializedName("text")
+     * @var array
+     */
+    protected $text = [];
 
     /**
      * @return Product[]
@@ -720,5 +738,42 @@ class OrderParameter
     public function getSubscribeFrequency(): int
     {
         return $this->subscribeFrequency;
+    }
+
+    /**
+     * @return string
+     */
+    public function getShelter(): string
+    {
+        return $this->shelter;
+    }
+
+    /**
+     * @param string $shelter
+     *
+     * @return OrderParameter
+     */
+    public function setShelter(string $shelter): OrderParameter
+    {
+        $this->shelter = $shelter;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getText(): array
+    {
+        return $this->text;
+    }
+
+    /**
+     * @param array $text
+     * @return OrderParameter
+     */
+    public function setText(array $text): OrderParameter
+    {
+        $this->text = $text;
+        return $this;
     }
 }

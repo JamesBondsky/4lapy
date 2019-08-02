@@ -7,13 +7,19 @@
 namespace FourPaws\MobileApiBundle\Services\Api;
 
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Bitrix\Iblock\ElementTable;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Internals\EntityCollection;
+use FourPaws\App\Application;
+use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Components\BasketComponent;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
@@ -27,6 +33,8 @@ use FourPaws\UserBundle\Service\UserService as AppUserService;
 
 class BasketService
 {
+    const GIFT_DOBROLAP_XML_ID = '3006635'; //FIXME вынести в SaleBundle
+
     /**
      * @var AppBasketService
      */
@@ -104,6 +112,40 @@ class BasketService
                 $userId = null;
             }
 
+            if ($userId && count($basket->getOrderableItems()) > 0) {
+                $user = $this->appUserService->getCurrentUser();
+                $needAddDobrolapMagnet = $user->getGiftDobrolap();
+                /** Если пользователю должны магнит */
+                if ($needAddDobrolapMagnet == BaseEntity::BITRIX_TRUE || $needAddDobrolapMagnet == true || $needAddDobrolapMagnet == 1) {
+                    $magnetID = ElementTable::getList([
+                        'select' => ['ID', 'XML_ID'],
+                        'filter' => ['XML_ID' => static::GIFT_DOBROLAP_XML_ID, 'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS)],
+                        'limit'  => 1,
+                    ])->fetch()['ID'];
+                    /** если магнит найден как оффер */
+                    if ($magnetID) {
+                        /** @var AppBasketService $basketService */
+                        $basketService = Application::getInstance()->getContainer()->get(AppBasketService::class);
+                        $basketItem = $basketService->addOfferToBasket(
+                            (int)$magnetID,
+                            1,
+                            [],
+                            true,
+                            $basket
+                        );
+                        $result = $basket->save();
+                        /** если магнит успешно добавлен в корзину */
+                        if ($basketItem->getId() && $result->isSuccess()) {
+                            $userDB = new \CUser;
+                            $fields = [
+                                'UF_GIFT_DOBROLAP' => false
+                            ];
+                            $userDB->Update($userId, $fields);
+                        }
+                    }
+                }
+            }
+
             $order =  \Bitrix\Sale\Order::create(SITE_ID, $userId);
             $order->setBasket($basket);
             // но иногда он так просто не запускается
@@ -117,12 +159,12 @@ class BasketService
         // В этом массиве будут храниться детализация цены для каждого товара в случае акций "берешь n товаров, 1 бесплатно", "50% скидка на второй товар" и т.д.
 
         foreach ($basketItems as $basketItem) {
-            if ($this->isSubProduct($basketItem)) {
+            $offer = OfferQuery::getById($basketItem->getProductId());
+            if ($this->isSubProduct($basketItem) && $offer->getXmlId() != static::GIFT_DOBROLAP_XML_ID) {
                 continue;
             }
 
             /** @var $basketItem BasketItem */
-            $offer = OfferQuery::getById($basketItem->getProductId());
             $product = $this->getBasketProduct($basketItem->getId(), $offer, $basketItem->getQuantity());
             $shortProduct = $product->getShortProduct();
             $shortProduct->setPickupOnly(

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace FourPaws\Components;
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
@@ -17,6 +19,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
@@ -56,6 +59,8 @@ use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
  */
 class BasketComponent extends CBitrixComponent
 {
+    const GIFT_DOBROLAP_XML_ID = '3006635'; //FIXME вынести в SaleBundle
+
     /**
      * @var BasketService
      */
@@ -188,6 +193,39 @@ class BasketComponent extends CBitrixComponent
             true
         );
 
+        /** если авторизирован добавляем магнит */
+        if ($user) { // костыль, если магнитик не добавился сразу после оплаты исходного заказа)
+            $needAddDobrolapMagnet = $user->getGiftDobrolap();
+            /** Если пользователю должны магнит */
+            if ($needAddDobrolapMagnet == BaseEntity::BITRIX_TRUE || $needAddDobrolapMagnet == true || $needAddDobrolapMagnet == 1) {
+                $magnetID = ElementTable::getList([
+                    'select' => ['ID', 'XML_ID'],
+                    'filter' => ['XML_ID' => static::GIFT_DOBROLAP_XML_ID, 'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS)],
+                    'limit'  => 1,
+                ])->fetch()['ID'];
+                /** если магнит найден как оффер */
+                if ($magnetID) {
+                    /** @var BasketService $basketService */
+                    $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
+                    $basketItem = $basketService->addOfferToBasket(
+                        (int)$magnetID,
+                        1,
+                        [],
+                        true,
+                        $basket
+                    );
+                    /** если магнит успешно добавлен в корзину */
+                    if ($basketItem->getId()) {
+                        $userDB = new \CUser;
+                        $fields = [
+                            'UF_GIFT_DOBROLAP' => false
+                        ];
+                        $userDB->Update($userId, $fields);
+                    }
+                }
+            }
+        }
+
         $this->includeComponentTemplate($this->getPage());
     }
 
@@ -200,11 +238,14 @@ class BasketComponent extends CBitrixComponent
     }
 
     /**
-     *
      * @param BasketItem $basketItem
      * @param bool $onlyApplied
-     *
      * @return array
+     * @throws ApplicationCreateException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\NotImplementedException
      */
     public function getPromoLink(BasketItem $basketItem, bool $onlyApplied = false): array
     {
@@ -227,6 +268,9 @@ class BasketComponent extends CBitrixComponent
         if ($basketDiscounts) {
             /** @noinspection ForeachSourceInspection */
             foreach (\array_column($basketDiscounts, 'DISCOUNT_ID') as $fakeId) {
+                if (\in_array($fakeId, Adder::getExcludedDiscountsFakeIds(), true)) {
+                    continue;
+                }
                 if ($onlyApplied && \in_array($fakeId, Adder::getSkippedDiscountsFakeIds(), true)) {
                     continue;
                 }
@@ -242,6 +286,9 @@ class BasketComponent extends CBitrixComponent
             $discountIds = $this->offer2promoMap[$this->getOffer((int)$basketItem->getProductId())->getXmlId()]
         ) {
             foreach ($discountIds as $id) {
+                if (\in_array($id, Adder::getExcludedDiscountsIds(), true)) {
+                    continue;
+                }
                 if (!$result[$id]) {
                     $result[$id] = $this->promoDescriptions[$id];
                 }

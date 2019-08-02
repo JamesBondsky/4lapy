@@ -377,6 +377,14 @@ class User implements UserInterface
      */
     protected $esSubscribed = false;
 
+    /** @var bool
+     * @Serializer\Type("boolean")
+     * @Serializer\SerializedName("UF_GIFT_DOBROLAP")
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $giftDobrolap = false;
+
     public function __construct()
     {
         $this->roles = new ArrayCollection();
@@ -1441,6 +1449,26 @@ class User implements UserInterface
     public function setActiveBonus(float $activeBonus): User
     {
         $this->activeBonus = $activeBonus;
+
+        return $this;
+    }
+
+    /**
+     * @return bool|null
+     */
+    public function getGiftDobrolap(): ?bool
+    {
+        return $this->giftDobrolap;
+    }
+
+    /**
+     * @param bool $giftDobrolap
+     *
+     * @return User
+     */
+    public function setGiftDobrolap(bool $giftDobrolap): User
+    {
+        $this->giftDobrolap = $giftDobrolap;
 
         return $this;
     }

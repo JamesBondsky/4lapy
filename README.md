@@ -28,12 +28,12 @@ https://api.esv2.com - валидный адрес
 ## Запуск консьюмеров для rabbit'а
 
 ```
-- ./bin/symfony_console r:c manzana_update # обработка очереди передачи контактов в ML
-- ./bin/symfony_console r:c catalog_sync   # обработка очереди изменения элементов каталога для изменения индекса elastic 
-- ./bin/symfony_console r:c callback_set   # обработка очереди отправки сообщений о запросе обратного звонка на АТС
-- ./bin/symfony_console r:c manzana_referral_add   # обработка очереди передачи рефералов в ML
-- ./bin/symfony_console r:c manzana_orders_import # обработка очереди запроса заказов пользователей в ML
-- ./bin/symfony_console r:c import_offers # обработка очереди импорта промокодов
+- ./bin/symfony_console rabbitmq:consumer manzana_update # обработка очереди передачи контактов в ML
+- ./bin/symfony_console rabbitmq:consumer catalog_sync   # обработка очереди изменения элементов каталога для изменения индекса elastic 
+- ./bin/symfony_console rabbitmq:consumer callback_set   # обработка очереди отправки сообщений о запросе обратного звонка на АТС
+- ./bin/symfony_console rabbitmq:consumer manzana_referral_add   # обработка очереди передачи рефералов в ML
+- ./bin/symfony_console rabbitmq:consumer manzana_orders_import # обработка очереди запроса заказов пользователей в ML
+- ./bin/symfony_console rabbitmq:consumer import_offers # обработка очереди импорта промокодов
 ```
 
 ## Перезапуск консьюмеров манзаны по расписанию

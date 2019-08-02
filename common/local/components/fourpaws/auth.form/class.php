@@ -33,6 +33,7 @@ use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\ProtectorHelper;
 use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\Model\City;
+use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
 use FourPaws\PersonalBundle\Service\PetService;
 use FourPaws\ReCaptchaBundle\Service\ReCaptchaInterface;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
@@ -862,7 +863,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                         if ($basketItem !== null) {
                             $id = $basketItem->getId();
                             if ($id > 0) {
-                                $basketService->deleteOfferFromBasket($id);
+                                $basketService->deleteOfferFromBasket($id, [ApiBasketService::GIFT_DOBROLAP_XML_ID]);
                             }
                         }
                     } catch (ObjectNotFoundException|BitrixProxyException|Exception $e) {
@@ -881,7 +882,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             if (\is_array($delBasketItems) && !empty($delBasketItems)) {
                 foreach ($delBasketItems as $id) {
                     try {
-                        $basketService->deleteOfferFromBasket($id);
+                        $basketService->deleteOfferFromBasket($id, [ApiBasketService::GIFT_DOBROLAP_XML_ID]);
                     } catch (ObjectNotFoundException|BitrixProxyException|Exception $e) {
                         return $this->ajaxMess->getSystemError();
                     }
