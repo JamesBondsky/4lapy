@@ -37,7 +37,7 @@ $APPLICATION->SetTitle("Добролап");
     			<div class="col-md-6 col-lg-7 pb-5">
     				<div class="row justify-content-start pb-3">
 		          <div class="col-md-12 heading-section ftco-animate">
-		          	<span class="subheading">IV ЕЖЕГОДНАЯ  Благотворительная акция «Добролап»</span>
+		          	<span class="subheading">V ЕЖЕГОДНАЯ БЛАГОТВОРИТЕЛЬНАЯ АКЦИЯ «ДОБРОЛАП»</span>
 			            <h1 class="mb-4 mt-3">ТВОРИМ ДОБРО ВМЕСТЕ</span></h1>
 			            <p class="but_scroll">
                             <a href="#how_get" class="btn btn-primary py-3 px-4" target="_blank">КАК ПОМОЧЬ</a>
@@ -62,7 +62,14 @@ $APPLICATION->SetTitle("Добролап");
                             <a href="javascript:void(0);" class="btn btn-primary-filled py-3 px-4">УЗНАТЬ ПРО ДОБРОЛАП</a>
                     	</div>
                     	<div class="needs_note">
-                        <h5 class="mb-4">С 1 августа  в компании «Четыре Лапы» стартует благотворительная инициатива ДОБРОЛАП. «Творим добро вместе!» -  под таким лозунгом уже 4 года вместе с 44 благотворительными организациями мы объединяем всех, кто не равнодушен к временно бездомным питомцам, чтобы помочь животным найти друзей и поддержать самым нужным. Принять участие можно на сайте «Добролап», нажав кнопку «Хочу помочь» или в любом зоомагазине «Четыре Лапы».</h5><h5 class="mb-4">Присоединяйтесь к команде «Добролап», узнавайте подробности на сайте, принимайте участие в челлендже #КОМАНДАДОБРОЛАП и следите за новостями в социальных сетях.</h5>
+                            <h5 class="mb-4">1 августа стартовала V&nbsp;ежегодная благотворительная акция &laquo;Добролап&raquo; &laquo;ТВОРИМ ДОБРО ВМЕСТЕ!&raquo;&nbsp;&mdash; ПОД ТАКИМ ЛОЗУНГОМ
+                                в&nbsp;зоомагазинах &laquo;Четыре&nbsp;Лапы&raquo; проводится акция помощи приютам для бездомных животных &laquo;Добролап&raquo;.<br />
+                                Благотворительная инициатива &laquo;Добролап&raquo; уже в&nbsp;пятый раз проходит в&nbsp;сети &laquo;Четыре&nbsp;Лапы&raquo;. Совместно с&nbsp;44 благотворительными
+                                организациями в&nbsp;этом году &laquo;Четыре&nbsp;лапы&raquo; объединяет всех, кто не&nbsp;равнодушен к&nbsp;питомцам без семьи, с&nbsp;целью помочь животным
+                                найти родителей и&nbsp;поддержать временно бездомных друзей.</h5>
+                            <h5 class="mb-4">ПРИНЯТЬ УЧАСТИЕ МОЖНО НА&nbsp;САЙТЕ &laquo;ЧЕТЫРЕ&nbsp;ЛАПЫ&raquo;, НАЖАВ КНОПКУ &laquo;ХОЧУ ПОМОЧЬ&raquo; ИЛИ В&nbsp;ЛЮБОМ ЗООМАГАЗИНЕ &laquo;ЧЕТЫРЕ&nbsp;ЛАПЫ&raquo;.<br />
+                                ПРИСОЕДИНЯЙТЕСЬ К&nbsp;КОМАНДЕ &laquo;ДОБРОЛАП&raquo;, УЗНАВАЙТЕ ПОДРОБНОСТИ НА&nbsp;САЙТЕ, ПРИНИМАЙТЕ УЧАСТИЕ В&nbsp;ЧЕЛЛЕНДЖЕ #КОМАНДАДОБРОЛАП И&nbsp;СЛЕДИТЕ
+                                ЗА&nbsp;НОВОСТЯМИ В&nbsp;СОЦИАЛЬНЫХ СЕТЯХ.</h5>
                     	</div>
                     </div>
                 </div>
@@ -428,7 +435,7 @@ $APPLICATION->SetTitle("Добролап");
 	      </div>
 	    </div>-->
 
-	    <img src="/dobrolap/images/story.jpg" style="margin: 20px auto; display: block;" alt="" />
+	    <img src="/dobrolap/images/story.png?v=1" style="margin: 20px auto; display: block;" alt="" />
     </section>
 
 <section class="ftco-section" id="photos">
