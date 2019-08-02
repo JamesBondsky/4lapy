@@ -293,6 +293,8 @@ class OrderParameter
      */
     protected $text = [];
 
+    protected $activeDobrolap = false;
+
     /**
      * @return Product[]
      */
@@ -775,5 +777,16 @@ class OrderParameter
     {
         $this->text = $text;
         return $this;
+    }
+
+    public function setActiveDobrolap(bool $flag): OrderParameter
+    {
+        $this->activeDobrolap = $flag;
+        return $this;
+    }
+
+    public function getActiveDobrolap(): bool
+    {
+        return $this->activeDobrolap;
     }
 }
