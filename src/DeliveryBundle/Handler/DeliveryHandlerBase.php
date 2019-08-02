@@ -392,7 +392,6 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                 $result = $storeService->getShopsByLocation($locationCode);
                 break;
             case DeliveryService::INNER_DELIVERY_CODE:
-            case DeliveryService::DOBROLAP_DELIVERY_CODE:
                 switch ($deliveryZone) {
                     case DeliveryService::ZONE_1:
                     case DeliveryService::ZONE_5:
@@ -451,6 +450,8 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                         break;
                 }
                 break;
+            case DeliveryService::DOBROLAP_DELIVERY_CODE:
+                $result = $storeService->getStores(StoreService::TYPE_ALL, ['XML_ID' => OrderService::STORE]);
         }
 
         return $result;
