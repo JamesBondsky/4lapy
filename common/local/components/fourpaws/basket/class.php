@@ -245,6 +245,9 @@ class BasketComponent extends CBitrixComponent
             $discountIds = $this->offer2promoMap[$this->getOffer((int)$basketItem->getProductId())->getXmlId()]
         ) {
             foreach ($discountIds as $id) {
+                if (\in_array($id, Adder::getExcludedDiscountsIds(), true)) {
+                    continue;
+                }
                 if (!$result[$id]) {
                     $result[$id] = $this->promoDescriptions[$id];
                 }

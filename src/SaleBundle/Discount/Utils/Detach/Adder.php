@@ -42,7 +42,8 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
 {
     public static $skippedDiscountsFakeIds = [];
 
-    public static $excludedDiscountsFakeIds = [];
+    private static $excludedDiscountsFakeIds = [];
+    private static $excludedDiscountsIds = [];
 
     public static $regionalDiscounts = [];
 
@@ -73,8 +74,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
 
         $applyResult = $discountBase->getApplyResult(true);
         $skippedDiscounts = $this->getLowDiscounts($applyResult['RESULT']['BASKET']);
-
-        $this->addRegionSkippedDiscounts($applyResult['DISCOUNT_LIST'], $skippedDiscounts);
+        $skippedDiscounts = array_merge($skippedDiscounts, $this->getExcludedDiscounts($applyResult['DISCOUNT_LIST']));
 
         if (is_iterable($applyResult['RESULT']['BASKET'])) {
             foreach ($applyResult['RESULT']['BASKET'] as $basketCode => $discounts) {
@@ -279,21 +279,26 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    protected function addRegionSkippedDiscounts(array $discountList, array &$skippedDiscounts)
+    protected function getExcludedDiscounts(array $discountList)
     {
+        $excludedDiscounts = [];
+
         /** @var LocationService $locationService */
         $locationService = App::getInstance()->getContainer()->get('location.service');
-        $regionCode = $locationService->getCurrentRegionCode();
         /** @var BasketRulesService $BasketRulesService */
         $basketRulesService = App::getInstance()->getContainer()->get(BasketRulesService::class);
+
+        $regionCode = $locationService->getCurrentRegionCode();
         $regionalDiscounts = $basketRulesService->getRegionalDiscounts();
 
         foreach($discountList as $discount){
             if(!empty($regionalDiscounts[$discount['REAL_DISCOUNT_ID']]) && !in_array($regionCode, $regionalDiscounts[$discount['REAL_DISCOUNT_ID']])){
-                $skippedDiscounts[] = $discount['ID'];
+                $excludedDiscounts[$discount['ID']] = $discount['REAL_DISCOUNT_ID'];
             }
         }
-        self::setExcludedDiscountsFakeIds($skippedDiscounts);
+        self::setExcludedDiscountsFakeIds(array_keys($excludedDiscounts));
+        self::setExcludedDiscountsIds(array_unique(array_values($excludedDiscounts)));
+        return count($excludedDiscounts) > 0 ? array_keys($excludedDiscounts) : [];
     }
 
     /**
@@ -329,6 +334,24 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
     {
         self::$excludedDiscountsFakeIds = array_flip(array_flip(array_merge(
             $skippedDiscountsFakeIds, self::$excludedDiscountsFakeIds
+        )));
+    }
+
+    /**
+     * @return array
+     */
+    public static function getExcludedDiscountsIds(): array
+    {
+        return self::$excludedDiscountsIds;
+    }
+
+    /**
+     * @param array $skippedDiscountsIds
+     */
+    public static function setExcludedDiscountsIds(array $skippedDiscountsIds): void
+    {
+        self::$excludedDiscountsIds = array_flip(array_flip(array_merge(
+            $skippedDiscountsIds, self::$excludedDiscountsIds
         )));
     }
 
