@@ -291,6 +291,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                 $skippedDiscounts[] = $discount['ID'];
             }
         }
+        self::setSkippedDiscountsFakeIds($skippedDiscounts);
     }
 
     /**

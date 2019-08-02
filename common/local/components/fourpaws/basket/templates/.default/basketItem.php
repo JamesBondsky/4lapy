@@ -26,7 +26,7 @@ if (!$basketItemId && $propertyValues['DETACH_FROM']) {
     $basketItemId = (int)$propertyValues['DETACH_FROM']['VALUE'];
 }
 
-$promoLinks = $component->getPromoLink($basketItem);
+$promoLinks = $component->getPromoLink($basketItem, true);
 $image = $component->getImage((int)$basketItem->getProductId());
 $useOffer = $offer instanceof Offer && $offer->getId() > 0;
 $isDiscounted = (float)$basketItem->getBasePrice() - (float)$basketItem->getPrice() >= 0.01;
