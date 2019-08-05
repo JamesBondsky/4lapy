@@ -1217,9 +1217,19 @@ class UserService implements
             $userIds[] = $user->getId();
         }
 
-        $users = $this->userRepository->findBy(['PERSONAL_PHONE' => $userIdsOrig]);
-        foreach ($users as $user) {
-            $userIds[] = $user->getId();
+        $userIdsOrig = array_filter($userIdsOrig, function ($item) {
+            return !empty(trim($item));
+        });
+
+        if (count($userIdsOrig) > 0) {
+            $users = $this->userRepository->findBy(['PERSONAL_PHONE' => $userIdsOrig]);
+            foreach ($users as $user) {
+                $userIds[] = $user->getId();
+            }
+        }
+
+        if (count($userIds) == 0) {
+            return;
         }
 
         $filter = ['=USER_ID' => $userIds];
