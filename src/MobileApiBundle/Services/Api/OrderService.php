@@ -471,7 +471,7 @@ class OrderService
             $orderParameter->setAddressText(
                 (($cityParameter = $orderParameter->getCity()) ? $cityParameter->getTitle() . ', '  : '')
                 . $orderParameter->getStreet()
-                . ' д.' . $orderParameter->getHouse()
+                . ($orderParameter->getHouse() ? ' д.' . $orderParameter->getHouse() : '')
                 . ' ' . $orderParameter->getBuilding()
                 . ($orderParameter->getPorch() ? ' подъезд ' . $orderParameter->getBuilding() : '')
                 . ($orderParameter->getFloor() ? ' этаж ' . $orderParameter->getFloor() : '')
@@ -789,7 +789,7 @@ class OrderService
         if ($dobrolapDelivery) {
             $result['dobrolap'] = [
                 'available' => $dobrolapDelivery->getAvailable(),
-                'description' => 'Ваш заказ будет доставлен в&nbsp;выбранный Вами приют для&nbsp;бездомных животных. После оплаты заказа вы получите сюрприз и памятный магнит.',
+                'description' => 'Ваш заказ будет доставлен в выбранный Вами приют для бездомных животных. После оплаты заказа вы получите сюрприз и памятный магнит.',
             ];
         }
 
