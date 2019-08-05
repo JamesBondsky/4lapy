@@ -473,7 +473,7 @@ class OrderService
 
             $city = null;
             if ($this->shelterData) {
-                $city = $this->shelterData['city'];
+                $city = $this->shelterData['name'] . ',' . $this->shelterData['city'];
             } else {
                 if ($cityParameter = $orderParameter->getCity()) {
                     $city = $cityParameter->getTitle();
