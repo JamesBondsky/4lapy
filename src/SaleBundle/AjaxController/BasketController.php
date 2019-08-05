@@ -337,15 +337,18 @@ class BasketController extends Controller implements LoggerAwareInterface
             $piggyBankService->checkPiggyBankCoupon($promoCode);
 
             $this->manzana->setPromocode($promoCode);
-            $this->manzana->calculate();
             $this->couponStorage->clear();
             $this->couponStorage->save($promoCode);
 
+            $data = [
+                'basket' => $this->basketViewService->getBasketHtml(true),
+            ];
+
             $result = JsonSuccessResponse::createWithData(
                 'Промокод применен',
-                [],
+                $data,
                 200,
-                ['reload' => true]
+                ['reload' => false]
             );
         } catch (ManzanaPromocodeUnavailableException $e) {
             /**
@@ -431,11 +434,15 @@ class BasketController extends Controller implements LoggerAwareInterface
             $this->couponStorage->delete($promoCode);
             $this->couponStorage->clear();
 
+            $data = [
+                'basket' => $this->basketViewService->getBasketHtml(true),
+            ];
+
             $result = JsonSuccessResponse::createWithData(
                 'Промокод удален',
-                [],
+                $data,
                 200,
-                ['reload' => true]
+                ['reload' => false]
             );
         } catch (Exception $e) {
             $this->log()->error(
