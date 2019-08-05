@@ -3,6 +3,7 @@
 namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\Catalog\Exception\CategoryNotFoundException;
@@ -18,13 +19,17 @@ use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\IblockHelper;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\Filter;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\FilterVariant;
+use FourPaws\MobileApiBundle\Exception\AccessDeinedException;
 use FourPaws\MobileApiBundle\Exception\CategoryNotFoundException as MobileCategoryNotFoundException;
 use FourPaws\MobileApiBundle\Exception\SystemException;
 use FourPaws\Search\Model\Navigation;
 use FourPaws\Search\SearchService;
+use Psr\Log\LoggerAwareTrait;
 
 class CatalogService
 {
+    use LazyLoggerAwareTrait;
+
     /**
      * @var CategoriesService
      */
@@ -53,11 +58,11 @@ class CatalogService
 
     /**
      * @param int $categoryId
-     *
-     * @throws \FourPaws\MobileApiBundle\Exception\SystemException
-     * @throws MobileCategoryNotFoundException
+     * @param int $stockId
+     * @return ArrayCollection
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @return Collection|Filter[]
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public function getFilters(int $categoryId = 0, int $stockId = 0)
     {
@@ -72,6 +77,9 @@ class CatalogService
 
         $productIds = '';
         if($stockId > 0){
+            if(!$this->productService->checkShareAccess($stockId)){
+                throw new AccessDeinedException('Access denied');
+            }
             $productIds = $this->productService->getProductIdsByShareId($stockId);
         }
 
