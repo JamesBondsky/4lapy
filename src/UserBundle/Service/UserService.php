@@ -1310,7 +1310,8 @@ class UserService implements
             }
         }
 
-        if ($emailId && count($userIdByEmail) > 0) {
+        if ($emailId) {
+            $userIdByEmail = $userIds;
             $users = $this->userRepository->findBy(['ID' => $userIdByEmail]);
 
             $barcodeGenerator = new BarcodeGeneratorPNG();
