@@ -73,7 +73,8 @@ body {
   margin-top: 0;
   margin-bottom: 0.5rem; }
 
-.b-wrapper p {
+.b-wrapper p,
+.b-popup-pick-city--shelter p{
   margin-top: 0;
   margin-bottom: 1rem; }
 
@@ -93,7 +94,10 @@ body {
 
 .b-wrapper ol,
 .b-wrapper ul,
-.b-wrapper dl {
+.b-wrapper dl,
+.b-popup-pick-city--shelter ol,
+.b-popup-pick-city--shelter ul,
+.b-popup-pick-city--shelter dl{
   margin-top: 0;
   margin-bottom: 1rem; }
 
@@ -8125,7 +8129,8 @@ a.text-dark:hover, a.text-dark:focus {
     border-color: #dee2e6; } }
 
 .b-wrapper h1, .b-wrapper h2, .b-wrapper h3, .b-wrapper h4, .b-wrapper h5,
-.b-wrapper .h1, .b-wrapper .h2, .b-wrapper .h3, .b-wrapper .h4, .b-wrapper .h5 {
+.b-wrapper .h1, .b-wrapper .h2, .b-wrapper .h3, .b-wrapper .h4, .b-wrapper .h5,
+.b-popup-pick-city--shelter h5, .b-popup-pick-city--shelter .h5{
   line-height: 1.5;
   color: #0f6198;
   font-weight: 400; }
@@ -9824,7 +9829,8 @@ font-weight: bold;
   font-size: 1.50rem;
 }
 
-.b-wrapper h5 {
+.b-wrapper h5,
+.b-popup-pick-city--shelter h5{
   text-transform: uppercase;
   font-size: 1rem;
   line-height: 2rem;
@@ -9963,6 +9969,12 @@ font-weight: bold;
     font-size: 11px;
     line-height: 17px;
     display: inline-block;
+}
+
+.b-popup-pick-city--shelter {
+  font-family: "Poppins", Arial, sans-serif;
+  color: #999999;
+  line-height: 1.8;
 }
 
 .b-popup-pick-city--shelter .shelter_logo {
