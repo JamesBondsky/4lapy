@@ -530,6 +530,91 @@ $APPLICATION->SetTitle("Добролап");
             </section>
         </div>
     </section>
+
+    <section class="ftco-section" id="together-more">
+        <div class="col-md-12">
+            <div class="row justify-content-center">
+                <div class="col-md-12 heading-section text-center ftco-animate">
+                    <h2 class="">Вместе мы сможем больше</h2>
+                    <hr/>
+                    <h5 class="mb-4">С&nbsp;начала старта благотворительной акции &laquo;Добролап&raquo; в&nbsp;30
+                        городах России к&nbsp;движению присоединились более 70
+                        <nobr>организаций-партнеров,</nobr>
+                        200&nbsp;000 участников и&nbsp;10&nbsp;000 волонтеров. Традиция помогать тем, кто нуждается в&nbsp;поддержке
+                        объединяет команду Добролап и&nbsp;зажигает сердца. Смотри историю, твори добро в месте с&nbsp;нами!
+                    </h5>
+                </div>
+            </div>
+        </div>
+        <div class="home-slider home-slider_images owl-carousel">
+            <div class="slider-item ">
+                <div class="overlay"></div>
+                <div class="container">
+                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end"
+                         data-scrollax-parent="true">
+                        <div class="home-slider__img">
+                            <img src="/dobrolap/images/together-more/banner-together-more1.jpg?v=1" alt=""/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slider-item ">
+                <div class="overlay"></div>
+                <div class="container">
+                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end"
+                         data-scrollax-parent="true">
+                        <div class="home-slider__img">
+                            <img src="/dobrolap/images/together-more/banner-together-more2.jpg?v=1" alt=""/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slider-item ">
+                <div class="overlay"></div>
+                <div class="container">
+                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end"
+                         data-scrollax-parent="true">
+                        <div class="home-slider__img">
+                            <img src="/dobrolap/images/together-more/banner-together-more3.jpg?v=1" alt=""/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slider-item ">
+                <div class="overlay"></div>
+                <div class="container">
+                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end"
+                         data-scrollax-parent="true">
+                        <div class="home-slider__img">
+                            <img src="/dobrolap/images/together-more/banner-together-more4.jpg?v=1" alt=""/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slider-item ">
+                <div class="overlay"></div>
+                <div class="container">
+                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end"
+                         data-scrollax-parent="true">
+                        <div class="home-slider__img">
+                            <img src="/dobrolap/images/together-more/banner-together-more5.jpg?v=1" alt=""/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slider-item ">
+                <div class="overlay"></div>
+                <div class="container">
+                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end"
+                         data-scrollax-parent="true">
+                        <div class="home-slider__img">
+                            <img src="/dobrolap/images/together-more/banner-together-more6.jpg?v=1" alt=""/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 <? /*?>
     <section class="ftco-section" id="raise">
     	<div class="col-md-12">

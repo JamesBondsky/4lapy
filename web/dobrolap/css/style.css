@@ -8400,6 +8400,11 @@ a.text-dark:hover, a.text-dark:focus {
     position: relative;
     height: auto;
     z-index: 0; }
+    @media (max-width: 767px) {
+      .owl-carousel.home-slider {
+        padding-bottom: 20px;
+      }
+    }
     .owl-carousel.home-slider .slider-item {
       background-size: cover;
       background-repeat: no-repeat;
@@ -8410,6 +8415,16 @@ a.text-dark:hover, a.text-dark:focus {
       @media (max-width: 1199.98px) {
         .owl-carousel.home-slider .slider-item {
           background-position: center center !important; } }
+      @media (min-width: 992px) {
+        .owl-carousel.home-slider .slider-item {
+          padding: 0 60px;
+        }
+      }
+      @media (min-width: 1200px) {
+        .owl-carousel.home-slider .slider-item {
+          padding: 0;
+        }
+      }
       .owl-carousel.home-slider .slider-item .overlay {
         position: absolute;
         top: 0;
@@ -8527,12 +8542,17 @@ a.text-dark:hover, a.text-dark:focus {
           text-transform: uppercase;
           font-size: 12px;
           letter-spacing: 3px; }
+    .home-slider_images.owl-carousel.home-slider .slider-item .home-slider__img {
+      max-width: 100%;
+      margin: 0 auto;
+    }
     .owl-carousel.home-slider .owl-nav {
       position: absolute;
-      bottom: 60px !important;
+      top: 50%;
       left: 0;
       right: 0;
-      margin: 0 auto; }
+      margin: 0 auto;
+      transform: translateY(-50%);}
       @media (max-width: 991.98px) {
         .owl-carousel.home-slider .owl-nav {
           display: none; } }
@@ -8546,12 +8566,25 @@ a.text-dark:hover, a.text-dark:focus {
           margin-top: 7px;
           color: #51b9ea; }
       .owl-carousel.home-slider .owl-nav .owl-prev {
-        top: -260px !important;
-        right: 0 !important; }
+        top: 0;
+        right: 0;
+        transform: translateY(-50%);}
         @media (min-width: 992px) {
           .owl-carousel.home-slider .owl-nav .owl-prev {
-            left: 50% !important;
-            margin-left: -548px; } }
+            right: auto;
+            left: 10px;
+            margin-left: 0;
+          }
+        }
+        @media (min-width: 1200px) {
+          .owl-carousel.home-slider .owl-nav .owl-prev {
+            right: auto;
+            left: 50%;
+            margin-left: -538px; }
+          .home-slider_images.owl-carousel.home-slider .owl-nav .owl-prev {
+            margin-left: -593px;
+          }
+        }
         .owl-carousel.home-slider .owl-nav .owl-prev:hover, .owl-carousel.home-slider .owl-nav .owl-prev:focus {
           outline: none !important; }
           .owl-carousel.home-slider .owl-nav .owl-prev:hover span:before, .owl-carousel.home-slider .owl-nav .owl-prev:focus span:before {
@@ -8559,12 +8592,25 @@ a.text-dark:hover, a.text-dark:focus {
             margin-top: 7px;
             color: #0f6198; }
       .owl-carousel.home-slider .owl-nav .owl-next {
-        top: -240px !important;
-        right: 0 !important; }
+        top: 0;
+        right: 0;
+        transform: translateY(-50%);}
         @media (min-width: 992px) {
           .owl-carousel.home-slider .owl-nav .owl-next {
-            left: 50% !important;
-            margin-left: 500px; } }
+            left: auto;
+            right: 10px;
+            margin-left: 0;
+          }
+        }
+        @media (min-width: 1200px) {
+          .owl-carousel.home-slider .owl-nav .owl-next {
+            right: auto;
+            left: 50%;
+            margin-left: 500px; }
+          .home-slider_images.owl-carousel.home-slider .owl-nav .owl-next {
+            margin-left: 555px;
+          }
+        }
         .owl-carousel.home-slider .owl-nav .owl-next:hover, .owl-carousel.home-slider .owl-nav .owl-next:focus {
           outline: none !important; }
           .owl-carousel.home-slider .owl-nav .owl-next:hover span:before, .owl-carousel.home-slider .owl-nav .owl-next:focus span:before {
@@ -8577,9 +8623,9 @@ a.text-dark:hover, a.text-dark:focus {
       right: 0;
       bottom: -30px;
       width: 100%; }
-      @media (max-width: 767.98px) {
+      @media (max-width: 767px) {
         .owl-carousel.home-slider .owl-dots {
-          bottom: 5px; } }
+          bottom: -10px; } }
       .owl-carousel.home-slider .owl-dots .owl-dot {
         width: 10px;
         height: 10px;
