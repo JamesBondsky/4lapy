@@ -473,7 +473,7 @@ class OrderService
 
             $city = null;
             if ($this->shelterData) {
-                $city = $this->shelterData['name'] . ',' . $this->shelterData['city'];
+                $city = $this->shelterData['name'] . ', ' . $this->shelterData['city'];
             } else {
                 if ($cityParameter = $orderParameter->getCity()) {
                     $city = $cityParameter->getTitle();
@@ -1072,7 +1072,7 @@ class OrderService
             $text = [
                 'title' => 'СПАСИБО ЧТО ВЫ ТВОРИТЕ ДОБРО ВМЕСТЕ С НАМИ!',
                 'titleOrder' => 'Ваш заказ №#' . $order->getField('ACCOUNT_NUMBER') . '# оформлен',
-                'description' => 'И будет доставлен в Приют ' . ($this->shelterData ? $this->shelterData['name'] : ''),
+                'description' => 'И будет доставлен в ' . ($this->shelterData ? $this->shelterData['name'] : ''),
                 'titleThank' => 'МЫ ГОВОРИМ ВАМ СПАСИБО!',
                 'descriptionFirstThank' => 'В знак благодарности мы подготовили небольшой сюрприз фанты "Добролап" с приятными презентами',
                 'descriptionSecondThank' => 'Также мы вложим в Ваш следующий заказ подарок - памятный магнит.',
