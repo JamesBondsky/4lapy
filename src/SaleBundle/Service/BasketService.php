@@ -1107,6 +1107,11 @@ class BasketService implements LoggerAwareInterface
             ) {
                 unset($appliedDiscounts[$k]);
             }
+
+            // на псевдоакции бонусы начисляются
+            if($this->isPseudoShare($appliedDiscount['DISCOUNT_ID'])){
+                unset($appliedDiscounts[$k]);
+            }
         }
 
         return $appliedDiscounts;
@@ -1548,5 +1553,11 @@ class BasketService implements LoggerAwareInterface
         }
 
         return $basket;
+    }
+
+    public function isPseudoShare($discountId)
+    {
+        $property = \CIBlockElement::GetProperty($this->shareRepository->getIblockId(), $discountId, $by=false, $order=false, ['CODE' => 'SIGNCHARGE'])->Fetch();
+        return $property['VALUE'] > 0;
     }
 }
