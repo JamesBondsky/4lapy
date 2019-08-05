@@ -238,11 +238,14 @@ class BasketComponent extends CBitrixComponent
     }
 
     /**
-     *
      * @param BasketItem $basketItem
      * @param bool $onlyApplied
-     *
      * @return array
+     * @throws ApplicationCreateException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\NotImplementedException
      */
     public function getPromoLink(BasketItem $basketItem, bool $onlyApplied = false): array
     {
@@ -265,6 +268,9 @@ class BasketComponent extends CBitrixComponent
         if ($basketDiscounts) {
             /** @noinspection ForeachSourceInspection */
             foreach (\array_column($basketDiscounts, 'DISCOUNT_ID') as $fakeId) {
+                if (\in_array($fakeId, Adder::getExcludedDiscountsFakeIds(), true)) {
+                    continue;
+                }
                 if ($onlyApplied && \in_array($fakeId, Adder::getSkippedDiscountsFakeIds(), true)) {
                     continue;
                 }
@@ -280,6 +286,9 @@ class BasketComponent extends CBitrixComponent
             $discountIds = $this->offer2promoMap[$this->getOffer((int)$basketItem->getProductId())->getXmlId()]
         ) {
             foreach ($discountIds as $id) {
+                if (\in_array($id, Adder::getExcludedDiscountsIds(), true)) {
+                    continue;
+                }
                 if (!$result[$id]) {
                     $result[$id] = $this->promoDescriptions[$id];
                 }

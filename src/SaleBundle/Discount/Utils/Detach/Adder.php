@@ -42,6 +42,9 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
 {
     public static $skippedDiscountsFakeIds = [];
 
+    private static $excludedDiscountsFakeIds = [];
+    private static $excludedDiscountsIds = null;
+
     public static $regionalDiscounts = [];
 
     /**
@@ -71,8 +74,7 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
 
         $applyResult = $discountBase->getApplyResult(true);
         $skippedDiscounts = $this->getLowDiscounts($applyResult['RESULT']['BASKET']);
-
-        $this->addRegionSkippedDiscounts($applyResult['DISCOUNT_LIST'], $skippedDiscounts);
+        $skippedDiscounts = array_merge($skippedDiscounts, $this->getExcludedDiscounts($applyResult['DISCOUNT_LIST']));
 
         if (is_iterable($applyResult['RESULT']['BASKET'])) {
             foreach ($applyResult['RESULT']['BASKET'] as $basketCode => $discounts) {
@@ -277,20 +279,25 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    protected function addRegionSkippedDiscounts(array $discountList, array &$skippedDiscounts)
+    protected function getExcludedDiscounts(array $discountList)
     {
+        $excludedDiscounts = [];
+
         /** @var LocationService $locationService */
         $locationService = App::getInstance()->getContainer()->get('location.service');
-        $regionCode = $locationService->getCurrentRegionCode();
         /** @var BasketRulesService $BasketRulesService */
         $basketRulesService = App::getInstance()->getContainer()->get(BasketRulesService::class);
+
+        $regionCode = $locationService->getCurrentRegionCode();
         $regionalDiscounts = $basketRulesService->getRegionalDiscounts();
 
         foreach($discountList as $discount){
             if(!empty($regionalDiscounts[$discount['REAL_DISCOUNT_ID']]) && !in_array($regionCode, $regionalDiscounts[$discount['REAL_DISCOUNT_ID']])){
-                $skippedDiscounts[] = $discount['ID'];
+                $excludedDiscounts[$discount['ID']] = $discount['REAL_DISCOUNT_ID'];
             }
         }
+        self::setExcludedDiscountsFakeIds(array_keys($excludedDiscounts));
+        return count($excludedDiscounts) > 0 ? array_keys($excludedDiscounts) : [];
     }
 
     /**
@@ -309,6 +316,61 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
         self::$skippedDiscountsFakeIds = array_flip(array_flip(array_merge(
             $skippedDiscountsFakeIds, self::$skippedDiscountsFakeIds
         )));
+    }
+
+    /**
+     * @return array
+     */
+    public static function getExcludedDiscountsFakeIds(): array
+    {
+        return self::$excludedDiscountsFakeIds;
+    }
+
+    /**
+     * @param array $skippedDiscountsFakeIds
+     */
+    public static function setExcludedDiscountsFakeIds(array $skippedDiscountsFakeIds): void
+    {
+        self::$excludedDiscountsFakeIds = array_flip(array_flip(array_merge(
+            $skippedDiscountsFakeIds, self::$excludedDiscountsFakeIds
+        )));
+    }
+
+    /**
+     * @return array
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public static function getExcludedDiscountsIds(): array
+    {
+        if(null === self::$excludedDiscountsIds) {
+            $excludedDiscounts = [];
+
+            /** @var LocationService $locationService */
+            $locationService = App::getInstance()->getContainer()->get('location.service');
+            /** @var BasketRulesService $basketRulesService */
+            $basketRulesService = App::getInstance()->getContainer()->get(BasketRulesService::class);
+
+            $regionCode = $locationService->getCurrentRegionCode();
+            $regionalDiscounts = $basketRulesService->getRegionalDiscounts();
+
+            foreach($regionalDiscounts as $discountId => $regions){
+                if(!in_array($regionCode, $regions)){
+                    $excludedDiscounts[] = $discountId;
+                }
+            }
+            self::setExcludedDiscountsIds($excludedDiscounts);
+        }
+
+        return self::$excludedDiscountsIds;
+    }
+
+    /**
+     * @param array $skippedDiscountsIds
+     */
+    public static function setExcludedDiscountsIds(array $skippedDiscountsIds): void
+    {
+        self::$excludedDiscountsIds = $skippedDiscountsIds;
     }
 
     /**
@@ -333,13 +395,6 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                     'CUSTOM_PRICE' => 'Y'
                 ]);
             }
-            /*else if($basketItem->getBasePrice() != $basketItem->getPrice()){
-                $basketItem->setFieldsNoDemand([
-                    'DISCOUNT_PRICE' => null,
-                    'PRICE' => $basketItem->getBasePrice(),
-                    'CUSTOM_PRICE' => 'N'
-                ]);
-            }*/
         }
     }
 
