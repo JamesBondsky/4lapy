@@ -16,6 +16,8 @@ use FourPaws\BitrixOrm\Model\Share;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\External\Interfaces\ManzanaServiceInterface;
+use FourPaws\External\Manzana\Dto\BalanceRequest;
+use FourPaws\External\Manzana\Dto\BalanceResponse;
 use FourPaws\External\Manzana\Dto\ChequePosition;
 use FourPaws\External\Manzana\Dto\SoftChequeRequest;
 use FourPaws\External\Manzana\Dto\SoftChequeResponse;
@@ -261,6 +263,22 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
     }
 
     /**
+     * @param BalanceRequest $balanceRequest
+     * @throws Exception
+     */
+    protected function prepareBalanceRequest(BalanceRequest $balanceRequest)
+    {
+        $requestId = $this->generateRequestId();
+
+        $balanceRequest->setBusinessUnit($this->parameters['business_unit'])
+            ->setOrganization($this->parameters['organization'])
+            ->setPos($this->parameters['pos'])
+            ->setDatetime(new DateTimeImmutable())
+            ->setRequestId($requestId);
+            //->setResponseType(0); //FIXME что это за поле и что в него нужно ставить? Без него не работает (сейчас задан жестко 0 в сущности реквеста)
+    }
+
+    /**
      * @param SoftChequeRequest $chequeRequest
      *
      * @return array
@@ -275,6 +293,28 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                         'request' => [
                             'Requests' => [
                                 $chequeRequest::ROOT_NAME => $this->serializer->toArray($chequeRequest),
+                            ],
+                        ],
+                        'orgName' => $this->parameters['organization_name'],
+                    ],
+            ];
+    }
+
+    /**
+     * @param BalanceRequest $balanceRequest
+     * @return array
+     * @throws Exception
+     */
+    protected function buildParametersFromBalanceRequest(BalanceRequest $balanceRequest): array
+    {
+        $this->prepareBalanceRequest($balanceRequest);
+
+        return [
+                'request_options' =>
+                    [
+                        'request' => [
+                            'Requests' => [
+                                $balanceRequest::ROOT_NAME => $this->serializer->toArray($balanceRequest),
                             ],
                         ],
                         'orgName' => $this->parameters['organization_name'],
@@ -302,6 +342,20 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
             ];
         }
         return $this->serializer->fromArray($rawResult, SoftChequeResponse::class);
+    }
+
+    /**
+     * @param $rawResult
+     *
+     * @return BalanceResponse
+     */
+    protected function buildResponseFromRawBalanceResponse($rawResult): BalanceResponse
+    {
+        $rawResult = $rawResult->ProcessRequestInfoResult->Responses->BalanceResponse;
+
+        $rawResult = \json_decode(\json_encode($rawResult), true);
+
+        return $this->serializer->fromArray($rawResult, BalanceResponse::class);
     }
 
     /**
@@ -338,7 +392,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                 }
 
                 throw new ExecuteException(
-                    \sprintf('Execute error: %s, detail: %s', $e->getMessage(), $detail),
+                    \sprintf(__METHOD__ . '. Execute error: %s, detail: %s', $e->getMessage(), $detail),
                     $e->getCode(),
                     $e
                 );
@@ -352,6 +406,58 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
         }
 
         if ($result->isErrorResponse() && $result->getItems()->isEmpty()) {
+            throw new ExecuteErrorException($result->getMessage(), $result->getReturnCode());
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param BalanceRequest $balanceRequest
+     * @param bool $noCache
+     *
+     * @return BalanceResponse
+     * @throws ExecuteErrorException
+     * @throws ExecuteException
+     */
+    public function executeBalanceRequest(BalanceRequest $balanceRequest, bool $noCache = false): BalanceResponse
+    {
+        $card = $balanceRequest->getCard();
+        if (!$card) {
+            throw new ExecuteErrorException(__METHOD__ . '. Не задан номер карты');
+        }
+        $cacheKey = \json_encode(['cardNumber' => $card->getNumber()]);
+        if ($noCache || !$this->results[$cacheKey]) {
+            try {
+                $result = $this->buildResponseFromRawBalanceResponse(
+                    $this->client->call(
+                        self::METHOD_EXECUTE,
+                        $this->buildParametersFromBalanceRequest($balanceRequest)
+                    )
+                );
+            } catch (Exception $e) {
+                try {
+                    /** @noinspection PhpUndefinedFieldInspection */
+                    $detail = $e->detail->details->description;
+                } catch (Throwable $e) {
+                    $detail = 'none';
+                }
+
+                throw new ExecuteException(
+                    \sprintf(__METHOD__ . '. Execute error: %s, detail: %s', $e->getMessage(), $detail),
+                    $e->getCode(),
+                    $e
+                );
+            }
+
+            if (!$noCache) {
+                $this->results[$cacheKey] = $result;
+            }
+        } else {
+            $result = $this->results[$cacheKey];
+        }
+
+        if ($result->isErrorResponse()) {
             throw new ExecuteErrorException($result->getMessage(), $result->getReturnCode());
         }
 

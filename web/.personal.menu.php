@@ -65,6 +65,13 @@ $aMenuLinks = [
         ['icon' => 'icon-profile'],
         "\$GLOBALS['isAuth']",
     ],
+    [
+        'Марки',
+        '/personal/marki/',
+        [],
+        ['icon' => 'icon-piggy-bank'], //TODO change icon?
+        "\$GLOBALS['isAuth']",
+    ],
     /*[
         'Копи марки',
         '/personal/kopi-marki/',
