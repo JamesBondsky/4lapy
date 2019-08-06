@@ -896,22 +896,24 @@ class PersonalOffersService
             $offer = $this->getOfferByCoupon($coupon);
             return [
                 'success' => true,
-                'data'    => [
-                    'personal_offer' => [
-                        'id' => $coupon['ID'],
-                        'promocode' => $coupon['UF_PROMO_CODE'],
-                        'discount' => ($offer["PROPERTY_DISCOUNT_VALUE"] ? $offer["PROPERTY_DISCOUNT_VALUE"] . "%" : $offer["PROPERTY_DISCOUNT_CURRENCY_VALUE"] . " ₽"),
-                        'date_active' => 'Действует до ' . $offer['DATE_ACTIVE_TO'],
-                        'text' => $offer["PREVIEW_TEXT"],
-                    ],
-                    'text' => [
-                        'title' => 'А вот и сюрприз для Вас!',
-                        'description' => 'Это ваш подарок за участие в акции. Он доступен в разделе Персональные предложения.',
-                        'titleUse' => 'Как использовать промо-код:',
-                        'descriptionUse' => '1. На сайте или в мобильном приложении положите неакционные товары в корзину и введите промо-код в специальное поле в корзине.
+                'data' => [
+                    'dobrolap_coupon' => [
+                        'personal_offer' => [
+                            'id' => $coupon['ID'],
+                            'promocode' => $coupon['UF_PROMO_CODE'],
+                            'discount' => ($offer["PROPERTY_DISCOUNT_VALUE"] ? $offer["PROPERTY_DISCOUNT_VALUE"] . "%" : $offer["PROPERTY_DISCOUNT_CURRENCY_VALUE"] . " ₽"),
+                            'date_active' => 'Действует до ' . $offer['DATE_ACTIVE_TO'],
+                            'text' => $offer["PREVIEW_TEXT"],
+                        ],
+                        'text' => [
+                            'title' => 'А вот и сюрприз для Вас!',
+                            'description' => 'Это ваш подарок за участие в акции. Он доступен в разделе Персональные предложения.',
+                            'titleUse' => 'Как использовать промо-код:',
+                            'descriptionUse' => '1. На сайте или в мобильном приложении положите неакционные товары в корзину и введите промо-код в специальное поле в корзине.
                         2. В магазине на кассе перед оплатой неакционных товаров покажите промо-код кассиру.
                         3. Промо-код можно использовать 1 раз до окончания его срока действия.',
-                    ],
+                        ],
+                    ]
                 ]
             ];
         }
