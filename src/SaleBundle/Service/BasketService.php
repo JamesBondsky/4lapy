@@ -797,17 +797,11 @@ class BasketService implements LoggerAwareInterface
         $offer = $this->getOfferCollection(true)->getById($basketItem->getProductId());
         if (!$offer)
         {
-            if($basketItem->getProductId() > 0){
-                $offerCollection = (new OfferQuery())->withFilter(['ID' => $basketItem->getProductId()])->exec();
-                if($offerCollection->isEmpty()){
-                    $this->log()->error(\sprintf(
-                        'empty offer for product id: %s',
-                        $basketItem->getProductId()
-                    ));
-                    return 0;
-                }
-                $offer = $offerCollection->first();
-            }
+            $this->log()->error(\sprintf(
+                'empty offer for product id: %s',
+                $basketItem->getProductId()
+            ));
+            return 0;
         }
         if (in_array((int)$offer->getXmlId(), $piggyBankService::getMarkXmlIds(), true))
         {

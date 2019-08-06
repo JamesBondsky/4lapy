@@ -129,9 +129,6 @@ class Price
      */
     public function getPrice(): float
     {
-        if($this->PRICE === null){
-            $this->PRICE = 0.00;
-        }
         return $this->PRICE;
     }
 

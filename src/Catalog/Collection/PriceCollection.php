@@ -21,14 +21,10 @@ class PriceCollection extends D7CollectionBase
         }
     }
 
-    /**
-     * @param $catalogGroupId
-     * @return Collection
-     */
     public function filterByCatalogGroupId($catalogGroupId)
     {
         if($this->isEmpty()){
-            return $this->collection;
+            return null;
         }
 
         return $this->collection->filter(function($item) use ($catalogGroupId){
