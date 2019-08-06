@@ -520,6 +520,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 $basket = $order1->getBasket();
             }
 
+            // бонусы
             if ($user) {
                 $this->arResult['MAX_BONUS_SUM'] = $this->basketService->getMaxBonusesForPayment($basket); // Получение из Manzana максимального количества бонусов для списания
 
@@ -542,6 +543,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 }
             }
 
+            // киоск: скидочная карта
             if(KioskService::isKioskMode()){
                 $curPage = BitrixApplication::getInstance()->getContext()->getRequest()->getRequestUri();
                 $url = $this->kioskService->addParamsToUrl($curPage, ['bindcard' => true]);
@@ -552,6 +554,10 @@ class FourPawsOrderComponent extends \CBitrixComponent
                     $storage->setDiscountCardNumber($this->kioskService->getCardNumber());
                     $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
                 }
+            }
+
+            if($user && !$this->deliveryService->isPickup($selectedDelivery)){
+
             }
 
             $payments = $this->orderStorageService->getAvailablePayments($storage, true, true, $basket->getPrice());
