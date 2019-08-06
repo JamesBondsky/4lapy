@@ -897,11 +897,15 @@ class PersonalOffersService
             return [
                 'success' => true,
                 'data'    => [
-                    'promocode' => $coupon['UF_PROMO_CODE'],
+                    'personal_offer' => [
+                        'id' => $coupon['ID'],
+                        'promocode' => $coupon['UF_PROMO_CODE'],
+                        'discount' => ($offer["PROPERTY_DISCOUNT_VALUE"] ? $offer["PROPERTY_DISCOUNT_VALUE"] . "%" : $offer["PROPERTY_DISCOUNT_CURRENCY_VALUE"] . " ₽"),
+                        'date_active' => 'Действует до ' . $offer['DATE_ACTIVE_TO'],
+                        'text' => $offer["PREVIEW_TEXT"],
+                    ],
                     'text' => [
                         'title' => 'А вот и сюрприз для Вас!',
-                        'value' => ($offer["PROPERTY_DISCOUNT_VALUE"] ? $offer["PROPERTY_DISCOUNT_VALUE"] . "%" : $offer["PROPERTY_DISCOUNT_CURRENCY_VALUE"] . " ₽"),
-                        'valueDescription' => $offer["PREVIEW_TEXT"],
                         'description' => 'Это ваш подарок за участие в акции. Он доступен в разделе Персональные предложения.',
                         'titleUse' => 'Как использовать промо-код:',
                         'descriptionUse' => '1. На сайте или в мобильном приложении положите неакционные товары в корзину и введите промо-код в специальное поле в корзине.
