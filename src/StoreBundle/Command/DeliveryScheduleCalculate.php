@@ -10,6 +10,7 @@ use Bitrix\Main\Application as BitrixApplication;
 use DateTime;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Entity\UserFieldEnumValue;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\DeliveryScheduleService;
@@ -114,7 +115,23 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
         //$senders = [$this->storeService->getStoreByXmlId('DC01')];
 
         $regularities = $this->scheduleResultService->getRegularityEnumAll();
+        /** @var UserFieldEnumValue $regularity */
         foreach ($regularities as $regularityId => $regularity) {
+            $scheduleRegularity = $this->deliveryScheduleService->getRegular()->filter(function($item) use ($regularity){
+                /**
+                 * @var UserFieldEnumValue $item
+                 * @var UserFieldEnumValue $regularity
+                 */
+                return $item->getXmlId() == $regularity->getXmlId();
+            })->first();
+
+            if(!$scheduleRegularity){
+                $this->log()->error(
+                    sprintf("Не найдена подходящая регулярность для расписаний: %s", $regularity->getValue())
+                );
+                continue;
+            }
+            $scheduleRegularityId = $scheduleRegularity->getId();
 
             /** @var Store $sender */
             foreach ($senders as $i => $sender) {
@@ -130,7 +147,7 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
                     $totalDeleted += $this->scheduleResultService->deleteResultsForSender($sender, $dateDelete, $regularityId);
 
                     $this->sqlHeartBeat();
-                    $results = $this->scheduleResultService->calculateForSender($sender, $dateActive, $regularityId, $tc);
+                    $results = $this->scheduleResultService->calculateForSender($sender, $dateActive, $scheduleRegularityId, $tc);
 
                     $this->sqlHeartBeat();
                     [$created] = $this->scheduleResultService->updateResults($results, $dateDelete);
