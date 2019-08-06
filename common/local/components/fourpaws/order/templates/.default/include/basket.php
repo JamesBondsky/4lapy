@@ -52,6 +52,8 @@ if ($deliveryService->isPickup($selectedDelivery)) {
 $pickup = $arResult['PICKUP'];
 /** @var CalculationResultInterface $delivery */
 $delivery = $arResult['DELIVERY'];
+/** @var CalculationResultInterface $deliveryDobrolap */
+$deliveryDobrolap = $arResult['DELIVERY_DOBROLAP'];
 
 $isSplit = $storage->isSplit();
 
@@ -103,6 +105,8 @@ $productsDeclension = new Declension('товар', 'товара', 'товаро
 
 if (null !== $delivery) {
     $deliveryResult = $delivery->getStockResult();
+} elseif ($deliveryDobrolap) {
+    $deliveryResult = $deliveryDobrolap->getStockResult();
 } else {
     $deliveryResult = $pickup->getStockResult();
 }
