@@ -10173,6 +10173,26 @@ h4.subheader {
     margin-right: 20px
 }
 
+.popup-good-surprises-dobrolap {
+  max-width: 740px;
+  padding: 35px 90px 35px 40px;
+}
+.popup-good-surprises-dobrolap__content p,
+.popup-good-surprises-dobrolap__content ul {
+  text-transform: uppercase;
+  font-size: 1rem;
+  line-height: 2rem;
+  color: #0f6198;
+  font-weight: 400;
+}
+
+.popup-good-surprises-dobrolap__primary {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #999999;
+  line-height: 1.8;
+}
+
 #little, #photos, #fanreg {
   background: #f5f5f5;
 }
@@ -10253,6 +10273,7 @@ body .b-page-wrapper.no-scroll {
   pointer-events: auto;
 }
 
+
 #fanreg .col-md-6:nth-child(2) input {
     float: left;
     width: 100%;
@@ -10323,6 +10344,7 @@ body .b-page-wrapper.no-scroll {
 
 #fanreg .col-md-12 .mb-4 {
     width: 100% !important;
+    margin-bottom: 12px !important;
 }
 
 #how_get .btn.btn-primary-filled {
@@ -10671,6 +10693,26 @@ body .b-page-wrapper.no-scroll {
 
   #thanks .col-md-6-desktop {
     display: none;
+  }
+
+  .popup-good-surprises-dobrolap {
+    padding: 45px 25px 30px;
+  }
+  .popup-good-surprises-dobrolap .b-popup-pick-city__close {
+    top: 12px;
+  }
+  .popup-good-surprises-dobrolap__content p,
+  .popup-good-surprises-dobrolap__content ul {
+    font-size: 0.9rem;
+    line-height: 1.6rem;
+  }
+
+  .popup-good-surprises-dobrolap__content ul {
+    padding-left: 0;
+  }
+
+  .popup-good-surprises-dobrolap__primary {
+    line-height: 1.4;
   }
 
   #needs .star_wrap svg {
