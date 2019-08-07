@@ -7,6 +7,7 @@ use FourPaws\External\ExpertsenderService;
 use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\UserSearchInterface;
+use FourPaws\UserBundle\Service\UserService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -24,7 +25,7 @@ class PopupNotification extends Command
     protected $personalCouponManager;
     /** @var DataManager */
     protected $personalCouponUsersManager;
-    /** @var UserSearchInterface $userService */
+    /** @var UserService */
     protected $userService;
 
     protected const TYPE = 'type';

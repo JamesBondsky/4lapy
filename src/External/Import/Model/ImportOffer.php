@@ -30,10 +30,10 @@ class ImportOffer
     public $promoCode;
 
     /**
-     * @Type("array")
-     * @SerializedName("users")
+     * @Type("string")
+     * @SerializedName("user")
      */
-    public $users;
+    public $user;
 
     /**
      * @Type("string")

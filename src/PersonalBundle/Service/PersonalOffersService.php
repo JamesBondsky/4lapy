@@ -11,7 +11,10 @@ use CUserFieldEnum;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\External\ExpertsenderService;
 use FourPaws\External\Import\Model\ImportOffer;
+use FourPaws\UserBundle\Service\UserSearchInterface;
+use FourPaws\UserBundle\Service\UserService;
 use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializerInterface;
 use FourPaws\Helpers\BxCollection;
@@ -60,12 +63,15 @@ class PersonalOffersService
      */
     private $orderService;
 
+    /** @var UserService */
+    protected $userService;
+
     /**
      * PersonalOffersService constructor.
      *
      * @param OrderService $orderService
      */
-    public function __construct(OrderService $orderService, PersonalOrderService $personalOrderService)
+    public function __construct(OrderService $orderService, PersonalOrderService $personalOrderService, UserSearchInterface $userService)
     {
         $this->setLogger(LoggerFactory::create('PersonalOffers'));
 
@@ -75,6 +81,7 @@ class PersonalOffersService
         $this->serializer = $container->get(SerializerInterface::class);
         $this->orderService = $orderService;
         $this->personalOrderService = $personalOrderService;
+        $this->userService = $userService;
     }
 
     /**
@@ -223,7 +230,39 @@ class PersonalOffersService
      * @throws InvalidArgumentException
      * @throws \Bitrix\Main\ObjectException
      */
-    public function importOffers(int $offerId, array $coupons, ?string $activeFrom = '', ?string $activeTo = ''): void
+    public function importOffersAsync(int $offerId, array $coupons, ?string $activeFrom = '', ?string $activeTo = ''): void
+    {
+        if ($offerId <= 0)
+        {
+            throw new InvalidArgumentException('can\'t import personal offer\'s coupons. offerId: ' . $offerId);
+        }
+
+        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.import_offers_producer');
+
+        foreach ($coupons as $coupon => $couponUsers) {
+            foreach ($couponUsers as $couponUser) {
+                $importOffer = new ImportOffer();
+                $importOffer->dateChanged = new DateTime();
+                $importOffer->dateCreate = new DateTime();
+                $importOffer->offerId = $offerId;
+                $importOffer->promoCode = $coupon;
+                $importOffer->user = $couponUser;
+                $importOffer->activeFrom = $activeFrom;
+                $importOffer->activeTo = $activeTo;
+
+                $producer->publish($this->serializer->serialize($importOffer, 'json'));
+            }
+        }
+    }
+
+    /**
+     * @param int $offerId
+     * @param array $coupons
+     *
+     * @throws InvalidArgumentException
+     * @throws \Bitrix\Main\ObjectException
+     */
+    public function importOffers(int $offerId, array $coupons): void
     {
         if ($offerId <= 0)
         {
@@ -232,20 +271,26 @@ class PersonalOffersService
 
         $promoCodes = array_keys($coupons);
         $promoCodes = array_filter(array_map('trim', $promoCodes));
+        foreach ($promoCodes as $promoCode)
+        {
+            $couponId = $this->personalCouponManager::add([
+                'UF_PROMO_CODE' => $promoCode,
+                'UF_OFFER' => $offerId,
+                'UF_DATE_CREATED' => new DateTime(),
+                'UF_DATE_CHANGED' => new DateTime(),
+            ])->getId();
 
-        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.import_offers_producer');
-
-        foreach ($coupons as $coupon => $couponUsers) {
-            $importOffer = new ImportOffer();
-            $importOffer->dateChanged = new DateTime();
-            $importOffer->dateCreate = new DateTime();
-            $importOffer->offerId = $offerId;
-            $importOffer->promoCode = $coupon;
-            $importOffer->users = array_values($couponUsers);
-            $importOffer->activeFrom = $activeFrom;
-            $importOffer->activeTo = $activeTo;
-
-            $producer->publish($this->serializer->serialize($importOffer, 'json'));
+            $userIds = $coupons[$promoCode];
+            foreach ($userIds as $userId)
+            {
+                $this->personalCouponUsersManager::add([
+                    'UF_USER_ID' => $userId,
+                    'UF_COUPON' => $couponId,
+                    'UF_DATE_CREATED' => new DateTime(),
+                    'UF_DATE_CHANGED' => new DateTime(),
+                ]);
+            }
+            unset($couponId);
         }
     }
 
@@ -853,6 +898,9 @@ class PersonalOffersService
             ];
         }
 
+        $this->userService->sendNotifications([$userID], $couponID, null, $coupon['UF_PROMO_CODE'], new \DateTime(), null, false,'ID');
+        $this->userService->sendNotifications([$userID], $couponID, ExpertsenderService::PERSONAL_OFFER_COUPON_START_SEND_EMAIL, $coupon['UF_PROMO_CODE'], new \DateTime(), null, true,'ID', $couponID);
+
         $freeCouponsCnt = $this->personalCouponManager::query()
             ->setSelect([
                 'ID',
@@ -896,18 +944,24 @@ class PersonalOffersService
             $offer = $this->getOfferByCoupon($coupon);
             return [
                 'success' => true,
-                'data'    => [
-                    'promocode' => $coupon['UF_PROMO_CODE'],
-                    'text' => [
-                        'title' => 'А вот и сюрприз для Вас!',
-                        'value' => ($offer["PROPERTY_DISCOUNT_VALUE"] ? $offer["PROPERTY_DISCOUNT_VALUE"] . "%" : $offer["PROPERTY_DISCOUNT_CURRENCY_VALUE"] . " ₽"),
-                        'valueDescription' => $offer["PREVIEW_TEXT"],
-                        'description' => 'Это ваш подарок за участие в акции. Он доступен в разделе Персональные предложения.',
-                        'titleUse' => 'Как использовать промо-код:',
-                        'descriptionUse' => '1. На сайте или в мобильном приложении положите неакционные товары в корзину и введите промо-код в специальное поле в корзине.
+                'data' => [
+                    'dobrolap_coupon' => [
+                        'personal_offer' => [
+                            'id' => $coupon['ID'],
+                            'promocode' => $coupon['UF_PROMO_CODE'],
+                            'discount' => ($offer["PROPERTY_DISCOUNT_VALUE"] ? $offer["PROPERTY_DISCOUNT_VALUE"] . "%" : $offer["PROPERTY_DISCOUNT_CURRENCY_VALUE"] . " ₽"),
+                            'date_active' => 'Действует до ' . $offer['DATE_ACTIVE_TO'],
+                            'text' => $offer["PREVIEW_TEXT"],
+                        ],
+                        'text' => [
+                            'title' => 'А вот и сюрприз для Вас!',
+                            'description' => 'Это ваш подарок за участие в акции. Он доступен в разделе Персональные предложения.',
+                            'titleUse' => 'Как использовать промо-код:',
+                            'descriptionUse' => '1. На сайте или в мобильном приложении положите неакционные товары в корзину и введите промо-код в специальное поле в корзине.
                         2. В магазине на кассе перед оплатой неакционных товаров покажите промо-код кассиру.
                         3. Промо-код можно использовать 1 раз до окончания его срока действия.',
-                    ],
+                        ],
+                    ]
                 ]
             ];
         }
