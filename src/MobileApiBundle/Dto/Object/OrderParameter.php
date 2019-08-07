@@ -303,6 +303,15 @@ class OrderParameter
     protected $activeDobrolap = false;
 
     /**
+     * Иконки
+     *
+     * @Serializer\Type("array")
+     * @Serializer\SerializedName("icons")
+     * @var array
+     */
+    protected $icons = [];
+
+    /**
      * @return Product[]
      */
     public function getProducts(): array
@@ -795,5 +804,23 @@ class OrderParameter
     public function getActiveDobrolap(): bool
     {
         return $this->activeDobrolap;
+    }
+
+    /**
+     * @return array
+     */
+    public function getIcons(): array
+    {
+        return $this->icons;
+    }
+
+    /**
+     * @param array $icons
+     * @return OrderParameter
+     */
+    public function setIcons(array $icons): OrderParameter
+    {
+        $this->icons = $icons;
+        return $this;
     }
 }

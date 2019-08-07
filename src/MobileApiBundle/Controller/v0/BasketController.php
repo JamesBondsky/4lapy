@@ -339,7 +339,7 @@ class BasketController extends BaseController
             }
         }
 
-        [$courierDelivery, $pickupDelivery, $dostavistaDelivery] = $this->apiOrderService->getDeliveryVariants();
+        [$courierDelivery, $pickupDelivery, $dostavistaDelivery, $dobrolapDelivery] = $this->apiOrderService->getDeliveryVariants();
 
         $dostavistaDelivery->setCourierPrice($deliveryPrice);
 
