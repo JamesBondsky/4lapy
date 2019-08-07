@@ -615,52 +615,33 @@ $APPLICATION->SetTitle("Добролап");
             </div>
         </div>
     </section>
-<? /*?>
-    <section class="ftco-section" id="raise">
-    	<div class="col-md-12">
-    				<div class="row justify-content-center">
-			          <div class="col-md-12 heading-section text-center ftco-animate">
-			            <h2 class="">едем помогать</h2>
-			            <hr />
-			            <h5 class="mb-4">КАЖДУЮ НЕДЕЛЮ МЫ ОТПРАВЛЯЕМСЯ В ГОСТИ К НАШИМ ЧЕТВЕРОЛАПЫМ ДРУЗЬЯМ, ЧТОБЫ отвезти нужные и долгожданные подарки четверолапым друзьям из приютов.</h5>
-			            <h5 class="mb-4">Примите участие в челлендже, расскажите друзьям и присоединяйтесь к нам. Вместе мы сможем больше!</h5>
-			          </div>
-			        </div>
-    	</div>
-    	<div class="home-slider  owl-carousel">
-	      <div class="slider-item ">
-	      	<div class="overlay"></div>
-	        <div class="container">
-	          <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end" data-scrollax-parent="true">
-	          		<video controls poster="/dobrolap/images/29184619-preview.jpg">
-					  <source src="/dobrolap/video/29184619-preview.mp4" type="video/mp4">
-					</video>
-	        	</div>
-	        </div>
-	      </div>
-	      <div class="slider-item ">
-	      	<div class="overlay"></div>
-	        <div class="container">
-	          <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end" data-scrollax-parent="true">
-	          		<video controls poster="/dobrolap/images/1014142868-preview.jpg">
-					  <source src="/dobrolap/video/1014142868-preview.mp4" type="video/mp4">
-					</video>
-	        	</div>
-	        </div>
-	      </div>
-	      <div class="slider-item ">
-	      	<div class="overlay"></div>
-	        <div class="container">
-	          <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end" data-scrollax-parent="true">
-	          		<video controls poster="/dobrolap/images/1012398863-preview.jpg">
-					  <source src="/dobrolap/video/1012398863-preview.mp4" type="video/mp4">
-					</video>
 
-					<span class='ion-ios-arrow-left'></span>
-	        	</div>
-	        </div>
-	      </div>
-	    </div>
+    <section class="ftco-section" id="raise">
+        <div class="col-md-12">
+            <div class="row justify-content-center">
+                <div class="col-md-12 heading-section text-center ftco-animate">
+                    <h2 class="">едем помогать</h2>
+                    <hr/>
+                    <h5 class="mb-4">КАЖДУЮ НЕДЕЛЮ МЫ ОТПРАВЛЯЕМСЯ В ГОСТИ К НАШИМ ЧЕТВЕРОЛАПЫМ ДРУЗЬЯМ, ЧТОБЫ отвезти
+                        нужные и долгожданные подарки четверолапым друзьям из приютов.</h5>
+                    <h5 class="mb-4">Примите участие в челлендже, расскажите друзьям и присоединяйтесь к нам. Вместе мы
+                        сможем больше!</h5>
+                </div>
+            </div>
+        </div>
+        <div class="home-slider  owl-carousel">
+            <div class="slider-item ">
+                <div class="overlay"></div>
+                <div class="container">
+                    <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end"
+                         data-scrollax-parent="true">
+                        <video controls poster="/dobrolap/images/raise-preview1.jpg">
+                            <source src="/upload/dobrolap/Dobrolap_06_08.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
-<?*/ ?>
+
 <? require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/footer.php"); ?>
