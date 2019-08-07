@@ -825,7 +825,7 @@ class BasketService implements LoggerAwareInterface
             }
         }
 
-        if ($resultQuantity === 0 && isset($offer) && ($offer->isBonusExclude() || $offer->isShare()) ) {
+        if ($resultQuantity === 0 && isset($offer) && ($offer->isBonusExclude() || $offer->isShare(true)) ) {
             $basketDiscounts = true;
         } elseif ($resultQuantity === 0) {
             if (!$order) {
@@ -842,7 +842,7 @@ class BasketService implements LoggerAwareInterface
 
             $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketItem->getBasketCode()];
             if (\is_array($basketDiscounts) && !empty($basketDiscounts)) {
-                $basketDiscounts = $this->purifyAppliedDiscounts($applyResult, $basketDiscounts);
+                $basketDiscounts = $this->purifyAppliedDiscounts($applyResult, $basketDiscounts, $offer->getXmlId());
             }
 
             // Проверяем не подарок ли это
@@ -859,7 +859,7 @@ class BasketService implements LoggerAwareInterface
 
             if (!$basketDiscounts) {
                 $resultQuantity = (int)$basketItem->getQuantity() - $this->getPremisesQuantity(
-                        $applyResult, $basketItem, $order
+                        $applyResult, $basketItem, $order, $offer->getXmlId()
                     );
             }
         }
@@ -875,7 +875,7 @@ class BasketService implements LoggerAwareInterface
      *
      * @return int
      */
-    public function getPremisesQuantity(array $applyResult, BasketItem $basketItem, Order $order): int
+    public function getPremisesQuantity(array $applyResult, BasketItem $basketItem, Order $order, $productXmlId): int
     {
         $allPremises = [];
         foreach ($applyResult['DISCOUNT_LIST'] as $fakeId => $discountDesc) {
@@ -886,7 +886,7 @@ class BasketService implements LoggerAwareInterface
                 &&
                 \is_array($params)
                 &&
-                !$this->isDiscountWithBonus($applyResult, (int)$discountDesc['REAL_DISCOUNT_ID'])
+                !$this->isDiscountWithBonus($applyResult, (int)$discountDesc['REAL_DISCOUNT_ID'], $productXmlId)
             ) {
                 if ($params['discountType'] === 'DETACH') {
                     $premises = (array)$params['params']['premises'];
@@ -1063,7 +1063,7 @@ class BasketService implements LoggerAwareInterface
      *
      * @return array
      */
-    protected function purifyAppliedDiscounts(array $applyResult, array $appliedDiscounts): array
+    protected function purifyAppliedDiscounts(array $applyResult, array $appliedDiscounts, $productXmlId): array
     {
         foreach ($appliedDiscounts as $k => $appliedDiscount) {
             // Описания подарочных скидок нужно чистить потому что они вешаются на предпосылки.
@@ -1077,7 +1077,7 @@ class BasketService implements LoggerAwareInterface
                 unset($appliedDiscounts[$k]);
                 continue;
             }
-            $id = $applyResult['DISCOUNT_LIST'][$appliedDiscount['DISCOUNT_ID']]['REAL_DISCOUNT_ID'];
+            $id = (int)$applyResult['DISCOUNT_LIST'][$appliedDiscount['DISCOUNT_ID']]['REAL_DISCOUNT_ID'];
             $settings = $applyResult['FULL_DISCOUNT_LIST'][$id]['ACTIONS']['CHILDREN'];
 
             if (
@@ -1105,6 +1105,11 @@ class BasketService implements LoggerAwareInterface
                     )
                 )
             ) {
+                unset($appliedDiscounts[$k]);
+            }
+
+            // на псевдоакции бонусы начисляются
+            if($this->isDiscountWithBonus($applyResult, $id, $productXmlId)){
                 unset($appliedDiscounts[$k]);
             }
         }
@@ -1282,7 +1287,7 @@ class BasketService implements LoggerAwareInterface
      *
      * @return bool
      */
-    private function isDiscountWithBonus(array $applyResult, int $discountId): bool
+    private function isDiscountWithBonus(array $applyResult, int $discountId, $productXmlId): bool
     {
         static $shareCollection;
         static $discountIdsString = '';
@@ -1297,14 +1302,14 @@ class BasketService implements LoggerAwareInterface
             if ($discountIdsString !== implode($discountIds)) {
                 /** @todo закешировать как-нибудь получше */
                 /** @var ShareCollection $shareCollection */
-                $shareCollection = $this->shareRepository->findBy(['PROPERTY_BASKET_RULES' => $discountIds]);
+                $shareCollection = $this->shareRepository->findBy(['PROPERTY_BASKET_RULES' => $discountIds, 'ACTIVE' => 'Y', 'ACTIVE_DATE' => 'Y']);
                 $discountIdsString = implode($discountIds);
             }
 
             /** @var Share $share */
             foreach ($shareCollection as $share) {
-                if (\in_array($discountId, $share->getPropertyBasketRules())) {
-                    $result = $share->isBonus();
+                if (\in_array($discountId, $share->getPropertyBasketRules()) && in_array($productXmlId, $share-> getPropertyProducts())) {
+                    $result = $share->isBonus() || $share->getPropertySigncharge();
                     break;
                 }
             }
