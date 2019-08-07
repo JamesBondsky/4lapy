@@ -26,6 +26,7 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
+use FourPaws\Enum\IblockElementXmlId;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\DateHelper;
@@ -59,8 +60,6 @@ use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
  */
 class BasketComponent extends CBitrixComponent
 {
-    const GIFT_DOBROLAP_XML_ID = '3006635'; //FIXME вынести в SaleBundle
-
     /**
      * @var BasketService
      */
@@ -198,16 +197,10 @@ class BasketComponent extends CBitrixComponent
             $needAddDobrolapMagnet = $user->getGiftDobrolap();
             /** Если пользователю должны магнит */
             if ($needAddDobrolapMagnet == BaseEntity::BITRIX_TRUE || $needAddDobrolapMagnet == true || $needAddDobrolapMagnet == 1) {
-                $magnetID = ElementTable::getList([
-                    'select' => ['ID', 'XML_ID'],
-                    'filter' => ['XML_ID' => static::GIFT_DOBROLAP_XML_ID, 'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS)],
-                    'limit'  => 1,
-                ])->fetch()['ID'];
+                $magnetID = $this->basketService->getDobrolapMagnet()['ID'];
                 /** если магнит найден как оффер */
                 if ($magnetID) {
-                    /** @var BasketService $basketService */
-                    $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
-                    $basketItem = $basketService->addOfferToBasket(
+                    $basketItem = $this->basketService->addOfferToBasket(
                         (int)$magnetID,
                         1,
                         [],

@@ -42,10 +42,12 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\PriceQuery;
 use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockElementXmlId;
 use FourPaws\Enum\IblockType;
 use FourPaws\Enum\UserGroup;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
+use FourPaws\Helpers\IblockHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
@@ -67,6 +69,7 @@ use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use WebArch\BitrixCache\BitrixCache;
 
 /** @noinspection EfferentObjectCouplingInspection */
 
@@ -98,6 +101,10 @@ class BasketService implements LoggerAwareInterface
      * @var ShareRepository
      */
     private $shareRepository;
+
+    public const GIFT_DOBROLAP_XML_ID = '3006635';
+    public const GIFT_DOBROLAP_XML_ID_ALT = '3006616';
+    private $dobrolapMagnets;
 
 	/**
 	 * BasketService constructor.
@@ -1548,5 +1555,39 @@ class BasketService implements LoggerAwareInterface
         }
 
         return $basket;
+    }
+
+    /**
+     * @return bool
+     * @throws ArgumentException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     */
+    public function getDobrolapMagnets()
+    {
+        if(null === $this->dobrolapMagnets){
+            $dbres = ElementTable::getList([
+                'select' => ['ID', 'XML_ID'],
+                'filter' => ['ACTIVE' => 'Y', 'XML_ID' => [BasketService::GIFT_DOBROLAP_XML_ID, BasketService::GIFT_DOBROLAP_XML_ID_ALT], 'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS)],
+                'limit'  => 2,
+            ]);
+            while($row = $dbres->fetch()){
+                $this->dobrolapMagnets[$row['XML_ID']] = $row;
+            }
+            if(count($this->dobrolapMagnets) < 2){
+                $this->log()->error('Не найдены магниты добролап');
+                return false;
+            }
+        }
+        return $this->dobrolapMagnets;
+    }
+
+    /**
+     * @param bool $alt
+     * @return mixed
+     */
+    public function getDobrolapMagnet($alt = false)
+    {
+        $magnets = $this->getDobrolapMagnets();
+        return $alt ? $magnets[BasketService::GIFT_DOBROLAP_XML_ID_ALT] : $magnets[BasketService::GIFT_DOBROLAP_XML_ID];
     }
 }
