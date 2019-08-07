@@ -120,6 +120,8 @@ $nextDeliveries = $component->getDeliveryService()->getNextDeliveries($delivery,
                        placeholder=""
                        name="street"
                        data-url=""
+                       data-street="1"
+                       data-errormsg="Не меньше 3 символов без пробелов"
                        value="<?= $storage->getStreet() ?>"
                        <? if ($storage->getStreet()){ ?>data-street="<?= str_replace(['ул ', 'пер ', 'пр-кт ', 'кв-л ', 'б-р ', ' наб', 'наб '], '', $storage->getStreet()) ?>"<? } ?>/>
                 <div class="b-error"><span class="js-message"></span>
