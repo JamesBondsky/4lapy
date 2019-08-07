@@ -34,9 +34,6 @@ class AddItemListInEntity20190731175343 extends SprintMigrationBase
 
         $field = $dbRes->Fetch();
 
-        $field['ID'];
-
-
         $obEnum = new \CUserFieldEnum;
         $obEnum->SetEnumValues($field['ID'], [
             'n0' => [
