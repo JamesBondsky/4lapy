@@ -863,7 +863,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                         if ($basketItem !== null) {
                             $id = $basketItem->getId();
                             if ($id > 0) {
-                                $basketService->deleteOfferFromBasket($id, [BasketService::GIFT_DOBROLAP_XML_ID]);
+                                $basketService->deleteOfferFromBasket($id, [BasketService::GIFT_DOBROLAP_XML_ID, BasketService::GIFT_DOBROLAP_XML_ID_ALT]);
                             }
                         }
                     } catch (ObjectNotFoundException|BitrixProxyException|Exception $e) {
@@ -882,7 +882,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             if (\is_array($delBasketItems) && !empty($delBasketItems)) {
                 foreach ($delBasketItems as $id) {
                     try {
-                        $basketService->deleteOfferFromBasket($id, [BasketService::GIFT_DOBROLAP_XML_ID]);
+                        $basketService->deleteOfferFromBasket($id, [BasketService::GIFT_DOBROLAP_XML_ID, BasketService::GIFT_DOBROLAP_XML_ID_ALT]);
                     } catch (ObjectNotFoundException|BitrixProxyException|Exception $e) {
                         return $this->ajaxMess->getSystemError();
                     }

@@ -153,7 +153,7 @@ class BasketService
 
         foreach ($basketItems as $basketItem) {
             $offer = OfferQuery::getById($basketItem->getProductId());
-            if ($this->isSubProduct($basketItem) && $offer->getXmlId() != AppBasketService::GIFT_DOBROLAP_XML_ID) {
+            if ($this->isSubProduct($basketItem) && !in_array($offer->getXmlId(), [AppBasketService::GIFT_DOBROLAP_XML_ID, AppBasketService::GIFT_DOBROLAP_XML_ID_ALT])) {
                 continue;
             }
 
