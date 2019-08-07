@@ -923,9 +923,10 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $magnetIds = array_column($magnets, 'ID');
         /** @var BasketItem $basketItem */
         foreach($basket as $basketItem) {
-            $needToChange = $this->deliveryService->isInnerPickup($selectedDelivery) || $this->deliveryService->isDostavistaDelivery($selectedDelivery);
             if(in_array($basketItem->getProductId(), $magnetIds)){
-                if($basketItem->getProductId() == $magnets[BasketService::GIFT_DOBROLAP_XML_ID]['ID'] && $needToChange){
+                if($basketItem->getProductId() == $magnets[BasketService::GIFT_DOBROLAP_XML_ID]['ID']
+                    && ($this->deliveryService->isInnerPickup($selectedDelivery) || $this->deliveryService->isDostavistaDelivery($selectedDelivery))
+                ){
                     $this->basketService->deleteOfferFromBasket($basketItem->getId(), [BasketService::GIFT_DOBROLAP_XML_ID]);
                     try {
                         $this->basketService->addOfferToBasket(
@@ -941,7 +942,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
                         ]);
                     }
                 }
-                if($basketItem->getProductId() == $magnets[BasketService::GIFT_DOBROLAP_XML_ID_ALT]['ID'] && !$needToChange){
+                if($basketItem->getProductId() == $magnets[BasketService::GIFT_DOBROLAP_XML_ID_ALT]['ID']
+                    && (!$this->deliveryService->isInnerPickup($selectedDelivery) && !$this->deliveryService->isDostavistaDelivery($selectedDelivery))
+                ){
                     $this->basketService->deleteOfferFromBasket($basketItem->getId(), [BasketService::GIFT_DOBROLAP_XML_ID_ALT]);
                     try {
                         $this->basketService->addOfferToBasket(
