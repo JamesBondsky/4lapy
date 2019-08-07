@@ -294,6 +294,15 @@ class OrderParameter
     protected $text = [];
 
     /**
+     * Флаг отвечает за активность акции добролап
+     *
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("activeDobrolap")
+     * @var bool
+     */
+    protected $activeDobrolap = false;
+
+    /**
      * Иконки
      *
      * @Serializer\Type("array")
@@ -784,6 +793,17 @@ class OrderParameter
     {
         $this->text = $text;
         return $this;
+    }
+
+    public function setActiveDobrolap(bool $flag): OrderParameter
+    {
+        $this->activeDobrolap = $flag;
+        return $this;
+    }
+
+    public function getActiveDobrolap(): bool
+    {
+        return $this->activeDobrolap;
     }
 
     /**

@@ -50,6 +50,7 @@ use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
+use FourPaws\SaleBundle\Repository\Table\AnimalShelterTable;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 use FourPaws\PersonalBundle\Entity\OrderStatusChange;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
@@ -121,6 +122,8 @@ class OrderService
 
     /** @var PersonalOffersService */
     private $personalOffersService;
+
+    private $shelterData;
 
     const DELIVERY_TYPE_COURIER = 'courier';
     const DELIVERY_TYPE_PICKUP = 'pickup';
@@ -413,6 +416,7 @@ class OrderService
                 ->setComment($order->getBitrixOrder()->getField('USER_DESCRIPTION') ?: '')
                 ->setDeliveryPlaceCode($order->getPropValue('DELIVERY_PLACE_CODE'))
                 ->setText($text)
+                ->setActiveDobrolap(new \DateTime() <= new \DateTime('2019-08-30 23:59:59'))
                 ->setIcons($icons)
                 /** значение может меняться автоматически, @see \FourPaws\SaleBundle\Service\OrderService::updateCommWayProperty  */
                 // ->setCommunicationWay($order->getPropValue('COM_WAY'))
@@ -471,15 +475,28 @@ class OrderService
                 }
             }
 
-            $orderParameter->setAddressText(
-                (($cityParameter = $orderParameter->getCity()) ? $cityParameter->getTitle() . ', '  : '')
-                . $orderParameter->getStreet()
-                . ' д.' . $orderParameter->getHouse()
-                . ' ' . $orderParameter->getBuilding()
-                . ($orderParameter->getPorch() ? ' подъезд ' . $orderParameter->getBuilding() : '')
-                . ($orderParameter->getFloor() ? ' этаж ' . $orderParameter->getFloor() : '')
-                . ($orderParameter->getApartment() ? ' кв. ' . $orderParameter->getApartment() : '')
-            );
+            $city = null;
+            if ($this->shelterData) {
+                $city = $this->shelterData['name'] . ', ' . $this->shelterData['city'];
+            } else {
+                if ($cityParameter = $orderParameter->getCity()) {
+                    $city = $cityParameter->getTitle();
+                }
+            }
+
+            if ($this->shelterData) {
+                $orderParameter->setAddressText($city);
+            } else {
+                $orderParameter->setAddressText(
+                    (($city) ? $city . ', ' : '')
+                    . $orderParameter->getStreet()
+                    . ($orderParameter->getHouse() ? ' д.' . $orderParameter->getHouse() : '')
+                    . ' ' . $orderParameter->getBuilding()
+                    . ($orderParameter->getPorch() ? ' подъезд ' . $orderParameter->getBuilding() : '')
+                    . ($orderParameter->getFloor() ? ' этаж ' . $orderParameter->getFloor() : '')
+                    . ($orderParameter->getApartment() ? ' кв. ' . $orderParameter->getApartment() : '')
+                );
+            }
 
             $weight = 0;
             /** @var \FourPaws\PersonalBundle\Entity\OrderItem $orderItem */
@@ -525,6 +542,9 @@ class OrderService
         $basketPrice = $basketProducts->getTotalPrice();
         $basketPriceWithDiscount = $basketPrice->getActual();
         $basketPriceWithoutDiscount = $basketPrice->getOld();
+        if ($basketPriceWithoutDiscount == 0 && $basketPriceWithDiscount) {
+            $basketPriceWithoutDiscount = $basketPriceWithDiscount;
+        }
         $basketPriceSubscribe = $basketPrice->getSubscribe();
         $deliveryPrice = 0;
         $bonusAddAmount = 0;
@@ -789,7 +809,7 @@ class OrderService
         if ($dobrolapDelivery) {
             $result['dobrolap'] = [
                 'available' => $dobrolapDelivery->getAvailable(),
-                'description' => 'Ваш заказ будет доставлен в&nbsp;выбранный Вами приют для&nbsp;бездомных животных. После оплаты заказа вы получите сюрприз и памятный магнит.',
+                'description' => 'Ваш заказ будет доставлен в выбранный Вами приют для бездомных животных. После оплаты заказа вы получите сюрприз и памятный магнит.',
             ];
         }
 
@@ -1049,10 +1069,14 @@ class OrderService
                 $fantIcons[] = $href->getFullPublicPath();
             }
 
+            if ($cartParam->getShelter()) {
+                $this->shelterData = AnimalShelterTable::getList(['filter' => ['barcode' => $cartParam->getShelter()]])->fetch();
+            }
+
             $text = [
                 'title' => 'СПАСИБО ЧТО ВЫ ТВОРИТЕ ДОБРО ВМЕСТЕ С НАМИ!',
                 'titleOrder' => 'Ваш заказ №#' . $order->getField('ACCOUNT_NUMBER') . '# оформлен',
-                'description' => 'И будет доставлен в Приют' . $cartParam->getShelter(),
+                'description' => 'И будет доставлен в ' . ($this->shelterData ? $this->shelterData['name'] : ''),
                 'titleThank' => 'МЫ ГОВОРИМ ВАМ СПАСИБО!',
                 'descriptionFirstThank' => 'В знак благодарности мы подготовили небольшой сюрприз фанты "Добролап" с приятными презентами',
                 'descriptionSecondThank' => 'Также мы вложим в Ваш следующий заказ подарок - памятный магнит.',

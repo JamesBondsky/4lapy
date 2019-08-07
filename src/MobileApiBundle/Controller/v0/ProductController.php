@@ -171,8 +171,8 @@ class ProductController extends BaseController
         $cdbResult = $productsList->get('cdbResult');
         return (new Response\ProductListResponse())
             ->setProductList($productsList->get('products'))
-            ->setTotalPages($cdbResult->NavPageCount)
-            ->setTotalItems($cdbResult->NavRecordCount);
+            ->setTotalPages($cdbResult->NavPageCount ?: 0)
+            ->setTotalItems($cdbResult->NavRecordCount ?: 0);
     }
 
     /**

@@ -51,6 +51,7 @@ use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct\Tag;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Exception\CategoryNotFoundException;
 use FourPaws\MobileApiBundle\Exception\NotFoundProductException;
+use FourPaws\SaleBundle\Service\BasketRulesService;
 use FourPaws\Search\Helper\IndexHelper;
 use FourPaws\Search\Model\Navigation;
 use FourPaws\Search\SearchService;
@@ -89,6 +90,9 @@ class ProductService
     /** @var AppBasketService */
     private $appBasketService;
 
+    /** @var BasketRulesService */
+    private $basketRulesService;
+
     public function __construct(
         CategoriesService $categoriesService,
         UserService $userService,
@@ -97,7 +101,8 @@ class ProductService
         FilterHelper $filterHelper,
         SortService $sortService,
         SearchService $searchService,
-        AppBasketService $appBasketService
+        AppBasketService $appBasketService,
+        BasketRulesService $basketRulesService
     )
     {
         $this->categoriesService = $categoriesService;
@@ -108,6 +113,7 @@ class ProductService
         $this->sortService = $sortService;
         $this->searchService = $searchService;
         $this->appBasketService = $appBasketService;
+        $this->basketRulesService = $basketRulesService;
     }
 
     /**
@@ -143,6 +149,12 @@ class ProductService
         }
 
         if ($stockId > 0) {
+            if(!$this->checkShareAccess($stockId)) {
+                return (new ArrayCollection([
+                    'products' => [],
+                    'cdbResult' => new \CIBlockResult()
+                ]));
+            }
             $searchQuery = $this->getProductIdsByShareId($stockId);
 
             $category = new \FourPaws\Catalog\Model\Category();
@@ -914,6 +926,17 @@ class ProductService
             $productIds[] = $product->getId();
         }
         return $productIds;
+    }
+
+    /**
+     * @param $shareId
+     * @return bool
+     * @throws ApplicationCreateException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     */
+    public function checkShareAccess($shareId)
+    {
+        return $this->basketRulesService->checkRegionAccess($shareId);
     }
 
 }

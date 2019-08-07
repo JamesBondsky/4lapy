@@ -18,6 +18,7 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Components\BasketComponent;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Enum\IblockElementXmlId;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
@@ -33,8 +34,6 @@ use FourPaws\UserBundle\Service\UserService as AppUserService;
 
 class BasketService
 {
-    const GIFT_DOBROLAP_XML_ID = '3006635';
-
     /**
      * @var AppBasketService
      */
@@ -117,16 +116,10 @@ class BasketService
                 $needAddDobrolapMagnet = $user->getGiftDobrolap();
                 /** Если пользователю должны магнит */
                 if ($needAddDobrolapMagnet == BaseEntity::BITRIX_TRUE || $needAddDobrolapMagnet == true || $needAddDobrolapMagnet == 1) {
-                    $magnetID = ElementTable::getList([
-                        'select' => ['ID', 'XML_ID'],
-                        'filter' => ['XML_ID' => static::GIFT_DOBROLAP_XML_ID, 'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS)],
-                        'limit'  => 1,
-                    ])->fetch()['ID'];
+                    $magnetID = $this->appBasketService->getDobrolapMagnet()['ID'];
                     /** если магнит найден как оффер */
                     if ($magnetID) {
-                        /** @var AppBasketService $basketService */
-                        $basketService = Application::getInstance()->getContainer()->get(AppBasketService::class);
-                        $basketItem = $basketService->addOfferToBasket(
+                        $basketItem = $this->appBasketService->addOfferToBasket(
                             (int)$magnetID,
                             1,
                             [],
@@ -160,7 +153,7 @@ class BasketService
 
         foreach ($basketItems as $basketItem) {
             $offer = OfferQuery::getById($basketItem->getProductId());
-            if ($this->isSubProduct($basketItem) && $offer->getXmlId() != static::GIFT_DOBROLAP_XML_ID) {
+            if ($this->isSubProduct($basketItem) && $offer->getXmlId() != AppBasketService::GIFT_DOBROLAP_XML_ID) {
                 continue;
             }
 

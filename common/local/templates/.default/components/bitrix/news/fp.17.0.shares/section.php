@@ -4,7 +4,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use FourPaws\App\Application as App;
 use FourPaws\Decorators\FullHrefDecorator;
+use FourPaws\LocationBundle\LocationService;
 
 $this->setFrameMode(true);
 
@@ -58,6 +60,23 @@ if (isset($arParams['USE_FILTER']) && $arParams['USE_FILTER'] === 'Y') {
         ]
     );
 }
+
+// ограничения по региону
+/** @var LocationService $locationService */
+$locationService = App::getInstance()->getContainer()->get('location.service');
+$regionCode = $locationService->getCurrentRegionCode();
+$regionFilter = [
+    "LOGIC" => "AND",
+    [
+        "LOGIC" => "OR",
+        ['PROPERTY_REGION' => false],
+        ['PROPERTY_REGION' => $regionCode],
+    ]
+];
+if(empty($arParams['FILTER_NAME'])){
+    $arParams['FILTER_NAME'] = 'defaultShareFilter';
+}
+$GLOBALS[$arParams['FILTER_NAME']] = array_merge($regionFilter, $GLOBALS[$arParams['FILTER_NAME']] ?: []);
 
 // список акций
 $APPLICATION->IncludeComponent(
@@ -113,6 +132,7 @@ $APPLICATION->IncludeComponent(
         'FILTER_NAME'                     => $arParams['FILTER_NAME'],
         'HIDE_LINK_WHEN_NO_DETAIL'        => $arParams['HIDE_LINK_WHEN_NO_DETAIL'],
         'CHECK_DATES'                     => $arParams['CHECK_DATES'],
+        'REGION_CODE'                     => $regionCode,
     ],
     $component,
     [

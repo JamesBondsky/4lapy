@@ -1188,6 +1188,7 @@ class UserService implements
      * @param \DateTime|null $lastDate
      * @param bool|null $isOnlyEmail
      * @param string|null $field
+     * @param int|null $promocodeId
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws ObjectPropertyException
@@ -1196,7 +1197,7 @@ class UserService implements
      * @throws \Bitrix\Main\LoaderException
      * @throws \FourPaws\PersonalBundle\Exception\InvalidArgumentException
      */
-    public function sendNotifications(array $userIds, int $idEvents, ?int $emailId, string $promocode, \DateTime $startDate, ?\DateTime $lastDate, ?bool $isOnlyEmail = false, ?string $field = 'LOGIN')
+    public function sendNotifications(array $userIds, int $idEvents, ?int $emailId, string $promocode, \DateTime $startDate, ?\DateTime $lastDate, ?bool $isOnlyEmail = false, ?string $field = 'LOGIN', ?int $promocodeId = null)
     {
         $container = App::getInstance()->getContainer();
         $renderer = $container->get('templating');
@@ -1216,9 +1217,19 @@ class UserService implements
             $userIds[] = $user->getId();
         }
 
-        $users = $this->userRepository->findBy(['PERSONAL_PHONE' => $userIdsOrig]);
-        foreach ($users as $user) {
-            $userIds[] = $user->getId();
+        $userIdsOrig = array_filter($userIdsOrig, function ($item) {
+            return !empty(trim($item));
+        });
+
+        if (count($userIdsOrig) > 0) {
+            $users = $this->userRepository->findBy(['PERSONAL_PHONE' => $userIdsOrig]);
+            foreach ($users as $user) {
+                $userIds[] = $user->getId();
+            }
+        }
+
+        if (count($userIds) == 0) {
+            return;
         }
 
         $filter = ['=USER_ID' => $userIds];
@@ -1246,7 +1257,7 @@ class UserService implements
         $textStart = $renderer->render('FourPawsSaleBundle:Push:coupon.new.start.html.php');
         $textLast = $renderer->render('FourPawsSaleBundle:Push:coupon.last.start.html.php');
 
-        if (!$isOnlyEmail) {
+        if (!$isOnlyEmail && count($userIdByPush) > 0) {
             $hlblock = \Bitrix\HighloadBlock\HighloadBlockTable::getList([
                 'filter' => [
                     'TABLE_NAME' => 'api_push_messages'
@@ -1300,11 +1311,12 @@ class UserService implements
         }
 
         if ($emailId) {
+            $userIdByEmail = $userIds;
             $users = $this->userRepository->findBy(['ID' => $userIdByEmail]);
 
             $barcodeGenerator = new BarcodeGeneratorPNG();
             if ($isOnlyEmail) {
-                $offerFields = $this->personalOffersService->getOfferFieldsByCouponId(intval($promocode));
+                $offerFields = $this->personalOffersService->getOfferFieldsByCouponId(is_int($promocode) ? intval($promocode) : $promocodeId);
             } else {
                 $offerFields = $this->personalOffersService->getOfferFieldsByPromoCode($promocode);
             }

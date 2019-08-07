@@ -42,10 +42,12 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\PriceQuery;
 use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockElementXmlId;
 use FourPaws\Enum\IblockType;
 use FourPaws\Enum\UserGroup;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
+use FourPaws\Helpers\IblockHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
@@ -67,6 +69,7 @@ use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use WebArch\BitrixCache\BitrixCache;
 
 /** @noinspection EfferentObjectCouplingInspection */
 
@@ -98,6 +101,10 @@ class BasketService implements LoggerAwareInterface
      * @var ShareRepository
      */
     private $shareRepository;
+
+    public const GIFT_DOBROLAP_XML_ID = '3006635';
+    public const GIFT_DOBROLAP_XML_ID_ALT = '3006616';
+    private $dobrolapMagnets;
 
 	/**
 	 * BasketService constructor.
@@ -197,6 +204,7 @@ class BasketService implements LoggerAwareInterface
 
     /**
      * @param int $basketId
+     * @param array|null $excludeXmlIds
      *
      * @throws ArgumentNullException
      * @throws ArgumentException
@@ -208,7 +216,7 @@ class BasketService implements LoggerAwareInterface
      *
      * @return bool
      */
-    public function deleteOfferFromBasket(int $basketId): bool
+    public function deleteOfferFromBasket(int $basketId, ?array $excludeXmlIds = []): bool
     {
         if ($basketId < 1) {
             throw new InvalidArgumentException('Wrong $basketId');
@@ -220,29 +228,35 @@ class BasketService implements LoggerAwareInterface
             throw new NotFoundException('Не найден элемент корзины');
         }
 
-        $result = $basketItem->delete();
+        if ($excludeXmlIds
+            && ($skuXmlId = explode('#', $basketItem->getField('PRODUCT_XML_ID'))[1])
+            && in_array($skuXmlId, $excludeXmlIds, true)) {
+            return true;
+        } else {
+            $result = $basketItem->delete();
 
-        if (!$result->isSuccess()) {
-            // проверяем не специально ли было запорото
-            $found = false;
-            foreach ($result->getErrors() as $error) {
-                if ($error->getCode() === 'SALE_EVENT_ON_BEFORE_SALEORDER_FINAL_ACTION_ERROR') {
-                    $found = true;
+            if (!$result->isSuccess()) {
+                // проверяем не специально ли было запорото
+                $found = false;
+                foreach ($result->getErrors() as $error) {
+                    if ($error->getCode() === 'SALE_EVENT_ON_BEFORE_SALEORDER_FINAL_ACTION_ERROR') {
+                        $found = true;
+                    }
+                }
+
+                if (!$found) {
+                    throw new BitrixProxyException($result);
                 }
             }
 
-            if (!$found) {
-                throw new BitrixProxyException($result);
+            $res = BasketTable::deleteWithItems($basketItem->getId())->isSuccess();
+            if ($res) {
+                //всегда перегружаем из-за подарков
+                $this->setBasketIds();
             }
-        }
 
-        $res = BasketTable::deleteWithItems($basketItem->getId())->isSuccess();
-        if ($res) {
-            //всегда перегружаем из-за подарков
-            $this->setBasketIds();
+            return $res;
         }
-
-        return $res;
     }
 
     /**
@@ -818,7 +832,7 @@ class BasketService implements LoggerAwareInterface
             }
         }
 
-        if ($resultQuantity === 0 && isset($offer) && ($offer->isBonusExclude() || $offer->isShare()) ) {
+        if ($resultQuantity === 0 && isset($offer) && ($offer->isBonusExclude() || $offer->isShare(true)) ) {
             $basketDiscounts = true;
         } elseif ($resultQuantity === 0) {
             if (!$order) {
@@ -835,7 +849,7 @@ class BasketService implements LoggerAwareInterface
 
             $basketDiscounts = $applyResult['RESULT']['BASKET'][$basketItem->getBasketCode()];
             if (\is_array($basketDiscounts) && !empty($basketDiscounts)) {
-                $basketDiscounts = $this->purifyAppliedDiscounts($applyResult, $basketDiscounts);
+                $basketDiscounts = $this->purifyAppliedDiscounts($applyResult, $basketDiscounts, $offer->getXmlId());
             }
 
             // Проверяем не подарок ли это
@@ -852,7 +866,7 @@ class BasketService implements LoggerAwareInterface
 
             if (!$basketDiscounts) {
                 $resultQuantity = (int)$basketItem->getQuantity() - $this->getPremisesQuantity(
-                        $applyResult, $basketItem, $order
+                        $applyResult, $basketItem, $order, $offer->getXmlId()
                     );
             }
         }
@@ -868,7 +882,7 @@ class BasketService implements LoggerAwareInterface
      *
      * @return int
      */
-    public function getPremisesQuantity(array $applyResult, BasketItem $basketItem, Order $order): int
+    public function getPremisesQuantity(array $applyResult, BasketItem $basketItem, Order $order, $productXmlId): int
     {
         $allPremises = [];
         foreach ($applyResult['DISCOUNT_LIST'] as $fakeId => $discountDesc) {
@@ -879,7 +893,7 @@ class BasketService implements LoggerAwareInterface
                 &&
                 \is_array($params)
                 &&
-                !$this->isDiscountWithBonus($applyResult, (int)$discountDesc['REAL_DISCOUNT_ID'])
+                !$this->isDiscountWithBonus($applyResult, (int)$discountDesc['REAL_DISCOUNT_ID'], $productXmlId)
             ) {
                 if ($params['discountType'] === 'DETACH') {
                     $premises = (array)$params['params']['premises'];
@@ -1056,7 +1070,7 @@ class BasketService implements LoggerAwareInterface
      *
      * @return array
      */
-    protected function purifyAppliedDiscounts(array $applyResult, array $appliedDiscounts): array
+    protected function purifyAppliedDiscounts(array $applyResult, array $appliedDiscounts, $productXmlId): array
     {
         foreach ($appliedDiscounts as $k => $appliedDiscount) {
             // Описания подарочных скидок нужно чистить потому что они вешаются на предпосылки.
@@ -1070,7 +1084,7 @@ class BasketService implements LoggerAwareInterface
                 unset($appliedDiscounts[$k]);
                 continue;
             }
-            $id = $applyResult['DISCOUNT_LIST'][$appliedDiscount['DISCOUNT_ID']]['REAL_DISCOUNT_ID'];
+            $id = (int)$applyResult['DISCOUNT_LIST'][$appliedDiscount['DISCOUNT_ID']]['REAL_DISCOUNT_ID'];
             $settings = $applyResult['FULL_DISCOUNT_LIST'][$id]['ACTIONS']['CHILDREN'];
 
             if (
@@ -1098,6 +1112,11 @@ class BasketService implements LoggerAwareInterface
                     )
                 )
             ) {
+                unset($appliedDiscounts[$k]);
+            }
+
+            // на псевдоакции бонусы начисляются
+            if($this->isDiscountWithBonus($applyResult, $id, $productXmlId)){
                 unset($appliedDiscounts[$k]);
             }
         }
@@ -1275,7 +1294,7 @@ class BasketService implements LoggerAwareInterface
      *
      * @return bool
      */
-    private function isDiscountWithBonus(array $applyResult, int $discountId): bool
+    private function isDiscountWithBonus(array $applyResult, int $discountId, $productXmlId): bool
     {
         static $shareCollection;
         static $discountIdsString = '';
@@ -1290,14 +1309,14 @@ class BasketService implements LoggerAwareInterface
             if ($discountIdsString !== implode($discountIds)) {
                 /** @todo закешировать как-нибудь получше */
                 /** @var ShareCollection $shareCollection */
-                $shareCollection = $this->shareRepository->findBy(['PROPERTY_BASKET_RULES' => $discountIds]);
+                $shareCollection = $this->shareRepository->findBy(['PROPERTY_BASKET_RULES' => $discountIds, 'ACTIVE' => 'Y', 'ACTIVE_DATE' => 'Y']);
                 $discountIdsString = implode($discountIds);
             }
 
             /** @var Share $share */
             foreach ($shareCollection as $share) {
-                if (\in_array($discountId, $share->getPropertyBasketRules())) {
-                    $result = $share->isBonus();
+                if (\in_array($discountId, $share->getPropertyBasketRules()) && in_array($productXmlId, $share-> getPropertyProducts())) {
+                    $result = $share->isBonus() || $share->getPropertySigncharge();
                     break;
                 }
             }
@@ -1541,5 +1560,39 @@ class BasketService implements LoggerAwareInterface
         }
 
         return $basket;
+    }
+
+    /**
+     * @return bool
+     * @throws ArgumentException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     */
+    public function getDobrolapMagnets()
+    {
+        if(null === $this->dobrolapMagnets){
+            $dbres = ElementTable::getList([
+                'select' => ['ID', 'XML_ID'],
+                'filter' => ['ACTIVE' => 'Y', 'XML_ID' => [BasketService::GIFT_DOBROLAP_XML_ID, BasketService::GIFT_DOBROLAP_XML_ID_ALT], 'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS)],
+                'limit'  => 2,
+            ]);
+            while($row = $dbres->fetch()){
+                $this->dobrolapMagnets[$row['XML_ID']] = $row;
+            }
+            if(count($this->dobrolapMagnets) < 2){
+                $this->log()->error('Не найдены магниты добролап');
+                return false;
+            }
+        }
+        return $this->dobrolapMagnets;
+    }
+
+    /**
+     * @param bool $alt
+     * @return mixed
+     */
+    public function getDobrolapMagnet($alt = false)
+    {
+        $magnets = $this->getDobrolapMagnets();
+        return $alt ? $magnets[BasketService::GIFT_DOBROLAP_XML_ID_ALT] : $magnets[BasketService::GIFT_DOBROLAP_XML_ID];
     }
 }

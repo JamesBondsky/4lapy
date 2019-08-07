@@ -26,6 +26,7 @@ use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
+use FourPaws\Enum\IblockElementXmlId;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\DateHelper;
@@ -59,8 +60,6 @@ use FourPaws\SaleBundle\Enum\OrderStorage as OrderStorageEnum;
  */
 class BasketComponent extends CBitrixComponent
 {
-    const GIFT_DOBROLAP_XML_ID = '3006635';
-
     /**
      * @var BasketService
      */
@@ -193,21 +192,15 @@ class BasketComponent extends CBitrixComponent
             true
         );
 
-        /** если авторизирован добавляем магнит и товаров в корзине > 0*/
-        if ($user && count($basket->getOrderableItems()) > 0) {
+        /** если авторизирован добавляем магнит */
+        if ($user) { // костыль, если магнитик не добавился сразу после оплаты исходного заказа)
             $needAddDobrolapMagnet = $user->getGiftDobrolap();
             /** Если пользователю должны магнит */
             if ($needAddDobrolapMagnet == BaseEntity::BITRIX_TRUE || $needAddDobrolapMagnet == true || $needAddDobrolapMagnet == 1) {
-                $magnetID = ElementTable::getList([
-                    'select' => ['ID', 'XML_ID'],
-                    'filter' => ['XML_ID' => static::GIFT_DOBROLAP_XML_ID, 'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS)],
-                    'limit'  => 1,
-                ])->fetch()['ID'];
+                $magnetID = $this->basketService->getDobrolapMagnet()['ID'];
                 /** если магнит найден как оффер */
                 if ($magnetID) {
-                    /** @var BasketService $basketService */
-                    $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
-                    $basketItem = $basketService->addOfferToBasket(
+                    $basketItem = $this->basketService->addOfferToBasket(
                         (int)$magnetID,
                         1,
                         [],
@@ -238,11 +231,14 @@ class BasketComponent extends CBitrixComponent
     }
 
     /**
-     *
      * @param BasketItem $basketItem
      * @param bool $onlyApplied
-     *
      * @return array
+     * @throws ApplicationCreateException
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\NotImplementedException
      */
     public function getPromoLink(BasketItem $basketItem, bool $onlyApplied = false): array
     {
@@ -265,6 +261,9 @@ class BasketComponent extends CBitrixComponent
         if ($basketDiscounts) {
             /** @noinspection ForeachSourceInspection */
             foreach (\array_column($basketDiscounts, 'DISCOUNT_ID') as $fakeId) {
+                if (\in_array($fakeId, Adder::getExcludedDiscountsFakeIds(), true)) {
+                    continue;
+                }
                 if ($onlyApplied && \in_array($fakeId, Adder::getSkippedDiscountsFakeIds(), true)) {
                     continue;
                 }
@@ -280,6 +279,9 @@ class BasketComponent extends CBitrixComponent
             $discountIds = $this->offer2promoMap[$this->getOffer((int)$basketItem->getProductId())->getXmlId()]
         ) {
             foreach ($discountIds as $id) {
+                if (\in_array($id, Adder::getExcludedDiscountsIds(), true)) {
+                    continue;
+                }
                 if (!$result[$id]) {
                     $result[$id] = $this->promoDescriptions[$id];
                 }

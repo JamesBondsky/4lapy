@@ -60,8 +60,8 @@ https://api.esv2.com - валидный адрес
 ## Запуск пересчета графиков доставок
 
 ```
-- ./bin/symfony_console f:s:s # на завтрашний день
-- ./bin/symfony_console f:s:s --date="2000.01.01" # на конкретную дату
+- ./bin/symfony_console fourpaws:store:schedulescalculate # на завтрашний день
+- ./bin/symfony_console fourpaws:store:schedulescalculate --date="2000-01-01" # на конкретную дату (сгенерируется на следующий день после указанного)
 ```
 
 ## Запуск импорта местоположений DPD
@@ -101,6 +101,12 @@ https://api.esv2.com - валидный адрес
 
 ```
 - ./bin/symfony_console bitrix:mobileApi:push:queue
+```
+
+## Рассылка персональных предложений на почту
+
+```
+- ./bin/symfony_console fourpaws:popup:notification
 ```
 
 ## Фабрика фидов
