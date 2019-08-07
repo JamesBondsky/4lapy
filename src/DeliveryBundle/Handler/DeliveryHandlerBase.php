@@ -316,6 +316,12 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
 
             $amount = $stockResult->getAmount();
             $stocks = $offer->getAllStocks();
+
+            if($offer->isIgnoreStocks()){
+                $stockResultCollection->add($stockResult);
+                continue;
+            }
+
             if ($availableAmount = $stocks->filterByStore($store)->getTotalAmount()) {
                 if ($availableAmount < $amount) {
                     $delayedStockResult = $stockResult->splitByAmount($availableAmount);
