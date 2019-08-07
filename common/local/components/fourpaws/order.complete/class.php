@@ -264,7 +264,7 @@ class FourPawsOrderCompleteComponent extends FourPawsComponent
 
         $this->arResult['NEED_SHOW_ROYAL_CANIN_BUNNER'] = $this->orderService->checkRoyalCaninAction($order);
 
-        if ($this->deliveryService->isDobrolapDeliveryCode($this->orderService->getOrderDeliveryCode($order)) && new DateTime() <= new DateTime('2019-09-30 23:59:59')) {
+        if ($this->deliveryService->isDobrolapDeliveryCode($this->orderService->getOrderDeliveryCode($order)) && new DateTime() <= new DateTime('2019-08-30 23:59:59')) {
             /* Проверяем не привязан ли купон */
             $this->arResult['EXIST_COUPON'] = false;
             $this->arResult['AVAILABLE_COUPONS'] = false;

@@ -337,15 +337,18 @@ class BasketController extends Controller implements LoggerAwareInterface
             $piggyBankService->checkPiggyBankCoupon($promoCode);
 
             $this->manzana->setPromocode($promoCode);
-            $this->manzana->calculate();
             $this->couponStorage->clear();
             $this->couponStorage->save($promoCode);
 
+            $data = [
+                'basket' => $this->basketViewService->getBasketHtml(true),
+            ];
+
             $result = JsonSuccessResponse::createWithData(
                 'Промокод применен',
-                [],
+                $data,
                 200,
-                ['reload' => true]
+                ['reload' => false]
             );
         } catch (ManzanaPromocodeUnavailableException $e) {
             /**
@@ -372,6 +375,46 @@ class BasketController extends Controller implements LoggerAwareInterface
     }
 
     /**
+     * * @Route("/promo/check/", methods={"POST"})
+     *
+     * @param Request $request
+     * @return JsonResponse
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ObjectException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function checkCouponsApplicability(Request $request): JsonResponse
+    {
+        $promoCodes = $request->get('promoCodes');
+
+        $result = [];
+
+        $appliedCoupon = $this->couponStorage->getApplicableCoupon() ?? '';
+        if ($appliedCoupon) {
+            foreach ($promoCodes as $key => $promoCode) {
+                if ($appliedCoupon === $promoCode) {
+                    $result[$promoCode] = ['active' => 1];
+                    unset($promoCodes[$key]);
+                }
+            }
+            unset($key);
+        }
+
+        if ($promoCodes) {
+            $applicableCoupons = $this->manzana->getAllowPromocodes($promoCodes);
+
+            foreach ($promoCodes as $promoCode) {
+                $result[$promoCode] = in_array($promoCode, $applicableCoupons, true)
+                    ? ['applicable' => 1]
+                    : ['disabled' => 1];
+            }
+        }
+
+        return JsonSuccessResponse::createWithData('', ['availablecoupons' => $result]);
+    }
+
+    /**
      * @Route("/promo/delete/", methods={"GET", "POST"})
      *
      * @param Request $request
@@ -391,11 +434,15 @@ class BasketController extends Controller implements LoggerAwareInterface
             $this->couponStorage->delete($promoCode);
             $this->couponStorage->clear();
 
+            $data = [
+                'basket' => $this->basketViewService->getBasketHtml(true),
+            ];
+
             $result = JsonSuccessResponse::createWithData(
                 'Промокод удален',
-                [],
+                $data,
                 200,
-                ['reload' => true]
+                ['reload' => false]
             );
         } catch (Exception $e) {
             $this->log()->error(

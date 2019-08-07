@@ -294,6 +294,24 @@ class OrderParameter
     protected $text = [];
 
     /**
+     * Флаг отвечает за активность акции добролап
+     *
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("activeDobrolap")
+     * @var bool
+     */
+    protected $activeDobrolap = false;
+
+    /**
+     * Иконки
+     *
+     * @Serializer\Type("array")
+     * @Serializer\SerializedName("icons")
+     * @var array
+     */
+    protected $icons = [];
+
+    /**
      * @return Product[]
      */
     public function getProducts(): array
@@ -774,6 +792,35 @@ class OrderParameter
     public function setText(array $text): OrderParameter
     {
         $this->text = $text;
+        return $this;
+    }
+
+    public function setActiveDobrolap(bool $flag): OrderParameter
+    {
+        $this->activeDobrolap = $flag;
+        return $this;
+    }
+
+    public function getActiveDobrolap(): bool
+    {
+        return $this->activeDobrolap;
+    }
+
+    /**
+     * @return array
+     */
+    public function getIcons(): array
+    {
+        return $this->icons;
+    }
+
+    /**
+     * @param array $icons
+     * @return OrderParameter
+     */
+    public function setIcons(array $icons): OrderParameter
+    {
+        $this->icons = $icons;
         return $this;
     }
 }
