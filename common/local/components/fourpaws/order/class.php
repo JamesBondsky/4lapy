@@ -927,7 +927,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 if($basketItem->getProductId() == $magnets[BasketService::GIFT_DOBROLAP_XML_ID]['ID']
                     && ($this->deliveryService->isInnerPickup($selectedDelivery) || $this->deliveryService->isDostavistaDelivery($selectedDelivery))
                 ){
-                    $this->basketService->deleteOfferFromBasket($basketItem->getId(), [BasketService::GIFT_DOBROLAP_XML_ID]);
+                    $this->basketService->deleteOfferFromBasket($basketItem->getId());
                     try {
                         $this->basketService->addOfferToBasket(
                             (int)$magnets[BasketService::GIFT_DOBROLAP_XML_ID_ALT]['ID'],
@@ -945,7 +945,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 if($basketItem->getProductId() == $magnets[BasketService::GIFT_DOBROLAP_XML_ID_ALT]['ID']
                     && (!$this->deliveryService->isInnerPickup($selectedDelivery) && !$this->deliveryService->isDostavistaDelivery($selectedDelivery))
                 ){
-                    $this->basketService->deleteOfferFromBasket($basketItem->getId(), [BasketService::GIFT_DOBROLAP_XML_ID_ALT]);
+                    $this->basketService->deleteOfferFromBasket($basketItem->getId());
                     try {
                         $this->basketService->addOfferToBasket(
                             (int)$magnets[BasketService::GIFT_DOBROLAP_XML_ID_ALT]['ID'],

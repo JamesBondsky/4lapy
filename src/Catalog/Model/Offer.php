@@ -2562,4 +2562,13 @@ class Offer extends IblockElement
         return $this;
     }
 
+    /**
+     * При проверки наличия такие товары считаются всегда доступными
+     * @return bool
+     */
+    public function isIgnoreStocks()
+    {
+        return substr($this->getXmlId(), 0, 1) === '3';
+    }
+
 }

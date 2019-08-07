@@ -974,11 +974,13 @@ class PersonalOffersService
         $offer = $this->getOfferByCoupon($coupon);
 
         if($offer) {
+            //FIXME Этот html практически целиком дублирует блок <div data-b-dobrolap-prizes="coupon-section"> в www/deploy/release/common/local/components/fourpaws/order.complete/templates/dobrolap/template.php:34
+            //      но этот HTML отображается сразу после выбора пользователем карточки с кодом добролапа, а тот - показывается на следующих хитах на странице "Спасибо"
             $html = '<div data-b-dobrolap-prizes="coupon-section">
                         <div class="b-order__text-block">
                             <strong>А вот и сюрприз для Вас!</strong>
                             <br/><br/>
-                            <div class="b-dobrolap-coupon" data-b-dobrolap-coupon data-coupon="' . $coupon["UF_PROMO_CODE"] . '">
+                            <div class="b-dobrolap-coupon js-open-popup" data-b-dobrolap-coupon data-coupon="' . $coupon["UF_PROMO_CODE"] . '" data-popup-id="send-email-personal-offers">
                                 <div class="b-dobrolap-coupon__item b-dobrolap-coupon__item--info">
                                     <div class="b-dobrolap-coupon__discount">
                                         <span class="b-dobrolap-coupon__discount-big">' . ($offer["PROPERTY_DISCOUNT_VALUE"] ? $offer["PROPERTY_DISCOUNT_VALUE"] . "%" : $offer["PROPERTY_DISCOUNT_CURRENCY_VALUE"] . " ₽") . '</span>
@@ -1009,7 +1011,7 @@ class PersonalOffersService
                                         <img src="data:image/png;base64,' . base64_encode($barcodeGenerator->getBarcode($coupon["UF_PROMO_CODE"], \Picqer\Barcode\BarcodeGenerator::TYPE_CODE_128, 2.132310384278889, 127)) . '" alt="" class="b-dobrolap-coupon__barcode-image"/>
                                     </div>
     
-                                    <button class="b-button b-button--outline-grey b-button--full-width b-dobrolap-coupon__email-me" data-b-dobrolap-coupon="email-btn">
+                                    <button class="b-button b-button--outline-grey b-button--full-width b-dobrolap-coupon__email-me js-open-popup" data-b-dobrolap-coupon="email-btn" data-popup-id="send-email-personal-offers" data-id-coupon-personal-offers="' . $coupon["UF_PROMO_CODE"] . '">
                                         Отправить мне на email
                                     </button>
                                 </div>
