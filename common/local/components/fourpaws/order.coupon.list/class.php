@@ -103,24 +103,7 @@ class FourPawsOrderCouponListComponent extends CBitrixComponent
             $this->arResult['SHOW'] = false;
         }
 
-        if ($this->arResult['SHOW']) {
-            $allowPromos = [];
-            $promocodes = [];
-            foreach ($this->arResult['COUPONS'] as $coupon) {
-                $promocodes[] = $coupon['UF_PROMO_CODE'];
-            }
-            if (count($promocodes)) {
-                $allowPromos = $this->manzana->getAllowPromocodes($promocodes);
-                foreach ($this->arResult['COUPONS'] as $key => $coupon) {
-                    if (!in_array($coupon['UF_PROMO_CODE'], $allowPromos)) {
-                        //unset($this->arResult['COUPONS'][$key]);
-                    }
-                }
-            }
-            $this->setCoupon($allowPromos);
-        } else {
-            $this->setCoupon();
-        }
+        $this->setCoupon();
 
         $this->includeComponentTemplate();
     }
@@ -128,10 +111,9 @@ class FourPawsOrderCouponListComponent extends CBitrixComponent
     /**
      * Set coupon and coupon discount
      *
-     * @param array|null $usablePromocodes
      * @return void
      */
-    private function setCoupon(?array $usablePromocodes = []): void
+    private function setCoupon(): void
     {
         $this->arResult['APPLY_COUPON'] = $this->couponsStorage->getApplicableCoupon() ?? '';
         $this->arResult['APPLY_COUPON_DISCOUNT'] = !empty($this->arResult['COUPON']) ? $this->basketService->getPromocodeDiscount() : 0;
@@ -140,7 +122,6 @@ class FourPawsOrderCouponListComponent extends CBitrixComponent
         } else {
             $this->arResult['COUPON_USED'] = false;
         }
-        $this->arResult['USABLE_PROMO_CODES'] = $usablePromocodes;
     }
 
 }
