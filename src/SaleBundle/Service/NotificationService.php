@@ -752,4 +752,25 @@ class NotificationService implements LoggerAwareInterface
             $this->log()->error($exception->getMessage());
         }
     }
+
+    /**
+     * Уведомление заказчику об ошибке на сайте
+     * @param $theme
+     * @param $message
+     */
+    public function sendErrorMessageToAdmin($theme, $message): bool
+    {
+        $fields = [
+            'THEME' => $theme,
+            'MESSAGE' => $message,
+        ];
+
+        $result = \CEvent::SendImmediate(
+            'SystemErrorMessage',
+            's1',
+            $fields
+        );
+
+        return (int)$result > 0;
+    }
 }

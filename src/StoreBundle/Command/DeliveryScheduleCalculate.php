@@ -11,6 +11,7 @@ use DateTime;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\SaleBundle\Service\NotificationService;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\DeliveryScheduleService;
 use FourPaws\StoreBundle\Service\ScheduleResultService;
@@ -135,11 +136,13 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
                     BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
                     $totalCreated += $created;
                     $isSuccess = true;
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     $this->log()->error(
                         sprintf('Failed to calculate schedule results: %s: %s', \get_class($e), $e->getMessage()),
                         ['sender' => $sender->getXmlId()]
                     );
+                    $message = sprintf('Не удалось сгенерировать расписания для %s: %s', $sender->getXmlId(),  $e->getMessage());
+                    $this->sendMessageToAdmin($message);
                 }
 
                 if ($isSuccess) {
@@ -178,5 +181,16 @@ class DeliveryScheduleCalculate extends Command implements LoggerAwareInterface
                 round((microtime(true) - $start_global) / 60, 2)
             )
         );
+    }
+
+    /**
+     * Сообщение об ошибке при генерации
+     * @param $message
+     */
+    private function sendMessageToAdmin($message)
+    {
+        /** @var NotificationService $notificationService */
+        $notificationService = Application::getInstance()->getContainer()->get(NotificationService::class);
+        $notificationService->sendErrorMessageToAdmin("Ошибка генерации расписания", $message);
     }
 }
