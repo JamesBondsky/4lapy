@@ -1326,7 +1326,7 @@ class OrderService implements LoggerAwareInterface
             }
 
             // активация подписки на доставку
-            if($storage->isSubscribe()){
+            if($storage->isSubscribe() && $storage->getSubscribeId() > 0){
                 $this->orderSubscribeService->activateSubscription($storage, $order);
             }
 
@@ -1337,6 +1337,7 @@ class OrderService implements LoggerAwareInterface
             }
             $this->log()->error(sprintf('failed to create order: %s', $e->getMessage()), [
                 'fuserId' => $storage->getFuserId(),
+                'trace' => $e->getTraceAsString()
             ]);
             throw new OrderCreateException('failed to save order');
         }
