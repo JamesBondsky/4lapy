@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use FourPaws\App\Application as App;
 use FourPaws\AppBundle\Bitrix\FourPawsComponent;
+use FourPaws\External\Manzana\Exception\ExecuteErrorException;
 use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -60,7 +61,11 @@ class FourPawsPersonalCabinetStampsComponent extends FourPawsComponent
         try {
             $userId = $this->currentUserProvider->getCurrentUserId();
 
-            $this->arResult['ACTIVE_STAMPS_COUNT'] = $this->stampService->getActiveStampsCount(); //TODO обработать ошибку "Карта не найдена"
+            try {
+                $this->arResult['ACTIVE_STAMPS_COUNT'] = $this->stampService->getActiveStampsCount();
+            } catch (ExecuteErrorException $e) {
+                $this->arResult['ACTIVE_STAMPS_COUNT'] = 0;
+            }
         } catch (NotAuthorizedException $e) {
             define('NEED_AUTH', true);
 
