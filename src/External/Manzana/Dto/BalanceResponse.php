@@ -72,7 +72,7 @@ class BalanceResponse
     protected $cardActiveBalance = 0;
 
     /**
-     * Баланс марок на карты
+     * Количество марок на карте
      *
      * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("float")
@@ -83,7 +83,7 @@ class BalanceResponse
     protected $cardStatusBalance = 0;
 
     /**
-     * Активный баланс марок на карте
+     * Доступное для списания количество марок на карте
      *
      * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("float")
@@ -92,6 +92,28 @@ class BalanceResponse
      * @var float
      */
     protected $cardStatusActiveBalance = 0;
+
+    /**
+     * Количество начисленных марок
+     *
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("ChargedStatusBonus")
+     *
+     * @var float
+     */
+    protected $chargedStatusBonus = 0;
+
+    /**
+     * Количество активируемых марок из начисленных
+     *
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("ActiveChargedStatusBonus")
+     *
+     * @var float
+     */
+    protected $activeChargedStatusBonus = 0;
 
     /**
      * ?, деньги
@@ -213,5 +235,21 @@ class BalanceResponse
     public function getCardSummDiscounted(): float
     {
         return (float)$this->cardSummDiscounted;
+    }
+
+    /**
+     * @return float
+     */
+    public function getChargedStatusBonus(): float
+    {
+        return $this->chargedStatusBonus;
+    }
+
+    /**
+     * @return float
+     */
+    public function getActiveChargedStatusBonus(): float
+    {
+        return $this->activeChargedStatusBonus;
     }
 }

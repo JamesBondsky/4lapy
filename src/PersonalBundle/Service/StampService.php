@@ -37,6 +37,14 @@ class StampService implements LoggerAwareInterface
             'DISCOUNT' => 30,
         ],
     ];
+
+    public const PRODUCTS_XML_ID = [ //TODO FIX xml_ids array
+        1000002,
+        1000003,
+        1000004,
+    ];
+
+
     /**
      * @var UserService
      */

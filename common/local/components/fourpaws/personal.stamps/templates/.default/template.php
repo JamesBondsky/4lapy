@@ -53,15 +53,11 @@ $marksDeclension = new Declension('марку', 'марки', 'марок');
     <?php
         $APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', '', array(
             'OFFER_FILTER' => [
-                '=XML_ID' => [ //TODO FIX xml_ids array
-                    1022039,
-                    1001747,
-                    1005609,
-                    1006601,
-                ]
+                '=XML_ID' => $arParams['PRODUCTS_XML_ID'],
             ],
             'COUNT' => 4,
             'TITLE' => 'Товары, участвующие в акции',
+	        'ONLY_PRODUCTS_XML_ID' => $arParams['PRODUCTS_XML_ID'], // показывать только указанные ТП, а не все в родительских товарах
         ), $this->getComponent());
         
         /*$APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', '', array(

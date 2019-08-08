@@ -47,6 +47,7 @@ class FourPawsPersonalCabinetStampsComponent extends FourPawsComponent
         $params['DISCOUNT_LEVELS'] = $this->discountLevels;
         $params['MARK_RATE'] = $this->stampService::MARK_RATE;
         $params['MARKS_PER_RATE'] = $this->stampService::MARKS_PER_RATE;
+        $params['PRODUCTS_XML_ID'] = $this->stampService::PRODUCTS_XML_ID;
 
         return parent::onPrepareComponentParams($params);
     }
@@ -59,7 +60,7 @@ class FourPawsPersonalCabinetStampsComponent extends FourPawsComponent
         try {
             $userId = $this->currentUserProvider->getCurrentUserId();
 
-            $this->arResult['ACTIVE_STAMPS_COUNT'] = $this->stampService->getActiveStampsCount();
+            $this->arResult['ACTIVE_STAMPS_COUNT'] = $this->stampService->getActiveStampsCount(); //TODO обработать ошибку "Карта не найдена"
         } catch (NotAuthorizedException $e) {
             define('NEED_AUTH', true);
 

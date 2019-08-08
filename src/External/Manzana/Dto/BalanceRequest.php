@@ -87,7 +87,7 @@ class BalanceRequest
      *
      * @var
      */
-    protected $responseType = 0; //FIXME что это за поле?
+    protected $responseType = 0; // какое-то костыльное поле, чтобы SOAP собрал request, иначе падает фатальная ошибка
 
 
     /**

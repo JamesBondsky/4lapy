@@ -275,7 +275,6 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
             ->setPos($this->parameters['pos'])
             ->setDatetime(new DateTimeImmutable())
             ->setRequestId($requestId);
-            //->setResponseType(0); //FIXME что это за поле и что в него нужно ставить? Без него не работает (сейчас задан жестко 0 в сущности реквеста)
     }
 
     /**
