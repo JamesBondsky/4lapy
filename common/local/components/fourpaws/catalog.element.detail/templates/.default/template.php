@@ -601,7 +601,7 @@ $this->EndViewTarget();
 $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
 ?>
     <div class="b-tab-content__container active js-tab-content" data-tab-content="description">
-        <div class="b-description-tab <? if (KioskService::isKioskMode()) { ?>b-description-tab--description<? } ?>">
+        <div class="b-description-tab <? if (KioskService::isKioskMode()) { ?>b-description-tab--description-product-detail<? } ?>">
             <div class="b-description-tab__column" itemprop="description" >
                 <div class="rc-product-detail">
                     <? if ($product->getLayoutDescription()->getText() != '' && $product->getLayoutDescription()->getText() != null) { ?>
