@@ -421,6 +421,10 @@ class OrderService
                 /** значение может меняться автоматически, @see \FourPaws\SaleBundle\Service\OrderService::updateCommWayProperty  */
                 // ->setCommunicationWay($order->getPropValue('COM_WAY'))
             ;
+            if ($icons) {
+                $orderParameter
+                    ->setIcons($icons);
+            }
 
             if($order->getPropValue('SUBSCRIBE_ID') > 0){
                 $subscribeId = (int)$order->getPropValue('SUBSCRIBE_ID');
