@@ -20,6 +20,7 @@ use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\KioskBundle\Service\KioskService;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -600,7 +601,7 @@ $this->EndViewTarget();
 $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
 ?>
     <div class="b-tab-content__container active js-tab-content" data-tab-content="description">
-        <div class="b-description-tab">
+        <div class="b-description-tab <? if (KioskService::isKioskMode()) { ?>b-description-tab--description<? } ?>">
             <div class="b-description-tab__column" itemprop="description" >
                 <div class="rc-product-detail">
                     <? if ($product->getLayoutDescription()->getText() != '' && $product->getLayoutDescription()->getText() != null) { ?>
