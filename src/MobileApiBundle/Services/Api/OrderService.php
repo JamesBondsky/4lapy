@@ -417,10 +417,13 @@ class OrderService
                 ->setDeliveryPlaceCode($order->getPropValue('DELIVERY_PLACE_CODE'))
                 ->setText($text)
                 ->setActiveDobrolap(new \DateTime() <= new \DateTime('2019-08-30 23:59:59'))
-                ->setIcons($icons)
                 /** значение может меняться автоматически, @see \FourPaws\SaleBundle\Service\OrderService::updateCommWayProperty  */
                 // ->setCommunicationWay($order->getPropValue('COM_WAY'))
             ;
+            if ($icons) {
+                $orderParameter
+                    ->setIcons($icons);
+            }
 
             if($order->getPropValue('SUBSCRIBE_ID') > 0){
                 $subscribeId = (int)$order->getPropValue('SUBSCRIBE_ID');
