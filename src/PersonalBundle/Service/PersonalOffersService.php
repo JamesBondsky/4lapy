@@ -802,7 +802,13 @@ class PersonalOffersService
                 'success' => false,
                 'message' => 'Неверный тип доставки в заказе!'
             ];
-        } else*/if ($this->orderService->getOrderPropertyByCode($bitrixOrder, 'DOBROLAP_COUPON_ID')->getValue()) {
+        } else*/
+        if (!($this->orderService->getOrderPropertyByCode($bitrixOrder, 'DOBROLAP_SHELTER')->getValue() > 0)) {
+            return [
+                'success' => false,
+                'message' => 'Данный заказ не для приюта'
+            ];
+        } else if ($this->orderService->getOrderPropertyByCode($bitrixOrder, 'DOBROLAP_COUPON_ID')->getValue()) {
             $dobrolapCouponID = $this->orderService->getOrderPropertyByCode($bitrixOrder, 'DOBROLAP_COUPON_ID')->getValue();
             /** @var PersonalOffersService $personalOffersService */
             $personalOffersService = App::getInstance()->getContainer()->get('personal_offers.service');
