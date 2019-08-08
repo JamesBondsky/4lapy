@@ -7,12 +7,12 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
 <? foreach($arResult['ELEMENTS'] as $i => $element) { ?>
 
     <? if($i == 0) { ?>
-        <div class="col-md-12 animate-box">
+        <div class="col-md-12 animate-box needs__row-items">
     <? } ?>
 
     <? if($i != 0 && $i % 4 == 0) { ?>
         </div>
-        <div class="col-md-12 animate-box">
+        <div class="col-md-12 animate-box needs__row-items">
     <? } ?>
 
         <div class="col-md-3 animate-box">

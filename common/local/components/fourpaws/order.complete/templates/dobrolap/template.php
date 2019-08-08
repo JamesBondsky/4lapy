@@ -31,11 +31,11 @@ $promocode = $coupon['UF_PROMO_CODE'];
                 <? } ?>
                 <div data-b-dobrolap-prizes data-order-id="<?= $order->getField('ACCOUNT_NUMBER') ?>" data-url="<?= $arResult['GET_COUPON_URL'] ?>">
                     <? if ($arResult['EXIST_COUPON']) { ?>
-                        <div data-b-dobrolap-prizes="coupon-section">
+                        <div data-b-dobrolap-prizes="coupon-section"><? //FIXME Этот html практически целиком дублирует блок <div data-b-dobrolap-prizes="coupon-section"> в www/deploy/release/src/PersonalBundle/Service/PersonalOffersService.php:978 ?>
                             <div class="b-order__text-block">
                                 <strong>А вот и сюрприз для Вас!</strong>
                                 <br/><br/>
-                                <div class="b-dobrolap-coupon" data-b-dobrolap-coupon data-coupon="<?= $promocode ?>">
+                                <div class="b-dobrolap-coupon js-open-popup" data-b-dobrolap-coupon data-coupon="<?= $promocode ?>" data-popup-id="send-email-personal-offers">
                                     <div class="b-dobrolap-coupon__item b-dobrolap-coupon__item--info">
                                         <div class="b-dobrolap-coupon__discount">
                                             <span class="b-dobrolap-coupon__discount-big"><?= ($offer["PROPERTY_DISCOUNT_VALUE"] ? $offer["PROPERTY_DISCOUNT_VALUE"] . "%" : $offer["PROPERTY_DISCOUNT_CURRENCY_VALUE"] . " ₽") ?></span>

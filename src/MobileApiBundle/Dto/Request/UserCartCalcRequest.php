@@ -25,7 +25,7 @@ class UserCartCalcRequest implements SimpleUnserializeRequest, PostRequest
      * Тип доставки
      * @Serializer\SerializedName("deliveryType")
      * @Serializer\Type("string")
-     * @Assert\Choice({"courier", "pickup", "dostavista"})
+     * @Assert\Choice({"courier", "pickup", "dostavista", "dobrolap"})
      * @var string
      */
     protected $deliveryType = '';

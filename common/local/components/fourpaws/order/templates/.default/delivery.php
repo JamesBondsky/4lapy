@@ -306,8 +306,10 @@ if ($arResult['ECOMMERCE_VIEW_SCRIPT']) {
             } else {
                 $basketPrice = $pickup->getStockResult()->getPrice();
             }
-        } else {
+        } elseif ($delivery) {
             $basketPrice = $delivery->getStockResult()->getOrderable()->getPrice();
+        } elseif ($deliveryDobrolap) {
+            $basketPrice = $deliveryDobrolap->getStockResult()->getOrderable()->getPrice();
         }
         ?>
         <div class="b-order-list b-order-list--cost b-order-list--order-step-two js-order-next">

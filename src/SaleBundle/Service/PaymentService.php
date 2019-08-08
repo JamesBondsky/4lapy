@@ -1194,7 +1194,7 @@ class PaymentService implements LoggerAwareInterface
 
                     $magnetID = ElementTable::getList([
                         'select' => ['ID', 'XML_ID'],
-                        'filter' => ['XML_ID' => ApiBasketService::GIFT_DOBROLAP_XML_ID, 'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS)],
+                        'filter' => ['XML_ID' => BasketService::GIFT_DOBROLAP_XML_ID, 'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS)],
                         'limit'  => 1,
                     ])->fetch()['ID'];
                     /** если магнит найден как оффер */

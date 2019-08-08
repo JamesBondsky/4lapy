@@ -661,7 +661,7 @@ class Event extends BaseServiceHandler
                     $container = Application::getInstance()->getContainer();
                     /** @var PersonalOffersService $personalOffersService */
                     $personalOffersService = $container->get('personal_offers.service');
-                    $personalOffersService->importOffers($arFields['ID'], $coupons);
+                    $personalOffersService->importOffersAsync($arFields['ID'], $coupons);
                 }
             }
         }

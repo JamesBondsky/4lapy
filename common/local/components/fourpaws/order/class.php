@@ -8,7 +8,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
@@ -37,6 +39,9 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\EcommerceBundle\Preset\Bitrix\SalePreset;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
+use FourPaws\Enum\IblockElementXmlId;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\ManzanaService;
 use FourPaws\KioskBundle\Service\KioskService;
@@ -63,6 +68,7 @@ use FourPaws\SaleBundle\Service\UserAccountService;
 use FourPaws\SaleBundle\Validation\OrderDeliveryValidator;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\EmptyPhoneException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -520,6 +526,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 $basket = $order1->getBasket();
             }
 
+            // бонусы
             if ($user) {
                 $this->arResult['MAX_BONUS_SUM'] = $this->basketService->getMaxBonusesForPayment($basket); // Получение из Manzana максимального количества бонусов для списания
 
@@ -542,6 +549,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 }
             }
 
+            // киоск: скидочная карта
             if(KioskService::isKioskMode()){
                 $curPage = BitrixApplication::getInstance()->getContext()->getRequest()->getRequestUri();
                 $url = $this->kioskService->addParamsToUrl($curPage, ['bindcard' => true]);
@@ -552,6 +560,11 @@ class FourPawsOrderComponent extends \CBitrixComponent
                     $storage->setDiscountCardNumber($this->kioskService->getCardNumber());
                     $this->orderStorageService->updateStorage($storage, OrderStorageEnum::NOVALIDATE_STEP);
                 }
+            }
+
+            // магнит добролап
+            if($user){
+                $this->checkAndReplaceDobrolapMagnet($basket, $user, $selectedDelivery);
             }
 
             $payments = $this->orderStorageService->getAvailablePayments($storage, true, true, $basket->getPrice());
@@ -888,5 +901,66 @@ class FourPawsOrderComponent extends \CBitrixComponent
             );
         }
         return $this->orderSubscribeService;
+    }
+
+    /**
+     * @param Basket $basket
+     * @param User $user
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     * @throws SystemException
+     * @throws BitrixProxyException
+     */
+    private function checkAndReplaceDobrolapMagnet(Basket $basket, User $user, CalculationResultInterface $selectedDelivery)
+    {
+        $magnets = $this->basketService->getDobrolapMagnets();
+        if(!$magnets){
+            return;
+        }
+        $magnetIds = array_column($magnets, 'ID');
+        /** @var BasketItem $basketItem */
+        foreach($basket as $basketItem) {
+            if(in_array($basketItem->getProductId(), $magnetIds)){
+                if($basketItem->getProductId() == $magnets[BasketService::GIFT_DOBROLAP_XML_ID]['ID']
+                    && ($this->deliveryService->isInnerPickup($selectedDelivery) || $this->deliveryService->isDostavistaDelivery($selectedDelivery))
+                ){
+                    $this->basketService->deleteOfferFromBasket($basketItem->getId());
+                    try {
+                        $this->basketService->addOfferToBasket(
+                            (int)$magnets[BasketService::GIFT_DOBROLAP_XML_ID_ALT]['ID'],
+                            1,
+                            [],
+                            true,
+                            $basket
+                        );
+                    } catch (\Exception $e) {
+                        $this->logger->error(sprintf('Не удалось добавить альтерантивынй магнит в корзину: %s', $e->getMessage()), [
+                            'user' => $user->getId(),
+                        ]);
+                    }
+                }
+                if($basketItem->getProductId() == $magnets[BasketService::GIFT_DOBROLAP_XML_ID_ALT]['ID']
+                    && (!$this->deliveryService->isInnerPickup($selectedDelivery) && !$this->deliveryService->isDostavistaDelivery($selectedDelivery))
+                ){
+                    $this->basketService->deleteOfferFromBasket($basketItem->getId());
+                    try {
+                        $this->basketService->addOfferToBasket(
+                            (int)$magnets[BasketService::GIFT_DOBROLAP_XML_ID_ALT]['ID'],
+                            1,
+                            [],
+                            true,
+                            $basket
+                        );
+                    } catch (\Exception $e) {
+                        $this->logger->error(sprintf('Не удалось добавить альтерантивынй магнит в корзину: %s', $e->getMessage()), [
+                            'user' => $user->getId(),
+                        ]);
+                    }
+                }
+            }
+        }
     }
 }
