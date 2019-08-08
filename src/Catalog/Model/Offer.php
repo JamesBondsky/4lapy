@@ -1388,7 +1388,7 @@ class Offer extends IblockElement
 
         if (
             !$this->isBonusExclude()
-            && !$this->isShare()
+            && !$this->isShare(true)
             && !$this->isRegionPrice()
         ) {
             $price = $this->getPrice();
@@ -1743,9 +1743,19 @@ class Offer extends IblockElement
     /**
      * @return bool
      */
-    public function isShare(): bool
+    public function isShare($excludePseudo = false): bool
     {
-        return !$this->getShare()->isEmpty();
+        $shareCollection = $this->getShare();
+
+        // псевдоакции
+        if($excludePseudo){
+            $shareCollection = $shareCollection->filter(function($share){
+                /** @var Share $share */
+                return !$share->getPropertySigncharge();
+            });
+        }
+
+        return !$shareCollection->isEmpty();
     }
 
     /**
@@ -2550,6 +2560,15 @@ class Offer extends IblockElement
     {
         $this->NAME = $newName;
         return $this;
+    }
+
+    /**
+     * При проверки наличия такие товары считаются всегда доступными
+     * @return bool
+     */
+    public function isIgnoreStocks()
+    {
+        return substr($this->getXmlId(), 0, 1) === '3';
     }
 
 }

@@ -4,6 +4,7 @@
 namespace FourPaws\External\Import\Consumer;
 
 
+use FourPaws\External\ExpertsenderService;
 use FourPaws\External\Import\Model\ImportOffer;
 use FourPaws\UserBundle\EventController\Event;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -30,16 +31,15 @@ class ImportOffersConsumer extends ImportConsumerBase
             'UF_DATE_CHANGED' => new DateTime($importOffer->dateChanged),
         ])->getId();
 
-        foreach ($importOffer->users as $userId) {
-            $this->personalCouponUsersManager::add([
-                'UF_USER_ID' => $userId,
-                'UF_COUPON' => $couponId,
-                'UF_DATE_CREATED' => new DateTime($importOffer->dateCreate),
-                'UF_DATE_CHANGED' => new DateTime($importOffer->dateChanged),
-            ]);
-        }
+        $this->personalCouponUsersManager::add([
+            'UF_USER_ID' => $importOffer->user,
+            'UF_COUPON' => $couponId,
+            'UF_DATE_CREATED' => new DateTime($importOffer->dateCreate),
+            'UF_DATE_CHANGED' => new DateTime($importOffer->dateChanged),
+        ]);
 
-        $this->userService->sendNotifications($importOffer->users, $importOffer->offerId, null, $importOffer->promoCode, new \DateTime($importOffer->activeFrom), $importOffer->activeTo ? new \DateTime($importOffer->activeTo) : null, false,'ID');
+        $this->userService->sendNotifications([$importOffer->user], $importOffer->offerId, null, $importOffer->promoCode, new \DateTime($importOffer->activeFrom), $importOffer->activeTo ? new \DateTime($importOffer->activeTo) : null, false,'ID');
+        $this->userService->sendNotifications([$importOffer->user], $importOffer->offerId, ExpertsenderService::PERSONAL_OFFER_COUPON_START_SEND_EMAIL, $importOffer->promoCode, new \DateTime($importOffer->activeFrom), $importOffer->activeTo ? new \DateTime($importOffer->activeTo) : null, true,'ID', $couponId);
 
         Event::enableEvents();
 

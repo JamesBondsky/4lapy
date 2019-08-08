@@ -14,7 +14,9 @@ use Bitrix\Sale\BasketPropertyItem;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Components\BasketComponent;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\Enum\IblockElementXmlId;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\SaleBundle\Service\BasketService;
 
 $basketUpdateUrl = '/ajax/sale/basket/update/';
 $basketDeleteUrl = '/ajax/sale/basket/delete/';
@@ -67,7 +69,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
         </span>
         <div class="b-common-item__info-center-block b-common-item__info-center-block--shopping-cart b-common-item__info-center-block--shopping">
             <a class="b-common-item__description-wrap b-common-item__description-wrap--shopping"
-               href="<? if ($offer->getXmlId() != $component::GIFT_DOBROLAP_XML_ID) { ?><?= $basketItem->getField('DETAIL_PAGE_URL'); ?><? } else {?>javascript::void(0);<? } ?>" title="">
+               href="<? if ($offer->getXmlId() != BasketService::GIFT_DOBROLAP_XML_ID) { ?><?= $basketItem->getField('DETAIL_PAGE_URL'); ?><? } else {?>javascript::void(0);<? } ?>" title="">
             <span class="b-clipped-text b-clipped-text--shopping-cart">
                 <span>
                     <?php if ($useOffer) { ?>
@@ -143,8 +145,8 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
         }
 
         if (!$basketItem->isDelay() && $offer->getQuantity() > 0) { ?>
-            <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--shopping js-plus-minus-cont" <? if ($offer->getXmlId() == $component::GIFT_DOBROLAP_XML_ID) { ?>style="background:transparent;"<?}?>>
-                <? if ($offer->getXmlId() != $component::GIFT_DOBROLAP_XML_ID) { ?>
+            <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--shopping js-plus-minus-cont" <? if ($offer->getXmlId() == BasketService::GIFT_DOBROLAP_XML_ID) { ?>style="background:transparent;"<?}?>>
+                <? if ($offer->getXmlId() != BasketService::GIFT_DOBROLAP_XML_ID) { ?>
                     <a class="b-plus-minus__minus js-minus" data-url="<?= $basketUpdateUrl ?>"
                        href="javascript:void(0);"></a>
                     <?php
@@ -204,7 +206,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                 }
                 ?>
             </div>
-            <? if ($offer->getXmlId() != $component::GIFT_DOBROLAP_XML_ID) { ?>
+            <? if ($offer->getXmlId() != BasketService::GIFT_DOBROLAP_XML_ID) { ?>
                 <a class="b-item-shopping__delete js-cart-delete-item" href="javascript:void(0);" title=""
                    data-url="<?= $basketDeleteUrl ?>" data-basketId="<?= $basketItemId; ?>">
                     <span class="b-icon b-icon--delete b-icon--shopping">
@@ -222,7 +224,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                 Нет в наличии
             </div>
         <?php } ?>
-        <? if ($offer->getXmlId() != $component::GIFT_DOBROLAP_XML_ID) { ?>
+        <? if ($offer->getXmlId() != BasketService::GIFT_DOBROLAP_XML_ID) { ?>
             <?php if (!(!$basketItem->isDelay() && $offer->getQuantity() > 0)) { ?>
                 <a class="b-item-shopping__delete js-cart-delete-item" href="javascript:void(0);" title=""
                    data-url="<?= $basketDeleteUrl ?>" data-basketId="<?= $basketItemId; ?>">

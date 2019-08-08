@@ -1142,6 +1142,7 @@ class OrderService implements LoggerAwareInterface
         $shipmentPlaceCode = $this->getOrderPropertyByCode($order, 'SHIPMENT_PLACE_CODE')->getValue();
         if ($shipmentPlaceCode) {
             $sender = $this->storeService->getStoreByXmlId($shipmentPlaceCode);
+            //$receiver = $this->storeService->getStoreByXmlId('R111');
             $receiver = $selectedDelivery->getSelectedStore();
             $currentDate = $storage->getCurrentDate();
             $scheduleResultOptimal = $this->getScheduleResultOptimal($sender, $receiver, $currentDate, $selectedDelivery->getDeliveryDate());
@@ -2323,26 +2324,46 @@ class OrderService implements LoggerAwareInterface
             /** @var ScheduleResultService $scheduleResultService */
             $scheduleResultService = Application::getInstance()->getContainer()->get(ScheduleResultService::class);
             foreach ($scheduleResultService->findResultsBySenderAndReceiver($sender, $receiver)->filterByDateActiveEqual($currentDate) as $scheduleResult) {
+                // нужно добавить срок поставки магазина, т.к. товар готов к выдаче не сразу
+                if ($receiver->isShop()) {
+                    $modifier = $receiver->getDeliveryTime();
+                    if ($modifier < 1) {
+                        $modifier = 1;
+                    }
+                }
+
+                $daysSchedule = $scheduleResult->getDays($currentDate);
+                if ($daysSchedule === ScheduleResult::RESULT_ERROR) {
+                    continue;
+                }
+                $daysSchedule += $modifier;
+
+                $daysDelivery = $deliveryDate->setTime(0,0,0)->diff($currentDate->setTime(0,0,0))->days;
+
+                // не спеваем доставить в срок по этому расписанию
+                if($daysDelivery - $daysSchedule < 0){
+                    continue;
+                }
+
                 if(!$scheduleResultOptimal){
                     $scheduleResultOptimal = $scheduleResult;
                     continue;
                 }
 
-                $days = $scheduleResult->getDays($currentDate);
-                if ($days === ScheduleResult::RESULT_ERROR) {
-                    continue;
-                }
-
-                $daysDiff = $deliveryDate->diff($currentDate)->days;
-
-                if ($days - $daysDiff <= 0) {
-                    $regularitySort = $scheduleResult->getRegularitySort();
-                    if($regularitySort < $scheduleResultOptimal->getRegularitySort()) {
-                        $scheduleResultOptimal = $scheduleResult;
-                    }
-                } else if($days < $scheduleResultOptimal->getDays($currentDate)) {
+                if($scheduleResult->getRegularitySort() < $scheduleResultOptimal->getRegularitySort()) {
                     $scheduleResultOptimal = $scheduleResult;
                 }
+
+                // если срок доставки в магазин меньше даты доставки клиенту,
+                // то выбираем расписание по сортировке
+//                if ($daysDelivery - $daysSchedule <= 0) {
+//                    $regularitySort = $scheduleResult->getRegularitySort();
+//                    if($regularitySort < $scheduleResultOptimal->getRegularitySort()) {
+//                        $scheduleResultOptimal = $scheduleResult;
+//                    }
+//                } else if($daysSchedule < $daysScheduleOptimal) {
+//                    $scheduleResultOptimal = $scheduleResult;
+//                }
             }
         } catch (\Exception $e) {
             // просто не проставится регулярность
