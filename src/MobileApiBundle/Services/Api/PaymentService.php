@@ -13,9 +13,16 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 /** @noinspection PhpIncludeInspection */
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sberbank.ecom/payment/rbs.php';
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Iblock\ElementTable;
+use FourPaws\App\Application;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\PaymentService as AppPaymentService;
 use FourPaws\PersonalBundle\Repository\OrderRepository;
 
@@ -101,6 +108,47 @@ class PaymentService
             default:
                 throw new \Exception("Unsupported pay type " . $payType);
                 break;
+        }
+
+        try {
+            //TODO вынести общий с \FourPaws\SaleBundle\Service\PaymentService::processOnlinePayment код
+            // Костыль, дублирующий код с сайта для добавления магнитика в МП.
+            // Причем магнит в данном случае добавляется при переходе пользователя к оплате (согласовано), но лучше было бы найти,
+            // как сайт узнает об оплате в МП, и перенести добавление магнита туда
+            $deliveryService = Application::getInstance()->getContainer()->get(DeliveryService::class);
+
+            /** получаем код доставки */
+            $deliveryId = $bitrixOrder->getField('DELIVERY_ID');
+            $deliveryCode = $deliveryService->getDeliveryCodeById($deliveryId);
+            if ($deliveryService->isDobrolapDeliveryCode($deliveryCode)) {
+                $magnetID = ElementTable::getList([
+                    'select' => ['ID', 'XML_ID'],
+                    'filter' => ['XML_ID' => BasketService::GIFT_DOBROLAP_XML_ID, 'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS)],
+                    'limit'  => 1,
+                ])->fetch()['ID'];
+
+                if ($magnetID && $userId = $bitrixOrder->getUserId()) {
+                    /** @var BasketService $basketService */
+                    $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
+                    $basketItem = $basketService->addOfferToBasket(
+                        (int)$magnetID,
+                        1,
+                        [],
+                        true,
+                        $basketService->getBasket()
+                    );
+                    /** если магнит успешно добавлен в корзину */
+                    if ($basketItem->getId()) {
+                        $userDB = new \CUser;
+                        $fields = [
+                            'UF_GIFT_DOBROLAP' => false
+                        ];
+                        $userDB->Update($userId, $fields);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            $this->log()->critical(__METHOD__ . '. Не удалось добавить магнитик в корзину пользователя ' . $userId . ' по заказу ' . $orderNumber);
         }
 
         return $url;
