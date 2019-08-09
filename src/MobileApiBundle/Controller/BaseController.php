@@ -48,7 +48,7 @@ class BaseController extends FOSRestController
                     $client->lastDateUseMobileApp = $currentDate->format(\DateTime::ATOM);
 
                     if ($client instanceof Client) {
-                        $manzanaService->updateContact($client);
+                        $manzanaService->updateContactMobileAsync($client);
 //                        $manzanaService->updateContactAsync($client);
                     }
                 }

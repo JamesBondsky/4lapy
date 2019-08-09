@@ -29,6 +29,10 @@ old_sound_rabbit_mq:
             connection: default
             exchange_options: { name: 'manzana_update', type: direct }
 
+        manzana_mobile_update:
+            connection: default
+            exchange_options: { name: 'manzana_mobile_update', type: direct }
+
         manzana_referral_add:
             connection: default
             exchange_options: { name: 'manzana_referral_add', type: direct }
@@ -79,6 +83,12 @@ old_sound_rabbit_mq:
             exchange_options: {name: 'manzana_update', type: direct}
             queue_options: {name: 'manzana_update'}
             callback: manzana.contact_consumer
+
+        manzana_mobile_update:
+            connection: default
+            exchange_options: {name: 'manzana_mobile_update', type: direct}
+            queue_options: {name: 'manzana_mobile_update'}
+            callback: manzana.contact_mobile_update_consumer
 
         manzana_referral_add:
             connection: default
