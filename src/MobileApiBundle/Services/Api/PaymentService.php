@@ -16,6 +16,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sberbank.ecom/payment/
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Iblock\ElementTable;
+use Bitrix\Sale\BasketItem;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
@@ -130,15 +131,22 @@ class PaymentService
                 if ($magnetID && $userId = $bitrixOrder->getUserId()) {
                     /** @var BasketService $basketService */
                     $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
-                    $basketItem = $basketService->addOfferToBasket(
-                        (int)$magnetID,
-                        1,
-                        [],
-                        true,
-                        $basketService->getBasket()
-                    );
+                    $isMagnetAlreadyInBasket = (bool)array_filter($basketService->getBasket()->getBasketItems(), static function($item) {
+                        /** @var BasketItem $item */
+                        return strpos($item->getField('PRODUCT_XML_ID'), '#' . BasketService::GIFT_DOBROLAP_XML_ID) !== false
+                            || strpos($item->getField('PRODUCT_XML_ID'), '#' . BasketService::GIFT_DOBROLAP_XML_ID_ALT) !== false;
+                    });
+                    if (!$isMagnetAlreadyInBasket) {
+                        $basketItem = $basketService->addOfferToBasket(
+                            (int)$magnetID,
+                            1,
+                            [],
+                            true,
+                            $basketService->getBasket()
+                        );
+                    }
                     /** если магнит успешно добавлен в корзину */
-                    if ($basketItem->getId()) {
+                    if ($isMagnetAlreadyInBasket || $basketItem->getId()) {
                         $userDB = new \CUser;
                         $fields = [
                             'UF_GIFT_DOBROLAP' => false
