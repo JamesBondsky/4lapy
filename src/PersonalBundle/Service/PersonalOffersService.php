@@ -787,7 +787,7 @@ class PersonalOffersService
                 'message' => 'Заказ не найден!'
             ];
         }
-        if (!$fuser && $bitrixOrder->getUserId() != $userID) {
+        /*if (!$fuser && $bitrixOrder->getUserId() != $userID) {
             return [
                 'success' => false,
                 'message' => 'Получение купона для текущего пользователя невозможно, так как в заказе указан другой пользователь!'
@@ -802,7 +802,13 @@ class PersonalOffersService
                 'success' => false,
                 'message' => 'Неверный тип доставки в заказе!'
             ];
-        } elseif ($this->orderService->getOrderPropertyByCode($bitrixOrder, 'DOBROLAP_COUPON_ID')->getValue()) {
+        } else*/
+        if (!($this->orderService->getOrderPropertyByCode($bitrixOrder, 'DOBROLAP_SHELTER')->getValue() > 0)) {
+            return [
+                'success' => false,
+                'message' => 'Данный заказ не для приюта'
+            ];
+        } else if ($this->orderService->getOrderPropertyByCode($bitrixOrder, 'DOBROLAP_COUPON_ID')->getValue()) {
             $dobrolapCouponID = $this->orderService->getOrderPropertyByCode($bitrixOrder, 'DOBROLAP_COUPON_ID')->getValue();
             /** @var PersonalOffersService $personalOffersService */
             $personalOffersService = App::getInstance()->getContainer()->get('personal_offers.service');
@@ -957,9 +963,7 @@ class PersonalOffersService
                             'title' => 'А вот и сюрприз для Вас!',
                             'description' => 'Это ваш подарок за участие в акции. Он доступен в разделе Персональные предложения.',
                             'titleUse' => 'Как использовать промо-код:',
-                            'descriptionUse' => '1. На сайте или в мобильном приложении положите неакционные товары в корзину и введите промо-код в специальное поле в корзине.
-                        2. В магазине на кассе перед оплатой неакционных товаров покажите промо-код кассиру.
-                        3. Промо-код можно использовать 1 раз до окончания его срока действия.',
+                            'descriptionUse' => "1. На сайте или в мобильном приложении положите неакционные товары в корзину и введите промо-код в специальное поле в корзине.\n2. В магазине на кассе перед оплатой неакционных товаров покажите промо-код кассиру.\n3. Промо-код можно использовать 1 раз до окончания его срока действия.",
                         ],
                     ]
                 ]

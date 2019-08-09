@@ -34,6 +34,7 @@ https://api.esv2.com - валидный адрес
 - ./bin/symfony_console rabbitmq:consumer manzana_referral_add   # обработка очереди передачи рефералов в ML
 - ./bin/symfony_console rabbitmq:consumer manzana_orders_import # обработка очереди запроса заказов пользователей в ML
 - ./bin/symfony_console rabbitmq:consumer import_offers # обработка очереди импорта промокодов
+- ./bin/symfony_console rabbitmq:consumer manzana_mobile_update # обработка очереди обновления параметров пользователя в манзане
 ```
 
 ## Перезапуск консьюмеров манзаны по расписанию

@@ -800,6 +800,20 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     }
 
     /**
+     * Обновление/создание контакта. Отдельная очередь в rabbit для обновления параметров в манзане(последнее использование апи).
+     *
+     * @param Client $contact
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     */
+    public function updateContactMobileAsync(Client $contact)
+    {
+        /** @noinspection MissingService */
+        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_mobile_update_producer');
+        $producer->publish($this->serializer->serialize($contact, 'json'));
+    }
+
+    /**
      * Импорт заказов пользователя. Очередь в rabbit.
      *
      * @param User $user
