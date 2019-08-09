@@ -55,7 +55,7 @@ class CDobrolapFormComponent extends \CBitrixComponent
             if($fan['PROPERTIES']['USER_ID']['VALUE'] > 0){
                 $user = CUser::GetByID($fan['PROPERTIES']['USER_ID']['VALUE'])->Fetch();
                 if(!$user){
-                    $this->log()->error(sprintf("Пользователь не найден: %s [%s]", $fan['PROPERTIES']['USER_ID']['VALUE']));
+                    $this->log()->error(sprintf("Пользователь не найден: %s [%s]", $fan['PROPERTIES']['USER_ID']['VALUE'], $fan['ID']));
                     continue;
                 }
             } else {
