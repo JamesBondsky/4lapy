@@ -38,10 +38,37 @@ class StampService implements LoggerAwareInterface
         ],
     ];
 
-    public const PRODUCTS_XML_ID = [ //TODO FIX xml_ids array
-        1000002,
-        1000003,
-        1000004,
+    public const EXCHANGE_RULES = [ //TODO FIX xml_ids array
+        1000002 => [
+            [
+                'discountPercent' => 30,
+                'stamps' => 5,
+            ],
+            [
+                'discountPercent' => 50,
+                'stamps' => 7,
+            ],
+        ],
+        1000003 => [
+            [
+                'discountPercent' => 30,
+                'stamps' => 5,
+            ],
+            [
+                'discountPercent' => 50,
+                'stamps' => 7,
+            ],
+        ],
+        1000004 => [
+            [
+                'discountPercent' => 30,
+                'stamps' => 5,
+            ],
+            [
+                'discountPercent' => 50,
+                'stamps' => 7,
+            ],
+        ],
     ];
 
 

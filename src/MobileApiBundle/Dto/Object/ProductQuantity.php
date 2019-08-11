@@ -28,6 +28,13 @@ class ProductQuantity
     protected $discountId = 0;
 
     /**
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("use_stamps")
+     * @var bool
+     */
+    protected $useStamps = false;
+
+    /**
      * @return int
      */
     public function getProductId(): int
@@ -81,6 +88,24 @@ class ProductQuantity
     public function setDiscountId(int $discountId): ProductQuantity
     {
         $this->discountId = $discountId;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isUseStamps(): bool
+    {
+        return $this->useStamps;
+    }
+
+    /**
+     * @param bool $useStamps
+     * @return ProductQuantity
+     */
+    public function setUseStamps(?bool $useStamps = false): ProductQuantity
+    {
+        $this->useStamps = $useStamps;
         return $this;
     }
 }

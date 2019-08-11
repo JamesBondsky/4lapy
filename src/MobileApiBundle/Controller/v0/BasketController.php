@@ -184,7 +184,7 @@ class BasketController extends BaseController
             $quantity = $productQuantity->getQuantity();
             try {
                 if ($quantity > 0) {
-                    $this->appBasketService->updateBasketQuantity($productQuantity->getProductId(), $productQuantity->getQuantity());
+                    $this->appBasketService->updateBasketQuantity($productQuantity->getProductId(), $productQuantity->getQuantity(), $productQuantity->isUseStamps());
                 } else {
                     $this->appBasketService->deleteOfferFromBasket($productQuantity->getProductId());
                 }

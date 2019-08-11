@@ -262,6 +262,7 @@ class BasketService implements LoggerAwareInterface
     /**
      * @param int $basketId
      * @param int|null $quantity
+     * @param bool|null $useStamps
      *
      * @throws Exception
      * @throws BitrixProxyException
@@ -271,7 +272,7 @@ class BasketService implements LoggerAwareInterface
      *
      * @return bool
      */
-    public function updateBasketQuantity(int $basketId, ?int $quantity = null): bool
+    public function updateBasketQuantity(int $basketId, ?int $quantity = null, ?bool $useStamps = false): bool
     {
         if ($quantity < 1) {
             throw new InvalidArgumentException('Wrong $quantity');
@@ -285,6 +286,20 @@ class BasketService implements LoggerAwareInterface
         if (null === $basketItem) {
             throw new NotFoundException('BasketItem');
         }
+
+        $basketPropertyCollection = $basketItem->getPropertyCollection();
+        $props = [];
+
+        $props[] = [
+            'NAME' => 'Использовать марки', //FIXME почему в запросе PUT /user_cart отдается предыдущее значение вместо нового, которое передается в запросе? Пофиксить!
+            'CODE' => 'USE_STAMPS', //TODO использовать это поле и на сайте
+            'VALUE' => $useStamps,
+        ];
+
+        $basketPropertyCollection->setProperty($props);
+        $basketItem->setPropertyCollection($basketPropertyCollection);
+        $basketPropertyCollection->setBasketItem($basketItem);
+        $basketPropertyCollection->save();
 
         $result = $basketItem->setField('QUANTITY', $quantity);
         if (!$result->isSuccess()) {

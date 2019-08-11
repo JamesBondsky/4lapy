@@ -37,6 +37,7 @@ use FourPaws\MobileApiBundle\Dto\Object\OrderParameter;
 use FourPaws\MobileApiBundle\Dto\Object\OrderStatus;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Dto\Object\PriceWithQuantity;
+use FourPaws\MobileApiBundle\Dto\Object\StampsDetailing;
 use FourPaws\MobileApiBundle\Dto\Request\PaginationRequest;
 use FourPaws\MobileApiBundle\Dto\Request\UserCartOrderRequest;
 use FourPaws\MobileApiBundle\Exception\BonusSubtractionException;
@@ -667,6 +668,16 @@ class OrderService
                     ->setId('bonus_sub')
                     ->setTitle('Списано')
                     ->setValue($bonusSubtractAmount),
+            ])
+            ->setStampsDetails([
+                (new StampsDetailing())
+                    ->setId('stamps_add')
+                    ->setTitle('Начислено')
+                    ->setValue(20), //TODO use real values
+                (new StampsDetailing())
+                    ->setId('stamps_sub')
+                    ->setTitle('Списано')
+                    ->setValue(12), //TODO use real values
             ])
             ->setTotalPrice(
                 $totalPrice

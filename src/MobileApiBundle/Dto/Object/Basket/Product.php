@@ -36,6 +36,13 @@ class Product
      */
     protected $prices = [];
 
+    /**
+     * @Serializer\SerializedName("useStamps")
+     * @Serializer\Type("bool")
+     * @var bool
+     */
+    protected $useStamps = false;
+
 
     /**
      * @return int
@@ -109,6 +116,24 @@ class Product
     public function setPrices(array $prices): Product
     {
         $this->prices = $prices;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isUseStamps(): bool
+    {
+        return $this->useStamps;
+    }
+
+    /**
+     * @param bool $useStamps
+     * @return Product
+     */
+    public function setUseStamps(bool $useStamps): Product
+    {
+        $this->useStamps = $useStamps;
         return $this;
     }
 }

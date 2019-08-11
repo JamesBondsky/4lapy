@@ -21,6 +21,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockElementXmlId;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\Helpers\BxCollection;
 use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
@@ -158,7 +159,12 @@ class BasketService
             }
 
             /** @var $basketItem BasketItem */
-            $product = $this->getBasketProduct($basketItem->getId(), $offer, $basketItem->getQuantity());
+            $useStampsProp = BxCollection::getBasketItemPropertyByCode($basketItem->getPropertyCollection(), 'USE_STAMPS');  //FIXME почему в запросе PUT /user_cart здесь лежит предыдущее значение вместо нового, которое передается в запросе? Пофиксить!
+            $useStamps = false;
+            if ($useStampsProp) {
+                $useStamps = (bool)$useStampsProp->getField('VALUE');
+            }
+            $product = $this->getBasketProduct($basketItem->getId(), $offer, $basketItem->getQuantity(), $useStamps);
             $shortProduct = $product->getShortProduct();
             $shortProduct->setPickupOnly(
                 $this->isPickupOnly($basketItem, $delivery, $offer)
@@ -237,11 +243,12 @@ class BasketService
      * @param int $basketItemId
      * @param Offer $offer
      * @param int $quantity
+     * @param bool|null $useStamps
      * @return Product
      * @throws \Bitrix\Main\ArgumentException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    public function getBasketProduct(int $basketItemId, Offer $offer, int $quantity)
+    public function getBasketProduct(int $basketItemId, Offer $offer, int $quantity, ?bool $useStamps)
     {
         $product = $offer->getProduct();
         $shortProduct = $this->apiProductService->convertToShortProduct($product, $offer, $quantity);
@@ -249,7 +256,9 @@ class BasketService
         return (new Product())
             ->setBasketItemId($basketItemId)
             ->setShortProduct($shortProduct)
-            ->setQuantity($quantity);
+            ->setQuantity($quantity)
+            ->setUseStamps($useStamps)
+        ;
     }
 
     /**
