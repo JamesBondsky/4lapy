@@ -54,6 +54,9 @@ class InfoController extends BaseController
 
         if (!$cityId) {
             $cityId = $this->locationService->getCurrentLocation();
+        }
+
+        if ($cityId) {
             $cityCodeRegion = $this->locationService->getRegionCode($cityId);
         }
 
