@@ -123,7 +123,7 @@ class CDobrolapFormComponent extends \CBitrixComponent
 
         header('Content-Description: File Transfer');
         header('Content-Type: application/octet-stream');
-        header("Content-Disposition:attachment;filename=Заявки по лендингу Добролап_".date('Y-m-d').".xls");
+        header('Content-Disposition:attachment;filename="Dobrolap_' .date('Y_m_d'). '.xls"');
 
         $objWriter = PHPExcel_IOFactory::createWriter($phpExcel, 'Excel2007');
         $objWriter->save('php://output');
