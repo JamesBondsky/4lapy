@@ -22,6 +22,12 @@ class CDobrolapFormComponent extends \CBitrixComponent
 
     private $fans;
 
+    private $hlFans;
+
+    private $enumTypes;
+
+    const HL_BLOCK_NAME = 'DobrolapFans';
+
     use LazyLoggerAwareTrait;
 
     public function onPrepareComponentParams($params): array
@@ -68,6 +74,7 @@ class CDobrolapFormComponent extends \CBitrixComponent
         }
 
         try {
+            $this->obtainCheckTypes();
             $this->generateExcel();
         } catch (\Exception $e) {
             $this->log()->error(sprintf("Не удалось сгенерировать Excel: %s", $e->getMessage()));
@@ -94,6 +101,7 @@ class CDobrolapFormComponent extends \CBitrixComponent
             ->setCellValue('C1', "Телефон")
             ->setCellValue('D1', "Email")
             ->setCellValue('E1', "Дата оформления")
+            ->setCellValue('F1', "Тип")
         ;
 
         $i = 2;
@@ -103,23 +111,79 @@ class CDobrolapFormComponent extends \CBitrixComponent
                 ->setCellValue('C'.$i, $fan['USER']['PERSONAL_PHONE'])
                 ->setCellValue('D'.$i, $fan['USER']['EMAIL'])
                 ->setCellValue('E'.$i, $fan['DATE_CREATE'])
+                ->setCellValue('F'.$i, $this->getEnumTypeValue($fan['PROPERTIES']['CHECK_NUMBER']['VALUE']))
             ;
             $i++;
         }
 
-        foreach(range('A','E') as $columnID) {
+        foreach(range('A','F') as $columnID) {
             $phpExcel->getActiveSheet()->getColumnDimension($columnID)
                 ->setAutoSize(true);
         }
 
         header('Content-Description: File Transfer');
         header('Content-Type: application/octet-stream');
-        header("Content-Disposition:attachment;filename='Заявки по лендингу Добролап_".date('Y-m-d').".xls'");
+        header("Content-Disposition:attachment;filename=Заявки по лендингу Добролап_".date('Y-m-d').".xls");
 
         $objWriter = PHPExcel_IOFactory::createWriter($phpExcel, 'Excel2007');
         $objWriter->save('php://output');
 
         exit();
+    }
+
+    /**
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    private function obtainCheckTypes()
+    {
+        if(!$this->fans){
+            return;
+        }
+
+        $fansIds = [];
+        foreach($this->fans as $fan) {
+            $fansIds[] = $fan['PROPERTIES']['CHECK_NUMBER']['VALUE'];
+        }
+
+        $hlData = HighloadBlockTable::getList([
+                'select' => array('*'),
+                'filter' => ['NAME' => self::HL_BLOCK_NAME],
+        ])->fetch();
+
+        if(!$hlData){
+            throw new \Exception('HL-блок не найден');
+        }
+
+        $entity = HighloadBlockTable::compileEntity($hlData);
+        $entityClass = $entity->getDataClass();
+
+        $entityId = 'HLBLOCK_'.$hlData['ID'];
+        $fieldData = CUserTypeEntity::GetList([], ['ENTITY_ID' => $entityId, 'FIELD_NAME' => 'UF_TYPE'])->fetch();
+
+        $dbres = CUserFieldEnum::GetList([], ['USER_FIELD_ID' => $fieldData['ID']]);
+        while($row = $dbres->Fetch()){
+            $this->enumTypes[$row['ID']] = $row;
+        }
+
+        $dbres = $entityClass::getList([
+            'select' => ['*'],
+            'filter' => ['UF_CHECK' => $fansIds]
+        ]);
+        while($row = $dbres->fetch()){
+            $this->hlFans[$row['UF_CHECK']] = $row;
+        }
+    }
+
+    /**
+     * @param $fanId
+     * @return mixed
+     */
+    private function getEnumTypeValue($fanId)
+    {
+        $valueId = $this->hlFans[$fanId]['UF_TYPE'];
+        return $this->enumTypes[$valueId]['VALUE'];
     }
 
 }
