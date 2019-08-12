@@ -795,7 +795,8 @@ class DeliverySchedule extends Base implements \Serializable
             $this->supplyDays,
             $this->deliveryNumber,
             $this->deliveryDates,
-            $this->type
+            $this->type,
+            $this->regular
         ]);
     }
 
@@ -819,7 +820,8 @@ class DeliverySchedule extends Base implements \Serializable
             $this->supplyDays,
             $this->deliveryNumber,
             $this->deliveryDates,
-            $this->type
+            $this->type,
+            $this->regular
         ] = \unserialize($serialized, ['allowed_classes' => true]);
 
         $this->__construct();
