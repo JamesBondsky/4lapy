@@ -106,7 +106,7 @@ class CDobrolapFormComponent extends \CBitrixComponent
 
         $i = 2;
         foreach($this->fans as $fan){
-            $page->setCellValue('A'.$i, $fan['PROPERTIES']['CHECK_NUMBER']['VALUE'])
+            $page->setCellValue('A'.$i, strtolower($fan['PROPERTIES']['CHECK_NUMBER']['VALUE']))
                 ->setCellValue('B'.$i, implode(' ',array_filter([$fan['USER']['LAST_NAME'], $fan['USER']['NAME'], $fan['USER']['SECOND_NAME']])))
                 ->setCellValue('C'.$i, $fan['USER']['PERSONAL_PHONE'])
                 ->setCellValue('D'.$i, $fan['USER']['EMAIL'])
@@ -182,7 +182,7 @@ class CDobrolapFormComponent extends \CBitrixComponent
      */
     private function getEnumTypeValue($fanId)
     {
-        $valueId = $this->hlFans[$fanId]['UF_TYPE'];
+        $valueId = $this->hlFans[strtolower($fanId)]['UF_TYPE'];
         return $this->enumTypes[$valueId]['VALUE'];
     }
 
