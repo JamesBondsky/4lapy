@@ -23,35 +23,14 @@ class BaseController extends FOSRestController
 
             /** @var ManzanaService $manzanaService */
             $manzanaService = $container->get('manzana.service');
-            $client = new Client();
             try {
                 /** @var UserService $userCurrentUserService */
-                $userCurrentUserService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+                $userCurrentUserService = $container->get(CurrentUserProviderInterface::class);
                 $currentUser = $userCurrentUserService->getCurrentUser();
                 $userId = $currentUser->getId();
-                $currentDate = new DateTime();
-                $fields = [
-                    'USER_ID' => $userId
-                ];
-                $getLastUsing = UserApiLastUsingTable::query()->setSelect(['ID', 'DATE_INSERT'])->addFilter('=USER_ID', $fields['USER_ID'])->setOrder(['ID' => 'DESC'])->exec()->fetch();
-                if (!$getLastUsing || (isset($getLastUsing['DATE_INSERT']) && $getLastUsing['DATE_INSERT']->format('d.m.Y') != $currentDate->format('d.m.Y'))) {
-                    if ($getLastUsing) {
-                        $fields['DATE_INSERT'] = $currentDate;
-                        UserApiLastUsingTable::update($getLastUsing['ID'], $fields);
-                    } else {
-                        UserApiLastUsingTable::add($fields);
-                    }
+                $personalPhone = $currentUser->getPersonalPhone();
 
-
-                    $client->phone = $currentUser->getPersonalPhone();
-                    $client->haveMobileApp = true;
-                    $client->lastDateUseMobileApp = $currentDate->format(\DateTime::ATOM);
-
-                    if ($client instanceof Client) {
-                        $manzanaService->updateContactMobileAsync($client);
-//                        $manzanaService->updateContactAsync($client);
-                    }
-                }
+                $manzanaService->updateContactMobileAsync(['userId' => $userId, 'personalPhone' => $personalPhone]);
             } catch (NotAuthorizedException $e) {
             }
         }
