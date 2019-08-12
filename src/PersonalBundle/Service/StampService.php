@@ -41,32 +41,32 @@ class StampService implements LoggerAwareInterface
     public const EXCHANGE_RULES = [ //TODO FIX xml_ids array
         1000002 => [
             [
-                'discountPercent' => 30,
+                'discountPercent' => 10,
                 'stamps' => 5,
             ],
             [
-                'discountPercent' => 50,
-                'stamps' => 7,
+                'discountPercent' => 20,
+                'stamps' => 15,
             ],
         ],
         1000003 => [
             [
-                'discountPercent' => 30,
+                'discountPercent' => 10,
                 'stamps' => 5,
             ],
             [
-                'discountPercent' => 50,
-                'stamps' => 7,
+                'discountPercent' => 20,
+                'stamps' => 15,
             ],
         ],
         1000004 => [
             [
-                'discountPercent' => 30,
+                'discountPercent' => 10,
                 'stamps' => 5,
             ],
             [
-                'discountPercent' => 50,
-                'stamps' => 7,
+                'discountPercent' => 20,
+                'stamps' => 15,
             ],
         ],
     ];
