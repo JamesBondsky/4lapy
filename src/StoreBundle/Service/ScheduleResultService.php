@@ -428,8 +428,8 @@ class ScheduleResultService implements LoggerAwareInterface
             $transitionCount = self::MAX_TRANSITION_COUNT;
         }
 
-        //$receivers = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
-        $receivers = [$this->storeService->getStoreByXmlId('R111')];
+        $receivers = $this->storeService->getStores(StoreService::TYPE_ALL_WITH_SUPPLIERS);
+        //$receivers = [$this->storeService->getStoreByXmlId('R111')];
 
         $result = [];
         /** @var Store $receiver */
