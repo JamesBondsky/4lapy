@@ -517,6 +517,62 @@ $APPLICATION->SetTitle("Добролап");
                         <div class="carousel-note"><p class="mb-4">Большая радость самому<br/>приехать к питомцам,
                                 которые<br/>очень тебя ждут</p></div>
                     </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/06.jpg" data-lightbox="image-1"
+                           data-title="Каждый день маленьких помощников ждут добрые дела"><img
+                                    src="/dobrolap/images/report/06.jpg"/></a>
+                        <div class="carousel-note"><p class="mb-4">Каждый день маленьких помощников ждут добрые дела</p></div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/07.jpg" data-lightbox="image-1"
+                           data-title="Вместе с мамой ребята собрали большую посылку с лакомствами для друзей"><img
+                                    src="/dobrolap/images/report/07.jpg"/></a>
+                        <div class="carousel-note"><p class="mb-4">Вместе с мамой ребята собрали большую посылку с лакомствами для друзей</p></div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/08.jpg" data-lightbox="image-1"
+                           data-title="Катя и Даша узнали про Добролап в Инстаграмм и привели родителей"><img
+                                    src="/dobrolap/images/report/08.jpg"/></a>
+                        <div class="carousel-note"><p class="mb-4">Катя и Даша узнали про Добролап в Инстаграмм и привели родителей</p></div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/09.jpg" data-lightbox="image-1"
+                           data-title="Много корма не бывает! "><img
+                                    src="/dobrolap/images/report/09.jpg"/></a>
+                        <div class="carousel-note"><p class="mb-4">Много корма не бывает!</p></div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/10.jpg" data-lightbox="image-1"
+                           data-title="Маша с мамой выбирают по списку, чтобы не упустить ничего важного"><img
+                                    src="/dobrolap/images/report/10.jpg"/></a>
+                        <div class="carousel-note"><p class="mb-4">Маша с мамой выбирают по списку, чтобы не упустить ничего важного</p></div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/11.jpg" data-lightbox="image-1"
+                           data-title="В приют отправились три коробочки с вкуснятиной, запас корма на месяц и уютные лежаки"><img
+                                    src="/dobrolap/images/report/11.jpg"/></a>
+                        <div class="carousel-note"><p class="mb-4">В приют отправились три коробочки с вкуснятиной, запас корма на месяц и уютные лежаки</p></div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/12.jpg" data-lightbox="image-1"
+                           data-title="У Маргариты это уже третий магнитик Добролап!"><img
+                                    src="/dobrolap/images/report/12.jpg"/></a>
+                        <div class="carousel-note"><p class="mb-4">У Маргариты это уже третий магнитик Добролап!</p></div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/13.jpg" data-lightbox="image-1"
+                           data-title="Долгожданная помощь отправляется в приюты каждую неделю"><img
+                                    src="/dobrolap/images/report/13.jpg"/></a>
+                        <div class="carousel-note"><p class="mb-4">Долгожданная помощь отправляется в приюты каждую неделю</p></div>
+                    </div>
                 </div>
             </section>
         </div>
