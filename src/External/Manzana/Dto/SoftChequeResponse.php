@@ -180,6 +180,15 @@ class SoftChequeResponse
     protected $items;
 
     /**
+     * @Serializer\XmlList(inline=true)
+     * @Serializer\Type("ArrayCollection<FourPaws\External\Manzana\Dto\ExtendedAttribute>")
+     * @Serializer\SerializedName("ExtendedAttribute")
+     *
+     * @var Collection|ExtendedAttribute[]
+     */
+    protected $extendedAttribute;
+
+    /**
      * @return bool
      */
     public function isErrorResponse(): bool
@@ -359,5 +368,27 @@ class SoftChequeResponse
     public function getCoupons() : ?Collection
     {
         return $this->coupons;
+    }
+
+    /**
+     * @return Collection|ExtendedAttribute[]
+     */
+    public function getExtendedAttribute(): Collection
+    {
+        if (!$this->extendedAttribute) {
+            $this->extendedAttribute = new ArrayCollection();
+        }
+
+        return $this->extendedAttribute;
+    }
+
+    /**
+     * @param Collection|ExtendedAttribute[] $extendedAttribute
+     * @return SoftChequeResponse
+     */
+    public function setExtendedAttribute($extendedAttribute): SoftChequeResponse
+    {
+        $this->extendedAttribute = $extendedAttribute;
+        return $this;
     }
 }
