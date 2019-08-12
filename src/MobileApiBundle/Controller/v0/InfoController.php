@@ -10,6 +10,7 @@ use Bitrix\Main\Application;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\Helpers\TaggedCacheHelper;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Request\InfoRequest;
 use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
@@ -24,9 +25,13 @@ class InfoController extends BaseController
     private $cacheTime = 3600;
     private $cachePath = '/api/info';
 
-    public function __construct(ApiInfoService $apiInfoService)
+    /** @var LocationService */
+    private $locationService;
+
+    public function __construct(ApiInfoService $apiInfoService, LocationService $locationService)
     {
         $this->apiInfoService = $apiInfoService;
+        $this->locationService = $locationService;
     }
 
     /**
@@ -44,8 +49,16 @@ class InfoController extends BaseController
     public function getInfoAction(InfoRequest $infoRequest): ApiResponse
     {
         $cache = Application::getInstance()->getCache();
+        $cityId = $infoRequest->getCityId();
+        $cityCodeRegion = null;
+
+        if (!$cityId) {
+            $cityId = $this->locationService->getCurrentLocation();
+            $cityCodeRegion = $this->locationService->getRegionCode($cityId);
+        }
+
         $cacheId = md5(serialize([
-            $infoRequest->getCityId(),
+            $cityId,
             $infoRequest->getFields(),
             $infoRequest->getType(),
             $infoRequest->getOfferTypeCode(),
@@ -60,7 +73,8 @@ class InfoController extends BaseController
                         $infoRequest->getType(),
                         $infoRequest->getInfoId(),
                         $infoRequest->getFields(),
-                        $infoRequest->getOfferTypeCode()
+                        $infoRequest->getOfferTypeCode(),
+                        $cityCodeRegion
                     )
                 ]);
 
