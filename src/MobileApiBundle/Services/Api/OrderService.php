@@ -852,6 +852,9 @@ class OrderService
                 $result['pickupRanges'] = $this->getPickupRanges($pickup, $basketProducts);
             }
         }
+        if (isset($result['dobrolap'])) {
+            $result['dobrolap']['available'] = true;
+        }
         return [
             'cartDelivery' => $result
         ];
@@ -1078,7 +1081,7 @@ class OrderService
 
             $text = [
                 'title' => 'СПАСИБО ЧТО ВЫ ТВОРИТЕ ДОБРО ВМЕСТЕ С НАМИ!',
-                'titleOrder' => 'Ваш заказ №#' . $order->getField('ACCOUNT_NUMBER') . '# оформлен',
+                'titleOrder' => 'Ваш заказ №' . $order->getField('ACCOUNT_NUMBER') . ' оформлен',
                 'description' => 'И будет доставлен в ' . ($this->shelterData ? $this->shelterData['name'] : ''),
                 'titleThank' => 'МЫ ГОВОРИМ ВАМ СПАСИБО!',
                 'descriptionFirstThank' => 'В знак благодарности мы подготовили небольшой сюрприз фанты "Добролап" с приятными презентами',
