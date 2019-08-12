@@ -7,7 +7,7 @@ class HLBlockDeliveryScheduleResult21Days20190812161427 extends \Adv\Bitrixtools
 
     protected $description = "Добавляет новое временной отрезок для расчётов по графикам поставов";
 
-    const HL_BLOCK_NAME = "	DeliveryScheduleTPZ";
+    const HL_BLOCK_NAME = "	DeliveryScheduleResult";
 
     public function up(){
         $helper = new HelperManager();
