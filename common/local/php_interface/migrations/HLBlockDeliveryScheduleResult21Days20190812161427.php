@@ -14,7 +14,7 @@ class HLBlockDeliveryScheduleResult21Days20190812161427 extends \Adv\Bitrixtools
 
         $entityId  = 'HLBLOCK_'.$helper->Hlblock()->getHlblockId(static::HL_BLOCK_NAME);
 
-        $helper->UserTypeEntity()->addUserTypeEntityIfNotExists($entityId, 'UF_SHOWN',
+        $helper->UserTypeEntity()->addUserTypeEntityIfNotExists($entityId, 'UF_DAYS_21',
             [
                 "FIELD_NAME" => "UF_DAYS_21",
                 "USER_TYPE_ID" => "integer",
