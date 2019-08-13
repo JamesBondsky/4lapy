@@ -9,6 +9,7 @@ use FourPaws\AppBundle\Entity\UserFieldEnumValue;
 use FourPaws\AppBundle\Service\UserFieldEnumService;
 use FourPaws\Enum\HlblockCode;
 use FourPaws\Helpers\HighloadHelper;
+use FourPaws\StoreBundle\Service\ScheduleResultService;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 use WebArch\BitrixCache\BitrixCache;
@@ -264,6 +265,24 @@ class ScheduleResult
     }
 
     /**
+     * @param int $days21
+     * @return ScheduleResult
+     */
+    public function setDays21(int $days21): ScheduleResult
+    {
+        $this->days21 = $days21;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDays21(): int
+    {
+        return $this->days21 ?? static::RESULT_ERROR;
+    }
+
+    /**
      * @return int
      */
     public function getDays24(): int
@@ -306,6 +325,10 @@ class ScheduleResult
             case ($h < 18):
                 /** @noinspection SuspiciousAssignmentsInspection */
                 $result = ($result === static::RESULT_ERROR) ? $this->getDays18() : $result;
+            /** @noinspection PhpMissingBreakStatementInspection */
+            case ($h < 21):
+                /** @noinspection SuspiciousAssignmentsInspection */
+                $result = ($result === static::RESULT_ERROR) ? $this->getDays21() : $result;
             default:
                 /** @noinspection SuspiciousAssignmentsInspection */
                 $result = ($result === static::RESULT_ERROR) ? $this->getDays24() : $result;
@@ -420,21 +443,13 @@ class ScheduleResult
     }
 
     /**
-     * @param int $days21
-     * @return ScheduleResult
+     * @return bool
+     * @throws \Exception
      */
-    public function setDays21(int $days21): ScheduleResult
+    public function isIrregular()
     {
-        $this->days21 = $days21;
-        return $this;
-    }
-
-    /**
-     * @return int
-     */
-    public function getDays21(): int
-    {
-        return $this->days21 ?? static::RESULT_ERROR;
+        $regularity = $this->getRegularityEnum()->get($this->getRegularity());
+        return $regularity->getXmlId() == ScheduleResultService::FAST_DELIV;
     }
 
 }
