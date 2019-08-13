@@ -8,6 +8,7 @@ namespace FourPaws\MobileApiBundle\Dto\Object\Catalog;
 
 use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct\Bundle;
+use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct\StampLevel;
 use FourPaws\MobileApiBundle\Dto\Object\CatalogCategory;
 use JMS\Serializer\Annotation as Serializer;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct\PackingVariant;
@@ -74,6 +75,13 @@ class FullProduct extends ShortProduct
      * @Serializer\SerializedName("nutritionFacts")
      */
     protected $nutritionFacts = '';
+
+    /**
+     * @var StampLevel[]
+     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct\StampLevel>")
+     * @Serializer\SerializedName("stampLevels")
+     */
+    protected $stampLevels = '';
 
     /**
      * @var string
@@ -434,6 +442,24 @@ class FullProduct extends ShortProduct
     public function setHasSpecialOffer(bool $hasSpecialOffer): FullProduct
     {
         $this->hasSpecialOffer = $hasSpecialOffer;
+        return $this;
+    }
+
+    /**
+     * @return StampLevel[]
+     */
+    public function getStampLevels(): array
+    {
+        return $this->stampLevels;
+    }
+
+    /**
+     * @param StampLevel[] $stampLevels
+     * @return FullProduct
+     */
+    public function setStampLevels(array $stampLevels): FullProduct
+    {
+        $this->stampLevels = $stampLevels;
         return $this;
     }
 }

@@ -19,12 +19,14 @@ use FourPaws\MobileApiBundle\Dto\Request\LoginRequest;
 use FourPaws\MobileApiBundle\Dto\Request\PostUserInfoRequest;
 use FourPaws\MobileApiBundle\Dto\Request\VerificationCodeSendByEmailRequest;
 use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
+use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 use FourPaws\MobileApiBundle\Services\Api\UserService as ApiUserService;
 use FourPaws\PersonalBundle\Service\StampService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Swagger\Annotations\Parameter;
 use Swagger\Annotations\Response;
 use FourPaws\MobileApiBundle\Dto\Response\PersonalBonusResponse;
+use Symfony\Component\HttpFoundation\Request;
 
 class UserController extends BaseController
 {
@@ -36,11 +38,16 @@ class UserController extends BaseController
      * @var StampService
      */
     protected $stampService;
+    /**
+     * @var ApiProductService
+     */
+    private $apiProductService;
 
-    public function __construct(ApiUserService $apiUserService, StampService $stampService)
+    public function __construct(ApiUserService $apiUserService, StampService $stampService, ApiProductService $apiProductService)
     {
         $this->apiUserService = $apiUserService;
         $this->stampService = $stampService;
+        $this->apiProductService = $apiProductService;
     }
 
     /**
@@ -228,86 +235,25 @@ class UserController extends BaseController
             $stamps = 0;
         }
 
-        $exchangeRules = StampService::EXCHANGE_RULES; //TODO use
-        $productsXmlIds = array_keys($exchangeRules); //TODO use
+        $exchangeRules = StampService::EXCHANGE_RULES;
+        $productsXmlIds = array_keys($exchangeRules);
+
+        $productsList = $this->apiProductService->getListFromXmlIds($productsXmlIds);
 
         return (new ApiResponse())->setData([
-            'stamps' => $stamps,
-            'description' => "1. Одна марка выдаётся за каждые полные N руб. (400 руб.) в чеке на любые товары, купленные в интернет-магазине, в розничном магазине и в приложении «Четыре Лапы» с предъявлением бонусной карты."
-                . "\n2. Дополнительно могут выдаваться марки за покупку определённых товаров."
-                . "\n3. Марки копятся в Личном кабинете пользователя в отдельном разделе. Марки появляются в Личном Кабинете автоматически после совершенной покупки."
-                . "\n4. Накопленные пользователем марки можно использовать для покупки определённой группы товаров по сниженной цене (для начала будет 4 товара)"
-                . "\n7. Выдача марок осуществляется в определённый период."
-                . "\n8. Количество товара, который можно купить с учётом скидки за электронные марки ограничено."
-                . "\n9. При возврате товара, приобретённого с использованием электронные марок, денежный эквивалент номинала марки не выплачивается, марки восстановлению не подлежат: покупателю возвращается сумма, внесённая денежными средствами в соответствии с данными кассового чека.",
-            'goods' => [
-                [ //TODO take GET /goods_list structure + price_levels field? PRIORITY!!!
-                    'id' => 41879,
-                    'title' => 'Pro Plan Sterilised корм для стерилизованных кошек, с лососем',
-                    'xml_id' => '1000002',
-                    'picture' => 'https://4lapy.ru/resize/240x240/upload/iblock/3c4/3c468d5b710c42f5bf0ac391803af620.jpg',
-                    'picture_preview' => 'https://4lapy.ru/resize/240x240/upload/iblock/3c4/3c468d5b710c42f5bf0ac391803af620.jpg',
-                    'link' => 'https://4lapy.ru/catalog/koshki/korm-koshki/sukhoy/Pro_Plan_After_Care_suhoy_korm_dlya_kastrirovannyhsterilizovannyh_koshekosostunets.html?offer=41879',
-                    'price_levels' => [
-                        [
-                            'price' => '3 000 руб',
-                            'stamps' => 0,
-                        ],
-                        [
-                            'price' => '1 500 руб',
-                            'stamps' => 5,
-                        ],
-                        [
-                            'price' => '500 руб',
-                            'stamps' => 7,
-                        ],
-                    ]
-                ],
-                [
-                    'id' => 41879,
-                    'title' => 'Pro Plan Sterilised корм для стерилизованных кошек, с индейкой',
-                    'xml_id' => '1000004',
-                    'picture' => 'https://4lapy.ru/resize/240x240/upload/iblock/3c4/3c468d5b710c42f5bf0ac391803af620.jpg',
-                    'picture_preview' => 'https://4lapy.ru/resize/240x240/upload/iblock/3c4/3c468d5b710c42f5bf0ac391803af620.jpg',
-                    'link' => 'https://4lapy.ru/catalog/koshki/korm-koshki/sukhoy/Pro_Plan_After_Care_suhoy_korm_dlya_kastrirovannyhsterilizovannyh_koshekosostunets.html?offer=41879',
-                    'price_levels' => [
-                        [
-                            'price' => '3 000 руб',
-                            'stamps' => 0,
-                        ],
-                        [
-                            'price' => '1 500 руб',
-                            'stamps' => 5,
-                        ],
-                        [
-                            'price' => '500 руб',
-                            'stamps' => 7,
-                        ],
-                    ]
-                ],
-                [
-                    'id' => 41879,
-                    'title' => 'Pro Plan Adult корм для кошек для поддержания иммунитета, с курицей',
-                    'xml_id' => '1000003',
-                    'picture' => 'https://4lapy.ru/resize/240x240/upload/iblock/3c4/3c468d5b710c42f5bf0ac391803af620.jpg',
-                    'picture_preview' => 'https://4lapy.ru/resize/240x240/upload/iblock/3c4/3c468d5b710c42f5bf0ac391803af620.jpg',
-                    'link' => 'https://4lapy.ru/catalog/koshki/korm-koshki/sukhoy/Pro_Plan_After_Care_suhoy_korm_dlya_kastrirovannyhsterilizovannyh_koshekosostunets.html?offer=41879',
-                    'price_levels' => [
-                        [
-                            'price' => '3 000 руб',
-                            'stamps' => 0,
-                        ],
-                        [
-                            'price' => '1 500 руб',
-                            'stamps' => 5,
-                        ],
-                        [
-                            'price' => '500 руб',
-                            'stamps' => 7,
-                        ],
-                    ]
+            'stamps' => [
+                'amount' => $stamps,
+                'description' => "1. Одна марка выдаётся за каждые полные N руб. (400 руб.) в чеке на любые товары, купленные в интернет-магазине, в розничном магазине и в приложении «Четыре Лапы» с предъявлением бонусной карты."
+                    . "\n2. Дополнительно могут выдаваться марки за покупку определённых товаров."
+                    . "\n3. Марки копятся в Личном кабинете пользователя в отдельном разделе. Марки появляются в Личном Кабинете автоматически после совершенной покупки."
+                    . "\n4. Накопленные пользователем марки можно использовать для покупки определённой группы товаров по сниженной цене (для начала будет 4 товара)"
+                    . "\n7. Выдача марок осуществляется в определённый период."
+                    . "\n8. Количество товара, который можно купить с учётом скидки за электронные марки ограничено."
+                    . "\n9. При возврате товара, приобретённого с использованием электронные марок, денежный эквивалент номинала марки не выплачивается, марки восстановлению не подлежат: покупателю возвращается сумма, внесённая денежными средствами в соответствии с данными кассового чека.",
+                'goods' => [
+                    $productsList,
                 ],
             ],
-        ]); //TODO add real data
+        ]);
     }
 }

@@ -20,7 +20,7 @@ class StampService implements LoggerAwareInterface
     public const MARK_RATE = 400;
     public const MARKS_PER_RATE = 1;
 
-    public const DISCOUNT_LEVELS = [
+    public const DISCOUNT_LEVELS = [ //TODO del?
         1 => [
             'LEVEL' => 1,
             'MARKS_NEEDED' => 7,
@@ -41,31 +41,31 @@ class StampService implements LoggerAwareInterface
     public const EXCHANGE_RULES = [ //TODO FIX xml_ids array
         1000002 => [
             [
-                'discountPercent' => 10,
+                'price' => '1 500 руб',
                 'stamps' => 5,
             ],
             [
-                'discountPercent' => 20,
+                'price' => '500 руб',
                 'stamps' => 15,
             ],
         ],
         1000003 => [
             [
-                'discountPercent' => 10,
+                'price' => '1 500 руб',
                 'stamps' => 5,
             ],
             [
-                'discountPercent' => 20,
+                'price' => '500 руб',
                 'stamps' => 15,
             ],
         ],
         1000004 => [
             [
-                'discountPercent' => 10,
+                'price' => '1 500 руб',
                 'stamps' => 5,
             ],
             [
-                'discountPercent' => 20,
+                'price' => '500 руб',
                 'stamps' => 15,
             ],
         ],

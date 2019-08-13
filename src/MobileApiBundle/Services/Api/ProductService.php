@@ -23,6 +23,7 @@ use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Collection\ProductCollection;
 use FourPaws\Catalog\Model\BundleItem;
 use FourPaws\Catalog\Model\Category;
+use FourPaws\Catalog\Model\Filter\ProductIdFilter;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\OfferQuery;
@@ -51,12 +52,14 @@ use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct\Tag;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Exception\CategoryNotFoundException;
 use FourPaws\MobileApiBundle\Exception\NotFoundProductException;
+use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Service\BasketRulesService;
 use FourPaws\Search\Helper\IndexHelper;
 use FourPaws\Search\Model\Navigation;
 use FourPaws\Search\SearchService;
 use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\UserBundle\Service\UserService;
+use JMS\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 
@@ -93,6 +96,9 @@ class ProductService
     /** @var BasketRulesService */
     private $basketRulesService;
 
+    /** @var StampService */
+    private $stampService;
+
     public function __construct(
         CategoriesService $categoriesService,
         UserService $userService,
@@ -102,7 +108,8 @@ class ProductService
         SortService $sortService,
         SearchService $searchService,
         AppBasketService $appBasketService,
-        BasketRulesService $basketRulesService
+        BasketRulesService $basketRulesService,
+        StampService $stampService
     )
     {
         $this->categoriesService = $categoriesService;
@@ -114,6 +121,7 @@ class ProductService
         $this->searchService = $searchService;
         $this->appBasketService = $appBasketService;
         $this->basketRulesService = $basketRulesService;
+        $this->stampService = $stampService;
     }
 
     /**
@@ -229,6 +237,35 @@ class ProductService
                 ->getValues(),
             'cdbResult' => $productCollection->getCdbResult()
         ]));
+    }
+
+    /**
+     * @param int[] $ids
+     * @return ArrayCollection
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public function getListFromXmlIds(array $ids): ArrayCollection
+    {
+        $filters = new FilterCollection();
+//        $filters->add([
+//            'ID' => $ids
+//        ]);
+
+        $sort = $this->sortService->getSorts('popular')->getSelected();
+
+        $productSearchResult = $this->searchService->searchProducts($filters, $sort, new Navigation(), $ids);
+        /** @var ProductCollection $productCollection */
+        $productCollection = $productSearchResult->getProductCollection();
+
+        return new ArrayCollection([
+            $productCollection
+                ->map(\Closure::fromCallable([$this, 'mapProductForList']))
+                ->filter(function($value) {
+                    return !is_null($value);
+                })
+                ->getValues()
+        ]);
     }
 
     /**
@@ -509,6 +546,13 @@ class ProductService
             ->setHasSpecialOffer($offer->isShare())
         ;
 
+        $serializer = Application::getInstance()->getContainer()->get(SerializerInterface::class);
+        $stampRules = $this->stampService::EXCHANGE_RULES[$shortProduct->getXmlId()];
+        $stampLevels = [];
+        foreach ($stampRules as $rule) {
+            $stampLevels[] = $serializer->fromArray($rule, FullProduct\StampLevel::class);
+        }
+
         // toDo: is there any better way to merge ShortProduct into FullProduct?
         $fullProduct
             ->setId($shortProduct->getId())
@@ -525,7 +569,8 @@ class ProductService
             ->setIsByRequest($shortProduct->getIsByRequest())
             ->setIsAvailable($shortProduct->getIsAvailable())
             ->setPickupOnly($shortProduct->getPickupOnly())
-            ->setInPack($shortProduct->getInPack());
+            ->setInPack($shortProduct->getInPack())
+            ->setStampLevels($stampLevels);
         $fullProduct->setColor($shortProduct->getColor());
 
         if ($needPackingVariants) {
