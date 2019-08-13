@@ -51,12 +51,12 @@ class InfoService implements LoggerAwareInterface
         $this->bitrixPhpDateTimeFormat = Date::convertFormatToPhp(\FORMAT_DATETIME) ?: '';
     }
 
-    public function getInfo(string $type, string $id, array $select = [], $offerTypeCode = '')
+    public function getInfo(string $type, string $id, array $select = [], $offerTypeCode = '', $cityId = '')
     {
         try {
             switch ($type) {
                 case InfoEnum::ACTION:
-                    $return = $this->getActions($id, $select, $offerTypeCode)->getValues();
+                    $return = $this->getActions($id, $select, $offerTypeCode, $cityId)->getValues();
                     break;
                 case InfoEnum::NEWS:
                     $return = $this->getNews($id, $select)->getValues();
@@ -277,7 +277,7 @@ class InfoService implements LoggerAwareInterface
      * @return ArrayCollection|Collection
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      */
-    protected function getActions(string $id, array $select = [], $offerTypeCode = ''): Collection
+    protected function getActions(string $id, array $select = [], $offerTypeCode = '', $cityId = ''): Collection
     {
         // костыль
         if ($offerTypeCode === 'vse') {
@@ -295,6 +295,10 @@ class InfoService implements LoggerAwareInterface
 
         if ($id) {
             $criteria['ID'] = $id;
+        }
+
+        if ($cityId) {
+            $criteria['=PROPERTY_REGION'] = [false, $cityId];
         }
 
         $order = [
