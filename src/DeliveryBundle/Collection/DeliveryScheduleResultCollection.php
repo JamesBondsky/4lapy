@@ -66,7 +66,7 @@ class DeliveryScheduleResultCollection extends ArrayCollection
         /** @var DeliveryScheduleResult $item */
         foreach ($this->getIterator() as $item) {
             /** @var DeliveryScheduleResult $schedule */
-            if(!$schedule || ($item->getScheduleResult()->getDays($from) > $schedule->getScheduleResult()->getDays($from))){
+            if(!$schedule || ($item->getScheduleResult()->getDays($from) < $schedule->getScheduleResult()->getDays($from))){
                 $schedule = $item;
             }
         }
