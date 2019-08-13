@@ -62,6 +62,10 @@ class Manzana implements LoggerAwareInterface
      * @var float
      */
     private $discount = 0.0;
+    /**
+     * @var float
+     */
+    private $stampsToBeAdded = 0.0;
 
     /**
      * Manzana constructor.
@@ -252,6 +256,7 @@ class Manzana implements LoggerAwareInterface
     public function recalculateBasketFromResponse(Basket $basket, SoftChequeResponse $response): void
     {
         $manzanaItems = $response->getItems();
+        $this->setStampsToBeAdded($response->getChargedStatusBonus());
 
         /**
          * @var BasketItem $item
@@ -342,5 +347,23 @@ class Manzana implements LoggerAwareInterface
         $this->personalOffersService = App::getInstance()->getContainer()->get('personal_offers.service');
 
         return $this->personalOffersService;
+    }
+
+    /**
+     * @return float
+     */
+    public function getStampsToBeAdded(): float
+    {
+        return $this->stampsToBeAdded;
+    }
+
+    /**
+     * @param float $stampsToBeAdded
+     * @return Manzana
+     */
+    public function setStampsToBeAdded(float $stampsToBeAdded): Manzana
+    {
+        $this->stampsToBeAdded = $stampsToBeAdded;
+        return $this;
     }
 }

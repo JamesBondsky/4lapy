@@ -47,7 +47,9 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\MobileApiBundle\Services\Api\BasketService as ApiBasketService;
 use FourPaws\PersonalBundle\Exception\OrderSubscribeException;
 use FourPaws\PersonalBundle\Service\BonusService as AppBonusService;
+use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Discount\Gift;
+use FourPaws\SaleBundle\Discount\Manzana;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Repository\CouponStorage\CouponStorageInterface;
@@ -126,6 +128,12 @@ class OrderService
 
     private $shelterData;
 
+    /** @var StampService */
+    private $stampService;
+
+    /** @var Manzana */
+    private $manzana;
+
     const DELIVERY_TYPE_COURIER = 'courier';
     const DELIVERY_TYPE_PICKUP = 'pickup';
     const DELIVERY_TYPE_DOSTAVISTA = 'dostavista';
@@ -148,7 +156,9 @@ class OrderService
         CouponStorageInterface $couponStorage,
         TokenStorageInterface $tokenStorage,
         AppBonusService $appBonusService,
-        PersonalOffersService $personalOffersService
+        PersonalOffersService $personalOffersService,
+        StampService $stampService,
+        Manzana $manzana
     )
     {
         $this->apiBasketService = $apiBasketService;
@@ -168,6 +178,8 @@ class OrderService
         $this->appBonusService = $appBonusService;
         $this->tokenStorage = $tokenStorage;
         $this->personalOffersService = $personalOffersService;
+        $this->stampService = $stampService;
+        $this->manzana = $manzana;
     }
 
     /**
@@ -636,6 +648,20 @@ class OrderService
             $totalPrice->setCourierPrice($deliveryPrice);
         }
 
+        $stampsAdded = $this->manzana->getStampsToBeAdded();
+        $stampService = $this->stampService;
+        $stampsUsed = array_reduce($basketProducts->getValues(), static function($carry, $product) use ($stampService) {
+            /** @var Product $product */
+            //if ($product->isCanUseStamps() && $product->isUseStamps() && $product->getShortProduct()) {
+            if ($product->isUseStamps() && $product->getShortProduct()) { //TODO заменить на верхнюю строку с $product->isCanUseStamps(), когда будет готово поле canUseStamps
+                $rules = $stampService::EXCHANGE_RULES[$product->getShortProduct()->getXmlId()];
+
+                $carry += max(array_column($rules, 'stamps')); //TODO fixme пока учитывается обмен марок только на одну единицу товара (нужно умножать на количество, к которому скидка применима)
+            }
+
+            return $carry;
+        }, 0);
+
         return (new OrderCalculate())
             ->setPriceDetails([
                 (new Detailing())
@@ -673,11 +699,11 @@ class OrderService
                 (new StampsDetailing())
                     ->setId('stamps_add')
                     ->setTitle('Начислено')
-                    ->setValue(20), //TODO use real values
+                    ->setValue($stampsAdded),
                 (new StampsDetailing())
                     ->setId('stamps_sub')
                     ->setTitle('Списано')
-                    ->setValue(12), //TODO use real values
+                    ->setValue($stampsUsed),
             ])
             ->setTotalPrice(
                 $totalPrice

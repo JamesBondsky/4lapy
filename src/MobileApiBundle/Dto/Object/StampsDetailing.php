@@ -85,7 +85,7 @@ class StampsDetailing
      */
     public function setValue(string $value): StampsDetailing
     {
-        $this->value = $value;
+        $this->value = (int)$value;
         return $this;
     }
 }

@@ -151,6 +151,28 @@ class SoftChequeResponse
     protected $chargedBonus = '';
 
     /**
+     * Количество начисленных марок
+     *
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("ChargedStatusBonus")
+     *
+     * @var float
+     */
+    protected $chargedStatusBonus = 0;
+
+    /**
+     * Количество активируемых марок из начисленных
+     *
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("ActiveChargedStatusBonus")
+     *
+     * @var float
+     */
+    protected $activeChargedStatusBonus = 0;
+
+    /**
      * Сумма бонусов, доступная для оплаты
      *
      * @Serializer\XmlElement(cdata=false)
@@ -178,15 +200,6 @@ class SoftChequeResponse
      * @var Collection|ChequePosition[]
      */
     protected $items;
-
-    /**
-     * @Serializer\XmlList(inline=true)
-     * @Serializer\Type("ArrayCollection<FourPaws\External\Manzana\Dto\ExtendedAttribute>")
-     * @Serializer\SerializedName("ExtendedAttribute")
-     *
-     * @var Collection|ExtendedAttribute[]
-     */
-    protected $extendedAttribute;
 
     /**
      * @return bool
@@ -371,24 +384,18 @@ class SoftChequeResponse
     }
 
     /**
-     * @return Collection|ExtendedAttribute[]
+     * @return float
      */
-    public function getExtendedAttribute(): Collection
+    public function getChargedStatusBonus(): float
     {
-        if (!$this->extendedAttribute) {
-            $this->extendedAttribute = new ArrayCollection();
-        }
-
-        return $this->extendedAttribute;
+        return $this->chargedStatusBonus;
     }
 
     /**
-     * @param Collection|ExtendedAttribute[] $extendedAttribute
-     * @return SoftChequeResponse
+     * @return float
      */
-    public function setExtendedAttribute($extendedAttribute): SoftChequeResponse
+    public function getActiveChargedStatusBonus(): float
     {
-        $this->extendedAttribute = $extendedAttribute;
-        return $this;
+        return $this->activeChargedStatusBonus;
     }
 }
