@@ -89,6 +89,15 @@ class ScheduleResult
     /**
      * @var int
      * @Serializer\Type("int")
+     * @Serializer\SerializedName("UF_DAYS_21")
+     * @Serializer\Groups(groups={"create", "read","update","delete"})
+     * @Assert\NotBlank(groups={"create", "read","update","delete"})
+     */
+    protected $days21 = -1;
+
+    /**
+     * @var int
+     * @Serializer\Type("int")
      * @Serializer\SerializedName("UF_DAYS_24")
      * @Serializer\Groups(groups={"create", "read","update","delete"})
      * @Assert\NotBlank(groups={"create", "read","update","delete"})
@@ -408,6 +417,24 @@ class ScheduleResult
                             ->resultOf($getRegularities)['result'];
 
         return $regularities;
+    }
+
+    /**
+     * @param int $days21
+     * @return ScheduleResult
+     */
+    public function setDays21(int $days21): ScheduleResult
+    {
+        $this->days21 = $days21;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDays21(): int
+    {
+        return $this->days21 ?? static::RESULT_ERROR;
     }
 
 }
