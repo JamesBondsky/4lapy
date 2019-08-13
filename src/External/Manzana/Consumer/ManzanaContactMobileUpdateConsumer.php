@@ -31,7 +31,7 @@ class ManzanaContactMobileUpdateConsumer extends ManzanaConsumerBase
         $getLastUsing = UserApiLastUsingTable::query()->setSelect(['ID', 'DATE_INSERT'])->addFilter('=USER_ID', $fields['USER_ID'])->setOrder(['ID' => 'DESC'])->exec()->fetch();
         if (!$getLastUsing || (isset($getLastUsing['DATE_INSERT']) && $getLastUsing['DATE_INSERT']->format('d.m.Y') != $currentDate->format('d.m.Y'))) {
             if ($getLastUsing) {
-                $fields['DATE_INSERT'] = $currentDate;
+                $fields['DATE_INSERT'] = clone $currentDate;
                 UserApiLastUsingTable::update($getLastUsing['ID'], $fields);
             } else {
                 UserApiLastUsingTable::add($fields);
