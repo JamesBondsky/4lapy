@@ -7,6 +7,7 @@ namespace FourPaws\External\Manzana\Consumer;
 use FourPaws\App\Application as App;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\MobileApiBundle\Tables\UserApiLastUsingTable;
 use FourPaws\UserBundle\EventController\Event;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -20,6 +21,8 @@ class ManzanaContactMobileUpdateConsumer extends ManzanaConsumerBase
 
         $userId = $userData['userId'];
         $personalPhone = $userData['personalPhone'];
+
+        $personalPhone = PhoneHelper::normalizePhone($personalPhone);
 
         $currentDate = new \DateTime();
         $fields = [

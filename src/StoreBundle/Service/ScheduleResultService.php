@@ -478,6 +478,7 @@ class ScheduleResultService implements LoggerAwareInterface
             11 => (clone $from)->setTime(10, 0, 0, 0),
             13 => (clone $from)->setTime(12, 0, 0, 0),
             18 => (clone $from)->setTime(17, 0, 0, 0),
+            21 => (clone $from)->setTime(20, 0, 0, 0),
             24 => (clone $from)->setTime(23, 0, 0, 0),
         ];
 
