@@ -4,6 +4,7 @@
 namespace FourPaws\External\Manzana\Consumer;
 
 
+use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application as App;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
@@ -24,7 +25,7 @@ class ManzanaContactMobileUpdateConsumer extends ManzanaConsumerBase
 
         $personalPhone = PhoneHelper::normalizePhone($personalPhone);
 
-        $currentDate = new \DateTime();
+        $currentDate = new DateTime();
         $fields = [
             'USER_ID' => $userId
         ];
