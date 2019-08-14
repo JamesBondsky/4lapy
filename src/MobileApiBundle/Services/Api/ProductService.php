@@ -48,6 +48,7 @@ use FourPaws\LocationBundle\LocationService;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct;
 use FourPaws\CatalogBundle\Helper\MarkHelper;
+use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct\StampLevel;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct\Tag;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Exception\CategoryNotFoundException;
@@ -559,7 +560,7 @@ class ProductService
         $stampRules = $this->stampService::EXCHANGE_RULES[$shortProduct->getXmlId()];
         $stampLevels = [];
         foreach ($stampRules as $rule) {
-            $stampLevels[] = $serializer->fromArray($rule, FullProduct\StampLevel::class);
+            $stampLevels[] = $serializer->fromArray($rule, StampLevel::class);
         }
 
         // toDo: is there any better way to merge ShortProduct into FullProduct?

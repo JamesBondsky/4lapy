@@ -1,13 +1,13 @@
 <?php
 
-namespace FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct;
+namespace FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct;
 
 use JMS\Serializer\Annotation as Serializer;
 
 /**
  * Class StampLevel
  *
- * @package FourPaws\MobileApiBundle\Dto\Object\Catalog\FullProduct
+ * @package FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct
  *
  * ОбъектКаталога.ПолныйТовар.УровеньСкидкиМарками
  */
