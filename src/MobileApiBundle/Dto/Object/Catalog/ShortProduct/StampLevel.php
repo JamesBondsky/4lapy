@@ -15,9 +15,9 @@ class StampLevel
 {
     /**
      * Цена на этом уровне
-     * @Serializer\Type("string")
+     * @Serializer\Type("float")
      * @Serializer\SerializedName("price")
-     * @var string
+     * @var float
      */
     protected $price;
 
@@ -31,18 +31,18 @@ class StampLevel
 
 
     /**
-     * @return string
+     * @return float
      */
-    public function getPrice(): string
+    public function getPrice(): float
     {
         return $this->price;
     }
 
     /**
-     * @param string $price
+     * @param float $price
      * @return StampLevel
      */
-    public function setPrice(string $price): StampLevel
+    public function setPrice(float $price): StampLevel
     {
         $this->price = $price;
         return $this;
