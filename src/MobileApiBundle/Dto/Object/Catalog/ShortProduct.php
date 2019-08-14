@@ -522,9 +522,9 @@ class ShortProduct
 
     /**
      * @param StampLevel[] $stampLevels
-     * @return FullProduct
+     * @return ShortProduct
      */
-    public function setStampLevels(array $stampLevels): FullProduct
+    public function setStampLevels(array $stampLevels): ShortProduct
     {
         $this->stampLevels = $stampLevels;
         return $this;

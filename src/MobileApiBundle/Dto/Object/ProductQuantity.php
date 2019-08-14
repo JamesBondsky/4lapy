@@ -29,7 +29,7 @@ class ProductQuantity
 
     /**
      * @Serializer\Type("bool")
-     * @Serializer\SerializedName("use_stamps")
+     * @Serializer\SerializedName("useStamps")
      * @var bool
      */
     protected $useStamps = false;

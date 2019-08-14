@@ -529,6 +529,15 @@ class ProductService
         //Округлить до упаковки
         $shortProduct->setInPack(intval($offer->getMultiplicity()));
 
+        // уровни скидок за марки
+        $serializer = Application::getInstance()->getContainer()->get(SerializerInterface::class);
+        $stampRules = $this->stampService::EXCHANGE_RULES[$shortProduct->getXmlId()];
+        $stampLevels = [];
+        foreach ($stampRules as $rule) {
+            $stampLevels[] = $serializer->fromArray($rule, StampLevel::class);
+        }
+        $shortProduct->setStampLevels($stampLevels);
+
         return $shortProduct;
     }
 
@@ -556,13 +565,6 @@ class ProductService
             ->setHasSpecialOffer($offer->isShare())
         ;
 
-        $serializer = Application::getInstance()->getContainer()->get(SerializerInterface::class);
-        $stampRules = $this->stampService::EXCHANGE_RULES[$shortProduct->getXmlId()];
-        $stampLevels = [];
-        foreach ($stampRules as $rule) {
-            $stampLevels[] = $serializer->fromArray($rule, StampLevel::class);
-        }
-
         // toDo: is there any better way to merge ShortProduct into FullProduct?
         $fullProduct
             ->setId($shortProduct->getId())
@@ -580,7 +582,7 @@ class ProductService
             ->setIsAvailable($shortProduct->getIsAvailable())
             ->setPickupOnly($shortProduct->getPickupOnly())
             ->setInPack($shortProduct->getInPack())
-            ->setStampLevels($stampLevels);
+            ->setStampLevels($shortProduct->getStampLevels());
         $fullProduct->setColor($shortProduct->getColor());
 
         if ($needPackingVariants) {

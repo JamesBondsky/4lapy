@@ -178,7 +178,7 @@ class BasketController extends BaseController
      * @return UserCartResponse
      * @throws \Exception
      */
-    public function putUserCartAction(PutUserCartRequest $putUserCartRequest) //TODO при указании флага use_stamps передать это в Manzana и в зависимости от ответа изменить ответ в запросе (и снять флаг USE_STAMPS у товара в корзине, если манзана ответила, что обмен применить нельзя)
+    public function putUserCartAction(PutUserCartRequest $putUserCartRequest) //TODO при указании флага useStamps передать это в Manzana и в зависимости от ответа изменить ответ в запросе (и снять флаг USE_STAMPS у товара в корзине, если манзана ответила, что обмен применить нельзя)
     {
         foreach ($putUserCartRequest->getGoods() as $productQuantity) {
             $quantity = $productQuantity->getQuantity();
