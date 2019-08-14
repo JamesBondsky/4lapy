@@ -59,6 +59,9 @@ if(KioskService::isKioskMode()) { $bodyClass = 'body-kiosk js-body-kiosk'; }
     <meta name="google" content="notranslate">
     <meta name="format-detection" content="telephone=no">
     <meta name="yandex-verification" content="6266e34669b85ed6">
+
+    <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/local/include/blocks/favicons.php'; ?>
+
     <?php /** @todo Mobe onto right place  */ ?>
     <script src="/static/build/js/jquery/jquery.min.js"></script>
     <script data-skip-moving="true">

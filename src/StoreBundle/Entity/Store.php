@@ -337,7 +337,7 @@ class Store extends Base
     protected $scheduleString;
 
     /**
-     * Время до которого можно оформить заказ
+     * Время до которого можно оформить заказ регулярный тип
      *
      * @var string
      * @Serializer\Type("string")
@@ -345,6 +345,16 @@ class Store extends Base
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $storeOrderTime = '00:00:00';
+
+    /**
+     * Время до которого можно оформить заказ нерегулярный тип
+     *
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_STORE_ORDER_TIMEI")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $storeOrderTimeI = '00:00:00';
 
     /**
      * @return int
@@ -1129,6 +1139,24 @@ class Store extends Base
     {
         $this->storeOrderTime = $storeOrderTime;
 
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getStoreOrderTimeI(): string
+    {
+        return $this->storeOrderTimeI ?: '21:00:00';
+    }
+
+    /**
+     * @param string $storeOrderTimeI
+     * @return Store
+     */
+    public function setStoreOrderTimeI(string $storeOrderTimeI): Store
+    {
+        $this->storeOrderTimeI = $storeOrderTimeI;
         return $this;
     }
 }

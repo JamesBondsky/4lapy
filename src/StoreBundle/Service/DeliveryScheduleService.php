@@ -9,6 +9,7 @@ namespace FourPaws\StoreBundle\Service;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\UserFieldTable;
 use FourPaws\App\Application;
+use FourPaws\AppBundle\Entity\UserFieldEnumValue;
 use FourPaws\AppBundle\Service\UserFieldEnumService;
 use FourPaws\Enum\HlblockCode;
 use FourPaws\Helpers\HighloadHelper;
@@ -379,7 +380,27 @@ class DeliveryScheduleService implements LoggerAwareInterface
         $type = $schedule->getTypeCode();
         $orderDays = $schedule->getOrderDays();
         $supplyDays = $schedule->getSupplyDays();
-        $orderTime = $schedule->getSender()->getStoreOrderTime();
+        $regularity = $schedule->getRegular();
+        if(!$regularity){
+            throw new \Exception("Не указана регулярность расписания");
+        }
+
+        /** @var UserFieldEnumValue $reg */
+        foreach ($this->getRegular() as $reg){
+            if($reg->getId() == $regularity){
+                $regularityCode = $reg->getXmlId();
+                break;
+            }
+        }
+
+        switch ($regularityCode){
+            case 'Z1':
+                $orderTime = $schedule->getSender()->getStoreOrderTime();
+                break;
+            case 'Z2':
+                $orderTime = $schedule->getSender()->getStoreOrderTimeI();
+                break;
+        }
 
         if(!$from){
             $from = new \DateTime();
