@@ -427,13 +427,18 @@ class OrderService
 
             if($order->getPropValue('SUBSCRIBE_ID') > 0){
                 $subscribeId = (int)$order->getPropValue('SUBSCRIBE_ID');
-                $orderSubscribe = $this->appOrderSubscribeService->getById($subscribeId);
 
-                $orderParameter
-                    ->setSubscribe(true)
-                    ->setSubscribeFrequency($orderSubscribe->getFrequency())
-                    ->setPayWithBonus($orderSubscribe->isPayWithbonus() ? 1 : 0)
-                ;
+                try {
+                    $orderSubscribe = $this->appOrderSubscribeService->getById($subscribeId);
+                    $orderParameter
+                        ->setSubscribe(true)
+                        ->setSubscribeFrequency($orderSubscribe->getFrequency())
+                        ->setPayWithBonus($orderSubscribe->isPayWithbonus() ? 1 : 0)
+                    ;
+                } catch (\Exception $e) {
+                    $logger = LoggerFactory::create('subscribeNotFound');
+                    $logger->error(__METHOD__ . ' error. deliveryId: ' . $order->getDeliveryId() . '. userId: ' . $userId . '. orderId: ' . $order->getId() . '. Exception. : ' . $e->getMessage() . '. ' . $e->getTraceAsString());
+                }
             }
 
             try {
