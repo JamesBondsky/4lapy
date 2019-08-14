@@ -290,6 +290,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                 }
             }
         }
+        $contact->phone = PhoneHelper::getManzanaPhone($contact->phone);
         $data = $this->serializer->toArray($contact);
         /** на обновление это поле ненужно */
         if(isset($data['HasChildrenCode'])) {
@@ -794,6 +795,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function updateContactAsync(Client $contact)
     {
+        if ($contact->phone) {
+            $contact->phone = PhoneHelper::getManzanaPhone($contact->phone);
+        }
         /** @noinspection MissingService */
         $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_update_producer');
         $producer->publish($this->serializer->serialize($contact, 'json'));
@@ -854,6 +858,8 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     {
         try {
             $userRepository = $this->userRepository;
+
+            $client->phone = PhoneHelper::getManzanaPhone($client->phone);
 
             /** обновим только у активного и делаем 1 запрос вместо 2-х */
             $users = $userRepository->findBy(['=PERSONAL_PHONE' => PhoneHelper::normalizePhone($client->phone), 'ACTIVE' => 'Y']);
