@@ -261,6 +261,15 @@ class ProductService
         return new ArrayCollection([
             $productCollection
                 ->map(\Closure::fromCallable([$this, 'mapProductForList']))
+                ->map(static function(FullProduct $product) use ($ids) {
+                    $packingVariants = $product->getPackingVariants();
+                    $packingVariants = array_filter($packingVariants, static function(FullProduct $product) use ($ids) {
+                        return in_array($product->getXmlId(), $ids, false);
+                    });
+                    $product->setPackingVariants($packingVariants);
+
+                    return $product;
+                })
                 ->filter(function($value) {
                     return !is_null($value);
                 })
