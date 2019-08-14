@@ -35,7 +35,7 @@ $promocode = $coupon['UF_PROMO_CODE'];
                             <div class="b-order__text-block">
                                 <strong>А вот и сюрприз для Вас!</strong>
                                 <br/><br/>
-                                <div class="b-dobrolap-coupon js-open-popup" data-b-dobrolap-coupon data-coupon="<?= $promocode ?>" data-popup-id="send-email-personal-offers">
+                                <div class="b-dobrolap-coupon" data-b-dobrolap-coupon data-coupon="<?= $promocode ?>">
                                     <div class="b-dobrolap-coupon__item b-dobrolap-coupon__item--info">
                                         <div class="b-dobrolap-coupon__discount">
                                             <span class="b-dobrolap-coupon__discount-big"><?= ($offer["PROPERTY_DISCOUNT_VALUE"] ? $offer["PROPERTY_DISCOUNT_VALUE"] . "%" : $offer["PROPERTY_DISCOUNT_CURRENCY_VALUE"] . " ₽") ?></span>

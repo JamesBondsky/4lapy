@@ -7,6 +7,7 @@ namespace FourPaws\External\Manzana\Consumer;
 use FourPaws\App\Application as App;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\MobileApiBundle\Tables\UserApiLastUsingTable;
 use FourPaws\UserBundle\EventController\Event;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -21,6 +22,8 @@ class ManzanaContactMobileUpdateConsumer extends ManzanaConsumerBase
         $userId = $userData['userId'];
         $personalPhone = $userData['personalPhone'];
 
+        $personalPhone = PhoneHelper::normalizePhone($personalPhone);
+
         $currentDate = new \DateTime();
         $fields = [
             'USER_ID' => $userId
@@ -28,7 +31,7 @@ class ManzanaContactMobileUpdateConsumer extends ManzanaConsumerBase
         $getLastUsing = UserApiLastUsingTable::query()->setSelect(['ID', 'DATE_INSERT'])->addFilter('=USER_ID', $fields['USER_ID'])->setOrder(['ID' => 'DESC'])->exec()->fetch();
         if (!$getLastUsing || (isset($getLastUsing['DATE_INSERT']) && $getLastUsing['DATE_INSERT']->format('d.m.Y') != $currentDate->format('d.m.Y'))) {
             if ($getLastUsing) {
-                $fields['DATE_INSERT'] = $currentDate;
+                $fields['DATE_INSERT'] = clone $currentDate;
                 UserApiLastUsingTable::update($getLastUsing['ID'], $fields);
             } else {
                 UserApiLastUsingTable::add($fields);
