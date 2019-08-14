@@ -30,6 +30,7 @@ use FourPaws\External\ExpertsenderService;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\TaggedCacheHelper;
 use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\LocationBundle\LocationService;
@@ -494,6 +495,32 @@ class UserService implements
         }
         $client->setActualContact();
         $client->setLoyaltyProgramContact();
+    }
+
+    public function setManzanaClientPersonalDataByUser(array $fields)
+    {
+        $client = new Client();
+
+        if ($fields['PERSONAL_BIRTHDAY']) {
+            $birthDate = new \DateTime($fields['PERSONAL_BIRTHDAY']);
+        }
+
+        if ($birthDate) {
+            $result = new \DateTimeImmutable($birthDate->format('Y-m-d\TH:i:s'));
+            $client->birthDate = $result;
+        }
+        $client->phone = PhoneHelper::getManzanaPhone($fields['PERSONAL_PHONE']);
+        $client->firstName = $fields['NAME'];
+        $client->secondName = $fields['SECOND_NAME'];
+        $client->lastName = $fields['LAST_NAME'];
+        $client->genderCode = str_replace(['M', 'F',], [1, 2], $fields['PERSONAL_GENDER']);
+        $client->email = $fields['EMAIL'];
+        $client->plLogin = $fields['LOGIN'];
+
+        $client->setActualContact();
+        $client->setLoyaltyProgramContact();
+
+        return $client;
     }
 
     /**
