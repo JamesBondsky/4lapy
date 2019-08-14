@@ -225,6 +225,8 @@ class UserController extends BaseController
      * @Security("has_role('REGISTERED_USERS')")
      *
      * @return ApiResponse
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
      * @throws \FourPaws\External\Manzana\Exception\ExecuteException
      */
     public function getStampsInfoAction(): ApiResponse //TODO change Response type // см. PersonalBonus для примера
@@ -238,7 +240,8 @@ class UserController extends BaseController
         $exchangeRules = StampService::EXCHANGE_RULES;
         $productsXmlIds = array_keys($exchangeRules);
 
-        $productsList = $this->apiProductService->getListFromXmlIds($productsXmlIds);
+        $productsListCollection = $this->apiProductService->getListFromXmlIds($productsXmlIds);
+        $productsList = $productsListCollection->get(0) ?? [];
 
         return (new ApiResponse())->setData([
             'stamps' => [
@@ -250,9 +253,7 @@ class UserController extends BaseController
                     . "\n7. Выдача марок осуществляется в определённый период."
                     . "\n8. Количество товара, который можно купить с учётом скидки за электронные марки ограничено."
                     . "\n9. При возврате товара, приобретённого с использованием электронные марок, денежный эквивалент номинала марки не выплачивается, марки восстановлению не подлежат: покупателю возвращается сумма, внесённая денежными средствами в соответствии с данными кассового чека.",
-                'goods' => [
-                    $productsList,
-                ],
+                'goods' => $productsList,
             ],
         ]);
     }
