@@ -23,7 +23,11 @@ class ManzanaContactMobileUpdateConsumer extends ManzanaConsumerBase
         $userId = $userData['userId'];
         $personalPhone = $userData['personalPhone'];
 
-        $personalPhone = PhoneHelper::getManzanaPhone($personalPhone);
+        try {
+            $personalPhone = PhoneHelper::getManzanaPhone($personalPhone);
+        } catch (\Exception $e) {
+            return false;
+        }
 
         $currentDate = new DateTime();
         $fields = [
