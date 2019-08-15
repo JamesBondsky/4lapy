@@ -394,11 +394,11 @@ class DeliveryScheduleService implements LoggerAwareInterface
         }
 
         switch ($regularityCode){
-            case 'Z1':
-                $orderTime = $schedule->getSender()->getStoreOrderTime();
-                break;
             case 'Z2':
                 $orderTime = $schedule->getSender()->getStoreOrderTimeI();
+                break;
+            default:
+                $orderTime = $schedule->getSender()->getStoreOrderTime();
                 break;
         }
 
