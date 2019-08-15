@@ -8,6 +8,7 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\Model\OftenSeek;
 use FourPaws\CatalogBundle\Service\OftenSeekInterface;
 use FourPaws\Helpers\TaggedCacheHelper;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -69,6 +70,8 @@ class CatalogOftenSeekComponent extends CBitrixComponent
      */
     public function executeComponent()
     {
+        global $APPLICATION;
+
         if ($this->arParams['SECTION_ID'] <= 0) {
             return null;
         }
@@ -85,9 +88,48 @@ class CatalogOftenSeekComponent extends CBitrixComponent
                 $this->arParams['DEPTH_LEVEL']
             );
 
+            $curPageParam = $this->getParamsFromUrl($APPLICATION->GetCurPageParam());
+            if(!empty($curPageParam)){
+                /** @var OftenSeek $item */
+                foreach ($this->arResult['ITEMS'] as $i => $item){
+                    $curPageParam = $this->getParamsFromUrl($APPLICATION->GetCurPageParam());
+                    $itemParam = $this->getParamsFromUrl($item->getLink());
+                    if(!$itemParam){
+                        continue;
+                    }
+                    foreach ($itemParam as $key => $value){
+                        if(!empty($curPageParam[$key])){
+                            $newValue = $curPageParam[$key] . ',' . $value;
+                            $arNewValue = explode(',', $newValue);
+                            $curPageParam[$key] = implode(',', array_unique($arNewValue));
+                            unset($itemParam[$key]);
+                        }
+                    }
+                    $newParams = array_merge($curPageParam, $itemParam ?: []);
+                    $newLink = sprintf('%s?%s', $APPLICATION->GetCurPage(false), http_build_query($newParams));
+                    $item->setLink($newLink);
+                    $this->arResult['ITEMS'][$i] = $item;
+                }
+            }
+
+
             $this->includeComponentTemplate();
         }
 
         return true;
+    }
+
+    public function getParamsFromUrl($url){
+        $result = [];
+        preg_match('/\?(.*)/', $url, $matches);
+        if(!empty($matches[1])) {
+            $params = explode('&',$matches[1]);
+            foreach ($params as $param){
+                $arValue = explode("=", $param);
+                $result[$arValue[0]] = str_replace('%2C', ',', $arValue[1]);
+            }
+        }
+
+        return $result;
     }
 }
