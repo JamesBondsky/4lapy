@@ -19,9 +19,11 @@ use FourPaws\External\Manzana\Dto\Coupon;
 use FourPaws\External\Manzana\Dto\SoftChequeResponse;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
+use FourPaws\Helpers\BxCollection;
 use FourPaws\PersonalBundle\Exception\CouponIsNotAvailableForUseException;
 use FourPaws\PersonalBundle\Service\PersonalOffersService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
+use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Helper\PriceHelper;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -66,19 +68,25 @@ class Manzana implements LoggerAwareInterface
      * @var float
      */
     private $stampsToBeAdded = 0.0;
+    /**
+     * @var StampService
+     */
+    private $stampService;
 
     /**
      * Manzana constructor.
      *
-     * @param BasketService     $basketService
+     * @param BasketService $basketService
      * @param ManzanaPosService $manzanaPosService
-     * @param UserService       $userService
+     * @param UserService $userService
+     * @param StampService $stampService
      */
-    public function __construct(BasketService $basketService, ManzanaPosService $manzanaPosService, UserService $userService)
+    public function __construct(BasketService $basketService, ManzanaPosService $manzanaPosService, UserService $userService, StampService $stampService)
     {
         $this->basketService = $basketService;
         $this->manzanaPosService = $manzanaPosService;
         $this->userService = $userService;
+        $this->stampService = $stampService;
     }
 
     /**
@@ -275,9 +283,33 @@ class Manzana implements LoggerAwareInterface
                         'DISCOUNT_PRICE' => $item->getBasePrice() - $price,
                         'CUSTOM_PRICE' => 'Y',
                     ]);
+
+                    //$basketPropertyCollection = $item->getPropertyCollection();
+                    //$maxStampsLevelProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'MAX_STAMPS_LEVEL');
+                    $extendedAttributeCollection = $position->getExtendedAttribute();
+                    if ($extendedAttributeCollection->isEmpty()) { // Если атрибут пустой, значит, обмен марок невозможен
+                        $this->basketService->setBasketItemPropertyValue($item, 'USE_STAMPS', false);
+                        $this->basketService->setBasketItemPropertyValue($item, 'MAX_STAMPS_LEVEL', false);
+                    } else {
+                        // указание, что можно применить марки для скидки на этот товар
+
+                        $maxAvailableLevel = $this->stampService->getMaxAvailableLevel($extendedAttributeCollection);
+
+                        $this->basketService->setBasketItemPropertyValue($item, 'MAX_STAMPS_LEVEL', $maxAvailableLevel ? serialize($maxAvailableLevel): false);
+                        /*if ($maxStampsLevelProperty) {
+                            $maxStampsLevelProperty->setField('VALUE', $maxAvailableLevel ? serialize($maxAvailableLevel): false);
+                            $basketPropertyCollection->save();
+                        }*/
+
+                        //TODO set USE_STAMPS=false & MAX_STAMPS_LEVEL=false instead (или заменить на максимальный из тех уровней, на который хватит марок), если пользователь уже выбрал обмен марок у других товаров и на этот обмен марок не хватит
+                    }
+
+                    //$item->setPropertyCollection($basketPropertyCollection);
                 }
             });
         }
+
+        $basket->save(); // если не делать здесь сохранение корзины, то надо использовать $maxStampsLevelProperty->setField и $basketPropertyCollection->save(), закомментированные выше
     }
 
     /**

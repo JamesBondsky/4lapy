@@ -287,19 +287,15 @@ class BasketService implements LoggerAwareInterface
             throw new NotFoundException('BasketItem');
         }
 
-        $basketPropertyCollection = $basketItem->getPropertyCollection();
-        $props = [];
+        //$basketPropertyCollection = $basketItem->getPropertyCollection();
+        //TODO использовать это поле и на сайте
 
-        $props[] = [
-            'NAME' => 'Использовать марки', //FIXME почему в запросе PUT /user_cart отдается предыдущее значение вместо нового, которое передается в запросе? Пофиксить!
-            'CODE' => 'USE_STAMPS', //TODO использовать это поле и на сайте
-            'VALUE' => $useStamps,
-        ];
-
-        $basketPropertyCollection->setProperty($props);
-        $basketItem->setPropertyCollection($basketPropertyCollection);
-        $basketPropertyCollection->setBasketItem($basketItem);
-        $basketPropertyCollection->save();
+        $this->setBasketItemPropertyValue($basketItem, 'USE_STAMPS', (string)$useStamps);
+        //$this->setBasketItemPropertyValue($basketItem, 'MAX_STAMPS_LEVEL', (string)'test3');
+        //$basketPropertyCollection->save();
+        //$basketItem->setPropertyCollection($basketPropertyCollection);
+        //$basketPropertyCollection->setBasketItem($basketItem);
+        //$basketPropertyCollection->save();
 
         $result = $basketItem->setField('QUANTITY', $quantity);
         if (!$result->isSuccess()) {
@@ -391,6 +387,16 @@ class BasketService implements LoggerAwareInterface
     public function getBasket(bool $reload = null, int $fUserId = 0): Basket
     {
         if (null === $this->basket || $reload) {
+            if ($this->basket && $reload) {
+                $basketItems = $this->basket->getBasketItems();
+
+                $propertyCollections = [];
+                /** @var BasketItem $basketItem */
+                foreach ($basketItems as $basketItem) {
+                    $propertyCollections[$basketItem->getId()] = $basketItem->getPropertyCollection();
+                }
+            }
+
             /** @var Basket $basket */
             /** @noinspection PhpInternalEntityUsedInspection */
             DiscountCompatibility::stopUsageCompatible();
@@ -401,6 +407,17 @@ class BasketService implements LoggerAwareInterface
 
             //всегда перегружаем из-за подарков
             $this->setBasketIds();
+
+            if ($this->basket && $reload) {
+                $basketItems = $this->basket->getBasketItems();
+                foreach ($basketItems as $key => $basketItem) {
+                    if (isset($propertyCollections[$basketItem->getId()])) {
+                        $basketItem->setPropertyCollection($propertyCollections[$basketItem->getId()]); // Костыль для сохранения propertyCollection при релоаде корзины
+                    }
+                }
+                $this->basket->save();
+            }
+
             try {
                 $this->refreshAvailability($this->basket);
             } catch (\Exception $e) {

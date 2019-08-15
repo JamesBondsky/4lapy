@@ -5,8 +5,10 @@ namespace FourPaws\PersonalBundle\Service;
 
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\External\Manzana\Dto\BalanceRequest;
+use FourPaws\External\Manzana\Dto\ExtendedAttribute;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -119,5 +121,36 @@ class StampService implements LoggerAwareInterface
         }
 
         return $this->activeStampsCount;
+    }
+
+    /**
+     * @param Collection|ExtendedAttribute[] $extendedAttributeCollection
+     * @return array
+     */
+    public function getMaxAvailableLevel($extendedAttributeCollection): array
+    {
+        // Реализация согласована. Определение, какой уровень наилучший, с помощью того, на какой уровень нужно больше марок
+        //TODO переделать способ определения максимальной скидки, учитывая, хватит ли пользователю марок на применение этого уровня)
+        $maxLevel = [];
+
+        /** @var ExtendedAttribute $extendedAttribute */
+        $maxDiscountSize = 0;
+        foreach ($extendedAttributeCollection as $extendedAttribute) {
+            preg_match('/(\d+)\*(\d+)\*([VP])$/', $extendedAttribute->getKey(), $discount);
+            if ($discountStampsNeeded = $discount[2]) {
+                $discountSize = $discountStampsNeeded
+                    * $extendedAttribute->getValue(); // Количество товара, на которое доступна эта скидка
+
+                if ($discountSize > $maxDiscountSize) {
+                    $maxLevel = [
+                        'key' => $extendedAttribute->getKey(),
+                        'value' => $extendedAttribute->getValue(),
+                    ];
+                    $maxDiscountSize = $discountSize;
+                }
+            }
+        }
+
+        return $maxLevel;
     }
 }

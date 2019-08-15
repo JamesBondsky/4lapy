@@ -10,6 +10,7 @@ use Adv\Bitrixtools\Tools\BitrixUtils;
 use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
 use DateTimeImmutable;
+use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
 use FourPaws\App\Application as App;
 use FourPaws\BitrixOrm\Model\Share;
@@ -19,6 +20,7 @@ use FourPaws\External\Interfaces\ManzanaServiceInterface;
 use FourPaws\External\Manzana\Dto\BalanceRequest;
 use FourPaws\External\Manzana\Dto\BalanceResponse;
 use FourPaws\External\Manzana\Dto\ChequePosition;
+use FourPaws\External\Manzana\Dto\ExtendedAttribute;
 use FourPaws\External\Manzana\Dto\SoftChequeRequest;
 use FourPaws\External\Manzana\Dto\SoftChequeResponse;
 use FourPaws\External\Manzana\Exception\ExecuteErrorException;
@@ -137,6 +139,12 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                         }
                     }
                 }
+            }
+
+            if ($basketService->getBasketItemPropertyValue($item, 'USE_STAMPS') && ($maxStampsLevel = unserialize($basketService->getBasketItemPropertyValue($item, 'MAX_STAMPS_LEVEL')))) {
+                $chequePosition->setExtendedAttribute(new ArrayCollection([
+                    (new ExtendedAttribute())->setKey($maxStampsLevel['key'])->setValue($maxStampsLevel['value'])
+                ]));
             }
 
             $chequePosition->setSignCharge((bool)$signCharge ? 1 : 0);
@@ -340,6 +348,18 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                 $rawResult['Item'],
             ];
         }
+
+        /**
+         * Если в запросе был один уровень скидки за марки, то возвращается неверная структура
+         */
+        foreach ($rawResult['Item'] as $key => $item) {
+            if (!empty($item['ExtendedAttribute']) && !isset($item['ExtendedAttribute'][0])) {
+                $rawResult['Item'][$key]['ExtendedAttribute'] = [
+                    $item['ExtendedAttribute'],
+                ];
+            }
+        }
+
         return $this->serializer->fromArray($rawResult, SoftChequeResponse::class);
     }
 
