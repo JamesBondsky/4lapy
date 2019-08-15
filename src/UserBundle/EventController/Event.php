@@ -356,6 +356,12 @@ class Event extends BaseServiceHandler
         $client = $userService->setManzanaClientPersonalDataByUser($fields, $user);
         $userService->setClientPersonalDataByCurUser($clientByCheck, $user);
 
+        foreach ($clientByCheck as $clientKey => $clientValue) {
+            if ($client->$clientKey != $clientValue && empty($client->$clientKey)) {
+                $client->$clientKey = $clientValue;
+            }
+        }
+
         if ($client != $clientByCheck) {
             $manzanaService->updateContactAsync($client);
         }
