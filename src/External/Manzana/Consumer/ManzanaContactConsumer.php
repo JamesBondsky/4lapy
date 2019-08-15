@@ -49,7 +49,9 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
                 throw new WrongContactMessageException('Неожиданное сообщение: контакт пуст.');
             }
 
-            $contact->phone = PhoneHelper::getManzanaPhone($contact->phone);
+            if ($contact->phone) {
+                $contact->phone = PhoneHelper::getManzanaPhone($contact->phone);
+            }
 
             if (empty($contact->contactId)) {
                 try {

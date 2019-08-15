@@ -543,6 +543,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         if(empty($phone)){
             throw new ManzanaServiceContactSearchNullException('не указан телефон');
         }
+        $phone = PhoneHelper::getManzanaPhone($phone);
         return (string)$this->getContactByPhone($phone)->contactId;
     }
 
@@ -859,7 +860,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         try {
             $userRepository = $this->userRepository;
 
-            $client->phone = PhoneHelper::getManzanaPhone($client->phone);
+            if ($client->phone) {
+                $client->phone = PhoneHelper::getManzanaPhone($client->phone);
+            }
 
             /** обновим только у активного и делаем 1 запрос вместо 2-х */
             $users = $userRepository->findBy(['=PERSONAL_PHONE' => PhoneHelper::normalizePhone($client->phone), 'ACTIVE' => 'Y']);

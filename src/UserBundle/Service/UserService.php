@@ -509,13 +509,15 @@ class UserService implements
             $result = new \DateTimeImmutable($birthDate->format('Y-m-d\TH:i:s'));
             $client->birthDate = $result;
         }
-        $client->phone = PhoneHelper::getManzanaPhone($fields['PERSONAL_PHONE']);
-        $client->firstName = $fields['NAME'];
-        $client->secondName = $fields['SECOND_NAME'];
-        $client->lastName = $fields['LAST_NAME'];
-        $client->genderCode = str_replace(['M', 'F',], [1, 2], $fields['PERSONAL_GENDER']);
-        $client->email = $fields['EMAIL'];
-        $client->plLogin = $fields['LOGIN'];
+        if ($fields['PERSONAL_PHONE']) {
+            $client->phone = PhoneHelper::getManzanaPhone($fields['PERSONAL_PHONE']);
+        }
+        $client->firstName = $fields['NAME'] ?? $client->firstName;
+        $client->secondName = $fields['SECOND_NAME'] ?? $client->secondName;
+        $client->lastName = $fields['LAST_NAME'] ?? $client->lastName;
+        $client->genderCode = $fields['PERSONAL_GENDER'] ? str_replace(['M', 'F',], [1, 2], $fields['PERSONAL_GENDER']) : $client->genderCode;
+        $client->email = $fields['EMAIL'] ?? $client->email;
+        $client->plLogin = $fields['LOGIN'] ?? $client->plLogin;
 
         $client->setActualContact();
         $client->setLoyaltyProgramContact();
