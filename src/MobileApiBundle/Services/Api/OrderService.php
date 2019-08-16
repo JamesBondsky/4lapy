@@ -693,21 +693,21 @@ class OrderService
             ->setCardDetails([
                 (new Detailing())
                     ->setId('bonus_add')
-                    ->setTitle('Начислено')
+                    ->setTitle('Начислено бонусов')
                     ->setValue($bonusAddAmount),
                 (new Detailing())
                     ->setId('bonus_sub')
-                    ->setTitle('Списано')
+                    ->setTitle('Списано бонусов')
                     ->setValue($bonusSubtractAmount),
             ])
             ->setStampsDetails([
                 (new StampsDetailing())
                     ->setId('stamps_add')
-                    ->setTitle('Начислено')
+                    ->setTitle('Начислено марок')
                     ->setValue($stampsAdded),
                 (new StampsDetailing())
                     ->setId('stamps_sub')
-                    ->setTitle('Списано')
+                    ->setTitle('Списано марок')
                     ->setValue($stampsUsed),
             ])
             ->setTotalPrice(

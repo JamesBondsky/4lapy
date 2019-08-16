@@ -536,7 +536,7 @@ class ProductService
         foreach ($stampRules as $rule) {
             $stampLevels[] = $serializer->fromArray($rule, StampLevel::class);
         }
-        $shortProduct->setStampLevels($stampLevels);
+        $shortProduct->setStampLevels($stampLevels); //TODO get stampLevels from Manzana. If Manzana doesn't answer then set no levels
 
         return $shortProduct;
     }
