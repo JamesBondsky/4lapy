@@ -330,15 +330,6 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                         </div>
                     </div>
 
-                    <? $marksForBasket = 4; //TODO correct value (Manzana говорит, что нужно брать из поля ChargedStatusBonus в ответе на мягкий чек, но там сейчас передается 0) ?>
-                    <div class="b-information-order__order">
-                        <div class="">Будет начислено</div>
-                        <div class="">
-                            <?= $marksForBasket . ' ' . WordHelper::declension($marksForBasket, ['марка', 'марки', 'марок']) ?>
-                        </div>
-                    </div>
-
-
                     <?php if ($arResult['TOTAL_DISCOUNT'] >= 0.01) { ?>
                         <div class="b-information-order__order">
                             <div class="b-information-order__order-price">Общая скидка</div>
@@ -349,9 +340,17 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                                 <span class="b-ruble">₽</span>
                             </div>
                         </div>
-                    <?php }
+                    <?php } ?>
 
-                    if ($arResult['COUPON_DISCOUNT']) { ?>
+                    <? $marksForBasket = 4; //TODO correct value (Manzana говорит, что нужно брать из поля ChargedStatusBonus в ответе на мягкий чек, но там сейчас передается 0) ?>
+                    <div class="b-information-order__order b-information-order__order--mark">
+                        <div class="">За заказ будет начислено:</div>
+                        <div class="">
+                            <?= $marksForBasket . '&nbsp;' . WordHelper::declension($marksForBasket, ['марка', 'марки', 'марок']) ?>
+                        </div>
+                    </div>
+
+                    <?php if ($arResult['COUPON_DISCOUNT']) { ?>
                         <div class="b-information-order__order">
                             <div class="b-information-order__order-price">Скидка по промокоду</div>
                             <div class="b-price b-price--information-order">
