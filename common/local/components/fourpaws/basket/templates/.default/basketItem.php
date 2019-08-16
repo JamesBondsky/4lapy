@@ -59,6 +59,13 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
             </div>
         <?php }
     } ?>
+    <div class="b-mark-order">
+        <div class="b-mark-order__info">
+            <span class="b-mark-order__text">Используйте марки, чтобы купить товар со скидкой! Вам  доступно — 8</span>
+            <span class="b-icon b-icon--mark"><?= new SvgDecorator('icon-mark', 12, 12) ?></span>
+        </div>
+    </div>
+
     <div class="b-common-item b-common-item--shopping-cart b-common-item--shopping">
         <span class="b-common-item__image-wrap b-common-item__image-wrap--shopping-cart">
             <?php if (null !== $image) { ?>
@@ -137,7 +144,8 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
             ?>
         </div>
     </div>
-    <div class="b-item-shopping__operation<?= $offer->getQuantity() > 0 ? ' b-item-shopping__operation--not-available' : '' ?>">
+    <?/* Класс b-item-shopping__operation--marks нужен только если будут марки*/?>
+    <div class="b-item-shopping__operation b-item-shopping__operation--marks<?= $offer->getQuantity() > 0 ? ' b-item-shopping__operation--not-available' : '' ?>">
         <?php
         $maxQuantity = 1000;
         if ($useOffer) {
@@ -145,75 +153,102 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
         }
 
         if (!$basketItem->isDelay() && $offer->getQuantity() > 0) { ?>
-            <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--shopping js-plus-minus-cont" <? if ($offer->getXmlId() == BasketService::GIFT_DOBROLAP_XML_ID) { ?>style="background:transparent;"<?}?>>
-                <? if ($offer->getXmlId() != BasketService::GIFT_DOBROLAP_XML_ID) { ?>
-                    <a class="b-plus-minus__minus js-minus" data-url="<?= $basketUpdateUrl ?>"
-                       href="javascript:void(0);"></a>
-                    <?php
-                    /** @todo data-one-price */
-                    ?>
-                    <input title="" class="b-plus-minus__count js-plus-minus-count"
-                           value="<?= WordHelper::numberFormat($arResult['PRODUCT_QUANTITIES'][$basketItem->getProductId()] ?? $basketItem->getQuantity(),
-                               0) ?>"
-                           data-one-price="<?= $basketItem->getPrice() ?>"
-                           data-cont-max="<?= $maxQuantity ?>"
-                           data-basketid="<?= $basketItemId; ?>"
-                           data-url="<?= $basketUpdateUrl ?>"
-                           type="text"/>
+            <div class="b-item-shopping__operation-inner"><?/* Эта обертка нужна только если будут марки*/?>
+                <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--shopping js-plus-minus-cont" <? if ($offer->getXmlId() == BasketService::GIFT_DOBROLAP_XML_ID) { ?>style="background:transparent;"<?}?>>
+                    <? if ($offer->getXmlId() != BasketService::GIFT_DOBROLAP_XML_ID) { ?>
+                        <a class="b-plus-minus__minus js-minus" data-url="<?= $basketUpdateUrl ?>"
+                           href="javascript:void(0);"></a>
+                        <?php
+                        /** @todo data-one-price */
+                        ?>
+                        <input title="" class="b-plus-minus__count js-plus-minus-count"
+                               value="<?= WordHelper::numberFormat($arResult['PRODUCT_QUANTITIES'][$basketItem->getProductId()] ?? $basketItem->getQuantity(),
+                                   0) ?>"
+                               data-one-price="<?= $basketItem->getPrice() ?>"
+                               data-cont-max="<?= $maxQuantity ?>"
+                               data-basketid="<?= $basketItemId; ?>"
+                               data-url="<?= $basketUpdateUrl ?>"
+                               type="text"/>
 
-                    <a class="b-plus-minus__plus js-plus" data-url="<?= $basketUpdateUrl ?>"
-                       href="javascript:void(0);"></a>
-                <? } ?>
-            </div>
-            <div class="b-select b-select--shopping-cart">
-                <?php $maxMobileQuantity = 100;
+                        <a class="b-plus-minus__plus js-plus" data-url="<?= $basketUpdateUrl ?>"
+                           href="javascript:void(0);"></a>
+                    <? } ?>
+                </div>
+                <div class="b-select b-select--shopping-cart">
+                    <?php $maxMobileQuantity = 100;
 
-                if ($maxQuantity < $maxMobileQuantity) {
-                    $maxMobileQuantity = $maxQuantity;
-                } ?>
-                <select title="" class="b-select__block b-select__block--shopping-cart"
-                        name="shopping-cart">
-                    <option value="" disabled="disabled" selected="selected">выберите</option>
-                    <?php for ($i = 0; $i < $maxMobileQuantity; $i++) { ?>
-                        <option value="one-click-<?= $i ?>"><?= $i + 1 ?></option>
-                    <?php } ?>
-                </select>
-            </div>
-            <div class="b-price">
-                <span class="b-price__current">
-                    <?= WordHelper::numberFormat(
-                        $arResult['ROWS_MAP'][$basketItem->getBasketCode()]['TOTAL_PRICE']
-                        ??
-                        $basketItem->getPrice() * $basketItem->getQuantity()
-                    ) ?>
-                </span>
-                <span class="b-ruble">₽</span>
-                <?php
-                //сюда же влетает округление до копеек при пересчете НДС, поэтому 0,01
-                if ($basketItem->getDiscountPrice() >= 0.01) {
-                    ?>
-                    <span class="b-old-price b-old-price--crossed-out">
-                    <span class="b-old-price__old">
+                    if ($maxQuantity < $maxMobileQuantity) {
+                        $maxMobileQuantity = $maxQuantity;
+                    } ?>
+                    <select title="" class="b-select__block b-select__block--shopping-cart"
+                            name="shopping-cart">
+                        <option value="" disabled="disabled" selected="selected">выберите</option>
+                        <?php for ($i = 0; $i < $maxMobileQuantity; $i++) { ?>
+                            <option value="one-click-<?= $i ?>"><?= $i + 1 ?></option>
+                        <?php } ?>
+                    </select>
+                </div>
+                <div class="b-price">
+                    <span class="b-price__current">
                         <?= WordHelper::numberFormat(
-                            $arResult['ROWS_MAP'][$basketItem->getBasketCode()]['BASE_PRICE']
+                            $arResult['ROWS_MAP'][$basketItem->getBasketCode()]['TOTAL_PRICE']
                             ??
-                            $basketItem->getBasePrice() * $basketItem->getQuantity()
+                            $basketItem->getPrice() * $basketItem->getQuantity()
                         ) ?>
                     </span>
-                    <span class="b-ruble b-ruble--old-weight-price">₽</span>
-                </span>
+                    <span class="b-ruble">₽</span>
                     <?php
-                }
-                ?>
-            </div>
-            <? if ($offer->getXmlId() != BasketService::GIFT_DOBROLAP_XML_ID) { ?>
-                <a class="b-item-shopping__delete js-cart-delete-item" href="javascript:void(0);" title=""
-                   data-url="<?= $basketDeleteUrl ?>" data-basketId="<?= $basketItemId; ?>">
-                    <span class="b-icon b-icon--delete b-icon--shopping">
-                        <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
+                    //сюда же влетает округление до копеек при пересчете НДС, поэтому 0,01
+                    if ($basketItem->getDiscountPrice() >= 0.01) {
+                        ?>
+                        <span class="b-old-price b-old-price--crossed-out">
+                        <span class="b-old-price__old">
+                            <?= WordHelper::numberFormat(
+                                $arResult['ROWS_MAP'][$basketItem->getBasketCode()]['BASE_PRICE']
+                                ??
+                                $basketItem->getBasePrice() * $basketItem->getQuantity()
+                            ) ?>
+                        </span>
+                        <span class="b-ruble b-ruble--old-weight-price">₽</span>
                     </span>
-                </a>
-            <? } ?>
+                        <?php
+                    }
+                    ?>
+                </div>
+                <? if ($offer->getXmlId() != BasketService::GIFT_DOBROLAP_XML_ID) { ?>
+                    <a class="b-item-shopping__delete js-cart-delete-item" href="javascript:void(0);" title=""
+                       data-url="<?= $basketDeleteUrl ?>" data-basketId="<?= $basketItemId; ?>">
+                        <span class="b-icon b-icon--delete b-icon--shopping">
+                            <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
+                        </span>
+                    </a>
+                <? } ?>
+            </div><?/* Эта обертка нужна только если будут марки*/?>
+            <div class="b-mark-order-price">
+                <div class="b-mark-order-price__list">
+                    <div class="b-mark-order-price__item">
+                        1 587 ₽  — 5
+                        <span class="b-icon b-icon--mark">
+                            <?= new SvgDecorator('icon-mark', 12, 12) ?>
+                        </span>
+                    </div>
+                    <div class="b-mark-order-price__item">
+                        1 587 ₽  — 5
+                        <span class="b-icon b-icon--mark">
+                            <?= new SvgDecorator('icon-mark', 12, 12) ?>
+                        </span>
+                    </div>
+                </div>
+                <div class="b-mark-order-price__action">
+                    <span data-use-marks-cart="true">Использовать марки</span>
+                    <span data-cancel-charge-marks-cart="true">
+                        Отменить<br/> списание 7
+                        <span class="b-icon b-icon--mark">
+                            <?= new SvgDecorator('icon-mark', 12, 12) ?>
+                        </span>
+                    </span>
+                </div>
+            </div>
             <?php if (in_array($offer->getId(), $arResult['ONLY_PICKUP'], true)) { ?>
                 <div class="b-item-shopping__sale-info b-item-shopping__sale-info--width b-item-shopping__sale-info--not-available">
                     Только самовывоз
@@ -247,7 +282,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
 
                 ?>
 
-                <div class="b-item-shopping__sale-info">
+                <div class="b-item-shopping__sale-info b-item-shopping__sale-info--count">
                     <?php
                     if ((float)$tItem->getBasePrice() - (float)$tItem->getPrice() >= 0.01) {
                         ?>
