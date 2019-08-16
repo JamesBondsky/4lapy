@@ -40,7 +40,7 @@ class ManzanaContactMobileUpdateConsumer extends ManzanaConsumerBase
         try {
             $personalPhone = PhoneHelper::getManzanaPhone($personalPhone);
         } catch (\Exception $e) {
-            return false;
+            return true;
         }
 
         $currentDate = new DateTime();
