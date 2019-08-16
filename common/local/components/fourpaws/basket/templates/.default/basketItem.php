@@ -61,7 +61,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
     } ?>
     <div class="b-mark-order">
         <div class="b-mark-order__info">
-            <span class="b-mark-order__text">Используйте марки, чтобы купить товар со скидкой! Вам  доступно — 8</span>
+            <span class="b-mark-order__text">Используйте марки, чтобы купить товар со скидкой! Вам  доступно — 8</span><? //TODO correct value. If 0 then don't show this text ?>
             <span class="b-icon b-icon--mark"><?= new SvgDecorator('icon-mark', 12, 12) ?></span>
         </div>
     </div>
@@ -144,7 +144,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
             ?>
         </div>
     </div>
-    <?/* Класс b-item-shopping__operation--marks нужен только если будут марки*/?>
+    <?/* Класс b-item-shopping__operation--marks нужен только если будут марки*/ //TODO this logic ?>
     <div class="b-item-shopping__operation b-item-shopping__operation--marks<?= $offer->getQuantity() > 0 ? ' b-item-shopping__operation--not-available' : '' ?>">
         <?php
         $maxQuantity = 1000;
@@ -153,7 +153,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
         }
 
         if (!$basketItem->isDelay() && $offer->getQuantity() > 0) { ?>
-            <div class="b-item-shopping__operation-inner"><?/* Эта обертка нужна только если будут марки*/?>
+            <div class="b-item-shopping__operation-inner"><?/* Эта обертка нужна только если будут марки*/ //TODO this logic ?>
                 <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--shopping js-plus-minus-cont" <? if ($offer->getXmlId() == BasketService::GIFT_DOBROLAP_XML_ID) { ?>style="background:transparent;"<?}?>>
                     <? if ($offer->getXmlId() != BasketService::GIFT_DOBROLAP_XML_ID) { ?>
                         <a class="b-plus-minus__minus js-minus" data-url="<?= $basketUpdateUrl ?>"
@@ -223,8 +223,8 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                         </span>
                     </a>
                 <? } ?>
-            </div><?/* Эта обертка нужна только если будут марки*/?>
-            <div class="b-mark-order-price">
+            </div><?/* Эта обертка нужна только если будут марки*/ //TODO this logic?>
+            <div class="b-mark-order-price"><? //TODO correct values in this block and conditions to show it ?>
                 <div class="b-mark-order-price__list">
                     <div class="b-mark-order-price__item">
                         1 587 ₽  — 5

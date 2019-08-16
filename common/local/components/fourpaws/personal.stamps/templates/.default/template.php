@@ -18,7 +18,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  */
 
 $marksDeclension = new Declension('марку', 'марки', 'марок');
-$arResult['ACTIVE_STAMPS_COUNT'] = 8;
 
 ?>
 <div class="b-kopilka b-kopilka--exchange-discount">

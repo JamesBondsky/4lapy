@@ -342,7 +342,7 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                         </div>
                     <?php } ?>
 
-                    <? $marksForBasket = 4; //TODO correct value (Manzana говорит, что нужно брать из поля ChargedStatusBonus в ответе на мягкий чек, но там сейчас передается 0) ?>
+                    <? $marksForBasket = 4; //TODO correct value (из $this->manzana->getStampsToBeAdded()) ?>
                     <div class="b-information-order__order b-information-order__order--mark">
                         <div class="">За заказ будет начислено:</div>
                         <div class="">
