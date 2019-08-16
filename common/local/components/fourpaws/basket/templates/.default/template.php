@@ -329,6 +329,16 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                             </span><span class="b-ruble">₽</span>
                         </div>
                     </div>
+
+                    <? $marksForBasket = 4; //TODO correct value (Manzana говорит, что нужно брать из поля ChargedStatusBonus в ответе на мягкий чек, но там сейчас передается 0) ?>
+                    <div class="b-information-order__order">
+                        <div class="">Будет начислено</div>
+                        <div class="">
+                            <?= $marksForBasket . ' ' . WordHelper::declension($marksForBasket, ['марка', 'марки', 'марок']) ?>
+                        </div>
+                    </div>
+
+
                     <?php if ($arResult['TOTAL_DISCOUNT'] >= 0.01) { ?>
                         <div class="b-information-order__order">
                             <div class="b-information-order__order-price">Общая скидка</div>

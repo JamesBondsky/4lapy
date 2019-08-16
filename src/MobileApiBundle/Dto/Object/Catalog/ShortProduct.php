@@ -8,6 +8,7 @@ namespace FourPaws\MobileApiBundle\Dto\Object\Catalog;
 
 use Doctrine\Common\Collections\Collection;
 use FourPaws\Decorators\FullHrefDecorator;
+use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct\StampLevel;
 use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct\Tag;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
 use JMS\Serializer\Annotation as Serializer;
@@ -174,6 +175,14 @@ class ShortProduct
      * @Serializer\Type("FourPaws\MobileApiBundle\Dto\Object\Color")
      */
     protected $color;
+
+    /**
+     * @var StampLevel[]
+     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct\StampLevel>")
+     * @Serializer\SerializedName("stampLevels")
+     */
+    protected $stampLevels = '';
+
 
     /**
      * @return int
@@ -501,5 +510,23 @@ class ShortProduct
     public function getColor()
     {
         return $this->color;
+    }
+
+    /**
+     * @return StampLevel[]
+     */
+    public function getStampLevels(): array
+    {
+        return $this->stampLevels;
+    }
+
+    /**
+     * @param StampLevel[] $stampLevels
+     * @return ShortProduct
+     */
+    public function setStampLevels(array $stampLevels): ShortProduct
+    {
+        $this->stampLevels = $stampLevels;
+        return $this;
     }
 }

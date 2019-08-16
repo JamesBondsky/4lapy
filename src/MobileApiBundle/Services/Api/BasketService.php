@@ -21,6 +21,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockElementXmlId;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\Helpers\BxCollection;
 use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
@@ -79,11 +80,19 @@ class BasketService
     /**
      * @param bool $onlyOrderable флаг запрашивать ли товары доступные для покупки или все товары (в том числе и недоступные для покупки)
      * @return BasketProductCollection
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\NotImplementedException
      * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectException
      * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
      */
     public function getBasketProducts(bool $onlyOrderable = false): BasketProductCollection
     {
@@ -158,7 +167,17 @@ class BasketService
             }
 
             /** @var $basketItem BasketItem */
-            $product = $this->getBasketProduct($basketItem->getId(), $offer, $basketItem->getQuantity());
+            $useStamps = false;
+            if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS'])) {
+                $useStamps = (bool)$basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS']['VALUE'];
+            }
+
+            $canUseStamps = false;
+            if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
+                $canUseStamps = (bool)$basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE']; //FIXME если нужно отображать размер скидки в рублях, процент скидки, то можно посчитать их здесь
+            }
+
+            $product = $this->getBasketProduct($basketItem->getId(), $offer, $basketItem->getQuantity(), $useStamps, $canUseStamps);
             $shortProduct = $product->getShortProduct();
             $shortProduct->setPickupOnly(
                 $this->isPickupOnly($basketItem, $delivery, $offer)
@@ -237,11 +256,16 @@ class BasketService
      * @param int $basketItemId
      * @param Offer $offer
      * @param int $quantity
+     * @param bool|null $useStamps
+     * @param bool|null $canUseStamps
      * @return Product
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    public function getBasketProduct(int $basketItemId, Offer $offer, int $quantity)
+    public function getBasketProduct(int $basketItemId, Offer $offer, int $quantity, ?bool $useStamps, ?bool $canUseStamps = false)
     {
         $product = $offer->getProduct();
         $shortProduct = $this->apiProductService->convertToShortProduct($product, $offer, $quantity);
@@ -249,7 +273,10 @@ class BasketService
         return (new Product())
             ->setBasketItemId($basketItemId)
             ->setShortProduct($shortProduct)
-            ->setQuantity($quantity);
+            ->setQuantity($quantity)
+            ->setUseStamps($useStamps)
+            ->setCanUseStamps($canUseStamps)
+        ;
     }
 
     /**

@@ -9,17 +9,24 @@ namespace FourPaws\MobileApiBundle\Controller\v0;
 use CEvent;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\App\Response\JsonResponse;
+use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\External\Manzana\Exception\ExecuteErrorException;
 use FourPaws\MobileApiBundle\Controller\BaseController;
 use FourPaws\MobileApiBundle\Dto\Request\LoginExistRequest;
 use FourPaws\MobileApiBundle\Dto\Request\LoginRequest;
 use FourPaws\MobileApiBundle\Dto\Request\PostUserInfoRequest;
 use FourPaws\MobileApiBundle\Dto\Request\VerificationCodeSendByEmailRequest;
 use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
+use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 use FourPaws\MobileApiBundle\Services\Api\UserService as ApiUserService;
+use FourPaws\PersonalBundle\Service\StampService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Swagger\Annotations\Parameter;
 use Swagger\Annotations\Response;
 use FourPaws\MobileApiBundle\Dto\Response\PersonalBonusResponse;
+use Symfony\Component\HttpFoundation\Request;
 
 class UserController extends BaseController
 {
@@ -27,10 +34,20 @@ class UserController extends BaseController
      * @var ApiUserService
      */
     private $apiUserService;
+    /**
+     * @var StampService
+     */
+    protected $stampService;
+    /**
+     * @var ApiProductService
+     */
+    private $apiProductService;
 
-    public function __construct(ApiUserService $apiUserService)
+    public function __construct(ApiUserService $apiUserService, StampService $stampService, ApiProductService $apiProductService)
     {
         $this->apiUserService = $apiUserService;
+        $this->stampService = $stampService;
+        $this->apiProductService = $apiProductService;
     }
 
     /**
@@ -200,5 +217,45 @@ class UserController extends BaseController
                     'N'
                 )
             ]);
+    }
+
+    /**
+     * @Rest\Get("/stamps/")
+     * @Rest\View()
+     * @Security("has_role('REGISTERED_USERS')")
+     *
+     * @return ApiResponse
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\External\Manzana\Exception\ExecuteException
+     */
+    public function getStampsInfoAction(): ApiResponse //TODO change Response type // см. PersonalBonus для примера
+    {
+        try {
+            $stamps = $this->stampService->getActiveStampsCount();
+        } catch (ExecuteErrorException $e) {
+            $stamps = 0;
+        }
+
+        $exchangeRules = StampService::EXCHANGE_RULES;
+        $productsXmlIds = array_keys($exchangeRules);
+
+        $productsListCollection = $this->apiProductService->getListFromXmlIds($productsXmlIds);
+        $productsList = $productsListCollection->get(0) ?? [];
+
+        return (new ApiResponse())->setData([
+            'stamps' => [
+                'amount' => $stamps,
+                'rate_text' => 'За каждые ' . StampService::MARK_RATE . ' ₽ = 1 марка',
+                'description' => "1. Одна марка выдаётся за каждые полные N руб. (" . StampService::MARK_RATE . " руб.) в чеке на любые товары, купленные в интернет-магазине, в розничном магазине и в приложении «Четыре Лапы» с предъявлением бонусной карты."
+                    . "\n2. Дополнительно могут выдаваться марки за покупку определённых товаров."
+                    . "\n3. Марки копятся в Личном кабинете пользователя в отдельном разделе. Марки появляются в Личном Кабинете автоматически после совершенной покупки."
+                    . "\n4. Накопленные пользователем марки можно использовать для покупки определённой группы товаров по сниженной цене (для начала будет 4 товара)"
+                    . "\n7. Выдача марок осуществляется в определённый период."
+                    . "\n8. Количество товара, который можно купить с учётом скидки за электронные марки ограничено."
+                    . "\n9. При возврате товара, приобретённого с использованием электронные марок, денежный эквивалент номинала марки не выплачивается, марки восстановлению не подлежат: покупателю возвращается сумма, внесённая денежными средствами в соответствии с данными кассового чека.",
+                'goods' => $productsList,
+            ],
+        ]);
     }
 }

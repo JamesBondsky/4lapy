@@ -28,6 +28,7 @@ class CPersonalCabinetComponent extends CBitrixComponent
             'referral'           => 'referral/',
             'subscribe'          => 'subscribe/',
             'top'                => 'top/',
+            'stamps'             => 'marki/',
             //'piggy-bank'         => 'kopi-marki/',
             //'piggy-bank-upgrade' => 'kopi-marki/upgrade/',
             'personal-offers'    => 'personal-offers/',

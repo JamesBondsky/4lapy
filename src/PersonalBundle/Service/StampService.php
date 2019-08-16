@@ -1,0 +1,156 @@
+<?php
+
+
+namespace FourPaws\PersonalBundle\Service;
+
+
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Doctrine\Common\Collections\Collection;
+use FourPaws\App\Application;
+use FourPaws\External\Manzana\Dto\BalanceRequest;
+use FourPaws\External\Manzana\Dto\ExtendedAttribute;
+use FourPaws\External\ManzanaPosService;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserService;
+use Psr\Log\LoggerAwareInterface;
+
+class StampService implements LoggerAwareInterface
+{
+    use LazyLoggerAwareTrait;
+
+    public const MARK_RATE = 400;
+    public const MARKS_PER_RATE = 1;
+
+    public const DISCOUNT_LEVELS = [ //TODO del?
+        1 => [
+            'LEVEL' => 1,
+            'MARKS_NEEDED' => 7,
+            'DISCOUNT' => 10,
+        ],
+        2 => [
+            'LEVEL' => 2,
+            'MARKS_NEEDED' => 15,
+            'DISCOUNT' => 20,
+        ],
+        3 => [
+            'LEVEL' => 3,
+            'MARKS_NEEDED' => 25,
+            'DISCOUNT' => 30,
+        ],
+    ];
+
+    public const EXCHANGE_RULES = [ //TODO FIX xml_ids array
+        1000002 => [
+            [
+                'price' => 1098,
+                'stamps' => 5,
+            ],
+            [
+                'price' => 976,
+                'stamps' => 10,
+            ],
+            [
+                'price' => 854,
+                'stamps' => 15,
+            ],
+        ],
+        1000003 => [
+            [
+                'price' => 1017,
+                'stamps' => 5,
+            ],
+            [
+                'price' => 904,
+                'stamps' => 10,
+            ],
+        ],
+        1000004 => [
+            [
+                'price' => 2043,
+                'stamps' => 5,
+            ],
+        ],
+    ];
+
+
+    /**
+     * @var UserService
+     */
+    protected $currentUserProvider;
+    /**
+     * @var ManzanaPosService
+     */
+    protected $manzanaPosService;
+    /**
+     * @var int
+     */
+    protected $activeStampsCount;
+
+    public function __construct()
+    {
+        $container = Application::getInstance()->getContainer();
+        $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
+        $this->manzanaPosService = Application::getInstance()->getContainer()->get('manzana.pos.service');
+    }
+
+
+    /**
+     * @param bool|null $withoutCache
+     * @return int
+     * @throws \FourPaws\External\Manzana\Exception\ExecuteErrorException
+     * @throws \FourPaws\External\Manzana\Exception\ExecuteException
+     * @throws NotAuthorizedException
+     */
+    public function getActiveStampsCount(?bool $withoutCache = false): int //TODO answer with this value in new API method
+    {
+        if (!$this->activeStampsCount || $withoutCache) {
+            $discountCardNumber = $this->currentUserProvider->getCurrentUser()->getDiscountCardNumber();
+
+            if (!$discountCardNumber) {
+                return 0;
+            }
+            $balanceResponse = $this->manzanaPosService->executeBalanceRequest((new BalanceRequest())->setCardByNumber($discountCardNumber));
+
+            if (!$balanceResponse->isErrorResponse()) {
+                $this->activeStampsCount = $balanceResponse->getCardStatusActiveBalance();
+            } else {
+                $this->log()->error(__METHOD__ . '. Не удалось получить balanceResponse по карте ' . $discountCardNumber . '. Ошибка: ' . $balanceResponse->getMessage());
+                $this->activeStampsCount = 0;
+            }
+        }
+
+        return $this->activeStampsCount;
+    }
+
+    /**
+     * @param Collection|ExtendedAttribute[] $extendedAttributeCollection
+     * @return array
+     */
+    public function getMaxAvailableLevel($extendedAttributeCollection): array
+    {
+        // Реализация согласована. Определение, какой уровень наилучший, с помощью того, на какой уровень нужно больше марок
+        //TODO переделать способ определения максимальной скидки, учитывая, хватит ли пользователю марок на применение этого уровня)
+        $maxLevel = [];
+
+        /** @var ExtendedAttribute $extendedAttribute */
+        $maxDiscountSize = 0;
+        foreach ($extendedAttributeCollection as $extendedAttribute) {
+            preg_match('/(\d+)\*(\d+)\*([VP])$/', $extendedAttribute->getKey(), $discount);
+            if ($discountStampsNeeded = $discount[2]) {
+                $discountSize = $discountStampsNeeded
+                    * $extendedAttribute->getValue(); // Количество товара, на которое доступна эта скидка
+
+                if ($discountSize > $maxDiscountSize) {
+                    $maxLevel = [
+                        'key' => $extendedAttribute->getKey(),
+                        'value' => $extendedAttribute->getValue(),
+                    ];
+                    $maxDiscountSize = $discountSize;
+                }
+            }
+        }
+
+        return $maxLevel;
+    }
+}

@@ -151,6 +151,28 @@ class SoftChequeResponse
     protected $chargedBonus = '';
 
     /**
+     * Количество начисленных марок
+     *
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("ChargedStatusBonus")
+     *
+     * @var float
+     */
+    protected $chargedStatusBonus = 0;
+
+    /**
+     * Количество активируемых марок из начисленных
+     *
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("ActiveChargedStatusBonus")
+     *
+     * @var float
+     */
+    protected $activeChargedStatusBonus = 0;
+
+    /**
      * Сумма бонусов, доступная для оплаты
      *
      * @Serializer\XmlElement(cdata=false)
@@ -359,5 +381,21 @@ class SoftChequeResponse
     public function getCoupons() : ?Collection
     {
         return $this->coupons;
+    }
+
+    /**
+     * @return float
+     */
+    public function getChargedStatusBonus(): float
+    {
+        return $this->chargedStatusBonus;
+    }
+
+    /**
+     * @return float
+     */
+    public function getActiveChargedStatusBonus(): float
+    {
+        return $this->activeChargedStatusBonus;
     }
 }
