@@ -223,7 +223,7 @@ class KkmService implements LoggerAwareInterface
             $suggestions = $this->daDataService->getKkmSuggestions($query, $level, $cityKladrId, $streetKladrId);
 
             if (count($suggestions) == 0) {
-                if ($level == 'house') {
+                if ($level == 'house' || $level == 'street') {
                     $suggestions[] = [
                         'value' => static::CUSTOM_NOT_FOUND,
                         'unrestricted_value' => static::CUSTOM_NOT_FOUND,
