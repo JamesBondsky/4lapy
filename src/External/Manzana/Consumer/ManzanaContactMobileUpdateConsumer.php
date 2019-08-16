@@ -33,6 +33,10 @@ class ManzanaContactMobileUpdateConsumer extends ManzanaConsumerBase
         $userId = $userData['userId'];
         $personalPhone = $userData['personalPhone'];
 
+        if (!$personalPhone || !$userId) {
+            return true;
+        }
+
         try {
             $personalPhone = PhoneHelper::getManzanaPhone($personalPhone);
         } catch (\Exception $e) {
