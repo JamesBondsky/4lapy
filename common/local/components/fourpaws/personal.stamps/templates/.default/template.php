@@ -18,38 +18,31 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  */
 
 $marksDeclension = new Declension('марку', 'марки', 'марок');
+$arResult['ACTIVE_STAMPS_COUNT'] = 8;
 
 ?>
-<div class="b-kopilka">
-    <h2 class="b-title b-kopilka__title">Копи марки, покупай со скидкой до -<?= $arParams['DISCOUNT_LEVELS'][3]['DISCOUNT'] ?>%!</h2>
+<div class="b-kopilka b-kopilka--exchange-discount">
+    <h2 class="b-title b-kopilka__title">Марки</h2>
 
-    <div class="b-kopilka__info">
-	    <? //TODO change styles of this text ?>
-	    <p>Вы накопили <?= $arResult['ACTIVE_STAMPS_COUNT'] . ' ' . $marksDeclension->get($arResult['ACTIVE_STAMPS_COUNT']) ?></p>
-        <h3>Условия акции</h3>
-        <ol><? //FIXME fix text ?>
-            <li>Одна марка выдаётся за&nbsp;каждые полные <?= $arParams['MARK_RATE'] ?>&nbsp;руб. в&nbsp;чеке на&nbsp;любые товары, купленные в&nbsp;<nobr>интернет-магазине</nobr>, в&nbsp;розничном магазине и&nbsp;в&nbsp;приложении &laquo;Четыре Лапы&raquo; с&nbsp;предъявлением бонусной карты.</li>
-            <li>Дополнительно одна марка выдается за&nbsp;покупку препаратов от&nbsp;блох и&nbsp;клещей за&nbsp;каждые полные <?= $arParams['MARK_RATE'] ?>&nbsp;руб. стоимости препаратов.</li>
-            <li>Марки появляются в&nbsp;поле для сбора марок автоматически на&nbsp;следующий день после совершенной покупки.</li>
-            <li>Как только Вы&nbsp;накопите необходимое количество марок для получения скидки, рядом с&nbsp;марками появится кнопка &laquo;Обменять марки&raquo;, при нажатии на&nbsp;нее Вы&nbsp;получите <nobr>промо-код</nobr> на&nbsp;скидку на&nbsp;товары, участвующие в&nbsp;акции.<br/>
-                <br/>
-                Чтобы получить скиду, Вам необходимо накопить определенное количество марок:
-                <ul>
-                    <li><b><?= $arParams['DISCOUNT_LEVELS'][1]['MARKS_NEEDED'] ?>&nbsp;марок</b>&nbsp;&mdash; <span class="orange">скидка <?= $arParams['DISCOUNT_LEVELS'][1]['DISCOUNT'] ?>%</span> на&nbsp;товары для путешествий с&nbsp;питомцем;</li>
-                    <li><b><?= $arParams['DISCOUNT_LEVELS'][2]['MARKS_NEEDED'] ?>&nbsp;марок</b>&nbsp;&mdash; <span class="orange">скидка <?= $arParams['DISCOUNT_LEVELS'][2]['DISCOUNT'] ?>%</span> на&nbsp;товары для путешествий с&nbsp;питомцем;</li>
-                    <li><b><?= $arParams['DISCOUNT_LEVELS'][3]['MARKS_NEEDED'] ?>&nbsp;марок</b>&nbsp;&mdash; <span class="orange">скидка <?= $arParams['DISCOUNT_LEVELS'][3]['DISCOUNT'] ?>%</span> на&nbsp;товары для путешествий с&nbsp;питомцем.</li>
-                </ul>
-            </li>
-            <li>Все товары, которые можно купить со&nbsp;скидкой за&nbsp;накопленные марки Вы&nbsp;можете посмотреть <a href="/shares/kopimarki-mart2019" target="_blank">по&nbsp;ссылке</a><? //FIXME fix link ?>.</li>
-            <li>Скидка за&nbsp;накопленные марки не&nbsp;суммируется с&nbsp;другими скидками и&nbsp;акциями.</li>
-            <li>После обмена марок на&nbsp;<nobr>промо-код</nobr> и&nbsp;покупки товара со&nbsp;скидкой, Вы&nbsp;можете повторно копить марки.</li>
-            <li>Выдача марок осуществляется с&nbsp;1&nbsp;марта по&nbsp;30 апреля 2019&nbsp;г.<? //FIXME fix date ?> Период приобретения товара по&nbsp;накопленной скидке возможен с&nbsp;1&nbsp;марта до&nbsp;20&nbsp;мая 2019 года<? //FIXME fix date ?> включительно.</li>
-            <li>Количество акционного товара, который можно купить с&nbsp;накопленной скидкой ограничено.</li>
-            <li>Организатор имеет право полностью или частично приостановить или продлить акцию в&nbsp;любой момент без объяснения причин.</li>
-            <li>Подробности об&nbsp;организаторе акции, месте и&nbsp;сроках ее&nbsp;проведения, товарах, участвующих в&nbsp;акции, можно получить по&nbsp;телефону горячей линии: <a href="tel:88007700022" target="_blank"><nobr>8 (800) 770-00-22</nobr></a>. Предложение действительно во&nbsp;всех городах присутствия зоомагазинов &laquo;Четыре Лапы&raquo;.</li>
-        </ol>
+    <div class="b-kopilka__details">
+        <div class="b-kopilka__ticket-mark">
+            <div class="title-ticket-mark"><?= $arResult['ACTIVE_STAMPS_COUNT'] . ' ' . $marksDeclension->get($arResult['ACTIVE_STAMPS_COUNT']) ?></div>
+            <div class="descr-ticket-mark">
+                Период начисления марок <nobr>1.03.19</nobr>&nbsp;&mdash; <nobr>31.03.19</nobr>
+            </div>
+        </div>
+        <div class="b-kopilka__info">
+            <h3>Условия акции</h3>
+            <p>За&nbsp;каждые 400&nbsp;рублей в&nbsp;чеке получайте:2 марки на&nbsp;товары из&nbsp;категории &laquo;Ветаптека&raquo;;<br />
+                1&nbsp;марку на&nbsp;все остальные товары.</p>
+            <p>Марки будут начислены после завершения заказа. Меняйте марки на&nbsp;скидку:<br />
+                7&nbsp;марок&nbsp;&mdash; скидка 10%; 15&nbsp;марок&nbsp;&mdash; скидка 20%; 25&nbsp;марок&nbsp;&mdash; скидка 30%.</p>
+            <a href="#">Подробные условия акции</a>
+        </div>
     </div>
-    
+
+    <hr class="b-hr" />
+
     <?php
         $APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', '', array(
             'OFFER_FILTER' => [
