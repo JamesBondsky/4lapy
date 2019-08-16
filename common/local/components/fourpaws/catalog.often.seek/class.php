@@ -88,6 +88,7 @@ class CatalogOftenSeekComponent extends CBitrixComponent
                 $this->arParams['DEPTH_LEVEL']
             );
 
+            // чтобы фильтры складывались
             $curPageParam = $this->getParamsFromUrl($APPLICATION->GetCurPageParam());
             if(!empty($curPageParam)){
                 /** @var OftenSeek $item */
@@ -105,6 +106,9 @@ class CatalogOftenSeekComponent extends CBitrixComponent
                             unset($itemParam[$key]);
                         }
                     }
+                    // провоцирует баг верстки
+                    unset($curPageParam['partitial']);
+
                     $newParams = array_merge($curPageParam, $itemParam ?: []);
                     $newLink = sprintf('%s?%s', $APPLICATION->GetCurPage(false), http_build_query($newParams));
                     $item->setLink($newLink);

@@ -845,4 +845,34 @@ class Category extends IblockSection implements FilterInterface
             'XML_ID'
         ];
     }
+
+    /**
+     * @return bool
+     * @throws IblockNotFoundException
+     */
+    public function isFashionDogsClothes()
+    {
+        $getSections = function () {
+                $sectiondIds = [];
+                $iblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS);
+                $dbres = \CIBlockSection::GetList([], ["IBLOCK_ID" => $iblockId, "CODE" => 'odezhda-i-obuv'], false, ['ID', 'NAME']);
+                if(!$rootSection = $dbres->Fetch()){
+                        throw new \Exception("На найден раздел Одежда и обувь для собак");
+            }
+            $sectiondIds[] = $rootSection['ID'];
+            $dbres = \CIBlockSection::GetList([], ["IBLOCK_ID" => $iblockId, "SECTION_ID" => $rootSection['ID'], "INCLUDE_SUBSECTIONS" => "Y"], false, ['ID', 'NAME']);
+            while($section = $dbres->Fetch()){
+                        $sectiondIds[] = $section['ID'];
+                    }
+           return $sectiondIds;
+        };
+
+        $sectiondIds = (new BitrixCache())
+            ->withId(__METHOD__)
+            ->withIblockTag(IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS))
+            ->withTime(84600 * 356)
+           ->resultOf($getSections);
+
+        return in_array($this->getId(), $sectiondIds);
+    }
 }
