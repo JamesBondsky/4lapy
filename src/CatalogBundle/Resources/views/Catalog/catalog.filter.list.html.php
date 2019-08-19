@@ -10,6 +10,7 @@
 
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
+use FourPaws\Catalog\Model\Filter\ClothingSizeFilter;
 use FourPaws\Catalog\Model\Filter\PriceFilter;
 use FourPaws\Catalog\Model\Variant;
 use FourPaws\Decorators\SvgDecorator;
@@ -55,6 +56,9 @@ foreach ($filters as $filter) {
         <div class="b-filter__block">
             <div class="b-title b-title--filter-header">
                 <?= $filter->getName() ?>
+                <? if($filter instanceof ClothingSizeFilter) { ?>
+                    <a class="js-scroll-to-size-select" href="javascript:void(0)">Узнать размер</a>
+                <? } ?>
             </div>
             <?php if ($filter->isShowWithPicture()) { ?>
                 <div class="size_filter js-size-filter color_filter js-color-filter js-accordion-filter js-filter-checkbox quoter">
