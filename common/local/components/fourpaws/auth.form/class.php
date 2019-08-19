@@ -369,9 +369,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             if ($this->userAuthorizationService->isAuthorized()
                 && !$this->currentUserProvider->getCurrentUser()
                     ->hasPhone()) {
+                unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
                 $needWritePhone = true;
             }
-            unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
         } catch (UsernameNotFoundException $e) {
             if ($_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3 && $this->isShowCapthca()) {
                 try {
