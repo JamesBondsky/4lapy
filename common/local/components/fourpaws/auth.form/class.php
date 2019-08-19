@@ -158,10 +158,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             $this->arResult['IS_SHOW_CAPTCHA'] = $this->isShowCapthca();
             $this->setSocial();
 
-            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > 3) {
-                unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
-            }
-
             $this->includeComponentTemplate();
         } catch (Exception $e) {
             try {
@@ -375,6 +371,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                     ->hasPhone()) {
                 $needWritePhone = true;
             }
+            unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
         } catch (UsernameNotFoundException $e) {
             if ($_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3 && $this->isShowCapthca()) {
                 try {
@@ -437,9 +434,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             }
         }
 
-        if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > 3) {
-            unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
-        }
         if ($needConfirmBasket) {
             $html = $this->getHtml(
                 'unionBasket',
