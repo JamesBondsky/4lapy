@@ -158,7 +158,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             $this->arResult['IS_SHOW_CAPTCHA'] = $this->isShowCapthca();
             $this->setSocial();
 
-            unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
+//            unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
 
             $this->includeComponentTemplate();
         } catch (Exception $e) {
@@ -216,7 +216,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @throws WrongPhoneNumberException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws Exception
      */
     public function ajaxLogin(string $rawLogin, string $password, string $backUrl = '', $token = false): JsonResponse
     {
@@ -375,7 +374,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 $needWritePhone = true;
             }
         } catch (UsernameNotFoundException $e) {
-            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] === 3 && $this->isShowCapthca()) {
+            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3 && $this->isShowCapthca()) {
                 try {
                     $this->setSocial();
                     $html = $this->getHtml(
@@ -399,7 +398,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
             return $this->ajaxMess->getWrongPasswordError($newTokenResponse);
         } catch (InvalidCredentialException $e) {
-            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] === 3 && $this->isShowCapthca()) {
+            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3 && $this->showBitrixCaptcha()) {
                 try {
                     $this->setSocial();
                     $html = $this->getHtml(
@@ -436,7 +435,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             }
         }
 
-        unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
+//        unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
         if ($needConfirmBasket) {
             $html = $this->getHtml(
                 'unionBasket',
@@ -1055,5 +1054,17 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     protected function isShowCapthca()
     {
         return !KioskService::isKioskMode();
+    }
+
+    protected function showBitrixCaptcha()
+    {
+        $this->arResult['IS_SHOW_CAPTCHA'] = $_SESSION['COUNT_AUTH_AUTHORIZE'] > 2;
+
+        return $this->arResult['IS_SHOW_CAPTCHA'];
+    }
+
+    protected function isShowBitrixCaptcha($word, $code)
+    {
+        return !empty($code) && !empty($word);
     }
 }
