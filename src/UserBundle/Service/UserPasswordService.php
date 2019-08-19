@@ -94,6 +94,28 @@ class UserPasswordService
     }
 
     /**
+     * @param int $userId
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     */
+    public function changePassword(int $userId)
+    {
+        /** @var User $user */
+        $user = $this->userRepository->find($userId);
+
+        if ($user) {
+            $password = $this->generatePassword($user);
+            $this->setChangePasswordPossibleForAll(true);
+            $this->userRepository->updatePassword($userId, $password);
+            $this->setChangePasswordPossibleForAll(false);
+        } else {
+            throw new NotFoundException('Пользователь "' . $userId . '" не найден.');
+        }
+    }
+
+    /**
      *
      * @param User $user
      *
@@ -101,6 +123,7 @@ class UserPasswordService
      */
     public function generatePassword(User $user): string
     {
+        $this->chars .= '~!@#$%^&*()_+=-{}|<>';
         $policy = \CUser::GetGroupPolicy($user->getGroupsIds());
         do {
             $password = randString($policy['PASSWORD_LENGTH'] + \random_int(1, 3), $this->chars);
