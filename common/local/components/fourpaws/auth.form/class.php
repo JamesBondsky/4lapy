@@ -158,7 +158,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             $this->arResult['IS_SHOW_CAPTCHA'] = $this->isShowCapthca();
             $this->setSocial();
 
-            unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
+            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > 3) {
+                unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
+            }
 
             $this->includeComponentTemplate();
         } catch (Exception $e) {
@@ -435,7 +437,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             }
         }
 
-        unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
+        if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > 3) {
+            unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
+        }
         if ($needConfirmBasket) {
             $html = $this->getHtml(
                 'unionBasket',
