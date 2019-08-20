@@ -100,6 +100,8 @@ class KkmService implements LoggerAwareInterface
         'house'       //Дом
     ];
 
+    const CUSTOM_NOT_FOUND = 'Нет';
+
     /**
      * @var DaDataService $daDataService
      */
@@ -221,10 +223,25 @@ class KkmService implements LoggerAwareInterface
             $suggestions = $this->daDataService->getKkmSuggestions($query, $level, $cityKladrId, $streetKladrId);
 
             if (count($suggestions) == 0) {
-                throw new KkmException(
-                    static::RESPONSE_STATUSES['success_empty']['message'] . ': по вводимым данным подсказки не найдены',
-                    static::RESPONSE_STATUSES['success_empty']['code']
-                );
+                if ($level == 'house' || $level == 'street') {
+                    $suggestions[] = [
+                        'value' => static::CUSTOM_NOT_FOUND,
+                        'unrestricted_value' => static::CUSTOM_NOT_FOUND,
+                        'data' => [
+                            'house' => static::CUSTOM_NOT_FOUND,
+                            'street' => static::CUSTOM_NOT_FOUND,
+                            'settlement_kladr_id' => static::CUSTOM_NOT_FOUND,
+                            'city_kladr_id' => static::CUSTOM_NOT_FOUND,
+                            'kladr_id' => static::CUSTOM_NOT_FOUND,
+                            'street_kladr_id' => static::CUSTOM_NOT_FOUND,
+                        ],
+                    ];
+                } else {
+                    throw new KkmException(
+                        static::RESPONSE_STATUSES['success_empty']['message'] . ': по вводимым данным подсказки не найдены',
+                        static::RESPONSE_STATUSES['success_empty']['code']
+                    );
+                }
             }
 
             foreach ($suggestions as $key => &$suggestion) {

@@ -20,6 +20,7 @@ foreach ($arResult['ITEMS'] as $item) {
         'chest_max' => $item['UF_CHEST_MAX'],
         'neck_min'  => $item['UF_NECK_MIN'],
         'neck_max'  => $item['UF_NECK_MAX'],
+        'code'      => $arResult['SIZE'][$item['UF_CODE']]['UF_XML_ID']
     ];
 }
 ?>
