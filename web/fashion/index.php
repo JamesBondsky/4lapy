@@ -38,95 +38,87 @@ use FourPaws\Enum\IblockType;
         </div>
     </section>
 
-    <section class="fashion-total-look-section">
-        <div class="fashion-total-look">
-            <div class="fashion-total-look__slider"></div>
-            <div class="fashion-total-look__list">
-                <a href="#" class="item-fashion-total-look">
-                    <div class="item-fashion-total-look__img"></div>
-                    <div class="item-fashion-total-look__info">
-                        <div class="item-fashion-total-look__title"><b>Petmax</b> Толстовка с сердцем с капюшоном и еще какой-то текст</div>
-                        <div class="item-fashion-total-look__bottom">
-                            <div class="item-fashion-total-look__size"></div>
-                            <div class="item-fashion-total-look__price"></div>
-                        </div>
+    <section class="fashion-total-look-section" data-section-total-look-fashion="true">
+        <div class="b-container">
+            <div class="fashion-total-look">
+                <div class="fashion-total-look__slider" data-total-look-slider-fashion="true">
+                    <div class="item-total-look-slider">
+                        <img src="/fashion/img/total-look/total-look1.jpg" alt="">
                     </div>
-                </a>
-                <a href="#" class="item-fashion-total-look">
-                    <div class="item-fashion-total-look__img"></div>
-                    <div class="item-fashion-total-look__info">
-                        <div class="item-fashion-total-look__title"><b>Petmax</b> Толстовка с сердцем с капюшоном и еще какой-то текст</div>
-                        <div class="item-fashion-total-look__bottom">
-                            <div class="item-fashion-total-look__size"></div>
-                            <div class="item-fashion-total-look__price"></div>
-                        </div>
+                    <div class="item-total-look-slider">
+                        <img src="/fashion/img/total-look/total-look2.jpg" alt="">
                     </div>
-                </a>
-                <a href="#" class="item-fashion-total-look">
-                    <div class="item-fashion-total-look__img"></div>
-                    <div class="item-fashion-total-look__info">
-                        <div class="item-fashion-total-look__title"><b>Petmax</b> Толстовка с сердцем с капюшоном и еще какой-то текст</div>
-                        <div class="item-fashion-total-look__bottom">
-                            <div class="item-fashion-total-look__size"></div>
-                            <div class="item-fashion-total-look__price"></div>
-                        </div>
+                    <div class="item-total-look-slider">
+                        <img src="/fashion/img/total-look/total-look1.jpg" alt="">
                     </div>
-                </a>
-                <a href="#" class="item-fashion-total-look">
-                    <div class="item-fashion-total-look__img"></div>
-                    <div class="item-fashion-total-look__info">
-                        <div class="item-fashion-total-look__title"><b>Petmax</b> Толстовка с сердцем с капюшоном и еще какой-то текст</div>
-                        <div class="item-fashion-total-look__bottom">
-                            <div class="item-fashion-total-look__size"></div>
-                            <div class="item-fashion-total-look__price"></div>
-                        </div>
+                </div>
+                <div class="fashion-total-look__list">
+                    <div class="b-common-section" data-url="/ajax/catalog/product-info/">
+                        <?php
+                            include __DIR__ . '/items-total-look.php';
+                        ?>
                     </div>
-                </a>
+                </div>
             </div>
-        </div>
-        <div class="fashion-total-look">
-            <div class="fashion-total-look__slider"></div>
-            <div class="fashion-total-look__list">
-                <a href="#" class="item-fashion-total-look">
-                    <div class="item-fashion-total-look__img"></div>
-                    <div class="item-fashion-total-look__info">
-                        <div class="item-fashion-total-look__title"><b>Petmax</b> Толстовка с сердцем с капюшоном и еще какой-то текст</div>
-                        <div class="item-fashion-total-look__bottom">
-                            <div class="item-fashion-total-look__size"></div>
-                            <div class="item-fashion-total-look__price"></div>
-                        </div>
+            <div class="fashion-total-look">
+                <div class="fashion-total-look__slider" data-total-look-slider-fashion="true">
+                    <div class="item-total-look-slider">
+                        <img src="/fashion/img/total-look/total-look2.jpg" alt="">
                     </div>
-                </a>
-                <a href="#" class="item-fashion-total-look">
-                    <div class="item-fashion-total-look__img"></div>
-                    <div class="item-fashion-total-look__info">
-                        <div class="item-fashion-total-look__title"><b>Petmax</b> Толстовка с сердцем с капюшоном и еще какой-то текст</div>
-                        <div class="item-fashion-total-look__bottom">
-                            <div class="item-fashion-total-look__size"></div>
-                            <div class="item-fashion-total-look__price"></div>
-                        </div>
+                    <div class="item-total-look-slider">
+                        <img src="/fashion/img/total-look/total-look1.jpg" alt="">
                     </div>
-                </a>
-                <a href="#" class="item-fashion-total-look">
-                    <div class="item-fashion-total-look__img"></div>
-                    <div class="item-fashion-total-look__info">
-                        <div class="item-fashion-total-look__title"><b>Petmax</b> Толстовка с сердцем с капюшоном и еще какой-то текст</div>
-                        <div class="item-fashion-total-look__bottom">
-                            <div class="item-fashion-total-look__size"></div>
-                            <div class="item-fashion-total-look__price"></div>
-                        </div>
+                    <div class="item-total-look-slider">
+                        <img src="/fashion/img/total-look/total-look2.jpg" alt="">
                     </div>
-                </a>
-                <a href="#" class="item-fashion-total-look">
-                    <div class="item-fashion-total-look__img"></div>
-                    <div class="item-fashion-total-look__info">
-                        <div class="item-fashion-total-look__title"><b>Petmax</b> Толстовка с сердцем с капюшоном и еще какой-то текст</div>
-                        <div class="item-fashion-total-look__bottom">
-                            <div class="item-fashion-total-look__size"></div>
-                            <div class="item-fashion-total-look__price"></div>
-                        </div>
+                </div>
+                <div class="fashion-total-look__list">
+                    <div class="b-common-section" data-url="/ajax/catalog/product-info/">
+                        <?php
+                        include __DIR__ . '/items-total-look.php';
+                        ?>
                     </div>
-                </a>
+                </div>
+            </div>
+            <div class="fashion-total-look">
+                <div class="fashion-total-look__slider" data-total-look-slider-fashion="true">
+                    <div class="item-total-look-slider">
+                        <img src="/fashion/img/total-look/total-look1.jpg" alt="">
+                    </div>
+                    <div class="item-total-look-slider">
+                        <img src="/fashion/img/total-look/total-look2.jpg" alt="">
+                    </div>
+                    <div class="item-total-look-slider">
+                        <img src="/fashion/img/total-look/total-look1.jpg" alt="">
+                    </div>
+                </div>
+                <div class="fashion-total-look__list">
+                    <div class="b-common-section" data-url="/ajax/catalog/product-info/">
+                        <?php
+                        include __DIR__ . '/items-total-look.php';
+                        ?>
+                    </div>
+                </div>
+            </div>
+            <div class="fashion-total-look">
+                <div class="fashion-total-look__slider" data-total-look-slider-fashion="true">
+                    <div class="item-total-look-slider">
+                        <img src="/fashion/img/total-look/total-look2.jpg" alt="">
+                    </div>
+                    <div class="item-total-look-slider">
+                        <img src="/fashion/img/total-look/total-look1.jpg" alt="">
+                    </div>
+                    <div class="item-total-look-slider">
+                        <img src="/fashion/img/total-look/total-look2.jpg" alt="">
+                    </div>
+                </div>
+                <div class="fashion-total-look__list">
+                    <div class="b-common-section" data-url="/ajax/catalog/product-info/">
+                        <?php
+                        include __DIR__ . '/items-total-look.php';
+                        ?>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -146,6 +138,15 @@ use FourPaws\Enum\IblockType;
         </div>
     </section>
 
+    <section class="fashion-info-banner">
+        <div class="fashion-info-banner__img">
+            <picture>
+                <source media="(max-width: 767px)" srcset="/fashion/img/fashion-info-banner_mobile.jpg">
+                <img src="/fashion/img/fashion-info-banner.jpg" alt="Новая коллекция одежды для собак" />
+            </picture>
+        </div>
+    </section>
+
     <section class="fashion-free-shipping">
         <div class="b-container">
             <div class="fashion-free-shipping__content">
@@ -160,7 +161,7 @@ use FourPaws\Enum\IblockType;
                         <div class="item-free-shipping__title">домой</div>
                         <div class="item-free-shipping__descr item-free-shipping__descr_time"><b>время примерки</b> 15&nbsp;минут</div>
                         <div class="item-free-shipping__descr item-free-shipping__descr_delivery">
-                            <p><b>доставка</b> от&nbsp;197Р бесплатно&nbsp;&mdash; при заказе от&nbsp;2000р</p>
+                            <p><b>доставка</b> от&nbsp;197Р<br/> бесплатно&nbsp;- при заказе от&nbsp;2000р</p>
                             <p>курьер привезёт ваш заказ в&nbsp;удобное место и&nbsp;время</p>
                         </div>
                     </div>
