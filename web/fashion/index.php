@@ -146,6 +146,37 @@ use FourPaws\Enum\IblockType;
         </div>
     </section>
 
+    <section class="fashion-free-shipping">
+        <div class="b-container">
+            <div class="fashion-free-shipping__content">
+                <div class="fashion-free-shipping__img"></div>
+                <div class="fashion-free-shipping__info">
+                    <div class="fashion-free-shipping__title">Закажи бесплатную доставку и&nbsp;примерку</div>
+                    <ul class="fashion-free-shipping__steps">
+                        <li>примерь несколько размеров</li>
+                        <li>купи только то, что подошло</li>
+                    </ul>
+                    <div class="item-free-shipping">
+                        <div class="item-free-shipping__title">домой</div>
+                        <div class="item-free-shipping__descr item-free-shipping__descr_time"><b>время примерки</b> 15&nbsp;минут</div>
+                        <div class="item-free-shipping__descr item-free-shipping__descr_delivery">
+                            <p><b>доставка</b> от&nbsp;197Р бесплатно&nbsp;&mdash; при заказе от&nbsp;2000р</p>
+                            <p>курьер привезёт ваш заказ в&nbsp;удобное место и&nbsp;время</p>
+                        </div>
+                    </div>
+                    <div class="item-free-shipping">
+                        <div class="item-free-shipping__title">в магазин</div>
+                        <div class="item-free-shipping__descr item-free-shipping__descr_time"><b>время примерки</b> не ограничено</div>
+                        <div class="item-free-shipping__descr item-free-shipping__descr_delivery">
+                            <p><b>доставка</b> бесплатно</p>
+                            <p>продавец поможет измерить питомца и&nbsp;быстро найти модель</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <section class="fashion-interesting-clothes">
         <div class="b-container">
             <h2 class="fashion-title txt-center">Интересное про одежду</h2>
