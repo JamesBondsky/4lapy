@@ -177,11 +177,11 @@ class BasketService
             if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
                 $maxStampsLevelValue = $basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'];
                 $canUseStamps = (bool)$maxStampsLevelValue; //FIXME если нужно отображать размер скидки в рублях, процент скидки, то можно посчитать их здесь
-                $canUseStampsAmount = unserialize($maxStampsLevelValue);
-                $canUseStampsAmountKey = $canUseStampsAmount ? $canUseStampsAmount['key'] : false;
+                $canUseStampsObj = unserialize($maxStampsLevelValue);
+                $canUseStampsAmountKey = $canUseStampsObj ? $canUseStampsObj['key'] : false;
                 if ($canUseStampsAmountKey) {
                     preg_match('/(\d+)\*(\d+)\*([VP])$/', $canUseStampsAmountKey, $discount);
-                    $canUseStampsAmount = $discount[2];
+                    $canUseStampsAmount = $discount[2] * $canUseStampsObj['value']; //TODO не будет ли бага, когда манзана присылает больше единиц, чем у пользователя в корзине?
                 }
             }
 

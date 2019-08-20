@@ -22,7 +22,7 @@ class StampService implements LoggerAwareInterface
     public const MARK_RATE = 400;
     public const MARKS_PER_RATE = 1;
 
-    public const DISCOUNT_LEVELS = [ //TODO del?
+    public const DISCOUNT_LEVELS = [ //TODO del
         1 => [
             'LEVEL' => 1,
             'MARKS_NEEDED' => 7,
