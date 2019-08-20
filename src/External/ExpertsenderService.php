@@ -143,6 +143,8 @@ class ExpertsenderService implements LoggerAwareInterface
     public const BLACK_LIST_ERROR_CODE = 400;
     public const BLACK_LIST_ERROR_MESSAGE = 'Subscriber is blacklisted.';
 
+    public const CHANGE_PASSWORD = 9641;
+
     /**
      * ExpertsenderService constructor.
      */
@@ -1249,6 +1251,18 @@ class ExpertsenderService implements LoggerAwareInterface
         );
         $this->sendSystemTransactional($transactionId, 'v.salshin@articul.ru', $snippets);
         return $transactionId;
+    }
+
+    public function sendNewPassword(string $password, User $user)
+    {
+        $snippets[] = new Snippet('user_name', htmlspecialcharsbx($user->getLogin()));
+        $snippets[] = new Snippet('pass', $password);
+
+        $email = $user->getEmail();
+
+        if ($email) {
+            $this->sendSystemTransactional(self::CHANGE_PASSWORD, $email, $snippets);
+        }
     }
 
     /**

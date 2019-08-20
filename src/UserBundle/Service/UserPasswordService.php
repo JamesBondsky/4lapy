@@ -15,6 +15,7 @@ use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Mail\Event;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use FourPaws\External\ExpertsenderService;
 use FourPaws\UserBundle\Entity\Group;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -51,15 +52,22 @@ class UserPasswordService
     private $cUser;
 
     /**
+     * @var ExpertsenderService
+     */
+    private $expertsenderService;
+
+    /**
      * UserPasswordService constructor.
      *
      * @param UserRepository $userRepository
      */
-    public function __construct(UserRepository $userRepository)
+    public function __construct(UserRepository $userRepository, ExpertsenderService $expertsenderService)
     {
         $this->userRepository = $userRepository;
         $this->chars = implode('', \array_merge(\range(0, 9), \range('a', 'z'), \range('A', 'Z')));
         $this->cUser = new \CUser(); // ничего страшного, просто еще один пустой объект
+
+        $this->expertsenderService = $expertsenderService;
     }
 
     /**
@@ -93,13 +101,6 @@ class UserPasswordService
         }
     }
 
-    /**
-     * @param int $userId
-     * @throws ArgumentException
-     * @throws NotFoundException
-     * @throws ObjectPropertyException
-     * @throws SystemException
-     */
     public function changePassword(int $userId)
     {
         /** @var User $user */
@@ -110,8 +111,8 @@ class UserPasswordService
             $this->setChangePasswordPossibleForAll(true);
             $this->userRepository->updatePassword($userId, $password);
             $this->setChangePasswordPossibleForAll(false);
-        } else {
-            throw new NotFoundException('Пользователь "' . $userId . '" не найден.');
+
+            $this->expertsenderService->sendNewPassword($password, $user);
         }
     }
 
