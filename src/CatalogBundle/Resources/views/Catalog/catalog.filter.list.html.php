@@ -1,6 +1,7 @@
 <?php
 
 /**
+ * @var ChildCategoryRequest $catalogRequest
  * @var FilterCollection $filters
  * @var FilterBase       $filter
  * @var PhpEngine        $view
@@ -13,8 +14,11 @@ use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Filter\ClothingSizeFilter;
 use FourPaws\Catalog\Model\Filter\PriceFilter;
 use FourPaws\Catalog\Model\Variant;
+use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
 use FourPaws\Decorators\SvgDecorator;
 use Symfony\Component\Templating\PhpEngine;
+
+$category = $catalogRequest->getCategory();
 
 foreach ($filters as $filter) {
     if ($filter instanceof PriceFilter) { ?>
@@ -56,7 +60,7 @@ foreach ($filters as $filter) {
         <div class="b-filter__block">
             <div class="b-title b-title--filter-header">
                 <?= $filter->getName() ?>
-                <? if($filter instanceof ClothingSizeFilter) { ?>
+                <? if($filter instanceof ClothingSizeFilter && $category->isShowFitting()) { ?>
                     <a class="js-scroll-to-size-select" href="javascript:void(0)">Узнать размер</a>
                 <? } ?>
             </div>

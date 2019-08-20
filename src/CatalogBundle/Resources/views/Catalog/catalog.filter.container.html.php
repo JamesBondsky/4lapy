@@ -139,7 +139,8 @@ if (!$catalogRequest->isLanding()) { ?>
                 'FourPawsCatalogBundle:Catalog:catalog.filter.list.html.php',
                 [
                     'filters'          => $filterToShow,
-                    'dataLayerService' => $dataLayerService
+                    'dataLayerService' => $dataLayerService,
+                    'catalogRequest'   => $catalogRequest,
                 ]
             ) ?>
             <div class="b-filter__block b-filter__block--discount js-discount-mobile-here">
