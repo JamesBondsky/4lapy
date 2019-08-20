@@ -1510,7 +1510,7 @@ class OrderSubscribeService implements LoggerAwareInterface
                     $currentUser = $this->getCurrentUserService();
                     $currentUser->setSelectedCity($orderSubscribe->getLocationId());
                 }
-            } catch (\Exception $exception) {
+            } catch (\Throwable $exception) {
                 $result->addError(
                     new Error(
                         $exception->getMessage(),
@@ -1546,7 +1546,7 @@ class OrderSubscribeService implements LoggerAwareInterface
                         $this->log()->info(sprintf('Обновлена дата следующей доставки для подписки %s: %s', $orderSubscribe->getId(), $orderSubscribe->getNextDate()->format('d.m.y')));
                     }
                 }
-            } catch (\Exception $exception) {
+            } catch (\Throwable $exception) {
                 $result->addError(
                     new Error(
                         $exception->getMessage(),
@@ -1566,7 +1566,7 @@ class OrderSubscribeService implements LoggerAwareInterface
                     // (если дата меньше текущей, то заказ будет создан с комментариями для оператора)
                     $data['canCopyOrder'] = true;
                 }
-            } catch (\Exception $exception) {
+            } catch (\Throwable $exception) {
                 $result->addError(
                     new Error(
                         $exception->getMessage(),
@@ -1584,7 +1584,7 @@ class OrderSubscribeService implements LoggerAwareInterface
                         $data['copyResult']->getErrors()
                     );
                 }
-            } catch (\Exception $exception) {
+            } catch (\Throwable $exception) {
                 $result->addError(
                     new Error(
                         $exception->getMessage(),
