@@ -696,12 +696,13 @@ $APPLICATION->SetTitle("Добролап");
         </div>
         <div class="home-slider  owl-carousel">
             <div class="slider-item ">
-                <div class="overlay"></div>
                 <div class="container">
                     <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end"
                          data-scrollax-parent="true">
-                        <video controls poster="/dobrolap/images/raise-preview1.jpg">
-                            <source src="/upload/dobrolap/Dobrolap_06_08.mp4" type="video/mp4">
+                        <video controls poster="/dobrolap/images/raise-preview2.jpg">
+                            <source src="/upload/dobrolap/4lapi_priut_14_08_2.mp4">
+                            <source src="/upload/dobrolap/4lapi_priut_14_08_2.ogv" type="video/webm">
+                            <source src="/upload/dobrolap/4lapi_priut_14_08_2.webm" type="video/ogg">
                         </video>
                     </div>
                 </div>
