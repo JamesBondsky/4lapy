@@ -274,7 +274,7 @@ class BasketService
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    public function getBasketProduct(int $basketItemId, Offer $offer, int $quantity, ?bool $useStamps, ?bool $canUseStamps = false, ?int $canUseStampsAmount = 0)
+    public function getBasketProduct(int $basketItemId, Offer $offer, int $quantity, ?bool $useStamps = false, ?bool $canUseStamps = false, ?int $canUseStampsAmount = 0)
     {
         $product = $offer->getProduct();
         $shortProduct = $this->apiProductService->convertToShortProduct($product, $offer, $quantity);
