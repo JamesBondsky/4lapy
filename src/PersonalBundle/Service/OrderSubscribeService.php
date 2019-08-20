@@ -811,7 +811,7 @@ class OrderSubscribeService implements LoggerAwareInterface
             if(!$calculationResult){
                 $arCalculationResult = $deliveryService->getByLocation($subscribe->getLocationId(), [$deliveryCode]);
                 $calculationResult = reset($arCalculationResult);
-                if($deliveryService->isDelivery($calculationResult)) {
+                if($deliveryService && $deliveryService->isDelivery($calculationResult)) {
                     $store = $storeService->getStoreByXmlId(SaleOrderService::STORE);
                     $calculationResult->setSelectedStore($store);
                 }
