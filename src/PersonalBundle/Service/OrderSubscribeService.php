@@ -1114,7 +1114,7 @@ class OrderSubscribeService implements LoggerAwareInterface
         if ($result->isSuccess()) {
             try {
                 $params->doCopyOrder();
-            } catch (\Exception $exception) {
+            } catch (\Throwable $exception) {
                 $result->addError(
                     new Error(
                         $exception->getMessage(),
