@@ -242,11 +242,12 @@ class ProductService
 
     /**
      * @param int[] $ids
+     * @param bool|null $onlyPackingVariants
      * @return ArrayCollection
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
      */
-    public function getListFromXmlIds(array $ids): ArrayCollection
+    public function getListFromXmlIds(array $ids, ?bool $onlyPackingVariants = false): ArrayCollection
     {
         $filters = new FilterCollection();
 //        $filters->add([
@@ -259,22 +260,38 @@ class ProductService
         /** @var ProductCollection $productCollection */
         $productCollection = $productSearchResult->getProductCollection();
 
-        return new ArrayCollection([
-            $productCollection
-                ->map(\Closure::fromCallable([$this, 'mapProductForList']))
-                ->map(static function(FullProduct $product) use ($ids) {
-                    $packingVariants = $product->getPackingVariants();
-                    $packingVariants = array_filter($packingVariants, static function(FullProduct $product) use ($ids) {
-                        return in_array($product->getXmlId(), $ids, false);
-                    });
+        $productList = $productCollection
+            ->map(\Closure::fromCallable([$this, 'mapProductForList']))
+            ->map(static function(FullProduct $product) use ($ids, $onlyPackingVariants) {
+                $packingVariants = $product->getPackingVariants();
+                $packingVariants = array_filter($packingVariants, static function(FullProduct $product) use ($ids) {
+                    return in_array($product->getXmlId(), $ids, false);
+                });
+                if ($onlyPackingVariants) {
+                    return array_values($packingVariants);
+                } else {
                     $product->setPackingVariants($packingVariants);
 
                     return $product;
-                })
-                ->filter(function($value) {
-                    return !is_null($value);
-                })
-                ->getValues()
+                }
+            })
+            ->filter(static function($value) {
+                return !is_null($value);
+            })
+            ->getValues();
+
+        if ($onlyPackingVariants) {
+            $productList = array_reduce($productList, static function($carry, $productArray) {
+                foreach ($productArray as $product) {
+                    $carry[] = $product;
+                }
+
+                return $carry;
+            }, []);
+        }
+
+        return new ArrayCollection([
+            $productList
         ]);
     }
 

@@ -240,7 +240,7 @@ class UserController extends BaseController
         $exchangeRules = StampService::EXCHANGE_RULES;
         $productsXmlIds = array_keys($exchangeRules);
 
-        $productsListCollection = $this->apiProductService->getListFromXmlIds($productsXmlIds);
+        $productsListCollection = $this->apiProductService->getListFromXmlIds($productsXmlIds, true);
         $productsList = $productsListCollection->get(0) ?? [];
 
         return (new ApiResponse())->setData([
