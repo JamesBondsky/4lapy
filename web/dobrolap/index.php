@@ -699,7 +699,7 @@ $APPLICATION->SetTitle("Добролап");
                 <div class="container">
                     <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end"
                          data-scrollax-parent="true">
-                        <video controls poster="/dobrolap/images/raise-preview1.jpg">
+                        <video controls poster="/dobrolap/images/raise-preview2.jpg">
                             <source src="/upload/dobrolap/4lapi_priut_14_08_2.mp4">
                             <source src="/upload/dobrolap/4lapi_priut_14_08_2.ogv" type="video/webm">
                             <source src="/upload/dobrolap/4lapi_priut_14_08_2.webm" type="video/ogg">
