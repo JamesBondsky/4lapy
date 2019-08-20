@@ -290,7 +290,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                 }
             }
         }
-        $contact->phone = PhoneHelper::getManzanaPhone($contact->phone);
+        if ($contact->phone) {
+            $contact->phone = PhoneHelper::getManzanaPhone($contact->phone);
+        }
         $data = $this->serializer->toArray($contact);
         /** на обновление это поле ненужно */
         if(isset($data['HasChildrenCode'])) {
@@ -543,7 +545,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         if(empty($phone)){
             throw new ManzanaServiceContactSearchNullException('не указан телефон');
         }
-        $phone = PhoneHelper::getManzanaPhone($phone);
+        if ($phone) {
+            $phone = PhoneHelper::getManzanaPhone($phone);
+        }
         return (string)$this->getContactByPhone($phone)->contactId;
     }
 
