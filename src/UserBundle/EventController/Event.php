@@ -91,7 +91,8 @@ class Event extends BaseServiceHandler
         static::initHandlerCompatible('OnAfterUserRegister', [self::class, 'sendEmail'], 'main');
 
         /** обновление данных в манзане */
-        static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'updateManzana'], 'main');
+//        static::initHandlerCompatible('OnAfterUserUpdate', [self::class, 'updateManzana'], 'main');
+        static::initHandlerCompatible('OnBeforeUserUpdate', [self::class, 'updateManzana'], 'main');
 
         /** привязка купонов фестиваля после регистрации */
         //static::initHandlerCompatible('OnAfterUserRegister', [self::class, 'addFestivalCoupon'], 'main');
@@ -291,46 +292,80 @@ class Event extends BaseServiceHandler
      *
      * @return bool
      */
+//    public static function updateManzana($fields): bool
+//    {
+//        if (self::$isEventsDisable) {
+//            return false;
+//        }
+//
+//        if (!isset($_SESSION['NOT_MANZANA_UPDATE'])) {
+//            $_SESSION['NOT_MANZANA_UPDATE'] = false;
+//        }
+//        if (!$_SESSION['NOT_MANZANA_UPDATE']) {
+//
+//            $container = App::getInstance()->getContainer();
+//
+//            unset($_SESSION['NOT_MANZANA_UPDATE']);
+//
+//            /**
+//             * @var UserService $userService
+//             */
+//            $userService = $container->get(CurrentUserProviderInterface::class);
+//            $user = $userService->getUserRepository()->find((int)$fields['ID']);
+//            if ($user === null) {
+//                return false;
+//            }
+//
+//            /**
+//             * @var ManzanaService $manzanaService
+//             */
+//            $manzanaService = $container->get('manzana.service');
+//
+//            $client = new Client();
+//            if ($_SESSION['MANZANA_CONTACT_ID']) {
+//                $client->contactId = $_SESSION['MANZANA_CONTACT_ID'];
+//                unset($_SESSION['MANZANA_CONTACT_ID']);
+//            }
+//
+//            /** устанавливаем всегда все поля для передачи - что на обновление что на регистарцию */
+//            $userService->setClientPersonalDataByCurUser($client, $user);
+//
+//            $manzanaService->updateContactAsync($client);
+//        }
+//        return true;
+//    }
+
     public static function updateManzana($fields): bool
     {
-        if (self::$isEventsDisable) {
+        $container = App::getInstance()->getContainer();
+
+        /** @var UserService $userService */
+        $userService = $container->get(CurrentUserProviderInterface::class);
+        $user = $userService->getUserRepository()->find((int)$fields['ID']);
+        if ($user === null) {
             return false;
         }
 
-        if (!isset($_SESSION['NOT_MANZANA_UPDATE'])) {
-            $_SESSION['NOT_MANZANA_UPDATE'] = false;
+        $clientByCheck = new Client();
+
+        /**
+         * @var ManzanaService $manzanaService
+         */
+        $manzanaService = $container->get('manzana.service');
+
+        $client = $userService->setManzanaClientPersonalDataByUser($fields, $user);
+        $userService->setClientPersonalDataByCurUser($clientByCheck, $user);
+
+        foreach ($clientByCheck as $clientKey => $clientValue) {
+            if ($client->$clientKey != $clientValue && empty($client->$clientKey)) {
+                $client->$clientKey = $clientValue;
+            }
         }
-        if (!$_SESSION['NOT_MANZANA_UPDATE']) {
 
-            $container = App::getInstance()->getContainer();
-
-            unset($_SESSION['NOT_MANZANA_UPDATE']);
-
-            /**
-             * @var UserService $userService
-             */
-            $userService = $container->get(CurrentUserProviderInterface::class);
-            $user = $userService->getUserRepository()->find((int)$fields['ID']);
-            if ($user === null) {
-                return false;
-            }
-
-            /**
-             * @var ManzanaService $manzanaService
-             */
-            $manzanaService = $container->get('manzana.service');
-
-            $client = new Client();
-            if ($_SESSION['MANZANA_CONTACT_ID']) {
-                $client->contactId = $_SESSION['MANZANA_CONTACT_ID'];
-                unset($_SESSION['MANZANA_CONTACT_ID']);
-            }
-
-            /** устанавливаем всегда все поля для передачи - что на обновление что на регистарцию */
-            $userService->setClientPersonalDataByCurUser($client, $user);
-
+        if ($client != $clientByCheck) {
             $manzanaService->updateContactAsync($client);
         }
+
         return true;
     }
 

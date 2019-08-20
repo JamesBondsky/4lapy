@@ -39,7 +39,7 @@ class ManzanaContactMobileUpdateConsumer extends ManzanaConsumerBase
             }
 
             $client = new Client();
-            $client->phone = $personalPhone;
+            $client->phone = PhoneHelper::getManzanaPhone($personalPhone);
             $client->haveMobileApp = true;
             $client->lastDateUseMobileApp = $currentDate->format(\DateTime::ATOM);
 
