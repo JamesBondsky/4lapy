@@ -232,7 +232,7 @@ class UserController extends BaseController
     public function getStampsInfoAction(): ApiResponse //TODO change Response type // см. PersonalBonus для примера
     {
         try {
-            $stamps = $this->stampService->getActiveStampsCount();
+            $stamps = $this->stampService->getActiveStampsCount(); //TODO переделать(?) на вывод значения, сохраненного в профиле пользователя (для этого нужно его заранее асинхронно обновлять)
         } catch (ExecuteErrorException $e) {
             $stamps = 0;
         }

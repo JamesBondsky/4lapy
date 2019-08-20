@@ -120,6 +120,8 @@ class StampService implements LoggerAwareInterface
 
             if (!$balanceResponse->isErrorResponse()) {
                 $this->activeStampsCount = $balanceResponse->getCardStatusActiveBalance();
+
+                //TODO save to user profile's field (to update its value asynchronously later)
             } else {
                 $this->log()->error(__METHOD__ . '. Не удалось получить balanceResponse по карте ' . $discountCardNumber . '. Ошибка: ' . $balanceResponse->getMessage());
                 $this->activeStampsCount = 0;

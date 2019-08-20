@@ -93,6 +93,13 @@ class User
      */
     protected $locationId;
 
+    /**
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("stamps_income")
+     * @var float
+     */
+    protected $stampsIncome = 0;
+
 
     /**
      * @return int
@@ -298,6 +305,24 @@ class User
     public function setLocationId(string $locationId): User
     {
         $this->locationId = $locationId;
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getStampsIncome(): float
+    {
+        return $this->stampsIncome;
+    }
+
+    /**
+     * @param float $stampsIncome
+     * @return User
+     */
+    public function setStampsIncome(float $stampsIncome): User
+    {
+        $this->stampsIncome = $stampsIncome;
         return $this;
     }
 }
