@@ -50,6 +50,13 @@ class Product
      */
     protected $canUseStamps = false;
 
+    /**
+     * @Serializer\SerializedName("canUseStampsAmount")
+     * @Serializer\Type("int")
+     * @var int
+     */
+    protected $canUseStampsAmount = 0;
+
 
     /**
      * @return int
@@ -159,6 +166,24 @@ class Product
     public function setCanUseStamps(bool $canUseStamps): Product
     {
         $this->canUseStamps = $canUseStamps;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCanUseStampsAmount(): int
+    {
+        return $this->canUseStampsAmount;
+    }
+
+    /**
+     * @param int $canUseStampsAmount
+     * @return Product
+     */
+    public function setCanUseStampsAmount(int $canUseStampsAmount): Product
+    {
+        $this->canUseStampsAmount = $canUseStampsAmount;
         return $this;
     }
 }

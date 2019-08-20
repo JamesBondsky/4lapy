@@ -173,11 +173,19 @@ class BasketService
             }
 
             $canUseStamps = false;
+            $canUseStampsAmount = 0;
             if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
-                $canUseStamps = (bool)$basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE']; //FIXME если нужно отображать размер скидки в рублях, процент скидки, то можно посчитать их здесь
+                $maxStampsLevelValue = $basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'];
+                $canUseStamps = (bool)$maxStampsLevelValue; //FIXME если нужно отображать размер скидки в рублях, процент скидки, то можно посчитать их здесь
+                $canUseStampsAmount = unserialize($maxStampsLevelValue);
+                $canUseStampsAmountKey = $canUseStampsAmount ? $canUseStampsAmount['key'] : false;
+                if ($canUseStampsAmountKey) {
+                    preg_match('/(\d+)\*(\d+)\*([VP])$/', $canUseStampsAmountKey, $discount);
+                    $canUseStampsAmount = $discount[2];
+                }
             }
 
-            $product = $this->getBasketProduct($basketItem->getId(), $offer, $basketItem->getQuantity(), $useStamps, $canUseStamps);
+            $product = $this->getBasketProduct($basketItem->getId(), $offer, $basketItem->getQuantity(), $useStamps, $canUseStamps, $canUseStampsAmount);
             $shortProduct = $product->getShortProduct();
             $shortProduct->setPickupOnly(
                 $this->isPickupOnly($basketItem, $delivery, $offer)
@@ -258,6 +266,7 @@ class BasketService
      * @param int $quantity
      * @param bool|null $useStamps
      * @param bool|null $canUseStamps
+     * @param int|null $canUseStampsAmount
      * @return Product
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
@@ -265,7 +274,7 @@ class BasketService
      * @throws \Bitrix\Main\SystemException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    public function getBasketProduct(int $basketItemId, Offer $offer, int $quantity, ?bool $useStamps, ?bool $canUseStamps = false)
+    public function getBasketProduct(int $basketItemId, Offer $offer, int $quantity, ?bool $useStamps, ?bool $canUseStamps = false, ?int $canUseStampsAmount = 0)
     {
         $product = $offer->getProduct();
         $shortProduct = $this->apiProductService->convertToShortProduct($product, $offer, $quantity);
@@ -276,6 +285,7 @@ class BasketService
             ->setQuantity($quantity)
             ->setUseStamps($useStamps)
             ->setCanUseStamps($canUseStamps)
+            ->setCanUseStampsAmount($canUseStampsAmount)
         ;
     }
 
