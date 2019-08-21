@@ -96,20 +96,18 @@ class PushMessagesQueue extends Command implements LoggerAwareInterface
         $this->lockerService->lock($pipeline);
 
         try {
-            $this->pushEventService->handleRowsWithFile(); // преобразование пользователей из прикрепленного файла в пользователей в поле
-            $this->log()->info('handleRowsWithFile done.');
-            $this->pushEventService->handleRowsWithoutFile(); // создание push-event`ов, снятие активности в hl-блоке "Push уведомления"
-            $this->log()->info('handleRowsWithoutFile done.');
-
-            // отправка push`ей
-            $this->pushEventService->execPushEventsForAndroid();
-            $this->log()->info('execPushEventsForAndroid done.');
+//            $this->pushEventService->handleRowsWithFile(); // преобразование пользователей из прикрепленного файла в пользователей в поле
+//            $this->log()->info('handleRowsWithFile done.');
+//            $this->pushEventService->handleRowsWithoutFile(); // создание push-event`ов, снятие активности в hl-блоке "Push уведомления"
+//            $this->log()->info('handleRowsWithoutFile done.');
+//
+//            // отправка push`ей
+//            $this->pushEventService->execPushEventsForAndroid();
+//            $this->log()->info('execPushEventsForAndroid done.');
             $this->pushEventService->execPushEventsForIos();
             $this->log()->info('execPushEventsForIos done.');
 
             $this->log()->info('push messages are sent.');
-        } catch (Exception $e) {
-            md5('erfref');
         } finally {
             $this->lockerService->unlock($pipeline);
         }

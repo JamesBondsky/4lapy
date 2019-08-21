@@ -248,14 +248,23 @@ class PushEventService
 
                 $message->setOption('badge', 1);
                 $message->setOption('sound', '');
-                $message->setOption('type', $pushEvent->getEventId());
-                $message->setOption('id', $pushEvent->getMessageTypeEntity()->getXmlId());
+                $message->setOption('custom', [
+                    'type' => $pushEvent->getMessageTypeEntity()->getXmlId(),
+                    'id' => $pushEvent->getEventId()
+                ]);
+                $message->setOption('type', $pushEvent->getMessageTypeEntity()->getXmlId());
+                $message->setOption('id', $pushEvent->getEventId());
 
-                $device = new Device('93637e483a59c568a6bc391a9ad164d705c677f5f77e7058eeb67d66b960a78a');
+
+                $device = new Device($pushEvent->getPushToken());
                 $device->setParameter('badge', 1);
                 $device->setParameter('sound', '');
-                $device->setParameter('type', $pushEvent->getEventId());
-                $device->setParameter('id', $pushEvent->getMessageTypeEntity()->getXmlId());
+                $device->setParameter('type',$pushEvent->getMessageTypeEntity()->getXmlId());
+                $device->setParameter('id', $pushEvent->getEventId());
+                $device->setParameter('custom', [
+                    'type' => $pushEvent->getMessageTypeEntity()->getXmlId(),
+                    'id' => $pushEvent->getEventId()
+                ]);
 
                 $deviceArr = new DeviceCollection([
                     $device
