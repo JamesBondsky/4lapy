@@ -37,8 +37,17 @@ $isDiscounted = (float)$basketItem->getBasePrice() - (float)$basketItem->getPric
 $canUseStamps = isset(StampService::EXCHANGE_RULES[$offer->getXmlId()]);
 $stampLevels = ($canUseStamps) ? StampService::EXCHANGE_RULES[$offer->getXmlId()] : null;
 $useStamps = false;
+$useStampsAmount = 0;
+
 if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS'])) {
     $useStamps = (bool)$basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS']['VALUE'];
+
+    if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
+        $stampsInfo = $this->getBasketPropertyValueByCode($basketItem, 'MAX_STAMPS_LEVEL');
+        if ($stampsInfoArr = unserialize($stampsInfo)) {
+            $useStampsAmount = $stampsInfoArr['value'] * $basketItem->getQuantity();
+        }
+    }
 }
 
 /**
@@ -251,7 +260,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                     <div class="b-mark-order-price__action">
                         <?php if ($useStamps) { ?>
                         <span data-cancel-charge-marks-cart="true">
-                        Отменить<br/> списание 7
+                        Отменить<br/> списание <?= $useStampsAmount ?>
                         <span class="b-icon b-icon--mark">
                             <?= new SvgDecorator('icon-mark', 12, 12) ?>
                         </span>
