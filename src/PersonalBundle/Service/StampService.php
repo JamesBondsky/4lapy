@@ -110,6 +110,11 @@ class StampService implements LoggerAwareInterface
      */
     public function getActiveStampsCount(?bool $withoutCache = false): int //TODO answer with this value in new API method
     {
+        if (!$this->currentUserProvider->isAuthorized()) {
+            $this->activeStampsCount = 0;
+            return $this->activeStampsCount;
+        }
+
         if (!$this->activeStampsCount || $withoutCache) {
             $discountCardNumber = $this->currentUserProvider->getCurrentUser()->getDiscountCardNumber();
 

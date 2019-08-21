@@ -32,6 +32,7 @@ use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\KioskBundle\Service\KioskService;
+use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils\Detach\Adder;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
@@ -81,6 +82,10 @@ class BasketComponent extends CBitrixComponent
      */
     private $couponsStorage;
     /**
+     * @var StampService
+     */
+    private $stampService;
+    /**
      * @var GoogleEcommerceService
      */
     private $ecommerceService;
@@ -116,6 +121,7 @@ class BasketComponent extends CBitrixComponent
         $this->ecommerceService = $container->get(GoogleEcommerceService::class);
         $this->ecommerceSalePreset = $container->get(SalePreset::class);
         $this->orderStorageService = $container->get(OrderStorageService::class);
+        $this->stampService = $container->get(StampService::class);
     }
 
     /** @noinspection PhpMissingParentCallCommonInspection
@@ -191,6 +197,7 @@ class BasketComponent extends CBitrixComponent
             $this->ecommerceSalePreset->createEcommerceToCheckoutFromBasket($basket, 1, 'Просмотр корзины'),
             true
         );
+        $this->arResult['ACTIVE_STAMPS_COUNT'] = $this->stampService->getActiveStampsCount();
 
         /** если авторизирован добавляем магнит */
         if ($user) { // костыль, если магнитик не добавился сразу после оплаты исходного заказа)

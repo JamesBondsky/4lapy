@@ -17,6 +17,7 @@ use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Enum\IblockElementXmlId;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\PersonalBundle\Service\StampService;
 
 $basketUpdateUrl = '/ajax/sale/basket/update/';
 $basketDeleteUrl = '/ajax/sale/basket/delete/';
@@ -32,6 +33,14 @@ $promoLinks = $component->getPromoLink($basketItem);
 $image = $component->getImage((int)$basketItem->getProductId());
 $useOffer = $offer instanceof Offer && $offer->getId() > 0;
 $isDiscounted = (float)$basketItem->getBasePrice() - (float)$basketItem->getPrice() >= 0.01;
+
+$canUseStamps = isset(StampService::EXCHANGE_RULES[$offer->getXmlId()]);
+$stampLevels = ($canUseStamps) ? StampService::EXCHANGE_RULES[$offer->getXmlId()] : null;
+$useStamps = false;
+if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS'])) {
+    $useStamps = (bool)$basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS']['VALUE'];
+}
+
 /**
  * @todo promo from property; after - promo from PromoLink;
  */
@@ -59,12 +68,15 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
             </div>
         <?php }
     } ?>
-    <div class="b-mark-order">
-        <div class="b-mark-order__info">
-            <span class="b-mark-order__text">Используйте марки, чтобы купить товар со скидкой! Вам  доступно — 8</span><? //TODO correct value. If 0 then don't show this text ?>
-            <span class="b-icon b-icon--mark"><?= new SvgDecorator('icon-mark', 12, 12) ?></span>
+
+    <?php if ($canUseStamps) { ?>
+        <div class="b-mark-order">
+            <div class="b-mark-order__info">
+                <span class="b-mark-order__text">Используйте марки, чтобы купить товар со скидкой! Вам  доступно — <?= $arResult['ACTIVE_STAMPS_COUNT'] ?></span><? //TODO correct value. If 0 then don't show this text ?>
+                <span class="b-icon b-icon--mark"><?= new SvgDecorator('icon-mark', 12, 12) ?></span>
+            </div>
         </div>
-    </div>
+    <?php } ?>
 
     <div class="b-common-item b-common-item--shopping-cart b-common-item--shopping">
         <span class="b-common-item__image-wrap b-common-item__image-wrap--shopping-cart">
@@ -145,7 +157,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
         </div>
     </div>
     <?/* Класс b-item-shopping__operation--marks нужен только если будут марки*/ //TODO this logic ?>
-    <div class="b-item-shopping__operation b-item-shopping__operation--marks<?= $offer->getQuantity() > 0 ? ' b-item-shopping__operation--not-available' : '' ?>">
+    <div class="b-item-shopping__operation<?= ($canUseStamps) ? ' b-item-shopping__operation--marks' : '' ?><?= $offer->getQuantity() > 0 ? ' b-item-shopping__operation--not-available' : '' ?>">
         <?php
         $maxQuantity = 1000;
         if ($useOffer) {
@@ -224,31 +236,32 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                     </a>
                 <? } ?>
             </div><?/* Эта обертка нужна только если будут марки*/ //TODO this logic?>
-            <div class="b-mark-order-price"><? //TODO correct values in this block and conditions to show it ?>
-                <div class="b-mark-order-price__list">
-                    <div class="b-mark-order-price__item">
-                        1 587 ₽  — 5
-                        <span class="b-icon b-icon--mark">
-                            <?= new SvgDecorator('icon-mark', 12, 12) ?>
-                        </span>
+            <?php if ($canUseStamps && count($stampLevels)) { ?>
+                <div class="b-mark-order-price"><? //TODO correct values in this block and conditions to show it ?>
+                    <div class="b-mark-order-price__list">
+                        <?php foreach ($stampLevels as $stampLevel) { ?>
+                            <div class="b-mark-order-price__item">
+                                <?= $stampLevel['price'] ?> ₽ — <?= $stampLevel['stamps'] ?>
+                                <span class="b-icon b-icon--mark">
+                                    <?= new SvgDecorator('icon-mark', 12, 12) ?>
+                                </span>
+                            </div>
+                        <?php } ?>
                     </div>
-                    <div class="b-mark-order-price__item">
-                        1 587 ₽  — 5
-                        <span class="b-icon b-icon--mark">
-                            <?= new SvgDecorator('icon-mark', 12, 12) ?>
-                        </span>
-                    </div>
-                </div>
-                <div class="b-mark-order-price__action">
-                    <span data-use-marks-cart="true">Использовать марки</span>
-                    <span data-cancel-charge-marks-cart="true">
+                    <div class="b-mark-order-price__action">
+                        <?php if ($useStamps) { ?>
+                        <span data-cancel-charge-marks-cart="true">
                         Отменить<br/> списание 7
                         <span class="b-icon b-icon--mark">
                             <?= new SvgDecorator('icon-mark', 12, 12) ?>
                         </span>
+                            <?php } else { ?>
+                                <span data-use-marks-cart="true">Использовать марки</span>
+                            <?php } ?>
                     </span>
+                    </div>
                 </div>
-            </div>
+            <?php } ?>
             <?php if (in_array($offer->getId(), $arResult['ONLY_PICKUP'], true)) { ?>
                 <div class="b-item-shopping__sale-info b-item-shopping__sale-info--width b-item-shopping__sale-info--not-available">
                     Только самовывоз
