@@ -105,6 +105,13 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                     'APPLY' => 'Y',
                     'DESCR' => json_encode($params)
                 ]];
+            } elseif (
+            ($xmlId = explode('#', $basketItem->getField('PRODUCT_XML_ID'))[1])
+                && array_key_exists($xmlId, $stampService::EXCHANGE_RULES)
+            ) {
+                // Костыли, для отмены скидки. Лучше вынести флаг о том, что скидка за марки применена, например, в отдельное свойство товара в корзине
+                $basketItem->setPrice($basketItem->getBasePrice());
+                $applyResult['PRICES']['BASKET'][$basketItem->getId()]['PRICE'] = $basketItem->getBasePrice();
             }
         }
         unset ($params);
