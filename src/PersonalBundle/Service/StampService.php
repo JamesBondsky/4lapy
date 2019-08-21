@@ -9,6 +9,7 @@ use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\External\Manzana\Dto\BalanceRequest;
 use FourPaws\External\Manzana\Dto\ExtendedAttribute;
+use FourPaws\External\Manzana\Exception\ExecuteErrorException;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -121,7 +122,16 @@ class StampService implements LoggerAwareInterface
             if (!$discountCardNumber) {
                 return 0;
             }
-            $balanceResponse = $this->manzanaPosService->executeBalanceRequest((new BalanceRequest())->setCardByNumber($discountCardNumber));
+            try {
+                $balanceResponse = $this->manzanaPosService->executeBalanceRequest((new BalanceRequest())->setCardByNumber($discountCardNumber));
+            } catch (ExecuteErrorException $e) {
+                if ($e->getCode() == 80241) { // Карта не найдена
+                    $this->activeStampsCount = 0;
+                    return $this->activeStampsCount;
+                } else {
+                    throw new ExecuteErrorException($e->getMessage(), $e->getCode());
+                }
+            }
 
             if (!$balanceResponse->isErrorResponse()) {
                 $this->activeStampsCount = $balanceResponse->getCardStatusActiveBalance();
