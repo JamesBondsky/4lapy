@@ -148,9 +148,10 @@ class StampService implements LoggerAwareInterface
 
     /**
      * @param Collection|ExtendedAttribute[] $extendedAttributeCollection
+     * @param int|null $availableStampsCount
      * @return array
      */
-    public function getMaxAvailableLevel($extendedAttributeCollection): array
+    public function getMaxAvailableLevel($extendedAttributeCollection, ?int $availableStampsCount = 0): array
     {
         // Реализация согласована. Определение, какой уровень наилучший, с помощью того, на какой уровень нужно больше марок
         //TODO переделать способ определения максимальной скидки, учитывая, хватит ли пользователю марок на применение этого уровня)
@@ -164,7 +165,7 @@ class StampService implements LoggerAwareInterface
                 $discountSize = $discountStampsNeeded
                     * $extendedAttribute->getValue(); // Количество товара, на которое доступна эта скидка
 
-                if ($discountSize > $maxDiscountSize) {
+                if ($discountSize > $maxDiscountSize && $availableStampsCount >= $discountSize) {
                     $maxLevel = [
                         'key' => $extendedAttribute->getKey(),
                         'value' => $extendedAttribute->getValue(),
