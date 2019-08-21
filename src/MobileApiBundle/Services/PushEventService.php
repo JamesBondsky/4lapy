@@ -23,6 +23,7 @@ use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\SerializationContext;
 use Sly\NotificationPusher\Adapter\Apns;
 use Sly\NotificationPusher\Collection\DeviceCollection;
+use Sly\NotificationPusher\Exception\AdapterException;
 use Sly\NotificationPusher\Model\Device;
 use Sly\NotificationPusher\Model\Message;
 use Sly\NotificationPusher\Model\Push;
@@ -256,7 +257,11 @@ class PushEventService
                 $message->setOption('id', $pushEvent->getEventId());
 
 
-                $device = new Device($pushEvent->getPushToken());
+                try {
+                    $device = new Device($pushEvent->getPushToken());
+                } catch (AdapterException $adapterException) {
+                    continue;
+                }
                 $device->setParameter('badge', 1);
                 $device->setParameter('sound', '');
                 $device->setParameter('type',$pushEvent->getMessageTypeEntity()->getXmlId());
