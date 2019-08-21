@@ -266,13 +266,20 @@ class Manzana implements LoggerAwareInterface
         $manzanaItems = $response->getItems();
         $this->setStampsToBeAdded($response->getChargedStatusBonus());
 
+        try {
+            $activeStampsCount = $this->stampService->getActiveStampsCount(); //TODO переделать(?) на вывод значения, сохраненного в профиле пользователя (для этого нужно его заранее асинхронно обновлять)
+        } catch (\Exception $e) {
+            $this->log()->error(__METHOD__ . '. getActiveStampsCount exception: ' . $e->getMessage());
+            $activeStampsCount = 0;
+        }
+
         /**
          * @var BasketItem $item
          */
         foreach ($basket as $item) {
             $basketCode = (int)str_replace('n', '', $item->getBasketCode());
 
-            $manzanaItems->map(function (ChequePosition $position) use ($basketCode, $item) {
+            $manzanaItems->map(function (ChequePosition $position) use ($basketCode, $item, $activeStampsCount) {
                 if ($position->getChequeItemNumber() === $basketCode) {
                     $price = PriceHelper::roundPrice($position->getSummDiscounted() / $position->getQuantity());
 
@@ -293,7 +300,7 @@ class Manzana implements LoggerAwareInterface
                     } else {
                         // указание, что можно применить марки для скидки на этот товар
 
-                        $maxAvailableLevel = $this->stampService->getMaxAvailableLevel($extendedAttributeCollection);
+                        $maxAvailableLevel = $this->stampService->getMaxAvailableLevel($extendedAttributeCollection, $activeStampsCount);
 
                         $this->basketService->setBasketItemPropertyValue($item, 'MAX_STAMPS_LEVEL', $maxAvailableLevel ? serialize($maxAvailableLevel): false);
                         /*if ($maxStampsLevelProperty) {
