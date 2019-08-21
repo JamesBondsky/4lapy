@@ -281,7 +281,10 @@ class PushEventService
                 $pushId[$pushEvent->getPushToken()] = $pushEvent;
             }
 
-            $pushManager->push();
+            try {
+                $pushManager->push();
+            } catch (AdapterException $adapterException) {
+            }
 
             foreach ($pushManager->getResponse()->getParsedResponses() as $token => $response) {
                 if (is_null($response['id'])) {
