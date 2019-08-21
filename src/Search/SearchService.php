@@ -19,6 +19,7 @@ use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Filter\FilterInterface;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Model\Sorting;
+use FourPaws\Catalog\Model\Variant;
 use FourPaws\CatalogBundle\Service\SortService;
 use FourPaws\Search\Enum\DocumentType;
 use FourPaws\Search\Helper\AggsHelper;
@@ -161,7 +162,43 @@ class SearchService implements LoggerAwareInterface
             $this->getAggsHelper()->collapseFilters($filters, $resultSet);
         }
 
-        return new ProductSearchResult($resultSet, $navigation, $queryTerm);
+        $productSearchResult = new ProductSearchResult($resultSet, $navigation, $queryTerm);
+
+        // фильтр доступности
+        if (!$filters->isEmpty()) {
+            $filterAvaliable = $filters->getDeliveryAvailabilityFilter();
+            if($filterAvaliable && $filterAvaliable->hasCheckedVariants()){
+                $variants = $filterAvaliable->getCheckedVariants();
+                $availabilityFlags = [];
+                /** @var Variant $variant */
+                foreach ($variants as $variant){
+                    $availabilityFlags[] = substr($variant->getValue(), -1);
+                }
+
+                /** @var Product $product */
+                foreach ($productSearchResult->getProductCollection() as $key => $product){
+                    $offers = $product->getOffers();
+                    foreach ($offers as $offer){
+                        $remove = false;
+                        if(in_array('d', $availabilityFlags) && !$offer->isDeliverable()){
+                            $remove = true;
+                        }
+                        if(in_array('d', $availabilityFlags) && !$offer->isPickupAvailable()){
+                            $remove = true;
+                        }
+                        if(in_array('p', $availabilityFlags) && !$offer->isByRequest()){
+                            $remove = true;
+                        }
+
+                        if($remove){
+                            $productSearchResult->getProductCollection()->remove($key);
+                        }
+                    }
+                }
+            }
+        }
+
+        return $productSearchResult;
     }
 
     /**

@@ -2,6 +2,8 @@
 
 namespace FourPaws\Catalog\Model\Filter;
 
+use Elastica\Query\AbstractQuery;
+use Elastica\QueryBuilder;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\VariantCollection;
@@ -58,4 +60,23 @@ class DeliveryAvailabilityFilter extends FilterBase
             ->withValue($code . '_' . Product::AVAILABILITY_BY_REQUEST));
         return $result;
     }
+
+
+//    public function getFilterRule(): AbstractQuery
+//    {
+//        $queryBuilder = new QueryBuilder();
+//
+//        $termsQuery = $queryBuilder->query()->nested()
+//            ->setPath('offers')
+//            ->setQuery(
+//                $queryBuilder->query()->terms(
+//                    'offers.availableStores',
+//                    [
+//                        'R001'
+//                    ]
+//                )
+//            );
+//
+//        return $termsQuery;
+//    }
 }

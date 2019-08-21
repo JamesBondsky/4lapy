@@ -57,6 +57,7 @@ use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Helper\PriceHelper;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
+use FourPaws\StoreBundle\Repository\StockRepository;
 use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserService;
@@ -1605,7 +1606,7 @@ class Offer extends IblockElement
      */
     public function getAllStocks(): StockCollection
     {
-        if (!$this->allStocks) {
+        if (!$this->allStocks || is_array($this->allStocks)) {
             /** @var StockService $stockService */
             $stockService = Application::getInstance()->getContainer()->get(StockService::class);
             $this->withAllStocks($stockService->getStocksByOffer($this));

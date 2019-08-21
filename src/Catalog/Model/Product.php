@@ -2186,6 +2186,8 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                || $this->isLicenseRequired();
     }
 
+
+    // TODO:: доделать
     /**
      * @throws ApplicationCreateException
      * @return array
@@ -2197,9 +2199,16 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             /** @var DeliveryService $deliveryService */
             $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
             $zones = array_keys($deliveryService->getAllZones());
+            $offerCollection = $this->getOffers();
+            $quantities = [];
+            foreach ($offerCollection as $offer){
+                $quantities[$offer->getXmlId()] = 1;
+            }
+
             foreach ($zones as $zone) {
                 $result = [];
                 foreach ($deliveryService->getByZone($zone) as $deliveryCode) {
+                //foreach ($deliveryService->getByOfferCollection($offerCollection, $quantities, ) as $deliveryCode) {
                     switch (true) {
                         case $canDeliver && \in_array($deliveryCode, DeliveryService::DELIVERY_CODES, true):
                             $result[] = static::AVAILABILITY_DELIVERY;
