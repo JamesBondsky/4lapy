@@ -21,6 +21,12 @@ use FourPaws\MobileApiBundle\Repository\ApiUserSessionRepository;
 use FourPaws\UserBundle\Repository\UserRepository;
 use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\SerializationContext;
+use Sly\NotificationPusher\Adapter\Apns;
+use Sly\NotificationPusher\Collection\DeviceCollection;
+use Sly\NotificationPusher\Model\Device;
+use Sly\NotificationPusher\Model\Message;
+use Sly\NotificationPusher\Model\Push;
+use tests\units\Sly\NotificationPusher\PushManager;
 
 class PushEventService
 {
@@ -197,7 +203,7 @@ class PushEventService
      * @throws \ApnsPHP_Exception
      * @throws \ApnsPHP_Push_Server_Exception
      */
-    public function execPushEventsForIos()
+    public function execPushEventsForIos1111()
     {
         $this->applePushNotificationService->startServer();
         $pushEvents = $this->apiPushEventRepository->findForIos();
@@ -223,6 +229,57 @@ class PushEventService
             $this->apiPushEventRepository->update($pushEvent);
         }
     }
+
+    public function execPushEventsForIos()
+    {
+        $pushEvents = $this->apiPushEventRepository->findForIos();
+
+        $adapter = new \FourPaws\External\ApplePushNotificationAdapter([
+            'certificate' => Application::getInstance()->getRootDir() . '/app/config/apple-push-notification-cert-new.pem',
+            'passPhrase' => 'lapy'
+        ]);
+        $pushManager = new \Sly\NotificationPusher\PushManager(\Sly\NotificationPusher\PushManager::ENVIRONMENT_PROD);
+
+        $pushId = [];
+
+        if (count($pushEvents) > 0) {
+            foreach ($pushEvents as $pushEvent) {
+                $message = new Message($pushEvent->getMessageText());
+
+                $message->setOption('badge', 1);
+                $message->setOption('sound', '');
+                $message->setOption('type', $pushEvent->getEventId());
+                $message->setOption('id', $pushEvent->getMessageTypeEntity()->getXmlId());
+
+                $device = new Device('93637e483a59c568a6bc391a9ad164d705c677f5f77e7058eeb67d66b960a78a');
+                $device->setParameter('badge', 1);
+                $device->setParameter('sound', '');
+                $device->setParameter('type', $pushEvent->getEventId());
+                $device->setParameter('id', $pushEvent->getMessageTypeEntity()->getXmlId());
+
+                $deviceArr = new DeviceCollection([
+                    $device
+                ]);
+                $push = new Push($adapter, $deviceArr, $message);
+
+                $pushManager->add($push);
+
+                $pushId[$pushEvent->getPushToken()] = $pushEvent;
+            }
+
+            $pushManager->push();
+
+            foreach ($pushManager->getResponse()->getParsedResponses() as $token => $response) {
+                if (is_null($response['id'])) {
+                    if (isset($pushId[$token])) {
+                        $pushId[$token]->setSuccessExec(ApiPushEvent::EXEC_SUCCESS_CODE);
+                        $this->apiPushEventRepository->update($pushId[$token]);
+                    }
+                }
+            }
+        }
+    }
+
 
     /**
      * Ищет сессии пользователей для конкретного push-сообщения

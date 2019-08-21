@@ -108,6 +108,8 @@ class PushMessagesQueue extends Command implements LoggerAwareInterface
             $this->log()->info('execPushEventsForIos done.');
 
             $this->log()->info('push messages are sent.');
+        } catch (Exception $e) {
+            md5('erfref');
         } finally {
             $this->lockerService->unlock($pipeline);
         }
