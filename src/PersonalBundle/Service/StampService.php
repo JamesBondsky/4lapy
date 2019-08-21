@@ -144,8 +144,8 @@ class StampService implements LoggerAwareInterface
         /** @var ExtendedAttribute $extendedAttribute */
         $maxDiscountSize = 0;
         foreach ($extendedAttributeCollection as $extendedAttribute) {
-            preg_match('/(\d+)\*(\d+)\*([VP])$/', $extendedAttribute->getKey(), $discount);
-            if ($discountStampsNeeded = $discount[2]) {
+            $discount = $this->parseLevelKey($extendedAttribute->getKey());
+            if ($discountStampsNeeded = $discount['discountStamps']) {
                 $discountSize = $discountStampsNeeded
                     * $extendedAttribute->getValue(); // Количество товара, на которое доступна эта скидка
 
@@ -160,5 +160,26 @@ class StampService implements LoggerAwareInterface
         }
 
         return $maxLevel;
+    }
+
+    /**
+     * Получение параметров уровня обмена марок из его "номера РА" (ключа)
+     * @param string $key
+     * @return array
+     */
+    public function parseLevelKey(string $key): array
+    {
+        $keyArray = [];
+        preg_match('/(\d+)\*(\d+)\*([VP])$/', $key, $discount);
+
+        if ($discount[1] && $discount[2] && $discount[3]) {
+            $keyArray = [
+                'discountValue' => $discount[1],
+                'discountStamps' => $discount[2],
+                'discountType' => $discount[3],
+            ];
+        }
+
+        return $keyArray;
     }
 }

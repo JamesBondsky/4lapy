@@ -142,9 +142,11 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
             }
 
             if ($basketService->getBasketItemPropertyValue($item, 'USE_STAMPS') && ($maxStampsLevel = unserialize($basketService->getBasketItemPropertyValue($item, 'MAX_STAMPS_LEVEL')))) {
-                $chequePosition->setExtendedAttribute(new ArrayCollection([
+                /*$chequePosition->setExtendedAttribute(new ArrayCollection([
                     (new ExtendedAttribute())->setKey($maxStampsLevel['key'])->setValue($maxStampsLevel['value'])
-                ]));
+                ]));*/ //TODO использовать, когда сделаем сохранение параметра первого запроса мягкого чека (до запроса на применение марок)
+
+                // Применение скидок пока реализовано на нашей стороне (исходя из ключей уровней, присланных из Manzana). см. \FourPaws\SaleBundle\Discount\Utils\Detach\Adder::processOrder
             }
 
             $chequePosition->setSignCharge((bool)$signCharge ? 1 : 0);

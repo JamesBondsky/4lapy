@@ -23,6 +23,7 @@ use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
+use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Discount\Utils\AdderInterface;
 use FourPaws\SaleBundle\Discount\Utils\BaseDiscountPostHandler;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
@@ -60,6 +61,9 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
      */
     public function processOrder(): void
     {
+        /** @var StampService $stampService */
+        $stampService = App::getInstance()->getContainer()->get(StampService::class);
+
         /**
          * 1. Региональные скидки
          * 2. количества и свойства
@@ -75,6 +79,31 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
         $applyResult = $discountBase->getApplyResult(true);
         $skippedDiscounts = $this->getLowDiscounts($applyResult['RESULT']['BASKET']);
         $skippedDiscounts = array_merge($skippedDiscounts, $this->getExcludedDiscounts($applyResult['DISCOUNT_LIST']));
+
+        $basket = $this->order->getBasket();
+        /** @var BasketItem $basketItem */
+        foreach ($basket as $basketItem) {
+            $useStamps = $this->basketService->getBasketItemPropertyValue($basketItem, 'USE_STAMPS');
+            $maxStampsLevel = unserialize($this->basketService->getBasketItemPropertyValue($basketItem, 'MAX_STAMPS_LEVEL'));
+            if ($useStamps && $maxStampsLevel) {
+                $maxStampsLevelKey = $stampService->parseLevelKey($maxStampsLevel['key']);
+                $params = [
+                    'discountType' => "DETACH",
+                    'params' => [
+                        'apply_count' => $maxStampsLevel['value'],
+                        'discount_value' => $maxStampsLevelKey['discountValue'],
+                        'percent' => $maxStampsLevelKey['discountType'] === 'P',
+                    ]
+                ];
+                $applyResult['RESULT']['BASKET'][$basketItem->getId()] = [[ //FIXME сейчас заменяем все остальные скидки, которые доступны по этому товару. После релиза в перспективе логика должна быть переделана с возможностью применения разных скидок одновременно
+                    //'DISCOUNT_ID' => 0,
+                    'COUPON_ID' => '',
+                    'APPLY' => 'Y',
+                    'DESCR' => json_encode($params)
+                ]];
+            }
+        }
+        unset ($params);
 
         if (is_iterable($applyResult['RESULT']['BASKET'])) {
             foreach ($applyResult['RESULT']['BASKET'] as $basketCode => $discounts) {

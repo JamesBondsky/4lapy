@@ -27,6 +27,7 @@ use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Dto\Object\PriceWithQuantity;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
+use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -59,13 +60,17 @@ class BasketService
     /** @var OrderSubscribeService */
     private $orderSubscribeService;
 
+    /** @var StampService */
+    private $stampService;
+
     public function __construct(
         AppBasketService $appBasketService,
         ApiProductService $apiProductService,
         TokenStorageInterface $tokenStorage,
         DeliveryService $deliveryService,
         AppUserService $appUserService,
-        OrderSubscribeService $orderSubscribeService
+        OrderSubscribeService $orderSubscribeService,
+        StampService $stampService
     )
     {
         $this->appBasketService = $appBasketService;
@@ -74,6 +79,7 @@ class BasketService
         $this->deliveryService = $deliveryService;
         $this->appUserService = $appUserService;
         $this->orderSubscribeService = $orderSubscribeService;
+        $this->stampService = $stampService;
     }
 
 
@@ -180,8 +186,8 @@ class BasketService
                 $canUseStampsObj = unserialize($maxStampsLevelValue);
                 $canUseStampsAmountKey = $canUseStampsObj ? $canUseStampsObj['key'] : false;
                 if ($canUseStampsAmountKey) {
-                    preg_match('/(\d+)\*(\d+)\*([VP])$/', $canUseStampsAmountKey, $discount);
-                    $canUseStampsAmount = $discount[2] * $canUseStampsObj['value']; //TODO не будет ли бага, когда манзана присылает больше единиц, чем у пользователя в корзине?
+                    $discount = $this->stampService->parseLevelKey($canUseStampsAmountKey);
+                    $canUseStampsAmount = $discount['discountStamps'] * $canUseStampsObj['value']; //TODO не будет ли бага, когда манзана присылает больше единиц, чем у пользователя в корзине?
                 }
             }
 
