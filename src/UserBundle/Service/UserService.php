@@ -1345,7 +1345,8 @@ class UserService implements
 
             $barcodeGenerator = new BarcodeGeneratorPNG();
             if ($isOnlyEmail) {
-                $offerFields = $this->personalOffersService->getOfferFieldsByCouponId(is_int($promocode) ? intval($promocode) : $promocodeId);
+//                $offerFields = $this->personalOffersService->getOfferFieldsByCouponId(is_int($promocode) ? intval($promocode) : $promocodeId);
+                $offerFields = $this->personalOffersService->getOfferFieldsByPromoCode($promocode);
             } else {
                 $offerFields = $this->personalOffersService->getOfferFieldsByPromoCode($promocode);
             }
