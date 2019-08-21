@@ -578,8 +578,17 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 $position++;
             }
 
+            $useStamps = $this->getBasketPropertyValueByCode($basketItem, 'USE_STAMPS');
+            if ($useStamps) { //todo раскоментить, когда в поле USE_STAMPS будет возвращаться корректное знаечение
+                $stampsInfo = $this->getBasketPropertyValueByCode($basketItem, 'MAX_STAMPS_LEVEL');
+                if ($stampsInfoArr = unserialize($stampsInfo)) {
+                    $offer->setStampsQuantity($stampsInfoArr['value'] * $quantity);
+                    $offer->setExchangeName($stampsInfoArr['key']);
+                }
+            }
+
             $offer->setQuantity($quantity);
-            $isPseudoActionPropValue = $this->getBasketPropertyValueByCode($basketItem, 'IS_PSEUDO_ACTION');
+            $isPseudoActionPropValue = $this->getBas5etPropertyValueByCode($basketItem, 'IS_PSEUDO_ACTION');
             $isPseudoAction = BitrixUtils::BX_BOOL_TRUE === $isPseudoActionPropValue;
             if ($isPseudoAction)
             {
