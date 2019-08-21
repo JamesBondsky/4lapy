@@ -197,7 +197,37 @@ class BasketComponent extends CBitrixComponent
             $this->ecommerceSalePreset->createEcommerceToCheckoutFromBasket($basket, 1, 'Просмотр корзины'),
             true
         );
+
+        /**  информация о марках */
         $this->arResult['ACTIVE_STAMPS_COUNT'] = $this->stampService->getActiveStampsCount();
+        $this->arResult['BASKET_ITEMS_STAMPS'] = [];
+
+        foreach ($this->arResult['BASKET'] as $basketItem) {
+            $offer = $this->getOffer((int)$basketItem->getProductId());
+
+            $canUseStamps = isset(StampService::EXCHANGE_RULES[$offer->getXmlId()]);
+            $stampLevels = ($canUseStamps) ? StampService::EXCHANGE_RULES[$offer->getXmlId()] : null;
+            $useStamps = false;
+            $useStampsAmount = 0;
+
+            if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS'])) {
+                $useStamps = (bool)$basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS']['VALUE'];
+
+                if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
+                    $stampsInfo = $basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'];
+                    if ($stampsInfoArr = unserialize($stampsInfo)) {
+                        $useStampsAmount = $stampsInfoArr['value'] * $basketItem->getQuantity();
+                    }
+                }
+            }
+
+            $this->arResult['BASKET_ITEMS_STAMPS_INFO'][$offer->getXmlId()] = [
+              'CAN_USE_STAMPS' => $canUseStamps,
+              'STAMP_LEVELS' => $stampLevels,
+              'USE_STAMPS' => $useStamps,
+              'USE_STAMP_AMOUNT' => $useStampsAmount,
+            ];
+        }
 
         /** если авторизирован добавляем магнит */
         if ($user) { // костыль, если магнитик не добавился сразу после оплаты исходного заказа)

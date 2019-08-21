@@ -17,7 +17,6 @@ use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Enum\IblockElementXmlId;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\SaleBundle\Service\BasketService;
-use FourPaws\PersonalBundle\Service\StampService;
 
 $basketUpdateUrl = '/ajax/sale/basket/update/';
 $basketDeleteUrl = '/ajax/sale/basket/delete/';
@@ -33,28 +32,14 @@ $promoLinks = $component->getPromoLink($basketItem);
 $image = $component->getImage((int)$basketItem->getProductId());
 $useOffer = $offer instanceof Offer && $offer->getId() > 0;
 $isDiscounted = (float)$basketItem->getBasePrice() - (float)$basketItem->getPrice() >= 0.01;
-
-$canUseStamps = isset(StampService::EXCHANGE_RULES[$offer->getXmlId()]);
-$stampLevels = ($canUseStamps) ? StampService::EXCHANGE_RULES[$offer->getXmlId()] : null;
-$useStamps = false;
-$useStampsAmount = 0;
-
-if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS'])) {
-    $useStamps = (bool)$basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS']['VALUE'];
-
-    if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
-        $stampsInfo = $this->getBasketPropertyValueByCode($basketItem, 'MAX_STAMPS_LEVEL');
-        if ($stampsInfoArr = unserialize($stampsInfo)) {
-            $useStampsAmount = $stampsInfoArr['value'] * $basketItem->getQuantity();
-        }
-    }
-}
+$stampInfo = $arResult['BASKET_ITEMS_STAMPS_INFO'][$offer->getXmlId()];
 
 /**
  * @todo promo from property; after - promo from PromoLink;
  */
 if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $offer->isByRequest())) {
     // kek, самое место для сбора данных
+
     $templateData['OFFERS'][] = ['ID' => $offer->getId(), 'QUANTITY' => $basketItem->getQuantity()];
 } ?>
 <div class="b-item-shopping js-remove-shopping js-item-shopping" data-productid="<?= $basketItemId; ?>">
@@ -78,7 +63,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
         <?php }
     } ?>
 
-    <?php if ($canUseStamps) { ?>
+    <?php if ($stampInfo['CAN_USE_STAMPS']) { ?>
         <div class="b-mark-order">
             <div class="b-mark-order__info">
                 <span class="b-mark-order__text">Используйте марки, чтобы купить товар со скидкой! Вам  доступно — <?= $arResult['ACTIVE_STAMPS_COUNT'] ?></span><? //TODO correct value. If 0 then don't show this text ?>
@@ -166,7 +151,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
         </div>
     </div>
     <?/* Класс b-item-shopping__operation--marks нужен только если будут марки*/ //TODO this logic ?>
-    <div class="b-item-shopping__operation<?= ($canUseStamps) ? ' b-item-shopping__operation--marks' : '' ?><?= $offer->getQuantity() > 0 ? ' b-item-shopping__operation--not-available' : '' ?>">
+    <div class="b-item-shopping__operation<?= ($stampInfo['CAN_USE_STAMPS']) ? ' b-item-shopping__operation--marks' : '' ?><?= $offer->getQuantity() > 0 ? ' b-item-shopping__operation--not-available' : '' ?>">
         <?php
         $maxQuantity = 1000;
         if ($useOffer) {
@@ -245,10 +230,10 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                     </a>
                 <? } ?>
             </div><?/* Эта обертка нужна только если будут марки*/ //TODO this logic?>
-            <?php if ($canUseStamps && count($stampLevels)) { ?>
+            <?php if ($stampInfo['CAN_USE_STAMPS'] && count($stampInfo['STAMP_LEVELS'])) { ?>
                 <div class="b-mark-order-price"><? //TODO correct values in this block and conditions to show it ?>
                     <div class="b-mark-order-price__list">
-                        <?php foreach ($stampLevels as $stampLevel) { ?>
+                        <?php foreach ($stampInfo['STAMP_LEVELS'] as $stampLevel) { ?>
                             <div class="b-mark-order-price__item">
                                 <?= $stampLevel['price'] ?> ₽ — <?= $stampLevel['stamps'] ?>
                                 <span class="b-icon b-icon--mark">
@@ -258,9 +243,9 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                         <?php } ?>
                     </div>
                     <div class="b-mark-order-price__action">
-                        <?php if ($useStamps) { ?>
+                        <?php if ($stampInfo['USE_STAMPS']) { ?>
                         <span data-cancel-charge-marks-cart="true">
-                        Отменить<br/> списание <?= $useStampsAmount ?>
+                        Отменить<br/> списание <?= $stampInfo['USE_STAMP_AMOUNT'] ?>
                         <span class="b-icon b-icon--mark">
                             <?= new SvgDecorator('icon-mark', 12, 12) ?>
                         </span>
