@@ -298,8 +298,10 @@ class OrderOffer
 
     /**
      * @param int $stampsQuantity
+     *
+     * @return OrderOffer
      */
-    public function setStampsQuantity(int $stampsQuantity): void
+    public function setStampsQuantity(int $stampsQuantity): OrderOffer
     {
         $this->stampsQuantity = $stampsQuantity;
     }
@@ -314,8 +316,10 @@ class OrderOffer
 
     /**
      * @param mixed $exchangeName
+     *
+     * @return OrderOffer
      */
-    public function setExchangeName($exchangeName): void
+    public function setExchangeName($exchangeName): OrderOffer
     {
         $this->exchangeName = $exchangeName;
     }
