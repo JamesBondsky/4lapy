@@ -172,179 +172,199 @@ use FourPaws\Enum\IblockType;
         <div class="b-container">
             <div class="fashion-category-filter">
                 <div class="fashion-category-filter__item active" data-type-filter-category-fashion="0">
-                    <div class="fashion-category-filter__img-wrap">
+                    <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
                         <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_overalls.png')"></div>
                     </div>
-                    <div class="fashion-category-filter__title">Комбинезоны</div>
+                    <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Комбинезоны</div>
                 </div>
                 <div class="fashion-category-filter__item active" data-type-filter-category-fashion="1">
-                    <div class="fashion-category-filter__img-wrap">
+                    <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
                         <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_sweaters.png')"></div>
                     </div>
-                    <div class="fashion-category-filter__title">Свитера и толстовки</div>
+                    <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Свитера и толстовки</div>
                 </div>
                 <div class="fashion-category-filter__item active" data-type-filter-category-fashion="2">
-                    <div class="fashion-category-filter__img-wrap">
+                    <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
                         <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_footwear.png')"></div>
                     </div>
-                    <div class="fashion-category-filter__title">Обувь</div>
+                    <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Обувь</div>
                 </div>
                 <div class="fashion-category-filter__item" data-type-filter-category-fashion="3">
-                    <div class="fashion-category-filter__img-wrap">
+                    <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
                         <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_jackets.png')"></div>
                     </div>
-                    <div class="fashion-category-filter__title">Куртки и жилетки</div>
+                    <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Куртки и жилетки</div>
                 </div>
                 <div class="fashion-category-filter__item" data-type-filter-category-fashion="4">
-                    <div class="fashion-category-filter__img-wrap">
+                    <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
                         <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_blankets.png')"></div>
                     </div>
-                    <div class="fashion-category-filter__title">Попоны</div>
+                    <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Попоны</div>
                 </div>
                 <div class="fashion-category-filter__item" data-type-filter-category-fashion="5">
-                    <div class="fashion-category-filter__img-wrap">
+                    <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
                         <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_raincoats.png')"></div>
                     </div>
-                    <div class="fashion-category-filter__title">Дождевики</div>
+                    <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Дождевики</div>
                 </div>
                 <div class="fashion-category-filter__item" data-type-filter-category-fashion="6">
-                    <div class="fashion-category-filter__img-wrap">
+                    <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
                         <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_socks.png')"></div>
                     </div>
-                    <div class="fashion-category-filter__title">Носки</div>
+                    <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Носки</div>
                 </div>
                 <div class="fashion-category-filter__item" data-type-filter-category-fashion="7">
-                    <div class="fashion-category-filter__img-wrap">
+                    <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
                         <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_costumes.png')"></div>
                     </div>
-                    <div class="fashion-category-filter__title">Костюмы</div>
+                    <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Костюмы</div>
                 </div>
                 <div class="fashion-category-filter__item" data-type-filter-category-fashion="8">
-                    <div class="fashion-category-filter__img-wrap">
+                    <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
                         <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_t-shirts.png')"></div>
                     </div>
-                    <div class="fashion-category-filter__title">Футболки и майки</div>
+                    <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Футболки и майки</div>
                 </div>
                 <div class="fashion-category-filter__item" data-type-filter-category-fashion="9">
-                    <div class="fashion-category-filter__img-wrap">
+                    <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
                         <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_hats.png')"></div>
                     </div>
-                    <div class="fashion-category-filter__title">Шапки</div>
+                    <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Шапки</div>
                 </div>
             </div>
-            <div class="fashion-category-list">
+        </div>
+        <div class="fashion-category-list">
                 <div class="item-category-fashion active" data-item-filter-category-fashion="0" data-url="/ajax/catalog/product-info/">
-                    <div class="item-category-fashion__title">Комбинезоны</div>
-                    <div class="item-category-fashion__content">
-                        <div class="item-category-fashion__img" style="background-image: url('/fashion/img/category/category-img_1.jpg')"></div>
-                        <div class="item-category-fashion__slider" data-slider-category-fashion="true">
-                            <?php
-                                include __DIR__ . '/products-list-category1.php';
-                            ?>
+                    <div class="b-container">
+                        <div class="item-category-fashion__title">Комбинезоны</div>
+                        <div class="item-category-fashion__content">
+                            <div class="item-category-fashion__img" style="background-image: url('/fashion/img/category/category-img_1.jpg')"></div>
+                            <div class="item-category-fashion__slider" data-slider-category-fashion="true">
+                                <?php
+                                    include __DIR__ . '/products-list-category1.php';
+                                ?>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="item-category-fashion active" data-item-filter-category-fashion="1" data-url="/ajax/catalog/product-info/">
-                    <div class="item-category-fashion__title">Свитера и толстовки</div>
-                    <div class="item-category-fashion__content">
-                        <div class="item-category-fashion__img" style="background-image: url('/fashion/img/category/category-img_2.jpg')"></div>
-                        <div class="item-category-fashion__slider" data-slider-category-fashion="true">
-                            <?php
-                            include __DIR__ . '/products-list-category2.php';
-                            ?>
+                    <div class="b-container">
+                        <div class="item-category-fashion__title">Свитера и толстовки</div>
+                        <div class="item-category-fashion__content">
+                            <div class="item-category-fashion__img" style="background-image: url('/fashion/img/category/category-img_2.jpg')"></div>
+                            <div class="item-category-fashion__slider" data-slider-category-fashion="true">
+                                <?php
+                                include __DIR__ . '/products-list-category2.php';
+                                ?>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="item-category-fashion active" data-item-filter-category-fashion="2" data-url="/ajax/catalog/product-info/">
-                    <div class="item-category-fashion__title">Обувь</div>
-                    <div class="item-category-fashion__content">
-                        <div class="item-category-fashion__img" style="background-image: url('/fashion/img/category/category-img_3.jpg')"></div>
-                        <div class="item-category-fashion__slider" data-slider-category-fashion="true">
-                            <?php
-                            include __DIR__ . '/products-list-category3.php';
-                            ?>
+                    <div class="b-container">
+                        <div class="item-category-fashion__title">Обувь</div>
+                        <div class="item-category-fashion__content">
+                            <div class="item-category-fashion__img" style="background-image: url('/fashion/img/category/category-img_3.jpg')"></div>
+                            <div class="item-category-fashion__slider" data-slider-category-fashion="true">
+                                <?php
+                                include __DIR__ . '/products-list-category3.php';
+                                ?>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="item-category-fashion" data-item-filter-category-fashion="3" data-url="/ajax/catalog/product-info/">
-                    <div class="item-category-fashion__title">Куртки и жилетки</div>
-                    <div class="item-category-fashion__content">
-                        <div class="item-category-fashion__img" style="background-image: url('/fashion/img/category/category-img_1.jpg')"></div>
-                        <div class="item-category-fashion__slider" data-slider-category-fashion="true">
-                            <?php
-                            include __DIR__ . '/products-list-category1.php';
-                            ?>
+                    <div class="b-container">
+                        <div class="item-category-fashion__title">Куртки и жилетки</div>
+                        <div class="item-category-fashion__content">
+                            <div class="item-category-fashion__img" style="background-image: url('/fashion/img/category/category-img_1.jpg')"></div>
+                            <div class="item-category-fashion__slider" data-slider-category-fashion="true">
+                                <?php
+                                include __DIR__ . '/products-list-category1.php';
+                                ?>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="item-category-fashion" data-item-filter-category-fashion="4" data-url="/ajax/catalog/product-info/">
-                    <div class="item-category-fashion__title">Попоны</div>
-                    <div class="item-category-fashion__content">
-                        <div class="item-category-fashion__img" style="background-image: url('/fashion/img/category/category-img_2.jpg')"></div>
-                        <div class="item-category-fashion__slider" data-slider-category-fashion="true">
-                            <?php
-                            include __DIR__ . '/products-list-category2.php';
-                            ?>
+                    <div class="b-container">
+                        <div class="item-category-fashion__title">Попоны</div>
+                        <div class="item-category-fashion__content">
+                            <div class="item-category-fashion__img" style="background-image: url('/fashion/img/category/category-img_2.jpg')"></div>
+                            <div class="item-category-fashion__slider" data-slider-category-fashion="true">
+                                <?php
+                                include __DIR__ . '/products-list-category2.php';
+                                ?>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="item-category-fashion" data-item-filter-category-fashion="5" data-url="/ajax/catalog/product-info/">
-                    <div class="item-category-fashion__title">Дождевики</div>
-                    <div class="item-category-fashion__content">
-                        <div class="item-category-fashion__img" style="background-image: url('/fashion/img/category/category-img_3.jpg')"></div>
-                        <div class="item-category-fashion__slider" data-slider-category-fashion="true">
-                            <?php
-                            include __DIR__ . '/products-list-category3.php';
-                            ?>
+                    <div class="b-container">
+                        <div class="item-category-fashion__title">Дождевики</div>
+                        <div class="item-category-fashion__content">
+                            <div class="item-category-fashion__img" style="background-image: url('/fashion/img/category/category-img_3.jpg')"></div>
+                            <div class="item-category-fashion__slider" data-slider-category-fashion="true">
+                                <?php
+                                include __DIR__ . '/products-list-category3.php';
+                                ?>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="item-category-fashion" data-item-filter-category-fashion="6" data-url="/ajax/catalog/product-info/">
-                    <div class="item-category-fashion__title">Носки</div>
-                    <div class="item-category-fashion__content">
-                        <div class="item-category-fashion__img" style="background-image: url('/fashion/img/category/category-img_1.jpg')"></div>
-                        <div class="item-category-fashion__slider" data-slider-category-fashion="true">
-                            <?php
-                            include __DIR__ . '/products-list-category1.php';
-                            ?>
+                    <div class="b-container">
+                        <div class="item-category-fashion__title">Носки</div>
+                        <div class="item-category-fashion__content">
+                            <div class="item-category-fashion__img" style="background-image: url('/fashion/img/category/category-img_1.jpg')"></div>
+                            <div class="item-category-fashion__slider" data-slider-category-fashion="true">
+                                <?php
+                                include __DIR__ . '/products-list-category1.php';
+                                ?>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="item-category-fashion" data-item-filter-category-fashion="7" data-url="/ajax/catalog/product-info/">
-                    <div class="item-category-fashion__title">Костюмы</div>
-                    <div class="item-category-fashion__content">
-                        <div class="item-category-fashion__img" style="background-image: url('/fashion/img/category/category-img_2.jpg')"></div>
-                        <div class="item-category-fashion__slider" data-slider-category-fashion="true">
-                            <?php
-                            include __DIR__ . '/products-list-category2.php';
-                            ?>
+                    <div class="b-container">
+                        <div class="item-category-fashion__title">Костюмы</div>
+                        <div class="item-category-fashion__content">
+                            <div class="item-category-fashion__img" style="background-image: url('/fashion/img/category/category-img_2.jpg')"></div>
+                            <div class="item-category-fashion__slider" data-slider-category-fashion="true">
+                                <?php
+                                include __DIR__ . '/products-list-category2.php';
+                                ?>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="item-category-fashion" data-item-filter-category-fashion="8" data-url="/ajax/catalog/product-info/">
-                    <div class="item-category-fashion__title">Футболки и майки</div>
-                    <div class="item-category-fashion__content">
-                        <div class="item-category-fashion__img" style="background-image: url('/fashion/img/category/category-img_3.jpg')"></div>
-                        <div class="item-category-fashion__slider" data-slider-category-fashion="true">
-                            <?php
-                            include __DIR__ . '/products-list-category3.php';
-                            ?>
+                    <div class="b-container">
+                        <div class="item-category-fashion__title">Футболки и майки</div>
+                        <div class="item-category-fashion__content">
+                            <div class="item-category-fashion__img" style="background-image: url('/fashion/img/category/category-img_3.jpg')"></div>
+                            <div class="item-category-fashion__slider" data-slider-category-fashion="true">
+                                <?php
+                                include __DIR__ . '/products-list-category3.php';
+                                ?>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="item-category-fashion" data-item-filter-category-fashion="9" data-url="/ajax/catalog/product-info/">
-                    <div class="item-category-fashion__title">Шапки</div>
-                    <div class="item-category-fashion__content">
-                        <div class="item-category-fashion__img" style="background-image: url('/fashion/img/category/category-img_1.jpg')"></div>
-                        <div class="item-category-fashion__slider" data-slider-category-fashion="true">
-                            <?php
-                            include __DIR__ . '/products-list-category1.php';
-                            ?>
+                    <div class="b-container">
+                        <div class="item-category-fashion__title">Шапки</div>
+                        <div class="item-category-fashion__content">
+                            <div class="item-category-fashion__img" style="background-image: url('/fashion/img/category/category-img_1.jpg')"></div>
+                            <div class="item-category-fashion__slider" data-slider-category-fashion="true">
+                                <?php
+                                include __DIR__ . '/products-list-category1.php';
+                                ?>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
     </section>
 
     <section class="fashion-info-banner">
