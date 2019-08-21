@@ -86,6 +86,10 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
             $useStamps = $this->basketService->getBasketItemPropertyValue($basketItem, 'USE_STAMPS');
             $maxStampsLevel = unserialize($this->basketService->getBasketItemPropertyValue($basketItem, 'MAX_STAMPS_LEVEL'));
             if ($useStamps && $maxStampsLevel) {
+                // Костыли, чтобы скидка не применялась повторно. Лучше вынести флаг о том, что скидка за марки применена, например, в отдельное свойство товара в корзине
+                $basketItem->setPrice($basketItem->getBasePrice());
+                $applyResult['PRICES']['BASKET'][$basketItem->getId()]['PRICE'] = $basketItem->getBasePrice();
+
                 $maxStampsLevelKey = $stampService->parseLevelKey($maxStampsLevel['key']);
                 $params = [
                     'discountType' => "DETACH",
