@@ -304,6 +304,7 @@ class OrderOffer
     public function setStampsQuantity(int $stampsQuantity): OrderOffer
     {
         $this->stampsQuantity = $stampsQuantity;
+        return $this;
     }
 
     /**
@@ -322,5 +323,6 @@ class OrderOffer
     public function setExchangeName($exchangeName): OrderOffer
     {
         $this->exchangeName = $exchangeName;
+        return $this;
     }
 }
