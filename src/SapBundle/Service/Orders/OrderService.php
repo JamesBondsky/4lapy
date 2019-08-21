@@ -588,7 +588,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             }
 
             $offer->setQuantity($quantity);
-            $isPseudoActionPropValue = $this->getBas5etPropertyValueByCode($basketItem, 'IS_PSEUDO_ACTION');
+            $isPseudoActionPropValue = $this->getBasketPropertyValueByCode($basketItem, 'IS_PSEUDO_ACTION');
             $isPseudoAction = BitrixUtils::BX_BOOL_TRUE === $isPseudoActionPropValue;
             if ($isPseudoAction)
             {
