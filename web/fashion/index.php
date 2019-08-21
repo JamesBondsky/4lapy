@@ -121,7 +121,9 @@ use FourPaws\Enum\IblockType;
                 </div>
             </div>
 
-            <div class="fashion-total-look-section__btn" data-btn-next-look-fashion="true">Показать ещё</div>
+            <div class="fashion-total-look-section__btn-wrap">
+                <div class="fashion-total-look-section__btn" data-btn-next-look-fashion="true">Показать ещё</div>
+            </div>
         </div>
     </section>
 
