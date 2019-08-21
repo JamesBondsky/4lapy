@@ -214,7 +214,7 @@ class BasketComponent extends CBitrixComponent
                 $useStamps = (bool)$basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS']['VALUE'];
 
                 if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
-                    $stampsInfo = $basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'];
+                    $stampsInfo = $basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'];
                     if ($stampsInfoArr = unserialize($stampsInfo)) {
                         $useStampsAmount = $stampsInfoArr['value'] * $basketItem->getQuantity();
                     }
