@@ -100,6 +100,13 @@ class User
      */
     protected $stampsIncome = 0;
 
+    /**
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("stamps_offer_active")
+     * @var bool
+     */
+    protected $stampsOfferActive = true;
+
 
     /**
      * @return int
@@ -324,5 +331,23 @@ class User
     {
         $this->stampsIncome = $stampsIncome;
         return $this;
+    }
+
+    /**
+     * @param bool $stampsOfferActive
+     * @return User
+     */
+    public function setStampsOfferActive(bool $stampsOfferActive): User
+    {
+        $this->stampsOfferActive = $stampsOfferActive;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isStampsOfferActive(): bool
+    {
+        return $this->stampsOfferActive;
     }
 }
