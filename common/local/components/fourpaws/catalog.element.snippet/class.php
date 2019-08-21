@@ -14,6 +14,7 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\EcommerceBundle\Service\GoogleEcommerceService;
 use FourPaws\EcommerceBundle\Service\RetailRocketService;
+use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\Helpers\TaggedCacheHelper;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -98,6 +99,19 @@ class CatalogElementSnippet extends CBitrixComponent
                 $this->arResult['CATEGORY'] = $category = $this->arParams['CATEGORY'];
                 $this->arResult['PRODUCT'] = $product = $this->arParams['PRODUCT'];
                 $this->arResult['CURRENT_OFFER'] = $currentOffer = $this->getCurrentOffer($product);
+
+                $exchangeRule = StampService::EXCHANGE_RULES[$product->getXmlId()] ?? false;
+
+                if (!$exchangeRule) {
+                    $offers = $product->getOffers();
+                    foreach ($offers as $offer) {
+                        if (isset(StampService::EXCHANGE_RULES[$offer->getXmlId()])) {
+                            $exchangeRule = StampService::EXCHANGE_RULES[$offer->getXmlId()];
+                        }
+                    }
+                }
+
+                $this->arResult['EXCHANGE_RULE'] = $exchangeRule;
 
                 if ($category && $product->getIblockSectionId() !== $category->getId()) {
                     $product->withDetailPageUrl(

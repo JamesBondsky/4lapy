@@ -43,7 +43,7 @@ $marksDeclension = new Declension('марку', 'марки', 'марок');
     <hr class="b-hr" />
 
     <?php
-        $APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', '', array(
+        $APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', 'stamps', array(
             'OFFER_FILTER' => [
                 '=XML_ID' => $arParams['PRODUCTS_XML_ID'],
             ],
