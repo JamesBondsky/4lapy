@@ -205,6 +205,10 @@ class BasketComponent extends CBitrixComponent
         foreach ($this->arResult['BASKET'] as $basketItem) {
             $offer = $this->getOffer((int)$basketItem->getProductId());
 
+            if ($this->arResult['BASKET_ITEMS_STAMPS_INFO'][$offer->getXmlId()]) {
+                continue;
+            }
+
             $canUseStamps = isset(StampService::EXCHANGE_RULES[$offer->getXmlId()]);
             $stampLevels = ($canUseStamps) ? StampService::EXCHANGE_RULES[$offer->getXmlId()] : null;
             $useStamps = false;
@@ -216,7 +220,7 @@ class BasketComponent extends CBitrixComponent
                 if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
                     $stampsInfo = $basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'];
                     if ($stampsInfoArr = unserialize($stampsInfo)) {
-                        $useStampsAmount = $stampsInfoArr['value'] * $basketItem->getQuantity();
+                        $useStampsAmount = $stampsInfoArr['value'] * $this->stampService->parseLevelKey($stampsInfoArr['key'])['discountStamps'];
                     }
                 }
             }

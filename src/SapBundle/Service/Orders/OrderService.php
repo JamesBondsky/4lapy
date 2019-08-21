@@ -43,6 +43,7 @@ use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\LocationBundle\LocationService;
+use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Enum\OrderPayment;
 use FourPaws\SaleBundle\Repository\Table\AnimalShelterTable;
@@ -129,6 +130,10 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      * @var BasketService
      */
     private $basketService;
+    /**
+     * @var StampService
+     */
+    private $stampService;
 
     /**
      * @var int
@@ -143,14 +148,15 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     /**
      * OrderService constructor.
      *
-     * @param DeliveryService     $deliveryService
-     * @param LocationService     $locationService
+     * @param DeliveryService $deliveryService
+     * @param LocationService $locationService
      * @param SerializerInterface $serializer
-     * @param Filesystem          $filesystem
-     * @param UserRepository      $userRepository
-     * @param IntervalService     $intervalService
-     * @param StatusService       $statusService
-     * @param BasketService       $basketService
+     * @param Filesystem $filesystem
+     * @param UserRepository $userRepository
+     * @param IntervalService $intervalService
+     * @param StatusService $statusService
+     * @param BasketService $basketService
+     * @param StampService $stampService
      */
     public function __construct(
         DeliveryService $deliveryService,
@@ -160,7 +166,8 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         UserRepository $userRepository,
         IntervalService $intervalService,
         StatusService $statusService,
-        BasketService $basketService
+        BasketService $basketService,
+        StampService $stampService
     )
     {
         $this->serializer = $serializer;
@@ -172,6 +179,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
         $this->setFilesystem($filesystem);
         $this->basketService = $basketService;
+        $this->stampService = $stampService;
     }
 
     /**
@@ -582,7 +590,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             if ($useStamps) { //todo раскоментить, когда в поле USE_STAMPS будет возвращаться корректное знаечение
                 $stampsInfo = $this->getBasketPropertyValueByCode($basketItem, 'MAX_STAMPS_LEVEL');
                 if ($stampsInfoArr = unserialize($stampsInfo)) {
-                    $offer->setStampsQuantity($stampsInfoArr['value'] * $quantity);
+                    $offer->setStampsQuantity($this->stampService->parseLevelKey($stampsInfoArr['key'])['discountStamps'] * $quantity);
                     $offer->setExchangeName($stampsInfoArr['key']);
                 }
             }

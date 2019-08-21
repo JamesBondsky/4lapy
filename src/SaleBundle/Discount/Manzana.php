@@ -316,7 +316,7 @@ class Manzana implements LoggerAwareInterface
             });
         }
 
-        $basket->save(); // если не делать здесь сохранение корзины, то надо использовать $maxStampsLevelProperty->setField и $basketPropertyCollection->save(), закомментированные выше
+        //$basket->save(); // если не делать здесь сохранение корзины, то надо использовать $maxStampsLevelProperty->setField и $basketPropertyCollection->save(), закомментированные выше
     }
 
     /**
