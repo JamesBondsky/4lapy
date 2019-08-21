@@ -283,7 +283,7 @@ class PushEventService
 
             try {
                 $pushManager->push();
-            } catch (AdapterException $adapterException) {
+            } catch (\Exception $adapterException) {
             }
 
             foreach ($pushManager->getResponse()->getParsedResponses() as $token => $response) {
