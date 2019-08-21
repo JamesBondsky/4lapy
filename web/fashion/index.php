@@ -40,83 +40,109 @@ use FourPaws\Enum\IblockType;
 
     <section class="fashion-total-look-section">
         <div class="b-container">
-            <div class="fashion-total-look active" data-item-total-look-fashion="true">
-                <div class="fashion-total-look__slider" data-total-look-slider-fashion="true">
-                    <div class="item-total-look-slider">
-                        <img src="/fashion/img/total-look/total-look1.jpg" alt="">
+            <div class="fashion-total-look-section__group active" style="display: block;" data-group-total-look-fashion="true">
+                <div class="fashion-total-look" data-item-total-look-fashion="true">
+                    <div class="fashion-total-look__slider" data-total-look-slider-fashion="true">
+                        <div class="item-total-look-slider">
+                            <img src="/fashion/img/total-look/total-look1.jpg" alt="">
+                        </div>
+                        <div class="item-total-look-slider">
+                            <img src="/fashion/img/total-look/total-look2.jpg" alt="">
+                        </div>
+                        <div class="item-total-look-slider">
+                            <img src="/fashion/img/total-look/total-look1.jpg" alt="">
+                        </div>
                     </div>
-                    <div class="item-total-look-slider">
-                        <img src="/fashion/img/total-look/total-look2.jpg" alt="">
-                    </div>
-                    <div class="item-total-look-slider">
-                        <img src="/fashion/img/total-look/total-look1.jpg" alt="">
-                    </div>
-                </div>
-                <div class="fashion-total-look__list">
-                    <div data-list-fashion-total-look="true" data-url="/ajax/catalog/product-info/">
-                        <?php
+                    <div class="fashion-total-look__list">
+                        <div data-list-fashion-total-look="true" data-url="/ajax/catalog/product-info/">
+                            <?php
                             include __DIR__ . '/items-total-look.php';
-                        ?>
+                            ?>
+                        </div>
+                    </div>
+                </div>
+                <div class="fashion-total-look" data-item-total-look-fashion="true">
+                    <div class="fashion-total-look__slider" data-total-look-slider-fashion="true">
+                        <div class="item-total-look-slider">
+                            <img src="/fashion/img/total-look/total-look2.jpg" alt="">
+                        </div>
+                        <div class="item-total-look-slider">
+                            <img src="/fashion/img/total-look/total-look1.jpg" alt="">
+                        </div>
+                        <div class="item-total-look-slider">
+                            <img src="/fashion/img/total-look/total-look2.jpg" alt="">
+                        </div>
+                    </div>
+                    <div class="fashion-total-look__list">
+                        <div data-list-fashion-total-look="true" data-url="/ajax/catalog/product-info/">
+                            <?php
+                            include __DIR__ . '/items-total-look.php';
+                            ?>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="fashion-total-look active" data-item-total-look-fashion="true">
-                <div class="fashion-total-look__slider" data-total-look-slider-fashion="true">
-                    <div class="item-total-look-slider">
-                        <img src="/fashion/img/total-look/total-look2.jpg" alt="">
+            <div class="fashion-total-look-section__group" data-group-total-look-fashion="true">
+                <div class="fashion-total-look" data-item-total-look-fashion="true">
+                    <div class="fashion-total-look__slider" data-total-look-slider-fashion="true">
+                        <div class="item-total-look-slider">
+                            <img src="/fashion/img/total-look/total-look1.jpg" alt="">
+                        </div>
+                        <div class="item-total-look-slider">
+                            <img src="/fashion/img/total-look/total-look2.jpg" alt="">
+                        </div>
+                        <div class="item-total-look-slider">
+                            <img src="/fashion/img/total-look/total-look1.jpg" alt="">
+                        </div>
                     </div>
-                    <div class="item-total-look-slider">
-                        <img src="/fashion/img/total-look/total-look1.jpg" alt="">
-                    </div>
-                    <div class="item-total-look-slider">
-                        <img src="/fashion/img/total-look/total-look2.jpg" alt="">
+                    <div class="fashion-total-look__list">
+                        <div data-list-fashion-total-look="true" data-url="/ajax/catalog/product-info/">
+                            <?php
+                            include __DIR__ . '/items-total-look.php';
+                            ?>
+                        </div>
                     </div>
                 </div>
-                <div class="fashion-total-look__list">
-                    <div data-list-fashion-total-look="true" data-url="/ajax/catalog/product-info/">
-                        <?php
-                        include __DIR__ . '/items-total-look.php';
-                        ?>
+                <div class="fashion-total-look" data-item-total-look-fashion="true">
+                    <div class="fashion-total-look__slider" data-total-look-slider-fashion="true">
+                        <div class="item-total-look-slider">
+                            <img src="/fashion/img/total-look/total-look2.jpg" alt="">
+                        </div>
+                        <div class="item-total-look-slider">
+                            <img src="/fashion/img/total-look/total-look1.jpg" alt="">
+                        </div>
+                        <div class="item-total-look-slider">
+                            <img src="/fashion/img/total-look/total-look2.jpg" alt="">
+                        </div>
+                    </div>
+                    <div class="fashion-total-look__list">
+                        <div data-list-fashion-total-look="true" data-url="/ajax/catalog/product-info/">
+                            <?php
+                            include __DIR__ . '/items-total-look.php';
+                            ?>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="fashion-total-look" data-item-total-look-fashion="true">
-                <div class="fashion-total-look__slider" data-total-look-slider-fashion="true">
-                    <div class="item-total-look-slider">
-                        <img src="/fashion/img/total-look/total-look1.jpg" alt="">
+            <div class="fashion-total-look-section__group" data-group-total-look-fashion="true">
+                <div class="fashion-total-look" data-item-total-look-fashion="true">
+                    <div class="fashion-total-look__slider" data-total-look-slider-fashion="true">
+                        <div class="item-total-look-slider">
+                            <img src="/fashion/img/total-look/total-look2.jpg" alt="">
+                        </div>
+                        <div class="item-total-look-slider">
+                            <img src="/fashion/img/total-look/total-look1.jpg" alt="">
+                        </div>
+                        <div class="item-total-look-slider">
+                            <img src="/fashion/img/total-look/total-look2.jpg" alt="">
+                        </div>
                     </div>
-                    <div class="item-total-look-slider">
-                        <img src="/fashion/img/total-look/total-look2.jpg" alt="">
-                    </div>
-                    <div class="item-total-look-slider">
-                        <img src="/fashion/img/total-look/total-look1.jpg" alt="">
-                    </div>
-                </div>
-                <div class="fashion-total-look__list">
-                    <div data-list-fashion-total-look="true" data-url="/ajax/catalog/product-info/">
-                        <?php
-                        include __DIR__ . '/items-total-look.php';
-                        ?>
-                    </div>
-                </div>
-            </div>
-            <div class="fashion-total-look" data-item-total-look-fashion="true">
-                <div class="fashion-total-look__slider" data-total-look-slider-fashion="true">
-                    <div class="item-total-look-slider">
-                        <img src="/fashion/img/total-look/total-look2.jpg" alt="">
-                    </div>
-                    <div class="item-total-look-slider">
-                        <img src="/fashion/img/total-look/total-look1.jpg" alt="">
-                    </div>
-                    <div class="item-total-look-slider">
-                        <img src="/fashion/img/total-look/total-look2.jpg" alt="">
-                    </div>
-                </div>
-                <div class="fashion-total-look__list">
-                    <div data-list-fashion-total-look="true" data-url="/ajax/catalog/product-info/">
-                        <?php
-                        include __DIR__ . '/items-total-look.php';
-                        ?>
+                    <div class="fashion-total-look__list">
+                        <div data-list-fashion-total-look="true" data-url="/ajax/catalog/product-info/">
+                            <?php
+                            include __DIR__ . '/items-total-look.php';
+                            ?>
+                        </div>
                     </div>
                 </div>
             </div>
