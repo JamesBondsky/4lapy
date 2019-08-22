@@ -354,8 +354,7 @@ class Manzana implements LoggerAwareInterface
 
         }
 
-        $test = 1; //TODO del
-        dump($availableStamps); //TODO del
+        //dump($availableStamps);
 
         foreach ($basket as $item) {
             $basketCode = (int)str_replace('n', '', $item->getBasketCode());
@@ -400,7 +399,7 @@ class Manzana implements LoggerAwareInterface
             $basketPropertyCollection = $item->getPropertyCollection();
             $useStampsProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'USE_STAMPS');
             $maxStampsLevelProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'MAX_STAMPS_LEVEL');
-            dump($item->getField('PRODUCT_XML_ID') . ' ' . $maxStampsLevelProperty->getField('VALUE') . ' ' . ($useStampsProperty && $useStampsProperty->getField('VALUE'))); //TODO del
+            //dump($item->getField('PRODUCT_XML_ID') . ' ' . $maxStampsLevelProperty->getField('VALUE') . ' ' . ($useStampsProperty && $useStampsProperty->getField('VALUE')));
         }
 
         // если не делать здесь сохранение корзины, то надо использовать $maxStampsLevelProperty->setField и $basketPropertyCollection->save() (см.выше)
