@@ -239,7 +239,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                     <div class="b-mark-order-price__list">
                         <?php foreach ($stampInfo['STAMP_LEVELS'] as $stampLevel) { ?>
                             <div class="b-mark-order-price__item">
-                                <?= $stampLevel['price'] ?> ₽ — <?= $stampLevel['stamps'] ?>
+                                <?= WordHelper::numberFormat($stampLevel['price']) ?> ₽ — <?= $stampLevel['stamps'] ?>
                                 <span class="b-icon b-icon--mark">
                                     <?= new SvgDecorator('icon-mark', 12, 12) ?>
                                 </span>

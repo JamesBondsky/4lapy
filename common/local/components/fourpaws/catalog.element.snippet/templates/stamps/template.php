@@ -262,7 +262,7 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
                 <? //todo стилизовать этот блок ?>
                 <? foreach ($arResult['EXCHANGE_RULE'] as $exchangeRule): ?>
                     <ul>
-                        <li><?= $exchangeRule['price'] ?> - <?= $exchangeRule['stamps'] ?></li>
+                        <li><?= WordHelper::numberFormat($exchangeRule['price']) ?> - <?= $exchangeRule['stamps'] ?></li>
                     </ul>
                 <? endforeach; ?>
             <? }
