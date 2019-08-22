@@ -1505,6 +1505,7 @@ class ExpertsenderService implements LoggerAwareInterface
      * @param $couponDescription
      * @param $couponDateActiveTo
      * @param $discountValue
+     * @param string|null $description
      * @param int|null $customTransactionId
      * @return bool
      * @throws ExpertSenderException
@@ -1540,6 +1541,7 @@ class ExpertsenderService implements LoggerAwareInterface
             $snippets[] = new Snippet('coupon', htmlspecialcharsbx($coupon));
             $snippets[] = new Snippet('date', htmlspecialcharsbx($couponDateActiveTo));
             $snippets[] = new Snippet('url_img', $base64);
+            $snippets[] = new Snippet('description', htmlspecialcharsbx($couponDescription));
             //$snippets[] = new Snippet('text', htmlspecialcharsbx());
 
             $this->sendSystemTransactional($transactionId, $email, $snippets);
