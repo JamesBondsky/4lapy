@@ -12,10 +12,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 $request = Application::getInstance()->getContext()->getRequest();
 $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
-
-if (!$backUrl) {
-    LocalRedirect($request->getRequestUri() . '?backurl=/');
-}
 ?>
 <div class="b-registration__content b-registration__content--moiety">
     <a class="b-button b-button--social b-button--full-width js-reg-by-phone"
