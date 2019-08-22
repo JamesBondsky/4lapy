@@ -44,121 +44,6 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
 
     <? $APPLICATION->IncludeComponent('articul:fashion.product.slider', '') ?>
 
-    <section class="fashion-total-look-section">
-        <div class="b-container">
-            <div class="fashion-total-look-section__group active" style="display: block;" data-group-total-look-fashion="true">
-                <div class="fashion-total-look" data-item-total-look-fashion="true">
-                    <div class="fashion-total-look__slider" data-total-look-slider-fashion="true">
-                        <div class="item-total-look-slider">
-                            <img src="/fashion/img/total-look/total-look1.jpg" alt="">
-                        </div>
-                        <div class="item-total-look-slider">
-                            <img src="/fashion/img/total-look/total-look2.jpg" alt="">
-                        </div>
-                        <div class="item-total-look-slider">
-                            <img src="/fashion/img/total-look/total-look1.jpg" alt="">
-                        </div>
-                    </div>
-                    <div class="fashion-total-look__list">
-                        <div data-list-fashion-total-look="true" data-url="/ajax/catalog/product-info/">
-                            <?php
-                            include __DIR__ . '/items-total-look.php';
-                            ?>
-                        </div>
-                    </div>
-                </div>
-                <div class="fashion-total-look" data-item-total-look-fashion="true">
-                    <div class="fashion-total-look__slider" data-total-look-slider-fashion="true">
-                        <div class="item-total-look-slider">
-                            <img src="/fashion/img/total-look/total-look2.jpg" alt="">
-                        </div>
-                        <div class="item-total-look-slider">
-                            <img src="/fashion/img/total-look/total-look1.jpg" alt="">
-                        </div>
-                        <div class="item-total-look-slider">
-                            <img src="/fashion/img/total-look/total-look2.jpg" alt="">
-                        </div>
-                    </div>
-                    <div class="fashion-total-look__list">
-                        <div data-list-fashion-total-look="true" data-url="/ajax/catalog/product-info/">
-                            <?php
-                        include __DIR__ . '/items-total-look.php';
-                        ?>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="fashion-total-look-section__group" data-group-total-look-fashion="true">
-                <div class="fashion-total-look" data-item-total-look-fashion="true">
-                    <div class="fashion-total-look__slider" data-total-look-slider-fashion="true">
-                        <div class="item-total-look-slider">
-                            <img src="/fashion/img/total-look/total-look1.jpg" alt="">
-                        </div>
-                        <div class="item-total-look-slider">
-                            <img src="/fashion/img/total-look/total-look2.jpg" alt="">
-                        </div>
-                        <div class="item-total-look-slider">
-                            <img src="/fashion/img/total-look/total-look1.jpg" alt="">
-                        </div>
-                    </div>
-                    <div class="fashion-total-look__list">
-                        <div data-list-fashion-total-look="true" data-url="/ajax/catalog/product-info/">
-                            <?php
-                        include __DIR__ . '/items-total-look.php';
-                        ?>
-                        </div>
-                    </div>
-                </div>
-                <div class="fashion-total-look" data-item-total-look-fashion="true">
-                    <div class="fashion-total-look__slider" data-total-look-slider-fashion="true">
-                        <div class="item-total-look-slider">
-                            <img src="/fashion/img/total-look/total-look2.jpg" alt="">
-                        </div>
-                        <div class="item-total-look-slider">
-                            <img src="/fashion/img/total-look/total-look1.jpg" alt="">
-                        </div>
-                        <div class="item-total-look-slider">
-                            <img src="/fashion/img/total-look/total-look2.jpg" alt="">
-                        </div>
-                    </div>
-                    <div class="fashion-total-look__list">
-                        <div data-list-fashion-total-look="true" data-url="/ajax/catalog/product-info/">
-                            <?php
-                        include __DIR__ . '/items-total-look.php';
-                        ?>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="fashion-total-look-section__group" data-group-total-look-fashion="true">
-                <div class="fashion-total-look" data-item-total-look-fashion="true">
-                    <div class="fashion-total-look__slider" data-total-look-slider-fashion="true">
-                        <div class="item-total-look-slider">
-                            <img src="/fashion/img/total-look/total-look2.jpg" alt="">
-                        </div>
-                        <div class="item-total-look-slider">
-                            <img src="/fashion/img/total-look/total-look1.jpg" alt="">
-                        </div>
-                        <div class="item-total-look-slider">
-                            <img src="/fashion/img/total-look/total-look2.jpg" alt="">
-                        </div>
-                    </div>
-                    <div class="fashion-total-look__list">
-                        <div data-list-fashion-total-look="true" data-url="/ajax/catalog/product-info/">
-                            <?php
-                            include __DIR__ . '/items-total-look.php';
-                            ?>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="fashion-total-look-section__btn-wrap">
-                <div class="fashion-total-look-section__btn" data-btn-next-look-fashion="true">Показать ещё</div>
-            </div>
-        </div>
-    </section>
-
     <section class="fashion-info hide show-xs">
         <div class="b-container">
             <div class="fashion-info__list">
@@ -174,6 +59,9 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
         </div>
     </section>
 
+    <? $APPLICATION->IncludeComponent('articul:fashion.product.footer', '') ?>
+
+    <?/*
     <section class="fashion-category">
         <div class="b-container">
             <div class="fashion-category-filter">
@@ -372,6 +260,7 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
                 </div>
             </div>
     </section>
+    */?>
 
     <section class="fashion-info-banner">
         <div class="fashion-info-banner__img">
