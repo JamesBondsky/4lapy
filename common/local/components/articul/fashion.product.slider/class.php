@@ -1,6 +1,8 @@
 <?php
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use FourPaws\Catalog\Collection\ProductCollection;
+use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -15,6 +17,9 @@ use FourPaws\Enum\IblockType;
 class CFashionProductSlider extends \CBitrixComponent
 {
     private $iblockId;
+
+    /** @var ProductCollection $products */
+    private $products;
 
     private $productXmlIds;
 
@@ -32,7 +37,7 @@ class CFashionProductSlider extends \CBitrixComponent
 
     public function executeComponent()
     {
-        if($this->startResultCache()){
+        //if($this->startResultCache()){
             $dbres = \CIBlockElement::GetList([], ['IBLOCK_ID' => $this->iblockId, 'ACTIVE' => 'Y']);
             while($row = $dbres->GetNextElement()){
                 $element = $row->GetFields();
@@ -52,7 +57,7 @@ class CFashionProductSlider extends \CBitrixComponent
             $this->fillImages();
 
             $this->includeComponentTemplate();
-        }
+        //}
     }
 
     private function fillProducts()
@@ -62,7 +67,7 @@ class CFashionProductSlider extends \CBitrixComponent
         }
 
         $productCollection = (new ProductQuery())->withFilter(['XML_ID' => $this->productXmlIds])->exec();
-        $this->arResult['PRODUCTS'] = $productCollection;
+        $this->products = $productCollection;
     }
 
     private function fillImages()
@@ -72,7 +77,15 @@ class CFashionProductSlider extends \CBitrixComponent
         }
         $dbres = CFile::GetList([], ['@ID' => implode(',', $this->imageIds)]);
         while($row = $dbres->Fetch()){
-            $this->arResult['IMAGES'][$row['ID']] = $row;
+            $this->arResult['IMAGES'][$row['ID']] = COption::GetOptionString("main", "upload_dir", "upload") . "/" . $row["SUBDIR"] . "/" . $row["FILE_NAME"];
         }
+    }
+
+    public function getProduct($xmlId)
+    {
+        return $this->products->filter(function ($product) use ($xmlId) {
+            /** @var Product $product */
+            return $product->getXmlId() == $xmlId;
+        })->first();
     }
 }
