@@ -107,6 +107,7 @@ class PushEventService
             ->setSelect([
                 '*',
             ])
+            ->setLimit(500)
             ->exec();
 
         $pushMessages = $this->transformer->fromArray(
@@ -151,6 +152,7 @@ class PushEventService
             ->setSelect([
                 '*'
             ])
+            ->setLimit(500)
             ->exec();
 
         /** @var ApiPushMessage[] $pushMessages */
