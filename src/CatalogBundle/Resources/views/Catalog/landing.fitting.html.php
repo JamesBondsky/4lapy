@@ -90,6 +90,8 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
         </div>
     </div>
 </div>
+
+<? if(!$hide_info) { ?>
 <div class="free_fitting__wrapper">
     <div class="free_fitting">
         <div class="content_dropdown mobile_mq js-content-dropdown-trigger">
@@ -201,3 +203,4 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
         </div>
     </div>
 </div>
+<? } ?>
