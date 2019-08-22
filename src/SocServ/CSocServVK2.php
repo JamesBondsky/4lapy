@@ -63,7 +63,7 @@ class CSocServVK2 extends \CSocServVKontakte {
                 array("logout", "auth_service_error", "auth_service_id", "backurl")
             );
 
-            $state = 'site_id=' . SITE_ID . '&backurl=' . urlencode('/personal/register' . $backurl) . (isset($arParams['BACKURL']) ? '&redirect_url=/personal/register/' . urlencode($arParams['BACKURL']) : '');
+            $state = 'site_id=' . SITE_ID . '&backurl=' . (isset($arParams['BACKURL']) ? '&redirect_url=/personal/register/' . urlencode($arParams['BACKURL']) : '');
         }
 
         return $gAuth->GetAuthUrl($redirect_uri, $state);
