@@ -291,8 +291,8 @@ class Manzana implements LoggerAwareInterface
                         'CUSTOM_PRICE' => 'Y',
                     ]);
 
-                    //$basketPropertyCollection = $item->getPropertyCollection();
-                    //$maxStampsLevelProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'MAX_STAMPS_LEVEL');
+                    $basketPropertyCollection = $item->getPropertyCollection();
+                    $maxStampsLevelProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'MAX_STAMPS_LEVEL');
                     $extendedAttributeCollection = $position->getExtendedAttribute();
                     if ($extendedAttributeCollection->isEmpty()) { // Если атрибут пустой, значит, обмен марок невозможен
                         $this->basketService->setBasketItemPropertyValue($item, 'USE_STAMPS', false);
@@ -303,20 +303,23 @@ class Manzana implements LoggerAwareInterface
                         $maxAvailableLevel = $this->stampService->getMaxAvailableLevel($extendedAttributeCollection, $activeStampsCount);
 
                         $this->basketService->setBasketItemPropertyValue($item, 'MAX_STAMPS_LEVEL', $maxAvailableLevel ? serialize($maxAvailableLevel): false);
-                        /*if ($maxStampsLevelProperty) {
+                        //if ($maxStampsLevelProperty) {
                             $maxStampsLevelProperty->setField('VALUE', $maxAvailableLevel ? serialize($maxAvailableLevel): false);
                             $basketPropertyCollection->save();
-                        }*/
+                        //}
 
                         //TODO set USE_STAMPS=false & MAX_STAMPS_LEVEL=false instead (или заменить на максимальный из тех уровней, на который хватит марок), если пользователь уже выбрал обмен марок у других товаров и на этот обмен марок не хватит
                     }
 
-                    //$item->setPropertyCollection($basketPropertyCollection);
+                    $item->setPropertyCollection($basketPropertyCollection);
                 }
             });
         }
 
-        //$basket->save(); // если не делать здесь сохранение корзины, то надо использовать $maxStampsLevelProperty->setField и $basketPropertyCollection->save(), закомментированные выше
+        // если не делать здесь сохранение корзины, то надо использовать $maxStampsLevelProperty->setField и $basketPropertyCollection->save() (см.выше)
+        // upd: если делать здесь сохранение всей корзины, то начинается дублирование товаров (из-за разделения товаров при применении скидок, которое создает временные дубли с internalId=n1,n2 и т.д.).
+        //      Поэтому использован вариант с сохранением propertyCollection
+        //$basket->save();
     }
 
     /**
