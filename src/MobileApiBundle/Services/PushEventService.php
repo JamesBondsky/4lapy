@@ -247,40 +247,42 @@ class PushEventService
 
         if (count($pushEvents) > 0) {
             foreach ($pushEvents as $pushEvent) {
-                $message = new Message($pushEvent->getMessageText());
-
-                $message->setOption('badge', 1);
-                $message->setOption('sound', '');
-                $message->setOption('custom', [
-                    'type' => $pushEvent->getMessageTypeEntity()->getXmlId(),
-                    'id' => $pushEvent->getEventId()
-                ]);
-                $message->setOption('type', $pushEvent->getMessageTypeEntity()->getXmlId());
-                $message->setOption('id', $pushEvent->getEventId());
-
-
                 try {
-                    $device = new Device($pushEvent->getPushToken());
-                } catch (AdapterException $adapterException) {
-                    continue;
-                }
-                $device->setParameter('badge', 1);
-                $device->setParameter('sound', '');
-                $device->setParameter('type',$pushEvent->getMessageTypeEntity()->getXmlId());
-                $device->setParameter('id', $pushEvent->getEventId());
-                $device->setParameter('custom', [
-                    'type' => $pushEvent->getMessageTypeEntity()->getXmlId(),
-                    'id' => $pushEvent->getEventId()
-                ]);
+                    $message = new Message($pushEvent->getMessageText());
 
-                $deviceArr = new DeviceCollection([
-                    $device
-                ]);
-                $push = new Push($adapter, $deviceArr, $message);
+                    $message->setOption('badge', 1);
+                    $message->setOption('sound', '');
+                    $message->setOption('custom', [
+                        'type' => $pushEvent->getMessageTypeEntity()->getXmlId(),
+                        'id' => $pushEvent->getEventId()
+                    ]);
+                    $message->setOption('type', $pushEvent->getMessageTypeEntity()->getXmlId());
+                    $message->setOption('id', $pushEvent->getEventId());
 
-                $pushManager->add($push);
 
-                $pushId[$pushEvent->getPushToken()] = $pushEvent;
+                    try {
+                        $device = new Device($pushEvent->getPushToken());
+                    } catch (AdapterException $adapterException) {
+                        continue;
+                    }
+                    $device->setParameter('badge', 1);
+                    $device->setParameter('sound', '');
+                    $device->setParameter('type', $pushEvent->getMessageTypeEntity()->getXmlId());
+                    $device->setParameter('id', $pushEvent->getEventId());
+                    $device->setParameter('custom', [
+                        'type' => $pushEvent->getMessageTypeEntity()->getXmlId(),
+                        'id' => $pushEvent->getEventId()
+                    ]);
+
+                    $deviceArr = new DeviceCollection([
+                        $device
+                    ]);
+                    $push = new Push($adapter, $deviceArr, $message);
+
+                    $pushManager->add($push);
+
+                    $pushId[$pushEvent->getPushToken()] = $pushEvent;
+                } catch (\Exception $e) {}
             }
 
             try {
