@@ -159,7 +159,9 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
         }
 
         if (!$basketItem->isDelay() && $offer->getQuantity() > 0) { ?>
-            <div class="b-item-shopping__operation-inner"><?/* Эта обертка нужна только если будут марки*/ //TODO this logic ?>
+            <?php if ($stampInfo['CAN_USE_STAMPS']) { ?>
+                <div class="b-item-shopping__operation-inner">
+            <?php } ?>
                 <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--shopping js-plus-minus-cont" <? if ($offer->getXmlId() == BasketService::GIFT_DOBROLAP_XML_ID) { ?>style="background:transparent;"<?}?>>
                     <? if ($offer->getXmlId() != BasketService::GIFT_DOBROLAP_XML_ID) { ?>
                         <a class="b-plus-minus__minus js-minus" data-url="<?= $basketUpdateUrl ?>"
@@ -229,7 +231,9 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                         </span>
                     </a>
                 <? } ?>
-            </div><?/* Эта обертка нужна только если будут марки*/ //TODO this logic?>
+            <?php if ($stampInfo['CAN_USE_STAMPS']) { ?>
+                </div>
+            <?php } ?>
             <?php if ($stampInfo['CAN_USE_STAMPS'] && count($stampInfo['STAMP_LEVELS'])) { ?>
                 <div class="b-mark-order-price"><? //TODO correct values in this block and conditions to show it ?>
                     <div class="b-mark-order-price__list">
