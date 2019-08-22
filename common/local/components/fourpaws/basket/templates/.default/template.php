@@ -342,11 +342,10 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                         </div>
                     <?php } ?>
 
-                    <? $marksForBasket = 4; //TODO correct value (из $this->manzana->getStampsToBeAdded()) ?>
                     <div class="b-information-order__order b-information-order__order--mark">
                         <div class="">За заказ будет начислено:</div>
                         <div class="">
-                            <?= $marksForBasket . '&nbsp;' . WordHelper::declension($marksForBasket, ['марка', 'марки', 'марок']) ?>
+                            <?= $arResult['MARKS_TO_BE_ADDED'] . '&nbsp;' . WordHelper::declension($arResult['MARKS_TO_BE_ADDED'], ['марка', 'марки', 'марок']) ?>
                         </div>
                     </div>
 

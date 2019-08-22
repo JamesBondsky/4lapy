@@ -34,6 +34,7 @@ use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\KioskBundle\Service\KioskService;
 use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Discount\Gift;
+use FourPaws\SaleBundle\Discount\Manzana;
 use FourPaws\SaleBundle\Discount\Utils\Detach\Adder;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
@@ -99,6 +100,10 @@ class BasketComponent extends CBitrixComponent
     private $ecommerceSalePreset;
     private $promoDescriptions = [];
     private $offer2promoMap = [];
+    /**
+     * @var Manzana
+     */
+    private $manzana;
 
     /**
      * BasketComponent constructor.
@@ -122,6 +127,7 @@ class BasketComponent extends CBitrixComponent
         $this->ecommerceSalePreset = $container->get(SalePreset::class);
         $this->orderStorageService = $container->get(OrderStorageService::class);
         $this->stampService = $container->get(StampService::class);
+        $this->manzana = $container->get(Manzana::class);
     }
 
     /** @noinspection PhpMissingParentCallCommonInspection
@@ -149,7 +155,6 @@ class BasketComponent extends CBitrixComponent
         if (null === $basket || !\is_object($basket) || !($basket instanceof Basket)) {
             $basket = $this->basketService->getBasket();
         }
-
 
         $this->arResult['BASKET'] = $basket;
 
@@ -199,6 +204,7 @@ class BasketComponent extends CBitrixComponent
         );
 
         /**  информация о марках */
+        $this->arResult['MARKS_TO_BE_ADDED'] = $this->manzana->getStampsToBeAdded();
         $this->arResult['ACTIVE_STAMPS_COUNT'] = $this->stampService->getActiveStampsCount();
         $this->arResult['BASKET_ITEMS_STAMPS'] = [];
 
