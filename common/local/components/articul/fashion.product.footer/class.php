@@ -37,7 +37,7 @@ class CFashionProductFooter extends \CBitrixComponent
 
     public function executeComponent()
     {
-        //if($this->startResultCache()){
+        if($this->startResultCache()){
             $dbres = \CIBlockElement::GetList([], ['IBLOCK_ID' => $this->iblockId, 'ACTIVE' => 'Y']);
             while($row = $dbres->GetNextElement()){
                 $element = $row->GetFields();
@@ -55,8 +55,9 @@ class CFashionProductFooter extends \CBitrixComponent
 
             $this->fillProducts();
             $this->fillImages();
-        //}
-        $this->includeComponentTemplate();
+
+            $this->includeComponentTemplate();
+        }
     }
 
     private function fillProducts()
