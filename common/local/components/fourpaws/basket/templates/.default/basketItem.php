@@ -246,18 +246,28 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                             </div>
                         <?php } ?>
                     </div>
-                    <div class="b-mark-order-price__action">
-                        <?php if ($stampInfo['USE_STAMPS']) { ?>
-                        <span data-cancel-charge-marks-cart="true">
-                        Отменить<br/> списание <?= $stampInfo['USE_STAMP_AMOUNT'] ?>
-                        <span class="b-icon b-icon--mark">
-                            <?= new SvgDecorator('icon-mark', 12, 12) ?>
-                        </span>
-                            <?php } else { ?>
-                                <span data-use-marks-cart="true">Использовать марки</span>
-                            <?php } ?>
-                    </span>
-                    </div>
+                    <?
+                    // для дебага
+//                    dump(
+//                        'use: ' . ($stampInfo['USE_STAMPS'] ? 'true' : 'false')
+//	                    . PHP_EOL . 'can use stamps: ' . ($stampInfo['CAN_USE_STAMPS'] ? 'true' : 'false')
+//	                    . PHP_EOL . 'stamps could be used: ' . $stampInfo['USE_STAMP_AMOUNT']
+//	                    . PHP_EOL . 'stamps used: ' . $stampInfo['USED_STAMP_AMOUNT'])
+                    ?>
+	                <?php if ($stampInfo['USE_STAMP_AMOUNT']) { ?>
+	                    <div class="b-mark-order-price__action">
+	                        <?php if ($stampInfo['USE_STAMPS'] && $stampInfo['USED_STAMP_AMOUNT']) { ?>
+	                        <span data-cancel-charge-marks-cart="true">
+	                        Отменить<br/> списание <?= $stampInfo['USED_STAMP_AMOUNT'] ?>
+	                        <span class="b-icon b-icon--mark">
+	                            <?= new SvgDecorator('icon-mark', 12, 12) ?>
+	                        </span>
+	                            <?php } else { ?>
+	                                <span data-use-marks-cart="true">Использовать марки</span>
+	                            <?php } ?>
+	                    </span>
+	                    </div>
+		            <?php } ?>
                 </div>
             <?php } ?>
             <?php if (in_array($offer->getId(), $arResult['ONLY_PICKUP'], true)) { ?>

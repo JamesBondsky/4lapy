@@ -183,11 +183,18 @@ class BasketService
             if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
                 $maxStampsLevelValue = $basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'];
                 $canUseStamps = (bool)$maxStampsLevelValue; //FIXME если нужно отображать размер скидки в рублях, процент скидки, то можно посчитать их здесь
-                $canUseStampsObj = unserialize($maxStampsLevelValue);
-                $canUseStampsAmountKey = $canUseStampsObj ? $canUseStampsObj['key'] : false;
-                if ($canUseStampsAmountKey) {
-                    $discount = $this->stampService->parseLevelKey($canUseStampsAmountKey);
-                    $canUseStampsAmount = $discount['discountStamps'] * $canUseStampsObj['value']; //TODO не будет ли бага, когда манзана присылает больше единиц, чем у пользователя в корзине?
+
+                if ($useStamps) {
+                    if ($usedStamps = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL']['VALUE'])['stampsUsed']) {
+                        $canUseStampsAmount = $usedStamps;
+                    }
+                } else {
+                    $canUseStampsObj = unserialize($maxStampsLevelValue);
+                    $canUseStampsAmountKey = $canUseStampsObj ? $canUseStampsObj['key'] : false;
+                    if ($canUseStampsAmountKey) {
+                        $discount = $this->stampService->parseLevelKey($canUseStampsAmountKey);
+                        $canUseStampsAmount = $discount['discountStamps'] * $canUseStampsObj['value']; //TODO не будет ли бага, когда манзана присылает больше единиц, чем у пользователя в корзине?
+                    }
                 }
             }
 

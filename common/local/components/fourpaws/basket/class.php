@@ -212,16 +212,19 @@ class BasketComponent extends CBitrixComponent
             $canUseStamps = isset(StampService::EXCHANGE_RULES[$offer->getXmlId()]);
             $stampLevels = ($canUseStamps) ? StampService::EXCHANGE_RULES[$offer->getXmlId()] : null;
             $useStamps = false;
+            $usedStamps = 0;
             $useStampsAmount = 0;
 
             if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS'])) {
                 $useStamps = (bool)$basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS']['VALUE'];
-
-                if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
-                    $stampsInfo = $basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'];
-                    if ($stampsInfoArr = unserialize($stampsInfo)) {
-                        $useStampsAmount = $stampsInfoArr['value'] * $this->stampService->parseLevelKey($stampsInfoArr['key'])['discountStamps'];
-                    }
+            }
+            if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL'])) {
+                $usedStamps = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL']['VALUE'])['stampsUsed'];
+            }
+            if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
+                $stampsInfo = $basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'];
+                if ($stampsInfo && $stampsInfoArr = unserialize($stampsInfo)) {
+                    $useStampsAmount = $stampsInfoArr['value'] * $this->stampService->parseLevelKey($stampsInfoArr['key'])['discountStamps'];
                 }
             }
 
@@ -229,6 +232,7 @@ class BasketComponent extends CBitrixComponent
               'CAN_USE_STAMPS' => $canUseStamps,
               'STAMP_LEVELS' => $stampLevels,
               'USE_STAMPS' => $useStamps,
+              'USED_STAMP_AMOUNT' => $usedStamps,
               'USE_STAMP_AMOUNT' => $useStampsAmount,
             ];
         }

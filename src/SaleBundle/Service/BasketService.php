@@ -51,6 +51,7 @@ use FourPaws\Helpers\IblockHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\PersonalBundle\Service\PiggyBankService;
+use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils;
 use FourPaws\SaleBundle\Discount\Utils\AdderInterface;
@@ -94,6 +95,8 @@ class BasketService implements LoggerAwareInterface
     private $manzanaPosService;
     /** @var OrderService */
     private $orderService;
+    /** @var StampService */
+    private $stampService;
     /** @todo КОСТЫЛЬ! УБРАТЬ В КУПОНЫ */
     private $promocodeDiscount = 0.0;
     private $fUserId;
@@ -106,24 +109,27 @@ class BasketService implements LoggerAwareInterface
     public const GIFT_DOBROLAP_XML_ID_ALT = '3006616';
     private $dobrolapMagnets;
 
-	/**
-	 * BasketService constructor.
-	 *
-	 * @param CurrentUserProviderInterface $currentUserProvider
-	 * @param ManzanaPosService $manzanaPosService
-	 * @param OrderService $orderService
-	 * @param ShareRepository $shareRepository
-	 */
+    /**
+     * BasketService constructor.
+     *
+     * @param CurrentUserProviderInterface $currentUserProvider
+     * @param ManzanaPosService $manzanaPosService
+     * @param OrderService $orderService
+     * @param ShareRepository $shareRepository
+     * @param StampService $stampService
+     */
     public function __construct(
         CurrentUserProviderInterface $currentUserProvider,
         ManzanaPosService $manzanaPosService,
         OrderService $orderService,
-        ShareRepository $shareRepository
+        ShareRepository $shareRepository,
+        StampService $stampService
     ) {
         $this->currentUserProvider = $currentUserProvider;
         $this->manzanaPosService = $manzanaPosService;
         $this->orderService = $orderService;
         $this->shareRepository = $shareRepository;
+        $this->stampService = $stampService;
     }
 
     /**
@@ -290,7 +296,6 @@ class BasketService implements LoggerAwareInterface
         //$basketPropertyCollection = $basketItem->getPropertyCollection();
         //TODO использовать это поле и на сайте
 
-        $this->setBasketItemPropertyValue($basketItem, 'USE_STAMPS', (string)$useStamps);
         //$this->setBasketItemPropertyValue($basketItem, 'MAX_STAMPS_LEVEL', (string)'test3');
         //$basketPropertyCollection->save();
         //$basketItem->setPropertyCollection($basketPropertyCollection);
@@ -310,6 +315,30 @@ class BasketService implements LoggerAwareInterface
                 throw new BitrixProxyException($result);
             }
         }
+
+        $this->setBasketItemPropertyValue($basketItem, 'USE_STAMPS', (string)$useStamps);
+
+        if ($useStamps) {
+            $maxStampsLevelProp = $this->getBasketItemPropertyValue($basketItem, 'MAX_STAMPS_LEVEL');
+            if ($maxStampsLevelProp) {
+                $maxStampsLevelPropValue = unserialize($maxStampsLevelProp);
+                $maxStampsLevelKey = $maxStampsLevelPropValue['key'];
+                if ($maxStampsLevelKey) {
+                    $parsedStampsLevelKey = $this->stampService->parseLevelKey($maxStampsLevelKey);
+                    $stampsUsed = $parsedStampsLevelKey['discountStamps'] * $maxStampsLevelPropValue['value'];
+                    $usedStampsInfo = [
+                        'stampsUsed' => $stampsUsed,
+                        'discountValue' => $parsedStampsLevelKey['discountValue'],
+                        'discountType' => $parsedStampsLevelKey['discountType'],
+                        'productQuantity' => $maxStampsLevelPropValue['value'],
+                    ];
+                    $this->setBasketItemPropertyValue($basketItem, 'USED_STAMPS_LEVEL', serialize($usedStampsInfo));
+                }
+            }
+        } else {
+            $this->setBasketItemPropertyValue($basketItem, 'USED_STAMPS_LEVEL', (string)false);
+        }
+
         if ($this->getBasket()->getOrder()) {
             $updateResult = BasketTable::update($basketItem->getId(), ['QUANTITY' => $quantity]);
             if (!$updateResult->isSuccess()) {
