@@ -12,6 +12,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 $request = Application::getInstance()->getContext()->getRequest();
 $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
+if (!$backUrl) {
+    $backUrl = '/';
+}
 ?>
 <div class="b-registration__content b-registration__content--moiety">
     <a class="b-button b-button--social b-button--full-width js-reg-by-phone"
@@ -32,6 +35,7 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
                 'AUTH_SERVICES' => $arResult['AUTH_SERVICES'],
                 'AUTH_URL'      => $arResult['AUTH_URL'],
                 'POST'          => $arResult['POST'],
+                'BACKURL' => 'tets',
             ],
             $component,
             ['HIDE_ICONS' => 'Y']
