@@ -63,70 +63,95 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
 
     <?/*
     <section class="fashion-category">
-        <div class="b-container">
-            <div class="fashion-category-filter">
-                <div class="fashion-category-filter__item active" data-type-filter-category-fashion="0">
-                    <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
-                        <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_overalls.png')"></div>
+        <div class="fashion-category-header-mobile">
+            <div class="b-container">
+                <div class="fashion-category-header-mobile__content">
+                    <div class="fashion-category-header-mobile__title">Категории</div>
+                    <div class="fashion-category-header-mobile__count-select">Выбрано (<span data-count-select-category-fashion="true"></span>)</div>
+                    <div class="fashion-category-header-mobile__back" data-open-filter-category-fashion="true">
+                        <span class="b-icon b-icon--open-filter">
+                            <?= new SvgDecorator('icon-open-filter', 19, 14) ?>
+                        </span>
                     </div>
-                    <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Комбинезоны</div>
-                </div>
-                <div class="fashion-category-filter__item active" data-type-filter-category-fashion="1">
-                    <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
-                        <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_sweaters.png')"></div>
-                    </div>
-                    <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Свитера и толстовки</div>
-                </div>
-                <div class="fashion-category-filter__item active" data-type-filter-category-fashion="2">
-                    <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
-                        <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_footwear.png')"></div>
-                    </div>
-                    <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Обувь</div>
-                </div>
-                <div class="fashion-category-filter__item" data-type-filter-category-fashion="3">
-                    <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
-                        <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_jackets.png')"></div>
-                    </div>
-                    <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Куртки и жилетки</div>
-                </div>
-                <div class="fashion-category-filter__item" data-type-filter-category-fashion="4">
-                    <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
-                        <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_blankets.png')"></div>
-                    </div>
-                    <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Попоны</div>
-                </div>
-                <div class="fashion-category-filter__item" data-type-filter-category-fashion="5">
-                    <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
-                        <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_raincoats.png')"></div>
-                    </div>
-                    <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Дождевики</div>
-                </div>
-                <div class="fashion-category-filter__item" data-type-filter-category-fashion="6">
-                    <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
-                        <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_socks.png')"></div>
-                    </div>
-                    <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Носки</div>
-                </div>
-                <div class="fashion-category-filter__item" data-type-filter-category-fashion="7">
-                    <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
-                        <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_costumes.png')"></div>
-                    </div>
-                    <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Костюмы</div>
-                </div>
-                <div class="fashion-category-filter__item" data-type-filter-category-fashion="8">
-                    <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
-                        <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_t-shirts.png')"></div>
-                    </div>
-                    <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Футболки и майки</div>
-                </div>
-                <div class="fashion-category-filter__item" data-type-filter-category-fashion="9">
-                    <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
-                        <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_hats.png')"></div>
-                    </div>
-                    <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Шапки</div>
                 </div>
             </div>
         </div>
+        <div class="fashion-category__filter" data-content-filter-category-fashion="true">
+            <div class="fashion-category-header-mobile">
+                <div class="b-container">
+                    <div class="fashion-category-header-mobile__content">
+                        <div class="fashion-category-header-mobile__back" data-close-filter-category-fashion="true"></div>
+                        <div class="fashion-category-header-mobile__title">Категории</div>
+                        <div class="fashion-category-header-mobile__count-select">Выбрано (<span data-count-select-category-fashion="true"></span>)</div>
+                    </div>
+                </div>
+            </div>
+            <div class="b-container">
+                <div class="fashion-category-filter">
+                    <div class="fashion-category-filter__item active" data-type-filter-category-fashion="0">
+                        <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
+                            <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_overalls.png')"></div>
+                        </div>
+                        <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Комбинезоны</div>
+                    </div>
+                    <div class="fashion-category-filter__item active" data-type-filter-category-fashion="1">
+                        <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
+                            <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_sweaters.png')"></div>
+                        </div>
+                        <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Свитера и толстовки</div>
+                    </div>
+                    <div class="fashion-category-filter__item active" data-type-filter-category-fashion="2">
+                        <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
+                            <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_footwear.png')"></div>
+                        </div>
+                        <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Обувь</div>
+                    </div>
+                    <div class="fashion-category-filter__item" data-type-filter-category-fashion="3">
+                        <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
+                            <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_jackets.png')"></div>
+                        </div>
+                        <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Куртки и жилетки</div>
+                    </div>
+                    <div class="fashion-category-filter__item" data-type-filter-category-fashion="4">
+                        <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
+                            <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_blankets.png')"></div>
+                        </div>
+                        <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Попоны</div>
+                    </div>
+                    <div class="fashion-category-filter__item" data-type-filter-category-fashion="5">
+                        <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
+                            <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_raincoats.png')"></div>
+                        </div>
+                        <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Дождевики</div>
+                    </div>
+                    <div class="fashion-category-filter__item" data-type-filter-category-fashion="6">
+                        <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
+                            <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_socks.png')"></div>
+                        </div>
+                        <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Носки</div>
+                    </div>
+                    <div class="fashion-category-filter__item" data-type-filter-category-fashion="7">
+                        <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
+                            <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_costumes.png')"></div>
+                        </div>
+                        <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Костюмы</div>
+                    </div>
+                    <div class="fashion-category-filter__item" data-type-filter-category-fashion="8">
+                        <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
+                            <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_t-shirts.png')"></div>
+                        </div>
+                        <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Футболки и майки</div>
+                    </div>
+                    <div class="fashion-category-filter__item" data-type-filter-category-fashion="9">
+                        <div class="fashion-category-filter__img-wrap" data-img-type-filter-category-fashion="true">
+                            <div class="fashion-category-filter__img" style="background-image: url('/fashion/img/category/category-fashion_hats.png')"></div>
+                        </div>
+                        <div class="fashion-category-filter__title" data-title-type-filter-category-fashion="true">Шапки</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="fashion-category-list">
                 <div class="item-category-fashion active" data-item-filter-category-fashion="0" data-url="/ajax/catalog/product-info/">
                     <div class="b-container">
