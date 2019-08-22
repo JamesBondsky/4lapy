@@ -13,7 +13,7 @@ use FourPaws\Decorators\SvgDecorator; ?>
             <div class="fashion-category-header-mobile__content">
                 <div class="fashion-category-header-mobile__info">
                     <div class="fashion-category-header-mobile__title">Категории</div>
-                    <div class="fashion-category-header-mobile__count-select">Выбрано (<span data-count-select-category-fashion="true">3</span>)</div>
+                    <div class="fashion-category-header-mobile__count-select">Выбрано (<span data-count-select-category-fashion="true"><?=(count($arResult['ELEMENTS']) > 2 ? '3' : count($arResult['ELEMENTS']))?></span>)</div>
                 </div>
                 <div class="fashion-category-header-mobile__open-filter" data-open-filter-category-fashion="true">
                     <span class="b-icon b-icon--open-filter">
@@ -31,7 +31,7 @@ use FourPaws\Decorators\SvgDecorator; ?>
                     <div class="fashion-category-header-mobile__info">
                         <div class="fashion-category-header-mobile__back" data-close-filter-category-fashion="true"></div>
                         <div class="fashion-category-header-mobile__title">Категории</div>
-                        <div class="fashion-category-header-mobile__count-select">Выбрано (<span data-count-select-category-fashion="true">3</span>)</div>
+                        <div class="fashion-category-header-mobile__count-select">Выбрано (<span data-count-select-category-fashion="true"><?=(count($arResult['ELEMENTS']) > 2 ? '3' : count($arResult['ELEMENTS']))?></span>)</div>
                     </div>
                 </div>
             </div>
