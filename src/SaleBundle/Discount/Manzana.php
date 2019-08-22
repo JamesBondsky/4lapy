@@ -302,11 +302,20 @@ class Manzana implements LoggerAwareInterface
 
                         $maxAvailableLevel = $this->stampService->getMaxAvailableLevel($extendedAttributeCollection, $activeStampsCount);
 
-                        $this->basketService->setBasketItemPropertyValue($item, 'MAX_STAMPS_LEVEL', $maxAvailableLevel ? serialize($maxAvailableLevel): false);
-                        //if ($maxStampsLevelProperty) {
-                            $maxStampsLevelProperty->setField('VALUE', $maxAvailableLevel ? serialize($maxAvailableLevel): false);
-                            $basketPropertyCollection->save();
-                        //}
+                        $maxAvailableLevelSerialized = $maxAvailableLevel ? serialize($maxAvailableLevel): false;
+                        //$this->basketService->setBasketItemPropertyValue($item, 'MAX_STAMPS_LEVEL', $maxAvailableLevelSerialized);
+                        if ($maxStampsLevelProperty) {
+                            $maxStampsLevelProperty->setField('VALUE', $maxAvailableLevelSerialized);
+                        } else {
+                            $maxStampsLevelProperty = $basketPropertyCollection->createItem();
+                            $maxStampsLevelProperty->setFields([
+                                'NAME' => 'MAX_STAMPS_LEVEL',
+                                'CODE' => 'MAX_STAMPS_LEVEL',
+                                'VALUE' => $maxAvailableLevelSerialized,
+                            ]);
+                            $maxStampsLevelProperty->save();
+                        }
+                        $basketPropertyCollection->save();
 
                         //TODO set USE_STAMPS=false & MAX_STAMPS_LEVEL=false instead (или заменить на максимальный из тех уровней, на который хватит марок), если пользователь уже выбрал обмен марок у других товаров и на этот обмен марок не хватит
                     }
