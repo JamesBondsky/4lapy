@@ -1250,7 +1250,7 @@ class UserService implements
             return !empty(trim($item));
         });
 
-        if (count($userIdsOrig) > 0) {
+        if (count($userIdsOrig) > 0 and $field == 'LOGIN') {
             $users = $this->userRepository->findBy(['PERSONAL_PHONE' => $userIdsOrig]);
             foreach ($users as $user) {
                 $userIds[] = $user->getId();
@@ -1345,7 +1345,8 @@ class UserService implements
 
             $barcodeGenerator = new BarcodeGeneratorPNG();
             if ($isOnlyEmail) {
-                $offerFields = $this->personalOffersService->getOfferFieldsByCouponId(is_int($promocode) ? intval($promocode) : $promocodeId);
+//                $offerFields = $this->personalOffersService->getOfferFieldsByCouponId(is_int($promocode) ? intval($promocode) : $promocodeId);
+                $offerFields = $this->personalOffersService->getOfferFieldsByPromoCode($promocode);
             } else {
                 $offerFields = $this->personalOffersService->getOfferFieldsByPromoCode($promocode);
             }
