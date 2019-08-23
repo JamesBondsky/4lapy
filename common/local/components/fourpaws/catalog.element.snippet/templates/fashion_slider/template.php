@@ -68,7 +68,7 @@ if (!$currentOffer->getImagesIds()) {
 <div class="b-common-item js-product-item" data-productid="<?= $product->getId() ?>">
     <span class="b-common-item__image-wrap">
         <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getLink() ?>"
-           onclick="<?= $getOnClick($currentOffer) ?>">
+           onclick="<?= $getOnClick($currentOffer) ?>" target="_blank">
             <img class="b-common-item__image js-weight-img"
                  src="<?= $offerWithImages->getResizeImages(240, 240)->first() ?>"
                  alt="<?= $product->getName() ?>"
@@ -77,7 +77,7 @@ if (!$currentOffer->getImagesIds()) {
     </span>
     <div class="b-common-item__info-center-block">
         <a class="b-common-item__description-wrap js-item-link" href="<?= $currentOffer->getLink() ?>"
-           onclick="<?= $getOnClick($currentOffer) ?>" title="">
+           onclick="<?= $getOnClick($currentOffer) ?>" title="" target="_blank">
             <span class="b-clipped-text b-clipped-text--three">
                 <span>
                     <?php if ($product->getBrand()) { ?>
@@ -118,6 +118,9 @@ if (!$currentOffer->getImagesIds()) {
                                                         > 1) ? ' b-weight-container__link--mobile ' : '' ?> js-mobile-select js-select-mobile-package"
                    href="javascript:void(0);"
                    title=""><?= $value ?></a>
+                <div class="b-weight-container__dropdown-list__wrapper">
+                    <div class="b-weight-container__dropdown-list"></div>
+                </div>
                 <ul class="b-weight-container__list">
                     <?php
                     foreach ($offers as $offer) {
