@@ -242,6 +242,32 @@ class IblockFashionAdd20190822125321 extends \Adv\Bitrixtools\Migration\SprintMi
             "USER_TYPE_SETTINGS" => null,
             "HINT" => "",
         ));
+
+        $helper->Iblock()->addPropertyIfNotExists($iblockId, array(
+            "NAME" => "Привязка к разделу",
+            "ACTIVE" => "Y",
+            "SORT" => "500",
+            "CODE" => "SECTION",
+            "DEFAULT_VALUE" => "",
+            "PROPERTY_TYPE" => "G",
+            "ROW_COUNT" => "1",
+            "COL_COUNT" => "30",
+            "LIST_TYPE" => "L",
+            "MULTIPLE" => "N",
+            "XML_ID" => "",
+            "FILE_TYPE" => "",
+            "MULTIPLE_CNT" => "5",
+            "TMP_ID" => null,
+            "LINK_IBLOCK_ID" => "2",
+            "WITH_DESCRIPTION" => "N",
+            "SEARCHABLE" => "N",
+            "FILTRABLE" => "N",
+            "IS_REQUIRED" => "Y",
+            "VERSION" => "1",
+            "USER_TYPE" => null,
+            "USER_TYPE_SETTINGS" => null,
+            "HINT" => "",
+        ));
     }
 
     public function down(){
