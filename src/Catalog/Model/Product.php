@@ -2234,17 +2234,20 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                 if(empty($locationGroup['LOCATIONS'])) continue;
                 $location = array_pop($locationGroup['LOCATIONS']);
                 foreach ($this->getOffers() as $offer) {
-                    if($canDeliver && $offer->isDeliverable($location)){
+                    if(!in_array(static::AVAILABILITY_DELIVERY, $result[$locationGroup['CODE']])
+                        && $canDeliver
+                        && $offer->isDeliverable($location)
+                    ){
                         $result[$locationGroup['CODE']][] = static::AVAILABILITY_DELIVERY;
                     }
-                    if($offer->isPickupAvailable($location)){
+
+                    if(!in_array(static::AVAILABILITY_PICKUP, $result[$locationGroup['CODE']])
+                        && $canDeliver
+                        && $offer->isPickupAvailable($location)
+                    ){
                         $result[$locationGroup['CODE']][] = static::AVAILABILITY_PICKUP;
                     }
                 }
-            }
-
-            foreach ($result as $code => $locationGroup){
-                $result[$code] = array_unique($locationGroup);
             }
 
             $this->fullDeliveryAvailability = $result;

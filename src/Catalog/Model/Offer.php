@@ -1568,7 +1568,7 @@ class Offer extends IblockElement
      */
     public function isDeliverable($locationId = ''): bool
     {
-        if (null === $this->isDeliverable) {
+        if (null === $this->isDeliverable || $locationId != '') {
             $this->isDeliverable = ($this->getAvailableAmount($locationId, DeliveryService::DELIVERY_CODES) > 0);
         }
 
@@ -1592,7 +1592,7 @@ class Offer extends IblockElement
      */
     public function isPickupAvailable($locationId = ''): bool
     {
-        if (null === $this->isPickupAvailable) {
+        if (null === $this->isPickupAvailable || $locationId != '') {
             $this->isPickupAvailable = ($this->getAvailableAmount($locationId, DeliveryService::PICKUP_CODES) > 0);
         }
 
