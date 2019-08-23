@@ -195,13 +195,19 @@ class OfferService implements LoggerAwareInterface
      */
     protected function fillProperties(Offer $offer, Material $material): void
     {
+        $colorCombination = $material->getColorCombination();
+
         if ($material->getMatType2() === '01') {
             $offer->withColourCombination(
                 $material->getOfferXmlId()
             );
         } else {
+            $generalArticle = $material->getGeneralArticle();
+            if (!$generalArticle && $colorCombination) {
+                $generalArticle = $colorCombination;
+            }
             $offer->withColourCombination(
-                $material->getGeneralArticle()
+                $generalArticle
             );
         }
         $offer->withFlavourCombination(
