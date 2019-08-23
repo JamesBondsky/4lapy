@@ -248,6 +248,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         if (!isset($_SESSION['COUNT_AUTH_AUTHORIZE'])) {
             $_SESSION['COUNT_AUTH_AUTHORIZE'] = 0;
         }
+        if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > 3) {
+            $_SESSION['COUNT_AUTH_AUTHORIZE'] = 0;
+        }
         $_SESSION['COUNT_AUTH_AUTHORIZE']++;
 
         $checkedCaptcha = true;

@@ -101,13 +101,13 @@ class UserPasswordService
         }
     }
 
-    public function changePassword(int $userId)
+    public function changePassword(int $userId, ?bool $checkPolicy = false)
     {
         /** @var User $user */
         $user = $this->userRepository->find($userId);
 
         if ($user) {
-            $password = $this->generatePassword($user);
+            $password = $this->generatePassword($user, $checkPolicy);
             $this->setChangePasswordPossibleForAll(true);
             $this->userRepository->updatePassword($userId, $password);
             $this->setChangePasswordPossibleForAll(false);
@@ -117,18 +117,20 @@ class UserPasswordService
     }
 
     /**
-     *
      * @param User $user
-     *
+     * @param bool|null $checkPolicy
      * @return string
+     * @throws \Exception
      */
-    public function generatePassword(User $user): string
+    public function generatePassword(User $user, ?bool $checkPolicy = true): string
     {
-        $this->chars .= '~!@#$%^&*()_+=-{}|<>';
+        if ($checkPolicy) {
+            $this->chars .= '~!@#$%^&*()_+=-{}|<>';
+        }
         $policy = \CUser::GetGroupPolicy($user->getGroupsIds());
         do {
             $password = randString($policy['PASSWORD_LENGTH'] + \random_int(1, 3), $this->chars);
-        } while (!empty($this->cUser->CheckPasswordAgainstPolicy($password, $policy)));
+        } while (!empty($this->cUser->CheckPasswordAgainstPolicy($password, $policy)) && $checkPolicy);
 
         return $password;
     }
