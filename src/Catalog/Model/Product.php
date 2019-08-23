@@ -2235,7 +2235,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                 $location = array_pop($locationGroup['LOCATIONS']);
                 foreach ($this->getOffers() as $offer) {
                     if($canDeliver && $offer->isDeliverable($location)){
-                        $result[$locationGroup['CODE']][] = static::AVAILABILITY_PICKUP;
+                        $result[$locationGroup['CODE']][] = static::AVAILABILITY_DELIVERY;
                     }
                     if($offer->isPickupAvailable($location)){
                         $result[$locationGroup['CODE']][] = static::AVAILABILITY_PICKUP;
