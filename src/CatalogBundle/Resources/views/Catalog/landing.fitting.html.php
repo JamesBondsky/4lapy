@@ -11,10 +11,10 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
  * @var PhpEngine $view
  */ ?>
 <div class="measure_dog__wrapper js-measure-dog">
-    <div class="measure_dog">
+    <div class="measure_dog measure_dog--start_size">
         <div class="content_dropdown js-content-dropdown-trigger mobile_mq">
             <div class="content_dropdown__title">
-                Узнать размер собаки
+                Как узнать размер собаки
                 <div class="content_dropdown__arrow">
                     <?= new SvgDecorator('icon-up-arrow') ?>
                 </div>
@@ -46,7 +46,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
     </div>
     <div class="measure_dog--custom_size">
         <div class="content_dropdown mobile_mq js-content-dropdown-trigger">
-            <div class="content_dropdown__title">Узнать размер собаки
+            <div class="content_dropdown__title">Как узнать размер собаки
                 <div class="content_dropdown__arrow">
                     <?= new SvgDecorator('icon-up-arrow') ?>
                 </div>
@@ -54,13 +54,13 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
         </div>
         <div class="content_dropdown__content js-content-dropdown-content">
             <div class="measure_dog__content_wrapper">
-                <div class="measure_dog__title">У твоей собаки нестандарный размер</div>
+                <div class="measure_dog__title">У&nbsp;твоей собаки нестандарный размер</div>
                 <div class="measure_dog__container">
                     <div class="measure_dog__img"></div>
                     <div class="measure_dog__result">
                         <ul class="measure_dog__steps">
                             <li><span class="num">1</span>
-                                закажи бесплатную доставку и примерку
+                                закажи бесплатную доставку и&nbsp;примерку<br/>
                                 <span class="light">домой или в <a href="/shops/">магазин</a></span>
                             </li>
                             <li><span class="num">2</span>примерь несколько размеров</li>
@@ -78,7 +78,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
     </div>
     <div class="measure_dog--default_size">
         <div class="content_dropdown mobile_mq js-content-dropdown-trigger">
-            <div class="content_dropdown__title">Узнать размер собаки
+            <div class="content_dropdown__title">Как узнать размер собаки
                 <div class="content_dropdown__arrow">
                     <?= new SvgDecorator('icon-up-arrow') ?>
                 </div>
@@ -92,12 +92,12 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
                     <div class="measure_dog__result">
                         <div class="measure_dog__size">
                             <div class="measure_dog__size-title">
-                                скорее всего у вашей собаки размер
+                                скорее всего у&nbsp;вашей собаки размер
                             </div>
                             <div class="measure_dog__size-number" data-size-dog-measure="true"></div>
                         </div>
                         <div class="measure_dog__paragraph">
-                            специально для вашего питомца Мы подобрали одежду по размеру
+                            специально для вашего питомца Мы подобрали одежду по&nbsp;размеру
                         </div>
                         <div class="measure_dog__button_set">
                             <a class="measure_dog__button js-scroll-to-catalog" href="#">Посмотреть</a>
