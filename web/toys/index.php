@@ -19,7 +19,7 @@
 
                     <div>
                         <p class="toys-landing__steps-title">Копи марки</p>
-                        <p class="toys-landing__steps-description">1 марка за 1500 Р в чеке</p>
+                        <p class="toys-landing__steps-description">1 марка = 400 рублей</p>
                     </div>
                 </li>
 
@@ -27,8 +27,8 @@
                     <img src="/upload/toys-landing/step-2.svg" alt="" class="toys-landing__steps-image" />
 
                     <div>
-                        <p class="toys-landing__steps-title">Выбери игру</p>
-                        <p class="toys-landing__steps-description">из 4-х участвующих</p>
+                        <p class="toys-landing__steps-title">Выбирай умные игрушки</p>
+                        <p class="toys-landing__steps-description">Покупай со скидкой до 50%</p>
                     </div>
                 </li>
 
@@ -36,8 +36,8 @@
                     <img src="/upload/toys-landing/step-3.svg" alt="" class="toys-landing__steps-image" />
 
                     <div>
-                        <p class="toys-landing__steps-title">Развивай</p>
-                        <p class="toys-landing__steps-description">своего питомца</p>
+                        <p class="toys-landing__steps-title">Занимайся с питомцем</p>
+                        <p class="toys-landing__steps-description">Развивай любознательность, обучай и играй с удовольствием</p>
                     </div>
                 </li>
             </ul>
@@ -60,7 +60,7 @@
                     </picture>
 
                     <div class="toys-landing-item__splash-content">
-                        <h3 class="toys-landing-item__splash-title">Cолитёр</h3>
+                        <h3 class="toys-landing-item__splash-title"><a href="/catalog/koshki/igrushki-koshki/razvivayushchie/razvivayushchaya-igrushka-dlya-koshek-soliter-oe-20-sm-belyy-siniy.html" target="_blank">Cолитёр</a></h3>
                         <p class="toys-landing-item__splash-text">Легкая и интересная игра для котят и любознательных взрослых кошек</p>
                     </div>
                 </div>
@@ -104,7 +104,7 @@
                         </div>
 
                         <div class="toys-landing-product__footer-actions">
-                            <button class="toys-landing-product__a2c">
+                            <button class="toys-landing-product__a2c js-basket-add" onmousedown="try { rrApi.addToBasket(1035430); } catch (e) {}" data-offerid="99560" data-url="/ajax/sale/basket/add/">
                                 В корзину
                             </button>
 
@@ -154,7 +154,7 @@
                         </div>
 
                         <div class="toys-landing-product__footer-actions">
-                            <button class="toys-landing-product__a2c">
+                            <button class="toys-landing-product__a2c js-basket-add" onmousedown="try {rrApi.addToBasket(1021198);} catch (e) {}" data-offerid="47902" data-url="/ajax/sale/basket/add/">
                                 В корзину
                             </button>
 
@@ -172,7 +172,7 @@
                     </picture>
 
                     <div class="toys-landing-item__splash-content">
-                        <h3 class="toys-landing-item__splash-title">Кормушка-тоннель</h3>
+                        <h3 class="toys-landing-item__splash-title"><a href="/catalog/koshki/igrushki-koshki/razvivayushchie/Triksi_Igrushka_dlya_lakomstv_dlya_koshek_Kormushkatunnel_ø_28_sm14_sm_1021198.html" target="_blank">Кормушка-тоннель</a></h3>
                         <p class="toys-landing-item__splash-text">Игра-кормушка развивает ловкость и смекалку. Можно кормить как из миски каждый день</p>
                     </div>
                 </div>
@@ -198,7 +198,7 @@
                     </picture>
 
                     <div class="toys-landing-item__splash-content">
-                        <h3 class="toys-landing-item__splash-title">Flip&amp;Fun</h3>
+                        <h3 class="toys-landing-item__splash-title"><a href="/catalog/sobaki/igrushki/razvivayushchie-igrushki/razvivayushchaya-igrushka-dlya-sobak-flip-fun-f-23-sm.html" target="_blank">Flip&amp;Fun</a></h3>
                         <p class="toys-landing-item__splash-text">Увлекательная игра-головоломка с несколькими уровнями сложности</p>
                     </div>
                 </div>
@@ -242,7 +242,7 @@
                         </div>
 
                         <div class="toys-landing-product__footer-actions">
-                            <button class="toys-landing-product__a2c">
+                            <button class="toys-landing-product__a2c js-basket-add" onmousedown="try {rrApi.addToBasket(1035432);} catch (e) {}" data-offerid="99564" data-url="/ajax/sale/basket/add/">
                                 В корзину
                             </button>
 
@@ -292,7 +292,7 @@
                         </div>
 
                         <div class="toys-landing-product__footer-actions">
-                            <button class="toys-landing-product__a2c">
+                            <button class="toys-landing-product__a2c js-basket-add" onmousedown="try {rrApi.addToBasket(1031456);} catch (e) {}" data-offerid="90309" data-url="/ajax/sale/basket/add/">
                                 В корзину
                             </button>
 
@@ -310,7 +310,7 @@
                     </picture>
 
                     <div class="toys-landing-item__splash-content">
-                        <h3 class="toys-landing-item__splash-title">Poker Box</h3>
+                        <h3 class="toys-landing-item__splash-title"><a href="/catalog/sobaki/igrushki/razvivayushchie-igrushki/razvivayushchaya-igrushka-dlya-sobak-poker-box-2-31x31sm.html" target="_blank">Poker Box</a></h3>
                         <p class="toys-landing-item__splash-text">Мощный тренажер для
                             развития интеллекта собаки</p>
                     </div>
@@ -336,7 +336,7 @@
                 <div class="toys-landing-benefits__text">
                     <strong>Подходят</strong><br />
                     для питомцев <br />
-                    от 3х месяцев
+                    от 3-х месяцев
                 </div>
             </li>
 
@@ -345,19 +345,21 @@
 
                 <div class="toys-landing-benefits__text">
                     <strong>Продлевают</strong><br />
-                    молодость и радует <br />
+                    молодость и радуют <br />
                     питомца
                 </div>
             </li>
         </ul>
 
-        <h2 class="toys-landing__check-header">Копи марки как тебе удобно</h2>
+        <h2 class="toys-landing__check-header">Как отслеживать баланс марок</h2>
 
         <div class="toys-landing-check">
             <img src="/upload/toys-landing/check.jpg" alt="" class="toys-landing-check__image" />
 
             <div class="toys-landing-check__sidebar">
                 <p class="toys-landing-check__text">
+                    <strong style="text-transform: uppercase;">Копи марки как тебе удобно</strong> <br /> <br />
+
                     АКТИВИРУЙ КАРТУ, СОВЕРШАЙ ПОКУПКИ, ОТСЛЕЖИВАЙ БАЛАНС МАРОК НА ЧЕКЕ, В
                     ЛИЧНОМ КАБИНЕТЕ НА САЙТЕ ИЛИ В МОБИЛЬНОМ ПРИЛОЖЕНИИ, ПОКУПАЙ УМНЫЕ
                     ИГРУШКИ СО СКИДКОЙ ДО 50%.
