@@ -2243,6 +2243,10 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                 }
             }
 
+            foreach ($result as $code => $locationGroup){
+                $result[$code] = array_unique($locationGroup);
+            }
+
             $this->fullDeliveryAvailability = $result;
         }
 
