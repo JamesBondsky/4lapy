@@ -13,6 +13,7 @@ use FourPaws\CatalogBundle\Service\OftenSeekInterface;
 use FourPaws\Helpers\TaggedCacheHelper;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use WebArch\BitrixCache\BitrixCache;
 
 /** @noinspection AutoloadingIssuesInspection */
 class CatalogOftenSeekComponent extends CBitrixComponent
@@ -76,54 +77,60 @@ class CatalogOftenSeekComponent extends CBitrixComponent
             return null;
         }
 
-        if ($this->startResultCache()) {
-            TaggedCacheHelper::addManagedCacheTags([
-                'catalog:often_seek:'.$this->arParams['SECTION_ID'],
-            ]);
+//        TaggedCacheHelper::addManagedCacheTags([
+//            'catalog:often_seek:' . $this->arParams['SECTION_ID'],
+//        ]);
 
-            $this->arResult['ITEMS'] = $this->oftenSeekService->getItems(
+        $getItems = function() {
+            return $this->oftenSeekService->getItems(
                 $this->arParams['SECTION_ID'],
                 $this->arParams['LEFT_MARGIN'],
                 $this->arParams['RIGHT_MARGIN'],
                 $this->arParams['DEPTH_LEVEL']
             );
+        };
 
-            // чтобы фильтры складывались
-            $curPageParam = $this->getParamsFromUrl($APPLICATION->GetCurPageParam());
-            if(!empty($curPageParam)){
-                /** @var OftenSeek $item */
-                foreach ($this->arResult['ITEMS'] as $i => $item){
-                    $curPageParam = $this->getParamsFromUrl($APPLICATION->GetCurPageParam());
-                    $itemParam = $this->getParamsFromUrl($item->getLink());
-                    if(!$itemParam){
-                        continue;
-                    }
+        $bitrixCache = new BitrixCache();
+        $bitrixCache->withId('section_' . $this->arParams['SECTION_ID']);
+        $bitrixCache->withTag('catalog:often_seek:' . $this->arParams['SECTION_ID']);
+        $bitrixCache->withTime(30*60*60*24);
 
-                    if(count(array_diff($itemParam, $curPageParam)) == 0){
-                        $item->setChosen(true);
-                    }
+        $this->arResult['ITEMS'] = $bitrixCache->resultOf($getItems)['result'];
 
-                    foreach ($itemParam as $key => $value){
-                        if(!empty($curPageParam[$key])){
-                            $newValue = $curPageParam[$key] . ',' . $value;
-                            $arNewValue = explode(',', $newValue);
-                            $curPageParam[$key] = implode(',', array_unique($arNewValue));
-                            unset($itemParam[$key]);
-                        }
-                    }
-                    // провоцирует баг верстки
-                    unset($curPageParam['partitial']);
-
-                    $newParams = array_merge($curPageParam, $itemParam ?: []);
-                    $newLink = sprintf('%s?%s', $APPLICATION->GetCurPage(false), http_build_query($newParams));
-                    $item->setLink($newLink);
-                    $this->arResult['ITEMS'][$i] = $item;
+        // чтобы фильтры складывались
+        $curPageParam = $this->getParamsFromUrl($APPLICATION->GetCurPageParam());
+        if(!empty($curPageParam)){
+            /** @var OftenSeek $item */
+            foreach ($this->arResult['ITEMS'] as $i => $item){
+                $curPageParam = $this->getParamsFromUrl($APPLICATION->GetCurPageParam());
+                $itemParam = $this->getParamsFromUrl($item->getLink());
+                if(!$itemParam){
+                    continue;
                 }
+
+                if(count(array_diff($itemParam, $curPageParam)) == 0){
+                    $item->setChosen(true);
+                }
+
+                foreach ($itemParam as $key => $value){
+                    if(!empty($curPageParam[$key])){
+                        $newValue = $curPageParam[$key] . ',' . $value;
+                        $arNewValue = explode(',', $newValue);
+                        $curPageParam[$key] = implode(',', array_unique($arNewValue));
+                        unset($itemParam[$key]);
+                    }
+                }
+                // провоцирует баг верстки
+                unset($curPageParam['partitial']);
+
+                $newParams = array_merge($curPageParam, $itemParam ?: []);
+                $newLink = sprintf('%s?%s', $APPLICATION->GetCurPage(false), http_build_query($newParams));
+                $item->setLink($newLink);
+                $this->arResult['ITEMS'][$i] = $item;
             }
-
-
-            $this->includeComponentTemplate();
         }
+
+        $this->includeComponentTemplate();
 
         return true;
     }
