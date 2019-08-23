@@ -52,7 +52,12 @@
         <div class="b-container">
             <div class="toys-landing-item toys-landing-item--1">
                 <div class="toys-landing-item__splash">
-                    <img src="/upload/toys-landing/1.png" alt="">
+                    <picture>
+                        <source srcset="/upload/toys-landing/1.png" media="(min-width: 1024px)" />
+                        <source srcset="/upload/toys-landing/1--mobile.png" media="(max-width: 1023px)" />
+
+                        <img src="/upload/toys-landing/1.png" alt="">
+                    </picture>
 
                     <div class="toys-landing-item__splash-content">
                         <h3 class="toys-landing-item__splash-title">Cолитёр</h3>
@@ -159,7 +164,12 @@
                 </div>
 
                 <div class="toys-landing-item__splash">
-                    <img src="/upload/toys-landing/2.png" alt="">
+                    <picture>
+                        <source srcset="/upload/toys-landing/2.png" media="(min-width: 1024px)" />
+                        <source srcset="/upload/toys-landing/2--mobile.png" media="(max-width: 1023px)" />
+
+                        <img src="/upload/toys-landing/2.png" alt="">
+                    </picture>
 
                     <div class="toys-landing-item__splash-content">
                         <h3 class="toys-landing-item__splash-title">Кормушка-тоннель</h3>
@@ -181,7 +191,12 @@
         <div class="b-container">
             <div class="toys-landing-item toys-landing-item--3">
                 <div class="toys-landing-item__splash">
-                    <img src="/upload/toys-landing/3.png" alt="">
+                    <picture>
+                        <source srcset="/upload/toys-landing/3.png" media="(min-width: 1024px)" />
+                        <source srcset="/upload/toys-landing/3--mobile.png" media="(max-width: 1023px)" />
+
+                        <img src="/upload/toys-landing/3.png" alt="">
+                    </picture>
 
                     <div class="toys-landing-item__splash-content">
                         <h3 class="toys-landing-item__splash-title">Flip&amp;Fun</h3>
@@ -289,7 +304,12 @@
                 </div>
 
                 <div class="toys-landing-item__splash">
-                    <img src="/upload/toys-landing/4.png" alt="">
+                    <picture>
+                        <source srcset="/upload/toys-landing/4.png" media="(min-width: 1024px)" />
+                        <source srcset="/upload/toys-landing/4--mobile.png" media="(max-width: 1023px)" />
+
+                        <img src="/upload/toys-landing/4.png" alt="">
+                    </picture>
 
                     <div class="toys-landing-item__splash-content">
                         <h3 class="toys-landing-item__splash-title">Poker Box</h3>
@@ -308,7 +328,7 @@
 
                 <div class="toys-landing-benefits__text">
                     <strong>Развивают</strong><br />
-                    интеллект, внимание
+                    интеллект, внимание<br/>
                     и&nbsp;ловкость
                 </div>
             </li>
