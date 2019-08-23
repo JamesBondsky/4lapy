@@ -1566,10 +1566,10 @@ class Offer extends IblockElement
      * @throws ObjectNotFoundException
      * @throws StoreNotFoundException
      */
-    public function isDeliverable(): bool
+    public function isDeliverable($locationId = ''): bool
     {
         if (null === $this->isDeliverable) {
-            $this->isDeliverable = ($this->getAvailableAmount('', DeliveryService::DELIVERY_CODES) > 0);
+            $this->isDeliverable = ($this->getAvailableAmount($locationId, DeliveryService::DELIVERY_CODES) > 0);
         }
 
         return $this->isDeliverable;
@@ -1590,10 +1590,10 @@ class Offer extends IblockElement
      * @throws ObjectNotFoundException
      * @throws StoreNotFoundException
      */
-    public function isPickupAvailable(): bool
+    public function isPickupAvailable($locationId = ''): bool
     {
         if (null === $this->isPickupAvailable) {
-            $this->isPickupAvailable = ($this->getAvailableAmount('', DeliveryService::PICKUP_CODES) > 0);
+            $this->isPickupAvailable = ($this->getAvailableAmount($locationId, DeliveryService::PICKUP_CODES) > 0);
         }
 
         return $this->isPickupAvailable;
