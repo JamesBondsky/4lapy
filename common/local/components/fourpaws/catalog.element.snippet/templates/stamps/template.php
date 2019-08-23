@@ -259,12 +259,15 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
             <? }
 
             if ($arResult['EXCHANGE_RULE']) { ?>
-                <? //todo стилизовать этот блок ?>
-                <? foreach ($arResult['EXCHANGE_RULE'] as $exchangeRule): ?>
-                    <ul>
-                        <li><?= WordHelper::numberFormat($exchangeRule['price']) ?> - <?= $exchangeRule['stamps'] ?></li>
-                    </ul>
-                <? endforeach; ?>
+                <ul class="b-common-item__marks">
+                    <? foreach ($arResult['EXCHANGE_RULE'] as $exchangeRule): ?>
+                        <li class="b-common-item__item-mark"><?= WordHelper::numberFormat($exchangeRule['price']) ?> - <?= $exchangeRule['stamps'] ?>
+                            <span class="b-icon b-icon--mark">
+                                <?= new SvgDecorator('icon-mark', 12, 12) ?>
+                            </span>
+                        </li>
+                    <? endforeach; ?>
+                </ul>
             <? }
 
             if ($currentOffer->isByRequest()) {
