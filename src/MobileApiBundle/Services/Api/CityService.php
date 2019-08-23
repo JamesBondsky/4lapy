@@ -2,6 +2,9 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Sale\Location\ExternalServiceTable;
+use Bitrix\Sale\Location\ExternalTable;
 use Closure;
 use Exception;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -244,5 +247,57 @@ class CityService implements LoggerAwareInterface
             ->setHasMetro($data['CODE'] === LocationService::LOCATION_CODE_MOSCOW)
             ->setLatitude($data['LATITUDE'])
             ->setLongitude($data['LONGITUDE']);
+    }
+
+    public function getKladrIdByLocationsIds(array $locationsIds)
+    {
+        $results = ExternalTable::query()
+            ->setSelect(['LOCATION_ID', 'XML_ID'])
+            ->setFilter([
+                'SERVICE.CODE' => LocationService::KLADR_SERVICE_CODE,
+                '=LOCATION_ID'      => $locationsIds,
+            ])
+            ->registerRuntimeField(
+                new ReferenceField(
+                    'SERVICE',
+                    ExternalServiceTable::getEntity(),
+                    ['=this.SERVICE_ID' => 'ref.ID']
+                )
+            )
+            ->exec()->fetchAll();
+
+        $result = [];
+        foreach ($results as $res) {
+            $result[$res['LOCATION_ID']] = $res['XML_ID'];
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param array $locations
+     * @return array
+     */
+    public function convertInDadataFormat(array $locations)
+    {
+        $locationsIds = array_keys($locations);
+        $kladrIds = $this->getKladrIdByLocationsIds($locationsIds);
+
+        $allowLocations = [];
+
+        foreach ($kladrIds as $locationId => $kladrId) {
+            if (isset($locations[$locationId])) {
+                $locations[$locationId]['KLADR'] = $kladrId;
+                $allowLocations[] = [
+                    'data' => [
+                        'city' => $locations[$locationId]['NAME'],
+                        'region_with_type' => '',
+                        'kladr_id' => $locations[$locationId]['KLADR'],
+                    ],
+                ];
+            }
+        }
+
+        return $allowLocations;
     }
 }
