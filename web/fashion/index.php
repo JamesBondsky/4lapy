@@ -6,9 +6,14 @@ $APPLICATION->SetPageProperty('description', '');
 $APPLICATION->SetTitle("Новая коллекция одежды для собак");
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use FourPaws\App\Application;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\Helpers\WordHelper;
+use FourPaws\LocationBundle\LocationService;
 use Symfony\Component\Templating\TemplateNameParser;
 use Symfony\Component\Templating\PhpEngine;
 use Symfony\Component\Templating\Loader\FilesystemLoader;
@@ -303,6 +308,22 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
         echo $templating->render('landing.fitting.html.php', ['hide_info' => true]); ?>
     </section>
 
+    <?
+    // Стоимость доставки
+    /** @var DeliveryService $deliveryService */
+    $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+
+    /** @var CalculationResultInterface[] $deliveries */
+    $deliveries = $deliveryService->getByLocation();
+    $filtered = array_filter(
+        $deliveries,
+        function (CalculationResultInterface $delivery) use ($deliveryService) {
+            return $deliveryService->isDelivery($delivery);
+        }
+    );
+    $deliveryResult = reset($filtered);
+    ?>
+
     <section class="fashion-free-shipping">
         <div class="b-container">
             <div class="fashion-free-shipping__content">
@@ -317,8 +338,13 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
                         <div class="item-free-shipping__title">домой</div>
                         <div class="item-free-shipping__descr item-free-shipping__descr_time"><b>время примерки</b> 15&nbsp;минут</div>
                         <div class="item-free-shipping__descr item-free-shipping__descr_delivery">
-                            <p><b>доставка</b> от&nbsp;197Р<br/> бесплатно&nbsp;- при заказе от&nbsp;2000р</p>
-                            <p>курьер привезёт ваш заказ в&nbsp;удобное место и&nbsp;время</p>
+                            <? if($deliveryResult) { ?>
+                                <p><b>доставка</b> от&nbsp;<?= WordHelper::numberFormat($deliveryResult->getPrice(), 0) ?> Р
+                                    <?php if (!empty($deliveryResult->getFreeFrom())) { ?>
+                                    <br/> бесплатно&nbsp;- при заказе от&nbsp;<?= WordHelper::numberFormat($deliveryResult->getFreeFrom(), 0) ?>р</p>
+                                    <?php } ?>
+                                <p>курьер привезёт ваш заказ в&nbsp;удобное место и&nbsp;время</p>
+                            <? } ?>
                         </div>
                     </div>
                     <div class="item-free-shipping">

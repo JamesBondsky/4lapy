@@ -68,7 +68,8 @@ if (!$currentOffer->getImagesIds()) {
 <div class="b-common-item js-product-item" data-productid="<?= $product->getId() ?>">
     <span class="b-common-item__image-wrap">
         <a class="b-common-item__image-link js-item-link" href="<?= $currentOffer->getLink() ?>"
-           onclick="<?= $getOnClick($currentOffer) ?>">
+           onclick="<?= $getOnClick($currentOffer) ?>"
+           target="_blank">
             <img class="b-common-item__image js-weight-img"
                  src="<?= $offerWithImages->getResizeImages(240, 240)->first() ?>"
                  alt="<?= $product->getName() ?>"
@@ -77,7 +78,7 @@ if (!$currentOffer->getImagesIds()) {
     </span>
     <div class="b-common-item__info-center-block">
         <a class="b-common-item__description-wrap js-item-link" href="<?= $currentOffer->getLink() ?>"
-           onclick="<?= $getOnClick($currentOffer) ?>" title="">
+           onclick="<?= $getOnClick($currentOffer) ?>" title="" target="_blank">
             <span class="b-clipped-text b-clipped-text--three">
                 <span>
                     <?php if ($product->getBrand()) { ?>

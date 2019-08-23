@@ -16,14 +16,12 @@ use FourPaws\Enum\IblockType;
 class CFashionProductFooter extends \CBitrixComponent
 {
     private $iblockId;
-
     private $productXmlIds;
-
     private $products;
-
     private $imageIds;
-
     private $titleImageIds;
+    private $sectionIds;
+    private $sections;
 
 
     public function onPrepareComponentParams($params): array
@@ -37,7 +35,7 @@ class CFashionProductFooter extends \CBitrixComponent
 
     public function executeComponent()
     {
-        if($this->startResultCache()){
+        //if($this->startResultCache()){
             $dbres = \CIBlockElement::GetList([], ['IBLOCK_ID' => $this->iblockId, 'ACTIVE' => 'Y']);
             while($row = $dbres->GetNextElement()){
                 $element = $row->GetFields();
@@ -47,6 +45,7 @@ class CFashionProductFooter extends \CBitrixComponent
                     $this->productXmlIds[] = $xmlId;
                 }
 
+                $this->sectionIds[] = $element['PROPERTIES']['SECTION']['VALUE'];
                 $this->titleImageIds[] = $element['PROPERTIES']['TITLE_IMAGE']['VALUE'];
                 $this->imageIds[] = $element['PROPERTIES']['IMAGE']['VALUE'];
 
@@ -55,9 +54,10 @@ class CFashionProductFooter extends \CBitrixComponent
 
             $this->fillProducts();
             $this->fillImages();
+            $this->fillSections();
 
             $this->includeComponentTemplate();
-        }
+        //}
     }
 
     private function fillProducts()
@@ -88,11 +88,29 @@ class CFashionProductFooter extends \CBitrixComponent
         }
     }
 
+    private function fillSections()
+    {
+        if(empty($this->sectionIds)){
+            return;
+        }
+
+        $dbres = CIBlockSection::GetList([], ['ID' => $this->sectionIds], false, ['ID', 'NAME', 'SECTION_PAGE_URL']);
+        while($row = $dbres->GetNext())
+        {
+            $this->sections[$row['ID']] = $row;
+        }
+    }
+
     public function getProduct($xmlId)
     {
         return $this->products->filter(function ($product) use ($xmlId) {
             /** @var Product $product */
             return $product->getXmlId() == $xmlId;
         })->first();
+    }
+
+    public function getSectionUrl($id)
+    {
+        return $this->sections[$id]['SECTION_PAGE_URL'];
     }
 }
