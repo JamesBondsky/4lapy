@@ -61,7 +61,7 @@
 
                     <div class="toys-landing-item__splash-content">
                         <h3 class="toys-landing-item__splash-title">Cолитёр</h3>
-                        <p class="toys-landing-item__splash-text">Подходит кошек любого возраста от 3х месяцев!</p>
+                        <p class="toys-landing-item__splash-text">Легкая и интересная игра для котят и любознательных взрослых кошек</p>
                     </div>
                 </div>
 
@@ -173,8 +173,7 @@
 
                     <div class="toys-landing-item__splash-content">
                         <h3 class="toys-landing-item__splash-title">Кормушка-тоннель</h3>
-                        <p class="toys-landing-item__splash-text">Можно кормить как из миски
-                            каждый день!</p>
+                        <p class="toys-landing-item__splash-text">Игра-кормушка развивает ловкость и смекалку. Можно кормить как из миски каждый день</p>
                     </div>
                 </div>
             </div>
@@ -200,8 +199,7 @@
 
                     <div class="toys-landing-item__splash-content">
                         <h3 class="toys-landing-item__splash-title">Flip&amp;Fun</h3>
-                        <p class="toys-landing-item__splash-text">Увлекательная игра
-                            на ловкость и смекалку.</p>
+                        <p class="toys-landing-item__splash-text">Увлекательная игра-головоломка с несколькими уровнями сложности</p>
                     </div>
                 </div>
 
@@ -353,17 +351,16 @@
             </li>
         </ul>
 
-        <h2 class="toys-landing__check-header">Проверяй марки где удобно!</h2>
+        <h2 class="toys-landing__check-header">Копи марки как тебе удобно</h2>
 
         <div class="toys-landing-check">
             <img src="/upload/toys-landing/check.jpg" alt="" class="toys-landing-check__image" />
 
             <div class="toys-landing-check__sidebar">
                 <p class="toys-landing-check__text">
-                    LOREM IPSUM Подходят
-                    для питомцев LOREM IPSUM
-                    от3х месяцев LOREM IPSUM
-                    LOREM IPSUM
+                    АКТИВИРУЙ КАРТУ, СОВЕРШАЙ ПОКУПКИ, ОТСЛЕЖИВАЙ БАЛАНС МАРОК НА ЧЕКЕ, В
+                    ЛИЧНОМ КАБИНЕТЕ НА САЙТЕ ИЛИ В МОБИЛЬНОМ ПРИЛОЖЕНИИ, ПОКУПАЙ УМНЫЕ
+                    ИГРУШКИ СО СКИДКОЙ ДО 50%.
                 </p>
 
                 <ul class="toys-landing-check__list">
