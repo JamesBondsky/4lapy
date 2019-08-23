@@ -34,20 +34,6 @@ $useOffer = $offer instanceof Offer && $offer->getId() > 0;
 $isDiscounted = (float)$basketItem->getBasePrice() - (float)$basketItem->getPrice() >= 0.01;
 $stampInfo = $arResult['BASKET_ITEMS_STAMPS_INFO'][$offer->getXmlId()];
 
-// для отладки марок
-//$stampInfo['CAN_USE_STAMPS'] = true;
-//$stampInfo['USE_STAMP_AMOUNT'] = true;
-//$stampInfo['STAMP_LEVELS'] = [
-//	[
-//		'price'	 => 1000,
-//		'stamps' => 15,
-//	],
-//	[
-//		'price'	 => 3000,
-//		'stamps' => 20,
-//	],
-//];
-
 /**
  * @todo promo from property; after - promo from PromoLink;
  */
@@ -77,7 +63,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
         <?php }
     } ?>
 
-    <?php if ($stampInfo['CAN_USE_STAMPS']) { ?>
+    <?php if ($stampInfo['HAS_STAMPS']) { ?>
         <div class="b-mark-order">
             <div class="b-mark-order__info">
                 <span class="b-mark-order__text">Используйте марки, чтобы купить товар со скидкой! Вам  доступно — <?= $arResult['ACTIVE_STAMPS_COUNT'] ?></span><? //TODO correct value. If 0 then don't show this text ?>
@@ -165,7 +151,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
         </div>
     </div>
     <?/* Класс b-item-shopping__operation--marks нужен только если будут марки*/ //TODO this logic ?>
-    <div class="b-item-shopping__operation<?= ($stampInfo['CAN_USE_STAMPS']) ? ' b-item-shopping__operation--marks' : '' ?><?= $offer->getQuantity() > 0 ? ' b-item-shopping__operation--not-available' : '' ?>">
+    <div class="b-item-shopping__operation<?= ($stampInfo['HAS_STAMPS']) ? ' b-item-shopping__operation--marks' : '' ?><?= $offer->getQuantity() > 0 ? ' b-item-shopping__operation--not-available' : '' ?>">
         <?php
         $maxQuantity = 1000;
         if ($useOffer) {
@@ -173,44 +159,44 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
         }
 
         if (!$basketItem->isDelay() && $offer->getQuantity() > 0) { ?>
-            <?php if ($stampInfo['CAN_USE_STAMPS']) { ?>
+            <?php if ($stampInfo['HAS_STAMPS']) { ?>
                 <div class="b-item-shopping__operation-inner">
             <?php } ?>
-                <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--shopping js-plus-minus-cont" <? if ($offer->getXmlId() == BasketService::GIFT_DOBROLAP_XML_ID) { ?>style="background:transparent;"<?}?>>
-                    <? if ($offer->getXmlId() != BasketService::GIFT_DOBROLAP_XML_ID) { ?>
-                        <a class="b-plus-minus__minus js-minus" data-url="<?= $basketUpdateUrl ?>"
-                           href="javascript:void(0);"></a>
-                        <?php
-                        /** @todo data-one-price */
-                        ?>
-                        <input title="" class="b-plus-minus__count js-plus-minus-count"
-                               value="<?= WordHelper::numberFormat($arResult['PRODUCT_QUANTITIES'][$basketItem->getProductId()] ?? $basketItem->getQuantity(),
-                                   0) ?>"
-                               data-one-price="<?= $basketItem->getPrice() ?>"
-                               data-cont-max="<?= $maxQuantity ?>"
-                               data-basketid="<?= $basketItemId; ?>"
-                               data-url="<?= $basketUpdateUrl ?>"
-                               type="text"/>
+            <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--shopping js-plus-minus-cont" <? if ($offer->getXmlId() == BasketService::GIFT_DOBROLAP_XML_ID) { ?>style="background:transparent;"<?}?>>
+                <? if ($offer->getXmlId() != BasketService::GIFT_DOBROLAP_XML_ID) { ?>
+                    <a class="b-plus-minus__minus js-minus" data-url="<?= $basketUpdateUrl ?>"
+                       href="javascript:void(0);"></a>
+                    <?php
+                    /** @todo data-one-price */
+                    ?>
+                    <input title="" class="b-plus-minus__count js-plus-minus-count"
+                           value="<?= WordHelper::numberFormat($arResult['PRODUCT_QUANTITIES'][$basketItem->getProductId()] ?? $basketItem->getQuantity(),
+                               0) ?>"
+                           data-one-price="<?= $basketItem->getPrice() ?>"
+                           data-cont-max="<?= $maxQuantity ?>"
+                           data-basketid="<?= $basketItemId; ?>"
+                           data-url="<?= $basketUpdateUrl ?>"
+                           type="text"/>
 
-                        <a class="b-plus-minus__plus js-plus" data-url="<?= $basketUpdateUrl ?>"
-                           href="javascript:void(0);"></a>
-                    <? } ?>
-                </div>
-                <div class="b-select b-select--shopping-cart">
-                    <?php $maxMobileQuantity = 100;
+                    <a class="b-plus-minus__plus js-plus" data-url="<?= $basketUpdateUrl ?>"
+                       href="javascript:void(0);"></a>
+                <? } ?>
+            </div>
+            <div class="b-select b-select--shopping-cart">
+                <?php $maxMobileQuantity = 100;
 
-                    if ($maxQuantity < $maxMobileQuantity) {
-                        $maxMobileQuantity = $maxQuantity;
-                    } ?>
-                    <select title="" class="b-select__block b-select__block--shopping-cart"
-                            name="shopping-cart">
-                        <option value="" disabled="disabled" selected="selected">выберите</option>
-                        <?php for ($i = 0; $i < $maxMobileQuantity; $i++) { ?>
-                            <option value="one-click-<?= $i ?>"><?= $i + 1 ?></option>
-                        <?php } ?>
-                    </select>
-                </div>
-                <div class="b-price">
+                if ($maxQuantity < $maxMobileQuantity) {
+                    $maxMobileQuantity = $maxQuantity;
+                } ?>
+                <select title="" class="b-select__block b-select__block--shopping-cart"
+                        name="shopping-cart">
+                    <option value="" disabled="disabled" selected="selected">выберите</option>
+                    <?php for ($i = 0; $i < $maxMobileQuantity; $i++) { ?>
+                        <option value="one-click-<?= $i ?>"><?= $i + 1 ?></option>
+                    <?php } ?>
+                </select>
+            </div>
+            <div class="b-price">
                     <span class="b-price__current">
                         <?= WordHelper::numberFormat(
                             $arResult['ROWS_MAP'][$basketItem->getBasketCode()]['TOTAL_PRICE']
@@ -218,12 +204,12 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                             $basketItem->getPrice() * $basketItem->getQuantity()
                         ) ?>
                     </span>
-                    <span class="b-ruble">₽</span>
-                    <?php
-                    //сюда же влетает округление до копеек при пересчете НДС, поэтому 0,01
-                    if ($basketItem->getDiscountPrice() >= 0.01) {
-                        ?>
-                        <span class="b-old-price b-old-price--crossed-out">
+                <span class="b-ruble">₽</span>
+                <?php
+                //сюда же влетает округление до копеек при пересчете НДС, поэтому 0,01
+                if ($basketItem->getDiscountPrice() >= 0.01) {
+                    ?>
+                    <span class="b-old-price b-old-price--crossed-out">
                         <span class="b-old-price__old">
                             <?= WordHelper::numberFormat(
                                 $arResult['ROWS_MAP'][$basketItem->getBasketCode()]['BASE_PRICE']
@@ -233,57 +219,58 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                         </span>
                         <span class="b-ruble b-ruble--old-weight-price">₽</span>
                     </span>
-                        <?php
-                    }
-                    ?>
-                </div>
-                <? if ($offer->getXmlId() != BasketService::GIFT_DOBROLAP_XML_ID) { ?>
-                    <a class="b-item-shopping__delete js-cart-delete-item" href="javascript:void(0);" title=""
-                       data-url="<?= $basketDeleteUrl ?>" data-basketId="<?= $basketItemId; ?>">
+                    <?php
+                }
+                ?>
+            </div>
+            <? if ($offer->getXmlId() != BasketService::GIFT_DOBROLAP_XML_ID) { ?>
+                <a class="b-item-shopping__delete js-cart-delete-item" href="javascript:void(0);" title=""
+                   data-url="<?= $basketDeleteUrl ?>" data-basketId="<?= $basketItemId; ?>">
                         <span class="b-icon b-icon--delete b-icon--shopping">
                             <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
                         </span>
-                    </a>
-                <? } ?>
-            <?php if ($stampInfo['CAN_USE_STAMPS']) { ?>
+                </a>
+            <? } ?>
+            <?php if ($stampInfo['HAS_STAMPS']) { ?>
                 </div>
             <?php } ?>
-            <?php if ($stampInfo['CAN_USE_STAMPS'] && count($stampInfo['STAMP_LEVELS'])) { ?>
+            <?php if ($stampInfo['HAS_STAMPS']) { ?>
                 <div class="b-mark-order-price"><? //TODO correct values in this block and conditions to show it ?>
-                    <div class="b-mark-order-price__list">
-                        <?php foreach ($stampInfo['STAMP_LEVELS'] as $stampLevel) { ?>
-                            <div class="b-mark-order-price__item">
-                                <?= WordHelper::numberFormat($stampLevel['price']) ?> ₽ — <?= $stampLevel['stamps'] ?>
+                    <?php if (count($stampInfo['STAMP_LEVELS'])) { ?>
+                        <div class="b-mark-order-price__list">
+                            <?php foreach ($stampInfo['STAMP_LEVELS'] as $stampLevel) { ?>
+                                <div class="b-mark-order-price__item">
+                                    <?= WordHelper::numberFormat($stampLevel['price']) ?> ₽ — <?= $stampLevel['stamps'] ?>
+                                    <span class="b-icon b-icon--mark">
+                                         <?= new   SvgDecorator('icon-mark', 12, 12) ?>
+                                    </span>
+                                </div>
+                            <?php } ?>
+                        </div>
+                    <?php } ?>
+                    <?
+                    // для дебага
+                    //                    dump(
+                    //                        'use: ' . ($stampInfo['USE_STAMPS'] ? 'true' : 'false')
+                    //	                    . PHP_EOL . 'can use stamps: ' . ($stampInfo['CAN_USE_STAMPS'] ? 'true' : 'false')
+                    //	                    . PHP_EOL . 'stamps could be used: ' . $stampInfo['USE_STAMP_AMOUNT']
+                    //	                    . PHP_EOL . 'stamps used: ' . $stampInfo['USED_STAMP_AMOUNT'])
+                    ?>
+                    <?php if ($stampInfo['USE_STAMPS'] || $stampInfo['CAN_USE_STAMPS']) { ?>
+                        <div class="b-mark-order-price__action">
+                            <?php if ($stampInfo['USE_STAMPS'] && $stampInfo['USED_STAMP_AMOUNT']) { ?>
+                                <span data-cancel-charge-marks-cart="true">
+                                Отменить<br/> списание <?= $stampInfo['USED_STAMP_AMOUNT'] ?>
                                 <span class="b-icon b-icon--mark">
                                     <?= new SvgDecorator('icon-mark', 12, 12) ?>
                                 </span>
-                            </div>
-                        <?php } ?>
-                    </div>
-                    <?
-                    // для отладки марок
-//                    echo '<div class="dev1243124" style="font-size: 12px; line-height: 1;">';
-//                    echo
-//                        'use: ' . ($stampInfo['USE_STAMPS'] ? 'true' : 'false')
-//	                    . PHP_EOL . '<br>can use stamps: ' . ($stampInfo['CAN_USE_STAMPS'] ? 'true' : 'false')
-//	                    . PHP_EOL . '<br>stamps could be used: ' . $stampInfo['USE_STAMP_AMOUNT']
-//	                    . PHP_EOL . '<br>stamps used: ' . $stampInfo['USED_STAMP_AMOUNT'];
-//                    echo '</div>';
-                    ?>
-	                <?php if ($stampInfo['USE_STAMP_AMOUNT']) { ?>
-	                    <div class="b-mark-order-price__action">
-	                        <?php if ($stampInfo['USE_STAMPS'] && $stampInfo['USED_STAMP_AMOUNT']) { ?>
-	                        <span data-cancel-charge-marks-cart="true">
-	                        Отменить<br/> списание <?= $stampInfo['USED_STAMP_AMOUNT'] ?>
-	                        <span class="b-icon b-icon--mark">
-	                            <?= new SvgDecorator('icon-mark', 12, 12) ?>
-	                        </span>
-	                            <?php } else { ?>
-	                                <span data-use-marks-cart="true">Использовать марки</span>
-	                            <?php } ?>
-	                    </span>
-	                    </div>
-		            <?php } ?>
+                            </span>
+                            <?php } ?>
+                            <?php if ($stampInfo['CAN_USE_STAMPS']) { ?>
+                                <span data-use-marks-cart="true">Использовать марки</span>
+                            <?php } ?>
+                        </div>
+                    <?php } ?>
                 </div>
             <?php } ?>
             <?php if (in_array($offer->getId(), $arResult['ONLY_PICKUP'], true)) { ?>

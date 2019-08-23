@@ -204,9 +204,9 @@ class BasketComponent extends CBitrixComponent
         );
 
         /**  информация о марках */
+        $activeStampsCount = $this->stampService->getActiveStampsCount();
         $this->arResult['MARKS_TO_BE_ADDED'] = $this->manzana->getStampsToBeAdded();
-        $this->arResult['ACTIVE_STAMPS_COUNT'] = $this->stampService->getActiveStampsCount();
-        $this->arResult['BASKET_ITEMS_STAMPS'] = [];
+        $this->arResult['ACTIVE_STAMPS_COUNT'] = $activeStampsCount;
 
         foreach ($this->arResult['BASKET'] as $basketItem) {
             $offer = $this->getOffer((int)$basketItem->getProductId());
@@ -215,32 +215,7 @@ class BasketComponent extends CBitrixComponent
                 continue;
             }
 
-            $canUseStamps = isset(StampService::EXCHANGE_RULES[$offer->getXmlId()]);
-            $stampLevels = ($canUseStamps) ? StampService::EXCHANGE_RULES[$offer->getXmlId()] : null;
-            $useStamps = false;
-            $usedStamps = 0;
-            $useStampsAmount = 0;
-
-            if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS'])) {
-                $useStamps = (bool)$basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS']['VALUE'];
-            }
-            if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL'])) {
-                $usedStamps = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL']['VALUE'])['stampsUsed'];
-            }
-            if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
-                $stampsInfo = $basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'];
-                if ($stampsInfo && $stampsInfoArr = unserialize($stampsInfo)) {
-                    $useStampsAmount = $stampsInfoArr['value'] * $this->stampService->parseLevelKey($stampsInfoArr['key'])['discountStamps'];
-                }
-            }
-
-            $this->arResult['BASKET_ITEMS_STAMPS_INFO'][$offer->getXmlId()] = [
-              'CAN_USE_STAMPS' => $canUseStamps,
-              'STAMP_LEVELS' => $stampLevels,
-              'USE_STAMPS' => $useStamps,
-              'USED_STAMP_AMOUNT' => $usedStamps,
-              'USE_STAMP_AMOUNT' => $useStampsAmount,
-            ];
+            $this->arResult['BASKET_ITEMS_STAMPS_INFO'][$offer->getXmlId()] = $this->stampService->getBasketItemStampsInfo($basketItem, $offer->getXmlId(), $activeStampsCount);
         }
 
         /** если авторизирован добавляем магнит */

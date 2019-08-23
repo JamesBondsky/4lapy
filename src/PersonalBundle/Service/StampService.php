@@ -5,6 +5,8 @@ namespace FourPaws\PersonalBundle\Service;
 
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Sale\BasketItem;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\External\Manzana\Dto\BalanceRequest;
@@ -143,7 +145,6 @@ class StampService implements LoggerAwareInterface
             }
         }
 
-        // для отладки марок
         //$this->activeStampsCount = 27;
         return $this->activeStampsCount;
     }
@@ -199,5 +200,94 @@ class StampService implements LoggerAwareInterface
         }
 
         return $keyArray;
+    }
+
+    /**
+     * @param BasketItem $basketItem
+     * @param $offerXmlId
+     * @param null $activeStampsCount
+     * @return array
+     * @throws ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\NotImplementedException
+     */
+    public function getBasketItemStampsInfo($basketItem, $offerXmlId, $activeStampsCount = null)
+    {
+        $hasStamps = isset(self::EXCHANGE_RULES[$offerXmlId]); // todo get from manzana
+
+        $stampLevels = [];
+        $maxCanStampLevel = null;
+
+        $useStamps = false;
+        $useStampsAmount = 0;
+
+        if ($hasStamps) {
+            if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS'])) {
+                $useStamps = (bool)$basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS']['VALUE'];
+            }
+
+            if ($useStamps) {
+                if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL'])) {
+                    $useStampsAmount = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL']['VALUE'])['stampsUsed'];
+                }
+            } else {
+                foreach (self::EXCHANGE_RULES[$offerXmlId] as $stampLevel) {
+                    $stampLevelInfo = $this->parseLevelKey($stampLevel['title']);
+                    if (is_array($stampLevelInfo)) {
+                        $discountStamps = $stampLevelInfo['discountStamps'];
+
+                        $discountPrice = $this->getBasketItemDiscountPrice($basketItem, $stampLevelInfo);
+
+                        if ($discountPrice === null) {
+                            continue;
+                        }
+
+                        $stampLevelArr = [
+                            'price' => $discountPrice,
+                            'stamps' => $discountStamps,
+                        ];
+
+                        if (($activeStampsCount >= $discountStamps) && ((!$maxCanStampLevel) || ($maxCanStampLevel['stamps'] < $discountStamps))) {
+                            $maxCanStampLevel = $stampLevelArr;
+                        } else if ($activeStampsCount < $discountStamps) {
+                            $stampLevels[] = $stampLevelArr;
+                        }
+                    }
+                }
+
+                if ($maxCanStampLevel) {
+                    $stampLevels = array_merge([$maxCanStampLevel], $stampLevels);
+                }
+            }
+        }
+
+        return [
+            'HAS_STAMPS' => $hasStamps,
+            'STAMP_LEVELS' => $stampLevels,
+            'CAN_USE_STAMPS' => ($maxCanStampLevel !== null),
+            'USE_STAMPS' => $useStamps,
+            'USED_STAMP_AMOUNT' => $useStampsAmount,
+        ];
+    }
+
+    /**
+     * @param BasketItem $basketItem
+     * @param $stampLevelInfo
+     * @return int
+     * @throws ArgumentNullException
+     */
+    public function getBasketItemDiscountPrice($basketItem, $stampLevelInfo) : int
+    {
+        $discountPrice = null;
+
+        $basketItemPrice = $basketItem->getPrice();
+
+        if ($stampLevelInfo['discountType'] == 'V') {
+            $discountPrice = $basketItemPrice - $stampLevelInfo['discountValue'];
+        } else if ($stampLevelInfo['discountType'] == 'P') {
+            $discountPrice = $basketItemPrice * ($stampLevelInfo['discountValue'] / 100);
+        }
+
+        return $discountPrice;
     }
 }
