@@ -7,7 +7,7 @@ $APPLICATION->SetTitle("Добролап");
             <button class="navbar-toggler js-fh5co-nav-toggle fh5co-nav-toggle" type="button" data-toggle="collapse"
                     data-target="#ftco-nav" aria-controls="ftco-nav" aria-expanded="false"
                     aria-label="Toggle navigation">
-                <span class="oi oi-menu"></span> Навигация
+                <span class="oi oi-menu"></span>
             </button>
 
             <div class="collapse navbar-collapse" id="ftco-nav">
@@ -59,8 +59,7 @@ $APPLICATION->SetTitle("Добролап");
             <div class="row justify-content-center pb-5">
                 <div class="col-md-12 heading-section text-center ftco-animate">
                     <h2 class="">ПОМОГАЕМ ВМЕСТЕ</h2>
-                    <h5 class="mb-4">«Четыре Лапы» объединяет всех, кто не равнодушен к питомцам без семьи, с целью
-                        помочь животным найти родителей и поддержать временно бездомных друзей.</h5>
+                    <h5 class="mb-4">Компания &laquo;Четыре Лапы&raquo; помогает временно бездомным животным.</h5>
                     <hr/>
                     <div class="harvest_icon read_more_btn">
                         <a href="javascript:void(0);" class="btn btn-primary-filled py-3 px-4">УЗНАТЬ ПРО ДОБРОЛАП</a>
@@ -142,11 +141,6 @@ $APPLICATION->SetTitle("Добролап");
                 <div class="col-md-12 heading-section text-center ftco-animate">
                     <h2 class="">Приюты участники</h2>
                     <hr/>
-                    <h5 class="mb-4">Каждый год «Добролап» помогает найти семью и друзей тысячам домашних животных. Ни
-                        одна из благотворительных организаций не остается без внимания и поддержки. Более 40 фондов,
-                        приютов, волонтерских групп и центров реабилитации ждут команду Добролап, более 200 000
-                        неравнодушных участников уже с нами. Присоединяйся!
-                    </h5>
                 </div>
             </div>
             <div class="row">
@@ -486,9 +480,6 @@ $APPLICATION->SetTitle("Добролап");
                 <div class="col-md-12 heading-section text-center ftco-animate">
                     <h2 class="">фотоотчеты</h2>
                     <hr/>
-                    <h5 class="mb-4">КАЖДУЮ НЕДЕЛЮ МЫ РАССКАЗЫВАЕМ О ВАЖНЫХ СОБЫТИЯХ НЕДЕЛИ, делимся новостями и вместе
-                        радуемся счастливым историям питомцев, у которых появились друзья.</h5>
-                    <h5 class="mb-4">Добро объединяет и делает нас лучше!</h5>
                 </div>
             </div>
         </div>
@@ -499,32 +490,112 @@ $APPLICATION->SetTitle("Добролап");
                 </div>
                 <div class="b-common-section__content b-common-section__content--sale b-common-section__content--main-sale js-popular-product">
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/02.jpg" data-lightbox="image-2"
-                           data-title="Команда «Добролап» помогла найти Лайме и еще более 100 питомцам новую семью"><img
-                                    src="/dobrolap/images/report/02.jpg"/></a>
+                        <a href="/dobrolap/images/report/02.jpg" data-lightbox="photos"
+                           class="photos__link"
+                           data-title="Команда «Добролап» помогла найти Лайме и еще более 100 питомцам новую семью">
+                            <img src="/dobrolap/images/report/02.jpg" class="photos__img" />
+                        </a>
                         <div class="carousel-note"><p class="mb-4">Команда «Добролап» помогла<br/>найти Лайме и еще
                                 более 100 питомцам<br/>новую семью</p></div>
                     </div>
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/03.jpg" data-lightbox="image-3"
-                           data-title="Самые вкусные подарки привозят друзья «Добролап»"><img
-                                    src="/dobrolap/images/report/03.jpg"/></a>
+                        <a href="/dobrolap/images/report/03.jpg" data-lightbox="photos"
+                           class="photos__link"
+                           data-title="Самые вкусные подарки привозят друзья «Добролап»">
+                            <img src="/dobrolap/images/report/03.jpg" class="photos__img" />
+                        </a>
                         <div class="carousel-note"><p class="mb-4">Самые вкусные подарки<br/>привозят друзья<br/>«Добролап»
                             </p></div>
                     </div>
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/04.jpg" data-lightbox="image-4"
-                           data-title="Большая дружба начинается с малого: более 500 ребят стали участниками акции в 2018 году"><img
-                                    src="/dobrolap/images/report/04.jpg"/></a>
+                        <a href="/dobrolap/images/report/04.jpg" data-lightbox="photos"
+                           class="photos__link"
+                           data-title="Большая дружба начинается с малого: более 500 ребят стали участниками акции в 2018 году">
+                            <img src="/dobrolap/images/report/04.jpg" class="photos__img" />
+                        </a>
                         <div class="carousel-note"><p class="mb-4">Большая дружба начинается<br/>с малого: более 500
                                 ребят стали<br/>участниками акции в 2018 году</p></div>
                     </div>
                     <div class="b-common-item">
-                        <a href="/dobrolap/images/report/05.jpg" data-lightbox="image-1"
-                           data-title="Большая радость самому приехать к питомцам, которые очень тебя ждут"><img
-                                    src="/dobrolap/images/report/05.jpg"/></a>
+                        <a href="/dobrolap/images/report/05.jpg" data-lightbox="photos"
+                           class="photos__link"
+                           data-title="Большая радость самому приехать к питомцам, которые очень тебя ждут">
+                            <img src="/dobrolap/images/report/05.jpg" class="photos__img" />
+                        </a>
                         <div class="carousel-note"><p class="mb-4">Большая радость самому<br/>приехать к питомцам,
                                 которые<br/>очень тебя ждут</p></div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/06.jpg" data-lightbox="photos"
+                           class="photos__link"
+                           data-title="Каждый день маленьких помощников ждут добрые дела">
+                            <img src="/dobrolap/images/report/06.jpg" class="photos__img" />
+                        </a>
+                        <div class="carousel-note"><p class="mb-4">Каждый день маленьких помощников ждут добрые дела</p></div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/07.jpg" data-lightbox="photos"
+                           class="photos__link"
+                           data-title="Вместе с мамой ребята собрали большую посылку с лакомствами для друзей">
+                            <img src="/dobrolap/images/report/07.jpg" class="photos__img" />
+                        </a>
+                        <div class="carousel-note"><p class="mb-4">Вместе с мамой ребята собрали большую посылку с лакомствами для друзей</p></div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/08.jpg" data-lightbox="photos"
+                           class="photos__link"
+                           data-title="Катя и Даша узнали про Добролап в Инстаграмм и привели родителей">
+                            <img src="/dobrolap/images/report/08.jpg" class="photos__img" />
+                        </a>
+                        <div class="carousel-note"><p class="mb-4">Катя и Даша узнали про Добролап в Инстаграмм и привели родителей</p></div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/09.jpg" data-lightbox="photos"
+                           class="photos__link"
+                           data-title="Много корма не бывает! ">
+                            <img src="/dobrolap/images/report/09.jpg" class="photos__img" />
+                        </a>
+                        <div class="carousel-note"><p class="mb-4">Много корма не бывает!</p></div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/10.jpg" data-lightbox="photos"
+                           class="photos__link"
+                           data-title="Маша с мамой выбирают по списку, чтобы не упустить ничего важного">
+                            <img src="/dobrolap/images/report/10.jpg" class="photos__img" />
+                        </a>
+                        <div class="carousel-note"><p class="mb-4">Маша с мамой выбирают по списку, чтобы не упустить ничего важного</p></div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/11.jpg" data-lightbox="photos"
+                           class="photos__link"
+                           data-title="В приют отправились три коробочки с вкуснятиной, запас корма на месяц и уютные лежаки">
+                            <img src="/dobrolap/images/report/11.jpg" class="photos__img" />
+                        </a>
+                        <div class="carousel-note"><p class="mb-4">В приют отправились три коробочки с вкуснятиной, запас корма на месяц и уютные лежаки</p></div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/12.jpg" data-lightbox="photos"
+                           class="photos__link"
+                           data-title="У Маргариты это уже третий магнитик Добролап!">
+                            <img src="/dobrolap/images/report/12.jpg" class="photos__img" />
+                        </a>
+                        <div class="carousel-note"><p class="mb-4">У Маргариты это уже третий магнитик Добролап!</p></div>
+                    </div>
+
+                    <div class="b-common-item">
+                        <a href="/dobrolap/images/report/13.jpg" data-lightbox="photos"
+                           class="photos__link"
+                           data-title="Долгожданная помощь отправляется в приюты каждую неделю">
+                            <img src="/dobrolap/images/report/13.jpg" class="photos__img" />
+                        </a>
+                        <div class="carousel-note"><p class="mb-4">Долгожданная помощь отправляется в приюты каждую неделю</p></div>
                     </div>
                 </div>
             </section>
@@ -537,12 +608,6 @@ $APPLICATION->SetTitle("Добролап");
                 <div class="col-md-12 heading-section text-center ftco-animate">
                     <h2 class="">Вместе мы сможем больше</h2>
                     <hr/>
-                    <h5 class="mb-4">С&nbsp;начала старта благотворительной акции &laquo;Добролап&raquo; в&nbsp;30
-                        городах России к&nbsp;движению присоединились более 70
-                        <nobr>организаций-партнеров,</nobr>
-                        200&nbsp;000 участников и&nbsp;10&nbsp;000 волонтеров. Традиция помогать тем, кто нуждается в&nbsp;поддержке
-                        объединяет команду Добролап и&nbsp;зажигает сердца. Смотри историю, твори добро в месте с&nbsp;нами!
-                    </h5>
                 </div>
             </div>
         </div>
@@ -631,12 +696,13 @@ $APPLICATION->SetTitle("Добролап");
         </div>
         <div class="home-slider  owl-carousel">
             <div class="slider-item ">
-                <div class="overlay"></div>
                 <div class="container">
                     <div class="row d-md-flex no-gutters slider-text align-items-end justify-content-end"
                          data-scrollax-parent="true">
-                        <video controls poster="/dobrolap/images/raise-preview1.jpg">
-                            <source src="/upload/dobrolap/Dobrolap_06_08.mp4" type="video/mp4">
+                        <video controls poster="/dobrolap/images/raise-preview2.jpg">
+                            <source src="/upload/dobrolap/4lapi_priut_14_08_2.mp4">
+                            <source src="/upload/dobrolap/4lapi_priut_14_08_2.ogv" type="video/webm">
+                            <source src="/upload/dobrolap/4lapi_priut_14_08_2.webm" type="video/ogg">
                         </video>
                     </div>
                 </div>
