@@ -98,6 +98,11 @@ class CatalogOftenSeekComponent extends CBitrixComponent
                     if(!$itemParam){
                         continue;
                     }
+
+                    if(count(array_diff($itemParam, $curPageParam)) == 0){
+                        $item->setChosen(true);
+                    }
+
                     foreach ($itemParam as $key => $value){
                         if(!empty($curPageParam[$key])){
                             $newValue = $curPageParam[$key] . ',' . $value;
