@@ -354,7 +354,8 @@ class Manzana implements LoggerAwareInterface
 
         }
 
-        //dump($availableStamps);
+        // для отладки марок
+        //dump('остается марок: ' . $availableStamps);
 
         foreach ($basket as $item) {
             $basketCode = (int)str_replace('n', '', $item->getBasketCode());
@@ -394,13 +395,15 @@ class Manzana implements LoggerAwareInterface
             unset($maxStampsLevel, $useStamps);
         }
 
-        // Для отладки
-        foreach ($basket as $item) { //TODO comment
-            $basketPropertyCollection = $item->getPropertyCollection();
-            $useStampsProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'USE_STAMPS');
-            $maxStampsLevelProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'MAX_STAMPS_LEVEL');
-            //dump($item->getField('PRODUCT_XML_ID') . ' ' . $maxStampsLevelProperty->getField('VALUE') . ' ' . ($useStampsProperty && $useStampsProperty->getField('VALUE')));
-        }
+        // для отладки марок
+//        foreach ($basket as $item) {
+//            $basketPropertyCollection = $item->getPropertyCollection();
+//            $useStampsProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'USE_STAMPS');
+//            $maxStampsLevelProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'MAX_STAMPS_LEVEL');
+//            dump($item->getField('PRODUCT_XML_ID')
+//                . PHP_EOL . $maxStampsLevelProperty->getField('VALUE')
+//                . PHP_EOL . 'использовать марки: ' . ($useStampsProperty && $useStampsProperty->getField('VALUE') ? 'true' : 'false'));
+//        }
 
         // если не делать здесь сохранение корзины, то надо использовать $maxStampsLevelProperty->setField и $basketPropertyCollection->save() (см.выше)
         // upd: если делать здесь сохранение всей корзины, то начинается дублирование товаров (из-за разделения товаров при применении скидок, которое создает временные дубли с internalId=n1,n2 и т.д.).

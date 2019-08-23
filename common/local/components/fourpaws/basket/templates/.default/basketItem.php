@@ -34,6 +34,20 @@ $useOffer = $offer instanceof Offer && $offer->getId() > 0;
 $isDiscounted = (float)$basketItem->getBasePrice() - (float)$basketItem->getPrice() >= 0.01;
 $stampInfo = $arResult['BASKET_ITEMS_STAMPS_INFO'][$offer->getXmlId()];
 
+// для отладки марок
+//$stampInfo['CAN_USE_STAMPS'] = true;
+//$stampInfo['USE_STAMP_AMOUNT'] = true;
+//$stampInfo['STAMP_LEVELS'] = [
+//	[
+//		'price'	 => 1000,
+//		'stamps' => 15,
+//	],
+//	[
+//		'price'	 => 3000,
+//		'stamps' => 20,
+//	],
+//];
+
 /**
  * @todo promo from property; after - promo from PromoLink;
  */
@@ -247,12 +261,14 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
                         <?php } ?>
                     </div>
                     <?
-                    // для дебага
-//                    dump(
+                    // для отладки марок
+//                    echo '<div class="dev1243124" style="font-size: 12px; line-height: 1;">';
+//                    echo
 //                        'use: ' . ($stampInfo['USE_STAMPS'] ? 'true' : 'false')
-//	                    . PHP_EOL . 'can use stamps: ' . ($stampInfo['CAN_USE_STAMPS'] ? 'true' : 'false')
-//	                    . PHP_EOL . 'stamps could be used: ' . $stampInfo['USE_STAMP_AMOUNT']
-//	                    . PHP_EOL . 'stamps used: ' . $stampInfo['USED_STAMP_AMOUNT'])
+//	                    . PHP_EOL . '<br>can use stamps: ' . ($stampInfo['CAN_USE_STAMPS'] ? 'true' : 'false')
+//	                    . PHP_EOL . '<br>stamps could be used: ' . $stampInfo['USE_STAMP_AMOUNT']
+//	                    . PHP_EOL . '<br>stamps used: ' . $stampInfo['USED_STAMP_AMOUNT'];
+//                    echo '</div>';
                     ?>
 	                <?php if ($stampInfo['USE_STAMP_AMOUNT']) { ?>
 	                    <div class="b-mark-order-price__action">
