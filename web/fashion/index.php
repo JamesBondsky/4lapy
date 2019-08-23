@@ -296,7 +296,7 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
         </div>
     </section>
 
-    <section>
+    <section class="fashion-measure-dog" data-measure-dog-fashion="true">
         <?
         $filesystemLoader = new FilesystemLoader($_SERVER['DOCUMENT_ROOT'].'/../src/CatalogBundle/Resources/views/Catalog/%name%');
         $templating = new PhpEngine(new TemplateNameParser(), $filesystemLoader);
