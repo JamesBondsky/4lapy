@@ -24,6 +24,7 @@ use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\MobileApiBundle\Collection\BasketProductCollection;
 use FourPaws\MobileApiBundle\Dto\Object\Basket\Product;
+use FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct\StampLevel;
 use FourPaws\MobileApiBundle\Dto\Object\Price;
 use FourPaws\MobileApiBundle\Dto\Object\PriceWithQuantity;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
@@ -31,6 +32,7 @@ use FourPaws\PersonalBundle\Service\StampService;
 use FourPaws\SaleBundle\Service\BasketService as AppBasketService;
 use FourPaws\MobileApiBundle\Services\Api\ProductService as ApiProductService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use JMS\Serializer\SerializerInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use FourPaws\UserBundle\Service\UserService as AppUserService;
 
@@ -214,6 +216,25 @@ class BasketService
                     $shortProduct->setUsedStamps((int)$usedStampsLevel['stampsUsed']);
                 }
             }
+
+            // уровни скидок за марки
+            $serializer = Application::getInstance()->getContainer()->get(SerializerInterface::class);
+            $maxStampsLevelDiscount = 0;
+
+            $maxStampsLevelKey = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'])['key'];
+            if ($maxStampsLevelKey) {
+                $maxStampsLevelDiscount = $this->stampService->parseLevelKey($maxStampsLevelKey)['discountStamps'];
+            }
+
+            $stampLevels = [];
+
+            if ($useStamps) {
+                foreach ($this->stampService->getBasketItemStampLevels($basketItem, $offer->getXmlId(), $maxStampsLevelDiscount) as $stampLevel) {
+                    $stampLevels[] = $serializer->fromArray($stampLevel, StampLevel::class);
+                }
+            }
+
+            $shortProduct->setStampLevels($stampLevels); //TODO get stampLevels from Manzana. If Manzana doesn't answer then set no levels
 
             $product->setShortProduct($shortProduct);
             $products->add($product);
