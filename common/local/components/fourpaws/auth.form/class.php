@@ -228,6 +228,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
 
         $newToken = ProtectorHelper::generateToken(ProtectorHelper::TYPE_AUTH);
+        $this->arResult['token'] = $newToken;
         $newToken['value'] = $newToken['token'];
         unset($newToken['token']);
         $newTokenResponse = ['token' => $newToken];
@@ -248,25 +249,36 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         if (!isset($_SESSION['COUNT_AUTH_AUTHORIZE'])) {
             $_SESSION['COUNT_AUTH_AUTHORIZE'] = 0;
         }
-        if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > 3) {
-            $_SESSION['COUNT_AUTH_AUTHORIZE'] = 0;
-        }
+
         $_SESSION['COUNT_AUTH_AUTHORIZE']++;
 
-        $checkedCaptcha = true;
         if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > 3) {
             try {
-                if ($this->isShowCapthca()) {
+                if ($this->showBitrixCaptcha()) {
                     $recaptchaService = $container->get(ReCaptchaInterface::class);
                     $checkedCaptcha = $recaptchaService->checkCaptcha();
+
+                    if (!$checkedCaptcha) {
+                        $html = $this->getHtml(
+                            'begin',
+                            '',
+                            [
+                                'isAjax'   => true,
+                                'backUrl'  => $backUrl,
+                                'arResult' => $this->arResult
+                            ]
+                        );
+
+                        return $this->ajaxMess->getWrongPasswordError(array_merge(
+                            ['html' => $html],
+                            $newTokenResponse
+                        ));
+                    }
                 }
                 $this->userAuthorizationService->clearLoginAttempts($rawLogin);
             } catch (Exception $e) {
                 return $this->ajaxMess->getSystemError()->extendData($newTokenResponse);
             }
-        }
-        if (!$checkedCaptcha) {
-            return $this->ajaxMess->getFailCaptchaCheckError()->extendData($newTokenResponse);
         }
 
         $needConfirmBasket = false;
@@ -378,7 +390,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
             }
         } catch (UsernameNotFoundException $e) {
-            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3 && $this->isShowCapthca()) {
+            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > 2) {
                 try {
                     $this->setSocial();
                     $html = $this->getHtml(
@@ -402,7 +414,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
             return $this->ajaxMess->getWrongPasswordError($newTokenResponse);
         } catch (InvalidCredentialException $e) {
-            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3 && $this->showBitrixCaptcha()) {
+            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > 2 && $this->showBitrixCaptcha()) {
                 try {
                     $this->setSocial();
                     $html = $this->getHtml(
