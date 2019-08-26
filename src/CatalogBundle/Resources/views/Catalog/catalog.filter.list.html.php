@@ -18,6 +18,8 @@ use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
 use FourPaws\Decorators\SvgDecorator;
 use Symfony\Component\Templating\PhpEngine;
 
+global $APPLICATION;
+
 $category = $catalogRequest->getCategory();
 
 foreach ($filters as $filter) {
@@ -61,7 +63,16 @@ foreach ($filters as $filter) {
             <div class="b-title b-title--filter-header">
                 <?= $filter->getName() ?>
                 <? if($filter instanceof ClothingSizeFilter && $category->isShowFitting()) { ?>
-                    <a class="js-scroll-to-size-select" href="javascript:void(0)">Узнать размер</a>
+                    <a href="javascript:void(0)" class="b-filter__size-select js-scroll-to-size-select">Узнать размер</a>
+                    <? /*if(!$sizeSelectBtn){
+                        ob_start(); ?>
+                        <a href="javascript:void(0)" class="b-catalog-filter__scroll-to-size-select js-scroll-to-size-select">Узнать размер собаки</a>
+                        <? $sizeSelectBtn = ob_get_contents();
+                        ob_end_clean();
+                        $APPLICATION->AddViewContent('size_select_filter', $sizeSelectBtn);
+                    }*/
+                    ?>
+                    <? $GLOBALS['showSizeSelectFilter'] = true; ?>
                 <? } ?>
             </div>
             <?php if ($filter->isShowWithPicture()) { ?>
