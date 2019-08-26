@@ -845,7 +845,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         }
 
         if (!$checkedCaptcha) {
-            return $this->ajaxMess->getFailCaptchaCheckError();
+            return $this->ajaxMess->getFailCaptchaCheckError()->extendData(['gcaptcha' => true]);
         }
 
         try {

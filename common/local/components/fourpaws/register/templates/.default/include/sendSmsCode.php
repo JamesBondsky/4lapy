@@ -67,7 +67,7 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
                title="Отправить снова">Отправить снова</a>
         </div>
 
-        <div style="display: none;" data-register-resend-captcha="true">
+        <div style="display: none;" js-captcha-block data-register-resend-captcha="true">
             <?
             /** @var \FourPaws\ReCaptchaBundle\Service\ReCaptchaService $recaptchaService */
             $recaptchaService = App::getInstance()->getContainer()->get(ReCaptchaInterface::class);
