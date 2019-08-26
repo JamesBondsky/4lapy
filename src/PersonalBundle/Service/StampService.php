@@ -205,13 +205,12 @@ class StampService implements LoggerAwareInterface
     /**
      * @param BasketItem $basketItem
      * @param $offerXmlId
-     * @param null $activeStampsCount
      * @return array
      * @throws ArgumentNullException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\NotImplementedException
      */
-    public function getBasketItemStampsInfo($basketItem, $offerXmlId, $activeStampsCount = null)
+    public function getBasketItemStampsInfo($basketItem, $offerXmlId)
     {
         $hasStamps = isset(self::EXCHANGE_RULES[$offerXmlId]); // todo get from manzana
 
@@ -238,23 +237,7 @@ class StampService implements LoggerAwareInterface
                     }
                 }
 
-                foreach (self::EXCHANGE_RULES[$offerXmlId] as $stampLevel) {
-                    $stampLevelInfo = $this->parseLevelKey($stampLevel['title']);
-                    if (is_array($stampLevelInfo) && ($stampLevelInfo['discountStamps'] >= $maxStampsLevelValue)) {
-                        $discountPrice = $this->getBasketItemDiscountPrice($basketItem, $stampLevelInfo);
-
-                        if ($discountPrice === null) {
-                            continue;
-                        }
-
-                        $stampLevelArr = [
-                            'price' => $discountPrice,
-                            'stamps' => $stampLevelInfo['discountStamps'],
-                        ];
-
-                        $stampLevels[] = $stampLevelArr;
-                    }
-                }
+                $stampLevels = $this->getBasketItemStampLevels($basketItem, $offerXmlId, $maxStampsLevelValue);
             }
         }
 
@@ -265,6 +248,36 @@ class StampService implements LoggerAwareInterface
             'USE_STAMPS' => $useStamps,
             'USED_STAMP_AMOUNT' => $useStampsAmount,
         ];
+    }
+
+    /**
+     * @param BasketItem $basketItem
+     * @param $offerXmlId
+     * @param $maxStampsLevelValue
+     * @return array
+     * @throws ArgumentNullException
+     */
+    public function getBasketItemStampLevels($basketItem, $offerXmlId, $maxStampsLevelValue)
+    {
+        $stampLevels = [];
+
+        foreach (self::EXCHANGE_RULES[$offerXmlId] as $stampLevel) {
+            $stampLevelInfo = $this->parseLevelKey($stampLevel['title']);
+            if (is_array($stampLevelInfo) && ($stampLevelInfo['discountStamps'] >= $maxStampsLevelValue)) {
+                $discountPrice = $this->getBasketItemDiscountPrice($basketItem, $stampLevelInfo);
+
+                if ($discountPrice === null) {
+                    continue;
+                }
+
+                $stampLevels[] = [
+                    'price' => $discountPrice,
+                    'stamps' => $stampLevelInfo['discountStamps'],
+                ];
+            }
+        }
+
+        return $stampLevels;
     }
 
     /**
