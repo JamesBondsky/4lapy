@@ -40,6 +40,7 @@ class OrderCalculate
      * Расшифровка движений марок клиентов на текущий заказ, список ОбъектДетализацииМарок[]
      * @Serializer\SerializedName("stamps_details")
      * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\StampsDetailing>")
+     * @Serializer\SkipWhenEmpty()
      * @var StampsDetailing[]
      */
     protected $stampsDetails = [];
