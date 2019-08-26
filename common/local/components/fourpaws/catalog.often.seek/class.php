@@ -108,9 +108,25 @@ class CatalogOftenSeekComponent extends CBitrixComponent
                     continue;
                 }
 
-                if(count(array_diff($itemParam, $curPageParam)) == 0){
-                    $item->setChosen(true);
+                // провоцирует баг верстки
+                unset($curPageParam['partitial'], $curPageParam['partial']);
+
+                $isChosen = true;
+                foreach ($itemParam as $key => $param){
+                    if(!$curPageParam[$key]){
+                        $isChosen = false;
+                        break;
+                    }
+
+                    $arItemValue = explode(',', $param);
+                    $arCurPageValue = explode(',', $curPageParam[$key]);
+
+                    if(count(array_diff($arItemValue, $arCurPageValue)) > 0){
+                        $isChosen = false;
+                        break;
+                    }
                 }
+                $item->setChosen($isChosen);
 
                 foreach ($itemParam as $key => $value){
                     if(!empty($curPageParam[$key])){
@@ -120,8 +136,6 @@ class CatalogOftenSeekComponent extends CBitrixComponent
                         unset($itemParam[$key]);
                     }
                 }
-                // провоцирует баг верстки
-                unset($curPageParam['partitial']);
 
                 $newParams = array_merge($curPageParam, $itemParam ?: []);
                 $newLink = sprintf('%s?%s', $APPLICATION->GetCurPage(false), http_build_query($newParams));
