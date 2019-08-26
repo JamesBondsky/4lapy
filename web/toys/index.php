@@ -341,7 +341,7 @@
 
                 <div class="toys-landing-benefits__text">
                     <strong>Продлевают</strong><br />
-                    молодость и радуют <br />
+                    молодость и&nbsp;радуют <br />
                     питомца
                 </div>
             </li>
