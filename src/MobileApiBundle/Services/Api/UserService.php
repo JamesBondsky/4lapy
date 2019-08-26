@@ -136,6 +136,8 @@ class UserService
             '9165919854',
             '9636263044',
             'a.vorobyev@articul.ru',
+            '9683618355',
+            'm.balezin@articul.ru',
         ];
 
         try {
