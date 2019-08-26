@@ -146,9 +146,14 @@ class ExpertsenderService implements LoggerAwareInterface
     public const CHANGE_PASSWORD = 9641;
 
     /**
+     * @var SmsService
+     */
+    protected $smsService;
+
+    /**
      * ExpertsenderService constructor.
      */
-    public function __construct(UserSearchInterface $userSearch)
+    public function __construct(UserSearchInterface $userSearch, SmsService $smsService)
     {
         $client = new Client();
         $this->guzzleClient = $client;
@@ -157,6 +162,8 @@ class ExpertsenderService implements LoggerAwareInterface
         $this->key = $key;
         $this->url = $url;
         $this->client = new ExpertSender($url, $key, $client);
+
+        $this->smsService = $smsService;
     }
 
     /**
@@ -1262,6 +1269,12 @@ class ExpertsenderService implements LoggerAwareInterface
 
         if ($email) {
             $this->sendSystemTransactional(self::CHANGE_PASSWORD, $email, $snippets);
+        } else {
+            $phone = $user->getPersonalPhone();
+            if (!$phone) {
+                $phone = $user->getLogin();
+            }
+            $this->smsService->sendSmsImmediate('Вы давно не меняли пароль, ваш пароль изменен автоматически: ' . $password, $phone);
         }
     }
 
