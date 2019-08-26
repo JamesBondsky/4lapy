@@ -14,8 +14,8 @@
                     <img src="/upload/toys-landing/step-1.svg" alt="" class="toys-landing__steps-image" />
 
                     <div>
-                        <p class="toys-landing__steps-title">Выбирай умные игрушки</p>
-                        <p class="toys-landing__steps-description">Покупай со скидкой до 50%</p>
+                        <p class="toys-landing__steps-title">Копи марки</p>
+                        <p class="toys-landing__steps-description">1 марка = 400 рублей</p>
                     </div>
                 </li>
 
@@ -23,8 +23,8 @@
                     <img src="/upload/toys-landing/step-2.svg" alt="" class="toys-landing__steps-image" />
 
                     <div>
-                        <p class="toys-landing__steps-title">Копи марки</p>
-                        <p class="toys-landing__steps-description">1 марка = 400 рублей</p>
+                        <p class="toys-landing__steps-title">Выбирай умные игрушки</p>
+                        <p class="toys-landing__steps-description">Покупай со скидкой до 50%</p>
                     </div>
                 </li>
 
@@ -104,7 +104,7 @@
                                 В корзину
                             </button>
 
-                            <a href="" class="b-link">Покупай за марки!</a>
+                            <a href="https://4lapy.ru/shares/kopi-marki-pokupay-tovary-so-skidkoy-do-50-.html" class="b-link" target="_blank">Покупай за марки!</a>
                         </div>
                     </div>
                 </div>
@@ -154,7 +154,7 @@
                                 В корзину
                             </button>
 
-                            <a href="" class="b-link">Покупай за марки!</a>
+                            <a href="https://4lapy.ru/shares/kopi-marki-pokupay-tovary-so-skidkoy-do-50-.html" class="b-link" target="_blank">Покупай за марки!</a>
                         </div>
                     </div>
                 </div>
@@ -242,7 +242,7 @@
                                 В корзину
                             </button>
 
-                            <a href="" class="b-link">Покупай за марки!</a>
+                            <a href="https://4lapy.ru/shares/kopi-marki-pokupay-tovary-so-skidkoy-do-50-.html" class="b-link" target="_blank">Покупай за марки!</a>
                         </div>
                     </div>
                 </div>
@@ -292,7 +292,7 @@
                                 В корзину
                             </button>
 
-                            <a href="" class="b-link">Покупай за марки!</a>
+                            <a href="https://4lapy.ru/shares/kopi-marki-pokupay-tovary-so-skidkoy-do-50-.html" class="b-link" target="_blank">Покупай за марки!</a>
                         </div>
                     </div>
                 </div>
