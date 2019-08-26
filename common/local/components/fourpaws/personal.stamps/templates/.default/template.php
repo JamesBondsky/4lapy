@@ -27,15 +27,14 @@ $marksDeclension = new Declension('марку', 'марки', 'марок');
         <div class="b-kopilka__ticket-mark">
             <div class="title-ticket-mark"><?= $arResult['ACTIVE_STAMPS_COUNT'] . ' ' . $marksDeclension->get($arResult['ACTIVE_STAMPS_COUNT']) ?></div>
             <div class="descr-ticket-mark">
-                Период начисления марок <nobr>1.03.19</nobr>&nbsp;&mdash; <nobr>31.03.19</nobr>
+                Период начисления марок <nobr>1.09.19</nobr>&nbsp;&mdash; <nobr>30.09.19</nobr>
             </div>
         </div>
         <div class="b-kopilka__info">
             <h3>Условия акции</h3>
-            <p>За&nbsp;каждые 400&nbsp;рублей в&nbsp;чеке получайте:2 марки на&nbsp;товары из&nbsp;категории &laquo;Ветаптека&raquo;;<br />
-                1&nbsp;марку на&nbsp;все остальные товары.</p>
-            <p>Марки будут начислены после завершения заказа. Меняйте марки на&nbsp;скидку:<br />
-                7&nbsp;марок&nbsp;&mdash; скидка 10%; 15&nbsp;марок&nbsp;&mdash; скидка 20%; 25&nbsp;марок&nbsp;&mdash; скидка 30%.</p>
+            <p>1. Копи марки: за каждые 400 руб. в чеке получайте 1 марку.</p>
+	        <p>2. Выбирай умные игрушки: покупай со скидкой до 50%.</p>
+	        <p>3. Занимайся с питомцем: развивай любознательность, обучай и играй с удовольствием.</p>
             <a href="#">Подробные условия акции</a>
         </div>
     </div>

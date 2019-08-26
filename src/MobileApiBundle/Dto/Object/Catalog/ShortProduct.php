@@ -188,7 +188,7 @@ class ShortProduct
      * @Serializer\Type("int")
      * @Serializer\Exclude()
      */
-    protected $usedStamps = '';
+    protected $usedStamps = 0;
 
 
     /**
