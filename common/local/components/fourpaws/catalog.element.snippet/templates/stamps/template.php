@@ -259,9 +259,13 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
             <? }
 
             if ($arResult['EXCHANGE_RULE']) { ?>
+                <span>С использованием марок</span>
                 <ul class="b-common-item__marks">
                     <? foreach ($arResult['EXCHANGE_RULE'] as $exchangeRule): ?>
-                        <li class="b-common-item__item-mark"><?= WordHelper::numberFormat($exchangeRule['price']) ?> - <?= $exchangeRule['stamps'] ?>
+                        <li class="b-common-item__item-mark">
+                            <?= WordHelper::numberFormat($exchangeRule['price']) ?>
+                            <span>₽</span>
+                            - <?= $exchangeRule['stamps'] ?>
                             <span class="b-icon b-icon--mark">
                                 <?= new SvgDecorator('icon-mark', 12, 12) ?>
                             </span>
