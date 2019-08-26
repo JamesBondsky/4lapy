@@ -208,6 +208,13 @@ class BasketService
                 $shortProduct->setPrice((new Price())->setActual(0)->setOld(0));
             }
 
+            if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL'])) {
+                $usedStampsLevel = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL']['VALUE']);
+                if ($usedStampsLevel) {
+                    $shortProduct->setUsedStamps((int)$usedStampsLevel['stampsUsed']);
+                }
+            }
+
             $product->setShortProduct($shortProduct);
             $products->add($product);
 

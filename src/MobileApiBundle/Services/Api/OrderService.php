@@ -658,10 +658,8 @@ class OrderService
         $stampsUsed = array_reduce($basketProducts->getValues(), static function($carry, $product) use ($stampService) {
             /** @var Product $product */
             //if ($product->isCanUseStamps() && $product->isUseStamps() && $product->getShortProduct()) {
-            if ($product->isUseStamps() && $product->getShortProduct()) { //TODO заменить на верхнюю строку с $product->isCanUseStamps(), когда будет готово поле canUseStamps
-                $rules = $stampService::EXCHANGE_RULES[$product->getShortProduct()->getXmlId()];
-
-                $carry += max(array_column($rules, 'stamps')); //TODO fixme пока учитывается обмен марок только на одну единицу товара (нужно умножать на количество, к которому скидка применима)
+            if ($product->isUseStamps() && $product->getShortProduct()) {
+                $carry += $product->getShortProduct()->getUsedStamps();
             }
 
             return $carry;

@@ -183,6 +183,13 @@ class ShortProduct
      */
     protected $stampLevels = '';
 
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\Exclude()
+     */
+    protected $usedStamps = '';
+
 
     /**
      * @return int
@@ -528,5 +535,23 @@ class ShortProduct
     {
         $this->stampLevels = $stampLevels;
         return $this;
+    }
+
+    /**
+     * @param int $usedStamps
+     * @return ShortProduct
+     */
+    public function setUsedStamps(int $usedStamps): ShortProduct
+    {
+        $this->usedStamps = $usedStamps;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getUsedStamps(): int
+    {
+        return $this->usedStamps;
     }
 }
