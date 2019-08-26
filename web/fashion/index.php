@@ -405,4 +405,15 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
     </section>
 </div>
 
+<script>
+    document.addEventListener('load', function() {
+        var items = document.querySelectorAll('.fashion-page .measure_dog__button.js-scroll-to-catalog, .fashion-page .b-news-item__link');
+
+        for (var i = 0; i < items.length; i++) {
+            items[i].setAttribute('target', '_blank');
+            items[i].target = '_blank';
+        }
+    });
+</script>
+
 <?php require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php'; ?>
