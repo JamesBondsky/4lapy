@@ -167,6 +167,7 @@ class Manzana implements LoggerAwareInterface
                     'DISCOUNT_PRICE' => $item->getBasePrice() - $price,
                     'CUSTOM_PRICE' => 'Y'
                 ]);
+                $this->clearBasketItemStampsProperties($item);
             }
 
             if ($e instanceof ExecuteException) {
@@ -295,9 +296,7 @@ class Manzana implements LoggerAwareInterface
                     $maxStampsLevelProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'MAX_STAMPS_LEVEL');
                     $extendedAttributeCollection = $position->getExtendedAttribute();
                     if ($extendedAttributeCollection->isEmpty()) { // Если атрибут пустой, значит, обмен марок невозможен
-                        $this->basketService->setBasketItemPropertyValue($item, 'USE_STAMPS', false);
-                        $this->basketService->setBasketItemPropertyValue($item, 'USED_STAMPS_LEVEL', false);
-                        $this->basketService->setBasketItemPropertyValue($item, 'MAX_STAMPS_LEVEL', false);
+                        $this->clearBasketItemStampsProperties($item);
                     } else {
                         // указание, что можно применить марки для скидки на этот товар
 
@@ -496,5 +495,18 @@ class Manzana implements LoggerAwareInterface
     {
         $this->stampsToBeAdded = $stampsToBeAdded;
         return $this;
+    }
+
+    /**
+     * Очищает значения всех свойств, связанных с марками
+     *
+     * @param BasketItem $item
+     */
+    public function clearBasketItemStampsProperties(BasketItem $item): void
+    {
+        $this->basketService->setBasketItemPropertyValue($item, 'USE_STAMPS', false);
+        $this->basketService->setBasketItemPropertyValue($item, 'USED_STAMPS_LEVEL', false);
+        $this->basketService->setBasketItemPropertyValue($item, 'MAX_STAMPS_LEVEL', false);
+        $this->basketService->setBasketItemPropertyValue($item, 'CAN_USE_STAMPS', false);
     }
 }
