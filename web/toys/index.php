@@ -2,10 +2,6 @@
     require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 ?>
 
-<style>
-
-</style>
-
 <div class="toys-landing">
     <div class="toys-landing__header">
         <img src="/upload/toys-landing/header.jpg" alt="" />
@@ -18,8 +14,8 @@
                     <img src="/upload/toys-landing/step-1.svg" alt="" class="toys-landing__steps-image" />
 
                     <div>
-                        <p class="toys-landing__steps-title">Копи марки</p>
-                        <p class="toys-landing__steps-description">1 марка = 400 рублей</p>
+                        <p class="toys-landing__steps-title">Выбирай умные игрушки</p>
+                        <p class="toys-landing__steps-description">Покупай со скидкой до 50%</p>
                     </div>
                 </li>
 
@@ -27,8 +23,8 @@
                     <img src="/upload/toys-landing/step-2.svg" alt="" class="toys-landing__steps-image" />
 
                     <div>
-                        <p class="toys-landing__steps-title">Выбирай умные игрушки</p>
-                        <p class="toys-landing__steps-description">Покупай со скидкой до 50%</p>
+                        <p class="toys-landing__steps-title">Копи марки</p>
+                        <p class="toys-landing__steps-description">1 марка = 400 рублей</p>
                     </div>
                 </li>
 
@@ -136,19 +132,19 @@
                                 +
 
                                 <span class="toys-landing-product__price-highlighed">
-                        1 458 ₽
+                        1 587 ₽
                     </span>
                             </p>
 
                             <p class="toys-landing-product__price">
                     <span class="toys-landing-product__price-highlighed">
-                        14 <img src="/upload/toys-landing/logo.png" alt="" width="19" height="19">
+                        12 <img src="/upload/toys-landing/logo.png" alt="" width="19" height="19">
                     </span>
 
                                 +
 
                                 <span class="toys-landing-product__price-highlighed">
-                        3 818 ₽
+                        1 287 ₽
                     </span>
                             </p>
                         </div>
@@ -224,19 +220,19 @@
                                 +
 
                                 <span class="toys-landing-product__price-highlighed">
-                        1 458 ₽
+                        1 587 ₽
                     </span>
                             </p>
 
                             <p class="toys-landing-product__price">
                     <span class="toys-landing-product__price-highlighed">
-                        14 <img src="/upload/toys-landing/logo.png" alt="" width="19" height="19">
+                        12 <img src="/upload/toys-landing/logo.png" alt="" width="19" height="19">
                     </span>
 
                                 +
 
                                 <span class="toys-landing-product__price-highlighed">
-                        3 818 ₽
+                        1 287 ₽
                     </span>
                             </p>
                         </div>
@@ -274,19 +270,19 @@
                                 +
 
                                 <span class="toys-landing-product__price-highlighed">
-                                    1 458 ₽
+                                    1 587 ₽
                                 </span>
                             </p>
 
                             <p class="toys-landing-product__price">
                                 <span class="toys-landing-product__price-highlighed">
-                                    14 <img src="/upload/toys-landing/logo.png" alt="" width="19" height="19">
+                                    12 <img src="/upload/toys-landing/logo.png" alt="" width="19" height="19">
                                 </span>
 
                                 +
 
                                 <span class="toys-landing-product__price-highlighed">
-                                    3 818 ₽
+                                    1 287 ₽
                                 </span>
                             </p>
                         </div>
