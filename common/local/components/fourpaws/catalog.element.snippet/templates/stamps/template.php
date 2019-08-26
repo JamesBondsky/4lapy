@@ -259,7 +259,7 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
             <? }
 
             if ($arResult['EXCHANGE_RULE']) { ?>
-                <span>С использованием марок</span>
+                <span class="b-common-item__title">С использованием марок</span>
                 <ul class="b-common-item__marks">
                     <? foreach ($arResult['EXCHANGE_RULE'] as $exchangeRule): ?>
                         <li class="b-common-item__item-mark">
