@@ -665,7 +665,7 @@ class OrderService
             return $carry;
         }, 0);
 
-        return (new OrderCalculate())
+        $orderCalculate = (new OrderCalculate())
             ->setPriceDetails([
                 (new Detailing())
                     ->setId('cart_price_old')
@@ -698,19 +698,25 @@ class OrderService
                     ->setTitle('Списано бонусов')
                     ->setValue($bonusSubtractAmount),
             ])
-            ->setStampsDetails([
-                (new StampsDetailing())
-                    ->setId('stamps_add')
-                    ->setTitle('Начислено марок')
-                    ->setValue($stampsAdded),
-                (new StampsDetailing())
-                    ->setId('stamps_sub')
-                    ->setTitle('Списано марок')
-                    ->setValue($stampsUsed),
-            ])
             ->setTotalPrice(
                 $totalPrice
             );
+
+        if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
+            $orderCalculate
+                ->setStampsDetails([
+                    (new StampsDetailing())
+                        ->setId('stamps_add')
+                        ->setTitle('Начислено марок')
+                        ->setValue($stampsAdded),
+                    (new StampsDetailing())
+                        ->setId('stamps_sub')
+                        ->setTitle('Списано марок')
+                        ->setValue($stampsUsed),
+                ]);
+        }
+
+        return $orderCalculate;
     }
 
     /**

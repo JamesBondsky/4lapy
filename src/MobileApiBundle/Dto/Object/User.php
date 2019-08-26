@@ -6,6 +6,7 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Object;
 
+use FourPaws\PersonalBundle\Service\StampService;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -105,7 +106,7 @@ class User
      * @Serializer\SerializedName("stamps_offer_active")
      * @var bool
      */
-    protected $stampsOfferActive = true;
+    protected $stampsOfferActive = StampService::IS_STAMPS_OFFER_ACTIVE;
 
 
     /**
