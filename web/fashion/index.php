@@ -329,7 +329,7 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
             <div class="fashion-free-shipping__content">
                 <div class="fashion-free-shipping__img"></div>
                 <div class="fashion-free-shipping__info">
-                    <div class="fashion-free-shipping__title">Закажи бесплатную доставку и&nbsp;примерку</div>
+                    <div class="fashion-free-shipping__title">Закажи бесплатную примерку</div>
                     <ul class="fashion-free-shipping__steps">
                         <li>примерь несколько размеров</li>
                         <li>купи только то, что подошло</li>
