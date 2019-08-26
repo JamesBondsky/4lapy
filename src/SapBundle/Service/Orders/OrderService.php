@@ -573,10 +573,12 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 ->setDeliveryFromPoint($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'));
 
             $useStamps = $this->getBasketPropertyValueByCode($basketItem, 'USE_STAMPS');
+            $discountStamps = 0;
             if ($useStamps) {
                 $maxStampsLevel = $this->getBasketPropertyValueByCode($basketItem, 'MAX_STAMPS_LEVEL');
                 if ($maxStampsLevelArr = unserialize($maxStampsLevel)) {
                     $offer->setExchangeName($maxStampsLevelArr['key']);
+                    $discountStamps = $this->stampService->parseLevelKey($maxStampsLevelArr['key'])['discountStamps'];
                 } else {
                     $useStamps = false;
                 }
@@ -593,7 +595,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     ->setPosition($position);
 
                 if ($useStamps) {
-                    $detachedOffer->setStampsQuantity($hasBonus);
+                    $detachedOffer->setStampsQuantity($hasBonus * $discountStamps);
                 }
 
                 $collection->add($detachedOffer);
@@ -603,7 +605,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
             if ($useStamps) {
                 // $offer->setStampsQuantity($maxStampsLevelArr['value']); todo проблематично использовать, так как есть разделение по бонусам
-                $offer->setStampsQuantity($quantity);
+                $offer->setStampsQuantity($quantity * $discountStamps);
             }
 
             $offer->setQuantity($quantity);
