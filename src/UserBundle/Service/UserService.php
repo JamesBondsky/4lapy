@@ -1344,12 +1344,14 @@ class UserService implements
             $users = $this->userRepository->findBy(['ID' => $userIdByEmail]);
 
             $barcodeGenerator = new BarcodeGeneratorPNG();
-            if ($isOnlyEmail) {
-//                $offerFields = $this->personalOffersService->getOfferFieldsByCouponId(is_int($promocode) ? intval($promocode) : $promocodeId);
-                $offerFields = $this->personalOffersService->getOfferFieldsByPromoCode($promocode);
-            } else {
-                $offerFields = $this->personalOffersService->getOfferFieldsByPromoCode($promocode);
-            }
+//            if ($isOnlyEmail) {
+////                $offerFields = $this->personalOffersService->getOfferFieldsByCouponId(is_int($promocode) ? intval($promocode) : $promocodeId);
+//                $offerFields = $this->personalOffersService->getOfferFieldsByPromoCode($promocode);
+//            } else {
+//                $offerFields = $this->personalOffersService->getOfferFieldsByPromoCode($promocode);
+//            }
+
+            $offerFields = $this->personalOffersService->getOfferFieldsByCouponId($promocodeId);
 
             if ($offerFields->count() == 0) {
                 throw new Exception('Купон по промокоду не найден');
