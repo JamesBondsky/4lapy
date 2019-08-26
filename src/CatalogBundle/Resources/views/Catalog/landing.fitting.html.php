@@ -35,9 +35,9 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.clothing_size_selection', '', [
 
             <form class="measure_dog__form-size js-measure-dog-form">
                 <div class="measure_dog__fields">
-                    <input class="measure_dog__input" pattern="[0-9]" id="neck_size" type="number" min="1" placeholder=" Обхват шеи (см)" required>
-                    <input class="measure_dog__input" pattern="[0-9]" id="chest_size" type="number" min="1" placeholder="Обхват груди (см)" required>
                     <input class="measure_dog__input" pattern="[0-9]" id="back_size" type="number" min="1" placeholder="Длина спинки (см)" required>
+                    <input class="measure_dog__input" pattern="[0-9]" id="chest_size" type="number" min="1" placeholder="Обхват груди (см)" required>
+                    <input class="measure_dog__input" pattern="[0-9]" id="neck_size" type="number" min="1" placeholder=" Обхват шеи (см)" required>
                 </div>
 
                 <input class="measure_dog__button" type="submit" value="Узнать размер">
