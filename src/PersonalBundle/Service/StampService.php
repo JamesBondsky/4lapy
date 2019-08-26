@@ -217,7 +217,7 @@ class StampService implements LoggerAwareInterface
         $hasStamps = isset(self::EXCHANGE_RULES[$offerXmlId]); // todo get from manzana
 
         $stampLevels = [];
-        $maxCanStampLevel = null;
+        $maxStampsLevelValue = 0;
 
         $useStamps = false;
         $useStampsAmount = 0;
@@ -232,11 +232,16 @@ class StampService implements LoggerAwareInterface
                     $useStampsAmount = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL']['VALUE'])['stampsUsed'];
                 }
             } else {
+                if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
+                    $maxStampsLevelKey = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'])['key'];
+                    if ($maxStampsLevelKey) {
+                        $maxStampsLevelValue = $this->parseLevelKey($maxStampsLevelKey)['discountStamps'];
+                    }
+                }
+
                 foreach (self::EXCHANGE_RULES[$offerXmlId] as $stampLevel) {
                     $stampLevelInfo = $this->parseLevelKey($stampLevel['title']);
-                    if (is_array($stampLevelInfo)) {
-                        $discountStamps = $stampLevelInfo['discountStamps'];
-
+                    if (is_array($stampLevelInfo) && ($stampLevelInfo['discountStamps'] >= $maxStampsLevelValue)) {
                         $discountPrice = $this->getBasketItemDiscountPrice($basketItem, $stampLevelInfo);
 
                         if ($discountPrice === null) {
@@ -245,19 +250,11 @@ class StampService implements LoggerAwareInterface
 
                         $stampLevelArr = [
                             'price' => $discountPrice,
-                            'stamps' => $discountStamps,
+                            'stamps' => $stampLevelInfo['discountStamps'],
                         ];
 
-                        if (($activeStampsCount >= $discountStamps) && ((!$maxCanStampLevel) || ($maxCanStampLevel['stamps'] < $discountStamps))) {
-                            $maxCanStampLevel = $stampLevelArr;
-                        } else if ($activeStampsCount < $discountStamps) {
-                            $stampLevels[] = $stampLevelArr;
-                        }
+                        $stampLevels[] = $stampLevelArr;
                     }
-                }
-
-                if ($maxCanStampLevel) {
-                    $stampLevels = array_merge([$maxCanStampLevel], $stampLevels);
                 }
             }
         }
@@ -265,7 +262,7 @@ class StampService implements LoggerAwareInterface
         return [
             'HAS_STAMPS' => $hasStamps,
             'STAMP_LEVELS' => $stampLevels,
-            'CAN_USE_STAMPS' => ($maxCanStampLevel !== null),
+            'CAN_USE_STAMPS' => (!$useStamps && $maxStampsLevelValue),
             'USE_STAMPS' => $useStamps,
             'USED_STAMP_AMOUNT' => $useStampsAmount,
         ];
@@ -281,12 +278,12 @@ class StampService implements LoggerAwareInterface
     {
         $discountPrice = null;
 
-        $basketItemPrice = $basketItem->getPrice();
+        $basketItemPrice = $basketItem->getBasePrice();
 
         if ($stampLevelInfo['discountType'] == 'V') {
             $discountPrice = $basketItemPrice - $stampLevelInfo['discountValue'];
         } else if ($stampLevelInfo['discountType'] == 'P') {
-            $discountPrice = $basketItemPrice * ($stampLevelInfo['discountValue'] / 100);
+            $discountPrice = $basketItemPrice * (1 - ($stampLevelInfo['discountValue'] / 100));
         }
 
         return $discountPrice;
