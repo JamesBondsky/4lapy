@@ -572,6 +572,16 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 ->setDeliveryShipmentPoint($this->getBasketPropertyValueByCode($basketItem, 'SHIPMENT_PLACE_CODE'))
                 ->setDeliveryFromPoint($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'));
 
+            $useStamps = $this->getBasketPropertyValueByCode($basketItem, 'USE_STAMPS');
+            if ($useStamps) {
+                $maxStampsLevel = $this->getBasketPropertyValueByCode($basketItem, 'MAX_STAMPS_LEVEL');
+                if ($maxStampsLevelArr = unserialize($maxStampsLevel)) {
+                    $offer->setExchangeName($maxStampsLevelArr['key']);
+                } else {
+                    $useStamps = false;
+                }
+            }
+
             $hasBonus = $this->getBasketPropertyValueByCode($basketItem, 'HAS_BONUS');
             $quantity = $basketItem->getQuantity();
             if ($hasBonus && $hasBonus < $quantity) {
@@ -581,18 +591,19 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     ->setQuantity($hasBonus)
                     ->setChargeBonus((bool)$hasBonus)
                     ->setPosition($position);
+
+                if ($useStamps) {
+                    $detachedOffer->setStampsQuantity($hasBonus);
+                }
+
                 $collection->add($detachedOffer);
                 $hasBonus = 0;
                 $position++;
             }
 
-            $useStamps = $this->getBasketPropertyValueByCode($basketItem, 'USE_STAMPS');
-            if ($useStamps) { //todo раскоментить, когда в поле USE_STAMPS будет возвращаться корректное знаечение
-                $stampsInfo = $this->getBasketPropertyValueByCode($basketItem, 'MAX_STAMPS_LEVEL');
-                if ($stampsInfoArr = unserialize($stampsInfo)) {
-                    $offer->setStampsQuantity($this->stampService->parseLevelKey($stampsInfoArr['key'])['discountStamps'] * $quantity);
-                    $offer->setExchangeName($stampsInfoArr['key']);
-                }
+            if ($useStamps) {
+                // $offer->setStampsQuantity($maxStampsLevelArr['value']); todo проблематично использовать, так как есть разделение по бонусам
+                $offer->setStampsQuantity($quantity);
             }
 
             $offer->setQuantity($quantity);
