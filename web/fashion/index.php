@@ -360,49 +360,58 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
         </div>
     </section>
 
-    <section class="fashion-interesting-clothes">
-        <div class="b-container">
-            <h2 class="fashion-title txt-center">Интересное про одежду</h2>
-            <? $APPLICATION->IncludeComponent('fourpaws:items.list',
-                'fashion',
-                [
-                    'ACTIVE_DATE_FORMAT'     => 'j F Y',
-                    'AJAX_MODE'              => 'N',
-                    'AJAX_OPTION_ADDITIONAL' => '',
-                    'AJAX_OPTION_HISTORY'    => 'N',
-                    'AJAX_OPTION_JUMP'       => 'N',
-                    'AJAX_OPTION_STYLE'      => 'Y',
-                    'CACHE_FILTER'           => 'Y',
-                    'CACHE_GROUPS'           => 'N',
-                    'CACHE_TIME'             => '36000000',
-                    'CACHE_TYPE'             => 'A',
-                    'CHECK_DATES'            => 'Y',
-                    'FIELD_CODE'             => [
-                        '',
+    <?
+    $section = CIBlockSection::GetList([], ['CODE' => 'fashion-dogs'])->Fetch();
+    if($section){
+        global $arNewsFilter;
+        $arNewsFilter = ['SECTION_ID' => [$section['ID']]];
+        ?>
+        <section class="fashion-interesting-clothes">
+            <div class="b-container">
+                <h2 class="fashion-title txt-center">Интересное про одежду</h2>
+                <?
+                $APPLICATION->IncludeComponent('fourpaws:items.list',
+                    'fashion',
+                    [
+                        'ACTIVE_DATE_FORMAT'     => 'j F Y',
+                        'AJAX_MODE'              => 'N',
+                        'AJAX_OPTION_ADDITIONAL' => '',
+                        'AJAX_OPTION_HISTORY'    => 'N',
+                        'AJAX_OPTION_JUMP'       => 'N',
+                        'AJAX_OPTION_STYLE'      => 'Y',
+                        'CACHE_FILTER'           => 'Y',
+                        'CACHE_GROUPS'           => 'N',
+                        'CACHE_TIME'             => '36000000',
+                        'CACHE_TYPE'             => 'A',
+                        'CHECK_DATES'            => 'Y',
+                        'FIELD_CODE'             => [
+                            '',
+                        ],
+                        'FILTER_NAME'            => 'arNewsFilter',
+                        'IBLOCK_ID'              => [
+                            IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::NEWS),
+                            IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::ARTICLES),
+                        ],
+                        'IBLOCK_TYPE'            => IblockType::PUBLICATION,
+                        'NEWS_COUNT'             => '7',
+                        'PREVIEW_TRUNCATE_LEN'   => '',
+                        'PROPERTY_CODE'          => [
+                            'PUBLICATION_TYPE',
+                            'VIDEO',
+                        ],
+                        'SET_LAST_MODIFIED'      => 'N',
+                        'SORT_BY1'               => 'ACTIVE_FROM',
+                        'SORT_BY2'               => 'SORT',
+                        'SORT_ORDER1'            => 'DESC',
+                        'SORT_ORDER2'            => 'ASC',
                     ],
-                    'FILTER_NAME'            => '',
-                    'IBLOCK_ID'              => [
-                        IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::NEWS),
-                        IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::ARTICLES),
-                    ],
-                    'IBLOCK_TYPE'            => IblockType::PUBLICATION,
-                    'NEWS_COUNT'             => '7',
-                    'PREVIEW_TRUNCATE_LEN'   => '',
-                    'PROPERTY_CODE'          => [
-                        'PUBLICATION_TYPE',
-                        'VIDEO',
-                    ],
-                    'SET_LAST_MODIFIED'      => 'N',
-                    'SORT_BY1'               => 'ACTIVE_FROM',
-                    'SORT_BY2'               => 'SORT',
-                    'SORT_ORDER1'            => 'DESC',
-                    'SORT_ORDER2'            => 'ASC',
-                ],
-                false,
-                ['HIDE_ICONS' => 'Y']);
-            ?>
-        </div>
-    </section>
+                    false,
+                    ['HIDE_ICONS' => 'Y']
+                );
+                ?>
+            </div>
+        </section>
+    <? } ?>
 </div>
 
 <?php require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php'; ?>
