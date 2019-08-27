@@ -181,7 +181,7 @@ class ShortProduct
      * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct\StampLevel>")
      * @Serializer\SerializedName("stampLevels")
      */
-    protected $stampLevels = '';
+    protected $stampLevels = [];
 
     /**
      * @var int
