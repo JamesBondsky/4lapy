@@ -27,28 +27,10 @@ class StampService implements LoggerAwareInterface
 
     public const IS_STAMPS_OFFER_ACTIVE = true;
 
-    public const DISCOUNT_LEVELS = [ //TODO del
-        1 => [
-            'LEVEL' => 1,
-            'MARKS_NEEDED' => 7,
-            'DISCOUNT' => 10,
-        ],
-        2 => [
-            'LEVEL' => 2,
-            'MARKS_NEEDED' => 15,
-            'DISCOUNT' => 20,
-        ],
-        3 => [
-            'LEVEL' => 3,
-            'MARKS_NEEDED' => 25,
-            'DISCOUNT' => 30,
-        ],
-    ];
-
     public const EXCHANGE_RULES = [ //TODO FIX xml_ids array
         1000002 => [
             [
-                'title' => 'Stamps_02_trade_action_10*5*P', //FIXME title пока еще не используется. Нужен?
+                'title' => 'Stamps_02_trade_action_10*5*P',
                 'price' => 1097.10,
                 'stamps' => 5,
             ],
@@ -113,7 +95,7 @@ class StampService implements LoggerAwareInterface
      * @throws \FourPaws\External\Manzana\Exception\ExecuteException
      * @throws NotAuthorizedException
      */
-    public function getActiveStampsCount(?bool $withoutCache = false): int //TODO answer with this value in new API method
+    public function getActiveStampsCount(?bool $withoutCache = false): int
     {
         if (!$this->currentUserProvider->isAuthorized()) {
             $this->activeStampsCount = 0;

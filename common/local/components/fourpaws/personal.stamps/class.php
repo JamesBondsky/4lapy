@@ -44,8 +44,6 @@ class FourPawsPersonalCabinetStampsComponent extends FourPawsComponent
 	 */
     public function onPrepareComponentParams($params): array
     {
-		$this->discountLevels = $this->stampService::DISCOUNT_LEVELS;
-        $params['DISCOUNT_LEVELS'] = $this->discountLevels;
         $params['MARK_RATE'] = $this->stampService::MARK_RATE;
         $params['MARKS_PER_RATE'] = $this->stampService::MARKS_PER_RATE;
         $params['PRODUCTS_XML_ID'] = array_keys($this->stampService::EXCHANGE_RULES); //TODO do $params['EXCHANGE_RULES'] (to show them on page) instead of $params['PRODUCTS_XML_ID']
