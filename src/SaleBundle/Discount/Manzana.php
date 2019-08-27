@@ -292,23 +292,90 @@ class Manzana implements LoggerAwareInterface
                         'CUSTOM_PRICE' => 'Y',
                     ]);
 
-                    $basketPropertyCollection = $item->getPropertyCollection();
-                    $maxStampsLevelProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'MAX_STAMPS_LEVEL');
-                    $extendedAttributeCollection = $position->getExtendedAttribute();
-                    if ($extendedAttributeCollection->isEmpty()) { // Если атрибут пустой, значит, обмен марок невозможен
-                        $this->clearBasketItemStampsProperties($item);
-                    } else {
-                        // указание, что можно применить марки для скидки на этот товар
+                    if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
+                        $basketPropertyCollection = $item->getPropertyCollection();
+                        $maxStampsLevelProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'MAX_STAMPS_LEVEL');
+                        $extendedAttributeCollection = $position->getExtendedAttribute();
+                        if ($extendedAttributeCollection->isEmpty()) { // Если атрибут пустой, значит, обмен марок невозможен
+                            $this->clearBasketItemStampsProperties($item);
+                        } else {
+                            // указание, что можно применить марки для скидки на этот товар
 
-                        $maxAvailableLevel = $this->stampService->getMaxAvailableLevel($extendedAttributeCollection, $activeStampsCount);
-                        if ($maxAvailableLevel['key']) {
-                            $maxAvailableLevelArray = $this->stampService->parseLevelKey($maxAvailableLevel['key']);
+                            $maxAvailableLevel = $this->stampService->getMaxAvailableLevel($extendedAttributeCollection, $activeStampsCount);
+                            if ($maxAvailableLevel['key']) {
+                                $maxAvailableLevelArray = $this->stampService->parseLevelKey($maxAvailableLevel['key']);
+                            }
+
+                            $usedStampsLevel = $this->basketService->getBasketItemPropertyValue($item, 'USED_STAMPS_LEVEL');
+                            $usedStampsLevel = $usedStampsLevel ? unserialize($usedStampsLevel) : false;
+
+                            if (!$maxAvailableLevelArray || $usedStampsLevel['stampsUsed'] > $maxAvailableLevelArray['discountStamps'] * $maxAvailableLevel['value']) {
+                                $maxAvailableLevelSerialized = $maxAvailableLevel ? serialize($maxAvailableLevel): false;
+                                //$this->basketService->setBasketItemPropertyValue($item, 'MAX_STAMPS_LEVEL', $maxAvailableLevelSerialized);
+                                if ($maxStampsLevelProperty) {
+                                    $maxStampsLevelProperty->setField('VALUE', $maxAvailableLevelSerialized);
+                                } else {
+                                    $maxStampsLevelProperty = $basketPropertyCollection->createItem();
+                                    $maxStampsLevelProperty->setFields([
+                                        'NAME' => 'MAX_STAMPS_LEVEL',
+                                        'CODE' => 'MAX_STAMPS_LEVEL',
+                                        'VALUE' => $maxAvailableLevelSerialized,
+                                    ]);
+                                    $maxStampsLevelProperty->save();
+                                }
+                                $basketPropertyCollection->save();
+                            }
+
+                            //TODO set USE_STAMPS=false & MAX_STAMPS_LEVEL=false instead (или заменить на максимальный из тех уровней, на который хватит марок), если пользователь уже выбрал обмен марок у других товаров и на этот обмен марок не хватит
                         }
 
-                        $usedStampsLevel = $this->basketService->getBasketItemPropertyValue($item, 'USED_STAMPS_LEVEL');
-                        $usedStampsLevel = $usedStampsLevel ? unserialize($usedStampsLevel) : false;
+                        $item->setPropertyCollection($basketPropertyCollection);
+                    }
+                }
+            });
+        }
 
-                        if (!$maxAvailableLevelArray || $usedStampsLevel['stampsUsed'] > $maxAvailableLevelArray['discountStamps'] * $maxAvailableLevel['value']) {
+        if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
+            // Расчет, сколько марок уже выбрано для обмена в $item в текущей корзине
+            $availableStamps = $activeStampsCount;
+            foreach ($basket as $item) {
+                $basketPropertyCollection = $item->getPropertyCollection();
+                $usedStampsLevelProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'USED_STAMPS_LEVEL');
+                //$maxStampsLevelProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'MAX_STAMPS_LEVEL');
+                if ($usedStampsLevelProperty && $usedStamps = unserialize($usedStampsLevelProperty->getField('VALUE'))['stampsUsed']) {
+                    $availableStamps -= $usedStamps;
+                }
+
+    //            if ($useStampsProperty && $useStamps = $useStampsProperty->getField('VALUE')) {
+    //                if ($maxStampsLevelProperty && $maxStampsLevel = unserialize($maxStampsLevelProperty->getField('VALUE'))) {
+    //                    $availableStamps -= $this->stampService->parseLevelKey($maxStampsLevel['key'])['discountStamps'] * $maxStampsLevel['value'];
+    //                } else {
+    //                    $this->basketService->setBasketItemPropertyValue($item, 'USE_STAMPS', false); //TODO будет ли работать без $basketPropertyCollection->save() ?
+    //                }
+    //            }
+
+            }
+
+            // для отладки марок
+            //dump('остается марок: ' . $availableStamps);
+
+            foreach ($basket as $item) {
+                $basketCode = (int)str_replace('n', '', $item->getBasketCode());
+
+                $basketPropertyCollection = $item->getPropertyCollection();
+                $useStampsProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'USE_STAMPS');
+                $maxStampsLevelProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'MAX_STAMPS_LEVEL');
+
+                if (
+                    //$maxStampsLevelProperty && ($maxStampsLevel = unserialize($maxStampsLevelProperty->getField('VALUE')))
+                    //&&
+                    (!$useStampsProperty || !$useStamps = $useStampsProperty->getField('VALUE'))
+                ) {
+                    $manzanaItems->map(function (ChequePosition $position) use ($basketCode, $item, $availableStamps, $basketPropertyCollection, $maxStampsLevelProperty) {
+                        if ($position->getChequeItemNumber() === $basketCode) {
+                            $extendedAttributeCollection = $position->getExtendedAttribute();
+                            $maxAvailableLevel = $this->stampService->getMaxAvailableLevel($extendedAttributeCollection, $availableStamps);
+
                             $maxAvailableLevelSerialized = $maxAvailableLevel ? serialize($maxAvailableLevel): false;
                             //$this->basketService->setBasketItemPropertyValue($item, 'MAX_STAMPS_LEVEL', $maxAvailableLevelSerialized);
                             if ($maxStampsLevelProperty) {
@@ -323,91 +390,28 @@ class Manzana implements LoggerAwareInterface
                                 $maxStampsLevelProperty->save();
                             }
                             $basketPropertyCollection->save();
+                            $item->setPropertyCollection($basketPropertyCollection);
                         }
-
-                        //TODO set USE_STAMPS=false & MAX_STAMPS_LEVEL=false instead (или заменить на максимальный из тех уровней, на который хватит марок), если пользователь уже выбрал обмен марок у других товаров и на этот обмен марок не хватит
-                    }
-
-                    $item->setPropertyCollection($basketPropertyCollection);
+                    });
                 }
-            });
-        }
-
-        // Расчет, сколько марок уже выбрано для обмена в$item текущей корзине
-        $availableStamps = $activeStampsCount;
-        foreach ($basket as $item) {
-            $basketPropertyCollection = $item->getPropertyCollection();
-            $usedStampsLevelProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'USED_STAMPS_LEVEL');
-            //$maxStampsLevelProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'MAX_STAMPS_LEVEL');
-            if ($usedStampsLevelProperty && $usedStamps = unserialize($usedStampsLevelProperty->getField('VALUE'))['stampsUsed']) {
-                $availableStamps -= $usedStamps;
+                unset($maxStampsLevel, $useStamps);
             }
 
-//            if ($useStampsProperty && $useStamps = $useStampsProperty->getField('VALUE')) {
-//                if ($maxStampsLevelProperty && $maxStampsLevel = unserialize($maxStampsLevelProperty->getField('VALUE'))) {
-//                    $availableStamps -= $this->stampService->parseLevelKey($maxStampsLevel['key'])['discountStamps'] * $maxStampsLevel['value'];
-//                } else {
-//                    $this->basketService->setBasketItemPropertyValue($item, 'USE_STAMPS', false); //TODO будет ли работать без $basketPropertyCollection->save() ?
-//                }
-//            }
+            // для отладки марок
+    //        foreach ($basket as $item) {
+    //            $basketPropertyCollection = $item->getPropertyCollection();
+    //            $useStampsProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'USE_STAMPS');
+    //            $maxStampsLevelProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'MAX_STAMPS_LEVEL');
+    //            dump($item->getField('PRODUCT_XML_ID')
+    //                . PHP_EOL . $maxStampsLevelProperty->getField('VALUE')
+    //                . PHP_EOL . 'использовать марки: ' . ($useStampsProperty && $useStampsProperty->getField('VALUE') ? 'true' : 'false'));
+    //        }
 
+            // если не делать здесь сохранение корзины, то надо использовать $maxStampsLevelProperty->setField и $basketPropertyCollection->save() (см.выше)
+            // upd: если делать здесь сохранение всей корзины, то начинается дублирование товаров (из-за разделения товаров при применении скидок, которое создает временные дубли с internalId=n1,n2 и т.д.).
+            //      Поэтому использован вариант с сохранением propertyCollection
+            //$basket->save();
         }
-
-        // для отладки марок
-        //dump('остается марок: ' . $availableStamps);
-
-        foreach ($basket as $item) {
-            $basketCode = (int)str_replace('n', '', $item->getBasketCode());
-
-            $basketPropertyCollection = $item->getPropertyCollection();
-            $useStampsProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'USE_STAMPS');
-            $maxStampsLevelProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'MAX_STAMPS_LEVEL');
-
-            if (
-                //$maxStampsLevelProperty && ($maxStampsLevel = unserialize($maxStampsLevelProperty->getField('VALUE')))
-                //&&
-                (!$useStampsProperty || !$useStamps = $useStampsProperty->getField('VALUE'))
-            ) {
-                $manzanaItems->map(function (ChequePosition $position) use ($basketCode, $item, $availableStamps, $basketPropertyCollection, $maxStampsLevelProperty) {
-                    if ($position->getChequeItemNumber() === $basketCode) {
-                        $extendedAttributeCollection = $position->getExtendedAttribute();
-                        $maxAvailableLevel = $this->stampService->getMaxAvailableLevel($extendedAttributeCollection, $availableStamps);
-
-                        $maxAvailableLevelSerialized = $maxAvailableLevel ? serialize($maxAvailableLevel): false;
-                        //$this->basketService->setBasketItemPropertyValue($item, 'MAX_STAMPS_LEVEL', $maxAvailableLevelSerialized);
-                        if ($maxStampsLevelProperty) {
-                            $maxStampsLevelProperty->setField('VALUE', $maxAvailableLevelSerialized);
-                        } else {
-                            $maxStampsLevelProperty = $basketPropertyCollection->createItem();
-                            $maxStampsLevelProperty->setFields([
-                                'NAME' => 'MAX_STAMPS_LEVEL',
-                                'CODE' => 'MAX_STAMPS_LEVEL',
-                                'VALUE' => $maxAvailableLevelSerialized,
-                            ]);
-                            $maxStampsLevelProperty->save();
-                        }
-                        $basketPropertyCollection->save();
-                        $item->setPropertyCollection($basketPropertyCollection);
-                    }
-                });
-            }
-            unset($maxStampsLevel, $useStamps);
-        }
-
-        // для отладки марок
-//        foreach ($basket as $item) {
-//            $basketPropertyCollection = $item->getPropertyCollection();
-//            $useStampsProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'USE_STAMPS');
-//            $maxStampsLevelProperty = BxCollection::getBasketItemPropertyByCode($basketPropertyCollection, 'MAX_STAMPS_LEVEL');
-//            dump($item->getField('PRODUCT_XML_ID')
-//                . PHP_EOL . $maxStampsLevelProperty->getField('VALUE')
-//                . PHP_EOL . 'использовать марки: ' . ($useStampsProperty && $useStampsProperty->getField('VALUE') ? 'true' : 'false'));
-//        }
-
-        // если не делать здесь сохранение корзины, то надо использовать $maxStampsLevelProperty->setField и $basketPropertyCollection->save() (см.выше)
-        // upd: если делать здесь сохранение всей корзины, то начинается дублирование товаров (из-за разделения товаров при применении скидок, которое создает временные дубли с internalId=n1,n2 и т.д.).
-        //      Поэтому использован вариант с сохранением propertyCollection
-        //$basket->save();
     }
 
     /**

@@ -80,40 +80,42 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
         $skippedDiscounts = $this->getLowDiscounts($applyResult['RESULT']['BASKET']);
         $skippedDiscounts = array_merge($skippedDiscounts, $this->getExcludedDiscounts($applyResult['DISCOUNT_LIST']));
 
-        $basket = $this->order->getBasket();
-        /** @var BasketItem $basketItem */
-        foreach ($basket as $basketItem) {
-            $useStamps = $this->basketService->getBasketItemPropertyValue($basketItem, 'USE_STAMPS');
-            $usedStampsLevel = unserialize($this->basketService->getBasketItemPropertyValue($basketItem, 'USED_STAMPS_LEVEL'));
-            if ($useStamps && $usedStampsLevel) {
-                // Костыли, чтобы скидка не применялась повторно. Лучше вынести флаг о том, что скидка за марки применена, например, в отдельное свойство товара в корзине
-                $basketItem->setPrice($basketItem->getBasePrice());
-                $applyResult['PRICES']['BASKET'][$basketItem->getId()]['PRICE'] = $basketItem->getBasePrice();
+        if ($stampService::IS_STAMPS_OFFER_ACTIVE) {
+            $basket = $this->order->getBasket();
+            /** @var BasketItem $basketItem */
+            foreach ($basket as $basketItem) {
+                $useStamps = $this->basketService->getBasketItemPropertyValue($basketItem, 'USE_STAMPS');
+                $usedStampsLevel = unserialize($this->basketService->getBasketItemPropertyValue($basketItem, 'USED_STAMPS_LEVEL'));
+                if ($useStamps && $usedStampsLevel) {
+                    // Костыли, чтобы скидка не применялась повторно. Лучше вынести флаг о том, что скидка за марки применена, например, в отдельное свойство товара в корзине
+                    $basketItem->setPrice($basketItem->getBasePrice());
+                    $applyResult['PRICES']['BASKET'][$basketItem->getId()]['PRICE'] = $basketItem->getBasePrice();
 
-                $params = [
-                    'discountType' => "DETACH",
-                    'params' => [
-                        'apply_count' => $usedStampsLevel['productQuantity'],
-                        'discount_value' => $usedStampsLevel['discountValue'],
-                        'percent' => $usedStampsLevel['discountType'] === 'P',
-                    ]
-                ];
-                $applyResult['RESULT']['BASKET'][$basketItem->getId()] = [[ //FIXME сейчас заменяем все остальные скидки, которые доступны по этому товару. После релиза в перспективе логика должна быть переделана с возможностью применения разных скидок одновременно
-                    //'DISCOUNT_ID' => 0,
-                    'COUPON_ID' => '',
-                    'APPLY' => 'Y',
-                    'DESCR' => json_encode($params)
-                ]];
-            } elseif (
-                ($xmlId = explode('#', $basketItem->getField('PRODUCT_XML_ID'))[1])
-                && array_key_exists($xmlId, $stampService::EXCHANGE_RULES)
-            ) {
-                // Костыли, для отмены скидки. Лучше вынести флаг о том, что скидка за марки применена, например, в отдельное свойство товара в корзине
-                $basketItem->setPrice($basketItem->getBasePrice());
-                $applyResult['PRICES']['BASKET'][$basketItem->getId()]['PRICE'] = $basketItem->getBasePrice();
+                    $params = [
+                        'discountType' => "DETACH",
+                        'params' => [
+                            'apply_count' => $usedStampsLevel['productQuantity'],
+                            'discount_value' => $usedStampsLevel['discountValue'],
+                            'percent' => $usedStampsLevel['discountType'] === 'P',
+                        ]
+                    ];
+                    $applyResult['RESULT']['BASKET'][$basketItem->getId()] = [[ //FIXME сейчас заменяем все остальные скидки, которые доступны по этому товару. После релиза в перспективе логика должна быть переделана с возможностью применения разных скидок одновременно
+                        //'DISCOUNT_ID' => 0,
+                        'COUPON_ID' => '',
+                        'APPLY' => 'Y',
+                        'DESCR' => json_encode($params)
+                    ]];
+                } elseif (
+                    ($xmlId = explode('#', $basketItem->getField('PRODUCT_XML_ID'))[1])
+                    && array_key_exists($xmlId, $stampService::EXCHANGE_RULES)
+                ) {
+                    // Костыли, для отмены скидки. Лучше вынести флаг о том, что скидка за марки применена, например, в отдельное свойство товара в корзине
+                    $basketItem->setPrice($basketItem->getBasePrice());
+                    $applyResult['PRICES']['BASKET'][$basketItem->getId()]['PRICE'] = $basketItem->getBasePrice();
+                }
             }
+            unset ($params);
         }
-        unset ($params);
 
         if (is_iterable($applyResult['RESULT']['BASKET'])) {
             foreach ($applyResult['RESULT']['BASKET'] as $basketCode => $discounts) {
