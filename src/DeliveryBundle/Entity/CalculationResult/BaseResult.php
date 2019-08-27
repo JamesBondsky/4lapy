@@ -411,6 +411,9 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             static::$scheduleResults = new DeliveryScheduleResultCollection();
         }
 
+        /** @var DeliveryScheduleResultService $scheduleResultService */
+        $scheduleResultService = Application::getInstance()->getContainer()->get(DeliveryScheduleResultService::class);
+
         $date = clone $this->getCurrentDate();
 
         $delayed = $stockResult->getDelayed();
@@ -453,8 +456,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                 $delayed->setType(StockResult::TYPE_UNAVAILABLE);
             }
         } else {
-            /** @var DeliveryScheduleResultService $scheduleResultService */
-            $scheduleResultService = Application::getInstance()->getContainer()->get(DeliveryScheduleResultService::class);
             $this->shipmentResults = $scheduleResultService->getFastest($resultCollection, $this->getCurrentDate());
 
             $date->modify(sprintf('+%s days', $this->shipmentResults->getDays($this->getCurrentDate())));
@@ -483,7 +484,8 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             }
         }
 
-        if ($store->isShop()) {
+
+        if ($store->isShop() && !$scheduleResultService->isIrregularTypeCollection($resultCollection, $this->getCurrentDate())) {
             /**
              * Добавляем "срок поставки" к дате доставки
              * (он должен быть не менее 1 дня)

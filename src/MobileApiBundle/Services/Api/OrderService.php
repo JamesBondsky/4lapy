@@ -427,13 +427,18 @@ class OrderService
 
             if($order->getPropValue('SUBSCRIBE_ID') > 0){
                 $subscribeId = (int)$order->getPropValue('SUBSCRIBE_ID');
-                $orderSubscribe = $this->appOrderSubscribeService->getById($subscribeId);
 
-                $orderParameter
-                    ->setSubscribe(true)
-                    ->setSubscribeFrequency($orderSubscribe->getFrequency())
-                    ->setPayWithBonus($orderSubscribe->isPayWithbonus() ? 1 : 0)
-                ;
+                try {
+                    $orderSubscribe = $this->appOrderSubscribeService->getById($subscribeId);
+                    $orderParameter
+                        ->setSubscribe(true)
+                        ->setSubscribeFrequency($orderSubscribe->getFrequency())
+                        ->setPayWithBonus($orderSubscribe->isPayWithbonus() ? 1 : 0)
+                    ;
+                } catch (\Exception $e) {
+                    $logger = LoggerFactory::create('subscribeNotFound');
+                    $logger->error(__METHOD__ . ' error. deliveryId: ' . $order->getDeliveryId() . '. userId: ' . $userId . '. orderId: ' . $order->getId() . '. Exception. : ' . $e->getMessage() . '. ' . $e->getTraceAsString());
+                }
             }
 
             try {
@@ -852,6 +857,9 @@ class OrderService
                 $result['pickupRanges'] = $this->getPickupRanges($pickup, $basketProducts);
             }
         }
+        if (isset($result['dobrolap'])) {
+            $result['dobrolap']['available'] = true;
+        }
         return [
             'cartDelivery' => $result
         ];
@@ -1078,7 +1086,7 @@ class OrderService
 
             $text = [
                 'title' => 'СПАСИБО ЧТО ВЫ ТВОРИТЕ ДОБРО ВМЕСТЕ С НАМИ!',
-                'titleOrder' => 'Ваш заказ №#' . $order->getField('ACCOUNT_NUMBER') . '# оформлен',
+                'titleOrder' => 'Ваш заказ №' . $order->getField('ACCOUNT_NUMBER') . ' оформлен',
                 'description' => 'И будет доставлен в ' . ($this->shelterData ? $this->shelterData['name'] : ''),
                 'titleThank' => 'МЫ ГОВОРИМ ВАМ СПАСИБО!',
                 'descriptionFirstThank' => 'В знак благодарности мы подготовили небольшой сюрприз фанты "Добролап" с приятными презентами',

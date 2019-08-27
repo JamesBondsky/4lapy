@@ -7,6 +7,7 @@
 namespace FourPaws\Catalog\Model;
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Catalog\Product\Basket as BitrixBasket;
 use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\ArgumentException;
@@ -49,6 +50,8 @@ use FourPaws\CatalogBundle\Service\CatalogGroupService;
 use FourPaws\CatalogBundle\Service\SubscribeDiscountService;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\MobileApiBundle\Dto\Object\Color;
@@ -74,6 +77,7 @@ use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\EventDispatcher\Tests\SubscriberService;
+use WebArch\BitrixCache\BitrixCache;
 
 /**
  * Class Offer
@@ -2569,6 +2573,32 @@ class Offer extends IblockElement
     public function isIgnoreStocks()
     {
         return substr($this->getXmlId(), 0, 1) === '3';
+    }
+
+    public function isFashionDogsCltohes()
+    {
+        $getSections = function () {
+            $sectiondIds = [];
+            $iblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS);
+            $dbres = \CIBlockSection::GetList([], ["IBLOCK_ID" => $iblockId, "CODE" => 'odezhda-i-obuv'], false, ['ID', 'NAME']);
+            if(!$rootSection = $dbres->Fetch()){
+                throw new \Exception("На найден раздел Одежда и обувь для собак");
+            }
+            $sectiondIds[] = $rootSection['ID'];
+            $dbres = \CIBlockSection::GetList([], ["IBLOCK_ID" => $iblockId, "SECTION_ID" => $rootSection['ID'], "INCLUDE_SUBSECTIONS" => "Y"], false, ['ID', 'NAME']);
+            while($section = $dbres->Fetch()){
+                $sectiondIds[] = $section['ID'];
+            }
+            return $sectiondIds;
+        };
+
+        $sectiondIds = (new BitrixCache())
+            ->withId(__METHOD__)
+            ->withIblockTag(IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS))
+            ->withTime(84600 * 356)
+            ->resultOf($getSections);
+
+        return in_array($this->getProduct()->getIblockSectionId(), $sectiondIds);
     }
 
 }
