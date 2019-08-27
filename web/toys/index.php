@@ -56,7 +56,7 @@
                     </picture>
 
                     <div class="toys-landing-item__splash-content">
-                        <h3 class="toys-landing-item__splash-title"><a href="/catalog/koshki/igrushki-koshki/razvivayushchie/razvivayushchaya-igrushka-dlya-koshek-soliter-oe-20-sm-belyy-siniy.html" target="_blank">Cолитёр</a></h3>
+                        <h3 class="toys-landing-item__splash-title"><a href="/catalog/koshki/igrushki-koshki/razvivayushchie/razvivayushchaya-igrushka-dlya-koshek-soliter-oe-20-sm-belyy-siniy.html" target="_blank">Solitaire</a></h3>
                         <p class="toys-landing-item__splash-text">Легкая и интересная игра для котят и любознательных взрослых кошек</p>
                     </div>
                 </div>
@@ -168,7 +168,7 @@
                     </picture>
 
                     <div class="toys-landing-item__splash-content">
-                        <h3 class="toys-landing-item__splash-title"><a href="/catalog/koshki/igrushki-koshki/razvivayushchie/Triksi_Igrushka_dlya_lakomstv_dlya_koshek_Kormushkatunnel_ø_28_sm14_sm_1021198.html" target="_blank">Кормушка-тоннель</a></h3>
+                        <h3 class="toys-landing-item__splash-title"><a href="/catalog/koshki/igrushki-koshki/razvivayushchie/Triksi_Igrushka_dlya_lakomstv_dlya_koshek_Kormushkatunnel_ø_28_sm14_sm_1021198.html" target="_blank">Tunnel Feeder</a></h3>
                         <p class="toys-landing-item__splash-text">Игра-кормушка развивает ловкость и смекалку. Можно кормить как из миски каждый день</p>
                     </div>
                 </div>
@@ -356,9 +356,13 @@
                 <p class="toys-landing-check__text">
                     <strong style="text-transform: uppercase;">Копи марки как тебе удобно</strong> <br /> <br />
 
-                    АКТИВИРУЙ КАРТУ, СОВЕРШАЙ ПОКУПКИ, ОТСЛЕЖИВАЙ БАЛАНС МАРОК НА ЧЕКЕ, В
+                    СОВЕРШАЙ ПОКУПКИ, ОТСЛЕЖИВАЙ БАЛАНС МАРОК НА ЧЕКЕ, В
                     ЛИЧНОМ КАБИНЕТЕ НА САЙТЕ ИЛИ В МОБИЛЬНОМ ПРИЛОЖЕНИИ, ПОКУПАЙ УМНЫЕ
                     ИГРУШКИ СО СКИДКОЙ ДО 50%.
+
+                    <span style="display: block;margin-top: 10px;">
+                        <a href="https://4lapy.ru/shares/kopi-marki-pokupay-tovary-so-skidkoy-do-50-.html" class="b-link">Подробнее</a>
+                    </span>
                 </p>
 
                 <ul class="toys-landing-check__list">
