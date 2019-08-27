@@ -1363,6 +1363,12 @@ class UserService implements
             $couponDateActiveTo = $offerFields->get('DATE_ACTIVE_TO');
             $discountValue = $offerFields->get('PROPERTY_DISCOUNT_VALUE');
 
+            if ($discountValue) {
+                $discountValue .= '%';
+            } else {
+                $discountValue = $offerFields->get('PROPERTY_DISCOUNT_CURRENCY_VALUE') . ' руб';
+            }
+
             foreach ($users as $user) {
                 try {
                     $resSend = $expertSender->sendPersonalOfferCouponEmail(
