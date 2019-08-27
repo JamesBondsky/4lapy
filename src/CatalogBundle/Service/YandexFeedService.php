@@ -337,7 +337,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
     public function addOffer(Offer $offer, ArrayCollection $collection, string $host, string $stockID = null): void
     {
         //isOfferExcluded - проверка наличия в складе DC01 и на акционные товары/новинки и прочее
-        if (empty($stockID) && $this->isOfferExcluded($offer)) {
+        if (empty($stockID)&& !$offer->isByRequest() && $this->isOfferExcluded($offer)) {
             return;
         }
 
@@ -391,7 +391,7 @@ class YandexFeedService extends FeedService implements LoggerAwareInterface
                     ->getDetailText()
                     ->getText()), 0, 2990))
                 ->setManufacturerWarranty(true)
-                ->setAvailable((!empty($stockID) && $tpz) ? false : $offer->isAvailable())
+                ->setAvailable((!empty($stockID) && $tpz) ? false : ($offer->isAvailable() && !$offer->isByRequest()) )
                 ->setCurrencyId('RUB')
                 ->setPrice($offer->getPrice())
                 ->setPicture($currentImage)
