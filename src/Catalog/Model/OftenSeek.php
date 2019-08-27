@@ -32,6 +32,12 @@ class OftenSeek extends BaseEntity
     protected $link = '';
 
     /**
+     * Выбран ли фильтр
+     * @var bool
+     */
+    protected $isChosen = false;
+
+    /**
      * @return bool
      */
     public function isActive(): bool
@@ -77,5 +83,22 @@ class OftenSeek extends BaseEntity
     public function setLink(string $link)
     {
         $this->link = $link;
+    }
+
+    /**
+     * @param bool $isChosen
+     * @return OftenSeek
+     */
+    public function setChosen(bool $isChosen)
+    {
+        $this->isChosen = $isChosen;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isChosen(): bool
+    {
+        return $this->isChosen;
     }
 }
