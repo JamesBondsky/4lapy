@@ -1505,7 +1505,6 @@ class ExpertsenderService implements LoggerAwareInterface
      * @param $couponDescription
      * @param $couponDateActiveTo
      * @param $discountValue
-     * @param string|null $description
      * @param int|null $customTransactionId
      * @return bool
      * @throws ExpertSenderException
