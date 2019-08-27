@@ -1541,6 +1541,7 @@ class ExpertsenderService implements LoggerAwareInterface
             $snippets[] = new Snippet('date', htmlspecialcharsbx($couponDateActiveTo));
             $snippets[] = new Snippet('url_img', $base64);
             $snippets[] = new Snippet('description', htmlspecialcharsbx($couponDescription));
+            $snippets[] = new Snippet('user_name', $name);
             //$snippets[] = new Snippet('text', htmlspecialcharsbx());
 
             $this->sendSystemTransactional($transactionId, $email, $snippets);
