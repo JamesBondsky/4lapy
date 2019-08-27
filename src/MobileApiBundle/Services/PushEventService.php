@@ -282,7 +282,9 @@ class PushEventService
                     $pushManager->add($push);
 
                     $pushId[$pushEvent->getPushToken()] = $pushEvent;
-                } catch (\Exception $e) {}
+                } catch (\Exception $e) {
+                    $pushEvent->setServiceResponseError($e->getMessage());
+                }
             }
 
             try {
