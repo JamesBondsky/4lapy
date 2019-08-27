@@ -492,8 +492,8 @@ $APPLICATION->SetTitle("Добролап");
                     <div class="b-common-item">
                         <a href="/dobrolap/images/report/2608/DSCN4338.JPG" data-lightbox="photos"
                            class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/2608/DSCN4338.JPG')"
                            data-title="Корзинка «Добролап» никогда не бывает пустой">
-                            <img src="/dobrolap/images/report/2608/DSCN4338.JPG" class="photos__img" />
                         </a>
                         <div class="carousel-note">
                             <p class="mb-4">
@@ -505,8 +505,8 @@ $APPLICATION->SetTitle("Добролап");
                     <div class="b-common-item">
                         <a href="/dobrolap/images/report/2608/IMG_7423-13-08-19-10-34.jpeg" data-lightbox="photos"
                            class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/2608/IMG_7423-13-08-19-10-34.jpeg')"
                            data-title="Каждый день питомцы из приютов получают долгожданные подарки">
-                            <img src="/dobrolap/images/report/2608/IMG_7423-13-08-19-10-34.jpeg" class="photos__img" />
                         </a>
                         <div class="carousel-note">
                             <p class="mb-4">
@@ -518,8 +518,8 @@ $APPLICATION->SetTitle("Добролап");
                     <div class="b-common-item">
                         <a href="/dobrolap/images/report/2608/lyEQwzEt0aY.jpg" data-lightbox="photos"
                            class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/2608/lyEQwzEt0aY.jpg')"
                            data-title="Вкусные лакомства теперь в обязательном рационе питомцев">
-                            <img src="/dobrolap/images/report/2608/lyEQwzEt0aY.jpg" class="photos__img" />
                         </a>
                         <div class="carousel-note">
                             <p class="mb-4">
@@ -531,8 +531,8 @@ $APPLICATION->SetTitle("Добролап");
                     <div class="b-common-item">
                         <a href="/dobrolap/images/report/2608/IMG_9399.JPG" data-lightbox="photos"
                            class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/2608/IMG_9399.JPG')"
                            data-title="Команда волонтеров растет с каждым днем">
-                            <img src="/dobrolap/images/report/2608/IMG_9399.JPG" class="photos__img" />
                         </a>
                         <div class="carousel-note">
                             <p class="mb-4">
@@ -544,8 +544,8 @@ $APPLICATION->SetTitle("Добролап");
                     <div class="b-common-item">
                         <a href="/dobrolap/images/report/2608/Skobelevskaja3.jpg" data-lightbox="photos"
                            class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/2608/Skobelevskaja3.jpg')"
                            data-title="Больше всего маленьким питомцам нужны ветеринарные препараты и пеленки. Теперь все будет в порядке!">
-                            <img src="/dobrolap/images/report/2608/Skobelevskaja3.jpg" class="photos__img" />
                         </a>
                         <div class="carousel-note">
                             <p class="mb-4">
@@ -554,37 +554,11 @@ $APPLICATION->SetTitle("Добролап");
                         </div>
                     </div>
 
-                    <?/*<div class="b-common-item">
-                        <a href="/dobrolap/images/report/2608/" data-lightbox="photos"
-                           class="photos__link"
-                           data-title="Целый набор самого необходимого собрали маленькие помощники всего за один день">
-                            <img src="/dobrolap/images/report/2608/" class="photos__img" />
-                        </a>
-                        <div class="carousel-note">
-                            <p class="mb-4">
-                                Целый набор самого необходимого собрали маленькие помощники всего за один день
-                            </p>
-                        </div>
-                    </div>*/?>
-
-                    <?/*<div class="b-common-item">
-                        <a href="/dobrolap/images/report/2608/" data-lightbox="photos"
-                           class="photos__link"
-                           data-title="Во время визита в  учебно- кинологический центр «Собаки-помощники инвалидов» волонтеры «Четыре Лапы» привезли с собой подарки от каждого">
-                            <img src="/dobrolap/images/report/2608/" class="photos__img" />
-                        </a>
-                        <div class="carousel-note">
-                            <p class="mb-4">
-                                Во время визита в  учебно- кинологический центр «Собаки-помощники инвалидов» волонтеры «Четыре Лапы» привезли с собой подарки от каждого
-                            </p>
-                        </div>
-                    </div>*/?>
-
                     <div class="b-common-item">
                         <a href="/dobrolap/images/report/2608/IMG_9332.JPG" data-lightbox="photos"
                            class="photos__link"
+                           style="background-image: url('/dobrolap/images/report/2608/IMG_9332.JPG')"
                            data-title="В Центре «Собаки-поводыри» обучаются лабрадоры и ретриверы. Эти породы наиболее приспособлены для ответственной работы собаки-поводыря.">
-                            <img src="/dobrolap/images/report/2608/IMG_9332.JPG" class="photos__img" />
                         </a>
                         <div class="carousel-note">
                             <p class="mb-4">
