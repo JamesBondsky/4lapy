@@ -35,7 +35,7 @@ $marksDeclension = new Declension('марку', 'марки', 'марок');
             <p>1. Копи марки: за каждые 400 руб. в чеке получайте 1 марку.</p>
 	        <p>2. Выбирай умные игрушки: покупай со скидкой до 50%.</p>
 	        <p>3. Занимайся с питомцем: развивай любознательность, обучай и играй с удовольствием.</p>
-            <a href="#">Подробные условия акции</a>
+            <a href="https://4lapy.ru/shares/kopi-marki-pokupay-tovary-so-skidkoy-do-50-.html">Подробные условия акции</a>
         </div>
     </div>
 
@@ -50,7 +50,7 @@ $marksDeclension = new Declension('марку', 'марки', 'марок');
             'TITLE' => 'Товары, участвующие в акции',
 	        'ONLY_PRODUCTS_XML_ID' => $arParams['PRODUCTS_XML_ID'], // показывать только указанные ТП, а не все в родительских товарах
         ), $this->getComponent());
-        
+
         /*$APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', '', array(
             'OFFER_FILTER' => [
                 '=XML_ID' => [
