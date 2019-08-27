@@ -228,7 +228,7 @@ class BasketService
 
             $stampLevels = [];
 
-            if ($useStamps) {
+            if ($canUseStamps) {
                 foreach ($this->stampService->getBasketItemStampLevels($basketItem, $offer->getXmlId(), $maxStampsLevelDiscount) as $stampLevel) {
                     $stampLevels[] = $serializer->fromArray($stampLevel, StampLevel::class);
                 }
