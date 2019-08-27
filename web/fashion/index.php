@@ -329,7 +329,7 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
             <div class="fashion-free-shipping__content">
                 <div class="fashion-free-shipping__img"></div>
                 <div class="fashion-free-shipping__info">
-                    <div class="fashion-free-shipping__title">Закажи бесплатную примерку</div>
+                    <div class="fashion-free-shipping__title">Бесплатная примерка</div>
                     <ul class="fashion-free-shipping__steps">
                         <li>примерь несколько размеров</li>
                         <li>купи только то, что подошло</li>
@@ -352,7 +352,7 @@ use Symfony\Component\Templating\Loader\FilesystemLoader;
                         <div class="item-free-shipping__descr item-free-shipping__descr_time"><b>время примерки</b> не ограничено</div>
                         <div class="item-free-shipping__descr item-free-shipping__descr_delivery">
                             <p><b>доставка</b> бесплатно</p>
-                            <p>продавец поможет измерить питомца и&nbsp;быстро найти модель</p>
+                            <p>продавец поможет одеть питомца, а&nbsp;в&nbsp;случае необходимости подобрать альтернативу</p>
                         </div>
                     </div>
                 </div>
