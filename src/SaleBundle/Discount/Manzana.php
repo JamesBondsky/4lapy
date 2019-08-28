@@ -160,7 +160,12 @@ class Manzana implements LoggerAwareInterface
         } catch (ExecuteException|CouponIsNotAvailableForUseException $e) {
             /** @var BasketItem $item */
             foreach ($basket as $item) {
-                $price = PriceHelper::roundPrice($item->getPrice());
+                $offerXmlId = explode('#', $item->getField('PRODUCT_XML_ID'))[1];
+                if ($offerXmlId && isset($this->stampService::EXCHANGE_RULES[$offerXmlId])) {
+                    $price = PriceHelper::roundPrice($item->getBasePrice());
+                } else {
+                    $price = PriceHelper::roundPrice($item->getPrice());
+                }
                 /** @noinspection PhpInternalEntityUsedInspection */
                 $item->setFieldsNoDemand([
                     'PRICE' => $price,
