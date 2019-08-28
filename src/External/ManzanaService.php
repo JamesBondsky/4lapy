@@ -696,12 +696,17 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function getCardsByContactId($contactId): array
     {
+        $this->sqlHeartBeat();
         if (!empty($this->cards[$contactId])) {
             $cards = $this->cards[$contactId];
         } else {
+            $this->sqlHeartBeat();
             $bag = new ParameterBag(['contact_id' => $contactId]);
+            $this->sqlHeartBeat();
             try {
+                $this->sqlHeartBeat();
                 $result = $this->execute(self::CONTRACT_CARDS, $bag->getParameters());
+                $this->sqlHeartBeat();
                 /** @var CardsByContractCards $cards */
                 $this->cards[$contactId] =
                 $cards = $this->serializer->deserialize($result, CardsByContractCards::class, 'xml')->cards->toArray();
@@ -911,6 +916,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     private function getActiveCardByContactId(string $contactId): CardByContractCards
     {
+        $this->sqlHeartBeat();
         $cards = $this->getCardsByContactId($contactId);
         $activeCards = array_filter($cards, function (CardByContractCards $card) {
             return $card->isActive();
