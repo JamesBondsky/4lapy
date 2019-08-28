@@ -537,11 +537,7 @@ class Event extends BaseServiceHandler
              *  так же чекаем что это не страница заказа
              *  но для регистрации надо оставить
              */
-
-            $logger = LoggerFactory::create('main');
-            $logger->critical('$template->hasUserAuth(): ' . $template->hasUserAuth() . ' $template->isAjaxRegister(): ' . $template->isAjaxRegister() );
-
-            if (!$template->hasUserAuth() || !$template->isAjaxRegister()) {
+            if (!$template->hasUserAuth() && !$template->isAjaxRegister()) {
                 return;
             }
             $container = App::getInstance()->getContainer();
