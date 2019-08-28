@@ -2063,7 +2063,8 @@ class OrderService implements LoggerAwareInterface
 
     public function getOrderFeedbackLink(Order $order): string
     {
-        return sprintf('/sale/order/interview/%d/?HASH=%s', $order->getId(), $order->getHash());
+        //return sprintf('/sale/order/interview/%d/?HASH=%s', $order->getId(), $order->getHash());
+        return '/feedback/';
     }
 
 
