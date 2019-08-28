@@ -100,6 +100,13 @@ class ProductService
     /** @var StampService */
     private $stampService;
 
+
+    /**
+     * @var bool
+     */
+    private $forceAtLeastOnePackingVariant = false;
+
+
     public function __construct(
         CategoriesService $categoriesService,
         UserService $userService,
@@ -260,6 +267,7 @@ class ProductService
         /** @var ProductCollection $productCollection */
         $productCollection = $productSearchResult->getProductCollection();
 
+        $this->forceAtLeastOnePackingVariant = true;
         $productList = $productCollection
             ->map(\Closure::fromCallable([$this, 'mapProductForList']))
             ->map(static function(FullProduct $product) use ($ids, $onlyPackingVariants) {
@@ -279,6 +287,7 @@ class ProductService
                 return !is_null($value);
             })
             ->getValues();
+        $this->forceAtLeastOnePackingVariant = false;
 
         if ($onlyPackingVariants) {
             $productList = array_reduce($productList, static function($carry, $productArray) {
@@ -314,7 +323,7 @@ class ProductService
             $itemOffer->setColor();
         }
 
-        $fullProduct = $this->convertToFullProduct($product, $currentOffer, true, false);
+        $fullProduct = $this->convertToFullProduct($product, $currentOffer, true, $this->forceAtLeastOnePackingVariant);
 
         // товары всегда доступны в каталоге (недоступные просто не должны быть в выдаче)
         $fullProduct->setIsAvailable(true);
