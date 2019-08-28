@@ -333,12 +333,15 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function getContactByUser(User $user = null): Client
     {
+        $this->sqlHeartBeat();
         if (!($user instanceof User)) {
             $user = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->getCurrentUser();
         }
+        $this->sqlHeartBeat();
         if(empty($user->getManzanaNormalizePersonalPhone())){
             throw new ManzanaServiceContactSearchNullException('телефон не задан');
         }
+        $this->sqlHeartBeat();
 
         return $this->getContactByPhone(
             $user->getManzanaNormalizePersonalPhone()
@@ -886,6 +889,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             $this->sqlHeartBeat();
 
             if($user->getDiscountCardNumber() !== (string)$card->cardNumber) {
+                $this->sqlHeartBeat();
                 $userRepository->updateDiscountCard($user->getId(), (string)$card->cardNumber);
             }
         } catch (ManzanaCardIsNotFound $e) {
