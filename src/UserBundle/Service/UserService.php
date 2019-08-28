@@ -1360,8 +1360,14 @@ class UserService implements
             $expertSender = $container->get('expertsender.service');
 
             $couponDescription = $offerFields->get('PREVIEW_TEXT');
-            $couponDateActiveTo = $offerFields->get('DATE_ACTIVE_TO');
+            $couponDateActiveTo = $offerFields->get('PROPERTY_ACTIVE_TO_VALUE');
             $discountValue = $offerFields->get('PROPERTY_DISCOUNT_VALUE');
+
+            if ($discountValue) {
+                $discountValue .= '%';
+            } else {
+                $discountValue = $offerFields->get('PROPERTY_DISCOUNT_CURRENCY_VALUE') . ' руб';
+            }
 
             foreach ($users as $user) {
                 try {

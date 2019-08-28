@@ -402,6 +402,8 @@ class PersonalOffersService
                     'DATE_ACTIVE_TO',
                     'PROPERTY_DISCOUNT',
                     'PROPERTY_NO_USED_STATUS',
+                    'PROPERTY_ACTIVE_TO',
+                    'PROPERTY_DISCOUNT_CURRENCY',
                 ]
             );
             if ($res = $rsOffers->GetNext())
