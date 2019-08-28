@@ -881,7 +881,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             $this->logger->error('search by login start');
             /** обновим только у активного и делаем 1 запрос вместо 2-х */
             $users = $userRepository->findBy(['=LOGIN' => PhoneHelper::normalizePhone($client->phone), 'ACTIVE' => 'Y']);
-            $this->logger->error('search by login stop');
+            $this->logger->error('search by login stop ' . count($users));
             $this->sqlHeartBeat();
             if (count($users) === 0) {
                 $this->logger->error('search by phone start');
