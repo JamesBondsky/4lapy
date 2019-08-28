@@ -68,6 +68,7 @@ use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use WebArch\BitrixCache\BitrixCache;
+use Bitrix\Main\Application as BitrixApplication;
 
 /**
  * Class UserService
@@ -910,20 +911,25 @@ class UserService implements
             return false;
         }
         try {
+            $this->sqlHeartBeat();
             /**
              * @var ManzanaService $manzanaService
              */
             $manzanaService = App::getInstance()
                                  ->getContainer()
                                  ->get('manzana.service');
+            $this->sqlHeartBeat();
         } catch (ApplicationCreateException $e) {
             $this->log()
                  ->error('ошибка загрузки сервиса - manzana ', $e->getTrace());
 
             return false;
         }
+        $this->sqlHeartBeat();
         try {
+            $this->sqlHeartBeat();
             $contact = $manzanaService->getContactByUser($user);
+            $this->sqlHeartBeat();
         } catch (ApplicationCreateException $e) {
             /** не должно сюда доходить, так как передаем объект юзера */
             $this->log()
@@ -944,7 +950,9 @@ class UserService implements
 
             return false;
         }
+        $this->sqlHeartBeat();
         try {
+            $this->sqlHeartBeat();
             $manzanaService->updateUserCardByClient($contact);
 
             return true;
@@ -1380,5 +1388,10 @@ class UserService implements
                 }
             }
         }
+    }
+
+    private function sqlHeartBeat()
+    {
+        BitrixApplication::getConnection()->queryExecute("SELECT CURRENT_TIMESTAMP");
     }
 }
