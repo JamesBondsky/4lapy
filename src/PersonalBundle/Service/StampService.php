@@ -27,7 +27,7 @@ class StampService implements LoggerAwareInterface
 
     public const IS_STAMPS_OFFER_ACTIVE = true;
 
-    public const EXCHANGE_RULES = [ //TODO FIX xml_ids array
+    /*public const EXCHANGE_RULES = [ // dev-манзана
         1000002 => [
             [
                 'title' => 'Stamps_02_trade_action_10*5*P',
@@ -58,6 +58,52 @@ class StampService implements LoggerAwareInterface
             ],
         ],
         1000004 => [
+            [
+                'title' => 'Stamps_04_trade_action_10*5*P',
+                'price' => 2042.10,
+                'stamps' => 5,
+            ],
+        ],
+    ];*/
+
+    public const EXCHANGE_RULES = [
+        1035430 => [
+            [
+                'title' => 'Stamps_02_trade_action_10*5*P',
+                'price' => 1097.10,
+                'stamps' => 5,
+            ],
+            [
+                'title' => 'Stamps_02_trade_action_20*15*P',
+                'price' => 975.20,
+                'stamps' => 15,
+            ],
+            [
+                'title' => 'Stamps_02_trade_action_30*20*P',
+                'price' => 853.30,
+                'stamps' => 20,
+            ],
+        ],
+        1021198 => [
+            [
+                'title' => 'Stamps_03_trade_action_10*5*P',
+                'price' => 1016.10,
+                'stamps' => 5,
+            ],
+            [
+                'title' => 'Stamps_03_trade_action_20*15*P',
+                'price' => 903.20,
+                'stamps' => 15,
+            ],
+        ],
+        1035432 => [
+            [
+                'title' => 'Stamps_04_trade_action_10*5*P',
+                'price' => 2042.10,
+                'stamps' => 5,
+            ],
+        ],
+        1031456 => [
             [
                 'title' => 'Stamps_04_trade_action_10*5*P',
                 'price' => 2042.10,
