@@ -879,7 +879,11 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             }
 
             /** обновим только у активного и делаем 1 запрос вместо 2-х */
-            $users = $userRepository->findBy(['=PERSONAL_PHONE' => PhoneHelper::normalizePhone($client->phone), 'ACTIVE' => 'Y']);
+            $users = $userRepository->findBy(['=LOGIN' => PhoneHelper::normalizePhone($client->phone), 'ACTIVE' => 'Y']);
+            $this->sqlHeartBeat();
+            if (count($users) === 0) {
+                $users = $userRepository->findBy(['=PERSONAL_PHONE' => PhoneHelper::normalizePhone($client->phone), 'ACTIVE' => 'Y']);
+            }
             $this->sqlHeartBeat();
             if (\count($users) > 1) {
                 throw new TooManyUserFoundException('Found more than one user with same raw login');
