@@ -142,8 +142,6 @@ class Event extends BaseServiceHandler
         static::initHandlerCompatible('OnCityChange', [self::class, 'updateBasketDiscountProperties'], 'main');
 
         static::initHandler('OnUserLogin', [self::class,'updateSessionCounter'], 'main');
-
-        static::initHandlerCompatible('OnAfterUserAdd', [self::class, 'refreshUserOnAuth'], 'main');
     }
 
     /**
