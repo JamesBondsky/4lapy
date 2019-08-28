@@ -953,7 +953,11 @@ class UserService implements
         $this->sqlHeartBeat();
         try {
             $this->sqlHeartBeat();
+            $this->log()
+                ->info('обновление карты');
             $manzanaService->updateUserCardByClient($contact);
+            $this->log()
+                ->info('обновление карты stop');
 
             return true;
         } catch (ManzanaCardIsNotFound $e) {
