@@ -262,12 +262,13 @@ $imageSrc = $offerWithImages->GetResizeImages(240, 240)->first();
                 <span class="b-common-item__title">С использованием марок</span>
                 <ul class="b-common-item__marks">
                     <? foreach ($arResult['EXCHANGE_RULE'] as $exchangeRule): ?>
+                        <?/* @todo выставлять класс is-active у li, в соотв. с задачей tm-35982 */?>
                         <li class="b-common-item__item-mark">
                             <?= WordHelper::numberFormat($exchangeRule['price']) ?>
                             <span>₽</span>
-                            - <?= $exchangeRule['stamps'] ?>
+                            — <?= $exchangeRule['stamps'] ?>
                             <span class="b-icon b-icon--mark">
-                                <?= new SvgDecorator('icon-mark', 12, 12) ?>
+                                <?= new SvgDecorator('icon-mark', 16, 16) ?>
                             </span>
                         </li>
                     <? endforeach; ?>
