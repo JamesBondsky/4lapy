@@ -74,6 +74,7 @@ if (!$catalogRequest->isLanding()) { ?>
             '',
             [
                 'IBLOCK_SECTION' => $category,
+                'SHOW_CURRENT'   => true,
             ],
             null,
             ['HIDE_ICONS' => 'Y']
