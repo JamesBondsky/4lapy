@@ -29,14 +29,22 @@ class CFashionProductFooter extends \CBitrixComponent
         if (!isset($params['CACHE_TIME'])) {
             $params['CACHE_TIME'] = 86400;
         }
+        $this->arParams['TYPE'] = $params['TYPE'] ?: 'default';
         $this->iblockId = IblockUtils::getIblockId(IblockType::GRANDIN, IblockCode::FASHION_FOOTER_PRODUCTS);
         return parent::onPrepareComponentParams($params);
     }
 
     public function executeComponent()
     {
+        // TODO:: Прикрутить кеш
         //if($this->startResultCache()){
-            $dbres = \CIBlockElement::GetList([], ['IBLOCK_ID' => $this->iblockId, 'ACTIVE' => 'Y']);
+            $filter = [
+                'IBLOCK_ID'    => $this->iblockId,
+                'ACTIVE'       => 'Y',
+                'SECTION_CODE' => $this->arParams['SECTION_CODE'] ?: false,
+            ];
+
+            $dbres = \CIBlockElement::GetList([], $filter);
             while($row = $dbres->GetNextElement()){
                 $element = $row->GetFields();
                 $element['PROPERTIES'] = $row->GetProperties();
