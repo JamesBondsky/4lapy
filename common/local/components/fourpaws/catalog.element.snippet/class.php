@@ -100,18 +100,20 @@ class CatalogElementSnippet extends CBitrixComponent
                 $this->arResult['PRODUCT'] = $product = $this->arParams['PRODUCT'];
                 $this->arResult['CURRENT_OFFER'] = $currentOffer = $this->getCurrentOffer($product);
 
-                $exchangeRule = StampService::EXCHANGE_RULES[$product->getXmlId()] ?? false;
+                if (StampService::IS_STAMPS_OFFER_ACTIVE) {
+                    $exchangeRule = StampService::EXCHANGE_RULES[$product->getXmlId()] ?? false;
 
-                if (!$exchangeRule) {
-                    $offers = $product->getOffers();
-                    foreach ($offers as $offer) {
-                        if (isset(StampService::EXCHANGE_RULES[$offer->getXmlId()])) {
-                            $exchangeRule = StampService::EXCHANGE_RULES[$offer->getXmlId()];
+                    if (!$exchangeRule) {
+                        $offers = $product->getOffers();
+                        foreach ($offers as $offer) {
+                            if (isset(StampService::EXCHANGE_RULES[$offer->getXmlId()])) {
+                                $exchangeRule = StampService::EXCHANGE_RULES[$offer->getXmlId()];
+                            }
                         }
                     }
-                }
 
-                $this->arResult['EXCHANGE_RULE'] = $exchangeRule;
+                    $this->arResult['EXCHANGE_RULE'] = $exchangeRule;
+                }
 
                 if ($category && $product->getIblockSectionId() !== $category->getId()) {
                     $product->withDetailPageUrl(

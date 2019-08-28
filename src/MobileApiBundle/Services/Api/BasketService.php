@@ -176,26 +176,28 @@ class BasketService
 
             /** @var $basketItem BasketItem */
             $useStamps = false;
-            if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS'])) {
-                $useStamps = (bool)$basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS']['VALUE'];
-            }
-
             $canUseStamps = false;
             $canUseStampsAmount = 0;
-            if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
-                $maxStampsLevelValue = $basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'];
-                $canUseStamps = (bool)$maxStampsLevelValue; //FIXME если нужно отображать размер скидки в рублях, процент скидки, то можно посчитать их здесь
+            if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
+                if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS'])) {
+                    $useStamps = (bool)$basketItem->getPropertyCollection()->getPropertyValues()['USE_STAMPS']['VALUE'];
+                }
 
-                if ($useStamps) {
-                    if ($usedStamps = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL']['VALUE'])['stampsUsed']) {
-                        $canUseStampsAmount = $usedStamps;
-                    }
-                } else {
-                    $canUseStampsObj = unserialize($maxStampsLevelValue);
-                    $canUseStampsAmountKey = $canUseStampsObj ? $canUseStampsObj['key'] : false;
-                    if ($canUseStampsAmountKey) {
-                        $discount = $this->stampService->parseLevelKey($canUseStampsAmountKey);
-                        $canUseStampsAmount = $discount['discountStamps'] * $canUseStampsObj['value']; //TODO не будет ли бага, когда манзана присылает больше единиц, чем у пользователя в корзине?
+                if (isset($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL'])) {
+                    $maxStampsLevelValue = $basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'];
+                    $canUseStamps = (bool)$maxStampsLevelValue; //FIXME если нужно отображать размер скидки в рублях, процент скидки, то можно посчитать их здесь
+
+                    if ($useStamps) {
+                        if ($usedStamps = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL']['VALUE'])['stampsUsed']) {
+                            $canUseStampsAmount = $usedStamps;
+                        }
+                    } else {
+                        $canUseStampsObj = unserialize($maxStampsLevelValue);
+                        $canUseStampsAmountKey = $canUseStampsObj ? $canUseStampsObj['key'] : false;
+                        if ($canUseStampsAmountKey) {
+                            $discount = $this->stampService->parseLevelKey($canUseStampsAmountKey);
+                            $canUseStampsAmount = $discount['discountStamps'] * $canUseStampsObj['value']; //TODO не будет ли бага, когда манзана присылает больше единиц, чем у пользователя в корзине?
+                        }
                     }
                 }
             }
@@ -210,31 +212,33 @@ class BasketService
                 $shortProduct->setPrice((new Price())->setActual(0)->setOld(0));
             }
 
-            if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL'])) {
-                $usedStampsLevel = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL']['VALUE']);
-                if ($usedStampsLevel) {
-                    $shortProduct->setUsedStamps((int)$usedStampsLevel['stampsUsed']);
+            if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
+                if (isset($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL'])) {
+                    $usedStampsLevel = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['USED_STAMPS_LEVEL']['VALUE']);
+                    if ($usedStampsLevel) {
+                        $shortProduct->setUsedStamps((int)$usedStampsLevel['stampsUsed']);
+                    }
                 }
-            }
 
-            // уровни скидок за марки
-            $serializer = Application::getInstance()->getContainer()->get(SerializerInterface::class);
-            $maxStampsLevelDiscount = 0;
+                // уровни скидок за марки
+                $serializer = Application::getInstance()->getContainer()->get(SerializerInterface::class);
+                $maxStampsLevelDiscount = 0;
 
-            $maxStampsLevelKey = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'])['key'];
-            if ($maxStampsLevelKey) {
-                $maxStampsLevelDiscount = $this->stampService->parseLevelKey($maxStampsLevelKey)['discountStamps'];
-            }
-
-            $stampLevels = [];
-
-            if ($canUseStamps) {
-                foreach ($this->stampService->getBasketItemStampLevels($basketItem, $offer->getXmlId(), $maxStampsLevelDiscount) as $stampLevel) {
-                    $stampLevels[] = $serializer->fromArray($stampLevel, StampLevel::class);
+                $maxStampsLevelKey = unserialize($basketItem->getPropertyCollection()->getPropertyValues()['MAX_STAMPS_LEVEL']['VALUE'])['key'];
+                if ($maxStampsLevelKey) {
+                    $maxStampsLevelDiscount = $this->stampService->parseLevelKey($maxStampsLevelKey)['discountStamps'];
                 }
-            }
 
-            $shortProduct->setStampLevels($stampLevels); //TODO get stampLevels from Manzana. If Manzana doesn't answer then set no levels
+                $stampLevels = [];
+
+                if ($canUseStamps) {
+                    foreach ($this->stampService->getBasketItemStampLevels($basketItem, $offer->getXmlId(), $maxStampsLevelDiscount) as $stampLevel) {
+                        $stampLevels[] = $serializer->fromArray($stampLevel, StampLevel::class);
+                    }
+                }
+
+                $shortProduct->setStampLevels($stampLevels); //TODO get stampLevels from Manzana. If Manzana doesn't answer then set no levels
+            }
 
             $product->setShortProduct($shortProduct);
             $products->add($product);

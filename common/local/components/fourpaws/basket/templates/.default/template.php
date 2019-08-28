@@ -342,12 +342,14 @@ $subscribePriceDiff = $arResult['TOTAL_PRICE'] - $arResult['SUBSCRIBE_PRICE'];
                         </div>
                     <?php } ?>
 
-                    <div class="b-information-order__order b-information-order__order--mark">
-                        <div class="">За заказ будет начислено:</div>
-                        <div class="">
-                            <?= $arResult['MARKS_TO_BE_ADDED'] . '&nbsp;' . WordHelper::declension($arResult['MARKS_TO_BE_ADDED'], ['марка', 'марки', 'марок']) ?>
-                        </div>
-                    </div>
+					<?php if ($arResult['IS_STAMPS_OFFER_ACTIVE']) { ?>
+	                    <div class="b-information-order__order b-information-order__order--mark">
+	                        <div class="">За заказ будет начислено:</div>
+	                        <div class="">
+	                            <?= $arResult['MARKS_TO_BE_ADDED'] . '&nbsp;' . WordHelper::declension($arResult['MARKS_TO_BE_ADDED'], ['марка', 'марки', 'марок']) ?>
+	                        </div>
+	                    </div>
+                    <?php } ?>
 
                     <?php if ($arResult['COUPON_DISCOUNT']) { ?>
                         <div class="b-information-order__order">

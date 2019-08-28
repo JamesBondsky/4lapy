@@ -572,15 +572,17 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 ->setDeliveryShipmentPoint($this->getBasketPropertyValueByCode($basketItem, 'SHIPMENT_PLACE_CODE'))
                 ->setDeliveryFromPoint($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'));
 
-            $useStamps = $this->getBasketPropertyValueByCode($basketItem, 'USE_STAMPS');
-            $discountStamps = 0;
-            if ($useStamps) {
-                $maxStampsLevel = $this->getBasketPropertyValueByCode($basketItem, 'MAX_STAMPS_LEVEL');
-                if ($maxStampsLevelArr = unserialize($maxStampsLevel)) {
-                    $offer->setExchangeName($maxStampsLevelArr['key']);
-                    $discountStamps = $this->stampService->parseLevelKey($maxStampsLevelArr['key'])['discountStamps'];
-                } else {
-                    $useStamps = false;
+            if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
+                $useStamps = $this->getBasketPropertyValueByCode($basketItem, 'USE_STAMPS');
+                $discountStamps = 0;
+                if ($useStamps) {
+                    $maxStampsLevel = $this->getBasketPropertyValueByCode($basketItem, 'MAX_STAMPS_LEVEL');
+                    if ($maxStampsLevelArr = unserialize($maxStampsLevel)) {
+                        $offer->setExchangeName($maxStampsLevelArr['key']);
+                        $discountStamps = $this->stampService->parseLevelKey($maxStampsLevelArr['key'])['discountStamps'];
+                    } else {
+                        $useStamps = false;
+                    }
                 }
             }
 
@@ -594,7 +596,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                     ->setChargeBonus((bool)$hasBonus)
                     ->setPosition($position);
 
-                if ($useStamps) {
+                if ($this->stampService::IS_STAMPS_OFFER_ACTIVE && $useStamps) {
                     $detachedOffer->setStampsQuantity($hasBonus * $discountStamps);
                 }
 
@@ -603,7 +605,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 $position++;
             }
 
-            if ($useStamps) {
+            if ($this->stampService::IS_STAMPS_OFFER_ACTIVE && $useStamps) {
                 // $offer->setStampsQuantity($maxStampsLevelArr['value']); todo проблематично использовать, так как есть разделение по бонусам
                 $offer->setStampsQuantity($quantity * $discountStamps);
             }

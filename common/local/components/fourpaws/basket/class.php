@@ -202,20 +202,23 @@ class BasketComponent extends CBitrixComponent
             $this->ecommerceSalePreset->createEcommerceToCheckoutFromBasket($basket, 1, 'Просмотр корзины'),
             true
         );
+        $this->arResult['IS_STAMPS_OFFER_ACTIVE'] = false;
+        if ($this->stampService::IS_STAMPS_OFFER_ACTIVE) {
+            $this->arResult['IS_STAMPS_OFFER_ACTIVE'] = true;
+            /**  информация о марках */
+            $activeStampsCount = $this->stampService->getActiveStampsCount();
+            $this->arResult['MARKS_TO_BE_ADDED'] = $this->manzana->getStampsToBeAdded();
+            $this->arResult['ACTIVE_STAMPS_COUNT'] = $activeStampsCount;
 
-        /**  информация о марках */
-        $activeStampsCount = $this->stampService->getActiveStampsCount();
-        $this->arResult['MARKS_TO_BE_ADDED'] = $this->manzana->getStampsToBeAdded();
-        $this->arResult['ACTIVE_STAMPS_COUNT'] = $activeStampsCount;
+            foreach ($this->arResult['BASKET'] as $basketItem) {
+                $offer = $this->getOffer((int)$basketItem->getProductId());
 
-        foreach ($this->arResult['BASKET'] as $basketItem) {
-            $offer = $this->getOffer((int)$basketItem->getProductId());
+                if ($this->arResult['BASKET_ITEMS_STAMPS_INFO'][$offer->getXmlId()]) {
+                    continue;
+                }
 
-            if ($this->arResult['BASKET_ITEMS_STAMPS_INFO'][$offer->getXmlId()]) {
-                continue;
+                $this->arResult['BASKET_ITEMS_STAMPS_INFO'][$offer->getXmlId()] = $this->stampService->getBasketItemStampsInfo($basketItem, $offer->getXmlId(), $activeStampsCount);
             }
-
-            $this->arResult['BASKET_ITEMS_STAMPS_INFO'][$offer->getXmlId()] = $this->stampService->getBasketItemStampsInfo($basketItem, $offer->getXmlId(), $activeStampsCount);
         }
 
         /** если авторизирован добавляем магнит */

@@ -164,7 +164,7 @@ if ($useOffer && (($offer->getQuantity() > 0 && !$basketItem->isDelay()) || $off
             ?>
         </div>
     </div>
-    <?/* Класс b-item-shopping__operation--marks нужен только если будут марки*/ //TODO this logic ?>
+    <?/* Класс b-item-shopping__operation--marks нужен только если будут марки*/ ?>
     <div class="b-item-shopping__operation<?= ($stampInfo['HAS_STAMPS']) ? ' b-item-shopping__operation--marks' : '' ?><?= $offer->getQuantity() > 0 ? ' b-item-shopping__operation--not-available' : '' ?>">
         <?php
         $maxQuantity = 1000;
