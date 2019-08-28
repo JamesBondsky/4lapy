@@ -335,7 +335,7 @@ class Event extends BaseServiceHandler
 //        return true;
 //    }
 
-    public static function updateManzana($fields): bool
+    public static function updateManzana(&$fields): bool
     {
         $container = App::getInstance()->getContainer();
 
@@ -529,6 +529,7 @@ class Event extends BaseServiceHandler
             return;
         }
 
+        self::disableEvents();
         try {
             /** @var MainTemplate $template */
             $template = MainTemplate::getInstance(BitrixApplication::getInstance()->getContext());
@@ -550,10 +551,14 @@ class Event extends BaseServiceHandler
             $userService->refreshUserAuthActions($userService->getCurrentUser());
         } catch (NotAuthorizedException $e) {
             // обработка не требуется
+            self::enableEvents();
         } catch (\Exception $e) {
+            self::enableEvents();
             $logger = LoggerFactory::create('system');
             $logger->critical('failed to update user account balance: ' . $e->getMessage());
         }
+
+        self::enableEvents();
     }
 
     /**

@@ -429,6 +429,9 @@ class UserRepository
      */
     public function updateDiscountCard(int $id, string $discountCardNumber): bool
     {
+        if (!$discountCardNumber) {
+            return true;
+        }
         return $this->updateData($id, ['UF_DISCOUNT_CARD' => $discountCardNumber]);
     }
 
